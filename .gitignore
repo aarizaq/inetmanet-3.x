@@ -1,0 +1,30 @@
+# ignore generated files
+*_m.h
+*_m.cc
+src/Makefile
+/doc/doxy/
+/doc/neddoc/
+/examples/*/*/results/
+
+# ignore binary files
+out/
+*.so
+*.dylib
+*.dll
+*.a
+*.lib
+*.exe
+*.o
+*.obj
+*.pdb
+*.idb
+*.manifest
+.tkenvrc
+
+# ignore backup and temp files
+*.bak
+backups
+*~
+xxx
+/3rdparty
+/tmp/

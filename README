@@ -1,0 +1,207 @@
+INET Framework for OMNEST/OMNeT++ 4.2
+=====================================
+
+The INET framework is an open-source communication networks simulation
+package, written for the OMNEST/OMNeT++ simulation system. The INET framework
+contains models for several Internet protocols: beyond TCP and IP there is UDP,
+Ethernet, PPP and MPLS with LDP and RSVP-TE signalling. See the CREDITS file
+for the names of people who have contributed to the INET Framework.
+
+IMPORTANT: The INET Framework is continuously being improved: new parts
+are added, bugs are corrected, and so on. We cannot assert that any protocol
+implemented here will work fully according to the specifications. YOU ARE
+RESPONSIBLE YOURSELF TO MAKE SURE THAT THE MODELS YOU USE IN YOUR SIMULATIONS
+WORK CORRECTLY, AND YOU'RE GETTING VALID RESULTS.
+
+Contributions are highly welcome. You can make a difference!
+
+See the WHATSNEW file for recent changes.
+
+
+GETTING STARTED
+---------------
+You may start by downloading and installing the INET framework. Read the INSTALL
+file for further information.
+
+Then you can gather initial experience by following the INET tutorial. After
+that, you can learn the NED language from the OMNeT++ manual & sample
+simulations.
+
+After that, you may write your own topologies using the NED language. You may
+assign some of the submodule parameters in NED files. You may leave some of
+them unassigned.
+
+Then, you may assign unassigned module parameters in omnetpp.ini of your
+simulation. (You can refer to sample simulations & manual for the content of
+omnetpp.ini)
+
+Finally, you will be ready to run your simulation. As you see, you may use
+the INET framework without writing any C++ code, as long as you use the
+available modules.
+
+To implement new protocols or modify existing ones, you'll need to add your 
+code somewhere under the src directory. If you add new files under the 'src' 
+directory you will need to regenerate the makefiles (using the 'make makefiles' 
+command).
+
+If you want to use external interfaces in INET, please install libpcap-dev (on linux)
+or winpcap (on windows from www.winpcap.org), then re-run the omnetpp configuration
+script (./configure). You should also enable the pcap support by editing the
+src/makefrag and then regenerating the INET makefiles (using the "make makefiles" 
+command).
+
+Directory structure
+-------------------
+Directories of INET framework source are arranged roughly along the OSI layers.
+
+Bottom-up:
+
+ src/
+   linklayer/            L2 (data link layer) protocols
+     contract/           API to common L2 functionality
+     ethernet/           Ethernet model (MAC, LLC, Encap)
+     etherswitch/        Ethernet switch (relay unit) model
+     ppp/                basic PPP model (framing only)
+     radio/              //TODO
+     ieee80211/          ieee 802.11 interface //TODO
+     mf80211/            MF's 802.11b ad-hoc mode model (modified)
+     ext/                External interface
+
+   networklayer/         L3 (network layer) protocols
+     common/             InterfaceTable, InterfaceEntry modules //TODO
+     contract/           API to common L3 functionality
+     extras/             FailureManager, Dummy //TODO
+     autorouting/        autoconfiguration of static routes
+     arp/                ARP protocol
+     queue/              router queues (QoS, RED, etc)
+     ipv4/               IPv4 and associated protocols
+     ipv6/               IPv6 implementation (currently in work)
+     icmpv6/             ICMPv6 implementation (currently in work)
+     mpls/               MPLS implementation (will be replaced soon)
+     ldp/                LDP signalling protocol for MPLS
+     rsvp_te/            RSVP-TE signalling protocol for MPLS (will be replaced soon)
+     scenario/           specific for RSVP-TE (will be replaced soon)
+     bgpv4/              BGP V4 protocol (see BGPv4 feature) //TODO
+     ospfv2/             OSPF protocol //TODO
+     ted/                Traffic Engineering Database //TODO
+
+   transport/            transport layer protocols
+     contract/           API to transport layer functionality
+     tcp/                TCP protocol (supporting SACK) (default TCP implementation)
+     tcp_nsc/            TCP protocol using Network Simulation Cradle
+     tcp_old/            TCP old (obsolete) TCP implementation (without SACK) for reference only
+     udp/                UDP protocol
+     rtp/                Realtime Transport Protocol (not yet integrated)
+     sctp/               Stream Control Transmission Protocol
+
+   applications/         application layer
+     tcpapp/             TCP application models
+     udpapp/             UDP application models (VideoStream, etc.)
+     generic/            traffic generators (directly for IP)
+     ethernet/           traffic generators (directly for Ethernet)
+     pingapp/            ping application
+     rtpapp/             RTP application
+     sctpapp/            SCTP applications
+
+   world/                scenario manager, MF channel manager //TODO is here the MF ch.m.?
+
+   nodes/                protocol stacks, host and router models
+     inet/               IP-based components
+     ipv6/               IPv6-based components
+     mpls/               router models with MPLS/LDP/RSVP-TE
+     bgp/                IPv4 router with BGP and OSPF support
+     ethernet/           //TODO
+     mf80211/            host for mf80211
+     ospfv2/             an OSPFv2 router node
+     wireless/           nodes for wireless simulations
+
+   base/                 common header files, base classes
+   util/                 utility classes
+
+ examples/               example networks
+   ethernet/             example Ethernet networks
+   inet/                 TCP/IP-based example networks
+   ipv6/                 IPv6-based example networks
+   sctp/                 SCTP examples
+   rtp/                  RTP examples (not yet integrated)
+   emulation/            example networks using external interface to connect with real networks
+   adhoc/                mobile and ad-hoc networks (incomplete)
+   wireless/             IEEE 802.11 examples
+   mpls/                 example networks for MPLS/LDP/RSVP-TE
+   ospfv2/               OSPF examples
+   bgpv4                 BGP examples
+
+ doc/                    documentation
+
+ tests/                  some test
+   ipv4/                 for IPv4 components
+   ipv6/                 for IPv6 components
+   mpls/                 for the MPLS models
+   newtcp/               for the TCP model
+   dlltest/              //TODO
+   performance/          performance tests for Ethernet, TCP, UDP, ieee80211 protocols
+
+ 3rdparty/               optional 3rd party components like (Network Simulation Cradle etc.)
+
+
+xMIPv6 additions for INET Framework
+=======================================
+further info: http://www.kn.e-technik.tu-dortmund.de/content/view/232/lang,de/
+
+
+VoIPTool 2.0
+============
+
+This is the OMNeT++ 4.x port and complete rewrite (by Zoltan Bojthe)
+of the TKN VoIPTool, http://www.tkn.tu-berlin.de/research/omnetVoipTool/
+
+The fraction of voice over Internet Protocol (VoIP) based telephone calls
+among the totality of voice based communication acts has been significantly
+growing during the last years. In wired as well as wireless communication
+applications, VoIP is expected to completely replace former circuit
+switched telephony. This project provides an OMNeT++-based VoIP traffic
+generator that creates realistic VoIP packet streams, due to the
+utilization of real audio data and an existing VoIP standard codec.
+Moreover, by applying ITU-T's perceptual evaluation of speech quality
+(PESQ) approach at the sink, the perceived quality of a transmitted VoIP
+stream can be determined.
+
+This library is an add-on to the INET Framework, http://inet.omnetpp.org.
+It provides two modules: VoIPSourceApp and VoIPSinkApp. Both are
+application- layer modules that operate over UDP, and can be used in INET's
+StandardHost very much like other UDP traffic generators and sinks (see the
+udpApp[] submodule vector, numUdpApps parameter, etc. in StandardHost.)
+
+VoIPSourceApp accepts an audio file and a destination IP address/port as
+input, and will transmit the file's contents as voice traffic over UDP n
+times (by default once). For transmission, the audio is resampled at the
+given frequency (by default 8KHz) and depth (by default 16 bits), and
+encoded with the given codec (by default G.726) at the given bit rate (by
+default 40Kbps), and chopped into packets that each carry dt milliseconds
+of voice (by default 20ms). (The above default values may be out of date;
+actual values come from the NED file).  Packets that are all silence (all
+samples are below a given threshold in absolute value) are transmitted as
+special "silence" packets. The module does not simulate any particular VoIP
+protocol (e.g. RTP), but instead accepts a "header size" parameter that
+can be set accordingly.
+
+VoIPSinkApp listens on an UDP port, and expects to receive VoIP packets on
+it. The received voice is then saved into a result audio file that can be
+compared with the original for further evaluation. VoIP packets are
+numbered, and out-of-order packets are discarded (the corresponding voice
+interval will be recorded as silence into the file). VoIP packets that miss
+their deadlines will similarly be discarded. It is assumed that the audio is
+played back with delay (by default 20ms), which allows some jitter for the
+incoming packets. The resulting audio file is closed when the simulation
+completes (i.e. in the OMNeT++ finish() function).
+
+Related publication:
+
+M. Bohge and M. Renwanz, "A realistic VoIP traffic generation and evaluation
+tool for OMNeT++", 1st International OMNeT++ Workshop, March 2008, Marseille,
+France.
+
+
+---
+Andras
+

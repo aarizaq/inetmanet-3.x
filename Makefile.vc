@@ -1,0 +1,28 @@
+all: checkmakefiles
+	cd src && $(MAKE) -f Makefile.vc
+
+clean: checkmakefiles
+	cd src && $(MAKE) -f Makefile.vc clean
+
+cleanall: checkmakefiles
+	cd src && $(MAKE) -f Makefile.vc MODE=release clean
+	cd src && $(MAKE) -f Makefile.vc MODE=debug clean
+
+makefiles:
+	cd src && call opp_nmakemake -f --deep --make-so -o inet -O out -Xapplications/voiptool -Xnetworklayer/ipv6tunneling -Xnetworklayer/xmipv6 -Xnodes/xmipv6 -Xtransport/tcp_nsc -DWITH_TCP_COMMON -DWITH_TCP_INET -DWITH_TCP_LWIP -DWITH_IPv4 -DWITH_IPv6 -DWITH_UDP -DWITH_RTP -DWITH_SCTP -DWITH_ETHERNET -DWITH_PPP -DWITH_EXT_IF -DWITH_MPLS -DWITH_OSPFv2 -DWITH_BGPv4 -DWITH_MANET
+
+checkmakefiles:
+	@if not exist src\Makefile.vc ( \
+	echo. && \
+	echo ============================================================================ && \
+	echo src/Makefile.vc does not exist. Please use the following command to generate it: && \
+	echo nmake -f Makefile.vc makefiles && \
+	echo ============================================================================ && \
+	echo. && \
+	exit 1 )
+
+doxy:
+	doxygen doxy.cfg
+
+tcptut:
+	cd doc\src\tcp && $(MAKE) -f Makefile.vc
