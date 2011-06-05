@@ -120,8 +120,12 @@ void DSRUU::omnet_xmit(struct dsr_pkt *dp)
     if (dp->flags & PKT_XMIT_JITTER)
     {
         /* Broadcast packet */
-        jitter = uniform(0, ((double) ConfVal(BroadCastJitter))/1000);
-        DEBUG("xmit jitter=%f s\n", jitter);
+        jitter=0;
+        if (ConfVal(BroadCastJitter))
+        {
+           jitter = uniform(0, ((double) ConfVal(BroadCastJitter))/1000);
+           DEBUG("xmit jitter=%f s\n", jitter);
+        }
     }
 
     if (dp->dst.s_addr != DSR_BROADCAST)
@@ -415,7 +419,7 @@ void DSRUU::initialize (int stage)
             etxTime=par("ETXHelloInterval");
             etxNumRetry = par("ETXRetryBeforeFail");
             etxWindowSize=etxTime*(unsigned int)par("ETXWindowNumHello");
-            extJitter=0.1;
+            etxJitter=0.1;
             etx_timer.init(&DSRUU::EtxMsgSend,0);
             set_timer(&etx_timer, 0.0);
             //set_timer(&etx_timer, etxTime);
@@ -1069,7 +1073,7 @@ void DSRUU::EtxMsgSend(unsigned long data)
     if (msg->getByteLength()<etxSize)
         msg->setByteLength(etxSize);
 
-    sendDelayed(msg,uniform(0,extJitter), "to_ip");
+    sendDelayed(msg,uniform(0,etxJitter), "to_ip");
 
     etxWindow+=etxTime;
     set_timer(&etx_timer,etxTime+ SIMTIME_DBL(simTime()));

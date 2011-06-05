@@ -224,7 +224,7 @@ class DSRUU:public cSimpleModule, public INotifiable
     double etxTime;
     double etxWindow;
     double etxWindowSize;
-    double extJitter;
+    double etxJitter;
     struct ETXEntry;
     int etxNumRetry;
 
