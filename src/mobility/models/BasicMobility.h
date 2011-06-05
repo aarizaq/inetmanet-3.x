@@ -58,7 +58,12 @@ class INET_API BasicMobility : public BasicModule
         PLACERANDOMLY, ///< placed at a randomly chosen position on the blackboard
         RAISEERROR     ///< stop the simulation with error
     };
-
+    /** @brief this module return a pointer to the mobility module if exist*/
+    static BasicMobility* get();
+    /** @brief This module return a copy of the position store in the mobility module*/
+    Coord getPos();
+    /** @brief This module return the position store in the mobility module, if the mobility module is not found it returns the position x=-1, y=-1*/
+    static Coord gpsPosition();
   protected:
     /** @brief Pointer to host module, to speed up repeated access*/
     cModule* hostPtr;

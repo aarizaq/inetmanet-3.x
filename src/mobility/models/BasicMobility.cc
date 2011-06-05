@@ -28,6 +28,34 @@
 
 #define coreEV (ev.isDisabled()||!coreDebug) ? (std::ostream&)ev : EV << logName() << "::BasicMobility: "
 
+BasicMobility* BasicMobility::get()
+{
+    cModule* mod = simulation.getModuleByPath("mobility");
+    if (check_and_cast<BasicMobility*>(mod))
+    {
+         return check_and_cast<BasicMobility*>(mod);
+    }
+    return NULL;
+}
+
+
+Coord BasicMobility::getPos()
+{
+    return pos;
+}
+
+Coord BasicMobility::gpsPosition()
+{
+    Coord position;
+    position.x=-1;
+    position.y=-1;
+    BasicMobility *  m = BasicMobility::get();
+    if (m)
+         position = m->pos;
+    return position;
+}
+
+
 static bool parseIntTo(const char *s, double& destValue)
 {
     if (!s || !*s)
