@@ -63,7 +63,7 @@ class INET_API BasicMobility : public BasicModule
     /** @brief This module return a copy of the position store in the mobility module*/
     Coord getPos();
     /** @brief This module return the position store in the mobility module, if the mobility module is not found it returns the position x=-1, y=-1*/
-    static Coord gpsPosition();
+    static Coord gpsCoord();
   protected:
     /** @brief Pointer to host module, to speed up repeated access*/
     cModule* hostPtr;
