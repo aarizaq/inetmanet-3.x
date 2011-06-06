@@ -21,6 +21,9 @@
 #include "WeightedFairQueue.h"
 Define_Module(WeightedFairQueue);
 
+simsignal_t REDQueue::queueLengthSignal = SIMSIGNAL_NULL;
+simsignal_t REDQueue::earlyDropPkBytesSignal = SIMSIGNAL_NULL;
+
 void WeightedFairQueue::initialize()
 {
     PassiveQueueBase::initialize();
