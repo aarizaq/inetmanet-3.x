@@ -24,7 +24,9 @@
 #include "BasicMobility.h"
 
 #include "FWMath.h"
-
+Coord BasicMobility::mininumTopLeft;
+Coord BasicMobility::maximumRightBotton;
+bool  BasicMobility::areaInitalized=false;
 
 #define coreEV (ev.isDisabled()||!coreDebug) ? (std::ostream&)ev : EV << logName() << "::BasicMobility: "
 
@@ -95,6 +97,24 @@ void BasicMobility::initialize(int stage)
         areaTopLeft.x = par("constraintAreaX");
         areaBottomRight.y = par("constraintAreaHeight");
         areaBottomRight += areaTopLeft;
+
+        if (!areaInitalized)
+        {
+        	mininumTopLeft=areaTopLeft;
+        	maximumRightBotton = areaBottomRight;
+        	areaInitalized=true;
+        }
+        else
+        {
+            if (mininumTopLeft.y>areaTopLeft.y)
+            	mininumTopLeft.y=areaTopLeft.y;
+            if (mininumTopLeft.x>areaTopLeft.x)
+            	mininumTopLeft.x=areaTopLeft.x;
+            if (areaBottomRight.x<areaBottomRight.x)
+            	areaBottomRight.x=areaBottomRight.x;
+            if (areaBottomRight.y<areaBottomRight.y)
+            	areaBottomRight.y=areaBottomRight.y;
+        }
 
         initPos();
 
@@ -282,4 +302,24 @@ Coord BasicMobility::gpsCoord()
          }
     }
     return position;
+}
+
+Coord BasicMobility::getMinimTopLeft()
+{
+    Coord val;
+    if (!areaInitalized)
+    {
+         val.x=val.y=-1;
+    }
+    return mininumTopLeft;
+}
+
+Coord BasicMobility::getMaximumRightBotton()
+{
+    Coord val;
+    if (!areaInitalized)
+    {
+         val.x=val.y=-1;
+    }
+    return maximumRightBotton;
 }

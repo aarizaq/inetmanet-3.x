@@ -64,7 +64,14 @@ class INET_API BasicMobility : public BasicModule
     Coord getPos();
     /** @brief This module return the position store in the mobility module, if the mobility module is not found it returns the position x=-1, y=-1*/
     static Coord gpsCoord();
+    static Coord getMinimTopLeft();
+    static Coord getMaximumRightBotton();
+
   protected:
+    static Coord mininumTopLeft;
+    static Coord maximumRightBotton;
+    static bool  areaInitalized;
+
     /** @brief Pointer to host module, to speed up repeated access*/
     cModule* hostPtr;
 
