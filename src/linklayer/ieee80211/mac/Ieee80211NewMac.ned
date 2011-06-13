@@ -105,7 +105,9 @@ simple Ieee80211NewMac
         double timerCoeff = double(2.0);
         // period of time usef byt the throughput measure
         double throughputTimePeriod @unit("s")=default(0);
-        
+        bool duplicateDetectionFilter = default (true);
+        bool purgeOldTuples=default (true);// delete old tuples in the duplicate list
+        double duplicateTimeOut @unit("s")= default(20s);       
         @display("i=block/layer");
     gates:
         input uppergateIn @labels(Ieee80211Frame);

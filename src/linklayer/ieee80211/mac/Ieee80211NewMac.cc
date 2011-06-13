@@ -231,6 +231,11 @@ void Ieee80211NewMac::initialize(int stage)
             bitrate=11e6;//11Mbps
         EV<<" bitrate="<<bitrate/1e6<<"M IDLE="<<IDLE<<" RECEIVE="<<RECEIVE<<endl;
 
+        duplicateDetect=par("duplicateDetectionFilter");
+        purgeOldTuples=par("purgeOldTuples");
+        duplicateTimeOut=par("duplicateTimeOut");
+        lastTimeDelete=0;
+
         // Auto rate code
         bool found= false;
         if (opMode == 'b')
@@ -948,6 +953,8 @@ void Ieee80211NewMac::receiveChangeNotification(int category, const cPolymorphic
  */
 void Ieee80211NewMac::handleWithFSM(cMessage *msg)
 {
+
+	removeOldTuplesFromDuplicateMap();
     // skip those cases where there's nothing to do, so the switch looks simpler
     if (isUpperMsg(msg) && fsm.getState() != IDLE)
     {
@@ -2789,4 +2796,67 @@ Ieee80211NewMac::getControlAnswerMode (ModulationType reqMode)
     }
 
   return mode;
+}
+
+// This methods implemet the duplicate filter
+void Ieee80211NewMac::sendUp(cMessage *msg)
+{
+    EV << "sending up " << msg << "\n";
+
+    if (duplicateDetect) // duplicate detection filter
+    {
+    	Ieee80211DataOrMgmtFrame *frame =dynamic_cast<Ieee80211DataOrMgmtFrame*>(msg);
+        if (frame)
+        {
+            Ieee80211ASFTupleList::iterator it = asfTuplesList.find(frame->getTransmitterAddress());
+            if (it==asfTuplesList.end())
+            {
+                Ieee80211ASFTuple tuple;
+                tuple.receivedTime=simTime();
+                tuple.sequenceNumber= frame->getSequenceNumber();
+                tuple.fragmentNumber=frame->getFragmentNumber();
+                asfTuplesList.insert(std::pair<MACAddress,Ieee80211ASFTuple>(frame->getTransmitterAddress(),tuple));
+            }
+            else
+            {
+            	// check if duplicate
+            	if (it->second.sequenceNumber==frame->getSequenceNumber() && it->second.fragmentNumber==frame->getFragmentNumber())
+            	{
+            	    delete msg;
+            	    return;
+            	}
+            	else
+            	{
+                    // actualize
+            	    it->second.sequenceNumber=frame->getSequenceNumber();
+            	    it->second.fragmentNumber=frame->getFragmentNumber();
+            	    it->second.receivedTime=simTime();
+            	}
+            }
+        }
+    }
+
+    if (msg->isPacket())
+        emit(packetSentToUpperSignal, msg);
+
+    send(msg, uppergateOut);
+}
+
+void Ieee80211NewMac::removeOldTuplesFromDuplicateMap()
+{
+    if (duplicateDetect && lastTimeDelete+duplicateTimeOut>=simTime())
+    {
+        lastTimeDelete=simTime();
+        for (Ieee80211ASFTupleList::iterator it = asfTuplesList.begin();it!=asfTuplesList.begin();)
+        {
+            if (it->second.receivedTime+duplicateTimeOut<simTime())
+            {
+                Ieee80211ASFTupleList::iterator itAux=it;
+                it++;
+                asfTuplesList.erase(itAux);
+            }
+            else
+                it++;
+        }
+    }
 }

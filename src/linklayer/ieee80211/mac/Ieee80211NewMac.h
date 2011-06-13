@@ -66,12 +66,20 @@ class INET_API Ieee80211NewMac : public WirelessMacBase, public INotifiable
      */
     struct Ieee80211ASFTuple
     {
-        MACAddress address;
         int sequenceNumber;
         int fragmentNumber;
+        simtime_t receivedTime;
+        Ieee80211ASFTuple& operator=(const Ieee80211ASFTuple& other)
+        {
+            if (this==&other) return *this;
+            this->sequenceNumber=other.sequenceNumber;
+            this->fragmentNumber=other.fragmentNumber;
+            this->receivedTime = other.receivedTime;
+        }
     };
 
-    typedef std::list<Ieee80211ASFTuple*> Ieee80211ASFTupleList;
+    typedef std::map<MACAddress, Ieee80211ASFTuple> Ieee80211ASFTupleList;
+
     enum
     {
         RATE_ARF,   // Auto Rate Fallback
@@ -338,8 +346,11 @@ class INET_API Ieee80211NewMac : public WirelessMacBase, public INotifiable
     /**
     * A list of last sender, sequence and fragment number tuples to identify
     * duplicates, see spec 9.2.9.
-    * TODO: this is not yet used
     */
+    bool duplicateDetect;
+    bool purgeOldTuples;
+    double duplicateTimeOut;
+    simtime_t lastTimeDelete;
     Ieee80211ASFTupleList asfTuplesList;
 
     /** Passive queue module to request messages from */
@@ -649,6 +660,10 @@ class INET_API Ieee80211NewMac : public WirelessMacBase, public INotifiable
     }
     ModulationType getControlAnswerMode (ModulationType reqMode);
     //@}
+
+    virtual void sendUp(cMessage *msg);
+
+    virtual void removeOldTuplesFromDuplicateMap();
 };
 
 #endif
