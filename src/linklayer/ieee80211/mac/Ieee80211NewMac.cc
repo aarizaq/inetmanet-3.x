@@ -2822,7 +2822,6 @@ void Ieee80211NewMac::sendUp(cMessage *msg)
             	// check if duplicate
             	if (it->second.sequenceNumber==frame->getSequenceNumber() && it->second.fragmentNumber==frame->getFragmentNumber())
             	{
-            	    delete msg;
             	    return;
             	}
             	else
