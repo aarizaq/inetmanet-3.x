@@ -550,4 +550,34 @@
         compileFlags = ""
         linkerFlags = ""
         />
+
+    <feature
+        id="Ieee8021d"
+        name="Ieee802.1d Ieee802.1Q Ieee802.1AH protocols"
+        description = "Ieee802.1d Ieee802.1Q Ieee802.1AH protocols"
+        initiallyEnabled = "false"
+        requires = "Ethernet"
+        labels = ""
+         nedPackages = "
+                       inet.linklayer.ieee8021d
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
+
+    <feature
+        id="RSTP"
+        name="J-C Moureira RSTP"
+        description = "J-C Moureira RSTP implementation"
+        initiallyEnabled = "true"
+        requires = "Ethernet"
+        labels = ""
+         nedPackages = "
+                       inet.linklayer.rstp
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
 </features>
