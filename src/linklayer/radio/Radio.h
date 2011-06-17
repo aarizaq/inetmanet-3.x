@@ -27,6 +27,7 @@
 #include "SnrList.h"
 #include "ObstacleControl.h"
 #include "IPowerControl.h"
+#include "INoiseGenerator.h"
 
 
 /**
@@ -153,6 +154,7 @@ class INET_API Radio : public ChannelAccess, public IPowerControl
 	double calcDistFreeSpace();
 
   protected:
+	INoiseGenerator *noiseGenerator;
     cMessage *updateString;
     simtime_t updateStringInterval;
     ObstacleControl* obstacles;
