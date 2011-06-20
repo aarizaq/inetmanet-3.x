@@ -580,4 +580,38 @@
         compileFlags = ""
         linkerFlags = ""
         />
+
+    <feature
+        id="Ieee802154"
+        name="802.15.4 code"
+        description = "Wpan 802.15.4"
+        initiallyEnabled = "true"
+        requires = ""
+        labels = ""
+         nedPackages = "
+                       inet.wpan.applications.Ieee802154TestApp
+                       inet.wpan.Isabel.Base
+                       inet.wpan.Isabel.Analysis
+                       inet.wpan.linklayer.ieee802154
+                       inet.wpan.networklayer.Ieee802154StarRouting
+                       inet.wpan.nodes
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
+    <feature
+        id="BMAC"
+        name="BMac code"
+        description = "Wpan link layer BMAC protocol"
+        initiallyEnabled = "true"
+        requires = "Ieee802154"
+        labels = ""
+         nedPackages = "
+                       inet.wpan.linklayer.bmac
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
 </features>
