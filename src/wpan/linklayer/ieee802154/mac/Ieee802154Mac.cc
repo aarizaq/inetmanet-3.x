@@ -1922,6 +1922,7 @@ void Ieee802154Mac::csmacaResume()
 
     if ((backoffStatus != 99)           //not during backoff
             &&  (!inTransmission))              //not during transmission
+    {
         if ((txBcnCmd) && (!waitBcnCmdAck))
         {
             backoffStatus = 99;
@@ -1946,6 +1947,7 @@ void Ieee802154Mac::csmacaResume()
             txCsmaca = txData;
             csmacaStart(true, txData, ackReq);
         }
+    }
 }
 
 void Ieee802154Mac::csmacaStart(bool firsttime, Ieee802154Frame* frame, bool ackReq)
@@ -2723,6 +2725,7 @@ void Ieee802154Mac::handleBcnTxTimer()
     int i;*/
 
     if (mpib.macBeaconOrder != 15)      //beacon enabled
+    {
         if (!txNow_bcnTxTimer)          //enable the transmitter
         {
             beaconWaitingTx = true;
@@ -2799,6 +2802,7 @@ void Ieee802154Mac::handleBcnTxTimer()
                 gtsScheduler();
             }
         }
+    }
     startBcnTxTimer();  //don't disable this even beacon not enabled (beacon may be temporarily disabled like in channel scan, but it will be enabled again)
 }
 
@@ -2887,10 +2891,10 @@ void Ieee802154Mac::handleIfsTimer()
 // or following reception of a data pkt requiring no ACK
 // other cmd pkts requirng no ACK are proccessed in <handleCommand()>
 {
-    FrameCtrl frmCtrl;
+/*    FrameCtrl frmCtrl;
     MACenum status;
     int i;
-
+*/
     ASSERT(rxData != NULL || rxCmd != NULL || txGTS != NULL);
 
     if (rxCmd)      // MAC command, all cmds requiring ACK are handled here
@@ -3462,7 +3466,7 @@ int Ieee802154Mac::calFrmByteLength(Ieee802154Frame* frame)
 
     if (frmType == Ieee802154_BEACON)       // Fig 37
     {
-        Ieee802154BeaconFrame* beaconFrm = check_and_cast<Ieee802154BeaconFrame *>(frame);
+//        Ieee802154BeaconFrame* beaconFrm = check_and_cast<Ieee802154BeaconFrame *>(frame);
         //byteLength = MHRLength + 2 + (2+ gtsCount * 3) + (1 + beaconFrm->getPaFields().numShortAddr * 2 + beaconFrm->getPaFields().numExtendedAddr * 8) + 2;
         byteLength = MHRLength + 6;
     }
@@ -3601,7 +3605,7 @@ bool Ieee802154Mac::toParent(Ieee802154Frame* frame)
  */
 void Ieee802154Mac::gtsScheduler()
 {
-    UINT_8 t_SO;
+//    UINT_8 t_SO;
     simtime_t w_time, tmpf;
 
     ASSERT(isPANCoor);
