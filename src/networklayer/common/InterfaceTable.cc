@@ -141,9 +141,23 @@ InterfaceEntry *InterfaceTable::getInterfaceById(int id)
 void InterfaceTable::addInterface(InterfaceEntry *entry, cModule *ifmod)
 {
     // check name is unique
+#ifndef MULTIINTERFACE
     if (getInterfaceByName(entry->getName())!=NULL)
         throw cRuntimeError(this, "addInterface(): interface '%s' already registered", entry->getName());
-
+#else
+    for (unsigned int i=0; i<idToInterface.size(); i++)
+        if (idToInterface[i] && !strcmp(entry->getName(), idToInterface[i]->getName()))
+        {
+            if (idToInterface[i]->getMacAddress()==entry->getMacAddress())
+            {
+            	throw cRuntimeError(this, "addInterface(): interface '%s' already registered", entry->getName());
+            }
+            else
+            {
+            	idToInterface[i]->getRelatedInterface(entry);
+            }
+        }
+#endif
     // insert
     entry->setInterfaceId(INTERFACEIDS_START + idToInterface.size());
     entry->setInterfaceTable(this);
@@ -204,6 +218,11 @@ void InterfaceTable::deleteInterface(InterfaceEntry *entry)
     nb->fireChangeNotification(NF_INTERFACE_DELETED, entry);  // actually, only going to be deleted
 
     idToInterface[id - INTERFACEIDS_START] = NULL;
+    if (entry->existRelatedInterface())
+    {
+         for (int i=0;i<entry->getNumRelated();i++)
+             entry->getRelatedInterface(i)->deleteRelatedInterface(entry);
+    }
     delete entry;
     invalidateTmpInterfaceList();
 }

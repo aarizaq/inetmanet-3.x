@@ -162,7 +162,8 @@ void InterfaceEntry::setIPv6Data(IPv6InterfaceData *p)
 
 bool InterfaceEntry::setEstimateCostProcess(int position,MacEstimateCostProcess *p)
 {
-	if(estimateCostProcessArray.size()<=position)
+	int size=estimateCostProcessArray.size();
+	if(size<=position)
 	{
 		estimateCostProcessArray.resize(position+1,NULL);
 	}
@@ -174,9 +175,43 @@ bool InterfaceEntry::setEstimateCostProcess(int position,MacEstimateCostProcess 
 
 MacEstimateCostProcess* InterfaceEntry::getEstimateCostProcess(int position)
 {
-	if(position <estimateCostProcessArray.size())
+	int size=estimateCostProcessArray.size();
+	if(position <size)
 	{
 		return estimateCostProcessArray[position];
 	}
 	return NULL;
+}
+
+
+
+void InterfaceEntry::addRelatedInterface(InterfaceEntry* e)
+{
+    for (unsigned int i=0;i<relatedInterfaces.size();i++)
+    {
+        if (relatedInterfaces[i]==e || e->getMacAddress()==relatedInterfaces[i]->getMacAddress())
+            return;
+    }
+    relatedInterfaces.push_back(e);
+}
+
+InterfaceEntry * InterfaceEntry::getRelatedInterface(int i)
+{
+     if (i>=relatedInterfaces.size())
+         return NULL;
+     if (i<0)
+    	 return NULL;
+     return relatedInterfaces[i];
+}
+
+void InterfaceEntry::deleteRelatedInterface(InterfaceEntry* e)
+{
+    for (unsigned int i=0;i<relatedInterfaces.size();i++)
+    {
+        if (relatedInterfaces[i]==e)
+        {
+        	relatedInterfaces.erase(relatedInterfaces.begin()+i);
+            return;
+        }
+    }
 }

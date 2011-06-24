@@ -98,6 +98,7 @@ class INET_API InterfaceEntry : public cNamedObject
     InterfaceProtocolData *protocol3data; ///< extension point: data for a 3rd network-layer protocol
     InterfaceProtocolData *protocol4data; ///< extension point: data for a 4th network-layer protocol
     std::vector<MacEstimateCostProcess *> estimateCostProcessArray;
+    std::vector<InterfaceEntry*> relatedInterfaces;
 
   private:
     // copying not supported: following are private and also left undefined
@@ -180,6 +181,12 @@ class INET_API InterfaceEntry : public cNamedObject
     //@{
     virtual bool setEstimateCostProcess(int,MacEstimateCostProcess *p);
     virtual MacEstimateCostProcess* getEstimateCostProcess(int);
+
+    virtual void addRelatedInterface(InterfaceEntry*);
+    virtual InterfaceEntry *getRelatedInterface(int i);
+    virtual void deleteRelatedInterface(InterfaceEntry* e);
+    virtual bool existRelatedInterface(){return !relatedInterfaces.empty();}
+    virtual int getNumRelated(){return relatedInterfaces.size();}
     //@}
 };
 
