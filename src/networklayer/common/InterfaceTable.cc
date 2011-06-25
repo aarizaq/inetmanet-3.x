@@ -141,10 +141,26 @@ InterfaceEntry *InterfaceTable::getInterfaceById(int id)
 void InterfaceTable::addInterface(InterfaceEntry *entry, cModule *ifmod)
 {
     // check name is unique
-#ifndef MULTIINTERFACE
     if (getInterfaceByName(entry->getName())!=NULL)
         throw cRuntimeError(this, "addInterface(): interface '%s' already registered", entry->getName());
-#else
+    // insert
+    entry->setInterfaceId(INTERFACEIDS_START + idToInterface.size());
+    entry->setInterfaceTable(this);
+    idToInterface.push_back(entry);
+    invalidateTmpInterfaceList();
+
+    // fill in networkLayerGateIndex, nodeOutputGateId, nodeInputGateId
+    if (ifmod)
+        discoverConnectingGates(entry, ifmod);
+
+    nb->fireChangeNotification(NF_INTERFACE_CREATED, entry);
+}
+
+void InterfaceTable::addInterfaceGroup(InterfaceEntry *entry, cModule *ifmod)
+{
+    // check name is unique
+
+	entry->setGroupInterface(true);
     for (unsigned int i=0; i<idToInterface.size(); i++)
         if (idToInterface[i] && !strcmp(entry->getName(), idToInterface[i]->getName()))
         {
@@ -152,13 +168,16 @@ void InterfaceTable::addInterface(InterfaceEntry *entry, cModule *ifmod)
             {
             	throw cRuntimeError(this, "addInterface(): interface '%s' already registered", entry->getName());
             }
+            else if (idToInterface[i]->getModuleOwner()!=ifmod)
+            	throw cRuntimeError(this, "addInterface(): interface '%s' different owner", entry->getName());
             else
             {
-            	idToInterface[i]->getRelatedInterface(entry);
+            	idToInterface[i]->addRelatedInterface(entry);
+
             }
         }
-#endif
     // insert
+    entry->setModuleOwner(ifmod);
     entry->setInterfaceId(INTERFACEIDS_START + idToInterface.size());
     entry->setInterfaceTable(this);
     idToInterface.push_back(entry);

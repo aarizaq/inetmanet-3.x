@@ -57,6 +57,12 @@ class INET_API IInterfaceTable
     virtual void addInterface(InterfaceEntry *entry, cModule *ifmod) = 0;
 
     /**
+     * Adds an interface. The second argument must be a module which belongs
+     * to the physical interface (e.g. PPP or EtherMac) -- it will be used
+     * to discover and fill in getNetworkLayerGateIndex(), getNodeOutputGateId(),
+     */
+    virtual void addInterfaceGroup(InterfaceEntry *entry, cModule *ifmod) = 0;
+    /**
      * Deletes the given interface from the table. Indices of existing
      * interfaces (see getInterface(int)) may change. It is an error if
      * the given interface is not in the table.

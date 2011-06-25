@@ -66,6 +66,10 @@ InterfaceEntry::InterfaceEntry()
     protocol3data = NULL;
     protocol4data = NULL;
     estimateCostProcessArray.clear();
+    relatedInterfaces.clear();
+    isGroup = false;
+    macAddGroup=MACAddress::UNSPECIFIED_ADDRESS; // share address
+    moduleOwner=NULL;
 }
 
 std::string InterfaceEntry::info() const
