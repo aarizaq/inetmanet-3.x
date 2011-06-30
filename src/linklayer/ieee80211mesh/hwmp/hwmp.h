@@ -68,6 +68,14 @@ public:
 
 };
 
+class GannTimer :  public ManetTimer
+{
+public:
+    virtual void expire();
+    GannTimer(ManetRoutingBase* agent):ManetTimer(agent){};
+
+};
+
 
 class HwmpProtocol : public ManetRoutingBase
 {
@@ -99,11 +107,23 @@ public:
     virtual bool getNextHopReactive(const Uint128 &dest,Uint128 &add, int &iface,double &cost);
     virtual void setRefreshRoute(const Uint128 &, const Uint128 &,const Uint128&,const Uint128&);
 
+    virtual bool getBestGan(Uint128 &, Uint128 &);
 private:
     friend class PreqTimeout;
     friend class PreqTimer;
     friend class ProactivePreqTimer;
     friend class PerrTimer;
+    friend class GannTimer;
+
+    bool m_isGann;
+    unsigned int gannSeqNumber;
+    struct GannData
+    {
+        unsigned int numHops;
+        unsigned int seqNum;
+        MACAddress gannAddr;
+    };
+    std::vector<GannData> ganVector;
 
     uint32_t dot11MeshHWMPnetDiameter;
     std::vector<PREQElem> myPendingReq;
@@ -162,6 +182,7 @@ private:
     void proccessPreq(cMessage *msg);
     void proccessPrep(cMessage *msg);
     void proccessPerr(cMessage *msg);
+    void proccessGann(cMessage *msg);
 
 
     void proccesData (cMessage *msg);
@@ -181,6 +202,7 @@ private:
     void sendPreq (PREQElem preq,bool isProactive=false);
     void sendPreq (std::vector<PREQElem> preq,bool isProactive=false);
     void sendPreqProactive ();
+    void sendGann ();
     void sendPerr(std::vector<HwmpFailedDestination> failedDestinations, std::vector<MACAddress> receivers);
     void requestDestination (MACAddress dst, uint32_t dst_seqno);
     void forwardPerr (std::vector<HwmpFailedDestination> failedDestinations, std::vector<MACAddress> receivers);
@@ -238,6 +260,8 @@ private:
     void sendMyPreq ();
     void sendMyPerr ();
 
+
+    void discoverRouteToGan (const MACAddress &add);
     ///\}
     ///\return address of MeshPointDevice
     MACAddress GetAddress ();
@@ -250,10 +274,12 @@ private:
     uint8_t GetMaxTtl ();
     uint32_t GetNextPreqId ();
     uint32_t GetNextHwmpSeqno ();
+    uint32_t GetNextGannSeqno ();
     uint32_t GetActivePathLifetime ();
     uint32_t GetRootPathLifetime();
     uint8_t GetUnicastPerrThreshold ();
     bool isRoot(){return m_isRoot;}
+    bool isGann(){return m_isGann;}
     uint32_t GetLinkMetric (const MACAddress &peerAddress);
     ///\}
 private:
@@ -301,6 +327,8 @@ private:
     ProactivePreqTimer * m_proactivePreqTimer;
     PreqTimer * m_preqTimer;
     PerrTimer  * m_perrTimer;
+
+    GannTimer *m_gannTimer;
     ///\}
     /// Packet Queue
     std::vector<QueuedPacket> m_rqueue;
@@ -315,6 +343,7 @@ private:
     double m_dot11MeshHWMPactivePathTimeout;
     double m_dot11MeshHWMPpathToRootInterval;
     double m_dot11MeshHWMPrannInterval;
+    double m_dot11MeshHWMPGannInterval;
     bool m_isRoot;
     uint8_t m_maxTtl;
     uint8_t m_unicastPerrThreshold;

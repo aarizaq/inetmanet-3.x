@@ -99,6 +99,13 @@ void PerrTimer::expire()
     hwmpProtocol->sendMyPerr();
 }
 
+void GannTimer::expire()
+{
+    HwmpProtocol*  hwmpProtocol = dynamic_cast<HwmpProtocol*> (agent_);
+    if (hwmpProtocol==NULL)
+        opp_error("agent not valid");
+    hwmpProtocol->sendGann();
+}
 
 
 HwmpProtocol::HwmpProtocol ()
@@ -107,8 +114,11 @@ HwmpProtocol::HwmpProtocol ()
     m_perrTimer = NULL;
     m_proactivePreqTimer = NULL;
     m_rtable = NULL;
+    m_gannTimer=NULL;
     neighborMap.clear();
     useEtxProc = false;
+    m_isGann=false;
+    ganVector.clear();
 }
 
 HwmpProtocol::~HwmpProtocol ()
@@ -117,7 +127,9 @@ HwmpProtocol::~HwmpProtocol ()
     delete m_preqTimer;
     delete m_perrTimer;
     delete m_rtable;
+    delete m_gannTimer;
     neighborMap.clear();
+    ganVector.clear();
 }
 
 
@@ -128,6 +140,7 @@ HwmpProtocol::initialize(int stage)
     {
         createTimerQueue();
         registerRoutingModule();
+        gannSeqNumber=0;
         m_hwmpSeqno=0;
         m_preqId=0;
         m_maxQueueSize=par("maxQueueSize");
@@ -149,9 +162,19 @@ HwmpProtocol::initialize(int stage)
         m_preqTimer = new PreqTimer(this);
         m_perrTimer = new PerrTimer(this);
         m_proactivePreqTimer = new ProactivePreqTimer(this);
+        m_gannTimer = new GannTimer(this);
         m_rtable = new HwmpRtable();
         if (isRoot())
             setRoot();
+
+        m_dot11MeshHWMPGannInterval= par("dot11MeshHWMPgannInterval");
+        m_isGann= par ("isGan");
+        if (m_isGann)
+        {
+            double randomStart = par("randomStart");
+            m_gannTimer->resched(randomStart);
+        }
+
 
         WATCH_MAP (m_rtable->m_routes);
         WATCH (m_rtable->m_root);
@@ -235,6 +258,9 @@ void HwmpProtocol::proccesData (cMessage *msg)
         break;
     case IE11S_PERR:
         proccessPerr(msg);
+        break;
+    case IE11S_GANN:
+        proccessGann(msg);
         break;
     default:
         opp_error("");
@@ -378,6 +404,54 @@ HwmpProtocol::sendPreqProactive ()
     sendPreq(preq,true);
     m_proactivePreqTimer->resched(m_dot11MeshHWMPpathToRootInterval);
 }
+
+
+void
+HwmpProtocol::sendGann ()
+{
+    if (!isGann())
+        return;
+    Ieee80211ActionGANNFrame * gannFrame = new Ieee80211ActionGANNFrame();
+    gannFrame->getBody().setMeshGateAddress(GetAddress());
+    gannFrame->getBody().setMeshGateSeqNumber(GetNextGannSeqno ());
+    m_gannTimer->resched(m_dot11MeshHWMPGannInterval);
+
+    gannFrame->getBody().setHopsCount(0);
+    gannFrame->getBody().setTTL(GetMaxTtl());
+    gannFrame->setReceiverAddress(MACAddress::BROADCAST_ADDRESS);
+
+    gannFrame->getBody().setMeshGateAddress(GetAddress());
+    gannFrame->setTransmitterAddress(GetAddress());
+    gannFrame->setAddress3(gannFrame->getTransmitterAddress());
+
+    for (int i = 1; i<getNumWlanInterfaces(); i++)
+    {
+               // It's necessary to duplicate the the control info message and include the information relative to the interface
+    	  Ieee802Ctrl *ctrl = new Ieee802Ctrl();
+          Ieee80211ActionGANNFrame *msgAux = gannFrame->dup();
+               // Set the control info to the duplicate packet
+          ctrl->setInputPort(getWlanInterfaceEntry(i)->getInterfaceId());
+          msgAux->setControlInfo(ctrl);
+          if (msgAux->getBody().getTTL()==0)
+               delete msgAux;
+          else
+          {
+              EV << "Sending gann frame " << endl;
+              sendDelayed(msgAux,par("broadCastDelay"),"to_ip");
+           }
+    }
+    Ieee802Ctrl *ctrl = new Ieee802Ctrl();
+    ctrl->setInputPort(getWlanInterfaceEntry(0)->getInterfaceId());
+    gannFrame->setControlInfo(ctrl);
+    if (gannFrame->getBody().getTTL()==0)
+         delete gannFrame;
+    else
+    {
+         EV << "Sending gann frame " << endl;
+         sendDelayed(gannFrame,par("broadCastDelay"),"to_ip");
+    }
+}
+
 
 Ieee80211ActionPREQFrame*
 HwmpProtocol::createPReq (PREQElem preq,bool individual,MACAddress addr,bool isProactive)
@@ -805,6 +879,96 @@ void HwmpProtocol::proccessPerr(cMessage *msg)
     receivePerr (destinations, from, interface,fromMp);
 }
 
+
+void
+HwmpProtocol::proccessGann (cMessage *msg)
+{
+    Ieee80211ActionGANNFrame * gannFrame = dynamic_cast<Ieee80211ActionGANNFrame*>(msg);
+    if (!gannFrame)
+    {
+        delete msg;
+        return;
+    }
+    if (gannFrame->getBody().getMeshGateAddress()==GetAddress())
+    {
+        delete msg;
+        return;
+    }
+	discoverRouteToGan(gannFrame->getBody().getMeshGateAddress());
+    int index=-1;
+
+    for (unsigned int i =0;ganVector.size();i++)
+    {
+       if (ganVector[i].gannAddr==gannFrame->getBody().getMeshGateAddress())
+       {
+           if ((int32_t)(ganVector[i].seqNum-gannFrame->getBody().getMeshGateSeqNumber())>0)
+           {
+
+               delete msg;
+               return;
+           }
+           index=(int)i;
+           break;
+       }
+    }
+    if (index<0)
+    {
+        GannData data;
+        data.gannAddr=gannFrame->getBody().getMeshGateAddress();
+        data.numHops=gannFrame->getBody().getHopsCount();
+        data.seqNum=gannFrame->getBody().getMeshGateSeqNumber();
+        ganVector.push_back(data);
+    }
+    else
+    {
+        ganVector[index].numHops=gannFrame->getBody().getHopsCount();
+        ganVector[index].seqNum=gannFrame->getBody().getMeshGateSeqNumber();
+    }
+
+    gannFrame->setTransmitterAddress(GetAddress());
+    gannFrame->setAddress3(gannFrame->getTransmitterAddress());
+    for (int i = 1; i<getNumWlanInterfaces(); i++)
+    {
+        Ieee802Ctrl *ctrl = new Ieee802Ctrl();
+        Ieee80211ActionGANNFrame *msgAux = gannFrame->dup();
+        // Set the control info to the duplicate packet
+        ctrl->setInputPort(getWlanInterfaceEntry(i)->getInterfaceId());
+        msgAux->setControlInfo(ctrl);
+        if (msgAux->getBody().getTTL()==0)
+             delete msgAux;
+        else
+        {
+        	EV << "Sending gann frame " << endl;
+            sendDelayed(msgAux,par("broadCastDelay"),"to_ip");
+        }
+    }
+    Ieee802Ctrl *ctrl = new Ieee802Ctrl();
+    ctrl->setInputPort(getWlanInterfaceEntry(0)->getInterfaceId());
+    gannFrame->setControlInfo(ctrl);
+    if (gannFrame->getBody().getTTL()==0)
+    	delete gannFrame;
+    else
+    {
+    	EV << "Sending gann frame " << endl;
+    	sendDelayed(gannFrame,par("broadCastDelay"),"to_ip");
+    }
+}
+
+void
+HwmpProtocol::discoverRouteToGan (const MACAddress &add)
+{
+    HwmpRtable::LookupResult result = m_rtable->LookupReactive (add);
+    if (result.retransmitter.isUnspecified())
+    {
+        if (shouldSendPreq (add))
+        {
+            GetNextHwmpSeqno ();
+            uint32_t dst_seqno = 0;
+            m_stats.initiatedPreq ++;
+            requestDestination (add, dst_seqno);
+        }
+    }
+}
 
 void HwmpProtocol::receivePreq (Ieee80211ActionPREQFrame *preqFrame, MACAddress from, uint32_t interface, MACAddress fromMp, uint32_t metric)
 {
@@ -1531,6 +1695,13 @@ HwmpProtocol::GetNextHwmpSeqno ()
 }
 
 uint32_t
+HwmpProtocol::GetNextGannSeqno ()
+{
+	gannSeqNumber ++;
+    return gannSeqNumber;
+}
+
+uint32_t
 HwmpProtocol::GetActivePathLifetime ()
 {
     return m_dot11MeshHWMPactivePathTimeout * 1000000 / 1024;
@@ -1726,3 +1897,61 @@ void HwmpProtocol::processFullPromiscuous (const cPolymorphic *details)
     }
 }
 
+
+bool HwmpProtocol::getBestGan(Uint128 &gannAddr, Uint128 &nextHop)
+{
+    if (m_isGann)
+    {
+        Uint128 aux =GetAddress();
+        gannAddr = aux;
+        nextHop=aux;
+        return true;
+    }
+    HwmpRtable::ProactiveRoute *rootPath = m_rtable->getLookupProactivePtr ();
+    if (ganVector.empty())
+    {
+        if(rootPath==NULL)
+            return false;
+        nextHop=rootPath->retransmitter;
+        gannAddr =rootPath->root;
+        return true;
+    }
+    HwmpRtable::ReactiveRoute *bestGanPath=NULL;
+    MACAddress bestGanPathAddr;
+    for (unsigned int i=0;i<ganVector.size();i++)
+    {
+        HwmpRtable::ReactiveRoute *ganPath = m_rtable->getLookupReactivePtr(ganVector[i].gannAddr);
+        if (ganPath==NULL)
+            continue;
+        if (bestGanPath==NULL)
+        {
+            bestGanPath=ganPath;
+            bestGanPathAddr= ganVector[i].gannAddr;
+        }
+        else if (bestGanPath->metric>ganPath->metric)
+        {
+            bestGanPath=ganPath;
+            bestGanPathAddr= ganVector[i].gannAddr;
+        }
+        else if (bestGanPath->metric==ganPath->metric &&  bestGanPath->whenExpire < ganPath->whenExpire)
+        {
+            bestGanPath=ganPath;
+            bestGanPathAddr= ganVector[i].gannAddr;
+        }
+    }
+    if (bestGanPath==NULL && rootPath==NULL)
+    {
+        return false;
+    }
+    if (bestGanPath==NULL || (rootPath && (bestGanPath->metric>rootPath->metric)))
+    {
+        nextHop=rootPath->retransmitter;
+        gannAddr =rootPath->root;
+    }
+    else
+    {
+        nextHop=bestGanPath->retransmitter;
+        gannAddr =bestGanPathAddr;
+    }
+    return true;
+}

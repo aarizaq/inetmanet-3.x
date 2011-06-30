@@ -116,6 +116,7 @@ enum Ieee80211StatusCode
 
 enum Ieee80211HWMPCode
 {
+    IE11S_GANN = 125;
     IE11S_RANN = 126;
     IE11S_PREQ = 130;
     IE11S_PREP = 131;
@@ -320,7 +321,14 @@ class  Ieee80211ActionPERRFrameBody extends Ieee80211ActionHWMPFrameBody
      PERRElem perrElem[];
 }
 
-
+class  Ieee80211ActionGANNFrameBody extends Ieee80211ActionHWMPFrameBody
+{
+    bodyLength = 15;
+    id = IE11S_GANN;
+    MACAddress meshGateAddress;
+    unsigned int meshGateSeqNumber;
+    
+}
 //--------------------------------------------------------------
 
 
@@ -424,6 +432,9 @@ packet Ieee80211ProbeResponseFrame extends Ieee80211ManagementFrame
     Ieee80211ProbeResponseFrameBody body;
 }
 
+//
+// Action frames
+//
 packet Ieee80211ActionFrame extends Ieee80211ManagementFrame
 {
     type = ST_ACTION;
@@ -431,6 +442,9 @@ packet Ieee80211ActionFrame extends Ieee80211ManagementFrame
     Ieee80211ActionFrameBody body;
 }
 
+//
+//  HWMP action frames
+//
 packet Ieee80211ActionHWMPFrame extends Ieee80211ActionFrame
 {
     type = ST_ACTION;
@@ -467,4 +481,13 @@ packet Ieee80211ActionPERRFrame extends Ieee80211ActionHWMPFrame
     byteLength = 28+getBody().getBodyLength();
     Ieee80211ActionPERRFrameBody body;
 }
+
+
+packet Ieee80211ActionGANNFrame extends Ieee80211ActionHWMPFrame
+{
+    type = ST_ACTION;
+    byteLength = 28+getBody().getBodyLength();
+    Ieee80211ActionGANNFrameBody body;
+}
+
 

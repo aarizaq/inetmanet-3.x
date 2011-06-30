@@ -42,6 +42,8 @@ simple HwmpProtocol extends BaseRouting like IManetRouting
         double dot11MeshHWMPactivePathTimeout @unit("s")=default(1024*5000 us);
         double dot11MeshHWMPpathToRootInterval @unit("s")=default(1024*2000 us);
         double dot11MeshHWMPrannInterval @unit("s")=default(1024*5000 us);
+        double dot11MeshHWMPgannInterval @unit("s")=default(1024*5000 us);
+        bool   isGan=default(false);
         double neighborLive @unit("s")=default(1024*5000 us);  // dot11MeshHWMPactivePathTimeout, maximun time to considere a neighbor live without receive a message
         int    lostThreshold = default(1); // number of consecutive lost packet to consider break path and lost the neighbor
         bool concurrentReactive=default(false);
@@ -51,7 +53,7 @@ simple HwmpProtocol extends BaseRouting like IManetRouting
         int unicastPerrThreshold = default(32);
         int unicastPreqThreshold = default(1);
         int unicastDataThreshold = default(1);
-        double randomStart = default(uniform(0,0.1));
+        volatile double randomStart = default(uniform(0,0.1));
         bool ToFlag=default(false);
         volatile double broadCastDelay @unit("s") = default (uniform(0s,0.01s));  // the delay added to broadcast operations if EqualDelay is set (used to model processing time) 
         volatile double uniCastDelay @unit("s") = default (uniform(0s,0.001s));  // a delay added to unicast messaged (i.e. data packet forwarding) (used to model processing time)
