@@ -961,6 +961,7 @@ OLSR::rtable_computation()
 
     // 2. The new routing entries are added starting with the
     // symmetric neighbors (h=1) as the destination nodes.
+    nsaddr_t netmask (IPv4Address::ALLONES_ADDRESS.getInt());
     for (nbset_t::iterator it = nbset().begin(); it != nbset().end(); it++)
     {
         OLSR_nb_tuple* nb_tuple = *it;
@@ -981,12 +982,12 @@ OLSR::rtable_computation()
                     if (!useIndex)
                         omnet_chg_rte (link_tuple->nb_iface_addr(),
                                        link_tuple->nb_iface_addr(),
-                                       0,
+                                       netmask,
                                        1,false,link_tuple->local_iface_addr());
                     else
                         omnet_chg_rte (link_tuple->nb_iface_addr(),
                                        link_tuple->nb_iface_addr(),
-                                       0,
+                                       netmask,
                                        1,false,link_tuple->local_iface_index());
 
                     if (link_tuple->nb_iface_addr() == nb_tuple->nb_main_addr())
@@ -1003,13 +1004,13 @@ OLSR::rtable_computation()
                 if (!useIndex)
                     omnet_chg_rte (nb_tuple->nb_main_addr(),
                                    lt->nb_iface_addr(),
-                                   0,// Default mask
+                                   netmask,// Default mask
                                    1,false,lt->local_iface_addr());
 
                 else
                     omnet_chg_rte (nb_tuple->nb_main_addr(),
                                    lt->nb_iface_addr(),
-                                   0,// Default mask
+                                   netmask,// Default mask
                                    1,false,lt->local_iface_index());
             }
         }
@@ -1052,13 +1053,13 @@ OLSR::rtable_computation()
             if (!useIndex)
                 omnet_chg_rte (nb2hop_tuple->nb2hop_addr(),
                                entry->next_addr(),
-                               0,
+                               netmask,
                                2,false,entry->iface_addr());
 
             else
                 omnet_chg_rte (nb2hop_tuple->nb2hop_addr(),
                                entry->next_addr(),
-                               0,
+                               netmask,
                                2,false,entry->local_iface_index());
 
         }
@@ -1091,13 +1092,13 @@ OLSR::rtable_computation()
                 if (!useIndex)
                     omnet_chg_rte (topology_tuple->dest_addr(),
                                    entry2->next_addr(),
-                                   0,
+                                   netmask,
                                    h+1,false,entry2->iface_addr());
 
                 else
                     omnet_chg_rte (topology_tuple->dest_addr(),
                                    entry2->next_addr(),
-                                   0,
+                                   netmask,
                                    h+1,false,entry2->local_iface_index());
 
                 added = true;
@@ -1127,13 +1128,13 @@ OLSR::rtable_computation()
                 if (!useIndex)
                     omnet_chg_rte (tuple->iface_addr(),
                                    entry1->next_addr(),
-                                   0,
+                                   netmask,
                                    entry1->dist(),false,entry1->iface_addr());
 
                 else
                     omnet_chg_rte (tuple->iface_addr(),
                                    entry1->next_addr(),
-                                   0,
+                                   netmask,
                                    entry1->dist(),false,entry1->local_iface_index());
                 added = true;
             }

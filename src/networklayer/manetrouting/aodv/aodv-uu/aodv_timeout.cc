@@ -162,7 +162,9 @@ void NS_CLASS local_repair_timeout(void *arg)
 #ifdef OMNETPP
     /* delete route to omnet inet routing table ... */
     /* if delete is true fiels next, hops and mask are nor used */
-    omnet_chg_rte(rt->dest_addr, rt->dest_addr, rt->dest_addr, rt->hcnt,true);
+    struct in_addr nm;
+    nm.s_addr = IPv4Address::ALLONES_ADDRESS.getInt();
+    omnet_chg_rte(rt->dest_addr, rt->dest_addr, nm, rt->hcnt,true);
 #endif
 #endif
     /* Route should already be invalidated. */
