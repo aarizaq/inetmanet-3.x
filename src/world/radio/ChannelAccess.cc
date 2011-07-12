@@ -74,6 +74,13 @@ void ChannelAccess::initialize(int stage)
 
 ChannelAccess::~ChannelAccess()
 {
+    // check if exist channel control
+    IChannelControl *ccAux = dynamic_cast<IChannelControl *>(simulation.getModuleByPath("channelControl"));
+    if (!ccAux)
+    	ccAux = dynamic_cast<IChannelControl *>(simulation.getModuleByPath("channelcontrol"));
+    if (!ccAux)
+        return;
+
     if (cc->isRadioRegistered(myRadioRef))
        cc->unregisterRadio(myRadioRef);
 }
