@@ -213,7 +213,7 @@ bool Ieee80211NewRadioModel::isPacketOK(double snirMin, int lengthMPDU, double b
     if (fileBer)
         MpduNoError=1-parseTable->getPer(bitrate,snirMin,lengthMPDU/8);
     else
-        MpduNoError = yansModel.GetChunkSuccessRate(modeHeader,snirMin,lengthMPDU);
+        MpduNoError = yansModel.GetChunkSuccessRate(modeBody,snirMin,lengthMPDU);
 
     EV << "berHeader: " << berHeader << " berMPDU: " <<berMPDU <<" lengthMPDU: "<<lengthMPDU<<" PER: "<<1-MpduNoError<<endl;
     if (MpduNoError>=1 && headerNoError>=1)
