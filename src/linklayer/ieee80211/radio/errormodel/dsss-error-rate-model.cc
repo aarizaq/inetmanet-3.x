@@ -26,6 +26,14 @@ const double DsssErrorRateModel::WLAN_SIR_PERFECT = 10.0;
 const double DsssErrorRateModel::WLAN_SIR_IMPOSSIBLE = 0.1; 
 #endif
 
+#ifdef BOEING_MODEL
+const double DsssErrorRateModel::spectralEfficiency1bit=22000000.0 / 1000000.0; // 1 bit per symbol with 1 MSPS
+const double DsssErrorRateModel::spectralEfficiency2bit=22000000.0 / 1000000.0/2.0; // 2 bits per symbol, 1 MSPS
+#else
+const double DsssErrorRateModel::spectralEfficiency1bit=2000000.0 / 1000000.0; // 1 bit per symbol with 1 MSPS
+const double DsssErrorRateModel::spectralEfficiency2bit=2000000.0 / 1000000.0/2.0; // 2 bits per symbol, 1 MSPS
+#endif
+
 double 
 DsssErrorRateModel::DqpskFunction (double x) 
 {
@@ -37,7 +45,7 @@ DsssErrorRateModel::DqpskFunction (double x)
 double 
 DsssErrorRateModel::GetDsssDbpskSuccessRate (double sinr, uint32_t nbits) 
 {
-  double EbN0 = sinr * 22000000.0 / 1000000.0; // 1 bit per symbol with 1 MSPS
+  double EbN0 = sinr * spectralEfficiency1bit; // 1 bit per symbol with 1 MSPS
   double ber = 0.5 * exp (-EbN0);
   return pow ((1.0 - ber), (int)nbits);
 }
@@ -45,7 +53,7 @@ DsssErrorRateModel::GetDsssDbpskSuccessRate (double sinr, uint32_t nbits)
 double 
 DsssErrorRateModel::GetDsssDqpskSuccessRate (double sinr,uint32_t nbits) 
 {
-  double EbN0 = sinr * 22000000.0 / 1000000.0 / 2.0; // 2 bits per symbol, 1 MSPS
+  double EbN0 = sinr * spectralEfficiency2bit; // 2 bits per symbol, 1 MSPS
   double ber = DqpskFunction (EbN0);
   return pow ((1.0 - ber), (int)nbits);
 }
