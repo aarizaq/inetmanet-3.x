@@ -95,36 +95,16 @@
 #define OLSR_C      0.0625
 
 
-/********** Intervals **********/
+	/********** Holding times **********/
 
-/// HELLO messages emission interval.
-#define OLSR_HELLO_INTERVAL 2
-
-/// TC messages emission interval.
-#define OLSR_TC_INTERVAL    5
-
-/// MID messages emission interval.
-#define OLSR_MID_INTERVAL   OLSR_TC_INTERVAL
-
-///
-/// \brief Period at which a node must cite every link and every neighbor.
-///
-/// We only use this value in order to define OLSR_NEIGHB_HOLD_TIME.
-///
-#define OLSR_REFRESH_INTERVAL   2
-
-
-/********** Holding times **********/
-
-/// Neighbor holding time.
+	/// Neighbor holding time.
 #define OLSR_NEIGHB_HOLD_TIME   3*OLSR_REFRESH_INTERVAL
-/// Top holding time.
+	/// Top holding time.
 #define OLSR_TOP_HOLD_TIME  3*OLSR_TC_INTERVAL
-/// Dup holding time.
+	/// Dup holding time.
 #define OLSR_DUP_HOLD_TIME  30
-/// MID holding time.
+	/// MID holding time.
 #define OLSR_MID_HOLD_TIME  3*OLSR_MID_INTERVAL
-
 
 /********** Link types **********/
 
@@ -173,7 +153,6 @@
 #define OLSR_STATUS_SYM     1
 /// Random number between [0-OLSR_MAXJITTER] used to jitter OLSR packet transmission.
 //#define JITTER            (Random::uniform()*OLSR_MAXJITTER)
-#define JITTER (uniform(0,(double)OLSR_MAXJITTER))
 
 class OLSR;         // forward declaration
 
@@ -362,6 +341,27 @@ typedef std::multimap <simtime_t, OLSR_Timer *> TimerQueue;
 
 class OLSR : public ManetRoutingBase
 {
+  protected:
+	/********** Intervals **********/
+	/// HELLO messages emission interval.
+	double OLSR_HELLO_INTERVAL;// 2
+
+	/// TC messages emission interval.
+	double OLSR_TC_INTERVAL;//    5
+
+	/// MID messages emission interval.
+	double OLSR_MID_INTERVAL;//   OLSR_TC_INTERVAL
+
+	///
+	/// \brief Period at which a node must cite every link and every neighbor.
+	///
+	/// We only use this value in order to define OLSR_NEIGHB_HOLD_TIME.
+	///
+	double OLSR_REFRESH_INTERVAL;//   2
+
+    double jitter() {return uniform(0,(double)OLSR_MAXJITTER);}
+#define JITTER jitter()
+
   private:
     friend class OLSR_HelloTimer;
     friend class OLSR_TcTimer;

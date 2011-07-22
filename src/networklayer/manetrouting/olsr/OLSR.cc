@@ -123,7 +123,7 @@ OLSR_HelloTimer::expire()
 {
     agent_->send_hello();
     // agent_->scheduleAt(simTime()+agent_->hello_ival_- JITTER,this);
-    agent_->timerQueuePtr->insert(std::pair<simtime_t, OLSR_Timer *>(simTime()+agent_->hello_ival_- JITTER,this));
+    agent_->timerQueuePtr->insert(std::pair<simtime_t, OLSR_Timer *>(simTime()+agent_->hello_ival_- agent_->jitter(),this));
 }
 
 ///
@@ -136,7 +136,7 @@ OLSR_TcTimer::expire()
     if (agent_->mprselset().size() > 0)
         agent_->send_tc();
     // agent_->scheduleAt(simTime()+agent_->tc_ival_- JITTER,this);
-    agent_->timerQueuePtr->insert(std::pair<simtime_t, OLSR_Timer *>(simTime()+agent_->tc_ival_- JITTER,this));
+    agent_->timerQueuePtr->insert(std::pair<simtime_t, OLSR_Timer *>(simTime()+agent_->tc_ival_- agent_->jitter(),this));
 
 }
 
@@ -435,6 +435,21 @@ OLSR::initialize(int stage)
 {
     if (stage==4)
     {
+
+       OLSR_HELLO_INTERVAL=par("OLSR_HELLO_INTERVAL");
+
+	/// TC messages emission interval.
+	    OLSR_TC_INTERVAL=par("OLSR_TC_INTERVAL");
+
+	/// MID messages emission interval.
+	    OLSR_MID_INTERVAL=par("OLSR_MID_INTERVAL");//   OLSR_TC_INTERVAL
+
+	///
+	/// \brief Period at which a node must cite every link and every neighbor.
+	///
+	/// We only use this value in order to define OLSR_NEIGHB_HOLD_TIME.
+	///
+	    OLSR_REFRESH_INTERVAL=par("OLSR_REFRESH_INTERVAL");
 
         //
         // Do some initializations

@@ -45,6 +45,22 @@ simple OLSR extends BaseRouting like IManetRouting
         int use_mac = default(0); // Determines if layer 2 notifications are enabled or not (chapter 13)
         bool UseIndex = default(false); // use the interface index instead the ip to identify the interface (EXPERIMENTAL)
         bool reduceFuncionality = default(false);
+        // OLSR timers
+        double OLSR_HELLO_INTERVAL @unit("s")=default(2s);
+
+	/// TC messages emission interval.
+	    double OLSR_TC_INTERVAL @unit("s")=default(5s);
+
+	/// MID messages emission interval.
+	    double OLSR_MID_INTERVAL @unit("s")=default(5s);//   OLSR_TC_INTERVAL
+
+	///
+	/// \brief Period at which a node must cite every link and every neighbor.
+	///
+	/// We only use this value in order to define OLSR_NEIGHB_HOLD_TIME.
+	///
+	    double OLSR_REFRESH_INTERVAL @unit("s")=default(2s);
+
     gates:
         input from_ip;
         output to_ip;
