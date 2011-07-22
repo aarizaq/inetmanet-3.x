@@ -47,7 +47,7 @@ simple BMacLayer
 		double slotDuration = default(1);
 		
 		// how long is the check interval (CCA)?
-		double checkInterval = default(0.01);
+		double checkInterval = default(0.1);
 		
 		// size of the MAC queue (maximum number of packets in Tx buffer)
         double queueLength = default(20);
@@ -72,6 +72,7 @@ simple BMacLayer
         double macMaxFrameRetries = default(3);
         
         bool useIeee802Ctrl=default(true);
+        bool forceBitRateAndPower=default(false); // the mac layer force the transmission parameter, if false the physical layer uses its configuration parameters.  
     gates:  
         input uppergateIn; // from upper layer
         output uppergateOut; // to uppe layer

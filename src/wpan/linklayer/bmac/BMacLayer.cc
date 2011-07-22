@@ -489,6 +489,9 @@ void BMacLayer::handleSelfMsg(cMessage *msg)
         if (msg->getKind() == BMAC_STOP_PREAMBLES)
         {
             EV << "State SEND_PREAMBLE, message BMAC_STOP_PREAMBLES, new state SEND_DATA" << endl;
+            if (send_preamble->isScheduled())
+               cancelEvent(send_preamble);
+            scheduleAt(simTime(),send_preamble); // force immediate change
             macState = SEND_DATA;
             txAttempts = 1;
             return;
@@ -870,6 +873,8 @@ void BMacLayer::attachSignal(BmacPkt *macPkt)
 {
     //calc signal duration
     //create and initialize control info
+    if (!par("forceBitRateAndPower").boolValue())
+        return;
     PhyControlInfo* ctrl = new PhyControlInfo();
     ctrl->setBitrate(bitrate);
     ctrl->setTransmitterPower(txPower);
@@ -979,14 +984,18 @@ void BMacLayer::receiveChangeNotification(int category, const cPolymorphic *deta
 {
     Enter_Method_Silent();
     printNotificationBanner(category, details);
+    RadioState *rs=dynamic_cast<RadioState *>(const_cast<cPolymorphic*> (details));
+    if (rs==NULL)
+          return;
+    if (rs->getRadioId()!=getRadioModuleId())
+    	 return;
 
+    if (!par("forceBitRateAndPower").boolValue())
+       bitrate = rs->getBitrate();
     switch (category)
     {
-
-        if (check_and_cast<RadioState *>(details)->getRadioId()!=getRadioModuleId())
-            return;
-    case NF_RADIOSTATE_CHANGED:
-           radioState = check_and_cast<RadioState *>(details)->getState();
+      case NF_RADIOSTATE_CHANGED:
+           radioState = rs->getState();
            if ((macState == SEND_PREAMBLE) && (radioState == RadioState::TRANSMIT))
             {
         	    if (!send_preamble->isScheduled())
