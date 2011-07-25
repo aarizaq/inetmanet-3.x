@@ -42,6 +42,13 @@ simple Ieee802154Phy
         double usage_radio_idle @unit("mA");
         double usage_radio_recv @unit("mA");
         double usage_radio_sleep @unit("mA");
+        
+        int aMaxPHYPacketSize  = default(127);      //max PSDU size (in bytes) the PHY shall be able to receive
+        int aTurnaroundTime    = default(12);       //Rx-to-Tx or Tx-to-Rx max turnaround time (in symbol period)
+        int aMaxBeaconOverhead = default(75);       //max # of octets added by the MAC sublayer to the payload of its beacon frame
+        int aMaxFrameOverhead  = default(25);       //max # of octets added by the MAC sublayer to its payload w/o security.//max # of octets that can be transmitted in the MAC frame payload field
+
+
         @statistic[bitrate](title="Bitrate"; record=timeavg,vector; interpolationmode=sample-hold; );
         @statistic[channelNo](title="Channel no"; record=histogram,vector; interpolationmode=sample-hold; ); //vector
         @statistic[radioState](title="Radio state (enum)"; record=histogram,vector; interpolationmode=sample-hold; ); //vector

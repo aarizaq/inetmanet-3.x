@@ -21,6 +21,7 @@
 #include "PhyControlInfo_m.h"
 #include "IInterfaceTable.h"
 #include "InterfaceTableAccess.h"
+#include "Ieee802154Phy.h"
 
 
 static uint64_t MacToUint64(const MACAddress &add)
@@ -127,12 +128,13 @@ void BMacLayer::registerInterface()
     e->setInterfaceToken(macAddress.formInterfaceIdentifier());
 
     // FIXME: MTU on 802.11 = ?
-    e->setMtu(aMaxMACFrameSize);
+    e->setMtu(Ieee802154Phy::aMaxMACFrameSize);
 
     // capabilities
     e->setBroadcast(true);
     e->setMulticast(true);
     e->setPointToPoint(false);
+    iface = e;
 
     // add
     ift->addInterface(e, this);
@@ -151,11 +153,11 @@ void BMacLayer::initialize(int stage)
         queueLength = hasPar("queueLength") ? par("queueLength") : 10;
         animation = hasPar("animation") ? par("animation") : true;
         animationBubble = hasPar("animationBubble") ? par("animationBubble") : true;
-        slotDuration = hasPar("slotDuration") ? par("slotDuration") : 1;
-        bitrate = hasPar("bitrate") ? par("bitrate") : 15360;
+        slotDuration = hasPar("slotDuration") ? par("slotDuration").doubleValue() : 1;
+        bitrate = hasPar("bitrate") ? par("bitrate").doubleValue() : 15360;
         headerLength = hasPar("headerLength") ? par("headerLength") : 10;
-        checkInterval = hasPar("checkInterval") ? par("checkInterval") : 0.1;
-        txPower = hasPar("txPower") ? par("txPower") : 50;
+        checkInterval = hasPar("checkInterval") ? par("checkInterval").doubleValue() : 0.1;
+        txPower = hasPar("txPower") ? par("txPower").doubleValue() : 50;
         useMacAcks = hasPar("useMACAcks") ? par("useMACAcks") : false;
         maxTxAttempts = hasPar("maxTxAttempts") ? par("maxTxAttempts") : 2;
         EV << "headerLength: " << headerLength << ", bitrate: " << bitrate << endl;
@@ -203,6 +205,7 @@ void BMacLayer::initialize(int stage)
         // init the dropped packet info
         //droppedPacket.setReason(DroppedPacket::NONE);
         nicId = getParentModule()->getId();
+        radioModule = gate("lowergateOut")->getNextGate()->getOwnerModule()->getId();
 
         //catDroppedPacket = utility->getCategory(&droppedPacket);
         WATCH(macState);
@@ -243,14 +246,17 @@ void BMacLayer::initialize(int stage)
 
         resend_data = new cMessage("resend_data");
         resend_data->setKind(BMAC_RESEND_DATA);
-        double maxFrameTime = (aMaxMACFrameSize*8)/bitrate;
+        double maxFrameTime = (Ieee802154Phy::aMaxMACFrameSize*8)/bitrate;
         if (slotDuration<=2*maxFrameTime)
         {
            EV << " !!!" <<endl;
            EV << " !!! slotDuration" << slotDuration << " and the maximum time need to transmit a frame is " <<maxFrameTime <<endl;
            EV << " !!! Possibility of problems" <<endl;
         }
-
+        if (iface->getMTU()!=Ieee802154Phy::aMaxMACFrameSize)
+        {
+        	iface->setMtu(Ieee802154Phy::aMaxMACFrameSize);
+        }
 
         scheduleAt(0.0, start_bmac);
     }
@@ -411,6 +417,7 @@ void BMacLayer::handleSelfMsg(cMessage *msg)
         {
             // channel is clear
             // something waiting in eth queue?
+        	EV << "State CCA, message CCA_TIMEOUT" << "radio state" << radioState <<endl;
             if (macQueue.size() > 0)
             {
                 EV << "State CCA, message CCA_TIMEOUT, new state SEND_PREAMBLE" << endl;
@@ -419,6 +426,7 @@ void BMacLayer::handleSelfMsg(cMessage *msg)
                 changeDisplayColor(BLUE);
                 showBuble(B_TXPREAMBLE);
                 macState = SEND_PREAMBLE;
+                numPreambles = 0;
                 scheduleAt(simTime() + slotDuration, stop_preambles);
                 return;
             }
@@ -444,7 +452,7 @@ void BMacLayer::handleSelfMsg(cMessage *msg)
             showBuble(B_RXPREAMBLE);
             changeDisplayColor(YELLOW);
             cancelEvent(cca_timeout);
-            double maxFrameTime = (aMaxMACFrameSize*8)/bitrate;
+            double maxFrameTime = (Ieee802154Phy::aMaxMACFrameSize*8)/bitrate;
             if (maxFrameTime>checkInterval)
                 scheduleAt(simTime() + slotDuration + maxFrameTime, data_timeout);
             else
@@ -482,6 +490,7 @@ void BMacLayer::handleSelfMsg(cMessage *msg)
             sendPreamble();
             showBuble(B_TXPREAMBLE);
             scheduleAt(simTime() + 0.5f*checkInterval, send_preamble);
+            numPreambles++;
             macState = SEND_PREAMBLE;
             return;
         }
@@ -717,6 +726,7 @@ void BMacLayer::handleSelfMsg(cMessage *msg)
         break;
     }
     EV << "Undefined event  of type " << msg->getKind() << "in state " << macState << endl;
+    opp_error ("Undefined event  of type %i in state %i ", msg->getKind(), macState);
     endSimulation();
 }
 

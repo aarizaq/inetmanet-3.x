@@ -47,16 +47,17 @@ struct MAC_PIB
 {
     //attributes from Table 71
     UINT_8          macAckWaitDuration;
-    bool                macAssociationPermit;
-    bool                macAutoRequest;
-    bool                macBattLifeExt;
+    bool            macAssociationPermit;
+    bool            macAutoRequest;
+    bool            macBattLifeExt;
     UINT_8          macBattLifeExtPeriods;
     /*
     UINT_8  macBeaconPayload[aMaxPHYPacketSize-(6+9+2+1)+1];    //beacon length in octets (w/o payload):
                                     //  max: 6(phy) + 15(mac) + 23 (GTSs) + 57 (pending addresses)
                                     //  min: 6(phy) + 9(mac) + 2 (GTSs) + 1 (pending addresses)
     */
-    UINT_8          macBeaconPayload[aMaxBeaconPayloadLength+1];
+    // UINT_8          macBeaconPayload[aMaxBeaconPayloadLength+1];
+    UINT_8          macBeaconPayload[MaxBeaconPayloadLength+1];
     UINT_8          macBeaconPayloadLength;
     UINT_8          macBeaconOrder;
     double      macBeaconTxTime;            // we use actual time in double instead of integer in spec

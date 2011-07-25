@@ -4,8 +4,9 @@
 #include "Ieee802154Def.h"
 
 //---PHY layer constants (Table 18)---
-const UINT_8 aMaxPHYPacketSize  = 127;      //max PSDU size (in bytes) the PHY shall be able to receive
-const UINT_8 aTurnaroundTime    = 12;       //Rx-to-Tx or Tx-to-Rx max turnaround time (in symbol period)
+// moved to Ieee802154Phy.h
+// const UINT_8 aMaxPHYPacketSize  = 127;      //max PSDU size (in bytes) the PHY shall be able to receive
+// const UINT_8 aTurnaroundTime    = 12;       //Rx-to-Tx or Tx-to-Rx max turnaround time (in symbol period)
 
 //---Frequency bands and data rates (Table 1)---
 const UINT_8 BR_868M    = 20;       //20 kb/s   -- ch 0
@@ -43,16 +44,19 @@ const UINT_16 aBaseSuperframeDuration
 = aBaseSlotDuration * aNumSuperframeSlots;      //# of symbols comprising a superframe of order 0
 //aExtendedAddress                  = ;     //64-bit (IEEE) address assigned to the device (device specific)
 const UINT_8 aMaxBE                 = 5;        //max value of the backoff exponent in the CSMA-CA algorithm
-const UINT_8 aMaxBeaconOverhead             = 75;       //max # of octets added by the MAC sublayer to the payload of its beacon frame
-const UINT_8 aMaxBeaconPayloadLength
-= aMaxPHYPacketSize - aMaxBeaconOverhead;       //max size, in octets, of a beacon payload
+// moved to Ieee802154Phy.h
+//const UINT_8 aMaxBeaconOverhead             = 75;       //max # of octets added by the MAC sublayer to the payload of its beacon frame
+//const UINT_8 aMaxBeaconPayloadLength = aMaxPHYPacketSize - aMaxBeaconOverhead;       //max size, in octets, of a beacon payload
+const UINT_8 MaxBeaconPayloadLength = 256;
+
 const UINT_8 aGTSDescPersistenceTime            = 4;        //# of superframes that a GTS descriptor exists in the beacon frame of a PAN coordinator
-const UINT_8 aMaxFrameOverhead              = 25;       //max # of octets added by the MAC sublayer to its payload w/o security.
+// moved to Ieee802154Phy.h
+// const UINT_8 aMaxFrameOverhead              = 25;       //max # of octets added by the MAC sublayer to its payload w/o security.
 const UINT_16 aMaxFrameResponseTime         = 1220;     //max # of symbols (or CAP symbols) to wait for a response frame
 const UINT_8 aMaxFrameRetries               = 3;        //max # of retries allowed after a transmission failures
 const UINT_8 aMaxLostBeacons                = 4;        //max # of consecutive beacons the MAC sublayer can miss w/o declaring a loss of synchronization
-const UINT_8 aMaxMACFrameSize
-= aMaxPHYPacketSize - aMaxFrameOverhead;            //max # of octets that can be transmitted in the MAC frame payload field
+// moved to Ieee802154Phy.h
+// const UINT_8 aMaxMACFrameSize = aMaxPHYPacketSize - aMaxFrameOverhead;            //max # of octets that can be transmitted in the MAC frame payload field
 const UINT_8 aMaxSIFSFrameSize              = 18;       //max size of a frame, in octets, that can be followed by a SIFS period
 const UINT_16 aMinCAPLength             = 440;      //min # of symbols comprising the CAP
 const UINT_8 aMinLIFSPeriod             = 40;       //min # of symbols comprising a LIFS period

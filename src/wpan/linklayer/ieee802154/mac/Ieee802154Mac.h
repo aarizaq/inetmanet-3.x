@@ -14,6 +14,7 @@
 #include "NotifierConsts.h"
 #include "IPassiveQueue.h"
 #include "MACAddress.h"
+#include "InterfaceEntry.h"
 
 /**
  * IEEE 802.15.4 Media Access Control (MAC) Layer
@@ -454,6 +455,7 @@ class INET_API Ieee802154Mac: public cSimpleModule, public INotifiable
 
     // Use to distinguish the radio module that send the event
     int radioModule;
+    InterfaceEntry *iface;
 
     int getRadioModuleId() {return radioModule;}
 

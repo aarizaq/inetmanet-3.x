@@ -23,6 +23,14 @@
 class INET_API Ieee802154Phy : public ChannelAccess
 {
   public:
+	static uint16_t aMaxPHYPacketSize;      //max PSDU size (in bytes) the PHY shall be able to receive
+	static uint16_t aTurnaroundTime;       //Rx-to-Tx or Tx-to-Rx max turnaround time (in symbol period)
+	static uint16_t aMaxBeaconOverhead;       //max # of octets added by the MAC sublayer to the payload of its beacon frame
+	static uint16_t aMaxBeaconPayloadLength;
+	static uint16_t aMaxMACFrameSize;
+	static uint16_t aMaxFrameOverhead;
+
+  public:
     Ieee802154Phy           ();
     virtual ~Ieee802154Phy      ();
 

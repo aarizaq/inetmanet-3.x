@@ -30,6 +30,7 @@
 #include "Ieee802154MacPhyPrimitives_m.h"
 #include "Ieee802154NetworkCtrlInfo_m.h"
 #include "Ieee802154Enum.h"
+#include "InterfaceEntry.h"
 /**
  *\mainpage
  * @brief Implementation of B-MAC (called also Berkeley MAC, Low Power Listening or LPL.
@@ -103,6 +104,8 @@ class  BMacLayer : public WirelessMacBase, public INotifiable
     long nbRecvdAcks;
     long nbDroppedDataPackets;
     long nbTxAcks;
+
+    unsigned int numPreambles;
     /*@}*/
 
     /** @brief MAC states
@@ -273,6 +276,7 @@ class  BMacLayer : public WirelessMacBase, public INotifiable
     void initializeQueueModule();
     /** @brief pointer to the passive queue module */
     IPassiveQueue* queueModule;
+    InterfaceEntry *iface;
 
 };
 

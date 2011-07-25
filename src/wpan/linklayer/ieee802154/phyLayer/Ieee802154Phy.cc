@@ -14,6 +14,15 @@ simsignal_t Ieee802154Phy::lossRateSignal = SIMSIGNAL_NULL;
 
 Define_Module(Ieee802154Phy);
 
+
+uint16_t Ieee802154Phy::aMaxPHYPacketSize  = 127;      //max PSDU size (in bytes) the PHY shall be able to receive
+uint16_t Ieee802154Phy::aTurnaroundTime    = 12;       //Rx-to-Tx or Tx-to-Rx max turnaround time (in symbol period)
+uint16_t Ieee802154Phy::aMaxBeaconOverhead             = 75;       //max # of octets added by the MAC sublayer to the payload of its beacon frame
+uint16_t Ieee802154Phy::aMaxBeaconPayloadLength = aMaxPHYPacketSize - aMaxBeaconOverhead;       //max size, in octets, of a beacon payload
+uint16_t Ieee802154Phy::aMaxFrameOverhead              = 25;       //max # of octets added by the MAC sublayer to its payload w/o security.//max # of octets that can be transmitted in the MAC frame payload field
+uint16_t Ieee802154Phy::aMaxMACFrameSize  = aMaxPHYPacketSize - aMaxFrameOverhead;
+
+
 Ieee802154Phy::Ieee802154Phy() : rs(this->getId())
 {
     radioModel = NULL;
@@ -180,6 +189,36 @@ void Ieee802154Phy::initialize(int stage)
         radioStateSignal = registerSignal("radioState");
         channelNumberSignal = registerSignal("channelNo");
         lossRateSignal = registerSignal("lossRate");
+        bool change=false;
+        if (par("aMaxPHYPacketSize").longValue()!=aMaxPHYPacketSize)
+        {
+            change=true;
+            aMaxPHYPacketSize=par("aMaxPHYPacketSize").longValue();
+        }
+
+        if (aTurnaroundTime!=par("aTurnaroundTime").longValue())
+        {
+            change=true;
+            aTurnaroundTime=par("aTurnaroundTime").longValue();
+        }
+
+        if (aMaxBeaconOverhead!=par("aMaxBeaconOverhead").longValue())
+        {
+            change=true;
+            aMaxBeaconOverhead=par("aMaxBeaconOverhead").longValue();
+        }
+
+        if (aMaxFrameOverhead!=par("aMaxFrameOverhead").longValue())
+        {
+            change=true;
+            aMaxFrameOverhead=par("aMaxFrameOverhead").longValue();
+        }
+        if (change)
+        {
+            aMaxBeaconPayloadLength = aMaxPHYPacketSize - aMaxBeaconOverhead;       //max size, in octets, of a beacon payload
+            aMaxMACFrameSize  = aMaxPHYPacketSize - aMaxFrameOverhead;
+        }
+
 
     }
     else if (stage == 1)

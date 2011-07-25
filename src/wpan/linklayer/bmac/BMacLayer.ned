@@ -44,10 +44,10 @@ simple BMacLayer
 
 		// BMAC specific parameters
 		// how long is one slot?
-		double slotDuration = default(1);
+		double slotDuration @unit(s) = default(1s);
 		
 		// how long is the check interval (CCA)?
-		double checkInterval = default(0.1);
+		double checkInterval @unit(s)= default(0.1s);
 		
 		// size of the MAC queue (maximum number of packets in Tx buffer)
         double queueLength = default(20);

@@ -2,7 +2,7 @@
 #include "Ieee802154Mac.h"
 #include "InterfaceTableAccess.h"
 #include "MACAddress.h"
-
+#include "Ieee802154Phy.h"
 //#undef EV
 //#define EV (ev.isDisabled() || !m_debug) ? std::cout : ev ==> EV is now part of <omnetpp.h>
 
@@ -127,13 +127,13 @@ void Ieee802154Mac::registerInterface()
     e->setInterfaceToken(macaddress.formInterfaceIdentifier());
 
     // FIXME: MTU on 802.11 = ?
-    e->setMtu(aMaxMACFrameSize);
+    e->setMtu(Ieee802154Phy::aMaxMACFrameSize);
 
     // capabilities
     e->setBroadcast(true);
     e->setMulticast(true);
     e->setPointToPoint(false);
-
+    iface = e;
     // add
     ift->addInterface(e, this);
 }
@@ -327,6 +327,10 @@ void Ieee802154Mac::initialize(int stage)
     }
     else if (2 == stage)
     {
+        if (iface->getMTU()!=Ieee802154Phy::aMaxMACFrameSize)
+        {
+        	iface->setMtu(Ieee802154Phy::aMaxMACFrameSize);
+        }
         EV << "MAC extended address is: " << aExtendedAddress << endl;
         EV << "mpib.macBSN initialized with: " << (int)mpib.macBSN << endl;
         EV << "mpib.macDSN initialized with: " << (int)mpib.macDSN << endl;
@@ -498,7 +502,7 @@ void Ieee802154Mac::handleUpperMsg(cMessage* msg)
     }
 
     //check if parameters valid or not, only check msdu size here
-    if (PK(msg)->getByteLength() > aMaxMACFrameSize)
+    if (PK(msg)->getByteLength() > Ieee802154Phy::aMaxMACFrameSize)
     {
         EV << "[MAC]: an " << msg->getName() <<" (#" << numUpperPkt << ") received from the upper layer, but drop it due to oversize" << endl;
         MCPS_DATA_confirm(mac_INVALID_PARAMETER);
@@ -959,7 +963,7 @@ void Ieee802154Mac::handleBeacon(Ieee802154Frame* frame)
             if (ack4Gts)
                 duration += (mpib.macAckWaitDuration + ifs)/phy_symbolrate;
             else                    // no ACK required
-                duration += (aTurnaroundTime + ifs)/phy_symbolrate;
+                duration += (Ieee802154Phy::aTurnaroundTime + ifs)/phy_symbolrate;
             // store duration value for later evaluation in gtsCanProceed()
             gtsTransDuration = duration;
 
@@ -995,7 +999,7 @@ void Ieee802154Mac::handleBeacon(Ieee802154Frame* frame)
         w_time = tmpf - now;
         // should turn on radio receiver aTurnaroundTime symbols berfore GTS starts, if I have a receive GTS
         if (isRecvGTS)
-            w_time = w_time - aTurnaroundTime / phy_symbolrate;
+            w_time = w_time - Ieee802154Phy::aTurnaroundTime / phy_symbolrate;
         EV << "[GTS]: schedule for my GTS with start slot #" << (int)gtsStartSlot << endl;
         startGtsTimer(w_time);
 
@@ -2309,7 +2313,7 @@ bool Ieee802154Mac::csmacaCanProceed(simtime_t wtime, bool afterCCA)
     }
     else                    // no ACK required
     {
-        t_transacTime += aTurnaroundTime/phy_symbolrate;        //transceiver turn-around time (receiver may need to do this to transmit next beacon)
+        t_transacTime += Ieee802154Phy::aTurnaroundTime/phy_symbolrate;        //transceiver turn-around time (receiver may need to do this to transmit next beacon)
         //t_transacTime += max_pDelay;      //one-way trip propagation delay (802.15.4 ignores this, but it should be there even though it is very small)
         t_transacTime += t_IFS;         //IFS time -- not only ensure that the sender can finish the transaction, but also the receiver
     }
@@ -2542,7 +2546,7 @@ void Ieee802154Mac::startBcnRxTimer()
 
     while (now - t_bcnRxTime > rxBI)
         t_bcnRxTime += rxBI;
-    len12s = aTurnaroundTime / phy_symbolrate;
+    len12s = Ieee802154Phy::aTurnaroundTime / phy_symbolrate;
 
     tmpf = (now - t_bcnRxTime);
     wtime = rxBI - tmpf;
@@ -2588,7 +2592,7 @@ void Ieee802154Mac::startBcnTxTimer(bool txFirstBcn, simtime_t startTime)
             // wtime = startTime - (now - bcnRxTime) - 12.0/phy_symbolrate;
             tmpf = now - bcnRxTime;
             tmpf = startTime - tmpf;
-            wtime = tmpf - aTurnaroundTime/phy_symbolrate;
+            wtime = tmpf - Ieee802154Phy::aTurnaroundTime/phy_symbolrate;
             ASSERT(wtime >= 0.0);
 
             if (bcnTxTimer->isScheduled())
@@ -2602,11 +2606,11 @@ void Ieee802154Mac::startBcnTxTimer(bool txFirstBcn, simtime_t startTime)
     {
         if (bcnTxTimer->isScheduled())
             cancelEvent(bcnTxTimer);
-        scheduleAt(now + aTurnaroundTime/phy_symbolrate, bcnTxTimer);
+        scheduleAt(now + Ieee802154Phy::aTurnaroundTime/phy_symbolrate, bcnTxTimer);
     }
     else if (mpib.macBeaconOrder != 15)
     {
-        wtime = (aBaseSuperframeDuration * (1 << mpib.macBeaconOrder) - aTurnaroundTime) / phy_symbolrate;
+        wtime = (aBaseSuperframeDuration * (1 << mpib.macBeaconOrder) - Ieee802154Phy::aTurnaroundTime) / phy_symbolrate;
         if (bcnTxTimer->isScheduled())
             cancelEvent(bcnTxTimer);
         scheduleAt(now + wtime, bcnTxTimer);
@@ -3614,7 +3618,7 @@ void Ieee802154Mac::gtsScheduler()
 
     // should turn on radio receiver aTurnaroundTime symbols berfore GTS starts, if it is a transmit GTS relative to device
     if (!gtsList[index_gtsTimer].isRecvGTS)
-        w_time = w_time - aTurnaroundTime/phy_symbolrate;
+        w_time = w_time - Ieee802154Phy::aTurnaroundTime/phy_symbolrate;
 
     EV << "[GTS]: schedule for starting of GTS index: " << index_gtsTimer << ", slot:#" << (int)gtsList[index_gtsTimer].startSlot << " with " << w_time << " s" << endl;
     startGtsTimer(w_time);
@@ -3714,7 +3718,7 @@ void Ieee802154Mac::handleGtsTimer()
             // calculate the duration of my GTS
             w_time = gtsLength * rxSfSlotDuration / phy_symbolrate;
             if (isRecvGTS)
-                w_time += aTurnaroundTime/phy_symbolrate;
+                w_time += Ieee802154Phy::aTurnaroundTime/phy_symbolrate;
             EV << "[GTS]: scheduling for the end of my GTS slot" << endl;
             startGtsTimer(w_time);
         }

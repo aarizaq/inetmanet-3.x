@@ -30,6 +30,7 @@
 #include "MACAddress.h"
 #include "Ieee802Ctrl_m.h"
 #include <assert.h>
+#include "Ieee802154Phy.h"
 
 Define_Module(csma802154);
 static uint64_t MacToUint64(const MACAddress &add)
@@ -180,6 +181,10 @@ void csma802154::initialize(int stage)
     }
     else if (stage == 2)
     {
+        if (iface->getMTU()!=Ieee802154Phy::aMaxMACFrameSize)
+        {
+        	iface->setMtu(Ieee802154Phy::aMaxMACFrameSize);
+        }
         EV << "queueLength = " << queueLength
         << " bitrate = " << bitrate
         << " backoff method = " << par("backoffMethod").stringValue() << endl;
