@@ -23,6 +23,8 @@
 #ifndef _DYMO_UM_OMNET_H
 #define _DYMO_UM_OMNET_H
 
+#define DYMO_UM_GLOBAL_STATISTISTIC
+
 // This define activate the new queue timer
 #define TIMERMAPLIST
 // This define activate the new routing table
@@ -366,7 +368,7 @@ class DYMOUM : public ManetRoutingBase
 #include "dymo_packet_queue_omnet.h"
 
 #undef NS_NO_GLOBALS
-
+#ifdef DYMO_UM_GLOBAL_STATISTISTIC
     static bool iswrite;
     static int totalSend;
     static int totalRreqSend;
@@ -377,6 +379,18 @@ class DYMOUM : public ManetRoutingBase
     static int totalRrepAckRec;
     static int totalRerrSend;
     static int totalRerrRec;
+#else
+    bool iswrite;
+    int totalSend;
+    int totalRreqSend;
+    int totalRreqRec;
+    int totalRrepSend;
+    int totalRrepRec;
+    int totalRrepAckSend;
+    int totalRrepAckRec;
+    int totalRerrSend;
+    int totalRerrRec;
+#endif
 };
 
 #endif /* _DYMO_UM_OMNET_H */

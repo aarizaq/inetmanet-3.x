@@ -52,6 +52,7 @@ Define_Module(DYMOUM);
 
 bool DYMOUM::log_file_fd_init=false;
 int DYMOUM::log_file_fd = -1;
+#ifdef DYMO_UM_GLOBAL_STATISTISTIC
 bool DYMOUM::iswrite = false;
 int DYMOUM::totalSend=0;
 int DYMOUM::totalRreqSend=0;
@@ -62,12 +63,27 @@ int DYMOUM::totalRrepAckSend=0;
 int DYMOUM::totalRrepAckRec=0;
 int DYMOUM::totalRerrSend=0;
 int DYMOUM::totalRerrRec=0;
+#endif
 std::map<Uint128,u_int32_t *> DYMOUM::mapSeqNum;
 
 void DYMOUM::initialize(int stage)
 {
     if (stage==4)
     {
+
+#ifndef DYMO_UM_GLOBAL_STATISTISTIC
+        iswrite = false;
+        totalSend=0;
+        totalRreqSend=0;
+        totalRreqRec=0;
+        totalRrepSend=0;
+        totalRrepRec=0;
+        totalRrepAckSend=0;
+        totalRrepAckRec=0;
+        totalRerrSend=0;
+        totalRerrRec=0;
+#endif
+
         macToIpAdress = new MacToIpAddress;
         sendMessageEvent = new cMessage();
 
