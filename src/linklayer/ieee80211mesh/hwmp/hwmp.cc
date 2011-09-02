@@ -976,7 +976,7 @@ void HwmpProtocol::receivePreq (Ieee80211ActionPREQFrame *preqFrame, MACAddress 
     uint32_t totalMetric = preqFrame->getBody().getMetric();
     MACAddress originatorAddress = preqFrame->getBody().getOriginator ();
     uint32_t originatorSeqNumber= preqFrame->getBody().getOriginatorSeqNumber ();
-    bool  addMode = (preqFrame->getBody().getFlags()|0x40)!=0;
+    bool  addMode = (preqFrame->getBody().getFlags() & 0x40)!=0;
 
 
     //acceptance criteria:
