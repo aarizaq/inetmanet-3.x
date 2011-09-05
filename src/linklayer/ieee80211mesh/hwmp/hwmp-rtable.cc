@@ -36,7 +36,7 @@ HwmpRtable::~HwmpRtable ()
 
 void
 HwmpRtable::AddReactivePath (MACAddress destination, MACAddress retransmitter, uint32_t interface,
-    uint32_t metric, simtime_t lifetime, uint32_t seqnum)
+    uint32_t metric, simtime_t lifetime, uint32_t seqnum,uint8_t hops)
 {
   //uint64_t dest= MacToUint64(destination);
   std::map<MACAddress, ReactiveRoute>::iterator i = m_routes.find (destination);
@@ -52,11 +52,12 @@ HwmpRtable::AddReactivePath (MACAddress destination, MACAddress retransmitter, u
   i->second.metric = metric;
   i->second.whenExpire = simTime() + lifetime;
   i->second.seqnum = seqnum;
+  i->second.hops=hops;
 }
 
 void
 HwmpRtable::AddProactivePath (uint32_t metric, MACAddress root, MACAddress retransmitter,
-    uint32_t interface, simtime_t lifetime, uint32_t seqnum)
+    uint32_t interface, simtime_t lifetime, uint32_t seqnum,uint8_t hops)
 {
   m_root.root = root;
   m_root.retransmitter = retransmitter;
@@ -64,6 +65,7 @@ HwmpRtable::AddProactivePath (uint32_t metric, MACAddress root, MACAddress retra
   m_root.whenExpire = simTime() + lifetime;
   m_root.seqnum = seqnum;
   m_root.interface = interface;
+  m_root.hops=hops;
 }
 
 void
@@ -105,6 +107,7 @@ HwmpRtable::DeleteProactivePath ()
   m_root.metric = MAX_METRIC;
   m_root.retransmitter = (MACAddress)MACAddress::UNSPECIFIED_ADDRESS;
   m_root.seqnum = 0;
+  m_root.hops=MAX_HOPS;
   m_root.whenExpire = simTime();
 }
 
@@ -230,7 +233,7 @@ bool
 HwmpRtable::LookupResult::operator== (const HwmpRtable::LookupResult & o) const
 {
   return (retransmitter == o.retransmitter && ifIndex == o.ifIndex && metric == o.metric && seqnum
-      == o.seqnum);
+      == o.seqnum && hops==o.hops);
 }
 
 

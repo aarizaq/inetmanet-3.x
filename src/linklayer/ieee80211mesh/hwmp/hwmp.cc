@@ -348,10 +348,11 @@ void HwmpProtocol::sendPrep (
         uint32_t originatorSn,
         uint32_t targetSn,
         uint32_t lifetime,
-        uint32_t interface)
+        uint32_t interface,
+        uint8_t hops)
 {
     Ieee80211ActionPREPFrame* ieee80211ActionPrepFrame = new Ieee80211ActionPREPFrame ();
-    ieee80211ActionPrepFrame->getBody().setHopsCount(0);
+    ieee80211ActionPrepFrame->getBody().setHopsCount(hops);
     ieee80211ActionPrepFrame->getBody().setTTL(GetMaxTtl());
 
     ieee80211ActionPrepFrame->getBody().setOriginator(src);
@@ -1021,7 +1022,8 @@ void HwmpProtocol::receivePreq (Ieee80211ActionPREQFrame *preqFrame, MACAddress 
                 interface,
                 totalMetric,
                 ((double)preqFrame->getBody().getLifeTime()*1024.0)/1000000.0,
-                originatorSeqNumber
+                originatorSeqNumber,
+                preqFrame->getBody().getHopsCount()
         );
         reactivePathResolved (originatorAddress);
     }
@@ -1036,7 +1038,8 @@ void HwmpProtocol::receivePreq (Ieee80211ActionPREQFrame *preqFrame, MACAddress 
                 interface,
                 metric,
                 ((double)preqFrame->getBody().getLifeTime()*1024.0)/1000000.0,
-                originatorSeqNumber
+                originatorSeqNumber,
+                preqFrame->getBody().getHopsCount()
         );
         reactivePathResolved (fromMp);
     }
@@ -1064,7 +1067,8 @@ void HwmpProtocol::receivePreq (Ieee80211ActionPREQFrame *preqFrame, MACAddress 
                         from,
                         interface,
                         ((double)preqFrame->getBody().getLifeTime()*1024.0)/1000000.0,
-                        originatorSeqNumber);
+                        originatorSeqNumber,
+                        preqFrame->getBody().getHopsCount());
                 proactivePathResolved ();
             }
             bool proactivePrep = false;
@@ -1080,7 +1084,8 @@ void HwmpProtocol::receivePreq (Ieee80211ActionPREQFrame *preqFrame, MACAddress 
                         GetNextHwmpSeqno (),
                         originatorSeqNumber,
                         preqFrame->getBody().getLifeTime(),
-                        interface
+                        interface,
+                        0
                 );
             }
             break;
@@ -1095,7 +1100,8 @@ void HwmpProtocol::receivePreq (Ieee80211ActionPREQFrame *preqFrame, MACAddress 
                     GetNextHwmpSeqno (),
                     originatorSeqNumber,
                     preqFrame->getBody().getLifeTime(),
-                    interface
+                    interface,
+                    0
             );
             ASSERT(!m_rtable->LookupReactive (originatorAddress).retransmitter.isUnspecified());
             delAddress.push_back(preq.targetAddress);
@@ -1103,7 +1109,10 @@ void HwmpProtocol::receivePreq (Ieee80211ActionPREQFrame *preqFrame, MACAddress 
         }
         //check if can answer:
         HwmpRtable::LookupResult result = m_rtable->LookupReactive (preq.targetAddress);
-        if ((! (preq.TO)) && (!result.retransmitter.isUnspecified()))
+        // Case E2 hops == 1
+        if (!result.retransmitter.isUnspecified() && result.hops==1)
+            preq.TO=true;
+        if ((!(preq.TO)) && (!result.retransmitter.isUnspecified()))
         {
             //have a valid information and can answer
             uint32_t lifetime = (result.lifetime.dbl()*1000000.0 / 1024.0);
@@ -1117,7 +1126,8 @@ void HwmpProtocol::receivePreq (Ieee80211ActionPREQFrame *preqFrame, MACAddress 
                         result.seqnum,
                         originatorSeqNumber,
                         lifetime,
-                        interface
+                        interface,
+                        result.hops
                 );
                 m_rtable->AddPrecursor (preq.targetAddress, interface, from,(preqFrame->getBody().getLifeTime()*1024)/1000000);
                 delAddress.push_back(preq.targetAddress); // not propagate
@@ -1278,7 +1288,8 @@ HwmpProtocol::receivePrep (Ieee80211ActionPREPFrame * prepFrame, MACAddress from
                 interface,
                 totalMetric,
                 ((double)prepFrame->getBody().getLifeTime()*1024.0)/1000000.0,
-                originatorSeqNumber);
+                originatorSeqNumber,
+                prepFrame->getBody().getHopsCount());
         m_rtable->AddPrecursor (destinationAddress, interface, from,
                 ((double)prepFrame->getBody().getLifeTime()*1024.0)/1000000.0);
         if (!result.retransmitter.isUnspecified())
@@ -1299,7 +1310,8 @@ HwmpProtocol::receivePrep (Ieee80211ActionPREPFrame * prepFrame, MACAddress from
                 interface,
                 metric,
                 ((double)prepFrame->getBody().getLifeTime()*1024.0)/1000000.0,
-                originatorSeqNumber);
+                originatorSeqNumber,
+                prepFrame->getBody().getHopsCount());
         reactivePathResolved (fromMp);
     }
     if (destinationAddress == GetAddress ())

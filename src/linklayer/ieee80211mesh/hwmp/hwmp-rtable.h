@@ -44,6 +44,7 @@ public:
   const static uint32_t INTERFACE_ANY = 0xffffffff;
   /// Maximum (the best?) path metric
   const static uint32_t MAX_METRIC = 0xffffffff;
+  const static uint32_t MAX_HOPS = 64;
 
   /// Route lookup result, return type of LookupXXX methods
   struct LookupResult
@@ -52,18 +53,20 @@ public:
     uint32_t ifIndex;
     uint32_t metric;
     uint32_t seqnum;
+    uint8_t hops;
     simtime_t lifetime;
     LookupResult (MACAddress r = MACAddress::UNSPECIFIED_ADDRESS,
                  uint32_t i = INTERFACE_ANY,
                  uint32_t m = MAX_METRIC,
                  uint32_t s = 0,
-                 simtime_t l=0)
+                 simtime_t l=0,uint8_t h = MAX_HOPS)
     {
     	  retransmitter =r;
     	  ifIndex = i;
     	  metric =m;
     	  seqnum= s;
     	  lifetime = l;
+    	  hops = h;
     }
     /// True for valid route
     bool isValid () const {return !(retransmitter.isUnspecified() && ifIndex == INTERFACE_ANY && metric == MAX_METRIC
@@ -87,6 +90,7 @@ public:
     MACAddress retransmitter;
     uint32_t interface;
     uint32_t metric;
+    uint8_t hops;
     simtime_t whenExpire;
     uint32_t seqnum;
     std::vector<Precursor> precursors;
@@ -99,6 +103,7 @@ public:
     MACAddress retransmitter;
     uint32_t interface;
     uint32_t metric;
+    uint8_t hops;
     simtime_t whenExpire;
     uint32_t seqnum;
     std::vector<Precursor> precursors;
@@ -115,7 +120,8 @@ public:
     uint32_t interface,
     uint32_t metric,
     simtime_t  lifetime,
-    uint32_t seqnum
+    uint32_t seqnum,
+    uint8_t hops
   );
   void AddProactivePath (
     uint32_t metric,
@@ -123,7 +129,8 @@ public:
     MACAddress retransmitter,
     uint32_t interface,
     simtime_t  lifetime,
-    uint32_t seqnum
+    uint32_t seqnum,
+    uint8_t hops
   );
   void AddPrecursor (MACAddress destination, uint32_t precursorInterface, MACAddress precursorAddress, simtime_t lifetime);
   PrecursorList GetPrecursors (MACAddress destination);

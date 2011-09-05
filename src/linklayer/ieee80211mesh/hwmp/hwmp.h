@@ -197,7 +197,7 @@ private:
             uint32_t originatorSn,
             uint32_t targetSn,
             uint32_t lifetime,
-            uint32_t interface);
+            uint32_t interface,uint8_t hops);
 
     void sendPreq (PREQElem preq,bool isProactive=false);
     void sendPreq (std::vector<PREQElem> preq,bool isProactive=false);
