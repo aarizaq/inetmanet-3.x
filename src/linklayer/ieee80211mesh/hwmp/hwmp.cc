@@ -1833,7 +1833,7 @@ void HwmpProtocol::setRefreshRoute(const Uint128 &src,const Uint128 &dest,const 
     if (!par("updateLifetimeInFrowarding").boolValue())
         return;
     HwmpRtable::ReactiveRoute * direct = m_rtable->getLookupReactivePtr (dest.getMACAddress());
-    HwmpRtable::ReactiveRoute * inverse = m_rtable->getLookupReactivePtr (dest.getMACAddress());
+    HwmpRtable::ReactiveRoute * inverse = m_rtable->getLookupReactivePtr (src.getMACAddress());
     HwmpRtable::ProactiveRoute * root = m_rtable->getLookupProactivePtr ();
     if (direct) // address not valid
     {
@@ -1848,6 +1848,13 @@ void HwmpProtocol::setRefreshRoute(const Uint128 &src,const Uint128 &dest,const 
         {
             inverse->whenExpire=simTime()+m_dot11MeshHWMPactivePathTimeout;
         }
+    }
+    else
+    {
+         if (par("gratuitousReverseRoute").boolValue())
+         {
+        	 m_rtable->AddReactivePath (src.getMACAddress(), prev.getMACAddress(), interface80211ptr->getInterfaceId(),HwmpRtable::MAX_METRIC, m_dot11MeshHWMPactivePathTimeout, 0, HwmpRtable::MAX_HOPS);
+         }
     }
     if (!isRoot() && root)
     {
