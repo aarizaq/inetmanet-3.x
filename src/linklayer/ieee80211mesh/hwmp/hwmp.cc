@@ -1023,7 +1023,8 @@ void HwmpProtocol::receivePreq (Ieee80211ActionPREQFrame *preqFrame, MACAddress 
                 totalMetric,
                 ((double)preqFrame->getBody().getLifeTime()*1024.0)/1000000.0,
                 originatorSeqNumber,
-                preqFrame->getBody().getHopsCount()
+                preqFrame->getBody().getHopsCount(),
+                true
         );
         reactivePathResolved (originatorAddress);
     }
@@ -1032,6 +1033,7 @@ void HwmpProtocol::receivePreq (Ieee80211ActionPREQFrame *preqFrame, MACAddress 
             (m_rtable->LookupReactive (fromMp).metric > metric)
     )
     {
+        // we don't know the sequence number of this node
         m_rtable->AddReactivePath (
                 fromMp,
                 from,
@@ -1039,7 +1041,8 @@ void HwmpProtocol::receivePreq (Ieee80211ActionPREQFrame *preqFrame, MACAddress 
                 metric,
                 ((double)preqFrame->getBody().getLifeTime()*1024.0)/1000000.0,
                 originatorSeqNumber,
-                preqFrame->getBody().getHopsCount()
+                1,
+                false
         );
         reactivePathResolved (fromMp);
     }
@@ -1056,7 +1059,7 @@ void HwmpProtocol::receivePreq (Ieee80211ActionPREQFrame *preqFrame, MACAddress 
             ASSERT (preqFrame->getBody().getTargetCount () == 1);
             //Add proactive path only if it is the better then existed
             //before
-            if (
+            if ((freshInfo) ||
                     ((m_rtable->LookupProactive ()).retransmitter.isUnspecified()) ||
                     ((m_rtable->LookupProactive ()).metric > totalMetric )
             )
@@ -1289,7 +1292,8 @@ HwmpProtocol::receivePrep (Ieee80211ActionPREPFrame * prepFrame, MACAddress from
                 totalMetric,
                 ((double)prepFrame->getBody().getLifeTime()*1024.0)/1000000.0,
                 originatorSeqNumber,
-                prepFrame->getBody().getHopsCount());
+                prepFrame->getBody().getHopsCount(),
+                true);
         m_rtable->AddPrecursor (destinationAddress, interface, from,
                 ((double)prepFrame->getBody().getLifeTime()*1024.0)/1000000.0);
         if (!result.retransmitter.isUnspecified())
@@ -1304,6 +1308,7 @@ HwmpProtocol::receivePrep (Ieee80211ActionPREPFrame * prepFrame, MACAddress from
             ((m_rtable->LookupReactive (fromMp)).metric > metric)
     )
     {
+    	// we don't know the neighbor sequence number
         m_rtable->AddReactivePath (
                 fromMp,
                 from,
@@ -1311,7 +1316,8 @@ HwmpProtocol::receivePrep (Ieee80211ActionPREPFrame * prepFrame, MACAddress from
                 metric,
                 ((double)prepFrame->getBody().getLifeTime()*1024.0)/1000000.0,
                 originatorSeqNumber,
-                prepFrame->getBody().getHopsCount());
+                1,
+                false);
         reactivePathResolved (fromMp);
     }
     if (destinationAddress == GetAddress ())
@@ -1853,7 +1859,7 @@ void HwmpProtocol::setRefreshRoute(const Uint128 &src,const Uint128 &dest,const 
     {
          if (par("gratuitousReverseRoute").boolValue())
          {
-        	 m_rtable->AddReactivePath (src.getMACAddress(), prev.getMACAddress(), interface80211ptr->getInterfaceId(),HwmpRtable::MAX_METRIC, m_dot11MeshHWMPactivePathTimeout, 0, HwmpRtable::MAX_HOPS);
+        	 m_rtable->AddReactivePath (src.getMACAddress(), prev.getMACAddress(), interface80211ptr->getInterfaceId(),HwmpRtable::MAX_METRIC, m_dot11MeshHWMPactivePathTimeout, 0, HwmpRtable::MAX_HOPS,false);
          }
     }
     if (!isRoot() && root)

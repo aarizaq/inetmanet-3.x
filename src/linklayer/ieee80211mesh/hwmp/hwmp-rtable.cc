@@ -36,7 +36,7 @@ HwmpRtable::~HwmpRtable ()
 
 void
 HwmpRtable::AddReactivePath (MACAddress destination, MACAddress retransmitter, uint32_t interface,
-    uint32_t metric, simtime_t lifetime, uint32_t seqnum,uint8_t hops)
+    uint32_t metric, simtime_t lifetime, uint32_t seqnum,uint8_t hops,bool actualizeSeqnum)
 {
   //uint64_t dest= MacToUint64(destination);
   std::map<MACAddress, ReactiveRoute>::iterator i = m_routes.find (destination);
@@ -51,6 +51,7 @@ HwmpRtable::AddReactivePath (MACAddress destination, MACAddress retransmitter, u
   i->second.interface = interface;
   i->second.metric = metric;
   i->second.whenExpire = simTime() + lifetime;
+  if (actualizeSeqnum)
   i->second.seqnum = seqnum;
   i->second.hops=hops;
 }

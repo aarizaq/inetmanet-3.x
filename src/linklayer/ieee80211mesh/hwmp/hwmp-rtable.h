@@ -121,7 +121,8 @@ public:
     uint32_t metric,
     simtime_t  lifetime,
     uint32_t seqnum,
-    uint8_t hops
+    uint8_t hops,
+    bool actualizeSeqnum
   );
   void AddProactivePath (
     uint32_t metric,
