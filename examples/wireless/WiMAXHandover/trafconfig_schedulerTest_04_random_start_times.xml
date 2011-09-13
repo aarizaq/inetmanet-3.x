@@ -1,0 +1,106 @@
+<?xml version="1.0" ?>
+<configurations>
+
+<!-- 
+	Traffic configuration for scheduler testing.
+	Generators are configured to produce ON/OFF traffic according to intervals
+	estimating the described kind of traffic.
+--> 
+
+	
+<!-- Attention: packet sizes are given in bits -->
+	
+<!-- Mobilestation Traffic Section -->
+	
+	<!-- config id 0: FTP-Traffic (BE)
+	     - constant traffic
+	     - datarate ->  variable
+	-->
+	<config id="0" 
+		packetSize="128"  
+		interDepartureTime="0.002" 
+		firstPacketTime="2"
+	/>
+	
+	
+	<!-- config id 1: VoIP-Traffic without Silence Suppression (UGS) -->
+	<config id="1" 
+		packetSize="128" 
+		interDepartureTime="0.002" 
+		firstPacketTime="uniform(5,15)" 
+	/>
+	
+	
+	<!-- config id 2: VoIP-Traffic with Silence Suppression (ertPS) -->
+	<config id="2" 
+		packetSize="128" 
+		interDepartureTime="0.002"
+		firstPacketTime="uniform(5,15)"
+	 />
+
+
+	<!-- config id 3: Video Stream with Constant Bitrate (rtPS)	-->
+	<config id="3" 
+		packetSize="128" 
+		interDepartureTime="0.002" 
+		firstPacketTime="uniform(5,15)"
+	 />
+	
+	
+	<!-- config id 4: Variable Internet Access (nrtPS) -->
+	<config id="4" 
+		packetSize="128" 
+		interDepartureTime="0.002" 
+		firstPacketTime="uniform(5,15)"
+	 />
+
+
+
+	
+<!-- Basestation Traffic Section -->
+
+	<!-- config id 0: FTP-Traffic (BE)-->
+	<config id="100" 
+		packetSize="300"  
+		interDepartureTime="0.002" 
+		firstPacketTime="-1"
+	/>
+	
+	
+	<!-- config id 1: VoIP-Traffic without Silence Suppression (UGS) -->
+	<config id="101" 
+		packetSize="300" 
+		interDepartureTime="0.002" 
+		firstPacketTime="-1"
+		onLength="uniform(10,120)"		
+		offLength="uniform(10,240)" />
+	
+	
+	<!-- config id 2: VoIP-Traffic with Silence Suppression (ertPS)	-->
+	<config id="102" 
+		packetSize="300" 
+		interDepartureTime="0.002"
+		firstPacketTime="-1"
+		onLength="uniform(5,20)"		
+		offLength="uniform(2,15)"
+	/>
+
+
+	<!-- config id 3: Video Stream with Constant Bitrate (rtPS) -->
+	<config id="103" 
+		packetSize="300" 
+		interDepartureTime="0.002" 
+		firstPacketTime="-1"
+		onLength="uniform(120,600)"		
+		offLength="uniform(10,30)" />
+	
+	
+	<!-- config id 4: Variable Internet Access (nrtPS) -->
+	<config id="104" 
+		packetSize="300" 
+		interDepartureTime="0.002" 
+		firstPacketTime="-1"
+		onLength="uniform(0.01,5)"		
+		offLength="uniform(1,7)" />
+
+</configurations>

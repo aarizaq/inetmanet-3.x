@@ -1,0 +1,145 @@
+<?xml version="1.0" ?>
+<configurations>
+
+<!-- 
+	Traffic configuration for scheduler testing.
+	Generators are configured to produce ON/OFF traffic according to intervals
+	estimating the described kind of traffic.
+	The generated bitrate is equal for each generator.
+--> 
+
+	
+<!-- Attention: packet sizes are given in bits -->
+	
+<!-- Mobilestation Traffic Section -->
+	
+	<!-- config id 0: FTP-Traffic (BE)
+	     - constant traffic
+	     - datarate ->  variable
+	-->
+	<config id="0" 
+		packetSize="128"  
+		interDepartureTime="0.002" 
+		firstPacketTime="1"
+		
+	/>
+	
+	
+	<!-- config id 1: VoIP-Traffic without Silence Suppression (UGS) -->
+	<config id="1" 
+		packetSize="256" 
+		interDepartureTime="0.002" 
+		firstPacketTime="25" 
+		onLength="uniform(40,60)"		
+		offLength="uniform(40,120)" 
+	/>
+	
+	
+	<!-- config id 2: VoIP-Traffic with Silence Suppression (ertPS) -->
+	<config id="2" 
+		packetSize="256" 
+		interDepartureTime="0.002"
+		firstPacketTime="15"
+		onLength="uniform(10,20)"		
+		offLength="uniform(2,15)"
+	 />
+
+
+	<!-- config id 3: Video Stream with Constant Bitrate (rtPS)	-->
+	<config id="3" 
+		packetSize="700" 
+		interDepartureTime="0.002" 
+		firstPacketTime="20"
+		onLength="uniform(12,60)"		
+		offLength="uniform(10,30)" />
+	
+	
+	<!-- config id 4: Variable Internet Access (nrtPS) -->
+	<config id="4" 
+		packetSize="196" 
+		interDepartureTime="0.002" 
+		firstPacketTime="5"
+		onLength="uniform(0.01,5)"		
+		offLength="uniform(1,7)"
+		
+	/>
+
+
+
+	
+<!-- Basestation Traffic Section -->
+
+	<!-- config id 0: FTP-Traffic (BE)-->
+	<config id="100" 
+		packetSize="128"  
+		interDepartureTime="0.002" 
+		firstPacketTime="-1"
+	/>
+	
+	
+	<!-- config id 1: VoIP-Traffic without Silence Suppression (UGS) -->
+	<config id="101" 
+		packetSize="128" 
+		interDepartureTime="0.002" 
+		firstPacketTime="-1"
+		onLength="uniform(10,120)"		
+		offLength="uniform(10,240)" />
+	
+	
+	<!-- config id 2: VoIP-Traffic with Silence Suppression (ertPS)	-->
+	<config id="102" 
+		packetSize="128" 
+		interDepartureTime="0.002"
+		firstPacketTime="-1"
+		onLength="uniform(5,20)"		
+		offLength="uniform(2,15)"
+	/>
+
+
+	<!-- config id 3: Video Stream with Constant Bitrate (rtPS) -->
+	<config id="103" 
+		packetSize="128" 
+		interDepartureTime="0.002" 
+		firstPacketTime="-1"
+		onLength="uniform(120,600)"		
+		offLength="uniform(10,30)" />
+	
+	
+	<!-- config id 4: Variable Internet Access (nrtPS) -->
+	<config id="104" 
+		packetSize="128" 
+		interDepartureTime="0.002" 
+		firstPacketTime="-1"
+		onLength="uniform(0.01,5)"		
+		offLength="uniform(1,7)" />
+
+
+
+
+	
+	<!-- config id 20: sends traffic to a random host
+		with a packet size of 50 bytes.
+		There is an "on" period lasting 25 seconds where the regular 
+		interdeparture time of 10 seconds is used, followed by an "off"
+		period lasting 350 seconds, where the interdeparture time indicated
+		by offInterDepartureTime (200 seconds) is used.
+		During "on" periods, all packets are sent to the same destination host.
+	-->
+	<config id="20" 
+		packetSize="50" 
+		interDepartureTime="10"
+		firstPacketTime="5"
+		onLength="25"
+		offLength="350"
+		offInterDepartureTime="200"
+		onIdenticalTrafDest="true"
+		trafDest="host[*]"  />
+		
+	<!-- more distributions are available for use here!
+		Just have a look in the omnet++ manual...
+		All distributions available inside the simulator can be used here too.
+	-->
+	<!-- for more information have a look at our wiki:
+		https://faui7as.informatik.uni-erlangen.de/wiki/index.php/Simulation_mit_OMNeT
+	-->
+</configurations>

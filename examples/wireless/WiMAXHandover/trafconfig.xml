@@ -1,0 +1,53 @@
+<?xml version="1.0" ?>
+<configurations>
+
+	<!-- config id 0: sends traffic to a random host
+		with an interarrival time of 100 seconds
+		and a packet size exponentially distributed around 200 bytes
+		the first packet is sent at 1000 seconds
+		
+		trafDest="host[*]"
+	-->
+	<config id="0" 
+		packetSize="80" 
+		interDepartureTime="0.005" 
+		firstPacketTime="0.05" />
+	
+	<!-- config id 1: sends traffic to host[1] 
+		with an interarrival time of 10 seconds (exponentially distributed)
+		and a packet size uniformly distributed between 30 and 40 bytes
+		the first packet is sent between 5 and 10 seconds.
+		
+		trafDest="host[1]"
+	-->
+	<config id="1" 
+		packetSize="uniform(30,40)" 
+		interDepartureTime="0.001" 
+		firstPacketTime="0.03" />
+
+	<!-- config id 2: sends traffic to a random host
+		with a packet size of 50 bytes.
+		There is an "on" period lasting 25 seconds where the regular 
+		interdeparture time of 10 seconds is used, followed by an "off"
+		period lasting 350 seconds, where the interdeparture time indicated
+		by offInterDepartureTime (200 seconds) is used.
+		During "on" periods, all packets are sent to the same destination host.
+	-->
+	<config id="2" 
+		packetSize="50" 
+		interDepartureTime="10"
+		firstPacketTime="5"
+		onLength="25"
+		offLength="350"
+		offInterDepartureTime="200"
+		onIdenticalTrafDest="true"
+		trafDest="host[*]"  />
+		
+	<!-- more distributions are available for use here!
+		Just have a look in the omnet++ manual...
+		All distributions available inside the simulator can be used here too.
+	-->
+	<!-- for more information have a look at our wiki:
+		https://faui7as.informatik.uni-erlangen.de/wiki/index.php/Simulation_mit_OMNeT
+	-->
+</configurations>

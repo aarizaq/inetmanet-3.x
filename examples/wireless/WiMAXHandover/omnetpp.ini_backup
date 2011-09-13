@@ -1,0 +1,186 @@
+[General]
+output-file=omnetpp.log
+preload-ned-files = *.ned @../../../nedfiles.lst
+;debug-on-errors = true
+
+network = handoverNetwork
+
+[Cmdenv]
+express-mode = no
+
+[Tkenv]
+plugin-path=../../../Etc/plugins
+default-run=1
+
+[Run 1]
+description = "handover from ap1 to ap2"
+
+[Parameters]
+*.playgroundSizeX = 600 #Länge des Simulationsfeldes
+*.playgroundSizeY = 400 #Breite des Simulationsfeldes
+**.debug = true
+**.coreDebug = 0
+#**.channelNumber = 0
+**.mobility.x = -1
+**.mobility.y = -1
+
+# channel physical parameters
+*.channelcontrol.carrierFrequency = 2.4e+9
+*.channelcontrol.pMax  = 2.0  ;[mW]
+*.channelcontrol.sat   = -110
+*.channelcontrol.alpha = 2
+*.channelcontrol.numChannels = 6
+
+# Basestation
+**.bs1.wimax.mgmt.basestationid = "0A:00:00:00:00:01"
+**.bs2.wimax.mgmt.basestationid = "0A:00:00:00:00:02"
+**.bs1.wimax.mgmt.ssid = "AP1"
+**.bs2.wimax.mgmt.ssid = "AP2"
+**.bs1.wimax.mgmt.DownlinkChannel = 1
+**.bs1.wimax.mgmt.UplinkChannel = 1
+**.bs2.wimax.mgmt.DownlinkChannel = 3
+**.bs2.wimax.mgmt.UplinkChannel = 3
+**.bs*.wimax.mgmt.DLMapInterval = 10 #Intervall beträgt 10 Sekunden
+**.wimax.mgmt.numAuthSteps = 4
+
+# Mobilestation
+**.ms.wimax.mgmt.address = "auto"
+
+
+
+
+**.mgmt.frameCapacity = 10
+
+# mobility
+**.ms*.mobilityType = "LinearMobility"
+**.ms*.mobility.debug = false
+**.ms*.mobility.x = 50  #FIXME -1 should mean "position from the display string, or random if it's missing"
+**.ms*.mobility.y = 100
+**.ms*.mobility.speed = 7
+**.ms*.mobility.angle = 30
+**.ms*.mobility.acceleration = 0
+**.ms*.mobility.updateInterval = 0.1
+
+# udp apps (off)
+**.numUdpApps=0
+**.udpAppType="UDPBasicApp"
+
+# tcp apps (off)
+**.numTcpApps=0
+**.tcpAppType="TelnetApp"
+
+# ping app (off)
+*.ms*.pingApp.destAddr=""
+**.pingApp.srcAddr=""
+**.pingApp.packetSize=56
+**.pingApp.interval=0.01
+**.pingApp.hopLimit=32
+**.pingApp.count=0
+**.pingApp.startTime=uniform(0,0.1)
+**.pingApp.stopTime=0
+**.pingApp.printPing=true
+
+# tcp settings
+**.tcp.mss = 1024
+**.tcp.advertisedWindow = 14336  # 14*mss
+**.tcp.sendQueueClass="TCPMsgBasedSendQueue"
+**.tcp.receiveQueueClass="TCPMsgBasedRcvQueue"
+**.tcp.tcpAlgorithmClass="TCPReno"
+**.tcp.recordStats=true
+
+# ip settings
+**.routingFile=""
+**.ip.procDelay=10us
+**.IPForward=false
+
+# ARP configuration
+**.arp.retryTimeout = 1
+**.arp.retryCount = 3
+**.arp.cacheTimeout = 100
+**.networkLayer.proxyARP = true  # Host's is hardwired "false"
+
+# wireless channels
+**.bs1.wimax.radioDownlink.channelNumber = 5
+**.bs1.wimax.radioDownlink.modulation ="BPSK"
+**.bs1.wimax.radioUplink.channelNumber = 5
+**.bs1.wimax.radioUplink.modulation ="BPSK"
+**.bs2.wimax.radioDownlink.channelNumber = 4
+**.bs2.wimax.radioDownlink.modulation = "BPSK"
+**.bs2.wimax.radioUplink.channelNumber = 4
+**.bs2.wimax.radioUplink.modulation = "BPSK"
+
+**.radioDownlink.bitrate=2E+6 ;in bits/second
+**.radioDownlink.transmitterPower=2.0  ;[mW]
+**.radioDownlink.carrierFrequency=3.4E+9
+**.radioDownlink.thermalNoise=-110
+**.radioDownlink.sensitivity=-85
+**.radioDownlink.pathLossAlpha=2
+**.radioDownlink.snirThreshold = 4  # in dB
+**.radioDownlink.headerLengthBits =48
+**.radioDownlink.bandwidth = 40E+6
+
+**.radioUplink.bitrate=2E+6 ;in bits/second
+**.radioUplink.transmitterPower=2.0  ;[mW]
+**.radioUplink.carrierFrequency=3.5E+9
+**.radioUplink.thermalNoise=-110
+**.radioUplink.sensitivity=-85
+**.radioUplink.pathLossAlpha=2
+**.radioUplink.snirThreshold = 4  # in dB
+**.radioUplink.headerLengthBits =48
+**.radioUplink.bandwidth = 40E+6
+
+**.ms.wimax.radioMSSDownlink.channelNumber = 1  # just initially -- it'll scan
+**.ms.wimax.radioMSSDownlink.modulation = "BPSK"
+**.ms.wimax.radioMSSUplink.channelNumber = 1  # just initially -- it'll scan
+**.ms.wimax.radioMSSUplink.modulation = "BPSK"
+
+**.radioMSSUplink.bitrate=2E+6 ;in bits/second
+**.radioMSSUplink.transmitterPower=2.0  ;[mW]
+**.radioMSSUplink.carrierFrequency=3.4E+9
+**.radioMSSUplink.thermalNoise=-110
+**.radioMSSUplink.sensitivity=-85
+**.radioMSSUplink.pathLossAlpha=2
+**.radioMSSUplink.snirThreshold = 4  # in dB
+**.radioMSSUplink.headerLengthBits =48
+**.radioMSSUplink.bandwidth = 40E+6
+
+**.radioMSSDownlink.bitrate=2E+6 ;in bits/second
+**.radioMSSDownlink.transmitterPower=2.0  ;[mW]
+**.radioMSSDownlink.carrierFrequency=3.4E+9
+**.radioMSSDownlink.thermalNoise=-110
+**.radioMSSDownlink.sensitivity=-85
+**.radioMSSDownlink.pathLossAlpha=2
+**.radioMSSDownlink.snirThreshold = 4  # in dB
+**.radioMSSDownlink.headerLengthBits =48
+**.radioMSSDownlink.bandwidth = 40E+6
+
+# wireless configuration
+**.wimax.agent.activeScan = 1
+**.wimax.agent.channelsToScan = ""  # "" means all
+**.wimax.agent.probeDelay = 0.1
+**.wimax.agent.minChannelTime = 0.15
+**.wimax.agent.maxChannelTime = 0.3
+**.wimax.agent.authenticationTimeout = 5
+**.wimax.agent.associationTimeout = 5
+
+**.mac.maxQueueSize = 14
+**.mac.rtsThresholdBytes = 4000
+**.mac.bitrate = 2e6  # 2Mbps
+**.wimax.mac.retryLimit = 7
+**.wimax.mac.cwMinData = 7
+**.wimax.mac.cwMinBroadcast = 31
+
+
+
+# relay unit configuration (APs)
+**.relayUnitType = "MACRelayUnitNP"
+**.relayUnit.addressTableSize = 100
+**.relayUnit.agingTime = 120s
+**.relayUnit.bufferSize = 1048576  # 1Mb
+**.relayUnit.highWatermark = 524288  # 512K
+**.relayUnit.pauseUnits = 300  # pause for 300*512 bit (19200 byte) time
+**.relayUnit.addressTableFile = ""
+**.relayUnit.numCPUs = 2
+**.relayUnit.processingTime = 2us
+**.relayUnit.writeScalars = false
+

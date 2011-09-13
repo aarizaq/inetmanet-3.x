@@ -1,0 +1,103 @@
+<?xml version="1.0" ?>
+<configurations>
+<!-- 
+	Traffic configuration for restless traffic production.
+	All generators produce the same CBR traffic.
+	
+	Attention: packet sizes are given in bits
+--> 
+	
+<!-- Mobilestation Traffic Section -->
+	
+	<!-- config id 0: FTP-Traffic (BE) - constant traffic -->
+	<config id="0" 
+		packetSize="128"  
+		interDepartureTime="0.002" 
+		firstPacketTime="1"
+	/>
+	
+	<!-- config id 1: VoIP-Traffic without Silence Suppression (UGS) -->
+	<config id="1" 
+		packetSize="256" 
+		interDepartureTime="0.002" 
+		firstPacketTime="20" 
+	/>
+	
+	<!-- config id 2: VoIP-Traffic with Silence Suppression (ertPS) -->
+	<config id="2" 
+		packetSize="256" 
+		interDepartureTime="0.002"
+		firstPacketTime="10"
+	 />
+
+	<!-- config id 3: Video Stream with Constant Bitrate (rtPS) -->
+	<config id="3" 
+		packetSize="700" 
+		interDepartureTime="0.002" 
+		firstPacketTime="15"
+	/>
+	
+	<!-- config id 4: Variable Internet Access (nrtPS) -->
+	<config id="4" 
+		packetSize="196" 
+		interDepartureTime="0.002" 
+		firstPacketTime="5"
+	/>
+
+
+
+	
+<!-- Basestation Traffic Section -->
+
+	<!-- config id 0: FTP-Traffic (BE)
+	     - constant traffic
+	     - datarate ->  variable 
+	-->
+	<config id="100" 
+		packetSize="128"  
+		interDepartureTime="0.002" 
+		firstPacketTime="-1"
+	/>
+	
+	
+	<!-- config id 1: VoIP-Traffic without Silence Suppression (UGS)
+	     - fixed packet size and intervals
+	     - datarate  ~64kbit/s
+	-->
+	<config id="101" 
+		packetSize="128" 
+		interDepartureTime="0.002" 
+		firstPacketTime="-1" />
+	
+	
+	<!-- config id 2: VoIP-Traffic with Silence Suppression (ertPS)
+		- fixed packet size and random on/off periods
+		- datarate  ~64kbit/s
+	-->
+	<config id="102" 
+		packetSize="128" 
+		interDepartureTime="0.002"
+		firstPacketTime="-1"
+	/>
+
+
+	<!-- config id 3: Video Stream with Constant Bitrate (rtPS)
+	     - fixed packet size and intervals
+	-->
+	<config id="103" 
+		packetSize="128" 
+		interDepartureTime="0.002" 
+		firstPacketTime="-1" />
+	
+	
+	<!-- config id 4: Variable Internet Access (nrtPS)
+	     - fixed packet size
+	     - distributed transmission intervals->
+	-->
+	<config id="104" 
+		packetSize="128" 
+		interDepartureTime="0.002" 
+		firstPacketTime="-1"
+	/>
+
+</configurations>
