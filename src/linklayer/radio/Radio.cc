@@ -45,6 +45,7 @@ Radio::Radio() : rs(this->getId())
     radioModel = NULL;
     receptionModel = NULL;
     transceiverConnect = true;
+    receiverConnect = true;
     updateString = NULL;
     noiseGenerator = NULL;
 }
@@ -240,7 +241,7 @@ void Radio::handleMessage(cMessage *msg)
     }
     else if (processAirFrame (check_and_cast<AirFrame*>(msg)))
     {
-        if (this->isEnabled()) 
+        if (this->isEnabled() && receiverConnect)
         {
         // must be an AirFrame
             AirFrame *airframe = (AirFrame *) msg;
@@ -850,17 +851,6 @@ void Radio::updateSensitivity(double rate)
         sensitivity = FWMath::dBm2mW (-65);
     }
     EV <<" sensitivity after updateSensitivity: "<<sensitivity<<endl;
-}
-
-void Radio::disconnectReceiver()
-{
-        cc->unregisterRadio(myRadioRef);
-}
-
-void Radio::connectReceiver()
-{
-        myRadioRef = cc->registerRadio(this);
-        cc->setRadioChannel(myRadioRef, rs.getChannelNumber());
 }
 
 void Radio::registerBattery()

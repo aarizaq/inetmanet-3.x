@@ -140,8 +140,8 @@ class INET_API Radio : public ChannelAccess, public IPowerControl
 
     virtual void disconnectTransceiver() {transceiverConnect=false;}
     virtual void connectTransceiver() {transceiverConnect=true;}
-    virtual void disconnectReceiver();
-    virtual void connectReceiver();
+    virtual void disconnectReceiver() {receiverConnect=false;}
+    virtual void connectReceiver() {receiverConnect=true;}
 
     virtual void registerBattery();
 
@@ -241,6 +241,7 @@ class INET_API Radio : public ChannelAccess, public IPowerControl
      * this variable is used to disconnect the possibility of sent packets to the ChannelControl
      */
     bool transceiverConnect;
+    bool receiverConnect;
 
     // if true draw coverage circles
     bool drawCoverage;
