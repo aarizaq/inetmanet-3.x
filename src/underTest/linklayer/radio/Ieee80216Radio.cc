@@ -8,16 +8,9 @@ void Ieee80216Radio::initialize(int stage)
 {
     Radio::initialize(stage);
 
-    if (stage == 2 && !par("isInput").boolValue())
+    if (stage == 3 && !par("isInput").boolValue())
     {
     	disconnectReceiver();
-    }
-
-    if (stage == 0)
-    {
-        rs.setRadioId(this->getId()); //Aenderung am 6 Dezember neue FUnktion in RadioState eingefuegt
-        EV << "Roland Module Id " << this->getId() << endl;
-        EV << "Roland RS Module Id " << rs.getRadioId() << endl;
     }
     isCollision = false;
     collisions = 0;

@@ -26,16 +26,7 @@ class INET_API Ieee80216Radio : public Radio
   protected:
     virtual void initialize(int);
     virtual void finish();
-
-    virtual IReceptionModel* createReceptionModel()
-    {
-        return (IReceptionModel*)createOne("WiMAXPathLossReceptionModel");
-    }
-
-    virtual IRadioModel* createRadioModel()
-    {
-        return (IRadioModel*)createOne("Ieee80216RadioModel");
-    }
+    virtual int numInitStages() const { return 4; }
 };
 
 #endif
