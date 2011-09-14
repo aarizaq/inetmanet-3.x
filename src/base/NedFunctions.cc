@@ -18,13 +18,19 @@
 
 #include "INETDefs.h"
 
+#if OMNETPP_VERSION > 0x0401
+cNEDValue nedf_haveClass(cComponent *context, cNEDValue argv[], int argc)
+{
+    return (NULL != classes.getInstance()->lookup(argv[0].str().c_str()));
+}
+#else
 typedef cDynamicExpression::Value Value;  // abbreviation for local use
 
 Value nedf_haveClass(cComponent *context, Value argv[], int argc)
 {
     return (NULL != classes.getInstance()->lookup(argv[0].s.c_str()));
 }
-
+#endif
 Define_NED_Function2(nedf_haveClass,
         "bool haveClass(string className)",
         "string",

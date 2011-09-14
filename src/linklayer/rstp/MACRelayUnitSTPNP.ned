@@ -43,8 +43,8 @@ simple MACRelayUnitSTPNP like IMACRelayUnit
         double agingTime @unit("s") = default(300s); // see MACRelayUnit
         int numCPUs = default(1);  // number of CPUs
         double processingTime @unit("s") = default(0s);  // processing time of one frame
-        int bufferSize @unit("B") = default(1MB);  // memory
-        int highWatermark @unit("B") = default(512KB);  // buffer usage threshold to send PAUSE frame
+        int bufferSize @unit("B") = default(1MiB);  // memory
+        int highWatermark @unit("B") = default(512KiB);  // buffer usage threshold to send PAUSE frame
         int pauseUnits = default(300);  // time to put in PAUSE frames (in units of 512 bit times)
         
         // RSTP parameters
