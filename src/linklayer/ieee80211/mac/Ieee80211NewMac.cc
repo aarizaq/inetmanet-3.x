@@ -613,7 +613,7 @@ void Ieee80211NewMac::registerInterface()
     e->setInterfaceToken(address.formInterfaceIdentifier());
 
     // FIXME: MTU on 802.11 = ?
-    e->setMtu(par("mtu"));
+    e->setMtu(par("mtu").longValue());
 
     // capabilities
     e->setBroadcast(true);
