@@ -75,6 +75,7 @@ class INET_API Ieee80211NewMac : public WirelessMacBase, public INotifiable
             this->sequenceNumber=other.sequenceNumber;
             this->fragmentNumber=other.fragmentNumber;
             this->receivedTime = other.receivedTime;
+            return *this;
         }
     };
 
