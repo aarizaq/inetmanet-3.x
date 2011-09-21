@@ -17,22 +17,24 @@
 
 MultiQueue::MultiQueue()
 {
-	classifier=NULL;
+    classifier=NULL;
     firstPk.second=NULL;
     lastPk = NULL;
+    queues.resize(1);
+    maxSize=100;
 }
 
 MultiQueue::~MultiQueue()
 {
-	// TODO Auto-generated destructor stub
+    // TODO Auto-generated destructor stub
     while (queues.empty())
-	{
-       	while (!queues.back().empty())
-       	{
-       		delete queues.back().back().second;
-       		queues.back().pop_back();
-       	}
-       	queues.pop_back();
+    {
+           while (!queues.back().empty())
+           {
+               delete queues.back().back().second;
+               queues.back().pop_back();
+           }
+           queues.pop_back();
     }
     if (firstPk.second)
        delete firstPk.second;
@@ -42,18 +44,18 @@ void MultiQueue::setNumQueues(int num)
 {
      if (num>queues.size())
      {
-    	 queues.resize(num);
+         queues.resize(num);
      }
      else if (num<queues.size())
      {
         while (queues.size()>num)
         {
-        	while (!queues.back().empty())
-        	{
-        		delete queues.back().back().second;
-        		queues.back().pop_back();
-        	}
-        	queues.pop_back();
+            while (!queues.back().empty())
+            {
+                delete queues.back().back().second;
+                queues.back().pop_back();
+            }
+            queues.pop_back();
         }
      }
 }
@@ -61,291 +63,291 @@ void MultiQueue::setNumQueues(int num)
 unsigned int MultiQueue::size(int i)
 {
     if (i>=queues.size())
-    	opp_error("MultiQueue::size Queue doesn't exist");
+        opp_error("MultiQueue::size Queue doesn't exist");
 
-	if (i != -1)
-	{
-		if (firstPk.first =i && firstPk.second)
-			return queues[i].size()+1;
-		return queues[i].size();
-	}
+    if (i != -1)
+    {
+        if (firstPk.first =i && firstPk.second)
+            return queues[i].size()+1;
+        return queues[i].size();
+    }
 
     unsigned int total=0;
     for (unsigned int j=0;j<queues.size();j++)
-    	total+=queues[j].size();
+        total+=queues[j].size();
     if (firstPk.second)
-    	total++;
+        total++;
     return total;
 }
 
 
 bool MultiQueue::empty(int i)
 {
-	if (i>=queues.size())
-	    opp_error("MultiQueue::size Queue doesn't exist");
-	if (i != -1)
-		return queues[i].empty();
+    if (i>=queues.size())
+        opp_error("MultiQueue::size Queue doesn't exist");
+    if (i != -1)
+        return queues[i].empty();
     for (unsigned int j=0;j<queues.size();j++)
-    	if (!queues[j].empty())
-    		return false;
+        if (!queues[j].empty())
+            return false;
     return true;
 }
 
 cMessage* MultiQueue::front(int i)
 {
-	if (i>=queues.size())
-	    opp_error("MultiQueue::size Queue doesn't exist");
-	if (!firstPk.second)
-		return NULL; // empty queue
-	if (i != -1)
-	{
-		if (firstPk.first==i)
-			return firstPk.second;
-		if (queues[i].empty())
-			return queues[i].front().second;
-	}
-	return firstPk.second;
+    if (i>=queues.size())
+        opp_error("MultiQueue::size Queue doesn't exist");
+    if (!firstPk.second)
+        return NULL; // empty queue
+    if (i != -1)
+    {
+        if (firstPk.first==i)
+            return firstPk.second;
+        if (queues[i].empty())
+            return queues[i].front().second;
+    }
+    return firstPk.second;
 }
 
 cMessage* MultiQueue::back(int i)
 {
-	if (i>=queues.size())
-	    opp_error("MultiQueue::size Queue doesn't exist");
-	if (!firstPk.second)
-		return NULL;
-	if (i != -1 && i!=firstPk.first)
-		return queues[i].back().second;
-	if (lastPk)
-		return lastPk;
-	return firstPk.second;
+    if (i>=queues.size())
+        opp_error("MultiQueue::size Queue doesn't exist");
+    if (!firstPk.second)
+        return NULL;
+    if (i != -1 && i!=firstPk.first)
+        return queues[i].back().second;
+    if (lastPk)
+        return lastPk;
+    return firstPk.second;
 }
 
 
 void MultiQueue::push_front(cMessage* val,int i)
 {
-	std::pair <simtime_t,cMessage*> value;
+    std::pair <simtime_t,cMessage*> value;
 
-	opp_error("this method doesn't be used");
+    opp_error("this method doesn't be used");
 
-	if (i>=queues.size())
-	    opp_error("MultiQueue::size Queue doesn't exist");
+    if (i>=queues.size())
+        opp_error("MultiQueue::size Queue doesn't exist");
 
-	if (size()>getMaxSize())
-	{
-		// first make space
-		// delete the oldest, the fist can't be deleted because can be in process.
-		simtime_t max;
-		int nQueue=-1;
-		for (unsigned int j=0;j<queues.size();j++)
-		{
-			simtime_t max;
-			int nQueue=-1;
-			if (queues[j].front().first>max)
-			{
-				max=queues[j].front().first;
-				nQueue=j;
-			}
-			if (nQueue>=0)
-			{
-				delete queues[nQueue].front().second;
-				queues[nQueue].pop_front();
-			}
-		}
-	}
+    if (size()>getMaxSize())
+    {
+        // first make space
+        // delete the oldest, the fist can't be deleted because can be in process.
+        simtime_t max;
+        int nQueue=-1;
+        for (unsigned int j=0;j<queues.size();j++)
+        {
+            simtime_t max;
+            int nQueue=-1;
+            if (queues[j].front().first>max)
+            {
+                max=queues[j].front().first;
+                nQueue=j;
+            }
+            if (nQueue>=0)
+            {
+                delete queues[nQueue].front().second;
+                queues[nQueue].pop_front();
+            }
+        }
+    }
 
-	if (i!=-1)
-	{
-		if (!firstPk.second)
-		{
-			firstPk.second=val;
-			firstPk.first=i;
-			return;
-		}
-		value = std::make_pair (simTime(),val);
-		queues[i].push_front(value);
+    if (i!=-1)
+    {
+        if (!firstPk.second)
+        {
+            firstPk.second=val;
+            firstPk.first=i;
+            return;
+        }
+        value = std::make_pair (simTime(),val);
+        queues[i].push_front(value);
 
-	}
-	else if (!classifier)
-	{
-		if (!firstPk.second)
-		{
-			firstPk.second=val;
-			firstPk.first=classifier->classifyPacket(val);
-			return;
-		}
-		value = std::make_pair (simTime(),val);
-		queues[classifier->classifyPacket(val)].push_front(value);
-	}
-	else
-	{
-		if (!firstPk.second)
-		{
-			firstPk.second=val;
-			firstPk.first=0;
-			return;
-		}
-		queues[0].push_front(value);
-	}
+    }
+    else if (!classifier)
+    {
+        if (!firstPk.second)
+        {
+            firstPk.second=val;
+            firstPk.first=classifier->classifyPacket(val);
+            return;
+        }
+        value = std::make_pair (simTime(),val);
+        queues[classifier->classifyPacket(val)].push_front(value);
+    }
+    else
+    {
+        if (!firstPk.second)
+        {
+            firstPk.second=val;
+            firstPk.first=0;
+            return;
+        }
+        queues[0].push_front(value);
+    }
 }
 
 void MultiQueue::pop_front(int i)
 {
-	std::pair <simtime_t,cMessage*> value;
-	if (i>=queues.size())
-	    opp_error("MultiQueue::size Queue doesn't exist");
-	if (!firstPk.second)
-		return;
-	if (i != -1 && i!=firstPk.first)
-	{
-		queues[i].pop_front();
-		priority[i]=basePriority[i];
-		return;
-	}
-	else
-	{
-		firstPk.second=NULL;
-		// decrease all priorities
-		for (unsigned int j=0;j<queues.size();j++)
-		{
-			priority[i]--;
-			if (priority[j]<0 && queues.empty())
-				priority[j]=0;
-		}
-		priority[firstPk.first]=basePriority[firstPk.first];
-		// select the next packet
-		int min = 10000000;
-		int q=-1;
+    std::pair <simtime_t,cMessage*> value;
+    if (i>=queues.size())
+        opp_error("MultiQueue::size Queue doesn't exist");
+    if (!firstPk.second)
+        return;
+    if (i != -1 && i!=firstPk.first)
+    {
+        queues[i].pop_front();
+        priority[i]=basePriority[i];
+        return;
+    }
+    else
+    {
+        firstPk.second=NULL;
+        // decrease all priorities
+        for (unsigned int j=0;j<queues.size();j++)
+        {
+            priority[i]--;
+            if (priority[j]<0 && queues.empty())
+                priority[j]=0;
+        }
+        priority[firstPk.first]=basePriority[firstPk.first];
+        // select the next packet
+        int min = 10000000;
+        int q=-1;
 
-		for (int j=0;j<(int)queues.size();j++)
-		{
-			if (queues[j].empty())
-				continue;
-			if (priority[j]<min)
-			{
-				min = priority[j];
-				q=j;
-			}
-		}
-		if (q>=0)
-		{
-			firstPk.second=queues[q].front().second;
-			queues[q].pop_front();
-			firstPk.first=q;
-		}
-	}
+        for (int j=0;j<(int)queues.size();j++)
+        {
+            if (queues[j].empty())
+                continue;
+            if (priority[j]<min)
+            {
+                min = priority[j];
+                q=j;
+            }
+        }
+        if (q>=0)
+        {
+            firstPk.second=queues[q].front().second;
+            queues[q].pop_front();
+            firstPk.first=q;
+        }
+    }
 }
 
 void MultiQueue::push_back(cMessage* val,int i)
 {
-	std::pair <simtime_t,cMessage*> value;
-	if (i>=queues.size())
-	    opp_error("MultiQueue::size Queue doesn't exist");
+    std::pair <simtime_t,cMessage*> value;
+    if (i>=queues.size())
+        opp_error("MultiQueue::size Queue doesn't exist");
 
-	if (size()>getMaxSize())
-	{
-		// first make space
-		// delete the oldest, the fist can't be deleted because can be in process.
-		simtime_t max;
-		int nQueue=-1;
-		for (unsigned int j=0;j<queues.size();j++)
-		{
-			simtime_t max;
-			int nQueue=-1;
-			if (queues[j].front().first>max)
-			{
-				max=queues[j].front().first;
-				nQueue=j;
-			}
-			if (nQueue>=0)
-			{
-				delete queues[nQueue].front().second;
-				queues[nQueue].pop_front();
-			}
-		}
-	}
-	value = std::make_pair (simTime(),val);
-	if (i != -1)
-	{
-		if (!firstPk.second)
-		{
-			firstPk.second=val;
-			firstPk.first=i;
-			return;
-		}
-		queues[i].push_back(value);
-	}
-	else if (!classifier)
-	{
-		if (!firstPk.second)
-		{
-			firstPk.second=val;
-			firstPk.first=i;
-			return;
-		}
-		queues[classifier->classifyPacket(val)].push_back(value);
-	}
-	else
-	{
-		if (!firstPk.second)
-		{
-			firstPk.second=val;
-			firstPk.first=i;
-			return;
-		}
-		queues[0].push_back(value);
-	}
-	lastPk=val;
+    if (size()>getMaxSize())
+    {
+        // first make space
+        // delete the oldest, the fist can't be deleted because can be in process.
+        simtime_t max;
+        int nQueue=-1;
+        for (unsigned int j=0;j<queues.size();j++)
+        {
+            simtime_t max;
+            int nQueue=-1;
+            if (queues[j].front().first>max)
+            {
+                max=queues[j].front().first;
+                nQueue=j;
+            }
+            if (nQueue>=0)
+            {
+                delete queues[nQueue].front().second;
+                queues[nQueue].pop_front();
+            }
+        }
+    }
+    value = std::make_pair (simTime(),val);
+    if (i != -1)
+    {
+        if (!firstPk.second)
+        {
+            firstPk.second=val;
+            firstPk.first=i;
+            return;
+        }
+        queues[i].push_back(value);
+    }
+    else if (!classifier)
+    {
+        if (!firstPk.second)
+        {
+            firstPk.second=val;
+            firstPk.first=i;
+            return;
+        }
+        queues[classifier->classifyPacket(val)].push_back(value);
+    }
+    else
+    {
+        if (!firstPk.second)
+        {
+            firstPk.second=val;
+            firstPk.first=i;
+            return;
+        }
+        queues[0].push_back(value);
+    }
+    lastPk=val;
 }
 
 void MultiQueue::pop_back(int i)
 {
-	std::pair <simtime_t,cMessage*> value;
-	if (i>=queues.size())
-	    opp_error("MultiQueue::size Queue doesn't exist");
+    std::pair <simtime_t,cMessage*> value;
+    if (i>=queues.size())
+        opp_error("MultiQueue::size Queue doesn't exist");
 
-	if (!firstPk.second)
-		return;
+    if (!firstPk.second)
+        return;
 
-	if (i != -1)
-	{
-		if (lastPk==queues[i].back().second)
-		{
-		    lastPk=NULL;
-		}
-		queues[i].pop_back();
-		if (lastPk!=NULL)
-			return; // nothing to do
-		if (this->empty())
-			return;
+    if (i != -1)
+    {
+        if (lastPk==queues[i].back().second)
+        {
+            lastPk=NULL;
+        }
+        queues[i].pop_back();
+        if (lastPk!=NULL)
+            return; // nothing to do
+        if (this->empty())
+            return;
 
-	}
-	else
-	{
-		for (unsigned int j=0;j<queues.size();j++)
-		{
-			if (queues[j].empty())
-				continue;
-			if (lastPk==queues[j].back().second)
-			    lastPk=NULL;
-		}
+    }
+    else
+    {
+        for (unsigned int j=0;j<queues.size();j++)
+        {
+            if (queues[j].empty())
+                continue;
+            if (lastPk==queues[j].back().second)
+                lastPk=NULL;
+        }
 
-	}
-	if (this->empty())
-		return;
-	simtime_t max;
-	int nQueue=-1;
-	for (unsigned int j=0;j<queues.size();j++)
-	{
-		if (queues[j].back().first>max)
-		{
-			max=queues[j].back().first;
-			nQueue=j;
-		}
-	}
-	if (nQueue>=0)
-	{
-		lastPk=queues[nQueue].back().second;
-	}
+    }
+    if (this->empty())
+        return;
+    simtime_t max;
+    int nQueue=-1;
+    for (unsigned int j=0;j<queues.size();j++)
+    {
+        if (queues[j].back().first>max)
+        {
+            max=queues[j].back().first;
+            nQueue=j;
+        }
+    }
+    if (nQueue>=0)
+    {
+        lastPk=queues[nQueue].back().second;
+    }
 }
 
 
