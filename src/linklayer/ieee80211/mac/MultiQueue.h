@@ -55,6 +55,18 @@ public:
         classifier = check_and_cast<IQoSClassifier*>(createOne(classifierClass));
         setNumQueues(classifier->getNumQueues());
     }
+    int getCost(int i)
+    {
+        if (i>=(int)queues.size())
+        	throw cRuntimeError(this, "Queue doens't exist");
+        return  basePriority[i];
+    }
+    void setCost(int i,int cost)
+    {
+        if (i>=(int)queues.size())
+        	throw cRuntimeError(this, "Queue doens't exist");
+        basePriority[i]=priority[i]=cost;
+    }
 };
 
 #endif /* MULTIQUEUE_H_ */
