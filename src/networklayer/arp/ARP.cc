@@ -58,8 +58,8 @@ void ARP::initialize(int stage)
 {
     if (stage==0) 
     {
-        globalArpCache.clear();
-
+        // globalArpCache.clear();
+        localAddress.clear();
         sentReqSignal = registerSignal("sentReq");
         sentReplySignal = registerSignal("sentReply");
         initiatedResolutionSignal = registerSignal("initiatedResolution");
@@ -107,6 +107,7 @@ void ARP::initialize(int stage)
             IPv4Address nextHopAddr = ie->ipv4Data()->getIPAddress();
             ARPCache::iterator where = globalArpCache.insert(globalArpCache.begin(), std::make_pair(nextHopAddr,entry));
             entry->myIter = where; // note: "inserting a new element into a map does not invalidate iterators that point to existing elements"
+            localAddress.push_back(nextHopAddr);
         }
     }
 
@@ -126,11 +127,21 @@ ARP::~ARP()
         delete (*i).second;
         arpCache.erase(i);
     }
-    while (!globalArpCache.empty())
+    if (!globalArpCache.empty())
     {
-        ARPCache::iterator i = globalArpCache.begin();
-        delete (*i).second;
-        globalArpCache.erase(i);
+    // delete local address from the globalArpCache
+        while (!localAddress.empty())
+        {
+            ARPCache::iterator it = globalArpCache.find(localAddress.back());
+            if (it==globalArpCache.end())
+                throw cRuntimeError(this, "Addres not found in global");
+            else
+            {
+                delete (*it).second;
+                globalArpCache.erase(it);
+            }
+            localAddress.pop_back();
+        }
     }
 }
 

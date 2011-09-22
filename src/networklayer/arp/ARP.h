@@ -44,6 +44,7 @@ class INET_API ARP : public cSimpleModule
     struct ARPCacheEntry;
     typedef std::map<IPv4Address, ARPCacheEntry*> ARPCache;
     typedef std::vector<cMessage*> MsgPtrVector;
+    std::vector<IPv4Address> localAddress;
 
     // IPv4Address -> MACAddress table
     // TBD should we key it on (IPv4Address, InterfaceEntry*)?
