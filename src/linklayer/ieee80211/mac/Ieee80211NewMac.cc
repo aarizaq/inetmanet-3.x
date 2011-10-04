@@ -152,6 +152,7 @@ void Ieee80211NewMac::initialize(int stage)
 
         EV<<"Operating mode: 802.11"<<opMode;
         maxQueueSize = par("maxQueueSize");
+        maxCategorieQueueSize = par("maxCategorieQueueSize");
         rtsThreshold = par("rtsThresholdBytes");
 
         // the variable is renamed due to a confusion in the standard
@@ -703,9 +704,9 @@ void Ieee80211NewMac::handleSelfMsg(cMessage *msg)
 
 void Ieee80211NewMac::handleUpperMsg(cPacket *msg)
 {
-    if (queueModule && numCategories()>1)
+    if (queueModule && numCategories()>1 && (int)transmissionQueueSize() < maxQueueSize)
     {
-        // the module are continuously asking for packets
+        // the module are continuously asking for packets, except if the queue is full
         EV << "requesting another frame from queue module\n";
         queueModule->requestPacket();
     }
@@ -750,7 +751,15 @@ int Ieee80211NewMac::MappingAccessCategory(Ieee80211DataOrMgmtFrame *frame)
     else
         currentAC = 0;
         // check for queue overflow
-    if (isDataFrame && maxQueueSize && (int)transmissionQueue()->size() >= maxQueueSize)
+    if (isDataFrame && maxCategorieQueueSize && (int)transmissionQueue()->size() >= maxCategorieQueueSize)
+    {
+        EV << "message " << frame << " received from higher layer but AC queue is full, dropping message\n";
+        numDropped()++;
+        delete frame;
+        return 200;
+    }
+
+    if (isDataFrame && maxQueueSize && (int)transmissionQueueSize() >= maxQueueSize)
     {
         EV << "message " << frame << " received from higher layer but AC queue is full, dropping message\n";
         numDropped()++;
@@ -2185,12 +2194,23 @@ void Ieee80211NewMac::popTransmissionQueue()
     Ieee80211Frame *temp = transmissionQueue()->front();
     ASSERT(!transmissionQueue()->empty());
     transmissionQueue()->pop_front();
-    if (queueModule && numCategories()==1)
+    if (queueModule)
     {
+        if (numCategories()==1)
+        {
         // the module are continuously asking for packets
-        EV << "requesting another frame from queue module\n";
-        queueModule->requestPacket();
+            EV << "requesting another frame from queue module\n";
+            queueModule->requestPacket();
+         }
+         else if (numCategories()>1 && (int)transmissionQueueSize()==maxQueueSize-1)
+         {
+         // Now exist a empty frame space
+         // the module are continuously asking for packets
+            EV << "requesting another frame from queue module\n";
+            queueModule->requestPacket();
+         }
     }
+
     delete temp;
 }
 
@@ -2312,15 +2332,23 @@ const char *Ieee80211NewMac::modeName(int mode)
 bool Ieee80211NewMac::transmissionQueueEmpty()
 {
     for (int i=0;i<numCategories();i++)
-       if (!transmissionQueue(i)->empty()) return false;
+        if (!transmissionQueue(i)->empty()) return false;
     return true;
+}
+
+unsigned int Ieee80211NewMac::transmissionQueueSize()
+{
+    unsigned int totalSize=0;
+	for (int i=0;i<numCategories();i++)
+	    totalSize+=transmissionQueue(i)->size();
+    return totalSize;
 }
 
 void Ieee80211NewMac::reportDataOk ()
 {
     retryCounter() = 0;
     if (rateControlMode==RATE_CR)
-       return;
+        return;
     successCounter ++;
     failedCounter = 0;
     recovery = false;

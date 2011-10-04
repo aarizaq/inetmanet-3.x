@@ -139,6 +139,7 @@ class INET_API Ieee80211NewMac : public WirelessMacBase, public INotifiable
 
     /** Maximum number of frames in the queue; should be set in the omnetpp.ini */
     int maxQueueSize;
+    int maxCategorieQueueSize;
 
     /**
      * The minimum length of MPDU to use RTS/CTS mechanism. 0 means always, extremely
@@ -562,6 +563,7 @@ class INET_API Ieee80211NewMac : public WirelessMacBase, public INotifiable
     virtual void giveUpCurrentTransmission();
     virtual void retryCurrentTransmission();
     virtual bool transmissionQueueEmpty();
+    virtual unsigned int transmissionQueueSize();
 
     /** @brief Mapping to access categories. */
     virtual int MappingAccessCategory(Ieee80211DataOrMgmtFrame *frame);
