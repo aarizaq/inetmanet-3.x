@@ -33,6 +33,7 @@ std::ostream& operator<<(std::ostream& os, const HwmpRtable::ReactiveRoute& e)
     os << " Next hop " << e.retransmitter <<"\n";
     os << "Interface " <<  e.interface <<"\n";
     os << "metric " << e.metric <<"\n";
+    os << "hops " << e.hops <<"\n";
     os << "whenExpire " << e.whenExpire <<"\n";
     os << "seqnum " << e.seqnum<< "\n";
     return os;
@@ -44,6 +45,7 @@ std::ostream& operator<<(std::ostream& os, const HwmpRtable::ProactiveRoute& e)
     os << " Next hop " << e.retransmitter <<"\n";
     os << "Interface " << e.interface <<"\n";
     os << "metric " << e.metric<<"\n";
+    os << "hops " << e.hops << "\n";
     os << "whenExpire " << e.whenExpire <<"\n";
     os << "seqnum " << e.seqnum <<"\n";
     return os;
@@ -772,7 +774,16 @@ void HwmpProtocol::sendMyPerr ()
 uint32_t HwmpProtocol::GetLinkMetric (const MACAddress &peerAddress)
 {
     // TODO: Replace ETX by Airlink metric
+    std::map<MACAddress,Neighbor>::iterator it = neighborMap.find(peerAddress);
+    if (it==neighborMap.end())
+        return 0xFFFFFFF; // no Neighbor
+    if (it->second.lastTime+par("neighborLive")<simTime())
+    {
+       neighborMap.erase(it);
+       return 0xFFFFFFF; // no Neighbor
+    }
     return 1; //WARNING: min hop for testing only
+
     if (useEtxProc)
     {
         Ieee80211Etx * etx= dynamic_cast<Ieee80211Etx *> (interface80211ptr->getEstimateCostProcess(0));
@@ -785,15 +796,7 @@ uint32_t HwmpProtocol::GetLinkMetric (const MACAddress &peerAddress)
     }
     else
     {
-        std::map<MACAddress,Neighbor>::iterator it = neighborMap.find(peerAddress);
-        if (it==neighborMap.end())
-            return 0xFFFFFFF;
-        if (it->second.lastTime+par("neighborLive").doubleValue()<simTime())
-        {
-            neighborMap.erase(it);
-            return 0xFFFFFFF;
-        }
-           return it->second.cost;
+        return it->second.cost;
     }
 }
 
