@@ -211,11 +211,36 @@ void HwmpProtocol::proccesData (cMessage *msg)
             delete msg;
             return;
         }
+        // seach route to destination
+        // pkt->getAddress4(); hass the destination address
+        HwmpRtable::LookupResult result = m_rtable->LookupReactive (pkt->getAddress4());
+        HwmpRtable::LookupResult resultProact = m_rtable->LookupProactive ();
+        // Intermediate search
+        if (hasPar("intermediateSeach") && !par("intermediateSeach").boolValue() &&
+               !isLocalAddress(pkt->getAddress3()))
+        {
+            if (result.retransmitter.isUnspecified() &&  resultProact.retransmitter.isUnspecified())
+            {
+            	// send perror
+                std::vector<HwmpFailedDestination> destinations;
+
+                HwmpFailedDestination dst;
+                dst.destination = pkt->getAddress4();
+                dst.seqnum = 0;
+
+                destinations.push_back(dst);
+                initiatePathError (makePathError (destinations));
+            	delete msg;
+            	return;
+            }
+        }
         // enqueue and request route
         QueuedPacket qpkt;
         qpkt.pkt= pkt;
         qpkt.dst=pkt->getAddress4();
         qpkt.src=pkt->getAddress3();
+        // Intermediate search
+
         if (pkt->getControlInfo())
         {
             Ieee802Ctrl *ctrl = check_and_cast<Ieee802Ctrl*>(pkt->removeControlInfo());
@@ -223,8 +248,8 @@ void HwmpProtocol::proccesData (cMessage *msg)
             delete ctrl;
         }
         this->QueuePacket(qpkt);
-        HwmpRtable::LookupResult result = m_rtable->LookupReactive (qpkt.dst);
-        HwmpRtable::LookupResult resultProact = m_rtable->LookupProactive ();
+//        HwmpRtable::LookupResult result = m_rtable->LookupReactive (qpkt.dst);
+//        HwmpRtable::LookupResult resultProact = m_rtable->LookupProactive ();
         if (result.retransmitter.isUnspecified() &&  resultProact.retransmitter.isUnspecified())
         {
             if (shouldSendPreq (qpkt.dst))
