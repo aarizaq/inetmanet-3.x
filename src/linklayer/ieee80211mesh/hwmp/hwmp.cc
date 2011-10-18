@@ -30,10 +30,14 @@
 
 std::ostream& operator<<(std::ostream& os, const HwmpRtable::ReactiveRoute& e)
 {
+    if (e.whenExpire<simTime() || e.retransmitter.isUnspecified())
+        os<< "Invalid"<<"\n";
+    else
+        os<< "Valid"<<"\n";
     os << " Next hop " << e.retransmitter <<"\n";
     os << "Interface " <<  e.interface <<"\n";
-    os << "metric " << e.metric <<"\n";
-    os << "hops " << e.hops <<"\n";
+    os << "metric 0x" <<std::hex<< e.metric <<"\n";
+    os << "hops " << (int)e.hops <<"\n";
     os << "whenExpire " << e.whenExpire <<"\n";
     os << "seqnum " << e.seqnum<< "\n";
     return os;
@@ -41,11 +45,15 @@ std::ostream& operator<<(std::ostream& os, const HwmpRtable::ReactiveRoute& e)
 
 std::ostream& operator<<(std::ostream& os, const HwmpRtable::ProactiveRoute& e)
 {
+    if (e.whenExpire<simTime() || e.root.isUnspecified())
+        os<< "Invalid"<<"\n";
+    else
+        os<< "Valid"<<"\n";
     os << " Root " << e.root <<"\n";
     os << " Next hop " << e.retransmitter <<"\n";
     os << "Interface " << e.interface <<"\n";
-    os << "metric " << e.metric<<"\n";
-    os << "hops " << e.hops << "\n";
+    os << "metric 0x" << std::hex << e.metric<<"\n";
+    os << "hops " << (int)e.hops << "\n";
     os << "whenExpire " << e.whenExpire <<"\n";
     os << "seqnum " << e.seqnum <<"\n";
     return os;
