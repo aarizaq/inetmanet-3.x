@@ -780,6 +780,8 @@ uint32_t HwmpProtocol::GetLinkMetric (const MACAddress &peerAddress)
     if (it->second.lastTime+par("neighborLive")<simTime())
     {
        neighborMap.erase(it);
+       // delete the route with this address like next hop
+       m_rtable->deleteNeighborRoutes(peerAddress);
        return 0xFFFFFFF; // no Neighbor
     }
     return 1; //WARNING: min hop for testing only
@@ -1903,8 +1905,6 @@ void HwmpProtocol::processFullPromiscuous (const cPolymorphic *details)
             else
                 cost=1;
         }
-        else
-            return;
     }
 
     std::map<MACAddress,Neighbor>::iterator it = neighborMap.find(frame->getTransmitterAddress());

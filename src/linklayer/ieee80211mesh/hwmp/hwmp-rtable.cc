@@ -258,3 +258,19 @@ HwmpRtable::getLookupProactivePtr ()
      return &m_root;
 }
 
+void
+HwmpRtable::deleteNeighborRoutes (MACAddress nextHop)
+{
+
+	for (std::map<MACAddress, ReactiveRoute>::iterator it = m_routes.begin ();it != m_routes.end ();)
+	{
+         if (it->second.retransmitter==nextHop)
+         {
+             std::map<MACAddress, ReactiveRoute>::iterator aux=it;
+             it++;
+             m_routes.erase(aux);
+         }
+         else
+             it++;
+	}
+}

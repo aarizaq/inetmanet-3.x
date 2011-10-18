@@ -153,13 +153,14 @@ public:
 
   ReactiveRoute * getLookupReactivePtr (MACAddress destination);
   ProactiveRoute * getLookupProactivePtr ();
-
+  void deleteNeighborRoutes (MACAddress nextHop);
   //\}
   bool IsValid ();
 
   /// When peer link with a given MAC-address fails - it returns list of unreachable destination addresses
   std::vector<HwmpFailedDestination> GetUnreachableDestinations (MACAddress peerAddress);
   friend class HwmpProtocol;
+
 private:
   /// List of routes
   std::map<MACAddress, ReactiveRoute>  m_routes;
