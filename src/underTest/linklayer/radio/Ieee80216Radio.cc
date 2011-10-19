@@ -126,25 +126,32 @@ void Ieee80216Radio::handleLowerMsgEnd(AirFrame *airframe)
         //    sendUp(airframe);
         //else
         //    delete airframe;
-        if (!radioModel->isReceivedCorrectly(airframe, list))
+        if (getRadioPosition().distance(airframe->getSenderPos())<0.000001)
         {
-#if OMNETPP_VERSION>0x0400
-            airframe->getEncapsulatedPacket()->setKind(list.size() > 1 ? COLLISION : BITERROR);
-#else
-            airframe->getEncapsulatedMsg()->setKind(list.size() > 1 ? COLLISION : BITERROR);
-#endif
-            airframe->setName(list.size() > 1 ? "COLLISION" : "BITERROR");
-            isCollision = true;
-            collisions++;
+            delete airframe;
         }
-        /*if(isCollision == false)
-           sendUp(airframe, list);
-           if(isCollision == true)
-           {
-           isCollision=false;
-           delete airframe;
-           } */
-        sendUp(airframe, list, rcvdPower);
+        else
+        {
+            if (!radioModel->isReceivedCorrectly(airframe, list))
+            {
+#if OMNETPP_VERSION>0x0400
+                airframe->getEncapsulatedPacket()->setKind(list.size() > 1 ? COLLISION : BITERROR);
+#else
+                airframe->getEncapsulatedMsg()->setKind(list.size() > 1 ? COLLISION : BITERROR);
+#endif
+                airframe->setName(list.size() > 1 ? "COLLISION" : "BITERROR");
+                isCollision = true;
+                collisions++;
+            }
+            /*if(isCollision == false)
+               sendUp(airframe, list);
+               if(isCollision == true)
+               {
+               isCollision=false;
+               delete airframe;
+               } */
+            sendUp(airframe, list, rcvdPower);
+        }
     }
     // all other messages are noise
     else
