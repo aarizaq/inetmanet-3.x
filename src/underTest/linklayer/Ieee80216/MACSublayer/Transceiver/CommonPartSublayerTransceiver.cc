@@ -39,6 +39,16 @@ CommonPartSublayerTransceiver::~CommonPartSublayerTransceiver()
     cancelAndDelete(endTimeout);
     cancelAndDelete(pendingRadioConfigMsg);
     cancelAndDelete(stopTransmision);
+    while (!requestMsgQueue.empty())
+    {
+        delete requestMsgQueue.back();
+        requestMsgQueue.pop_back();
+    }
+    while (!dataMsgQueue.empty())
+    {
+        delete dataMsgQueue.back();
+        dataMsgQueue.pop_back();
+    }
 }
 
 void CommonPartSublayerTransceiver::initialize()
