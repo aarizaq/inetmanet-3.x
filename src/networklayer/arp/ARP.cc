@@ -109,6 +109,11 @@ void ARP::initialize(int stage)
             entry->myIter = where; // note: "inserting a new element into a map does not invalidate iterators that point to existing elements"
             localAddress.push_back(nextHopAddr);
         }
+        nb = NotificationBoardAccess().get();
+        if (nb!=NULL && globalARP)
+        {
+        	nb->subscribe(this, NF_INTERFACE_IPv4CONFIG_CHANGED);
+        }
     }
 
 }
@@ -616,4 +621,53 @@ void ARP::setChangeAddress(const IPv4Address &oldAddress)
             entry->myIter = where; // note: "inserting a new element into a map does not invalidate iterators that point to existing elements"
         }
     }
+}
+
+
+void ARP::receiveChangeNotification(int category, const cPolymorphic *details)
+{
+    Enter_Method_Silent();
+    // host associated. Link is up. Change the state to init.
+    if (category == NF_INTERFACE_IPv4CONFIG_CHANGED)
+    {
+    	// rebuild the arp cache
+        for (int i=0; i<ift->getNumInterfaces(); i++)
+        {
+            InterfaceEntry *ie = ift->getInterface(i);
+            if (ie->isLoopback())
+                continue;
+            ARPCache::iterator it;
+            for (it=globalArpCache.begin();it!=globalArpCache.end();it++)
+            {
+                if (it->second->ie==ie)
+                    break;
+            }
+            if (it==globalArpCache.end())
+            {
+                ARPCacheEntry *entry = new ARPCacheEntry();
+                entry->ie = ie;
+                entry->pending = false;
+                entry->timer = NULL;
+                entry->numRetries = 0;
+                entry->macAddress = ie->getMacAddress();
+                IPv4Address ipAddr = ie->ipv4Data()->getIPAddress();
+                ARPCache::iterator where = globalArpCache.insert(globalArpCache.begin(), std::make_pair(ipAddr,entry));
+                entry->myIter = where; // note: "inserting a new element into a map does not invalidate iterators that point to existing elements"
+            }
+            else
+            {
+                // actualize
+            	ARPCacheEntry *entry = it->second;
+            	globalArpCache.erase(it);
+                entry->ie = ie;
+                entry->pending = false;
+                entry->timer = NULL;
+                entry->numRetries = 0;
+                entry->macAddress = ie->getMacAddress();
+                IPv4Address ipAddr = ie->ipv4Data()->getIPAddress();
+                ARPCache::iterator where = globalArpCache.insert(globalArpCache.begin(), std::make_pair(ipAddr,entry));
+                entry->myIter = where; // note: "inserting a new element into a map does not invalidate iterators that point to existing elements"
+            }
+        }
+	}
 }

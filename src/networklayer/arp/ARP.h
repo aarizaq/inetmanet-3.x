@@ -28,6 +28,7 @@
 #include "MACAddress.h"
 #include "ModuleAccess.h"
 #include "IPv4Address.h"
+#include "NotificationBoard.h"
 
 // Forward declarations:
 class ARPPacket;
@@ -38,7 +39,7 @@ class IRoutingTable;
 /**
  * ARP implementation.
  */
-class INET_API ARP : public cSimpleModule
+class INET_API ARP : public cSimpleModule, public INotifiable
 {
   public:
     struct ARPCacheEntry;
@@ -86,6 +87,7 @@ class INET_API ARP : public cSimpleModule
 
     IInterfaceTable *ift;
     IRoutingTable *rt;  // for Proxy ARP
+    NotificationBoard* nb;
 
   public:
     ARP() {}
@@ -94,6 +96,7 @@ class INET_API ARP : public cSimpleModule
     const MACAddress getDirectAddressResolution(const IPv4Address &) const;
     const IPv4Address getInverseAddressResolution(const MACAddress &) const;
     void setChangeAddress(const IPv4Address &);
+    virtual void receiveChangeNotification(int category, const cPolymorphic *details);
 
   protected:
     virtual void initialize(int stage);
