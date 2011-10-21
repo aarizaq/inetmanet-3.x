@@ -126,6 +126,6 @@ void WiMAXQoSTrafficGenerator::SendTraf(cPacket * apMsg, const char *apDest)
     ci->setPacketInterval(interDepartureTime);
 
     ip_d->setControlInfo(ci);
-
+    mNumTrafficMsgs++;
     send(ip_d, mLowergateOut);
 }
