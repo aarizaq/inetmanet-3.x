@@ -1131,10 +1131,11 @@ bool ManetRoutingBase::checkTimer(cMessage *msg)
     TimerMultiMap::iterator it = timerMultiMapPtr->begin();
     while (it->first<=simTime())
     {
-        if (it->second==NULL)
+        ManetTimer * timer =it->second;
+        if (timer==NULL)
             opp_error ("timer owner is bad");
         timerMultiMapPtr->erase(it);
-        it->second->expire();
+        timer->expire();
         if (timerMultiMapPtr->empty())
             break;
         it = timerMultiMapPtr->begin();
