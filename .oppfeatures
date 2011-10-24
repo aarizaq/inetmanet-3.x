@@ -614,4 +614,33 @@
         compileFlags = ""
         linkerFlags = ""
         />
+
+    <feature
+        id="DHCP"
+        name="IPv4 DHCP"
+        description = "DHCP protocol"
+        initiallyEnabled = "true"
+        requires = "UDP IPv4 Ethernet Ieee80211"
+        labels = ""
+        nedPackages = "
+                       inet.applications.dhcp
+                      "
+        extraSourceFolders = ""
+        compileFlags = "-DWITH_DHCP"
+        linkerFlags = ""
+        />
+    <feature
+        id="DHCP_examples"
+        name="DHCP examples"
+        description = "DHCP examples"
+        initiallyEnabled = "true"
+        requires = "DHCP"
+        labels = ""
+        nedPackages = "
+                       inet.examples.wireless.dhcp
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
 </features>
