@@ -98,19 +98,26 @@ void ARP::initialize(int stage)
             InterfaceEntry *ie = ift->getInterface(i);
             if (ie->isLoopback())
                 continue;
+            IPv4Address nextHopAddr = ie->ipv4Data()->getIPAddress();
+            if (nextHopAddr.isUnspecified())
+                continue; // if the address is not defined it isn't included in the global cache
+            // cehck if the entry exist
+            ARPCache::iterator it = globalArpCache.find(nextHopAddr);
+            if (it!=globalArpCache.end())
+                continue;
             ARPCacheEntry *entry = new ARPCacheEntry();
             entry->ie = ie;
             entry->pending = false;
             entry->timer = NULL;
             entry->numRetries = 0;
             entry->macAddress = ie->getMacAddress();
-            IPv4Address nextHopAddr = ie->ipv4Data()->getIPAddress();
+
             ARPCache::iterator where = globalArpCache.insert(globalArpCache.begin(), std::make_pair(nextHopAddr,entry));
             entry->myIter = where; // note: "inserting a new element into a map does not invalidate iterators that point to existing elements"
             localAddress.push_back(nextHopAddr);
         }
         nb = NotificationBoardAccess().get();
-        if (nb!=NULL && globalARP)
+        if (nb!=NULL)
         {
         	nb->subscribe(this, NF_INTERFACE_IPv4CONFIG_CHANGED);
         }
@@ -637,6 +644,8 @@ void ARP::receiveChangeNotification(int category, const cPolymorphic *details)
             InterfaceEntry *ie = ift->getInterface(i);
             if (ie->isLoopback())
                 continue;
+            if (ie->ipv4Data()->getIPAddress().isUnspecified())
+                continue; // if the address is not defined it isn't included in the global cache
             ARPCache::iterator it;
             for (it=globalArpCache.begin();it!=globalArpCache.end();it++)
             {
