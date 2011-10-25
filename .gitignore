@@ -5,6 +5,7 @@ src/Makefile
 /doc/doxy/
 /doc/neddoc/
 /examples/*/*/results/
+/.settings/*
 
 # ignore binary files
 out/
@@ -28,3 +29,5 @@ backups
 xxx
 /3rdparty
 /tmp/
+/src/.tmp*
+/src/sta*
