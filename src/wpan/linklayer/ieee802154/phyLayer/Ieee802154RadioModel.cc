@@ -9,7 +9,7 @@ static const double BER_LOWER_BOUND = 1e-10;
 void Ieee802154RadioModel::initializeFrom(cModule *radioModule)
 {
     // read from Ieee802154phy
-    snirThreshold = dB2fraction(radioModule->par("snirThreshold"));
+    snirThreshold = dB2fraction(radioModule->par("snirThreshold").doubleValue());
     ownerRadioModule = radioModule;
 }
 
@@ -39,7 +39,7 @@ bool Ieee802154RadioModel::isReceivedCorrectly(AirFrame *airframe, const SnrList
         EV << "COLLISION! Packet got lost\n";
         return false;
     }
-    if (!packetOk(snirMin, airframe->getEncapsulatedMsg()->getBitLength(), airframe->getBitrate()))
+    if (!packetOk(snirMin, frame->getBitLength(), airframe->getBitrate()))
     {
     	EV << "Packet has BIT ERRORS! It is lost!\n";
     	return false;
@@ -74,7 +74,7 @@ bool Ieee802154RadioModel::packetOk(double snirMin, int lengthMPDU, double bitra
     double MpduError = 1.0 - pow((1.0 - ber), lengthMPDU);
 
     EV << "ber: " << ber << endl;
-    double rand = dblrand();
+    // double rand = dblrand();
 
     if (dblrand() < errorHeader)
         return false; // error in header

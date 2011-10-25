@@ -125,11 +125,11 @@ void Ieee802154Phy::initialize(int stage)
 
         // The following parameters to be specified in omnetpp.ini
         m_debug             = par("debug");
-        rs.setChannelNumber(par("channelNumber")); // default: 11, 2.4G
+        rs.setChannelNumber(par("channelNumber").longValue()); // default: 11, 2.4G
         // carrierFrequency     = cc->par("carrierFrequency");  // taken from ChannelControl
         carrierFrequency = par("carrierFrequency");
-        sensitivity             = FWMath::dBm2mW(par("sensitivity")); // -85 dBm for 2450 MHz, -92 dBm for 868/915 MHz
-        thermalNoise            = FWMath::dBm2mW(par("thermalNoise"));
+        sensitivity             = FWMath::dBm2mW(par("sensitivity").doubleValue()); // -85 dBm for 2450 MHz, -92 dBm for 868/915 MHz
+        thermalNoise            = FWMath::dBm2mW(par("thermalNoise").doubleValue());
         transmitterPower        = par("transmitterPower");  // in mW
         if (transmitterPower > (double) getChannelControlPar("pMax"))
             error("[PHY]: transmitterPower cannot be bigger than pMax in ChannelControl!");
@@ -783,7 +783,7 @@ void Ieee802154Phy::PLME_bitRate(double bitRate)
     send(primitive, uppergateOut);
 }
 
-void Ieee802154Phy::PLME_ED_confirm(PHYenum status, UINT_8 energyLevel)
+void Ieee802154Phy::PLME_ED_confirm(PHYenum status, uint16_t energyLevel)
 {
     Ieee802154MacPhyPrimitives *primitive = new Ieee802154MacPhyPrimitives();
     primitive->setKind(PLME_ED_CONFIRM);
@@ -1162,10 +1162,10 @@ double Ieee802154Phy::getRate(char bitOrSymbol)
     return (rate*1000);     // return bit/s
 }
 
-UINT_8 Ieee802154Phy::calculateEnergyLevel()
+uint16_t Ieee802154Phy::calculateEnergyLevel()
 {
     int energy;
-    UINT_8 t_EnergyLevel;
+    uint16_t t_EnergyLevel;
 
     //refer to sec 6.7.7 for ED implementation details
     //ED is somewhat simulation/implementation specific; here's our way:

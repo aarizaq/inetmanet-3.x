@@ -25,12 +25,10 @@ network Ieee802154StarNet
 {
     parameters:
         double numHosts;
-        double playgroundSizeX;
-        double playgroundSizeY;
     submodules:
         host[numHosts]: Ieee802154Node {
             parameters:
-                @display("i=device/pocketpc_s;r=,,#707070");
+                @display("i=device/pocketpc_s;r=,,#707070;p=84,57");
         }
         channelcontrol: ChannelControl {
             parameters:

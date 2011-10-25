@@ -94,8 +94,10 @@ Ieee802154Mac::~Ieee802154Mac()
 
 void Ieee802154Mac::registerInterface()
 {
+    iface=NULL;
+    aExtendedAddress = MacToUint64(macaddress);
+    /*
     int size = sizeof(IE3ADDR);
-    aExtendedAddress = 0;
     for (int i=0; i<size; i++)
     {
         if (i<6)
@@ -104,7 +106,7 @@ void Ieee802154Mac::registerInterface()
             aExtendedAddress |=  aux<<(8*i);
         }
     }
-
+   */
     IInterfaceTable *ift = InterfaceTableAccess().getIfExists();
     if (!ift)
         return;
@@ -327,7 +329,7 @@ void Ieee802154Mac::initialize(int stage)
     }
     else if (2 == stage)
     {
-        if (iface->getMTU()!=Ieee802154Phy::aMaxMACFrameSize)
+        if (iface && (iface->getMTU()!=Ieee802154Phy::aMaxMACFrameSize))
         {
         	iface->setMtu(Ieee802154Phy::aMaxMACFrameSize);
         }
@@ -347,7 +349,7 @@ void Ieee802154Mac::initialize(int stage)
             ev << "**************************** PAN Parameters ****************************" << endl;
             ev << getParentModule()->getParentModule()->getFullName() << " is the PAN coordinator!" << endl;
             ev << "Channel Number: " << ppib.phyCurrentChannel << "; bit rate: " << phy_bitrate /1000 << " kb/s; symbol rate: " << phy_symbolrate/1000 << " ksymbol/s" << endl;
-            ev << "BO = " << (int)mpib.macBeaconOrder << ", BI = " << (int)aBaseSuperframeDuration * (1 << mpib.macBeaconOrder)/phy_symbolrate << " s; SO = " << (int)mpib.macSuperframeOrder << ", SD = " << (int)aBaseSuperframeDuration * (1 << mpib.macSuperframeOrder)/phy_symbolrate << " s; duty cycle = " << pow(2, (mpib.macSuperframeOrder-mpib.macBeaconOrder))*100 << "%" << endl;
+            ev << "BO = " << (int)mpib.macBeaconOrder << ", BI = " << (int)aBaseSuperframeDuration * (1 << mpib.macBeaconOrder)/phy_symbolrate << " s; SO = " << (int)mpib.macSuperframeOrder << ", SD = " << (int)aBaseSuperframeDuration * (1 << mpib.macSuperframeOrder)/phy_symbolrate << " s; duty cycle = " << pow(2.0, (mpib.macSuperframeOrder-mpib.macBeaconOrder))*100 << "%" << endl;
             ev << "There are " << (int)aBaseSuperframeDuration * (1 << mpib.macSuperframeOrder) << " symbols (" <<  (int)aBaseSuperframeDuration * (1 << mpib.macSuperframeOrder)/aUnitBackoffPeriod << " backoff periods) in CAP" << endl;
             ev << "Length of a unit of backoff period: " << bPeriod << " s" << endl;
             ev << "************************************************************************" << endl;
@@ -482,7 +484,7 @@ void Ieee802154Mac::handleMessage(cMessage* msg)
 
 void Ieee802154Mac::handleUpperMsg(cMessage* msg)
 {
-    UINT_8 index;
+    uint16_t index;
     IE3ADDR destAddr;
     bool gtsFound = false;
     numUpperPkt++;
@@ -871,7 +873,7 @@ void Ieee802154Mac::handleBeacon(Ieee802154Frame* frame)
     FrameCtrl frmCtrl;
     bool pending;
     simtime_t now,  tmpf, w_time,duration;
-    UINT_8 ifs;
+    uint16_t ifs;
     int  dataFrmLength;
     now = simTime();
 
@@ -895,7 +897,7 @@ void Ieee802154Mac::handleBeacon(Ieee802154Frame* frame)
         ifs = aMinLIFSPeriod;
     tmpf = duration * phy_symbolrate;
     tmpf += ifs;
-    rxBcnDuration = (UINT_8)(SIMTIME_DBL(tmpf) / aUnitBackoffPeriod);
+    rxBcnDuration = (uint16_t)(SIMTIME_DBL(tmpf) / aUnitBackoffPeriod);
     if (fmod(tmpf, aUnitBackoffPeriod) > 0.0)
         rxBcnDuration++;
 
@@ -973,7 +975,7 @@ void Ieee802154Mac::handleBeacon(Ieee802154Frame* frame)
                 gtsLength = 1;
             else
             {
-                gtsLength = (UINT_8)(duration/tmpf);
+                gtsLength = (uint16_t)(duration/tmpf);
                 if (fmod(duration, tmpf) > 0.0)
                     gtsLength++;
             }
@@ -1774,8 +1776,8 @@ void Ieee802154Mac::handle_PLME_SET_TRX_STATE_confirm(PHYenum status)
 //-------------------------------------------------------------------------------/
 /***************************** <SSCS-MAC Primitive> *****************************/
 //-------------------------------------------------------------------------------/
-void Ieee802154Mac::MCPS_DATA_request(UINT_8 SrcAddrMode, UINT_16 SrcPANId, IE3ADDR SrcAddr,
-                                      UINT_8 DstAddrMode, UINT_16 DstPANId, IE3ADDR DstAddr,
+void Ieee802154Mac::MCPS_DATA_request(uint16_t SrcAddrMode, UINT_16 SrcPANId, IE3ADDR SrcAddr,
+                                      uint16_t DstAddrMode, UINT_16 DstPANId, IE3ADDR DstAddr,
                                       cPacket* msdu,  Ieee802154TxOption TxOption)
 {
 
@@ -2946,7 +2948,7 @@ void Ieee802154Mac::handleSDTimer()     // we must make sure that outgoing CAP a
 void Ieee802154Mac::taskSuccess(char type, bool csmacaRes)
 {
     UINT_16 t_CAP;
-    UINT_8 ifs;
+    uint16_t ifs;
     simtime_t tmpf;
 
     if (type == 'b')    //beacon
@@ -2967,7 +2969,7 @@ void Ieee802154Mac::taskSuccess(char type, bool csmacaRes)
         // calculate <txBcnDuration>
         tmpf = calDuration(txBeacon) * phy_symbolrate;
         tmpf += ifs;
-        txBcnDuration = (UINT_8)(SIMTIME_DBL(tmpf) / aUnitBackoffPeriod);
+        txBcnDuration = (uint16_t)(SIMTIME_DBL(tmpf) / aUnitBackoffPeriod);
         if (fmod(tmpf,aUnitBackoffPeriod) > 0.0)
             txBcnDuration++;
         EV << "[MAC]: calculating txBcnDuration = " << (int)txBcnDuration << endl;
@@ -3537,7 +3539,7 @@ int Ieee802154Mac::calFrmByteLength(Ieee802154Frame* frame)
     return byteLength;
 }
 
-int Ieee802154Mac::calMHRByteLength(UINT_8 addrModeSum)
+int Ieee802154Mac::calMHRByteLength(uint16_t addrModeSum)
 {
     switch (addrModeSum)
     {
@@ -3609,7 +3611,7 @@ bool Ieee802154Mac::toParent(Ieee802154Frame* frame)
  */
 void Ieee802154Mac::gtsScheduler()
 {
-//    UINT_8 t_SO;
+//    uint16_t t_SO;
     simtime_t w_time, tmpf;
 
     ASSERT(isPANCoor);
@@ -3737,10 +3739,10 @@ void Ieee802154Mac::handleGtsTimer()
  *  The return value indicates the GTS start slot for corresponding device
  *  Note: devices are allowed to call this function only in CAP
  */
-UINT_8 Ieee802154Mac::gts_request_cmd(UINT_16 macShortAddr, UINT_8 length, bool isReceive)
+uint16_t Ieee802154Mac::gts_request_cmd(UINT_16 macShortAddr, uint16_t length, bool isReceive)
 {
     Enter_Method_Silent();
-    UINT_8 startSlot;
+    uint16_t startSlot;
     UINT_32 t_cap;
     ASSERT(isPANCoor);
     EV << "[GTS]: the PAN coordinator is processing GTS request from MAC address " << macShortAddr << endl;

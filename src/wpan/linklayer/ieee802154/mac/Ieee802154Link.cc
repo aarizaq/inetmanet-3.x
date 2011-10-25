@@ -1,7 +1,7 @@
 #include "Ieee802154Link.h"
 
 // Operations for HLISTLINK
-int addHListLink(HLISTLINK **hlistLink1, HLISTLINK **hlistLink2, UINT_16 hostid, UINT_8 sn)
+int addHListLink(HLISTLINK **hlistLink1, HLISTLINK **hlistLink2, IE3ADDR hostid, UINT_8 sn)
 {
     HLISTLINK *tmp;
     if (*hlistLink2 == 0)       //not exist yet
@@ -21,7 +21,7 @@ int addHListLink(HLISTLINK **hlistLink1, HLISTLINK **hlistLink2, UINT_16 hostid,
     return 0;
 }
 
-int updateHListLink(int oper, HLISTLINK **hlistLink1, HLISTLINK **hlistLink2, UINT_16 hostid, UINT_8 sn)
+int updateHListLink(int oper, HLISTLINK **hlistLink1, HLISTLINK **hlistLink2, IE3ADDR hostid, UINT_8 sn)
 {
     HLISTLINK *tmp;
     int ok;
@@ -73,7 +73,7 @@ int updateHListLink(int oper, HLISTLINK **hlistLink1, HLISTLINK **hlistLink2, UI
     return ok;
 }
 
-int chkAddUpdHListLink(HLISTLINK **hlistLink1, HLISTLINK **hlistLink2, UINT_16 hostid, UINT_8 sn)
+int chkAddUpdHListLink(HLISTLINK **hlistLink1, HLISTLINK **hlistLink2, IE3ADDR hostid, UINT_8 sn)
 {
     int i;
 
@@ -104,7 +104,7 @@ void emptyHListLink(HLISTLINK **hlistLink1, HLISTLINK **hlistLink2)
     *hlistLink2 = *hlistLink1;
 }
 
-void dumpHListLink(HLISTLINK *hlistLink1, UINT_16 hostid)
+void dumpHListLink(HLISTLINK *hlistLink1, IE3ADDR hostid)
 {
     HLISTLINK *tmp;
     int i;

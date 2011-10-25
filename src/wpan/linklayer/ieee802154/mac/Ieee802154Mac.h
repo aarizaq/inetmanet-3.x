@@ -177,77 +177,77 @@ struct taskPending
     Ieee802154Frame*    mcps_data_request_pendPkt;
     /*----------------
     bool    mlme_associate_request;
-    UINT_8  mlme_associate_request_STEP;
+    uint16_t  mlme_associate_request_STEP;
     char    mlme_associate_request_frFunc[81];
     bool    mlme_associate_request_SecurityEnable;
-    UINT_8  mlme_associate_request_CoordAddrMode;
+    uint16_t  mlme_associate_request_CoordAddrMode;
     Packet  *mlme_associate_request_pendPkt;
     //----------------
     bool    mlme_associate_response;
-    UINT_8  mlme_associate_response_STEP;
+    uint16_t  mlme_associate_response_STEP;
     char    mlme_associate_response_frFunc[81];
     IE3ADDR mlme_associate_response_DeviceAddress;
     Packet  *mlme_associate_response_pendPkt;
     //----------------
     bool    mlme_disassociate_request;
-    UINT_8  mlme_disassociate_request_STEP;
+    uint16_t  mlme_disassociate_request_STEP;
     char    mlme_disassociate_request_frFunc[81];
     bool    mlme_disassociate_request_toCoor;
     Packet  *mlme_disassociate_request_pendPkt;
     //----------------
     bool    mlme_orphan_response;
-    UINT_8  mlme_orphan_response_STEP;
+    uint16_t  mlme_orphan_response_STEP;
     char    mlme_orphan_response_frFunc[81];
     IE3ADDR mlme_orphan_response_OrphanAddress;
     //----------------
     bool    mlme_reset_request;
-    UINT_8  mlme_reset_request_STEP;
+    uint16_t  mlme_reset_request_STEP;
     char    mlme_reset_request_frFunc[81];
     bool    mlme_reset_request_SetDefaultPIB;
     //----------------
     bool    mlme_rx_enable_request;
-    UINT_8  mlme_rx_enable_request_STEP;
+    uint16_t  mlme_rx_enable_request_STEP;
     char    mlme_rx_enable_request_frFunc[81];
     UINT_32 mlme_rx_enable_request_RxOnTime;
     UINT_32 mlme_rx_enable_request_RxOnDuration;
     double  mlme_rx_enable_request_currentTime;
     //----------------
     bool    mlme_scan_request;
-    UINT_8  mlme_scan_request_STEP;
+    uint16_t  mlme_scan_request_STEP;
     char    mlme_scan_request_frFunc[81];
-    UINT_8  mlme_scan_request_ScanType;
-    UINT_8  mlme_scan_request_orig_macBeaconOrder;
-    UINT_8  mlme_scan_request_orig_macBeaconOrder2;
-    UINT_8  mlme_scan_request_orig_macBeaconOrder3;
+    uint16_t  mlme_scan_request_ScanType;
+    uint16_t  mlme_scan_request_orig_macBeaconOrder;
+    uint16_t  mlme_scan_request_orig_macBeaconOrder2;
+    uint16_t  mlme_scan_request_orig_macBeaconOrder3;
     UINT_16 mlme_scan_request_orig_macPANId;
     UINT_32 mlme_scan_request_ScanChannels;
-    UINT_8  mlme_scan_request_ScanDuration;
-    UINT_8  mlme_scan_request_CurrentChannel;
-    UINT_8  mlme_scan_request_ListNum;
-    UINT_8  mlme_scan_request_EnergyDetectList[27];
+    uint16_t  mlme_scan_request_ScanDuration;
+    uint16_t  mlme_scan_request_CurrentChannel;
+    uint16_t  mlme_scan_request_ListNum;
+    uint16_t  mlme_scan_request_EnergyDetectList[27];
     PAN_ELE mlme_scan_request_PANDescriptorList[27];
     //----------------
     bool    mlme_start_request;
-    UINT_8  mlme_start_request_STEP;
+    uint16_t  mlme_start_request_STEP;
     char    mlme_start_request_frFunc[81];
-    UINT_8  mlme_start_request_BeaconOrder;
-    UINT_8  mlme_start_request_SuperframeOrder;
+    uint16_t  mlme_start_request_BeaconOrder;
+    uint16_t  mlme_start_request_SuperframeOrder;
     bool    mlme_start_request_BatteryLifeExtension;
     bool    mlme_start_request_SecurityEnable;
     bool    mlme_start_request_PANCoordinator;
     UINT_16 mlme_start_request_PANId;
-    UINT_8  mlme_start_request_LogicalChannel;
+    uint16_t  mlme_start_request_LogicalChannel;
     //----------------
     bool    mlme_sync_request;
-    UINT_8  mlme_sync_request_STEP;
+    uint16_t  mlme_sync_request_STEP;
     char    mlme_sync_request_frFunc[81];
-    UINT_8  mlme_sync_request_numSearchRetry;
+    uint16_t  mlme_sync_request_numSearchRetry;
     bool    mlme_sync_request_tracking;
     //----------------
     bool    mlme_poll_request;
-    UINT_8  mlme_poll_request_STEP;
+    uint16_t  mlme_poll_request_STEP;
     char    mlme_poll_request_frFunc[81];
-    UINT_8  mlme_poll_request_CoordAddrMode;
+    uint16_t  mlme_poll_request_CoordAddrMode;
     UINT_16 mlme_poll_request_CoordPANId;
     IE3ADDR mlme_poll_request_CoordAddress;
     bool    mlme_poll_request_SecurityEnable;
@@ -264,6 +264,32 @@ struct taskPending
 
 class INET_API Ieee802154Mac: public cSimpleModule, public INotifiable
 {
+protected:
+	static uint64_t MacToUint64(const MACAddress &add)
+	{
+	    uint64_t aux;
+	    uint64_t lo=0;
+	    for (int i=0; i<MAC_ADDRESS_BYTES; i++)
+	    {
+	        aux  = add.getAddressByte(MAC_ADDRESS_BYTES-i-1);
+	        aux <<= 8*i;
+	        lo  |= aux ;
+	    }
+	    return lo;
+	}
+
+	static MACAddress Uint64ToMac(uint64_t lo)
+	{
+	    MACAddress add;
+	    add.setAddressByte(0, (lo>>40)&0xff);
+	    add.setAddressByte(1, (lo>>32)&0xff);
+	    add.setAddressByte(2, (lo>>24)&0xff);
+	    add.setAddressByte(3, (lo>>16)&0xff);
+	    add.setAddressByte(4, (lo>>8)&0xff);
+	    add.setAddressByte(5, lo&0xff);
+	    return add;
+	}
+
   public:
     /**
     * @name Constructor and destructor
@@ -332,7 +358,7 @@ class INET_API Ieee802154Mac: public cSimpleModule, public INotifiable
     /** This function is a part of simplified GTS request process in the model.
      *  After association, each device should call this function of its PAN Coordinator
      *  to apply for GTS and get its GTS starting number from the return value */
-    virtual UINT_8    gts_request_cmd    (UINT_16 macShortAddr, UINT_8 length, bool isReceive);
+    virtual uint16_t    gts_request_cmd    (UINT_16 macShortAddr, uint16_t length, bool isReceive);
 
     /**
     * @name MAC-PHY primitives related functions
@@ -351,8 +377,8 @@ class INET_API Ieee802154Mac: public cSimpleModule, public INotifiable
     * @name SSCS-MAC primitives related functions
     */
     //@{
-    virtual void    MCPS_DATA_request    (UINT_8 SrcAddrMode, UINT_16 SrcPANId, IE3ADDR SrcAddr,
-                                          UINT_8 DstAddrMode, UINT_16 DstPANId, IE3ADDR DstAddr,
+    virtual void    MCPS_DATA_request    (uint16_t SrcAddrMode, UINT_16 SrcPANId, IE3ADDR SrcAddr,
+                                          uint16_t DstAddrMode, UINT_16 DstPANId, IE3ADDR DstAddr,
                                           cPacket* msdu,     Ieee802154TxOption TxOption);
     virtual void    MCPS_DATA_confirm    (MACenum status);
     virtual void    MCPS_DATA_indication    (Ieee802154Frame*);
@@ -444,7 +470,7 @@ class INET_API Ieee802154Mac: public cSimpleModule, public INotifiable
     virtual int    calFrmByteLength    (Ieee802154Frame*);
 
     /** @brief calculate byte length of frame header  */
-    virtual int    calMHRByteLength    (UINT_8);
+    virtual int    calMHRByteLength    (uint16_t);
 
     /** @brief calculate duration of the frame transmitted over wireless channel  */
     virtual simtime_t    calDuration    (Ieee802154Frame*);
@@ -569,10 +595,10 @@ class INET_API Ieee802154Mac: public cSimpleModule, public INotifiable
     */
     //@{
     /** @brief beacon order of incoming superframe */
-    UINT_8 rxBO;
+    uint16_t rxBO;
 
     /** @brief superframe order of incoming superframe */
-    UINT_8 rxSO;
+    uint16_t rxSO;
 
     /** @brief duration (in symbol) of a outgoing superframe slot (aBaseSlotDuration * 2^mpib.macSuperframeOrder) */
     UINT_32 txSfSlotDuration;
@@ -581,10 +607,10 @@ class INET_API Ieee802154Mac: public cSimpleModule, public INotifiable
     UINT_32 rxSfSlotDuration;
 
     /** @brief duration (in backoff periods) of latest outgoing beacon */
-    UINT_8 txBcnDuration;
+    uint16_t txBcnDuration;
 
     /** @brief duration (in backoff periods) of latest incoming beacon */
-    UINT_8 rxBcnDuration;
+    uint16_t rxBcnDuration;
 
     /** @brief length (in s) of a unit of backoff period, aUnitBackoffPeriod/phy_symbolrate */
     simtime_t bPeriod;
@@ -620,17 +646,17 @@ class INET_API Ieee802154Mac: public cSimpleModule, public INotifiable
     bool notAssociated;
 
     /** @brief num of incoming beacons lost in a row */
-    UINT_8 bcnLossCounter;
+    uint16_t bcnLossCounter;
     //@}
 
     /**
     * @name CSMA/CA related variables
     */
     //@{
-    UINT_8 NB;
-    UINT_8 CW;
-    UINT_8 BE;
-    UINT_8 backoffStatus;   // 0: no backoff; 1: backoff successful; 2: backoff failed; 99: is backing off
+    uint16_t NB;
+    uint16_t CW;
+    uint16_t BE;
+    uint16_t backoffStatus;   // 0: no backoff; 1: backoff successful; 2: backoff failed; 99: is backing off
     int bPeriodsLeft;   // backoff periods left
     bool csmacaAckReq;
     bool csmacaWaitNextBeacon;
@@ -641,17 +667,17 @@ class INET_API Ieee802154Mac: public cSimpleModule, public INotifiable
     */
     //@{
     /** @brief number of GTS descriptors being maintained */
-    UINT_8 gtsCount;
+    uint16_t gtsCount;
 
     /** @brief list of GTS descriptors for all existing GTS being maintained */
     GTSDescriptor gtsList[7];
 
     /** @brief store new value of final superframe slot in the CAP after updating GTS settings
      and put into effect when next beacon is transmitted  */
-    UINT_8 tmp_finalCap;
+    uint16_t tmp_finalCap;
 
     /** @brief index of current running GTS, 99 means not in GTS */
-    UINT_8 indexCurrGts;
+    uint16_t indexCurrGts;
     //@}
 
 
@@ -660,10 +686,10 @@ class INET_API Ieee802154Mac: public cSimpleModule, public INotifiable
     */
     //@{
     /** @brief number of superframe slots for the GTS, calculated in handleBeacon()  */
-    UINT_8 gtsLength;
+    uint16_t gtsLength;
 
     /** @brief GTS starting slot, 0 means no GTS for me, allocated by the PAN coordinator when applying for GTS */
-    UINT_8 gtsStartSlot;
+    uint16_t gtsStartSlot;
 
     /** @brief duration of one complete data transaction in GTS, calculated in handleBeacon() */
     simtime_t gtsTransDuration;
@@ -782,7 +808,7 @@ class INET_API Ieee802154Mac: public cSimpleModule, public INotifiable
      * that GTS timer is currently scheduling for its starting;
      * for devices: 99 indicating currently being in my GTS
     */
-    UINT_8 index_gtsTimer;
+    uint16_t index_gtsTimer;
     //@}
 
     /**
@@ -805,16 +831,16 @@ class INET_API Ieee802154Mac: public cSimpleModule, public INotifiable
     bool waitGTSAck;
 
     /** @brief number of retries for txing a beacon or cmd frame in txBcnCmd */
-    UINT_8 numBcnCmdRetry;
+    uint16_t numBcnCmdRetry;
 
     /** @brief number of retries for txing a beacon or cmd frame in txBcnCmdUpper */
-    UINT_8 numBcnCmdUpperRetry;
+    uint16_t numBcnCmdUpperRetry;
 
     /** @brief number of retries for txing a data frame in txData */
-    UINT_8 numDataRetry;
+    uint16_t numDataRetry;
 
     /** @brief number of retries for txing a data frame in txGTS */
-    UINT_8 numGTSRetry;
+    uint16_t numGTSRetry;
     //@}
 
     /**

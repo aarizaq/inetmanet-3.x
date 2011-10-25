@@ -105,7 +105,7 @@ BMacLayer::~BMacLayer()
 
 void BMacLayer::registerInterface()
 {
-
+    iface=NULL;
 
     IInterfaceTable *ift = InterfaceTableAccess().getIfExists();
     if (!ift)
@@ -253,7 +253,7 @@ void BMacLayer::initialize(int stage)
            EV << " !!! slotDuration" << slotDuration << " and the maximum time need to transmit a frame is " <<maxFrameTime <<endl;
            EV << " !!! Possibility of problems" <<endl;
         }
-        if (iface->getMTU()!=Ieee802154Phy::aMaxMACFrameSize)
+        if (iface && (iface->getMTU()!=Ieee802154Phy::aMaxMACFrameSize))
         {
         	iface->setMtu(Ieee802154Phy::aMaxMACFrameSize);
         }

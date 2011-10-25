@@ -48,7 +48,7 @@ class INET_API Ieee802154Phy : public ChannelAccess
     virtual void        handleLowerMsgEnd   (AirFrame*);
     virtual AirFrame*   encapsulatePacket   (cMessage*);
     void                bufferMsg       (AirFrame*);
-    AirFrame*       unbufferMsg     (cMessage*);
+    AirFrame*           unbufferMsg     (cMessage*);
     void                sendUp          (cMessage*);
     void                sendDown        (AirFrame*);
 
@@ -56,25 +56,24 @@ class INET_API Ieee802154Phy : public ChannelAccess
     virtual IRadioModel *createRadioModel() {return (IRadioModel *)createOne(par("radioModel").stringValue());}
 
     // primitives processing functions
-    void                PD_DATA_confirm     (PHYenum status);
-    void                PD_DATA_confirm     (PHYenum status,short);
-    void                PLME_CCA_confirm    (PHYenum status);
-    void                PLME_ED_confirm     (PHYenum status, UINT_8 energyLevel);
-    void                handle_PLME_SET_TRX_STATE_request   (PHYenum setState);
-    void                PLME_SET_TRX_STATE_confirm      (PHYenum status);
-    void                handle_PLME_SET_request         (Ieee802154MacPhyPrimitives *primitive);
-    void                PLME_SET_confirm            (PHYenum status, PHYPIBenum attribute);
-    void                PLME_bitRate(double bitRate);
+    virtual void        PD_DATA_confirm     (PHYenum status);
+    virtual void        PD_DATA_confirm     (PHYenum status,short);
+    virtual void        PLME_CCA_confirm    (PHYenum status);
+    virtual void        PLME_ED_confirm     (PHYenum status, uint16_t energyLevel);
+    virtual void        handle_PLME_SET_TRX_STATE_request   (PHYenum setState);
+    virtual void        PLME_SET_TRX_STATE_confirm      (PHYenum status);
+    virtual void        handle_PLME_SET_request         (Ieee802154MacPhyPrimitives *primitive);
+    virtual void        PLME_SET_confirm            (PHYenum status, PHYPIBenum attribute);
+    virtual void        PLME_bitRate(double bitRate);
 
-    void                setRadioState           (RadioState::State newState);
-    int                 getChannelNumber        () const {return rs.getChannelNumber();}
-    void                addNewSnr           ();
-    void                changeChannel       (int newChannel);
-    bool                channelSupported        (int channel);
-    UINT_8              calculateEnergyLevel    ();
-    double              getRate             (char dataOrSymbol);
-
-    bool processAirFrame (AirFrame*);
+    virtual void        setRadioState           (RadioState::State newState);
+    virtual int         getChannelNumber        () const {return rs.getChannelNumber();}
+    virtual void        addNewSnr           ();
+    virtual void        changeChannel       (int newChannel);
+    virtual bool        channelSupported        (int channel);
+    virtual uint16_t      calculateEnergyLevel    ();
+    virtual double      getRate             (char dataOrSymbol);
+    virtual bool processAirFrame (AirFrame*);
 
   protected:
     bool                m_debug;        // debug switch

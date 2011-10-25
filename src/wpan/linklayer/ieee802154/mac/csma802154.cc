@@ -25,39 +25,14 @@
  * part of:    Modifications to the MF-2 framework by CSEM
  **************************************************************************/
 
-#include "csma802154.h"
+#include <assert.h>
 #include "InterfaceTableAccess.h"
 #include "MACAddress.h"
 #include "Ieee802Ctrl_m.h"
-#include <assert.h>
 #include "Ieee802154Phy.h"
+#include "csma802154.h"
 
 Define_Module(csma802154);
-static uint64_t MacToUint64(const MACAddress &add)
-{
-    uint64_t aux;
-    uint64_t lo=0;
-    for (int i=0; i<MAC_ADDRESS_BYTES; i++)
-    {
-        aux  = add.getAddressByte(MAC_ADDRESS_BYTES-i-1);
-        aux <<= 8*i;
-        lo  |= aux ;
-    }
-    return lo;
-}
-
-static MACAddress Uint64ToMac(uint64_t lo)
-{
-    MACAddress add;
-    add.setAddressByte(0, (lo>>40)&0xff);
-    add.setAddressByte(1, (lo>>32)&0xff);
-    add.setAddressByte(2, (lo>>24)&0xff);
-    add.setAddressByte(3, (lo>>16)&0xff);
-    add.setAddressByte(4, (lo>>8)&0xff);
-    add.setAddressByte(5, lo&0xff);
-    return add;
-}
-
 /**
  * Initialize the of the omnetpp.ini variables in stage 1. In stage
  * two subscribe to the RadioState.
@@ -181,7 +156,7 @@ void csma802154::initialize(int stage)
     }
     else if (stage == 2)
     {
-        if (iface->getMTU()!=Ieee802154Phy::aMaxMACFrameSize)
+        if (iface && (iface->getMTU()!=Ieee802154Phy::aMaxMACFrameSize))
         {
         	iface->setMtu(Ieee802154Phy::aMaxMACFrameSize);
         }
