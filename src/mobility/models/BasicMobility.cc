@@ -110,10 +110,10 @@ void BasicMobility::initialize(int stage)
             	mininumTopLeft.y=areaTopLeft.y;
             if (mininumTopLeft.x>areaTopLeft.x)
             	mininumTopLeft.x=areaTopLeft.x;
-            if (areaBottomRight.x<areaBottomRight.x)
-            	areaBottomRight.x=areaBottomRight.x;
-            if (areaBottomRight.y<areaBottomRight.y)
-            	areaBottomRight.y=areaBottomRight.y;
+            if (maximumRightBotton.x<areaBottomRight.x)
+            	maximumRightBotton.x=areaBottomRight.x;
+            if (maximumRightBotton.y<areaBottomRight.y)
+            	maximumRightBotton.y=areaBottomRight.y;
         }
 
         initPos();
