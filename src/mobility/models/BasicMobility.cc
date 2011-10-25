@@ -45,6 +45,22 @@ static bool parseIntTo(const char *s, double& destValue)
     return true;
 }
 
+/**
+* Sets up background size by adding the following tags:
+* "p=0,0;b=$playgroundSizeX,$playgroundSizeY"
+*/
+void BasicMobility::updateDisplayString()
+{
+	cModule *playgroundMod = this->getParentModule();
+	while (playgroundMod->getParentModule())
+	    playgroundMod = playgroundMod->getParentModule();
+     cDisplayString& d = playgroundMod->getDisplayString();
+     d.setTagArg("bgp", 0, (long)mininumTopLeft.x);
+     d.setTagArg("bgp", 1, (long)mininumTopLeft.y);
+     d.setTagArg("bgb", 0, (long) maximumRightBotton.x);
+     d.setTagArg("bgb", 1, (long) maximumRightBotton.y);
+}
+
 void BasicMobility::initPos()
 {
     // reading the coordinates from omnetpp.ini makes predefined scenarios a lot easier
@@ -102,18 +118,34 @@ void BasicMobility::initialize(int stage)
         {
         	mininumTopLeft=areaTopLeft;
         	maximumRightBotton = areaBottomRight;
+        	updateDisplayString();
         	areaInitalized=true;
         }
         else
         {
+            bool change=false;
             if (mininumTopLeft.y>areaTopLeft.y)
-            	mininumTopLeft.y=areaTopLeft.y;
+            {
+                mininumTopLeft.y=areaTopLeft.y;
+                change=true;
+            }
             if (mininumTopLeft.x>areaTopLeft.x)
-            	mininumTopLeft.x=areaTopLeft.x;
+            {
+           	    mininumTopLeft.x=areaTopLeft.x;
+           	    change=true;
+            }
             if (maximumRightBotton.x<areaBottomRight.x)
-            	maximumRightBotton.x=areaBottomRight.x;
+            {
+                maximumRightBotton.x=areaBottomRight.x;
+                change=true;
+            }
             if (maximumRightBotton.y<areaBottomRight.y)
-            	maximumRightBotton.y=areaBottomRight.y;
+            {
+                maximumRightBotton.y=areaBottomRight.y;
+                change=true;
+            }
+            if (change)
+                updateDisplayString();
         }
 
         initPos();

@@ -154,6 +154,8 @@ class INET_API BasicMobility : public BasicModule
      */
     virtual void handleIfOutside(BorderPolicy policy, Coord& targetPos, Coord& step, double& angle);
 
+    virtual void updateDisplayString();
+
 };
 
 #endif
