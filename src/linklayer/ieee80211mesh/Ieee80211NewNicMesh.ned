@@ -28,7 +28,7 @@ import inet.linklayer.IWirelessNic;
 //
 // This NIC implements an 802.11g network interface card in ad-hoc mode.
 //
-module Ieee80211gNicMesh like IWirelessNic
+module Ieee80211NewNicMesh like IWirelessNic
 {
     parameters:
         @display("i=block/ifcard");
