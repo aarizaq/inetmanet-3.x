@@ -218,8 +218,24 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
+					<folderInfo id="org.omnetpp.cdt.gnu.config.release.62523253.1656457420" name="/" resourcePath="src">
+						<toolChain id="org.omnetpp.cdt.gnu.toolchain.release.1815605490" name="GCC for OMNeT++" superClass="org.omnetpp.cdt.gnu.toolchain.release" unusedChildren="">
+							<tool id="cdt.managedbuild.tool.gnu.archiver.base.1627579653" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base.1961014933"/>
+							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.251148459" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1994843943">
+								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.658832669" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+							</tool>
+							<tool id="cdt.managedbuild.tool.gnu.c.compiler.base.640177297" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.base.701532606">
+								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1218667426" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
+							</tool>
+							<tool id="cdt.managedbuild.tool.gnu.c.linker.base.1145137119" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.base.1885751961"/>
+							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.base.454548800" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base.348498130"/>
+							<tool id="cdt.managedbuild.tool.gnu.assembler.base.245697245" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.base.1670401424">
+								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1664439077" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
+							</tool>
+						</toolChain>
+					</folderInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="src"/>
+						<entry excluding="linklayer/rstp|linklayer/ieee8021d|applications/voiptool|transport/tcp_nsc|transport/tcp_lwip" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

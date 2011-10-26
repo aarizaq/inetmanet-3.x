@@ -1,8 +1,8 @@
 examples
 src
+-inet.linklayer.rstp
 -inet.applications.voiptool
+-inet.transport.tcp_lwip
 -inet.examples.voiptool
 -inet.linklayer.ieee8021d
--inet.linklayer.rstp
--inet.transport.tcp_lwip
 -inet.transport.tcp_nsc
