@@ -81,21 +81,21 @@ class HwmpProtocol : public ManetRoutingBase
 {
 public:
     HwmpProtocol ();
-    ~HwmpProtocol ();
+    virtual ~HwmpProtocol ();
     void initialize (int);
-    int numInitStages() const  {return 5;}
-    void handleMessage(cMessage *msg);
+    virtual int numInitStages() const  {return 5;}
+    virtual void handleMessage(cMessage *msg);
     // Detect a transmission fault
     virtual void processLinkBreak(const cPolymorphic *details);
-    void packetFailedMac (Ieee80211TwoAddressFrame *frame);
+    virtual void packetFailedMac (Ieee80211TwoAddressFrame *frame);
     // promiscuous frame process.
     virtual void processFullPromiscuous (const cPolymorphic *details);
     ///\brief This callback is used to obtain active neighbours on a given interface
     ///\param cb is a callback, which returns a list of addresses on given interface (uint32_t)
     ///\name Proactive PREQ mechanism:
     ///\{
-    void setRoot ();
-    void UnsetRoot ();
+    virtual void setRoot ();
+    virtual void UnsetRoot ();
     ///\}
     ///\brief Statistics:
     virtual bool isProactive(){return false;};
@@ -178,14 +178,14 @@ private:
 
     ///\name Interaction with HWMP MAC plugin
     //\{
-    void proccessRann(cMessage *msg) {delete msg; return;}
-    void proccessPreq(cMessage *msg);
-    void proccessPrep(cMessage *msg);
-    void proccessPerr(cMessage *msg);
-    void proccessGann(cMessage *msg);
+    void processRann(cMessage *msg) {delete msg; return;}
+    void processPreq(cMessage *msg);
+    void processPrep(cMessage *msg);
+    void processPerr(cMessage *msg);
+    void processGann(cMessage *msg);
 
 
-    void proccesData (cMessage *msg);
+    void processData (cMessage *msg);
     void receivePreq (Ieee80211ActionPREQFrame *preqFrame, MACAddress from, uint32_t interface, MACAddress fromMp, uint32_t metric);
     void receivePrep (Ieee80211ActionPREPFrame * prepFrame, MACAddress from, uint32_t interface, MACAddress fromMp, uint32_t metric);
     void receivePerr (std::vector<HwmpFailedDestination> destinations, MACAddress from, uint32_t interface, MACAddress fromMp);

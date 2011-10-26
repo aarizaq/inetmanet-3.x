@@ -46,10 +46,11 @@ simple HwmpProtocol extends BaseRouting like IManetRouting
         bool   isGan=default(false);
         double neighborLive @unit("s")=default(1024*5000 us);  // dot11MeshHWMPactivePathTimeout, maximun time to considere a neighbor live without receive a message
         int    lostThreshold = default(1); // number of consecutive lost packet to consider break path and lost the neighbor
-        bool concurrentReactive=default(false);
-        bool isRoot=default(false);
+        bool concurrentReactive=default(false); // it allows that a reactive can be search at the same time that the proactive route is used 
+        bool isRoot=default(false); // this node is root, only must be one per network
+        bool minHopCost=default(true); // use the min-hop like cost, if false use the airlink metric.
         int maxTtl=default(32);
-        bool updateLifetimeInFrowarding=default(true);
+        bool updateLifetimeInFrowarding=default(true); // refress the route life time every time that this route is used
         int unicastPerrThreshold = default(32);
         int unicastPreqThreshold = default(1);
         int unicastDataThreshold = default(1);

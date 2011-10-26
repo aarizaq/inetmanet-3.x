@@ -24,6 +24,7 @@
 #include "Ieee80211MgmtFrames_m.h"
 #include "Ieee802Ctrl_m.h"
 #include <Ieee80211Etx.h>
+#include "ControlManetRouting_m.h"
 #include "Radio80211aControlInfo_m.h"
 
 #define delay uniform(0.0,0.01)
@@ -204,70 +205,87 @@ HwmpProtocol::initialize(int stage)
 void HwmpProtocol::handleMessage(cMessage *msg)
 {
     if (!checkTimer(msg))
-        proccesData (msg);
+        processData (msg);
     scheduleEvent();
 }
 
-void HwmpProtocol::proccesData (cMessage *msg)
+void HwmpProtocol::processData (cMessage *msg)
 {
     Ieee80211ActionHWMPFrame * pkt = dynamic_cast<Ieee80211ActionHWMPFrame*>(msg);
     if (pkt==NULL)
     {
         Ieee80211MeshFrame * pkt = dynamic_cast<Ieee80211MeshFrame*>(msg);
-        if (pkt==NULL)
+        ControlManetRouting *ctrlmanet =dynamic_cast<ControlManetRouting*>(msg);
+        if (pkt)  // is data packet, enqueue and search new route
         {
-            delete msg;
-            return;
-        }
-        // seach route to destination
-        // pkt->getAddress4(); hass the destination address
-        HwmpRtable::LookupResult result = m_rtable->LookupReactive (pkt->getAddress4());
-        HwmpRtable::LookupResult resultProact = m_rtable->LookupProactive ();
-        // Intermediate search
-        if (hasPar("intermediateSeach") && !par("intermediateSeach").boolValue() &&
-               !isLocalAddress(pkt->getAddress3()))
-        {
+            // seach route to destination
+        	// pkt->getAddress4(); hass the destination address
+            HwmpRtable::LookupResult result = m_rtable->LookupReactive (pkt->getAddress4());
+            HwmpRtable::LookupResult resultProact = m_rtable->LookupProactive ();
+            // Intermediate search
+            if (hasPar("intermediateSeach") && !par("intermediateSeach").boolValue() &&	!isLocalAddress(pkt->getAddress3()))
+        	{
+                if (result.retransmitter.isUnspecified() &&  resultProact.retransmitter.isUnspecified())
+                {
+                    // send perror
+                    std::vector<HwmpFailedDestination> destinations;
+                    HwmpFailedDestination dst;
+                    dst.destination = pkt->getAddress4();
+                    dst.seqnum = 0;
+
+                    destinations.push_back(dst);
+                    initiatePathError (makePathError (destinations));
+                    delete msg;
+                    return;
+                }
+            }
+            // enqueue and request route
+            QueuedPacket qpkt;
+            qpkt.pkt= pkt;
+            qpkt.dst=pkt->getAddress4();
+            qpkt.src=pkt->getAddress3();
+            // Intermediate search
+            if (pkt->getControlInfo())
+            {
+                Ieee802Ctrl *ctrl = check_and_cast<Ieee802Ctrl*>(pkt->removeControlInfo());
+                qpkt.inInterface = ctrl->getInputPort();
+                delete ctrl;
+            }
+            this->QueuePacket(qpkt);
+//            HwmpRtable::LookupResult result = m_rtable->LookupReactive (qpkt.dst);
+//            HwmpRtable::LookupResult resultProact = m_rtable->LookupProactive ();
             if (result.retransmitter.isUnspecified() &&  resultProact.retransmitter.isUnspecified())
             {
-            	// send perror
-                std::vector<HwmpFailedDestination> destinations;
+                if (shouldSendPreq (qpkt.dst))
+                {
+                    GetNextHwmpSeqno ();
+                    uint32_t dst_seqno = 0;
+                    m_stats.initiatedPreq ++;
+                    requestDestination (qpkt.dst, dst_seqno);
+                }
+            }
+        }
+        else if (ctrlmanet && ctrlmanet->getOptionCode()==MANET_ROUTE_NOROUTE)
+        {
 
+            MACAddress destination = ctrlmanet->getDestAddress().getMACAddress();
+            MACAddress source = ctrlmanet->getSrcAddress().getMACAddress();
+            HwmpRtable::LookupResult result = m_rtable->LookupReactive (destination);
+            HwmpRtable::LookupResult resultProact = m_rtable->LookupProactive ();
+            if (result.retransmitter.isUnspecified() &&  resultProact.retransmitter.isUnspecified())
+            {
+                // send perror
+                std::vector<HwmpFailedDestination> destinations;
                 HwmpFailedDestination dst;
                 dst.destination = pkt->getAddress4();
                 dst.seqnum = 0;
-
                 destinations.push_back(dst);
                 initiatePathError (makePathError (destinations));
-            	delete msg;
-            	return;
             }
+            delete msg;
         }
-        // enqueue and request route
-        QueuedPacket qpkt;
-        qpkt.pkt= pkt;
-        qpkt.dst=pkt->getAddress4();
-        qpkt.src=pkt->getAddress3();
-        // Intermediate search
-
-        if (pkt->getControlInfo())
-        {
-            Ieee802Ctrl *ctrl = check_and_cast<Ieee802Ctrl*>(pkt->removeControlInfo());
-            qpkt.inInterface = ctrl->getInputPort();
-            delete ctrl;
-        }
-        this->QueuePacket(qpkt);
-//        HwmpRtable::LookupResult result = m_rtable->LookupReactive (qpkt.dst);
-//        HwmpRtable::LookupResult resultProact = m_rtable->LookupProactive ();
-        if (result.retransmitter.isUnspecified() &&  resultProact.retransmitter.isUnspecified())
-        {
-            if (shouldSendPreq (qpkt.dst))
-            {
-                GetNextHwmpSeqno ();
-                uint32_t dst_seqno = 0;
-                m_stats.initiatedPreq ++;
-                requestDestination (qpkt.dst, dst_seqno);
-            }
-        }
+        else
+            delete msg; // in other case delete
         return;
     }
 
@@ -283,19 +301,19 @@ void HwmpProtocol::proccesData (cMessage *msg)
     switch (pkt->getBody().getId())
     {
     case IE11S_RANN:
-        proccessRann(msg);
+        processRann(msg);
         break;
     case IE11S_PREQ:
-        proccessPreq(msg);
+        processPreq(msg);
         break;
     case IE11S_PREP:
-        proccessPrep(msg);
+        processPrep(msg);
         break;
     case IE11S_PERR:
-        proccessPerr(msg);
+        processPerr(msg);
         break;
     case IE11S_GANN:
-        proccessGann(msg);
+        processGann(msg);
         break;
     default:
         opp_error("");
@@ -817,7 +835,8 @@ uint32_t HwmpProtocol::GetLinkMetric (const MACAddress &peerAddress)
        m_rtable->deleteNeighborRoutes(peerAddress);
        return 0xFFFFFFF; // no Neighbor
     }
-    return 1; //WARNING: min hop for testing only
+    if (par("minHopCost").boolValue()) // the cost is 1
+       return 1; //WARNING: min hop for testing only
 
     if (useEtxProc)
     {
@@ -835,7 +854,7 @@ uint32_t HwmpProtocol::GetLinkMetric (const MACAddress &peerAddress)
     }
 }
 
-void HwmpProtocol::proccessPreq(cMessage *msg)
+void HwmpProtocol::processPreq(cMessage *msg)
 {
     Ieee80211ActionPREQFrame *frame = dynamic_cast<Ieee80211ActionPREQFrame*>(msg);
     if (frame==NULL)
@@ -859,7 +878,7 @@ void HwmpProtocol::proccessPreq(cMessage *msg)
     receivePreq (frame, from,interface,fromMp,metric);
 }
 
-void HwmpProtocol::proccessPrep(cMessage *msg)
+void HwmpProtocol::processPrep(cMessage *msg)
 {
     Ieee80211ActionPREPFrame *frame = dynamic_cast<Ieee80211ActionPREPFrame*>(msg);
     if (frame==NULL)
@@ -884,7 +903,7 @@ void HwmpProtocol::proccessPrep(cMessage *msg)
     receivePrep (frame, from,interface,fromMp,metric);
 }
 
-void HwmpProtocol::proccessPerr(cMessage *msg)
+void HwmpProtocol::processPerr(cMessage *msg)
 {
     Ieee80211ActionPERRFrame *frame = dynamic_cast<Ieee80211ActionPERRFrame*>(msg);
     if (frame==NULL)
@@ -920,7 +939,7 @@ void HwmpProtocol::proccessPerr(cMessage *msg)
 
 
 void
-HwmpProtocol::proccessGann (cMessage *msg)
+HwmpProtocol::processGann (cMessage *msg)
 {
     Ieee80211ActionGANNFrame * gannFrame = dynamic_cast<Ieee80211ActionGANNFrame*>(msg);
     if (!gannFrame)
@@ -1869,7 +1888,7 @@ int  HwmpProtocol::getInterfaceReceiver(MACAddress add)
         return -1;
     if (result.retransmitter != add)
         return -1;
-    return result.ifIndex;;
+    return result.ifIndex;
 }
 
 void HwmpProtocol::setRefreshRoute(const Uint128 &src,const Uint128 &dest,const Uint128 &gtw,const Uint128& prev)
@@ -1878,7 +1897,6 @@ void HwmpProtocol::setRefreshRoute(const Uint128 &src,const Uint128 &dest,const 
         return;
     HwmpRtable::ReactiveRoute * direct = m_rtable->getLookupReactivePtr (dest.getMACAddress());
     HwmpRtable::ReactiveRoute * inverse = m_rtable->getLookupReactivePtr (src.getMACAddress());
-    HwmpRtable::ProactiveRoute * root = m_rtable->getLookupProactivePtr ();
     if (direct) // address not valid
     {
         if (gtw.getMACAddress()==direct->retransmitter)
@@ -1900,6 +1918,8 @@ void HwmpProtocol::setRefreshRoute(const Uint128 &src,const Uint128 &dest,const 
         	 m_rtable->AddReactivePath (src.getMACAddress(), prev.getMACAddress(), interface80211ptr->getInterfaceId(),HwmpRtable::MAX_METRIC, m_dot11MeshHWMPactivePathTimeout, 0, HwmpRtable::MAX_HOPS,false);
          }
     }
+    /** the root is only actualized by the proactive mechanism
+    HwmpRtable::ProactiveRoute * root = m_rtable->getLookupProactivePtr ();
     if (!isRoot() && root)
     {
         if (dest.getMACAddress() ==root->root)
@@ -1907,6 +1927,7 @@ void HwmpProtocol::setRefreshRoute(const Uint128 &src,const Uint128 &dest,const 
              root->whenExpire=simTime()+m_dot11MeshHWMPactiveRootTimeout;
         }
     }
+    */
 }
 
 void HwmpProtocol::processFullPromiscuous (const cPolymorphic *details)

@@ -200,6 +200,12 @@ void Ieee80211Mesh::mplsCreateNewPath(int label,LWMPLSPacket *mpls_pk_ptr,MACAdd
                         if (routingModuleProactive->findInAddressGroup(mpls_pk_ptr->getDest()))
                              toGateWay = true;
                     }
+                    else if (routingModuleHwmp)
+                    {
+                        if (routingModuleHwmp->findInAddressGroup(mpls_pk_ptr->getDest()))
+                             toGateWay = true;
+                    }
+
                     Uint128 gateWayAddress;
                     if (routingModuleProactive)
                     {
@@ -229,6 +235,22 @@ void Ieee80211Mesh::mplsCreateNewPath(int label,LWMPLSPacket *mpls_pk_ptr,MACAdd
                                dist = 1;
                     }
 
+                    if (dist==0 && routingModuleHwmp)
+                    {
+                        int iface;
+                        add.resize(1);
+                        double cost;
+                        if (toGateWay)
+                        {
+                            bool isToGw;
+                            if (routingModuleHwmp->getNextHopGroup(mpls_pk_ptr->getDest(),add[0],iface,gateWayAddress,isToGw))
+                               dist = 1;
+                        }
+                        else
+                            if (routingModuleHwmp->getNextHop(mpls_pk_ptr->getDest(),add[0],iface,cost))
+                               dist = 1;
+                    }
+
                     if (dist==0)
                     {
                         // Destination unreachable
@@ -239,6 +261,14 @@ void Ieee80211Mesh::mplsCreateNewPath(int label,LWMPLSPacket *mpls_pk_ptr,MACAdd
                             ctrlmanet->setDestAddress(mpls_pk_ptr->getDest());
                             ctrlmanet->setSrcAddress(mpls_pk_ptr->getSource());
                             send(ctrlmanet,"routingOutReactive");
+                        }
+                        if (routingModuleHwmp)
+                        {
+                            ControlManetRouting *ctrlmanet = new ControlManetRouting();
+                            ctrlmanet->setOptionCode(MANET_ROUTE_NOROUTE);
+                            ctrlmanet->setDestAddress(mpls_pk_ptr->getDest());
+                            ctrlmanet->setSrcAddress(mpls_pk_ptr->getSource());
+                            send(ctrlmanet,"routingOutHwmp");
                         }
                         mplsData->deleteForwarding(forwarding_ptr);
                         delete mpls_pk_ptr;
@@ -278,14 +308,22 @@ void Ieee80211Mesh::mplsCreateNewPath(int label,LWMPLSPacket *mpls_pk_ptr,MACAdd
                             if (routingModuleProactive->findInAddressGroup(mpls_pk_ptr->getDest()))
                                  toGateWay = true;
                         }
-                        if (toGateWay)
+                        else if (routingModuleHwmp)
                         {
-                            bool isToGw;
-                            dist = routingModuleProactive->getRouteGroup(mpls_pk_ptr->getDest(),add,gateWayAddress,isToGw);
+                            if (routingModuleHwmp->findInAddressGroup(mpls_pk_ptr->getDest()))
+                                 toGateWay = true;
                         }
-                        else
+                        if (routingModuleProactive)
                         {
-                            dist = routingModuleProactive->getRoute(mpls_pk_ptr->getDest(),add);
+                            if (toGateWay)
+                            {
+                                bool isToGw;
+                                dist = routingModuleProactive->getRouteGroup(mpls_pk_ptr->getDest(),add,gateWayAddress,isToGw);
+                            }
+                            else
+                            {
+                                dist = routingModuleProactive->getRoute(mpls_pk_ptr->getDest(),add);
+                            }
                         }
                         if (dist==0 && routingModuleReactive)
                         {
@@ -297,11 +335,27 @@ void Ieee80211Mesh::mplsCreateNewPath(int label,LWMPLSPacket *mpls_pk_ptr,MACAdd
 
                                 bool isToGw;
                                 if (routingModuleReactive->getNextHopGroup(mpls_pk_ptr->getDest(),add[0],iface,gateWayAddress,isToGw))
-                                     dist = 1;
+                                    dist = 1;
                             }
                             else
                                 if (routingModuleReactive->getNextHop(mpls_pk_ptr->getDest(),add[0],iface,cost))
-                                      dist = 1;
+                                     dist = 1;
+                        }
+
+                        if (dist==0 && routingModuleHwmp)
+                        {
+                            int iface;
+                            add.resize(1);
+                            double cost;
+                            if (toGateWay)
+                            {
+                                bool isToGw;
+                                if (routingModuleHwmp->getNextHopGroup(mpls_pk_ptr->getDest(),add[0],iface,gateWayAddress,isToGw))
+                                   dist = 1;
+                            }
+                            else
+                                if (routingModuleHwmp->getNextHop(mpls_pk_ptr->getDest(),add[0],iface,cost))
+                                    dist = 1;
                         }
                         if (dist==0)
                         {
@@ -408,6 +462,14 @@ void Ieee80211Mesh::mplsCreateNewPath(int label,LWMPLSPacket *mpls_pk_ptr,MACAdd
                     dist = 1;
             }
 
+            if (dist==0 && routingModuleHwmp)
+            {
+                int iface;
+                add.resize(1);
+                double cost;
+                if (routingModuleHwmp->getNextHop(mpls_pk_ptr->getDest(),add[0],iface,cost))
+                    dist = 1;
+            }
             if (dist==0)
             {
                 // Destination unreachable
@@ -462,6 +524,15 @@ void Ieee80211Mesh::mplsCreateNewPath(int label,LWMPLSPacket *mpls_pk_ptr,MACAdd
                     double cost;
 
                     if (routingModuleReactive->getNextHop(mpls_pk_ptr->getDest(),add[0],iface,cost))
+                        dist = 1;
+                }
+                if (dist==0 && routingModuleHwmp)
+                {
+                    int iface;
+                    add.resize(1);
+                    double cost;
+
+                    if (routingModuleHwmp->getNextHop(mpls_pk_ptr->getDest(),add[0],iface,cost))
                         dist = 1;
                 }
                 if (dist==0)
@@ -530,6 +601,7 @@ void Ieee80211Mesh::mplsBasicSend (LWMPLSPacket *mpls_pk_ptr,MACAddress sta_addr
         {
             dist = routingModuleProactive->getRoute(mpls_pk_ptr->getDest(),add);
         }
+
         if (dist==0 && routingModuleReactive)
         {
             int iface;
@@ -539,7 +611,14 @@ void Ieee80211Mesh::mplsBasicSend (LWMPLSPacket *mpls_pk_ptr,MACAddress sta_addr
                 dist = 1;
         }
 
-
+        if (dist==0 && routingModuleHwmp)
+        {
+            int iface;
+            add.resize(1);
+            double cost;
+            if (routingModuleHwmp->getNextHop(mpls_pk_ptr->getDest(),add[0],iface,cost))
+                dist = 1;
+        }
         if (dist==0)
         {
             // Destination unreachable
@@ -984,6 +1063,8 @@ void Ieee80211Mesh::mplsDataProcess(LWMPLSPacket * mpls_pk_ptr,MACAddress sta_ad
     case WMPLS_ADITIONAL:
         break;
     case WMPLS_BROADCAST:
+    case WMPLS_ANNOUNCE_GATEWAY:
+    case WMPLS_REQUEST_GATEWAY:
         uint32_t cont;
         uint32_t newCounter = mpls_pk_ptr->getCounter();
         if (mpls_pk_ptr->getSource()==myAddress)
@@ -1011,11 +1092,16 @@ void Ieee80211Mesh::mplsDataProcess(LWMPLSPacket * mpls_pk_ptr,MACAddress sta_ad
         }
         mplsData->setBroadCastCounter(MacToUint64(mpls_pk_ptr->getSource()),newCounter);
         // send up and Resend
+        if (code==WMPLS_BROADCAST)
+        {
 #if OMNETPP_VERSION > 0x0400
         sendUp(mpls_pk_ptr->getEncapsulatedPacket()->dup());
 #else
         sendUp(mpls_pk_ptr->getEncapsulatedMsg()->dup());
 #endif
+        }
+        else
+            processControlPacket (dynamic_cast<LWMPLSControl*>(mpls_pk_ptr));
 //        sendOrEnqueue(encapsulate(mpls_pk_ptr,MACAddress::BROADCAST_ADDRESS));
 //       small random delay. Avoid the collision
         Ieee80211DataFrame *meshFrame = encapsulate(mpls_pk_ptr,MACAddress::BROADCAST_ADDRESS);
