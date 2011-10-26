@@ -242,12 +242,14 @@ HwmpRtable::ReactiveRoute *
 HwmpRtable::getLookupReactivePtr (MACAddress destination)
 {
 	 // uint64_t dest= MacToUint64(destination);
-     std::map<MACAddress, ReactiveRoute>::iterator i = m_routes.find (destination);
-     if (i == m_routes.end ())
-         return NULL;
-     if ((i->second.whenExpire < simTime()) && (i->second.whenExpire !=  0))
-         return NULL;
-     return &(i->second);
+    if (destination.isUnspecified())
+        return NULL;
+    std::map<MACAddress, ReactiveRoute>::iterator i = m_routes.find (destination);
+    if (i == m_routes.end ())
+        return NULL;
+    if ((i->second.whenExpire < simTime()) && (i->second.whenExpire !=  0))
+        return NULL;
+    return &(i->second);
 }
 
 HwmpRtable::ProactiveRoute *
