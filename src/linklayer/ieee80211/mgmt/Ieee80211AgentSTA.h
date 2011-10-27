@@ -22,6 +22,7 @@
 #include <omnetpp.h>
 #include "Ieee80211Primitives_m.h"
 #include "NotificationBoard.h"
+#include "InterfaceTable.h"
 
 
 /**
@@ -36,6 +37,9 @@
 class INET_API Ieee80211AgentSTA : public cSimpleModule, public INotifiable
 {
   protected:
+    InterfaceEntry *myIface;
+    NotificationBoard *nb;
+    MACAddress prevAP;
     bool activeScan;
     std::vector<int> channelsToScan;
     simtime_t probeDelay;

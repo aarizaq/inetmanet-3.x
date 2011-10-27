@@ -19,6 +19,7 @@
 #include "Ieee80211AgentSTA.h"
 #include "Ieee80211Primitives_m.h"
 #include "NotifierConsts.h"
+#include "InterfaceTableAccess.h"
 
 
 Define_Module(Ieee80211AgentSTA);
@@ -45,8 +46,15 @@ void Ieee80211AgentSTA::initialize(int stage)
         while ((token = tokenizer.nextToken())!=NULL)
             channelsToScan.push_back(atoi(token));
 
-        NotificationBoard *nb = NotificationBoardAccess().get();
+        nb = NotificationBoardAccess().get();
         nb->subscribe(this, NF_L2_BEACON_LOST);
+
+        InterfaceTable *ift = (InterfaceTable*)InterfaceTableAccess().getIfExists();
+        myIface = NULL;
+        if (!ift)
+        {
+            myIface = ift->getInterfaceByName(getParentModule()->getFullName());
+        }
 
         //Statistics:
         sentRequestSignal = registerSignal("sentRequest");
@@ -114,6 +122,7 @@ void Ieee80211AgentSTA::receiveChangeNotification(int category, const cPolymorph
         getParentModule()->getParentModule()->bubble("Beacon lost!");
         //sendDisassociateRequest();
         sendScanRequest();
+        nb->fireChangeNotification(NF_L2_DISSOCIATED, myIface);
     }
 }
 
@@ -280,6 +289,13 @@ void Ieee80211AgentSTA::processAssociateConfirm(Ieee80211Prim_AssociateConfirm *
         emit(acceptConfirmSignal, PR_ASSOCIATE_CONFIRM);
         // we are happy!
         getParentModule()->getParentModule()->bubble("Associated with AP");
+        if(prevAP.isUnspecified() || prevAP != resp->getAddress())
+        {
+            nb->fireChangeNotification(NF_L2_ASSOCIATED_NEWAP, myIface); //XXX detail: InterfaceEntry?
+            prevAP = resp->getAddress();
+        }
+        else
+            nb->fireChangeNotification(NF_L2_ASSOCIATED_OLDAP, myIface);
     }
 }
 
@@ -296,6 +312,7 @@ void Ieee80211AgentSTA::processReassociateConfirm(Ieee80211Prim_ReassociateConfi
     else
     {
         EV << "Reassociation successful\n";
+        nb->fireChangeNotification(NF_L2_ASSOCIATED_OLDAP, myIface); //XXX detail: InterfaceEntry?
         emit(acceptConfirmSignal, PR_REASSOCIATE_CONFIRM);
         // we are happy!
     }
