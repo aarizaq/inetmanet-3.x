@@ -39,6 +39,7 @@ class INET_API MACAddress64
     unsigned char address[8];   // 8*8=64 bit address
     bool forceException; // try to convert 64 to 48 and desn't match, throw exception
     bool removeUnnecessary; // remove unnecessary bytes if the orignal address was 48 bits
+    friend class MACAddress;
   public:
     /** Returns the unspecified (null) MAC address */
     static const MACAddress64 UNSPECIFIED_ADDRESS;
@@ -197,8 +198,13 @@ class INET_API MACAddress64
     void desRemoveUnnecessary() {removeUnnecessary=false;}
 
 
-
     // works with MACaddress (48 bits)
+
+    /**
+         * Copy constructor.
+         */
+     MACAddress64(const MACAddress& other) {operator=(other);}
+
     /**
         * Returns true if the two addresses are equal.
         */
@@ -220,10 +226,27 @@ class INET_API MACAddress64
         */
     int compareTo(const MACAddress& other) const;
 
-       /**
-        * Copy constructor.
-        */
-    MACAddress64(const MACAddress& other) {operator=(other);}
+
+    int compare(const MACAddress& addr) const
+    {
+    	if (address[3]!=0xFF)
+    	    return 1; // in other case will consider always bigger EUI-64
+    	if (address[4]!=0xFF || address[4]!=0xFE)
+    		return 1; // in other case will consider always bigger EUI-64
+        return address[0] < addr.address[0] ? -1 : address[0] > addr.address[0] ? 1 :
+               address[1] < addr.address[1] ? -1 : address[1] > addr.address[1] ? 1 :
+               address[2] < addr.address[2] ? -1 : address[2] > addr.address[2] ? 1 :
+               //address[3] < addr.address[3] ? -1 : address[3] > addr.address[3] ? 1 :
+               //address[4] < addr.address[4] ? -1 : address[4] > addr.address[4] ? 1 :
+               address[5] < addr.address[3] ? -1 : address[5] > addr.address[3] ? 1 :
+               address[6] < addr.address[4] ? -1 : address[6] > addr.address[4] ? 1 :
+               address[7] < addr.address[5] ? -1 : address[7] > addr.address[5] ? 1 : 0;
+    }
+
+    bool operator<(const MACAddress& addr) const {return compare (addr)<0;}
+
+    bool operator>(const MACAddress& addr) const {return compare (addr)>0;}
+
 
        /**
         * Assignment.
@@ -233,7 +256,6 @@ class INET_API MACAddress64
     MACAddress getMacAddress48();
     void setAddressUint64(uint64_t val);
     uint64_t getAddressUint64();
-
 };
 
 inline std::ostream& operator<<(std::ostream& os, const MACAddress64& mac)

@@ -99,14 +99,22 @@ MACAddress64& MACAddress64::operator=(const MACAddress& other)
 {
 	forceException = true;
 	removeUnnecessary=true;
-	address[0]=other.getAddressByte(0);
-	address[1]=other.getAddressByte(1);
-	address[2]=other.getAddressByte(2);
-	address[3]=0xFF;
-	address[4]=0xFE;
-	address[5]=other.getAddressByte(3);
-	address[6]=other.getAddressByte(4);
-	address[7]=other.getAddressByte(5);
+	// Special case address null
+    if (other.isUnspecified())
+        memset(address,0, MAC_ADDRESS_BYTES_64);
+    else if (other.isBroadcast())
+        memset(address,0xFF, MAC_ADDRESS_BYTES_64);
+    else
+    {
+        address[0]=other.getAddressByte(0);
+        address[1]=other.getAddressByte(1);
+        address[2]=other.getAddressByte(2);
+        address[3]=0xFF;
+        address[4]=0xFE;
+        address[5]=other.getAddressByte(3);
+        address[6]=other.getAddressByte(4);
+        address[7]=other.getAddressByte(5);
+    }
     return *this;
 }
 
@@ -182,7 +190,7 @@ void MACAddress64::setBroadcast()
 
 bool MACAddress64::isBroadcast() const
 {
-    if (address[3]==0xFF && address[4]==0xFE) // is EUI-48
+    if (address[3]==0xFF && (address[4]==0xFE || address[4]==0xFF)) // is EUI-48
 	   return (address[0]&address[1]&address[2]&address[3]&address[4]&address[5]&address[6]&address[6])==0xff;
     else
        return (address[0]&address[1]&address[2]&address[5]&address[6]&address[6])==0xff;
@@ -263,8 +271,13 @@ MACAddress64 MACAddress64::generateAutoAddress()
 
 MACAddress MACAddress64::getMacAddress48()
 {
+	// special case address NULL
+    if (this->isUnspecified())
+        return MACAddress::UNSPECIFIED_ADDRESS;
+    if (this->isBroadcast()())
+        return MACAddress::BROADCAST_ADDRESS;
     if (forceException && !(address[3]==0xFF && (address[4]==0xFF  || address[4]==0xFE)))
-    	throw cRuntimeError("Try to convert address EUI-64 %s to EUI-48 and address doesn't match ",str().c_str());
+        throw cRuntimeError("Try to convert address EUI-64 %s to EUI-48 and address doesn't match ",str().c_str());
     MACAddress addr;
 	addr.setAddressByte(0,address[0]);
 	addr.setAddressByte(1,address[1]);
@@ -292,7 +305,7 @@ uint64_t MACAddress64::getAddressUint64()
 {
     uint64_t aux;
     uint64_t lo=0;
-    for (int i=0; i<MAC_ADDRESS_BYTES; i++)
+    for (int i=0; i<MAC_ADDRESS_BYTES_64; i++)
     {
         aux  = address[MAC_ADDRESS_BYTES_64-i-1];
         aux <<= 8*i;

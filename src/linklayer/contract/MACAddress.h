@@ -1,6 +1,8 @@
 /*
  * Copyright (C) 2003 Andras Varga; CTIE, Monash University, Australia
  *
+ *  2011 Alfonso Ariza; Universidad de Malaga, Spain, EUI-64 Support
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation; either version 2
@@ -26,7 +28,7 @@
 #define MAC_ADDRESS_BYTES 6
 
 class InterfaceToken;
-
+class MACAddress64;
 
 /**
  * Stores an IEEE 802 MAC address (6 octets = 48 bits).
@@ -178,6 +180,52 @@ class INET_API MACAddress
                address[4] < addr.address[4] ? -1 : address[4] > addr.address[4] ? 1 :
                address[5] < addr.address[5] ? -1 : address[5] > addr.address[5] ? 1 : 0;
     }
+
+
+    // works with MACaddress (64 bits)
+
+    /**
+         * Copy constructor.
+         */
+     MACAddress(const MACAddress64& other) {operator=(other);}
+
+    /**
+        * Returns true if the two addresses are equal.
+        */
+    bool equals(const MACAddress64& other) const;
+
+
+       /**
+        * Returns true if the two addresses are equal.
+        */
+    bool operator==(const MACAddress64& other) const {return (*this).equals(other);}
+
+       /**
+        * Returns true if the two addresses are not equal.
+        */
+    bool operator!=(const MACAddress64& other) const {return !(*this).equals(other);}
+
+       /**
+        * Returns -1, 0 or 1 as result of comparison of 2 addresses.
+        */
+
+    int compare(const MACAddress64& addr) const;
+
+    bool operator<(const MACAddress64& addr) const {return compare (addr)<0;}
+
+    bool operator>(const MACAddress64& addr) const {return compare (addr)>0;}
+
+
+       /**
+        * Assignment.
+        */
+    MACAddress& operator=(const MACAddress64& other);
+
+    MACAddress64 getMacAddress64();
+
+    void setAddressUint64(uint64_t val);
+
+    uint64_t getAddressUint64();
 
 };
 
