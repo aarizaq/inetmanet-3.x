@@ -637,7 +637,24 @@
         requires = "DHCP"
         labels = ""
         nedPackages = "
-                       inet.examples.wireless.dhcp
+                       inet.examples.dhcp
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
+    <feature
+        id="HIP"
+        name="Host Identity Protocol"
+        description = "Host Identity Protocol)"
+        initiallyEnabled = "false"
+        requires = "UDP IPv6 Ethernet Ieee80211"
+        labels = ""
+        nedPackages = "
+                       inet.underTest.hip
+                       inet.underTest.hip.application
+                       inet.underTest.hip.base
+                       inet.underTest.nodes.hip
                       "
         extraSourceFolders = ""
         compileFlags = ""
