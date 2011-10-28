@@ -274,7 +274,7 @@ MACAddress MACAddress64::getMacAddress48()
 	// special case address NULL
     if (this->isUnspecified())
         return MACAddress::UNSPECIFIED_ADDRESS;
-    if (this->isBroadcast()())
+    if (this->isBroadcast())
         return MACAddress::BROADCAST_ADDRESS;
     if (forceException && !(address[3]==0xFF && (address[4]==0xFF  || address[4]==0xFE)))
         throw cRuntimeError("Try to convert address EUI-64 %s to EUI-48 and address doesn't match ",str().c_str());
