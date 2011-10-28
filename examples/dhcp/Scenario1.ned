@@ -15,7 +15,7 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-package inet.examples.wireless.dhcp;
+package inet.examples.dhcp;
 import inet.world.radio.ChannelControl;
 import inet.nodes.inet.Router;
 import inet.nodes.inet.StandardHost;
