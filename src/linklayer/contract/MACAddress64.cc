@@ -19,6 +19,9 @@
 #include <ctype.h>
 #include "MACAddress64.h"
 #include "InterfaceToken.h"
+//
+// TODO: Incluir los metodos de conversion EUI-64/48 en MACAddress e incluir el soporte en Uint128
+//
 
 
 //
@@ -100,7 +103,7 @@ MACAddress64& MACAddress64::operator=(const MACAddress& other)
 	address[1]=other.getAddressByte(1);
 	address[2]=other.getAddressByte(2);
 	address[3]=0xFF;
-	address[4]=0xFF;
+	address[4]=0xFE;
 	address[5]=other.getAddressByte(3);
 	address[6]=other.getAddressByte(4);
 	address[7]=other.getAddressByte(5);
@@ -147,7 +150,7 @@ bool MACAddress64::tryParse(const char *hexstr)
         address[1]=address48[1];
         address[2]=address48[2];
         address[3]=0xFF;
-        address[4]=0XFF;
+        address[4]=0XFE;
         address[5]=address48[3];
         address[6]=address48[4];
         address[7]=address48[5];
@@ -179,7 +182,10 @@ void MACAddress64::setBroadcast()
 
 bool MACAddress64::isBroadcast() const
 {
-    return (address[0]&address[1]&address[2]&address[3]&address[4]&address[5]&address[6]&address[6])==0xff;
+    if (address[3]==0xFF && address[4]==0xFE) // is EUI-48
+	   return (address[0]&address[1]&address[2]&address[3]&address[4]&address[5]&address[6]&address[6])==0xff;
+    else
+       return (address[0]&address[1]&address[2]&address[5]&address[6]&address[6])==0xff;
 }
 
 bool MACAddress64::isUnspecified() const
@@ -192,7 +198,7 @@ std::string MACAddress64::str() const
     char buf[30];
     char *s = buf;
     bool jump=false;
-    if (removeUnnecessary && address[3]==0xFF && address[4]==0xFF)
+    if (removeUnnecessary && address[3]==0xFF && (address[4]==0xFF  || address[4]==0xFE))
         jump=true;
     for (int i=0; i<MAC_ADDRESS_BYTES_64; i++, s+=3)
     {
@@ -244,7 +250,7 @@ MACAddress64 MACAddress64::generateAutoAddress()
     addrbytes[1] = 0xAA;
     addrbytes[2] = (MACAddress::autoAddressCtr>>24)&0xff;
     addrbytes[3] = 0xFF;
-    addrbytes[4] = 0xFF;
+    addrbytes[4] = 0xFE;
     addrbytes[5] = (MACAddress::autoAddressCtr>>16)&0xff;
     addrbytes[6] = (MACAddress::autoAddressCtr>>8)&0xff;
     addrbytes[7] = (MACAddress::autoAddressCtr)&0xff;
@@ -257,8 +263,8 @@ MACAddress64 MACAddress64::generateAutoAddress()
 
 MACAddress MACAddress64::getMacAddress48()
 {
-    if (forceException && address[3]!=0xFF && address[4]!=0xFF)
-    	throw cRuntimeError("Try to convert address EUI-64 %s to Mac-48 and address doesn't match ",str().c_str());
+    if (forceException && !(address[3]==0xFF && (address[4]==0xFF  || address[4]==0xFE)))
+    	throw cRuntimeError("Try to convert address EUI-64 %s to EUI-48 and address doesn't match ",str().c_str());
     MACAddress addr;
 	addr.setAddressByte(0,address[0]);
 	addr.setAddressByte(1,address[1]);
