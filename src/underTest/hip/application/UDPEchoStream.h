@@ -1,5 +1,5 @@
 //*********************************************************************************
-// File:           DNSClient.ned
+// File:           UDPEchoStream.h
 //
 // Authors:        Laszlo Tamas Zeke, Levente Mihalyi, Laszlo Bokor
 //
@@ -24,19 +24,58 @@
 // Part of: HIPSim++ Host Identity Protocol Simulation Framework developed by BME-HT
 //**********************************************************************************
 
-//simpe DNS client module to provide DNS access to tcp apps
 
-package inet.applications.udpapp;
+#ifndef __UDPECHOSTREAM_H__
+#define __UDPECHOSTREAM_H__
 
-simple DNSClient
+#include <vector>
+#include <omnetpp.h>
+#include "UDPAppBase.h"
+#include "IPvXAddress.h"
+
+class UDPEchoStream : public UDPAppBase
 {
-    parameters:
-        string dnsAddress;
-        string tcpAppName;
-        volatile double tcpAppIndex;
-        volatile double localPort;
-    gates:
-        input from_udp;
-        output to_udp;
-        input dns;
-}
+
+  protected:
+    // module parameters
+    int port;
+    cPar *waitInterval;
+    cPar *packetLen;
+	bool first;
+	IPvXAddress destAddr;
+	int destPort;
+
+
+    // statistics
+    unsigned long numPkRec;
+    unsigned long numPkSent;  // total number of packets sent
+	cOutVector rttVector;
+	cOutVector jitterVector;
+	cStdDev rttStat;
+	cStdDev jitterStat;
+	simtime_t lastrtt;
+
+  protected:
+    // process stream request from client
+    // void processStreamRequest(cMessage *msg);
+
+    // send a packet of the given video stream
+	void processStreamData(cMessage *msg);
+    void sendStreamData(cMessage *timer);
+	void sendRequest();
+
+  public:
+    UDPEchoStream();
+    virtual ~UDPEchoStream();
+
+  protected:
+    ///@name Overidden cSimpleModule functions
+    //@{
+    virtual void initialize();
+    virtual void finish();
+    virtual void handleMessage(cMessage* msg);
+    //@}
+};
+
+
+#endif

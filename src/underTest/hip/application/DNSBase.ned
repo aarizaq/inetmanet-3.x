@@ -1,5 +1,5 @@
 //*********************************************************************************
-// File:           HIP.ned
+// File:           DNSBase.ned
 //
 // Authors:        Laszlo Tamas Zeke, Levente Mihalyi, Laszlo Bokor
 //
@@ -25,29 +25,15 @@
 //**********************************************************************************
 
 
-package inet.hip;
+package inet.underTest.hip.application;
+import inet.applications.IUDPApp;
 
-
-simple HIP
+simple DNSBase like IUDPApp
 {
     parameters:
-        string OWN_HIT;
-        string PARTNER_HIT;
-        string RVSAddr;
-        volatile double REG_StartTime @unit("s");
-        string dnsAddress;
-        volatile double registerAtRVS @unit("s");
+        string dnsDataFile; // xml file containing the DNS entries
+        volatile double startTime @unit("s");
     gates:
-        input tcpIn;
         input udpIn;
-        input tcp6In;
-        input udp6In;
-        output tcpOut;
         output udpOut;
-        output tcp6Out;
-        output udp6Out;
-        input fromFsmIn;
-        input fromFsmOut;
-        input fromFsmTrigger;
-};
-
+}

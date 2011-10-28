@@ -24,7 +24,7 @@
 // Part of: HIPSim++ Host Identity Protocol Simulation Framework developed by BME-HT
 //**********************************************************************************
 
-package inet.hip;
+package inet.underTest.hip.base;
 
 simple HipFsmBase
 {

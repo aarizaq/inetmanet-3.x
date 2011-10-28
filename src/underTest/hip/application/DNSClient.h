@@ -1,5 +1,5 @@
 //*********************************************************************************
-// File:           RvsHIP.ned
+// File:           DNSClient.h
 //
 // Authors:        Laszlo Tamas Zeke, Levente Mihalyi, Laszlo Bokor
 //
@@ -26,20 +26,27 @@
 
 
 
-package inet.hip;
+#ifndef __DNSCLIENT_H__
+#define __DNSCLIENT_H__
+
+#include <omnetpp.h>
+#include "UDPAppBase.h"
+
+/**
+ simple DNS client module to provide DNS access to tcp apps
+ */
 
 
-simple RvsHIP
+class INET_API DNSClient : public UDPAppBase
 {
-    parameters:
-        string OWN_HIT;
-        string PARTNER_HIT;
-    gates:
-        input tcp6In;
-        input udp6In;
-        output tcp6Out;
-        output udp6Out;
-        input fromFsmIn;
-        input fromFsmOut;
-}
+  protected:
+    ///@name Overridden cSimpleModule functions
+    //@{
+    virtual void initialize();
+    virtual void finish();
+    virtual void handleMessage(cPacket* msg);
+    //@}
 
+};
+
+#endif

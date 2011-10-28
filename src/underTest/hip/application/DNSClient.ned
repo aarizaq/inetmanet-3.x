@@ -1,5 +1,5 @@
 //*********************************************************************************
-// File:           DNSBase.ned
+// File:           DNSClient.ned
 //
 // Authors:        Laszlo Tamas Zeke, Levente Mihalyi, Laszlo Bokor
 //
@@ -24,14 +24,19 @@
 // Part of: HIPSim++ Host Identity Protocol Simulation Framework developed by BME-HT
 //**********************************************************************************
 
-package inet.applications.udpapp;
+//simpe DNS client module to provide DNS access to tcp apps
 
-simple DNSBase like UDPApp
+package inet.underTest.hip.application;
+
+simple DNSClient
 {
     parameters:
-        string dnsDataFile; // xml file containing the DNS entries
-        volatile double startTime @unit("s");
+        string dnsAddress;
+        string tcpAppName;
+        volatile double tcpAppIndex;
+        volatile double localPort;
     gates:
-        input udpIn;
-        output udpOut;
+        input from_udp;
+        output to_udp;
+        input dns;
 }
