@@ -140,23 +140,23 @@ bool MACAddress64::tryParse(const char *hexstr)
 
     if (numHexDigits == 2*MAC_ADDRESS_BYTES)
     {
-    	unsigned char address48[6];
-    	hextobin(hexstr, address48, MAC_ADDRESS_BYTES);
-    	// insert extensions
-    	address[0]=address48[0];
-    	address[1]=address48[1];
-    	address[2]=address48[2];
-    	address[3]=0xFF;
-    	address[4]=0XFF;
-    	address[5]=address48[3];
-    	address[6]=address48[4];
-    	address[7]=address48[5];
+        unsigned char address48[6];
+        hextobin(hexstr, address48, MAC_ADDRESS_BYTES);
+        // insert extensions
+        address[0]=address48[0];
+        address[1]=address48[1];
+        address[2]=address48[2];
+        address[3]=0xFF;
+        address[4]=0XFF;
+        address[5]=address48[3];
+        address[6]=address48[4];
+        address[7]=address48[5];
         return true;
     }
     if (numHexDigits == 2*MAC_ADDRESS_BYTES_64)
     {
-    	hextobin(hexstr, address, MAC_ADDRESS_BYTES_64);
-        return false;
+        hextobin(hexstr, address, MAC_ADDRESS_BYTES_64);
+        return true;
     }
     return false;
 }
