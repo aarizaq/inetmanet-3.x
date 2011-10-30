@@ -105,7 +105,7 @@ public:
     virtual bool getNextHop(const Uint128 &dest,Uint128 &add, int &iface,double &cost);
     virtual bool getNextHopProactive(const Uint128 &dest,Uint128 &add, int &iface,double &cost);
     virtual bool getNextHopReactive(const Uint128 &dest,Uint128 &add, int &iface,double &cost);
-    virtual void setRefreshRoute(const Uint128 &, const Uint128 &,const Uint128&,const Uint128&);
+    virtual void setRefreshRoute(const Uint128 &destination, const Uint128 & nextHop,bool isReverse);
 
     virtual bool getBestGan(Uint128 &, Uint128 &);
 private:

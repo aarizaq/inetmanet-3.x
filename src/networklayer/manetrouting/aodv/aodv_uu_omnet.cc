@@ -1040,32 +1040,62 @@ bool NS_CLASS isProactive()
     return false;
 }
 
-void NS_CLASS setRefreshRoute(const Uint128 &src,const Uint128 &dest,const Uint128 &gtw,const Uint128& prev)
+void NS_CLASS setRefreshRoute(const Uint128 &destination, const Uint128 & nextHop,bool isReverse)
 {
-    struct in_addr dest_addr, src_addr, next_hop;
-    src_addr.s_addr = src;
-    dest_addr.s_addr = dest;
-    next_hop.s_addr = gtw;
-    rt_table_t * fwd_rt = rt_table_find(dest_addr);
-    rt_table_t * rev_rt = rt_table_find(src_addr);
-    if (!rev_rt)
-    {
-        // Gratuitous Return Path
+    struct in_addr dest_addr, next_hop;
+    dest_addr.s_addr = destination;
+    next_hop.s_addr = nextHop;
+    rt_table_t * route  = rt_table_find(dest_addr);
 
-        struct in_addr node_addr;
-        struct in_addr  ip_src;
-        node_addr.s_addr = src;
-        ip_src.s_addr = prev;
-        rt_table_insert(node_addr, ip_src,0,0, ACTIVE_ROUTE_TIMEOUT, VALID, 0,NS_DEV_NR,0xFFFFFFF,100);
-    }
-    if (gtw!=0)
+    if(par ("checkNextHop").boolValue())
     {
-        if ((fwd_rt &&(fwd_rt->next_hop.s_addr==gtw))|| (rev_rt &&(rev_rt->next_hop.s_addr==gtw)))
-            rt_table_update_route_timeouts(fwd_rt, rev_rt);
+        if (nextHop == (Uint128)0)
+           return;
+        if (!isReverse)
+        {
+            if (route &&(route->next_hop.s_addr==nextHop))
+                 rt_table_update_route_timeouts(route, NULL);
+        }
+
+
+        if (isReverse && !route)
+        {
+            // Gratuitous Return Path
+            struct in_addr node_addr;
+            struct in_addr  ip_src;
+            node_addr.s_addr = destination;
+            ip_src.s_addr = nextHop;
+            rt_table_insert(node_addr, ip_src,0,0, ACTIVE_ROUTE_TIMEOUT, VALID, 0,NS_DEV_NR,0xFFFFFFF,100);
+        }
+        else if (route && (route->next_hop.s_addr==nextHop))
+            rt_table_update_route_timeouts(NULL, route);
+
     }
     else
-        rt_table_update_route_timeouts(fwd_rt, rev_rt);
+    {
+        if (!isReverse)
+        {
+            if (route)
+                 rt_table_update_route_timeouts(route, NULL);
+        }
 
+
+        if (isReverse && !route && nextHop != (Uint128)0)
+        {
+            // Gratuitous Return Path
+            struct in_addr node_addr;
+            struct in_addr  ip_src;
+            node_addr.s_addr = destination;
+            ip_src.s_addr = nextHop;
+            rt_table_insert(node_addr, ip_src,0,0, ACTIVE_ROUTE_TIMEOUT, VALID, 0,NS_DEV_NR,0xFFFFFFF,100);
+        }
+        else if (route)
+            rt_table_update_route_timeouts(NULL, route);
+
+    }
+
+    Enter_Method_Silent();
+    scheduleNextEvent();
 }
 
 

@@ -1484,51 +1484,52 @@ bool DYMOUM::isProactive()
     return false;
 }
 
-void DYMOUM::setRefreshRoute(const Uint128 &src,const Uint128 &dest,const Uint128 &gtw,const Uint128& prev)
+void DYMOUM::setRefreshRoute(const Uint128 &destination, const Uint128 & nextHop,bool isReverse)
 {
-    struct in_addr dest_addr, src_addr, next_hop, prev_hop;
-    src_addr.s_addr = src;
-    dest_addr.s_addr = dest;
-    next_hop.s_addr = gtw;
-    prev_hop.s_addr = prev;
+    struct in_addr dest_addr, next_hop;
+
+    dest_addr.s_addr = destination;
+    next_hop.s_addr = nextHop;
 
 
-    rtable_entry_t *rev_rt = NULL;
-    rtable_entry_t *fwd_rt = NULL;
-    rtable_entry_t *rev_pre_rt = NULL;
+    rtable_entry_t *route = NULL;
     rtable_entry_t *fwd_pre_rt = NULL;
 
     bool change = false;
-    if (src!=(Uint128)0)
-        rev_rt  = rtable_find(src_addr);
-    if (dest!=(Uint128)0)
-        fwd_rt  = rtable_find(dest_addr);
-
-    if (gtw!=(Uint128)0)
+    if (destination!=(Uint128)0)
+        route  = rtable_find(dest_addr);
+    if (nextHop!=(Uint128)0)
         fwd_pre_rt  = rtable_find(next_hop);
-    if (prev!=(Uint128)0)
-        rev_pre_rt  = rtable_find(prev_hop);
 
-    if (fwd_rt)
+    if (par("checkNextHop").boolValue())
     {
-        rtable_update_timeout(fwd_rt);
-        change = true;
+
+        if (route && route->rt_nxthop_addr.s_addr==next_hop.s_addr)
+        {
+            rtable_update_timeout(route);
+            change = true;
+        }
+
+        if (fwd_pre_rt && fwd_pre_rt->rt_nxthop_addr.s_addr==next_hop.s_addr)
+        {
+            rtable_update_timeout(fwd_pre_rt);
+            change = true;
+        }
     }
-    if (rev_rt)
+    else
     {
-        rtable_update_timeout(rev_rt);
-        change = true;
+        if (route)
+        {
+            rtable_update_timeout(route);
+            change = true;
+        }
+        if (fwd_pre_rt)
+        {
+            rtable_update_timeout(fwd_pre_rt);
+            change = true;
+        }
     }
-    if (rev_pre_rt)
-    {
-        rtable_update_timeout(rev_pre_rt);
-        change = true;
-    }
-    if (fwd_pre_rt)
-    {
-        rtable_update_timeout(fwd_pre_rt);
-        change = true;
-    }
+
     if (change)
     {
         Enter_Method_Silent();
@@ -1536,14 +1537,14 @@ void DYMOUM::setRefreshRoute(const Uint128 &src,const Uint128 &dest,const Uint12
     }
     return;
     /*
-    if (!rev_rt && prev!=(Uint128)0)
+    if (isReverse && !route && nextHop!=(Uint128)0)
     {
     // Gratuitous Return Path
 
         struct in_addr node_addr;
         struct in_addr  ip_src;
-        node_addr.s_addr = src;
-        ip_src.s_addr = prev;
+        node_addr.s_addr = destination;
+        ip_src.s_addr = nextHop;
         rtable_insert(
             node_addr,      // dest
             ip_src,         // nxt hop
@@ -1554,42 +1555,7 @@ void DYMOUM::setRefreshRoute(const Uint128 &src,const Uint128 &dest,const Uint12
             0); // is gw
         change = true;
     }
-    if (gtw!=0)
-    {
-        if ((fwd_rt &&(fwd_rt->rt_nxthop_addr.s_addr==gtw))|| (rev_rt&&(rev_rt->rt_nxthop_addr.s_addr==gtw)))
-        {
-            if (fwd_rt)
-            {
-                rtable_update_timeout(fwd_rt);
-                change = true;
-            }
-            if (rev_rt)
-            {
-                rtable_update_timeout(rev_rt);
-                change = true;
-            }
-        }
-    }
-    else
-    {
-        if (fwd_rt)
-        {
-            rtable_update_timeout(fwd_rt);
-            change = true;
-        }
-        if (rev_rt)
-        {
-            rtable_update_timeout(rev_rt);
-            change = true;
-        }
-    }
     */
-    /* We don't care about link failures for broadcast or non-data packets */
-    if (change)
-    {
-        Enter_Method_Silent();
-        scheduleNextEvent();
-    }
 }
 
 bool DYMOUM::isOurType(cPacket * msg)

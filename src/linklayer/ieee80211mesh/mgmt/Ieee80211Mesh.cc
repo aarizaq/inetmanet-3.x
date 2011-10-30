@@ -1215,7 +1215,7 @@ cPacket *Ieee80211Mesh::decapsulate(Ieee80211DataFrame *frame)
 
 void Ieee80211Mesh::actualizeReactive(cPacket *pkt,bool out)
 {
-    Uint128 dest,prev,next,src;
+    Uint128 dest,next;
     if (!routingModuleReactive && !routingModuleHwmp)
         return;
 
@@ -1240,7 +1240,7 @@ void Ieee80211Mesh::actualizeReactive(cPacket *pkt,bool out)
         send(ctrlmanet,"routingOutReactive");
         return;
     */
-
+    bool isReverse=false;
     if (out)
     {
         if (!frame->getAddress4().isUnspecified() && !frame->getAddress4().isBroadcast())
@@ -1260,15 +1260,16 @@ void Ieee80211Mesh::actualizeReactive(cPacket *pkt,bool out)
         else
             return;
         if (!frame->getTransmitterAddress().isUnspecified() && !frame->getTransmitterAddress().isBroadcast())
-            prev=frame->getTransmitterAddress();
+            next=frame->getTransmitterAddress();
         else
             return;
+        isReverse=true;
 
     }
     if (routingModuleHwmp)
-        routingModuleHwmp->setRefreshRoute(src,dest,next,prev);
+        routingModuleHwmp->setRefreshRoute(dest,next,isReverse);
     if (routingModuleReactive)
-        routingModuleReactive->setRefreshRoute(src,dest,next,prev);
+        routingModuleReactive->setRefreshRoute(dest,next,isReverse);
 }
 
 
