@@ -38,17 +38,17 @@ class IPv6InterfaceData;
 class INET_API MacEstimateCostProcess
 {
 public:
-	virtual double getCost(int,MACAddress &)=0;
-	virtual double getNumCost()=0;
-	virtual int getNumNeighbors()=0;
-	virtual int getNeighbors(MACAddress [])=0;
+    virtual double getCost(int, MACAddress &) = 0;
+    virtual double getNumCost() = 0;
+    virtual int getNumNeighbors() = 0;
+    virtual int getNeighbors(MACAddress []) = 0;
 };
 
 /**
  * Base class for protocol-specific data on an interface.
  * Notable subclasses are IPv4InterfaceData and IPv6InterfaceData.
  */
-class INET_API InterfaceProtocolData : public cPolymorphic
+class INET_API InterfaceProtocolData : public cObject
 {
     friend class InterfaceEntry; //only this guy is allowed to set ownerp
 
@@ -182,7 +182,7 @@ class INET_API InterfaceEntry : public cNamedObject
 
     /** @name access to the cost process estimation  */
     //@{
-    virtual bool setEstimateCostProcess(int,MacEstimateCostProcess *p);
+    virtual bool setEstimateCostProcess(int, MacEstimateCostProcess *p);
     virtual MacEstimateCostProcess* getEstimateCostProcess(int);
 
     virtual void addRelatedInterface(InterfaceEntry*);

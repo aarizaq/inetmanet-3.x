@@ -37,6 +37,12 @@ package inet.linklayer.ieee80211.mgmt;
 // This module never switches channels, that is, it will operate on the channel
 // the physical layer is configured for (see channelNumber in ~Ieee80211Radio).
 //
+// This module checks if there is an other module connected above the management
+// module (e.g. RelayUnit) and sends a copy of the frame there and at the same time
+// sends the frame back to the wirless interface. The relay unit will send it out
+// on the interface which is towards the destination or will broadcast it on all
+// interfaces (except on which it was received).
+//
 // @author Andras Varga
 //
 simple Ieee80211MgmtAPSimplified like IIeee80211Mgmt
@@ -45,9 +51,16 @@ simple Ieee80211MgmtAPSimplified like IIeee80211Mgmt
         int frameCapacity = default(100);
         bool forceRelayUnit=default(false);
         @display("i=block/cogwheel");
+        @signal[enqueuePk](type=cMessage);
+        @signal[dequeuePk](type=cMessage);
+        @signal[dropPkByQueue](type=cMessage);
+        @signal[queueingTime](type=simtime_t; unit=s);
+        @signal[dataQueueLen](type=long; interpolationmode=sample-hold);  // number of stored packets
+        @statistic[dataQueueLen](title="Data queue len"; record=histogram,vector; interpolationmode=sample-hold);
+        @statistic[droppedPkBytesByQueue](title="Dropped packet bytes by queue"; source="packetBytes(dropPkByQueue)"; unit=B; record=count,sum,vector; interpolationmode=none);
     gates:
-        input uppergateIn; // from ~IMACRelayUnit; can be left unconnected
-        output uppergateOut; // to ~IMACRelayUnit; can be left unconnected
+        input upperLayerIn; // from ~IMACRelayUnit; can be left unconnected
+        output upperLayerOut; // to ~IMACRelayUnit; can be left unconnected
         input macIn @labels(Ieee80211Frame); // from ~Ieee80211Mac
         output macOut @labels(Ieee80211Frame); // to ~Ieee80211Mac
         input agentIn @loose;   // unused dummy to statisfy the IIeee80211Mgmt interface

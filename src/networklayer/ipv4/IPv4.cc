@@ -63,7 +63,7 @@ void IPv4::initialize()
     WATCH(numForwarded);
 
     // by default no MANET routing
-    manetRouting=false;
+    manetRouting = false;
 
 #ifdef WITH_MANET
     // test for the presence of MANET routing
@@ -96,7 +96,7 @@ void IPv4::updateDisplayString()
     if (numMulticast>0) sprintf(buf+strlen(buf), "mcast:%d ", numMulticast);
     if (numDropped>0) sprintf(buf+strlen(buf), "DROP:%d ", numDropped);
     if (numUnroutable>0) sprintf(buf+strlen(buf), "UNROUTABLE:%d ", numUnroutable);
-    getDisplayString().setTagArg("t",0,buf);
+    getDisplayString().setTagArg("t", 0, buf);
 }
 
 void IPv4::endService(cPacket *msg)
@@ -149,20 +149,22 @@ void IPv4::handlePacketFromNetwork(IPv4Datagram *datagram)
     const IPv4RouteRule *rule=checkInputRule(datagram);
     if (rule && rule->getRule()==IPv4RouteRule::DROP)
     {
-         EV << "\n Drop datagram with source "<< datagram->getSrcAddress() <<
-               " and  destination "<< datagram->getDestAddress() << " by rule "<<rule->info() << "\n";
-         numDropped++;
-         delete datagram;
-         return;
+        EV << "\n Drop datagram with source "<< datagram->getSrcAddress() <<
+                " and  destination "<< datagram->getDestAddress() << " by rule "<<rule->info() << "\n";
+        numDropped++;
+        delete datagram;
+        return;
     }
     else if (rule && rule->getRule()==IPv4RouteRule::ACCEPT)
     {
-    	 InterfaceEntry *destIE = rule->getInterface();
-    	 if (!datagram->getDestAddress().isMulticast())
-    	      routePacket(datagram, destIE, false,NULL);
-    	 else
-    	      routeMulticastPacket(datagram, destIE, getSourceInterfaceFrom(datagram));
-    	 return;
+        InterfaceEntry *destIE = rule->getInterface();
+        // hop counter decrement; FIXME but not if it will be locally delivered
+        datagram->setTimeToLive(datagram->getTimeToLive()-1);
+        if (!datagram->getDestAddress().isMulticast())
+            routePacket(datagram, destIE, false,NULL);
+        else
+            routeMulticastPacket(datagram, destIE, getSourceInterfaceFrom(datagram));
+        return;
     }
 // end check
 
@@ -261,33 +263,33 @@ void IPv4::handleMessageFromHL(cPacket *msg)
     }
 
     // encapsulate and send
-    InterfaceEntry *destIE=NULL; // will be filled in by encapsulate() or dsrFillDestIE
+    InterfaceEntry *destIE = NULL; // will be filled in by encapsulate() or dsrFillDestIE
     IPv4Address nextHopAddress;
-    IPv4Address *nextHopAddressPrt=NULL;
+    IPv4Address *nextHopAddressPrt = NULL;
 
-    // if HL send a Ipdatagram routing the packet
+    // if HL sends an IPv4Datagram, route the packet
+    //FIXME dubious code, remove? how can the HL tell IP whether it wants tunneling or forwarding?? --Andras
     if (dynamic_cast<IPv4Datagram *>(msg))
     {
         IPv4Datagram *datagram = check_and_cast  <IPv4Datagram *>(msg);
         // Dsr routing, Dsr is a HL protocol and send IPv4Datagram
         dsrFillDestIE(datagram, destIE, nextHopAddress);
         if (!nextHopAddress.isUnspecified())
-            nextHopAddressPrt=&nextHopAddress;
+            nextHopAddressPrt = &nextHopAddress;
         if (!datagram->getDestAddress().isMulticast())
-            routePacket(datagram, destIE, true,nextHopAddressPrt);
+            routePacket(datagram, destIE, true, nextHopAddressPrt);
         else
             routeMulticastPacket(datagram, destIE, NULL);
         return;
     }
-    // encapsulate and send
 
     // encapsulate and send
     IPv4ControlInfo *controlInfo = check_and_cast<IPv4ControlInfo*>(msg->removeControlInfo());
-    IPv4Datagram *datagram = encapsulate(msg, destIE,controlInfo);
+    IPv4Datagram *datagram = encapsulate(msg, destIE, controlInfo);
     nextHopAddress = controlInfo->getNextHopAddr();
     delete controlInfo;
     if (!nextHopAddress.isUnspecified())
-        nextHopAddressPrt=&nextHopAddress;
+        nextHopAddressPrt = &nextHopAddress;
 
     // route packet
     if (!datagram->getDestAddress().isMulticast())
@@ -305,7 +307,7 @@ void IPv4::routePacket(IPv4Datagram *datagram, InterfaceEntry *destIE, bool from
         IPv4SourceRoutingOption rtOpt = datagram->getSourceRoutingOption();
         if (rtOpt.getNextAddressPtr()<rtOpt.getLastAddressPtr())
         {
-            IPv4Address nextRouteAddress = rtOpt.getRecordAddress(rtOpt.getNextAddressPtr()/4);class IInterfaceTable;
+            IPv4Address nextRouteAddress = rtOpt.getRecordAddress(rtOpt.getNextAddressPtr()/4);
             rtOpt.setNextAddressPtr(rtOpt.getNextAddressPtr()+4);
             datagram->setSrcAddress(rt->getRouterId());
             datagram->setDestAddress(nextRouteAddress);
@@ -352,7 +354,7 @@ void IPv4::routePacket(IPv4Datagram *datagram, InterfaceEntry *destIE, bool from
             }
             else if (destIE!=NULL && forceBroadcast)
             {
-                for (int i = 0;i<ift->getNumInterfaces();i++)
+                for (int i = 0; i<ift->getNumInterfaces(); i++)
                 {
                     InterfaceEntry *ie = ift->getInterface(i);
                     if (!ie->isLoopback())
@@ -384,7 +386,7 @@ void IPv4::routePacket(IPv4Datagram *datagram, InterfaceEntry *destIE, bool from
     }
 
     const IPv4RouteRule *rule = checkOutputRule(datagram,destIE);
-    if (rule && rule->getRule()==IPv4RouteRule::DROP)
+    if (rule && rule->getRule() == IPv4RouteRule::DROP)
     {
         EV << "\n Drop datagram with source "<< datagram->getSrcAddress() <<
               " and  destination "<< datagram->getDestAddress() << " by rule "<<rule->info() << "\n";
@@ -394,8 +396,7 @@ void IPv4::routePacket(IPv4Datagram *datagram, InterfaceEntry *destIE, bool from
     }
 // end check drop
     IPv4Address nextHopAddr;
-
-    // if output port was explicitly requested, use that, otherwise use IP routing
+    // if output port was explicitly requested, use that, otherwise use IPv4 routing
     if (destIE)
     {
         EV << "using manually specified output interface " << destIE->getName() << "\n";
@@ -407,8 +408,8 @@ void IPv4::routePacket(IPv4Datagram *datagram, InterfaceEntry *destIE, bool from
         {
             // if the interface is broadcast we must search the next hop
             const IPv4Route *re = rt->findBestMatchingRoute(destAddr);
-            if (re!=NULL && re->getSource()== IPv4Route::MANET  && re->getHost()!=destAddr)
-                re=NULL;
+            if (re!=NULL && re->getSource() == IPv4Route::MANET  && re->getHost()!=destAddr)
+                re = NULL;
             if (re && destIE == re->getInterface())
                 nextHopAddr = re->getGateway();
         }
@@ -418,11 +419,11 @@ void IPv4::routePacket(IPv4Datagram *datagram, InterfaceEntry *destIE, bool from
         // use IPv4 routing (lookup in routing table)
         const IPv4Route *re = rt->findBestMatchingRoute(destAddr);
 
-        if (re!=NULL && re->getSource()== IPv4Route::MANET)
+        if (re!=NULL && re->getSource() == IPv4Route::MANET)
         {
            // special case the address must agree
            if (re->getHost()!=destAddr)
-               re=NULL;
+               re = NULL;
         }
 
         // error handling: destination address does not exist in routing table:
@@ -432,7 +433,7 @@ void IPv4::routePacket(IPv4Datagram *datagram, InterfaceEntry *destIE, bool from
 #ifdef WITH_MANET
             if (manetRouting)
             {
-               controlMessageToManetRouting(MANET_ROUTE_NOROUTE,datagram);
+               controlMessageToManetRouting(MANET_ROUTE_NOROUTE, datagram);
                return;
             }
 #endif
@@ -608,7 +609,7 @@ void IPv4::reassembleAndDeliver(IPv4Datagram *datagram)
 
     // decapsulate and send on appropriate output gate
     int protocol = datagram->getTransportProtocol();
-    cPacket *packet=NULL;
+    cPacket *packet = NULL;
     if (protocol!=IP_PROT_DSR)
     {
         packet = decapsulateIP(datagram);
@@ -628,7 +629,7 @@ void IPv4::reassembleAndDeliver(IPv4Datagram *datagram)
     {
 #ifdef WITH_MANET
         // If the protocol is Dsr Send directely the datagram to manet routing
-        controlMessageToManetRouting(MANET_ROUTE_NOROUTE,datagram);
+        controlMessageToManetRouting(MANET_ROUTE_NOROUTE, datagram);
 #else
         throw cRuntimeError(this, "DSR protocol packet received, but MANET routing support is not available.");
 #endif
@@ -639,13 +640,16 @@ void IPv4::reassembleAndDeliver(IPv4Datagram *datagram)
         // discard the packet
         int gateindex = mapping.getOutputGateForProtocol(protocol);
 
-        if (gate("transportOut",gateindex)->isPathOK()) {
-        send(packet, "transportOut", gateindex);
-        } else {
+        if (gate("transportOut", gateindex)->isPathOK())
+        {
+            send(packet, "transportOut", gateindex);
+        } 
+        else 
+        {
             EV << "L3 Protocol not connected. discarding packet" << endl;
-            delete(packet);
+            delete (packet);
+        }
     }
-}
 }
 #endif
 cPacket *IPv4::decapsulateIP(IPv4Datagram *datagram)
@@ -775,7 +779,7 @@ IPv4Datagram *IPv4::encapsulate(cPacket *transportPacket, InterfaceEntry *&destI
 
     datagram->setIdentification(curFragmentId++);
     datagram->setMoreFragments(false);
-    datagram->setDontFragment (controlInfo->getDontFragment());
+    datagram->setDontFragment(controlInfo->getDontFragment());
     datagram->setFragmentOffset(0);
 
     short ttl;
@@ -822,10 +826,10 @@ void IPv4::sendDatagramToOutput(IPv4Datagram *datagram, InterfaceEntry *ie, IPv4
 
 }
 
-void IPv4::dsrFillDestIE(IPv4Datagram *datagram, InterfaceEntry *&destIE,IPv4Address &nextHopAddress)
+void IPv4::dsrFillDestIE(IPv4Datagram *datagram, InterfaceEntry *&destIE, IPv4Address &nextHopAddress)
 {
 
-    nextHopAddress= IPv4Address::UNSPECIFIED_ADDRESS;
+    nextHopAddress = IPv4Address::UNSPECIFIED_ADDRESS;
 
     if (datagram->getTransportProtocol()!=IP_PROT_DSR)
         return; // Not Dsr packet
@@ -842,7 +846,7 @@ void IPv4::dsrFillDestIE(IPv4Datagram *datagram, InterfaceEntry *&destIE,IPv4Add
 }
 
 #ifdef WITH_MANET
-void IPv4::controlMessageToManetRouting(int code,IPv4Datagram *datagram)
+void IPv4::controlMessageToManetRouting(int code, IPv4Datagram *datagram)
 {
     ControlManetRouting *control;
     if (!manetRouting)
@@ -973,7 +977,7 @@ void IPv4::reassembleAndDeliver(IPv4Datagram *datagram)
         {
             int totalLength = datagram->getByteLength();
             headerLength = datagram->getHeaderLength();
-            cPacket * payload=datagram->decapsulate();
+            cPacket * payload = datagram->decapsulate();
             datagram->setHeaderLength(datagram->getByteLength());
             payload->setByteLength(datagram->getTotalPayloadLength());
             datagram->encapsulate(payload);
@@ -991,7 +995,7 @@ void IPv4::reassembleAndDeliver(IPv4Datagram *datagram)
     }
 
     int protocol = datagram->getTransportProtocol();
-    cPacket *packet=NULL;
+    cPacket *packet = NULL;
     if (protocol!=IP_PROT_DSR)
     {
         packet = decapsulateIP(datagram);
@@ -1005,7 +1009,7 @@ void IPv4::reassembleAndDeliver(IPv4Datagram *datagram)
     else if (protocol==IP_PROT_DSR)
     {
         // If the protocol is Dsr Send directely the datagram to manet routing
-        controlMessageToManetRouting(MANET_ROUTE_NOROUTE,datagram);
+        controlMessageToManetRouting(MANET_ROUTE_NOROUTE, datagram);
     }
     else if (protocol==IP_PROT_IP)
     {
@@ -1018,11 +1022,11 @@ void IPv4::reassembleAndDeliver(IPv4Datagram *datagram)
         // discard the packet
         int gateindex = mapping.getOutputGateForProtocol(protocol);
 
-        if (gate("transportOut",gateindex)->isPathOK()) {
+        if (gate("transportOut", gateindex)->isPathOK()) {
             send(packet, "transportOut", gateindex);
         } else {
             EV << "L3 Protocol not connected. discarding packet" << endl;
-            delete(packet);
+            delete (packet);
         }
     }
 }

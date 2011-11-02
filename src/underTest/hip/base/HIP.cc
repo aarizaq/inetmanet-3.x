@@ -171,7 +171,7 @@ void HIP::handleRvsRegistration(cMessage *msg)
 			strcat(reqstring, par("RVSAddr"));
 			dnsReqMsg->setData(reqstring);
 			//UDP controlinfo
-			UDPControlInfo *ctrl = new UDPControlInfo();
+			UDPDataIndication *ctrl = new UDPDataIndication();
 			ctrl->setSrcPort(0);
 			InterfaceTable* ift = (InterfaceTable*) InterfaceTableAccess().get();
 
@@ -341,7 +341,7 @@ void HIP::handleMsgFromTransport(cMessage *msg)
 		dnsReqMsg->setId(this->getId());
 		dnsReqMsg->setAddrData(originalHIT);
 		//UDP controlinfo
-		UDPControlInfo *ctrl = new UDPControlInfo();
+		UDPDataIndication *ctrl = new UDPDataIndication();
 		ctrl->setSrcPort(0);
 		InterfaceTable* ift = (InterfaceTable*)InterfaceTableAccess().get();
 

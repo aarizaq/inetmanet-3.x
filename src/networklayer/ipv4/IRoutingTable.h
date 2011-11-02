@@ -178,7 +178,7 @@ class INET_API IRoutingTable
     //@}
    // Dsdv time to live test entry
     virtual void setTimeToLiveRoutingEntry(simtime_t a) = 0;
-    virtual simtime_t getTimeToLiveRoutingEntry()=0;
+    virtual simtime_t getTimeToLiveRoutingEntry() = 0;
     virtual void dsdvTestAndDelete() = 0;
     virtual const bool testValidity(const IPv4Route *entry) const = 0;
     // Rules (similar to linux iptables)

@@ -22,19 +22,18 @@
 
 #include "UDPVideoStreamCli.h"
 
+#include "UDPControlInfo_m.h"
 #include "IPvXAddressResolver.h"
 
 
 Define_Module(UDPVideoStreamCli);
 
-simsignal_t UDPVideoStreamCli::endToEndDelaySignal = SIMSIGNAL_NULL;
-simsignal_t UDPVideoStreamCli::rcvdPkBytesSignal = SIMSIGNAL_NULL;
+simsignal_t UDPVideoStreamCli::rcvdPkSignal = SIMSIGNAL_NULL;
 
 void UDPVideoStreamCli::initialize()
 {
-    //statistics
-    endToEndDelaySignal = registerSignal("endToEndDelay");
-    rcvdPkBytesSignal = registerSignal("rcvdPkBytes");
+    // statistics
+    rcvdPkSignal = registerSignal("rcvdPk");
 
     simtime_t startTime = par("startTime");
 
@@ -53,9 +52,19 @@ void UDPVideoStreamCli::handleMessage(cMessage* msg)
         delete msg;
         requestStream();
     }
+    else if (msg->getKind() == UDP_I_DATA)
+    {
+        // process incoming packet
+        receiveStream(PK(msg));
+    }
+    else if (msg->getKind() == UDP_I_ERROR)
+    {
+        EV << "Ignoring UDP error report\n";
+        delete msg;
+    }
     else
     {
-        receiveStream(PK(msg));
+        error("Unrecognized message (%s)%s", msg->getClassName(), msg->getName());
     }
 }
 
@@ -74,18 +83,17 @@ void UDPVideoStreamCli::requestStream()
 
     EV << "Requesting video stream from " << svrAddr << ":" << svrPort << "\n";
 
-    bindToPort(localPort);
+    socket.setOutputGate(gate("udpOut"));
+    socket.bind(localPort);
 
-    cPacket *msg = new cPacket("VideoStrmReq");
-    sendToUDP(msg, localPort, svrAddr, svrPort);
+    cPacket *pk = new cPacket("VideoStrmReq");
+    socket.sendTo(pk, svrAddr, svrPort);
 }
 
-void UDPVideoStreamCli::receiveStream(cPacket *msg)
+void UDPVideoStreamCli::receiveStream(cPacket *pk)
 {
-    EV << "Video stream packet:\n";
-    printPacket(msg);
-    emit(rcvdPkBytesSignal, (long)(msg->getByteLength()));
-    emit(endToEndDelaySignal, (simTime() - msg->getCreationTime()));
-    delete msg;
+    EV << "Video stream packet: " << UDPSocket::getReceivedPacketInfo(pk) << endl;
+    emit(rcvdPkSignal, pk);
+    delete pk;
 }
 

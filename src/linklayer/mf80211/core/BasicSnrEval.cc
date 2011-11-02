@@ -48,8 +48,8 @@ void BasicSnrEval::initialize(int stage)
     {
         gate("radioIn")->setDeliverOnReceptionStart(true);
 
-        uppergateIn = findGate("uppergateIn");
-        uppergateOut = findGate("uppergateOut");
+        upperLayerIn = findGate("upperLayerIn");
+        upperLayerOut = findGate("upperLayerOut");
 
         headerLength = par("headerLength");
         bitrate = par("bitrate");
@@ -70,7 +70,7 @@ Determine if the packet must be delete or process
 
 bool BasicSnrEval::processAirFrame(AirFrame *airframe)
 {
-	return airframe->getChannelNumber() == getChannelNumber();
+    return airframe->getChannelNumber() == getChannelNumber();
 }
 
 /**
@@ -90,7 +90,7 @@ bool BasicSnrEval::processAirFrame(AirFrame *airframe)
  */
 void BasicSnrEval::handleMessage(cMessage *msg)
 {
-    if (msg->getArrivalGateId() == uppergateIn)
+    if (msg->getArrivalGateId() == upperLayerIn)
     {
         AirFrame *frame = encapsMsg(PK(msg));
         handleUpperMsg(frame);
@@ -109,7 +109,7 @@ void BasicSnrEval::handleMessage(cMessage *msg)
         else
             handleSelfMsg(msg);
     }
-    else if (processAirFrame (check_and_cast<AirFrame *>(msg)))
+    else if (processAirFrame(check_and_cast<AirFrame *>(msg)))
     {
         // must be an AirFrame
         AirFrame *frame = (AirFrame *) msg;
@@ -149,7 +149,7 @@ void BasicSnrEval::bufferMsg(AirFrame * frame) //FIXME: add explicit simtime_t a
  */
 AirFrame *BasicSnrEval::encapsMsg(cPacket *msg)
 {
-	AirFrame *frame = createCapsulePkt();
+    AirFrame *frame = createCapsulePkt();
     frame->setName(msg->getName());
     frame->setPSend(transmitterPower);
     frame->setBitLength(headerLength);
@@ -194,7 +194,7 @@ void BasicSnrEval::sendUp(AirFrame *msg, SnrList& list)
     // attach the cInfo to the AirFrame
     msg->setControlInfo(cInfo);
 
-    send(msg, uppergateOut);
+    send(msg, upperLayerOut);
 }
 
 /**

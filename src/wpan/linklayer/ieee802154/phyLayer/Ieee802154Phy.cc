@@ -119,8 +119,8 @@ void Ieee802154Phy::initialize(int stage)
 
     if (stage == 0)
     {
-        uppergateIn = findGate("uppergateIn");
-        uppergateOut = findGate("uppergateOut");
+        upperLayerIn = findGate("upperLayerIn");
+        upperLayerOut = findGate("upperLayerOut");
         gate("radioIn")->setDeliverOnReceptionStart(true);
 
         // The following parameters to be specified in omnetpp.ini
@@ -276,7 +276,7 @@ void Ieee802154Phy::handleMessage(cMessage *msg)
     }
     if (!msg->isSelfMessage())
     {
-        if (msg->getArrivalGateId()==uppergateIn && (dynamic_cast<cPacket*>(msg)==NULL))
+        if (msg->getArrivalGateId()==upperLayerIn && (dynamic_cast<cPacket*>(msg)==NULL))
         {
             if (msg->getKind()==0)
                 error("[PHY]: Message '%s' with length==0 is supposed to be a primitive, but msg kind is also zero", msg->getName());
@@ -285,7 +285,7 @@ void Ieee802154Phy::handleMessage(cMessage *msg)
             return;
         }
     }
-    if (msg->getArrivalGateId() == uppergateIn)
+    if (msg->getArrivalGateId() == upperLayerIn)
     {
         EV << "[PHY]: a MAC frame " << msg->getName()  << " received from MAC layer" << endl;
         AirFrame *airframe = encapsulatePacket(msg);
@@ -439,7 +439,7 @@ void Ieee802154Phy::handleUpperMsg(AirFrame *airframe)
 void Ieee802154Phy::sendUp(cMessage *msg)
 {
     EV << "[PHY]: sending received " << msg->getName() << " frame to MAC layer" << endl;
-    send(msg, uppergateOut);
+    send(msg, upperLayerOut);
 }
 
 void Ieee802154Phy::sendDown(AirFrame *airframe)
@@ -748,7 +748,7 @@ void Ieee802154Phy::PD_DATA_confirm(PHYenum status)
     primitive->setStatus(status);
     primitive->setBitRate(rs.getBitrate());
     EV << "[PHY]: sending a PD_DATA_confirm with " << status << " to MAC" << endl;
-    send(primitive, uppergateOut);
+    send(primitive, upperLayerOut);
 }
 
 void Ieee802154Phy::PD_DATA_confirm(PHYenum status,short additional)
@@ -759,7 +759,7 @@ void Ieee802154Phy::PD_DATA_confirm(PHYenum status,short additional)
     primitive->setBitRate(rs.getBitrate());
     primitive->setAdditional(additional);
     EV << "[PHY]: sending a PD_DATA_confirm with " << status << " to MAC" << endl;
-    send(primitive, uppergateOut);
+    send(primitive, upperLayerOut);
 }
 
 
@@ -770,7 +770,7 @@ void Ieee802154Phy::PLME_CCA_confirm(PHYenum status)
     primitive->setStatus(status);
     primitive->setBitRate(rs.getBitrate());
     EV << "[PHY]: sending a PLME_CCA_confirm with " << status << " to MAC" << endl;
-    send(primitive, uppergateOut);
+    send(primitive, upperLayerOut);
 }
 
 void Ieee802154Phy::PLME_bitRate(double bitRate)
@@ -780,7 +780,7 @@ void Ieee802154Phy::PLME_bitRate(double bitRate)
     primitive->setBitRate(bitRate);
     primitive->setBitRate(rs.getBitrate());
     EV << "[PHY]: sending a PLME_bitRate with " << bitRate << " to MAC" << endl;
-    send(primitive, uppergateOut);
+    send(primitive, upperLayerOut);
 }
 
 void Ieee802154Phy::PLME_ED_confirm(PHYenum status, uint16_t energyLevel)
@@ -791,7 +791,7 @@ void Ieee802154Phy::PLME_ED_confirm(PHYenum status, uint16_t energyLevel)
     primitive->setEnergyLevel(energyLevel);
     primitive->setBitRate(rs.getBitrate());
     EV << "[PHY]: sending a PLME_ED_confirm with " << status << " to MAC" << endl;
-    send(primitive, uppergateOut);
+    send(primitive, upperLayerOut);
 }
 
 void Ieee802154Phy::PLME_SET_TRX_STATE_confirm(PHYenum status)
@@ -803,7 +803,7 @@ void Ieee802154Phy::PLME_SET_TRX_STATE_confirm(PHYenum status)
     if (status == phy_SUCCESS)
     	EV << "phy_SUCCESS";
     EV << "[PHY]: sending a PLME_SET_TRX_STATE_confirm with " << status << " to MAC" << endl;
-    send(primitive, uppergateOut);
+    send(primitive, upperLayerOut);
 }
 
 void Ieee802154Phy::PLME_SET_confirm(PHYenum status, PHYPIBenum attribute)
@@ -814,7 +814,7 @@ void Ieee802154Phy::PLME_SET_confirm(PHYenum status, PHYPIBenum attribute)
     primitive->setAttribute(attribute);
     primitive->setBitRate(rs.getBitrate());
     EV << "[PHY]: sending a PLME_SET_confirm with " << status << " and attr " <<  attribute << " to MAC" << endl;
-    send(primitive, uppergateOut);
+    send(primitive, upperLayerOut);
 }
 
 void Ieee802154Phy::handle_PLME_SET_TRX_STATE_request(PHYenum setState)

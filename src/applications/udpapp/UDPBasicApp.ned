@@ -39,14 +39,18 @@ import inet.applications.IUDPApp;
 simple UDPBasicApp like IUDPApp
 {
     parameters:
-        int localPort; // if -1, app doesn't bind in UDP
+        int localPort = default(-1);  // local port (-1: use ephemeral port)
         int destPort;
-        volatile int messageLength @unit("B"); // length of messages to generate, in bytes
-        volatile double messageFreq @unit("s"); // should usually be a random value, e.g. exponential(1)
+        volatile int messageLength @unit(B); // length of messages to generate, in bytes
+        double startTime @unit(s) = default(this.sendInterval); // application start time (start of the first packet)
+        double stopTime @unit(s) = default(0);  // time of finish sending, 0 means forever
+        volatile double sendInterval @unit(s); // should usually be a random value, e.g. exponential(1)
         string destAddresses = default(""); // list of IP addresses, separated by spaces
         @display("i=block/app");
-        @statistic[rcvdPkBytes](title="Received packet bytes"; record=count,sum,vector);
-        @statistic[sentPkBytes](title="Sent packet bytes"; record=count,sum,vector);
+        @signal[sentPk](type=cPacket);
+        @signal[rcvdPk](type=cPacket);
+        @statistic[rcvdPkBytes](title="Received packet bytes"; source="packetBytes(rcvdPk)"; unit=B; record=count,sum,vector; interpolationmode=none);
+        @statistic[sentPkBytes](title="Sent packet bytes"; source="packetBytes(sentPk)"; unit=B; record=count,sum,vector; interpolationmode=none);
     gates:
         input udpIn @labels(UDPControlInfo/up);
         output udpOut @labels(UDPControlInfo/down);

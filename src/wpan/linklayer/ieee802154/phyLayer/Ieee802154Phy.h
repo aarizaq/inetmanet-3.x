@@ -81,8 +81,8 @@ class INET_API Ieee802154Phy : public ChannelAccess
     IReceptionModel*    receptionModel;
     ObstacleControl* obstacles;
 
-    int             uppergateOut;
-    int             uppergateIn;
+    int             upperLayerOut;
+    int             upperLayerIn;
 
     double          transmitterPower;       // in mW
     double          noiseLevel;

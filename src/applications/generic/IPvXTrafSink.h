@@ -1,5 +1,6 @@
 //
-// Copyright (C) 2005 Andras Varga
+// Copyright (C) 2004 Andras Varga
+// Copyright (C) 2000 Institut fuer Telematik, Universitaet Karlsruhe
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -16,39 +17,32 @@
 //
 
 
-#ifndef __INET_UDPAPPBASE_H
-#define __INET_UDPAPPBASE_H
+#ifndef __INET_IPTRAFSINK_H
+#define __INET_IPTRAFSINK_H
 
+#include <vector>
 
 #include "INETDefs.h"
 
-class IPvXAddress;
+#include "IPvXAddress.h"
 
 
 /**
- * Contains a few utility functions as protected methods, for sending
- * and receiving UDP packets.
+ * Consumes and prints packets received from the IP module. See NED for more info.
  */
-class INET_API UDPAppBase : public cSimpleModule
+class INET_API IPvXTrafSink : public cSimpleModule
 {
   protected:
-    /**
-     * Tells UDP we want to get all packets arriving on the given port
-     */
-    virtual void bindToPort(int port);
+    int numReceived;
+    static simsignal_t rcvdPkSignal;
 
-    /**
-     * Sends a packet over UDP
-     */
-    virtual void sendToUDP(cPacket *msg, int srcPort, const IPvXAddress& destAddr, int destPort);
-
-    /**
-     * Prints a brief about packets having an attached UDPControlInfo
-     * (i.e. those which just arrived from UDP, or about to be send to UDP).
-     */
     virtual void printPacket(cPacket *msg);
-};
+    virtual void processPacket(cPacket *msg);
 
+  protected:
+    virtual void initialize();
+    virtual void handleMessage(cMessage *msg);
+};
 
 #endif
 

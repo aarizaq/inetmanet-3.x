@@ -78,7 +78,7 @@ class INET_API Radio : public ChannelAccess, public IPowerControl
 
     virtual void handleSelfMsg(cMessage*);
 
-    virtual void handleCommand(int msgkind, cPolymorphic *ctrl);
+    virtual void handleCommand(int msgkind, cObject *ctrl);
 
     /** @brief Buffer the frame and update noise levels and snr information */
     virtual void handleLowerMsgStart(AirFrame *airframe);
@@ -138,10 +138,10 @@ class INET_API Radio : public ChannelAccess, public IPowerControl
      * Routines to connect or disconnect the transmission and reception  of packets
      */
 
-    virtual void disconnectTransceiver() {transceiverConnect=false;}
-    virtual void connectTransceiver() {transceiverConnect=true;}
-    virtual void disconnectReceiver() {receiverConnect=false;}
-    virtual void connectReceiver() {receiverConnect=true;}
+    virtual void disconnectTransceiver() {transceiverConnect = false;}
+    virtual void connectTransceiver() {transceiverConnect = true;}
+    virtual void disconnectReceiver() {receiverConnect = false;}
+    virtual void connectReceiver() {receiverConnect = true;}
 
     virtual void registerBattery();
 
@@ -173,8 +173,8 @@ class INET_API Radio : public ChannelAccess, public IPowerControl
 
     /** @name Gate Ids */
     //@{
-    int uppergateOut;
-    int uppergateIn;
+    int upperLayerOut;
+    int upperLayerIn;
     //@}
 
     /**

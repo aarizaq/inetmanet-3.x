@@ -57,7 +57,7 @@ simple Ieee802154Phy
 
 
     gates:
-        input uppergateIn;			// from Mac
-        output uppergateOut;			// to Mac
+        input upperLayerIn;			// from Mac
+        output upperLayerOut;			// to Mac
         input radioIn; 					// to receive frames (AirFrame) on the radio channel
 }

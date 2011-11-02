@@ -28,13 +28,8 @@ Define_Module(EtherEncapMesh);
 
 void EtherEncapMesh::initialize()
 {
-    seqNum = 0;
-    WATCH(seqNum);
-
-    totalFromHigherLayer = totalFromMAC = totalPauseSent = totalFromWifi =totalToWifi=0;
-    WATCH(totalFromHigherLayer);
-    WATCH(totalFromMAC);
-    WATCH(totalPauseSent);
+    EtherEncap::initialize();
+    totalFromWifi =totalToWifi=0;
     WATCH(totalFromWifi);
 }
 

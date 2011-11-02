@@ -28,9 +28,10 @@ import inet.applications.IUDPApp;
 simple UDPSink like IUDPApp
 {
     parameters:
-        int localPort; // if -1, app doesn't bind in UDP
+        int localPort; // local port
         @display("i=block/sink");
-        @statistic[rcvdPkBytes](title="Received packet bytes"; record=count,sum,vector);
+        @signal[rcvdPk](type=cPacket);
+        @statistic[rcvdPkBytes](title="Received packet bytes"; source="packetBytes(rcvdPk)"; unit=B; record=count,sum,vector; interpolationmode=none);
     gates:
         input udpIn @labels(UDPControlInfo/up);
         output udpOut @labels(UDPControlInfo/down);

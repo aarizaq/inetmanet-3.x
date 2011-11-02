@@ -67,8 +67,8 @@ class INET_API BasicSnrEval : public ChannelAccess
 
     /** @brief gate id*/
     /*@{*/
-    int uppergateOut;
-    int uppergateIn;
+    int upperLayerOut;
+    int upperLayerIn;
     /*@}*/
     double carrierFrequency;
 
@@ -81,7 +81,7 @@ class INET_API BasicSnrEval : public ChannelAccess
 
   protected:
 
-	virtual bool processAirFrame(AirFrame *);
+    virtual bool processAirFrame(AirFrame *);
     /**
      * @name Handle Messages
      * @brief Functions to redefine by the programmer

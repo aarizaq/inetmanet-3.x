@@ -27,11 +27,12 @@
 
 Define_Module(Test_TraCI);
 
+simsignal_t Test_TraCI::mobilityStateChangedSignal = SIMSIGNAL_NULL;
 void Test_TraCI::initialize(int aStage)
 {
     cSimpleModule::initialize(aStage);
-    mobility = dynamic_cast<TraCIMobility*>(getParentModule()->getSubmodule("mobility"));
-    if (mobility == 0) error("Could not find mobility module of type TraCIMobility");
+    mobility = dynamic_cast<TraCIMobility*>(getParentModule()->getSubmodule("mobility"));if
+(    mobility == 0) error("Could not find mobility module of type TraCIMobility");
 
     if (aStage == 0)
     {
@@ -48,20 +49,22 @@ void Test_TraCI::initialize(int aStage)
             logfile.close();
         }
 
-        NotificationBoard* nb = NotificationBoardAccess().get();
-        nb->subscribe(this, NF_HOSTPOSITION_UPDATED);
+        mobilityStateChangedSignal = registerSignal("mobilityStateChanged");
+        getParentModule()->subscribe(mobilityStateChangedSignal, this);
 
         cXMLElement* commands_root_xml = par("commands").xmlValue();
         cXMLElementList commands_xml = commands_root_xml->getChildren();
         simtime_t lastTime = simTime();
-        for (cXMLElementList::iterator iter=commands_xml.begin(); iter != commands_xml.end(); iter++)
+        for (cXMLElementList::iterator iter = commands_xml.begin(); iter != commands_xml.end(); iter++)
         {
             const cXMLElement* e = *iter;
 
             const char* time_s = e->getAttribute("t");
             const char* dtime_s = e->getAttribute("dt");
-            if (!time_s && !dtime_s) error("command is missing attribute \"t\" and \"dt\". Need exactly one.");
-            if (time_s && dtime_s) error("command has both attribute \"t\" and \"dt\". Need exactly one.");
+            if (!time_s && !dtime_s)
+                error("command is missing attribute \"t\" and \"dt\". Need exactly one.");
+            if (time_s && dtime_s)
+                error("command has both attribute \"t\" and \"dt\". Need exactly one.");
             simtime_t time = simTime();
             if (time_s)
             {
@@ -72,7 +75,8 @@ void Test_TraCI::initialize(int aStage)
                 time = lastTime + parseOrBail<double>(e, "dt");
             }
 
-            if (time < lastTime) error("commands not in ascending chronological order or scheduled prior to node creation");
+            if (time < lastTime)
+                error("commands not in ascending chronological order or scheduled prior to node creation");
             lastTime = time;
 
             if (debug)
@@ -87,10 +91,11 @@ void Test_TraCI::initialize(int aStage)
     }
 }
 
-
 void Test_TraCI::executeCommand(const cXMLElement* e)
 {
-    const char* name_s = e->getTagName(); if (!name_s) error("command name not found");
+    const char* name_s = e->getTagName();
+    if (!name_s)
+        error("command name not found");
     std::string name = name_s;
 
     if (debug)
@@ -116,12 +121,14 @@ void Test_TraCI::executeCommand(const cXMLElement* e)
         float p1y = parseOrBail<float>(e, "p1y");
         float p2x = parseOrBail<float>(e, "p2x");
         float p2y = parseOrBail<float>(e, "p2y");
-        bool drivingDistance = e->getAttribute("drivingDistance");;
+        bool drivingDistance = e->getAttribute("drivingDistance");
+        ;
         float result = mobility->commandDistanceRequest(Coord(p1x, p1y), Coord(p2x, p2y), drivingDistance);
 
         std::ofstream logfile;
-        logfile.open ("Test_TraCI.log", std::ios::out | std::ios::app);
-        logfile << this->getFullPath() << "\t" << "commandDistanceRequest" << "\t" << std::setiosflags(std::ios::fixed) << std::setprecision(1) << result << std::endl;
+        logfile.open("Test_TraCI.log", std::ios::out | std::ios::app);
+        logfile << this->getFullPath() << "\t" << "commandDistanceRequest" << "\t" << std::setiosflags(std::ios::fixed)
+                << std::setprecision(1) << result << std::endl;
         logfile.close();
     }
     else if (name == "CMD_STOP")
@@ -140,16 +147,16 @@ void Test_TraCI::executeCommand(const cXMLElement* e)
     }
 }
 
-
 void Test_TraCI::finish()
 {
     std::ofstream logfile;
-    logfile.open ("Test_TraCI.log", std::ios::out | std::ios::app);
+    logfile.open("Test_TraCI.log", std::ios::out | std::ios::app);
 
     std::string visitedEdges_s;
     for (std::set<std::string>::const_iterator i = visitedEdges.begin(); i != visitedEdges.end(); i++)
     {
-        if (i != visitedEdges.begin()) visitedEdges_s += " ";
+        if (i != visitedEdges.begin())
+            visitedEdges_s += " ";
         visitedEdges_s += *i;
     }
 
@@ -160,7 +167,6 @@ void Test_TraCI::finish()
 
     logfile.close();
 }
-
 
 void Test_TraCI::handleMessage(cMessage* apMsg)
 {
@@ -181,27 +187,23 @@ void Test_TraCI::handleMessage(cMessage* apMsg)
     executeCommand(e);
 }
 
-
-void Test_TraCI::receiveChangeNotification(int category, const cPolymorphic *details)
+void Test_TraCI::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj)
 {
-    Enter_Method("receiveChangeNotification()");
-
-    if (category != NF_HOSTPOSITION_UPDATED) error("Test_TraCI should only be subscribed to NF_HOSTPOSITION_UPDATED, but received notification of category %d", category);
-
     try
     {
         double speed = mobility->getSpeed();
 
         std::string roadId = mobility->getRoadId();
-        if ((roadId.length() > 0) && (roadId[0] != ':')) visitedEdges.insert(roadId);
-        if (speed < 0.001) hasStopped = true;
+        if ((roadId.length() > 0) && (roadId[0] != ':'))
+            visitedEdges.insert(roadId);
+        if (speed < 0.001)
+            hasStopped = true;
     }
     catch (std::runtime_error e)
     {
         // We didn't already receive movement commands from TraCI
     }
 }
-
 
 template<> double Test_TraCI::extract(cDynamicExpression& o)
 {
@@ -224,7 +226,8 @@ template<> std::string Test_TraCI::parseOrBail(const cXMLElement* xmlElement, st
     try
     {
         const char* value_s = xmlElement->getAttribute(name.c_str());
-        if (!value_s) throw new std::runtime_error("missing attribute");
+        if (!value_s)
+            throw new std::runtime_error("missing attribute");
         return value_s;
     }
     catch (std::runtime_error e)

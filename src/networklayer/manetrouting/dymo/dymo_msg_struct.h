@@ -51,18 +51,18 @@ struct DYMO_element : public cPacket
 
     //explicit AODV_msg(const char *name="AodvMgs") : cMessage(name) {extensionsize=0;extension=NULL;}
 #ifdef STATIC_BLOCK
-    explicit DYMO_element(const char *name=NULL) : cPacket(name) {previousStatic=false;setBitLength (0); extensionsize=0; memset(extension,0,STATIC_BLOCK_SIZE);blockAddressGroup=0;}
+    explicit DYMO_element(const char *name = NULL) : cPacket(name) {setBitLength(0); extensionsize = 0; memset(extension, 0, STATIC_BLOCK_SIZE); blockAddressGroup = 0; previousStatic=false;}
 #else
-    explicit DYMO_element(const char *name=NULL) : cPacket(name) {previousStatic=false;setBitLength (0); extensionsize=0; extension=NULL;blockAddressGroup=0;}
+    explicit DYMO_element(const char *name = NULL) : cPacket(name) {setBitLength(0); extensionsize = 0; extension = NULL; blockAddressGroup = 0; previousStatic = false;}
 #endif
-    ~DYMO_element ();
-    DYMO_element (const DYMO_element  &m);
-    DYMO_element &  operator= (const DYMO_element &m);
+    ~DYMO_element();
+    DYMO_element(const DYMO_element  &m);
+    DYMO_element &  operator=(const DYMO_element &m);
     virtual DYMO_element *dup() const {return new DYMO_element(*this);}
     char *  addExtension(int);
     char *  delExtension(int);
     void clearExtension();
-    char * getFirstExtension () {return extension;}
+    char * getFirstExtension() {return extension;}
     int getSizeExtension() {return extensionsize;}
     virtual std::string detailedInfo() const;
   protected:
@@ -84,9 +84,9 @@ struct re_block
     Uint128     re_node_addr;
     u_int32_t   re_node_seqnum;
     unsigned char from_proactive;
-    bool       staticNode;
-    uint32_t   cost;
-    uint8_t    re_hopfix;
+    bool        staticNode;
+    uint32_t    cost;
+    uint8_t     re_hopfix;
 };
 
 #define MAX_RERR_BLOCKS 50L
@@ -111,10 +111,10 @@ struct Dymo_RE : public DYMO_element
     u_int8_t    thopcnt : 6;
     u_int8_t    res2 : 2;
     struct re_block *re_blocks;
-    explicit Dymo_RE (const char *name="RE_DymoMsg");
+    explicit Dymo_RE(const char *name = "RE_DymoMsg");
 
-    Dymo_RE (const Dymo_RE &m);
-    Dymo_RE &   operator= (const Dymo_RE &m);
+    Dymo_RE(const Dymo_RE &m);
+    Dymo_RE &   operator=(const Dymo_RE &m);
     virtual Dymo_RE *dup() const {return new Dymo_RE(*this);}
 
     void newBocks(int n);
@@ -134,9 +134,9 @@ struct rerr_block
 
 struct Dymo_UERR : public DYMO_element
 {
-    explicit Dymo_UERR (const char *name="UERR_DymoMsg") : DYMO_element (name) {}
-    Dymo_UERR &     operator= (const Dymo_UERR &m);
-    Dymo_UERR (const Dymo_UERR &m);
+    explicit Dymo_UERR(const char *name = "UERR_DymoMsg") : DYMO_element(name) {}
+    Dymo_UERR &     operator=(const Dymo_UERR &m);
+    Dymo_UERR(const Dymo_UERR &m);
     virtual Dymo_UERR *dup() const {return new Dymo_UERR(*this);}
     Uint128 uelem_target_addr;
     Uint128 uerr_node_addr;
@@ -161,10 +161,10 @@ struct Dymo_RERR : public DYMO_element
 {
     struct rerr_block *rerr_blocks;
 
-    explicit Dymo_RERR (const char *name="RERR_DymoMsg") : DYMO_element (name) {rerr_blocks = (struct rerr_block *)extension;}
+    explicit Dymo_RERR(const char *name = "RERR_DymoMsg") : DYMO_element(name) {rerr_blocks = (struct rerr_block *)extension;}
 
-    Dymo_RERR (const Dymo_RERR &m);
-    Dymo_RERR &     operator= (const Dymo_RERR &m);
+    Dymo_RERR(const Dymo_RERR &m);
+    Dymo_RERR &     operator=(const Dymo_RERR &m);
     virtual Dymo_RERR *dup() const {return new Dymo_RERR(*this);}
 
     void newBocks(int n);
@@ -178,7 +178,7 @@ struct Dymo_RERR : public DYMO_element
 
 struct Dymo_HELLO : public DYMO_element
 {
-    explicit Dymo_HELLO (const char *name="HELLO_DymoMsg") : DYMO_element (name) {}
+    explicit Dymo_HELLO(const char *name = "HELLO_DymoMsg") : DYMO_element(name) {}
 };
 
 

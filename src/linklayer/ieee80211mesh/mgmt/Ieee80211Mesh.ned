@@ -26,7 +26,7 @@ simple Ieee80211Mesh like IIeee80211Mgmt
     parameters:
         @macRouting;  // Mac layer with routing protocol working in the level 2
         int frameCapacity = default(100);
-        bool useHwmp=default(false); // If active automatically deactivate useProactive and useReactive and activate ETXEstimate
+        bool useHwmp = default(false); // If active automatically deactivate useProactive and useReactive and activate ETXEstimate
         bool useProactive = default(false);
         bool useReactive = default(true);
         bool FixNode = default(false); // used by routing protocol to indicate no mobility node
@@ -46,6 +46,11 @@ simple Ieee80211Mesh like IIeee80211Mgmt
  //       int Tc_ival = default(5); // sec
  //       int Mid_ival = default(5); // sec
  //       int use_mac = default(0);
+        @signal[enqueuePk](type=cMessage);
+        @signal[dequeuePk](type=cMessage);
+        @signal[dropPkByQueue](type=cMessage);
+        @signal[queueingTime](type=simtime_t; unit=s);
+        @signal[dataQueueLen](type=long; interpolationmode=sample-hold);  // number of stored packets
     gates:
         input  ETXProcIn;
         output ETXProcOut;
@@ -55,8 +60,8 @@ simple Ieee80211Mesh like IIeee80211Mgmt
         output routingOutReactive;
         input  routingInHwmp;
         output routingOutHwmp;
-        input  uppergateIn @labels(Ieee802Ctrl/down);
-        output uppergateOut @labels(Ieee802Ctrl/up);
+        input  upperLayerIn @labels(Ieee802Ctrl/down);
+        output upperLayerOut @labels(Ieee802Ctrl/up);
         input  fromEthernet @labels(Ieee80211Frame);
         output toEthernet @labels(Ieee80211Frame);
         input  macIn;

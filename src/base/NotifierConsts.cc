@@ -27,7 +27,6 @@ const char *notificationCategoryName(int category)
     {
         case NF_SUBSCRIBERLIST_CHANGED: return "SUBSCRIBERS";
 
-        case NF_HOSTPOSITION_UPDATED: return "POS";
         case NF_NODE_FAILURE: return "FAILURE";
         case NF_NODE_RECOVERY: return "RECOVERY";
 
@@ -62,12 +61,12 @@ const char *notificationCategoryName(int category)
         case NF_BATTERY_CHANGED: return "NF_BATTERY_CHANGED";
         case NF_BATTERY_CPUTIME_CONSUMED: return "NF_BATTERY_CPUTIME_CONSUMED";
 
-        default: sprintf(buf, "%d", category); s = buf;
+        default: sprintf(buf, "%d", category); s = buf; break;
     }
     return s;
 }
 
-void printNotificationBanner(int category, const cPolymorphic *details)
+void printNotificationBanner(int category, const cObject *details)
 {
     EV << "** Notification at T=" << simTime()
        << " to " << simulation.getContextModule()->getFullPath() << ": "

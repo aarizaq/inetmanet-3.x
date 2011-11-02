@@ -62,7 +62,7 @@ void Ieee80211AgentSTA::initialize(int stage)
         dropConfirmSignal = registerSignal("dropConfirm");
 
         // start up: send scan request
-        scheduleAt(simTime()+uniform(0,maxChannelTime), new cMessage("startUp", MK_STARTUP));
+        scheduleAt(simTime()+uniform(0, maxChannelTime), new cMessage("startUp", MK_STARTUP));
     }
 }
 
@@ -90,7 +90,7 @@ void Ieee80211AgentSTA::handleTimer(cMessage *msg)
 
 void Ieee80211AgentSTA::handleResponse(cMessage *msg)
 {
-    cPolymorphic *ctrl = msg->removeControlInfo();
+    cObject *ctrl = msg->removeControlInfo();
     delete msg;
 
     EV << "Processing confirmation from mgmt: " << ctrl->getClassName() << "\n";
@@ -110,7 +110,7 @@ void Ieee80211AgentSTA::handleResponse(cMessage *msg)
     delete ctrl;
 }
 
-void Ieee80211AgentSTA::receiveChangeNotification(int category, const cPolymorphic *details)
+void Ieee80211AgentSTA::receiveChangeNotification(int category, const cObject *details)
 {
     Enter_Method_Silent();
     printNotificationBanner(category, details);

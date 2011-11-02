@@ -216,7 +216,7 @@ int NSCLASS dsr_ack_req_send(struct dsr_pkt *dp)
           (uint32_t)dp->src.s_addr, (uint32_t)dp->dst.s_addr, (uint32_t)dp->nxt_hop.s_addr);
 
     /* Set packet fields depending on packet type */
-    double jitter=0;
+    double jitter = 0;
     if (dp->flags & PKT_XMIT_JITTER)
     {
         /* Broadcast packet */
@@ -283,11 +283,11 @@ int NSCLASS dsr_ack_req_send(struct dsr_pkt *dp)
 #endif
     p->setPrevAddress(prev);
     if (jitter)
-        sendDelayed(p,jitter, "to_ip");
+        sendDelayed(p, jitter, "to_ip");
     else if (dp->dst.s_addr != DSR_BROADCAST)
-        sendDelayed(p,par ("uniCastDelay"), "to_ip");
+        sendDelayed(p, par("uniCastDelay"), "to_ip");
     else
-        sendDelayed(p,par ("broadCastDelay"), "to_ip");
+        sendDelayed(p, par ("broadCastDelay"), "to_ip");
     return 1;
 }
 

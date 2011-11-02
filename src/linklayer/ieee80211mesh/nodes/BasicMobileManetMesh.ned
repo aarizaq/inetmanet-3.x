@@ -103,8 +103,8 @@ module BasicMobileManetMesh
 
         // connections to network outside
         radioIn --> wlan.radioIn;
-        wlan.uppergateOut --> sink.ifIn[0];
-        wlan.uppergateIn <-- sink.ifOut[0];
+        wlan.upperLayerOut --> sink.ifIn[0];
+        wlan.upperLayerIn <-- sink.ifOut[0];
 }
 
 

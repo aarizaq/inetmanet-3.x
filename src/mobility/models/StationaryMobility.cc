@@ -16,26 +16,13 @@
 //
 
 
-#ifndef NULL_MOBILITY_H
-#define NULL_MOBILITY_H
-
-#include <omnetpp.h>
-
-#include "BasicMobility.h"
+#include "StationaryMobility.h"
 
 
-/**
- * This mobility module does nothing; it can be used for stationary nodes.
- *
- * @ingroup mobility
- * @author Andras Varga
- */
-class INET_API NullMobility : public BasicMobility
+Define_Module(StationaryMobility);
+
+
+void StationaryMobility::handleSelfMessage(cMessage *msg)
 {
-  protected:
-    /** This implementation does nothing. */
-    virtual void handleSelfMsg(cMessage *msg);
-};
-
-#endif
-
+    ASSERT(false);
+}

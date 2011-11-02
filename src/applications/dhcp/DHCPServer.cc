@@ -30,7 +30,7 @@ Define_Module(DHCPServer);
 
 void DHCPServer::initialize(int stage)
 {
-    if (stage==1)
+    if (stage == 1)
     {
         numSent = 0;
         numReceived = 0;
@@ -39,23 +39,26 @@ void DHCPServer::initialize(int stage)
         WATCH_MAP(leased);
 
         // DHCP UDP ports
-        this->bootpc_port = 68;  // client
-        this->bootps_port = 67;  // server
+        this->bootpc_port = 68; // client
+        this->bootps_port = 67; // server
 
         // process delay
-        this->proc_delay = 0.001;  // 100ms
+        this->proc_delay = 0.001; // 100ms
 
         IInterfaceTable* ift = InterfaceTableAccess().get();
 
         this->ie = ift->getInterfaceByName(par("iface"));
     }
 
-    if (stage==2)
+    if (stage == 2)
     {
-        if (this->ie!=NULL)
+        if (this->ie != NULL)
         {
             // bind the client to the udp port
-            bindToPort(bootps_port);
+            // bindToPort(bootps_port);
+            socket.setOutputGate(gate("udpOut"));
+            socket.bind(bootps_port);
+
             ev << "DHCP Server bond to port " << bootps_port << " at " << ie <<  endl;
         }
         else
@@ -74,28 +77,28 @@ void DHCPServer::handleMessage(cMessage *msg)
     }
     else
     {
-        this->handleIncommingPacket((cPacket*)msg);
+        this->handleIncommingPacket((cPacket*) msg);
     }
 }
 
 void DHCPServer::handleIncommingPacket(cPacket *pkt)
 {
     // schedule the packet processing
-    cMessage* proc_delay_timer = new cMessage("PROC_DELAY",PROC_DELAY);
+    cMessage* proc_delay_timer = new cMessage("PROC_DELAY", PROC_DELAY);
     proc_delay_timer->addPar("incomming_packet") = pkt;
-    scheduleAt(simTime()+this->proc_delay,proc_delay_timer);
+    scheduleAt(simTime() + this->proc_delay, proc_delay_timer);
     std::cout << "scheduling process" << endl;
 }
 
 void DHCPServer::handleTimer(cMessage *msg)
 {
-    if (msg->getKind()==PROC_DELAY)
+    if (msg->getKind() == PROC_DELAY)
     {
         cPacket* pkt = check_and_cast<cPacket*>(msg->par("incomming_packet"));
-        cMsgPar* par = (cMsgPar*)msg->removeObject("incomming_packet");
+        cMsgPar* par = (cMsgPar*) msg->removeObject("incomming_packet");
         delete par;
         delete msg;
-        if (pkt!=NULL)
+        if (pkt != NULL)
         {
             this->processPacket(pkt);
             return;
@@ -109,13 +112,12 @@ void DHCPServer::handleTimer(cMessage *msg)
     {
         EV << "Unknown Timer, discarding it" << endl;
     }
-    delete(msg);
+    delete (msg);
 }
 
 void DHCPServer::processPacket(cPacket *msg)
 {
     EV << "Received packet: ";
-    printPacket(check_and_cast<cPacket*>(msg));
 
     DHCPMessage* packet = check_and_cast<DHCPMessage*>(msg);
 
@@ -128,11 +130,11 @@ void DHCPServer::processPacket(cPacket *msg)
             EV << "DHCPDISCOVER arrived. handling it." << endl;
 
             DHCPLease* lease = this->getLeaseByMac(packet->getChaddr());
-            if (lease==NULL)
+            if (lease == NULL)
             {
                 // mac not registered. create offering a new lease to the client
                 lease = this->getAvailableLease();
-                if (lease!=NULL)
+                if (lease != NULL)
                 {
                     lease->mac = packet->getChaddr();
                     lease->xid = packet->getXid();
@@ -159,11 +161,11 @@ void DHCPServer::processPacket(cPacket *msg)
         {
             EV << "DHCPREQUEST arrived. handling it." << endl;
             // check if the request was in response of a offering
-            if (packet->getOptions().get(SERVER_ID)==this->ie->ipv4Data()->getIPAddress().str())
+            if (packet->getOptions().get(SERVER_ID) == this->ie->ipv4Data()->getIPAddress().str())
             {
                 // the REQUEST is in response to an offering
                 DHCPLease* lease = this->getLeaseByMac(packet->getChaddr());
-                if (lease!=NULL)
+                if (lease != NULL)
                 {
                     EV << "Requesting offered. From now " << lease->ip << " is leased to " << lease->mac << endl;
                     lease->xid = packet->getXid();
@@ -181,8 +183,8 @@ void DHCPServer::processPacket(cPacket *msg)
             else
             {
                 // the request is to extend, renew or rebind a lease
-                DHCPLease* lease = this->getLeaseByMac(packet->getChaddr());  // FIXME: we should find the lease by ip, not by mac
-                if (lease!=NULL)
+                DHCPLease* lease = this->getLeaseByMac(packet->getChaddr()); // FIXME: we should find the lease by ip, not by mac
+                if (lease != NULL)
                 {
                     EV << "Request for renewal/rebind. extending lease " << lease->ip << " to " << lease->mac << endl;
                     lease->xid = packet->getXid();
@@ -223,39 +225,38 @@ void DHCPServer::sendACK(DHCPLease* lease)
     DHCPMessage* ack = new DHCPMessage("DHCPACK");
     ack->setOp(BOOTREPLY);
     //ack->setByteLength(308); // DHCP ACK packet size
-    ack->setHtype(1);  // Ethernet
-    ack->setHlen(6);   // Hardware Address lenght (6 octets)
+    ack->setHtype(1); // Ethernet
+    ack->setHlen(6); // Hardware Address lenght (6 octets)
     ack->setHops(0);
-    ack->setXid(lease->xid);  // transacction id;
-    ack->setSecs(0);      // 0 seconds from transaction started.
-    ack->setFlags(0);        // 0 = Unicast
-    ack->setCiaddr(lease->ip);   // client IP addr.
-    ack->setYiaddr(lease->ip);  // clinet IP addr.
-    ack->setGiaddr("0.0.0.0");  // Next server ip
+    ack->setXid(lease->xid); // transacction id;
+    ack->setSecs(0); // 0 seconds from transaction started.
+    ack->setFlags(0); // 0 = Unicast
+    ack->setCiaddr(lease->ip); // client IP addr.
+    ack->setYiaddr(lease->ip); // clinet IP addr.
+    ack->setGiaddr("0.0.0.0"); // Next server ip
 
     ack->setChaddr(lease->mac); // client mac address;
     ack->setSname(""); // no server name given
     ack->setFile(""); // no file given
-    ack->getOptions().set(DHCP_MSG_TYPE,DHCPACK);
+    ack->getOptions().set(DHCP_MSG_TYPE, DHCPACK);
 
     // add the lease options
     long lease_time = this->par("lease_time");
-    ack->getOptions().set(SUBNET_MASK,lease->netmask.str());
-    ack->getOptions().set(RENEWAL_TIME, lease_time*0.5);  // RFC 4.4.5
-    ack->getOptions().set(REBIND_TIME, lease_time*0.875);  // RFC 4.4.5
+    ack->getOptions().set(SUBNET_MASK, lease->netmask.str());
+    ack->getOptions().set(RENEWAL_TIME, lease_time * 0.5); // RFC 4.4.5
+    ack->getOptions().set(REBIND_TIME, lease_time * 0.875); // RFC 4.4.5
     ack->getOptions().set(LEASE_TIME, lease_time);
     ack->getOptions().set(ROUTER, lease->gateway.str());
     ack->getOptions().set(DNS, lease->dns.str());
     ack->getOptions().set(LEASE_TIME, lease_time);
 
-
     // add the server_id as the RFC says
-    ack->getOptions().set(SERVER_ID,this->ie->ipv4Data()->getIPAddress().str());
+    ack->getOptions().set(SERVER_ID, this->ie->ipv4Data()->getIPAddress().str());
 
     // register the lease time
     lease->lease_time = simTime();
 
-    sendToUDP(ack,this->bootps_port,lease->ip.getBroadcastAddress(lease->netmask),this->bootpc_port);
+    sendToUDP(ack, this->bootps_port, lease->ip.getBroadcastAddress(lease->netmask), this->bootpc_port);
 }
 
 void DHCPServer::sendOffer(DHCPLease* lease)
@@ -266,76 +267,76 @@ void DHCPServer::sendOffer(DHCPLease* lease)
     DHCPMessage* offer = new DHCPMessage("DHCPOFFER");
     offer->setOp(BOOTREPLY);
     //offer->setByteLength(308); // DHCP OFFER packet size
-    offer->setHtype(1);  // Ethernet
-    offer->setHlen(6);   // Hardware Address lenght (6 octets)
+    offer->setHtype(1); // Ethernet
+    offer->setHlen(6); // Hardware Address lenght (6 octets)
     offer->setHops(0);
-    offer->setXid(lease->xid);  // transacction id;
-    offer->setSecs(0);      // 0 seconds from transaction started.
-    offer->setFlags(0);        // 0 = Unicast
-    offer->setCiaddr("0.0.0.0");  // NO client IP addr.
+    offer->setXid(lease->xid); // transacction id;
+    offer->setSecs(0); // 0 seconds from transaction started.
+    offer->setFlags(0); // 0 = Unicast
+    offer->setCiaddr("0.0.0.0"); // NO client IP addr.
 
-    offer->setYiaddr(lease->ip);  // ip offered.
-    offer->setGiaddr(lease->gateway);  // next server ip
+    offer->setYiaddr(lease->ip); // ip offered.
+    offer->setGiaddr(lease->gateway); // next server ip
 
     offer->setChaddr(lease->mac); // client mac address;
     offer->setSname(""); // no server name given
     offer->setFile(""); // no file given
-    offer->getOptions().set(DHCP_MSG_TYPE,DHCPOFFER);
+    offer->getOptions().set(DHCP_MSG_TYPE, DHCPOFFER);
 
     // add the offer options
     long lease_time = this->par("lease_time");
-    offer->getOptions().set(SUBNET_MASK,lease->netmask.str());
-    offer->getOptions().set(RENEWAL_TIME, lease_time*0.5);  // RFC 4.4.5
-    offer->getOptions().set(REBIND_TIME, lease_time*0.875);  // RFC 4.4.5
+    offer->getOptions().set(SUBNET_MASK, lease->netmask.str());
+    offer->getOptions().set(RENEWAL_TIME, lease_time * 0.5); // RFC 4.4.5
+    offer->getOptions().set(REBIND_TIME, lease_time * 0.875); // RFC 4.4.5
     offer->getOptions().set(LEASE_TIME, lease_time);
     offer->getOptions().set(DNS, lease->dns.str());
     offer->getOptions().set(ROUTER, lease->gateway.str());
 
     // add the server_id as the RFC says
-    offer->getOptions().set(SERVER_ID,this->ie->ipv4Data()->getIPAddress().str());
+    offer->getOptions().set(SERVER_ID, this->ie->ipv4Data()->getIPAddress().str());
 
     // register the offering time
     lease->lease_time = simTime();
 
-    sendToUDP(offer,67,lease->ip.getBroadcastAddress(lease->netmask),68);
+    sendToUDP(offer, 67, lease->ip.getBroadcastAddress(lease->netmask), 68);
 }
 
 DHCPLease* DHCPServer::getLeaseByMac(MACAddress mac)
 {
-    for (DHCPLeased::iterator it=this->leased.begin(); it!=this->leased.end(); it++)
+    for (DHCPLeased::iterator it = this->leased.begin(); it != this->leased.end(); it++)
     {
         // lease exist
-        if (it->second.mac==mac)
+        if (it->second.mac == mac)
         {
             EV << "found lease for mac " << mac << endl;
-            return(&(it->second));
+            return (&(it->second));
         }
     }
     EV << "lease not found for mac " << mac << endl;
     // lease does not exist
-    return(NULL);
+    return (NULL);
 }
 
 DHCPLease* DHCPServer::getAvailableLease()
 {
-	IPv4Address network(par("net").stringValue());
-	IPv4Address netmask(par("mask").stringValue());
-	IPv4Address gateway(par("gateway").stringValue());
-	IPv4Address begin(par("ip_begin").stringValue());
+    IPv4Address network(par("net").stringValue());
+    IPv4Address netmask(par("mask").stringValue());
+    IPv4Address gateway(par("gateway").stringValue());
+    IPv4Address begin(par("ip_begin").stringValue());
 
     int num_cli = par("client_num");
 
     int begin_addr_int = begin.getInt();
-    for (int i=0; i<num_cli; i++)
+    for (int i = 0; i < num_cli; i++)
     {
-    	IPv4Address ip(begin_addr_int+i);
-        if (this->leased.find(ip)!=this->leased.end())
+        IPv4Address ip(begin_addr_int + i);
+        if (this->leased.find(ip) != this->leased.end())
         {
             // lease exists
             if (!this->leased[ip].leased)
             {
                 // lease expired
-                return(&(this->leased[ip]));
+                return (&(this->leased[ip]));
             }
         }
         else
@@ -346,29 +347,20 @@ DHCPLease* DHCPServer::getAvailableLease()
             this->leased[ip].gateway = gateway;
             this->leased[ip].netmask = netmask;
             this->leased[ip].network = network;
-            return(&(this->leased[ip]));
+            return (&(this->leased[ip]));
         }
     }
     // no lease available
-    return(NULL);
+    return (NULL);
 }
 
 void DHCPServer::sendToUDP(cPacket *msg, int srcPort, const IPvXAddress& destAddr, int destPort)
 {
     // Overwrite the sendToUDP in order to add the interface to use to allow the packet be routed by the IP stack
     msg->setKind(UDP_C_DATA);
-
-    UDPControlInfo *ctrl = new UDPControlInfo();
-    ctrl->setSrcPort(srcPort);
-    ctrl->setDestAddr(destAddr);
-    ctrl->setDestPort(destPort);
-
-    ctrl->setInterfaceId(this->ie->getInterfaceId());
-
-    msg->setControlInfo(ctrl);
-
     EV << "Sending packet: ";
-    printPacket(msg);
+    // printPacket(msg);
 
-    send(msg, "udpOut");
+    //send(msg, "udpOut");
+    socket.sendTo(msg, destAddr, destPort);
 }

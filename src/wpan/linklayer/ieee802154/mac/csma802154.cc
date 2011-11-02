@@ -42,7 +42,7 @@ Define_Module(csma802154);
 void csma802154::sendUp(cMessage *msg)
 {
     mpNb->fireChangeNotification(NF_LINK_PROMISCUOUS, msg);
-    send(msg, mUppergateOut);
+    send(msg, mUpperLayerOut);
 }
 
 void csma802154::initialize(int stage)
@@ -68,10 +68,10 @@ void csma802154::initialize(int stage)
         registerInterface();
 
         // get gate ID
-        mUppergateIn  = findGate("uppergateIn");
-        mUppergateOut = findGate("uppergateOut");
-        mLowergateIn  = findGate("lowergateIn");
-        mLowergateOut = findGate("lowergateOut");
+        mUpperLayerIn  = findGate("upperLayerIn");
+        mUpperLayerOut = findGate("upperLayerOut");
+        mLowerLayerIn  = findGate("lowerLayerIn");
+        mLowerLayerOut = findGate("lowerLayerOut");
 
         // get a pointer to the NotificationBoard module
         mpNb = NotificationBoardAccess().get();
@@ -211,7 +211,7 @@ csma802154::~csma802154()
 void csma802154::handleMessage(cMessage* msg)
 {
 
-    if (msg->getArrivalGateId() == mLowergateIn && !msg->isPacket())
+    if (msg->getArrivalGateId() == mLowerLayerIn && !msg->isPacket())
     {
         if (msg->getKind()==0)
             error("[MAC]: message '%s' with length==0 is supposed to be a primitive, but msg kind is also zero", msg->getName());
@@ -219,7 +219,7 @@ void csma802154::handleMessage(cMessage* msg)
         return;
     }
 
-    if (msg->getArrivalGateId() == mLowergateIn)
+    if (msg->getArrivalGateId() == mLowerLayerIn)
     {
         mpNb->fireChangeNotification(NF_LINK_FULL_PROMISCUOUS, msg);
         handleLowerMsg(msg);
@@ -452,7 +452,7 @@ void csma802154::updateStatusCCA(t_mac_event event, cMessage *msg)
             Ieee802154Frame * mac = check_and_cast<Ieee802154Frame *>(macQueue.front()->dup());
             //sendDown(msg);
             // give time for the radio to be in Tx state before transmitting
-            //sendDelayed(mac, aTurnaroundTime, mLowergateOut);
+            //sendDelayed(mac, aTurnaroundTime, mLowerLayerOut);
             sendNewPacketInTx(mac);
             nbTxFrames++;
         }
@@ -668,7 +668,7 @@ void csma802154::updateStatusSIFS(t_mac_event event, cMessage *msg)
         //sendDown(ackMessage);
         sendNewPacketInTx(ackMessage);
         nbTxAcks++;
-        //      sendDelayed(ackMessage, aTurnaroundTime, lowergateOut);
+        //      sendDelayed(ackMessage, aTurnaroundTime, lowerLayerOut);
         ackMessage = NULL;
         break;
     case EV_TIMER_BACKOFF:

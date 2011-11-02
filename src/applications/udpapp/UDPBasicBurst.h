@@ -1,6 +1,7 @@
 //
 // Copyright (C) 2004 Andras Varga
 // Copyright (C) 2000 Institut fuer Telematik, Universitaet Karlsruhe
+// Copyright (C) 2011 Zoltan Bojthe
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -25,58 +26,65 @@
 #include <map>
 
 #include "INETDefs.h"
-
-#include "IPvXAddress.h"
-#include "UDPAppBase.h"
-
-class MMapBoard;
+#include "UDPSocket.h"
 
 
 /**
  * UDP application. See NED for more info.
  */
-
-class INET_API UDPBasicBurst : public UDPAppBase
+class INET_API UDPBasicBurst : public cSimpleModule
 {
+  public:
+    enum ChooseDestAddrMode
+    {
+        ONCE = 1, PER_BURST, PER_SEND
+    };
+
   protected:
-    std::string nodeName;
+    UDPSocket socket;
     int localPort, destPort;
-    int msgByteLength;
 
+    ChooseDestAddrMode chooseDestAddrMode;
     std::vector<IPvXAddress> destAddresses;
-
-    typedef std::map<int,int> SurceSequence;
-    SurceSequence sourceSequence;
-    cStdDev *pktDelay;
-    double meanDelay;
-    simtime_t limitDelay;
-    int randGenerator;
-    cMessage timerNext;
-    simtime_t endSend;
-    simtime_t nextPkt;
-    simtime_t timeBurst;
-    bool activeBurst;
     IPvXAddress destAddr;
-    bool isSink;
-    bool offDisable;
-    MMapBoard *mmap;
-    int * numShare;
+    int destAddrRNG;
+
+    typedef std::map<int,int> SourceSequence;
+    SourceSequence sourceSequence;
+    simtime_t delayLimit;
+    cMessage *timerNext;
+    simtime_t stopTime;
+    simtime_t nextPkt;
+    simtime_t nextBurst;
+    simtime_t nextSleep;
+    bool activeBurst;
+    bool isSource;
+    bool haveSleepDuration;
 
     static int counter; // counter for generating a global number for each packet
 
     int numSent;
     int numReceived;
     int numDeleted;
+    int numDuplicated;
+
+    // volatile parameters:
+    cPar *messageLengthPar;
+    cPar *burstDurationPar;
+    cPar *sleepDurationPar;
+    cPar *sendIntervalPar;
+
+    //statistics:
+    static simsignal_t sentPkSignal;
+    static simsignal_t rcvdPkSignal;
+    static simsignal_t outOfOrderPkSignal;
+    static simsignal_t dropPkSignal;
 
     // chooses random destination address
     virtual IPvXAddress chooseDestAddr();
     virtual cPacket *createPacket();
-    virtual void sendPacket();
     virtual void processPacket(cPacket *msg);
     virtual void generateBurst();
-
-    virtual void sendToUDPDelayed(cPacket *, int srcPort,
-                                  const IPvXAddress& destAddr, int destPort, double delay);
 
   protected:
     virtual int numInitStages() const {return 4;}
@@ -85,7 +93,7 @@ class INET_API UDPBasicBurst : public UDPAppBase
     virtual void finish();
 
   public:
-    UDPBasicBurst() {pktDelay = new cStdDev("burst pkt delay"); numShare = NULL;}
+    UDPBasicBurst();
     ~UDPBasicBurst();
 };
 

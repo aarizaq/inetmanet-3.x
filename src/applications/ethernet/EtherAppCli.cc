@@ -25,11 +25,19 @@
 #include "Ieee802Ctrl_m.h"
 
 
-Define_Module (EtherAppCli);
+Define_Module(EtherAppCli);
 
-simsignal_t EtherAppCli::endToEndDelaySignal = SIMSIGNAL_NULL;
-simsignal_t EtherAppCli::sentPkBytesSignal = SIMSIGNAL_NULL;
-simsignal_t EtherAppCli::rcvdPkBytesSignal = SIMSIGNAL_NULL;
+simsignal_t EtherAppCli::sentPkSignal = SIMSIGNAL_NULL;
+simsignal_t EtherAppCli::rcvdPkSignal = SIMSIGNAL_NULL;
+
+EtherAppCli::EtherAppCli()
+{
+    timerMsg = NULL;
+}
+EtherAppCli::~EtherAppCli()
+{
+    cancelAndDelete(timerMsg);
+}
 
 void EtherAppCli::initialize(int stage)
 {
@@ -39,7 +47,7 @@ void EtherAppCli::initialize(int stage)
     {
         reqLength = &par("reqLength");
         respLength = &par("respLength");
-        waitTime = &par("waitTime");
+        sendInterval = &par("sendInterval");
 
         localSAP = ETHERAPP_CLI_SAP;
         remoteSAP = ETHERAPP_SRV_SAP;
@@ -49,9 +57,8 @@ void EtherAppCli::initialize(int stage)
 
         // statistics
         packetsSent = packetsReceived = 0;
-        endToEndDelaySignal = registerSignal("endToEndDelay");
-        sentPkBytesSignal = registerSignal("sentPkBytes");
-        rcvdPkBytesSignal = registerSignal("rcvdPkBytes");
+        sentPkSignal = registerSignal("sentPk");
+        rcvdPkSignal = registerSignal("rcvdPk");
         WATCH(packetsSent);
         WATCH(packetsReceived);
 
@@ -65,9 +72,13 @@ void EtherAppCli::initialize(int stage)
         if (registerSAP)
             registerDSAP(localSAP);
 
-        cMessage *timermsg = new cMessage("generateNextPacket");
-        simtime_t d = par("startTime").doubleValue();
-        scheduleAt(simTime()+d, timermsg);
+        simtime_t startTime = par("startTime");
+        stopTime = par("stopTime");
+        if (stopTime != 0 && stopTime <= startTime)
+            error("Invalid startTime/stopTime parameters");
+
+        timerMsg = new cMessage("generateNextPacket");
+        scheduleAt(startTime, timerMsg);
     }
 }
 
@@ -99,8 +110,9 @@ void EtherAppCli::handleMessage(cMessage *msg)
     if (msg->isSelfMessage())
     {
         sendPacket();
-        simtime_t d = waitTime->doubleValue();
-        scheduleAt(simTime()+d, msg);
+        simtime_t d = simTime() + sendInterval->doubleValue();
+        if (stopTime == 0 || d < stopTime)
+            scheduleAt(d, msg);
     }
     else
     {
@@ -144,9 +156,9 @@ void EtherAppCli::sendPacket()
     etherctrl->setDest(destMACAddress);
     datapacket->setControlInfo(etherctrl);
 
+    emit(sentPkSignal, datapacket);
     send(datapacket, "out");
     packetsSent++;
-    emit(sentPkBytesSignal, len);
 }
 
 void EtherAppCli::receivePacket(cPacket *msg)
@@ -154,13 +166,13 @@ void EtherAppCli::receivePacket(cPacket *msg)
     EV << "Received packet `" << msg->getName() << "'\n";
 
     packetsReceived++;
-    simtime_t lastEED = simTime() - msg->getCreationTime();
-    emit(rcvdPkBytesSignal, (long)(msg->getByteLength()));
-    emit(endToEndDelaySignal, lastEED);
-
+    emit(rcvdPkSignal, msg);
     delete msg;
 }
 
 void EtherAppCli::finish()
 {
+    cancelAndDelete(timerMsg);
+    timerMsg = NULL;
 }
+

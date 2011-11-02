@@ -49,24 +49,26 @@ class AirFrame;
  * @ingroup channelControl
  * @ingroup phyLayer
  */
-class INET_API ChannelAccess : public BasicModule
+class INET_API ChannelAccess : public BasicModule, protected cListener
 {
   protected:
-	IChannelControl* cc;  // Pointer to the ChannelControl module
-	IChannelControl::RadioRef myRadioRef;  // Identifies this radio in the ChannelControl module
-	cModule *hostModule;    // the host that contains this radio model
-	Coord radioPos;  // the physical position of the radio (derived from display string or from mobility models)
-	bool positionUpdateArrived;
+    static simsignal_t mobilityStateChangedSignal;
+    NotificationBoard *nb; // Cached pointer to the NotificationBoard module
+    IChannelControl* cc;  // Pointer to the ChannelControl module
+    IChannelControl::RadioRef myRadioRef;  // Identifies this radio in the ChannelControl module
+    cModule *hostModule;    // the host that contains this radio model
+    Coord radioPos;  // the physical position of the radio (derived from display string or from mobility models)
+    bool positionUpdateArrived;
 
   public:
     ChannelAccess() : cc(NULL), myRadioRef(NULL), hostModule(NULL) {}
-    ~ChannelAccess();
 
     /**
-     * Called by the NotificationBoard whenever a change of a category
-     * occurs to which this client has subscribed.
+     * @brief Called by the signalling mechanism to inform of changes.
+     *
+     * ChannelAccess is subscribed to position changes.
      */
-    virtual void receiveChangeNotification(int category, const cPolymorphic *details);
+    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj);
 
     /** Finds the channelControl module in the network */
     static IChannelControl *getChannelControl();

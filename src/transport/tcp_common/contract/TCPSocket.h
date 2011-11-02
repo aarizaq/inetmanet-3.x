@@ -127,9 +127,9 @@ class INET_API TCPSocket
      * Abstract base class for your callback objects. See setCallbackObject()
      * and processMessage() for more info.
      *
-     * Note: this class is not subclassed from cPolymorphic, because
+     * Note: this class is not subclassed from cObject, because
      * classes may have both this class and cSimpleModule as base class,
-     * and cSimpleModule is already a cPolymorphic.
+     * and cSimpleModule is already a cObject.
      */
     class CallbackInterface
     {
@@ -382,7 +382,7 @@ class INET_API TCPSocket
      * in that case you don't have to look it up by connId in the callbacks,
      * you can have it passed to you as yourPtr.
      */
-    void setCallbackObject(CallbackInterface *cb, void *yourPtr=NULL);
+    void setCallbackObject(CallbackInterface *cb, void *yourPtr = NULL);
 
     /**
      * Examines the message (which should have arrived from TCP),

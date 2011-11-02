@@ -225,7 +225,7 @@ void Ieee80216Radio::sendUp(AirFrame *airframe, SnrList list, double rcvdPower)
         macFrame->setYPos(myPos.y);
     }
     EV << "sending up frame " << frame->getName() << endl;
-    send(frame, uppergateOut);
+    send(frame, upperLayerOut);
 }
 
 SnrList Ieee80216Radio::getSNRlist()

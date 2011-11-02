@@ -12,7 +12,6 @@
 #include <vector>
 #include <string>
 #include <fstream>
-#include "NotifierConsts.h"
 
 #include "Coord.h"          // provides: struct for position coordinates
 #include "Energy.h"         // provides: class for maintaining energy
@@ -20,7 +19,7 @@
 #include "ChannelControl.h" // provides: global position knowledge
 
 
-class AnalysisEnergy : public cSimpleModule, public INotifiable
+class AnalysisEnergy : public cSimpleModule, protected cListener
 {
   public:
     // LIFECYCLE
@@ -28,7 +27,7 @@ class AnalysisEnergy : public cSimpleModule, public INotifiable
     virtual void    initialize(int);
     virtual void    finish();
     virtual int numInitStages(){return 4;};
-    virtual void receiveChangeNotification(int category, const cPolymorphic *details);
+    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj);
 
     // OPERATIONS
     void            handleMessage(cMessage*);
@@ -36,7 +35,7 @@ class AnalysisEnergy : public cSimpleModule, public INotifiable
 
 
   private:
-    NotificationBoard *nb;
+    static simsignal_t mobilityStateChangedSignal;
 
     Coord   myCord;
     // OPERATIONS

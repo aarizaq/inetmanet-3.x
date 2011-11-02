@@ -31,12 +31,9 @@
 Define_Module(PPP);
 
 simsignal_t PPP::txStateSignal = SIMSIGNAL_NULL;
-simsignal_t PPP::txPkBytesSignal = SIMSIGNAL_NULL;
-simsignal_t PPP::rxPkBytesOkSignal = SIMSIGNAL_NULL;
-simsignal_t PPP::droppedPkBytesIfaceDownSignal = SIMSIGNAL_NULL;
-simsignal_t PPP::droppedPkBytesBitErrorSignal = SIMSIGNAL_NULL;
-simsignal_t PPP::passedUpPkBytesSignal = SIMSIGNAL_NULL;
-simsignal_t PPP::rcvdPkBytesFromHLSignal = SIMSIGNAL_NULL;
+simsignal_t PPP::rxPkOkSignal = SIMSIGNAL_NULL;
+simsignal_t PPP::dropPkIfaceDownSignal = SIMSIGNAL_NULL;
+simsignal_t PPP::dropPkBitErrorSignal = SIMSIGNAL_NULL;
 simsignal_t PPP::packetSentToLowerSignal = SIMSIGNAL_NULL;
 simsignal_t PPP::packetReceivedFromLowerSignal = SIMSIGNAL_NULL;
 simsignal_t PPP::packetSentToUpperSignal = SIMSIGNAL_NULL;
@@ -75,13 +72,10 @@ void PPP::initialize(int stage)
         WATCH(numBitErr);
         WATCH(numDroppedIfaceDown);
 
-        txPkBytesSignal = registerSignal("txPkBytes");
-        rxPkBytesOkSignal = registerSignal("rxPkBytesOk");
-        droppedPkBytesIfaceDownSignal = registerSignal("droppedPkBytesIfaceDown");
+        rxPkOkSignal = registerSignal("rxPkOk");
+        dropPkIfaceDownSignal = registerSignal("dropPkIfaceDown");
         txStateSignal = registerSignal("txState");
-        droppedPkBytesBitErrorSignal = registerSignal("droppedPkBytesBitError");
-        passedUpPkBytesSignal = registerSignal("passedUpPkBytes");
-        rcvdPkBytesFromHLSignal = registerSignal("rcvdPkBytesFromHL");
+        dropPkBitErrorSignal = registerSignal("dropPkBitError");
         packetSentToLowerSignal = registerSignal("packetSentToLower");
         packetReceivedFromLowerSignal = registerSignal("packetReceivedFromLower");
         packetSentToUpperSignal = registerSignal("packetSentToUpper");
@@ -130,8 +124,8 @@ void PPP::initialize(int stage)
             else
             {
                 // we are not connected: gray out our icon
-                getDisplayString().setTagArg("i",1,"#707070");
-                getDisplayString().setTagArg("i",2,"100");
+                getDisplayString().setTagArg("i", 1, "#707070");
+                getDisplayString().setTagArg("i", 2, "100");
             }
         }
 
@@ -166,7 +160,7 @@ InterfaceEntry *PPP::registerInterface(double datarate)
 
     // MTU: typical values are 576 (Internet de facto), 1500 (Ethernet-friendly),
     // 4000 (on some point-to-point links), 4470 (Cisco routers default, FDDI compatible)
-    e->setMtu(par("mtu"));
+    e->setMtu(par("mtu").longValue());
 
     // capabilities
     e->setMulticast(true);
@@ -234,7 +228,7 @@ void PPP::refreshOutGateConnection(bool connected)
                 cMessage *msg = check_and_cast<cMessage *>(txQueue.pop());
                 EV << "Interface is not connected, dropping packet " << msg << endl;
                 numDroppedIfaceDown++;
-                emit(droppedPkBytesIfaceDownSignal, msg->isPacket() ? (long)(((cPacket*)msg)->getByteLength()) : 0L);
+                emit(dropPkIfaceDownSignal, msg);
                 delete msg;
             }
         }
@@ -294,7 +288,6 @@ void PPP::startTransmitting(cPacket *msg)
     // send
     EV << "Starting transmission of " << pppFrame << endl;
     emit(txStateSignal, 1L);
-    emit(txPkBytesSignal, (long)(msg->getByteLength()));
     emit(packetSentToLowerSignal, pppFrame);
     send(pppFrame, physOutGate);
 
@@ -352,7 +345,7 @@ void PPP::handleMessage(cMessage *msg)
         if (PK(msg)->hasBitError())
         {
             EV << "Bit error in " << msg << endl;
-            emit(droppedPkBytesBitErrorSignal, (long)(((cPacket*)msg)->getByteLength()));
+            emit(dropPkBitErrorSignal, msg);
             numBitErr++;
             delete msg;
         }
@@ -360,12 +353,11 @@ void PPP::handleMessage(cMessage *msg)
         {
             // pass up payload
             PPPFrame *pppFrame = check_and_cast<PPPFrame *>(msg);
-            emit(rxPkBytesOkSignal, (long)(pppFrame->getByteLength()));
+            emit(rxPkOkSignal, pppFrame);
             cPacket *payload = decapsulate(pppFrame);
             numRcvdOK++;
-            emit(passedUpPkBytesSignal, (long)(payload->getByteLength()));
             emit(packetSentToUpperSignal, payload);
-            send(payload,"netwOut");
+            send(payload, "netwOut");
         }
     }
     else // arrived on gate "netwIn"
@@ -374,7 +366,7 @@ void PPP::handleMessage(cMessage *msg)
         {
             EV << "Interface is not connected, dropping packet " << msg << endl;
             numDroppedIfaceDown++;
-            emit(droppedPkBytesIfaceDownSignal, msg->isPacket() ? (long)(((cPacket*)msg)->getByteLength()) : 0L);
+            emit(dropPkIfaceDownSignal, msg);
             delete msg;
 
             if (queueModule && 0 == queueModule->getNumPendingRequests())
@@ -383,7 +375,6 @@ void PPP::handleMessage(cMessage *msg)
         else
         {
             emit(packetReceivedFromUpperSignal, msg);
-            emit(rcvdPkBytesFromHLSignal, (long)(PK(msg)->getByteLength()));
 
             if (endTransmissionEvent->isScheduled())
             {
@@ -446,7 +437,7 @@ void PPP::updateDisplayString()
         double datarate = datarateChannel->getNominalDatarate();
         if (datarate >= 1e9) sprintf(datarateText, "%gGbps", datarate / 1e9);
         else if (datarate >= 1e6) sprintf(datarateText, "%gMbps", datarate / 1e6);
-        else if (datarate >= 1e3) sprintf(datarateText, "%gKbps", datarate / 1e3);
+        else if (datarate >= 1e3) sprintf(datarateText, "%gkbps", datarate / 1e3);
         else sprintf(datarateText, "%gbps", datarate);
 
 /* TBD find solution for displaying IPv4 address without dependence on IPv4 or IPv6
@@ -477,7 +468,7 @@ void PPP::updateHasSubcribers()
                      nb->hasSubscribers(NF_PP_RX_END);
 }
 
-void PPP::receiveChangeNotification(int category, const cPolymorphic *)
+void PPP::receiveChangeNotification(int category, const cObject *)
 {
     if (category == NF_SUBSCRIBERLIST_CHANGED)
         updateHasSubcribers();

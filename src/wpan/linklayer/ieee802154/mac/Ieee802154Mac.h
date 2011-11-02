@@ -543,10 +543,10 @@ protected:
     * @name Module gate ID
     */
     //@{
-    int mUppergateIn;
-    int mUppergateOut;
-    int mLowergateIn;
-    int mLowergateOut;
+    int mUpperLayerIn;
+    int mUpperLayerOut;
+    int mLowerLayerIn;
+    int mLowerLayerOut;
     //@}
 
     /** @brief  pointer to the NotificationBoard module */

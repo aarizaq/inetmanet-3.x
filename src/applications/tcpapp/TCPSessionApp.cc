@@ -21,9 +21,9 @@
 
 Define_Module(TCPSessionApp);
 
-simsignal_t TCPSessionApp::rcvdPkBytesSignal = SIMSIGNAL_NULL;
-simsignal_t TCPSessionApp::sentPkBytesSignal = SIMSIGNAL_NULL;
-simsignal_t TCPSessionApp::rcvdIndicationsSignal = SIMSIGNAL_NULL;
+simsignal_t TCPSessionApp::rcvdPkSignal = SIMSIGNAL_NULL;
+simsignal_t TCPSessionApp::sentPkSignal = SIMSIGNAL_NULL;
+simsignal_t TCPSessionApp::recvIndicationsSignal = SIMSIGNAL_NULL;
 
 void TCPSessionApp::parseScript(const char *script)
 {
@@ -80,14 +80,14 @@ void TCPSessionApp::parseScript(const char *script)
 
 void TCPSessionApp::count(cMessage *msg)
 {
-    if(msg->isPacket())
+    if (msg->isPacket())
     {
         if (msg->getKind() == TCP_I_DATA || msg->getKind() == TCP_I_URGENT_DATA)
         {
             packetsRcvd++;
             cPacket *packet = PK(msg);
             bytesRcvd += packet->getByteLength();
-            emit(rcvdPkBytesSignal, (long)(packet->getByteLength()));
+            emit(rcvdPkSignal, packet);
         }
         else
         {
@@ -98,7 +98,7 @@ void TCPSessionApp::count(cMessage *msg)
     else
     {
         indicationsRcvd++;
-        emit(rcvdIndicationsSignal, msg->getKind());
+        emit(recvIndicationsSignal, msg->getKind());
     }
 }
 
@@ -159,13 +159,13 @@ void TCPSessionApp::activity()
     WATCH(bytesRcvd);
     WATCH(indicationsRcvd);
 
-    rcvdPkBytesSignal = registerSignal("rcvdPkBytes");
-    sentPkBytesSignal = registerSignal("sentPkBytes");
-    rcvdIndicationsSignal = registerSignal("rcvdIndications");
+    rcvdPkSignal = registerSignal("rcvdPk");
+    sentPkSignal = registerSignal("sentPk");
+    recvIndicationsSignal = registerSignal("recvIndications");
 
     // parameters
-    const char *address = par("address");
-    int port = par("port");
+    const char *localAddress = par("localAddress");
+    int localPort = par("localPort");
     const char *connectAddress = par("connectAddress");
     int connectPort = par("connectPort");
 
@@ -187,7 +187,7 @@ void TCPSessionApp::activity()
     waitUntil(tOpen);
 
     socket.readDataTransferModePar(*this);
-    socket.bind(*address ? IPvXAddress(address) : IPvXAddress(), port);
+    socket.bind(*localAddress ? IPvXAddress(localAddress) : IPvXAddress(), localPort);
 
     EV << "issuing OPEN command\n";
 
@@ -219,7 +219,7 @@ void TCPSessionApp::activity()
         EV << "sending " << sendBytes << " bytes\n";
         cPacket *msg = genDataMsg(sendBytes);
         bytesSent += sendBytes;
-        emit(sentPkBytesSignal, sendBytes);
+        emit(sentPkSignal, msg);
         socket.send(msg);
     }
 
@@ -228,9 +228,8 @@ void TCPSessionApp::activity()
         waitUntil(i->tSend);
         EV << "sending " << i->numBytes << " bytes\n";
         cPacket *msg = genDataMsg(i->numBytes);
-        msg->setByteLength(i->numBytes);
         bytesSent += i->numBytes;
-        emit(sentPkBytesSignal, i->numBytes);
+        emit(sentPkSignal, msg);
         socket.send(msg);
     }
 

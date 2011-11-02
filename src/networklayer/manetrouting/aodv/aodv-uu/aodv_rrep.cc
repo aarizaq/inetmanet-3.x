@@ -395,7 +395,7 @@ void NS_CLASS rrep_process(RREP * rrep, int rreplen, struct in_addr ip_src,
     {
         /* We didn't have an existing entry, so we insert a new one. */
         fwd_rt = rt_table_insert(rrep_dest, ip_src, rrep_new_hcnt, rrep_seqno,
-                                 rrep_lifetime, VALID, rt_flags, ifindex,cost,hopfix);
+                                 rrep_lifetime, VALID, rt_flags, ifindex, cost, hopfix);
     }
     else if (useHover && (fwd_rt->dest_seqno == 0 ||
              (int32_t) rrep_seqno > (int32_t) fwd_rt->dest_seqno ||
@@ -408,7 +408,7 @@ void NS_CLASS rrep_process(RREP * rrep, int rreplen, struct in_addr ip_src,
 
         fwd_rt = rt_table_update(fwd_rt, ip_src, rrep_new_hcnt, rrep_seqno,
                                  rrep_lifetime, VALID,
-                                 rt_flags | fwd_rt->flags,ifindex,cost,hopfix);
+                                 rt_flags | fwd_rt->flags, ifindex, cost, hopfix);
     }
     else if (!useHover && (fwd_rt->dest_seqno == 0 ||
              (int32_t) rrep_seqno > (int32_t) fwd_rt->dest_seqno ||
@@ -421,7 +421,7 @@ void NS_CLASS rrep_process(RREP * rrep, int rreplen, struct in_addr ip_src,
 
         fwd_rt = rt_table_update(fwd_rt, ip_src, rrep_new_hcnt, rrep_seqno,
                                  rrep_lifetime, VALID,
-                                 rt_flags | fwd_rt->flags,ifindex,cost,hopfix);
+                                 rt_flags | fwd_rt->flags, ifindex, cost, hopfix);
     }
     else
     {
@@ -475,7 +475,7 @@ void NS_CLASS rrep_process(RREP * rrep, int rreplen, struct in_addr ip_src,
             {
                 rt_table_update(inet_rt, rrep_dest, rrep_new_hcnt, 0,
                                 rrep_lifetime, VALID, RT_INET_DEST |
-                                inet_rt->flags,ifindex);
+                                inet_rt->flags, ifindex);
             }
             else
             {

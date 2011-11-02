@@ -165,7 +165,7 @@ void RoutingTable::updateDisplayString()
         sprintf(buf, "%d+%d routes", (int)routes.size(), (int)multicastRoutes.size());
     else
         sprintf(buf, "routerId: %s\n%d+%d routes", routerId.str().c_str(), (int)routes.size(), (int)multicastRoutes.size());
-    getDisplayString().setTagArg("t",0,buf);
+    getDisplayString().setTagArg("t", 0, buf);
 }
 
 void RoutingTable::handleMessage(cMessage *msg)
@@ -173,7 +173,7 @@ void RoutingTable::handleMessage(cMessage *msg)
     throw cRuntimeError(this, "This module doesn't process messages");
 }
 
-void RoutingTable::receiveChangeNotification(int category, const cPolymorphic *details)
+void RoutingTable::receiveChangeNotification(int category, const cObject *details)
 {
     if (simulation.getContextType()==CTX_INITIALIZE)
         return;  // ignore notifications during initialize
@@ -425,7 +425,7 @@ const IPv4Route *RoutingTable::findBestMatchingRoute(const IPv4Address& dest) co
 
     if (bestRoute && bestRoute->getSource()==IPv4Route::MANET && bestRoute->getHost()!=dest)
     {
-        bestRoute=NULL;
+        bestRoute = NULL;
         /* in this case we must find the mask must be 255.255.255.255 route */
         for (RouteVector::const_iterator i=routes.begin(); i!=routes.end(); ++i)
         {

@@ -47,55 +47,61 @@
  * Results are written as scalars and/or appended to Test_TraCI.log
  *
  */
-class Test_TraCI : public cSimpleModule, public INotifiable
+
+class Test_TraCI : public cSimpleModule, protected cListener
 {
-  public:
+    public:
 
-    int numInitStages() const {return 1;}
-    virtual void initialize(int);
-    virtual void finish();
-    virtual void handleMessage(cMessage* msg);
-
-    /**
-     * Callback for NotificationBoard to inform module via NF_HOSTPOSITION_UPDATED
-     */
-    virtual void receiveChangeNotification(int category, const cPolymorphic *details);
-
-  protected:
-    void executeCommand(const cXMLElement* xmlElement);
-
-    template<typename T> T extract(cDynamicExpression& o)
-    {
-        throw std::runtime_error("extract called for unknown type");
-    }
-
-    template<typename T> T parseOrBail(const cXMLElement* xmlElement, std::string name)
-    {
-        try
+        int numInitStages() const
         {
-            const char* value_s = xmlElement->getAttribute(name.c_str());
-            if (!value_s) throw new std::runtime_error("missing attribute");
-            cDynamicExpression value_e;
-            value_e.parse(value_s);
-            return extract<T>(value_e);
+            return 1;
         }
-        catch (std::runtime_error e)
+        virtual void initialize(int);
+        virtual void finish();
+        virtual void handleMessage(cMessage* msg);
+
+        /**
+         * Callback for NotificationBoard to inform module via NF_HOSTPOSITION_UPDATED
+         */
+        virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj);
+
+    protected:
+        static simsignal_t mobilityStateChangedSignal;
+        void executeCommand(const cXMLElement* xmlElement);
+
+        template<typename T> T extract(cDynamicExpression& o)
         {
-            error((std::string("command parse error for attribute \"") + name + "\": " + e.what()).c_str());
-            throw e;
+            throw std::runtime_error("extract called for unknown type");
         }
-    }
 
-    TraCIMobility* mobility;
-    std::list<const cXMLElement*> commands; /**< list of commands to execute, ordered by time */
-    static bool clearedLog; /**< true if the logfile has already been cleared */
+        template<typename T> T parseOrBail(const cXMLElement* xmlElement, std::string name)
+        {
+            try
+            {
+                const char* value_s = xmlElement->getAttribute(name.c_str());
+                if (!value_s)
+                    throw new std::runtime_error("missing attribute");
+                cDynamicExpression value_e;
+                value_e.parse(value_s);
+                return extract<T>(value_e);
+            }
+            catch (std::runtime_error e)
+            {
+                error((std::string("command parse error for attribute \"") + name + "\": " + e.what()).c_str());
+                throw e;
+            }
+        }
 
-    // module parameters
-    bool debug;
+        TraCIMobility* mobility;
+        std::list<const cXMLElement*> commands; /**< list of commands to execute, ordered by time */
+        static bool clearedLog; /**< true if the logfile has already been cleared */
 
-    // statistics output
-    std::set<std::string> visitedEdges; /**< set of edges this vehicle visited */
-    bool hasStopped; /**< true if at some point in time this vehicle travelled at negligible speed */
+        // module parameters
+        bool debug;
+
+        // statistics output
+        std::set<std::string> visitedEdges; /**< set of edges this vehicle visited */
+        bool hasStopped; /**< true if at some point in time this vehicle travelled at negligible speed */
 };
 
 template<> double Test_TraCI::extract(cDynamicExpression& o);

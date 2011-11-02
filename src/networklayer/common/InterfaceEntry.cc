@@ -57,7 +57,7 @@ InterfaceEntry::InterfaceEntry()
     down = false;
     broadcast = false;
     multicast = false;
-    pointToPoint= false;
+    pointToPoint = false;
     loopback = false;
     datarate = 0;
 
@@ -93,9 +93,9 @@ std::string InterfaceEntry::info() const
         out << getMacAddress();
 
     if (ipv4data)
-        out << " " << ((cPolymorphic*)ipv4data)->info(); // Khmm...
+        out << " " << ((cObject*)ipv4data)->info(); // Khmm...
     if (ipv6data)
-        out << " " << ((cPolymorphic*)ipv6data)->info(); // Khmm...
+        out << " " << ((cObject*)ipv6data)->info(); // Khmm...
     if (protocol3data)
         out << " " << protocol3data->info();
     if (protocol4data)
@@ -125,9 +125,9 @@ std::string InterfaceEntry::detailedInfo() const
         out << getMacAddress();
     out << "\n";
     if (ipv4data)
-        out << " " << ((cPolymorphic*)ipv4data)->info() << "\n"; // Khmm...
+        out << " " << ((cObject*)ipv4data)->info() << "\n"; // Khmm...
     if (ipv6data)
-        out << " " << ((cPolymorphic*)ipv6data)->info() << "\n"; // Khmm...
+        out << " " << ((cObject*)ipv6data)->info() << "\n"; // Khmm...
     if (protocol3data)
         out << " " << protocol3data->info() << "\n";
     if (protocol4data)
@@ -164,23 +164,21 @@ void InterfaceEntry::setIPv6Data(IPv6InterfaceData *p)
 #endif
 }
 
-bool InterfaceEntry::setEstimateCostProcess(int position,MacEstimateCostProcess *p)
+bool InterfaceEntry::setEstimateCostProcess(int position, MacEstimateCostProcess *p)
 {
-	int size=estimateCostProcessArray.size();
-	if(size<=position)
+    if ((int)estimateCostProcessArray.size()<=position)
 	{
-		estimateCostProcessArray.resize(position+1,NULL);
+        estimateCostProcessArray.resize(position+1, NULL);
 	}
 	if (estimateCostProcessArray[position]!=NULL)
 		return false;
-	estimateCostProcessArray[position]=p;
+    estimateCostProcessArray[position] = p;
 	return true;
 }
 
 MacEstimateCostProcess* InterfaceEntry::getEstimateCostProcess(int position)
 {
-	int size=estimateCostProcessArray.size();
-	if(position <size)
+    if (position < (int)estimateCostProcessArray.size())
 	{
 		return estimateCostProcessArray[position];
 	}
@@ -201,7 +199,7 @@ void InterfaceEntry::addRelatedInterface(InterfaceEntry* e)
 
 InterfaceEntry * InterfaceEntry::getRelatedInterface(int i)
 {
-     if (i>=relatedInterfaces.size())
+     if (i>=(int)relatedInterfaces.size())
          return NULL;
      if (i<0)
     	 return NULL;

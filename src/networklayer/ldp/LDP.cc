@@ -28,6 +28,7 @@
 #include "LIBTableAccess.h"
 #include "TEDAccess.h"
 #include "NotifierConsts.h"
+#include "UDPControlInfo_m.h"
 #include "UDPPacket.h"
 #include "TCPSegment.h"
 
@@ -318,7 +319,7 @@ void LDP::rebuildFecList()
 
     // our own addresses (XXX is it needed?)
 
-    for (int i = 0; i< ift->getNumInterfaces(); ++i)
+    for (int i = 0; i < ift->getNumInterfaces(); ++i)
     {
         InterfaceEntry *ie = ift->getInterface(i);
         if (ie->getNetworkLayerGateIndex() < 0)
@@ -486,7 +487,7 @@ void LDP::processHelloTimeout(cMessage *msg)
 
 void LDP::processLDPHello(LDPHello *msg)
 {
-    UDPControlInfo *controlInfo = check_and_cast<UDPControlInfo *>(msg->getControlInfo());
+    UDPDataIndication *controlInfo = check_and_cast<UDPDataIndication *>(msg->getControlInfo());
     //IPv4Address peerAddr = controlInfo->getSrcAddr().get4();
     IPv4Address peerAddr = msg->getSenderAddress();
     int interfaceId = controlInfo->getInterfaceId();
@@ -882,7 +883,7 @@ void LDP::processNOTIFICATION(LDPNotify *packet)
         EV << "notification received from=" << srcAddr << " fec=" << fec << " status=" << status << endl;
     }
 
-    switch(status)
+    switch (status)
     {
         case NO_ROUTE:
         {
@@ -1237,7 +1238,7 @@ bool LDP::lookupLabel(IPv4Datagram *ipdatagram, LabelOpVector& outLabel, std::st
     return false;
 }
 
-void LDP::receiveChangeNotification(int category, const cPolymorphic *details)
+void LDP::receiveChangeNotification(int category, const cObject *details)
 {
     Enter_Method_Silent();
     printNotificationBanner(category, details);

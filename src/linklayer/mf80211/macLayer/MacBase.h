@@ -40,10 +40,10 @@ class INET_API MacBase : public cSimpleModule
   protected:
     /** @brief gate id*/
     //@{
-    int uppergateIn;
-    int uppergateOut;
-    int lowergateIn;
-    int lowergateOut;
+    int upperLayerIn;
+    int upperLayerOut;
+    int lowerLayerIn;
+    int lowerLayerOut;
     //@}
 
     /** @brief Cached pointer to the NotificationBoard module*/

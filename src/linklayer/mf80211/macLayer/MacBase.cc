@@ -29,10 +29,10 @@ void MacBase::initialize(int stage)
 {
     if (stage==0)
     {
-        uppergateIn  = findGate("uppergateIn");
-        uppergateOut = findGate("uppergateOut");
-        lowergateIn  = findGate("lowergateIn");
-        lowergateOut = findGate("lowergateOut");
+        upperLayerIn = findGate("upperLayerIn");
+        upperLayerOut = findGate("upperLayerOut");
+        lowerLayerIn = findGate("lowerLayerIn");
+        lowerLayerOut = findGate("lowerLayerOut");
 
         // get a pointer to the NotificationBoard module
         nb = NotificationBoardAccess().get();
@@ -46,7 +46,7 @@ void MacBase::handleMessage(cMessage *msg)
         handleSelfMsg(msg);
     else if (!msg->isPacket())
         handleCommand(msg);
-    else if (msg->getArrivalGateId()==uppergateIn)
+    else if (msg->getArrivalGateId()==upperLayerIn)
         handleUpperMsg(PK(msg));
     else
         handleLowerMsg(PK(msg));
@@ -54,23 +54,23 @@ void MacBase::handleMessage(cMessage *msg)
 
 bool MacBase::isUpperMsg(cMessage *msg)
 {
-    return msg->getArrivalGateId()==uppergateIn;
+    return msg->getArrivalGateId()==upperLayerIn;
 }
 
 bool MacBase::isLowerMsg(cMessage *msg)
 {
-    return msg->getArrivalGateId()==lowergateIn;
+    return msg->getArrivalGateId()==lowerLayerIn;
 }
 
 void MacBase::sendDown(cMessage *msg)
 {
     EV << "sending down " << msg << "\n";
-    send(msg, lowergateOut);
+    send(msg, lowerLayerOut);
 }
 
 void MacBase::sendUp(cMessage *msg)
 {
     EV << "sending up " << msg << "\n";
-    send(msg, uppergateOut);
+    send(msg, upperLayerOut);
 }
 

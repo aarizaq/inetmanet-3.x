@@ -30,10 +30,10 @@
 
 #include <vector>
 #include <omnetpp.h>
-#include "UDPAppBase.h"
+#include "UDPSocket.h"
 #include "IPvXAddress.h"
 
-class UDPEchoStream : public UDPAppBase
+class UDPEchoStream : public cSimpleModule
 {
 
   protected:
@@ -44,6 +44,7 @@ class UDPEchoStream : public UDPAppBase
 	bool first;
 	IPvXAddress destAddr;
 	int destPort;
+	UDPSocket socket;
 
 
     // statistics

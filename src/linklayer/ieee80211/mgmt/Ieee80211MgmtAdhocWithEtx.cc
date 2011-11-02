@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2006 Andras Varga
+// Copyright (C) 2010 Alfonso Ariza Quintana
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -51,9 +51,9 @@ void Ieee80211MgmtAdhocWithEtx::handleMessage(cMessage *msg)
 
     cGate * msggate = msg->getArrivalGate();
     char gateName [40];
-    memset(gateName,0,40);
-    strcpy(gateName,msggate->getBaseName());
-    if (strstr(gateName,"ETXProcIn")!=NULL)
+    memset(gateName, 0, 40);
+    strcpy(gateName, msggate->getBaseName());
+    if (strstr(gateName, "ETXProcIn")!=NULL)
     {
         handleEtxMessage(PK(msg));
     }
@@ -80,7 +80,7 @@ void Ieee80211MgmtAdhocWithEtx::handleDataFrame(Ieee80211DataFrame *frame)
             cPacket *msg = decapsulate(frame);
             if (msg->getControlInfo())
                 delete msg->removeControlInfo();
-            send(msg,"ETXProcOut");
+            send(msg, "ETXProcOut");
         }
         else
             delete frame;

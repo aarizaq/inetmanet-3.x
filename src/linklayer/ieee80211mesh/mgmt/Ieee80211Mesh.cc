@@ -80,17 +80,17 @@ Ieee80211Mesh::Ieee80211Mesh()
     gateWayDataMap=NULL;
    // gateWayDataMap.clear();
     // subprocess
-    ETXProcess=NULL;
+    ETXProcess = NULL;
     routingModuleProactive = NULL;
     routingModuleReactive = NULL;
     routingModuleHwmp = NULL;
     // packet timers
-    WMPLSCHECKMAC =NULL;
-    gateWayTimeOut=NULL;
+    WMPLSCHECKMAC = NULL;
+    gateWayTimeOut = NULL;
     //
     macBaseGateId = -1;
-    gateWayIndex=-1;
-    isGateWay=false;
+    gateWayIndex = -1;
+    isGateWay = false;
 }
 
 void Ieee80211Mesh::initialize(int stage)
@@ -98,14 +98,14 @@ void Ieee80211Mesh::initialize(int stage)
     EV << "Init mesh proccess \n";
     Ieee80211MgmtBase::initialize(stage);
 
-    if (stage== 0)
+    if (stage == 0)
     {
         limitDelay = par("maxDelay").doubleValue();
         useLwmpls = par("UseLwMpls");
         maxHopProactiveFeedback = par("maxHopProactiveFeedback");
         maxHopProactive = par("maxHopProactive");
         maxHopReactive = par("maxHopReactive");
-        maxTTL=par("maxTTL");
+        maxTTL = par("maxTTL");
     }
     else if (stage==1)
     {
@@ -115,8 +115,8 @@ void Ieee80211Mesh::initialize(int stage)
         bool useHwmp = par("useHwmp");
         if (useHwmp)
         {
-            useReactive=false;
-            useProactive=false;
+            useReactive = false;
+            useProactive = false;
             useLwmpls = false;
         }
         //if (useReactive)
@@ -143,11 +143,11 @@ void Ieee80211Mesh::initialize(int stage)
         if (useHwmp)
             startHwmp();
 
-        if (routingModuleProactive==NULL && routingModuleReactive ==NULL && routingModuleHwmp==NULL)
+        if (routingModuleProactive == NULL && routingModuleReactive ==NULL && routingModuleHwmp==NULL)
             error("Ieee80211Mesh doesn't have active routing protocol");
 
-        mplsData->mplsMaxTime()=35;
-        activeMacBreak=false;
+        mplsData->mplsMaxTime() = 35;
+        activeMacBreak = false;
         if (activeMacBreak)
             WMPLSCHECKMAC = new cMessage();
 
@@ -157,14 +157,14 @@ void Ieee80211Mesh::initialize(int stage)
             startEtx();
 
     }
-    else if (stage==4)
+    else if (stage == 4)
     {
         macBaseGateId = gateSize("macOut")==0 ? -1 : gate("macOut",0)->getId(); // FIXME macBaseGateId is unused, what is it?
         EV << "macBaseGateId :" << macBaseGateId << "\n";
         ift = InterfaceTableAccess ().get();
         nb = NotificationBoardAccess().get();
         nb->subscribe(this, NF_LINK_BREAK);
-        nb->subscribe(this,NF_LINK_REFRESH);
+        nb->subscribe(this, NF_LINK_REFRESH);
     }
     else if (stage==5)
     {
@@ -244,16 +244,16 @@ void Ieee80211Mesh::startGateWay()
 {
 // check if the ethernet exist
 // check: datarate is forbidden with EtherMAC -- module's txrate must be used
-    isGateWay=true;
-    if (gateWayDataMap==NULL)
-        gateWayDataMap=new GateWayDataMap;
+    isGateWay = true;
+    if (gateWayDataMap == NULL)
+        gateWayDataMap = new GateWayDataMap;
     cGate *g = gate("toEthernet")->getPathEndGate();
     MACAddress ethAddr;
-    if (strcmp(g->getOwnerModule()->getClassName(),"EtherEncapMesh")!=0)
+    if (strcmp(g->getOwnerModule()->getClassName(), "EtherEncapMesh")!=0)
         return;
     // find the interface
     char interfaceName[100];
-    for (int i=0;i<ift->getNumInterfaces();i++)
+    for (int i=0; i<ift->getNumInterfaces(); i++)
     {
         InterfaceEntry * ie= ift->getInterface(i);
         if (ie->isLoopback())
@@ -261,8 +261,8 @@ void Ieee80211Mesh::startGateWay()
         if (ie->getMacAddress()==myAddress)
             continue;
         memset(interfaceName,0,sizeof(interfaceName));
-        char *d=interfaceName;
-        for (const char *s=g->getOwnerModule()->getParentModule()->getFullName(); *s; s++)
+        char *d = interfaceName;
+        for (const char *s = g->getOwnerModule()->getParentModule()->getFullName(); *s; s++)
             if (isalnum(*s))
                 *d++ = *s;
         *d = '\0';
@@ -1011,7 +1011,7 @@ bool Ieee80211Mesh::forwardMessage (Ieee80211DataFrame *frame)
 
 }
 
-bool Ieee80211Mesh::macLabelBasedSend (Ieee80211DataFrame *frame)
+bool Ieee80211Mesh::macLabelBasedSend(Ieee80211DataFrame *frame)
 {
 
     if (!frame)
@@ -1180,7 +1180,7 @@ bool Ieee80211Mesh::macLabelBasedSend (Ieee80211DataFrame *frame)
 void Ieee80211Mesh::sendUp(cMessage *msg)
 {
     if (isUpperLayer(msg))
-        send(msg, "uppergateOut");
+        send(msg, "upperLayerOut");
     else
         delete msg;
 }

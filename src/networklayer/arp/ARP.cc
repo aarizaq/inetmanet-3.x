@@ -35,13 +35,13 @@ simsignal_t ARP::sentReplySignal = SIMSIGNAL_NULL;
 simsignal_t ARP::failedResolutionSignal = SIMSIGNAL_NULL;
 simsignal_t ARP::initiatedResolutionSignal = SIMSIGNAL_NULL;
 
-static std::ostream& operator<< (std::ostream& out, cMessage *msg)
+static std::ostream& operator<<(std::ostream& out, cMessage *msg)
 {
     out << "(" << msg->getClassName() << ")" << msg->getFullName();
     return out;
 }
 
-static std::ostream& operator<< (std::ostream& out, const ARP::ARPCacheEntry& e)
+static std::ostream& operator<<(std::ostream& out, const ARP::ARPCacheEntry& e)
 {
     if (e.pending)
         out << "pending (" << e.numRetries << " retries)";
@@ -52,7 +52,7 @@ static std::ostream& operator<< (std::ostream& out, const ARP::ARPCacheEntry& e)
 
 ARP::ARPCache ARP::globalArpCache;
 
-Define_Module (ARP);
+Define_Module(ARP);
 
 void ARP::initialize(int stage)
 {
@@ -71,7 +71,7 @@ void ARP::initialize(int stage)
         ift = InterfaceTableAccess().get();
         rt = RoutingTableAccess().get();
 
-        nicOutBaseGateId = gateSize("nicOut")==0 ? -1 : gate("nicOut",0)->getId();
+        nicOutBaseGateId = gateSize("nicOut")==0 ? -1 : gate("nicOut", 0)->getId();
 
         retryTimeout = par("retryTimeout");
         retryCount = par("retryCount");
@@ -260,7 +260,7 @@ void ARP::processOutboundPacket(cMessage *msg)
     {
         // no cache entry: launch ARP request
         ARPCacheEntry *entry = new ARPCacheEntry();
-        ARPCache::iterator where = arpCache.insert(arpCache.begin(), std::make_pair(nextHopAddr,entry));
+        ARPCache::iterator where = arpCache.insert(arpCache.begin(), std::make_pair(nextHopAddr, entry));
         entry->myIter = where; // note: "inserting a new element into a map does not invalidate iterators that point to existing elements"
         entry->ie = ie;
 
@@ -481,7 +481,7 @@ void ARP::processARPPacket(ARPPacket *arp)
             else
             {
                 entry = new ARPCacheEntry();
-                ARPCache::iterator where = arpCache.insert(arpCache.begin(), std::make_pair(srcIPAddress,entry));
+                ARPCache::iterator where = arpCache.insert(arpCache.begin(), std::make_pair(srcIPAddress, entry));
                 entry->myIter = where;
                 entry->ie = ie;
 
@@ -523,9 +523,9 @@ void ARP::processARPPacket(ARPPacket *arp)
                 delete arp;
                 break;
             }
-            case ARP_RARP_REQUEST: error("RARP request received: RARP is not supported");
-            case ARP_RARP_REPLY: error("RARP reply received: RARP is not supported");
-            default: error("Unsupported opcode %d in received ARP packet",arp->getOpcode());
+            case ARP_RARP_REQUEST: throw cRuntimeError("RARP request received: RARP is not supported");
+            case ARP_RARP_REPLY: throw cRuntimeError("RARP reply received: RARP is not supported");
+            default: throw cRuntimeError("Unsupported opcode %d in received ARP packet", arp->getOpcode());
         }
     }
     else
@@ -624,7 +624,7 @@ void ARP::setChangeAddress(const IPv4Address &oldAddress)
             entry->timer = NULL;
             entry->numRetries = 0;
             IPv4Address nextHopAddr = entry->ie->ipv4Data()->getIPAddress();
-            ARPCache::iterator where = globalArpCache.insert(globalArpCache.begin(),std::make_pair(nextHopAddr,entry));
+            ARPCache::iterator where = globalArpCache.insert(globalArpCache.begin(), std::make_pair(nextHopAddr, entry));
             entry->myIter = where; // note: "inserting a new element into a map does not invalidate iterators that point to existing elements"
         }
     }
@@ -649,10 +649,10 @@ void ARP::receiveChangeNotification(int category, const cPolymorphic *details)
             ARPCache::iterator it;
             for (it=globalArpCache.begin();it!=globalArpCache.end();it++)
             {
-                if (it->second->ie==ie)
+                if (it->second->ie == ie)
                     break;
             }
-            if (it==globalArpCache.end())
+            if (it == globalArpCache.end())
             {
                 ARPCacheEntry *entry = new ARPCacheEntry();
                 entry->ie = ie;
@@ -661,7 +661,7 @@ void ARP::receiveChangeNotification(int category, const cPolymorphic *details)
                 entry->numRetries = 0;
                 entry->macAddress = ie->getMacAddress();
                 IPv4Address ipAddr = ie->ipv4Data()->getIPAddress();
-                ARPCache::iterator where = globalArpCache.insert(globalArpCache.begin(),std::make_pair(ipAddr,entry));
+                ARPCache::iterator where = globalArpCache.insert(globalArpCache.begin(),std::make_pair(ipAddr, entry));
                 entry->myIter = where; // note: "inserting a new element into a map does not invalidate iterators that point to existing elements"
                 localAddress.push_back(ipAddr);
             }
@@ -676,7 +676,7 @@ void ARP::receiveChangeNotification(int category, const cPolymorphic *details)
                 entry->numRetries = 0;
                 entry->macAddress = ie->getMacAddress();
                 IPv4Address ipAddr = ie->ipv4Data()->getIPAddress();
-                ARPCache::iterator where = globalArpCache.insert(globalArpCache.begin(),std::make_pair(ipAddr,entry));
+                ARPCache::iterator where = globalArpCache.insert(globalArpCache.begin(),std::make_pair(ipAddr, entry));
                 entry->myIter = where; // note: "inserting a new element into a map does not invalidate iterators that point to existing elements"
                 localAddress.push_back(ipAddr);
             }

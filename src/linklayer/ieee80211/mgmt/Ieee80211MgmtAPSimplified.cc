@@ -51,12 +51,12 @@ void Ieee80211MgmtAPSimplified::handleUpperMessage(cPacket *msg)
     sendOrEnqueue(frame);
 }
 
-void Ieee80211MgmtAPSimplified::handleCommand(int msgkind, cPolymorphic *ctrl)
+void Ieee80211MgmtAPSimplified::handleCommand(int msgkind, cObject *ctrl)
 {
     error("handleCommand(): no commands supported");
 }
 
-void Ieee80211MgmtAPSimplified::receiveChangeNotification(int category, const cPolymorphic *details)
+void Ieee80211MgmtAPSimplified::receiveChangeNotification(int category, const cObject *details)
 {
     Enter_Method_Silent();
     printNotificationBanner(category, details);
@@ -79,16 +79,14 @@ void Ieee80211MgmtAPSimplified::handleDataFrame(Ieee80211DataFrame *frame)
         // if the frame needs to be distributed onto the wireless LAN too,
         // then relayUnit will send a copy back to us.
 #ifdef WITH_ETHERNET
-        send(convertToEtherFrame(frame), "uppergateOut");
+        send(convertToEtherFrame(frame->dup()), "upperLayerOut");
 #else
-        send(frame, "uppergateOut");
+        send(frame->dup(), "upperLayerOut");
 #endif
     }
-    else
-    {
+
         // send it out to the destination STA
         distributeReceivedDataFrame(frame);
-    }
 }
 
 void Ieee80211MgmtAPSimplified::handleAuthenticationFrame(Ieee80211AuthenticationFrame *frame)

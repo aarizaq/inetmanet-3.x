@@ -266,17 +266,17 @@ void NS_CLASS dymo_socket_send(struct in_addr dest_addr, struct dev_info *dev,do
         p->previousStatic=true;
         if (rePkt)
         {
-            for (int i=0;i<rePkt->numBlocks();i++)
-            	rePkt->re_blocks[i].cost+=costStatic;
+            for (int i=0; i<rePkt->numBlocks(); i++)
+            	rePkt->re_blocks[i].cost += costStatic;
         }
     }
     else
     {
-        p->previousStatic=false;
+        p->previousStatic = false;
         if (rePkt)
         {
-            for (int i=0;i<rePkt->numBlocks();i++)
-            	rePkt->re_blocks[i].cost+= costMobile;
+            for (int i=0; i<rePkt->numBlocks(); i++)
+            	rePkt->re_blocks[i].cost += costMobile;
         }
     }
 

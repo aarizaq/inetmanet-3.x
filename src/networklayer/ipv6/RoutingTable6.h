@@ -32,7 +32,7 @@ class InterfaceEntry;
  * Represents a route in the route table. Routes with src=FROM_RA represent
  * on-link prefixes advertised by routers.
  */
-class INET_API IPv6Route : public cPolymorphic
+class INET_API IPv6Route : public cObject
 {
   public:
     /** Specifies where the route comes from */
@@ -74,7 +74,7 @@ class INET_API IPv6Route : public cPolymorphic
     void setInterfaceId(int interfaceId)  {_interfaceID = interfaceId;}
     void setNextHop(const IPv6Address& nextHop)  {_nextHop = nextHop;}
     void setExpiryTime(simtime_t expiryTime)  {_expiryTime = expiryTime;}
-    void setMetric(int metric)  {_metric = _metric;}
+    void setMetric(int metric)  {_metric = metric;}
 
     const IPv6Address& getDestPrefix() const {return _destPrefix;}
     int getPrefixLength() const  {return _length;}
@@ -110,7 +110,7 @@ class INET_API RoutingTable6 : public cSimpleModule, protected INotifiable
 
 #ifdef WITH_xMIPv6
     bool ishome_agent; //added by Zarrar Yousaf @ CNI, UniDortmund on 20.02.07
-    bool ismobile_node;//added by Zarrar Yousaf @ CNI, UniDortmund on 25.02.07
+    bool ismobile_node; //added by Zarrar Yousaf @ CNI, UniDortmund on 25.02.07
     bool mipv6Support; // 4.9.07 - CB
 #endif /* WITH_xMIPv6 */
 
@@ -174,7 +174,7 @@ class INET_API RoutingTable6 : public cSimpleModule, protected INotifiable
      * Called by the NotificationBoard whenever a change of a category
      * occurs to which this client has subscribed.
      */
-    virtual void receiveChangeNotification(int category, const cPolymorphic *details);
+    virtual void receiveChangeNotification(int category, const cObject *details);
 
   public:
     /** @name Interfaces */
@@ -306,7 +306,7 @@ class INET_API RoutingTable6 : public cSimpleModule, protected INotifiable
      */
     virtual void addStaticRoute(const IPv6Address& destPrefix, int prefixLength,
                         unsigned int interfaceId, const IPv6Address& nextHop,
-                        int metric=0);
+                        int metric = 0);
 
     /**
      *  Adds a default route for a host. This method requires the RA's source

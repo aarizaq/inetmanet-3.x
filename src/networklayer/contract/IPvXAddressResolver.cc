@@ -40,6 +40,16 @@ IPvXAddress IPvXAddressResolver::resolve(const char *s, int addrType)
     return addr;
 }
 
+std::vector<IPvXAddress> IPvXAddressResolver::resolve(std::vector<std::string> strs, int addrType)
+{
+    std::vector<IPvXAddress> result;
+    int n = strs.size();
+    result.reserve(n);
+    for (int i=0; i<n; i++)
+        result.push_back(resolve(strs[i].c_str(), addrType));
+    return result;
+}
+
 bool IPvXAddressResolver::tryResolve(const char *s, IPvXAddress& result, int addrType)
 {
     // empty address
@@ -53,9 +63,9 @@ bool IPvXAddressResolver::tryResolve(const char *s, IPvXAddress& result, int add
 
     // must be "modulename/interfacename(protocol)" syntax then,
     // "/interfacename" and "(protocol)" being optional
-    const char *slashp = strchr(s,'/');
-    const char *leftparenp = strchr(s,'(');
-    const char *rightparenp = strchr(s,')');
+    const char *slashp = strchr(s, '/');
+    const char *leftparenp = strchr(s, '(');
+    const char *rightparenp = strchr(s, ')');
     const char *endp = s+strlen(s);
 
     // rudimentary syntax check

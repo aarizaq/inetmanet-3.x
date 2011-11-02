@@ -531,7 +531,7 @@ void Mac80211::handleEndContentionTimer()
         // removes the packet from the queue without waiting for an acknowledgement
         Mac80211Pkt *temp = fromUpperLayer.front();
         fromUpperLayer.pop_front();
-        delete(temp);
+        delete (temp);
     }
 }
 
@@ -897,7 +897,7 @@ void Mac80211::testMaxAttempts()
         // delete the frame to transmit
         Mac80211Pkt *temp = fromUpperLayer.front();
         fromUpperLayer.pop_front();
-        delete(temp);
+        delete (temp);
     }
 }
 
@@ -905,7 +905,7 @@ void Mac80211::testMaxAttempts()
  * Handle change nofitications. In this layer it is usually
  * information about the radio channel, i.e. if it is IDLE etc.
  */
-void Mac80211::receiveChangeNotification(int category, const cPolymorphic *details)
+void Mac80211::receiveChangeNotification(int category, const cObject *details)
 {
     Enter_Method("receiveChangeNotification(%s, %s)", notificationCategoryName(category),
                  details?details->info().c_str() : "n/a");

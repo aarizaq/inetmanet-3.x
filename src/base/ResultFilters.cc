@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2006 Andras Varga
+// Copyright (C) 2011 Zoltan Bojthe
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -16,17 +16,29 @@
 //
 
 
-#include "NullMobility.h"
+#include "ResultFilters.h"
 
+Register_ResultFilter("messageAge", MessageAgeFilter);
 
-#define coreEV (ev.isDisabled()||!coreDebug) ? (std::ostream&)ev : EV << logName() << "::BasicMobility: "
-
-Define_Module(NullMobility);
-
-void NullMobility::handleSelfMsg(cMessage *msg)
+void MessageAgeFilter::receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object)
 {
-    ASSERT(false);
+    if (dynamic_cast<cMessage *>(object))
+    {
+        cMessage *msg = (cMessage *)object;
+        fire(this, t, t - msg->getCreationTime());
+    }
 }
 
+//---
 
+Register_ResultFilter("messageTSAge", MessageTSAgeFilter);
+
+void MessageTSAgeFilter::receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object)
+{
+    if (dynamic_cast<cMessage *>(object))
+    {
+        cMessage *msg = (cMessage *)object;
+        fire(this, t, t - msg->getTimestamp());
+    }
+}
 

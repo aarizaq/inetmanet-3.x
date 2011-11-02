@@ -52,8 +52,7 @@ ChannelControl::~ChannelControl()
 }
 
 /**
- * Sets up the playgroundSize and calculates the
- * maxInterferenceDistance
+ * Calculates maxInterferenceDistance.
  *
  * @ref calcInterfDist
  */
@@ -162,18 +161,6 @@ ChannelControl::RadioRef ChannelControl::lookupRadio(cModule *radio)
         if (it->radioModule == radio)
             return &(*it);
     return 0;
-}
-
-
-bool ChannelControl::isRadioRegistered(RadioRef r)
-{
-    Enter_Method_Silent();
-    for (RadioList::iterator it = radios.begin(); it != radios.end(); it++)
-    {
-        if (it->radioModule == r->radioModule)
-            return true;
-    }
-    return false;
 }
 
 const ChannelControl::RadioRefVector& ChannelControl::getNeighbors(RadioRef h)

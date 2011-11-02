@@ -61,7 +61,7 @@ int RoutingTableParser::streq(const char *str1, const char *str2)
 int RoutingTableParser::strcpyword(char *dest, const char *src)
 {
     int i;
-    for (i = 0; !isspace(dest[i] = src[i]); i++) ;
+    for (i = 0; !isspace(dest[i] = src[i]); i++);
     dest[i] = '\0';
     return i;
 }
@@ -69,7 +69,7 @@ int RoutingTableParser::strcpyword(char *dest, const char *src)
 
 void RoutingTableParser::skipBlanks(char *str, int &charptr)
 {
-    for (;isspace(str[charptr]); charptr++) ;
+    for (; isspace(str[charptr]); charptr++);
 }
 
 
@@ -89,7 +89,7 @@ int RoutingTableParser::readRoutingTableFromFile(const char *filename)
     // read the whole into the file[] char-array
     for (charpointer = 0;
          (file[charpointer] = getc(fp)) != EOF;
-         charpointer++) ;
+         charpointer++);
 
     charpointer++;
     for (; charpointer < MAX_FILESIZE; charpointer++)
@@ -130,21 +130,25 @@ int RoutingTableParser::readRoutingTableFromFile(const char *filename)
         }
     }
 
-    delete[] file;
+    delete [] file;
 
     // parse filtered files
     if (ifconfigFile)
+    {
         parseInterfaces(ifconfigFile);
+        delete [] ifconfigFile;
+    }
     if (routeFile)
+    {
         parseRouting(routeFile);
+        delete [] routeFile;
+    }
     if (rulesFile)
+    {
         parseRules(rulesFile);
-
-    delete ifconfigFile;
-    delete routeFile;
-
+        delete [] rulesFile;
+    }
     return 0;
-
 }
 
 char *RoutingTableParser::createFilteredFile(char *file, int &charpointer, const char *endtoken)
@@ -153,10 +157,10 @@ char *RoutingTableParser::createFilteredFile(char *file, int &charpointer, const
     char *filterFile = new char[MAX_FILESIZE];
     filterFile[0] = '\0';
 
-    while(true) {
+    while (true) {
         // skip blank lines and comments
         while ( !isalnum(file[charpointer]) && !isspace(file[charpointer]) ) {
-            while (file[charpointer++] != '\n') ;
+            while (file[charpointer++] != '\n');
         }
 
         // check for endtoken:
@@ -166,7 +170,7 @@ char *RoutingTableParser::createFilteredFile(char *file, int &charpointer, const
         }
 
         // copy whole line to filterFile
-        while ((filterFile[i++] = file[charpointer++]) != '\n') ;
+        while ((filterFile[i++] = file[charpointer++]) != '\n');
     }
 
     return filterFile;
@@ -180,12 +184,12 @@ void RoutingTableParser::parseInterfaces(char *ifconfigFile)
     InterfaceEntry *ie;
 
     // parsing of entries in interface definition
-    while(ifconfigFile[charpointer] != '\0')
+    while (ifconfigFile[charpointer] != '\0')
     {
         // name entry
         if (streq(ifconfigFile + charpointer, "name:")) {
             // find existing interface with this name
-            char *name = parseEntry(ifconfigFile, "name:", charpointer,buf);
+            char *name = parseEntry(ifconfigFile, "name:", charpointer, buf);
             ie = ift->getInterfaceByName(name);
             if (!ie)
                 throw cRuntimeError("Error in routing file: interface name `%s' not registered by any L2 module", name);
@@ -209,7 +213,7 @@ void RoutingTableParser::parseInterfaces(char *ifconfigFile)
 
         // inet_addr entry
         if (streq(ifconfigFile + charpointer, "inet_addr:")) {
-            ie->ipv4Data()->setIPAddress(IPv4Address(parseEntry(ifconfigFile, "inet_addr:", charpointer,buf)));
+            ie->ipv4Data()->setIPAddress(IPv4Address(parseEntry(ifconfigFile, "inet_addr:", charpointer, buf)));
             continue;
         }
 
@@ -222,7 +226,7 @@ void RoutingTableParser::parseInterfaces(char *ifconfigFile)
 
         // Mask entry
         if (streq(ifconfigFile + charpointer, "Mask:")) {
-            ie->ipv4Data()->setNetmask(IPv4Address(parseEntry(ifconfigFile, "Mask:", charpointer,buf)));
+            ie->ipv4Data()->setNetmask(IPv4Address(parseEntry(ifconfigFile, "Mask:", charpointer, buf)));
             continue;
         }
 
@@ -235,13 +239,13 @@ void RoutingTableParser::parseInterfaces(char *ifconfigFile)
 
         // MTU entry
         if (streq(ifconfigFile + charpointer, "MTU:")) {
-            ie->setMtu(atoi(parseEntry(ifconfigFile, "MTU:", charpointer,buf)));
+            ie->setMtu(atoi(parseEntry(ifconfigFile, "MTU:", charpointer, buf)));
             continue;
         }
 
         // Metric entry
         if (streq(ifconfigFile + charpointer, "Metric:")) {
-            ie->ipv4Data()->setMetric(atoi(parseEntry(ifconfigFile, "Metric:", charpointer,buf)));
+            ie->ipv4Data()->setMetric(atoi(parseEntry(ifconfigFile, "Metric:", charpointer, buf)));
             continue;
         }
 
@@ -303,7 +307,7 @@ void RoutingTableParser::parseMulticastGroups(char *groupStr, InterfaceEntry *it
         mcg.push_back(IPv4Address::ALL_ROUTERS_MCAST);
 
     // Parse string (IPv4 addresses separated by colons)
-    cStringTokenizer tokenizer(groupStr,":");
+    cStringTokenizer tokenizer(groupStr, ":");
     const char *token;
     while ((token = tokenizer.nextToken())!=NULL)
         mcg.push_back(IPv4Address(token));
@@ -424,11 +428,11 @@ void RoutingTableParser::parseRules(char *rulesFile)
                    pos += strcpyword(str, rulesFile + pos);
                    skipBlanks(rulesFile, pos);
                    if (!strcmp(str, "INPUT"))
-                       position=1;
+                       position = 1;
                    else if (!strcmp(str, "OUTPUT"))
-                       position=0;
+                       position = 0;
                    else if (!strcmp(str, "FORWARD"))
-                       position=3;
+                       position = 3;
                    else
                        opp_error("Syntax error in routing file: `%s' should be INPUT or OUTPUT", str);
                    continue;
@@ -440,15 +444,15 @@ void RoutingTableParser::parseRules(char *rulesFile)
                    // find mask
                    IPv4Address mask("255.255.255.255");
                    char * p = strstr(str,"/");
-                   if (p!=NULL)
+                   if (p != NULL)
                    {
                        char strAux[30];
                        strcpy (strAux,p+1);
                        int size=atoi(strAux);
                        unsigned int m=1;
-                       for (int i=0;i<size;i++)
+                       for (int i=0; i<size; i++)
                        {
-                           m=(m<<1)|m;
+                           m = (m<<1)|m;
                        }
                        IPv4Address aux(m);
                        mask = aux;
@@ -471,15 +475,15 @@ void RoutingTableParser::parseRules(char *rulesFile)
                    {
                        char strAux[30];
                        strcpy (strAux,p+1);
-                       int size=atoi(strAux);
-                       unsigned int m=1;
-                       for (int i=0;i<size;i++)
+                       int size = atoi(strAux);
+                       unsigned int m = 1;
+                       for (int i=0; i<size; i++)
                        {
-                           m=(m<<1)|m;
+                           m = (m<<1)|m;
                        }
                        IPv4Address aux(m);
                        mask = aux;
-                       *p='\0';
+                       *p = '\0';
                    }
                    if (!IPv4Address::isWellFormed(str))
                        opp_error("Syntax error in routing file: `%s' should be a valid IPv4 address", str);
@@ -540,12 +544,12 @@ void RoutingTableParser::parseRules(char *rulesFile)
               }
               if (!strcmp(str, "iptables"))
               {
-                  if (position==0)
-                      rt->addRule(true,e);
-                  else if (position==1)
-                      rt->addRule(false,e);
-                  else if (position==3 && e->getRule()==IPv4RouteRule::ACCEPT && e->getInterface())
-                      rt->addRule(false,e);
+                  if (position == 0)
+                      rt->addRule(true, e);
+                  else if (position == 1)
+                      rt->addRule(false, e);
+                  else if (position == 3 && e->getRule() == IPv4RouteRule::ACCEPT && e->getInterface())
+                      rt->addRule(false, e);
                   else
                      opp_error("table rule not valid, must indicate input or output or \"FORWARD with accept\" ");
                   if (e->getRule()!=IPv4RouteRule::DROP && e->getRule()!=IPv4RouteRule::ACCEPT)
@@ -557,11 +561,11 @@ void RoutingTableParser::parseRules(char *rulesFile)
               }
          }
          if (position==0)
-             rt->addRule(true,e);
+             rt->addRule(true, e);
          else if (position==1)
-             rt->addRule(false,e);
+             rt->addRule(false, e);
          else if (position==3 && e->getRule()==IPv4RouteRule::ACCEPT && e->getInterface())
-             rt->addRule(false,e);
+             rt->addRule(false, e);
          else
              opp_error("table rule not valid, must indicate input or output");
          if (e->getRule()!=IPv4RouteRule::DROP && e->getRule()!=IPv4RouteRule::ACCEPT)

@@ -27,7 +27,7 @@ import inet.base.NotificationBoard;
 // multiple ethernet ports. The type of the ethernet MAC, relay Unit
 // and wireless card can be specified as parameters.
 //
-// By default the access point is stationary (NullMobility), but can be
+// By default the access point is stationary (StationaryMobility), but can be
 // changed also if needed.
 //
 // The wlan[*].mgmtType can be configured for different management types
@@ -43,9 +43,10 @@ module AccessPoint
         @node();
         @labels(node,ethernet-node,wireless-node);
         @display("i=device/accesspoint");
-        string mobilityType = default("NullMobility"); // how the node moves around. see: inet.mobility
+        string mobilityType = default("StationaryMobility"); // how the node moves around. see: inet.mobility
         string relayUnitType = default(haveClass("MACRelayUnitNP")?"MACRelayUnitNP":"MACRelayUnit_None"); // type of the IMACRelayUnit (MACRelayUnitNP, MACRelayUnitPP, etc)
         int numRadios = default(1);               // the number of radios in the access point
+        wlan[*].mgmtType = default("Ieee80211MgmtAP");
     gates:
         input radioIn[numRadios] @directIn;
         inout ethg[] @labels(EtherFrame-conn);
@@ -53,12 +54,10 @@ module AccessPoint
         relayUnit: <relayUnitType> like IMACRelayUnit if sizeof(ethg)+numRadios>1 {
             parameters:
                 @display("p=151,121");
-                numWirelessPorts = numRadios;
         }
         wlan[numRadios]: <default("Ieee80211Nic")> like IWirelessNic {
             parameters:
                 @display("p=89,225;q=queue");
-                mgmtType = default("Ieee80211MgmtAP");
         }
         eth[sizeof(ethg)]: <default("EtherMACFullDuplex")> like IEtherMAC {
             parameters:
@@ -81,8 +80,8 @@ module AccessPoint
         // because broadcasts must be handled differently for wilreless IFs by the relayUnit
         for i=0..numRadios-1 {
             radioIn[i] --> wlan[i].radioIn;
-            wlan[i].uppergateOut --> relayUnit.lowerLayerIn++ if sizeof(ethg)+numRadios>1;
-            wlan[i].uppergateIn <-- relayUnit.lowerLayerOut++ if sizeof(ethg)+numRadios>1;
+            wlan[i].upperLayerOut --> relayUnit.lowerLayerIn++ if sizeof(ethg)+numRadios>1;
+            wlan[i].upperLayerIn <-- relayUnit.lowerLayerOut++ if sizeof(ethg)+numRadios>1;
         }
         // ethernet must be connected only AFTER wireless ports
         for i=0..sizeof(ethg)-1 {

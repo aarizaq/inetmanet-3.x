@@ -40,10 +40,10 @@ class INET_API WirelessMacBase : public cSimpleModule
   protected:
     /** @brief gate id*/
     //@{
-    int uppergateIn;
-    int uppergateOut;
-    int lowergateIn;
-    int lowergateOut;
+    int upperLayerIn;
+    int upperLayerOut;
+    int lowerLayerIn;
+    int lowerLayerOut;
     //@}
 
     static simsignal_t packetSentToLowerSignal;

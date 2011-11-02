@@ -60,8 +60,8 @@ class INET_API BasicDecider : public BasicModule
   protected:
     /** @brief gate id*/
     /*@{*/
-    int uppergateOut;
-    int lowergateIn;
+    int upperLayerOut;
+    int lowerLayerIn;
     /*@}*/
 
     /** @brief statistics*/

@@ -586,24 +586,24 @@ void NS_CLASS aodv_socket_send(AODV_msg * aodv_msg, struct in_addr dst,
 
         if (this->isStaticNode())
         {
-            if (dynamic_cast<RREP*> (aodv_msg))
+            if (dynamic_cast<RREP*>(aodv_msg))
             {
-                dynamic_cast<RREP*> (aodv_msg)->cost+=costStatic;
+                dynamic_cast<RREP*>(aodv_msg)->cost += costStatic;
             }
             else if (dynamic_cast<RREQ*> (aodv_msg))
             {
-                dynamic_cast<RREQ*> (aodv_msg)->cost+=costStatic;
+                dynamic_cast<RREQ*>(aodv_msg)->cost += costStatic;
             }
         }
         else
         {
-            if (dynamic_cast<RREP*> (aodv_msg))
+            if (dynamic_cast<RREP*>(aodv_msg))
             {
-                dynamic_cast<RREP*> (aodv_msg)->cost+=costMobile;
+                dynamic_cast<RREP*>(aodv_msg)->cost += costMobile;
             }
-            else if (dynamic_cast<RREQ*> (aodv_msg))
+            else if (dynamic_cast<RREQ*>(aodv_msg))
             {
-                dynamic_cast<RREQ*> (aodv_msg)->cost+=costMobile;
+                dynamic_cast<RREQ*>(aodv_msg)->cost += costMobile;
             }
         }
 

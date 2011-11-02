@@ -20,6 +20,11 @@
 #ifndef VOIPTOOL_VOIPSINKAPP_H
 #define VOIPTOOL_VOIPSINKAPP_H
 
+#ifndef HAVE_FFMPEG
+#error Please install libavcodec, libavformat, libavutil or disable 'VoIPTool' feature
+#endif
+
+
 #define __STDC_CONSTANT_MACROS
 
 #include <omnetpp.h>
@@ -33,14 +38,14 @@ extern "C" {
 #include <sys/stat.h>
 
 #include "IPvXAddressResolver.h"
-#include "UDPAppBase.h"
 #include "UDPControlInfo_m.h"
+#include "UDPSocket.h"
 
 #include "VoIPPacket_m.h"
 
 #include "AudioOutFile.h"
 
-class VoIPSinkApp : public UDPAppBase
+class VoIPSinkApp : public cSimpleModule
 {
   public:
     VoIPSinkApp() { resultFile = ""; }
@@ -61,7 +66,7 @@ class VoIPSinkApp : public UDPAppBase
     class Connection
     {
       public:
-        Connection() : offline(true) {}
+        Connection() : offline(true), oc(NULL), fmt(NULL), audio_st(NULL), decCtx(NULL), pCodecDec(NULL) {}
         void addAudioStream(enum CodecID codec_id);
         bool openAudio(const char *fileName);
         void writeAudioFrame(uint8_t *buf, int len);
@@ -91,12 +96,14 @@ class VoIPSinkApp : public UDPAppBase
     simtime_t playOutDelay;
     const char *resultFile;
 
+    UDPSocket socket;
+
     Connection curConn;
 
-    static simsignal_t receivedBytesSignal;
+    static simsignal_t rcvdPkSignal;
+    static simsignal_t dropPkSignal;
     static simsignal_t lostSamplesSignal;
     static simsignal_t lostPacketsSignal;
-    static simsignal_t droppedBytesSignal;
     static simsignal_t packetHasVoiceSignal;
     static simsignal_t connStateSignal;
     static simsignal_t delaySignal;

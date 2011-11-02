@@ -27,10 +27,10 @@
 
 /**
  * Stores an IPv4 or an IPv6 address. This class should be used everywhere
- * in transport layer and up, to guarantee IPv4/IPv6 transparence.
+ * in transport layer and up, to guarantee IPv4/IPv6 transparency.
  *
  * Storage is efficient: an object occupies size of an IPv6 address
- * (128bits=16 bytes) plus a bool.
+ * (128 bits=16 bytes) plus a bool.
  */
 class INET_API IPvXAddress
 {
@@ -39,8 +39,6 @@ class INET_API IPvXAddress
     bool isv6;
 
   public:
-    /** name Constructors, destructor */
-    //@{
     /**
      * Constructor for IPv4 addresses.
      */
@@ -72,10 +70,7 @@ class INET_API IPvXAddress
      * Destructor
      */
     ~IPvXAddress() {}
-    //@}
 
-    /** name Getters, setters */
-    //@{
     /**
      * Is this an IPv6 address?
      */
@@ -181,29 +176,34 @@ class INET_API IPvXAddress
      */
     std::string str() const
     {
-    	if (isv6)
-    	{
-    		return get6().str();
-    	}
-    	else if (d[0] == 0)
-    	{
-			return std::string("<unspec>");
-    	}
-    	else
-    	{
-			return get4().str();
-    	}
+        if (isv6)
+        {
+            return get6().str();
+        }
+        else if (d[0] == 0)
+        {
+            return std::string("<unspec>");
+        }
+        else
+        {
+            return get4().str();
+        }
     }
-    //@}
 
-    /** name Comparison */
-    //@{
     /**
      * True if the structure has not been assigned any address yet.
      */
     bool isUnspecified() const
     {
         return !isv6 && d[0] == 0;
+    }
+
+    /**
+     * True if the stored address is a multicast address.
+     */
+    bool isMulticast() const
+    {
+        return isv6 ? get6().isMulticast() : get4().isMulticast();
     }
 
     /**
@@ -231,7 +231,7 @@ class INET_API IPvXAddress
     bool equals(const IPv6Address& addr) const
     {
         const uint32 *w = addr.words();
-        return isv6 && d[3] == w[3] && d[2] == w[2] && d[1] == w[1] && d[0] == w[0];
+        return isv6 ? (d[3] == w[3] && d[2] == w[2] && d[1] == w[1] && d[0] == w[0]) : (isUnspecified() && addr.isUnspecified());
     }
 
     /**
@@ -285,7 +285,6 @@ class INET_API IPvXAddress
         else
             return memcmp(&d, &addr.d, 16) < 0;  // this provides an ordering, though not surely the one one would expect
     }
-    //@}
 };
 
 inline std::ostream& operator<<(std::ostream& os, const IPvXAddress& ip)

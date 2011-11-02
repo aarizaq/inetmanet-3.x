@@ -222,7 +222,7 @@ class INET_API IPv4Address
     /**
       * Returns the broadcast address for the given netmask
       */
-	IPv4Address getBroadcastAddress(IPv4Address netmask);
+    IPv4Address getBroadcastAddress(IPv4Address netmask);
 
     /**
      * Returns equals(addr).
@@ -257,7 +257,7 @@ class INET_API IPv4Address
      * Typical usage is when the length of an IPv4 prefix is done and to check
      * the address ends with the right number of 0.
      */
-    void keepFirstBits (unsigned int n);
+    void keepFirstBits(unsigned int n);
 };
 
 inline std::ostream& operator<<(std::ostream& os, const IPv4Address& ip)

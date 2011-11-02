@@ -37,22 +37,30 @@ Define_Module(PingApp);
 
 simsignal_t PingApp::endToEndDelaySignal = SIMSIGNAL_NULL;
 simsignal_t PingApp::dropSignal = SIMSIGNAL_NULL;
-simsignal_t PingApp::sentPacketSignal = SIMSIGNAL_NULL;
 simsignal_t PingApp::outOfOrderArrivalSignal = SIMSIGNAL_NULL;
 simsignal_t PingApp::pingTxSignal = SIMSIGNAL_NULL;
 simsignal_t PingApp::pingRxSignal = SIMSIGNAL_NULL;
 
-void PingApp::initialize()
+void PingApp::initialize(int stage)
 {
+    cSimpleModule::initialize(stage);
+
+    // because of IPvXAddressResolver, we need to wait until interfaces are registered,
+    // address auto-assignment takes place etc.
+    if (stage != 3)
+        return;
+
     // read params
     // (defer reading srcAddr/destAddr to when ping starts, maybe
     // addresses will be assigned later by some protocol)
     packetSize = par("packetSize");
-    intervalp = & par("interval");
+    sendIntervalp = & par("sendInterval");
     hopLimit = par("hopLimit");
     count = par("count");
     startTime = par("startTime");
     stopTime = par("stopTime");
+    if (stopTime != 0 && stopTime <= startTime)
+        error("Invalid startTime/stopTime parameters");
     printPing = (bool)par("printPing");
 
     // state
@@ -64,17 +72,17 @@ void PingApp::initialize()
     delayStat.setName("pingRTT");
     endToEndDelaySignal = registerSignal("endToEndDelay");
     dropSignal = registerSignal("drop");
-    sentPacketSignal = registerSignal("sentPacket");
     outOfOrderArrivalSignal = registerSignal("outOfOrderArrival");
     pingTxSignal = registerSignal("pingTx");
     pingRxSignal = registerSignal("pingRx");
 
-    dropCount = outOfOrderArrivalCount = 0;
+    dropCount = outOfOrderArrivalCount = numPongs = 0;
     WATCH(dropCount);
     WATCH(outOfOrderArrivalCount);
+    WATCH(numPongs);
 
-    // schedule first ping (use empty destAddr or stopTime<=startTime to disable)
-    if (par("destAddr").stringValue()[0] && (stopTime==0 || stopTime>=startTime))
+    // schedule first ping (use empty destAddr to disable)
+    if (par("destAddr").stringValue()[0])
     {
         cMessage *msg = new cMessage("sendPing");
         scheduleAt(startTime, msg);
@@ -86,11 +94,12 @@ void PingApp::handleMessage(cMessage *msg)
     if (msg->isSelfMessage())
     {
         // on first call we need to initialize
-        if (destAddr.isUnspecified())
+        if (sendSeqNo == 0)
         {
+            srcAddr = IPvXAddressResolver().resolve(par("srcAddr"));
             destAddr = IPvXAddressResolver().resolve(par("destAddr"));
             ASSERT(!destAddr.isUnspecified());
-            srcAddr = IPvXAddressResolver().resolve(par("srcAddr"));
+
             EV << "Starting up: dest=" << destAddr << "  src=" << srcAddr << "\n";
         }
 
@@ -112,7 +121,7 @@ void PingApp::sendPing()
     EV << "Sending ping #" << sendSeqNo << "\n";
 
     char name[32];
-    sprintf(name,"ping%ld", sendSeqNo);
+    sprintf(name, "ping%ld", sendSeqNo);
 
     PingPayload *msg = new PingPayload(name);
     msg->setOriginatorId(getId());
@@ -121,15 +130,14 @@ void PingApp::sendPing()
 
     sendToICMP(msg, destAddr, srcAddr, hopLimit);
     emit(pingTxSignal, sendSeqNo);
-    emit(sentPacketSignal, 1L);
     sendSeqNo++;
 }
 
 void PingApp::scheduleNextPing(cMessage *timer)
 {
-    simtime_t nextPing = simTime() + intervalp->doubleValue();
+    simtime_t nextPing = simTime() + sendIntervalp->doubleValue();
 
-    if ((count==0 || sendSeqNo<count) && (stopTime==0 || nextPing<stopTime))
+    if ((count == 0 || sendSeqNo < count) && (stopTime == 0 || nextPing < stopTime))
         scheduleAt(nextPing, timer);
     else
         delete timer;
@@ -216,6 +224,8 @@ void PingApp::countPingResponse(int bytes, long seqNo, simtime_t rtt)
     EV << "Ping reply #" << seqNo << " arrived, rtt=" << rtt << "\n";
     emit(pingRxSignal, seqNo);
 
+	numPongs++;
+
     delayStat.collect(rtt);
     emit(endToEndDelaySignal, rtt);
 
@@ -249,7 +259,9 @@ void PingApp::finish()
 {
     if (sendSeqNo==0)
     {
-        EV << getFullPath() << ": No pings sent, skipping recording statistics and printing results.\n";
+        if (printPing)
+        	EV << getFullPath() << ": No pings sent, skipping recording statistics and printing results.\n";
+        recordScalar("Pings sent", sendSeqNo);
         return;
     }
 
@@ -260,17 +272,17 @@ void PingApp::finish()
     recordScalar("Ping out-of-order rate (%)", 100 * outOfOrderArrivalCount / (double)sendSeqNo);
 
     // print it to stdout as well
-    cout << "--------------------------------------------------------" << endl;
-    cout << "\t" << getFullPath() << endl;
-    cout << "--------------------------------------------------------" << endl;
+    if (printPing)
+    {
+        cout << "--------------------------------------------------------" << endl;
+        cout << "\t" << getFullPath() << endl;
+        cout << "--------------------------------------------------------" << endl;
 
-    cout << "sent: " << sendSeqNo
-         << "   drop rate (%): " << (100 * dropCount / (double)sendSeqNo) << endl;
-    cout << "round-trip min/avg/max (ms): "
-         << (delayStat.getMin()*1000.0) << "/"
-         << (delayStat.getMean()*1000.0) << "/"
-         << (delayStat.getMax()*1000.0) << endl;
-    cout << "stddev (ms): "<< (delayStat.getStddev()*1000.0)
-         << "   variance:" << delayStat.getVariance() << endl;
-    cout <<"--------------------------------------------------------" << endl;
+        cout << "sent: " << sendSeqNo << "   drop rate (%): " << (100 * dropCount / (double) sendSeqNo) << endl;
+        cout << "round-trip min/avg/max (ms): " << (delayStat.getMin() * 1000.0) << "/"
+             << (delayStat.getMean() * 1000.0) << "/" << (delayStat.getMax() * 1000.0) << endl;
+        cout << "stddev (ms): " << (delayStat.getStddev() * 1000.0) << "   variance:" << delayStat.getVariance() << endl;
+        cout << "--------------------------------------------------------" << endl;
+    }
 }
+

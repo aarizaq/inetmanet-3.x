@@ -30,8 +30,7 @@
 
 Define_Module(RTCP);
 
-simsignal_t RTCP::rcvdPkBytesSignal = SIMSIGNAL_NULL;
-simsignal_t RTCP::endToEndDelaySignal = SIMSIGNAL_NULL;
+simsignal_t RTCP::rcvdPkSignal = SIMSIGNAL_NULL;
 
 RTCP::RTCP()
 {
@@ -43,16 +42,14 @@ void RTCP::initialize()
     // initialize variables
     _ssrcChosen = false;
     _leaveSession = false;
-    _socketFdIn = -1;
-    _socketFdOut = -1;
+    _udpSocket.setOutputGate(gate("udpOut"));
 
     _packetsCalculated = 0;
     _averagePacketSize = 0.0;
 
     _participantInfos.setName("ParticipantInfos");
 
-    rcvdPkBytesSignal = registerSignal("rcvdPkBytes");
-    endToEndDelaySignal = registerSignal("endToEndDelay");
+    rcvdPkSignal = registerSignal("rcvdPk");
 }
 
 RTCP::~RTCP()
@@ -94,7 +91,7 @@ void RTCP::handleMessageFromRTP(cMessage *msg)
     RTPInnerPacket *rinp = check_and_cast<RTPInnerPacket *>(msg);
 
     // distinguish by type
-    switch(rinp->getType())
+    switch (rinp->getType())
     {
     case RTP_INP_INITIALIZE_RTCP:
         handleInitializeRTCP(rinp);
@@ -117,7 +114,7 @@ void RTCP::handleMessageFromRTP(cMessage *msg)
         break;
 
     default:
-        error("unknown RTPInnerPacket type");
+        throw cRuntimeError("unknown RTPInnerPacket type");
     }
 }
 
@@ -203,39 +200,15 @@ void RTCP::connectRet()
 
 void RTCP::readRet(cPacket *sifpIn)
 {
+    emit(rcvdPkSignal, sifpIn);
     RTCPCompoundPacket *packet = check_and_cast<RTCPCompoundPacket *>(sifpIn->decapsulate());
-    emit(rcvdPkBytesSignal, (long)(sifpIn->getByteLength()));
-    emit(endToEndDelaySignal, simTime() - sifpIn->getCreationTime());
     processIncomingRTCPPacket(packet, IPv4Address(_destinationAddress), _port);
 }
 
 void RTCP::createSocket()
 {
-    // TODO UDPAppBase should be ported to use UDPSocket sometime, but for now
-    // we just manage the UDP socket by hand...
-    if (_socketFdIn == -1)
-    {
-        _socketFdIn = UDPSocket::generateSocketId();
-        UDPControlInfo *ctrl = new UDPControlInfo();
-        IPv4Address ipaddr(_destinationAddress);
-
-        if (ipaddr.isMulticast())
-        {
-            ctrl->setSrcAddr(IPv4Address(_destinationAddress));
-            ctrl->setSrcPort(_port);
-        }
-        else
-        {
-             ctrl->setSrcPort(_port);
-             ctrl->setSockId(_socketFdOut);
-        }
-        ctrl->setSockId((int)_socketFdIn);
-        cMessage *msg = new cMessage("UDP_C_BIND", UDP_C_BIND);
-        msg->setControlInfo(ctrl);
-        send(msg,"udpOut");
-
-        connectRet();
-    }
+    _udpSocket.bind(_port);  //XXX this will fail if this function is invoked multiple times; not sure that may (or is expected to) happen
+    connectRet();
 }
 
 void RTCP::scheduleInterval()
@@ -317,6 +290,7 @@ void RTCP::createPacket()
             }
         }
     }
+
     // insert source description items (at least common name)
     RTCPSDESPacket *sdesPacket = new RTCPSDESPacket("SDESPacket");
 
@@ -340,14 +314,7 @@ void RTCP::createPacket()
 
     cPacket *msg = new cPacket("RTCPCompoundPacket");
     msg->encapsulate(compoundPacket);
-    msg->setKind(UDP_C_DATA);
-    UDPControlInfo *ctrl = new UDPControlInfo();
-    ctrl->setSockId(_socketFdOut);
-    ctrl->setDestAddr(_destinationAddress);
-    ctrl->setDestPort(_port);
-    msg->setControlInfo(ctrl);
-
-    send(msg, "udpOut");
+    _udpSocket.sendTo(msg, _destinationAddress, _port);
 
     if (_leaveSession)
     {

@@ -29,7 +29,7 @@
 
 #include <omnetpp.h>
 
-#include "BasicMobility.h"
+#include "MovingMobilityBase.h"
 #include "ModuleAccess.h"
 #include "world/traci/TraCIScenarioManager.h"
 
@@ -43,7 +43,7 @@
  * @ingroup mobility
  * @author Christoph Sommer
  */
-class INET_API TraCIMobility : public BasicMobility
+class INET_API TraCIMobility : public MovingMobilityBase
 {
   public:
     class Statistics
@@ -63,14 +63,14 @@ class INET_API TraCIMobility : public BasicMobility
         void recordScalars(cSimpleModule& module);
     };
 
-    TraCIMobility() : BasicMobility(), isPreInitialized(false) {}
+    TraCIMobility() : MovingMobilityBase(), isPreInitialized(false) {}
     virtual void initialize(int);
     virtual void finish();
 
     virtual void handleSelfMsg(cMessage *msg);
     virtual void preInitialize(std::string external_id, const Coord& position, std::string road_id = "", double speed = -1, double angle = -1);
     virtual void nextPosition(const Coord& position, std::string road_id = "", double speed = -1, double angle = -1);
-    virtual void changePosition();
+    virtual void move();
     virtual void setExternalId(std::string external_id)
     {
         this->external_id = external_id;
@@ -82,7 +82,7 @@ class INET_API TraCIMobility : public BasicMobility
     }
     virtual Coord getPosition()
     {
-        return pos;
+        return lastPosition;
     }
     virtual std::string getRoadId()
     {
@@ -180,6 +180,7 @@ class INET_API TraCIMobility : public BasicMobility
      * @returns emission in g/s
      */
     double calculateCO2emission(double v, double a);
+
 };
 
 class TraCIMobilityAccess : public ModuleAccess<TraCIMobility>

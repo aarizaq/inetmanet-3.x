@@ -81,7 +81,9 @@ rtable_entry_t *NS_CLASS rtable_insert(struct in_addr dest_addr,
                                        u_int32_t seqnum,
                                        u_int8_t prefix,
                                        u_int8_t hopcnt,
-                                       u_int8_t is_gw, uint32_t cost, uint8_t hopfix)
+                                       u_int8_t is_gw,
+                                       uint32_t cost,
+                                       uint8_t hopfix)
 {
     rtable_entry_t *entry;
     struct in_addr netmask;
@@ -156,7 +158,9 @@ rtable_entry_t *NS_CLASS rtable_update(rtable_entry_t *entry,
                                        u_int32_t seqnum,
                                        u_int8_t prefix,
                                        u_int8_t hopcnt,
-                                       u_int8_t is_gw, uint32_t cost, uint8_t hopfix)
+                                       u_int8_t is_gw,
+                                       uint32_t cost,
+                                       uint8_t hopfix)
 {
 #ifndef NS_PORT
     struct in_addr netmask;
@@ -329,7 +333,7 @@ void NS_CLASS rtable_init()
 {
     while (!dymoRoutingTable->empty())
     {
-    	if (dymoRoutingTable->begin()->second)
+        if (dymoRoutingTable->begin()->second)
         {
             timer_remove(&dymoRoutingTable->begin()->second->rt_deltimer);
             timer_remove(&dymoRoutingTable->begin()->second->rt_validtimer);
@@ -373,7 +377,8 @@ rtable_entry_t *NS_CLASS rtable_insert(struct in_addr dest_addr,
                                        u_int8_t prefix,
                                        u_int8_t hopcnt,
                                        u_int8_t is_gw,
-                                       uint32_t cost, uint8_t hopfix)
+                                       uint32_t cost,
+                                       uint8_t hopfix)
 {
     rtable_entry_t *entry;
     struct in_addr netmask;
@@ -434,7 +439,8 @@ rtable_entry_t *NS_CLASS rtable_update(rtable_entry_t *entry,
                                        u_int8_t prefix,
                                        u_int8_t hopcnt,
                                        u_int8_t is_gw,
-                                       uint32_t cost, uint8_t hopfix)
+                                       uint32_t cost,
+                                       uint8_t hopfix)
 {
 
     struct in_addr netmask;

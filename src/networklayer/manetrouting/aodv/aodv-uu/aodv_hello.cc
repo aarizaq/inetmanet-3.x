@@ -59,7 +59,7 @@ long NS_CLASS hello_jitter()
         return (long) (((float) Random::integer(RAND_MAX + 1) / RAND_MAX - 0.5)
                        * JITTER_INTERVAL);
 #else
-        return (long) (((float) intuniform(0,RAND_MAX) / (RAND_MAX-1) - 0.5)
+        return (long) (((float) intuniform(0,RAND_MAX + 1) / RAND_MAX - 0.5)
                        * JITTER_INTERVAL);
 #endif
 #else
@@ -381,7 +381,7 @@ void NS_CLASS hello_process(RREP * hello, int rreplen, unsigned int ifindex)
             memcpy(&rt->last_hello_time, &now, sizeof(struct timeval));
             return;
         }
-        rt_table_update(rt, hello_dest, 1, hello_seqno, timeout, VALID, flags,ifindex,cost,fixhop);
+        rt_table_update(rt, hello_dest, 1, hello_seqno, timeout, VALID, flags, ifindex, cost, fixhop);
     }
 
 hello_update:

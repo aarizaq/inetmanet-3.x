@@ -32,7 +32,7 @@ static std::ostream& operator<< (std::ostream& os, cMessage *msg)
 }
 */
 
-static std::ostream& operator<< (std::ostream& os, const MACRelayUnitBase::AddressEntry& e)
+static std::ostream& operator<<(std::ostream& os, const MACRelayUnitBase::AddressEntry& e)
 {
     os << "port=" << e.portno << " insTime=" << e.insertionTime;
     return os;
@@ -45,18 +45,21 @@ static std::ostream& operator<< (std::ostream& os, const MACRelayUnitBase::Addre
  * also note that if on a line containing useful data that EOF occurs, then
  * that line will not be read in, hence must terminate file with unused line.
  */
-static char *fgetline (FILE *fp)
+static char *fgetline(FILE *fp)
 {
     // alloc buffer and read a line
     char *line = new char[MAX_LINE];
-    if (fgets(line,MAX_LINE,fp)==NULL)
+    if (fgets(line, MAX_LINE, fp)==NULL)
+    {
+        delete [] line;
         return NULL;
+    }
 
     // chop CR/LF
     line[MAX_LINE-1] = '\0';
     int len = strlen(line);
     while (len>0 && (line[len-1]=='\n' || line[len-1]=='\r'))
-        line[--len]='\0';
+        line[--len] = '\0';
 
     return line;
 }
@@ -64,12 +67,11 @@ static char *fgetline (FILE *fp)
 void MACRelayUnitBase::initialize()
 {
     // number of ports
-    numPorts = gate("lowerLayerOut",0)->size();
-    if (gate("lowerLayerIn",0)->size()!=numPorts)
+    numPorts = gate("lowerLayerOut", 0)->size();
+    if (gate("lowerLayerIn", 0)->size()!=numPorts)
         error("the sizes of the lowerLayerIn[] and lowerLayerOut[] gate vectors must be the same");
 
     // other parameters
-    numWirelessPorts = par("numWirelessPorts");
     addressTableSize = par("addressTableSize");
     addressTableSize = addressTableSize >= 0 ? addressTableSize : 0;
 
@@ -104,14 +106,14 @@ void MACRelayUnitBase::handleAndDispatchFrame(EtherFrame *frame, int inputport)
     int outputport = getPortForAddress(frame->getDest());
     // should not send out the same frame on the same ethernet port
     // (although wireless ports are ok to receive the same message)
-    if (inputport==outputport && outputport>=numWirelessPorts)
+    if (inputport == outputport)
     {
         EV << "Output port is same as input port, " << frame->getFullName() <<
               " dest " << frame->getDest() << ", discarding frame\n";
         delete frame;
         return;
     }
-    if (outputport>=0)
+    if (outputport >= 0)
     {
         EV << "Sending frame " << frame << " with dest address " << frame->getDest() << " to port " << outputport << endl;
         send(frame, "lowerLayerOut", outputport);
@@ -126,7 +128,7 @@ void MACRelayUnitBase::handleAndDispatchFrame(EtherFrame *frame, int inputport)
 void MACRelayUnitBase::broadcastFrame(EtherFrame *frame, int inputport)
 {
     for (int i=0; i<numPorts; ++i)
-        if (i!=inputport || i<numWirelessPorts)  // we always send out on a wireless port even if we received it from the same port
+        if (i != inputport)
             send((EtherFrame*)frame->dup(), "lowerLayerOut", i);
     delete frame;
 }
@@ -274,6 +276,8 @@ void MACRelayUnitBase::readAddressTable(const char* fileName)
         AddressEntry entry;
         entry.insertionTime = 0;
         entry.portno = atoi(portno);
+        if (addresstable.size() >= (unsigned int)addressTableSize)
+            error("Too many entries in address table file '%s'", fileName);
         addresstable[MACAddress(hexaddress)] = entry;
 
         // Garbage collection before next iteration

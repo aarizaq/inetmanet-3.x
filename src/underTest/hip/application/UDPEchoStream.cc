@@ -65,8 +65,8 @@ void UDPEchoStream::initialize()
 
 	if (startTime>=0)
         scheduleAt(startTime, new cMessage("UDPEchoStreamStart"));
-
-	bindToPort(port);
+	socket.setOutputGate(gate("udpOut"));
+	socket.bind(port);
 }
 
 // Collects statistics
@@ -113,8 +113,7 @@ void UDPEchoStream::sendRequest() {
 
     UDPEchoAppMsg *msg = new UDPEchoAppMsg("StrmReq");
 	msg->setIsRequest(true);
-    sendToUDP(msg, port, destAddr, destPort);
-
+    socket.sendTo(msg, destAddr, destPort);
 }
 
 // Get the time statistics from incoming packet
@@ -146,7 +145,7 @@ void UDPEchoStream::sendStreamData(cMessage *timer)
 	pkt->setIsRequest(true);
     int pktLen = (*packetLen);
     pkt->setByteLength(pktLen);
-    sendToUDP(pkt, port, destAddr, destPort);
+    socket.sendTo(pkt, destAddr, destPort);
 
     numPkSent++;
 

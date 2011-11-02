@@ -35,7 +35,8 @@ Define_Module(DNSClient);
 
 void DNSClient::initialize()
 {
-     bindToPort(par("localPort").longValue());
+     socket.setOutputGate(gate("udpOut"));
+     socket.bind(par("localPort").longValue());
 }
 
 void DNSClient::finish()
@@ -53,7 +54,7 @@ void DNSClient::handleMessage(cPacket* msg)
     {
       if (msg->isName("DNS Request"))
     	  // Sending response
-    	  sendToUDP(msg, par("localPort"), IPvXAddressResolver().resolve(par("dnsAddress")), 23);
+          socket.sendTo(msg, IPvXAddressResolver().resolve(par("dnsAddress")), 23);
       else
       {
          sendDirect(msg,this->getParentModule()->getSubmodule(par("tcpAppName"),par("tcpAppIndex")),"dns");

@@ -31,7 +31,7 @@
 
 Define_Module(Ieee80211MgmtAP);
 
-static std::ostream& operator<< (std::ostream& os, const Ieee80211MgmtAP::STAInfo& sta)
+static std::ostream& operator<<(std::ostream& os, const Ieee80211MgmtAP::STAInfo& sta)
 {
     os << "state:" << sta.status;
     return os;
@@ -55,7 +55,7 @@ void Ieee80211MgmtAP::initialize(int stage)
         WATCH(beaconInterval);
         WATCH(numAuthSteps);
         WATCH_MAP(staList);
-        isConnected = gate("uppergateOut")->getPathEndGate()->isConnected();
+        isConnected = gate("upperLayerOut")->getPathEndGate()->isConnected();
 
         //TBD fill in supportedRates
 
@@ -65,7 +65,7 @@ void Ieee80211MgmtAP::initialize(int stage)
 
         // start beacon timer (randomize startup time)
         beaconTimer = new cMessage("beaconTimer");
-        scheduleAt(simTime()+uniform(0,beaconInterval), beaconTimer);
+        scheduleAt(simTime()+uniform(0, beaconInterval), beaconTimer);
     }
 }
 
@@ -100,7 +100,7 @@ void Ieee80211MgmtAP::handleUpperMessage(cPacket *msg)
         const MACAddress& macAddr = frame->getReceiverAddress();
 #endif
 
-        if (!macAddr.isBroadcast())
+        if (!macAddr.isMulticast())
         {
             STAList::iterator it = staList.find(macAddr);
             if (it==staList.end() || it->second.status!=ASSOCIATED)
@@ -124,7 +124,7 @@ void Ieee80211MgmtAP::handleUpperMessage(cPacket *msg)
         EV << "Handling upper message from Network Layer" << endl;
 
         Ieee802Ctrl* ctrl = check_and_cast<Ieee802Ctrl*>(msg->removeControlInfo());
-        if (!ctrl->getDest().isBroadcast())
+        if (!ctrl->getDest().isMulticast())
         {
             // check if the destination address is our STA (or broadcast)
             STAList::iterator it = staList.find(ctrl->getDest());
@@ -164,7 +164,7 @@ void Ieee80211MgmtAP::handleUpperMessage(cPacket *msg)
     const MACAddress& macAddr = frame->getReceiverAddress();
 #endif
 
-    if (!macAddr.isBroadcast())
+    if (!macAddr.isMulticast())
     {
         STAList::iterator it = staList.find(macAddr);
         if (it==staList.end() || it->second.status!=ASSOCIATED)
@@ -184,12 +184,12 @@ void Ieee80211MgmtAP::handleUpperMessage(cPacket *msg)
 #endif
 
 
-void Ieee80211MgmtAP::handleCommand(int msgkind, cPolymorphic *ctrl)
+void Ieee80211MgmtAP::handleCommand(int msgkind, cObject *ctrl)
 {
     error("handleCommand(): no commands supported");
 }
 
-void Ieee80211MgmtAP::receiveChangeNotification(int category, const cPolymorphic *details)
+void Ieee80211MgmtAP::receiveChangeNotification(int category, const cObject *details)
 {
     Enter_Method_Silent();
     printNotificationBanner(category, details);
@@ -243,17 +243,17 @@ void Ieee80211MgmtAP::handleDataFrame(Ieee80211DataFrame *frame)
         return;
     }
 
-    // handle broadcast frames
-    if (frame->getAddress3().isBroadcast())
+    // handle broadcast/multicast frames
+    if (frame->getAddress3().isMulticast())
     {
-        EV << "Handling broadcast frame\n";
+        EV << "Handling multicast frame\n";
 
         if (hasRelayUnit)
         {
 #ifdef WITH_ETHERNET
-            send(convertToEtherFrame((Ieee80211DataFrame *)frame->dup()), "uppergateOut");
+            send(convertToEtherFrame((Ieee80211DataFrame *)frame->dup()), "upperLayerOut");
 #else
-            send(frame->dup(), "uppergateOut");
+            send(frame->dup(), "upperLayerOut");
 #endif
         }
         else if (isConnected)
@@ -261,7 +261,7 @@ void Ieee80211MgmtAP::handleDataFrame(Ieee80211DataFrame *frame)
             // JcM add: we dont have a relayunit, so, send the decap packet
 
             cPacket* payload = frame->getEncapsulatedPacket()->dup();
-            send(payload,"uppergateOut");
+            send(payload,"upperLayerOut");
         }
 
         distributeReceivedDataFrame(frame);
@@ -276,16 +276,16 @@ void Ieee80211MgmtAP::handleDataFrame(Ieee80211DataFrame *frame)
         if (hasRelayUnit)
         {
 #ifdef WITH_ETHERNET
-            send(convertToEtherFrame(frame), "uppergateOut");
+            send(convertToEtherFrame(frame), "upperLayerOut");
 #else
-            send(frame, "uppergateOut");
+            send(frame, "upperLayerOut");
 #endif
         }
         else if (isConnected)
         {
             cPacket* payload = frame->decapsulate();
             delete frame;
-            send(payload,"uppergateOut");
+            send(payload,"upperLayerOut");
         }
         else
         {
@@ -319,16 +319,16 @@ void Ieee80211MgmtAP::handleDataFrame(Ieee80211DataFrame *frame)
     }
 
     // handle broadcast frames
-    if (frame->getAddress3().isBroadcast())
+    if (frame->getAddress3().isMulticast())
     {
         EV << "Handling broadcast frame\n";
 
         if (hasRelayUnit)
         {
 #ifdef WITH_ETHERNET
-            send(convertToEtherFrame((Ieee80211DataFrame *)frame->dup()), "uppergateOut");
+            send(convertToEtherFrame((Ieee80211DataFrame *)frame->dup()), "upperLayerOut");
 #else
-            send(frame->dup(), "uppergateOut");
+            send(frame->dup(), "upperLayerOut");
 #endif
         }
         distributeReceivedDataFrame(frame);
@@ -343,9 +343,9 @@ void Ieee80211MgmtAP::handleDataFrame(Ieee80211DataFrame *frame)
         if (hasRelayUnit)
         {
 #ifdef WITH_ETHERNET
-            send(convertToEtherFrame(frame), "uppergateOut");
+            send(convertToEtherFrame(frame), "upperLayerOut");
 #else
-            send(frame, "uppergateOut");
+            send(frame, "upperLayerOut");
 #endif
         }
         else
@@ -365,7 +365,7 @@ void Ieee80211MgmtAP::handleDataFrame(Ieee80211DataFrame *frame)
         }
     }
 }
-#endif 0
+#endif
 
 void Ieee80211MgmtAP::handleAuthenticationFrame(Ieee80211AuthenticationFrame *frame)
 {
@@ -542,7 +542,7 @@ void Ieee80211MgmtAP::handleProbeRequestFrame(Ieee80211ProbeRequestFrame *frame)
 {
     EV << "Processing ProbeRequest frame\n";
 
-    if (strcmp(frame->getBody().getSSID(),"")!=0 && strcmp(frame->getBody().getSSID(), ssid.c_str())!=0)
+    if (strcmp(frame->getBody().getSSID(), "")!=0 && strcmp(frame->getBody().getSSID(), ssid.c_str())!=0)
     {
         EV << "SSID `" << frame->getBody().getSSID() << "' does not match, ignoring frame\n";
         dropManagementFrame(frame);

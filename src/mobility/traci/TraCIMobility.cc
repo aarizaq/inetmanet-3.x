@@ -75,11 +75,7 @@ void TraCIMobility::Statistics::recordScalars(cSimpleModule& module)
 void TraCIMobility::initialize(int stage)
 {
     // skip stage 1 initialisation of BasicMobility as this messes with pos.x/pos.y and triggers an NB update with these wrong values
-    if (stage != 1)
-    {
-        BasicMobility::initialize(stage);
-    }
-
+    MobilityBase::initialize(stage);
     if (stage == 1)
     {
         debug = par("debug");
@@ -101,16 +97,16 @@ void TraCIMobility::initialize(int stage)
             road_id = -1;
             speed = -1;
             angle = M_PI;
-            pos.x = -1;
-            pos.y = -1;
+            lastPosition.x = -1;
+            lastPosition.y = -1;
         }
         isPreInitialized = false;
 
         WATCH(road_id);
         WATCH(speed);
         WATCH(angle);
-        WATCH(pos.x);
-        WATCH(pos.y);
+        WATCH(lastPosition.x);
+        WATCH(lastPosition.y);
 
         startAccidentMsg = 0;
         stopAccidentMsg = 0;
@@ -125,7 +121,7 @@ void TraCIMobility::initialize(int stage)
             scheduleAt(simTime() + accidentStart, startAccidentMsg);
         }
 
-        positionUpdated();
+        updateVisualRepresentation();
     }
 
 }
@@ -168,7 +164,7 @@ void TraCIMobility::preInitialize(std::string external_id, const Coord& position
 
     this->external_id = external_id;
     nextPos = position;
-    pos = position;
+    lastPosition = position;
     this->road_id = road_id;
     this->speed = speed;
     this->angle = angle;
@@ -184,10 +180,10 @@ void TraCIMobility::nextPosition(const Coord& position, std::string road_id, dou
     this->road_id = road_id;
     this->speed = speed;
     this->angle = angle;
-    changePosition();
+    move ();
 }
 
-void TraCIMobility::changePosition()
+void TraCIMobility::move()
 {
     simtime_t updateInterval = simTime() - this->lastUpdate;
     this->lastUpdate = simTime();
@@ -196,17 +192,17 @@ void TraCIMobility::changePosition()
     if (statistics.firstRoadNumber == MY_INFINITY && (!road_id.empty())) statistics.firstRoadNumber = roadIdAsDouble(road_id);
 
     // keep speed statistics
-    if ((pos.x != -1) && (pos.y != -1))
+    if ((lastPosition.x != -1) && (lastPosition.y != -1) && (lastPosition.z != -1))
     {
-        double distance = pos.distance(nextPos);
+        double distance = lastPosition.distance(nextPos);
         statistics.totalDistance += distance;
         statistics.totalTime += updateInterval;
         if (speed != -1)
         {
             statistics.minSpeed = std::min(statistics.minSpeed, speed);
             statistics.maxSpeed = std::max(statistics.maxSpeed, speed);
-            currentPosXVec.record(pos.x);
-            currentPosYVec.record(pos.y);
+            currentPosXVec.record(lastPosition.x);
+            currentPosYVec.record(lastPosition.y);
             currentSpeedVec.record(speed);
             if (last_speed != -1)
             {
@@ -225,9 +221,9 @@ void TraCIMobility::changePosition()
         }
     }
 
-    pos = nextPos;
+    lastPosition = nextPos;
     fixIfHostGetsOutside();
-    positionUpdated();
+    updateVisualRepresentation();
 }
 
 void TraCIMobility::fixIfHostGetsOutside()

@@ -79,7 +79,7 @@ void InterfaceTable::updateDisplayString()
 
     char buf[80];
     sprintf(buf, "%d interfaces", getNumInterfaces());
-    getDisplayString().setTagArg("t",0,buf);
+    getDisplayString().setTagArg("t", 0, buf);
 }
 
 void InterfaceTable::handleMessage(cMessage *msg)
@@ -87,7 +87,7 @@ void InterfaceTable::handleMessage(cMessage *msg)
     throw cRuntimeError(this, "This module doesn't process messages");
 }
 
-void InterfaceTable::receiveChangeNotification(int category, const cPolymorphic *details)
+void InterfaceTable::receiveChangeNotification(int category, const cObject *details)
 {
     // nothing needed here at the moment
     Enter_Method_Silent();
@@ -162,20 +162,17 @@ void InterfaceTable::addInterfaceGroup(InterfaceEntry *entry, cModule *ifmod)
 
 	entry->setGroupInterface(true);
     for (unsigned int i=0; i<idToInterface.size(); i++)
+    {
         if (idToInterface[i] && !strcmp(entry->getName(), idToInterface[i]->getName()))
         {
             if (idToInterface[i]->getMacAddress()==entry->getMacAddress())
-            {
             	throw cRuntimeError(this, "addInterface(): interface '%s' already registered", entry->getName());
-            }
             else if (idToInterface[i]->getModuleOwner()!=ifmod)
             	throw cRuntimeError(this, "addInterface(): interface '%s' different owner", entry->getName());
             else
-            {
             	idToInterface[i]->addRelatedInterface(entry);
-
-            }
         }
+    }
     // insert
     entry->setModuleOwner(ifmod);
     entry->setInterfaceId(INTERFACEIDS_START + idToInterface.size());
@@ -200,7 +197,7 @@ void InterfaceTable::discoverConnectingGates(InterfaceEntry *entry, cModule *ifm
         throw cRuntimeError(this, "addInterface(): specified module is not in this host/router");
 
     // find gates connected to host / network layer
-    cGate *nwlayerInGate=NULL, *nwlayerOutGate=NULL;
+    cGate *nwlayerInGate = NULL, *nwlayerOutGate = NULL;
     for (GateIterator i(ifmod); !i.end(); i++)
     {
         cGate *g = i();
@@ -249,7 +246,7 @@ void InterfaceTable::deleteInterface(InterfaceEntry *entry)
 void InterfaceTable::invalidateTmpInterfaceList()
 {
     tmpNumInterfaces = -1;
-    delete[] tmpInterfaceList;
+    delete [] tmpInterfaceList;
     tmpInterfaceList = NULL;
 }
 

@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2005 Andras Varga
+// Copyright (C) 2005,2011 Andras Varga
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -19,117 +19,48 @@
 #ifndef __INET_UDPSOCKET_H
 #define __INET_UDPSOCKET_H
 
-#include <omnetpp.h>
-#include "UDPControlInfo_m.h"
+#include "INETDefs.h"
+#include "IPvXAddress.h"
 
+class UDPDataIndication;
 
 /**
- * UDPSocket is a convenience class, to make it easier to manage TCP connections
- * from your application models. You'd have one (or more) UDPSocket object(s)
- * in your application simple module class, and call its member functions
- * (bind(), listen(), connect(), etc.) to open, close or abort a TCP connection.
+ * UDPSocket is a convenience class, to make it easier to send and receive
+ * UDP packets from your application models. You'd have one (or more)
+ * UDPSocket object(s) in your application simple module class, and call
+ * its member functions (bind(), connect(), sendTo(), etc.) to create and
+ * configure a socket, and to send datagrams.
  *
  * UDPSocket chooses and remembers the sockId for you, assembles and sends command
- * packets (such as OPEN_ACTIVE, OPEN_PASSIVE, CLOSE, ABORT, etc.) to TCP,
- * and can also help you deal with packets and notification messages arriving
- * from TCP.
+ * packets such as UDP_C_BIND to UDP, and can also help you deal with packets and
+ * notification messages arriving from UDP.
  *
- * A session which opens a connection from local port 1000 to 10.0.0.2:2000,
- * sends 16K of data and closes the connection may be as simple as this
- * (the code can be placed in your handleMessage() or activity()):
+ * Here is a code fragment that creates an UDP socket and sends a 1K packet
+ * over it (the code can be placed in your handleMessage() or activity()):
  *
  * <pre>
  *   UDPSocket socket;
+ *   socket.setOutputGate(gate("udpOut"));
  *   socket.connect(IPvXAddress("10.0.0.2"), 2000);
  *
- *   msg = new cMessage("data1");
- *   msg->setByteLength(16*1024);  // 16K
- *   socket.send(msg);
+ *   cPacket *pk = new cPacket("dgram");
+ *   pk->setByteLength(1024);
+ *   socket.send(pk);
  *
  *   socket.close();
  * </pre>
  *
- * Dealing with packets and notification messages coming from TCP is somewhat
- * more cumbersome. Basically you have two choices: you either process those
- * messages yourself, or let UDPSocket do part of the job. For the latter,
- * you give UDPSocket a callback object on which it'll invoke the appropriate
- * member functions: socketEstablished(), socketDataArrived(), socketFailure(),
- * socketPeerClosed(), etc (these are methods of UDPSocket::CallbackInterface).,
- * The callback object can be your simple module class too.
- *
- * This code skeleton example shows how to set up a UDPSocket to use the module
- * itself as callback object:
- *
- * <pre>
- * class MyModule : public cSimpleModule, public UDPSocket::CallbackInterface
- * {
- *    UDPSocket socket;
- *    virtual void socketDataArrived(int sockId, void *yourPtr, cPacket *msg, bool urgent);
- *    virtual void socketFailure(int sockId, void *yourPtr, int code);
- *    ...
- * };
- *
- * void MyModule::initialize() {
- *    socket.setCallbackObject(this,NULL);
- * }
- *
- * void MyModule::handleMessage(cMessage *msg) {
- *    if (socket.belongsToSocket(msg))
- *       socket.processMessage(msg);
- *    else
- *       ...
- * }
- *
- * void MyModule::socketDatagramArrived(int, void *, cMessage *msg, UDPControlInfo *ctrl) {
- *     ev << "Received UDP packet, " << msg->getByteLength() << " bytes\\n";
- *     delete msg;
- * }
- *
- * void MyModule::socketPeerClosed(int, void *, int code) {
- *     ev << "Socket peer closed!\\n";
- * }
- * </pre>
- *
- * If you need to manage a large number of sockets, the UDPSocketMap
- * class may be useful.
- *
- * @see UDPSocketMap
+ * Processing messages sent up by the UDP module is relatively straightforward.
+ * You only need to distinguish between data packets and error notifications,
+ * by checking the message kind (should be either UDP_I_DATA or UDP_I_ERROR),
+ * and casting the control info to UDPDataIndication or UDPErrorIndication.
+ * USPSocket provides some help for this with the belongsToSocket() and
+ * belongsToAnyUDPSocket() methods.
  */
 class INET_API UDPSocket
 {
-  public:
-    /**
-     * Abstract base class for your callback objects. See setCallbackObject()
-     * and processMessage() for more info.
-     *
-     * Note: this class is not subclassed from cPolymorphic, because
-     * classes may have both this class and cSimpleModule as base class,
-     * and cSimpleModule is already a cPolymorphic.
-     */
-    class CallbackInterface
-    {
-      public:
-        virtual ~CallbackInterface() {}
-        virtual void socketDatagramArrived(int sockId, void *yourPtr, cMessage *msg, UDPControlInfo *ctrl) = 0;
-        virtual void socketPeerClosed(int sockId, void *yourPtr) {}
-    };
-
-    enum State {NOT_BOUND, BOUND};  // FIXME needed?
-
   protected:
     int sockId;
-    int usrId;
-    int sockstate;
-
-    IPvXAddress localAddr; // needed for sendTo() as local address
-    int localPrt;
-    IPvXAddress remoteAddr; // needed to enable send(msg) call
-    int remotePrt; // needed to enable send(msg) call
-    int mcastIfaceId;
-
-    CallbackInterface *cb;
-    void *yourPtr;
-
     cGate *gateToUdp;
 
   protected:
@@ -153,38 +84,9 @@ class INET_API UDPSocket
     int getSocketId() const  {return sockId;}
 
     /**
-     * Sets userId to an arbitrary value. (This value will be sent back to us
-     * by UDP in UDPControlInfo if we receive a packet on this socket.)
-     */
-    void setUserId(int userId);
-
-    /**
-     * Returns the userId.
-     */
-    int getUserId() const  {return usrId;}
-
-    /**
-     * Returns the socket state, one of NOT_BOUND, BOUND, etc.
-     * Messages received from UDP must be routed through
-     * processMessage() in order to keep socket state up-to-date.
-     */
-    int getState()   {return sockstate;}
-
-    /**
-     * Returns name of socket state code returned by getState().
-     */
-    static const char *stateName(int state);
-
-    /**
      * Generates a new socket id.
      */
     static int generateSocketId();
-
-    /** @name Getter functions */
-    //@{
-    IPvXAddress getLocalAddress() {return localAddr;}
-    int getLocalPort() {return localPrt;}
-    //@}
 
     /** @name Opening and closing connections, sending data */
     //@{
@@ -214,30 +116,51 @@ class INET_API UDPSocket
     void connect(IPvXAddress remoteAddr, int remotePort);
 
     /**
-     * Set the output interface for sending multicast packets (like the Unix
-     * IP_MULTICAST_IF socket option). The argument is the interface's Id
-     * in InterfaceTable.
+     * Set the TTL (IPv6: Hop Limit) field on sent packets.
      */
-    void setMulticastInterfaceId(int interfaceId) {mcastIfaceId = interfaceId;}
+    void setTimeToLive(int ttl);
 
     /**
-     * Returns the output interface for sending multicast packets.
+     * Set the Broadcast option on the UDP socket. This will cause the
+     * socket to receive broadcast packets as well.
      */
-    int getMulticastInterfaceId() const {return mcastIfaceId;}
+    void setBroadcast(bool broadcast);
+
+    /**
+     * Set the output interface for sending multicast packets (like the Unix
+     * IP_MULTICAST_IF socket option). The argument is the interface's ID in
+     * InterfaceTable.
+     */
+    void setMulticastOutputInterface(int interfaceId);
+
+    /**
+     * Adds the socket to the given multicast group, that is, UDP packets
+     * arriving to the given multicast address will be passed up to the socket.
+     * One can also optionally specify the output interface for packets sent to
+     * that address.
+     */
+    void joinMulticastGroup(const IPvXAddress& multicastAddr, int interfaceId=-1);
+
+    /**
+     * Causes the socket to socket leave the given multicast group, i.e. UDP packets
+     * arriving to the given multicast address will no longer passed up to the socket.
+     */
+    void leaveMulticastGroup(const IPvXAddress& multicastAddr);
 
     /**
      * Sends a data packet to the given address and port.
      */
-    void sendTo(cMessage *msg, IPvXAddress destAddr, int destPort);
+    void sendTo(cPacket *msg, IPvXAddress destAddr, int destPort);
 
     /**
      * Sends a data packet to the address and port specified previously
      * in a connect() call.
      */
-    void send(cMessage *msg);
+    void send(cPacket *msg);
 
     /**
-     * Unbinds the socket. There is no need for renewSocket() as with TCPSocket.
+     * Unbinds the socket. Once closed, a closed socket may be bound to another
+     * (or the same) port, and reused.
      */
     void close();
     //@}
@@ -259,42 +182,11 @@ class INET_API UDPSocket
     static bool belongsToAnyUDPSocket(cMessage *msg);
 
     /**
-     * Sets a callback object, to be used with processMessage().
-     * This callback object may be your simple module itself (if it
-     * multiply inherits from CallbackInterface too, that is you
-     * declared it as
-     * <pre>
-     * class MyAppModule : public cSimpleModule, public UDPSocket::CallbackInterface
-     * </pre>
-     * and redefined the necessary virtual functions; or you may use
-     * dedicated class (and objects) for this purpose.
-     *
-     * UDPSocket doesn't delete the callback object in the destructor
-     * or on any other occasion.
-     *
-     * YourPtr is an optional pointer. It may contain any value you wish --
-     * UDPSocket will not look at it or do anything with it except passing
-     * it back to you in the CallbackInterface calls. You may find it
-     * useful if you maintain additional per-connection information:
-     * in that case you don't have to look it up by sockId in the callbacks,
-     * you can have it passed to you as yourPtr.
+     * Utility function: returns a line of information about a packet received via UDP.
      */
-    void setCallbackObject(CallbackInterface *cb, void *yourPtr=NULL);
-
-    /**
-     * Examines the message (which should have arrived from UDP),
-     * and if there is a callback object installed (see setCallbackObject(),
-     * class CallbackInterface), dispatches to the appropriate method of
-     * it with the same yourPtr that you gave in the setCallbackObject() call.
-     *
-     * IMPORTANT: for performance reasons, this method doesn't check that
-     * the message belongs to this socket, i.e. belongsToSocket(msg) would
-     * return true!
-     */
-    void processMessage(cMessage *msg);
+    static std::string getReceivedPacketInfo(cPacket *pk);
     //@}
 };
 
 #endif
-
 

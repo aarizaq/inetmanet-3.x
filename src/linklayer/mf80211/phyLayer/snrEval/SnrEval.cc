@@ -87,7 +87,7 @@ void SnrEval::initialize(int stage)
 
 void SnrEval::finish()
 {
-    BasicSnrEval::finish();
+    cComponent::finish();
 }
 
 SnrEval::~SnrEval()
@@ -99,9 +99,9 @@ SnrEval::~SnrEval()
 
 void SnrEval::handleMessage(cMessage *msg)
 {
-    if (msg->getArrivalGateId()==uppergateIn && !msg->isPacket())
+    if (msg->getArrivalGateId()==upperLayerIn && !msg->isPacket())
     {
-        cPolymorphic *ctrl = msg->removeControlInfo();
+        cObject *ctrl = msg->removeControlInfo();
         handleCommand(msg->getKind(), ctrl);
         delete msg;
     }
@@ -160,7 +160,7 @@ void SnrEval::handleUpperMsg(AirFrame *frame)
     sendDown(frame);
 }
 
-void SnrEval::handleCommand(int msgkind, cPolymorphic *ctrl)
+void SnrEval::handleCommand(int msgkind, cObject *ctrl)
 {
     if (msgkind==PHY_C_CONFIGURERADIO)
     {
@@ -436,7 +436,7 @@ void SnrEval::changeChannel(int channel)
     // if we are currently receiving, must clean that up before moving to different channel
     if (rs.getState() == RadioState::RECV)
     {
-		EV<<"Radio State is in RECV. Setting it to IDLE"<<endl;
+        EV<<"Radio State is in RECV. Setting it to IDLE"<<endl;
         rs.setState(RadioState::IDLE);
         // delete messages being received, and cancel associated self-messages
         for (RecvBuff::iterator it = recvBuff.begin(); it!=recvBuff.end(); ++it)

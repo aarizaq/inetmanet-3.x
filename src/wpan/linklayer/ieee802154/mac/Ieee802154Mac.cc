@@ -162,10 +162,10 @@ void Ieee802154Mac::initialize(int stage)
         registerInterface();
 
         // get gate ID
-        mUppergateIn  = findGate("uppergateIn");
-        mUppergateOut = findGate("uppergateOut");
-        mLowergateIn  = findGate("lowergateIn");
-        mLowergateOut = findGate("lowergateOut");
+        mUpperLayerIn  = findGate("upperLayerIn");
+        mUpperLayerOut = findGate("upperLayerOut");
+        mLowerLayerIn  = findGate("lowerLayerIn");
+        mLowerLayerOut = findGate("lowerLayerOut");
 
         // get a pointer to the NotificationBoard module
         mpNb = NotificationBoardAccess().get();
@@ -308,7 +308,7 @@ void Ieee802154Mac::initialize(int stage)
         WATCH(numRxAckPkt);
 
         WATCH(numTxAckInactive);
-        radioModule = gate("lowergateOut")->getNextGate()->getOwnerModule()->getId();
+        radioModule = gate("lowerLayerOut")->getNextGate()->getOwnerModule()->getId();
     }
     else if (1 == stage)
     {
@@ -460,7 +460,7 @@ void Ieee802154Mac::startDevice()
 void Ieee802154Mac::handleMessage(cMessage* msg)
 {
 
-    if (msg->getArrivalGateId() == mLowergateIn && dynamic_cast<cPacket*>(msg)==NULL)
+    if (msg->getArrivalGateId() == mLowerLayerIn && dynamic_cast<cPacket*>(msg)==NULL)
     {
         if (msg->getKind()==0)
             error("[MAC]: message '%s' with length==0 is supposed to be a primitive, but msg kind is also zero", msg->getName());
@@ -468,7 +468,7 @@ void Ieee802154Mac::handleMessage(cMessage* msg)
         return;
     }
 
-    if (msg->getArrivalGateId() == mLowergateIn)
+    if (msg->getArrivalGateId() == mLowerLayerIn)
     {
         handleLowerMsg(msg);
     }
@@ -848,7 +848,7 @@ void Ieee802154Mac::sendDown(Ieee802154Frame* frame)
 
     // TBD: energy model
     inTransmission = true;              // cleared by PD_DATA_confirm
-    send(frame, mLowergateOut);     // send a duplication
+    send(frame, mLowerLayerOut);     // send a duplication
     EV << "[MAC]: sending frame " << frame->getName() << " (" << frame->getByteLength() << " Bytes) to PHY layer" << endl;
     EV << "[MAC]: the estimated transmission time is " << calDuration(frame) << " s" << endl;
 }
@@ -1509,7 +1509,7 @@ void Ieee802154Mac::PLME_SET_TRX_STATE_request(PHYenum state)
     Ieee802154MacPhyPrimitives *primitive = new Ieee802154MacPhyPrimitives();
     primitive->setKind(PLME_SET_TRX_STATE_REQUEST);
     primitive->setStatus(state);
-    send(primitive, mLowergateOut);
+    send(primitive, mLowerLayerOut);
     trx_state_req = state;      // store requested radio state
 }
 
@@ -1546,7 +1546,7 @@ void Ieee802154Mac::PLME_SET_request(PHYPIBenum attribute)
         break;
     }
 
-    send(primitive, mLowergateOut);
+    send(primitive, mLowerLayerOut);
 }
 
 void Ieee802154Mac::PLME_CCA_request()
@@ -1554,7 +1554,7 @@ void Ieee802154Mac::PLME_CCA_request()
     // construct PLME_CCA_request primitive
     Ieee802154MacPhyPrimitives *primitive = new Ieee802154MacPhyPrimitives();
     primitive->setKind(PLME_CCA_REQUEST);
-    send(primitive, mLowergateOut);
+    send(primitive, mLowerLayerOut);
     EV << "[MAC]: send PLME_CCA_request to PHY layer" << endl;
 }
 
@@ -1563,7 +1563,7 @@ void Ieee802154Mac::PLME_bitrate_request()
     // construct PLME_CCA_request primitive
     Ieee802154MacPhyPrimitives *primitive = new Ieee802154MacPhyPrimitives();
     primitive->setKind(PLME_GET_BITRATE);
-    send(primitive, mLowergateOut);
+    send(primitive, mLowerLayerOut);
     EV << "[MAC]: send PLME_GET_BITRATE to PHY layer" << endl;
 }
 
@@ -1883,7 +1883,7 @@ void Ieee802154Mac::MCPS_DATA_indication(Ieee802154Frame* tmpData)
     cMessage *appframe = tmpData->decapsulate();
     delete tmpData;
     EV << "[MAC]: sending received " << appframe->getName() << " frame to upper layer" << endl;
-    send(appframe, mUppergateOut);
+    send(appframe, mUpperLayerOut);
 }
 
 //-------------------------------------------------------------------------------/

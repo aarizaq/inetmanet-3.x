@@ -171,7 +171,7 @@ class OLSR_Timer :  public cOwnedObject /*cMessage*/
     OLSR_Timer(OLSR* agent);
     OLSR_Timer();
     ~OLSR_Timer();
-    virtual void expire()=0;
+    virtual void expire() = 0;
     virtual void removeQueueTimer();
     virtual void resched(double time);
     virtual void setTuple(cObject *tuple) {tuple_ = tuple;}
@@ -228,7 +228,7 @@ class OLSR_DupTupleTimer : public OLSR_Timer
     {
         tuple_ = tuple;
     }
-    void setTuple(OLSR_dup_tuple* tuple) {tuple_=tuple; tuple->asocTimer = this;}
+    void setTuple(OLSR_dup_tuple* tuple) {tuple_ = tuple; tuple->asocTimer = this;}
     ~OLSR_DupTupleTimer();
     virtual void expire();
 };
@@ -239,7 +239,7 @@ class OLSR_LinkTupleTimer : public OLSR_Timer
   public:
     OLSR_LinkTupleTimer(OLSR* agent, OLSR_link_tuple* tuple);
 
-    void setTuple(OLSR_link_tuple* tuple) {tuple_=tuple; tuple->asocTimer = this;}
+    void setTuple(OLSR_link_tuple* tuple) {tuple_ = tuple; tuple->asocTimer = this;}
     ~OLSR_LinkTupleTimer();
     virtual void expire();
   protected:
@@ -256,10 +256,10 @@ class OLSR_Nb2hopTupleTimer : public OLSR_Timer
   public:
     OLSR_Nb2hopTupleTimer(OLSR* agent, OLSR_nb2hop_tuple* tuple) : OLSR_Timer(agent)
     {
-        tuple_      = tuple;
+        tuple_ = tuple;
     }
 
-    void setTuple(OLSR_nb2hop_tuple* tuple) {tuple_=tuple; tuple->asocTimer = this;}
+    void setTuple(OLSR_nb2hop_tuple* tuple) {tuple_ = tuple; tuple->asocTimer = this;}
     ~OLSR_Nb2hopTupleTimer();
     virtual void expire();
 //  protected:
@@ -276,10 +276,10 @@ class OLSR_MprSelTupleTimer : public OLSR_Timer
   public:
     OLSR_MprSelTupleTimer(OLSR* agent, OLSR_mprsel_tuple* tuple) : OLSR_Timer(agent)
     {
-        tuple_      = tuple;
+        tuple_ = tuple;
     }
 
-    void setTuple(OLSR_mprsel_tuple* tuple) {tuple_=tuple; tuple->asocTimer = this;}
+    void setTuple(OLSR_mprsel_tuple* tuple) {tuple_ = tuple; tuple->asocTimer = this;}
     ~OLSR_MprSelTupleTimer();
     virtual void expire();
 
@@ -296,10 +296,10 @@ class OLSR_TopologyTupleTimer : public OLSR_Timer
   public:
     OLSR_TopologyTupleTimer(OLSR* agent, OLSR_topology_tuple* tuple) : OLSR_Timer(agent)
     {
-        tuple_      = tuple;
+        tuple_ = tuple;
     }
 
-    void setTuple(OLSR_topology_tuple* tuple) {tuple_=tuple; tuple->asocTimer = this;}
+    void setTuple(OLSR_topology_tuple* tuple) {tuple_ = tuple; tuple->asocTimer = this;}
     ~OLSR_TopologyTupleTimer();
     virtual void expire();
 //  protected:
@@ -313,10 +313,10 @@ class OLSR_IfaceAssocTupleTimer : public OLSR_Timer
   public:
     OLSR_IfaceAssocTupleTimer(OLSR* agent, OLSR_iface_assoc_tuple* tuple) : OLSR_Timer(agent)
     {
-        tuple_      = tuple;
+        tuple_ = tuple;
     }
 
-    void setTuple(OLSR_iface_assoc_tuple* tuple) {tuple_=tuple; tuple->asocTimer = this;}
+    void setTuple(OLSR_iface_assoc_tuple* tuple) {tuple_ = tuple; tuple->asocTimer = this;}
     ~OLSR_IfaceAssocTupleTimer();
     virtual void expire();
 //  protected:
@@ -342,22 +342,22 @@ typedef std::multimap <simtime_t, OLSR_Timer *> TimerQueue;
 class OLSR : public ManetRoutingBase
 {
   protected:
-	/********** Intervals **********/
-	/// HELLO messages emission interval.
-	double OLSR_HELLO_INTERVAL;// 2
+    /********** Intervals **********/
+    /// HELLO messages emission interval.
+    double OLSR_HELLO_INTERVAL;// 2
 
-	/// TC messages emission interval.
-	double OLSR_TC_INTERVAL;//    5
+    /// TC messages emission interval.
+    double OLSR_TC_INTERVAL;//    5
 
-	/// MID messages emission interval.
-	double OLSR_MID_INTERVAL;//   OLSR_TC_INTERVAL
+    /// MID messages emission interval.
+    double OLSR_MID_INTERVAL;//   OLSR_TC_INTERVAL
 
-	///
-	/// \brief Period at which a node must cite every link and every neighbor.
-	///
-	/// We only use this value in order to define OLSR_NEIGHB_HOLD_TIME.
-	///
-	double OLSR_REFRESH_INTERVAL;//   2
+    ///
+    /// \brief Period at which a node must cite every link and every neighbor.
+    ///
+    /// We only use this value in order to define OLSR_NEIGHB_HOLD_TIME.
+    ///
+    double OLSR_REFRESH_INTERVAL;//   2
 
     double jitter() {return uniform(0,(double)OLSR_MAXJITTER);}
 #define JITTER jitter()
@@ -418,7 +418,7 @@ class OLSR : public ManetRoutingBase
     char nodeName[50];
 
 
-    virtual OLSR_pkt * check_packet(cPacket* ,nsaddr_t &,int &);
+    virtual OLSR_pkt * check_packet(cPacket*, nsaddr_t &, int &);
 
     // PortClassifier*  dmux_;      ///< For passing packets up to agents.
     // Trace*       logtarget_; ///< For logging.
@@ -466,11 +466,11 @@ class OLSR : public ManetRoutingBase
     virtual void        mpr_computation();
     virtual void        rtable_computation();
 
-    virtual void        process_hello(OLSR_msg&, const nsaddr_t &, const nsaddr_t &,const int &);
-    virtual void        process_tc(OLSR_msg&,const nsaddr_t &,const int &);
-    virtual void        process_mid(OLSR_msg&,const nsaddr_t &,const int &);
+    virtual void        process_hello(OLSR_msg&, const nsaddr_t &, const nsaddr_t &, const int &);
+    virtual void        process_tc(OLSR_msg&, const nsaddr_t &, const int &);
+    virtual void        process_mid(OLSR_msg&, const nsaddr_t &, const int &);
 
-    virtual void        forward_default(OLSR_msg&, OLSR_dup_tuple*,const nsaddr_t &,const nsaddr_t &);
+    virtual void        forward_default(OLSR_msg&, OLSR_dup_tuple*, const nsaddr_t &, const nsaddr_t &);
     virtual void        forward_data(cMessage* p) {}
 
     virtual void        enque_msg(OLSR_msg&, double);
@@ -479,7 +479,7 @@ class OLSR : public ManetRoutingBase
     virtual void        send_mid();
     virtual void        send_pkt();
 
-    virtual void        link_sensing(OLSR_msg&, const nsaddr_t &,const nsaddr_t &,const int &);
+    virtual void        link_sensing(OLSR_msg&, const nsaddr_t &, const nsaddr_t &, const int &);
     virtual void        populate_nbset(OLSR_msg&);
     virtual void        populate_nb2hopset(OLSR_msg&);
     virtual void        populate_mprselset(OLSR_msg&);
@@ -509,15 +509,15 @@ class OLSR : public ManetRoutingBase
     int     degree(OLSR_nb_tuple*);
 
     static bool seq_num_bigger_than(uint16_t, uint16_t);
-    int numInitStages() const  {return 5;}
+    virtual int numInitStages() const  {return 5;}
     virtual void initialize(int stage);
     virtual void    mac_failed(IPv4Datagram*);
     virtual void    recv(cMessage *p) {}
 
     virtual void handleMessage(cMessage *msg);
     virtual void finish();
-    //virtual void processPromiscuous(const cPolymorphic *details){};
-    virtual void processLinkBreak(const cPolymorphic *details);
+    //virtual void processPromiscuous(const cObject *details){};
+    virtual void processLinkBreak(const cObject *details);
     virtual void scheduleNextEvent();
 
   public:
@@ -530,16 +530,16 @@ class OLSR : public ManetRoutingBase
     static int      node_id(const nsaddr_t&);
 
     // Routing information access
-    virtual uint32_t getRoute(const Uint128 &,std::vector<Uint128> &);
-    virtual bool getNextHop(const Uint128 &,Uint128 &add,int &iface,double &);
+    virtual uint32_t getRoute(const Uint128 &, std::vector<Uint128> &);
+    virtual bool getNextHop(const Uint128 &, Uint128 &add, int &iface, double &);
     virtual bool isProactive();
     virtual void setRefreshRoute(const Uint128 &destination, const Uint128 & nextHop,bool isReverse) {}
     virtual bool isOurType(cPacket *);
-    virtual bool getDestAddress(cPacket *,Uint128 &);
-    virtual int getRouteGroup(const AddressGroup &gr,std::vector<Uint128>&);
-    virtual bool getNextHopGroup(const AddressGroup &gr,Uint128 &add,int &iface,Uint128&);
-    virtual int  getRouteGroup(const Uint128&,std::vector<Uint128> &,Uint128&,bool &,int group=0);
-    virtual bool getNextHopGroup(const Uint128&,Uint128 &add,int &iface,Uint128&,bool &,int group=0);
+    virtual bool getDestAddress(cPacket *, Uint128 &);
+    virtual int getRouteGroup(const AddressGroup &gr, std::vector<Uint128>&);
+    virtual bool getNextHopGroup(const AddressGroup &gr, Uint128 &add, int &iface, Uint128&);
+    virtual int  getRouteGroup(const Uint128&, std::vector<Uint128> &, Uint128&, bool &, int group = 0);
+    virtual bool getNextHopGroup(const Uint128&, Uint128 &add, int &iface, Uint128&, bool &, int group = 0);
 };
 
 #endif

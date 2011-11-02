@@ -41,7 +41,7 @@ Dijkstra::Dijkstra()
     parameter = &(dynamic_cast<OLSR_ETX*>(getOwner())->parameter_);
 }
 
-void Dijkstra::add_edge (const nsaddr_t & dest_node, const nsaddr_t & last_node, double delay,
+void Dijkstra::add_edge(const nsaddr_t & dest_node, const nsaddr_t & last_node, double delay,
                          double quality, bool direct_connected)
 {
     edge *link = new edge;
@@ -54,9 +54,9 @@ void Dijkstra::add_edge (const nsaddr_t & dest_node, const nsaddr_t & last_node,
     LinkArray::iterator it = link_array_->find(dest_node);
     if (it==link_array_->end())
     {
-    	std::vector<edge*> val;
-    	link_array_->insert(std::pair<nsaddr_t,std::vector<edge*> >(dest_node,val));
-    	it = link_array_->find(dest_node);
+        std::vector<edge*> val;
+        link_array_->insert(std::pair<nsaddr_t,std::vector<edge*> >(dest_node, val));
+        it = link_array_->find(dest_node);
     }
 
 
@@ -67,16 +67,16 @@ void Dijkstra::add_edge (const nsaddr_t & dest_node, const nsaddr_t & last_node,
 
         // Since dest_node is directly connected to the node running the djiksra
         // algorithm, this link has hop count 1
-    	dijkstraMap[dest_node].hop_count() = 1;
+        dijkstraMap[dest_node].hop_count() = 1;
         // Report the best link we have at the moment to these nodes
-    	dijkstraMap[dest_node].link().last_node() = link->last_node();
-    	dijkstraMap[dest_node].link().getDelay() = link->getDelay();
-    	dijkstraMap[dest_node].link().quality() = link->quality();
+        dijkstraMap[dest_node].link().last_node() = link->last_node();
+        dijkstraMap[dest_node].link().getDelay() = link->getDelay();
+        dijkstraMap[dest_node].link().quality() = link->quality();
     }
     else if (all_nodes_->find(dest_node) == all_nodes_->end())
         // Since we don't have an edge connecting dest_node to the node running
         // the dijkstra algorithm, the cost is set to infinite...
-    	dijkstraMap[dest_node].hop_count() = -1;
+        dijkstraMap[dest_node].hop_count() = -1;
 
     // Add dest_node to the list of nodes we will have to iterate through
     // while calculating the best path among nodes...
@@ -86,14 +86,14 @@ void Dijkstra::add_edge (const nsaddr_t & dest_node, const nsaddr_t & last_node,
     nonprocessed_nodes_->insert(dest_node);
 }
 
-Dijkstra::NodesSet::iterator Dijkstra::best_cost ()
+Dijkstra::NodesSet::iterator Dijkstra::best_cost()
 {
-	NodesSet::iterator best = nonprocessed_nodes_->end();
+    NodesSet::iterator best = nonprocessed_nodes_->end();
 
     // Search for a node that was not processed yet and that has
     // the best cost to be reached from the node running dijkstra...
     NodesSet::iterator it;
-    for (it = nonprocessed_nodes_->begin();it != nonprocessed_nodes_->end(); it++)
+    for (it = nonprocessed_nodes_->begin(); it != nonprocessed_nodes_->end(); it++)
     {
         DijkstraMap::iterator itDij = dijkstraMap.find(*it);
         if (itDij==dijkstraMap.end())
@@ -104,9 +104,9 @@ Dijkstra::NodesSet::iterator Dijkstra::best_cost ()
             best = it;
         else
         {
-        	DijkstraMap::iterator itBest = dijkstraMap.find(*best);
-        	if (itBest==dijkstraMap.end())
-        	    opp_error("dijkstraMap error");
+            DijkstraMap::iterator itBest = dijkstraMap.find(*best);
+            if (itBest==dijkstraMap.end())
+                opp_error("dijkstraMap error");
             if (parameter->link_delay())
             {
                 /// Link quality extension
@@ -138,13 +138,13 @@ Dijkstra::NodesSet::iterator Dijkstra::best_cost ()
     return best;
 }
 
-edge* Dijkstra::get_edge (const nsaddr_t & dest_node, const nsaddr_t & last_node)
+edge* Dijkstra::get_edge(const nsaddr_t & dest_node, const nsaddr_t & last_node)
 {
     // Find the edge that connects dest_node and last_node
-	LinkArray::iterator itLink = link_array_->find(dest_node);
-	if (itLink==link_array_->end())
-	    opp_error("link_array_ error");
-    for (std::vector<edge*>::iterator it = itLink->second.begin();it != itLink->second.end(); it++)
+    LinkArray::iterator itLink = link_array_->find(dest_node);
+    if (itLink==link_array_->end())
+        opp_error("link_array_ error");
+    for (std::vector<edge*>::iterator it = itLink->second.begin(); it != itLink->second.end(); it++)
     {
         edge* current_edge = *it;
         if (current_edge->last_node() == last_node)
@@ -159,7 +159,7 @@ void Dijkstra::run()
     while (nonprocessed_nodes_->begin() != nonprocessed_nodes_->end())
     {
         // Get the node among those nom processed having best cost...
-    	NodesSet::iterator current_node = best_cost();
+        NodesSet::iterator current_node = best_cost();
         // If all non processed nodes have cost equals to infinite, there is
         // nothing left to do, but abort (this might be the case of a not
         // fully connected graph)
@@ -167,7 +167,7 @@ void Dijkstra::run()
             break;
 
         // for each node in all_nodes...
-        for (NodesSet::iterator dest_node = all_nodes_->begin();dest_node != all_nodes_->end(); dest_node++)
+        for (NodesSet::iterator dest_node = all_nodes_->begin(); dest_node != all_nodes_->end(); dest_node++)
         {
             // ... not processed yet...
             if (nonprocessed_nodes_->find(*dest_node) == nonprocessed_nodes_->end())
@@ -184,29 +184,29 @@ void Dijkstra::run()
             DijkstraMap::iterator itCurrent = dijkstraMap.find(*current_node);
             if (itCurrent==dijkstraMap.end())
                 opp_error("dijkstraMap error node not found");
-            hop destHop =itDest->second;
-            hop currentHop =itCurrent->second;
+            hop destHop = itDest->second;
+            hop currentHop = itCurrent->second;
             if (itDest->second.hop_count() == -1)   // there is not a link to dest_node yet...
             {
                 switch (parameter->link_quality())
                 {
                 case OLSR_ETX_BEHAVIOR_ETX:
-                	itDest->second.link().last_node() = current_edge->last_node();
-                	itDest->second.link().quality() = itCurrent->second.link().quality() + current_edge->quality();
+                    itDest->second.link().last_node() = current_edge->last_node();
+                    itDest->second.link().quality() = itCurrent->second.link().quality() + current_edge->quality();
                     /// Link delay extension
-                	itDest->second.link().getDelay() = itCurrent->second.link().getDelay() + current_edge->getDelay();
-                	itDest->second.hop_count() = itCurrent->second.hop_count() + 1;
+                    itDest->second.link().getDelay() = itCurrent->second.link().getDelay() + current_edge->getDelay();
+                    itDest->second.hop_count() = itCurrent->second.hop_count() + 1;
                     // Keep track of the highest path we have by means of number of hops...
                     if (itDest->second.hop_count() > highest_hop_)
                         highest_hop_ = itDest->second.hop_count();
                     break;
 
                 case OLSR_ETX_BEHAVIOR_ML:
-                	itDest->second.link().last_node() = current_edge->last_node();
-                	itDest->second.link().quality() = itCurrent->second.link().quality() * current_edge->quality();
+                    itDest->second.link().last_node() = current_edge->last_node();
+                    itDest->second.link().quality() = itCurrent->second.link().quality() * current_edge->quality();
                     /// Link delay extension
-                	itDest->second.link().getDelay() = itCurrent->second.link().getDelay() + current_edge->getDelay();
-                	itDest->second.hop_count() = itCurrent->second.hop_count() + 1;
+                    itDest->second.link().getDelay() = itCurrent->second.link().getDelay() + current_edge->getDelay();
+                    itDest->second.hop_count() = itCurrent->second.hop_count() + 1;
                     // Keep track of the highest path we have by means of number of hops...
                     if (itDest->second.hop_count() > highest_hop_)
                         highest_hop_ = itDest->second.hop_count();
@@ -228,10 +228,10 @@ void Dijkstra::run()
                     case OLSR_ETX_BEHAVIOR_ETX:
                         if (itCurrent->second.link().getDelay() + current_edge->getDelay() < itDest->second.link().getDelay())
                         {
-                        	itDest->second.link().last_node() = current_edge->last_node();
-                        	itDest->second.link().quality() = itCurrent->second.link().quality() + current_edge->quality();
-                        	itDest->second.link().getDelay() = itCurrent->second.link().getDelay() + current_edge->getDelay();
-                        	itDest->second.hop_count() = itCurrent->second.hop_count() + 1;
+                            itDest->second.link().last_node() = current_edge->last_node();
+                            itDest->second.link().quality() = itCurrent->second.link().quality() + current_edge->quality();
+                            itDest->second.link().getDelay() = itCurrent->second.link().getDelay() + current_edge->getDelay();
+                            itDest->second.hop_count() = itCurrent->second.hop_count() + 1;
                             // Keep track of the highest path we have by means of number of hops...
                             if (itDest->second.hop_count() > highest_hop_)
                                 highest_hop_ = itDest->second.hop_count();
@@ -241,10 +241,10 @@ void Dijkstra::run()
                     case OLSR_ETX_BEHAVIOR_ML:
                         if (itCurrent->second.link().getDelay() + current_edge->getDelay() < itDest->second.link().getDelay())
                         {
-                        	itDest->second.link().last_node() = current_edge->last_node();
-                        	itDest->second.link().quality() = itCurrent->second.link().quality() * current_edge->quality();
-                        	itDest->second.link().getDelay() = itCurrent->second.link().getDelay() + current_edge->getDelay();
-                        	itDest->second.hop_count() = itCurrent->second.hop_count() + 1;
+                            itDest->second.link().last_node() = current_edge->last_node();
+                            itDest->second.link().quality() = itCurrent->second.link().quality() * current_edge->quality();
+                            itDest->second.link().getDelay() = itCurrent->second.link().getDelay() + current_edge->getDelay();
+                            itDest->second.hop_count() = itCurrent->second.hop_count() + 1;
                             // Keep track of the highest path we have by means of number of hops...
                             if (itDest->second.hop_count() > highest_hop_)
                                 highest_hop_ = itDest->second.hop_count();
@@ -264,9 +264,9 @@ void Dijkstra::run()
                     case OLSR_ETX_BEHAVIOR_ETX:
                         if (itCurrent->second.link().quality() + current_edge->quality() < itDest->second.link().quality())
                         {
-                        	itDest->second.link().last_node() = current_edge->last_node();
-                        	itDest->second.link().quality() = itCurrent->second.link().quality() + current_edge->quality();
-                        	itDest->second.hop_count() = itCurrent->second.hop_count() + 1;
+                            itDest->second.link().last_node() = current_edge->last_node();
+                            itDest->second.link().quality() = itCurrent->second.link().quality() + current_edge->quality();
+                            itDest->second.hop_count() = itCurrent->second.hop_count() + 1;
                             // Keep track of the highest path we have by means of number of hops...
                             if (itDest->second.hop_count() > highest_hop_)
                                 highest_hop_ = itDest->second.hop_count();
@@ -276,9 +276,9 @@ void Dijkstra::run()
                     case OLSR_ETX_BEHAVIOR_ML:
                         if (itCurrent->second.link().quality() * current_edge->quality() > itDest->second.link().quality())
                         {
-                        	itDest->second.link().last_node() = current_edge->last_node();
-                        	itDest->second.link().quality() = itCurrent->second.link().quality() * current_edge->quality();
-                        	itDest->second.hop_count() = itCurrent->second.hop_count() + 1;
+                            itDest->second.link().last_node() = current_edge->last_node();
+                            itDest->second.link().quality() = itCurrent->second.link().quality() * current_edge->quality();
+                            itDest->second.hop_count() = itCurrent->second.hop_count() + 1;
                             // Keep track of the highest path we have by means of number of hops...
                             if (itDest->second.hop_count() > highest_hop_)
                                 highest_hop_ = itDest->second.hop_count();
@@ -316,12 +316,12 @@ void Dijkstra::clear()
 
     nonprocessed_nodes_->clear();
     delete nonprocessed_nodes_;
-    all_nodes_->clear ();
+    all_nodes_->clear();
     delete all_nodes_;
 
     link_array_ = NULL;
     nonprocessed_nodes_ = NULL;
-    all_nodes_=NULL;
+    all_nodes_ = NULL;
 }
 
 Dijkstra::~Dijkstra()

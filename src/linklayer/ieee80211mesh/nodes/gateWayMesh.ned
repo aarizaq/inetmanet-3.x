@@ -123,8 +123,8 @@ module gateWayMesh
         // connections to network outside
 
         radioIn[1] --> wlanMesh.radioIn;
-        wlanMesh.uppergateOut --> networkLayer.ifIn++;
-        wlanMesh.uppergateIn <-- networkLayer.ifOut++;
+        wlanMesh.upperLayerOut --> networkLayer.ifIn++;
+        wlanMesh.upperLayerIn <-- networkLayer.ifOut++;
 
         for i=0..sizeof(radioIn)-2 {
             radioIn[i+1] --> wlan[i].radioIn;

@@ -24,10 +24,10 @@
 
 Define_Module(VoIPSinkApp);
 
-simsignal_t VoIPSinkApp::receivedBytesSignal = SIMSIGNAL_NULL;
+simsignal_t VoIPSinkApp::rcvdPkSignal = SIMSIGNAL_NULL;
 simsignal_t VoIPSinkApp::lostSamplesSignal = SIMSIGNAL_NULL;
 simsignal_t VoIPSinkApp::lostPacketsSignal = SIMSIGNAL_NULL;
-simsignal_t VoIPSinkApp::droppedBytesSignal = SIMSIGNAL_NULL;
+simsignal_t VoIPSinkApp::dropPkSignal = SIMSIGNAL_NULL;
 simsignal_t VoIPSinkApp::packetHasVoiceSignal = SIMSIGNAL_NULL;
 simsignal_t VoIPSinkApp::connStateSignal = SIMSIGNAL_NULL;
 simsignal_t VoIPSinkApp::delaySignal = SIMSIGNAL_NULL;
@@ -39,13 +39,10 @@ VoIPSinkApp::~VoIPSinkApp()
 
 void VoIPSinkApp::initSignals()
 {
-    if (receivedBytesSignal != SIMSIGNAL_NULL)
-        return;
-
-    receivedBytesSignal = registerSignal("receivedBytes");
+    rcvdPkSignal = registerSignal("rcvdPk");
     lostSamplesSignal = registerSignal("lostSamples");
     lostPacketsSignal = registerSignal("lostPackets");
-    droppedBytesSignal  = registerSignal("droppedBytes");
+    dropPkSignal = registerSignal("dropPk");
     packetHasVoiceSignal = registerSignal("packetHasVoice");
     connStateSignal = registerSignal("connState");
     delaySignal = registerSignal("delay");
@@ -53,8 +50,10 @@ void VoIPSinkApp::initSignals()
 
 void VoIPSinkApp::initialize()
 {
-    UDPAppBase::initialize();
     initSignals();
+
+    // Hack for create results folder
+    recordScalar("hackForCreateResultsFolder", 0);
 
     // Say Hello to the world
     ev << "VoIPSinkApp initialize()" << endl;
@@ -66,7 +65,8 @@ void VoIPSinkApp::initialize()
     // initialize avcodec library
     av_register_all();
 
-    bindToPort(localPort);
+    socket.setOutputGate(gate("udpOut"));
+    socket.bind(localPort);
 }
 
 void VoIPSinkApp::handleMessage(cMessage *msg)
@@ -108,22 +108,27 @@ void VoIPSinkApp::Connection::writeLostSamples(int sampleCount)
 
 void VoIPSinkApp::Connection::writeAudioFrame(uint8_t *inbuf, int inbytes)
 {
+    AVPacket avpkt;
+    av_init_packet(&avpkt);
+    avpkt.data = inbuf;
+    avpkt.size = inbytes;
+
     int decBufSize = AVCODEC_MAX_AUDIO_FRAME_SIZE;
     int16_t *decBuf = new int16_t[decBufSize]; // output is 16bit
-    int ret = avcodec_decode_audio2(decCtx, decBuf, &decBufSize, inbuf, inbytes);
+//    int ret = avcodec_decode_audio2(decCtx, decBuf, &decBufSize, inbuf, inbytes);
+    int ret = avcodec_decode_audio3(decCtx, decBuf, &decBufSize, &avpkt);
     if (ret < 0)
         throw cRuntimeError("avcodec_decode_audio2(): received packet decoding error: %d", ret);
 
     lastPacketFinish += simtime_t(1.0) * (decBufSize * 8 / av_get_bits_per_sample_format(decCtx->sample_fmt)) / sampleRate;
     outFile.write(decBuf, decBufSize);
-    delete[] decBuf;
+    delete [] decBuf;
 }
 
 void VoIPSinkApp::Connection::closeAudio()
 {
     outFile.close();
 }
-
 
 bool VoIPSinkApp::createConnect(VoIPPacket *vp)
 {
@@ -161,7 +166,7 @@ bool VoIPSinkApp::createConnect(VoIPPacket *vp)
 
 bool VoIPSinkApp::checkConnect(VoIPPacket *vp)
 {
-    return  (!curConn.offline)
+    return (!curConn.offline)
             && vp->getSsrc() == curConn.ssrc
             && vp->getCodec() == curConn.codec
             && vp->getSampleBits() == curConn.sampleBits
@@ -186,9 +191,8 @@ void VoIPSinkApp::closeConnection()
 
 void VoIPSinkApp::handleVoIPMessage(VoIPPacket *vp)
 {
-    long int bytes = (long int)vp->getByteLength();
     bool ok = (curConn.offline) ? createConnect(vp) : checkConnect(vp);
-    emit(ok ? receivedBytesSignal : droppedBytesSignal, bytes);
+    emit(ok ? rcvdPkSignal : dropPkSignal, vp);
 
     if (ok)
         decodePacket(vp);
@@ -198,7 +202,7 @@ void VoIPSinkApp::handleVoIPMessage(VoIPPacket *vp)
 
 void VoIPSinkApp::decodePacket(VoIPPacket *vp)
 {
-    switch(vp->getType())
+    switch (vp->getType())
     {
         case VOICE:
             emit(packetHasVoiceSignal, 1);
@@ -225,6 +229,7 @@ void VoIPSinkApp::decodePacket(VoIPPacket *vp)
     }
     emit(delaySignal, curConn.lastPacketFinish - vp->getCreationTime());
     curConn.seqNo = newSeqNo;
+
     int len = vp->getByteArray().getDataArraySize();
     uint8_t buff[len];
     vp->copyDataToBuffer(buff, len);
@@ -236,3 +241,4 @@ void VoIPSinkApp::finish()
     ev << "Sink finish()" << endl;
     closeConnection();
 }
+

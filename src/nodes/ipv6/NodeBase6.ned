@@ -42,7 +42,7 @@ module NodeBase6
         @labels(node,ethernet-node,wireless-node);
         int numExtInterfaces = default(0);
         int numRadios = default(0);               // the number of radios in the router. by default no wireless
-        string mobilityType = default("NullMobility");
+        string mobilityType = default("StationaryMobility");
         xml routingTable = default(xml("<routingTable/>"));
         bool IPForward = default(true);
     gates:
@@ -56,7 +56,7 @@ module NodeBase6
         }
 
         // optional mobility module. Required only if wireless cards are present
-        mobility: <mobilityType> like IMobility if numRadios>0 {
+        mobility: <mobilityType> like IMobility if mobilityType != "" && numRadios > 0 {
             parameters:
                 @display("p=53,121");
         }
@@ -83,7 +83,6 @@ module NodeBase6
         wlan[numRadios]: <default("Ieee80211Nic")> like IWirelessNic {
             parameters:
                 @display("p=159,386;q=queue");
-                mgmtType = default("Ieee80211MgmtSTA");
         }
         eth[sizeof(ethg)]: <default("EthernetInterface")> like IWiredNic {
             parameters:
@@ -102,8 +101,8 @@ module NodeBase6
         // connections to network outside
         for i=0..sizeof(radioIn)-1 {
             radioIn[i] --> wlan[i].radioIn;
-            wlan[i].uppergateOut --> networkLayer.ifIn++;
-            wlan[i].uppergateIn <-- networkLayer.ifOut++;
+            wlan[i].upperLayerOut --> networkLayer.ifIn++;
+            wlan[i].upperLayerIn <-- networkLayer.ifOut++;
         }
 
         for i=0..sizeof(ethg)-1 {

@@ -20,13 +20,12 @@
 
 //
 // General definitions.
-// Andras Varga
 //
 
 #include <omnetpp.h>
 
-#if OMNETPP_VERSION < 0x0400
-#  error At least OMNeT++/OMNEST version 4.0 required
+#if OMNETPP_VERSION < 0x0402
+#  error At least OMNeT++/OMNEST version 4.2 required
 #endif
 
 #if defined(INET_EXPORT)
@@ -63,7 +62,7 @@ template <class T>
 T *__checknull(T *p, const char *expr, const char *file, int line)
 {
     if (!p)
-        opp_error("Expression %s returned NULL at %s:%d",expr,file,line);
+        opp_error("Expression %s returned NULL at %s:%d", expr, file, line);
     return p;
 }
 #define CHK(x) __checknull((x), #x, __FILE__, __LINE__)

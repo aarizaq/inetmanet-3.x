@@ -52,6 +52,6 @@ simple BasicDecider
         bool coreDebug = default(false); // debug switch for the core framework
         @display("i=block/process_s");
     gates:
-        output uppergateOut; // to MAC layer
-        input lowergateIn; // from snrEval sub-module
+        output upperLayerOut; // to MAC layer
+        input lowerLayerIn; // from snrEval sub-module
 }
