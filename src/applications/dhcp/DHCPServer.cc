@@ -58,7 +58,7 @@ void DHCPServer::initialize(int stage)
             // bindToPort(bootps_port);
             socket.setOutputGate(gate("udpOut"));
             socket.bind(bootps_port);
-
+            socket.setBroadcast(true);
             ev << "DHCP Server bond to port " << bootps_port << " at " << ie <<  endl;
         }
         else
@@ -362,5 +362,5 @@ void DHCPServer::sendToUDP(cPacket *msg, int srcPort, const IPvXAddress& destAdd
     // printPacket(msg);
 
     //send(msg, "udpOut");
-    socket.sendTo(msg, destAddr, destPort);
+    socket.sendTo(msg, destAddr, destPort, this->ie->getInterfaceId());
 }

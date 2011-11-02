@@ -90,6 +90,7 @@ void DHCPClient::initialize(int stage)
     // bind the client to the udp port
     socket.setOutputGate(gate("udpOut"));
     socket.bind(bootpc_port);
+    socket.setBroadcast(true);
     ev << "DHCP Client bond to port " << bootpc_port << " at " << ie->getName() <<  endl;
 
     // set client to idle state
@@ -553,5 +554,5 @@ void DHCPClient::sendToUDP(cPacket *msg, int srcPort, const IPvXAddress& destAdd
     // printPacket(msg);
 
    // emit(sentPkSignal, msg);
-    socket.sendTo(msg, destAddr, destPort);
+    socket.sendTo(msg, destAddr, destPort, this->ie->getInterfaceId());
 }
