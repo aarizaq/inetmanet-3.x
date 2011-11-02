@@ -46,7 +46,7 @@ network bmacnet
                 x = 90m;
                 @display("i=device/pocketpc_s;r=,,#707070;p=518,100");
         }
-        channelcontrol: ChannelControl {
+        channelControl: ChannelControl {
             parameters:
                 @display("p=60,50;i=misc/sun");
         }
