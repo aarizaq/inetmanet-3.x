@@ -20,7 +20,7 @@
 package inet.examples.wireless.throughput;
 
 import inet.world.radio.ChannelControl;
-import inet.mobility.models.NullMobility;
+import inet.mobility.models.StationaryMobility;
 import inet.linklayer.ieee80211.Ieee80211Nic;
 import inet.base.NotificationBoard;
 import inet.applications.ethernet.EtherAppCli;
@@ -30,6 +30,7 @@ module ThroughputClient
 {
     parameters:
         @display("i=device/wifilaptop");
+        @node();
     gates:
         input radioIn @directIn;
 
@@ -48,13 +49,13 @@ module ThroughputClient
                 @display("p=112,134;q=queue");
                 mgmtType = default("Ieee80211MgmtSTASimplified");
         }
-        mobility: NullMobility {
+        mobility: StationaryMobility {
             parameters:
                 @display("p=50,141");
         }
     connections allowunconnected:
         wlan.radioIn <-- radioIn;
-        cli.out --> wlan.uppergateIn;
+        cli.out --> wlan.upperLayerIn;
 }
 
 network Throughput
@@ -71,7 +72,7 @@ network Throughput
             parameters:
                 @display("p=200,200;r=,,#707070");
         }
-        channelcontrol: ChannelControl {
+        channelControl: ChannelControl {
             parameters:
                 @display("p=61,46");
         }

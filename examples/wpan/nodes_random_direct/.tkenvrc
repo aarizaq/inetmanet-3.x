@@ -1,4 +1,0 @@
-# Partial Tkenv config file -- see $HOME/.tkenvrc as well
-inspector "Ieee802154StarNet" "Ieee802154StarNet" "2" "653x502+562+111:normal"
-inspector "Ieee802154StarNet.host[7]" "Ieee802154Node" "2" "565x339+50+50:normal"
-

@@ -16,7 +16,7 @@
 package inet.examples.manetrouting.batman;
 
 import inet.networklayer.autorouting.ipv4.FlatNetworkConfigurator;
-import inet.nodes.wireless.AdhocHost;
+import inet.nodes.inet.AdhocHost;
 import inet.world.radio.ChannelControl;
 import inet.nodes.ethernet.EtherHost;
 

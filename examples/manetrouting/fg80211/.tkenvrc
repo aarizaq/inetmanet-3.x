@@ -1,6 +1,0 @@
-# Partial Tkenv config file -- see $HOME/.tkenvrc as well
-inspector "Fg80211Net.host[6].wlan[0]" "Ieee80211NewNic" "2" "589x341+25+25:normal"
-inspector "Fg80211Net.host[6]" "AdhocHost" "2" "565x341+225+225:normal"
-inspector "Fg80211Net" "Fg80211Net" "2" "565x341+200+200:normal"
-inspector "Fg80211Net.host[6].wlan[0]" "Ieee80211NewNic" "1" "519x314+50+50:normal"
-

@@ -20,7 +20,7 @@ import inet.world.radio.ChannelControl;
 import inet.nodes.inet.Router;
 import inet.nodes.inet.StandardHost;
 import inet.nodes.wireless.AccessPoint;
-import inet.nodes.wireless.WirelessHost;
+import inet.nodes.inet.WirelessHost;
 
 import inet.applications.dhcp.DHCPClient;
 //

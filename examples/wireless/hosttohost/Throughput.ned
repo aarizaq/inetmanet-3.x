@@ -21,7 +21,7 @@ package inet.examples.wireless.hosttohost;
 
 import inet.world.radio.ChannelControl;
 import inet.nodes.wireless.AccessPoint;
-import inet.mobility.models.NullMobility;
+import inet.mobility.models.StationaryMobility;
 import inet.mobility.models.CircleMobility;
 import inet.linklayer.ieee80211.Ieee80211Nic;
 import inet.base.Sink;
@@ -33,6 +33,7 @@ module ThroughputClient
 {
     parameters:
         @display("i=device/wifilaptop");
+        @node();
     gates:
         input radioIn @directIn;
 
@@ -57,13 +58,14 @@ module ThroughputClient
         }
     connections allowunconnected:
         wlan.radioIn <-- radioIn;
-        cli.out --> wlan.uppergateIn;
+        cli.out --> wlan.upperLayerIn;
 }
 
 module ThroughputServer
 {
     parameters:
         @display("i=device/wifilaptop");
+        @node();
     gates:
         input radioIn @directIn;
 
@@ -81,13 +83,13 @@ module ThroughputServer
                 @display("p=120,158;q=queue");
                 mgmtType = "Ieee80211MgmtSTASimplified";
         }
-        mobility: NullMobility {
+        mobility: StationaryMobility {
             parameters:
                 @display("p=50,141");
         }
     connections allowunconnected:
         wlan.radioIn <-- radioIn;
-        sink.in++ <-- wlan.uppergateOut;
+        sink.in++ <-- wlan.upperLayerOut;
 }
 
 network Throughput

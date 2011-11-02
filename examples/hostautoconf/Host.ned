@@ -91,8 +91,8 @@ module Host
         networkLayer.udpOut --> udp.ipIn;
         networkLayer.udpIn <-- udp.ipOut;
  
-        wlan.uppergateOut --> networkLayer.ifIn[0];
-        wlan.uppergateIn <-- networkLayer.ifOut[0];
+        wlan.upperLayerOut --> networkLayer.ifIn[0];
+        wlan.upperLayerIn <-- networkLayer.ifOut[0];
  
         radioIn --> wlan.radioIn;
  

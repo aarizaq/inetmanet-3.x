@@ -23,7 +23,7 @@ import inet.applications.pingapp.PingApp;
 import inet.applications.ITCPApp;
 import inet.applications.IUDPApp;
 import inet.base.NotificationBoard;
-import inet.mobility.models.NullMobility;
+import inet.mobility.models.StationaryMobility;
 import inet.wpan.linklayer.bmac.NicBMAC;
 import inet.networklayer.common.InterfaceTable;
 import inet.networklayer.ipv4.RoutingTable;
@@ -115,7 +115,7 @@ module nodebmac
         }
         //        wlan: Nic80211;
         //            display: "p=248,349;q=queue;i=block/ifcard";
-        mobility: NullMobility {
+        mobility: StationaryMobility {
             parameters:
                 initialX = x;
                 initialY = y;
@@ -156,8 +156,8 @@ module nodebmac
         networkLayer.manetIn <-- manetrouting.to_ip if routingProtocol != "";
         // connections to network outside
         radioIn --> wlan.radioIn;
-        wlan.uppergateOut --> networkLayer.ifIn[0];
-        wlan.uppergateIn <-- networkLayer.ifOut[0];
+        wlan.upperLayerOut --> networkLayer.ifIn[0];
+        wlan.upperLayerIn <-- networkLayer.ifOut[0];
 }
 
 
