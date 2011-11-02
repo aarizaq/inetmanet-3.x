@@ -50,7 +50,15 @@ void Test_TraCI::initialize(int aStage)
         }
 
         mobilityStateChangedSignal = registerSignal("mobilityStateChanged");
-        getParentModule()->subscribe(mobilityStateChangedSignal, this);
+        cModule *mod;
+        for (mod = getParentModule(); mod != 0; mod = mod->getParentModule())
+        {
+                cProperties *properties = mod->getProperties();
+                if (properties && properties->getAsBool("node"))
+                    break;
+        }
+        if (mod)
+            mod->subscribe(mobilityStateChangedSignal, this);
 
         cXMLElement* commands_root_xml = par("commands").xmlValue();
         cXMLElementList commands_xml = commands_root_xml->getChildren();

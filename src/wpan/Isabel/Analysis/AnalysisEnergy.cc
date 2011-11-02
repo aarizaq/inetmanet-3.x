@@ -32,7 +32,15 @@ void AnalysisEnergy::initialize(int aStage)
     if (aStage==3)
     {
         mobilityStateChangedSignal = registerSignal("mobilityStateChanged");
-        getParentModule()->subscribe(mobilityStateChangedSignal, this);
+        cModule *mod;
+        for (mod = getParentModule(); mod != 0; mod = mod->getParentModule())
+        {
+                cProperties *properties = mod->getProperties();
+                if (properties && properties->getAsBool("node"))
+                    break;
+        }
+        if (mod)
+           mod->subscribe(mobilityStateChangedSignal, this);
     }
 }
 
