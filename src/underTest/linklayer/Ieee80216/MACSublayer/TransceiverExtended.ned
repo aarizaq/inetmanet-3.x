@@ -64,8 +64,8 @@ module TransceiverExtended
         cpsTransceiver.securityGateOut --> securityTransceiver.commonPartGateIn;
         cpsTransceiver.securityGateIn <-- securityTransceiver.commonPartGateOut;
 
-        securityTransceiver.transceiverRadioGateOut --> radioTransceiver.uppergateIn;
-        securityTransceiver.transceiverRadioGateIn <-- radioTransceiver.uppergateOut;
+        securityTransceiver.transceiverRadioGateOut --> radioTransceiver.upperLayerIn;
+        securityTransceiver.transceiverRadioGateIn <-- radioTransceiver.upperLayerOut;
 
         not --> radioTransceiver.radioIn;
 

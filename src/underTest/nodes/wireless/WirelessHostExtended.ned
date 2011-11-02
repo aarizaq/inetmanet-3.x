@@ -141,8 +141,8 @@ module WirelessHostExtended
         }
 
         radioIn --> wlan.radioIn;
-        wlan.uppergateOut --> networkLayer.ifIn[sizeof(pppg)+sizeof(ethg)];
-        wlan.uppergateIn <-- networkLayer.ifOut[sizeof(pppg)+sizeof(ethg)];
+        wlan.upperLayerOut --> networkLayer.ifIn[sizeof(pppg)+sizeof(ethg)];
+        wlan.upperLayerIn <-- networkLayer.ifOut[sizeof(pppg)+sizeof(ethg)];
 
         ieee80211Agent.mgmtOut --> wlan.agentIn;
         wlan.agentOut --> ieee80211Agent.mgmtIn;

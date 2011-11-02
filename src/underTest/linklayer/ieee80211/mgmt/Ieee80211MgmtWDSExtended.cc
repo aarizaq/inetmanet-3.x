@@ -228,7 +228,7 @@ void Ieee80211MgmtWDSExtended::handleDataFrame(Ieee80211DataFrame *frame)
     cPacket* payload = this->decapsulate(frame);
     if (payload!=NULL)
     {
-        send(payload,"uppergateOut");
+        send(payload,"upperLayerOut");
     }
 }
 

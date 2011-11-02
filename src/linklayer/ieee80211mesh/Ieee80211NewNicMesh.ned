@@ -57,8 +57,8 @@ module Ieee80211NewNicMesh like IWirelessNic
         }
     connections allowunconnected:
         radioIn --> radio.radioIn;
-        radio.uppergateIn <-- mac.lowerLayerOut;
-        radio.uppergateOut --> mac.lowerLayerIn;
+        radio.upperLayerIn <-- mac.lowerLayerOut;
+        radio.upperLayerOut --> mac.lowerLayerIn;
 
         mac.upperLayerOut --> mgmt.macIn;
         mac.upperLayerIn <-- mgmt.macOut;

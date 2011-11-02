@@ -24,10 +24,10 @@ void Ieee802154StarRouting::initialize(int aStage)
     if (0 == aStage)
     {
         // WirelessMacBase stuff...
-        mUppergateIn  = findGate("uppergateIn");
-        mUppergateOut = findGate("uppergateOut");
-        mLowergateIn  = findGate("lowergateIn");
-        mLowergateOut = findGate("lowergateOut");
+        mUpperLayerIn  = findGate("upperLayerIn");
+        mUpperLayerOut = findGate("upperLayerOut");
+        mLowerLayerIn  = findGate("lowerLayerIn");
+        mLowerLayerOut = findGate("lowerLayerOut");
 
         m_moduleName    = getParentModule()->getFullName();
 
@@ -49,7 +49,7 @@ void Ieee802154StarRouting::handleMessage(cMessage* msg)
     Ieee802154AppPkt* appPkt = check_and_cast<Ieee802154AppPkt *>(msg);
 
     // coming from App layer
-    if (msg->getArrivalGateId() == mUppergateIn)
+    if (msg->getArrivalGateId() == mUpperLayerIn)
     {
         Ieee802154NetworkCtrlInfo *control_info = new Ieee802154NetworkCtrlInfo();
 
@@ -65,16 +65,16 @@ void Ieee802154StarRouting::handleMessage(cMessage* msg)
         }
 
         appPkt->setControlInfo(control_info);
-        send(appPkt, mLowergateOut);
+        send(appPkt, mLowerLayerOut);
     }
 
     // coming from MAC layer
-    else if (msg->getArrivalGateId() == mLowergateIn)
+    else if (msg->getArrivalGateId() == mLowerLayerIn)
     {
         if (strcmp(appPkt->getDestName(), m_moduleName) == 0)
         {
             EV << "[NETWORK]: sending received pkt to upper layer" << endl;
-            send(appPkt, mUppergateOut);    // to app layer
+            send(appPkt, mUpperLayerOut);    // to app layer
         }
         else if (isPANCoor)     // need to forward this pkt
         {
@@ -84,7 +84,7 @@ void Ieee802154StarRouting::handleMessage(cMessage* msg)
             appPkt->setControlInfo(control_info);
             EV << "[NETWORK]: received a pkt from " << appPkt->getSourceName() << " and forward it to " << appPkt->getDestName() << endl;
             numForward++;
-            send(appPkt, mLowergateOut);
+            send(appPkt, mLowerLayerOut);
         }
         else
         {

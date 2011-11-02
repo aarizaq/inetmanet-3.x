@@ -51,8 +51,8 @@ class WiMAXQoSTrafficGenerator : public TrafGen
     virtual void SendTraf(cPacket *msg, const char *dest);
 
   private:
-    int mLowergateIn;
-    int mLowergateOut;
+    int mLowerLayerIn;
+    int mLowerLayerOut;
 
     int mCurrentTrafficPattern;
 

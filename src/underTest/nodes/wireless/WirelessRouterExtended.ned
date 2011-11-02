@@ -139,8 +139,8 @@ module WirelessRouterExtended
         networkLayer.tcpOut --> tcp.ipIn;
         pingApp.pingOut --> networkLayer.pingIn;
         networkLayer.pingOut --> pingApp.pingIn;
-        networkLayer.ifOut++ --> wlan.uppergateIn;
-        wlan.uppergateOut --> networkLayer.ifIn++;
+        networkLayer.ifOut++ --> wlan.upperLayerIn;
+        wlan.upperLayerOut --> networkLayer.ifIn++;
         radioIn --> wlan.radioIn;
 }
 

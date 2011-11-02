@@ -45,8 +45,8 @@ simple Ieee80211MgmtAPExtended like IIeee80211Mgmt
         //dataRate: numeric; XXX TBD
         @display("i=block/cogwheel");
     gates:
-        input uppergateIn; // from MACRelayUnit; can be left unconnected
-        output uppergateOut; // to MACRelayUnit; can be left unconnected
+        input upperLayerIn; // from MACRelayUnit; can be left unconnected
+        output upperLayerOut; // to MACRelayUnit; can be left unconnected
         input macIn; // from Ieee80211Mac
         output macOut; // to Ieee80211Mac
         

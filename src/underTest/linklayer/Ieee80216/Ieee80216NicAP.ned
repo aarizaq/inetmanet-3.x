@@ -18,8 +18,8 @@ module Ieee80216NicAP
     parameters:
         @display("bgb=349,530");
     gates:
-        input uppergateIn; // to upper layers
-        output uppergateOut; // from upper layers
+        input upperLayerIn; // to upper layers
+        output upperLayerOut; // from upper layers
         input radioIn; // to receive AirFrames
         input not;
     submodules:
@@ -60,17 +60,17 @@ module Ieee80216NicAP
                 @display("p=208,237;i=block/cogwheel");
         }
     connections:
-        csUp.uppergateOut --> uppergateOut;
-        csDown.uppergateIn <-- uppergateIn;
+        csUp.upperLayerOut --> upperLayerOut;
+        csDown.upperLayerIn <-- upperLayerIn;
 
-        cpsUp.uppergateOut --> csUp.lowergateIn;
-        cpsDown.uppergateIn <-- csDown.lowergateOut;
+        cpsUp.upperLayerOut --> csUp.lowerLayerIn;
+        cpsDown.upperLayerIn <-- csDown.lowerLayerOut;
 
-        securityUp.uppergateOut --> cpsUp.lowergateIn;
-        securityDown.uppergateIn <-- cpsDown.lowergateOut;
+        securityUp.upperLayerOut --> cpsUp.lowerLayerIn;
+        securityDown.upperLayerIn <-- cpsDown.lowerLayerOut;
 
-        radioUp.uppergateOut --> securityUp.lowergateIn;
-        radioDown.uppergateIn <-- securityDown.lowergateOut;
+        radioUp.upperLayerOut --> securityUp.lowerLayerIn;
+        radioDown.upperLayerIn <-- securityDown.lowerLayerOut;
 
         radioIn --> radioUp.radioIn;
 
@@ -82,7 +82,7 @@ module Ieee80216NicAP
         cpsUp.controlplaneOut --> controlplane.cpsUpIn;
         controlplane.cpsUpOut --> cpsUp.controlplaneIn;
 
-        controlplane.radioUpOut --> radioUp.uppergateIn;
-        radioDown.uppergateOut --> controlplane.radioDownIn;
+        controlplane.radioUpOut --> radioUp.upperLayerIn;
+        radioDown.upperLayerOut --> controlplane.radioDownIn;
 }
 

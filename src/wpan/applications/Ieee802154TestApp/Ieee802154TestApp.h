@@ -29,8 +29,8 @@ class Ieee802154TestApp : public TrafGenPar
 
   private:
     bool    m_debug;        // debug switch
-    int     mLowergateIn;
-    int     mLowergateOut;
+    int     mLowerLayerIn;
+    int     mLowerLayerOut;
 
     int     mCurrentTrafficPattern;
 

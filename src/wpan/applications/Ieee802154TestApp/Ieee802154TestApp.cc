@@ -13,8 +13,8 @@ void Ieee802154TestApp::initialize(int aStage)
     if (0 == aStage)
     {
         m_debug             = par("debug");
-        mLowergateIn        = findGate("lowergateIn");
-        mLowergateOut       = findGate("lowergateOut");
+        mLowerLayerIn        = findGate("lowerLayerIn");
+        mLowerLayerOut       = findGate("lowerLayerOut");
         m_moduleName        = getParentModule()->getFullName();
         sumE2EDelay         = 0;
         numReceived         = 0;
@@ -81,6 +81,6 @@ void Ieee802154TestApp::SendTraf(cPacket* apMsg, const char* apDest)
     appPkt->setControlInfo(control_info);*/
 
     mNumTrafficMsgs++;
-    send(appPkt, mLowergateOut);
+    send(appPkt, mLowerLayerOut);
 
 }

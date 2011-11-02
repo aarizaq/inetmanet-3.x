@@ -18,7 +18,7 @@
 
 
 package inet.linklayer.ieee80211mesh.nodes;
-import inet.nodes.wireless.WirelessHost;
+import inet.nodes.inet.WirelessHost;
 
 import inet.util.PcapRecorder;
 import inet.networklayer.ipv4.RoutingTable;
@@ -53,6 +53,7 @@ module gateWayMesh
         string mobilityType = default("NullMobility");
         string routingFile = default("");
         bool IPForward = default(true);
+        wlan[*].mgmtType = default("Ieee80211MgmtSTA");
     gates:
         input radioIn[numRadios+1] @directIn;
         inout pppg[] @labels(PPPFrame-conn);
@@ -100,7 +101,6 @@ module gateWayMesh
         wlan[numRadios]: <default("Ieee80211Nic")> like IWirelessNic {
             parameters:
                 @display("p=317,392;q=queue");
-                mgmtType = default("Ieee80211MgmtSTA");
         }
         ethMesh: EthernetInterfaceMesh {
             parameters:
@@ -128,8 +128,8 @@ module gateWayMesh
 
         for i=0..sizeof(radioIn)-2 {
             radioIn[i+1] --> wlan[i].radioIn;
-            wlan[i].uppergateOut --> networkLayer.ifIn++;
-            wlan[i].uppergateIn <-- networkLayer.ifOut++;
+            wlan[i].upperLayerOut --> networkLayer.ifIn++;
+            wlan[i].upperLayerIn <-- networkLayer.ifOut++;
         }
 
 

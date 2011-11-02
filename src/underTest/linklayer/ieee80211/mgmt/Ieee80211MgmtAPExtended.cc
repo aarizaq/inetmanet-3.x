@@ -204,7 +204,7 @@ void Ieee80211MgmtAPExtended::handleDataFrame(Ieee80211DataFrame *frame)
 
         payload->setControlInfo(ctrl);
 
-        send(payload,"uppergateOut");
+        send(payload,"upperLayerOut");
 
         delete(frame);
         return;
@@ -228,7 +228,7 @@ void Ieee80211MgmtAPExtended::handleDataFrame(Ieee80211DataFrame *frame)
         payload->setControlInfo(ctrl);
         delete frame;
 
-        send(payload,"uppergateOut");
+        send(payload,"upperLayerOut");
     }
     else
     {

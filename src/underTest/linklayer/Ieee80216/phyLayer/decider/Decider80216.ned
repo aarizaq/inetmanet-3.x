@@ -10,6 +10,6 @@ simple Decider80216
         bool debug; // debug switch
         volatile double snrThresholdLevel;
     gates:
-        output uppergateOut;
-        input lowergateIn;
+        output upperLayerOut;
+        input lowerLayerIn;
 }

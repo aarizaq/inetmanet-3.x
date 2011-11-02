@@ -5,9 +5,9 @@ simple CommonPartSublayerUp
     parameters:
 
     gates:
-        input lowergateIn;
+        input lowerLayerIn;
         input controlplaneIn;
-        output uppergateOut;
+        output upperLayerOut;
         output controlplaneOut;
 }
 

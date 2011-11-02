@@ -80,11 +80,11 @@ module WiMAXMS
     connections allowunconnected:
         radioIn --> wimax.radioIn;
 
-        trafGen_ftp.lowergateOut --> wimax.macUpperGateIn[0];
-        trafGen_voice_no_supr.lowergateOut --> wimax.macUpperGateIn[1];
-        trafGen_voice_supr.lowergateOut --> wimax.macUpperGateIn[2];
-        trafGen_video_stream.lowergateOut --> wimax.macUpperGateIn[3];
-        trafGen_guaranteed_minbw_web_access.lowergateOut --> wimax.macUpperGateIn[4];
+        trafGen_ftp.lowerLayerOut --> wimax.macUpperGateIn[0];
+        trafGen_voice_no_supr.lowerLayerOut --> wimax.macUpperGateIn[1];
+        trafGen_voice_supr.lowerLayerOut --> wimax.macUpperGateIn[2];
+        trafGen_video_stream.lowerLayerOut --> wimax.macUpperGateIn[3];
+        trafGen_guaranteed_minbw_web_access.lowerLayerOut --> wimax.macUpperGateIn[4];
 
 }
 

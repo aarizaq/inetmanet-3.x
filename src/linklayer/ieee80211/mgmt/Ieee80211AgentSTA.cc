@@ -56,13 +56,19 @@ void Ieee80211AgentSTA::initialize(int stage)
             myIface = ift->getInterfaceByName(getParentModule()->getFullName());
         }
 
+        // JcM add: get the default ssid, if there is one.
+        default_ssid = par("default_ssid").stringValue();
+
         //Statistics:
         sentRequestSignal = registerSignal("sentRequest");
         acceptConfirmSignal = registerSignal("acceptConfirm");
         dropConfirmSignal = registerSignal("dropConfirm");
 
         // start up: send scan request
-        scheduleAt(simTime()+uniform(0, maxChannelTime), new cMessage("startUp", MK_STARTUP));
+        if (par("startingTime").doubleValue()>0)
+            scheduleAt(simTime()+par("startingTime").doubleValue(), new cMessage("startUp", MK_STARTUP));
+        else
+            scheduleAt(simTime()+uniform(0, maxChannelTime), new cMessage("startUp", MK_STARTUP));
     }
 }
 
@@ -205,7 +211,29 @@ void Ieee80211AgentSTA::sendDisassociateRequest(const MACAddress& address, int r
 void Ieee80211AgentSTA::processScanConfirm(Ieee80211Prim_ScanConfirm *resp)
 {
     // choose best AP
-    int bssIndex = chooseBSS(resp);
+
+    int bssIndex;
+    if (this->default_ssid=="")
+    {
+            // no default ssid, so pick the best one
+            bssIndex = chooseBSS(resp);
+    }
+    else
+    {
+        // search if the default_ssid is in the list, otherwise
+        // keep searching.
+        for (int i=0; i<(int)resp->getBssListArraySize(); i++)
+        {
+            std::string resp_ssid = resp->getBssList(i).getSSID();
+            if (resp_ssid == this->default_ssid)
+            {
+                EV << "found default SSID " << resp_ssid << endl;
+                bssIndex = i;
+                break;
+            }
+        }
+    }
+
     if (bssIndex==-1)
     {
         EV << "No (suitable) AP found, continue scanning\n";

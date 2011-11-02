@@ -34,8 +34,8 @@ module Ieee80211NicExtended like IWirelessNic
         string mgmtType; // name of the management module type
         @display("bgb=220,326;i=block/ifcard");
     gates:
-        input uppergateIn; // to upper layers
-        output uppergateOut; // from upper layers
+        input upperLayerIn; // to upper layers
+        output upperLayerOut; // from upper layers
         input radioIn; // to receive AirFrames
         input agentIn; // to Agent
         output agentOut; // from Agent
@@ -57,14 +57,14 @@ module Ieee80211NicExtended like IWirelessNic
         }
     connections:
         radioIn --> radio.radioIn;
-        radio.uppergateIn <-- mac.lowergateOut;
-        radio.uppergateOut --> mac.lowergateIn;
+        radio.upperLayerIn <-- mac.lowerLayerOut;
+        radio.upperLayerOut --> mac.lowerLayerIn;
 
-        mac.uppergateOut --> mgmt.macIn;
-        mac.uppergateIn <-- mgmt.macOut;
+        mac.upperLayerOut --> mgmt.macIn;
+        mac.upperLayerIn <-- mgmt.macOut;
 
-        mgmt.uppergateOut --> uppergateOut;
-        mgmt.uppergateIn <-- uppergateIn;
+        mgmt.upperLayerOut --> upperLayerOut;
+        mgmt.upperLayerIn <-- upperLayerIn;
 
         mgmt.agentOut --> agentOut;
         agentIn --> mgmt.agentIn;

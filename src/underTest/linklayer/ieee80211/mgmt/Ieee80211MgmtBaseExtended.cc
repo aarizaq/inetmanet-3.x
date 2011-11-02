@@ -214,7 +214,7 @@ cPacket *Ieee80211MgmtBaseExtended::decapsulate(Ieee80211DataFrame *frame)
 
 void Ieee80211MgmtBaseExtended::sendUp(cMessage *msg)
 {
-    send(msg, "uppergateOut");
+    send(msg, "upperLayerOut");
 }
 
 void Ieee80211MgmtBaseExtended::processFrame(Ieee80211DataOrMgmtFrame *frame)

@@ -30,9 +30,9 @@ void CommonPartSublayerUp::handleMessage(cMessage *msg)
 */
     if (msg->arrivedOn("controlIn"))
     {
-        //send(msg,"lowergateOut");
+        //send(msg,"lowerLayerOut");
     }
-    else if (msg->arrivedOn("lowergateIn")) // Nachricht vom physikal Layer empfangen
+    else if (msg->arrivedOn("lowerLayerIn")) // Nachricht vom physikal Layer empfangen
     {
         handleLowerMsg(check_and_cast<cPacket *>(msg));
     }
