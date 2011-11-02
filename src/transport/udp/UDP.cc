@@ -180,7 +180,7 @@ void UDP::processCommandFromApp(cMessage *msg)
             if (dynamic_cast<UDPSetTimeToLiveCommand*>(ctrl))
                 setTimeToLive(ctrl->getSockId(), ((UDPSetTimeToLiveCommand*)ctrl)->getTtl());
             else if (dynamic_cast<UDPSetBroadcastCommand*>(ctrl))
-                setTimeToLive(ctrl->getSockId(), ((UDPSetBroadcastCommand*)ctrl)->getBroadcast());
+                setBroadcast(ctrl->getSockId(), ((UDPSetBroadcastCommand*)ctrl)->getBroadcast());
             else if (dynamic_cast<UDPSetMulticastInterfaceCommand*>(ctrl))
                 setMulticastOutputInterface(ctrl->getSockId(), ((UDPSetMulticastInterfaceCommand*)ctrl)->getInterfaceId());
             else if (dynamic_cast<UDPJoinMulticastGroupCommand*>(ctrl))
@@ -214,12 +214,19 @@ void UDP::processPacketFromApp(cPacket *appData)
         error("send: missing destination address or port when sending over unconnected port");
 
     int interfaceId = -1;
-    if (destAddr.isMulticast())
+    if (ctrl->getInterfaceId() == -1)
     {
-        std::map<IPvXAddress,int>::iterator it = sd->multicastAddrs.find(destAddr);
-        interfaceId = (it != sd->multicastAddrs.end() && it->second != -1) ? it->second : sd->multicastOutputInterfaceId;
+        if (destAddr.isMulticast())
+
+        {
+            std::map<IPvXAddress, int>::iterator it = sd->multicastAddrs.find(destAddr);
+            interfaceId = (it != sd->multicastAddrs.end() && it->second != -1) ? it->second : sd->multicastOutputInterfaceId;
+        }
+        sendDown(appData, sd->localAddr, sd->localPort, destAddr, destPort, interfaceId, sd->ttl);
     }
-    sendDown(appData, sd->localAddr, sd->localPort, destAddr, destPort, interfaceId, sd->ttl);
+    else
+        sendDown(appData, sd->localAddr, sd->localPort, destAddr, destPort, ctrl->getInterfaceId(), sd->ttl);
+
     delete ctrl; // cannot be deleted earlier, due to destAddr
 }
 
@@ -296,6 +303,7 @@ void UDP::processUDPPacket(UDPPacket *udpPacket)
         {
             EV << "No socket registered on port " << destPort << "\n";
             processUndeliverablePacket(udpPacket, ctrl);
+            delete payload;
             return;
         }
         else
@@ -313,6 +321,7 @@ void UDP::processUDPPacket(UDPPacket *udpPacket)
         {
             EV << "No socket registered on port " << destPort << "\n";
             processUndeliverablePacket(udpPacket, ctrl);
+            delete payload;
             return;
         }
         else
@@ -401,10 +410,13 @@ void UDP::processUndeliverablePacket(UDPPacket *udpPacket, cObject *ctrl)
     {
         if (!icmp)
             icmp = ICMPAccess().get();
-
         IPv4ControlInfo *ctrl4 = (IPv4ControlInfo *)ctrl;
+        bool isMulticast = ctrl4->getDestAddr().isMulticast();
+        bool isBroadcast = ctrl4->getDestAddr() == IPv4Address::ALLONES_ADDRESS;
 
-        if (!ctrl4->getDestAddr().isMulticast())
+        if (isMulticast || isBroadcast)
+            delete udpPacket;
+        else
             icmp->sendErrorMessage(udpPacket, ctrl4, ICMP_DESTINATION_UNREACHABLE, ICMP_DU_PORT_UNREACHABLE);
     }
     else
@@ -419,12 +431,16 @@ void UDP::processUndeliverablePacket(UDPPacket *udpPacket, cObject *ctrl)
 
         if (!ctrl6->getDestAddr().isMulticast())
             icmpv6->sendErrorMessage(udpPacket, ctrl6, ICMPv6_DESTINATION_UNREACHABLE, PORT_UNREACHABLE);
+        else
+            delete udpPacket;
     }
     else
 #endif
     {
         error("(%s)%s arrived from lower layer without control info", udpPacket->getClassName(), udpPacket->getName()); //FIXME rather: with unrecognized control info
     }
+    if (ctrl)
+       delete ctrl;
 }
 
 void UDP::bind(int sockId, int gateIndex, const IPvXAddress& localAddr, int localPort)
