@@ -34,6 +34,7 @@ simsignal_t Radio::bitrateSignal = SIMSIGNAL_NULL;
 simsignal_t Radio::radioStateSignal = SIMSIGNAL_NULL;
 simsignal_t Radio::channelNumberSignal = SIMSIGNAL_NULL;
 simsignal_t Radio::lossRateSignal = SIMSIGNAL_NULL;
+simsignal_t Radio::changeLevelNoise = SIMSIGNAL_NULL;
 
 #define MIN_DISTANCE 0.001 // minimum distance 1 millimeter
 #define BASE_NOISE_LEVEL noiseGenerator?noiseLevel+noiseGenerator->noiseLevel():noiseLevel
@@ -79,8 +80,11 @@ void Radio::initialize(int stage)
         std::string noiseModel =  par("NoiseGenerator").stdstringValue();
         if (noiseModel!="")
         {
-        	noiseGenerator = (INoiseGenerator *) createOne(noiseModel.c_str());
-        	noiseGenerator->initializeFrom(this);
+            noiseGenerator = (INoiseGenerator *) createOne(noiseModel.c_str());
+            noiseGenerator->initializeFrom(this);
+            // register to get a notification when position changes
+            changeLevelNoise = registerSignal("changeLevelNoise");
+            subscribe(changeLevelNoise, this); // the INoiseGenerator must send a signal to this module
         }
 
         EV << "Initialized channel with noise: " << noiseLevel << " sensitivity: " << sensitivity <<
@@ -307,6 +311,14 @@ void Radio::sendUp(AirFrame *airframe)
 {
     cPacket *frame = airframe->decapsulate();
     Radio80211aControlInfo * cinfo = new Radio80211aControlInfo;
+    if (radioModel->haveTestFrame())
+    {
+        cinfo->setAirtimeMetric(true);
+        cinfo->setTestFrameDuration(radioModel->calculateDurationTestFrame(airframe));
+        double snirMin = pow(10.0, (airframe->getSnr()/ 10));
+        cinfo->setTestFrameError(radioModel->getTestFrameError(snirMin,airframe->getBitrate()));
+        cinfo->setTestFrameSize(radioModel->getTestFrameSize());
+    }
     cinfo->setSnr(airframe->getSnr());
     cinfo->setLossRate(airframe->getLossRate());
     cinfo->setRecPow(airframe->getPowRec());
@@ -927,5 +939,23 @@ double Radio::calcDistFreeSpace()
     double interfDistance = pow(waveLength * waveLength * transmitterPower /
                          (16.0 * M_PI * M_PI * minReceivePower), 1.0 / alpha);
     return interfDistance;
+}
+
+void Radio::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj)
+{
+    ChannelAccess::receiveSignal(source,signalID, obj);
+    if (signalID == changeLevelNoise)
+    {
+        if (BASE_NOISE_LEVEL<sensitivity)
+        {
+            if (rs.getState()==RadioState::RECV && snrInfo.ptr==NULL)
+                setRadioState(RadioState::IDLE);
+        }
+        else
+        {
+            if (rs.getState()!=RadioState::IDLE)
+                setRadioState(RadioState::RECV);
+        }
+    }
 }
 
