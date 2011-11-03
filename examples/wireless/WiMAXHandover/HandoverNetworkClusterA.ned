@@ -61,7 +61,7 @@ network HandoverNetworkClusterA
                 @display("p=200,127;i=device/antennatower_l;r=,,#707070");
 
         }
-        channelcontrol: ChannelControl {
+        channelControl: ChannelControl {
                 @display("p=60,50;i=misc/sun");
         }
     connections allowunconnected:

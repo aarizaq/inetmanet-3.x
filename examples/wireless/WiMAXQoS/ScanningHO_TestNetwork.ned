@@ -58,7 +58,7 @@ module ScanningHONetwork
         }
         //bs3: WiMAXAP;
         //    display: "p=1558,482;i=device/antennatower_l;r=,,#707070";
-        channelcontrol: ChannelControl {
+        channelControl: ChannelControl {
             parameters:
                 @display("p=60,50;i=misc/sun");
         }

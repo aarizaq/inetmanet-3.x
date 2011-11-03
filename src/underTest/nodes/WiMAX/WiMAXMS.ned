@@ -35,7 +35,7 @@ module WiMAXMS
 {
     parameters:
         string mobilityType;
-
+        @node();
     gates:
         input in[];
         output out[];

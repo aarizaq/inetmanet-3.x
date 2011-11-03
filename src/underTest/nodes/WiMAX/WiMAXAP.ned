@@ -39,7 +39,7 @@ module WiMAXAP
     parameters:
         bool IPForward;
         string routingFile;
-
+        @node();
     gates:
         input radioIn;
 
