@@ -117,6 +117,9 @@ simple UDPBasicBurst like IUDPApp
         volatile double sleepDuration @unit(s); // time between bursts (zero allowed)
         volatile double sendInterval @unit(s); // time between messages during bursts; usually a random value, e.g. 0.1s+uniform(-0.001s,0.001s); zero not allowed
         double delayLimit @unit(s) = default(0); // maximum accepted delay for a packet; packets with a bigger delay are discarded (dropped), zero value means no limit
+        string outputInterface = default(""); // select the interface in which the packets will be sent
+        string outputInterfaceMulticastBroadcast = default(""); // select the interface in which the broadcast packets will be sent
+        bool setBroadcast = default(false); // Configure the socket for receive broadcast packets 
         @signal[sentPk](type=cPacket);
         @signal[rcvdPk](type=cPacket);
         @signal[dropPk](type=cPacket);

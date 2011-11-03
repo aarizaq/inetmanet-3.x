@@ -23,6 +23,8 @@
 
 #include "UDPControlInfo_m.h"
 #include "IPvXAddressResolver.h"
+#include "InterfaceTable.h"
+#include "InterfaceTableAccess.h"
 
 
 EXECUTE_ON_STARTUP(
@@ -49,6 +51,8 @@ UDPBasicBurst::UDPBasicBurst()
     sleepDurationPar = NULL;
     sendIntervalPar = NULL;
     timerNext = NULL;
+    outputInterface = -1;
+    outputInterfaceMulticastBroadcast = -1;
 }
 
 UDPBasicBurst::~UDPBasicBurst()
@@ -98,6 +102,26 @@ void UDPBasicBurst::initialize(int stage)
 
     socket.setOutputGate(gate("udpOut"));
     socket.bind(localPort);
+    if (par("setBroadcast").boolValue())
+        socket.setBroadcast(true);
+
+    if (par("outputInterface").str() != "")
+    {
+        IInterfaceTable* ift = InterfaceTableAccess().get();
+        InterfaceEntry *ie = ift->getInterfaceByName(par("outputInterface").stringValue());
+        if (ie == NULL)
+            throw cRuntimeError(this, "Invalid output interface name : %s",par("outputInterface").stringValue());
+        outputInterface = ie->getInterfaceId();
+    }
+    if (par("outputInterfaceMulticastBroadcast").str() != "")
+    {
+        IInterfaceTable* ift = InterfaceTableAccess().get();
+        InterfaceEntry *ie = ift->getInterfaceByName(par("outputInterfaceMulticastBroadcast").stringValue());
+        if (ie == NULL)
+            throw cRuntimeError(this, "Invalid output interface name : %s",par("outputInterfaceMulticastBroadcast").stringValue());
+        outputInterfaceMulticastBroadcast = ie->getInterfaceId();
+    }
+
 
     const char *destAddrs = par("destAddresses");
     cStringTokenizer tokenizer(destAddrs);
@@ -280,7 +304,13 @@ void UDPBasicBurst::generateBurst()
     cPacket *payload = createPacket();
     payload->setTimestamp();
     emit(sentPkSignal, payload);
-    socket.sendTo(payload, destAddr, destPort);
+
+    // Check address type
+    if (outputInterfaceMulticastBroadcast != -1 && (destAddr.isMulticast() || (!destAddr.isIPv6() && destAddr.get4() == IPv4Address::ALLONES_ADDRESS)))
+        socket.sendTo(payload, destAddr, destPort,outputInterfaceMulticastBroadcast);
+    else
+        socket.sendTo(payload, destAddr, destPort,outputInterface);
+
     numSent++;
 
     // Next timer
