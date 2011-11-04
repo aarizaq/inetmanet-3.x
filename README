@@ -77,6 +77,7 @@ Bottom-up:
      ipv4/               IPv4 and associated protocols
      ipv6/               IPv6 implementation (currently in work)
      icmpv6/             ICMPv6 implementation (currently in work)
+     manetrouting/       manet routing protocols
      mpls/               MPLS implementation (will be replaced soon)
      ldp/                LDP signalling protocol for MPLS
      rsvp_te/            RSVP-TE signalling protocol for MPLS (will be replaced soon)
@@ -84,6 +85,7 @@ Bottom-up:
      bgpv4/              BGP V4 protocol (see BGPv4 feature) //TODO
      ospfv2/             OSPF protocol //TODO
      ted/                Traffic Engineering Database //TODO
+
 
    transport/            transport layer protocols
      contract/           API to transport layer functionality
