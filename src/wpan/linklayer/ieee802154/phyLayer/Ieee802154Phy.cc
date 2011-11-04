@@ -734,6 +734,7 @@ void Ieee802154Phy::handleSelfMsg(cMessage *msg)
     }
     default:
         error("[PHY]: unknown PHY timer type!");
+        break;
     }
 }
 

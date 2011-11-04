@@ -191,7 +191,7 @@ int ControlPlaneBase::getSFIDForCID(int cid)
     else
     {
         EV << "getSFIDForCID(" << cid << "): CID not found!\n";
-        return NULL;
+        return 0;
     }
 }
 

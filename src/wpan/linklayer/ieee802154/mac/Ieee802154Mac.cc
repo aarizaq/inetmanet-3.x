@@ -766,6 +766,7 @@ void Ieee802154Mac::handleLowerMsg(cMessage* msg)
 
     default:
         error("[MAC]: undefined MAC frame type: %d", frmType);
+        break;
     }
 }
 
@@ -825,6 +826,7 @@ void Ieee802154Mac::handleSelfMsg(cMessage* msg)
 
     default:
         error("[MAC]: unknown MAC timer type!");
+        break;
     }
 }
 
@@ -871,7 +873,6 @@ void Ieee802154Mac::handleBeacon(Ieee802154Frame* frame)
     EV << "[MAC]: starting processing received Beacon frame" << endl;
     Ieee802154BeaconFrame *bcnFrame = check_and_cast<Ieee802154BeaconFrame *>(frame);
     FrameCtrl frmCtrl;
-    bool pending;
     simtime_t now,  tmpf, w_time,duration;
     uint16_t ifs;
     int  dataFrmLength;
@@ -1861,6 +1862,7 @@ void Ieee802154Mac::MCPS_DATA_request(uint16_t SrcAddrMode, UINT_16 SrcPANId, IE
 
     default:
         error("[MAC]: undefined txOption: %d!", TxOption);
+        break;
     }
 }
 
@@ -3306,6 +3308,7 @@ void Ieee802154Mac::FSM_MCPS_DATA_request(PHYenum pStatus, MACenum mStatus)
             taskP.taskStatus(task) = false; // task ends successfully
             EV << "[GTS]: GTS transmission completes successfully, prepared for next GTS request" << endl;
             taskSuccess('g');
+            break;
 
         default:
             break;
@@ -3557,6 +3560,7 @@ int Ieee802154Mac::calMHRByteLength(uint16_t addrModeSum)
         return 23;
     default:
         error("[MAC]: impossible address mode sum!");
+        break;
     }
     return 0;
 }

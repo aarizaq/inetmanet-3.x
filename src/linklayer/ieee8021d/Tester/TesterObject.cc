@@ -78,7 +78,7 @@ void TesterObject::initialize(int stage)
 void TesterObject::scheduleMessage(cXMLElement * mens)
 {
 	//Getting parameters
-	simtime_t temp=(simtime_t) getParameterDoubleValue(mens,"Time");
+	// simtime_t temp=(simtime_t) getParameterDoubleValue(mens,"Time");
 	int message=getParameterIntValue(mens,"Type");
 	cMessage * msg;
 	Ethernet1QTag * tag;

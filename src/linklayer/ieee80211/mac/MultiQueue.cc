@@ -152,18 +152,16 @@ void MultiQueue::push_front(cMessage* val,int i)
         int nQueue=-1;
         for (unsigned int j=0;j<queues.size();j++)
         {
-            simtime_t max;
-            int nQueue=-1;
             if (queues[j].front().first>max)
             {
                 max=queues[j].front().first;
                 nQueue=j;
             }
-            if (nQueue>=0)
-            {
-                delete queues[nQueue].front().second;
-                queues[nQueue].pop_front();
-            }
+        }
+        if (nQueue>=0)
+        {
+            delete queues[nQueue].front().second;
+            queues[nQueue].pop_front();
         }
     }
 
@@ -263,7 +261,6 @@ void MultiQueue::push_back(cMessage* val,int i)
         int nQueue=-1;
         for (unsigned int j=0;j<queues.size();j++)
         {
-            simtime_t max;
             if (queues[j].front().first>max)
             {
                 max=queues[j].front().first;

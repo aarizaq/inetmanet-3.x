@@ -63,6 +63,7 @@ std::ostream& operator << (std::ostream& os, const PriorityVector& pr )
     return os;
 }
 
+#if 0
 bool operator < (MACAddress mac1,MACAddress mac2)
 {
 
@@ -103,6 +104,7 @@ bool operator > (MACAddress mac1,MACAddress mac2)
 
     return false;
 }
+#endif
 
 bool operator < (BridgeID bid1,BridgeID bid2)
 {
@@ -116,7 +118,7 @@ bool operator < (BridgeID bid1,BridgeID bid2)
         // only compare the mac address if the priority are equals
         if (bid1.priority == bid2.priority)
         {
-            if (bid1.address > bid2.address)
+            if (bid1.address.getInt() > bid2.address.getInt())
             {
                 return true;
             }
@@ -139,7 +141,7 @@ bool operator > (BridgeID bid1, BridgeID bid2)
 
         if (bid1.priority == bid2.priority)
         {
-            if (bid1.address < bid2.address)
+            if (bid1.address.getInt() < bid2.address.getInt())
             {
                 return true;
             }

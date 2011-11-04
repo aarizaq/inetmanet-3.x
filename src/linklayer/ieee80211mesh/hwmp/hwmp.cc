@@ -309,6 +309,7 @@ msg                    ;
             break;
         default:
             opp_error("");
+            break;
     }
 
 }

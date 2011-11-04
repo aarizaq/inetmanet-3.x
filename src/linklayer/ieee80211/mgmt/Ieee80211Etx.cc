@@ -46,7 +46,7 @@ void Ieee80211Etx::initialize(int stage)
         {
             InterfaceEntry * ie = inet_ift->getInterface(i);
             if (ie->getMacAddress()==myAddress)
-                ie->setEstimateCostProcess(par("Index"), this);
+                ie->setEstimateCostProcess(par("Index").longValue(), this);
         }
         if (etxSize>0 && etxInterval>0)
             scheduleAt(simTime()+par("jitter")+etxInterval, etxTimer);
@@ -416,7 +416,6 @@ void Ieee80211Etx::receiveChangeNotification(int category, const cObject *detail
     Ieee80211TwoAddressFrame *frame = dynamic_cast<Ieee80211TwoAddressFrame *>(const_cast<cObject*> (details));
     if (frame==NULL)
         return;
-    MACAddress add = frame->getTransmitterAddress();
     if (category == NF_LINK_BREAK)
     {
         NeighborsMap::iterator it = neighbors.find(frame->getReceiverAddress());

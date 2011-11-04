@@ -656,6 +656,7 @@ void LDP::processLDPPacketFromTCP(LDPPacket *ldpPacket)
     {
     case HELLO:
         error("Received LDP HELLO over TCP (should arrive over UDP)");
+        break;
 
     case ADDRESS:
         // processADDRESS(ldpPacket);

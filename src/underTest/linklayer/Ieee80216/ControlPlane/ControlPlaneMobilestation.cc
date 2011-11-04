@@ -498,6 +498,7 @@ void ControlPlaneMobilestation::handleManagementFrame(Ieee80216GenericMacHeader 
         default:
             error("error: Management Message Type not in switch-statement");
             delete mgmtFrame;
+            break;
         }
     }
 }
@@ -2246,7 +2247,7 @@ void ControlPlaneMobilestation::getCalculateSNR(cMessage *msg)
     SNRQueue.push_back(frame->getSNR());
 
     //Es wird der mittlere SNR von "FrameAnzahl" Frames bestimmt
-    if (SNRQueue.size() >= FrameAnzahl)
+    if ((int)SNRQueue.size() >= FrameAnzahl)
     {
         for (SNRList::const_iterator ci = SNRQueue.begin(); ci != SNRQueue.end(); ++ci)
         {

@@ -142,7 +142,6 @@ void LWMPLSDataStructure::lwmpls_interface_delete_list_mpls(uint64_t mac_addr)
 {
 
     LWmpls_Forwarding_Structure *data_f_ptr = NULL;
-    simtime_t actual_time = simTime();
 
     /* borra todas las estructuras de datos correspondientes a las etiquetas que usan la direcci�n mac como */
     /* siguiente salto */
