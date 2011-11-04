@@ -65,7 +65,7 @@ class INET_API MACAddress
      */
     MACAddress(uint64 bits)
     {
-        if (bits & MAC_ADDRESS_MASK)
+        if (bits & !MAC_ADDRESS_MASK)
             macAddress64 = true;
         else
             macAddress64 = false;
