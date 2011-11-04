@@ -826,11 +826,9 @@ uint32_t HwmpProtocol::GetLinkMetric(const MACAddress &peerAddress)
     if (useEtxProc)
     {
         Ieee80211Etx * etx = dynamic_cast<Ieee80211Etx *>(interface80211ptr->getEstimateCostProcess(0));if (etx)
-        {
             return etx->getAirtimeMetric(peerAddress);
-        }
         else
-        return 1;
+            return 1;
     }
     else
     {
@@ -1832,7 +1830,7 @@ void HwmpProtocol::processFullPromiscuous(const cPolymorphic *details)
 
     Radio80211aControlInfo * cinfo = dynamic_cast<Radio80211aControlInfo *>(frame->getControlInfo());uint32_t
     cost = 1;
-    if (cinfo  && useEtxProc)
+    if (cinfo)
     {
         if (dynamic_cast<Ieee80211DataFrame *>(frame))
         {
