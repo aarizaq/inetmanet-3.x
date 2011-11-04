@@ -23,7 +23,7 @@ import inet.world.radio.ChannelControl;
 import inet.examples.wpan.csma802154.nodecsma802154;
 
 
-network csma802454net
+network csma802154net
 {
     parameters:
         int numHosts;
