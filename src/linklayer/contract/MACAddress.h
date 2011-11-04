@@ -54,18 +54,34 @@ class INET_API MACAddress
     /**
      * Default constructor initializes address bytes to zero.
      */
-    MACAddress();
+    MACAddress()
+    {
+        address = 0;
+        macAddress64 = false;
+    }
 
     /**
      * Initializes the address from a 48-bit integer
      */
-    MACAddress(uint64 bits);
+    MACAddress(uint64 bits)
+    {
+        if (bits & MAC_ADDRESS_MASK)
+            macAddress64 = true;
+        else
+            macAddress64 = false;
+        address = bits;
+    }
+
 
     /**
      * Constructor which accepts a hex string (12 hex digits, may also
      * contain spaces, hyphens and colons)
      */
-    MACAddress(const char *hexstr);
+    MACAddress(const char *hexstr)
+    {
+        setAddress(hexstr);
+    }
+
 
     /**
      * Copy constructor.
@@ -80,7 +96,13 @@ class INET_API MACAddress
     /**
      * Returns the address size in bytes, that is, 6.
      */
-    unsigned int getAddressSize() const;
+    unsigned int getAddressSize() const
+    {
+        if (macAddress64)
+            return MAC_ADDRESS_BYTES64;
+        return MAC_ADDRESS_SIZE;
+    }
+
 
     /**
      * Returns the kth byte of the address.
@@ -119,22 +141,40 @@ class INET_API MACAddress
     /**
      * Sets the address to the broadcast address (hex ff:ff:ff:ff:ff:ff).
      */
-    void setBroadcast();
+    void setBroadcast()
+    {
+        if (macAddress64)
+            address = MAC_ADDRESS_MASK64;
+        else
+            address = MAC_ADDRESS_MASK;
+    }
 
     /**
      * Returns true if this is the broadcast address (hex ff:ff:ff:ff:ff:ff).
      */
-    bool isBroadcast() const;
+    bool isBroadcast() const
+    {
+        if (macAddress64)
+            return address == MAC_ADDRESS_MASK64;
+        else
+            return address == MAC_ADDRESS_MASK;
+    }
+
 
     /**
      * Returns true if this is a multicast logical address (first byte's lsb is 1).
      */
     bool isMulticast() const  { return getAddressByte(0) & 0x01; };
 
+
     /**
      * Returns true if all address bytes are zero.
      */
-    bool isUnspecified() const;
+    bool isUnspecified() const
+    {
+        return address == 0;
+    }
+
 
     /**
      * Converts address to a hex string.
@@ -144,22 +184,22 @@ class INET_API MACAddress
     /**
      * Converts address to 48 bits integer.
      */
-    uint64 getInt() const;
+    uint64 getInt() const { return address; }
 
-    /**
+    /*
      * Returns true if the two addresses are equal.
      */
-    bool equals(const MACAddress& other) const;
+    bool equals(const MACAddress& other) const { return address == other.address; }
 
-    /**
+    /*
      * Returns true if the two addresses are equal.
      */
-    bool operator==(const MACAddress& other) const {return (*this).equals(other);}
+    bool operator==(const MACAddress& other) const { return address == other.address; }
 
-    /**
+    /*
      * Returns true if the two addresses are not equal.
      */
-    bool operator!=(const MACAddress& other) const {return !(*this).equals(other);}
+    bool operator!=(const MACAddress& other) const { return address != other.address; }
 
     /**
      * Returns -1, 0 or 1 as result of comparison of 2 addresses.
@@ -178,22 +218,35 @@ class INET_API MACAddress
      */
     static MACAddress generateAutoAddress();
 
-    bool operator<(const MACAddress& addr) const {return compare(addr)<0;}
+    bool operator<(const MACAddress& other) const { return address < other.address; }
 
-    bool operator>(const MACAddress& addr) const {return compare(addr)>0;}
-
-    /**
-     * Compares two MAC addresses.
-     * Returns -1, 0 or 1.
-     */
-    int compare(const MACAddress& other) const { return address - other.address; }
+    bool operator>(const MACAddress& other) const { return address > other.address; }
 
     // works with MACaddress (64 bits)
-
+    // convert EUI-48 to EUI64
     void convert64();
+
+    // get the address like EUI64, with independence if it is EUI64 or EUI48
     MACAddress getEui64();
+
+    // try to convert EUI-64 to EUI-48 if us possible
     void convert48();
-    MACAddress getEui46();
+
+    // try to get the address like EUI-48, if is possible
+    MACAddress getEui48();
+
+    MACAddress getMaskEUI48()
+    {
+        return MACAddress(MAC_ADDRESS_MASK);
+    }
+
+    MACAddress getMaskEUI64()
+    {
+        return MACAddress(MAC_ADDRESS_MASK64);
+    }
+
+    bool operator&(const MACAddress& other) const { return address & other.address; }
+    bool operator|(const MACAddress& other) const { return address | other.address; }
 
 };
 

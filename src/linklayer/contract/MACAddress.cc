@@ -27,35 +27,12 @@ const MACAddress MACAddress::UNSPECIFIED_ADDRESS;
 const MACAddress MACAddress::BROADCAST_ADDRESS("ff:ff:ff:ff:ff:ff");
 const MACAddress MACAddress::BROADCAST_ADDRESS64("ff:ff:ff:ff:ff:ff:ff:ff");
 
-MACAddress::MACAddress()
-{
-    address = 0;
-    macAddress64 = false;
-}
-
-MACAddress::MACAddress(uint64 bits)
-{
-    address = bits & MAC_ADDRESS_MASK;
-    macAddress64 = false;
-}
-
-MACAddress::MACAddress(const char *hexstr)
-{
-    setAddress(hexstr);
-}
 
 MACAddress& MACAddress::operator=(const MACAddress& other)
 {
     address = other.address;
     macAddress64 = other.macAddress64;
     return *this;
-}
-
-unsigned int MACAddress::getAddressSize() const
-{
-    if (macAddress64)
-        return MAC_ADDRESS_BYTES64;
-    return MAC_ADDRESS_SIZE;
 }
 
 unsigned char MACAddress::getAddressByte(unsigned int k) const
@@ -205,26 +182,6 @@ void MACAddress::setAddressBytes(unsigned char *addrbytes)
 
 }
 
-void MACAddress::setBroadcast()
-{
-    if (macAddress64)
-        address = MAC_ADDRESS_MASK64;
-    else
-        address = MAC_ADDRESS_MASK;
-}
-
-bool MACAddress::isBroadcast() const
-{
-    if (macAddress64)
-        return address == MAC_ADDRESS_MASK64;
-    else
-        return address == MAC_ADDRESS_MASK;
-}
-
-bool MACAddress::isUnspecified() const
-{
-    return address == 0;
-}
 
 std::string MACAddress::str() const
 {
@@ -245,19 +202,9 @@ std::string MACAddress::str() const
     return std::string(buf);
 }
 
-uint64 MACAddress::getInt() const
-{
-    return address;
-}
-
-bool MACAddress::equals(const MACAddress& other) const
-{
-	return address == other.address;
-}
-
 int MACAddress::compareTo(const MACAddress& other) const
 {
-	return address - other.address;
+    return (address < other.address) ? -1 : (address == other.address) ? 0 : 1;
 }
 
 InterfaceToken MACAddress::formInterfaceIdentifier() const
@@ -340,7 +287,7 @@ void MACAddress::convert48()
     setAddressBytes(addrbytes);
 }
 
-MACAddress MACAddress::getEui46()
+MACAddress MACAddress::getEui48()
 {
     MACAddress addr=*this;
     addr.convert48();
