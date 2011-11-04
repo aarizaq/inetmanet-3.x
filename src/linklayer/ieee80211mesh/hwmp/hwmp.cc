@@ -188,8 +188,8 @@ void HwmpProtocol::initialize(int stage)
             useEtxProc=false;
         else
             useEtxProc=true;
-        if (!useEtxProc)
-            linkFullPromiscuous();
+
+        linkFullPromiscuous();
         linkLayerFeeback();
         scheduleEvent();
     }
@@ -1832,7 +1832,7 @@ void HwmpProtocol::processFullPromiscuous(const cPolymorphic *details)
 
     Radio80211aControlInfo * cinfo = dynamic_cast<Radio80211aControlInfo *>(frame->getControlInfo());uint32_t
     cost = 1;
-    if (cinfo)
+    if (cinfo  && useEtxProc)
     {
         if (dynamic_cast<Ieee80211DataFrame *>(frame))
         {
