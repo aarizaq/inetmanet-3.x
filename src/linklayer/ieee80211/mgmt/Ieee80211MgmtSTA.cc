@@ -97,17 +97,19 @@ void Ieee80211MgmtSTA::initialize(int stage)
 
         nb = NotificationBoardAccess().get();
 
-        // determine numChannels (needed when we're told to scan "all" channels)
-        IChannelControl *cc = ChannelAccess::getChannelControl();
-        numChannels = cc->getNumChannels();
-        nb->subscribe(this, NF_LINK_FULL_PROMISCUOUS);
-
         WATCH(isScanning);
         WATCH(isAssociated);
 
         WATCH(scanning);
         WATCH(assocAP);
         WATCH_LIST(apList);
+    }
+    else if (stage == 1)
+    {
+        // determine numChannels (needed when we're told to scan "all" channels)
+        IChannelControl *cc = ChannelAccess::getChannelControl();
+        numChannels = cc->getNumChannels();
+        nb->subscribe(this, NF_LINK_FULL_PROMISCUOUS);
     }
 }
 
@@ -178,12 +180,14 @@ void Ieee80211MgmtSTA::handleTimer(cMessage *msg)
 
 void Ieee80211MgmtSTA::handleUpperMessage(cPacket *msg)
 {
-    Ieee80211DataFrame *frame = encapsulate(msg);
+    if (!isAssociated || assocAP.address.isUnspecified())
+    {
+        EV << "The STA is not associated to an Access point, discard the packet" << msg << "\n";
+        delete msg;
+        return;
+    }
 
-    // Discard frame if STA is not associated (assocAP.address is unspecified).
-    if (frame->getReceiverAddress().isUnspecified())
-        delete frame;
-    else
+    Ieee80211DataFrame *frame = encapsulate(msg);
         sendOrEnqueue(frame);
 }
 

@@ -155,6 +155,8 @@ InterfaceEntry *PPP::registerInterface(double datarate)
     e->setDatarate(datarate);
 
     // generate a link-layer address to be used as interface token for IPv6
+//    MACAddress address = MACAddress::generateAutoAddress();
+//    e->setMACAddress(address);
     InterfaceToken token(0, simulation.getUniqueNumber(), 64);
     e->setInterfaceToken(token);
 
@@ -295,6 +297,8 @@ void PPP::startTransmitting(cPacket *msg)
 
     // schedule an event for the time when last bit will leave the gate.
     simtime_t endTransmissionTime = datarateChannel->getTransmissionFinishTime();
+    if (endTransmissionTime < simTime())
+        endTransmissionTime = simTime();
     scheduleAt(endTransmissionTime, endTransmissionEvent);
     numSent++;
 }

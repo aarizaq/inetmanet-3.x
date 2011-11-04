@@ -146,11 +146,9 @@ long double int128::toLongDouble() const throw ()
 
 int128 int128::operator-() const throw ()
 {
-    if (!this->hi && !this->lo)
-        // number is 0, just return 0
-        return *this;
+    if (this->lo == 0)
+        return int128(0ull, -this->hi);
     else
-        // non 0 number
         return int128(-this->lo, ~this->hi);
 };
 
@@ -329,7 +327,7 @@ int128 & int128::operator>>=(unsigned int n) throw ()
 
         // get lower N bits of high qword
         uint64_t mask = 0ull;
-        for (unsigned int i = 0; i < n; ++i) mask |= (1 << i);
+        for (unsigned int i = 0; i < n; ++i) mask |= (1ull << i);
 
         // and add them to low qword
         this->lo |= (this->hi & mask) << (64 - n);
@@ -359,7 +357,7 @@ int128 & int128::operator<<=(unsigned int n) throw ()
 
         // get higher N bits of low qword
         uint64_t mask = 0ull;
-        for (unsigned int i = 0; i < n; ++i) mask |= (1 << (63 - i));
+        for (unsigned int i = 0; i < n; ++i) mask |= (1ull << (63 - i));
 
         // and add them to high qword
         this->hi |= (this->lo & mask) >> (64 - n);

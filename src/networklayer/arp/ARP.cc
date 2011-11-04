@@ -112,7 +112,7 @@ void ARP::initialize(int stage)
             entry->numRetries = 0;
             entry->macAddress = ie->getMacAddress();
 
-            ARPCache::iterator where = globalArpCache.insert(globalArpCache.begin(), std::make_pair(nextHopAddr,entry));
+            ARPCache::iterator where = globalArpCache.insert(globalArpCache.begin(), std::make_pair(nextHopAddr, entry));
             entry->myIter = where; // note: "inserting a new element into a map does not invalidate iterators that point to existing elements"
             localAddress.push_back(nextHopAddr);
         }

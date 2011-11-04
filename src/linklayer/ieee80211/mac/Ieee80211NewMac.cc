@@ -27,6 +27,9 @@
 #include "Ieee80211eClassifier.h"
 #include "Ieee80211DataRate.h"
 
+// TODO: 9.3.2.1, If there are buffered multicast or broadcast frames, the PC shall transmit these prior to any unicast frames.
+// TODO: control frames must send before
+
 Define_Module(Ieee80211NewMac);
 
 // don't forget to keep synchronized the C++ enum and the runtime enum definition

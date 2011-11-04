@@ -112,9 +112,8 @@ cPacket *TCPDataStreamRcvQueue::extractBytesUpTo(uint32 seq)
     {
         msg = new ByteArrayMessage("data");
         reg->copyTo(msg);
+        delete reg;
     }
-
-    delete reg;
     return msg;
 }
 
