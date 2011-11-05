@@ -61,7 +61,7 @@ simple Ieee80211NewMac
                                           // a generated MAC address in init stage 0.   
         string queueModule = default("");    // name of optional external queue module
         int maxQueueSize = default(50); // max queue length in frames; only used if queueModule==""
-        int maxCategorieQueueSize=default(50); // Max queue length in frames per categorie; only used if queueModule==""
+        int maxCategorieQueueSize = default(50); // Max queue length in frames per categorie; only used if queueModule==""
         int defaultAC = default(0); // what is default AC category
         int AIFSN0 = default(7); //AIFSN for background
         int AIFSN1 = default(3); //AIFSN for best effort
@@ -76,15 +76,15 @@ simple Ieee80211NewMac
         bool EDCA = default(true);
         /// WARNING
         // importan if true slot time, difs and ack time out (aPHY-RX-START-Delay) are funtion of modulation time (standar 2007)
-        bool useModulationParameters=default(false); //if true slot time, difs and ack time out (aPHY-RX-START-Delay) are funtion of modulation time (standar 2007)  
+        bool useModulationParameters = default(false); //if true slot time, difs and ack time out (aPHY-RX-START-Delay) are funtion of modulation time (standar 2007)  
 	    /// WARNING
         double bitrate @unit("bps");
         string opMode@enum ("b","g","a","p") = default("g");
         string WifiPreambleMode @enum ("LONG","SHORT") = default("LONG"); // Wifi preambre mode Ieee 2007, 19.3.2
         
-        double basicBitrate @unit("bps")= default(2e6bps);
+        double basicBitrate @unit("bps") = default(2e6bps);
         int mtu = default(1500);
-        double slotTime @unit("s")= default(9us);
+        double slotTime @unit("s") = default(9us);
         int rtsThresholdBytes @unit("B") = default(2346B); // longer messages will be sent using RTS/CTS
         int retryLimit = default(-1); // maximum number of retries per message, -1 means default
         int cwMinData = default(-1); // contention window for normal data frames, -1 means default
