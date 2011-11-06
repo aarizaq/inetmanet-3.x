@@ -23,34 +23,38 @@
 #include <utility>
 #include "IQoSClassifier.h"
 
-class INET_API MultiQueue : public cPolymorphic {
-protected:
-    typedef std::pair <simtime_t, cMessage *> Data;
-    typedef std::list<Data>Queue;
+class INET_API MultiQueue : public cObject
+{
+    protected:
+        typedef std::pair<simtime_t, cMessage *> Data;
+        typedef std::list<Data> Queue;
 
-    std::pair <int, cMessage *> firstPk;
-    cMessage * lastPk;
-    std::vector<Queue> queues;
-    std::vector<int> basePriority;
-    std::vector<int> priority;
-    IQoSClassifier * classifier;
-    unsigned int maxSize;
-public:
-    MultiQueue();
-    virtual ~MultiQueue();
-    void setNumQueues(int num);
-    unsigned int getNumQueques() {return  queues.size();}
-    void setMaxSize(unsigned int i){maxSize=i;}
-    unsigned int getMaxSize(){return maxSize;}
-    unsigned int size(int i=-1);
-    bool empty(int i=-1);
-    cMessage* front(int i=-1);
-    cMessage* back(int i=-1);
-    void push_front(cMessage* val,int i=-1);
-    void pop_front(int i=-1);
-    void push_back(cMessage* val,int i=-1);
-    void pop_back(int i=-1);
-    void createClassifier(const char * classifierClass)
+        std::pair<int, cMessage *> firstPk;
+        cMessage * lastPk;
+        std::vector<Queue> queues;
+        std::vector<int> basePriority;
+        std::vector<int> priority;
+        IQoSClassifier * classifier;
+        unsigned int maxSize;
+        unsigned int numStrictQueuePriorities;
+    public:
+        MultiQueue();
+        virtual ~MultiQueue();
+        void setNumQueues(int num);
+        void setNumStrictPrioritiesQueue(int num) { numStrictQueuePriorities = num;}
+        unsigned int getNumStrictPrioritiesQueues() { return numStrictQueuePriorities; }
+        unsigned int getNumQueques() { return queues.size(); }
+        void setMaxSize(unsigned int i) { maxSize = i; }
+        unsigned int getMaxSize() { return maxSize; }
+        unsigned int size(int i = -1);
+        bool empty(int i = -1);
+        cMessage* front(int i = -1);
+        cMessage* back(int i = -1);
+        void push_front(cMessage* val, int i = -1);
+        void pop_front(int i = -1);
+        void push_back(cMessage* val, int i = -1);
+        void pop_back(int i = -1);
+        void createClassifier(const char * classifierClass)
     {
         classifier = check_and_cast<IQoSClassifier*>(createOne(classifierClass));
         setNumQueues(classifier->getNumQueues());
