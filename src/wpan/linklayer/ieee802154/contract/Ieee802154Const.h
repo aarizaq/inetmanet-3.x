@@ -1,6 +1,7 @@
 #ifndef IEEE_802154_CONST_H
 #define IEEE_802154_CONST_H
 
+#include <stdint.h>
 #include "Ieee802154Def.h"
 
 //---PHY layer constants (Table 18)---
