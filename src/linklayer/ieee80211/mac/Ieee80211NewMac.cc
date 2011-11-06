@@ -747,7 +747,7 @@ void Ieee80211NewMac::handleUpperMsg(cPacket *msg)
 
 int Ieee80211NewMac::MappingAccessCategory(Ieee80211DataOrMgmtFrame *frame)
 {
-    bool isDataFrame = dynamic_cast<Ieee80211DataFrame *>(frame) != NULL;
+    bool isDataFrame = (dynamic_cast<Ieee80211DataFrame *>(frame) != NULL);
 
     if (classifier)
         currentAC = classifier->classifyPacket(frame->getEncapsulatedPacket());
@@ -771,7 +771,29 @@ int Ieee80211NewMac::MappingAccessCategory(Ieee80211DataOrMgmtFrame *frame)
     }
     if (isDataFrame)
     {
-        transmissionQueue()->push_back(frame);
+        if (transmissionQueue()->empty() || transmissionQueue()->size() == 1 || !frame->getReceiverAddress().isMulticast())
+        {
+            transmissionQueue()->push_back(frame);
+        }
+        else
+        {
+            // if the last frame is management insert here
+            Ieee80211DataFrame * frameAux = dynamic_cast<Ieee80211DataFrame *>(transmissionQueue()->back());
+            if ((frameAux==NULL) || (frameAux && frameAux->getReceiverAddress().isMulticast()))
+                transmissionQueue()->push_back(frame);
+            else
+            {
+                std::list<Ieee80211DataOrMgmtFrame*>::iterator p = transmissionQueue()->end();
+                while ((*p)->getReceiverAddress().isMulticast() && (p != transmissionQueue()->begin())) // search the first broadcast frame
+                {
+                    if (dynamic_cast<Ieee80211DataFrame *>(*p) == NULL)
+                        break;
+                    p--;
+                }
+                p++;
+                transmissionQueue()->insert(p, frame);
+            }
+        }
     }
     else
     {
@@ -786,6 +808,8 @@ int Ieee80211NewMac::MappingAccessCategory(Ieee80211DataOrMgmtFrame *frame)
             //so for sure we placed it on second place
             p = transmissionQueue()->begin();
             p++;
+            while ((dynamic_cast<Ieee80211DataFrame *> (*p) == NULL) && (p != transmissionQueue()->end())) // search the first not management frame
+                p++;
             transmissionQueue()->insert(p, frame);
         }
     }
