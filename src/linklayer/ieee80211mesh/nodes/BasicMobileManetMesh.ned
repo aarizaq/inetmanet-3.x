@@ -63,7 +63,7 @@ module BasicMobileManetMesh
         string mobilityType = default("StationaryMobility");
         int numRadios = default(1);
     gates:
-        input radioIn @directIn;
+        input radioIn[numRadios] @directIn;
 
     submodules:
         routingTable: RoutingTable {
@@ -71,42 +71,44 @@ module BasicMobileManetMesh
                 IPForward = true;
                 routerId = "";
                 routingFile = "";
-                @display("p=47,146");
+                @display("p=38,146");
         }
 
         notificationBoard: NotificationBoard {
             parameters:
-                @display("p=146,148");
+                @display("p=159,146");
         }
         interfaceTable: InterfaceTable {
             parameters:
-                @display("p=142,77");
+                @display("p=159,62");
         }
         sink: BasicNetLayer {
-            @display("p=101,205;i=block/sink");
+            @display("p=159,294;i=block/sink");
         }
         // the name of radio interface must have "wlan", valid examples wlan, wlan802, localwlan ....
-        wlan: Ieee80211NewNicMesh {
+        wlan[numRadios]: Ieee80211NewNicMesh {
             parameters:
-                @display("p=101,275;q=queue");
+                @display("p=159,386;q=queue");
         }
         // optional mobility module. Required only if wireless cards are present
         mobility: <mobilityType> like IMobility if mobilityType != "" && numRadios > 0 {
             parameters:
-                @display("p=53,121");
+                @display("p=30,62");
         }
 
 
         mmapBoard: MMapBoard {
             parameters:
-                @display("p=38,224;i=block/blackboard");
+                @display("p=38,294;i=block/blackboard");
         }
     connections allowunconnected:
 
         // connections to network outside
-        radioIn --> wlan.radioIn;
-        wlan.upperLayerOut --> sink.ifIn[0];
-        wlan.upperLayerIn <-- sink.ifOut[0];
+        for i=0..sizeof(radioIn)-1 {
+            radioIn[i] --> wlan[i].radioIn;
+            wlan[i].upperLayerOut --> sink.ifIn++;
+            wlan[i].upperLayerIn <-- sink.ifOut++;
+        }
 }
 
 

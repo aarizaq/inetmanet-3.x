@@ -50,7 +50,7 @@ module gateWayMesh
         int numExtInterfaces = default(0);
         int numRadios = default(0);               // the number of radios in the router. by default no wireless
         int numPcapRecorders = default(0); // no of PcapRecorders.
-        string mobilityType = default("NullMobility");
+        string mobilityType = default("StaticMobility");
         string routingFile = default("");
         bool IPForward = default(true);
         wlan[*].mgmtType = default("Ieee80211MgmtSTA");
