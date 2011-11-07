@@ -319,12 +319,22 @@ void Ieee80211Mesh::handleMessage(cMessage *msg)
     {
         // process incoming frame
         EV << "Frame arrived from MAC: " << msg << "\n";
-        Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame *>(msg);
-        Ieee80211MeshFrame *frame2  = dynamic_cast<Ieee80211MeshFrame *>(msg);
-        if (frame2)
-            frame2->setTTL(frame2->getTTL()-1);
-        actualizeReactive(frame,false);
-        processFrame(frame);
+        if (dynamic_cast<Ieee80211ActionHWMPFrame *>(msg))
+        {
+            if ((routingModuleHwmp != NULL) && (routingModuleHwmp->isOurType(PK(msg))))
+                send(msg,"routingOutHwmp");
+            else
+                delete msg;
+        }
+        else
+        {
+            Ieee80211DataOrMgmtFrame *frame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg);
+            Ieee80211MeshFrame *frame2  = dynamic_cast<Ieee80211MeshFrame *>(msg);
+            if (frame2)
+                frame2->setTTL(frame2->getTTL()-1);
+            actualizeReactive(frame,false);
+            processFrame(frame);
+        }
     }
     //else if (msg->arrivedOn("agentIn"))
     else if (strstr(gateName,"agentIn")!=NULL)
@@ -1270,6 +1280,11 @@ void Ieee80211Mesh::actualizeReactive(cPacket *pkt,bool out)
         routingModuleHwmp->setRefreshRoute(dest,next,isReverse);
     if (routingModuleReactive)
         routingModuleReactive->setRefreshRoute(dest,next,isReverse);
+    // actualize route to neighbor
+    if (routingModuleHwmp)
+        routingModuleHwmp->setRefreshRoute(next,next,isReverse);
+    if (routingModuleReactive)
+        routingModuleReactive->setRefreshRoute(next,next,isReverse);
 }
 
 
