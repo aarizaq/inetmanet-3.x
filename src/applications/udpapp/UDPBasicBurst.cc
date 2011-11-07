@@ -105,7 +105,7 @@ void UDPBasicBurst::initialize(int stage)
     if (par("setBroadcast").boolValue())
         socket.setBroadcast(true);
 
-    if (par("outputInterface").str() != "")
+    if (strcmp(par("outputInterface").stringValue(),"") != 0)
     {
         IInterfaceTable* ift = InterfaceTableAccess().get();
         InterfaceEntry *ie = ift->getInterfaceByName(par("outputInterface").stringValue());
@@ -113,7 +113,8 @@ void UDPBasicBurst::initialize(int stage)
             throw cRuntimeError(this, "Invalid output interface name : %s",par("outputInterface").stringValue());
         outputInterface = ie->getInterfaceId();
     }
-    if (par("outputInterfaceMulticastBroadcast").str() != "")
+
+    if (strcmp(par("outputInterfaceMulticastBroadcast").stringValue(),"") != 0)
     {
         IInterfaceTable* ift = InterfaceTableAccess().get();
         InterfaceEntry *ie = ift->getInterfaceByName(par("outputInterfaceMulticastBroadcast").stringValue());
