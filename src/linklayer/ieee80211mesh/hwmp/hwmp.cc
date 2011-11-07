@@ -228,8 +228,8 @@ void HwmpProtocol::processData(cMessage *msg)
                     dst.seqnum = 0;
 
                     destinations.push_back(dst);
-                    initiatePathError (makePathError(destinations));delete
-msg                    ;
+                    initiatePathError (makePathError(destinations));
+                    delete msg;
                     return;
                 }
             }
@@ -273,7 +273,8 @@ msg                    ;
                 dst.destination = pkt->getAddress4();
                 dst.seqnum = 0;
                 destinations.push_back(dst);
-                initiatePathError (makePathError(destinations));}
+                initiatePathError (makePathError(destinations));
+            }
             delete msg;
         }
         else
@@ -545,8 +546,7 @@ HwmpProtocol::createPReq(std::vector<PREQElem> preq, bool individual, MACAddress
     }
     ieee80211ActionPreqFrame->getBody().setTargetCount(ieee80211ActionPreqFrame->getBody().getPreqElemArraySize());
 
-    ieee80211ActionPreqFrame->getBody().setBodyLength(
-            ieee80211ActionPreqFrame->getBody().getBodyLength() + (preq.size() * PREQElemLen));
+    ieee80211ActionPreqFrame->getBody().setBodyLength(ieee80211ActionPreqFrame->getBody().getBodyLength() + (preq.size() * PREQElemLen));
     ieee80211ActionPreqFrame->setByteLength(ieee80211ActionPreqFrame->getByteLength() + (preq.size() * PREQElemLen));
 
     ieee80211ActionPreqFrame->setTransmitterAddress(GetAddress());
@@ -665,10 +665,8 @@ void HwmpProtocol::sendPerr(std::vector<HwmpFailedDestination> failedDestination
 {
     Ieee80211ActionPERRFrame * ieee80211ActionPerrFrame = new Ieee80211ActionPERRFrame();
     ieee80211ActionPerrFrame->getBody().setPerrElemArraySize(failedDestinations.size());
-    ieee80211ActionPerrFrame->getBody().setBodyLength(
-            ieee80211ActionPerrFrame->getBody().getBodyLength() + (failedDestinations.size() * PERRElemLen));
-    ieee80211ActionPerrFrame->setByteLength(
-            ieee80211ActionPerrFrame->getByteLength() + (failedDestinations.size() * PERRElemLen));
+    ieee80211ActionPerrFrame->getBody().setBodyLength(ieee80211ActionPerrFrame->getBody().getBodyLength() + (failedDestinations.size() * PERRElemLen));
+    ieee80211ActionPerrFrame->setByteLength(ieee80211ActionPerrFrame->getByteLength() + (failedDestinations.size() * PERRElemLen));
     ieee80211ActionPerrFrame->getBody().setTTL(GetMaxTtl());
 
     ieee80211ActionPerrFrame->setTransmitterAddress(GetAddress());
@@ -762,9 +760,8 @@ void HwmpProtocol::initiatePerr(std::vector<HwmpFailedDestination> failedDestina
         for (std::vector<MACAddress>::const_iterator i = receivers.begin(); i != end; i++)
         {
             bool should_add = true;
-            for (std::vector<MACAddress>::const_iterator j = m_myPerr.receivers.begin(); j != m_myPerr.receivers.end();
-                    j++)
-                    {
+            for (std::vector<MACAddress>::const_iterator j = m_myPerr.receivers.begin(); j != m_myPerr.receivers.end(); j++)
+            {
                 if ((*i) == (*j))
                 {
                     should_add = false;
@@ -781,8 +778,7 @@ void HwmpProtocol::initiatePerr(std::vector<HwmpFailedDestination> failedDestina
         for (std::vector<HwmpFailedDestination>::const_iterator i = failedDestinations.begin(); i != end; i++)
         {
             bool should_add = true;
-            for (std::vector<HwmpFailedDestination>::const_iterator j = m_myPerr.destinations.begin();
-                    j != m_myPerr.destinations.end(); j++)
+            for (std::vector<HwmpFailedDestination>::const_iterator j = m_myPerr.destinations.begin(); j != m_myPerr.destinations.end(); j++)
                     {
                 if (((*i).destination == (*j).destination) && ((*j).seqnum > (*i).seqnum))
                 {
