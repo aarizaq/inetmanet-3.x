@@ -54,7 +54,7 @@ module Ieee80211NicMesh like IWirelessNic
             parameters:
                 @display("p=96,240");
         }
-    connections:
+    connections allowunconnected:
         radioIn --> radio.radioIn;
         radio.upperLayerIn <-- mac.lowerLayerOut;
         radio.upperLayerOut --> mac.lowerLayerIn;

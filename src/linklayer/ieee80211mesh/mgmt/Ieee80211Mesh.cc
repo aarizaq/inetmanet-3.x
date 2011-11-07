@@ -159,7 +159,8 @@ void Ieee80211Mesh::initialize(int stage)
     }
     else if (stage == 4)
     {
-        macBaseGateId = gateSize("macOut")==0 ? -1 : gate("macOut",0)->getId(); // FIXME macBaseGateId is unused, what is it?
+        // macBaseGateId = gateSize("macOut")==0 ? -1 : gate("macOut",0)->getId(); // FIXME macBaseGateId is unused, what is it?
+        macBaseGateId = 0;
         EV << "macBaseGateId :" << macBaseGateId << "\n";
         ift = InterfaceTableAccess ().get();
         nb = NotificationBoardAccess().get();
@@ -981,7 +982,7 @@ void Ieee80211Mesh::sendOut(cMessage *msg)
     //InterfaceEntry *ie = ift->getInterfaceById(msg->getKind());
     msg->setKind(0);
     //send(msg, macBaseGateId + ie->getNetworkLayerGateIndex());
-    send(msg, "macOut",0);
+    send(msg, "macOut");
 }
 
 

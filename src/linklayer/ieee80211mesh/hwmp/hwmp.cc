@@ -383,9 +383,9 @@ void HwmpProtocol::sendPreq(std::vector<PREQElem> preq, bool isProactive)
     }
 }
 
-void HwmpProtocol::sendPrep(MACAddress src, 
-                            MACAddress targetAddr, 
-                            MACAddress retransmitter, 
+void HwmpProtocol::sendPrep(MACAddress src,
+                            MACAddress targetAddr,
+                            MACAddress retransmitter,
                             uint32_t initMetric,
                             uint32_t originatorSn,
                             uint32_t targetSn,

@@ -59,9 +59,9 @@ module BasicMobileManetMesh
 {
     parameters:
         @node();
-        string mobilityType = default("NullMobility");
         @display("i=device/pocketpc_s");
-
+        string mobilityType = default("StationaryMobility");
+        int numRadios = default(1);
     gates:
         input radioIn @directIn;
 
@@ -90,10 +90,12 @@ module BasicMobileManetMesh
             parameters:
                 @display("p=101,275;q=queue");
         }
-        mobility: <default("NullMobility")>  like IMobility {
+        // optional mobility module. Required only if wireless cards are present
+        mobility: <mobilityType> like IMobility if mobilityType != "" && numRadios > 0 {
             parameters:
-                @display("p=38,73");
+                @display("p=53,121");
         }
+
 
         mmapBoard: MMapBoard {
             parameters:
