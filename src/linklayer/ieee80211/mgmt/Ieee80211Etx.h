@@ -36,6 +36,7 @@
     bool airtimeMetric;
     double testFrameDuration;
     double testFrameError;
+    uint32_t airtimeValue;
 
     SNRDataTime& operator=(const SNRDataTime& other)
     {
@@ -46,6 +47,7 @@
         this->airtimeMetric=other.airtimeMetric;
         this->testFrameDuration=other.testFrameDuration;
         this->testFrameError=other.testFrameError;
+        this->airtimeValue = other.airtimeValue;
         return *this;
     }
 }; // Store information about the SNR and the time that that measure was store
