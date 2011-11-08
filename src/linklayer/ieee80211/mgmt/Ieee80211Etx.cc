@@ -37,7 +37,7 @@ void Ieee80211Etx::initialize(int stage)
         ettSize2 = par("ETTSize2");
         maxLive = par("TimeToLive");
         powerWindow = par("powerWindow");
-        powerWindowTime = par("powerWindow");
+        powerWindowTime = par("powerWindowTime");
         NotificationBoard *nb = NotificationBoardAccess().get();
         nb->subscribe(this, NF_LINK_BREAK);
         nb->subscribe(this, NF_LINK_FULL_PROMISCUOUS);
