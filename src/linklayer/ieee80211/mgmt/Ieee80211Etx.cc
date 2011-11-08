@@ -494,7 +494,7 @@ uint32_t Ieee80211Etx::getAirtimeMetric(const MACAddress &addr)
     NeighborsMap::iterator it = neighbors.find(addr);
     if (it != neighbors.end())
     {
-        while (simTime() - it->second->signalToNoiseAndSignal.front().snrTime > powerWindowTime)
+        while (!it->second->signalToNoiseAndSignal.empty() && (simTime() - it->second->signalToNoiseAndSignal.front().snrTime > powerWindowTime))
             it->second->signalToNoiseAndSignal.erase(it->second->signalToNoiseAndSignal.begin());
         if (it->second->signalToNoiseAndSignal.empty() && (simTime() - it->second->getTime() > maxLive))
         {
