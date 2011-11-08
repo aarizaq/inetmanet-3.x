@@ -450,10 +450,13 @@ void Ieee80211Etx::receiveChangeNotification(int category, const cObject *detail
                     neighbors.insert(std::pair<MACAddress, MacEtxNeighbor*>(frame->getTransmitterAddress(),neig));
                     it = neighbors.find(frame->getTransmitterAddress());
                 }
-                while ((int)it->second->signalToNoiseAndSignal.size()>powerWindow-1)
-                    it->second->signalToNoiseAndSignal.erase(it->second->signalToNoiseAndSignal.begin());
-                while (simTime() - it->second->signalToNoiseAndSignal.front().snrTime>powerWindowTime)
-                    it->second->signalToNoiseAndSignal.erase(it->second->signalToNoiseAndSignal.begin());
+                if (!it->second->signalToNoiseAndSignal.empty())
+                {
+                    while ((int)it->second->signalToNoiseAndSignal.size()>powerWindow-1)
+                        it->second->signalToNoiseAndSignal.erase(it->second->signalToNoiseAndSignal.begin());
+                    while (simTime() - it->second->signalToNoiseAndSignal.front().snrTime>powerWindowTime)
+                        it->second->signalToNoiseAndSignal.erase(it->second->signalToNoiseAndSignal.begin());
+                }
 
                 SNRDataTime snrDataTime;
                 snrDataTime.signalPower = cinfo->getRecPow();
