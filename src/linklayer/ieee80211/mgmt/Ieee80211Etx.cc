@@ -454,7 +454,7 @@ void Ieee80211Etx::receiveChangeNotification(int category, const cObject *detail
                 {
                     while ((int)it->second->signalToNoiseAndSignal.size()>powerWindow-1)
                         it->second->signalToNoiseAndSignal.erase(it->second->signalToNoiseAndSignal.begin());
-                    while (simTime() - it->second->signalToNoiseAndSignal.front().snrTime>powerWindowTime)
+                    while (simTime() - it->second->signalToNoiseAndSignal.front().snrTime>powerWindowTime && !it->second->signalToNoiseAndSignal.empty())
                         it->second->signalToNoiseAndSignal.erase(it->second->signalToNoiseAndSignal.begin());
                 }
 
