@@ -508,9 +508,9 @@ void RoutingTableParser::parseRules(char *rulesFile)
                    pos += strcpyword(str, rulesFile + pos);
                    skipBlanks(rulesFile, pos);
                    if (!strcmp(str, "DROP"))
-                       e->setRoule(IPv4RouteRule::DROP);
+                       e->setRule(IPv4RouteRule::DROP);
                    else if (!strcmp(str, "ACCEPT"))
-                       e->setRoule(IPv4RouteRule::ACCEPT);
+                       e->setRule(IPv4RouteRule::ACCEPT);
                    else
                        opp_error("Syntax error in routing file: `%s' should be DROP or ACCEPT", str);
                    continue;

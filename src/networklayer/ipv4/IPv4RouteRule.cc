@@ -1,4 +1,5 @@
 //
+// Copyright (C) 2011 Alfonso Ariza, Malaga University (Spain)
 // Copyright (C) 2004-2006 Andras Varga
 // Copyright (C) 2000 Institut fuer Telematik, Universitaet Karlsruhe
 //
@@ -24,7 +25,7 @@
 #include "InterfaceEntry.h"
 
 
-void IPv4RouteRule::setRoule(Rule rule)
+void IPv4RouteRule::setRule(Rule rule)
 {
     if (DROP != rule && NONE != rule)
         opp_error("Rule not supported yet");
