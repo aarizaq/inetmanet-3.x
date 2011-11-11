@@ -362,7 +362,7 @@ void IPv4::routePacket(IPv4Datagram *datagram, InterfaceEntry *destIE, bool from
                         IPv4Datagram * dataAux = datagram->dup();
                         if (dataAux->getSrcAddress().isUnspecified())
                              dataAux->setSrcAddress(ie->ipv4Data()->getIPAddress());
-                        fragmentAndSend(datagram->dup(), ie, IPv4Address::ALLONES_ADDRESS);
+                        fragmentAndSend(dataAux, ie, IPv4Address::ALLONES_ADDRESS);
                     }
                 }
                 delete datagram;
