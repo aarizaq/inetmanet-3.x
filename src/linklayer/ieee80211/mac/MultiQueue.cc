@@ -27,6 +27,7 @@ MultiQueue::MultiQueue()
     priority[0] = 1;
     maxSize = 1000000;
     numStrictQueuePriorities = 0;
+    exploreQueue = 1;
 }
 
 MultiQueue::~MultiQueue()
@@ -47,6 +48,7 @@ MultiQueue::~MultiQueue()
 
 void MultiQueue::setNumQueues(int num)
 {
+    exploreQueue = num;  // set iterator to null
     basePriority.resize(num);
     priority.resize(num);
     if (num > (int) queues.size())
@@ -371,3 +373,58 @@ void MultiQueue::pop_back(int i)
     }
 }
 
+cMessage* MultiQueue::initIterator()
+{
+    // if strict priority queues are empty search in the others
+    for (unsigned int j = 0; j < queues.size(); j++)
+    {
+        if (queues[j].empty())
+            continue;
+        exploreQueue = j;
+        position = queues[j].begin();
+        return queues[j].front().second;
+    }
+    return NULL;
+}
+
+cMessage* MultiQueue::next()
+{
+    // if strict priority queues are empty search in the others
+
+    while (position==queues[exploreQueue].end())
+    {
+        if (exploreQueue < queues.size())
+        {
+            exploreQueue++;
+            position = queues[exploreQueue].begin();
+            if (position!=queues[exploreQueue].end())
+                return position->second;
+        }
+        else
+            return NULL;
+    }
+
+    position++;
+    while (position==queues[exploreQueue].end())
+    {
+         if (exploreQueue < queues.size())
+         {
+             exploreQueue++;
+             position = queues[exploreQueue].begin();
+             if (position!=queues[exploreQueue].end())
+                 return position->second;
+         }
+         else
+             return NULL;
+     }
+    return position->second;
+}
+
+bool  MultiQueue::isEnd()
+{
+    if (exploreQueue >= queues.size())
+        return true;
+    if (position==queues[exploreQueue].end())
+        return true;
+    return false;
+}

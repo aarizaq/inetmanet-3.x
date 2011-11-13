@@ -28,6 +28,8 @@ class INET_API MultiQueue : public cObject
     protected:
         typedef std::pair<simtime_t, cMessage *> Data;
         typedef std::list<Data> Queue;
+        Queue::iterator position;
+        unsigned int exploreQueue;
 
         std::pair<int, cMessage *> firstPk;
         cMessage * lastPk;
@@ -41,11 +43,26 @@ class INET_API MultiQueue : public cObject
         MultiQueue();
         virtual ~MultiQueue();
         void setNumQueues(int num);
-        void setNumStrictPrioritiesQueue(int num) { numStrictQueuePriorities = num;}
-        unsigned int getNumStrictPrioritiesQueues() { return numStrictQueuePriorities; }
-        unsigned int getNumQueques() { return queues.size(); }
-        void setMaxSize(unsigned int i) { maxSize = i; }
-        unsigned int getMaxSize() { return maxSize; }
+        void setNumStrictPrioritiesQueue(int num)
+        {
+            numStrictQueuePriorities = num;
+        }
+        unsigned int getNumStrictPrioritiesQueues()
+        {
+            return numStrictQueuePriorities;
+        }
+        unsigned int getNumQueques()
+        {
+            return queues.size();
+        }
+        void setMaxSize(unsigned int i)
+        {
+            maxSize = i;
+        }
+        unsigned int getMaxSize()
+        {
+            return maxSize;
+        }
         unsigned int size(int i = -1);
         bool empty(int i = -1);
         cMessage* front(int i = -1);
@@ -55,22 +72,25 @@ class INET_API MultiQueue : public cObject
         void push_back(cMessage* val, int i = -1);
         void pop_back(int i = -1);
         void createClassifier(const char * classifierClass)
-    {
-        classifier = check_and_cast<IQoSClassifier*>(createOne(classifierClass));
-        setNumQueues(classifier->getNumQueues());
-    }
-    int getCost(int i)
-    {
-        if (i>=(int)queues.size())
-        	throw cRuntimeError(this, "Queue doens't exist");
-        return  basePriority[i];
-    }
-    void setCost(int i,int cost)
-    {
-        if (i>=(int)queues.size())
-        	throw cRuntimeError(this, "Queue doens't exist");
-        basePriority[i]=priority[i]=cost;
-    }
+        {
+            classifier = check_and_cast<IQoSClassifier*>(createOne(classifierClass));
+            setNumQueues(classifier->getNumQueues());
+        }
+        int getCost(int i)
+        {
+            if (i >= (int) queues.size())
+                throw cRuntimeError(this, "Queue doens't exist");
+            return basePriority[i];
+        }
+        void setCost(int i, int cost)
+        {
+            if (i >= (int) queues.size())
+                throw cRuntimeError(this, "Queue doens't exist");
+            basePriority[i] = priority[i] = cost;
+        }
+        cMessage * initIterator();
+        cMessage * next();
+        bool isEnd();
 };
 
 #endif /* MULTIQUEUE_H_ */
