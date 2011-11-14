@@ -300,7 +300,7 @@ void MultiQueue::push_back(cMessage* val, int i)
         }
         queues[i].push_back(value);
     }
-    else if (!classifier)
+    else if (classifier)
     {
         if (!firstPk.second)
         {
@@ -337,8 +337,7 @@ void MultiQueue::pop_back(int i)
         if (lastPk == queues[i].back().second)
             lastPk = NULL;
         queues[i].pop_back();
-        if (lastPk != NULL
-            )
+        if (lastPk != NULL)
             return; // nothing to do
         if (this->empty())
             return;
@@ -375,14 +374,14 @@ void MultiQueue::pop_back(int i)
 
 cMessage* MultiQueue::initIterator()
 {
-    // if strict priority queues are empty search in the others
-    for (unsigned int j = 0; j < queues.size(); j++)
+
+    isFirst = true;
+    exploreQueue = 0;
+    position = queues[0].begin();
+
+    if (firstPk.second)
     {
-        if (queues[j].empty())
-            continue;
-        exploreQueue = j;
-        position = queues[j].begin();
-        return queues[j].front().second;
+        return firstPk.second;
     }
     return NULL;
 }
@@ -390,12 +389,25 @@ cMessage* MultiQueue::initIterator()
 cMessage* MultiQueue::next()
 {
     // if strict priority queues are empty search in the others
+    if (isFirst)
+    {
+        isFirst = false;
+        for (unsigned int j = 0; j < queues.size(); j++)
+        {
+            if (queues[j].empty())
+                continue;
+            exploreQueue = j;
+            position = queues[j].begin();
+            return queues[j].front().second;
+        }
+        return NULL; // if arrive here the queue is empty return NULL
+    }
 
     while (position==queues[exploreQueue].end())
     {
+        exploreQueue++;
         if (exploreQueue < queues.size())
         {
-            exploreQueue++;
             position = queues[exploreQueue].begin();
             if (position!=queues[exploreQueue].end())
                 return position->second;

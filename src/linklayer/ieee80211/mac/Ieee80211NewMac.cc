@@ -80,7 +80,11 @@ Ieee80211NewMac::~Ieee80211NewMac()
         cancelAndDelete(endBackoff(i));
         while (!transmissionQueue(i)->empty())
         {
+#ifdef USEMULTIQUEUE
+            Ieee80211Frame *temp = dynamic_cast<Ieee80211Frame *> (transmissionQueue(i)->front());
+#else
             Ieee80211Frame *temp = transmissionQueue(i)->front();
+#endif
             transmissionQueue(i)->pop_front();
             delete temp;
         }
@@ -158,6 +162,16 @@ void Ieee80211NewMac::initialize(int stage)
         maxCategorieQueueSize = par("maxCategorieQueueSize");
         rtsThreshold = par("rtsThresholdBytes");
 
+#ifdef  USEMULTIQUEUE
+        for (int i=0; i<numCategories(); i++)
+        {
+            transmissionQueue(i)->createClassifier("Ieee80211MacQueueClassifier");
+            if (numCategories()==1)
+                transmissionQueue(i)->setMaxSize(maxQueueSize);
+            else
+                transmissionQueue(i)->setMaxSize(maxCategorieQueueSize);
+        }
+#endif
         // the variable is renamed due to a confusion in the standard
         // the name retry limit would be misleading, see the header file comment
         transmissionLimit = par("retryLimit");
@@ -494,8 +508,10 @@ void Ieee80211NewMac::initWatches()
          WATCH(edcCAF[i].backoffPeriod);
      WATCH(currentAC);
      WATCH(oldcurrentAC);
+#ifndef  USEMULTIQUEUE
      for (int i=0; i<numCategories(); i++)
          WATCH_LIST(edcCAF[i].transmissionQueue);
+#endif
      WATCH(nav);
      WATCH(txop);
 
@@ -745,6 +761,38 @@ void Ieee80211NewMac::handleUpperMsg(cPacket *msg)
     handleWithFSM(frame);
 }
 
+#ifdef  USEMULTIQUEUE
+int Ieee80211NewMac::MappingAccessCategory(Ieee80211DataOrMgmtFrame *frame)
+{
+    bool isDataFrame = (dynamic_cast<Ieee80211DataFrame *>(frame) != NULL);
+
+    if (classifier)
+        currentAC = classifier->classifyPacket(frame->getEncapsulatedPacket());
+    else
+        currentAC = 0;
+        // check for queue overflow
+    if (isDataFrame && maxCategorieQueueSize && (int)transmissionQueue()->size() >= maxCategorieQueueSize)
+    {
+        EV << "message " << frame << " received from higher layer but AC queue is full, dropping message\n";
+        numDropped()++;
+        delete frame;
+        return 200;
+    }
+
+    if (isDataFrame && maxQueueSize && (int)transmissionQueueSize() >= maxQueueSize)
+    {
+        EV << "message " << frame << " received from higher layer but AC queue is full, dropping message\n";
+        numDropped()++;
+        delete frame;
+        return 200;
+    }
+    transmissionQueue()->push_back(frame);
+    EV << "frame classified as access category "<< currentAC <<" (0 background, 1 best effort, 2 video, 3 voice)\n";
+    return true;
+}
+
+#else
+
 int Ieee80211NewMac::MappingAccessCategory(Ieee80211DataOrMgmtFrame *frame)
 {
     bool isDataFrame = (dynamic_cast<Ieee80211DataFrame *>(frame) != NULL);
@@ -816,6 +864,7 @@ int Ieee80211NewMac::MappingAccessCategory(Ieee80211DataOrMgmtFrame *frame)
     EV << "frame classified as access category "<< currentAC <<" (0 background, 1 best effort, 2 video, 3 voice)\n";
     return true;
 }
+#endif
 
 void Ieee80211NewMac::handleCommand(cMessage *msg)
 {
@@ -1911,6 +1960,44 @@ void Ieee80211NewMac::sendDataFrameOnEndSIFS(Ieee80211DataOrMgmtFrame *frameToSe
     delete ctsFrame;
 }
 
+#ifdef  USEMULTIQUEUE
+void Ieee80211NewMac::sendDataFrame(Ieee80211DataOrMgmtFrame *frameToSend)
+{
+    simtime_t t = 0, time = 0;
+    int count = 0;
+    Ieee80211DataOrMgmtFrame* frame;
+
+    frame = dynamic_cast<Ieee80211DataOrMgmtFrame*> (transmissionQueue()->initIterator());
+    ASSERT(frame==frameToSend);
+    if (!txop && TXOP() > 0 && transmissionQueue()->size() >= 2 )
+    {
+        //we start packet burst within TXOP time period
+        txop = true;
+
+        for (frame=dynamic_cast<Ieee80211DataOrMgmtFrame*>(transmissionQueue()->initIterator()); frame!=NULL; frame=dynamic_cast<Ieee80211DataOrMgmtFrame*>(transmissionQueue()->next()))
+        {
+            count++;
+            t = computeFrameDuration(frame) + 2 * getSIFS() + computeFrameDuration(LENGTH_ACK, basicBitrate);
+            EV << "t is " << t << endl;
+            if (TXOP()>time+t)
+            {
+                time += t;
+                EV << "adding t \n";
+            }
+            else
+            {
+                break;
+            }
+        }
+        //to be sure we get endTXOP earlier then receive ACK and we have to minus SIFS time from first packet
+        time -= getSIFS()/2 + getSIFS();
+        EV << "scheduling TXOP for AC" << currentAC << ", duration is " << time << ",count is " << count << endl;
+        scheduleAt(simTime() + time, endTXOP);
+    }
+    EV << "sending Data frame\n";
+    sendDown(setBitrateFrame(buildDataFrame(frameToSend)));
+}
+#else
 void Ieee80211NewMac::sendDataFrame(Ieee80211DataOrMgmtFrame *frameToSend)
 {
     simtime_t t = 0, time = 0;
@@ -1947,6 +2034,7 @@ void Ieee80211NewMac::sendDataFrame(Ieee80211DataOrMgmtFrame *frameToSend)
     EV << "sending Data frame\n";
     sendDown(setBitrateFrame(buildDataFrame(frameToSend)));
 }
+#endif
 
 void Ieee80211NewMac::sendRTSFrame(Ieee80211DataOrMgmtFrame *frameToSend)
 {
@@ -1988,13 +2076,20 @@ Ieee80211DataOrMgmtFrame *Ieee80211NewMac::buildDataFrame(Ieee80211DataOrMgmtFra
         if (txop)
 
         {
-            std::list<Ieee80211DataOrMgmtFrame*>::iterator nextframeToSend;
+#ifdef  USEMULTIQUEUE
+            Ieee80211DataOrMgmtFrame* nextframeToSend = dynamic_cast<Ieee80211DataOrMgmtFrame*> (transmissionQueue()->initIterator());
+            nextframeToSend = dynamic_cast<Ieee80211DataOrMgmtFrame*> (transmissionQueue()->next());
+            frame->setDuration(3 * getSIFS() + 2 * computeFrameDuration(LENGTH_ACK, basicBitrate)
+                               + computeFrameDuration(nextframeToSend));
+#else
             // ++ operation is safe because txop is true
+            std::list<Ieee80211DataOrMgmtFrame*>::iterator nextframeToSend;
             nextframeToSend = transmissionQueue()->begin();
             ASSERT(transmissionQueue()->end() != nextframeToSend);
             nextframeToSend++;
             frame->setDuration(3 * getSIFS() + 2 * computeFrameDuration(LENGTH_ACK, basicBitrate)
                                + computeFrameDuration(*nextframeToSend));
+#endif
         }
         else
             frame->setDuration(getSIFS() + computeFrameDuration(LENGTH_ACK, basicBitrate));
@@ -2215,8 +2310,11 @@ Ieee80211Frame *Ieee80211NewMac::getFrameReceivedBeforeSIFS()
 void Ieee80211NewMac::popTransmissionQueue()
 {
     EV << "dropping frame from transmission queue\n";
-
+#ifdef USEMULTIQUEUE
+    Ieee80211Frame *temp = dynamic_cast<Ieee80211Frame *>(transmissionQueue()->front());
+#else
     Ieee80211Frame *temp = transmissionQueue()->front();
+#endif
     ASSERT(!transmissionQueue()->empty());
     transmissionQueue()->pop_front();
     if (queueModule)

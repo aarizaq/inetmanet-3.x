@@ -39,6 +39,7 @@ class INET_API MultiQueue : public cObject
         IQoSClassifier * classifier;
         unsigned int maxSize;
         unsigned int numStrictQueuePriorities;
+        bool isFirst;
     public:
         MultiQueue();
         virtual ~MultiQueue();
