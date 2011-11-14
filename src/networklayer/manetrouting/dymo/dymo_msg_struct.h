@@ -51,7 +51,7 @@ struct DYMO_element : public cPacket
 
     //explicit AODV_msg(const char *name="AodvMgs") : cMessage(name) {extensionsize=0;extension=NULL;}
 #ifdef STATIC_BLOCK
-    explicit DYMO_element(const char *name = NULL) : cPacket(name) {setBitLength(0); extensionsize = 0; memset(extension, 0, STATIC_BLOCK_SIZE); blockAddressGroup = 0; previousStatic=false;}
+    explicit DYMO_element(const char *name = NULL) : cPacket(name) {setBitLength(0); extensionsize = 0; memset(extension, 0, STATIC_BLOCK_SIZE); blockAddressGroup = 0; previousStatic = false;}
 #else
     explicit DYMO_element(const char *name = NULL) : cPacket(name) {setBitLength(0); extensionsize = 0; extension = NULL; blockAddressGroup = 0; previousStatic = false;}
 #endif
@@ -65,6 +65,11 @@ struct DYMO_element : public cPacket
     char * getFirstExtension() {return extension;}
     int getSizeExtension() {return extensionsize;}
     virtual std::string detailedInfo() const;
+
+  private:
+    void copy(const DYMO_element& other);
+    void clean() { clearExtension(); }
+
   protected:
 #ifdef  STATIC_BLOCK
     char extension[STATIC_BLOCK_SIZE];
@@ -121,6 +126,10 @@ struct Dymo_RE : public DYMO_element
     void delBocks(int n);
     void delBlockI(int);
     int numBlocks() const {return ((int)ceil((double)extensionsize/(double)sizeof(struct re_block)));}
+
+  private:
+    void copy(const Dymo_RE& other);
+    void clean();
 };
 
 #define UERR_SIZE 17U
@@ -141,6 +150,10 @@ struct Dymo_UERR : public DYMO_element
     Uint128 uelem_target_addr;
     Uint128 uerr_node_addr;
     u_int8_t    uelem_type;
+
+    private:
+      void copy(const Dymo_UERR& other);
+      void clean() {};
 };
 
 
@@ -171,6 +184,9 @@ struct Dymo_RERR : public DYMO_element
     void delBocks(int n);
     int numBlocks() const {return ((int)ceil((double)extensionsize/(double)sizeof(struct rerr_block)));}
 
+  private:
+    void copy(const Dymo_RERR& other);
+    void clean() {};
 };
 
 #define HELLO_BASIC_SIZE 2U

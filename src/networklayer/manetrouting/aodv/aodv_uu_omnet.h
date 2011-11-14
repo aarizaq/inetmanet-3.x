@@ -132,7 +132,7 @@ class AODVUU : public ManetRoutingBase
   public:
     static int  log_file_fd;
     static bool log_file_fd_init;
-    AODVUU() {isRoot= false; is_init =false; log_file_fd_init=false; sendMessageEvent = new cMessage();/*&messageEvent;*/}
+    AODVUU() {isRoot = false; is_init = false; log_file_fd_init = false; sendMessageEvent = new cMessage();/*&messageEvent;*/}
     ~AODVUU();
 
     void packetFailed(IPv4Datagram *p);

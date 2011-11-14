@@ -146,9 +146,11 @@ long double int128::toLongDouble() const throw ()
 
 int128 int128::operator-() const throw ()
 {
-    if (this->lo == 0)
-        return int128(0ull, -this->hi);
+    if (!this->hi && !this->lo)
+        // number is 0, just return 0
+        return *this;
     else
+        // non 0 number
         return int128(-this->lo, ~this->hi);
 };
 

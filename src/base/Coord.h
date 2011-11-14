@@ -47,6 +47,9 @@ public:
     double z;
     /*@}*/
 
+private:
+  void copy(const Coord& other) { x = other.x; y = other.y; z = other.z; }
+
 public:
     /** @brief Default constructor. */
     Coord()
@@ -57,12 +60,12 @@ public:
         : x(x), y(y), z(z) {}
 
     /** @brief Initializes coordinate from other coordinate. */
-    Coord(const Coord& pos)
-        : cObject(pos), x(pos.x), y(pos.y), z(pos.z) {}
+    Coord(const Coord& other)
+        : cObject(other) { copy(other); }
 
     /** @brief Initializes coordinate from other coordinate. */
-    Coord(const Coord* pos)
-        : cObject(*pos), x(pos->x), y(pos->y), z(pos->z) {}
+    Coord(const Coord* other)
+        : cObject(*other) { copy(*other); }
 
     /** @brief Returns a string with the value of the coordinate. */
     std::string info() const {
@@ -73,29 +76,29 @@ public:
 
     /** @brief Adds two coordinate vectors. */
     friend Coord operator+(const Coord& a, const Coord& b) {
-        Coord tmp = a;
+        Coord tmp(a);
         tmp += b;
         return tmp;
     }
 
     /** @brief Subtracts two coordinate vectors. */
     friend Coord operator-(const Coord& a, const Coord& b) {
-        Coord tmp = a;
+        Coord tmp(a);
         tmp -= b;
         return tmp;
     }
 
     /** @brief Multiplies a coordinate vector by a real number. */
     friend Coord operator*(const Coord& a, double f) {
-		Coord tmp = a;
-		tmp *= f;
+        Coord tmp(a);
+        tmp *= f;
         return tmp;
     }
 
     /** @brief Divides a coordinate vector by a real number. */
     friend Coord operator/(const Coord& a, double f) {
-		Coord tmp = a;
-		tmp /= f;
+        Coord tmp(a);
+        tmp /= f;
         return tmp;
     }
 
@@ -130,14 +133,14 @@ public:
     }
 
     /**
-     * @brief Assigns coordinate vector 'a' to this.
+     * @brief Assigns coordinate vector 'other' to this.
      *
      * This operator can change the dimension of the coordinate.
      */
-    Coord operator=(const Coord& a) {
-        x = a.x;
-        y = a.y;
-        z = a.z;
+    Coord operator=(const Coord& other) {
+        if (this == &other) return this;
+        cObject::operator=(other);
+        copy(other);
         return *this;
     }
 
@@ -175,7 +178,7 @@ public:
      * @brief Returns the distance to Coord 'a'.
      */
     double distance(const Coord& a) const {
-        Coord dist=*this-a;
+        Coord dist(*this - a);
         return dist.length();
     }
 
@@ -183,7 +186,7 @@ public:
      * @brief Returns distance^2 to Coord 'a' (omits calling square root).
      */
     double sqrdist(const Coord& a) const {
-        Coord dist=*this-a;
+        Coord dist(*this - a);
         return dist.squareLength();
     }
 
