@@ -73,7 +73,6 @@
                        inet.networklayer.autorouting.ipv4
                        inet.networklayer.arp
                        inet.nodes.inet
-                       inet.nodes.wireless
                        inet.util.headerserializers.ipv4
                       "
         extraSourceFolders = ""
@@ -81,11 +80,11 @@
         linkerFlags = ""
         />
     <feature
-        id="IPv4_examples"
-        name="IPv4 examples"
-        description = "Examples for Basic IPv4 support (IPv4)"
+        id="INET_examples"
+        name="INET examples"
+        description = "Examples for Basic Internet Protocols (IPv4, TCP, UDP)"
         initiallyEnabled = "true"
-        requires = "IPv4"
+        requires = "IPv4 TCP_INET UDP Ethernet PPP"
         labels = "protocols examples"
         nedPackages = "
                        inet.examples.inet
@@ -116,7 +115,7 @@
         name="IPv6 examples"
         description = "Examples for Basic IPv6 support (IPv6)"
         initiallyEnabled = "true"
-        requires = "IPv6"
+        requires = "IPv6 TCP_INET UDP Ethernet PPP"
         labels = "protocols examples"
         nedPackages = "
                        inet.examples.ipv6
@@ -146,7 +145,7 @@
         name="xMIPv6 examples"
         description = "Examples for Mobile IPv6 support (xMIPv6)"
         initiallyEnabled = "true"
-        requires = "xMIPv6"
+        requires = "xMIPv6 TCP_INET UDP Ethernet PPP Ieee80211 mobility"
         labels = "protocols examples"
         nedPackages = "
                        inet.examples.mobileipv6
@@ -309,7 +308,7 @@
         id="MPLS"
         name="MPLS support (incl. LDP and RSVP-TE)"
         description = "MPLS support"
-        requires = "TCP_common UDP IPv4"
+        requires = "TCP_INET UDP IPv4"
         labels = "routing"
         nedPackages = "
                        inet.networklayer.mpls inet.nodes.mpls
@@ -355,7 +354,7 @@
         name="OSPFv2 examples"
         description = "Examples for OSPFv2"
         initiallyEnabled = "true"
-        requires = "OSPFv2 Ethernet"
+        requires = "OSPFv2 UDP IPv4 Ethernet"
         labels = "routing examples"
         nedPackages = "
                        inet.examples.ospfv2
@@ -369,7 +368,7 @@
         name="BGPv4"
         description = "BGP support"
         initiallyEnabled = "true"
-        requires = "IPv4 OSPFv2 TCP_common"
+        requires = "IPv4 OSPFv2 TCP_INET"
         labels = "routing"
         nedPackages = "
                        inet.networklayer.bgpv4
@@ -384,7 +383,7 @@
         name="BGPv4 examples"
         description = "Examples for BGPv4"
         initiallyEnabled = "true"
-        requires = "BGPv4 Ethernet"
+        requires = "BGPv4 TCP_INET UDP IPv4 Ethernet"
         labels = "routing examples"
         nedPackages = "
                        inet.examples.bgpv4
@@ -412,7 +411,7 @@
         name="MANET routing examples"
         description = "Examples for the MANET routing protocols"
         initiallyEnabled = "true"
-        requires = "MANET"
+        requires = "MANET TCP_INET UDP IPv4"
         labels = "routing manet examples"
         nedPackages = "
                        inet.examples.manetrouting
@@ -498,7 +497,7 @@
         name="802.11a/b/g/e (mesh networking mode)"
         description = "IEEE 802.11a/b/g/e NIC supporting mesh networking"
         initiallyEnabled = "true"
-        requires = "mobility radio TCP_common MANET OSPFv2 MPLS UDP IPv4 IPv6"
+        requires = "mobility radio TCP_INET MANET OSPFv2 MPLS UDP IPv4 IPv6"
         labels = "nic wireless mesh"
         nedPackages = "
                        inet.linklayer.ieee80211mesh
@@ -512,7 +511,7 @@
         name="wireless examples"
         description = "wireless examples"
         initiallyEnabled = "true"
-        requires = "IPv4 Ethernet Ieee80211 MF80211"
+        requires = "TCP_INET UDP IPv4 Ethernet Ieee80211 MF80211"
         labels = "nic wireless"
         nedPackages = "
                        inet.examples.adhoc
@@ -525,7 +524,7 @@
     <feature
         id="VoIPTool"
         name="VoIPTool"
-        description = "Voice over IP tool. Required external libraries: libavcodec, libavformat"
+        description = "Voice over IP tool. Required external libraries: libavcodec, libavformat libavutil"
         initiallyEnabled = "false"
         requires = "UDP"
         labels = ""
@@ -534,14 +533,14 @@
                       "
         extraSourceFolders = ""
         compileFlags = "-DWITH_VOIPTOOL"
-        linkerFlags = "-lavcodec -lavformat -lavutil"
+        linkerFlags = ""
         />
     <feature
         id="VoIPTool_examples"
         name="VoIP examples"
         description = "Example VoIP simulations"
         initiallyEnabled = "false"
-        requires = "VoIPTool"
+        requires = "VoIPTool IPv4 Ethernet"
         labels = "examples"
         nedPackages = "
                        inet.examples.voiptool
@@ -549,9 +548,54 @@
         extraSourceFolders = ""
         compileFlags = ""
         linkerFlags = ""
-        />
-
+        />  
     <feature
+        id="HttpTools"
+        name="HttpTools"
+        description = "Components for web traffic simulation.
+                       This is a port of Kristjan Jonsson's HttpTools,
+                       see http://code.google.com/p/omnet-httptools/."
+        initiallyEnabled = "true"
+        requires = "TCP_common"
+        labels = "application http web"
+        nedPackages = "
+                       inet.applications.httptools
+                       inet.nodes.httptools
+                       inet.world.httptools
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
+    <feature
+        id="HttpTools_examples_direct"
+        name="HttpTools examples with direct sending"
+        description = "HttpTools examples that do not use underlying protocol layers"
+        initiallyEnabled = "true"
+        requires = "HttpTools"
+        labels = "examples http web"
+        nedPackages = "
+                       inet.examples.httptools.direct
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
+      <feature
+        id="HttpTools_examples_socket"
+        name="HttpTools examples with socket mode"
+        description = "HttpTools examples that include the simulation of TCP and lower layers as well"
+        initiallyEnabled = "true"
+        requires = "HttpTools IPv4 Ethernet TCP_INET"
+        labels = "examples http web"
+        nedPackages = "
+                       inet.examples.httptools.socket
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />   
+<feature
         id="Ieee8021d"
         name="Ieee802.1d Ieee802.1Q Ieee802.1AH protocols"
         description = "Ieee802.1d Ieee802.1Q Ieee802.1AH protocols"
