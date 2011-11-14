@@ -34,8 +34,8 @@ int Ieee80211MacQueueClassifier::classifyPacket(cMessage *msg)
 
     ASSERT(frame!=NULL);
 
-    Ieee80211DataOrMgmtFrame *dataFrame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg);
-    if (frame == NULL)
+    Ieee80211DataFrame *dataFrame = dynamic_cast<Ieee80211DataFrame *>(msg);
+    if (dataFrame == NULL)
         return 0;
 
     if (dataFrame->getReceiverAddress() == MACAddress::BROADCAST_ADDRESS)
