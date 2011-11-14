@@ -170,6 +170,7 @@ void Ieee80211NewMac::initialize(int stage)
                 transmissionQueue(i)->setMaxSize(maxQueueSize);
             else
                 transmissionQueue(i)->setMaxSize(maxCategorieQueueSize);
+            transmissionQueue(i)->setNumStrictPrioritiesQueue(2); // multicast and control
         }
 #endif
         // the variable is renamed due to a confusion in the standard

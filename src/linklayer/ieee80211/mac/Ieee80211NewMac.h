@@ -24,7 +24,7 @@
 
 // uncomment this if you do not want to log state machine transitions
 #define FSM_DEBUG
-//#define USEMULTIQUEUE
+#define USEMULTIQUEUE
 
 #include "WifiMode.h"
 #include "WirelessMacBase.h"
