@@ -9,7 +9,7 @@ Testing TCP communication speed
 
 import inet.world.radio.ChannelControl;
 import inet.nodes.wireless.AccessPoint;
-import inet.mobility.models.NullMobility;
+import inet.mobility.models.StationaryMobility;
 import inet.mobility.models.CircleMobility;
 import inet.linklayer.ieee80211.Ieee80211Nic;
 import inet.base.Sink;
@@ -34,6 +34,7 @@ module ThroughputClient
         int idx;
         int maxCli;
         int maxSrv;
+        @node();
         @display("i=device/wifilaptop");
     gates:
         input radioIn @directIn;
@@ -60,7 +61,7 @@ module ThroughputClient
         }
     connections allowunconnected:
         wlan.radioIn <-- radioIn;
-        cli.out --> wlan.uppergateIn;
+        cli.out --> wlan.upperLayerIn;
 }
 
 module ThroughputServer
@@ -68,6 +69,7 @@ module ThroughputServer
     parameters:
         int idx;
         int maxSrv;
+        @node();
         @display("i=device/wifilaptop");
     gates:
         input radioIn @directIn;
@@ -85,14 +87,14 @@ module ThroughputServer
             parameters:
                 @display("p=120,158;q=queue");
         }
-        mobility: NullMobility {
+        mobility: StationaryMobility {
             parameters:
                 initialX = 350m * (idx+1) / maxSrv;
                 @display("p=50,141");
         }
     connections allowunconnected:
         wlan.radioIn <-- radioIn;
-        sink.in++ <-- wlan.uppergateOut;
+        sink.in++ <-- wlan.upperLayerOut;
 }
 
 network Throughput
@@ -121,7 +123,7 @@ network Throughput
             parameters:
                 @display("p=200,200;r=,,#707070");
         }
-        channelcontrol: ChannelControl {
+        channelControl: ChannelControl {
             parameters:
                 @display("p=61,46");
         }
@@ -138,12 +140,17 @@ tkenv-plugin-path = ../../../etc/plugins
 sim-time-limit = 100s
 **.vector-recording = false
 
-**.constraintAreaWidth = 400m
-**.constraintAreaHeight = 400m
+**.constraintAreaMinX = 0m
+**.constraintAreaMinY = 0m
+**.constraintAreaMinZ = 0m
+**.constraintAreaMaxX = 400m
+**.constraintAreaMaxY = 400m
+**.constraintAreaMaxZ = 0m
+
 **.debug = true
 **.coreDebug = false
 **.channelNumber = 0
-**.channelcontrol.numChannels = 1
+**.channelControl.numChannels = 1
 
 # positions
 **.mobility.cx = 200m
@@ -153,10 +160,10 @@ sim-time-limit = 100s
 **.mobility.updateInterval = 100ms
 
 # channel physical parameters
-*.channelcontrol.carrierFrequency = 2.4GHz
-*.channelcontrol.pMax = 20mW
-*.channelcontrol.sat = -110dBm
-*.channelcontrol.alpha = 2
+*.channelControl.carrierFrequency = 2.4GHz
+*.channelControl.pMax = 20mW
+*.channelControl.sat = -110dBm
+*.channelControl.alpha = 2
 
 # access point
 **.ap.wlan*.mac.address = "10:00:00:00:00:00"
@@ -187,7 +194,7 @@ sim-time-limit = 100s
 description = "10 host to 10 host over AP"
 Throughput.numCli = 10
 Throughput.numSrv = 10
-**.cli.waitTime = 1ms
+**.cli.sendInterval = 1ms
 
 %#--------------------------------------------------------------------------------------------------------------
 %postprocess-script: check.r

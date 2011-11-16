@@ -1,148 +1,167 @@
-#ifndef INT128_H
-#define INT128_H
+/**
+ * Copyright (c) 2005 Jan Ringo, www.ringos.cz
+ *
+ * This software is provided 'as-is', without any express or implied warranty.
+ * In no event will the author be held liable for any damages arising from the
+ * use of this software.
+ *
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it
+ * freely, subject to the following restrictions:
+ *
+ * The origin of this software must not be misrepresented; you must not claim
+ * that you wrote the original software. If you use this software in a
+ * product, an acknowledgment in the product documentation would be
+ * appreciated but is not required. Altered source versions must be plainly
+ * marked as such, and must not be misrepresented as being the original
+ * software. This notice may not be removed or altered from any source
+ * distribution.
+ */
+
+#ifndef __INET_INT128_H
+#define __INET_INT128_H
 
 /*
   Name: int128.h
-  Copyright: Copyright (C) 2005, Jan Ringos
   Author: Jan Ringos, http://Tringi.Mx-3.cz
-
+  Source: http://mx-3.cz/tringi/www/int128
   Version: 1.1
+
+  Modifications: Alfonso Ariza Quintana, Zoltan Bojthe et al.
 */
 
-#include <exception>
-#include <cstdlib>
-#include <cstdio>
-#include <new>
-#include <IPv4Address.h>
+
+#include "IPv4Address.h"
 
 // CLASS
 
-class int128
+class Int128
 {
   private:
     // Binary correct representation of signed 128bit integer
-    uint64_t    lo;
-    int64_t    hi;
+    uint64_t lo;
+    int64_t  hi;
 
   protected:
     // Some global operator functions must be friends
-    friend bool operator<(const int128 &, const int128 &) throw ();
-    friend bool operator==(const int128 &, const int128 &) throw ();
-    friend bool operator||(const int128 &, const int128 &) throw ();
-    friend bool operator&&(const int128 &, const int128 &) throw ();
+    friend bool operator<(const Int128&, const Int128&);
+    friend bool operator==(const Int128&, const Int128&);
+    friend bool operator||(const Int128&, const Int128&);
+    friend bool operator&&(const Int128&, const Int128&);
 
 #ifdef __GNUC__
-    //   friend int128 operator <? (const int128 &, const int128 &) throw ();
-    //   friend int128 operator >? (const int128 &, const int128 &) throw ();
+    //   friend Int128 operator <? (const Int128&, const Int128&);
+    //   friend Int128 operator >? (const Int128&, const Int128&);
 #endif
 
   public:
+    void set(const char *sz);
+
     // Constructors
-    inline int128() throw () {};
-    inline int128(const int128 & a) throw () : lo(a.lo), hi(a.hi) {};
+    inline Int128() {}
+    inline Int128(const Int128& a) : lo(a.lo), hi(a.hi) {}
 
-    inline int128(const uint32_t & a) throw () : lo(a), hi(0ll) {};
-    inline int128(const int32_t & a) throw () : lo(a), hi(0ll)
+    inline Int128(const uint32_t& a) : lo(a), hi(0ll) {}
+    inline Int128(const int32_t& a) : lo(a), hi(0ll)
     {
-        if (a < 0) this->hi = -1ll;
-    };
+        if (a < 0) hi = -1ll;
+    }
 
-    inline int128(const uint64_t & a) throw () : lo(a), hi(0ll) {};
-    inline int128(const int64_t & a) throw () : lo(a), hi(0ll)
+    inline Int128(const uint64_t& a) : lo(a), hi(0ll) {}
+    inline Int128(const int64_t& a) : lo(a), hi(0ll)
     {
-        if (a < 0) this->hi = -1ll;
-    };
+        if (a < 0) hi = -1ll;
+    }
 
-    int128(const float a) throw ();
-    int128(const double & a) throw ();
-    int128(const long double & a) throw ();
+    Int128(const float a);
+    Int128(const double& a);
+    Int128(const long double& a);
 
-    int128(const char * sz) throw ();
+    Int128(const char *sz) { set(sz); }
 
     // TODO: Consider creation of operator= to eliminate
     //       the need of intermediate objects during assignments.
 
-    int128 & operator=(const int128 &other) {if (this==&other) return *this; lo = other.lo; hi = other.hi; return *this;}
-    int128 & operator=(const int32_t &a) {lo = a; hi = 0; return *this;}
-    int128 & operator=(const uint32_t &a) {lo = a; hi = 0; return *this;}
+    Int128& operator=(const Int128& other) {lo = other.lo; hi = other.hi; return *this;}
+    Int128& operator=(const int32_t& a) {lo = a; hi = 0; return *this;}
+    Int128& operator=(const uint32_t& a) {lo = a; hi = 0; return *this;}
 
-    int128 & operator=(const int64_t &a) {lo = a; hi = 0; return *this;}
-    int128 & operator=(const uint64_t &a) {lo = a; hi = 0; return *this;}
+    Int128& operator=(const int64_t& a) {lo = a; hi = 0; return *this;}
+    Int128& operator=(const uint64_t& a) {lo = a; hi = 0; return *this;}
 
-    int128 & operator=( const char * sz) throw ();
-    int128 & operator=(const float &a) throw ();
-    int128 & operator=(const double & a) throw ();
-    int128 & operator=(const long double & a) throw ();
+    Int128& operator=(const char *sz) {set(sz); return *this;}
+    Int128& operator=(const float& a);
+    Int128& operator=(const double& a);
+    Int128& operator=(const long double& a);
 
   private:
     // Special internal constructors
-    int128(const uint64_t & a, const int64_t & b) throw ()
-            : lo(a), hi(b) {};
+    Int128(const uint64_t& a, const int64_t& b)
+            : lo(a), hi(b) {}
 
   public:
     // Operators
-    bool operator!() const throw ();
+    bool operator!() const { return !(hi || lo); }
 
-    int128 operator-() const throw ();
-    int128 operator ~ () const throw ();
+    Int128 operator-() const;
+    Int128 operator ~ () const { return Int128(~lo, ~hi); }
 
-    int128 & operator++();
-    int128 & operator--();
-    int128 operator++(int);
-    int128 operator--(int);
+    Int128& operator++();
+    Int128& operator--();
+    Int128 operator++(int);
+    Int128 operator--(int);
 
-    int128 & operator+=(const int128 & b) throw ();
-    int128 & operator*=(const int128 & b) throw ();
+    Int128& operator+=(const Int128& b);
+    Int128& operator*=(const Int128& b);
 
-    int128 & operator>>=(unsigned int n) throw ();
-    int128 & operator<<=(unsigned int n) throw ();
+    Int128& operator>>=(unsigned int n);
+    Int128& operator<<=(unsigned int n);
 
-    int128 & operator|=(const int128 & b) throw ();
-    int128 & operator&=(const int128 & b) throw ();
-    int128 & operator^=(const int128 & b) throw ();
+    Int128& operator|=(const Int128& b) { hi |= b.hi; lo |= b.lo; return *this; }
+    Int128& operator&=(const Int128& b) { hi &= b.hi; lo &= b.lo; return *this; }
+    Int128& operator^=(const Int128& b) { hi ^= b.hi; lo ^= b.lo; return *this; }
 
     // Inline simple operators
-    inline const int128 & operator+() const throw () { return *this; };
+    inline const Int128& operator+() const { return *this; }
 
     // Rest of inline operators
-    inline int128 & operator-=(const int128 & b) throw ()
+    inline Int128& operator-=(const Int128& b)
     {
         return *this += (-b);
-    };
-    inline int128 & operator/=(const int128 & b) throw ()
+    }
+    inline Int128& operator/=(const Int128& b)
     {
-        int128 dummy;
+        Int128 dummy;
         *this = this->div(b, dummy);
         return *this;
-    };
-    inline int128 & operator%=(const int128 & b) throw ()
+    }
+    inline Int128& operator%=(const Int128& b)
     {
         this->div(b, *this);
         return *this;
-    };
+    }
 
     // Common methods
-    int toInt() const throw () {return (int) this->lo; };
-    int64_t toInt64() const throw () {  return (int64_t) this->lo; };
+    int toInt() const { return (int) lo; }
+    int64_t toInt64() const { return (int64_t) lo; }
 
-    const char * toString(uint32_t radix = 10) const throw ();
-    float toFloat() const throw ();
-    double toDouble() const throw ();
-    long double toLongDouble() const throw ();
+    const char *toString(uint32_t radix = 10) const;
+    float toFloat() const;
+    double toDouble() const;
+    long double toLongDouble() const;
 
     // Arithmetic methods
-    int128  div(const int128 &, int128 &) const throw ();
+    Int128  div(const Int128&, Int128&) const;
 
     // Bit operations
-    bool    bit(unsigned int n) const throw ();
-    void    bit(unsigned int n, bool val) throw ();
-
+    bool bit(unsigned int n) const;
+    void bit(unsigned int n, bool val);
 
     operator double() { return toDouble(); }
     operator int() { return toInt();}
     operator IPv4Address() { IPv4Address add(toInt()); return add;}
-    static const int128 INT128_MAX;
-    static const int128 INT128_MIN;
+    static const Int128 INT128_MAX;
+    static const Int128 INT128_MIN;
 }
 #ifdef __GNUC__
 __attribute__((__aligned__(16), __packed__))
@@ -152,83 +171,95 @@ __attribute__((__aligned__(16), __packed__))
 
 // GLOBAL OPERATORS
 
-bool operator<(const int128 & a, const int128 & b) throw ();
-bool operator==(const int128 & a, const int128 & b) throw ();
-bool operator||(const int128 & a, const int128 & b) throw ();
-bool operator&&(const int128 & a, const int128 & b) throw ();
+bool operator<(const Int128& a, const Int128& b);
+
+inline bool operator==(const Int128& a, const Int128& b)
+{
+    return a.hi == b.hi && a.lo == b.lo;
+}
+
+inline bool operator&&(const Int128& a, const Int128& b)
+{
+    return (a.hi || a.lo) && (b.hi || b.lo);
+}
+
+inline bool operator||(const Int128& a, const Int128& b)
+{
+    return (a.hi || a.lo) || (b.hi || b.lo);
+}
 
 #ifdef __GNUC__
-// inline int128 operator <? (const int128 & a, const int128 & b) throw () {
-//     return (a < b) ? a : b; };
-// inline int128 operator >? (const int128 & a, const int128 & b) throw () {
-//     return (a < b) ? b : a; };
+// inline Int128 operator <? (const Int128& a, const Int128& b) {
+//     return (a < b) ? a : b; }
+// inline Int128 operator >? (const Int128& a, const Int128& b) {
+//     return (a < b) ? b : a; }
 #endif
 
 // GLOBAL OPERATOR INLINES
 
-inline int128 operator+(const int128 & a, const int128 & b) throw ()
+inline Int128 operator+(const Int128& a, const Int128& b)
 {
-    return int128(a) += b;
-};
-inline int128 operator-(const int128 & a, const int128 & b) throw ()
+    return Int128(a) += b;
+}
+inline Int128 operator-(const Int128& a, const Int128& b)
 {
-    return int128(a) -= b;
-};
-inline int128 operator*(const int128 & a, const int128 & b) throw ()
+    return Int128(a) -= b;
+}
+inline Int128 operator*(const Int128& a, const Int128& b)
 {
-    return int128(a) *= b;
-};
-inline int128 operator/(const int128 & a, const int128 & b) throw ()
+    return Int128(a) *= b;
+}
+inline Int128 operator/(const Int128& a, const Int128& b)
 {
-    return int128(a) /= b;
-};
-inline int128 operator%(const int128 & a, const int128 & b) throw ()
+    return Int128(a) /= b;
+}
+inline Int128 operator%(const Int128& a, const Int128& b)
 {
-    return int128(a) %= b;
-};
+    return Int128(a) %= b;
+}
 
-inline int128 operator>>(const int128 & a, unsigned int n) throw ()
+inline Int128 operator>>(const Int128& a, unsigned int n)
 {
-    return int128(a) >>= n;
-};
-inline int128 operator<<(const int128 & a, unsigned int n) throw ()
+    return Int128(a) >>= n;
+}
+inline Int128 operator<<(const Int128& a, unsigned int n)
 {
-    return int128(a) <<= n;
-};
+    return Int128(a) <<= n;
+}
 
-inline int128 operator&(const int128 & a, const int128 & b) throw ()
+inline Int128 operator&(const Int128& a, const Int128& b)
 {
-    return int128(a) &= b;
-};
-inline int128 operator|(const int128 & a, const int128 & b) throw ()
+    return Int128(a) &= b;
+}
+inline Int128 operator|(const Int128& a, const Int128& b)
 {
-    return int128(a) |= b;
-};
-inline int128 operator^(const int128 & a, const int128 & b) throw ()
+    return Int128(a) |= b;
+}
+inline Int128 operator^(const Int128& a, const Int128& b)
 {
-    return int128(a) ^= b;
-};
+    return Int128(a) ^= b;
+}
 
-inline bool operator>(const int128 & a, const int128 & b) throw ()
+inline bool operator>(const Int128& a, const Int128& b)
 {
     return   b < a;
-};
-inline bool operator<=(const int128 & a, const int128 & b) throw ()
+}
+inline bool operator<=(const Int128& a, const Int128& b)
 {
     return !(b < a);
-};
-inline bool operator>=(const int128 & a, const int128 & b) throw ()
+}
+inline bool operator>=(const Int128& a, const Int128& b)
 {
     return !(a < b);
-};
-inline bool operator!=(const int128 & a, const int128 & b) throw ()
+}
+inline bool operator!=(const Int128& a, const Int128& b)
 {
     return !(a == b);
-};
+}
 
 
 // MISC
 
-//typedef int128 __int128;
+//typedef Int128 __int128;
 
 #endif

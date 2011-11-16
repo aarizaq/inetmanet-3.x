@@ -77,32 +77,22 @@ class INET_API MACAddress
      * Constructor which accepts a hex string (12 hex digits, may also
      * contain spaces, hyphens and colons)
      */
-    MACAddress(const char *hexstr)
-    {
-        setAddress(hexstr);
-    }
-
+    MACAddress(const char *hexstr) { setAddress(hexstr); }
 
     /**
      * Copy constructor.
      */
-    MACAddress(const MACAddress& other) {operator=(other);}
+    MACAddress(const MACAddress& other) { address = other.address; macAddress64 = other.macAddress64;}
 
     /**
      * Assignment.
      */
-    MACAddress& operator=(const MACAddress& other);
+    MACAddress& operator=(const MACAddress& other) { address = other.address; macAddress64 = other.macAddress64; return *this; }
 
     /**
      * Returns the address size in bytes, that is, 6.
      */
-    unsigned int getAddressSize() const
-    {
-        if (macAddress64)
-            return MAC_ADDRESS_BYTES64;
-        return MAC_ADDRESS_SIZE;
-    }
-
+    unsigned int getAddressSize() const { return (macAddress64?MAC_ADDRESS_BYTES64:MAC_ADDRESS_SIZE); }
 
     /**
      * Returns the kth byte of the address.
@@ -141,25 +131,12 @@ class INET_API MACAddress
     /**
      * Sets the address to the broadcast address (hex ff:ff:ff:ff:ff:ff).
      */
-    void setBroadcast()
-    {
-        if (macAddress64)
-            address = MAC_ADDRESS_MASK64;
-        else
-            address = MAC_ADDRESS_MASK;
-    }
+    void setBroadcast() {address = (macAddress64 ? MAC_ADDRESS_MASK64 :MAC_ADDRESS_MASK); }
 
     /**
      * Returns true if this is the broadcast address (hex ff:ff:ff:ff:ff:ff).
      */
-    bool isBroadcast() const
-    {
-        if (macAddress64)
-            return address == MAC_ADDRESS_MASK64;
-        else
-            return address == MAC_ADDRESS_MASK;
-    }
-
+    bool isBroadcast() const {return (macAddress64 ? address == MAC_ADDRESS_MASK64 : address == MAC_ADDRESS_MASK); }
 
     /**
      * Returns true if this is a multicast logical address (first byte's lsb is 1).
@@ -170,11 +147,7 @@ class INET_API MACAddress
     /**
      * Returns true if all address bytes are zero.
      */
-    bool isUnspecified() const
-    {
-        return address == 0;
-    }
-
+    bool isUnspecified() const { return address == 0; }
 
     /**
      * Converts address to a hex string.
@@ -186,17 +159,17 @@ class INET_API MACAddress
      */
     uint64 getInt() const { return address; }
 
-    /*
+    /**
      * Returns true if the two addresses are equal.
      */
     bool equals(const MACAddress& other) const { return address == other.address; }
 
-    /*
+    /**
      * Returns true if the two addresses are equal.
      */
     bool operator==(const MACAddress& other) const { return address == other.address; }
 
-    /*
+    /**
      * Returns true if the two addresses are not equal.
      */
     bool operator!=(const MACAddress& other) const { return address != other.address; }

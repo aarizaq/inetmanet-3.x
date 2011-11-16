@@ -57,7 +57,7 @@ module STest
         clients_LWIP: SubTest {
             parameters:
                 srvTcpType = srvTcpType;
-                cliTcpType = "TCP_lwip";
+                cliTcpType = "TCP_lwIP";
         }
 }
 
@@ -74,7 +74,7 @@ network TcpSpeedTest
         }
         server_LWIP: STest {
             parameters:
-                srvTcpType = "TCP_lwip";
+                srvTcpType = "TCP_lwIP";
         }
         configurator: FlatNetworkConfigurator {
             @display("p=70,40");
@@ -86,7 +86,7 @@ network TcpSpeedTest
 
 [General]
 network = TcpSpeedTest
-total-stack = 7MB
+total-stack = 7MiB
 tkenv-plugin-path = ../../../etc/plugins
 #debug-on-errors = true
 #record-eventlog = true
@@ -100,7 +100,7 @@ sim-time-limit = 2s+20s+4.2s
 
 #client app:
 **.client*.tcpApp[0].active = true
-**.client*.tcpApp[0].port = -1
+**.client*.tcpApp[0].localPort = -1
 **.client*.tcpApp[0].connectPort = 1000
 **.client*.tcpApp[0].tOpen = 1s
 **.client*.tcpApp[0].tSend = 2s
@@ -109,7 +109,7 @@ sim-time-limit = 2s+20s+4.2s
 **.client*.tcpApp[0].tClose = 100s
 
 #server app:
-**.server*.tcpApp[0].port = 1000
+**.server*.tcpApp[0].localPort = 1000
 **.server*.tcpApp[0].echoFactor = 2.0
 **.server*.tcpApp[0].echoDelay = 0
 

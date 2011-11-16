@@ -27,14 +27,6 @@ const MACAddress MACAddress::UNSPECIFIED_ADDRESS;
 const MACAddress MACAddress::BROADCAST_ADDRESS("ff:ff:ff:ff:ff:ff");
 const MACAddress MACAddress::BROADCAST_ADDRESS64("ff:ff:ff:ff:ff:ff:ff:ff");
 
-
-MACAddress& MACAddress::operator=(const MACAddress& other)
-{
-    address = other.address;
-    macAddress64 = other.macAddress64;
-    return *this;
-}
-
 unsigned char MACAddress::getAddressByte(unsigned int k) const
 {
     if (macAddress64)

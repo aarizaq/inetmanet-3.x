@@ -24,14 +24,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-//#ifndef  _WIN32
+#ifndef  _MSC_VER
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/types.h>
 //#include <syslog.h>
-//#else
+#endif
 #include "compatibility.h"
-//#endif
 
 
 #ifndef NS_PORT

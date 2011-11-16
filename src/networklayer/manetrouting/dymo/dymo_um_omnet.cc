@@ -50,7 +50,7 @@ Define_Module(DYMOUM);
 
 /* Constructor for the DYMOUM routing agent */
 
-bool DYMOUM::log_file_fd_init=false;
+bool DYMOUM::log_file_fd_init = false;
 int DYMOUM::log_file_fd = -1;
 #ifdef DYMO_UM_GLOBAL_STATISTISTIC
 bool DYMOUM::iswrite = false;
