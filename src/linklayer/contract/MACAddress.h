@@ -131,7 +131,7 @@ class INET_API MACAddress
     /**
      * Sets the address to the broadcast address (hex ff:ff:ff:ff:ff:ff).
      */
-    void setBroadcast() {address = (macAddress64 ? MAC_ADDRESS_MASK64 :MAC_ADDRESS_MASK); }
+    void setBroadcast() {address = (macAddress64 ? MAC_ADDRESS_MASK64 : MAC_ADDRESS_MASK); }
 
     /**
      * Returns true if this is the broadcast address (hex ff:ff:ff:ff:ff:ff).
@@ -208,15 +208,12 @@ class INET_API MACAddress
     // try to get the address like EUI-48, if is possible
     MACAddress getEui48();
 
-    MACAddress getMaskEUI48()
-    {
-        return MACAddress(MAC_ADDRESS_MASK);
-    }
+    MACAddress getMaskEUI48() { return MACAddress(MAC_ADDRESS_MASK); }
 
-    MACAddress getMaskEUI64()
-    {
-        return MACAddress(MAC_ADDRESS_MASK64);
-    }
+    MACAddress getMaskEUI64() { return MACAddress(MAC_ADDRESS_MASK64); }
+
+    bool getFlagEui64() const {return macAddress64; }
+    void setFlagEui64(bool v)  {macAddress64 = v; }
 
     bool operator&(const MACAddress& other) const { return address & other.address; }
     bool operator|(const MACAddress& other) const { return address | other.address; }
