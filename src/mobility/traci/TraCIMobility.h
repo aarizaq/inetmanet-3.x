@@ -67,128 +67,139 @@ class INET_API TraCIMobility : public MovingMobilityBase
     virtual void initialize(int);
     virtual void finish();
 
-    virtual void handleSelfMsg(cMessage *msg);
-    virtual void preInitialize(std::string external_id, const Coord& position, std::string road_id = "", double speed = -1, double angle = -1);
-    virtual void nextPosition(const Coord& position, std::string road_id = "", double speed = -1, double angle = -1);
-    virtual void move();
-    virtual void setExternalId(std::string external_id)
-    {
-        this->external_id = external_id;
-    }
-    virtual std::string getExternalId()
-    {
-        if (external_id == "") throw std::runtime_error("TraCIMobility::getExternalId called with no external_id set yet");
-        return external_id;
-    }
-    virtual Coord getPosition()
-    {
-        return lastPosition;
-    }
-    virtual std::string getRoadId()
-    {
-        if (road_id == "") throw std::runtime_error("TraCIMobility::getRoadId called with no road_id set yet");
-        return road_id;
-    }
-    virtual double getSpeed()
-    {
-        if (speed == -1) throw std::runtime_error("TraCIMobility::getSpeed called with no speed set yet");
-        return speed;
-    }
-    /**
-     * returns angle in rads, 0 being east, with -M_PI <= angle < M_PI.
-     */
-    virtual double getAngleRad()
-    {
-        if (angle == M_PI) throw std::runtime_error("TraCIMobility::getAngleRad called with no angle set yet");
-        return angle;
-    }
-    virtual TraCIScenarioManager* getManager()
-    {
-        if (!manager) manager = TraCIScenarioManagerAccess().get();
-        return manager;
-    }
-    void commandSetMaximumSpeed(float maxSpeed)
-    {
-        getManager()->commandSetMaximumSpeed(getExternalId(), maxSpeed);
-    }
-    void commandChangeRoute(std::string roadId, double travelTime)
-    {
-        getManager()->commandChangeRoute(getExternalId(), roadId, travelTime);
-    }
-    float commandDistanceRequest(Coord position1, Coord position2, bool returnDrivingDistance)
-    {
-        return getManager()->commandDistanceRequest(position1, position2, returnDrivingDistance);
-    }
-    void commandStopNode(std::string roadId, float pos, uint8_t laneid, float radius, double waittime)
-    {
-        return getManager()->commandStopNode(getExternalId(), roadId, pos, laneid, radius, waittime);
-    }
-    std::list<std::string> commandGetPolygonIds()
-    {
-        return getManager()->commandGetPolygonIds();
-    }
-    std::string commandGetPolygonTypeId(std::string polyId)
-    {
-        return getManager()->commandGetPolygonTypeId(polyId);
-    }
-    std::list<Coord> commandGetPolygonShape(std::string polyId)
-    {
-        return getManager()->commandGetPolygonShape(polyId);
-    }
-    void commandSetPolygonShape(std::string polyId, std::list<std::pair<float, float> > points)
-    {
-        getManager()->commandSetPolygonShape(polyId, points);
-    }
-    bool commandAddVehicle(std::string vehicleId, std::string vehicleTypeId, std::string routeId, std::string laneId, float emitPosition, float emitSpeed)
-    {
-        return getManager()->commandAddVehicle(vehicleId, vehicleTypeId, routeId, laneId, emitPosition, emitSpeed);
-    }
+        virtual void handleSelfMsg(cMessage *msg);
+        virtual void preInitialize(std::string external_id, const Coord& position, std::string road_id = "",
+                double speed = -1, double angle = -1);
+        virtual void nextPosition(const Coord& position, std::string road_id = "", double speed = -1,
+                double angle = -1);
+        virtual void move();
+        virtual void updateDisplayString();
+        virtual void setExternalId(std::string external_id)
+        {
+            this->external_id = external_id;
+        }
+        virtual std::string getExternalId() const
+        {
+            if (external_id == "")
+                throw cRuntimeError("TraCIMobility::getExternalId called with no external_id set yet");
+            return external_id;
+        }
+        virtual Coord getPosition() const
+        {
+            return lastPosition;
+        }
+        virtual std::string getRoadId() const
+        {
+            if (road_id == "")
+                throw cRuntimeError("TraCIMobility::getRoadId called with no road_id set yet");
+            return road_id;
+        }
+        virtual double getSpeed() const
+        {
+            if (speed == -1)
+                throw cRuntimeError("TraCIMobility::getSpeed called with no speed set yet");
+            return speed;
+        }
+        /**
+         * returns angle in rads, 0 being east, with -M_PI <= angle < M_PI.
+         */
+        virtual double getAngleRad() const
+        {
+            if (angle == M_PI
+                ) throw cRuntimeError("TraCIMobility::getAngleRad called with no angle set yet");
+            return angle;
+        }
+        virtual TraCIScenarioManager* getManager() const
+        {
+            if (!manager)
+                manager = TraCIScenarioManagerAccess().get();
+            return manager;
+        }
+        void commandSetSpeedMode(int32_t bitset)
+        {
+            getManager()->commandSetSpeedMode(getExternalId(), bitset);
+        }
+        void commandSetSpeed(double speed)
+        {
+            getManager()->commandSetSpeed(getExternalId(), speed);
+        }
+        void commandChangeRoute(std::string roadId, double travelTime)
+        {
+            getManager()->commandChangeRoute(getExternalId(), roadId, travelTime);
+        }
+        double commandDistanceRequest(Coord position1, Coord position2, bool returnDrivingDistance)
+        {
+            return getManager()->commandDistanceRequest(position1, position2, returnDrivingDistance);
+        }
+        void commandStopNode(std::string roadId, double pos, uint8_t laneid, double radius, double waittime)
+        {
+            return getManager()->commandStopNode(getExternalId(), roadId, pos, laneid, radius, waittime);
+        }
+        std::list<std::string> commandGetPolygonIds()
+        {
+            return getManager()->commandGetPolygonIds();
+        }
+        std::string commandGetPolygonTypeId(std::string polyId)
+        {
+            return getManager()->commandGetPolygonTypeId(polyId);
+        }
+        std::list<Coord> commandGetPolygonShape(std::string polyId)
+        {
+            return getManager()->commandGetPolygonShape(polyId);
+        }
+        void commandSetPolygonShape(std::string polyId, std::list<Coord> points)
+        {
+            getManager()->commandSetPolygonShape(polyId, points);
+        }
+        bool commandAddVehicle(std::string vehicleId, std::string vehicleTypeId, std::string routeId,
+                std::string laneId, double emitPosition, double emitSpeed)
+        {
+            return getManager()->commandAddVehicle(vehicleId, vehicleTypeId, routeId, laneId, emitPosition, emitSpeed);
+        }
 
-  protected:
-    bool debug; /**< whether to emit debug messages */
-    int accidentCount; /**< number of accidents */
+    protected:
+        bool debug; /**< whether to emit debug messages */
+        int accidentCount; /**< number of accidents */
 
-    cOutVector currentPosXVec; /**< vector plotting posx */
-    cOutVector currentPosYVec; /**< vector plotting posy */
-    cOutVector currentSpeedVec; /**< vector plotting speed */
-    cOutVector currentAccelerationVec; /**< vector plotting acceleration */
-    cOutVector currentCO2EmissionVec; /**< vector plotting current CO2 emission */
+        cOutVector currentPosXVec; /**< vector plotting posx */
+        cOutVector currentPosYVec; /**< vector plotting posy */
+        cOutVector currentSpeedVec; /**< vector plotting speed */
+        cOutVector currentAccelerationVec; /**< vector plotting acceleration */
+        cOutVector currentCO2EmissionVec; /**< vector plotting current CO2 emission */
 
-    Statistics statistics; /**< everything statistics-related */
+        Statistics statistics; /**< everything statistics-related */
 
-    bool isPreInitialized; /**< true if preInitialize() has been called immediately before initialize() */
+        bool isPreInitialized; /**< true if preInitialize() has been called immediately before initialize() */
 
-    std::string external_id; /**< updated by setExternalId() */
+        std::string external_id; /**< updated by setExternalId() */
 
-    simtime_t lastUpdate; /**< updated by nextPosition() */
-    Coord nextPos; /**< updated by nextPosition() */
-    std::string road_id; /**< updated by nextPosition() */
-    double speed; /**< updated by nextPosition() */
-    double angle; /**< updated by nextPosition() */
+        simtime_t lastUpdate; /**< updated by nextPosition() */
+        Coord nextPos; /**< updated by nextPosition() */
+        std::string road_id; /**< updated by nextPosition() */
+        double speed; /**< updated by nextPosition() */
+        double angle; /**< updated by nextPosition() */
 
-    cMessage* startAccidentMsg;
-    cMessage* stopAccidentMsg;
-    TraCIScenarioManager* manager;
-    double last_speed;
+        cMessage* startAccidentMsg;
+        cMessage* stopAccidentMsg;
+        mutable TraCIScenarioManager* manager;
+        double last_speed;
 
-    virtual void fixIfHostGetsOutside(); /**< called after each read to check for (and handle) invalid positions */
+        virtual void fixIfHostGetsOutside(); /**< called after each read to check for (and handle) invalid positions */
 
-    /**
-     * Returns the amount of CO2 emissions in grams/second, calculated for an average Car
-     * @param v speed in m/s
-     * @param a acceleration in m/s^2
-     * @returns emission in g/s
-     */
-    double calculateCO2emission(double v, double a);
-
+        /**
+         * Returns the amount of CO2 emissions in grams/second, calculated for an average Car
+         * @param v speed in m/s
+         * @param a acceleration in m/s^2
+         * @returns emission in g/s
+         */
+        double calculateCO2emission(double v, double a) const;
 };
 
 class TraCIMobilityAccess : public ModuleAccess<TraCIMobility>
 {
-  public:
-    TraCIMobilityAccess() : ModuleAccess<TraCIMobility>("mobility") {};
+    public:
+        TraCIMobilityAccess() :  ModuleAccess<TraCIMobility>("mobility") {};
 };
-
 
 #endif
 

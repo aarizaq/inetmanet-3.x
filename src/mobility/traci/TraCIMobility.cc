@@ -90,16 +90,7 @@ void TraCIMobility::initialize(int stage)
         statistics.initialize();
         statistics.watch(*this);
 
-        if (!isPreInitialized)
-        {
-            external_id = -1;
-            nextPos = Coord(-1,-1);
-            road_id = -1;
-            speed = -1;
-            angle = M_PI;
-            lastPosition.x = -1;
-            lastPosition.y = -1;
-        }
+        ASSERT(isPreInitialized);
         isPreInitialized = false;
 
         WATCH(road_id);
@@ -142,14 +133,14 @@ void TraCIMobility::handleSelfMsg(cMessage *msg)
 {
     if (msg == startAccidentMsg)
     {
-        commandSetMaximumSpeed(0);
+        commandSetSpeed(0);
         simtime_t accidentDuration = par("accidentDuration");
         scheduleAt(simTime() + accidentDuration, stopAccidentMsg);
         accidentCount--;
     }
     else if (msg == stopAccidentMsg)
     {
-        commandSetMaximumSpeed(-1);
+        commandSetSpeed(-1);
         if (accidentCount > 0)
         {
             simtime_t accidentInterval = par("accidentInterval");
@@ -158,11 +149,11 @@ void TraCIMobility::handleSelfMsg(cMessage *msg)
     }
 }
 
-void TraCIMobility::preInitialize(std::string external_id, const Coord& position, std::string road_id, double speed, double angle)
+void TraCIMobility::preInitialize(std::string external_id, const Coord& position, std::string road_id, double speed,
+        double angle)
 {
-    if (debug) EV << "pre-initializing to " << position.x << " " << position.y << " " << road_id << " " << speed << " " << angle << std::endl;
-
     this->external_id = external_id;
+    this->lastUpdate = 0;
     nextPos = position;
     lastPosition = position;
     this->road_id = road_id;
@@ -185,15 +176,19 @@ void TraCIMobility::nextPosition(const Coord& position, std::string road_id, dou
 
 void TraCIMobility::move()
 {
-    simtime_t updateInterval = simTime() - this->lastUpdate;
-    this->lastUpdate = simTime();
+    // ensure we're not called twice in one time step
+    ASSERT(lastUpdate != simTime());
 
-    // keep track of first road id we encounter
-    if (statistics.firstRoadNumber == MY_INFINITY && (!road_id.empty())) statistics.firstRoadNumber = roadIdAsDouble(road_id);
+    // keep statistics (for current step)
+    currentPosXVec.record(lastPosition.x);
+    currentPosYVec.record(lastPosition.y);
 
-    // keep speed statistics
-    if ((lastPosition.x != -1) && (lastPosition.y != -1) && (lastPosition.z != -1))
+    // keep statistics (relative to last step)
+    if (statistics.startTime != simTime())
     {
+        simtime_t updateInterval = simTime() - this->lastUpdate;
+        this->lastUpdate = simTime();
+
         double distance = lastPosition.distance(nextPos);
         statistics.totalDistance += distance;
         statistics.totalTime += updateInterval;
@@ -201,8 +196,6 @@ void TraCIMobility::move()
         {
             statistics.minSpeed = std::min(statistics.minSpeed, speed);
             statistics.maxSpeed = std::max(statistics.maxSpeed, speed);
-            currentPosXVec.record(lastPosition.x);
-            currentPosYVec.record(lastPosition.y);
             currentSpeedVec.record(speed);
             if (last_speed != -1)
             {
@@ -210,7 +203,7 @@ void TraCIMobility::move()
                 double co2emission = calculateCO2emission(speed, acceleration);
                 currentAccelerationVec.record(acceleration);
                 currentCO2EmissionVec.record(co2emission);
-                statistics.totalCO2Emission+=co2emission * updateInterval.dbl();
+                statistics.totalCO2Emission += co2emission * updateInterval.dbl();
             }
             last_speed = speed;
         }
@@ -222,8 +215,76 @@ void TraCIMobility::move()
     }
 
     lastPosition = nextPos;
+    if (ev.isGUI())
+        updateDisplayString();
     fixIfHostGetsOutside();
     updateVisualRepresentation();
+}
+
+void TraCIMobility::updateDisplayString()
+{
+    ASSERT(-M_PI <= angle);
+    ASSERT(angle < M_PI);
+
+    getParentModule()->getDisplayString().setTagArg("b", 2, "rect");
+    getParentModule()->getDisplayString().setTagArg("b", 3, "red");
+    getParentModule()->getDisplayString().setTagArg("b", 4, "red");
+    getParentModule()->getDisplayString().setTagArg("b", 5, "0");
+
+    if (angle < -M_PI + 0.5 * M_PI_4 * 1)
+    {
+        getParentModule()->getDisplayString().setTagArg("t", 0, "\u2190");
+        getParentModule()->getDisplayString().setTagArg("b", 0, "4");
+        getParentModule()->getDisplayString().setTagArg("b", 1, "2");
+    }
+    else if (angle < -M_PI + 0.5 * M_PI_4 * 3)
+    {
+        getParentModule()->getDisplayString().setTagArg("t", 0, "\u2199");
+        getParentModule()->getDisplayString().setTagArg("b", 0, "3");
+        getParentModule()->getDisplayString().setTagArg("b", 1, "3");
+    }
+    else if (angle < -M_PI + 0.5 * M_PI_4 * 5)
+    {
+        getParentModule()->getDisplayString().setTagArg("t", 0, "\u2193");
+        getParentModule()->getDisplayString().setTagArg("b", 0, "2");
+        getParentModule()->getDisplayString().setTagArg("b", 1, "4");
+    }
+    else if (angle < -M_PI + 0.5 * M_PI_4 * 7)
+    {
+        getParentModule()->getDisplayString().setTagArg("t", 0, "\u2198");
+        getParentModule()->getDisplayString().setTagArg("b", 0, "3");
+        getParentModule()->getDisplayString().setTagArg("b", 1, "3");
+    }
+    else if (angle < -M_PI + 0.5 * M_PI_4 * 9)
+    {
+        getParentModule()->getDisplayString().setTagArg("t", 0, "\u2192");
+        getParentModule()->getDisplayString().setTagArg("b", 0, "4");
+        getParentModule()->getDisplayString().setTagArg("b", 1, "2");
+    }
+    else if (angle < -M_PI + 0.5 * M_PI_4 * 11)
+    {
+        getParentModule()->getDisplayString().setTagArg("t", 0, "\u2197");
+        getParentModule()->getDisplayString().setTagArg("b", 0, "3");
+        getParentModule()->getDisplayString().setTagArg("b", 1, "3");
+    }
+    else if (angle < -M_PI + 0.5 * M_PI_4 * 13)
+    {
+        getParentModule()->getDisplayString().setTagArg("t", 0, "\u2191");
+        getParentModule()->getDisplayString().setTagArg("b", 0, "2");
+        getParentModule()->getDisplayString().setTagArg("b", 1, "4");
+    }
+    else if (angle < -M_PI + 0.5 * M_PI_4 * 15)
+    {
+        getParentModule()->getDisplayString().setTagArg("t", 0, "\u2196");
+        getParentModule()->getDisplayString().setTagArg("b", 0, "3");
+        getParentModule()->getDisplayString().setTagArg("b", 1, "3");
+    }
+    else
+    {
+        getParentModule()->getDisplayString().setTagArg("t", 0, "\u2190");
+        getParentModule()->getDisplayString().setTagArg("b", 0, "4");
+        getParentModule()->getDisplayString().setTagArg("b", 1, "2");
+    }
 }
 
 void TraCIMobility::fixIfHostGetsOutside()
@@ -231,7 +292,7 @@ void TraCIMobility::fixIfHostGetsOutside()
     raiseErrorIfOutside();
 }
 
-double TraCIMobility::calculateCO2emission(double v, double a)
+double TraCIMobility::calculateCO2emission(double v, double a) const
 {
     // Calculate CO2 emission parameters according to:
     // Cappiello, A. and Chabini, I. and Nam, E.K. and Lue, A. and Abou Zeid, M., "A statistical model of vehicle emissions and fuel consumption," IEEE 5th International Conference on Intelligent Transportation Systems (IEEE ITSC), pp. 801-809, 2002
@@ -242,16 +303,16 @@ double TraCIMobility::calculateCO2emission(double v, double a)
     double M = 1325.0; // kg
 
     // power in W
-    double P_tract = A*v + B*v*v + C*v*v*v + M*a*v; // for sloped roads: +M*g*sin_theta*v
+    double P_tract = A * v + B * v * v + C * v * v * v + M * a * v; // for sloped roads: +M*g*sin_theta*v
 
     /*
-    // "Category 7 vehicle" (e.g. a '92 Suzuki Swift)
-    double alpha = 1.01;
-    double beta = 0.0162;
-    double delta = 1.90e-06;
-    double zeta = 0.252;
-    double alpha1 = 0.985;
-    */
+     // "Category 7 vehicle" (e.g. a '92 Suzuki Swift)
+     double alpha = 1.01;
+     double beta = 0.0162;
+     double delta = 1.90e-06;
+     double zeta = 0.252;
+     double alpha1 = 0.985;
+     */
 
     // "Category 9 vehicle" (e.g. a '94 Dodge Spirit)
     double alpha = 1.11;
@@ -260,7 +321,8 @@ double TraCIMobility::calculateCO2emission(double v, double a)
     double zeta = 0.241;
     double alpha1 = 0.973;
 
-    if (P_tract <= 0) return alpha1;
-    return alpha + beta*v*3.6 + delta*v*v*v*(3.6*3.6*3.6) + zeta*a*v;
+    if (P_tract <= 0)
+        return alpha1;
+    return alpha + beta * v * 3.6 + delta * v * v * v * (3.6 * 3.6 * 3.6) + zeta * a * v;
 }
 

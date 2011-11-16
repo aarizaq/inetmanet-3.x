@@ -1,7 +1,5 @@
 //
-//  Copyright (C) 2009 Christoph Sommer <christoph.sommer@informatik.uni-erlangen.de>
-//
-//  Documentation for these modules is at http://veins.car2x.org/
+//  Copyright (C) 2010 Christoph Sommer <christoph.sommer@informatik.uni-erlangen.de>
 //
 //  This program is free software; you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -21,27 +19,14 @@
 package inet.applications.traci;
 
 //
-// Processes an XML script to test the OMNeT++ TraCI client modules.
+// TraCI IVC Demo
 //
-// Parameter "commands" takes as input an XML fragment of the following form:
-//
-// <commands>
-//   <CMD_SETMAXSPEED t="10" maxspeed="0" />
-//   <CMD_CHANGEROUTE dt="0" roadid="28" traveltime="9999" />
-// </commands>
-//
-// Execution times can be specified relative to the start of the 
-// simulation ("t") or the last command ("dt"), i.e. the above example sends 
-// CMD_SETMAXSPEED at t=10 and CMD_CHANGEROUTE as soon as the vehicle enters
-// the simulation.
-//
-simple Test_TraCI
+simple TraCIDemo
 {
     parameters:
         bool debug = default(false);  // output debugging information
-        xml commands;  // test script to run
 
         @display("i=block/app2");
     gates:
-
+        inout udp;
 }
