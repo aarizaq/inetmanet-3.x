@@ -47,6 +47,7 @@ struct IChannelControl::RadioEntry {
     std::set<RadioRef> neighbors; // cached neighbor list
     std::vector<RadioRef> neighborList;
     bool isNeighborListValid;
+    bool isActive;
 };
 
 /**
@@ -145,6 +146,12 @@ class INET_API ChannelControl : public cSimpleModule, public IChannelControl
 
     /** Returns the maximal interference distance*/
     virtual double getInterferenceRange(RadioRef r) { return maxInterferenceDistance; }
+
+    /** disable the reception in the reference module */
+    virtual bool setDisableReception(RadioRef r) { r->isActive = false; };
+
+    /** disable the reception in the reference module */
+    virtual bool setEnableReception(RadioRef r) { r->isActive = true; };
 };
 
 #endif

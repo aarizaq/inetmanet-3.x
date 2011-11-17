@@ -33,6 +33,15 @@ static int parseInt(const char *s, int defaultValue)
     return *endptr == '\0' ? value : defaultValue;
 }
 
+// the destructor unregister the radio module
+ChannelAccess::~ChannelAccess()
+{
+    if (cc && myRadioRef)
+    {
+        cc->unregisterRadio(myRadioRef);
+    }
+}
+
 /**
  * Upon initialization ChannelAccess registers the nic parent module
  * to have all its connections handled by ChannelControl

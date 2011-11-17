@@ -140,8 +140,8 @@ class INET_API Radio : public ChannelAccess, public IPowerControl
 
     virtual void disconnectTransceiver() {transceiverConnect = false;}
     virtual void connectTransceiver() {transceiverConnect = true;}
-    virtual void disconnectReceiver() {receiverConnect = false;}
-    virtual void connectReceiver() {receiverConnect = true;}
+    virtual void disconnectReceiver() {receiverConnect = false; cc->setDisableReception(this->myRadioRef); }
+    virtual void connectReceiver() {receiverConnect = true; cc->setEnableReception(this->myRadioRef);}
 
     virtual void registerBattery();
 
@@ -154,7 +154,6 @@ class INET_API Radio : public ChannelAccess, public IPowerControl
 	double calcDistFreeSpace();
 
   protected:
-	bool isRegistered;
 	// Support of noise generators, the noise generators allow that the radio can change between  RECV <-->IDLE without to receive a frame
     static simsignal_t changeLevelNoise;
     virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj);

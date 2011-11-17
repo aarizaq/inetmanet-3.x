@@ -72,6 +72,12 @@ class INET_API IChannelControl
 
     /** Returns the maximal interference distance*/
     virtual double getInterferenceRange(RadioRef r) = 0;
+
+    /** disable the reception in the reference module */
+    virtual bool setDisableReception(RadioRef r) = 0;
+
+    /** disable the reception in the reference module */
+    virtual bool setEnableReception(RadioRef r) = 0;
 };
 
 #endif

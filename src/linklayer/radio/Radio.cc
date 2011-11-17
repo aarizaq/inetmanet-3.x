@@ -49,7 +49,6 @@ Radio::Radio() : rs(this->getId())
     receiverConnect = true;
     updateString = NULL;
     noiseGenerator = NULL;
-    isRegistered = false;
 }
 
 void Radio::initialize(int stage)
@@ -159,7 +158,6 @@ void Radio::initialize(int stage)
         // tell initial channel number to ChannelControl; should be done in
         // stage==2 or later, because base class initializes myRadioRef in that stage
         cc->setRadioChannel(myRadioRef, rs.getChannelNumber());
-        isRegistered = true;
 
         // statistics
         emit(bitrateSignal, rs.getBitrate());
@@ -187,8 +185,6 @@ Radio::~Radio()
     // delete messages being received
     for (RecvBuff::iterator it = recvBuff.begin(); it!=recvBuff.end(); ++it)
         delete it->first;
-    if (isRegistered)
-        cc->unregisterRadio(myRadioRef);
 }
 
 
