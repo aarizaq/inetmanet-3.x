@@ -32,6 +32,8 @@ Ieee802154Phy::Ieee802154Phy() : rs(this->getId())
     TRX_timer = NULL;
     TxOver_timer = NULL;
     updateString =NULL;
+    transceiverConnect = true;
+    receiverConnect = true;
 
 }
 
@@ -287,9 +289,17 @@ void Ieee802154Phy::handleMessage(cMessage *msg)
     }
     if (msg->getArrivalGateId() == upperLayerIn)
     {
-        EV << "[PHY]: a MAC frame " << msg->getName()  << " received from MAC layer" << endl;
-        AirFrame *airframe = encapsulatePacket(msg);
-        handleUpperMsg(airframe);
+        if (transceiverConnect)
+        {
+            EV << "[PHY]: a MAC frame " << msg->getName()  << " received from MAC layer" << endl;
+            AirFrame *airframe = encapsulatePacket(msg);
+            handleUpperMsg(airframe);
+        }
+        else
+        {
+            EV << "[PHY]: a MAC frame " << msg->getName()  << " received from MAC layer but transceiver is disconnected, delete packet" << endl;
+            delete msg;
+        }
     }
     else if (msg->isSelfMessage())
     {
@@ -438,8 +448,17 @@ void Ieee802154Phy::handleUpperMsg(AirFrame *airframe)
 
 void Ieee802154Phy::sendUp(cMessage *msg)
 {
-    EV << "[PHY]: sending received " << msg->getName() << " frame to MAC layer" << endl;
-    send(msg, upperLayerOut);
+    if (receiverConnect)
+    {
+        EV << "[PHY]: sending received " << msg->getName() << " frame to MAC layer" << endl;
+        send(msg, upperLayerOut);
+    }
+    else
+    {
+        EV << "[PHY]: a MAC frame " << msg->getName()  << " received from the radio layer but receiver is disconnected, delete packet" << endl;
+        delete msg;
+    }
+
 }
 
 void Ieee802154Phy::sendDown(AirFrame *airframe)
