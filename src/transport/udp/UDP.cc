@@ -293,8 +293,6 @@ void UDP::processUDPPacket(UDPPacket *udpPacket)
                 udpPacket->getClassName(), udpPacket->getName(), ctrl->getClassName());
     }
 
-    cPacket *payload = udpPacket->decapsulate();
-
     if (!isMulticast && !isBroadcast)
     {
         // unicast packet, there must be only one socket listening
@@ -303,11 +301,11 @@ void UDP::processUDPPacket(UDPPacket *udpPacket)
         {
             EV << "No socket registered on port " << destPort << "\n";
             processUndeliverablePacket(udpPacket, ctrl);
-            delete payload;
             return;
         }
         else
         {
+            cPacket *payload = udpPacket->decapsulate();
             sendUp(payload, sd, srcAddr, srcPort, destAddr, destPort, interfaceId, ttl);
             delete udpPacket;
             delete ctrl;
@@ -321,13 +319,13 @@ void UDP::processUDPPacket(UDPPacket *udpPacket)
         {
             EV << "No socket registered on port " << destPort << "\n";
             processUndeliverablePacket(udpPacket, ctrl);
-            delete payload;
             return;
         }
         else
         {
-            int i;
-            for (i = 0; i < (int)sds.size()-1; i++)
+            cPacket *payload = udpPacket->decapsulate();
+            unsigned int i;
+            for (i = 0; i < sds.size()-1; i++)      // sds.size() >= 1
                 sendUp(payload->dup(), sds[i], srcAddr, srcPort, destAddr, destPort, interfaceId, ttl); // dup() to all but the last one
             sendUp(payload, sds[i], srcAddr, srcPort, destAddr, destPort, interfaceId, ttl);  // send original to last socket
             delete udpPacket;
