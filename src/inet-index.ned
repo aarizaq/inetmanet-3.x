@@ -32,21 +32,18 @@
 // <a href="http://mobility-fw.sourceforge.net" target="_blank">Mobility Framework</a>.
 //
 // There are several other bugfixes and improvements as well; see the
-// <tt><a href="../doxy/whatsnew.html">WHATSNEW</a></tt> file in the distribution.
+// <tt><a href="whatsnew.html">WHATSNEW</a></tt> file in the distribution.
 //
 // Introductory material:
 //  - <a href="inet-architecture.html">INET Framework architecture</a>
 //  - <a href="../walkthrough/tutorial.html" target="_top">Guided Tour</a>
 //
 // A few useful starting points for browsing the documentation:
-//  - the <a href="full-ned-usage-diagram.html">Usage Diagram</a>
-//    includes all modules and networks
-//  - example networks: ~NClients, ~BulkTransfer, ~MulticastNetwork,
-//    ~ARPTest, ~MixedLAN, etc.
+//  - example networks: ~BulkTransfer, ~MulticastNetwork,
+//    ~MixedLAN, etc.
 //  - hosts, routers, switches: ~StandardHost, ~Router, ~EtherSwitch, ~EtherHub,
 //    etc.
-//  - network interfaces: ~EthernetInterface, ~PPPInterface, ~Ieee80211NicAdhoc,
-//    ~Ieee80211NicSTA
+//  - network interfaces: ~EthernetInterface, ~PPPInterface, ~Ieee80211Nic
 //  - <a href="ieee80211.html">IEEE 802.11 models</a>, both ad-hoc and infrastructure
 //    mode are supported
 //  - IPv4 layer: ~IPv4, ~ARP and ~ICMP; ~RoutingTable
@@ -65,7 +62,7 @@
 //    ~ARPPacket, ~PPPFrame, ~GenericAppMsg, ~EtherAppReq, etc.
 //  - control info classes (used in communication between protocol layers):
 //    ~IPv4ControlInfo, ~TCPCommand, ~UDPControlInfo, ~Ieee802Ctrl, etc.
-//  - application models: ~UDPVideoStreamSvr, ~UDPVideoStreamCli, ~UDPApp,
+//  - application models: ~UDPVideoStreamSvr, ~UDPVideoStreamCli, ~UDPBasicApp, ~UDPEchoApp,
 //    ~TCPSessionApp, ~TCPBasicClientApp, ~TCPGenericSrvApp, ~TCPSinkApp,
 //    ~TCPSrvHostApp, ~EtherAppCli, ~EtherAppSrv, ~PingApp, etc.
 //  - wireless support: ~ChannelControl, ~Nic80211
@@ -74,12 +71,10 @@
 //  - MPLS models: the core modules are ~MPLS, ~LIBTable, ~LDP, ~RSVP, ~TED,
 //    ~LinkStateRouting; MPLS-enabled routers are ~LDP_LSR, ~RSVP_LSR;
 //    see also the list of <a href="standards.html">implemented standards</a>
-//  - dynamic routing is provided by the ~Daemon module (the Quagga routing
-//    daemon ported into the INET Framework) used inside ~QuaggaRouter;
-//    alternatively one can run ~OSPFRouter which relies on the ~OSPFRouting
-//    module;
-//  - support for recording <i>nam</i> traces is provided by ~NAMTrace and
-//    ~NAMTraceWriter
+//  - dynamic routing is provided by the Daemon module (the Quagga routing
+//    daemon ported into the INET Framework, currently in a different project)
+//    used inside QuaggaRouter; alternatively one can run ~OSPFRouter which relies
+//    on the ~OSPFRouting module;
 //
 // Related documentation:
 //   - <a href="../doxy/index.html" target="_top">C++ source documentation (Doxygen)</a>

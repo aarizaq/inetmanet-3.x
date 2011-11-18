@@ -56,19 +56,6 @@ void ExtInterface::initialize(int stage)
             // this simulation run works without external interface..
             connected = false;
         }
-    }
-
-    if (stage == 3)
-    {
-        // update display string when addresses have been autoconfigured etc.
-        updateDisplayString();
-        return;
-    }
-
-    // all initialization is done in the first stage
-    if (stage != 0)
-        return;
-
     numSent = numRcvd = numDropped = 0;
     WATCH(numSent);
     WATCH(numRcvd);
@@ -82,6 +69,13 @@ void ExtInterface::initialize(int stage)
     {
         getDisplayString().setTagArg("i", 1, "#707070");
         getDisplayString().setTagArg("i", 2, "100");
+    }
+    }
+    else if (stage == 3)
+    {
+        // update display string when addresses have been autoconfigured etc.
+        if (ev.isGUI())
+            updateDisplayString();
     }
 }
 
@@ -188,14 +182,20 @@ void ExtInterface::displayIdle()
 
 void ExtInterface::updateDisplayString()
 {
+    if (!ev.isGUI())
+        return;
+
+    const char *str;
     char buf[80];
-    if (ev.disable_tracing)
-        getDisplayString().setTagArg("t", 0, "");
+
     if (connected)
+    {
         sprintf(buf, "pcap device: %s\nrcv:%d snt:%d", device, numRcvd, numSent);
+        str = buf;
+    }
     else
-        sprintf(buf, "not connected");
-    getDisplayString().setTagArg("t", 0, buf);
+        str = "not connected";
+    getDisplayString().setTagArg("t", 0, str);
 }
 
 void ExtInterface::finish()
