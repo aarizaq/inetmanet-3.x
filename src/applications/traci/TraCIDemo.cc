@@ -47,6 +47,7 @@ void TraCIDemo::initialize(int stage) {
 void TraCIDemo::setupLowerLayer() {
     socket.setOutputGate(gate("udp$o"));
     socket.bind(12345);
+    socket.setBroadcast(true);
 }
 
 void TraCIDemo::handleMessage(cMessage* msg) {
