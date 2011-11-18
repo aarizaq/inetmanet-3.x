@@ -152,6 +152,11 @@ void UDPBasicBurst::initialize(int stage)
 
         timerNext = new cMessage("UDPBasicBurstTimer");
         scheduleAt(startTime, timerNext);
+
+        if (par("chooseNewIfDeleted").boolValue())
+        {
+            simulation.getSystemModule()->subscribe(POST_MODEL_CHANGE, this);
+        }
     }
 
     sentPkSignal = registerSignal("sentPk");
@@ -327,4 +332,59 @@ void UDPBasicBurst::finish()
     recordScalar("Total received", numReceived);
     recordScalar("Total deleted", numDeleted);
 }
+
+void UDPBasicBurst::receiveSignal(cComponent *src, simsignal_t id, cObject *obj)
+{
+    if (dynamic_cast<cPostModuleDeleteNotification *>(obj))
+    {
+        cPostModuleDeleteNotification *data = (cPostModuleDeleteNotification *)obj;
+        if (!data->module->getProperties()->getAsBool("node"))
+            return;
+    }
+    else
+        return;
+
+
+    // rebuild address destination table
+    const char *destAddrs = par("destAddresses");
+    cStringTokenizer tokenizer(destAddrs);
+    const char *token;
+
+    IPvXAddress myAddr = IPvXAddressResolver().resolve(this->getParentModule()->getFullPath().c_str());
+    while ((token = tokenizer.nextToken()) != NULL)
+    {
+        if (strstr(token, "Broadcast") != NULL)
+            destAddresses.push_back(IPv4Address::ALLONES_ADDRESS);
+        else
+        {
+            IPvXAddress addr = IPvXAddressResolver().resolve(token);
+            if (addr != myAddr)
+                destAddresses.push_back(addr);
+        }
+    }
+
+    isSource = !destAddresses.empty();
+    if (!isSource)
+    {
+        cancelAndDelete(timerNext);
+        timerNext = NULL;
+    }
+    else
+    {
+        // search if the address continue
+        for (unsigned int i = 0; i < destAddresses.size(); i++)
+        {
+            if (destAddr == destAddresses[i])
+                return;
+        }
+        // choose other address
+        destAddr = chooseDestAddr();
+        if (!timerNext)
+        {
+            timerNext = new cMessage("UDPBasicBurstTimer");
+            scheduleAt(simTime(), timerNext);
+        }
+    }
+}
+
 

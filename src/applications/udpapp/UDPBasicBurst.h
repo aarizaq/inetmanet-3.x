@@ -32,7 +32,7 @@
 /**
  * UDP application. See NED for more info.
  */
-class INET_API UDPBasicBurst : public cSimpleModule
+class INET_API UDPBasicBurst : public cSimpleModule, public cListener
 {
   public:
     enum ChooseDestAddrMode
@@ -93,6 +93,7 @@ class INET_API UDPBasicBurst : public cSimpleModule
     virtual void initialize(int stage);
     virtual void handleMessage(cMessage *msg);
     virtual void finish();
+    virtual void receiveSignal(cComponent *src, simsignal_t id, cObject *obj);
 
   public:
     UDPBasicBurst();
