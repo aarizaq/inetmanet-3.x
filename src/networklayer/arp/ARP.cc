@@ -78,6 +78,7 @@ void ARP::initialize(int stage)
         cacheTimeout = par("cacheTimeout");
         doProxyARP = par("proxyARP");
         globalARP = par("globalARP");
+        silentDeletion = par("silentDeletion");
 
         pendingQueue.setName("pendingQueue");
 
@@ -247,7 +248,12 @@ void ARP::processOutboundPacket(cMessage *msg)
     {
         ARPCache::iterator it = globalArpCache.find(nextHopAddr);
         if (it==globalArpCache.end())
-            throw cRuntimeError(this, "Addres not found in global");
+        {
+            if (silentDeletion)
+                delete msg;
+            else
+                throw cRuntimeError(this, "Addres not found in global");
+        }
         else
             sendPacketToNIC(msg, ie, (*it).second->macAddress);
         return;

@@ -68,6 +68,7 @@ class INET_API ARP : public cSimpleModule, public INotifiable
     simtime_t cacheTimeout;
     bool doProxyARP;
     bool globalARP;
+    bool silentDeletion;
 
     long numResolutions;
     long numFailedResolutions;
