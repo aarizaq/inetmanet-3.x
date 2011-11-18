@@ -43,3 +43,21 @@ int Ieee80211MacQueueClassifier::classifyPacket(cMessage *msg)
     return 2;
 }
 
+Register_Class(Ieee80211MacQueueClassifier2);
+
+int Ieee80211MacQueueClassifier2::getNumQueues()
+{
+    return 2;
+}
+
+int Ieee80211MacQueueClassifier2::classifyPacket(cMessage *msg)
+{
+    Ieee80211DataOrMgmtFrame *frame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg);
+
+    ASSERT(frame!=NULL);
+
+    Ieee80211DataFrame *dataFrame = dynamic_cast<Ieee80211DataFrame *>(msg);
+    if (dataFrame == NULL)
+        return 0;
+     return 1;
+}

@@ -47,5 +47,17 @@ class INET_API Ieee80211MacQueueClassifier : public IQoSClassifier
     virtual int classifyPacket(cMessage *msg);
 };
 
+class INET_API Ieee80211MacQueueClassifier2 : public Ieee80211MacQueueClassifier
+{
+  public:
+    virtual int getNumQueues();
+    /**
+     * The method should return the priority (the index of subqueue)
+     * for the given packet, a value between 0 and getNumQueues()-1
+     * (inclusive).
+     */
+    virtual int classifyPacket(cMessage *msg);
+};
+
 #endif
 

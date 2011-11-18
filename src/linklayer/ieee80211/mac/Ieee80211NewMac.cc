@@ -157,6 +157,8 @@ void Ieee80211NewMac::initialize(int stage)
 
         useModulationParameters = par("useModulationParameters");
 
+        prioritizeMulticast = par("prioritizeMulticast");
+
         EV<<"Operating mode: 802.11"<<opMode;
         maxQueueSize = par("maxQueueSize");
         maxCategorieQueueSize = par("maxCategorieQueueSize");
@@ -165,12 +167,25 @@ void Ieee80211NewMac::initialize(int stage)
 #ifdef  USEMULTIQUEUE
         for (int i=0; i<numCategories(); i++)
         {
-            transmissionQueue(i)->createClassifier("Ieee80211MacQueueClassifier");
-            if (numCategories()==1)
-                transmissionQueue(i)->setMaxSize(maxQueueSize);
+            if (priorizeMulticast)
+            {
+                transmissionQueue(i)->createClassifier("Ieee80211MacQueueClassifier");
+                if (numCategories()==1)
+                    transmissionQueue(i)->setMaxSize(maxQueueSize);
+                else
+                    transmissionQueue(i)->setMaxSize(maxCategorieQueueSize);
+                transmissionQueue(i)->setNumStrictPrioritiesQueue(3); // multicast and control
+            }
             else
-                transmissionQueue(i)->setMaxSize(maxCategorieQueueSize);
-            transmissionQueue(i)->setNumStrictPrioritiesQueue(2); // multicast and control
+            {
+                transmissionQueue(i)->createClassifier("Ieee80211MacQueueClassifier2");
+                if (numCategories()==1)
+                    transmissionQueue(i)->setMaxSize(maxQueueSize);
+                else
+                    transmissionQueue(i)->setMaxSize(maxCategorieQueueSize);
+                transmissionQueue(i)->setNumStrictPrioritiesQueue(2); // multicast and control
+
+            }
         }
 #endif
         // the variable is renamed due to a confusion in the standard
@@ -820,25 +835,24 @@ int Ieee80211NewMac::MappingAccessCategory(Ieee80211DataOrMgmtFrame *frame)
     }
     if (isDataFrame)
     {
-        if (transmissionQueue()->empty() || transmissionQueue()->size() == 1 || !frame->getReceiverAddress().isMulticast())
-        {
+        if (!prioritizeMulticast  || !frame->getReceiverAddress().isMulticast() || transmissionQueue()->size() < 2)
             transmissionQueue()->push_back(frame);
-        }
         else
         {
             // if the last frame is management insert here
             Ieee80211DataFrame * frameAux = dynamic_cast<Ieee80211DataFrame *>(transmissionQueue()->back());
-            if ((frameAux==NULL) || (frameAux && frameAux->getReceiverAddress().isMulticast()))
+            if ((frameAux == NULL) || (frameAux && frameAux->getReceiverAddress().isMulticast()))
                 transmissionQueue()->push_back(frame);
             else
             {
+                // in other case search the possition
                 std::list<Ieee80211DataOrMgmtFrame*>::iterator p = transmissionQueue()->end();
                 while ((*p)->getReceiverAddress().isMulticast() && (p != transmissionQueue()->begin())) // search the first broadcast frame
-                {
+                    {
                     if (dynamic_cast<Ieee80211DataFrame *>(*p) == NULL)
                         break;
                     p--;
-                }
+                    }
                 p++;
                 transmissionQueue()->insert(p, frame);
             }

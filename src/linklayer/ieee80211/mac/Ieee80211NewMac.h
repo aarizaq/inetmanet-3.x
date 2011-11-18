@@ -99,6 +99,7 @@ class INET_API Ieee80211NewMac : public WirelessMacBase, public INotifiable
     ModulationType recFrameModulationType;
     bool validRecMode;
     bool useModulationParameters;
+    bool prioritizeMulticast;
   protected:
     /**
      * @name Configuration parameters

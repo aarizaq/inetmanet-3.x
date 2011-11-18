@@ -76,7 +76,9 @@ simple Ieee80211NewMac
         bool EDCA = default(true);
         /// WARNING
         // importan if true slot time, difs and ack time out (aPHY-RX-START-Delay) are funtion of modulation time (standar 2007)
-        bool useModulationParameters=default(false); //if true slot time, difs and ack time out (aPHY-RX-START-Delay) are funtion of modulation time (standar 2007)  
+        bool useModulationParameters = default(false); //if true slot time, difs and ack time out (aPHY-RX-START-Delay) are funtion of modulation time (standar 2007)
+        bool prioritizeMulticast = default(false); //if true prioritize multicast (9.3.2.1 Fundamental access)
+          
 	    /// WARNING
         double bitrate @unit("bps");
         string opMode@enum ("b","g","a","p") = default("g");
