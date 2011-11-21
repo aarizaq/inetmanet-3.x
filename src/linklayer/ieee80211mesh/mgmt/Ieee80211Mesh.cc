@@ -47,6 +47,18 @@
 Ieee80211Mesh::GateWayDataMap * Ieee80211Mesh::gateWayDataMap;
 #endif
 
+std::ostream& operator<<(std::ostream& os, const LWmpls_Forwarding_Structure& e)
+{
+    os << e.info();
+    return os;
+};
+
+std::ostream& operator<<(std::ostream& os, const LWMPLSKey& e)
+{
+    os <<  "label : " << e.label << " MAC addr " << MACAddress(e.mac_addr).str();
+    return os;
+};
+
 Define_Module(Ieee80211Mesh);
 
 Ieee80211Mesh::~Ieee80211Mesh()
@@ -129,6 +141,8 @@ void Ieee80211Mesh::initialize(int stage)
         else
             proactiveFeedback = false;
         mplsData = new LWMPLSDataStructure;
+        WATCH_PTRMAP(*(mplsData->forwardingTableOutput));
+
          //
         // cambio para evitar que puedan estar los dos protocolos simultaneamente
         // cuidado con esto

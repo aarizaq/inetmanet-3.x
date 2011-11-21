@@ -1,6 +1,22 @@
 #include <stack>
 #include "lwmpls_data.h"
+#include "MACAddress.h"
 
+std::string LWmpls_Forwarding_Structure::info() const
+{
+    std::stringstream out;
+
+    out << "Input label :" << return_label_input << "Output label :" << return_label_output;
+    out << "Return Input label :" << input_label << "Return Output label :" << output_label;
+    out << "Input mac Address" << MACAddress(input_mac_address).str() << " Output mac Address" << MACAddress(mac_address).str();
+    out << "last used " << last_use;
+    return out.str();
+}
+
+std::string LWmpls_Forwarding_Structure::detailedInfo() const
+{
+    return std::string();
+}
 
 
 LWMPLSDataStructure::LWMPLSDataStructure()

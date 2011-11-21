@@ -110,6 +110,8 @@ typedef struct   LWmpls_Forwarding_Structure : public cOwnedObject
         path.clear();
 
     }
+    virtual std::string info() const;
+    virtual std::string detailedInfo() const;
 } LWmpls_Forwarding_Structure;
 
 class LWMPLSDataStructure;
