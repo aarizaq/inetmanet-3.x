@@ -28,7 +28,7 @@
 #include "Coord.h"
 #include "BasicModule.h"
 #include "IMobility.h"
-#include "NotificationBoard.h"
+
 
 /**
  * @brief Abstract base class for mobility modules.
