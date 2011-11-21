@@ -73,7 +73,7 @@ IPvXAddress AddressModule::getAddress(int val)
 {
     if (val == -1)
     {
-        if (chosedAddresses.isUnspecified())
+        if (chosedAddresses.isUnspecified() && !destAddresses.empty())
             chosedAddresses = choseNewAddress();
         return chosedAddresses;
     }
@@ -84,7 +84,9 @@ IPvXAddress AddressModule::getAddress(int val)
 
 IPvXAddress AddressModule::choseNewAddress()
 {
-    if (destAddresses.size() == 1)
+    if (destAddresses.empty())
+        chosedAddresses.set(IPv4Address::UNSPECIFIED_ADDRESS);
+    else if (destAddresses.size() == 1)
         chosedAddresses =  destAddresses[0];
     else
     {

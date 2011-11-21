@@ -109,7 +109,9 @@ void UDPBasicBurstNotification::initialize(int stage)
     addressModule->initModule(true);
 
 
-    isSource = (addressModule->getNumAddress() > 0);
+    if (strcmp(par("destAddresses").stringValue(),"") != 0)
+        isSource = true;
+
     if (isSource)
     {
         if (chooseDestAddrMode == ONCE)
@@ -119,12 +121,6 @@ void UDPBasicBurstNotification::initialize(int stage)
 
         timerNext = new cMessage("UDPBasicBurstTimer");
         scheduleAt(startTime, timerNext);
-        /*
-        if (par("chooseNewIfDeleted").boolValue())
-        {
-            simulation.getSystemModule()->subscribe(POST_MODEL_CHANGE, this);
-        }
-        */
     }
 
     sentPkSignal = registerSignal("sentPk");
@@ -176,18 +172,18 @@ void UDPBasicBurstNotification::generateBurst()
         chooseDestAddr();
 
     destAddr = addressModule->getAddress();
-    cPacket *payload = createPacket();
-    payload->setTimestamp();
-    emit(sentPkSignal, payload);
-
-    // Check address type
-    if (outputInterfaceMulticastBroadcast != -1 && (destAddr.isMulticast() || (!destAddr.isIPv6() && destAddr.get4() == IPv4Address::ALLONES_ADDRESS)))
-        socket.sendTo(payload, destAddr, destPort,outputInterfaceMulticastBroadcast);
-    else
-        socket.sendTo(payload, destAddr, destPort,outputInterface);
-
-    numSent++;
-
+    if (!destAddr.isUnspecified())
+    {
+        cPacket *payload = createPacket();
+        payload->setTimestamp();
+        emit(sentPkSignal, payload);
+        // Check address type
+        if (outputInterfaceMulticastBroadcast != -1 && (destAddr.isMulticast() || (!destAddr.isIPv6() && destAddr.get4() == IPv4Address::ALLONES_ADDRESS)))
+            socket.sendTo(payload, destAddr, destPort,outputInterfaceMulticastBroadcast);
+        else
+            socket.sendTo(payload, destAddr, destPort,outputInterface);
+        numSent++;
+    }
     // Next timer
     if (activeBurst && nextPkt >= nextSleep)
         nextPkt = nextBurst;
