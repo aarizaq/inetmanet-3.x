@@ -1128,7 +1128,8 @@ void Ieee80211NewMac::handleWithFSM(cMessage *msg)
             FSMA_No_Event_Transition(Immediate-Data-Ready,
                                      !transmissionQueueEmpty(),
                                      DEFER,
-                                     invalidateBackoffPeriod();
+                                     if (retryCounter() == 0)
+                                        invalidateBackoffPeriod();
                                     );
             FSMA_Event_Transition(Receive,
                                   isLowerMsg(msg),
@@ -1409,6 +1410,22 @@ void Ieee80211NewMac::handleWithFSM(cMessage *msg)
                                   retryCurrentTransmission();
                                   txop = false;
                                   if (endTXOP->isScheduled()) cancelEvent(endTXOP);
+                                 );
+            FSMA_Event_Transition(Interrupted-ACK-Failure,
+                                  isLowerMsg(msg) && retryCounter() == transmissionLimit - 1,
+                                  RECEIVE,
+                                  currentAC=oldcurrentAC;
+                                  giveUpCurrentTransmission();
+                                  txop = false;
+                                  if (endTXOP->isScheduled()) cancelEvent(endTXOP);
+                                 );
+            FSMA_Event_Transition(Retry-Interrupted-ACK,
+                                 isLowerMsg(msg),
+                                 RECEIVE,
+                                 currentAC=oldcurrentAC;
+                                 retryCurrentTransmission();
+                                 txop = false;
+                                 if (endTXOP->isScheduled()) cancelEvent(endTXOP);
                                  );
         }
         // wait until multicast is sent
@@ -2441,17 +2458,22 @@ void Ieee80211NewMac::logState()
     EV << "\n# retryCounter 0.."<<numCategories()<<" = ";
     for (int i=0; i<numCategories(); i++)
          EV << retryCounter(i) << " ";
-    EV << ", radioState = " << radioState << ", nav = " << nav <<  ",txop is "<< txop << endl;
-    EV << "queue size 0.."<<numCategories()<<" = ";
+    EV << ", radioState = " << radioState << ", nav = " << nav <<  ",txop is "<< txop << "\n";
+    EV << "#queue size 0.."<<numCategories()<<" = ";
     for (int i=0; i<numCategories(); i++)
         EV << transmissionQueue(i)->size() << " ";
-    EV << " medium is " << medium << ", scheduled AIFS are ";
+    EV << ", medium is " << medium << ", scheduled AIFS are ";
     for (int i=0; i<numCategories(); i++)
         EV << i << "(" << a[i] << ")";
     EV << ", scheduled backoff are ";
     for (int i=0; i<numCategories(); i++)
         EV << i << "(" << b[i] << ")";
-    EV << "# currentAC: " << currentAC << ", oldcurrentAC: " << oldcurrentAC << endl;
+    EV << "\n# currentAC: " << currentAC << ", oldcurrentAC: " << oldcurrentAC;
+    if (getCurrentTransmission() != NULL)
+         EV << "\n# current transmission: " << getCurrentTransmission()->getId();
+    else
+        EV << "\n# current transmission: none";
+    EV << endl;
 }
 
 const char *Ieee80211NewMac::modeName(int mode)
