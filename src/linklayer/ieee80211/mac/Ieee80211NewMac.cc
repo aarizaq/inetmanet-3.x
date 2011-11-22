@@ -1128,7 +1128,7 @@ void Ieee80211NewMac::handleWithFSM(cMessage *msg)
             FSMA_No_Event_Transition(Immediate-Data-Ready,
                                      !transmissionQueueEmpty(),
                                      DEFER,
-                                     if (retryCounter() == 0)
+                                     if (retryCounter() == 0) //  jesjones patch.  TODO: check this particular case, I haven't been sure about this particular case
                                         invalidateBackoffPeriod();
                                     );
             FSMA_Event_Transition(Receive,
