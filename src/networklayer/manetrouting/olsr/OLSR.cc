@@ -250,6 +250,7 @@ OLSR_LinkTupleTimer::~OLSR_LinkTupleTimer()
     if (agent_->state_ptr==NULL)
         return;
     agent_->rm_link_tuple(tuple);
+    agent_->setTopologyChanged(true);
     delete tuple_;
 }
 
@@ -288,6 +289,7 @@ OLSR_Nb2hopTupleTimer::~OLSR_Nb2hopTupleTimer()
     if (agent_->state_ptr==NULL)
         return;
     agent_->rm_nb2hop_tuple(tuple);
+    agent_->setTopologyChanged(true);
     delete tuple_;
 }
 
@@ -368,6 +370,7 @@ OLSR_TopologyTupleTimer::~OLSR_TopologyTupleTimer()
     if (agent_->state_ptr==NULL)
         return;
     agent_->rm_topology_tuple(tuple);
+    agent_->setTopologyChanged(true);
     delete tuple_;
 }
 
@@ -404,6 +407,7 @@ OLSR_IfaceAssocTupleTimer::~OLSR_IfaceAssocTupleTimer()
     if (agent_->state_ptr==NULL)
         return;
     agent_->rm_ifaceassoc_tuple(tuple);
+    agent_->setTopologyChanged(true);
     delete tuple_;
 }
 
@@ -1158,6 +1162,7 @@ OLSR::rtable_computation()
         if (!added)
             break;
     }
+    setTopologyChanged(false);
 }
 
 ///
@@ -1170,7 +1175,7 @@ OLSR::rtable_computation()
 /// \param receiver_iface the address of the interface where the message was received from.
 /// \param sender_iface the address of the interface where the message was sent from.
 ///
-void
+bool
 OLSR::process_hello(OLSR_msg& msg, const nsaddr_t &receiver_iface, const nsaddr_t &sender_iface, const int &index)
 {
     assert(msg.msg_type() == OLSR_HELLO_MSG);
@@ -1180,6 +1185,7 @@ OLSR::process_hello(OLSR_msg& msg, const nsaddr_t &receiver_iface, const nsaddr_
     populate_nb2hopset(msg);
     mpr_computation();
     populate_mprselset(msg);
+    return false;
 }
 
 ///
@@ -1191,7 +1197,7 @@ OLSR::process_hello(OLSR_msg& msg, const nsaddr_t &receiver_iface, const nsaddr_
 /// \param msg the %OLSR message which contains the TC message.
 /// \param sender_iface the address of the interface where the message was sent from.
 ///
-void
+bool
 OLSR::process_tc(OLSR_msg& msg, const nsaddr_t &sender_iface, const int &index)
 {
     assert(msg.msg_type() == OLSR_TC_MSG);
@@ -1202,7 +1208,7 @@ OLSR::process_tc(OLSR_msg& msg, const nsaddr_t &sender_iface, const int &index)
     // 1-hop neighborhood of this node, the message MUST be discarded.
     OLSR_link_tuple* link_tuple = state_.find_sym_link_tuple(sender_iface, now);
     if (link_tuple == NULL)
-        return;
+        return false;
 
     // 2. If there exist some tuple in the topology set where:
     //  T_last_addr == originator address AND
@@ -1212,7 +1218,7 @@ OLSR::process_tc(OLSR_msg& msg, const nsaddr_t &sender_iface, const int &index)
     OLSR_topology_tuple* topology_tuple =
         state_.find_newer_topology_tuple(msg.orig_addr(), tc.ansn());
     if (topology_tuple != NULL)
-        return;
+        return false;
 
     // 3. All tuples in the topology set where:
     //  T_last_addr == originator address AND
@@ -1256,6 +1262,7 @@ OLSR::process_tc(OLSR_msg& msg, const nsaddr_t &sender_iface, const int &index)
             topology_timer->resched(DELAY(topology_tuple->time()));
         }
     }
+    return false;
 }
 
 ///
@@ -1673,7 +1680,7 @@ OLSR::send_mid()
 /// \param receiver_iface the address of the interface where the message was received from.
 /// \param sender_iface the address of the interface where the message was sent from.
 ///
-void
+bool
 OLSR::link_sensing(OLSR_msg& msg, const nsaddr_t &receiver_iface, const nsaddr_t &sender_iface, const int &index)
 {
     OLSR_hello& hello = msg.hello();
@@ -1748,6 +1755,7 @@ OLSR::link_sensing(OLSR_msg& msg, const nsaddr_t &receiver_iface, const nsaddr_t
             new OLSR_LinkTupleTimer(this, link_tuple);
         link_timer->resched(DELAY(MIN(link_tuple->time(), link_tuple->sym_time())));
     }
+    return false;
 }
 
 ///
@@ -1756,7 +1764,7 @@ OLSR::link_sensing(OLSR_msg& msg, const nsaddr_t &receiver_iface, const nsaddr_t
 ///
 /// \param msg the %OLSR message which contains the HELLO message.
 ///
-void
+bool
 OLSR::populate_nbset(OLSR_msg& msg)
 {
     OLSR_hello& hello = msg.hello();
@@ -1764,6 +1772,7 @@ OLSR::populate_nbset(OLSR_msg& msg)
     OLSR_nb_tuple* nb_tuple = state_.find_nb_tuple(msg.orig_addr());
     if (nb_tuple != NULL)
         nb_tuple->willingness() = hello.willingness();
+    return false;
 }
 
 ///
@@ -1772,7 +1781,7 @@ OLSR::populate_nbset(OLSR_msg& msg)
 ///
 /// \param msg the %OLSR message which contains the HELLO message.
 ///
-void
+bool
 OLSR::populate_nb2hopset(OLSR_msg& msg)
 {
     double now = CURRENT_TIME;
@@ -1848,6 +1857,7 @@ OLSR::populate_nb2hopset(OLSR_msg& msg)
             }
         }
     }
+    return false;
 }
 
 ///

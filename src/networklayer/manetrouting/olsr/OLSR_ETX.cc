@@ -1409,7 +1409,7 @@ OLSR_ETX::rtable_dijkstra_computation()
 /// \param receiver_iface the address of the interface where the message was received from.
 /// \param sender_iface the address of the interface where the message was sent from.
 ///
-void
+bool
 OLSR_ETX::process_hello(OLSR_msg& msg, const nsaddr_t &receiver_iface, const nsaddr_t &sender_iface, uint16_t pkt_seq_num, const int &index)
 {
     assert(msg.msg_type() == OLSR_ETX_HELLO_MSG);
@@ -1436,6 +1436,7 @@ OLSR_ETX::process_hello(OLSR_msg& msg, const nsaddr_t &receiver_iface, const nsa
         break;
     }
     populate_mprselset(msg);
+    return false;
 }
 
 ///
@@ -1447,7 +1448,7 @@ OLSR_ETX::process_hello(OLSR_msg& msg, const nsaddr_t &receiver_iface, const nsa
 /// \param msg the %OLSR message which contains the TC message.
 /// \param sender_iface the address of the interface where the message was sent from.
 ///
-void
+bool
 OLSR_ETX::process_tc(OLSR_msg& msg, const nsaddr_t &sender_iface, const int &index)
 {
     assert(msg.msg_type() == OLSR_ETX_TC_MSG);
@@ -1466,7 +1467,7 @@ OLSR_ETX::process_tc(OLSR_msg& msg, const nsaddr_t &sender_iface, const int &ind
     }
 
     if (link_tuple == NULL)
-        return;
+        return false;
     // 2. If there exist some tuple in the topology set where:
     //   T_last_addr == originator address AND
     //   T_seq       >  ANSN,
@@ -1482,7 +1483,7 @@ OLSR_ETX::process_tc(OLSR_msg& msg, const nsaddr_t &sender_iface, const int &ind
     }
 
     if (topology_tuple != NULL)
-        return;
+        return false;
 
     // 3. All tuples in the topology set where:
     //  T_last_addr == originator address AND
@@ -1541,6 +1542,7 @@ OLSR_ETX::process_tc(OLSR_msg& msg, const nsaddr_t &sender_iface, const int &ind
         topology_tuple->update_link_delay(tc.nb_etx_main_addr(i).link_delay(),
                                           tc.nb_etx_main_addr(i).nb_link_delay());
     }
+    return false;
 }
 
 ///
@@ -2000,7 +2002,7 @@ OLSR_ETX::send_tc()
 /// \param receiver_iface the address of the interface where the message was received from.
 /// \param sender_iface the address of the interface where the message was sent from.
 ///
-void
+bool
 OLSR_ETX::link_sensing
 (OLSR_msg& msg, const nsaddr_t &receiver_iface, const nsaddr_t &sender_iface,
  uint16_t pkt_seq_num, const int & index)
@@ -2123,6 +2125,7 @@ OLSR_ETX::link_sensing
             new OLSR_LinkTupleTimer(this, link_tuple);
         link_timer->resched(DELAY(MIN(link_tuple->time(), link_tuple->sym_time())));
     }
+    return false;
 }
 
 ///
@@ -2140,7 +2143,7 @@ OLSR_ETX::link_sensing
 ///
 /// \param msg the %OLSR message which contains the HELLO message.
 ///
-void
+bool
 OLSR_ETX::populate_nb2hopset(OLSR_msg& msg)
 {
     OLSR_hello& hello = msg.hello();
@@ -2279,6 +2282,7 @@ OLSR_ETX::populate_nb2hopset(OLSR_msg& msg)
             break;
         }
     }
+    return false;
 }
 ///
 /// \brief  Updates the MPR Selector Set according to the information contained in a new
