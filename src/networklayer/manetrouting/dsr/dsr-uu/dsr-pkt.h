@@ -69,7 +69,7 @@ struct dsr_pkt
         struct iphdr *iph;
         char *raw;
     } nh;
-    char ip_data[60];
+    char ip_data[70];
 #endif
     struct
     {

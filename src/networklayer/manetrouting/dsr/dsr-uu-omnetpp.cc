@@ -59,7 +59,7 @@ struct iphdr *DSRUU::dsr_build_ip(struct dsr_pkt *dp, struct in_addr src,
     else
     {
         iph->version = 4; //IPVERSION;
-        iph->ihl = 5;
+        iph->ihl = ip_len;
         iph->tos = 0;
         iph->id = 0;
         iph->frag_off = 0;
@@ -175,9 +175,8 @@ void DSRUU::omnet_xmit(struct dsr_pkt *dp)
 
 void DSRUU::omnet_deliver(struct dsr_pkt *dp)
 {
-    int len;
     if (dp->dh.raw)
-        len = dsr_opt_remove(dp);
+        dsr_opt_remove(dp);
 #ifdef MobilityFramework
     if (dp->dst.s_addr==my_addr().s_addr) // Is for us send to upper layer
     {
@@ -789,18 +788,10 @@ else
             if (dynamic_cast<Ieee80211DataFrame *>(const_cast<cObject*>(details)))
             {
                 Ieee80211DataFrame *frame = check_and_cast<Ieee80211DataFrame *>(details);
-#if OMNETPP_VERSION > 0x0400
                 if (dynamic_cast<DSRPkt *>(frame->getEncapsulatedPacket()))
-#else
-if (dynamic_cast<DSRPkt *>(frame->getEncapsulatedMsg()))
-#endif
                 {
 
-#if OMNETPP_VERSION > 0x0400
                     DSRPkt *paux = check_and_cast <DSRPkt *> (frame->getEncapsulatedPacket());
-#else
-DSRPkt *paux = check_and_cast <DSRPkt *> (frame->getEncapsulatedMsg());
-#endif
 
                     DSRPkt *p = check_and_cast <DSRPkt *> (paux->dup());
                     take(p);
@@ -926,31 +917,26 @@ void DSRUU::linkFailed(IPv4Address ipAdd)
 void DSRUU::tap(DSRPkt *p)
 {
     struct dsr_pkt *dp;
-    struct in_addr next_hop, prev_hop;
-    int transportProtocol;
 
-    /* Cast the packet so that we can touch it */
-
-
-    /* Do nothing for my own packets... */
 #ifdef MobilityFramework
+    struct in_addr next_hop, prev_hop;
     next_hop.s_addr = p->nextAddress();
     prev_hop.s_addr = p->prevAddress();
-    transportProtocol = p->getTransportProtocol();
 #else
+    struct in_addr next_hop, prev_hop;
     next_hop.s_addr = p->nextAddress().getInt();
     prev_hop.s_addr = p->prevAddress().getInt();
-    transportProtocol = p->getTransportProtocol();
 #endif
+    int transportProtocol = p->getTransportProtocol();
+    /* Cast the packet so that we can touch it */
     dp = dsr_pkt_alloc(p);
     dp->flags |= PKT_PROMISC_RECV;
 
     /* TODO: See if this node is the next hop. In that case do nothing */
-
     switch (transportProtocol)
     {
     case IP_PROT_DSR:
-        if (dp->src.s_addr != myaddr_.s_addr)
+        if (dp->src.s_addr != myaddr_.s_addr) /* Do nothing for my own packets... */
         {
             //DEBUG("DSR packet from %s\n", print_ip(dp->src));
             dsr_recv(dp);

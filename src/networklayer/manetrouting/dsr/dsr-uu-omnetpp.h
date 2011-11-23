@@ -459,10 +459,8 @@ static inline int omnet_vprintk(const char *fmt, va_list args)
 static inline void omnet_debug(const char *fmt, ...)
 {
     va_list args;
-    int r;
-
     va_start(args, fmt);
-    r = omnet_vprintk(fmt, args);
+    omnet_vprintk(fmt, args);
     va_end(args);
 }
 

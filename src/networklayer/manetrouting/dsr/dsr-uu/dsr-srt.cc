@@ -875,6 +875,9 @@ int NSCLASS dsr_srt_add(struct dsr_pkt *dp)
     tot_len = ntohs(dp->nh.iph->tot_len) + len;
     ttl = dp->nh.iph->ttl;
 #endif
+#ifdef OMNETPP
+    ip_len = dp->nh.iph->ihl;
+#endif
     dp->nh.iph = dsr_build_ip(dp, dp->src, dp->dst, ip_len, tot_len,
                               IPPROTO_DSR, ttl);
 
