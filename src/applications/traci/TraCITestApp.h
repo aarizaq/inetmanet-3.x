@@ -26,7 +26,7 @@
 
 #include <omnetpp.h>
 
-#include "mobility/traci/TraCIMobility.h"
+#include "TraCIMobility.h"
 
 /**
  * FIXME

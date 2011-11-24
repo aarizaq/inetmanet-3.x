@@ -335,6 +335,7 @@ OLSROPT::link_sensing(OLSR_msg& msg, const nsaddr_t &receiver_iface, const nsadd
     double now = CURRENT_TIME;
     bool updated = false;
     bool created = false;
+    bool change = false;
 
     OLSR_link_tuple* link_tuple = state_.find_link_tuple(sender_iface);
     if (link_tuple == NULL)
@@ -360,7 +361,7 @@ OLSROPT::link_sensing(OLSR_msg& msg, const nsaddr_t &receiver_iface, const nsadd
         OLSR_hello_msg& hello_msg = hello.hello_msg(i);
         int lt = hello_msg.link_code() & 0x03;
         int nt = hello_msg.link_code() >> 2;
-
+        
         // We must not process invalid advertised links
         if ((lt == OLSR_SYM_LINK && nt == OLSR_NOT_NEIGH) ||
                 (nt != OLSR_SYM_NEIGH && nt != OLSR_MPR_NEIGH
@@ -379,7 +380,7 @@ OLSROPT::link_sensing(OLSR_msg& msg, const nsaddr_t &receiver_iface, const nsadd
                 }
                 else if (lt == OLSR_SYM_LINK || lt == OLSR_ASYM_LINK)
                 {
-                    link_tuple->sym_time() =
+                	link_tuple->sym_time() =
                         now + OLSROPT::emf_to_seconds(msg.vtime());
                     link_tuple->time() =
                         link_tuple->sym_time() + OLSR_NEIGHB_HOLD_TIME;

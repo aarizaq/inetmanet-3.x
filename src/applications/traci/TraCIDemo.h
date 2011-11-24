@@ -22,7 +22,7 @@
 #include <omnetpp.h>
 #include "UDPSocket.h"
 
-#include "mobility/traci/TraCIMobility.h"
+#include "TraCIMobility.h"
 
 /**
  * Small IVC Demo
