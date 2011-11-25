@@ -1038,6 +1038,7 @@ bool DSRUU::proccesICMP(cMessage *msg)
     IPv4Address dst(this->my_addr().S_addr);
     newdgram->setDestAddress(dst);
     newdgram->encapsulate(pk);
+    newdgram->setTransportProtocol(IP_PROT_ICMP);
     send(newdgram,"to_ip");
     return true;
  }
