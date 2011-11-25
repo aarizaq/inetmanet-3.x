@@ -27,6 +27,7 @@
 #include "IPv4Address.h"
 #include "Ieee802Ctrl_m.h"
 #include "Ieee80211Frame_m.h"
+#include "ICMPMessage_m.h"
 
 unsigned int DSRUU::confvals[CONFVAL_MAX];
 //simtime_t DSRUU::current_time;
@@ -552,12 +553,15 @@ void DSRUU::handleMessage(cMessage* msg)
     }
     else
     {
-        EV << "############################################################\n";
-        EV << "!!WARNING: DSR has received not supported packet, delete it \n";
-        EV << "############################################################\n";
-        delete msg;
-        return;
-        //opp_error("DSR has received not supported packet");
+        // recapsulate and send
+        if (proccesICMP(msg))
+            return;
+        //EV << "############################################################\n";
+        //EV << "!!WARNING: DSR has received not supported packet, delete it \n";
+        //EV << "############################################################\n";
+        //delete msg;
+        //return;
+        opp_error("DSR has received not supported packet");
     }
     DEBUG("##########\n");
     if (ipDgram->getSrcAddress().isUnspecified())
@@ -1007,3 +1011,34 @@ void DSRUU::AddCost(struct dsr_pkt *dp, struct dsr_srt *srt)
     dp->costVector[srt->cost_size-1].address = IPv4Address((uint32_t)srt->dst.s_addr);
     dp->costVector[srt->cost_size-1].cost = srt->cost[srt->cost_size-1];
 }
+
+
+bool DSRUU::proccesICMP(cMessage *msg)
+{
+    ICMPMessage * pk = dynamic_cast<ICMPMessage *>(msg);
+    if (pk==NULL)
+        return false;
+    // check if
+    // recapsulate and send
+    DSRPkt *bogusPacket = dynamic_cast<DSRPkt *>(pk->getEncapsulatedPacket());
+    if (bogusPacket==NULL)
+    {
+        delete msg;
+        return true;
+    }
+    // check if is a exclusive DSR packet
+    if (bogusPacket->getEncapProtocol()==0)
+    {
+        // delete all and return
+        delete msg;
+        return true;
+    }
+    IPv4Datagram *newdgram = new IPv4Datagram();
+    bogusPacket->setTransportProtocol(bogusPacket->getEncapProtocol());
+    IPv4Address dst(this->my_addr().S_addr);
+    newdgram->setDestAddress(dst);
+    newdgram->encapsulate(pk);
+    send(newdgram,"to_ip");
+    return true;
+ }
+
