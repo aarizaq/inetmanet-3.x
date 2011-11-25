@@ -207,7 +207,6 @@ static struct maint_entry *maint_entry_create(struct dsr_pkt *dp,
         else
             dgram = new IPv4Datagram();
 
-#ifndef MobilityFramework
         IPv4Address destAddress_var((uint32_t)dp->dst.s_addr);
         dgram->setDestAddress(destAddress_var);
         IPv4Address srcAddress_var((uint32_t)dp->src.s_addr);
@@ -219,11 +218,7 @@ static struct maint_entry *maint_entry_create(struct dsr_pkt *dp,
         dgram->setMoreFragments(dp->nh.iph->tos & 0x2000);
         dgram->setDontFragment (dp->nh.iph->frag_off & 0x4000);
         dgram->setTimeToLive (dp->nh.iph->ttl); // TTL
-#else
-    dgram->setDestAddr(dp->dst.s_addr);
-    dgram->setSrcAddr(dp->src.s_addr);
-    dgram->setTtl (dp->nh.iph->ttl); // TTL
-#endif
+
         if (dp->nh.iph->protocol == IP_PROT_DSR)
         {
             dgram->setTransportProtocol(IP_PROT_DSR);

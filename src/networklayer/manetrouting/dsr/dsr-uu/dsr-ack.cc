@@ -160,7 +160,6 @@ int NSCLASS dsr_ack_req_send(struct dsr_pkt *dp)
         IPv4Datagram *dgram;
         dgram = p;
 
-#ifndef MobilityFramework
         IPv4Address destAddress_var((uint32_t)dp->dst.s_addr);
         dgram->setDestAddress(destAddress_var);
         IPv4Address srcAddress_var((uint32_t)dp->src.s_addr);
@@ -172,11 +171,7 @@ int NSCLASS dsr_ack_req_send(struct dsr_pkt *dp)
         dgram->setMoreFragments(dp->nh.iph->tos & 0x2000);
         dgram->setDontFragment (dp->nh.iph->frag_off & 0x4000);
         dgram->setTimeToLive (dp->nh.iph->ttl); // TTL
-#else
-        dgram->setDestAddr(dp->dst.s_addr);
-        dgram->setSrcAddr(dp->src.s_addr);
-        dgram->setTtl (dp->nh.iph->ttl); // TTL
-#endif
+
         if (dp->nh.iph->protocol == IP_PROT_DSR)
         {
             dgram->setTransportProtocol(IP_PROT_DSR);
@@ -230,11 +225,6 @@ int NSCLASS dsr_ack_req_send(struct dsr_pkt *dp)
     if (dp->dst.s_addr != DSR_BROADCAST)
     {
         /* Get hardware destination address */
-#ifdef MobilityFramework
-        int macAddr = arp->getMacAddr(dp->nxt_hop.s_addr);
-        p->setNextAddress(dp->nxt_hop.s_addr);
-        p->setControlInfo(new MacControlInfo(macAddr));
-#else
         IPv4ControlInfo *controlInfo=NULL;
         if (p->getControlInfo())
         {
@@ -260,27 +250,14 @@ int NSCLASS dsr_ack_req_send(struct dsr_pkt *dp)
         controlInfo->setDestAddr(p->getDestAddress());
 
         p->setNextAddress(nextIp);
-#endif
     }
-#ifdef MobilityFramework
-    else
-    {
-        p->setDestAddr(L3BROADCAST);
-        int macAddr = L2BROADCAST;
-        p->setControlInfo(new MacControlInfo(macAddr));
-    }
-#endif
     /*
     if (!ConfVal(UseNetworkLayerAck)) {
         cmh->xmit_failure_ = xmit_failure;
         cmh->xmit_failure_data_ = (void *) this;
     }
     */
-#ifdef MobilityFramework
-    int prev = myaddr_.s_addr;
-#else
     IPv4Address prev((uint32_t)myaddr_.s_addr);
-#endif
     p->setPrevAddress(prev);
     if (jitter)
         sendDelayed(p, jitter, "to_ip");
