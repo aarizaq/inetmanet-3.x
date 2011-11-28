@@ -152,22 +152,29 @@ void DSRUU::omnet_xmit(struct dsr_pkt *dp)
 
 void DSRUU::omnet_deliver(struct dsr_pkt *dp)
 {
+    int dsr_opts_len = 0;
     if (dp->dh.raw)
+    {
+        dsr_opts_len = dp->dh.opth->p_len + DSR_OPT_HDR_LEN;
         dsr_opt_remove(dp);
+    }
     IPv4Datagram *dgram;
     dgram = new IPv4Datagram;
+
     IPv4Address destAddress_var((uint32_t)dp->dst.s_addr);
     dgram->setDestAddress(destAddress_var);
     IPv4Address srcAddress_var((uint32_t)dp->src.s_addr);
     dgram->setSrcAddress(srcAddress_var);
-    dgram->setHeaderLength(dp->nh.iph->ihl); // Header length
+    dgram->setHeaderLength(dp->nh.iph->ihl-dsr_opts_len); // Header length
     dgram->setVersion(dp->nh.iph->version); // Ip version
     dgram->setDiffServCodePoint(dp->nh.iph->tos); // ToS
     dgram->setIdentification(dp->nh.iph->id); // Identification
     dgram->setMoreFragments(dp->nh.iph->tos & 0x2000);
     dgram->setDontFragment(dp->nh.iph->frag_off & 0x4000);
+    dgram->setTotalPayloadLength(dp->totalPayloadLength);
     dgram->setTimeToLive(dp->nh.iph->ttl); // TTL
     dgram->setTransportProtocol(dp->encapsulate_protocol); // Transport protocol
+
     if (dp->payload)
         dgram->encapsulate(dp->payload);
     dp->payload = NULL;
@@ -1020,6 +1027,8 @@ bool DSRUU::proccesICMP(cMessage *msg)
         return false;
     // check if
     // recapsulate and send
+    if (pk->getControlInfo())
+        delete pk->removeControlInfo();
     DSRPkt *bogusPacket = dynamic_cast<DSRPkt *>(pk->getEncapsulatedPacket());
     if (bogusPacket==NULL)
     {

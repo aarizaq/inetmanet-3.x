@@ -103,6 +103,8 @@ struct dsr_pkt
 #else
     bool moreFragments;
     int fragmentOffset;
+    int totalPayloadLength;
+
     cPacket *payload;
     DSRPkt   *ip_pkt;
     int encapsulate_protocol;

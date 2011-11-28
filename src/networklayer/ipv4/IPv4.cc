@@ -950,7 +950,7 @@ void IPv4::fragmentAndSend(IPv4Datagram *datagram, InterfaceEntry *ie, IPv4Addre
 
         sendDatagramToOutput(fragment, ie, nextHopAddr);
     }
-
+    delete payload;
     delete datagram;
 }
 
@@ -961,7 +961,7 @@ void IPv4::reassembleAndDeliver(IPv4Datagram *datagram)
     // reassemble the packet (if fragmented)
 
 
-    int headerLength;
+    int headerLength = datagram->getHeaderLength();
     if (datagram->getFragmentOffset()!=0 || datagram->getMoreFragments())
     {
         EV << "Datagram fragment: offset=" << datagram->getFragmentOffset()
@@ -973,7 +973,8 @@ void IPv4::reassembleAndDeliver(IPv4Datagram *datagram)
             lastCheckTime = simTime();
             fragbuf.purgeStaleFragments(simTime()-fragmentTimeoutTime);
         }
-        if (!datagram->getMoreFragments())
+
+        if (datagram->getTotalPayloadLength()>0)
         {
             int totalLength = datagram->getByteLength();
             headerLength = datagram->getHeaderLength();
