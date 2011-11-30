@@ -451,6 +451,38 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
         }
     }
 #endif
+
+#ifdef OMNETPP
+    if (getIsGateway())
+    {
+        /* Subnet locality decision */
+        // search address
+        if (isAddressInProxyList(rreq_dest.s_addr))
+        {
+            /* We must increase the gw's sequence number before sending a RREP,
+             * otherwise intermediate nodes will not forward the RREP. */
+            seqno_incr(this_host.seqno);
+            rrep = rrep_create(0, 0, 0, DEV_IFINDEX(rev_rt->ifindex).ipaddr,
+                               this_host.seqno, rev_rt->dest_addr,
+                               ACTIVE_ROUTE_TIMEOUT);
+
+            ext = rrep_add_ext(rrep, RREP_INET_DEST_EXT, rrep_size,
+                               sizeof(struct in_addr), (char *) &rreq_dest);
+
+            rrep_size += AODV_EXT_SIZE(ext);
+
+
+            DEBUG(LOG_DEBUG, 0,
+                  "Responding for INTERNET dest: %s rrep_size=%d",
+                  ip_to_str(rreq_dest), rrep_size);
+
+            rrep_send(rrep, rev_rt, NULL, rrep_size);
+
+            return;
+
+        }
+    }
+#endif
     /* Are we the destination of the RREQ?, if so we should immediately send a
        RREP.. */
 #ifndef OMNETPP

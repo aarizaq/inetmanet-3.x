@@ -290,43 +290,81 @@ void NS_CLASS re_process(RE *re,struct in_addr ip_src, u_int32_t ifindex)
         // If A-bit is set, a RE is sent back
         switch (mustAnswer)
         {
-        case 1:
+            case 1:
             if (re->a)
             {
                 struct in_addr target_addr;
                 u_int32_t target_seqnum;
-                node_addr.s_addr    = re->re_blocks[0].re_node_addr;
-                target_addr.s_addr  = re->target_addr;
-                target_seqnum       = ntohl(re->target_seqnum);
-                if (!target_seqnum ||
-                        ((int32_t) target_seqnum) - ((int32_t) this_host.seqnum) > 0 ||
+                node_addr.s_addr = re->re_blocks[0].re_node_addr;
+                target_addr.s_addr = re->target_addr;
+                target_seqnum = ntohl(re->target_seqnum);
+                if (!target_seqnum || ((int32_t) target_seqnum) - ((int32_t) this_host.seqnum) > 0 ||
                         (target_seqnum == this_host.seqnum && re->thopcnt < re->re_blocks[0].re_hopcnt))
-                    INC_SEQNUM(this_host.seqnum);
+                       INC_SEQNUM(this_host.seqnum);
                 RE *rrep = re_create_rrep(
-                               node_addr,
-                               ntohl(re->re_blocks[0].re_node_seqnum),
-                               target_addr,
-                               this_host.seqnum,
-                               this_host.prefix,
-                               this_host.is_gw,
-                               NET_DIAMETER,
-                               re->re_blocks[0].re_hopcnt);
+                        node_addr,
+                        ntohl(re->re_blocks[0].re_node_seqnum),
+                        target_addr,
+                        this_host.seqnum,
+                        this_host.prefix,
+                        this_host.is_gw,
+                        NET_DIAMETER,
+                        re->re_blocks[0].re_hopcnt);
                 re_send_rrep(rrep);
             }
             break;
-        case 2:
-        {
-            struct in_addr target_addr;
-            node_addr.s_addr    = re->re_blocks[0].re_node_addr;
-            target_addr.s_addr  = re->target_addr;
-            re_intermediate_rrep (node_addr, target_addr, entry,ifindex);
-        }
-        break;
-        case 3:
-        {
-            re_answer (re,ifindex);
-        }
-        break;
+            case 2:
+            {
+                struct in_addr target_addr;
+                node_addr.s_addr = re->re_blocks[0].re_node_addr;
+                target_addr.s_addr = re->target_addr;
+                re_intermediate_rrep (node_addr, target_addr, entry,ifindex);
+            }
+            break;
+            case 3:
+            {
+                re_answer (re,ifindex);
+            }
+            break;
+            case 4: // gateway
+            {
+                if (re->a)
+                {
+                    struct in_addr target_addr;
+                    u_int32_t target_seqnum;
+                    node_addr.s_addr = re->re_blocks[0].re_node_addr;
+                    target_addr.s_addr = re->target_addr;
+                    target_seqnum = ntohl(re->target_seqnum);
+                    if (!target_seqnum ||
+                            ((int32_t) target_seqnum) - ((int32_t) this_host.seqnum) > 0 ||
+                            (target_seqnum == this_host.seqnum && re->thopcnt < re->re_blocks[0].re_hopcnt))
+                            INC_SEQNUM(this_host.seqnum);
+                    RE *rrep = re_create_rrep(
+                            node_addr,
+                            ntohl(re->re_blocks[0].re_node_seqnum),
+                            target_addr,
+                            this_host.seqnum,
+                            this_host.prefix,
+                            this_host.is_gw,
+                            NET_DIAMETER,
+                            re->re_blocks[0].re_hopcnt);
+                    rrep->re_blocks[0].re_hopcnt = 1;
+                    if (!no_path_acc)
+                    {
+                        rrep->newBocks(1);
+                        rrep->re_blocks[1].g       = this_host.is_gw;
+                        rrep->re_blocks[1].prefix  = this_host.prefix;
+                        rrep->re_blocks[1].res     = 0;
+                        rrep->re_blocks[1].re_hopcnt = 0;
+                        rrep->re_blocks[1].re_node_seqnum  = this_host.seqnum;
+                        rrep->re_blocks[1].re_node_addr    = DEV_NR(ifindex).ipaddr.s_addr;
+                        rrep->re_blocks[1].from_proactive = 0;
+                        rrep->re_blocks[1].staticNode = isStaticNode();
+                    }
+                    re_send_rrep(rrep);
+                }
+            }
+            break;
         }
 #ifdef OMNETPP
         if (!isInMacLayer())
@@ -339,7 +377,7 @@ void NS_CLASS re_process(RE *re,struct in_addr ip_src, u_int32_t ifindex)
         re=NULL;
 #endif
     }
-    else if (isBroadcast(re->target_addr)) // proactive RREQ
+    else if (isBroadcast(re->target_addr) && re->a) // proactive RREQ
     {
         if (!propagateProactive)
         {
@@ -864,9 +902,23 @@ int NS_CLASS re_mustAnswer(RE *re, u_int32_t ifindex)
     struct in_addr target_addr;
     struct in_addr src_addr;
 
+    if (!re->a) // not RREQ
+        return mustAnswer;
 #ifdef OMNETPP
     if (isBroadcast(re->target_addr))
         return mustAnswer; // return immediately
+
+    if (getIsGateway() && re->a)
+    {
+        /* Subnet locality decision */
+        // search address
+        if (isAddressInProxyList(re->target_addr))
+        {
+            return 4;
+        }
+    }
+
+
     bool haveRoute= false;
     if (isLocalAddress(re->target_addr))  // If this node is the target, the RE must not be retransmitted
         return 1;

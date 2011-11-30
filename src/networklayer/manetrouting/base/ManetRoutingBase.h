@@ -56,7 +56,6 @@ class ManetTimer :  public cOwnedObject
     virtual ~ManetTimer();
 };
 
-
 typedef std::multimap <simtime_t, ManetTimer *> TimerMultiMap;
 typedef std::set<Uint128> AddressGroup;
 typedef std::set<Uint128>::iterator AddressGroupIterator;
@@ -107,6 +106,14 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
     std::vector<AddressGroup> addressGroupVector;
     std::vector<int> inAddressGroup;
     bool staticNode;
+
+    struct ManetProxyAddress
+    {
+            Uint128 mask;
+            Uint128 address;
+    };
+    bool isGateway;
+    std::vector<ManetProxyAddress> proxyAddress;
   protected:
     ~ManetRoutingBase();
     ManetRoutingBase();
@@ -332,6 +339,18 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
     virtual bool getNextHopGroup(const AddressGroup &gr, Uint128 &add, int &iface, Uint128&){opp_error("getNextHopGroup, method is not implemented"); return false;}
     virtual int  getRouteGroup(const Uint128&, std::vector<Uint128> &, Uint128&, bool &, int group = 0){opp_error("getRouteGroup, method is not implemented"); return 0;}
     virtual bool getNextHopGroup(const Uint128&, Uint128 &add, int &iface, Uint128&, bool &, int group = 0){opp_error("getNextHopGroup, method is not implemented"); return false;}
+
+
+    // proxy/gateway methods, this methods help to the reactive protocols to answer the RREQ for a address that are in other subnetwork
+    // Set if the node will work like gateway for address in the list
+    virtual void setIsGateway(bool p) {isGateway = p;}
+    virtual bool getIsGateway() {return isGateway;}
+    // return true if the node must answer because the addres are in the list
+    virtual bool isAddressInProxyList(const Uint128 &);
+    virtual void setAddressInProxyList(const Uint128 &,const Uint128 &);
+    virtual int getNumAddressInProxyList() {return (int)proxyAddress.size();}
+    virtual bool getAddressInProxyList(int,Uint128 &, Uint128 &);
+
 };
 
 #define interface80211ptr getInterfaceWlanByAddress()

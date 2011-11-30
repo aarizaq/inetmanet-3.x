@@ -1495,3 +1495,38 @@ bool ManetRoutingBase::getAddressGroup(std::vector<Uint128> &addressGroup, int g
     return true;
 }
 
+
+bool ManetRoutingBase::isAddressInProxyList(const Uint128 & addr)
+{
+    if (!isGateway)
+        return false;
+    for (unsigned int i = 0; i < proxyAddress.size(); i++)
+    {
+        if ((addr & proxyAddress[i].mask) == proxyAddress[i].address)
+            return true;
+    }
+    return false;
+}
+
+void ManetRoutingBase::setAddressInProxyList(const Uint128 & addr,const Uint128 & mask)
+{
+    // search if exist
+    for (unsigned int i = 0; i < proxyAddress.size(); i++)
+    {
+        if ((addr == proxyAddress[i].address) && (mask == proxyAddress[i].mask))
+            return;
+    }
+    ManetProxyAddress val;
+    val.address = addr;
+    val.mask = mask;
+    proxyAddress.push_back(val);
+}
+
+bool ManetRoutingBase::getAddressInProxyList(int i,Uint128 &addr, Uint128 &mask)
+{
+    if (i< 0 || i >= proxyAddress.size())
+        return false;
+    addr = proxyAddress[i].address;
+    mask = proxyAddress[i].mask;
+    return true;
+}
