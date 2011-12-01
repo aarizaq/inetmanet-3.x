@@ -1042,6 +1042,8 @@ bool DSRUU::proccesICMP(cMessage *msg)
         delete msg;
         return true;
     }
+    if (bogusPacket->getControlInfo())
+        delete bogusPacket->removeControlInfo();
     IPv4Datagram *newdgram = new IPv4Datagram();
     bogusPacket->setTransportProtocol(bogusPacket->getEncapProtocol());
     IPv4Address dst(this->my_addr().S_addr);
