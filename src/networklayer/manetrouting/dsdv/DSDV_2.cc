@@ -50,9 +50,25 @@ void DSDV_2::initialize(int stage)
             interface80211ptr = i_face;
         else
             opp_error("DSDV has found %i 80211 interfaces", num_80211);
+        rt = RoutingTableAccess().get();
+        if (par("manetPurgeRoutingTables").boolValue())
+        {
+            const IPv4Route *entry;
+            // clean the route table wlan interface entry
+            for (int i=rt->getNumRoutes()-1; i>=0; i--)
+            {
+                entry = rt->getRoute(i);
+                const InterfaceEntry *ie = entry->getInterface();
+                if (strstr(ie->getName(), "wlan")!=NULL)
+                {
+                    rt->deleteRoute(entry);
+                }
+            }
+        }
+        interface80211ptr->ipv4Data()->joinMulticastGroup(IPv4Address::LL_MANET_ROUTERS);
 
         // schedules a random periodic event: the hello message broadcast from DSDV module
-        rt = RoutingTableAccess().get();
+
         rt->setTimeToLiveRoutingEntry(par("timetolive_routing_entry"));
 
         //reads from omnetpp.ini

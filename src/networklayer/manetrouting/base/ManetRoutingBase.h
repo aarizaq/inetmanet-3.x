@@ -61,6 +61,9 @@ typedef std::set<Uint128> AddressGroup;
 typedef std::set<Uint128>::iterator AddressGroupIterator;
 class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, protected cListener
 {
+ public:
+    static IPv4Address  LL_MANET_Routers;
+    static IPv6Address  LL_MANET_RoutersV6;
   private:
     static simsignal_t mobilityStateChangedSignal;
     typedef std::map<Uint128,Uint128> RouteMap;

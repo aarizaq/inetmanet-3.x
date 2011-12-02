@@ -259,6 +259,14 @@ void ManetRoutingBase::registerRoutingModule()
             }
         }
     }
+    // register LL-MANET-Routers
+    if (!mac_layer_)
+    {
+        for (unsigned int i = 0; i<interfaceVector->size(); i++)
+        {
+            (*interfaceVector)[i].interfacePtr->ipv4Data()->joinMulticastGroup(IPv4Address::LL_MANET_ROUTERS);
+        }
+    }
  //   WATCH_MAP(*routesVector);
 }
 
