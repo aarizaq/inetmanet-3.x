@@ -40,8 +40,8 @@ class PhyControlInfo
 {
     int channelNumber = -1; // with PHY_C_CONFIGURERADIO: the channel to switch to
     double bitrate = -1; // with PHY_C_CONFIGURERADIO: the bitrate to switch to
-    bool  adativeSensitivity=false;
-    double transmitterPower=-1; // With PHY_C_CHANGETRANSMITTERPOWER : the power transmission swith to
+    bool  adaptiveSensitivity = false;
+    double transmitterPower = -1; // With PHY_C_CHANGETRANSMITTERPOWER : the power transmission swith to
 }
 
 //
