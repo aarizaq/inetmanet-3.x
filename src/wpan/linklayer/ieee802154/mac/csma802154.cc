@@ -250,8 +250,7 @@ void csma802154::handleUpperMsg(cMessage *msg)
     {
         useIeee802Ctrl = true;
         Ieee802Ctrl* cInfo = check_and_cast<Ieee802Ctrl *>(controlInfo);
-        MACAddress destination = cInfo->getDest();
-        dest = static_cast<IE3ADDR> (MacToUint64(destination));
+        dest = cInfo->getDest();
     }
     else
     {
@@ -922,8 +921,8 @@ void csma802154::handleSelfMsg(cMessage *msg)
 void csma802154::handleLowerMsg(cMessage *msg)
 {
     Ieee802154Frame *macPkt = static_cast<Ieee802154Frame *> (msg);
-    long src = macPkt->getSrcAddr();
-    long dest = macPkt->getDstAddr();
+    MACAddress src = macPkt->getSrcAddr();
+    MACAddress dest = macPkt->getDstAddr();
     //long ExpectedNr = 0;
     uint8_t ExpectedNr = 0;
     if (msg->getControlInfo())
@@ -1100,14 +1099,14 @@ cPacket *csma802154::decapsMsg(Ieee802154Frame * macPkt)
     if (useIeee802Ctrl)
     {
         Ieee802Ctrl* cinfo = new Ieee802Ctrl();
-        MACAddress destination = Uint64ToMac (macPkt->getSrcAddr());
+        MACAddress destination = macPkt->getSrcAddr();
         cinfo->setSrc(destination);
         msg->setControlInfo(cinfo);
     }
     else
     {
         Ieee802154NetworkCtrlInfo * cinfo = new Ieee802154NetworkCtrlInfo();
-        cinfo->setNetwAddr(macPkt->getSrcAddr());
+        cinfo->setNetwAddr(macPkt->getSrcAddr().getInt());
     }
     return msg;
 }

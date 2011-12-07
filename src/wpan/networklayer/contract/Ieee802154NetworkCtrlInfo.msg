@@ -11,5 +11,5 @@ message Ieee802154NetworkCtrlInfo
     // MAC layer is responsible for MAC address translation
     bool toParent;
     string destName;
-    int  netwAddr=-1; 
+    uint64_t  netwAddr=-1; 
 }
