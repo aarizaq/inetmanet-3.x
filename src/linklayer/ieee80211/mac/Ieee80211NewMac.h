@@ -79,8 +79,8 @@ class INET_API Ieee80211NewMac : public WirelessMacBase, public INotifiable
         Ieee80211ASFTuple& operator=(const Ieee80211ASFTuple& other)
         {
             if (this==&other) return *this;
-            this->sequenceNumber=other.sequenceNumber;
-            this->fragmentNumber=other.fragmentNumber;
+            this->sequenceNumber = other.sequenceNumber;
+            this->fragmentNumber = other.fragmentNumber;
             this->receivedTime = other.receivedTime;
             return *this;
         }
@@ -664,10 +664,10 @@ class INET_API Ieee80211NewMac : public WirelessMacBase, public INotifiable
     {
         for (unsigned int i = 0; i<edcCAF.size(); i++)
         {
-    	    if (edcCAF[i].backoff)
-    	        return true;
+            if (edcCAF[i].backoff)
+                return true;
         }
-    	return false;
+        return false;
     }
     ModulationType getControlAnswerMode(ModulationType reqMode);
     //@}

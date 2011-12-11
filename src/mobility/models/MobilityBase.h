@@ -63,8 +63,6 @@ class INET_API MobilityBase : public BasicModule, public IMobility
         PLACERANDOMLY, ///< placed at a randomly chosen position within the constraint area
         RAISEERROR     ///< stop the simulation with error
     };
-    /** @brief This module return the position store in the mobility module, if the mobility module is not found it returns the position x=-1, y=-1*/
-    //static Coord gpsCoord();
     static Coord getMinimTopLeft() {return mininumArea;}
     static Coord getMaximumRightBotton() {return maximumArea;}
 
@@ -80,7 +78,6 @@ class INET_API MobilityBase : public BasicModule, public IMobility
 
     /** @brief The last position that was reported. */
     Coord lastPosition;
-
 
   protected:
     static Coord mininumArea;

@@ -85,8 +85,8 @@ void Ieee80211MgmtAPSimplified::handleDataFrame(Ieee80211DataFrame *frame)
 #endif
     }
 
-        // send it out to the destination STA
-        distributeReceivedDataFrame(frame);
+    // send it out to the destination STA
+    distributeReceivedDataFrame(frame);
 }
 
 void Ieee80211MgmtAPSimplified::handleAuthenticationFrame(Ieee80211AuthenticationFrame *frame)

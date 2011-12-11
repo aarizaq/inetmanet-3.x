@@ -182,13 +182,13 @@ void Ieee80211MgmtSTA::handleUpperMessage(cPacket *msg)
 {
     if (!isAssociated || assocAP.address.isUnspecified())
     {
-        EV << "The STA is not associated to an Access point, discard the packet" << msg << "\n";
+        EV << "STA is not associated with an access point, discarding packet" << msg << "\n";
         delete msg;
         return;
     }
 
     Ieee80211DataFrame *frame = encapsulate(msg);
-        sendOrEnqueue(frame);
+    sendOrEnqueue(frame);
 }
 
 void Ieee80211MgmtSTA::handleCommand(int msgkind, cObject *ctrl)

@@ -1046,7 +1046,7 @@ bool DSRUU::proccesICMP(cMessage *msg)
         delete pk->removeControlInfo();
     IPv4Datagram *newdgram = new IPv4Datagram();
     bogusPacket->setTransportProtocol(bogusPacket->getEncapProtocol());
-    IPv4Address dst(this->my_addr().S_addr);
+    IPv4Address dst(this->my_addr().s_addr);
     newdgram->setDestAddress(dst);
     newdgram->encapsulate(bogusPacket);
     newdgram->setTransportProtocol(IP_PROT_ICMP);

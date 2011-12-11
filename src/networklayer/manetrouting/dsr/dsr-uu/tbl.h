@@ -184,14 +184,15 @@ static inline void *__tbl_find(struct tbl *t, void *id, criteria_t crit)
 
 static inline void *__tbl_detach(struct tbl *t, list_t * l)
 {
-    int len;
+    //int len;
 
     if (TBL_EMPTY(t))
         return NULL;
 
     list_del(l);
 
-    len = --t->len;
+    //len = --t->len;
+    t->len--;
 
     return l;
 }

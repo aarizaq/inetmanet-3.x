@@ -42,7 +42,7 @@ void Ieee80211MgmtSTASimplified::handleUpperMessage(cPacket *msg)
 {
     if (accessPointAddress.isUnspecified())
     {
-        EV << "The STA is not associated to an Access point, discard the packet " << msg << "\n";
+        EV << "STA is not associated with an access point, discarding packet " << msg << "\n";
         delete msg;
         return;
     }

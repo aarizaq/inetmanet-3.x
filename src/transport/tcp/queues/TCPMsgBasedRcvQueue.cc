@@ -93,7 +93,7 @@ cPacket *TCPMsgBasedRcvQueue::extractBytesUpTo(uint32 seq)
         if (!payloadList.empty() && payloadList.begin()->first == reg->getEnd())
         {
             msg = payloadList.begin()->second;
-    payloadList.erase(payloadList.begin());
+            payloadList.erase(payloadList.begin());
         }
         delete reg;
     }

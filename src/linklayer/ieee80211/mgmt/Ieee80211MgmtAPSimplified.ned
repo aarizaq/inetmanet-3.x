@@ -49,7 +49,7 @@ simple Ieee80211MgmtAPSimplified like IIeee80211Mgmt
 {
     parameters:
         int frameCapacity = default(100);
-        bool forceRelayUnit=default(false);
+        bool forceRelayUnit = default(false);
         @display("i=block/cogwheel");
         @signal[enqueuePk](type=cMessage);
         @signal[dequeuePk](type=cMessage);

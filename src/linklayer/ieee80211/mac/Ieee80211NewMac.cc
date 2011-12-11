@@ -275,7 +275,7 @@ void Ieee80211NewMac::initialize(int stage)
         if (opMode == 'b')
         {
             rateIndex = 0;
-            for (int i = 0; i <  getMaxBitrate(); i++)
+            for (int i = 0; i < getMaxBitrate(); i++)
             {
                 if (bitrate == BITRATES_80211b[i])
                 {
@@ -290,7 +290,7 @@ void Ieee80211NewMac::initialize(int stage)
                 rateIndex = getMaxBitrate()-1;
             }
             found = false;
-            for (int i = 0; i <  getMaxBitrate(); i++)
+            for (int i = 0; i < getMaxBitrate(); i++)
             {
                 if (basicBitrate == BITRATES_80211b[i])
                 {
@@ -305,7 +305,7 @@ void Ieee80211NewMac::initialize(int stage)
         else if (opMode == 'g')
         {
             rateIndex = 0;
-            for (int i = 0; i <  getMaxBitrate(); i++)
+            for (int i = 0; i < getMaxBitrate(); i++)
             {
                 if (bitrate == BITRATES_80211g[i])
                 {
@@ -320,7 +320,7 @@ void Ieee80211NewMac::initialize(int stage)
                 rateIndex = getMaxBitrate()-1;
             }
             found = false;
-            for (int i = 0; i <  getMaxBitrate(); i++)
+            for (int i = 0; i < getMaxBitrate(); i++)
             {
                 if (basicBitrate == BITRATES_80211g[i])
                 {
@@ -334,7 +334,7 @@ void Ieee80211NewMac::initialize(int stage)
         else if (opMode == 'a')
         {
             rateIndex = 0;
-            for (int i = 0; i <  getMaxBitrate(); i++)
+            for (int i = 0; i < getMaxBitrate(); i++)
             {
                 if (bitrate == BITRATES_80211a[i])
                 {
@@ -349,7 +349,7 @@ void Ieee80211NewMac::initialize(int stage)
                 rateIndex = getMaxBitrate()-1;
             }
             found = false;
-            for (int i = 0; i <  getMaxBitrate(); i++)
+            for (int i = 0; i < getMaxBitrate(); i++)
             {
                 if (basicBitrate == BITRATES_80211a[i])
                 {
@@ -363,7 +363,7 @@ void Ieee80211NewMac::initialize(int stage)
         else if (opMode == 'p')
         {
             rateIndex = 0;
-            for (int i = 0; i <  getMaxBitrate(); i++)
+            for (int i = 0; i < getMaxBitrate(); i++)
             {
                 if (bitrate == BITRATES_80211p[i])
                 {
@@ -378,7 +378,7 @@ void Ieee80211NewMac::initialize(int stage)
                 rateIndex = getMaxBitrate()-1;
             }
             found = false;
-            for (int i = 0; i <  getMaxBitrate(); i++)
+            for (int i = 0; i < getMaxBitrate(); i++)
             {
                 if (basicBitrate == BITRATES_80211p[i])
                 {
@@ -682,7 +682,7 @@ void Ieee80211NewMac::handleSelfMsg(cMessage *msg)
 {
     if (msg==throughputTimer)
     {
-    	throughputLastPeriod = recBytesOverPeriod/SIMTIME_DBL(throughputTimePeriod);
+        throughputLastPeriod = recBytesOverPeriod/SIMTIME_DBL(throughputTimePeriod);
         recBytesOverPeriod = 0;
         scheduleAt(simTime()+throughputTimePeriod, throughputTimer);
         return;
@@ -711,7 +711,7 @@ void Ieee80211NewMac::handleSelfMsg(cMessage *msg)
         EV <<" kind is " << kind << ",name is " << msg->getName() <<endl;
         for (unsigned int i = numCategories()-1; (int)i > kind; i--)  //mozna prochaze jen 3..kind XXX
         {
-            if (((endBackoff(i)->isScheduled() &&  endBackoff(i)->getArrivalTime() == simTime())
+            if (((endBackoff(i)->isScheduled() && endBackoff(i)->getArrivalTime() == simTime())
                     || (endAIFS(i)->isScheduled() && !backoff(i) && endAIFS(i)->getArrivalTime() == simTime()))
                     && !transmissionQueue(i)->empty())
             {
@@ -768,7 +768,7 @@ void Ieee80211NewMac::handleUpperMsg(cPacket *msg)
     frame->setSequenceNumber(sequenceNumber);
     sequenceNumber = (sequenceNumber+1) % 4096;  //XXX seqNum must be checked upon reception of frames!
 
-    if (MappingAccessCategory(frame) ==  200)
+    if (MappingAccessCategory(frame) == 200)
     {
         // if function MappingAccessCategory() returns 200, it means transsmissionQueue is full
         return;
@@ -1315,7 +1315,7 @@ void Ieee80211NewMac::handleWithFSM(cMessage *msg)
                                   cancelBackoffPeriod();
                                  );
             FSMA_Event_Transition(Backoff-Idle,
-            		              isBakoffMsg(msg) && transmissionQueueEmpty(),
+                                  isBakoffMsg(msg) && transmissionQueueEmpty(),
                                   IDLE,
                                   resetStateVariables();
                                   );
@@ -1656,7 +1656,7 @@ simtime_t Ieee80211NewMac::getDIFS(int category)
 {
     if (category<0 || category>(numCategories()-1))
     {
-        int index =  numCategories()-1;
+        int index = numCategories()-1;
         if (index<0)
             index = 0;
         return getSIFS() + ((double)AIFSN(index) * getSlotTime());
@@ -1678,7 +1678,7 @@ simtime_t Ieee80211NewMac::getHeaderTime(double bitrate)
     else if (opMode=='p')
         modType = WifiModulationType::getMode80211p(bitrate);
     else
-    	opp_error("mode not supported");
+        opp_error("mode not supported");
     return WifiModulationType::getPreambleAndHeader(modType, wifiPreambleType);
 }
 
@@ -2196,7 +2196,7 @@ Ieee80211Frame *Ieee80211NewMac::setBasicBitrate(Ieee80211Frame *frame)
 
 Ieee80211Frame *Ieee80211NewMac::setBitrateFrame(Ieee80211Frame *frame)
 {
-    if (rateControlMode ==  RATE_CR && forceBitRate==false)
+    if (rateControlMode == RATE_CR && forceBitRate==false)
         return frame;
     PhyControlInfo *ctrl = NULL;
     if (frame->getControlInfo()==NULL)
@@ -2234,9 +2234,9 @@ void Ieee80211NewMac::retryCurrentTransmission()
 {
     ASSERT(retryCounter() < transmissionLimit - 1);
     getCurrentTransmission()->setRetry(true);
-    if (rateControlMode == RATE_AARF || rateControlMode == RATE_ARF) 
+    if (rateControlMode == RATE_AARF || rateControlMode == RATE_ARF)
         reportDataFailed();
-    else 
+    else
         retryCounter() ++;
     numRetry()++;
     backoff() = true;
@@ -2268,9 +2268,9 @@ void Ieee80211NewMac::setMode(Mode mode)
 void Ieee80211NewMac::resetStateVariables()
 {
     backoffPeriod() = 0;
-    if (rateControlMode == RATE_AARF || rateControlMode == RATE_ARF) 
+    if (rateControlMode == RATE_AARF || rateControlMode == RATE_ARF)
         reportDataOk();
-    else 
+    else
         retryCounter() = 0;
 
     if (!transmissionQueue()->empty())
@@ -2365,7 +2365,6 @@ void Ieee80211NewMac::popTransmissionQueue()
             queueModule->requestPacket();
          }
     }
-
     delete temp;
 }
 
@@ -2401,7 +2400,7 @@ double Ieee80211NewMac::computeFrameDuration(int bits, double bitrate)
 #else
     if (PHY_HEADER_LENGTH<0)
     {
-    	ModulationType modType;
+        ModulationType modType;
         if (opMode=='g' || (opMode=='b'))
             modType = WifiModulationType::getMode80211g(bitrate);
         else if (opMode=='a')
@@ -2492,7 +2491,7 @@ const char *Ieee80211NewMac::modeName(int mode)
 bool Ieee80211NewMac::transmissionQueueEmpty()
 {
     for (int i=0; i<numCategories(); i++)
-        if (!transmissionQueue(i)->empty()) return false;
+       if (!transmissionQueue(i)->empty()) return false;
     return true;
 }
 
@@ -2504,11 +2503,11 @@ unsigned int Ieee80211NewMac::transmissionQueueSize()
     return totalSize;
 }
 
-void Ieee80211NewMac::reportDataOk ()
+void Ieee80211NewMac::reportDataOk()
 {
     retryCounter() = 0;
     if (rateControlMode==RATE_CR)
-        return;
+       return;
     successCounter ++;
     failedCounter = 0;
     recovery = false;
@@ -2776,11 +2775,11 @@ cMessage * Ieee80211NewMac::endBackoff(int i)
 const bool Ieee80211NewMac::isBakoffMsg(cMessage *msg)
 {
     for (unsigned int i=0; i<edcCAF.size(); i++)
-	{
-	    if (msg==edcCAF[i].endBackoff)
-	       return true;
-	}
-	return false;
+    {
+        if (msg==edcCAF[i].endBackoff)
+           return true;
+    }
+    return false;
 }
 
 // Statistics
@@ -2931,18 +2930,18 @@ Ieee80211NewMac::getControlAnswerMode(ModulationType reqMode)
    * TODO: Note that we're ignoring the last sentence for now, because
    * there is not yet any manipulation here of PHY options.
    */
-	bool found = false;
-	ModulationType mode;
+    bool found = false;
+    ModulationType mode;
     for (uint32_t idx = 0; idx < (uint32_t)getMaxBitrate(); idx++)
     {
-	    ModulationType thismode;
-	    if (opMode=='b')
+        ModulationType thismode;
+        if (opMode=='b')
             thismode = WifiModulationType::getMode80211b(BITRATES_80211b[idx]);
-	    else if (opMode=='g')
+        else if (opMode=='g')
             thismode = WifiModulationType::getMode80211g(BITRATES_80211g[idx]);
-	    else if (opMode=='a')
+        else if (opMode=='a')
             thismode = WifiModulationType::getMode80211a(BITRATES_80211a[idx]);
-	    else if (opMode=='a')
+        else if (opMode=='a')
             thismode = WifiModulationType::getMode80211p(BITRATES_80211p[idx]);
 
       /* If the rate:
