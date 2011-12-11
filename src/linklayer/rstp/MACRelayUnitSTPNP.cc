@@ -41,7 +41,19 @@ MACRelayUnitSTPNP::MACRelayUnitSTPNP():MACRelayUnitNP()
 
 MACRelayUnitSTPNP::~MACRelayUnitSTPNP()
 {
-
+    while (!port_status.empty())
+    {
+        if (this->port_status.begin()->second.forward_timer)
+            cancelAndDelete(this->port_status.begin()->second.forward_timer);
+        if (this->port_status.begin()->second.hold_timer)
+            cancelAndDelete(this->port_status.begin()->second.hold_timer);
+        if (this->port_status.begin()->second.edge_timer)
+            cancelAndDelete(this->port_status.begin()->second.edge_timer);
+        if (this->port_status.begin()->second.bpdu_timeout_timer)
+            cancelAndDelete(this->port_status.begin()->second.bpdu_timeout_timer);
+        this->port_status.begin()->second.BPDUQueue.clear();
+        this->port_status.erase(this->port_status.begin());
+    }
 }
 
 void MACRelayUnitSTPNP::setAllPortsStatus(PortStatus status)
