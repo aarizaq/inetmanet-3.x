@@ -76,40 +76,23 @@ void EtherBus::initialize()
             error("Tap positions must be ordered in ascending fashion, modify 'positions' parameter and rerun\n");
     }
 
-    // Calculate propagation of delays between tap points on the bus
-    for (i = 0; i < taps; i++)
-    {
-        // Propagation delay between adjacent tap points
-        if (i == 0)
-        {
-            tap[i].propagationDelay[UPSTREAM] = 0;
-            tap[i].propagationDelay[DOWNSTREAM] = (tap[i+1].position - tap[i].position)/propagationSpeed;
-        }
-        else if (i == taps-1)
-        {
-            tap[i].propagationDelay[UPSTREAM] = tap[i-1].propagationDelay[DOWNSTREAM];
-            tap[i].propagationDelay[DOWNSTREAM] = 0;
-        }
-        else
-        {
-            tap[i].propagationDelay[UPSTREAM] = tap[i-1].propagationDelay[DOWNSTREAM];
-            tap[i].propagationDelay[DOWNSTREAM] = (tap[i+1].position - tap[i].position)/propagationSpeed;;
-        }
-    }
-
     // Prints out data of parameters for parameter checking...
     EV << "Parameters of (" << getClassName() << ") " << getFullPath() << "\n";
     EV << "propagationSpeed: " << propagationSpeed << "\n";
 
-    for (i=0; i<taps; i++)
+    // Calculate propagation of delays between tap points on the bus
+    for (i = 0; i < taps; i++)
     {
+        // Propagation delay between adjacent tap points
+        tap[i].propagationDelay[UPSTREAM] = (i > 0) ? tap[i-1].propagationDelay[DOWNSTREAM] : 0;
+        tap[i].propagationDelay[DOWNSTREAM] = (i+1 < taps) ? (tap[i+1].position - tap[i].position)/propagationSpeed : 0;
         EV << "tap[" << i << "] pos: " << tap[i].position <<
               "  upstream delay: " << tap[i].propagationDelay[UPSTREAM] <<
               "  downstream delay: " << tap[i].propagationDelay[DOWNSTREAM] << endl;
     }
-
     EV << "\n";
 
+    // TODO: the following code block is a duplicate of another found in EtherHub
     double datarate = 0.0;
 
     for (i = 0; i < taps; i++)
@@ -177,10 +160,8 @@ void EtherBus::handleMessage(cMessage *msg)
         bool isLast = (direction == UPSTREAM) ? (tapPoint == 0) : (tapPoint == taps-1);
         cPacket *msg2 = isLast ? PK(msg) : PK(msg->dup());
 
-        {
-            // stop current transmission
-            gate("ethg$o", tapPoint)->getTransmissionChannel()->forceTransmissionFinishTime(SIMTIME_ZERO);
-        }
+        // stop current transmission
+        gate("ethg$o", tapPoint)->getTransmissionChannel()->forceTransmissionFinishTime(SIMTIME_ZERO);
 
         send(msg2, "ethg$o", tapPoint);
 

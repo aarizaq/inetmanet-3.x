@@ -23,6 +23,7 @@
 #include "EtherMACBase.h"
 
 
+class EtherJam;
 class IPassiveQueue;
 
 /**
@@ -43,8 +44,8 @@ class INET_API EtherMAC : public EtherMACBase
 
   protected:
     // states
-    int  backoffs;          // Value of backoff for exponential back-off algorithm
-    int  numConcurrentTransmissions; // number of colliding frames -- we must receive this many jams
+    int  backoffs;                     // value of backoff for exponential back-off algorithm
+    long currentSendPkTreeID;
 
     // other variables
     EtherTraffic *frameBeingReceived;
@@ -53,34 +54,60 @@ class INET_API EtherMAC : public EtherMACBase
     // statistics
     simtime_t totalCollisionTime;      // total duration of collisions on channel
     simtime_t totalSuccessfulRxTxTime; // total duration of successful transmissions on channel
-    simtime_t channelBusySince;  // needed for computing totalCollisionTime/totalSuccessfulRxTxTime
+    simtime_t channelBusySince;        // needed for computing totalCollisionTime/totalSuccessfulRxTxTime
     unsigned long numCollisions;       // collisions (NOT number of collided frames!) sensed
     unsigned long numBackoffs;         // number of retransmissions
+    unsigned int  framesSentInBurst;   // Number of frames send out in current frame burst
+    long bytesSentInBurst;             // Number of bytes transmitted in current frame burst
+
+    struct PkIdRxTime
+    {
+        long packetTreeId;             // tree ID of packet being received.
+        simtime_t endTime;             // end of reception
+        PkIdRxTime(long id, simtime_t time) {packetTreeId=id; endTime = time;}
+    };
+    typedef std::list<PkIdRxTime> EndRxTimeList;
+    EndRxTimeList endRxTimeList;       // list of incoming packets, ordered by endTime
+    int numConcurrentTransmissions;    // number of colliding frames -- we must receive this many jams (caches endRxTimeList.size())
+
     static simsignal_t collisionSignal;
     static simsignal_t backoffSignal;
 
+  protected:
     // event handlers
-    virtual void processFrameFromUpperLayer(EtherFrame *msg);
-    virtual void processMsgFromNetwork(EtherTraffic *msg);
+    virtual void handleSelfMessage(cMessage *msg);
     virtual void handleEndIFGPeriod();
+    virtual void handleEndPausePeriod();
     virtual void handleEndTxPeriod();
     virtual void handleEndRxPeriod();
     virtual void handleEndBackoffPeriod();
     virtual void handleEndJammingPeriod();
-
-    virtual void printState();
+    virtual void handleRetransmission();
 
     // helpers
-    virtual void scheduleEndRxPeriod(cPacket *);
+    virtual void calculateParameters(bool errorWhenAsymmetric);
+    virtual void processFrameFromUpperLayer(EtherFrame *msg);
+    virtual void processMsgFromNetwork(EtherTraffic *msg);
+    virtual void processMessageWhenNotConnected(cMessage *msg);
+    virtual void processMessageWhenDisabled(cMessage *msg);
+    virtual void scheduleEndIFGPeriod();
+    virtual void scheduleEndTxPeriod(EtherFrame *);
+    virtual void scheduleEndRxPeriod(EtherTraffic *);
+    virtual void scheduleEndPausePeriod(int pauseUnits);
+    virtual bool checkAndScheduleEndPausePeriod();
+    virtual void beginSendFrames();
     virtual void sendJamSignal();
-    virtual void handleRetransmission();
     virtual void startFrameTransmission();
+    virtual void frameReceptionComplete();
+    virtual void processReceivedDataFrame(EtherFrame *frame);
+    virtual void processReceivedJam(EtherJam *jam);
+    virtual void processPauseCommand(int pauseUnits);
+    virtual void handleDisconnect();
+    virtual simtime_t insertEndReception(long id, simtime_t endRxTime);
+    virtual void removeExpiredEndRxTimes();
+    virtual void processDetectedCollision();
 
-    // notifications
-    virtual void updateHasSubcribers();
-
-    // model change related functions
-    virtual void refreshConnection(bool connected);
+    virtual void printState();
 };
 
 #endif

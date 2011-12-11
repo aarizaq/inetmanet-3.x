@@ -31,10 +31,10 @@ enum EtherType;
 
 enum SAPCode;
 
-// containing their common header fields.
 //
 // This class should never be instantiated by the models, only specific
 // subclasses: EthernetJam, EtherIFG and submodules of ~EtherFrame.
+//
 packet EtherTraffic
 {
 }
@@ -44,13 +44,16 @@ packet EtherTraffic
 //
 packet EtherJam extends EtherTraffic
 {
+    long abortedPkTreeID = 0;  // this field stores the packetTreeId of the aborted packet
 }
 
 //
-// Represents padding when packet too short, and filled IFG on burst mode.
+// Represents a filled inter-frame gap in burst mode.
+// Also used for calculating IFG times.
 //
-packet EtherPadding extends EtherTraffic
+packet EtherIFG extends EtherTraffic
 {
+    bitLength = INTERFRAME_GAP_BITS;
 }
 
 //
@@ -63,16 +66,15 @@ packet EtherPadding extends EtherTraffic
 // Source and destination MAC address are stored in data members.
 // Other fields include:
 //  - preamble: not stored (only contributes length)
-//  - length: stored in cMessage length, not stored explicitly
-//  - payload: stored a encapsulated packet (cMessage::encapsulate())
-//  - crc: represented by cMessage::hasBitError()
+//  - length: stored in cPacket length, not stored explicitly
+//  - payload: stored a encapsulated packet (cPacket::encapsulate())
+//  - crc: represented by cPacket::hasBitError()
 //
 packet EtherFrame extends EtherTraffic
 {
     MACAddress dest;
     MACAddress src;
     int origByteLength;
-    //MessageId id; -- uncomment for tracing frames
 }
 
 
@@ -96,8 +98,8 @@ packet EthernetIIFrame extends EtherFrame
 //
 packet EtherFrameWithLLC extends EtherFrame
 {
-    int ssap;
     int dsap;
+    int ssap;
     int control;
 }
 
@@ -105,16 +107,19 @@ packet EtherFrameWithLLC extends EtherFrame
 //
 // Ethernet frame with 802.3 LLC and SNAP headers.
 //
-// The fields ssap, dsap and control are not included in the class because
-// they are always set to fixed values: 0xAA, 0xAA, 0x03.
+// The ssap, dsap and control LLC fields are set to fixed values in the
+// frame: 0xAA, 0xAA, 0x03.
 //
 // Header length: src(6)+dest(6)+length(2)+ssap(1)+dsap(1)+control(1)+
 // orgCode(3)+localCode(2) = 22 bytes
 //
-packet EtherFrameWithSNAP extends EtherFrame
+packet EtherFrameWithSNAP extends EtherFrameWithLLC
 {
-    long orgCode;  // SNAP organization code, 0 for IP and ARP
-    int localcode; // SNAP local code (stores ~EtherType for IP and ARP)
+    dsap = 0xAA;
+    ssap = 0xAA;
+    control = 0x03;
+    int orgCode;   // organizationally unique identifier (OUI); 0 for protocols that have an EtherType (ARP, IPv4, IPv6, etc.)
+    int localcode; // protocol identifier (PID); stores ~EtherType if orgCode is 0
 }
 
 
@@ -128,12 +133,12 @@ packet EtherPauseFrame extends EtherFrame
 
 // Mod1
 // Ethernet 802.1Q Tag. VLAN
-// 
+//
 //
 packet Ethernet1QTag
 {
     string displayString = "b=,,,#a5ffa5";
-	int VID=0;  // VID Outter VID tag.
+    int VID=0; // VID Outter VID tag.
 }
 
 
@@ -144,5 +149,5 @@ packet Ethernet1QTag
 packet Ethernet1ahITag
 {
     string displayString = "b=,,,#3ea53e";
-    int ISid=0;		// ISID 
+    int ISid=0; // ISID
 }

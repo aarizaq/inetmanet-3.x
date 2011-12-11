@@ -72,20 +72,13 @@ void MACRelayUnitNP::initialize()
     highWatermark = par("highWatermark");
     pauseUnits = par("pauseUnits");
 
-    // 1 pause unit is 512 bit times; we assume 100Mb MACs here.
-    // We send a pause again when previous one is about to expire.
-    pauseInterval = pauseUnits*512.0/100000.0;
-
-    pauseLastSent = 0;
-    WATCH(pauseLastSent);
-
     bufferUsed = 0;
     WATCH(bufferUsed);
 
     endProcEvents = new cMessage *[numCPUs];
     for (int i=0; i<numCPUs; i++)
     {
-        char msgname[20];
+        char msgname[40];
         sprintf(msgname, "endProcessing-cpu%d", i);
         endProcEvents[i] = new cMessage(msgname, i);
     }
@@ -126,13 +119,8 @@ void MACRelayUnitNP::handleIncomingFrame(EtherFrame *frame)
         bufferUsed += length;
 
         // send PAUSE if above watermark
-        if (pauseUnits>0 && highWatermark>0 && bufferUsed>=highWatermark && simTime()-pauseLastSent>pauseInterval)
-        {
-            // send PAUSE on all ports
-            for (int i=0; i<numPorts; i++)
-                sendPauseFrame(i, pauseUnits);
-            pauseLastSent = simTime();
-        }
+        if (pauseUnits>0 && highWatermark>0 && bufferUsed>=highWatermark)
+            sendPauseFramesIfNeeded(pauseUnits);
 
         // assign frame to a free CPU (if there is one)
         int i;
@@ -203,3 +191,4 @@ void MACRelayUnitNP::finish()
     recordScalar("processed frames", numProcessedFrames);
     recordScalar("dropped frames", numDroppedFrames);
 }
+

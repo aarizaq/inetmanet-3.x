@@ -1,6 +1,7 @@
 //
-// Copyright (C) 2006 Levente Meszaros
 // Copyright (C) 2004 Andras Varga
+// Copyright (C) 2006 Levente Meszaros
+// Copyright (C) 2011 Zoltan Bojthe
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -21,21 +22,18 @@
 
 #include "INETDefs.h"
 
-#include "INotifiable.h"
+#include "IPassiveQueue.h"
 #include "MACAddress.h"
-#include "TxNotifDetails.h"
 
 // Forward declarations:
 class EtherFrame;
 class EtherTraffic;
 class InterfaceEntry;
-class IPassiveQueue;
-class NotificationBoard;
 
 /**
  * Base class for ethernet MAC implementations.
  */
-class INET_API EtherMACBase : public cSimpleModule, public INotifiable, public cListener
+class INET_API EtherMACBase : public cSimpleModule, public cListener
 {
   protected:
     enum MACTransmitState
@@ -69,28 +67,40 @@ class INET_API EtherMACBase : public cSimpleModule, public INotifiable, public c
 
     enum
     {
-        NUM_OF_ETHERDESCRS = 4
+        NUM_OF_ETHERDESCRS = 6
     };
 
     struct EtherDescr
     {
-        double      txrate;
-        int         maxFramesInBurst;
-        int64       maxBytesInBurst;      // with IFG and external datas
-        int64       frameMinBytes;        // minimal frame length
-        int64       frameInBurstMinBytes; // minimal frame length in burst mode, after first frame
-        const_simtime_t   halfBitTime;          // transmission time of a half bit
-        const_simtime_t   slotTime;             // slot time
-        const_simtime_t   shortestFrameDuration; // precalculated from MIN_ETHERNET_FRAME or GIGABIT_MIN_FRAME_WITH_EXT
+        double        txrate;
+        double        halfBitTime;          // transmission time of a half bit
+        int64         frameMinBytes;        // minimal frame length
+        //for half duplex:
+        unsigned int  maxFramesInBurst;
+        int64         maxBytesInBurst;      // with IFG and external datas
+        int64         halfDuplexFrameMinBytes;   // minimal frame length in half duplex mode, half duplex not supported when smaller than 0
+        int64         frameInBurstMinBytes; // minimal frame length in burst mode, after first frame
+        double        slotTime;             // slot time
+        double        maxPropagationDelay;  // used for detecting longer cables than allowed
     };
 
     class InnerQueue
     {
-      public:
+      protected:
         cQueue queue;
         int queueLimit;               // max queue length
 
-        InnerQueue(const char* name = NULL, int limit = 0) : queue(name), queueLimit(limit) {}
+      protected:
+        static int packetCompare(cObject *a, cObject *b);  // PAUSE frames have higher priority
+
+      public:
+        InnerQueue(const char* name = NULL, int limit = 0) : queue(name, packetCompare), queueLimit(limit) {}
+        void insertFrame(cObject *obj) { queue.insert(obj); }
+        cObject *pop() { return queue.pop(); }
+        bool empty() const { return queue.empty(); }
+        int getQueueLimit() const { return queueLimit; }
+        bool isFull() const { return queueLimit != 0 && queue.length() > queueLimit; }
+        int length() const { return queue.length(); }
     };
 
     class MacQueue
@@ -99,15 +109,12 @@ class INET_API EtherMACBase : public cSimpleModule, public INotifiable, public c
         InnerQueue * innerQueue;
         IPassiveQueue *extQueue;
 
+      public:
         MacQueue() : innerQueue(NULL), extQueue(NULL) {};
-
         ~MacQueue() { delete innerQueue; };
-
-        bool isEmpty();
-
+        bool isEmpty() { return innerQueue ? innerQueue->empty() : extQueue->isEmpty(); }
         void setExternalQueue(IPassiveQueue *_extQueue)
                 { delete innerQueue; innerQueue = NULL; extQueue = _extQueue; };
-
         void setInternalQueue(const char* name = NULL, int limit = 0)
                 { delete innerQueue; innerQueue = new InnerQueue(name, limit); extQueue = NULL; };
     };
@@ -118,11 +125,11 @@ class INET_API EtherMACBase : public cSimpleModule, public INotifiable, public c
     bool disabled;                  // true if the MAC is disabled, defined by the user
     bool promiscuous;               // if true, passes up all received frames
 
-    // MAC operation modes and parameters
-    bool duplexMode;                // channel connecting to MAC is full duplex, i.e. like a switch with 2 half-duplex lines
-    bool carrierExtension;          // carrier extension on/off (Gigabit Ethernet)
+    bool dataratesDiffer;           // true when tx rate and rx rate differ (configuration error, or between datarate change of tx/rx channels)
 
-    bool hasSubscribers;            // only notify if somebody is listening
+    // MAC operation modes and parameters
+    // TODO: some of these parameters do not have any meaning for EtherMACFullDuplex, they should rather be in EtherMAC instead
+    bool duplexMode;                // channel connecting to MAC is full duplex, i.e. like a switch with 2 half-duplex lines
 
     bool frameBursting;             // frame bursting on/off (Gigabit Ethernet)
     simtime_t lastTxFinishTime;     // time of finish last transmission
@@ -135,21 +142,20 @@ class INET_API EtherMACBase : public cSimpleModule, public INotifiable, public c
     static const EtherDescr etherDescrs[NUM_OF_ETHERDESCRS];
     static const EtherDescr nullEtherDescr;
 
-    const EtherDescr *curEtherDescr;    // Current Ethernet Constants (eg txrate, ...)
+    const EtherDescr *curEtherDescr;       // Current Ethernet Constants (eg txrate, ...)
 
     cChannel *transmissionChannel;  // transmission channel
 
     int pauseUnitsRequested;        // requested pause duration, or zero -- examined at endTx
 
-    MacQueue txQueue;            // output queue
+    MacQueue txQueue;               // output queue
 
     cGate *physInGate;              // pointer to the "phys$i" gate
     cGate *physOutGate;             // pointer to the "phys$o" gate
+    cGate *upperLayerInGate;        // pointer to the "upperLayerIn" gate
 
     // notification stuff
     InterfaceEntry *interfaceEntry;  // points into IInterfaceTable
-    NotificationBoard *nb;
-    TxNotifDetails notifDetails;
 
     EtherFrame *curTxFrame;
 
@@ -157,8 +163,6 @@ class INET_API EtherMACBase : public cSimpleModule, public INotifiable, public c
     cMessage *endTxMsg, *endIFGMsg, *endPauseMsg;
 
     // statistics
-    int  framesSentInBurst;            // Number of frames send out in current frame burst
-    int  bytesSentInBurst;             // Number of bytes transmitted in current frame burst
     unsigned long numFramesSent;
     unsigned long numFramesReceivedOK;
     unsigned long numBytesSent;        // includes Ethernet frame bytes with preamble
@@ -171,15 +175,14 @@ class INET_API EtherMACBase : public cSimpleModule, public INotifiable, public c
     unsigned long numPauseFramesRcvd;  // PAUSE frames received from network
     unsigned long numPauseFramesSent;  // PAUSE frames sent
 
-    static simsignal_t txPkBytesSignal;
-    static simsignal_t rxPkBytesOkSignal;
-    static simsignal_t passedUpPkBytesSignal;
+    static simsignal_t txPkSignal;
+    static simsignal_t rxPkOkSignal;
     static simsignal_t txPausePkUnitsSignal;
     static simsignal_t rxPausePkUnitsSignal;
-    static simsignal_t rxPkBytesFromHLSignal;
-    static simsignal_t droppedPkBytesNotForUsSignal;
-    static simsignal_t droppedPkBytesBitErrorSignal;
-    static simsignal_t droppedPkBytesIfaceDownSignal;
+    static simsignal_t rxPkFromHLSignal;
+    static simsignal_t dropPkNotForUsSignal;
+    static simsignal_t dropPkBitErrorSignal;
+    static simsignal_t dropPkIfaceDownSignal;
 
     static simsignal_t packetSentToLowerSignal;
     static simsignal_t packetReceivedFromLowerSignal;
@@ -187,10 +190,16 @@ class INET_API EtherMACBase : public cSimpleModule, public INotifiable, public c
     static simsignal_t packetReceivedFromUpperSignal;
 
   public:
+    static const double SPEED_OF_LIGHT_IN_CABLE;
+
+  public:
     EtherMACBase();
     virtual ~EtherMACBase();
 
     virtual MACAddress getMACAddress() {return address;}
+
+    double getTxRate() { return curEtherDescr->txrate; }
+    bool isActive() { return connected && !disabled; }
 
   protected:
     //  initialization
@@ -198,51 +207,38 @@ class INET_API EtherMACBase : public cSimpleModule, public INotifiable, public c
     virtual void initializeFlags();
     virtual void initializeMACAddress();
     virtual void initializeQueueModule();
-    virtual void initializeNotificationBoard();
     virtual void initializeStatistics();
     virtual void registerInterface();
 
     // helpers
-    virtual bool checkDestinationAddress(EtherFrame *frame);
-    virtual void calculateParameters();
+    /** Checks destination address and drop frame when not came for me */
+    virtual bool dropFrameNotForUs(EtherFrame *frame);
+
+    /**
+     * Calculates datarates, etc. Verify the same settings on in/out channels, and throw error
+     * when differs and the parameter errorWhenAsymmetric is true.
+     */
+    virtual void calculateParameters(bool errorWhenAsymmetric);
+
     virtual void printParameters();
-    virtual void prepareTxFrame(EtherFrame *frame);
 
     // finish
     virtual void finish();
 
     // event handlers
-    virtual void processFrameFromUpperLayer(EtherFrame *msg);
-    virtual void processMsgFromNetwork(EtherTraffic *msg);
-    virtual void processMessageWhenNotConnected(cMessage *msg);
-    virtual void processMessageWhenDisabled(cMessage *msg);
-    virtual void handleEndIFGPeriod();
-    virtual void handleEndTxPeriod();
-    virtual void handleEndPausePeriod();
-    virtual void scheduleEndIFGPeriod();
-    virtual void scheduleEndTxPeriod();
-    virtual void scheduleEndPausePeriod(int pauseUnits);
 
     // helpers
-    virtual bool checkAndScheduleEndPausePeriod();
-    virtual void fireChangeNotification(int type, cPacket *msg);
-    virtual void beginSendFrames();
-    virtual void frameReceptionComplete(EtherTraffic *frame);
-    virtual void processReceivedDataFrame(EtherFrame *frame);
-    virtual void processPauseCommand(int pauseUnits);
     virtual void getNextFrameFromQueue();
+    virtual void requestNextFrameFromExtQueue();
+    virtual void handleDisconnect();
 
     // display
     virtual void updateDisplayString();
     virtual void updateConnectionColor(int txState);
 
-    // notifications
-    virtual void updateHasSubcribers() = 0;
-    virtual void receiveChangeNotification(int category, const cObject *details);
-
     // model change related functions
     virtual void receiveSignal(cComponent *src, simsignal_t id, cObject *obj);
-    virtual void refreshConnection(bool connected);
+    virtual void refreshConnection();
 };
 
 #endif

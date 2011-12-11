@@ -25,7 +25,7 @@ network R37
         {
             delay = 15ms;
             datarate = 128kbps;
-			thruputDisplayFormat = "u";
+            thruputDisplayFormat = "u";
         }
     submodules:
         configurator: NetworkConfigurator {

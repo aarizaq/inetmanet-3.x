@@ -56,20 +56,20 @@ void ExtInterface::initialize(int stage)
             // this simulation run works without external interface..
             connected = false;
         }
-    numSent = numRcvd = numDropped = 0;
-    WATCH(numSent);
-    WATCH(numRcvd);
-    WATCH(numDropped);
+        numSent = numRcvd = numDropped = 0;
+        WATCH(numSent);
+        WATCH(numRcvd);
+        WATCH(numDropped);
 
-    // register our interface entry in RoutingTable
-    interfaceEntry = registerInterface();
+        // register our interface entry in RoutingTable
+        interfaceEntry = registerInterface();
 
-    // if not connected, make it gray
-    if (ev.isGUI() && !connected)
-    {
-        getDisplayString().setTagArg("i", 1, "#707070");
-        getDisplayString().setTagArg("i", 2, "100");
-    }
+        // if not connected, make it gray
+        if (ev.isGUI() && !connected)
+        {
+            getDisplayString().setTagArg("i", 1, "#707070");
+            getDisplayString().setTagArg("i", 2, "100");
+        }
     }
     else if (stage == 3)
     {

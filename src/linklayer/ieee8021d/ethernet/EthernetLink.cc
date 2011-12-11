@@ -139,8 +139,8 @@ void EthernetLink::updateDisplayString()
 
 void EthernetLink::processPacketFromHigherLayer(cPacket *msg)
 {
-    if (msg->getByteLength() > (MAX_ETHERNET_DATA))
-        error("packet from higher layer (%d bytes) exceed maximum Ethernet payload length (%d)", (int)(msg->getByteLength()), MAX_ETHERNET_DATA);
+    if (msg->getByteLength() > (MAX_ETHERNET_DATA_BYTES))
+        error("packet from higher layer (%d bytes) exceed maximum Ethernet payload length (%d)", (int)(msg->getByteLength()), MAX_ETHERNET_DATA_BYTES);
 
     totalFromHigherLayer++;
 
@@ -185,8 +185,8 @@ void EthernetLink::processPacketFromHigherLayer(cPacket *msg)
 
     EthIIF->encapsulate(frame);
     delete etherctrl;
-    if (EthIIF->getByteLength() < MIN_ETHERNET_FRAME)
-        EthIIF->setByteLength(MIN_ETHERNET_FRAME);
+    if (EthIIF->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+        EthIIF->setByteLength(MIN_ETHERNET_FRAME_BYTES);
     send(EthIIF, "lowerLayerOut");
 }
 

@@ -43,13 +43,16 @@ class INET_API MACAddress
     bool macAddress64;
 
   public:
-    /** Returns the unspecified (null) MAC address */
+    /** The unspecified MAC address, 00:00:00:00:00:00 */
     static const MACAddress UNSPECIFIED_ADDRESS;
 
-    /** Returns the broadcast (ff:ff:ff:ff:ff:ff) MAC address */
+    /** The broadcast MAC address, ff:ff:ff:ff:ff:ff */
     static const MACAddress BROADCAST_ADDRESS;
 
-    static const MACAddress BROADCAST_ADDRESS64;
+    /** The special multicast PAUSE MAC address, 01:80:C2:00:00:01 */
+    static const MACAddress MULTICAST_PAUSE_ADDRESS;
+
+  static const MACAddress BROADCAST_ADDRESS64;
 
     /**
      * Default constructor initializes address bytes to zero.

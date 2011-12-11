@@ -320,8 +320,8 @@ void IComponent::handle1adFrame(EthernetIIFrame *frame)
 		ITag->encapsulate(frame);
 		BTag->encapsulate(ITag);
 		frameAH->encapsulate(BTag);
-		if (frameAH->getByteLength() < MIN_ETHERNET_FRAME)   //This will never happen
-			frameAH->setByteLength(MIN_ETHERNET_FRAME);
+		if (frameAH->getByteLength() < MIN_ETHERNET_FRAME_BYTES)   //This will never happen
+			frameAH->setByteLength(MIN_ETHERNET_FRAME_BYTES);
 		send(frameAH,"IGatesOut");
 		ev<<"Frame sent."<<endl;
 	}
