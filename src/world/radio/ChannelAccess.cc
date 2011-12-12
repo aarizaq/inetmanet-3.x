@@ -38,7 +38,11 @@ ChannelAccess::~ChannelAccess()
 {
     if (cc && myRadioRef)
     {
-        cc->unregisterRadio(myRadioRef);
+        // check if channel control exist
+        IChannelControl *cc = dynamic_cast<IChannelControl *>(simulation.getModuleByPath("channelControl"));
+        if (cc)
+             cc->unregisterRadio(myRadioRef);
+        myRadioRef = NULL;
     }
 }
 
