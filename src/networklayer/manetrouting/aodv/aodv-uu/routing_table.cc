@@ -372,14 +372,20 @@ NS_INLINE rt_table_t *NS_CLASS rt_table_update_timeout(rt_table_t * rt,
     {
         /* Check if the current valid timeout is larger than the new
            one - in that case keep the old one. */
-        gettimeofday(&new_timeout, NULL);
-        timeval_add_msec(&new_timeout, lifetime);
-
         DEBUG(LOG_DEBUG, 0, "Route %s update time out to %d milliseconds",
               ip_to_str(rt->dest_addr),lifetime);
 
+#ifdef AODVUSEMAP
+        double interval = ((double)lifetime)/1000.0;
+        simtime_t new_timeout = simTime() + interval;
+        if (rt->rt_timer.timeout < new_timeout)
+            timer_set_timeout(&rt->rt_timer, lifetime);
+#else
+        gettimeofday(&new_timeout, NULL);
+        timeval_add_msec(&new_timeout, lifetime);
         if (timeval_diff(&rt->rt_timer.timeout, &new_timeout) < 0)
             timer_set_timeout(&rt->rt_timer, lifetime);
+#endif
     }
     else
         timer_set_timeout(&rt->rt_timer, lifetime);

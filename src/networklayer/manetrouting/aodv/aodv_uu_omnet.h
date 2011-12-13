@@ -47,6 +47,7 @@
 #error "To compile the ported version, NS_PORT must be defined!"
 #endif /* NS_PORT */
 
+#define AODVUSEMAP
 #define AODV_GLOBAL_STATISTISTIC
 
 /* Global definitions and lib functions */
@@ -108,7 +109,6 @@ class AODVUU : public ManetRoutingBase
 {
 
   private:
-
     char nodeName[50];
     ICMPAccess icmpAccess;
     bool useIndex;
@@ -128,6 +128,8 @@ class AODVUU : public ManetRoutingBase
         return false;
     }
     // cMessage  messageEvent;
+    typedef std::multimap<simtime_t, struct timer*> AodvTimerMap;
+    AodvTimerMap aodvTimerMap;
 
   public:
     static int  log_file_fd;

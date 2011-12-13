@@ -102,8 +102,13 @@ void NS_CLASS route_discovery_timeout(void *arg)
            before 2 * NET_TRAVERSAL_TIME... */
         rt = rt_table_find(seek_entry->dest_addr);
 
+#ifdef AODVUSEMAP
+        if (rt && ((rt->rt_timer.timeout - simTime() ) < (2 * NET_TRAVERSAL_TIME)))
+            rt_table_update_timeout(rt, 2 * NET_TRAVERSAL_TIME);
+#else
         if (rt && timeval_diff(&rt->rt_timer.timeout, &now) < (2 * NET_TRAVERSAL_TIME))
             rt_table_update_timeout(rt, 2 * NET_TRAVERSAL_TIME);
+#endif
         rreq_send(seek_entry->dest_addr, seek_entry->dest_seqno,
                   TTL_VALUE, seek_entry->flags);
 

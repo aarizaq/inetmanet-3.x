@@ -600,11 +600,20 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
             {
 //      if (fwd_rt->dest_seqno != 0 &&
 //      (int32_t) fwd_rt->dest_seqno >= (int32_t) rreq_dest_seqno) {
-
+#ifdef AODVUSEMAP
+                if (fwd_rt->state==IMMORTAL)
+                    lifetime = 10000;
+                else
+                {
+                    double val = SIMTIME_DBL(fwd_rt->rt_timer.timeout - simTime());
+                    lifetime = (val * 1000.0);
+                }
+#else
                 if (fwd_rt->state==IMMORTAL)
                     lifetime = 10000;
                 else
                     lifetime = timeval_diff(&fwd_rt->rt_timer.timeout, &now);
+#endif
                 rrep = rrep_create(0, 0, fwd_rt->hcnt, fwd_rt->dest_addr,
                                    fwd_rt->dest_seqno, rev_rt->dest_addr,
                                    lifetime);
@@ -720,9 +729,14 @@ void NS_CLASS rreq_route_discovery(struct in_addr dest_addr, u_int8_t flags,
 
         /* A routing table entry waiting for a RREP should not be expunged
            before 2 * NET_TRAVERSAL_TIME... */
+#ifdef AODVUSEMAP
+        if ((rt->rt_timer.timeout - simTime()) < (2 * NET_TRAVERSAL_TIME))
+            rt_table_update_timeout(rt, 2 * NET_TRAVERSAL_TIME);
+#else
         if (timeval_diff(&rt->rt_timer.timeout, &now) <
                 (2 * NET_TRAVERSAL_TIME))
             rt_table_update_timeout(rt, 2 * NET_TRAVERSAL_TIME);
+#endif
     }
 
     rreq_send(dest_addr, dest_seqno, ttl, flags);
@@ -782,9 +796,13 @@ void NS_CLASS rreq_local_repair(rt_table_t * rt, struct in_addr src_addr,
        local_repair_timeout */
     rt->rt_timer.handler = &NS_CLASS route_expire_timeout;
 
+#ifdef AODVUSEMAP
+    if ((rt->rt_timer.timeout -simTime()) < (2 * NET_TRAVERSAL_TIME))
+        rt_table_update_timeout(rt, 2 * NET_TRAVERSAL_TIME);
+#else
     if (timeval_diff(&rt->rt_timer.timeout, &now) < (2 * NET_TRAVERSAL_TIME))
         rt_table_update_timeout(rt, 2 * NET_TRAVERSAL_TIME);
-
+#endif
 
     rreq_send(rt->dest_addr, rt->dest_seqno, ttl, flags);
 
@@ -873,6 +891,7 @@ void NS_CLASS rreq_record_timeout(void *arg)
     free(rec);
 }
 
+
 struct blacklist *NS_CLASS rreq_blacklist_insert(struct in_addr dest_addr)
 {
 
@@ -899,6 +918,7 @@ struct blacklist *NS_CLASS rreq_blacklist_insert(struct in_addr dest_addr)
     timer_set_timeout(&bl->bl_timer, BLACKLIST_TIMEOUT);
     return bl;
 }
+
 
 struct blacklist *NS_CLASS rreq_blacklist_find(struct in_addr dest_addr)
 {

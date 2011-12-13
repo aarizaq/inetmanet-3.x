@@ -66,8 +66,7 @@ int AODVUU::totalRerrRec=0;
 
 void NS_CLASS initialize(int stage)
 {
-    list_t *lista_ptr;
-    /*
+     /*
        Enable usage of some of the configuration variables from Tcl.
 
        Note: Do NOT change the values of these variables in the constructor
@@ -209,7 +208,7 @@ void NS_CLASS initialize(int stage)
         NS_DEV_NR = getWlanInterfaceIndexByAddress();
         NS_IFINDEX = getWlanInterfaceIndexByAddress();
 
-
+        list_t *lista_ptr;
         lista_ptr=&rreq_records;
         INIT_LIST_HEAD(&rreq_records);
         lista_ptr=&rreq_blacklist;
@@ -686,6 +685,31 @@ IPv4Datagram *NS_CLASS pkt_decapsulate(IPv4Datagram *p)
   earliest event (so that the timer queue will be investigated then).
   Should be called whenever something might have changed the timer queue.
 */
+#ifdef AODVUSEMAP
+void NS_CLASS scheduleNextEvent()
+{
+    double delay;
+    simtime_t timer;
+    simtime_t timeout = timer_age_queue();
+
+    if (!aodvTimerMap.empty())
+    {
+        timer = aodvTimerMap.begin()->first;
+        if (sendMessageEvent->isScheduled())
+        {
+            if (timer < sendMessageEvent->getArrivalTime())
+            {
+                cancelEvent(sendMessageEvent);
+                scheduleAt(timer, sendMessageEvent);
+            }
+        }
+        else
+        {
+            scheduleAt(timer, sendMessageEvent);
+        }
+    }
+}
+#else
 void NS_CLASS scheduleNextEvent()
 {
     struct timeval *timeout;
@@ -710,7 +734,7 @@ void NS_CLASS scheduleNextEvent()
         }
     }
 }
-
+#endif
 
 
 
