@@ -50,7 +50,7 @@ static void printTQ(list_t * l);
 #endif              /* NS_PORT */
 
 
-#ifdef AODVUSEMAP
+#ifdef AODV_USE_STL
 int NS_CLASS timer_init(struct timer *t, timeout_func_t f, void *data)
 {
     if (!t)
@@ -163,31 +163,7 @@ simtime_t NS_CLASS timer_age_queue()
     remaining =  aodvTimerMap.begin()->first - now;
     return remaining;
 }
-
-
-#ifdef DEBUG_TIMER_QUEUE
-void NS_CLASS printTQ(list_t * l)
-{
-    struct timeval now;
-    int n = 0;
-    list_t *pos;
-
-    gettimeofday(&now, NULL);
-
-    fprintf(stderr, "================\n");
-    fprintf(stderr, "%-12s %-4s %lu\n", "left", "n", (unsigned long) l);
-
-    list_foreach(pos, l)
-    {
-        struct timer *t = (struct timer *) pos;
-        fprintf(stderr, "%-12ld %-4d %lu\n", timeval_diff(&t->timeout, &now), n,
-                (unsigned long) pos);
-        n++;
-    }
-}
-#endif
 #else
-
 int NS_CLASS timer_init(struct timer *t, timeout_func_t f, void *data)
 {
     if (!t)

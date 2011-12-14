@@ -37,7 +37,7 @@ typedef void (AODVUU::*timeout_func_t) (void *);
 typedef void (*timeout_func_t) (void *);
 #endif
 
-#ifdef AODVUSEMAP
+#ifdef AODV_USE_STL
 struct timer
 {
     int used;
@@ -91,7 +91,7 @@ void timer_queue_init();
 int timer_remove(struct timer *t);
 void timer_set_timeout(struct timer *t, long msec);
 int timer_timeout_now(struct timer *t);
-#ifdef AODVUSEMAP
+#ifdef AODV_USE_STL
 simtime_t timer_age_queue();
 #else
 struct timeval *timer_age_queue();
@@ -102,7 +102,7 @@ int timer_init(struct timer *t, timeout_func_t f, void *data);
 
 #ifdef NS_PORT
 void timer_add(struct timer *t);
-#ifdef AODVUSEMAP
+#ifdef AODV_USE_STL
 void timer_timeout(const simtime_t &now);
 #else
 void timer_timeout(struct timeval *now);

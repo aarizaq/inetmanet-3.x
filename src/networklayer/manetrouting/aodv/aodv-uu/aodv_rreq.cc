@@ -600,7 +600,7 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
             {
 //      if (fwd_rt->dest_seqno != 0 &&
 //      (int32_t) fwd_rt->dest_seqno >= (int32_t) rreq_dest_seqno) {
-#ifdef AODVUSEMAP
+#ifdef AODV_USE_STL
                 if (fwd_rt->state==IMMORTAL)
                     lifetime = 10000;
                 else
@@ -729,7 +729,7 @@ void NS_CLASS rreq_route_discovery(struct in_addr dest_addr, u_int8_t flags,
 
         /* A routing table entry waiting for a RREP should not be expunged
            before 2 * NET_TRAVERSAL_TIME... */
-#ifdef AODVUSEMAP
+#ifdef AODV_USE_STL
         if ((rt->rt_timer.timeout - simTime()) < (2 * NET_TRAVERSAL_TIME))
             rt_table_update_timeout(rt, 2 * NET_TRAVERSAL_TIME);
 #else
@@ -796,7 +796,7 @@ void NS_CLASS rreq_local_repair(rt_table_t * rt, struct in_addr src_addr,
        local_repair_timeout */
     rt->rt_timer.handler = &NS_CLASS route_expire_timeout;
 
-#ifdef AODVUSEMAP
+#ifdef AODV_USE_STL
     if ((rt->rt_timer.timeout -simTime()) < (2 * NET_TRAVERSAL_TIME))
         rt_table_update_timeout(rt, 2 * NET_TRAVERSAL_TIME);
 #else

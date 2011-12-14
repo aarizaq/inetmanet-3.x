@@ -215,9 +215,10 @@ void NS_CLASS initialize(int stage)
         INIT_LIST_HEAD(&rreq_blacklist);
         lista_ptr=&seekhead;
         INIT_LIST_HEAD(&seekhead);
+#ifndef AODV_USE_STL
         lista_ptr=&TQ;
         INIT_LIST_HEAD(&TQ);
-
+#endif
         /* Initialize data structures */
         worb_timer.data = NULL;
         worb_timer.used = 0;
@@ -254,8 +255,14 @@ void NS_CLASS initialize(int stage)
 /* Destructor for the AODV-UU routing agent */
 NS_CLASS ~ AODVUU()
 {
-
     list_t *tmp = NULL, *pos = NULL;
+#ifdef AODV_USE_STL_RT
+    while (!aodvRtTableMap.empty())
+    {
+        free (aodvRtTableMap.begin()->second);
+        aodvRtTableMap.erase(aodvRtTableMap.begin());
+    }
+#else
     for (int i = 0; i < RT_TABLESIZE; i++)
     {
         list_foreach_safe(pos, tmp, &rt_tbl.tbl[i])
@@ -266,7 +273,7 @@ NS_CLASS ~ AODVUU()
             free(rt);
         }
     }
-
+#endif
     while (!list_empty(&rreq_records))
     {
         pos = list_first(&rreq_records);
@@ -685,10 +692,9 @@ IPv4Datagram *NS_CLASS pkt_decapsulate(IPv4Datagram *p)
   earliest event (so that the timer queue will be investigated then).
   Should be called whenever something might have changed the timer queue.
 */
-#ifdef AODVUSEMAP
+#ifdef AODV_USE_STL
 void NS_CLASS scheduleNextEvent()
 {
-    double delay;
     simtime_t timer;
     simtime_t timeout = timer_age_queue();
 
@@ -1140,6 +1146,137 @@ bool NS_CLASS getDestAddress(cPacket *msg,Uint128 &dest)
     return true;
 
 }
+#ifdef AODV_USE_STL_RT
+bool  NS_CLASS setRoute(const Uint128 &dest,const Uint128 &add, const int &ifaceIndex,const int &hops,const Uint128 &mask)
+{
+    Enter_Method_Silent();
+    struct in_addr destAddr;
+    struct in_addr nextAddr;
+    struct in_addr rerr_dest;
+    destAddr.s_addr = dest;
+    nextAddr.s_addr = add;
+    bool status=true;
+    bool delEntry = (add == (Uint128)0);
+
+    DEBUG(LOG_DEBUG, 0, "setRoute %s next hop %s",ip_to_str(destAddr),ip_to_str(nextAddr));
+
+    rt_table_t * fwd_rt = rt_table_find(destAddr);
+
+    if (fwd_rt)
+    {
+        if (delEntry)
+        {
+            RERR* rerr = rerr_create(0, destAddr, 0);
+            DEBUG(LOG_DEBUG, 0, "setRoute Sending for unknown dest %s", ip_to_str(destAddr));
+
+            /* Unicast the RERR to the source of the data transmission
+             * if possible, otherwise we broadcast it. */
+            rerr_dest.s_addr = AODV_BROADCAST;
+
+            aodv_socket_send((AODV_msg *) rerr, rerr_dest,RERR_CALC_SIZE(rerr),
+                             1, &DEV_IFINDEX(NS_IFINDEX));
+        }
+        Uint128 dest = fwd_rt->dest_addr.s_addr;
+        AodvRtTableMap::iterator it = aodvRtTableMap.find(dest);
+        if (it != aodvRtTableMap.end())
+        {
+            if (it->second != fwd_rt)
+                opp_error("AODV routing table error");
+        }
+        aodvRtTableMap.erase(it);
+        if (fwd_rt->state == VALID || fwd_rt->state == IMMORTAL)
+            rt_tbl.num_active--;
+        timer_remove(&fwd_rt->rt_timer);
+        timer_remove(&fwd_rt->hello_timer);
+        timer_remove(&fwd_rt->ack_timer);
+        rt_tbl.num_entries = aodvRtTableMap.size();
+        free (fwd_rt);
+    }
+    else
+        DEBUG(LOG_DEBUG, 0, "No route entry to delete");
+
+    if (ifaceIndex>=getNumInterfaces())
+        status = false;
+    ManetRoutingBase::setRoute(dest,add,ifaceIndex,hops,mask);
+
+    if (!delEntry && ifaceIndex<getNumInterfaces())
+    {
+        fwd_rt = modifyAODVTables(destAddr,nextAddr,hops,(uint32_t) SIMTIME_DBL(simTime()), 0xFFFF,IMMORTAL,0, ifaceIndex);
+        status = (fwd_rt!=NULL);
+
+    }
+
+    return status;
+}
+
+
+bool  NS_CLASS setRoute(const Uint128 &dest,const Uint128 &add, const char  *ifaceName,const int &hops,const Uint128 &mask)
+{
+    Enter_Method_Silent();
+    struct in_addr destAddr;
+    struct in_addr nextAddr;
+    struct in_addr rerr_dest;
+    destAddr.s_addr = dest;
+    nextAddr.s_addr = add;
+    bool status=true;
+    int index;
+    bool delEntry = (add == (Uint128)0);
+
+    DEBUG(LOG_DEBUG, 0, "setRoute %s next hop %s",ip_to_str(destAddr),ip_to_str(nextAddr));
+    rt_table_t * fwd_rt = rt_table_find(destAddr);
+
+    if (fwd_rt)
+    {
+        if (delEntry)
+        {
+            RERR* rerr = rerr_create(0, destAddr, 0);
+            DEBUG(LOG_DEBUG, 0, "setRoute Sending for unknown dest %s", ip_to_str(destAddr));
+
+            /* Unicast the RERR to the source of the data transmission
+             * if possible, otherwise we broadcast it. */
+            rerr_dest.s_addr = AODV_BROADCAST;
+
+            aodv_socket_send((AODV_msg *) rerr, rerr_dest,RERR_CALC_SIZE(rerr),
+                             1, &DEV_IFINDEX(NS_IFINDEX));
+        }
+        Uint128 dest = fwd_rt->dest_addr.s_addr;
+        AodvRtTableMap::iterator it = aodvRtTableMap.find(dest);
+        if (it != aodvRtTableMap.end())
+        {
+            if (it->second != fwd_rt)
+                opp_error("AODV routing table error");
+        }
+        aodvRtTableMap.erase(it);
+        if (fwd_rt->state == VALID || fwd_rt->state == IMMORTAL)
+            rt_tbl.num_active--;
+        timer_remove(&fwd_rt->rt_timer);
+        timer_remove(&fwd_rt->hello_timer);
+        timer_remove(&fwd_rt->ack_timer);
+        rt_tbl.num_entries = aodvRtTableMap.size();
+        free (fwd_rt);
+    }
+    else
+        DEBUG(LOG_DEBUG, 0, "No route entry to delete");
+
+    for (index = 0; index <getNumInterfaces(); index++)
+    {
+        if (strcmp(ifaceName, getInterfaceEntry(index)->getName())==0) break;
+    }
+    if (index>=getNumInterfaces())
+        status = false;
+
+    ManetRoutingBase::setRoute(dest,add,index,hops,mask);
+
+    if (!delEntry && index<getNumInterfaces())
+    {
+        fwd_rt = modifyAODVTables(destAddr,nextAddr,hops,(uint32_t) SIMTIME_DBL(simTime()), 0xFFFF,IMMORTAL,0, index);
+        status = (fwd_rt!=NULL);
+    }
+
+
+    return status;
+}
+#else
 
 bool  NS_CLASS setRoute(const Uint128 &dest,const Uint128 &add, const int &ifaceIndex,const int &hops,const Uint128 &mask)
 {
@@ -1257,6 +1394,6 @@ bool  NS_CLASS setRoute(const Uint128 &dest,const Uint128 &add, const char  *ifa
 
     return status;
 }
-
+#endif
 
 

@@ -419,7 +419,7 @@ void NS_CLASS print_rt_table(void *arg)
                 sprintf(seqno_str, "%u", rt->dest_seqno);
 
             /* Print routing table entries one by one... */
-#ifdef AODVUSEMAP
+#ifdef AODV_USE_STL
             long dif = (1000.0*(SIMTIME_DBL(rt->rt_timer.timeout) - SIMTIME_DBL(simTime())));
 
             if (list_empty(&rt->precursors))

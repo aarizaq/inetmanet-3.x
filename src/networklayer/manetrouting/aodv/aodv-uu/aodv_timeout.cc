@@ -102,7 +102,7 @@ void NS_CLASS route_discovery_timeout(void *arg)
            before 2 * NET_TRAVERSAL_TIME... */
         rt = rt_table_find(seek_entry->dest_addr);
 
-#ifdef AODVUSEMAP
+#ifdef AODV_USE_STL
         if (rt && ((rt->rt_timer.timeout - simTime() ) < (2 * NET_TRAVERSAL_TIME)))
             rt_table_update_timeout(rt, 2 * NET_TRAVERSAL_TIME);
 #else
@@ -181,7 +181,11 @@ void NS_CLASS local_repair_timeout(void *arg)
 
         if (rt->nprec == 1)
         {
+#ifdef AODV_USE_STL_RT
+            rerr_dest = rt->precursors[0].neighbor;
+#else
             rerr_dest = FIRST_PREC(rt->precursors)->neighbor;
+#endif
 
             aodv_socket_send((AODV_msg *) rerr, rerr_dest,
                              RERR_CALC_SIZE(rerr), 1,
