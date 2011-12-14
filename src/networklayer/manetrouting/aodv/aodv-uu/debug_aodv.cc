@@ -371,6 +371,7 @@ char *NS_CLASS devs_ip_to_str()
     return str;
 }
 
+#ifndef AODV_USE_STL_RT
 void NS_CLASS print_rt_table(void *arg)
 {
 #ifndef _WIN32
@@ -504,6 +505,127 @@ void NS_CLASS print_rt_table(void *arg)
     /* Schedule a new printing of routing table... */
 schedule:
     timer_set_timeout(&rt_log_timer, rt_log_interval);
+#endif
+}
+
+#else
+
+coid NS_CLASS print_rt_table(void *arg)
+{
+#ifndef _WIN32
+    char rt_buf[2048], ifname[64], seqno_str[11];
+    int len = 0;
+    int i = 0;
+    struct timeval now;
+    struct tm *time;
+    if (rt_tbl.num_entries == 0)
+        goto schedule;
+
+    gettimeofday(&now, NULL);
+
+#ifdef NS_PORT
+    time = gmtime(&now.tv_sec);
+#else
+    time = localtime(&now.tv_sec);
+#endif
+
+    len +=
+       sprintf(rt_buf,
+                "# Time: %02d:%02d:%02d.%03ld IP: %s seqno: %u entries/active: %u/%u\n",
+                time->tm_hour, time->tm_min, time->tm_sec, now.tv_usec / 1000,
+                devs_ip_to_str(), this_host.seqno, rt_tbl.num_entries,
+                rt_tbl.num_active);
+    len +=
+        sprintf(rt_buf + len,
+                "%-15s %-15s %-3s %-3s %-5s %-6s %-5s %-5s %-15s\n",
+                "Destination", "Next hop", "HC", "St.", "Seqno", "Expire",
+                "Flags", "Iface", "Precursors");
+
+    write(log_rt_fd, rt_buf, len);
+    len = 0;
+    for (AodvRtTableMap::iterator it = aodvRtTableMap.begin(); it != aodvRtTableMap.end(); it++)
+    {
+        rt_table_t *rt = it->second;
+
+        if (rt->dest_seqno == 0)
+        sprintf(seqno_str, "-");
+        else
+        sprintf(seqno_str, "%u", rt->dest_seqno);
+
+        /* Print routing table entries one by one... */
+#ifdef AODV_USE_STL
+        long dif = (1000.0*(SIMTIME_DBL(rt->rt_timer.timeout) - SIMTIME_DBL(simTime())));
+
+        if (rt->precursors.empty())
+            len += sprintf(rt_buf + len,
+                "%-15s %-15s %-3d %-3s %-5s %-6lu %-5s %-5s\n",
+                ip_to_str(rt->dest_addr),
+                ip_to_str(rt->next_hop), rt->hcnt,
+                state_to_str(rt->state), seqno_str,
+                (rt->hcnt == 255) ? 0 :
+                dif,
+                rt_flags_to_str(rt->flags),
+                if_indextoname(rt->ifindex, ifname));
+
+        else
+        {
+
+            len += sprintf(rt_buf + len,
+                    "%-15s %-15s %-3d %-3s %-5s %-6lu %-5s %-5s %-15s\n",
+                    ip_to_str(rt->dest_addr),
+                    ip_to_str(rt->next_hop), rt->hcnt,
+                    state_to_str(rt->state), seqno_str,
+                    (rt->hcnt == 255) ? 0 :
+                    dif,
+                    rt_flags_to_str(rt->flags),
+                    if_indextoname(rt->ifindex, ifname),
+                    ip_to_str(((precursor_t *) rt->precursors[0].neighbor));
+#else
+         if (rt->precursors.empty())
+             len += sprintf(rt_buf + len,
+                     "%-15s %-15s %-3d %-3s %-5s %-6lu %-5s %-5s\n",
+                     ip_to_str(rt->dest_addr),
+                     ip_to_str(rt->next_hop), rt->hcnt,
+                     state_to_str(rt->state), seqno_str,
+                     (rt->hcnt == 255) ? 0 :
+                             timeval_diff(&rt->rt_timer.timeout, &now),
+                             rt_flags_to_str(rt->flags),
+                             if_indextoname(rt->ifindex, ifname));
+         else
+         {
+            len += sprintf(rt_buf + len,
+                    "%-15s %-15s %-3d %-3s %-5s %-6lu %-5s %-5s %-15s\n",
+                    ip_to_str(rt->dest_addr),
+                    ip_to_str(rt->next_hop), rt->hcnt,
+                    state_to_str(rt->state), seqno_str,
+                    (rt->hcnt == 255) ? 0 :
+                            timeval_diff(&rt->rt_timer.timeout, &now),
+                            rt_flags_to_str(rt->flags),
+                            if_indextoname(rt->ifindex, ifname),
+                            ip_to_str(((precursor_t *) rt->precursors[0].neighbor));
+#endif
+                /* Print all precursors for the current routing entry */
+                for (unsigned int i = 1; i< rt->precursors.size(); i++)
+                {
+                    precursor_t *pr = &rt->precursors[i];
+                    len += sprintf(rt_buf + len, "%64s %-15s\n", " ",
+                            ip_to_str(pr->neighbor));
+
+                    /* Since the precursor list is grown dynamically
+                     * the write buffer should be flushed for every
+                     * entry to avoid buffer overflows */
+                    write(log_rt_fd, rt_buf, len);
+                    len = 0;
+
+                }
+            }
+            if (len > 0)
+            {
+                write(log_rt_fd, rt_buf, len);
+                len = 0;
+            }
+        }
+    }
 #endif
 }
 
