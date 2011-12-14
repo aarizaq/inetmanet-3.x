@@ -510,7 +510,7 @@ schedule:
 
 #else
 
-coid NS_CLASS print_rt_table(void *arg)
+void NS_CLASS print_rt_table(void *arg)
 {
 #ifndef _WIN32
     char rt_buf[2048], ifname[64], seqno_str[11];
@@ -628,6 +628,7 @@ coid NS_CLASS print_rt_table(void *arg)
     }
 #endif
 }
+#endif
 
 /* This function lets you print more than one IP address at the same time */
 char *NS_CLASS ip_to_str(struct in_addr addr)
