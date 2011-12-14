@@ -515,7 +515,6 @@ void NS_CLASS print_rt_table(void *arg)
 #ifndef _WIN32
     char rt_buf[2048], ifname[64], seqno_str[11];
     int len = 0;
-    int i = 0;
     struct timeval now;
     struct tm *time;
     if (rt_tbl.num_entries == 0)
@@ -579,7 +578,7 @@ void NS_CLASS print_rt_table(void *arg)
                     dif,
                     rt_flags_to_str(rt->flags),
                     if_indextoname(rt->ifindex, ifname),
-                    ip_to_str(((precursor_t *) rt->precursors[0].neighbor));
+                    ip_to_str(rt->precursors[0].neighbor));
 #else
          if (rt->precursors.empty())
              len += sprintf(rt_buf + len,
@@ -604,28 +603,29 @@ void NS_CLASS print_rt_table(void *arg)
                             if_indextoname(rt->ifindex, ifname),
                             ip_to_str(((precursor_t *) rt->precursors[0].neighbor));
 #endif
-                /* Print all precursors for the current routing entry */
-                for (unsigned int i = 1; i< rt->precursors.size(); i++)
-                {
-                    precursor_t *pr = &rt->precursors[i];
-                    len += sprintf(rt_buf + len, "%64s %-15s\n", " ",
-                            ip_to_str(pr->neighbor));
+            /* Print all precursors for the current routing entry */
+            for (unsigned int i = 1; i< rt->precursors.size(); i++)
+            {
+                precursor_t *pr = &rt->precursors[i];
+                len += sprintf(rt_buf + len, "%64s %-15s\n", " ",ip_to_str(pr->neighbor));
 
                     /* Since the precursor list is grown dynamically
                      * the write buffer should be flushed for every
                      * entry to avoid buffer overflows */
-                    write(log_rt_fd, rt_buf, len);
-                    len = 0;
+                 write(log_rt_fd, rt_buf, len);
+                 len = 0;
 
-                }
-            }
-            if (len > 0)
-            {
-                write(log_rt_fd, rt_buf, len);
-                len = 0;
-            }
-        }
+             }
+         }
+         if (len > 0)
+         {
+             write(log_rt_fd, rt_buf, len);
+             len = 0;
+         }
     }
+        /* Schedule a new printing of routing table... */
+    schedule:
+        timer_set_timeout(&rt_log_timer, rt_log_interval);
 #endif
 }
 #endif
