@@ -1483,11 +1483,7 @@ void Ieee80211NewMac::handleWithFSM(cMessage *msg)
                                   msg == endSIFS && getFrameReceivedBeforeSIFS()->getType() == ST_ACK,
                                   WAITACK,
                                   sendDataFrame(getCurrentTransmission());
-                                 );
-            FSMA_Event_Transition(Transmit-Data-TXOP,
-                                  msg == endSIFS && getFrameReceivedBeforeSIFS()->getType() == ST_ACK,
-                                  WAITACK,
-                                  sendDataFrame(getCurrentTransmission());
+                                  oldcurrentAC = currentAC;
                                  );
             FSMA_Event_Transition(Transmit-CTS,
                                   msg == endSIFS && getFrameReceivedBeforeSIFS()->getType() == ST_RTS,
@@ -1502,6 +1498,7 @@ void Ieee80211NewMac::handleWithFSM(cMessage *msg)
                                   msg == endSIFS && getFrameReceivedBeforeSIFS()->getType() == ST_CTS,
                                   WAITACK,
                                   sendDataFrameOnEndSIFS(getCurrentTransmission());
+                                  oldcurrentAC = currentAC;
                                  );
             FSMA_Event_Transition(Transmit-ACK,
                                   msg == endSIFS && isDataOrMgmtFrame(getFrameReceivedBeforeSIFS()),
