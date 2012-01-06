@@ -732,6 +732,7 @@ void Ieee80211NewMac::handleSelfMsg(cMessage *msg)
                 return;
             }
         }
+        currentAC = kind;
     }
     handleWithFSM(msg);
 }
