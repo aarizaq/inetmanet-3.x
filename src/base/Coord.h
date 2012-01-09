@@ -21,7 +21,8 @@
 #ifndef __INET_COORD_H
 #define __INET_COORD_H
 
-#include <omnetpp.h>
+#include "INETDefs.h"
+
 #include "FWMath.h"
 
 
@@ -63,10 +64,6 @@ public:
     Coord(const Coord& other)
         : cObject(other) { copy(other); }
 
-    /** @brief Initializes coordinate from other coordinate. */
-    Coord(const Coord* other)
-        : cObject(*other) { copy(*other); }
-
     /** @brief Returns a string with the value of the coordinate. */
     std::string info() const {
         std::stringstream os;
@@ -105,7 +102,7 @@ public:
     /**
      * @brief Multiplies this coordinate vector by a real number.
      */
-    Coord operator*=(double f) {
+    Coord& operator*=(double f) {
         x *= f;
         y *= f;
         z *= f;
@@ -115,7 +112,7 @@ public:
     /**
      * @brief Divides this coordinate vector by a real number.
      */
-    Coord operator/=(double f) {
+    Coord& operator/=(double f) {
         x /= f;
         y /= f;
         z /= f;
@@ -125,7 +122,7 @@ public:
     /**
      * @brief Adds coordinate vector 'a' to this.
      */
-    Coord operator+=(const Coord& a) {
+    Coord& operator+=(const Coord& a) {
         x += a.x;
         y += a.y;
         z += a.z;
@@ -137,8 +134,8 @@ public:
      *
      * This operator can change the dimension of the coordinate.
      */
-    Coord operator=(const Coord& other) {
-        if (this == &other) return this;
+    Coord& operator=(const Coord& other) {
+        if (this == &other) return *this;
         cObject::operator=(other);
         copy(other);
         return *this;
@@ -147,7 +144,7 @@ public:
     /**
      * @brief Subtracts coordinate vector 'a' from this.
      */
-    Coord operator-=(const Coord& a) {
+    Coord& operator-=(const Coord& a) {
         x -= a.x;
         y -= a.y;
         z -= a.z;

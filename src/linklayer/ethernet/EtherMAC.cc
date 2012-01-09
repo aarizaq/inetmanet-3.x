@@ -197,6 +197,11 @@ void EtherMAC::handleMessage(cMessage *msg)
 
 void EtherMAC::processFrameFromUpperLayer(EtherFrame *frame)
 {
+    if (frame->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+        throw cRuntimeError("Ethernet frame too short, must be at least 64 bytes (padding should be done at encapsulation)");
+
+    frame->setFrameByteLength(frame->getByteLength());
+
     EV << "Received frame from upper layer: " << frame << endl;
 
     emit(packetReceivedFromUpperSignal, frame);
@@ -444,7 +449,6 @@ void EtherMAC::startFrameTransmission()
     if (frame->getSrc().isUnspecified())
         frame->setSrc(address);
 
-    frame->setOrigByteLength(frame->getByteLength());
     bool inBurst = frameBursting && framesSentInBurst;
     int64 minFrameLength = duplexMode ? curEtherDescr->frameMinBytes : (inBurst ? curEtherDescr->frameInBurstMinBytes : curEtherDescr->halfDuplexFrameMinBytes);
 
@@ -457,7 +461,6 @@ void EtherMAC::startFrameTransmission()
     if (ev.isGUI())
         updateConnectionColor(TRANSMITTING_STATE);
 
-    emit(packetSentToLowerSignal, frame);
     currentSendPkTreeID = frame->getTreeId();
     send(frame, physOutGate);
 
@@ -510,6 +513,8 @@ void EtherMAC::handleEndTxPeriod()
     if (NULL == curTxFrame)
         error("Frame under transmission cannot be found");
 
+    emit(packetSentToLowerSignal, curTxFrame);  //consider: emit with start time of frame
+
     if (dynamic_cast<EtherPauseFrame*>(curTxFrame) != NULL)
     {
         numPauseFramesSent++;
@@ -517,7 +522,7 @@ void EtherMAC::handleEndTxPeriod()
     }
     else
     {
-        unsigned long curBytes = curTxFrame->getByteLength();
+        unsigned long curBytes = curTxFrame->getFrameByteLength();
         numFramesSent++;
         numBytesSent += curBytes;
         emit(txPkSignal, curTxFrame);
@@ -740,18 +745,18 @@ void EtherMAC::frameReceptionComplete()
         return;
     }
 
-    emit(packetReceivedFromLowerSignal, msg);
+    EtherFrame *frame = check_and_cast<EtherFrame *>(msg);
+
+    emit(packetReceivedFromLowerSignal, frame);
 
     // bit errors
-    if (msg->hasBitError())
+    if (frame->hasBitError())
     {
         numDroppedBitError++;
-        emit(dropPkBitErrorSignal, msg);
+        emit(dropPkBitErrorSignal, frame);
         delete msg;
         return;
     }
-
-    EtherFrame *frame = check_and_cast<EtherFrame *>(msg);
 
     if (dropFrameNotForUs(frame))
         return;
@@ -772,8 +777,8 @@ void EtherMAC::frameReceptionComplete()
 
 void EtherMAC::processReceivedDataFrame(EtherFrame *frame)
 {
-    // restore original byte length (strip preamble and SFD and external bytes)
-    frame->setByteLength(frame->getOrigByteLength());
+    // strip physical layer overhead (preamble, SFD, carrier extension) from frame
+    frame->setByteLength(frame->getFrameByteLength());
 
     // statistics
     unsigned long curBytes = frame->getByteLength();

@@ -41,9 +41,9 @@ simple Ieee80211MgmtSTASimplified like IIeee80211Mgmt
         @signal[dequeuePk](type=cMessage);
         @signal[dropPkByQueue](type=cMessage);
         @signal[queueingTime](type=simtime_t; unit=s);
-        @signal[dataQueueLen](type=long; interpolationmode=sample-hold);  // number of stored packets
-        @statistic[dataQueueLen](title="Data queue len"; record=histogram,vector; interpolationmode=sample-hold);
-        @statistic[droppedPkBytesByQueue](title="Dropped packet bytes by queue"; source="packetBytes(dropPkByQueue)"; unit=B; record=count,sum,vector; interpolationmode=none);
+        @signal[dataQueueLen](type=long);  // number of stored packets
+        @statistic[dataQueueLen](title="data queue length"; record=max,timeavg,vector; interpolationmode=sample-hold);
+        @statistic[dropPkByQueue](title="packets dropped by queue"; source=dropPkByQueue; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
     gates:
         input upperLayerIn;
         output upperLayerOut;
@@ -52,3 +52,4 @@ simple Ieee80211MgmtSTASimplified like IIeee80211Mgmt
         input agentIn @loose;   // unused dummy to statisfy the IIeee80211Mgmt interface
         output agentOut @loose; // unused dummy to statisfy the IIeee80211Mgmt interface
 }
+

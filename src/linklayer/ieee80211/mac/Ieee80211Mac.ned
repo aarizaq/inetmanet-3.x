@@ -67,8 +67,8 @@ simple Ieee80211Mac
         int cwMinMulticast = default(-1); // contention window for multicast messages, -1 means default
         int mtu = default(1500);
         @display("i=block/layer");
-        @statistic[state](title="State"; record=vector; interpolationmode=sample-hold); // ENUM!!
-        @statistic[radioState](title="Radio state"; record=vector; interpolationmode=sample-hold); // ENUM!!
+        @statistic[state](title="state"; record=vector; interpolationmode=sample-hold); // ENUM!!
+        @statistic[radioState](title="radio state"; record=vector; interpolationmode=sample-hold); // ENUM!!
     gates:
         input upperLayerIn @labels(Ieee80211Frame);
         output upperLayerOut @labels(Ieee80211Frame);

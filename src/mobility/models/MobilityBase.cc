@@ -99,7 +99,7 @@ void MobilityBase::initialize(int stage)
     else if (stage == 1)
     {
         initializePosition();
-        if (!isFiniteNumber(lastPosition.x) || !isFiniteNumber(lastPosition.y) | !isFiniteNumber(lastPosition.z))
+        if (!isFiniteNumber(lastPosition.x) || !isFiniteNumber(lastPosition.y) || !isFiniteNumber(lastPosition.z))
             throw cRuntimeError("mobility position is not a finite number after initialize (x=%g,y=%g,z=%g)", lastPosition.x, lastPosition.y, lastPosition.z);
         if (isOutside())
             throw cRuntimeError("mobility position (x=%g,y=%g,z=%g) is outside the constraint area (%g,%g,%g - %g,%g,%g)",
@@ -177,14 +177,6 @@ void MobilityBase::initializePosition()
         lastPosition.y = par("initialY");
         lastPosition.z = par("initialZ");
         filled = true;
-        if (lastPosition.x < constraintAreaMin.x ||  lastPosition.x > constraintAreaMax.x || lastPosition.y < constraintAreaMin.y ||  lastPosition.y > constraintAreaMax.y
-        		|| lastPosition.z < constraintAreaMin.z ||  lastPosition.z > constraintAreaMax.z)
-        {
-                // out of area
-                EV << "Initial position x: "<< lastPosition.x << " y :" << lastPosition.y << " z :" << lastPosition.z <<" is out of the restrain area, the node will select the initial position randomly \n";
-                filled = false;
-        }
-
     }
     if (!filled)
         lastPosition = getRandomPosition();

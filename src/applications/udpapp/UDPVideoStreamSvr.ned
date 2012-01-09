@@ -52,8 +52,8 @@ simple UDPVideoStreamSvr like IUDPApp
         @display("i=block/app");
         @signal[sentPk](type=cPacket);
         @signal[reqStreamBytes](type=long);
-        @statistic[reqStreamBytes](title="Requested stream bytes"; record=count,sum,vector; interpolationmode=none);
-        @statistic[sentPkBytes](title="Sent packet bytes"; source="packetBytes(sentPk)"; unit=B; record=count,sum,vector; interpolationmode=none);
+        @statistic[reqStreamBytes](title="requested stream bytes"; record=count,sum,vector; interpolationmode=none);
+        @statistic[sentPk](title="packets sent"; source=sentPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
     gates:
         input udpIn @labels(UDPControlInfo/up);
         output udpOut @labels(UDPControlInfo/down);

@@ -47,6 +47,8 @@ die("Not found ini files\n") if ($#inifiles lt 0);
 
 @runs = ();
 
+print '# workingdir,                        args,                                          simtimelimit,    fingerprint'."\n";
+
 foreach $fname (@inifiles)
 {
     chomp $fname;
@@ -55,7 +57,7 @@ foreach $fname (@inifiles)
     read(INFILE, $txt, 1000000) || die "cannot read $fname";
     close INFILE;
 
-    next if ($txt =~ /\bfingerprint\s*=/); #skip fingerprint tests
+###    next if ($txt =~ /\bfingerprint\s*=/); #skip fingerprint tests
 
     @configs = ($txt =~ /^\s*(\[Config \w+\].*)$/mg);
 
@@ -70,7 +72,14 @@ foreach $fname (@inifiles)
         ($cfg,$comm) = ($conf =~ /^\[Config (\w+)\]\s*(\#.*)?$/g);
         ($dir,$fnameonly) = ($fname =~ /(.*)[\/\\](.*)/);
 
-        $run = "/$dir, -f $fnameonly -c $cfg"; # intentionally no "-r 0" -- test should do all runs if fits into the time limit...
+        $run = "/".$dir.'/'.",";
+        $run .= (' 'x(36-length $run)).' ';
+        $run .= "-f $fnameonly -c $cfg -r 0";#.",";
+#        $run .= (' 'x(83-length $run)).' ';
+#        $run .= '---100s'.",";
+#        $run .= (' 'x(100-length $run)).' ';
+#        $run .= '0'; # intentionally no "-r 0" -- test should do all runs if fits into the time limit...
+
         $x = "$run";
 
         if ($comm =~ /\b__interactive__\b/i)

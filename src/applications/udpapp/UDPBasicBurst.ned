@@ -124,11 +124,11 @@ simple UDPBasicBurst like IUDPApp
         @signal[rcvdPk](type=cPacket);
         @signal[dropPk](type=cPacket);
         @signal[outOfOrderPk](type=cPacket);
-        @statistic[sentPkBytes](title="packets sent"; source="packetBytes(sentPk)"; unit=B; record=count,sum,vector; interpolationmode=none);
-        @statistic[rcvdPkBytes](title="packets received"; source="packetBytes(rcvdPk)"; unit=B; record=count,sum,vector; interpolationmode=none);
-        @statistic[dropPkBytes](title="packets dropped"; source="packetBytes(dropPk)"; unit=B; record=count,sum,vector; interpolationmode=none);
-        @statistic[outOfOrderPkBytes](title="packets received out of order"; source="packetBytes(outOfOrderPk)"; unit=B; record=count,sum,vector; interpolationmode=none);
-        @statistic[endToEndDelay](title="delay"; source="messageAge(rcvdPk)"; unit=s; record=histogram,stats,vector; interpolationmode=none);
+        @statistic[sentPk](title="packets sent"; source=sentPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[rcvdPk](title="packets received"; source=rcvdPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[dropPk](title="packets dropped"; source=dropPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[outOfOrderPk](title="packets received out of order"; source=outOfOrderPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[endToEndDelay](title="delay"; source="messageAge(rcvdPk)"; unit=s; record=histogram,vector; interpolationmode=none);
 
     gates:
         input udpIn @labels(UDPControlInfo/up);
