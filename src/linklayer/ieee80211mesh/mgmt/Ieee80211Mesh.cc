@@ -1017,11 +1017,7 @@ void Ieee80211Mesh::sendOut(cMessage *msg)
 
 bool Ieee80211Mesh::forwardMessage (Ieee80211DataFrame *frame)
 {
-#if OMNETPP_VERSION > 0x0400
     cPacket *msg = frame->getEncapsulatedPacket();
-#else
-    cPacket *msg = frame->getEncapsulatedMsg();
-#endif
     LWMPLSPacket *lwmplspk = dynamic_cast<LWMPLSPacket*> (msg);
 
     if (lwmplspk)

@@ -520,11 +520,7 @@ void MACRelayUnitSTPNP::handleMessage(cMessage* msg)
         {
             if (dynamic_cast<EtherFrame*>(msg))
             {
-#if OMNETPP_VERSION > 0x0400
                 cPacket* frame = ((EtherFrame*)msg)->getEncapsulatedPacket();
-#else
-                cPacket* frame = ((EtherFrame*)msg)->getEncapsulatedMsg();
-#endif
                 if (dynamic_cast<BPDU*>(frame))
                 {
                     cPacket* frame = ((EtherFrame*)msg)->decapsulate();

@@ -959,13 +959,8 @@ void DYMOUM::processPromiscuous(const cObject *details)
         struct in_addr gatewayAddr;
 
         frame = check_and_cast<Ieee80211DataOrMgmtFrame *>(details);
-#if OMNETPP_VERSION > 0x0400
         if (!isInMacLayer())
             ip_msg = dynamic_cast<IPv4Datagram *>(frame->getEncapsulatedPacket());
-#else
-        if (!isInMacLayer())
-            ip_msg = dynamic_cast<IPv4Datagram *>(frame->getEncapsulatedMsg());
-#endif
         /////////////////////////////////////
         /////////////////////////////////////
         /////////////////////////////////////
@@ -1069,21 +1064,11 @@ void DYMOUM::processPromiscuous(const cObject *details)
             if (!isInMacLayer())
             {
                 if (ip_msg && ip_msg->getTransportProtocol()==IP_PROT_MANET)
-                {
-#if OMNETPP_VERSION > 0x0400
                     dymo_msg = dynamic_cast<DYMO_element *>(ip_msg->getEncapsulatedPacket()->getEncapsulatedPacket());
-#else
-                    dymo_msg = dynamic_cast<DYMO_element *>(ip_msg->getEncapsulatedMsg()->getEncapsulatedMsg());
-#endif
-                }
             }
             else
             {
-#if OMNETPP_VERSION > 0x0400
                 dymo_msg = dynamic_cast<DYMO_element *>(frame->getEncapsulatedPacket());
-#else
-                dymo_msg = dynamic_cast<DYMO_element *>(frame->getEncapsulatedMsg());
-#endif
             }
             if (dymo_msg)
             {
@@ -1119,11 +1104,7 @@ void DYMOUM::processFullPromiscuous(const cObject *details)
                 addr.s_addr = (*it).second;
             else
             {
-#if OMNETPP_VERSION > 0x0400
                 IPv4Datagram * ip_msg = dynamic_cast<IPv4Datagram *>(twoAddressFrame->getEncapsulatedPacket());
-#else
-                IPv4Datagram * ip_msg = dynamic_cast<IPv4Datagram *>(twoAddressFrame->getEncapsulatedMsg());
-#endif
                 if (ip_msg && ip_msg->getTransportProtocol()==IP_PROT_MANET)
                 {
                     unsigned int ip_src = ip_msg->getSrcAddress().getInt();
@@ -1171,30 +1152,16 @@ void DYMOUM::processFullPromiscuous(const cObject *details)
             DYMO_element * dymo_msg;
             if (!isInMacLayer())
             {
-#if OMNETPP_VERSION > 0x0400
                 ip_msg = dynamic_cast<IPv4Datagram *>(twoAddressFrame->getEncapsulatedPacket());
-#else
-                ip_msg = dynamic_cast<IPv4Datagram *>(twoAddressFrame->getEncapsulatedMsg());
-#endif
                 if (ip_msg)
                 {
                     if (ip_msg->getTransportProtocol()==IP_PROT_MANET)
-                    {
-#if OMNETPP_VERSION > 0x0400
                         dymo_msg = dynamic_cast<DYMO_element *>(ip_msg->getEncapsulatedPacket()->getEncapsulatedPacket());
-#else
-                        dymo_msg = dynamic_cast<DYMO_element *>(ip_msg->getEncapsulatedMsg()->getEncapsulatedMsg());
-#endif
-                    }
                 }
             }
             else
             {
-#if OMNETPP_VERSION > 0x0400
                 dymo_msg = dynamic_cast<DYMO_element *>(twoAddressFrame->getEncapsulatedPacket());
-#else
-                dymo_msg = dynamic_cast<DYMO_element *>(twoAddressFrame->getEncapsulatedMsg());
-#endif
             }
             if (dymo_msg)
             {

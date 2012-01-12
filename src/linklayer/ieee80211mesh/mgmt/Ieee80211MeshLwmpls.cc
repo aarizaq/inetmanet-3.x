@@ -817,11 +817,7 @@ void Ieee80211Mesh::mplsForwardData(int label, LWMPLSPacket *mpls_pk_ptr, MACAdd
         mplsBasicSend(mpls_pk_ptr, sta_addr);
         return;
 
-#if OMNETPP_VERSION > 0x0400
         if (!(dynamic_cast<LWMPLSPacket*> (mpls_pk_ptr->getEncapsulatedPacket())))
-#else
-        if (!(dynamic_cast<LWMPLSPacket*> (mpls_pk_ptr->getEncapsulatedMsg())))
-#endif
         {
 // Source or destination?
 
@@ -859,11 +855,7 @@ void Ieee80211Mesh::mplsForwardData(int label, LWMPLSPacket *mpls_pk_ptr, MACAdd
         }
         else
         {
-#if OMNETPP_VERSION > 0x0400
             if (dynamic_cast<LWMPLSPacket*>(mpls_pk_ptr->getEncapsulatedPacket()))
-#else
-            if (dynamic_cast<LWMPLSPacket*>(mpls_pk_ptr->getEncapsulatedMsg()))
-#endif
             {
                 LWMPLSPacket *seg_pkptr =  dynamic_cast<LWMPLSPacket*>(mpls_pk_ptr->decapsulate());
                 seg_pkptr->setTTL(mpls_pk_ptr->getTTL());
@@ -1093,13 +1085,7 @@ void Ieee80211Mesh::mplsDataProcess(LWMPLSPacket * mpls_pk_ptr, MACAddress sta_a
         mplsData->setBroadCastCounter(mpls_pk_ptr->getSource().getInt(), newCounter);
         // send up and Resend
         if (code==WMPLS_BROADCAST)
-        {
-#if OMNETPP_VERSION > 0x0400
-        sendUp(mpls_pk_ptr->getEncapsulatedPacket()->dup());
-#else
-        sendUp(mpls_pk_ptr->getEncapsulatedMsg()->dup());
-#endif
-        }
+            sendUp(mpls_pk_ptr->getEncapsulatedPacket()->dup());
         else
             processControlPacket(dynamic_cast<LWMPLSControl*>(mpls_pk_ptr));
 //        sendOrEnqueue(encapsulate(mpls_pk_ptr,MACAddress::BROADCAST_ADDRESS));
@@ -1292,12 +1278,7 @@ void Ieee80211Mesh::mplsPurge(LWmpls_Forwarding_Structure *forwarding_ptr, bool 
             iter++;
             continue;
         }
-#if OMNETPP_VERSION > 0x0400
         LWMPLSPacket* mplsmsg = dynamic_cast<LWMPLSPacket*>(frame->getEncapsulatedPacket());
-#else
-        LWMPLSPacket* mplsmsg = dynamic_cast<LWMPLSPacket*>(frame->getEncapsulatedMsg());
-#endif
-
         if (mplsmsg!=NULL)
         {
             int label = mplsmsg->getLabel();

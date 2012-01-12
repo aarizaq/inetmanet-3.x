@@ -41,11 +41,7 @@ bool Ieee80216RadioModel::isReceivedCorrectly(AirFrame* airframe, const SnrList&
     for (SnrList::const_iterator iter = receivedList.begin(); iter != receivedList.end(); iter++)
         if (iter->snr < snirMin)
             snirMin = iter->snr;
-#if OMNETPP_VERSION>0x0400
     cPacket *frame = airframe->getEncapsulatedPacket();
-#else
-    cPacket *frame = airframe->getEncapsulatedMsg();
-#endif
     EV << "packet (" << frame->getClassName() << ")" << frame->getName() << " (" << frame->info() <<
         ") snrMin=" << snirMin << endl;
 

@@ -582,11 +582,7 @@ void Ieee802154Phy::handleLowerMsgEnd(AirFrame * airframe)
             isCorrupt = true;
         }
         // the sender of this pkt turned off the transmitter during transmission
-#if OMNETPP_VERSION>0x0400
         else if (airframe->getEncapsulatedPacket()->getKind() == BITERROR_FORCE_TRX_OFF)
-#else
-        else if (airframe->getEncapsulatedMsg()->getKind() == BITERROR_FORCE_TRX_OFF)
-#endif
         {
             EV << "[PHY]: reception of " << airframe->getName() << " frame failed because the sender turned off its transmitter during the tranmission, drop it \n";
             isCorrupt = true;
@@ -931,11 +927,7 @@ void Ieee802154Phy::handle_PLME_SET_TRX_STATE_request(PHYenum setState)
             if ( rs.getState() == RadioState::TRANSMIT && TxOver_timer->isScheduled())
             {
                 ASSERT(txPktCopy);
-#if OMNETPP_VERSION>0x0400
                 txPktCopy->getEncapsulatedPacket()->setKind(BITERROR_FORCE_TRX_OFF);
-#else
-                txPktCopy->getEncapsulatedMsg()->setKind(BITERROR_FORCE_TRX_OFF);
-#endif
                 cancelEvent(TxOver_timer);
                 delete txPktCopy;
                 txPktCopy = NULL;
