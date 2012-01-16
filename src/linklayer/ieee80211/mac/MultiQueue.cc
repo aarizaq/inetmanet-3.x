@@ -426,7 +426,7 @@ cMessage* MultiQueue::next()
          }
          else
              return NULL;
-     }
+    }
     return position->second;
 }
 
@@ -435,6 +435,16 @@ bool  MultiQueue::isEnd()
     if (exploreQueue >= queues.size())
         return true;
     if (position==queues[exploreQueue].end())
+    {
+        // check next queues has data
+        for (unsigned int i = exploreQueue+1; i<queues.size(); i++)
+        {
+            if (!queues[i].empty())
+                return false; // there are more data
+        }
+        position=queues[queues.size()].end(); // the rest of queues are empty, force position to he end of the last queue
+        exploreQueue = queues.size();
         return true;
+    }
     return false;
 }
