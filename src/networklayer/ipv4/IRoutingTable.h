@@ -89,29 +89,32 @@ class INET_API IRoutingTable
     /** @name Routing functions (query the route table) */
     //@{
     /**
-     * Checks if the address is a local broadcast one, i.e. one 192.168.0.255/24
+     * Checks if the address is a local network broadcast address, i.e. one of the
+     * broadcast addresses derived from the interface addresses and netmasks.
      */
     virtual bool isLocalBroadcastAddress(const IPv4Address& dest) const = 0;
 
     /**
-     * The routing function.
+     * The routing function. Performs longest prefix match for the given
+     * destination address, and returns the resulting route. Returns NULL
+     * if there is no matching route.
      */
-    virtual const IPv4Route *findBestMatchingRoute(const IPv4Address& dest) const = 0;
+    virtual IPv4Route *findBestMatchingRoute(const IPv4Address& dest) const = 0;
 
     /**
      * Convenience function based on findBestMatchingRoute().
      *
-     * Returns the interface Id to send the packets with dest as
-     * destination address, or -1 if destination is not in routing table.
+     * Returns the output interface for the packets with dest as destination
+     * address, or NULL if the destination is not in routing table.
      */
     virtual InterfaceEntry *getInterfaceForDestAddr(const IPv4Address& dest) const = 0;
 
     /**
      * Convenience function based on findBestMatchingRoute().
      *
-     * Returns the gateway to send the destination. Returns null address
-     * if the destination is not in routing table or there is
-     * no gateway (local delivery).
+     * Returns the gateway for the destination address. Returns the unspecified
+     * address if the destination is not in routing table or the gateway field
+     * is not filled in in the route.
      */
     virtual IPv4Address getGatewayForDestAddr(const IPv4Address& dest) const = 0;
     //@}
@@ -141,46 +144,53 @@ class INET_API IRoutingTable
     virtual int getNumRoutes() const = 0;
 
     /**
-     * Returns the kth route. The returned route cannot be modified;
-     * you must delete and re-add it instead. This rule is emphasized
-     * by returning a const pointer.
+     * Returns the kth route.
      */
-    virtual const IPv4Route *getRoute(int k) const = 0;
+    virtual IPv4Route *getRoute(int k) const = 0;
 
     /**
      * Finds and returns the default route, or NULL if it doesn't exist
      */
-    virtual const IPv4Route *findRoute(const IPv4Address& target, const IPv4Address& netmask,
-        const IPv4Address& gw, int metric = 0, const char *dev = NULL) const = 0;
+    virtual IPv4Route *getDefaultRoute() const = 0;
 
     /**
-     * Finds and returns the default route, or NULL if it doesn't exist
+     * Adds a route to the routing table. Routes are allowed to be modified
+     * while in the routing table. (There is a notification mechanism that
+     * allows routing table internals to be updated on a routing entry change.)
      */
-    virtual const IPv4Route *getDefaultRoute() const = 0;
+    virtual void addRoute(IPv4Route *entry) = 0;
 
     /**
-     * Adds a route to the routing table. Note that once added, routes
-     * cannot be modified; you must delete and re-add them instead.
+     * Removes the given route from the routing table, and returns it.
+     * NULL is returned of the route was not in the routing table.
      */
-    virtual void addRoute(const IPv4Route *entry) = 0;
+    virtual IPv4Route *removeRoute(IPv4Route *entry) = 0;
 
     /**
      * Deletes the given route from the routing table.
-     * Returns true if the route was deleted correctly, false if it was
+     * Returns true if the route was deleted, and false if it was
      * not in the routing table.
      */
-    virtual bool deleteRoute(const IPv4Route *entry) = 0;
+    virtual bool deleteRoute(IPv4Route *entry) = 0;
+
+    /**
+     * Deletes invalid routes from the routing table. Invalid routes are those
+     * where the isValid() method returns false.
+     */
+    virtual void purge() = 0;
 
     /**
      * Utility function: Returns a vector of all addresses of the node.
      */
     virtual std::vector<IPv4Address> gatherAddresses() const = 0;
+
+    /**
+     * To be called from route objects whenever a field changes. Used for
+     * maintaining internal data structures and firing "routing table changed"
+     * notifications.
+     */
+    virtual void routeChanged(IPv4Route *entry, int fieldCode) = 0;
     //@}
-   // Dsdv time to live test entry
-    virtual void setTimeToLiveRoutingEntry(simtime_t a) = 0;
-    virtual simtime_t getTimeToLiveRoutingEntry() = 0;
-    virtual void dsdvTestAndDelete() = 0;
-    virtual const bool testValidity(const IPv4Route *entry) const = 0;
     // Rules (similar to linux iptables)
     virtual void addRule(bool output,IPv4RouteRule *entry) = 0;
     virtual void delRule(IPv4RouteRule *entry) = 0;

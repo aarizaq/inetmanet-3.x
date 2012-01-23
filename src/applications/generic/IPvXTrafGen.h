@@ -35,21 +35,21 @@ class INET_API IPvXTrafGen : public IPvXTrafSink
 {
   protected:
     int protocol;
-    int msgByteLength;
     int numPackets;
     simtime_t stopTime;
     std::vector<IPvXAddress> destAddresses;
+    cPar *packetLengthPar;  // volatile packetLength parameter
 
     static int counter; // counter for generating a global number for each packet
 
     int numSent;
     static simsignal_t sentPkSignal;
 
+  protected:
     // chooses random destination address
     virtual IPvXAddress chooseDestAddr();
     virtual void sendPacket();
 
-  protected:
     virtual int numInitStages() const {return 4;}
     virtual void initialize(int stage);
     virtual void handleMessage(cMessage *msg);

@@ -160,12 +160,12 @@ void NetworkConfigurator::addPointToPointPeerRoutes(cTopology& topo, NodeInfoVec
             IPv4Route *e = new IPv4Route();
             if (useRouterIdForRoutes)
             {
-                e->setHost(neighborRouterId);
+                e->setDestination(neighborRouterId);
                 e->setGateway(neighborAddr);
             }
             else
             {
-                e->setHost(neighborAddr); // and no gateway
+                e->setDestination(neighborAddr); // and no gateway
             }
             e->setNetmask(IPv4Address(255, 255, 255, 255)); // full match needed
             e->setInterface(ie);
@@ -206,7 +206,7 @@ void NetworkConfigurator::addDefaultRoutes(cTopology& topo, NodeInfoVector& node
 
         // add route
         IPv4Route *e = new IPv4Route();
-        e->setHost(IPv4Address());
+        e->setDestination(IPv4Address());
         e->setNetmask(IPv4Address());
         e->setInterface(ie);
         e->setType(IPv4Route::REMOTE);

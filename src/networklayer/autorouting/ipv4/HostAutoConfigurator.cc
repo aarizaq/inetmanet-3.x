@@ -65,7 +65,7 @@ void addToMcastGroup(InterfaceEntry* ie, IRoutingTable* routingTable, const IPv4
     ie->ipv4Data()->setMulticastGroups(mcg);
 
     IPv4Route* re = new IPv4Route(); //TODO: add @c delete to destructor
-    re->setHost(mcastGroup);
+    re->setDestination(mcastGroup);
     re->setNetmask(IPv4Address::ALLONES_ADDRESS); // TODO: can't set this to none?
     re->setGateway(IPv4Address()); // none
     re->setInterface(ie);

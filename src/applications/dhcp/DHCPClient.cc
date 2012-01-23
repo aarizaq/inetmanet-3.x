@@ -142,18 +142,27 @@ void DHCPClient::changeFSMState(CLIENT_STATE new_state)
                         << this->lease->netmask << " leased time: " << lease->lease_time << " (segs)" << endl;
         std::cout << "host " << this->host_name << " got ip" << endl;
 
-        if (!this->irt->findRoute(IPv4Address(), IPv4Address(), lease->gateway, 0, (char*) (this->ie->getName())))
+        IPv4Route *iroute = NULL;
+        for (int i=0;i<this->irt->getNumRoutes();i++)
+        {
+            IPv4Route * e = this->irt->getRoute(i);
+            if (routeMatches(e, IPv4Address(), IPv4Address(), lease->gateway, 0, (char*) (this->ie->getName())))
+            {
+                iroute =  e;
+                break;
+            }
+        }
+        if (iroute == NULL)
         {
             // create gateway route
             IPv4Route *e = new IPv4Route();
-            e->setHost(IPv4Address());
+            e->setDestination(IPv4Address());
             e->setNetmask(IPv4Address());
             e->setGateway(lease->gateway);
             e->setInterface(this->ie);
             e->setType(IPv4Route::DIRECT);
             e->setSource(IPv4Route::MANUAL);
             this->irt->addRoute(e);
-
         }
         // update the routing table
         this->nb->fireChangeNotification(NF_INTERFACE_IPv4CONFIG_CHANGED, NULL);

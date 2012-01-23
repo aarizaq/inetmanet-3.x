@@ -53,7 +53,7 @@ void DSDV_2::initialize(int stage)
         rt = RoutingTableAccess().get();
         if (par("manetPurgeRoutingTables").boolValue())
         {
-            const IPv4Route *entry;
+            IPv4Route *entry;
             // clean the route table wlan interface entry
             for (int i=rt->getNumRoutes()-1; i>=0; i--)
             {
@@ -69,7 +69,7 @@ void DSDV_2::initialize(int stage)
 
         // schedules a random periodic event: the hello message broadcast from DSDV module
 
-        rt->setTimeToLiveRoutingEntry(par("timetolive_routing_entry"));
+        routeLifetime = par("routeLifetime").doubleValue();
 
         //reads from omnetpp.ini
         hellomsgperiod_DSDV = (simtime_t) par("hellomsgperiod_DSDV");
@@ -146,7 +146,7 @@ void DSDV_2::handleMessage(cMessage *msg)
             if (!rt)
                 rt = RoutingTableAccess().get();
 
-            rt->dsdvTestAndDelete();
+            rt->purge();
 
             // count non-loopback interfaces
             // int numIntf = 0;
@@ -334,33 +334,24 @@ void DSDV_2::handleMessage(cMessage *msg)
 
 
 
-            IPv4Route *entrada_routing = const_cast<IPv4Route *> (rt->findBestMatchingRoute(src));
+            IPv4Route *_entrada_routing = rt->findBestMatchingRoute(src);
+            DSDVIPv4Route *entrada_routing = dynamic_cast<DSDVIPv4Route *>(_entrada_routing);
 
             //Tests if the DSDV hello message that arrived is useful
-            if (entrada_routing == NULL || (entrada_routing != NULL && (msgsequencenumber>(entrada_routing->getSequencenumber()) || (msgsequencenumber == (entrada_routing->getSequencenumber()) && numHops < (entrada_routing->getMetric())))))
+            if (_entrada_routing == NULL
+                    || (_entrada_routing != NULL && _entrada_routing->getNetmask() != IPv4Address::ALLONES_ADDRESS)
+                    || (entrada_routing != NULL && (msgsequencenumber>(entrada_routing->getSequencenumber()) || (msgsequencenumber == (entrada_routing->getSequencenumber()) && numHops < (entrada_routing->getMetric())))))
             {
 
-                //changes information that exists in routing table according to information in hello message
+                //remove old entry
                 if (entrada_routing != NULL)
-                {
-                    IPv4Address netmask = IPv4Address(par("netmask").stringValue()); //reads from omnetpp.ini
-                    entrada_routing->setHost(src);
-                    entrada_routing->setNetmask(netmask);
-                    entrada_routing->setGateway(next);
-                    entrada_routing->setInterface(interface80211ptr);
-                    entrada_routing->setType(IPv4Route::REMOTE);
-                    entrada_routing->setSource(IPv4Route::MANET);
-                    entrada_routing->setMetric(numHops);
-                    entrada_routing->setSequencenumber(msgsequencenumber);
-                    entrada_routing->setInstallTime(simTime());
+                    rt->deleteRoute(entrada_routing);
 
-                }
                 //adds new information to routing table according to information in hello message
-                else
                 {
-                    IPv4Address netmask = IPv4Address(par("netmask").stringValue());
-                    IPv4Route *e = new IPv4Route();
-                    e->setHost(src);
+                    IPv4Address netmask = IPv4Address::ALLONES_ADDRESS; // IPv4Address(par("netmask").stringValue());
+                    DSDVIPv4Route *e = new DSDVIPv4Route();
+                    e->setDestination(src);
                     e->setNetmask(netmask);
                     e->setGateway(next);
                     e->setInterface(interface80211ptr);
@@ -368,7 +359,7 @@ void DSDV_2::handleMessage(cMessage *msg)
                     e->setSource(IPv4Route::MANET);
                     e->setMetric(numHops);
                     e->setSequencenumber(msgsequencenumber);
-                    e->setInstallTime(simTime());
+                    e->setExpiryTime(simTime()+routeLifetime);
                     rt->addRoute(e);
                 }
 #ifdef      NOforwardHello

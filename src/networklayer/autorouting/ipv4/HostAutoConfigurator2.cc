@@ -88,7 +88,7 @@ void addToMcastGroup(InterfaceEntry* ie, IRoutingTable* routingTable, const IPv4
     ie->ipv4Data()->setMulticastGroups(mcg);
 
     IPv4Route* re = new IPv4Route(); //TODO: add @c delete to destructor
-    re->setHost(mcastGroup);
+    re->setDestination(mcastGroup);
     re->setNetmask(IPv4Address::ALLONES_ADDRESS); // TODO: can't set this to none?
     re->setGateway(IPv4Address()); // none
     re->setInterface(ie);
@@ -103,7 +103,7 @@ void addRoute(InterfaceEntry* ie, IRoutingTable* routingTable, const IPv4Address
     //
 	//
 	IPv4Route* re = new IPv4Route(); //TODO: add @c delete to destructor
-    re->setHost(ipaddress);
+    re->setDestination(ipaddress);
     re->setNetmask(maskaddress); // TODO: can't set this to none?
     re->setGateway(IPv4Address::UNSPECIFIED_ADDRESS); // none
     re->setInterface(ie);
@@ -148,7 +148,7 @@ void HostAutoConfigurator2::addDefaultRoutes()
     	    i++;
     }
     IPv4Route *e = new IPv4Route();
-    e->setHost(IPv4Address());
+    e->setDestination(IPv4Address());
     e->setNetmask(IPv4Address());
     e->setInterface(ie);
     e->setType(IPv4Route::REMOTE);
@@ -344,7 +344,7 @@ void HostAutoConfigurator2::setupRoutingTable()
         if (ie==NULL)
             opp_error("default ID interface doesn't exist");
         IPv4Route *e = new IPv4Route();
-        e->setHost(IPv4Address());
+        e->setDestination(IPv4Address());
         e->setNetmask(IPv4Address());
         e->setGateway(defaultAddr);
         e->setInterface(ie);
@@ -416,7 +416,7 @@ void HostAutoConfigurator2::fillRoutingTables()
                 error("%s has no interface for output gate id %d", iftN->getFullPath().c_str(), outputGateId);
 
             IPv4Route *e = new IPv4Route();
-            e->setHost(ieTarget->ipv4Data()->getIPAddress());
+            e->setDestination(ieTarget->ipv4Data()->getIPAddress());
             e->setNetmask(IPv4Address(255,255,255,255)); // full match needed
             e->setInterface(ie);
             e->setType(IPv4Route::DIRECT);

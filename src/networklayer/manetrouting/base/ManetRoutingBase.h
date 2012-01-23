@@ -59,6 +59,7 @@ class ManetTimer :  public cOwnedObject
 typedef std::multimap <simtime_t, ManetTimer *> TimerMultiMap;
 typedef std::set<Uint128> AddressGroup;
 typedef std::set<Uint128>::iterator AddressGroupIterator;
+typedef std::set<Uint128>::const_iterator AddressGroupConstIterator;
 class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, protected cListener
 {
  public:
@@ -280,13 +281,6 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
     virtual InterfaceEntry *getWlanInterfaceEntry(int i) const;
 
     virtual bool isThisInterfaceRegistered(InterfaceEntry *);
-
-//
-// DSDV routines
-//
-//
-    virtual void setTimeToLiveRoutingEntry(simtime_t a) {inet_rt->setTimeToLiveRoutingEntry(a);}
-    virtual simtime_t getTimeToLiveRoutingEntry()  const {return inet_rt->getTimeToLiveRoutingEntry();}
 
 //
 //     Access to the node position

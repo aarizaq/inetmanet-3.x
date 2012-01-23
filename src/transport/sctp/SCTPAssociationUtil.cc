@@ -439,12 +439,13 @@ void SCTPAssociation::sendInit()
     }
     else
     {
-        int rlevel = getLevel(remoteAddr);
+        int rlevel = getAddressLevel(remoteAddr);
         sctpEV3<<"level of remote address="<<rlevel<<"\n";
         for (AddressVector::iterator i=adv.begin(); i!=adv.end(); ++i)
         {
-            sctpEV3<<"level of address "<<(*i)<<" = "<<getLevel((*i))<<"\n";
-            if (getLevel((*i))>=rlevel)
+            int addressLevel = getAddressLevel(*i);
+            sctpEV3<<"level of address "<<(*i)<<" = "<<addressLevel<<"\n";
+            if (addressLevel>=rlevel)
             {
                 initChunk->setAddressesArraySize(addrNum+1);
                 initChunk->setAddresses(addrNum++, (*i));
@@ -454,7 +455,7 @@ void SCTPAssociation::sendInit()
                 if (localAddr.get4().getInt()==0)
                     localAddr = (*i);
             }
-            else if (rlevel==4 && getLevel((*i))==3 && friendly)
+            else if (rlevel==4 && addressLevel==3 && friendly)
             {
                 sctpMain->addLocalAddress(this, (*i));
                 state->localAddresses.push_back((*i));
@@ -2126,3 +2127,61 @@ void SCTPAssociation::disposeOf(SCTPMessage* sctpmsg)
     delete sctpmsg;
 }
 
+int SCTPAssociation::getAddressLevel(const IPvXAddress& addr)
+{
+    if (addr.isIPv6())
+    {
+        switch(addr.get6().getScope())
+        {
+            case IPv6Address::UNSPECIFIED:
+            case IPv6Address::MULTICAST:
+                return 0;
+
+            case IPv6Address::LOOPBACK:
+                return 1;
+
+            case IPv6Address::LINK:
+                return 2;
+
+            case IPv6Address::SITE:
+                return 3;
+
+            case IPv6Address::GLOBAL:
+                return 4;
+
+            default:
+                throw cRuntimeError("Unknown IPv6 scope: %d", (int)(addr.get6().getScope()));
+        }
+    }
+    else
+    {
+        switch(addr.get4().getAddressCategory())
+        {
+            case IPv4Address::UNSPECIFIED:
+            case IPv4Address::THIS_NETWORK:
+            case IPv4Address::MULTICAST:
+            case IPv4Address::BROADCAST:
+            case IPv4Address::BENCHMARK:
+            case IPv4Address::IPv6_TO_IPv4_RELAY:
+            case IPv4Address::IETF:
+            case IPv4Address::TEST_NET:
+            case IPv4Address::RESERVED:
+                return 0;
+
+            case IPv4Address::LOOPBACK:
+                return 1;
+
+            case IPv4Address::LINKLOCAL:
+                return 2;
+
+            case IPv4Address::PRIVATE_NETWORK:
+                return 3;
+
+            case IPv4Address::GLOBAL:
+                return 4;
+
+            default:
+                throw cRuntimeError("Unknown IPv4 address category: %d", (int)(addr.get4().getAddressCategory()));
+        }
+    }
+}

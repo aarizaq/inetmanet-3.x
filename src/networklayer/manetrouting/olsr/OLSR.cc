@@ -2607,7 +2607,7 @@ int OLSR::getRouteGroup(const AddressGroup &gr, std::vector<Uint128> &add)
 
     int distance = 1000;
     add.clear();
-    for (AddressGroupIterator it = gr.begin(); it!=gr.end(); it++)
+    for (AddressGroupConstIterator it = gr.begin(); it!=gr.end(); it++)
     {
         Uint128 dest = *it;
         OLSR_rt_entry* rt_entry = rtable_.lookup(dest);
@@ -2635,7 +2635,7 @@ bool OLSR::getNextHopGroup(const AddressGroup &gr, Uint128 &add, int &iface, Uin
 {
 
     int distance = 1000;
-    for (AddressGroupIterator it = gr.begin(); it!=gr.end(); it++)
+    for (AddressGroupConstIterator it = gr.begin(); it!=gr.end(); it++)
     {
         Uint128 dest = *it;
         OLSR_rt_entry* rt_entry = rtable_.lookup(dest);

@@ -22,12 +22,13 @@
 #include "IPv4Route.h"
 
 #include "InterfaceEntry.h"
+#include "IRoutingTable.h"
 
 
 IPv4Route::IPv4Route()
 {
+    rt = NULL;
     interfacePtr = NULL;
-
     metric = 0;
     type = DIRECT;
     source = MANUAL;
@@ -37,7 +38,7 @@ std::string IPv4Route::info() const
 {
     std::stringstream out;
 
-    out << "dest:"; if (host.isUnspecified()) out << "*  "; else out << host << "  ";
+    out << "dest:"; if (dest.isUnspecified()) out << "*  "; else out << dest << "  ";
     out << "gw:"; if (gateway.isUnspecified()) out << "*  "; else out << gateway << "  ";
     out << "mask:"; if (netmask.isUnspecified()) out << "*  "; else out << netmask << "  ";
     out << "metric:" << metric << " ";
@@ -69,3 +70,8 @@ const char *IPv4Route::getInterfaceName() const
     return interfacePtr ? interfacePtr->getName() : "";
 }
 
+void IPv4Route::changed(int fieldCode)
+{
+    if (rt)
+        rt->routeChanged(this, fieldCode);
+}

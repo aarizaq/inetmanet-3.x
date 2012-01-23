@@ -214,9 +214,10 @@ void DSRUU::initialize(int stage)
         confvals[PromiscOperation] = 0;
         confvals[UseNetworkLayerAck] = 0;
         confvals[UseNetworkLayerAck] = 0;
-
+#ifdef DEBUG
         if (par("PrintDebug"))
             confvals[PrintDebug] = 1;
+#endif
         if (par("FlushLinkCache"))
             confvals[FlushLinkCache] = 1;
         if (par("PromiscOperation"))
@@ -304,10 +305,10 @@ void DSRUU::initialize(int stage)
             confvals[RREQMulVisit] = 1;
         else
             confvals[RREQMulVisit] = 0;
-
+#ifdef DEBUG
         /* Default values specific to simulation */
         set_confval(PrintDebug, 1);
-
+#endif
         grat_rrep_tbl_timer.setOwer(this);
         send_buf_timer.setOwer(this);
         neigh_tbl_timer.setOwer(this);
@@ -378,7 +379,7 @@ void DSRUU::initialize(int stage)
         bool manetPurgeRoutingTables = (bool) par("manetPurgeRoutingTables");
         if (manetPurgeRoutingTables)
         {
-            const IPv4Route *entry;
+            IPv4Route *entry;
             // clean the route table wlan interface entry
             for (int i=inet_rt->getNumRoutes()-1; i>=0; i--)
             {

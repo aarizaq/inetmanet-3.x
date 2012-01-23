@@ -23,6 +23,10 @@
 #include "InterfaceEntry.h"
 #include "IPv4InterfaceData.h"
 
+#if OMNETPP_VERSION < 0x0403
+#include "WeightedTopology.h"
+#endif
+
 
 Define_Module(FlatNetworkConfigurator);
 
@@ -31,7 +35,11 @@ void FlatNetworkConfigurator::initialize(int stage)
 {
     if (stage==2)
     {
+#if OMNETPP_VERSION < 0x0403
+        WeightedTopology topo("topo");
+#else
         cTopology topo("topo");
+#endif
         NodeInfoVector nodeInfo; // will be of size topo.nodes[]
 
         // extract topology into the cTopology object, then fill in
@@ -69,6 +77,8 @@ void FlatNetworkConfigurator::extractTopology(cTopology& topo, NodeInfoVector& n
         {
             nodeInfo[i].ift = IPvXAddressResolver().interfaceTableOf(mod);
             nodeInfo[i].rt = IPvXAddressResolver().routingTableOf(mod);
+            nodeInfo[i].ipForwardEnabled = mod->hasPar("IPForward") ? mod->par("IPForward").boolValue() : false;
+            topo.getNode(i)->setWeight(nodeInfo[i].ipForwardEnabled ? 0.0 : INFINITY);
         }
     }
 }
@@ -136,7 +146,7 @@ void FlatNetworkConfigurator::addDefaultRoutes(cTopology& topo, NodeInfoVector& 
 
         // add route
         IPv4Route *e = new IPv4Route();
-        e->setHost(IPv4Address());
+        e->setDestination(IPv4Address());
         e->setNetmask(IPv4Address());
         e->setInterface(ie);
         e->setType(IPv4Route::REMOTE);
@@ -146,8 +156,9 @@ void FlatNetworkConfigurator::addDefaultRoutes(cTopology& topo, NodeInfoVector& 
     }
 }
 
-void FlatNetworkConfigurator::fillRoutingTables(cTopology& topo, NodeInfoVector& nodeInfo)
+void FlatNetworkConfigurator::fillRoutingTables(cTopology& _topo, NodeInfoVector& nodeInfo)
 {
+    WeightedTopology &topo = (WeightedTopology &)_topo;
     // fill in routing tables with static routes
     for (int i=0; i<topo.getNumNodes(); i++)
     {
@@ -161,7 +172,7 @@ void FlatNetworkConfigurator::fillRoutingTables(cTopology& topo, NodeInfoVector&
         std::string destModName = destNode->getModule()->getFullName();
 
         // calculate shortest paths from everywhere towards destNode
-        topo.calculateUnweightedSingleShortestPathsTo(destNode);
+        topo.calculateWeightedSingleShortestPathsTo(destNode);
 
         // add route (with host=destNode) to every routing table in the network
         // (excepting nodes with only one interface -- there we'll set up a default route)
@@ -192,7 +203,7 @@ void FlatNetworkConfigurator::fillRoutingTables(cTopology& topo, NodeInfoVector&
             // add route
             IRoutingTable *rt = nodeInfo[j].rt;
             IPv4Route *e = new IPv4Route();
-            e->setHost(destAddr);
+            e->setDestination(destAddr);
             e->setNetmask(IPv4Address(255, 255, 255, 255)); // full match needed
             e->setInterface(ie);
             e->setType(IPv4Route::DIRECT);

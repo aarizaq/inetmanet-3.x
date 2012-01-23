@@ -46,7 +46,6 @@ void IPvXTrafGen::initialize(int stage)
     sentPkSignal = registerSignal("sentPk");
 
     protocol = par("protocol");
-    msgByteLength = par("packetLength");
     numPackets = par("numPackets");
     simtime_t startTime = par("startTime");
     stopTime = par("stopTime");
@@ -58,6 +57,8 @@ void IPvXTrafGen::initialize(int stage)
     const char *token;
     while ((token = tokenizer.nextToken()) != NULL)
         destAddresses.push_back(IPvXAddressResolver().resolve(token));
+
+    packetLengthPar = &par("packetLength");
 
     counter = 0;
 
@@ -86,7 +87,7 @@ void IPvXTrafGen::sendPacket()
     sprintf(msgName, "appData-%d", counter++);
 
     cPacket *payload = new cPacket(msgName);
-    payload->setByteLength(msgByteLength);
+    payload->setByteLength(packetLengthPar->longValue());
 
     IPvXAddress destAddr = chooseDestAddr();
     const char *gate;
@@ -132,7 +133,7 @@ void IPvXTrafGen::handleMessage(cMessage *msg)
         // send, then reschedule next sending
         sendPacket();
 
-        simtime_t d = simTime()+(double)par("sendInterval");
+        simtime_t d = simTime() + par("sendInterval").doubleValue();
         if ((!numPackets || numSent<numPackets) && (stopTime == 0 || stopTime > d))
             scheduleAt(d, msg);
         else

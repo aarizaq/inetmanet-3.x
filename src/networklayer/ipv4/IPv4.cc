@@ -271,7 +271,7 @@ void IPv4::handleMessageFromHL(cPacket *msg)
     //FIXME dubious code, remove? how can the HL tell IP whether it wants tunneling or forwarding?? --Andras
     if (dynamic_cast<IPv4Datagram *>(msg))
     {
-        IPv4Datagram *datagram = check_and_cast  <IPv4Datagram *>(msg);
+        IPv4Datagram *datagram = check_and_cast<IPv4Datagram *>(msg);
         // Dsr routing, Dsr is a HL protocol and send IPv4Datagram
         dsrFillDestIE(datagram, destIE, nextHopAddress);
         if (!nextHopAddress.isUnspecified())
@@ -326,8 +326,24 @@ void IPv4::routePacket(IPv4Datagram *datagram, InterfaceEntry *destIE, bool from
     if (rt->isLocalAddress(destAddr))
     {
         EV << "local delivery\n";
+
+        if (fromHL)
+        {
+            if (destIE)
+                EV << "datagram destination address is local, ignoring destination interface specified in the control info\n";
+
         if (datagram->getSrcAddress().isUnspecified())
             datagram->setSrcAddress(destAddr); // allows two apps on the same host to communicate
+
+            if (datagram->getDontFragment() && datagram->getByteLength() > ift->getFirstLoopbackInterface()->getMTU())
+            {
+                EV << "datagram larger than MTU and don't fragment bit set, sending ICMP_DESTINATION_UNREACHABLE\n";
+                icmpAccess.get()->sendErrorMessage(datagram, ICMP_DESTINATION_UNREACHABLE, ICMP_DU_FRAGMENTATION_NEEDED);
+                numDropped++;
+                return;
+            }
+        }
+
         numLocalDeliver++;
         reassembleAndDeliver(datagram);
         return;
@@ -340,12 +356,13 @@ void IPv4::routePacket(IPv4Datagram *datagram, InterfaceEntry *destIE, bool from
         {
             EV << "limited broadcast received \n";
             if (datagram->getSrcAddress().isUnspecified())
-                datagram->setSrcAddress(destAddr); // allows two apps on the same host to communicate
+                throw cRuntimeError("Received broadcast datagram '%s' without source address filled in", datagram->getName());
             numLocalDeliver++;
             reassembleAndDeliver(datagram);
         }
         else
-        { // send limited broadcast packet
+        {
+            // broadcast packet from higher layer: send limited broadcast packet
             if (destIE!=NULL)
             {
                 if (datagram->getSrcAddress().isUnspecified())
@@ -357,6 +374,7 @@ void IPv4::routePacket(IPv4Datagram *datagram, InterfaceEntry *destIE, bool from
                 for (int i = 0; i<ift->getNumInterfaces(); i++)
                 {
                     InterfaceEntry *ie = ift->getInterface(i);
+                    //FIXME bug #458: If no outgoing interface is specified, and forceBroadcast parameter is true, the datagram should be delivered locally too.
                     if (!ie->isLoopback())
                     {
                         IPv4Datagram * dataAux = datagram->dup();
@@ -408,7 +426,7 @@ void IPv4::routePacket(IPv4Datagram *datagram, InterfaceEntry *destIE, bool from
         {
             // if the interface is broadcast we must search the next hop
             const IPv4Route *re = rt->findBestMatchingRoute(destAddr);
-            if (re!=NULL && re->getSource() == IPv4Route::MANET  && re->getHost()!=destAddr)
+            if (re!=NULL && re->getSource() == IPv4Route::MANET && re->getDestination()!=destAddr)
                 re = NULL;
             if (re && destIE == re->getInterface())
                 nextHopAddr = re->getGateway();
@@ -422,7 +440,7 @@ void IPv4::routePacket(IPv4Datagram *datagram, InterfaceEntry *destIE, bool from
         if (re!=NULL && re->getSource() == IPv4Route::MANET)
         {
            // special case the address must agree
-           if (re->getHost()!=destAddr)
+           if (re->getDestination()!=destAddr)
                re = NULL;
         }
 
@@ -623,7 +641,7 @@ void IPv4::reassembleAndDeliver(IPv4Datagram *datagram)
     else if (protocol==IP_PROT_IP)
     {
         // tunnelled IP packets are handled separately
-        send(packet, "preRoutingOut");
+        send(packet, "preRoutingOut");  //FIXME There is no "preRoutingOut" gate in the IPv4 module.
     }
     else if (protocol==IP_PROT_DSR)
     {
@@ -647,7 +665,8 @@ void IPv4::reassembleAndDeliver(IPv4Datagram *datagram)
         else 
         {
             EV << "L3 Protocol not connected. discarding packet" << endl;
-            delete (packet);
+            IPv4ControlInfo *ctrl = check_and_cast<IPv4ControlInfo*>(packet->removeControlInfo());
+            icmpAccess.get()->sendErrorMessage(packet, ctrl, ICMP_DESTINATION_UNREACHABLE, ICMP_DU_PROTOCOL_UNREACHABLE);
         }
     }
 }
@@ -679,6 +698,16 @@ cPacket *IPv4::decapsulateIP(IPv4Datagram *datagram)
 #ifndef NEWFRAGMENT
 void IPv4::fragmentAndSend(IPv4Datagram *datagram, InterfaceEntry *ie, IPv4Address nextHopAddr)
 {
+    // hop counter check
+    if (datagram->getTimeToLive() <= 0)
+    {
+        // drop datagram, destruction responsibility in ICMP
+        EV << "datagram TTL reached zero, sending ICMP_TIME_EXCEEDED\n";
+        icmpAccess.get()->sendErrorMessage(datagram, ICMP_TIME_EXCEEDED, 0);
+        numDropped++;
+        return;
+    }
+
     int mtu = ie->getMTU();
 
     // check if datagram does not require fragmentation
@@ -688,49 +717,45 @@ void IPv4::fragmentAndSend(IPv4Datagram *datagram, InterfaceEntry *ie, IPv4Addre
         return;
     }
 
-    int headerLength = datagram->getHeaderLength();
-    int payload = datagram->getByteLength() - headerLength;
-
-    int noOfFragments =
-        int(ceil((float(payload)/mtu) /
-        (1-float(headerLength)/mtu) ) ); // FIXME ???
-
     // if "don't fragment" bit is set, throw datagram away and send ICMP error message
-    if (datagram->getDontFragment() && noOfFragments>1)
+    if (datagram->getDontFragment())
     {
         EV << "datagram larger than MTU and don't fragment bit set, sending ICMP_DESTINATION_UNREACHABLE\n";
         icmpAccess.get()->sendErrorMessage(datagram, ICMP_DESTINATION_UNREACHABLE,
                                                      ICMP_FRAGMENTATION_ERROR_CODE);
+        numDropped++;
         return;
     }
 
-    // create and send fragments
+    int headerLength = datagram->getHeaderLength();
+    int payloadLength = datagram->getByteLength() - headerLength;
+    int fragmentLength = ((mtu - headerLength) / 8) * 8; // payload only (without header)
+    int offsetBase = datagram->getFragmentOffset();
+
+    int noOfFragments = (payloadLength + fragmentLength - 1)/ fragmentLength;
     EV << "Breaking datagram into " << noOfFragments << " fragments\n";
+
+    // create and send fragments
     std::string fragMsgName = datagram->getName();
     fragMsgName += "-frag";
 
-    // FIXME revise this!
-    for (int i=0; i<noOfFragments; i++)
+    for (int offset=0; offset < payloadLength; offset+=fragmentLength)
     {
+        bool lastFragment = (offset+fragmentLength >= payloadLength);
+        // length equal to fragmentLength, except for last fragment;
+        int thisFragmentLength = lastFragment ? payloadLength - offset : fragmentLength;
+
         // FIXME is it ok that full encapsulated packet travels in every datagram fragment?
         // should better travel in the last fragment only. Cf. with reassembly code!
         IPv4Datagram *fragment = (IPv4Datagram *) datagram->dup();
         fragment->setName(fragMsgName.c_str());
 
-        // total_length equal to mtu, except for last fragment;
         // "more fragments" bit is unchanged in the last fragment, otherwise true
-        if (i != noOfFragments-1)
-        {
+        if (!lastFragment)
             fragment->setMoreFragments(true);
-            fragment->setByteLength(mtu);
-        }
-        else
-        {
-            // size of last fragment
-            int bytes = datagram->getByteLength() - (noOfFragments-1) * (mtu - datagram->getHeaderLength());
-            fragment->setByteLength(bytes);
-        }
-        fragment->setFragmentOffset( i*(mtu - datagram->getHeaderLength()) );
+
+        fragment->setByteLength(headerLength + thisFragmentLength);
+        fragment->setFragmentOffset(offsetBase + offset);
 
         sendDatagramToOutput(fragment, ie, nextHopAddr);
     }
@@ -807,15 +832,6 @@ IPv4Datagram *IPv4::createIPv4Datagram(const char *name)
 
 void IPv4::sendDatagramToOutput(IPv4Datagram *datagram, InterfaceEntry *ie, IPv4Address nextHopAddr)
 {
-    // hop counter check
-    if (datagram->getTimeToLive() <= 0)
-    {
-        // drop datagram, destruction responsibility in ICMP
-        EV << "datagram TTL reached zero, sending ICMP_TIME_EXCEEDED\n";
-        icmpAccess.get()->sendErrorMessage(datagram, ICMP_TIME_EXCEEDED, 0);
-        return;
-    }
-
     // send out datagram to ARP, with control info attached
     IPv4RoutingDecision *routingDecision = new IPv4RoutingDecision();
     routingDecision->setInterfaceId(ie->getInterfaceId());
@@ -889,6 +905,14 @@ void IPv4::controlMessageToManetRouting(int code, IPv4Datagram *datagram)
 #ifdef NEWFRAGMENT
 void IPv4::fragmentAndSend(IPv4Datagram *datagram, InterfaceEntry *ie, IPv4Address nextHopAddr)
 {
+    // hop counter check
+    if (datagram->getTimeToLive() <= 0)
+    {
+        // drop datagram, destruction responsibility in ICMP
+        EV << "datagram TTL reached zero, sending ICMP_TIME_EXCEEDED\n";
+        icmpAccess.get()->sendErrorMessage(datagram, ICMP_TIME_EXCEEDED, 0);
+        return;
+    }
     int mtu = ie->getMTU();
 
     // check if datagram does not require fragmentation

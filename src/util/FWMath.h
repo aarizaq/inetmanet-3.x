@@ -71,7 +71,8 @@ class INET_API FWMath {
    */
   static double div(double dividend, double divisor) {
       double i;
-      modf(dividend/divisor, &i);
+      double f;
+      f = modf(dividend/divisor, &i);
       return i;
   }
 

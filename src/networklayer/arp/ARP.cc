@@ -51,8 +51,21 @@ static std::ostream& operator<<(std::ostream& out, const ARP::ARPCacheEntry& e)
 }
 
 ARP::ARPCache ARP::globalArpCache;
+int ARP::globalArpCacheRefCnt = 0;
 
 Define_Module(ARP);
+
+ARP::ARP()
+{
+    if (++globalArpCacheRefCnt == 1)
+    {
+        if (!globalArpCache.empty())
+            throw cRuntimeError("Global ARP cache not empty, model error in previous run?");
+    }
+
+    ift = NULL;
+    rt = NULL;
+}
 
 void ARP::initialize(int stage)
 {
@@ -140,6 +153,7 @@ ARP::~ARP()
         delete (*i).second;
         arpCache.erase(i);
     }
+    --globalArpCacheRefCnt;
     if (!globalArpCache.empty())
     {
     // delete local address from the globalArpCache
