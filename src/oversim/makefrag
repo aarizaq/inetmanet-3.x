@@ -1,0 +1,2 @@
+INCLUDE_PATH += -I$(OMNETPP_ROOT)/src/sim/parsim -I/sw/include
+LIBS += -L/sw/lib

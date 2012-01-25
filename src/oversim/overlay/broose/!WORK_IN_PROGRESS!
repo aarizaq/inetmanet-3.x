@@ -1,0 +1,9 @@
+This is an alpha version of Broose!
+
+- Implementation is not validated
+- Join protocol as described in the Broose paper doesn't give reliable
+  results in high churn scenarios
+  
+
+
+

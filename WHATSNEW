@@ -91,7 +91,7 @@ to revise your existing simulations.
 
 - IPv4-related modules and classes whose names started with "IP" were renamed
   to start with "IPv4", to be more explicit and more future-proof. IP->IPv4,
-  IPAddress->IPv4Address, IPControlInfo->IPv4ControlInfo, IPRoute->IPv4Route,
+  IPAddress->IPv4Address, IPControlInfo->IPv4ControlInfo, IPv4Route->IPv4Route,
   IPDatagram->IPv4Datagram, etc.
 
 - Renamed routingTableFile to routingTable in RoutingTable6. Added default
@@ -491,7 +491,7 @@ Internal snapshot, for omnetpp-4.0b2.
 - InterfaceTable: added deleteInterface(). This also causes RoutingTable to
   drop routes that correspond to the deleted interface.
 
-- RoutingTable: wrapped naked data members of IPRoute into getters/setters;
+- RoutingTable: wrapped naked data members of IPv4Route into getters/setters;
   enforce by returning "const" pointers that routes already added cannot be
   changed any more (one must delete and re-add it)
 

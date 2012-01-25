@@ -1,0 +1,12 @@
+<!ELEMENT arealist (area)+>
+
+<!ATTLIST arealist
+    dimensions CDATA #REQUIRED>
+
+<!ELEMENT area (min+,max+,prefix)>
+<!ELEMENT min (#PCDATA)>
+<!ELEMENT max (#PCDATA)>
+<!ELEMENT prefix (#PCDATA)>
+
+<!ATTLIST min dimension CDATA #REQUIRED>
+<!ATTLIST max dimension CDATA #REQUIRED>

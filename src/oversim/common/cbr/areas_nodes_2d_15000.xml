@@ -1,0 +1,1795 @@
+<!DOCTYPE arealist SYSTEM "areas.dtd">
+<arealist dimensions="2">
+	<area>
+		<min dimension="0">-1000</min>
+		<min dimension="1">-1000</min>
+		<max dimension="0">-74.19985</max>
+		<max dimension="1">-118.9955</max>
+		<prefix>00000000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-1000</min>
+		<min dimension="1">-118.9955</min>
+		<max dimension="0">-74.19985</max>
+		<max dimension="1">-85.57875</max>
+		<prefix>00000001</prefix>
+	</area>
+	<area>
+		<min dimension="0">-74.19985</min>
+		<min dimension="1">-1000</min>
+		<max dimension="0">-51.60495</max>
+		<max dimension="1">-93.45035</max>
+		<prefix>00000010</prefix>
+	</area>
+	<area>
+		<min dimension="0">-74.19985</min>
+		<min dimension="1">-93.45035</min>
+		<max dimension="0">-51.60495</max>
+		<max dimension="1">-85.57875</max>
+		<prefix>00000011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-1000</min>
+		<min dimension="1">-85.57875</min>
+		<max dimension="0">-56.3975</max>
+		<max dimension="1">-80.7264</max>
+		<prefix>00000100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-1000</min>
+		<min dimension="1">-80.7264</min>
+		<max dimension="0">-56.3975</max>
+		<max dimension="1">-72.4187</max>
+		<prefix>00000101</prefix>
+	</area>
+	<area>
+		<min dimension="0">-56.3975</min>
+		<min dimension="1">-85.57875</min>
+		<max dimension="0">-51.60495</max>
+		<max dimension="1">-78.61505</max>
+		<prefix>00000110</prefix>
+	</area>
+	<area>
+		<min dimension="0">-56.3975</min>
+		<min dimension="1">-78.61505</min>
+		<max dimension="0">-51.60495</max>
+		<max dimension="1">-72.4187</max>
+		<prefix>00000111</prefix>
+	</area>
+	<area>
+		<min dimension="0">-51.60495</min>
+		<min dimension="1">-1000</min>
+		<max dimension="0">-42.3958</max>
+		<max dimension="1">-83.2466</max>
+		<prefix>00001000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-51.60495</min>
+		<min dimension="1">-83.2466</min>
+		<max dimension="0">-42.3958</max>
+		<max dimension="1">-77.3301</max>
+		<prefix>00001001</prefix>
+	</area>
+	<area>
+		<min dimension="0">-42.3958</min>
+		<min dimension="1">-1000</min>
+		<max dimension="0">-34.9886</max>
+		<max dimension="1">-81.857</max>
+		<prefix>00001010</prefix>
+	</area>
+	<area>
+		<min dimension="0">-42.3958</min>
+		<min dimension="1">-81.857</min>
+		<max dimension="0">-34.9886</max>
+		<max dimension="1">-77.3301</max>
+		<prefix>00001011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-51.60495</min>
+		<min dimension="1">-77.3301</min>
+		<max dimension="0">-46.89775</max>
+		<max dimension="1">-74.75235</max>
+		<prefix>00001100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-51.60495</min>
+		<min dimension="1">-74.75235</min>
+		<max dimension="0">-46.89775</max>
+		<max dimension="1">-72.4187</max>
+		<prefix>00001101</prefix>
+	</area>
+	<area>
+		<min dimension="0">-46.89775</min>
+		<min dimension="1">-77.3301</min>
+		<max dimension="0">-34.9886</max>
+		<max dimension="1">-74.925</max>
+		<prefix>00001110</prefix>
+	</area>
+	<area>
+		<min dimension="0">-46.89775</min>
+		<min dimension="1">-74.925</min>
+		<max dimension="0">-34.9886</max>
+		<max dimension="1">-72.4187</max>
+		<prefix>00001111</prefix>
+	</area>
+	<area>
+		<min dimension="0">-1000</min>
+		<min dimension="1">-72.4187</min>
+		<max dimension="0">-49.06175</max>
+		<max dimension="1">-70.17675</max>
+		<prefix>00010000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-1000</min>
+		<min dimension="1">-70.17675</min>
+		<max dimension="0">-49.06175</max>
+		<max dimension="1">-66.02675</max>
+		<prefix>00010001</prefix>
+	</area>
+	<area>
+		<min dimension="0">-49.06175</min>
+		<min dimension="1">-72.4187</min>
+		<max dimension="0">-44.3959</max>
+		<max dimension="1">-70.363</max>
+		<prefix>00010010</prefix>
+	</area>
+	<area>
+		<min dimension="0">-49.06175</min>
+		<min dimension="1">-70.363</min>
+		<max dimension="0">-44.3959</max>
+		<max dimension="1">-66.02675</max>
+		<prefix>00010011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-1000</min>
+		<min dimension="1">-66.02675</min>
+		<max dimension="0">-54.2664</max>
+		<max dimension="1">-48.0319</max>
+		<prefix>00010100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-1000</min>
+		<min dimension="1">-48.0319</min>
+		<max dimension="0">-54.2664</max>
+		<max dimension="1">-17.5015</max>
+		<prefix>00010101</prefix>
+	</area>
+	<area>
+		<min dimension="0">-54.2664</min>
+		<min dimension="1">-66.02675</min>
+		<max dimension="0">-44.3959</max>
+		<max dimension="1">-30.02505</max>
+		<prefix>00010110</prefix>
+	</area>
+	<area>
+		<min dimension="0">-54.2664</min>
+		<min dimension="1">-30.02505</min>
+		<max dimension="0">-44.3959</max>
+		<max dimension="1">-17.5015</max>
+		<prefix>00010111</prefix>
+	</area>
+	<area>
+		<min dimension="0">-44.3959</min>
+		<min dimension="1">-72.4187</min>
+		<max dimension="0">-40.90355</max>
+		<max dimension="1">-68.22845</max>
+		<prefix>00011000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-44.3959</min>
+		<min dimension="1">-68.22845</min>
+		<max dimension="0">-40.90355</max>
+		<max dimension="1">-64.45215</max>
+		<prefix>00011001</prefix>
+	</area>
+	<area>
+		<min dimension="0">-40.90355</min>
+		<min dimension="1">-72.4187</min>
+		<max dimension="0">-34.9886</max>
+		<max dimension="1">-67.1221</max>
+		<prefix>00011010</prefix>
+	</area>
+	<area>
+		<min dimension="0">-40.90355</min>
+		<min dimension="1">-67.1221</min>
+		<max dimension="0">-34.9886</max>
+		<max dimension="1">-64.45215</max>
+		<prefix>00011011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-44.3959</min>
+		<min dimension="1">-64.45215</min>
+		<max dimension="0">-38.09465</max>
+		<max dimension="1">-26.2013</max>
+		<prefix>00011100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-44.3959</min>
+		<min dimension="1">-26.2013</min>
+		<max dimension="0">-38.09465</max>
+		<max dimension="1">-17.5015</max>
+		<prefix>00011101</prefix>
+	</area>
+	<area>
+		<min dimension="0">-38.09465</min>
+		<min dimension="1">-64.45215</min>
+		<max dimension="0">-34.9886</max>
+		<max dimension="1">-58.8092</max>
+		<prefix>00011110</prefix>
+	</area>
+	<area>
+		<min dimension="0">-38.09465</min>
+		<min dimension="1">-58.8092</min>
+		<max dimension="0">-34.9886</max>
+		<max dimension="1">-17.5015</max>
+		<prefix>00011111</prefix>
+	</area>
+	<area>
+		<min dimension="0">-34.9886</min>
+		<min dimension="1">-1000</min>
+		<max dimension="0">-31.6209</max>
+		<max dimension="1">-71.8295</max>
+		<prefix>00100000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-34.9886</min>
+		<min dimension="1">-71.8295</min>
+		<max dimension="0">-31.6209</max>
+		<max dimension="1">-63.6851</max>
+		<prefix>00100001</prefix>
+	</area>
+	<area>
+		<min dimension="0">-31.6209</min>
+		<min dimension="1">-1000</min>
+		<max dimension="0">-29.4008</max>
+		<max dimension="1">-70.89755</max>
+		<prefix>00100010</prefix>
+	</area>
+	<area>
+		<min dimension="0">-31.6209</min>
+		<min dimension="1">-70.89755</min>
+		<max dimension="0">-29.4008</max>
+		<max dimension="1">-63.6851</max>
+		<prefix>00100011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-34.9886</min>
+		<min dimension="1">-63.6851</min>
+		<max dimension="0">-33.8707</max>
+		<max dimension="1">-62.39185</max>
+		<prefix>00100100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-34.9886</min>
+		<min dimension="1">-62.39185</min>
+		<max dimension="0">-33.8707</max>
+		<max dimension="1">-61.51685</max>
+		<prefix>00100101</prefix>
+	</area>
+	<area>
+		<min dimension="0">-33.8707</min>
+		<min dimension="1">-63.6851</min>
+		<max dimension="0">-29.4008</max>
+		<max dimension="1">-62.0562</max>
+		<prefix>00100110</prefix>
+	</area>
+	<area>
+		<min dimension="0">-33.8707</min>
+		<min dimension="1">-62.0562</min>
+		<max dimension="0">-29.4008</max>
+		<max dimension="1">-61.51685</max>
+		<prefix>00100111</prefix>
+	</area>
+	<area>
+		<min dimension="0">-29.4008</min>
+		<min dimension="1">-1000</min>
+		<max dimension="0">-26.47485</max>
+		<max dimension="1">-72.3848</max>
+		<prefix>00101000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-29.4008</min>
+		<min dimension="1">-72.3848</min>
+		<max dimension="0">-26.47485</max>
+		<max dimension="1">-65.06145</max>
+		<prefix>00101001</prefix>
+	</area>
+	<area>
+		<min dimension="0">-26.47485</min>
+		<min dimension="1">-1000</min>
+		<max dimension="0">-21.19115</max>
+		<max dimension="1">-76.6196</max>
+		<prefix>00101010</prefix>
+	</area>
+	<area>
+		<min dimension="0">-26.47485</min>
+		<min dimension="1">-76.6196</min>
+		<max dimension="0">-21.19115</max>
+		<max dimension="1">-65.06145</max>
+		<prefix>00101011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-29.4008</min>
+		<min dimension="1">-65.06145</min>
+		<max dimension="0">-24.56165</max>
+		<max dimension="1">-62.64065</max>
+		<prefix>00101100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-29.4008</min>
+		<min dimension="1">-62.64065</min>
+		<max dimension="0">-24.56165</max>
+		<max dimension="1">-61.51685</max>
+		<prefix>00101101</prefix>
+	</area>
+	<area>
+		<min dimension="0">-24.56165</min>
+		<min dimension="1">-65.06145</min>
+		<max dimension="0">-21.19115</max>
+		<max dimension="1">-63.92215</max>
+		<prefix>00101110</prefix>
+	</area>
+	<area>
+		<min dimension="0">-24.56165</min>
+		<min dimension="1">-63.92215</min>
+		<max dimension="0">-21.19115</max>
+		<max dimension="1">-61.51685</max>
+		<prefix>00101111</prefix>
+	</area>
+	<area>
+		<min dimension="0">-34.9886</min>
+		<min dimension="1">-61.51685</min>
+		<max dimension="0">-29.5136</max>
+		<max dimension="1">-60.09645</max>
+		<prefix>00110000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-34.9886</min>
+		<min dimension="1">-60.09645</min>
+		<max dimension="0">-29.5136</max>
+		<max dimension="1">-59.2169</max>
+		<prefix>00110001</prefix>
+	</area>
+	<area>
+		<min dimension="0">-29.5136</min>
+		<min dimension="1">-61.51685</min>
+		<max dimension="0">-26.03335</max>
+		<max dimension="1">-60.49075</max>
+		<prefix>00110010</prefix>
+	</area>
+	<area>
+		<min dimension="0">-29.5136</min>
+		<min dimension="1">-60.49075</min>
+		<max dimension="0">-26.03335</max>
+		<max dimension="1">-59.2169</max>
+		<prefix>00110011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-34.9886</min>
+		<min dimension="1">-59.2169</min>
+		<max dimension="0">-30.6555</max>
+		<max dimension="1">-22.534</max>
+		<prefix>00110100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-34.9886</min>
+		<min dimension="1">-22.534</min>
+		<max dimension="0">-30.6555</max>
+		<max dimension="1">-17.5015</max>
+		<prefix>00110101</prefix>
+	</area>
+	<area>
+		<min dimension="0">-30.6555</min>
+		<min dimension="1">-59.2169</min>
+		<max dimension="0">-26.03335</max>
+		<max dimension="1">-30.7858</max>
+		<prefix>00110110</prefix>
+	</area>
+	<area>
+		<min dimension="0">-30.6555</min>
+		<min dimension="1">-30.7858</min>
+		<max dimension="0">-26.03335</max>
+		<max dimension="1">-17.5015</max>
+		<prefix>00110111</prefix>
+	</area>
+	<area>
+		<min dimension="0">-26.03335</min>
+		<min dimension="1">-61.51685</min>
+		<max dimension="0">-25.29515</max>
+		<max dimension="1">-60.6779</max>
+		<prefix>00111000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-26.03335</min>
+		<min dimension="1">-60.6779</min>
+		<max dimension="0">-25.29515</max>
+		<max dimension="1">-60.58215</max>
+		<prefix>00111001</prefix>
+	</area>
+	<area>
+		<min dimension="0">-25.29515</min>
+		<min dimension="1">-61.51685</min>
+		<max dimension="0">-21.19115</max>
+		<max dimension="1">-60.6902</max>
+		<prefix>00111010</prefix>
+	</area>
+	<area>
+		<min dimension="0">-25.29515</min>
+		<min dimension="1">-60.6902</min>
+		<max dimension="0">-21.19115</max>
+		<max dimension="1">-60.58215</max>
+		<prefix>00111011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-26.03335</min>
+		<min dimension="1">-60.58215</min>
+		<max dimension="0">-24.33435</max>
+		<max dimension="1">-59.9664</max>
+		<prefix>00111100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-26.03335</min>
+		<min dimension="1">-59.9664</min>
+		<max dimension="0">-24.33435</max>
+		<max dimension="1">-17.5015</max>
+		<prefix>00111101</prefix>
+	</area>
+	<area>
+		<min dimension="0">-24.33435</min>
+		<min dimension="1">-60.58215</min>
+		<max dimension="0">-21.19115</max>
+		<max dimension="1">-56.4805</max>
+		<prefix>00111110</prefix>
+	</area>
+	<area>
+		<min dimension="0">-24.33435</min>
+		<min dimension="1">-56.4805</min>
+		<max dimension="0">-21.19115</max>
+		<max dimension="1">-17.5015</max>
+		<prefix>00111111</prefix>
+	</area>
+	<area>
+		<min dimension="0">-1000</min>
+		<min dimension="1">-17.5015</min>
+		<max dimension="0">-36.47655</max>
+		<max dimension="1">-14.1306</max>
+		<prefix>01000000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-1000</min>
+		<min dimension="1">-14.1306</min>
+		<max dimension="0">-36.47655</max>
+		<max dimension="1">-11.19625</max>
+		<prefix>01000001</prefix>
+	</area>
+	<area>
+		<min dimension="0">-36.47655</min>
+		<min dimension="1">-17.5015</min>
+		<max dimension="0">-33.07885</max>
+		<max dimension="1">-13.59115</max>
+		<prefix>01000010</prefix>
+	</area>
+	<area>
+		<min dimension="0">-36.47655</min>
+		<min dimension="1">-13.59115</min>
+		<max dimension="0">-33.07885</max>
+		<max dimension="1">-11.19625</max>
+		<prefix>01000011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-1000</min>
+		<min dimension="1">-11.19625</min>
+		<max dimension="0">-35.6279</max>
+		<max dimension="1">-9.303265</max>
+		<prefix>01000100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-1000</min>
+		<min dimension="1">-9.303265</min>
+		<max dimension="0">-35.6279</max>
+		<max dimension="1">-5.459925</max>
+		<prefix>01000101</prefix>
+	</area>
+	<area>
+		<min dimension="0">-35.6279</min>
+		<min dimension="1">-11.19625</min>
+		<max dimension="0">-33.07885</max>
+		<max dimension="1">-8.89001</max>
+		<prefix>01000110</prefix>
+	</area>
+	<area>
+		<min dimension="0">-35.6279</min>
+		<min dimension="1">-8.89001</min>
+		<max dimension="0">-33.07885</max>
+		<max dimension="1">-5.459925</max>
+		<prefix>01000111</prefix>
+	</area>
+	<area>
+		<min dimension="0">-33.07885</min>
+		<min dimension="1">-17.5015</min>
+		<max dimension="0">-31.77165</max>
+		<max dimension="1">-12.9587</max>
+		<prefix>01001000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-33.07885</min>
+		<min dimension="1">-12.9587</min>
+		<max dimension="0">-31.77165</max>
+		<max dimension="1">-9.81253</max>
+		<prefix>01001001</prefix>
+	</area>
+	<area>
+		<min dimension="0">-31.77165</min>
+		<min dimension="1">-17.5015</min>
+		<max dimension="0">-29.01255</max>
+		<max dimension="1">-13.0775</max>
+		<prefix>01001010</prefix>
+	</area>
+	<area>
+		<min dimension="0">-31.77165</min>
+		<min dimension="1">-13.0775</min>
+		<max dimension="0">-29.01255</max>
+		<max dimension="1">-9.81253</max>
+		<prefix>01001011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-33.07885</min>
+		<min dimension="1">-9.81253</min>
+		<max dimension="0">-31.5352</max>
+		<max dimension="1">-6.56327</max>
+		<prefix>01001100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-33.07885</min>
+		<min dimension="1">-6.56327</min>
+		<max dimension="0">-31.5352</max>
+		<max dimension="1">-5.459925</max>
+		<prefix>01001101</prefix>
+	</area>
+	<area>
+		<min dimension="0">-31.5352</min>
+		<min dimension="1">-9.81253</min>
+		<max dimension="0">-29.01255</max>
+		<max dimension="1">-6.8311</max>
+		<prefix>01001110</prefix>
+	</area>
+	<area>
+		<min dimension="0">-31.5352</min>
+		<min dimension="1">-6.8311</min>
+		<max dimension="0">-29.01255</max>
+		<max dimension="1">-5.459925</max>
+		<prefix>01001111</prefix>
+	</area>
+	<area>
+		<min dimension="0">-1000</min>
+		<min dimension="1">-5.459925</min>
+		<max dimension="0">-40.47995</max>
+		<max dimension="1">11.044</max>
+		<prefix>01010000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-1000</min>
+		<min dimension="1">11.044</min>
+		<max dimension="0">-40.47995</max>
+		<max dimension="1">28.1901</max>
+		<prefix>01010001</prefix>
+	</area>
+	<area>
+		<min dimension="0">-40.47995</min>
+		<min dimension="1">-5.459925</min>
+		<max dimension="0">-35.7046</max>
+		<max dimension="1">-0.59907</max>
+		<prefix>01010010</prefix>
+	</area>
+	<area>
+		<min dimension="0">-40.47995</min>
+		<min dimension="1">-0.59907</min>
+		<max dimension="0">-35.7046</max>
+		<max dimension="1">28.1901</max>
+		<prefix>01010011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-1000</min>
+		<min dimension="1">28.1901</min>
+		<max dimension="0">-62.19825</max>
+		<max dimension="1">52.46545</max>
+		<prefix>01010100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-1000</min>
+		<min dimension="1">52.46545</min>
+		<max dimension="0">-62.19825</max>
+		<max dimension="1">1000</max>
+		<prefix>01010101</prefix>
+	</area>
+	<area>
+		<min dimension="0">-62.19825</min>
+		<min dimension="1">28.1901</min>
+		<max dimension="0">-35.7046</max>
+		<max dimension="1">76.31885</max>
+		<prefix>01010110</prefix>
+	</area>
+	<area>
+		<min dimension="0">-62.19825</min>
+		<min dimension="1">76.31885</min>
+		<max dimension="0">-35.7046</max>
+		<max dimension="1">1000</max>
+		<prefix>01010111</prefix>
+	</area>
+	<area>
+		<min dimension="0">-35.7046</min>
+		<min dimension="1">-5.459925</min>
+		<max dimension="0">-30.80145</max>
+		<max dimension="1">-0.06280174</max>
+		<prefix>01011000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-35.7046</min>
+		<min dimension="1">-0.06280174</min>
+		<max dimension="0">-30.80145</max>
+		<max dimension="1">6.051555</max>
+		<prefix>01011001</prefix>
+	</area>
+	<area>
+		<min dimension="0">-30.80145</min>
+		<min dimension="1">-5.459925</min>
+		<max dimension="0">-29.01255</max>
+		<max dimension="1">-1.889125</max>
+		<prefix>01011010</prefix>
+	</area>
+	<area>
+		<min dimension="0">-30.80145</min>
+		<min dimension="1">-1.889125</min>
+		<max dimension="0">-29.01255</max>
+		<max dimension="1">6.051555</max>
+		<prefix>01011011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-35.7046</min>
+		<min dimension="1">6.051555</min>
+		<max dimension="0">-31.28595</max>
+		<max dimension="1">18.1708</max>
+		<prefix>01011100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-35.7046</min>
+		<min dimension="1">18.1708</min>
+		<max dimension="0">-31.28595</max>
+		<max dimension="1">1000</max>
+		<prefix>01011101</prefix>
+	</area>
+	<area>
+		<min dimension="0">-31.28595</min>
+		<min dimension="1">6.051555</min>
+		<max dimension="0">-29.01255</max>
+		<max dimension="1">12.271</max>
+		<prefix>01011110</prefix>
+	</area>
+	<area>
+		<min dimension="0">-31.28595</min>
+		<min dimension="1">12.271</min>
+		<max dimension="0">-29.01255</max>
+		<max dimension="1">1000</max>
+		<prefix>01011111</prefix>
+	</area>
+	<area>
+		<min dimension="0">-29.01255</min>
+		<min dimension="1">-17.5015</min>
+		<max dimension="0">-27.6872</max>
+		<max dimension="1">-7.8195</max>
+		<prefix>01100000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-29.01255</min>
+		<min dimension="1">-7.8195</min>
+		<max dimension="0">-27.6872</max>
+		<max dimension="1">-3.81552</max>
+		<prefix>01100001</prefix>
+	</area>
+	<area>
+		<min dimension="0">-27.6872</min>
+		<min dimension="1">-17.5015</min>
+		<max dimension="0">-25.5413</max>
+		<max dimension="1">-6.7938</max>
+		<prefix>01100010</prefix>
+	</area>
+	<area>
+		<min dimension="0">-27.6872</min>
+		<min dimension="1">-6.7938</min>
+		<max dimension="0">-25.5413</max>
+		<max dimension="1">-3.81552</max>
+		<prefix>01100011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-29.01255</min>
+		<min dimension="1">-3.81552</min>
+		<max dimension="0">-27.0028</max>
+		<max dimension="1">-1.770795</max>
+		<prefix>01100100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-29.01255</min>
+		<min dimension="1">-1.770795</min>
+		<max dimension="0">-27.0028</max>
+		<max dimension="1">1.538245</max>
+		<prefix>01100101</prefix>
+	</area>
+	<area>
+		<min dimension="0">-27.0028</min>
+		<min dimension="1">-3.81552</min>
+		<max dimension="0">-25.5413</max>
+		<max dimension="1">-1.922905</max>
+		<prefix>01100110</prefix>
+	</area>
+	<area>
+		<min dimension="0">-27.0028</min>
+		<min dimension="1">-1.922905</min>
+		<max dimension="0">-25.5413</max>
+		<max dimension="1">1.538245</max>
+		<prefix>01100111</prefix>
+	</area>
+	<area>
+		<min dimension="0">-25.5413</min>
+		<min dimension="1">-17.5015</min>
+		<max dimension="0">-24.2153</max>
+		<max dimension="1">-4.87344</max>
+		<prefix>01101000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-25.5413</min>
+		<min dimension="1">-4.87344</min>
+		<max dimension="0">-24.2153</max>
+		<max dimension="1">-2.027855</max>
+		<prefix>01101001</prefix>
+	</area>
+	<area>
+		<min dimension="0">-24.2153</min>
+		<min dimension="1">-17.5015</min>
+		<max dimension="0">-21.19115</max>
+		<max dimension="1">-2.945715</max>
+		<prefix>01101010</prefix>
+	</area>
+	<area>
+		<min dimension="0">-24.2153</min>
+		<min dimension="1">-2.945715</min>
+		<max dimension="0">-21.19115</max>
+		<max dimension="1">-2.027855</max>
+		<prefix>01101011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-25.5413</min>
+		<min dimension="1">-2.027855</min>
+		<max dimension="0">-22.7489</max>
+		<max dimension="1">-0.6651025</max>
+		<prefix>01101100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-25.5413</min>
+		<min dimension="1">-0.6651025</min>
+		<max dimension="0">-22.7489</max>
+		<max dimension="1">1.538245</max>
+		<prefix>01101101</prefix>
+	</area>
+	<area>
+		<min dimension="0">-22.7489</min>
+		<min dimension="1">-2.027855</min>
+		<max dimension="0">-21.19115</max>
+		<max dimension="1">-0.9900925</max>
+		<prefix>01101110</prefix>
+	</area>
+	<area>
+		<min dimension="0">-22.7489</min>
+		<min dimension="1">-0.9900925</min>
+		<max dimension="0">-21.19115</max>
+		<max dimension="1">1.538245</max>
+		<prefix>01101111</prefix>
+	</area>
+	<area>
+		<min dimension="0">-29.01255</min>
+		<min dimension="1">1.538245</min>
+		<max dimension="0">-26.9725</max>
+		<max dimension="1">4.289355</max>
+		<prefix>01110000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-29.01255</min>
+		<min dimension="1">4.289355</min>
+		<max dimension="0">-26.9725</max>
+		<max dimension="1">7.85142</max>
+		<prefix>01110001</prefix>
+	</area>
+	<area>
+		<min dimension="0">-26.9725</min>
+		<min dimension="1">1.538245</min>
+		<max dimension="0">-25.0236</max>
+		<max dimension="1">4.52054</max>
+		<prefix>01110010</prefix>
+	</area>
+	<area>
+		<min dimension="0">-26.9725</min>
+		<min dimension="1">4.52054</min>
+		<max dimension="0">-25.0236</max>
+		<max dimension="1">7.85142</max>
+		<prefix>01110011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-29.01255</min>
+		<min dimension="1">7.85142</min>
+		<max dimension="0">-26.53865</max>
+		<max dimension="1">13.5129</max>
+		<prefix>01110100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-29.01255</min>
+		<min dimension="1">13.5129</min>
+		<max dimension="0">-26.53865</max>
+		<max dimension="1">1000</max>
+		<prefix>01110101</prefix>
+	</area>
+	<area>
+		<min dimension="0">-26.53865</min>
+		<min dimension="1">7.85142</min>
+		<max dimension="0">-25.0236</max>
+		<max dimension="1">10.96975</max>
+		<prefix>01110110</prefix>
+	</area>
+	<area>
+		<min dimension="0">-26.53865</min>
+		<min dimension="1">10.96975</min>
+		<max dimension="0">-25.0236</max>
+		<max dimension="1">1000</max>
+		<prefix>01110111</prefix>
+	</area>
+	<area>
+		<min dimension="0">-25.0236</min>
+		<min dimension="1">1.538245</min>
+		<max dimension="0">-22.9084</max>
+		<max dimension="1">4.730015</max>
+		<prefix>01111000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-25.0236</min>
+		<min dimension="1">4.730015</min>
+		<max dimension="0">-22.9084</max>
+		<max dimension="1">8.81207</max>
+		<prefix>01111001</prefix>
+	</area>
+	<area>
+		<min dimension="0">-22.9084</min>
+		<min dimension="1">1.538245</min>
+		<max dimension="0">-21.19115</max>
+		<max dimension="1">4.15437</max>
+		<prefix>01111010</prefix>
+	</area>
+	<area>
+		<min dimension="0">-22.9084</min>
+		<min dimension="1">4.15437</min>
+		<max dimension="0">-21.19115</max>
+		<max dimension="1">8.81207</max>
+		<prefix>01111011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-25.0236</min>
+		<min dimension="1">8.81207</min>
+		<max dimension="0">-22.8453</max>
+		<max dimension="1">14.064</max>
+		<prefix>01111100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-25.0236</min>
+		<min dimension="1">14.064</min>
+		<max dimension="0">-22.8453</max>
+		<max dimension="1">1000</max>
+		<prefix>01111101</prefix>
+	</area>
+	<area>
+		<min dimension="0">-22.8453</min>
+		<min dimension="1">8.81207</min>
+		<max dimension="0">-21.19115</max>
+		<max dimension="1">18.8851</max>
+		<prefix>01111110</prefix>
+	</area>
+	<area>
+		<min dimension="0">-22.8453</min>
+		<min dimension="1">18.8851</min>
+		<max dimension="0">-21.19115</max>
+		<max dimension="1">1000</max>
+		<prefix>01111111</prefix>
+	</area>
+	<area>
+		<min dimension="0">-21.19115</min>
+		<min dimension="1">-1000</min>
+		<max dimension="0">-14.0199</max>
+		<max dimension="1">-79.44935</max>
+		<prefix>10000000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-21.19115</min>
+		<min dimension="1">-79.44935</min>
+		<max dimension="0">-14.0199</max>
+		<max dimension="1">-70.2383</max>
+		<prefix>10000001</prefix>
+	</area>
+	<area>
+		<min dimension="0">-14.0199</min>
+		<min dimension="1">-1000</min>
+		<max dimension="0">-10.9172</max>
+		<max dimension="1">-79.0752</max>
+		<prefix>10000010</prefix>
+	</area>
+	<area>
+		<min dimension="0">-14.0199</min>
+		<min dimension="1">-79.0752</min>
+		<max dimension="0">-10.9172</max>
+		<max dimension="1">-70.2383</max>
+		<prefix>10000011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-21.19115</min>
+		<min dimension="1">-70.2383</min>
+		<max dimension="0">-13.92025</max>
+		<max dimension="1">-65.7206</max>
+		<prefix>10000100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-21.19115</min>
+		<min dimension="1">-65.7206</min>
+		<max dimension="0">-13.92025</max>
+		<max dimension="1">-63.2721</max>
+		<prefix>10000101</prefix>
+	</area>
+	<area>
+		<min dimension="0">-13.92025</min>
+		<min dimension="1">-70.2383</min>
+		<max dimension="0">-10.9172</max>
+		<max dimension="1">-66.0973</max>
+		<prefix>10000110</prefix>
+	</area>
+	<area>
+		<min dimension="0">-13.92025</min>
+		<min dimension="1">-66.0973</min>
+		<max dimension="0">-10.9172</max>
+		<max dimension="1">-63.2721</max>
+		<prefix>10000111</prefix>
+	</area>
+	<area>
+		<min dimension="0">-10.9172</min>
+		<min dimension="1">-1000</min>
+		<max dimension="0">-9.150885</max>
+		<max dimension="1">-81.754</max>
+		<prefix>10001000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-10.9172</min>
+		<min dimension="1">-81.754</min>
+		<max dimension="0">-9.150885</max>
+		<max dimension="1">-75.07665</max>
+		<prefix>10001001</prefix>
+	</area>
+	<area>
+		<min dimension="0">-9.150885</min>
+		<min dimension="1">-1000</min>
+		<max dimension="0">-8.244235</max>
+		<max dimension="1">-79.9262</max>
+		<prefix>10001010</prefix>
+	</area>
+	<area>
+		<min dimension="0">-9.150885</min>
+		<min dimension="1">-79.9262</min>
+		<max dimension="0">-8.244235</max>
+		<max dimension="1">-75.07665</max>
+		<prefix>10001011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-10.9172</min>
+		<min dimension="1">-75.07665</min>
+		<max dimension="0">-9.60105</max>
+		<max dimension="1">-70.8219</max>
+		<prefix>10001100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-10.9172</min>
+		<min dimension="1">-70.8219</min>
+		<max dimension="0">-9.60105</max>
+		<max dimension="1">-63.2721</max>
+		<prefix>10001101</prefix>
+	</area>
+	<area>
+		<min dimension="0">-9.60105</min>
+		<min dimension="1">-75.07665</min>
+		<max dimension="0">-8.244235</max>
+		<max dimension="1">-69.42805</max>
+		<prefix>10001110</prefix>
+	</area>
+	<area>
+		<min dimension="0">-9.60105</min>
+		<min dimension="1">-69.42805</min>
+		<max dimension="0">-8.244235</max>
+		<max dimension="1">-63.2721</max>
+		<prefix>10001111</prefix>
+	</area>
+	<area>
+		<min dimension="0">-21.19115</min>
+		<min dimension="1">-63.2721</min>
+		<max dimension="0">-17.6541</max>
+		<max dimension="1">-58.3055</max>
+		<prefix>10010000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-21.19115</min>
+		<min dimension="1">-58.3055</min>
+		<max dimension="0">-17.6541</max>
+		<max dimension="1">-25.3479</max>
+		<prefix>10010001</prefix>
+	</area>
+	<area>
+		<min dimension="0">-17.6541</min>
+		<min dimension="1">-63.2721</min>
+		<max dimension="0">-15.07835</max>
+		<max dimension="1">-60.4035</max>
+		<prefix>10010010</prefix>
+	</area>
+	<area>
+		<min dimension="0">-17.6541</min>
+		<min dimension="1">-60.4035</min>
+		<max dimension="0">-15.07835</max>
+		<max dimension="1">-25.3479</max>
+		<prefix>10010011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-21.19115</min>
+		<min dimension="1">-25.3479</min>
+		<max dimension="0">-18.50035</max>
+		<max dimension="1">-8.13428</max>
+		<prefix>10010100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-21.19115</min>
+		<min dimension="1">-8.13428</min>
+		<max dimension="0">-18.50035</max>
+		<max dimension="1">-2.931245</max>
+		<prefix>10010101</prefix>
+	</area>
+	<area>
+		<min dimension="0">-18.50035</min>
+		<min dimension="1">-25.3479</min>
+		<max dimension="0">-15.07835</max>
+		<max dimension="1">-18.3333</max>
+		<prefix>10010110</prefix>
+	</area>
+	<area>
+		<min dimension="0">-18.50035</min>
+		<min dimension="1">-18.3333</min>
+		<max dimension="0">-15.07835</max>
+		<max dimension="1">-2.931245</max>
+		<prefix>10010111</prefix>
+	</area>
+	<area>
+		<min dimension="0">-15.07835</min>
+		<min dimension="1">-63.2721</min>
+		<max dimension="0">-13.64945</max>
+		<max dimension="1">-61.88305</max>
+		<prefix>10011000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-15.07835</min>
+		<min dimension="1">-61.88305</min>
+		<max dimension="0">-13.64945</max>
+		<max dimension="1">-28.55915</max>
+		<prefix>10011001</prefix>
+	</area>
+	<area>
+		<min dimension="0">-13.64945</min>
+		<min dimension="1">-63.2721</min>
+		<max dimension="0">-8.244235</max>
+		<max dimension="1">-62.0607</max>
+		<prefix>10011010</prefix>
+	</area>
+	<area>
+		<min dimension="0">-13.64945</min>
+		<min dimension="1">-62.0607</min>
+		<max dimension="0">-8.244235</max>
+		<max dimension="1">-28.55915</max>
+		<prefix>10011011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-15.07835</min>
+		<min dimension="1">-28.55915</min>
+		<max dimension="0">-12.56465</max>
+		<max dimension="1">-19.979</max>
+		<prefix>10011100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-15.07835</min>
+		<min dimension="1">-19.979</min>
+		<max dimension="0">-12.56465</max>
+		<max dimension="1">-2.931245</max>
+		<prefix>10011101</prefix>
+	</area>
+	<area>
+		<min dimension="0">-12.56465</min>
+		<min dimension="1">-28.55915</min>
+		<max dimension="0">-8.244235</max>
+		<max dimension="1">-20.3574</max>
+		<prefix>10011110</prefix>
+	</area>
+	<area>
+		<min dimension="0">-12.56465</min>
+		<min dimension="1">-20.3574</min>
+		<max dimension="0">-8.244235</max>
+		<max dimension="1">-2.931245</max>
+		<prefix>10011111</prefix>
+	</area>
+	<area>
+		<min dimension="0">-8.244235</min>
+		<min dimension="1">-1000</min>
+		<max dimension="0">-6.81944</max>
+		<max dimension="1">-80.34935</max>
+		<prefix>10100000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-8.244235</min>
+		<min dimension="1">-80.34935</min>
+		<max dimension="0">-6.81944</max>
+		<max dimension="1">-76.67145</max>
+		<prefix>10100001</prefix>
+	</area>
+	<area>
+		<min dimension="0">-6.81944</min>
+		<min dimension="1">-1000</min>
+		<max dimension="0">-4.874455</max>
+		<max dimension="1">-82.1394</max>
+		<prefix>10100010</prefix>
+	</area>
+	<area>
+		<min dimension="0">-6.81944</min>
+		<min dimension="1">-82.1394</min>
+		<max dimension="0">-4.874455</max>
+		<max dimension="1">-76.67145</max>
+		<prefix>10100011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-8.244235</min>
+		<min dimension="1">-76.67145</min>
+		<max dimension="0">-7.10604</max>
+		<max dimension="1">-74.487</max>
+		<prefix>10100100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-8.244235</min>
+		<min dimension="1">-74.487</min>
+		<max dimension="0">-7.10604</max>
+		<max dimension="1">-70.54365</max>
+		<prefix>10100101</prefix>
+	</area>
+	<area>
+		<min dimension="0">-7.10604</min>
+		<min dimension="1">-76.67145</min>
+		<max dimension="0">-4.874455</max>
+		<max dimension="1">-73.8035</max>
+		<prefix>10100110</prefix>
+	</area>
+	<area>
+		<min dimension="0">-7.10604</min>
+		<min dimension="1">-73.8035</min>
+		<max dimension="0">-4.874455</max>
+		<max dimension="1">-70.54365</max>
+		<prefix>10100111</prefix>
+	</area>
+	<area>
+		<min dimension="0">-4.874455</min>
+		<min dimension="1">-1000</min>
+		<max dimension="0">2.50856</max>
+		<max dimension="1">-83.3005</max>
+		<prefix>10101000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-4.874455</min>
+		<min dimension="1">-83.3005</min>
+		<max dimension="0">2.50856</max>
+		<max dimension="1">-80.4251</max>
+		<prefix>10101001</prefix>
+	</area>
+	<area>
+		<min dimension="0">2.50856</min>
+		<min dimension="1">-1000</min>
+		<max dimension="0">1000</max>
+		<max dimension="1">-95.7719</max>
+		<prefix>10101010</prefix>
+	</area>
+	<area>
+		<min dimension="0">2.50856</min>
+		<min dimension="1">-95.7719</min>
+		<max dimension="0">1000</max>
+		<max dimension="1">-80.4251</max>
+		<prefix>10101011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-4.874455</min>
+		<min dimension="1">-80.4251</min>
+		<max dimension="0">-0.855672</max>
+		<max dimension="1">-76.5128</max>
+		<prefix>10101100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-4.874455</min>
+		<min dimension="1">-76.5128</min>
+		<max dimension="0">-0.855672</max>
+		<max dimension="1">-70.54365</max>
+		<prefix>10101101</prefix>
+	</area>
+	<area>
+		<min dimension="0">-0.855672</min>
+		<min dimension="1">-80.4251</min>
+		<max dimension="0">1000</max>
+		<max dimension="1">-75.81415</max>
+		<prefix>10101110</prefix>
+	</area>
+	<area>
+		<min dimension="0">-0.855672</min>
+		<min dimension="1">-75.81415</min>
+		<max dimension="0">1000</max>
+		<max dimension="1">-70.54365</max>
+		<prefix>10101111</prefix>
+	</area>
+	<area>
+		<min dimension="0">-8.244235</min>
+		<min dimension="1">-70.54365</min>
+		<max dimension="0">-2.199815</max>
+		<max dimension="1">-67.52035</max>
+		<prefix>10110000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-8.244235</min>
+		<min dimension="1">-67.52035</min>
+		<max dimension="0">-2.199815</max>
+		<max dimension="1">-27.6622</max>
+		<prefix>10110001</prefix>
+	</area>
+	<area>
+		<min dimension="0">-2.199815</min>
+		<min dimension="1">-70.54365</min>
+		<max dimension="0">2.800195</max>
+		<max dimension="1">-32.8461</max>
+		<prefix>10110010</prefix>
+	</area>
+	<area>
+		<min dimension="0">-2.199815</min>
+		<min dimension="1">-32.8461</min>
+		<max dimension="0">2.800195</max>
+		<max dimension="1">-27.6622</max>
+		<prefix>10110011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-8.244235</min>
+		<min dimension="1">-27.6622</min>
+		<max dimension="0">-3.26365</max>
+		<max dimension="1">-19.0932</max>
+		<prefix>10110100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-8.244235</min>
+		<min dimension="1">-19.0932</min>
+		<max dimension="0">-3.26365</max>
+		<max dimension="1">-2.931245</max>
+		<prefix>10110101</prefix>
+	</area>
+	<area>
+		<min dimension="0">-3.26365</min>
+		<min dimension="1">-27.6622</min>
+		<max dimension="0">2.800195</max>
+		<max dimension="1">-18.8103</max>
+		<prefix>10110110</prefix>
+	</area>
+	<area>
+		<min dimension="0">-3.26365</min>
+		<min dimension="1">-18.8103</min>
+		<max dimension="0">2.800195</max>
+		<max dimension="1">-2.931245</max>
+		<prefix>10110111</prefix>
+	</area>
+	<area>
+		<min dimension="0">2.800195</min>
+		<min dimension="1">-70.54365</min>
+		<max dimension="0">17.45625</max>
+		<max dimension="1">-36.9138</max>
+		<prefix>10111000</prefix>
+	</area>
+	<area>
+		<min dimension="0">2.800195</min>
+		<min dimension="1">-36.9138</min>
+		<max dimension="0">17.45625</max>
+		<max dimension="1">-20.23185</max>
+		<prefix>10111001</prefix>
+	</area>
+	<area>
+		<min dimension="0">17.45625</min>
+		<min dimension="1">-70.54365</min>
+		<max dimension="0">1000</max>
+		<max dimension="1">-54.52665</max>
+		<prefix>10111010</prefix>
+	</area>
+	<area>
+		<min dimension="0">17.45625</min>
+		<min dimension="1">-54.52665</min>
+		<max dimension="0">1000</max>
+		<max dimension="1">-20.23185</max>
+		<prefix>10111011</prefix>
+	</area>
+	<area>
+		<min dimension="0">2.800195</min>
+		<min dimension="1">-20.23185</min>
+		<max dimension="0">14.27145</max>
+		<max dimension="1">-12.94575</max>
+		<prefix>10111100</prefix>
+	</area>
+	<area>
+		<min dimension="0">2.800195</min>
+		<min dimension="1">-12.94575</min>
+		<max dimension="0">14.27145</max>
+		<max dimension="1">-2.931245</max>
+		<prefix>10111101</prefix>
+	</area>
+	<area>
+		<min dimension="0">14.27145</min>
+		<min dimension="1">-20.23185</min>
+		<max dimension="0">1000</max>
+		<max dimension="1">-8.954515</max>
+		<prefix>10111110</prefix>
+	</area>
+	<area>
+		<min dimension="0">14.27145</min>
+		<min dimension="1">-8.954515</min>
+		<max dimension="0">1000</max>
+		<max dimension="1">-2.931245</max>
+		<prefix>10111111</prefix>
+	</area>
+	<area>
+		<min dimension="0">-21.19115</min>
+		<min dimension="1">-2.931245</min>
+		<max dimension="0">-18.5966</max>
+		<max dimension="1">-0.131074</max>
+		<prefix>11000000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-21.19115</min>
+		<min dimension="1">-0.131074</min>
+		<max dimension="0">-18.5966</max>
+		<max dimension="1">1.36289</max>
+		<prefix>11000001</prefix>
+	</area>
+	<area>
+		<min dimension="0">-18.5966</min>
+		<min dimension="1">-2.931245</min>
+		<max dimension="0">-16.25805</max>
+		<max dimension="1">-0.8492495</max>
+		<prefix>11000010</prefix>
+	</area>
+	<area>
+		<min dimension="0">-18.5966</min>
+		<min dimension="1">-0.8492495</min>
+		<max dimension="0">-16.25805</max>
+		<max dimension="1">1.36289</max>
+		<prefix>11000011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-21.19115</min>
+		<min dimension="1">1.36289</min>
+		<max dimension="0">-19.50005</max>
+		<max dimension="1">4.157385</max>
+		<prefix>11000100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-21.19115</min>
+		<min dimension="1">4.157385</min>
+		<max dimension="0">-19.50005</max>
+		<max dimension="1">11.49935</max>
+		<prefix>11000101</prefix>
+	</area>
+	<area>
+		<min dimension="0">-19.50005</min>
+		<min dimension="1">1.36289</min>
+		<max dimension="0">-16.25805</max>
+		<max dimension="1">3.648205</max>
+		<prefix>11000110</prefix>
+	</area>
+	<area>
+		<min dimension="0">-19.50005</min>
+		<min dimension="1">3.648205</min>
+		<max dimension="0">-16.25805</max>
+		<max dimension="1">11.49935</max>
+		<prefix>11000111</prefix>
+	</area>
+	<area>
+		<min dimension="0">-16.25805</min>
+		<min dimension="1">-2.931245</min>
+		<max dimension="0">5.757985</max>
+		<max dimension="1">4.791685</max>
+		<prefix>11001000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-16.25805</min>
+		<min dimension="1">4.791685</min>
+		<max dimension="0">5.757985</max>
+		<max dimension="1">7.265565</max>
+		<prefix>11001001</prefix>
+	</area>
+	<area>
+		<min dimension="0">5.757985</min>
+		<min dimension="1">-2.931245</min>
+		<max dimension="0">28.44</max>
+		<max dimension="1">3.26038</max>
+		<prefix>11001010</prefix>
+	</area>
+	<area>
+		<min dimension="0">5.757985</min>
+		<min dimension="1">3.26038</min>
+		<max dimension="0">28.44</max>
+		<max dimension="1">7.265565</max>
+		<prefix>11001011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-16.25805</min>
+		<min dimension="1">7.265565</min>
+		<max dimension="0">6.937745</max>
+		<max dimension="1">9.78394</max>
+		<prefix>11001100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-16.25805</min>
+		<min dimension="1">9.78394</min>
+		<max dimension="0">6.937745</max>
+		<max dimension="1">11.49935</max>
+		<prefix>11001101</prefix>
+	</area>
+	<area>
+		<min dimension="0">6.937745</min>
+		<min dimension="1">7.265565</min>
+		<max dimension="0">28.44</max>
+		<max dimension="1">8.646485</max>
+		<prefix>11001110</prefix>
+	</area>
+	<area>
+		<min dimension="0">6.937745</min>
+		<min dimension="1">8.646485</min>
+		<max dimension="0">28.44</max>
+		<max dimension="1">11.49935</max>
+		<prefix>11001111</prefix>
+	</area>
+	<area>
+		<min dimension="0">-21.19115</min>
+		<min dimension="1">11.49935</min>
+		<max dimension="0">-14.35025</max>
+		<max dimension="1">14.45235</max>
+		<prefix>11010000</prefix>
+	</area>
+	<area>
+		<min dimension="0">-21.19115</min>
+		<min dimension="1">14.45235</min>
+		<max dimension="0">-14.35025</max>
+		<max dimension="1">18.8373</max>
+		<prefix>11010001</prefix>
+	</area>
+	<area>
+		<min dimension="0">-14.35025</min>
+		<min dimension="1">11.49935</min>
+		<max dimension="0">0.9645365</max>
+		<max dimension="1">14.5004</max>
+		<prefix>11010010</prefix>
+	</area>
+	<area>
+		<min dimension="0">-14.35025</min>
+		<min dimension="1">14.5004</min>
+		<max dimension="0">0.9645365</max>
+		<max dimension="1">18.8373</max>
+		<prefix>11010011</prefix>
+	</area>
+	<area>
+		<min dimension="0">-21.19115</min>
+		<min dimension="1">18.8373</min>
+		<max dimension="0">-15.1556</max>
+		<max dimension="1">22.79365</max>
+		<prefix>11010100</prefix>
+	</area>
+	<area>
+		<min dimension="0">-21.19115</min>
+		<min dimension="1">22.79365</min>
+		<max dimension="0">-15.1556</max>
+		<max dimension="1">1000</max>
+		<prefix>11010101</prefix>
+	</area>
+	<area>
+		<min dimension="0">-15.1556</min>
+		<min dimension="1">18.8373</min>
+		<max dimension="0">0.9645365</max>
+		<max dimension="1">29.2104</max>
+		<prefix>11010110</prefix>
+	</area>
+	<area>
+		<min dimension="0">-15.1556</min>
+		<min dimension="1">29.2104</min>
+		<max dimension="0">0.9645365</max>
+		<max dimension="1">1000</max>
+		<prefix>11010111</prefix>
+	</area>
+	<area>
+		<min dimension="0">0.9645365</min>
+		<min dimension="1">11.49935</min>
+		<max dimension="0">10.92855</max>
+		<max dimension="1">18.5015</max>
+		<prefix>11011000</prefix>
+	</area>
+	<area>
+		<min dimension="0">0.9645365</min>
+		<min dimension="1">18.5015</min>
+		<max dimension="0">10.92855</max>
+		<max dimension="1">74.115</max>
+		<prefix>11011001</prefix>
+	</area>
+	<area>
+		<min dimension="0">10.92855</min>
+		<min dimension="1">11.49935</min>
+		<max dimension="0">28.44</max>
+		<max dimension="1">63.93855</max>
+		<prefix>11011010</prefix>
+	</area>
+	<area>
+		<min dimension="0">10.92855</min>
+		<min dimension="1">63.93855</min>
+		<max dimension="0">28.44</max>
+		<max dimension="1">74.115</max>
+		<prefix>11011011</prefix>
+	</area>
+	<area>
+		<min dimension="0">0.9645365</min>
+		<min dimension="1">74.115</min>
+		<max dimension="0">16.2024</max>
+		<max dimension="1">94.8707</max>
+		<prefix>11011100</prefix>
+	</area>
+	<area>
+		<min dimension="0">0.9645365</min>
+		<min dimension="1">94.8707</min>
+		<max dimension="0">16.2024</max>
+		<max dimension="1">1000</max>
+		<prefix>11011101</prefix>
+	</area>
+	<area>
+		<min dimension="0">16.2024</min>
+		<min dimension="1">74.115</min>
+		<max dimension="0">28.44</max>
+		<max dimension="1">88.2963</max>
+		<prefix>11011110</prefix>
+	</area>
+	<area>
+		<min dimension="0">16.2024</min>
+		<min dimension="1">88.2963</min>
+		<max dimension="0">28.44</max>
+		<max dimension="1">1000</max>
+		<prefix>11011111</prefix>
+	</area>
+	<area>
+		<min dimension="0">28.44</min>
+		<min dimension="1">-2.931245</min>
+		<max dimension="0">58.93775</max>
+		<max dimension="1">46.5777</max>
+		<prefix>11100000</prefix>
+	</area>
+	<area>
+		<min dimension="0">28.44</min>
+		<min dimension="1">46.5777</min>
+		<max dimension="0">58.93775</max>
+		<max dimension="1">52.3469</max>
+		<prefix>11100001</prefix>
+	</area>
+	<area>
+		<min dimension="0">58.93775</min>
+		<min dimension="1">-2.931245</min>
+		<max dimension="0">71.67705</max>
+		<max dimension="1">41.97495</max>
+		<prefix>11100010</prefix>
+	</area>
+	<area>
+		<min dimension="0">58.93775</min>
+		<min dimension="1">41.97495</min>
+		<max dimension="0">71.67705</max>
+		<max dimension="1">52.3469</max>
+		<prefix>11100011</prefix>
+	</area>
+	<area>
+		<min dimension="0">28.44</min>
+		<min dimension="1">52.3469</min>
+		<max dimension="0">55.35385</max>
+		<max dimension="1">59.88075</max>
+		<prefix>11100100</prefix>
+	</area>
+	<area>
+		<min dimension="0">28.44</min>
+		<min dimension="1">59.88075</min>
+		<max dimension="0">55.35385</max>
+		<max dimension="1">64.5437</max>
+		<prefix>11100101</prefix>
+	</area>
+	<area>
+		<min dimension="0">55.35385</min>
+		<min dimension="1">52.3469</min>
+		<max dimension="0">71.67705</max>
+		<max dimension="1">59.8153</max>
+		<prefix>11100110</prefix>
+	</area>
+	<area>
+		<min dimension="0">55.35385</min>
+		<min dimension="1">59.8153</min>
+		<max dimension="0">71.67705</max>
+		<max dimension="1">64.5437</max>
+		<prefix>11100111</prefix>
+	</area>
+	<area>
+		<min dimension="0">71.67705</min>
+		<min dimension="1">-2.931245</min>
+		<max dimension="0">81.09825</max>
+		<max dimension="1">16.2442</max>
+		<prefix>11101000</prefix>
+	</area>
+	<area>
+		<min dimension="0">71.67705</min>
+		<min dimension="1">16.2442</min>
+		<max dimension="0">81.09825</max>
+		<max dimension="1">37.02145</max>
+		<prefix>11101001</prefix>
+	</area>
+	<area>
+		<min dimension="0">81.09825</min>
+		<min dimension="1">-2.931245</min>
+		<max dimension="0">1000</max>
+		<max dimension="1">16.2861</max>
+		<prefix>11101010</prefix>
+	</area>
+	<area>
+		<min dimension="0">81.09825</min>
+		<min dimension="1">16.2861</min>
+		<max dimension="0">1000</max>
+		<max dimension="1">37.02145</max>
+		<prefix>11101011</prefix>
+	</area>
+	<area>
+		<min dimension="0">71.67705</min>
+		<min dimension="1">37.02145</min>
+		<max dimension="0">79.2623</max>
+		<max dimension="1">56.08075</max>
+		<prefix>11101100</prefix>
+	</area>
+	<area>
+		<min dimension="0">71.67705</min>
+		<min dimension="1">56.08075</min>
+		<max dimension="0">79.2623</max>
+		<max dimension="1">64.5437</max>
+		<prefix>11101101</prefix>
+	</area>
+	<area>
+		<min dimension="0">79.2623</min>
+		<min dimension="1">37.02145</min>
+		<max dimension="0">1000</max>
+		<max dimension="1">52.19945</max>
+		<prefix>11101110</prefix>
+	</area>
+	<area>
+		<min dimension="0">79.2623</min>
+		<min dimension="1">52.19945</min>
+		<max dimension="0">1000</max>
+		<max dimension="1">64.5437</max>
+		<prefix>11101111</prefix>
+	</area>
+	<area>
+		<min dimension="0">28.44</min>
+		<min dimension="1">64.5437</min>
+		<max dimension="0">33.58395</max>
+		<max dimension="1">72.33715</max>
+		<prefix>11110000</prefix>
+	</area>
+	<area>
+		<min dimension="0">28.44</min>
+		<min dimension="1">72.33715</min>
+		<max dimension="0">33.58395</max>
+		<max dimension="1">76.65005</max>
+		<prefix>11110001</prefix>
+	</area>
+	<area>
+		<min dimension="0">33.58395</min>
+		<min dimension="1">64.5437</min>
+		<max dimension="0">46.00755</max>
+		<max dimension="1">72.79595</max>
+		<prefix>11110010</prefix>
+	</area>
+	<area>
+		<min dimension="0">33.58395</min>
+		<min dimension="1">72.79595</min>
+		<max dimension="0">46.00755</max>
+		<max dimension="1">76.65005</max>
+		<prefix>11110011</prefix>
+	</area>
+	<area>
+		<min dimension="0">28.44</min>
+		<min dimension="1">76.65005</min>
+		<max dimension="0">38.88285</max>
+		<max dimension="1">86.89915</max>
+		<prefix>11110100</prefix>
+	</area>
+	<area>
+		<min dimension="0">28.44</min>
+		<min dimension="1">86.89915</min>
+		<max dimension="0">38.88285</max>
+		<max dimension="1">1000</max>
+		<prefix>11110101</prefix>
+	</area>
+	<area>
+		<min dimension="0">38.88285</min>
+		<min dimension="1">76.65005</min>
+		<max dimension="0">46.00755</max>
+		<max dimension="1">95.0222</max>
+		<prefix>11110110</prefix>
+	</area>
+	<area>
+		<min dimension="0">38.88285</min>
+		<min dimension="1">95.0222</min>
+		<max dimension="0">46.00755</max>
+		<max dimension="1">1000</max>
+		<prefix>11110111</prefix>
+	</area>
+	<area>
+		<min dimension="0">46.00755</min>
+		<min dimension="1">64.5437</min>
+		<max dimension="0">53.2557</max>
+		<max dimension="1">70.27355</max>
+		<prefix>11111000</prefix>
+	</area>
+	<area>
+		<min dimension="0">46.00755</min>
+		<min dimension="1">70.27355</min>
+		<max dimension="0">53.2557</max>
+		<max dimension="1">79.4784</max>
+		<prefix>11111001</prefix>
+	</area>
+	<area>
+		<min dimension="0">53.2557</min>
+		<min dimension="1">64.5437</min>
+		<max dimension="0">1000</max>
+		<max dimension="1">68.1884</max>
+		<prefix>11111010</prefix>
+	</area>
+	<area>
+		<min dimension="0">53.2557</min>
+		<min dimension="1">68.1884</min>
+		<max dimension="0">1000</max>
+		<max dimension="1">79.4784</max>
+		<prefix>11111011</prefix>
+	</area>
+	<area>
+		<min dimension="0">46.00755</min>
+		<min dimension="1">79.4784</min>
+		<max dimension="0">66.84555</max>
+		<max dimension="1">112.596</max>
+		<prefix>11111100</prefix>
+	</area>
+	<area>
+		<min dimension="0">46.00755</min>
+		<min dimension="1">112.596</min>
+		<max dimension="0">66.84555</max>
+		<max dimension="1">1000</max>
+		<prefix>11111101</prefix>
+	</area>
+	<area>
+		<min dimension="0">66.84555</min>
+		<min dimension="1">79.4784</min>
+		<max dimension="0">1000</max>
+		<max dimension="1">109.627</max>
+		<prefix>11111110</prefix>
+	</area>
+	<area>
+		<min dimension="0">66.84555</min>
+		<min dimension="1">109.627</min>
+		<max dimension="0">1000</max>
+		<max dimension="1">1000</max>
+		<prefix>11111111</prefix>
+	</area>
+</arealist>
