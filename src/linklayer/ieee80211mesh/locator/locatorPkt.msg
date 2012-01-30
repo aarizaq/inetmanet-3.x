@@ -23,14 +23,18 @@ class noncobject MACAddress;
 cplusplus {{
 #include "IPv4Address.h"
 #include "MACAddress.h"
-
-// ARP header length for IPv4 (4-byte addresses) and 802 LANs (6-byte MAC addrs)
-#define ARP_HEADER_BYTES   28
 }}
+
+enum LocatorOpcode
+{
+    LocatorAssoc = 1;
+    LocatorDisAssoc = 2;
+}
 
 packet LocatorPkt 
 {
-    byteLength = 20;//6+6+4+4 
+    byteLength = 22;//6+6+4+4+2
+    int opcode enum(LocatorOpcode);
     MACAddress apMACAddress;
     MACAddress staMACAddress;
     IPv4Address apIPAddress;
