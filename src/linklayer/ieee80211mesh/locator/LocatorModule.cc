@@ -21,6 +21,10 @@
 
 simsignal_t LocatorModule::locatorChangeSignal = SIMSIGNAL_NULL;
 
+LocatorModule::LocatorMapIp LocatorModule::globalLocatorMapIp;
+
+LocatorModule::LocatorMapMac LocatorModule::globalLocatorMapMac;
+
 LocatorModule::LocatorModule()
 {
     // TODO Auto-generated constructor stub
@@ -37,7 +41,7 @@ LocatorModule::~LocatorModule()
 
 void handleMessage(cMessage *msg)
 {
-
+   delete msg;
 }
 
 void LocatorModule::initialize()
