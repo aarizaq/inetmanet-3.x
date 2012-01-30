@@ -39,7 +39,7 @@ LocatorModule::~LocatorModule()
     // TODO Auto-generated destructor stub
 }
 
-void handleMessage(cMessage *msg)
+void LocatorModule::handleMessage(cMessage *msg)
 {
    delete msg;
 }
