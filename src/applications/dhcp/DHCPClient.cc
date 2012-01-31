@@ -18,7 +18,6 @@
 
 #include <omnetpp.h>
 #include "DHCPClient.h"
-#include "UDPControlInfo_m.h"
 //#include "IPvXAddressResolver.h"
 #include "NotifierConsts.h"
 #include "InterfaceTableAccess.h"
@@ -556,8 +555,6 @@ cModule *DHCPClient::findHost(void) const
 // Overwrite the sendToUDP in order to add the interface to use to allow the packet be routed by the IP stack
 void DHCPClient::sendToUDP(cPacket *msg, int srcPort, const IPvXAddress& destAddr, int destPort)
 {
-
-    msg->setKind(UDP_C_DATA);
 
     EV << "Sending packet: ";
     // printPacket(msg);
