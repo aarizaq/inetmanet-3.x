@@ -24,6 +24,7 @@
 #include "IRoutingTable.h"
 #include "IInterfaceTable.h"
 #include "INotifiable.h"
+#include "UDPSocket.h"
 
 class LocatorModule : public cSimpleModule, public INotifiable, public cListener
 {
@@ -42,6 +43,9 @@ class LocatorModule : public cSimpleModule, public INotifiable, public cListener
         typedef LocatorMapMac::iterator MapMacIterator;
         IPv4Address myIpAddress;
         MACAddress  myMacAddress;
+        UDPSocket * socket;
+        int port;
+        int interfaceId;
 
         LocatorMapIp locatorMapIp;
         static LocatorMapIp globalLocatorMapIp;
@@ -55,11 +59,22 @@ class LocatorModule : public cSimpleModule, public INotifiable, public cListener
         IRoutingTable *rt;
         bool isInMacLayer;
 
+        enum Action
+        {
+            ASSOCIATION,
+            DISASSOCIATION
+        };
+        virtual void modifyInformationMac(const MACAddress &,const MACAddress &, const Action &);
+        virtual void modifyInformationIp(const IPv4Address &, const IPv4Address &, const Action &);
+        virtual void setTables(const MACAddress & APaddr, const MACAddress &STAaddr, const IPv4Address & apIpAddr, const IPv4Address & staIpAddr, const Action &action, InterfaceEntry *ie);
+        bool useGlobal;
+
 
     public:
         LocatorModule();
         virtual ~LocatorModule();
-        void initialize();
+        virtual void initialize(int stage);
+        virtual int numInitStages() const {return 4;}
         virtual void receiveChangeNotification(int category, const cObject *details);
         virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj);
         virtual void handleMessage(cMessage *);
@@ -67,7 +82,7 @@ class LocatorModule : public cSimpleModule, public INotifiable, public cListener
         virtual const IPv4Address getLocatorMacToIp(const MACAddress &);
         virtual const IPv4Address getLocatorIpToIp(const IPv4Address &);
         virtual const MACAddress  getLocatorIpToMac(const IPv4Address &);
-        virtual void  sendMessage(const MACAddress &,const MACAddress &,const IPv4Address &,const IPv4Address &);
+        virtual void  sendMessage(const MACAddress &,const MACAddress &,const IPv4Address &,const IPv4Address &,const Action &);
 
         virtual void setIpAddress(const IPv4Address &add) {myIpAddress = add;}
         virtual void setMacAddress(const MACAddress &add) {myMacAddress = add;}

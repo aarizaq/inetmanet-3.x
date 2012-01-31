@@ -29,6 +29,8 @@ enum LocatorOpcode
 {
     LocatorAssoc = 1;
     LocatorDisAssoc = 2;
+    LocatorAskAddress = 3;
+    LocatorAckAddress = 4;
 }
 
 packet LocatorPkt 
