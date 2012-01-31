@@ -37,6 +37,8 @@ packet LocatorPkt
 {
     byteLength = 22;//6+6+4+4+2
     int opcode enum(LocatorOpcode);
+    IPv4Address origin;
+    unsigned int sequence;
     MACAddress apMACAddress;
     MACAddress staMACAddress;
     IPv4Address apIPAddress;

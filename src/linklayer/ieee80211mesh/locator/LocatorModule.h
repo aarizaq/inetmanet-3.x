@@ -68,7 +68,8 @@ class LocatorModule : public cSimpleModule, public INotifiable, public cListener
         virtual void modifyInformationIp(const IPv4Address &, const IPv4Address &, const Action &);
         virtual void setTables(const MACAddress & APaddr, const MACAddress &STAaddr, const IPv4Address & apIpAddr, const IPv4Address & staIpAddr, const Action &action, InterfaceEntry *ie);
         bool useGlobal;
-
+        unsigned int mySequence;
+        std::map<IPv4Address,unsigned int> sequenceMap;
 
     public:
         LocatorModule();

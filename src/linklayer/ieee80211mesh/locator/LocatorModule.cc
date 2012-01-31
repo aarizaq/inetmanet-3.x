@@ -36,6 +36,7 @@ LocatorModule::LocatorModule()
     isInMacLayer = true;
     socket = NULL;
     useGlobal = false;
+    mySequence = 0;
 }
 
 LocatorModule::~LocatorModule()
@@ -46,6 +47,7 @@ LocatorModule::~LocatorModule()
    globalLocatorMapMac.clear();
    if (socket)
        delete socket;
+   sequenceMap.clear();
 }
 
 void LocatorModule::handleMessage(cMessage *msg)
@@ -59,6 +61,24 @@ void LocatorModule::handleMessage(cMessage *msg)
     LocatorPkt *pkt = dynamic_cast<LocatorPkt*> (msg);
     if (pkt)
     {
+        if (socket)
+        {
+            if (pkt->getOrigin() == myIpAddress)
+            {
+                delete pkt;
+                return;
+            }
+            std::map<IPv4Address,unsigned int>::iterator it = sequenceMap.find(pkt->getOrigin());
+            if (it!=sequenceMap.end())
+            {
+                if (it->second >= pkt->getSequence())
+                {
+                    delete pkt;
+                    return;
+                }
+            }
+            sequenceMap[pkt->getOrigin()] = pkt->getSequence();
+        }
         IPv4Address staIpaddr = pkt->getStaIPAddress();
         IPv4Address apIpaddr = pkt->getApIPAddress();
         MACAddress staAddr = pkt->getStaMACAddress();
@@ -93,7 +113,10 @@ void LocatorModule::handleMessage(cMessage *msg)
         else if (pkt->getOpcode() == LocatorDisAssoc)
             setTables(apAddr,staAddr,apIpaddr,staIpaddr,DISASSOCIATION,NULL);
     }
-    delete msg;
+    if (socket)
+        socket->sendTo(pkt,"255.255.255.255",port, interfaceId);
+    else
+        delete msg;
 }
 
 void LocatorModule::initialize(int stage)
@@ -137,7 +160,14 @@ void  LocatorModule::sendMessage(const MACAddress &apMac,const MACAddress &staMa
         pkt->setOpcode(LocatorDisAssoc);
 
     if (socket)
+    {
+        pkt->setByteLength(pkt->getByteLength()+8);
+        pkt->setOrigin(myIpAddress);
+        pkt->setSequence(mySequence);
+        mySequence++;
+
         socket->sendTo(pkt,"255.255.255.255",port, interfaceId);
+    }
     else
         send(pkt,"outGate");
 }
