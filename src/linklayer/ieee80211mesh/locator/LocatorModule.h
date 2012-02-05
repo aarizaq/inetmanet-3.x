@@ -18,7 +18,8 @@
 
 #include <csimplemodule.h>
 #include <map>
-#include "uint128.h"
+#include <set>
+#include "ILocator.h"
 #include "IRoutingTable.h"
 #include "ARP.h"
 #include "IRoutingTable.h"
@@ -26,7 +27,8 @@
 #include "INotifiable.h"
 #include "UDPSocket.h"
 
-class LocatorModule : public cSimpleModule, public INotifiable, public cListener
+
+class LocatorModule : public cSimpleModule, ILocator, protected INotifiable, protected cListener
 {
     protected:
         struct LocEntry
@@ -41,6 +43,13 @@ class LocatorModule : public cSimpleModule, public INotifiable, public cListener
         typedef std::map<MACAddress,LocEntry>  LocatorMapMac;
         typedef LocatorMapIp::iterator  MapIpIteartor;
         typedef LocatorMapMac::iterator MapMacIterator;
+        typedef std::set<IPv4Address> ApIpSet;
+        typedef std::set<MACAddress> ApSet;
+
+        typedef ApIpSet::iterator ApIpSetIterator;
+        typedef ApSet::iterator ApSetIterator;
+
+
         IPv4Address myIpAddress;
         MACAddress  myMacAddress;
         UDPSocket * socket;
@@ -51,6 +60,11 @@ class LocatorModule : public cSimpleModule, public INotifiable, public cListener
         static LocatorMapIp globalLocatorMapIp;
         LocatorMapMac locatorMapMac;
         static LocatorMapMac globalLocatorMapMac;
+
+        static ApIpSet globalApIpSet;
+        static ApSet globalApSet;
+        ApIpSet apIpSet;
+        ApSet apSet;
 
 
         static simsignal_t locatorChangeSignal;
@@ -71,6 +85,7 @@ class LocatorModule : public cSimpleModule, public INotifiable, public cListener
         unsigned int mySequence;
         std::map<IPv4Address,unsigned int> sequenceMap;
 
+        virtual void  sendMessage(const MACAddress &,const MACAddress &,const IPv4Address &,const IPv4Address &,const Action &);
     public:
         LocatorModule();
         virtual ~LocatorModule();
@@ -83,16 +98,18 @@ class LocatorModule : public cSimpleModule, public INotifiable, public cListener
         virtual const IPv4Address getLocatorMacToIp(const MACAddress &);
         virtual const IPv4Address getLocatorIpToIp(const IPv4Address &);
         virtual const MACAddress  getLocatorIpToMac(const IPv4Address &);
-        virtual void  sendMessage(const MACAddress &,const MACAddress &,const IPv4Address &,const IPv4Address &,const Action &);
+        virtual void getApList(const MACAddress &,std::vector<MACAddress>&);
+        virtual void getApListIp(const IPv4Address &,std::vector<IPv4Address>&);
+        virtual bool isAp(const MACAddress & add);
+        virtual bool isApIp(const IPv4Address &add);
+
+
 
         virtual void setIpAddress(const IPv4Address &add) {myIpAddress = add;}
         virtual void setMacAddress(const MACAddress &add) {myMacAddress = add;}
+        virtual IPv4Address getIpAddress() {return myIpAddress;}
+        virtual MACAddress getMacAddress() {return myMacAddress;}
 
 };
 
-class INET_API LocatorModuleAccess : public ModuleAccess<LocatorModule>
-{
-  public:
-    LocatorModuleAccess() : ModuleAccess<LocatorModule>("locator") {}
-};
 #endif /* LOCATORMODULE_H_ */

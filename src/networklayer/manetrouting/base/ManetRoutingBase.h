@@ -35,6 +35,8 @@
 #include "uint128.h"
 #include "NotifierConsts.h"
 #include "ICMP.h"
+#include "ILocator.h"
+#include "ARP.h"
 #include <vector>
 #include <set>
 
@@ -92,6 +94,8 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
     bool sendToICMP;
     ManetRoutingBase *colaborativeProtocol;
 
+    ARP *arp;
+
     typedef struct InterfaceIdentification
     {
         InterfaceEntry* interfacePtr;
@@ -118,6 +122,9 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
     };
     bool isGateway;
     std::vector<ManetProxyAddress> proxyAddress;
+
+    ILocator *locator;
+
   protected:
     ~ManetRoutingBase();
     ManetRoutingBase();
@@ -347,6 +354,9 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
     virtual void setAddressInProxyList(const Uint128 &,const Uint128 &);
     virtual int getNumAddressInProxyList() {return (int)proxyAddress.size();}
     virtual bool getAddressInProxyList(int,Uint128 &, Uint128 &);
+
+    // access to locator information
+    bool getAp(Uint128 &, Uint128);
 
 };
 

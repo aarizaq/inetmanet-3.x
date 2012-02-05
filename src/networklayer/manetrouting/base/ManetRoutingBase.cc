@@ -33,6 +33,7 @@
 #include "Ieee80211Frame_m.h"
 #include "ICMPAccess.h"
 #include "IMobility.h"
+#include "Ieee80211MgmtAP.h"
 #define IP_DEF_TTL 32
 #define UDP_HDR_LEN 8
 
@@ -115,6 +116,8 @@ ManetRoutingBase::ManetRoutingBase()
     interfaceVector = new InterfaceVector;
     staticNode = false;
     colaborativeProtocol = NULL;
+    arp = NULL;
+    locator = NULL;
 }
 
 
@@ -133,7 +136,6 @@ bool ManetRoutingBase::isThisInterfaceRegistered(InterfaceEntry * ie)
 void ManetRoutingBase::registerRoutingModule()
 {
     InterfaceEntry *   ie;
-    InterfaceEntry *   i_face;
     const char *name;
     /* Set host parameters */
     isRegistered = true;
@@ -173,7 +175,6 @@ void ManetRoutingBase::registerRoutingModule()
                 name = ie->getName();
                 if ((strstr(name, interfacePrefix.c_str() )!=NULL) && !isThisInterfaceRegistered(ie))
                 {
-                    i_face = ie;
                     InterfaceIdentification interface;
                     interface.interfacePtr = ie;
                     interface.index = i;
@@ -190,7 +191,6 @@ void ManetRoutingBase::registerRoutingModule()
                 name = ie->getName();
                 if (strcmp(name, token)==0 && !isThisInterfaceRegistered(ie))
                 {
-                    i_face = ie;
                     InterfaceIdentification interface;
                     interface.interfacePtr = ie;
                     interface.index = i;
@@ -266,6 +266,19 @@ void ManetRoutingBase::registerRoutingModule()
         {
             (*interfaceVector)[i].interfacePtr->ipv4Data()->joinMulticastGroup(IPv4Address::LL_MANET_ROUTERS);
         }
+        arp = ArpAccess().get();
+    }
+    nb->subscribe(this,NF_L2_AP_DISSOCIATED);
+    nb->subscribe(this,NF_L2_AP_ASSOCIATED);
+
+    locator = LocatorModuleAccess().getIfExists();
+    if (locator)
+    {
+        InterfaceEntry *ie = getInterfaceWlanByAddress();
+        if (locator->getIpAddress().isUnspecified())
+            locator->setIpAddress(ie->ipv4Data()->getIPAddress());
+        if (locator->getMacAddress().isUnspecified())
+            locator->setMacAddress(ie->getMacAddress());
     }
  //   WATCH_MAP(*routesVector);
 }
@@ -743,7 +756,25 @@ void ManetRoutingBase::omnet_chg_rte(const Uint128 &dst, const Uint128 &gtwy, co
         }
     }
 
-
+    if (locator && locator->isApIp(desAddress) && del_entry)
+    {
+        std::vector<IPv4Address> list;
+        locator->getApListIp(desAddress,list);
+        for (unsigned int i = 0; i<list.size(); i++)
+        {
+            for (int i=inet_rt->getNumRoutes(); i>0; --i)
+            {
+                IPv4Route *e = inet_rt->getRoute(i-1);
+                if (list[i] == e->getDestination())
+                {
+                    if (!inet_rt->deleteRoute(e))
+                        opp_error("Aodv omnet_chg_rte can't delete route entry");
+                    else
+                        break;
+                }
+            }
+        }
+    }
     if (del_entry)
         return;
 
@@ -790,8 +821,42 @@ void ManetRoutingBase::omnet_chg_rte(const Uint128 &dst, const Uint128 &gtwy, co
     /// Source of route, MANUAL by reading a file,
     /// routing protocol name otherwise
     entry->setSource(routeSource);
+    inet_rt->addRoute(entry);
+    if (locator && locator->isApIp(desAddress))
+    {
+        std::vector<IPv4Address> list;
+        locator->getApListIp(desAddress,list);
+        for (unsigned int i = 0; i<list.size(); i++)
+        {
+            IPv4Route *e = inet_rt->findBestMatchingRoute(list[i]);
+            if (e && e->getDestination() == list[i])
+            {
+                if (e->getGateway() == gateway && e->getMetric() == hops && e->getInterface() == ie)
+                    continue;
+            }
 
-        inet_rt->addRoute(entry);
+            IPv4Route *entry = new IPv4Route();
+
+            /// Destination
+            entry->setDestination(list[i]);
+            /// Route mask
+            entry->setNetmask(netmask);
+            /// Next hop
+            entry->setGateway(gateway);
+            /// Metric ("cost" to reach the destination)
+            entry->setMetric(hops);
+            /// Interface name and pointer
+
+            entry->setInterface(ie);
+
+            /// Route type: Direct or Remote
+            entry->setType(routeType);
+            /// Source of route, MANUAL by reading a file,
+            /// routing protocol name otherwise
+            entry->setSource(routeSource);
+            inet_rt->addRoute(entry);
+        }
+    }
 }
 
 // This methods use the nic index to identify the output nic.
@@ -846,6 +911,25 @@ void ManetRoutingBase::omnet_chg_rte(const Uint128 &dst, const Uint128 &gtwy, co
         }
     }
 
+    if (locator && locator->isApIp(desAddress) && del_entry)
+    {
+        std::vector<IPv4Address> list;
+        locator->getApListIp(desAddress, list);
+        for (unsigned int i = 0; i < list.size(); i++)
+        {
+            for (int i = inet_rt->getNumRoutes(); i > 0; --i)
+            {
+                IPv4Route *e = inet_rt->getRoute(i - 1);
+                if (list[i] == e->getDestination())
+                {
+                    if (!inet_rt->deleteRoute(e))
+                        opp_error("Aodv omnet_chg_rte can't delete route entry");
+                    else
+                        break;
+                }
+            }
+        }
+    }
 
     if (del_entry)
         return;
@@ -900,6 +984,42 @@ void ManetRoutingBase::omnet_chg_rte(const Uint128 &dst, const Uint128 &gtwy, co
         entry->setSource(IPv4Route::MANET2);
 
         inet_rt->addRoute(entry);
+
+    if (locator && locator->isApIp(desAddress))
+    {
+        std::vector<IPv4Address> list;
+        locator->getApListIp(desAddress, list);
+        for (unsigned int i = 0; i < list.size(); i++)
+        {
+            IPv4Route *e = inet_rt->findBestMatchingRoute(list[i]);
+            if (e && e->getDestination() == list[i])
+            {
+                if (e->getGateway() == gateway && e->getMetric() == hops && e->getInterface() == ie)
+                    continue;
+            }
+
+            e = new IPv4Route();
+
+            /// Destination
+            e->setDestination(list[i]);
+            /// Route mask
+            e->setNetmask(netmask);
+            /// Next hop
+            e->setGateway(gateway);
+            /// Metric ("cost" to reach the destination)
+            e->setMetric(hops);
+            /// Interface name and pointer
+
+            e->setInterface(ie);
+
+            /// Route type: Direct or Remote
+            e->setType(entry->getType());
+            /// Source of route, MANUAL by reading a file,
+            /// routing protocol name otherwise
+            e->setSource(entry->getSource());
+            inet_rt->addRoute(e);
+        }
+    }
 }
 
 
@@ -982,6 +1102,34 @@ void ManetRoutingBase::receiveChangeNotification(int category, const cObject *de
     else if (category == NF_LINK_FULL_PROMISCUOUS)
     {
         processFullPromiscuous(details);
+    }
+    else if(category == NF_L2_AP_DISSOCIATED || category == NF_L2_AP_ASSOCIATED)
+    {
+        Ieee80211MgmtAP::NotificationInfoSta * infoSta = dynamic_cast<Ieee80211MgmtAP::NotificationInfoSta *>(const_cast<cObject*> (details));
+        if (infoSta)
+        {
+            Uint128 addr;
+            if (!mac_layer_ && arp)
+                addr = arp->getInverseAddressResolution(infoSta->getStaAddress());
+            else
+                addr = infoSta->getStaAddress();
+            // sanity check
+            for (unsigned int i = 0; i< proxyAddress.size(); i++)
+            {
+                 if (proxyAddress[i].address == addr)
+                 {
+                     proxyAddress.erase(proxyAddress.begin()+i);
+                     break;
+                 }
+            }
+            if (category == NF_L2_AP_ASSOCIATED)
+            {
+                ManetProxyAddress p;
+                p.address = addr;
+                p.mask = Uint128::UINT128_MAX;
+                proxyAddress.push_back(p);
+            }
+        }
     }
 }
 
@@ -1311,6 +1459,26 @@ bool ManetRoutingBase::setRoute(const Uint128 & destination, const Uint128 &next
         }
     }
 
+    if (locator && locator->isApIp(desAddress) && del_entry)
+    {
+        std::vector<IPv4Address> list;
+        locator->getApListIp(desAddress, list);
+        for (unsigned int i = 0; i < list.size(); i++)
+        {
+            for (int i = inet_rt->getNumRoutes(); i > 0; --i)
+            {
+                IPv4Route *e = inet_rt->getRoute(i - 1);
+                if (list[i] == e->getDestination())
+                {
+                    if (!inet_rt->deleteRoute(e))
+                        opp_error("Aodv omnet_chg_rte can't delete route entry");
+                    else
+                        break;
+                }
+            }
+        }
+    }
+
     if (del_entry)
         return true;
 
@@ -1353,7 +1521,43 @@ bool ManetRoutingBase::setRoute(const Uint128 & destination, const Uint128 &next
     /// routing protocol name otherwise
     entry->setSource(IPv4Route::MANUAL);
 
-        inet_rt->addRoute(entry);
+    inet_rt->addRoute(entry);
+
+    if (locator && locator->isApIp(desAddress))
+    {
+        std::vector<IPv4Address> list;
+        locator->getApListIp(desAddress, list);
+        for (unsigned int i = 0; i < list.size(); i++)
+        {
+            IPv4Route *e = inet_rt->findBestMatchingRoute(list[i]);
+            if (e && e->getDestination() == list[i])
+            {
+                if (e->getGateway() == gateway && e->getMetric() == hops && e->getInterface() == ie)
+                    continue;
+            }
+
+            e = new IPv4Route();
+
+            /// Destination
+            e->setDestination(list[i]);
+            /// Route mask
+            e->setNetmask(netmask);
+            /// Next hop
+            e->setGateway(gateway);
+            /// Metric ("cost" to reach the destination)
+            e->setMetric(hops);
+            /// Interface name and pointer
+
+            e->setInterface(ie);
+
+            /// Route type: Direct or Remote
+            e->setType(entry->getType());
+            /// Source of route, MANUAL by reading a file,
+            /// routing protocol name otherwise
+            e->setSource(entry->getSource());
+            inet_rt->addRoute(e);
+        }
+    }
     return true;
 
 }
@@ -1563,7 +1767,7 @@ void ManetRoutingBase::setAddressInProxyList(const Uint128 & addr,const Uint128 
 
 bool ManetRoutingBase::getAddressInProxyList(int i,Uint128 &addr, Uint128 &mask)
 {
-    if (i< 0 || i >= proxyAddress.size())
+    if (i< 0 || i >= (int)proxyAddress.size())
         return false;
     addr = proxyAddress[i].address;
     mask = proxyAddress[i].mask;

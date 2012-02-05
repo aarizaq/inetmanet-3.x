@@ -20,12 +20,16 @@
 #include "locatorPkt_m.h"
 #include "UDP.h"
 #include "IPv4InterfaceData.h"
+#include "NotificationBoard.h"
 
 simsignal_t LocatorModule::locatorChangeSignal = SIMSIGNAL_NULL;
 
 LocatorModule::LocatorMapIp LocatorModule::globalLocatorMapIp;
 
 LocatorModule::LocatorMapMac LocatorModule::globalLocatorMapMac;
+
+LocatorModule::ApIpSet LocatorModule::globalApIpSet;
+LocatorModule::ApSet LocatorModule::globalApSet;
 
 LocatorModule::LocatorModule()
 {
@@ -84,6 +88,9 @@ void LocatorModule::handleMessage(cMessage *msg)
         MACAddress staAddr = pkt->getStaMACAddress();
         MACAddress apAddr = pkt->getApMACAddress();
 
+        apIpSet.find(apIpaddr);
+        apSet.insert(apAddr);
+
         if (staIpaddr.isUnspecified() && staAddr.isUnspecified())
         {
             delete pkt;
@@ -137,11 +144,18 @@ void LocatorModule::initialize(int stage)
         socket->bind(port);
         socket->setBroadcast(true);
         InterfaceEntry *ie = itable->getInterfaceByName(this->par("iface"));
+
         useGlobal = par("useGlobal").boolValue();
-        interfaceId = ie->getInterfaceId();
-        myMacAddress =  ie->getMacAddress();
-        myIpAddress = ie->ipv4Data()->getIPAddress();
+        if (ie)
+        {
+            interfaceId = ie->getInterfaceId();
+            myMacAddress = ie->getMacAddress();
+            myIpAddress = ie->ipv4Data()->getIPAddress();
+        }
     }
+    NotificationBoard * nb = NotificationBoardAccess().get();
+    nb->subscribe(this,NF_L2_AP_DISSOCIATED);
+    nb->subscribe(this,NF_L2_AP_ASSOCIATED);
 }
 
 
@@ -190,6 +204,10 @@ void LocatorModule::receiveChangeNotification(int category, const cObject *detai
                     break;
                 }
             }
+
+            globalApIpSet.find(myIpAddress);
+            globalApSet.insert(myMacAddress);
+
             if (category == NF_L2_AP_ASSOCIATED)
             {
                 setTables(myMacAddress,infoSta->getStaAddress(),myIpAddress,add,ASSOCIATION,ie);
@@ -391,4 +409,74 @@ void LocatorModule::setTables(const MACAddress & APaddr, const MACAddress &STAad
     }
 }
 
+void LocatorModule::getApList(const MACAddress &add,std::vector<MACAddress>& list)
+{
+    list.clear();
+    if (useGlobal)
+    {
+        for (MapMacIterator itMac = globalLocatorMapMac.begin(); itMac != globalLocatorMapMac.end(); itMac++)
+            if (itMac->second.apMacAddr == add)
+                list.push_back(itMac->first);
+    }
+    else
+    {
+        for (MapMacIterator itMac = locatorMapMac.begin(); itMac != locatorMapMac.end(); itMac++)
+            if (itMac->second.apMacAddr == add)
+                list.push_back(itMac->first);
+    }
+}
+
+void LocatorModule::getApListIp(const IPv4Address & add,std::vector<IPv4Address>& list)
+{
+    list.clear();
+    if (useGlobal)
+    {
+        for (MapIpIteartor itIp = globalLocatorMapIp.begin(); itIp != globalLocatorMapIp.end(); itIp++)
+            if (itIp->second.apIpAddr == add)
+                list.push_back(itIp->first);
+    }
+    else
+    {
+        for (MapIpIteartor itIp = locatorMapIp.begin(); itIp != locatorMapIp.end(); itIp++)
+            if (itIp->second.apIpAddr == add)
+                list.push_back(itIp->first);
+    }
+}
+
+
+bool LocatorModule::isAp(const MACAddress & add)
+{
+    ApSetIterator it;
+    if (useGlobal)
+    {
+        it = globalApSet.find(add);
+        if (it != globalApSet.end())
+            return true;
+    }
+    else
+    {
+        it = apSet.find(add);
+        if (it != apSet.end())
+            return true;
+    }
+    return false;
+}
+
+bool LocatorModule::isApIp(const IPv4Address &add)
+{
+    ApIpSetIterator it;
+    if (useGlobal)
+    {
+        it = globalApIpSet.find(add);
+        if (it != globalApIpSet.end())
+            return true;
+    }
+    else
+    {
+        it = apIpSet.find(add);
+        if (it != apIpSet.end())
+            return true;
+    }
+    return false;
+}
 
