@@ -31,6 +31,8 @@ enum LocatorOpcode
     LocatorDisAssoc = 2;
     LocatorAskAddress = 3;
     LocatorAckAddress = 4;
+    RequestAddress = 5;
+    ReplyAddress = 6;
 }
 
 packet LocatorPkt 

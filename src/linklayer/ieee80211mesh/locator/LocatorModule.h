@@ -22,7 +22,6 @@
 #include "ILocator.h"
 #include "IRoutingTable.h"
 #include "ARP.h"
-#include "IRoutingTable.h"
 #include "IInterfaceTable.h"
 #include "INotifiable.h"
 #include "UDPSocket.h"
@@ -48,7 +47,6 @@ class LocatorModule : public cSimpleModule, ILocator, protected INotifiable, pro
 
         typedef ApIpSet::iterator ApIpSetIterator;
         typedef ApSet::iterator ApSetIterator;
-
 
         IPv4Address myIpAddress;
         MACAddress  myMacAddress;
@@ -86,6 +84,10 @@ class LocatorModule : public cSimpleModule, ILocator, protected INotifiable, pro
         std::map<IPv4Address,unsigned int> sequenceMap;
 
         virtual void  sendMessage(const MACAddress &,const MACAddress &,const IPv4Address &,const IPv4Address &,const Action &);
+        virtual void sendRequest(const MACAddress &);
+
+        virtual void processReply(cPacket* pkt);
+        virtual void processRequest(cPacket* pkt);
     public:
         LocatorModule();
         virtual ~LocatorModule();
