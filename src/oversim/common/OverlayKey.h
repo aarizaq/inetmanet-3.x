@@ -24,7 +24,6 @@
 #ifndef __OVERLAYKEY_H_
 #define __OVERLAYKEY_H_
 
-
 #ifndef USEGMP
 #include "OverlayKeyNoGmp.h"
 #else

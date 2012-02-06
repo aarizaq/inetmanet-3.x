@@ -28,16 +28,11 @@
 
 #include "uint128.h"
 #include <stdint.h>
-#include "gmp.h"
 
 class BinaryValue;
 class OverlayKeyBit;
 class cCommBuffer;
 
-/**
- * replacement function for mpn_random() using omnet's rng
- */
-inline void omnet_random(mp_limb_t *r1p, mp_size_t r1n);
 
 /**
  * A common overlay key class.

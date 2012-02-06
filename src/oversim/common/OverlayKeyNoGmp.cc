@@ -59,10 +59,12 @@ const OverlayKey OverlayKey::ONE((uint32_t)1);
 // hex crap
 const char* HEX = "0123456789abcdef";
 
-
+#define GMP_NUMB_BITS 64
+#define GMP_NUMB_MASK UINT64_MAX
+#define GMP_LIMB_BITS 64
 
 static int
-mpn_set_str (mp_ptr rp, const unsigned char *str, size_t str_len)
+mpn_set_str (uint64_t *rp, const unsigned char *str, size_t str_len)
 {
     /* The base is a power of 2.  Read the input string from least to most
      *              *             *      significant character/digit.  */
@@ -77,7 +79,7 @@ mpn_set_str (mp_ptr rp, const unsigned char *str, size_t str_len)
     for (s = str + str_len - 1; s >= str; s--)
     {
       int inp_digit = *s;
-      res_digit |= ((mp_limb_t) inp_digit << next_bitpos) & GMP_NUMB_MASK;
+      res_digit |= ((uint64_t) inp_digit << next_bitpos) & GMP_NUMB_MASK;
       next_bitpos += bits_per_indigit;
       if (next_bitpos >= GMP_NUMB_BITS)
         {
@@ -799,17 +801,6 @@ inline void OverlayKey::clear()
 {
     key = 0;
     isUnspec = false;
-}
-
-// replacement function for mpn_random() using omnet's rng
-inline void omnet_random(mp_limb_t *r1p, mp_size_t r1n)
-{
-    // fill in 32 bit chunks
-    uint32_t* chunkPtr = (uint32_t*)r1p;
-
-    for (uint32_t i=0; i < ((r1n*sizeof(mp_limb_t) + 3) / 4); i++) {
-        chunkPtr[i] = intuniform(0, 0xFFFFFFFF);
-    }
 }
 
 
