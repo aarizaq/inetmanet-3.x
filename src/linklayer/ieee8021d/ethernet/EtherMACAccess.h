@@ -14,7 +14,6 @@
 
 
 
-#include <omnetpp.h>
 #include "ModuleAccess.h"
 #include "EtherMAC.h"
 

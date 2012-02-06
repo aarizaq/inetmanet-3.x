@@ -26,8 +26,6 @@
 #include <list>
 #include <stdexcept>
 
-#include <omnetpp.h>
-
 #include "MobilityBase.h"
 #include "ModuleAccess.h"
 #include "world/traci/TraCIScenarioManager.h"

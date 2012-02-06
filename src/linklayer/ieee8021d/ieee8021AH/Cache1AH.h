@@ -10,7 +10,6 @@
 #ifndef __A_CACHE1AH_H
 #define __A_CACHE1AH_H
 
-#include <omnetpp.h>
 #include "MACAddress.h"
 #include "8021Q.h"
 #include "Cache1Q.h"

@@ -26,7 +26,6 @@
 #ifndef __ALMTEST_H_
 #define __ALMTEST_H_
 
-#include <omnetpp.h>
 #include "BaseApp.h"
 #include "CommonMessages_m.h"
 #include "MessageObserver.h"

@@ -17,7 +17,6 @@
  *
  * Author: Mathieu Lacage <mathieu.lacage@sophia.inria.fr>
  */
-#include <omnetpp.h>
 #include "yans-error-rate-model.h"
 #include <math.h>
 

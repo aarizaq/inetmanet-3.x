@@ -19,7 +19,6 @@
 #ifndef TraCIDemo_H
 #define TraCIDemo_H
 
-#include <omnetpp.h>
 #include "UDPSocket.h"
 
 #include "TraCIMobility.h"

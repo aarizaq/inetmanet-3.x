@@ -21,7 +21,7 @@
 
 #include <vector>
 #include <map>
-#include <omnetpp.h>
+#include "INETDefs.h"
 #include "DHCP_m.h"
 #include "DHCPOptions.h"
 #include "DHCPLease.h"

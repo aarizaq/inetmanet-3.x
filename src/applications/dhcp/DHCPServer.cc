@@ -16,13 +16,13 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <omnetpp.h>
-#include "DHCPServer.h"
+
 #include "UDPControlInfo_m.h"
 #include "IPvXAddressResolver.h"
 #include "InterfaceTableAccess.h"
 #include "InterfaceTable.h"
 #include "IPv4InterfaceData.h"
+#include "DHCPServer.h"
 
 #include "DHCP_m.h"
 

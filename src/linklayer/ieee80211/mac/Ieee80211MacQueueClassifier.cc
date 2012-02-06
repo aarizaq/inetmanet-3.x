@@ -16,7 +16,6 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <omnetpp.h>
 #include "Ieee80211MacQueueClassifier.h"
 #include "Ieee80211Frame_m.h"
 

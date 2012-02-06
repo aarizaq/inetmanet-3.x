@@ -22,7 +22,6 @@
 #define HWMP_RTABLE_H
 
 #include <map>
-#include <omnetpp.h>
 #include "MACAddress.h"
 
 /**

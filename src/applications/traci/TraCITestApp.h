@@ -24,8 +24,6 @@
 #include <set>
 #include <list>
 
-#include <omnetpp.h>
-
 #include "TraCIMobility.h"
 
 /**

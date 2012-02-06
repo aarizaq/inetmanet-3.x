@@ -20,7 +20,6 @@
 #define __DHCPCLIENT_H__
 
 #include <vector>
-#include <omnetpp.h>
 #include "NotificationBoard.h"
 #include "MACAddress.h"
 #include "DHCP_m.h"

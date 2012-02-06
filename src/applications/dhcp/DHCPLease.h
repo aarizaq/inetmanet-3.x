@@ -18,7 +18,6 @@
 #ifndef __DHCPLEASE_H__
 #define __DHCPLEASE_H__
 
-#include <omnetpp.h>
 #include "Byte.h"
 #include "IPv4Address.h"
 #include "MACAddress.h"
