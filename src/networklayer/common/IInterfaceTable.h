@@ -18,7 +18,6 @@
 #ifndef __INET_IINTERFACETABLE_H
 #define __INET_IINTERFACETABLE_H
 
-#include <omnetpp.h>
 #include "INETDefs.h"
 #include "InterfaceEntry.h"  // not strictly required, but clients will need it anyway
 
@@ -46,6 +45,11 @@ class INET_API IInterfaceTable
      * Module path name
      */
     virtual std::string getFullPath() const = 0;
+
+    /**
+     * Returns the host or router this interface table lives in.
+     */
+    virtual cModule *getHostModule() = 0;
 
     /**
      * Adds an interface. The second argument should be a module which belongs

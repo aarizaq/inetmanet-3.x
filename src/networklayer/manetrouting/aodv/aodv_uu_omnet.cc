@@ -192,8 +192,8 @@ void NS_CLASS initialize(int stage)
             }
             else
             {
-                DEV_NR(i).netmask.s_addr = MACAddress::BROADCAST_ADDRESS;
-                DEV_NR(i).ipaddr.s_addr =getInterfaceEntry(i)->getMacAddress();
+                DEV_NR(i).netmask.s_addr = MACAddress::BROADCAST_ADDRESS.getInt();
+                DEV_NR(i).ipaddr.s_addr = getInterfaceEntry(i)->getMacAddress().getInt();
 
             }
         }
@@ -390,8 +390,8 @@ void NS_CLASS packetFailedMac(Ieee80211DataFrame *dgram)
         return;
     }
 
-    src_addr.s_addr = dgram->getAddress3();
-    dest_addr.s_addr = dgram->getAddress4();
+    src_addr.s_addr = dgram->getAddress3().getInt();
+    dest_addr.s_addr = dgram->getAddress4().getInt();
     if (seek_list_find(dest_addr))
     {
         DEBUG(LOG_DEBUG, 0, "Ongoing route discovery, buffering packet...");
@@ -476,7 +476,7 @@ void NS_CLASS handleMessage (cMessage *msg)
                 if (dynamic_cast<Ieee802Ctrl*> (ctrl))
                 {
                     Ieee802Ctrl *ieeectrl = dynamic_cast<Ieee802Ctrl*> (ctrl);
-                    Uint128 address = ieeectrl->getDest();
+                    Uint128 address = ieeectrl->getDest().getInt();
                     int index = getWlanInterfaceIndexByAddress(address);
                     if (index!=-1)
                         ifindex = index;
@@ -531,7 +531,7 @@ void NS_CLASS handleMessage (cMessage *msg)
             else
             {
                 Ieee802Ctrl *controlInfo = check_and_cast<Ieee802Ctrl*>(udpPacket->getControlInfo());
-                src_addr.s_addr = controlInfo->getSrc();
+                src_addr.s_addr = controlInfo->getSrc().getInt();
             }
         }
         else
@@ -782,8 +782,8 @@ void NS_CLASS recvAODVUUPacket(cMessage * msg)
     else
     {
         Ieee802Ctrl *ctrl = check_and_cast<Ieee802Ctrl *>(msg->getControlInfo());
-        src.s_addr = ctrl->getSrc();
-        dst.s_addr =  ctrl->getDest();
+        src.s_addr = ctrl->getSrc().getInt();
+        dst.s_addr =  ctrl->getDest().getInt();
     }
 
     InterfaceEntry *   ie;
@@ -804,7 +804,7 @@ void NS_CLASS recvAODVUUPacket(cMessage * msg)
         }
         else
         {
-            Uint128 add = ie->getMacAddress();
+            Uint128 add = ie->getMacAddress().getInt();
             if (add== src.s_addr)
             {
                 delete   aodv_msg;
@@ -839,7 +839,7 @@ void NS_CLASS processPacket(IPv4Datagram * p,unsigned int ifindex)
 
     if (!p->getSrcAddress().isUnspecified())
     {
-        isLocal = isLocalAddress (p->getSrcAddress());
+        isLocal = isLocalAddress(p->getSrcAddress().getInt());
     }
 
     ie = getInterfaceEntry (ifindex);

@@ -374,8 +374,8 @@ OLSR_state::erase_topology_tuple(OLSR_topology_tuple* tuple)
 std::ostream& operator<<(std::ostream& out, const OLSR_topology_tuple& tuple)
 {
 	out << "Tuple index: " << tuple.index;
-	out << " dest: "<< tuple.dest_addr_.getIPAddress() ;
-	out << " last: " << tuple.last_addr_.getIPAddress();
+	out << " dest: "<< IPv4Address(tuple.dest_addr_.getLo()) ;
+	out << " last: " << IPv4Address(tuple.last_addr_.getLo());
 	out << " seq: " << tuple.seq_;
 	out << " time: " << tuple.time_;
 	out << std::endl;

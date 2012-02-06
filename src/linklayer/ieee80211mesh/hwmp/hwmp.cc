@@ -217,7 +217,7 @@ void HwmpProtocol::processData(cMessage *msg)
             HwmpRtable::LookupResult resultProact = m_rtable->LookupProactive();
             // Intermediate search
             if (hasPar("intermediateSeach") && !par("intermediateSeach").boolValue()
-                    && !isLocalAddress(pkt->getAddress3()))
+                    && !isLocalAddress(pkt->getAddress3().getInt()))
             {
                 if (result.retransmitter.isUnspecified() && resultProact.retransmitter.isUnspecified())
                 {
@@ -262,7 +262,7 @@ void HwmpProtocol::processData(cMessage *msg)
         else if (ctrlmanet && ctrlmanet->getOptionCode() == MANET_ROUTE_NOROUTE)
         {
 
-            MACAddress destination = ctrlmanet->getDestAddress().getMACAddress();
+            MACAddress destination = MACAddress(ctrlmanet->getDestAddress().getLo());
             HwmpRtable::LookupResult result = m_rtable->LookupReactive(destination);
             HwmpRtable::LookupResult resultProact = m_rtable->LookupProactive();
             if (result.retransmitter.isUnspecified() && resultProact.retransmitter.isUnspecified())
@@ -1014,7 +1014,7 @@ void HwmpProtocol::receivePreq(Ieee80211ActionPREQFrame *preqFrame, MACAddress f
     bool addMode = (preqFrame->getBody().getFlags() & 0x40) != 0;
 
     //acceptance criteria:
-    if (isLocalAddress((Uint128) originatorAddress))
+    if (isLocalAddress((Uint128) originatorAddress.getInt()))
     {
         delete preqFrame;
         return;
@@ -1686,7 +1686,7 @@ uint8_t HwmpProtocol::GetUnicastPerrThreshold()
 
 MACAddress HwmpProtocol::GetAddress()
 {
-    return getAddress().getMACAddress();
+    return MACAddress(getAddress().getLo());
 }
 
 bool HwmpProtocol::isOurType(cPacket *p)
@@ -1702,29 +1702,29 @@ bool HwmpProtocol::getDestAddress(cPacket *msg, Uint128 &addr)
     if (!rreq)
         return false;
     PREQElem pqeq = rreq->getBody().getPreqElem(0);
-    addr = pqeq.targetAddress;
+    addr = pqeq.targetAddress.getInt();
     return true;
 }
 
 bool HwmpProtocol::getNextHop(const Uint128 &dest, Uint128 &add, int &iface, double &cost)
 {
-    HwmpRtable::LookupResult result = m_rtable->LookupReactive(dest.getMACAddress());
+    HwmpRtable::LookupResult result = m_rtable->LookupReactive(MACAddress(dest.getLo()));
     if (result.retransmitter.isUnspecified()) // address not valid
     {
         if (m_concurrentReactive && !isRoot())
         {
-            if (shouldSendPreq(dest.getMACAddress()))
+            if (shouldSendPreq(MACAddress(dest.getLo())))
             {
                 GetNextHwmpSeqno();
                 uint32_t dst_seqno = 0;
                 m_stats.initiatedPreq++;
-                requestDestination(dest.getMACAddress(), dst_seqno);
+                requestDestination(MACAddress(dest.getLo()), dst_seqno);
             }
         }
     }
     else
     {
-        add = result.retransmitter;
+        add = result.retransmitter.getInt();
         cost = result.metric;
         iface = result.ifIndex;
         return true;
@@ -1732,7 +1732,7 @@ bool HwmpProtocol::getNextHop(const Uint128 &dest, Uint128 &add, int &iface, dou
     HwmpRtable::LookupResult resultProact = m_rtable->LookupProactive();
     if (resultProact.retransmitter.isUnspecified())
         return false; // the Mesh code should send the packet to hwmp
-    add = resultProact.retransmitter;
+    add = resultProact.retransmitter.getInt();
     cost = resultProact.metric;
     iface = resultProact.ifIndex;
     return true;
@@ -1745,10 +1745,10 @@ uint32_t HwmpProtocol::getRoute(const Uint128 &dest, std::vector<Uint128> &add)
 
 bool HwmpProtocol::getNextHopReactive(const Uint128 &dest, Uint128 &add, int &iface, double &cost)
 {
-    HwmpRtable::LookupResult result = m_rtable->LookupReactive(dest.getMACAddress());
+    HwmpRtable::LookupResult result = m_rtable->LookupReactive(MACAddress(dest.getLo()));
     if (result.retransmitter.isUnspecified()) // address not valid
         return false;
-    add = result.retransmitter;
+    add = result.retransmitter.getInt();
     cost = result.metric;
     iface = result.ifIndex;
     return true;
@@ -1759,7 +1759,7 @@ bool HwmpProtocol::getNextHopProactive(const Uint128 &dest, Uint128 &add, int &i
     HwmpRtable::LookupResult result = m_rtable->LookupProactive();
     if (result.retransmitter.isUnspecified())
         return false;
-    add = result.retransmitter;
+    add = result.retransmitter.getInt();
     cost = result.metric;
     iface = result.ifIndex;
     return true;
@@ -1781,10 +1781,10 @@ void HwmpProtocol::setRefreshRoute(const Uint128 &destination, const Uint128 &ne
 {
     if (!par("updateLifetimeInFrowarding").boolValue())
         return;
-    HwmpRtable::ReactiveRoute * route = m_rtable->getLookupReactivePtr(destination.getMACAddress());
+    HwmpRtable::ReactiveRoute * route = m_rtable->getLookupReactivePtr(MACAddress(destination.getLo()));
     if (par("checkNextHop").boolValue())
     {
-        if (route && nextHop.getMACAddress() == route->retransmitter)
+        if (route && nextHop.getLo() == route->retransmitter.getInt())
         {
             route->whenExpire = simTime() + m_dot11MeshHWMPactivePathTimeout;
         }
@@ -1800,7 +1800,7 @@ void HwmpProtocol::setRefreshRoute(const Uint128 &destination, const Uint128 &ne
     }
     if (isReverse && !route && par("gratuitousReverseRoute").boolValue())
     {
-        m_rtable->AddReactivePath(destination.getMACAddress(), nextHop.getMACAddress(),
+        m_rtable->AddReactivePath(MACAddress(destination.getLo()), MACAddress(nextHop.getLo()),
                 interface80211ptr->getInterfaceId(), HwmpRtable::MAX_METRIC, m_dot11MeshHWMPactivePathTimeout, 0,
                 HwmpRtable::MAX_HOPS, false);
     }
@@ -1870,7 +1870,7 @@ bool HwmpProtocol::getBestGan(Uint128 &gannAddr, Uint128 &nextHop)
 {
     if (m_isGann)
     {
-        Uint128 aux = GetAddress();
+        Uint128 aux = GetAddress().getInt();
         gannAddr = aux;
         nextHop = aux;
         return true;
@@ -1880,8 +1880,8 @@ bool HwmpProtocol::getBestGan(Uint128 &gannAddr, Uint128 &nextHop)
     {
         if (rootPath == NULL)
             return false;
-        nextHop = rootPath->retransmitter;
-        gannAddr = rootPath->root;
+        nextHop = rootPath->retransmitter.getInt();
+        gannAddr = rootPath->root.getInt();
         return true;
     }
     HwmpRtable::ReactiveRoute *bestGanPath = NULL;
@@ -1913,13 +1913,13 @@ bool HwmpProtocol::getBestGan(Uint128 &gannAddr, Uint128 &nextHop)
     }
     if (bestGanPath == NULL || (rootPath && (bestGanPath->metric > rootPath->metric)))
     {
-        nextHop = rootPath->retransmitter;
-        gannAddr = rootPath->root;
+        nextHop = rootPath->retransmitter.getInt();
+        gannAddr = rootPath->root.getInt();
     }
     else
     {
-        nextHop = bestGanPath->retransmitter;
-        gannAddr = bestGanPathAddr;
+        nextHop = bestGanPath->retransmitter.getInt();
+        gannAddr = bestGanPathAddr.getInt();
     }
     return true;
 }

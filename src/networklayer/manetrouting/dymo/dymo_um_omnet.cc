@@ -125,7 +125,7 @@ void DYMOUM::initialize(int stage)
             dev_indices[getWlanInterfaceIndex(i)] = i;
             strcpy(DEV_NR(i).ifname, getInterfaceEntry(i)->getName());
             if (isInMacLayer())
-                DEV_NR(i).ipaddr.s_addr = getInterfaceEntry(i)->getMacAddress();
+                DEV_NR(i).ipaddr.s_addr = getInterfaceEntry(i)->getMacAddress().getInt();
             else
                 DEV_NR(i).ipaddr.s_addr = getInterfaceEntry(i)->ipv4Data()->getIPAddress().getInt();
             if (isInMacLayer())
@@ -362,7 +362,7 @@ void DYMOUM::handleMessage(cMessage *msg)
         {
             if (isInMacLayer())
             {
-                if (control->getDestAddress().getMACAddress().isBroadcast())
+                if (MACAddress(control->getDestAddress().getLo()).isBroadcast())
                 {
                     delete control;
                     return;
@@ -433,7 +433,7 @@ void DYMOUM::handleMessage(cMessage *msg)
             else
             {
                 Ieee802Ctrl *controlInfo = check_and_cast<Ieee802Ctrl*>(dymoMsg->getControlInfo());
-                src_addr.s_addr = controlInfo->getSrc();
+                src_addr.s_addr = controlInfo->getSrc().getInt();
                 EV << "rec packet from " << controlInfo->getSrc() <<endl;
             }
         }
@@ -656,14 +656,14 @@ void DYMOUM::recvDYMOUMPacket(cMessage * msg)
         if (dymoRe && dymoRe->a)
         {
             Ieee802Ctrl *ctrl = check_and_cast<Ieee802Ctrl *>(msg->getControlInfo());
-            src.s_addr = ctrl->getSrc();
-            dst.s_addr = ctrl->getDest();
+            src.s_addr = ctrl->getSrc().getInt();
+            dst.s_addr = ctrl->getDest().getInt();
         }
         else
         {
             Ieee802Ctrl *ctrl = check_and_cast<Ieee802Ctrl *>(msg->removeControlInfo());
-            src.s_addr = ctrl->getSrc();
-            dst.s_addr = ctrl->getDest();
+            src.s_addr = ctrl->getSrc().getInt();
+            dst.s_addr = ctrl->getDest().getInt();
             if (ctrl)
                 delete ctrl;
 
@@ -882,7 +882,8 @@ void DYMOUM::processMacPacket(cPacket * p, const Uint128 &dest, const Uint128 &s
         if (isInMacLayer())
         {
             Ieee802Ctrl *ctrl = new Ieee802Ctrl();
-            ctrl->setDest(entry->rt_nxthop_addr.s_addr.getMACAddress());
+            ctrl->setDest(MACAddress(entry->rt_nxthop_addr.s_addr.getLo()));
+            //TODO ctrl->setEtherType(...);
             p->setControlInfo(ctrl);
         }
 
@@ -1002,7 +1003,7 @@ void DYMOUM::processPromiscuous(const cObject *details)
         }
         else
         {
-            gatewayAddr.s_addr = frame->getTransmitterAddress();
+            gatewayAddr.s_addr = frame->getTransmitterAddress().getInt();
         }
 
 
@@ -1117,7 +1118,7 @@ void DYMOUM::processFullPromiscuous(const cObject *details)
         }
         else
         {
-            addr.s_addr = twoAddressFrame->getTransmitterAddress();
+            addr.s_addr = twoAddressFrame->getTransmitterAddress().getInt();
         }
 
         entry = rtable_find(addr);
@@ -1348,9 +1349,9 @@ void DYMOUM::packetFailedMac(Ieee80211DataFrame *dgram)
         return;
     }
 
-    src_addr.s_addr = dgram->getAddress3();
-    dest_addr.s_addr = dgram->getAddress4();
-    next_hop.s_addr = dgram->getReceiverAddress();
+    src_addr.s_addr = dgram->getAddress3().getInt();
+    dest_addr.s_addr = dgram->getAddress4().getInt();
+    next_hop.s_addr = dgram->getReceiverAddress().getInt();
     int count = 0;
 
     if (isStaticNode() && getColaborativeProtocol())
@@ -1636,9 +1637,9 @@ void DYMOUM::rreq_proactive(void *arg)
     if (!isRoot)
          return;
     if (this->isInMacLayer())
-         dest.s_addr = MACAddress::BROADCAST_ADDRESS;
+         dest.s_addr = MACAddress::BROADCAST_ADDRESS.getInt();
     else
-         dest.s_addr = IPv4Address::ALLONES_ADDRESS;
+         dest.s_addr = IPv4Address::ALLONES_ADDRESS.getInt();
     re_send_rreq(dest, 0, NET_DIAMETER);
     timer_set_timeout(&proactive_rreq_timer, proactive_rreq_timeout);
     timer_add(&proactive_rreq_timer);

@@ -76,6 +76,7 @@ class KademliaLookupListener : public LookupListener
 private:
     Kademlia* overlay;
 public:
+    virtual ~KademliaLookupListener(){}
     KademliaLookupListener(Kademlia* overlay)
     {
         this->overlay = overlay;

@@ -36,6 +36,7 @@ class BrooseLookupListener : public LookupListener
 private:
     Broose* overlay;
 public:
+    virtual ~BrooseLookupListener() {}
     BrooseLookupListener(Broose* overlay)
     {
         this->overlay = overlay;

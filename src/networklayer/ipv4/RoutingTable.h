@@ -156,6 +156,11 @@ class INET_API RoutingTable: public cSimpleModule, public IRoutingTable, protect
      */
     virtual void printRoutingTable() const;
 
+    /**
+     * Returns the host or router this routing table lives in.
+     */
+    virtual cModule *getHostModule();
+
     /** @name Interfaces */
     //@{
     virtual void configureInterfaceForIPv4(InterfaceEntry *ie);
@@ -285,7 +290,7 @@ class INET_API RoutingTable: public cSimpleModule, public IRoutingTable, protect
      */
     virtual std::vector<IPv4Address> gatherAddresses() const;
 
-/**
+    /**
      * To be called from route objects whenever a field changes. Used for
      * maintaining internal data structures and firing "routing table changed"
      * notifications.

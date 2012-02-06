@@ -45,7 +45,9 @@
 extern int llfeedback;
 #endif              /* NS_PORT */
 
+#ifndef AODV_USE_STL_RT
 static unsigned int hashing(struct in_addr *addr, hash_value * hash);
+#endif
 
 #ifdef AODV_USE_STL_RT
 
@@ -151,7 +153,7 @@ rt_table_t *NS_CLASS rt_table_insert(struct in_addr dest_addr,
     {
         rt_tbl.num_active++;
         /* Add route to omnet inet routing table ... */
-        nm.s_addr = IPv4Address::ALLONES_ADDRESS;
+        nm.s_addr = IPv4Address::ALLONES_ADDRESS.getInt();
         if (useIndex)
             omnet_chg_rte(dest_addr, next, nm, hops,false,ifindex);
         else
@@ -298,7 +300,7 @@ int NS_CLASS rt_table_invalidate(rt_table_t * rt)
     /* delete route to omnet inet routing table ... */
     /* if delete is true fiels next, hops and mask are nor used */
     struct in_addr nm;
-    nm.s_addr = IPv4Address::ALLONES_ADDRESS;
+    nm.s_addr = IPv4Address::ALLONES_ADDRESS.getInt();
     omnet_chg_rte(rt->dest_addr, rt->dest_addr, nm, 0,true);
 
 #ifdef CONFIG_GATEWAY
@@ -391,7 +393,7 @@ void NS_CLASS rt_table_delete(rt_table_t * rt)
         /* delete route to omnet inet routing table ... */
         /* if delete is true fiels next, hops and mask are nor used */
         struct in_addr nm;
-        nm.s_addr = IPv4Address::ALLONES_ADDRESS;
+        nm.s_addr = IPv4Address::ALLONES_ADDRESS.getInt();
         omnet_chg_rte(rt->dest_addr, rt->dest_addr, nm, 0,true);
         rt_tbl.num_active--;
     }
@@ -1204,7 +1206,7 @@ rt_table_t *NS_CLASS rt_table_update(rt_table_t * rt, struct in_addr next,
 #else
 #ifdef OMNETPP
         /* Add route to omnet inet routing table ... */
-        nm.s_addr = IPv4Address::ALLONES_ADDRESS;
+        nm.s_addr = IPv4Address::ALLONES_ADDRESS.getInt();
         if (useIndex)
             omnet_chg_rte(rt->dest_addr, next, nm, hops,false,rt->ifindex);
         else
@@ -1226,7 +1228,7 @@ rt_table_t *NS_CLASS rt_table_update(rt_table_t * rt, struct in_addr next,
 #else
 #ifdef OMNETPP
         /* change route to omnet inet routing table ... */
-        nm.s_addr = IPv4Address::ALLONES_ADDRESS;
+        nm.s_addr = IPv4Address::ALLONES_ADDRESS.getInt();
         if (useIndex)
             omnet_chg_rte(rt->dest_addr, next, nm, hops,false,rt->ifindex);
         else
@@ -1299,8 +1301,6 @@ rt_table_t *NS_CLASS rt_table_update(rt_table_t * rt, struct in_addr next,
 NS_INLINE rt_table_t *NS_CLASS rt_table_update_timeout(rt_table_t * rt,
         u_int32_t lifetime)
 {
-    struct timeval new_timeout;
-
     if (!rt)
         return NULL;
 
@@ -1325,6 +1325,7 @@ NS_INLINE rt_table_t *NS_CLASS rt_table_update_timeout(rt_table_t * rt,
         if (rt->rt_timer.timeout < new_timeout)
             timer_set_timeout(&rt->rt_timer, lifetime);
 #else
+        struct timeval new_timeout;
         gettimeofday(&new_timeout, NULL);
         timeval_add_msec(&new_timeout, lifetime);
         if (timeval_diff(&rt->rt_timer.timeout, &new_timeout) < 0)

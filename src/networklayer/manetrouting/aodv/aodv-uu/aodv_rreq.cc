@@ -829,9 +829,9 @@ void NS_CLASS  rreq_proactive (void *arg)
     if (!isRoot)
          return;
     if (this->isInMacLayer())
-         dest.s_addr= MACAddress::BROADCAST_ADDRESS;
+         dest.s_addr= MACAddress::BROADCAST_ADDRESS.getInt();
     else
-         dest.s_addr= IPv4Address::ALLONES_ADDRESS;
+         dest.s_addr= IPv4Address::ALLONES_ADDRESS.getInt();
     rreq_send(dest,0,NET_DIAMETER, RREQ_DEST_ONLY);
     timer_set_timeout(&proactive_rreq_timer, proactive_rreq_timeout);
 }

@@ -179,7 +179,7 @@ void OSPF::LinkStateUpdateHandler::processPacket(OSPFPacket* packet, OSPF::Inter
                     }
                     shouldRebuildRoutingTable |= router->installLSA(currentLSA, areaID);
 
-                    // Add externalIPv4Route in IPRoutingTable if this route is learned by BGP
+                    // Add externalIPRoute in IPRoutingTable if this route is learned by BGP
                     if (currentType == AS_EXTERNAL_LSA_TYPE)
                     {
                         OSPFASExternalLSA* externalLSA = &(lsUpdatePacket->getAsExternalLSAs(0));

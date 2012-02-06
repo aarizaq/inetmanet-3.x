@@ -79,18 +79,16 @@ class INET_API IPv4 : public QueueBase
     // utility: show current statistics above the icon
     virtual void updateDisplayString();
 
-    /**
-     * Encapsulate packet coming from higher layers into IPv4Datagram, using
-     * the control info attached to the packet.
-     */
-    virtual IPv4Datagram *encapsulate(cPacket *transportPacket, InterfaceEntry *&destIE);
+    // utility: true if the incoming interface is the same as the
+    //          outgoing interface of the shortest path to the source
+    virtual bool receivedOnTheShortestPath(IPv4Datagram *datagram);
 
     /**
      * Encapsulate packet coming from higher layers into IPv4Datagram, using
      * the given control info. Override if you subclassed controlInfo and/or
      * want to add options etc to the datagram.
      */
-    virtual IPv4Datagram *encapsulate(cPacket *transportPacket, InterfaceEntry *&destIE, IPv4ControlInfo *controlInfo);
+    virtual IPv4Datagram *encapsulate(cPacket *transportPacket, IPv4ControlInfo *controlInfo);
 
     /**
      * Creates a blank IPv4 datagram. Override when subclassing IPv4Datagram is needed
@@ -101,7 +99,7 @@ class INET_API IPv4 : public QueueBase
      * Handle IPv4Datagram messages arriving from lower layer.
      * Decrements TTL, then invokes routePacket().
      */
-    virtual void handlePacketFromNetwork(IPv4Datagram *datagram);
+    virtual void handlePacketFromNetwork(IPv4Datagram *datagram, InterfaceEntry *fromIE);
 
     /**
      * Handle messages (typically packets to be send in IPv4) from transport or ICMP.
@@ -120,12 +118,16 @@ class INET_API IPv4 : public QueueBase
     virtual void handleReceivedICMP(ICMPMessage *msg);
 
     /**
-     * Performs routing. Based on the routing decision, it dispatches to
-     * reassembleAndDeliver() for local packets, to fragmentAndSend() for forwarded packets,
-     * to handleMulticastPacket() for multicast packets, or drops the packet if
-     * it's unroutable or forwarding is off.
+     * Performs unicast routing. Based on the routing decision, it sends the
+     * datagram through the outgoing interface.
      */
-    virtual void routePacket(IPv4Datagram *datagram, InterfaceEntry *destIE, bool fromHL, IPv4Address* nextHopAddrPtr);
+    virtual void routeUnicastPacket(IPv4Datagram *datagram, InterfaceEntry *destIE, IPv4Address nextHopAddr);
+
+    /**
+     * Broadcasts the datagram on the specified interface.
+     * When destIE is NULL, the datagram is broadcasted on each interface.
+     */
+    virtual void routeLocalBroadcastPacket(IPv4Datagram *datagram, InterfaceEntry *destIE);
 
     /**
      * Forwards packets to all multicast destinations, using fragmentAndSend().
@@ -141,7 +143,7 @@ class INET_API IPv4 : public QueueBase
     /**
      * Decapsulate and return encapsulated packet after attaching IPv4ControlInfo.
      */
-    virtual cPacket *decapsulateIP(IPv4Datagram *datagram);
+    virtual cPacket *decapsulate(IPv4Datagram *datagram);
 
     /**
      * Fragment packet if needed, then send it to the selected interface using
@@ -155,10 +157,26 @@ class INET_API IPv4 : public QueueBase
     virtual void sendDatagramToOutput(IPv4Datagram *datagram, InterfaceEntry *ie, IPv4Address nextHopAddr);
 
 #ifdef WITH_MANET
-    virtual void controlMessageToManetRouting(int, IPv4Datagram *datagram);
-#endif
+    /**
+     * Sends a MANET_ROUTE_UPDATE packet to Manet. The datagram is
+     * not transmitted, only its source and destination address is used.
+     * About DSR datagrams no update message is sent.
+     */
+    virtual void sendRouteUpdateMessageToManet(IPv4Datagram *datagram);
 
-    virtual void dsrFillDestIE(IPv4Datagram *, InterfaceEntry *&destIE, IPv4Address &nextHopAddress);
+    /**
+     * Sends a MANET_ROUTE_NOROUTE packet to Manet. The packet
+     * will encapsulate the given datagram, so this method takes
+     * ownership.
+     * DSR datagrams are transmitted as they are, i.e. without
+     * encapsulation. (?)
+     */
+    virtual void sendNoRouteMessageToManet(IPv4Datagram *datagram);
+ /**
+     * Sends a packet to the Manet module.
+     */
+    virtual void sendToManet(cPacket *packet);
+#endif
 
     const IPv4RouteRule * checkInputRule(const IPv4Datagram*);
     const IPv4RouteRule * checkOutputRule(const IPv4Datagram*, const InterfaceEntry*);

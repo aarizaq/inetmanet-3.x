@@ -394,7 +394,7 @@ bool SCTPAssociation::processInitArrived(SCTPInitChunk* initchunk, int32 srcPort
 #ifdef WITH_IPv4
                         adv.push_back(ift->getInterface(i)->ipv4Data()->getIPAddress());
 #else
-                        throw cRuntimeError("INET compiled without IPv4 features!");
+                        throw cRuntimeError("INET was compiled without IPv4 support");
 #endif
                     }
                     else if (ift->getInterface(i)->ipv6Data()!=NULL)
@@ -402,7 +402,7 @@ bool SCTPAssociation::processInitArrived(SCTPInitChunk* initchunk, int32 srcPort
 #ifdef WITH_IPv6
                         adv.push_back(ift->getInterface(i)->ipv6Data()->getAddress(0));
 #else
-                        throw cRuntimeError("INET compiled without IPv6 features!");
+                        throw cRuntimeError("INET was compiled without IPv6 support");
 #endif
                     }
                 }
@@ -1424,7 +1424,7 @@ void SCTPAssociation::process_TIMEOUT_INIT_REXMIT(SCTPEventCode& event)
         case SCTP_S_COOKIE_WAIT: retransmitInit(); break;
         case SCTP_S_COOKIE_ECHOED: retransmitCookieEcho(); break;
         default:
-            throw cRuntimeError(this, "Internal error: INIT-REXMIT timer expired while in state %s",
+            throw cRuntimeError("Internal error: INIT-REXMIT timer expired while in state %s",
                     stateName(fsm->getState()));
     }
     state->initRexmitTimeout *= 2;

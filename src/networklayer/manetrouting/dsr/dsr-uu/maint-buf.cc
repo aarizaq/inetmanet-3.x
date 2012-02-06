@@ -43,7 +43,7 @@ static DSRUUTimer ack_timer;
 
 struct maint_entry
 {
-    list_t l;
+    dsr_list_t l;
     struct in_addr nxt_hop;
     unsigned int rexmt;
     unsigned short id;
@@ -765,7 +765,7 @@ int NSCLASS maint_buf_del_addr(struct in_addr nxt_hop)
 #ifdef __KERNEL__
 static int maint_buf_print(struct tbl *t, char *buffer)
 {
-    list_t *p;
+    dsr_list_t *p;
     int len;
     struct timeval now;
 

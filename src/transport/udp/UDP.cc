@@ -23,11 +23,12 @@
 #include "IInterfaceTable.h"
 #include "InterfaceTableAccess.h"
 #include "InterfaceEntry.h"
+#include "IPv4ControlInfo.h"
+#include "IPv6ControlInfo.h"
 
 #ifdef WITH_IPv4
 #include "ICMPAccess.h"
 #include "ICMPMessage_m.h"
-#include "IPv4ControlInfo.h"
 #include "IPv4Datagram_m.h"
 #include "IPv4InterfaceData.h"
 #endif
@@ -35,7 +36,6 @@
 #ifdef WITH_IPv6
 #include "ICMPv6Access.h"
 #include "ICMPv6Message_m.h"
-#include "IPv6ControlInfo.h"
 #include "IPv6Datagram_m.h"
 #include "IPv6InterfaceData.h"
 #endif
@@ -183,16 +183,31 @@ void UDP::processCommandFromApp(cMessage *msg)
                 setBroadcast(ctrl->getSockId(), ((UDPSetBroadcastCommand*)ctrl)->getBroadcast());
             else if (dynamic_cast<UDPSetMulticastInterfaceCommand*>(ctrl))
                 setMulticastOutputInterface(ctrl->getSockId(), ((UDPSetMulticastInterfaceCommand*)ctrl)->getInterfaceId());
-            else if (dynamic_cast<UDPJoinMulticastGroupCommand*>(ctrl))
-                joinMulticastGroup(ctrl->getSockId(), ((UDPJoinMulticastGroupCommand*)ctrl)->getMulticastAddr(), ((UDPJoinMulticastGroupCommand*)ctrl)->getInterfaceId());
-            else if (dynamic_cast<UDPLeaveMulticastGroupCommand*>(ctrl))
-                leaveMulticastGroup(ctrl->getSockId(), ((UDPLeaveMulticastGroupCommand*)ctrl)->getMulticastAddr());
+            else if (dynamic_cast<UDPJoinMulticastGroupsCommand*>(ctrl))
+            {
+                UDPJoinMulticastGroupsCommand *cmd = (UDPJoinMulticastGroupsCommand*)ctrl;
+                std::vector<IPvXAddress> addresses;
+                std::vector<int> interfaceIds;
+                for (int i = 0; i < cmd->getMulticastAddrArraySize(); i++)
+                    addresses.push_back(cmd->getMulticastAddr(i));
+                for (int i = 0; i < cmd->getInterfaceIdArraySize(); i++)
+                    interfaceIds.push_back(cmd->getInterfaceId(i));
+                joinMulticastGroups(cmd->getSockId(), addresses, interfaceIds);
+            }
+            else if (dynamic_cast<UDPLeaveMulticastGroupsCommand*>(ctrl))
+            {
+                UDPLeaveMulticastGroupsCommand *cmd = (UDPLeaveMulticastGroupsCommand*)ctrl;
+                std::vector<IPvXAddress> addresses;
+                for (int i = 0; i < cmd->getMulticastAddrArraySize(); i++)
+                    addresses.push_back(cmd->getMulticastAddr(i));
+                leaveMulticastGroups(cmd->getSockId(), addresses);
+            }
             else
-                throw cRuntimeError("unknown subclass of UDPSetOptionCommand received from app: %s", ctrl->getClassName());
+                throw cRuntimeError("Unknown subclass of UDPSetOptionCommand received from app: %s", ctrl->getClassName());
             break;
         }
         default: {
-            throw cRuntimeError("unknown command code (message kind) %d received from app", msg->getKind());
+            throw cRuntimeError("Unknown command code (message kind) %d received from app", msg->getKind());
         }
     }
 
@@ -256,7 +271,6 @@ void UDP::processUDPPacket(UDPPacket *udpPacket)
     int ttl;
 
     cObject *ctrl = udpPacket->removeControlInfo();
-#ifdef WITH_IPv4
     if (dynamic_cast<IPv4ControlInfo *>(ctrl)!=NULL)
     {
         IPv4ControlInfo *ctrl4 = (IPv4ControlInfo *)ctrl;
@@ -267,10 +281,7 @@ void UDP::processUDPPacket(UDPPacket *udpPacket)
         isMulticast = ctrl4->getDestAddr().isMulticast();
         isBroadcast = ctrl4->getDestAddr() == IPv4Address::ALLONES_ADDRESS;  // note: we cannot recognize other broadcast addresses (where the host part is all-ones), because here we don't know the netmask
     }
-    else
-#endif
-#ifdef WITH_IPv6
-    if (dynamic_cast<IPv6ControlInfo *>(ctrl)!=NULL)
+    else if (dynamic_cast<IPv6ControlInfo *>(ctrl)!=NULL)
     {
         IPv6ControlInfo *ctrl6 = (IPv6ControlInfo *)ctrl;
         srcAddr = ctrl6->getSrcAddr();
@@ -280,9 +291,7 @@ void UDP::processUDPPacket(UDPPacket *udpPacket)
         isMulticast = ctrl6->getDestAddr().isMulticast();
         isBroadcast = false;  // IPv6 has no broadcast, just various multicasts
     }
-    else
-#endif
-    if (ctrl == NULL)
+    else if (ctrl == NULL)
     {
         error("(%s)%s arrived from lower layer without control info",
                 udpPacket->getClassName(), udpPacket->getName());
@@ -403,42 +412,47 @@ void UDP::processUndeliverablePacket(UDPPacket *udpPacket, cObject *ctrl)
     numDroppedWrongPort++;
 
     // send back ICMP PORT_UNREACHABLE
-#ifdef WITH_IPv4
     if (dynamic_cast<IPv4ControlInfo *>(ctrl) != NULL)
     {
-        if (!icmp)
-            icmp = ICMPAccess().get();
         IPv4ControlInfo *ctrl4 = (IPv4ControlInfo *)ctrl;
         bool isMulticast = ctrl4->getDestAddr().isMulticast();
         bool isBroadcast = ctrl4->getDestAddr() == IPv4Address::ALLONES_ADDRESS;
-
-        if (isMulticast || isBroadcast)
-            delete udpPacket;
-        else
+        if (!isMulticast && !isBroadcast)
+        {
+#ifdef WITH_IPv4
+            if (!icmp)
+                icmp = ICMPAccess().get();
             icmp->sendErrorMessage(udpPacket, ctrl4, ICMP_DESTINATION_UNREACHABLE, ICMP_DU_PORT_UNREACHABLE);
+#endif
     }
     else
-#endif
-#ifdef WITH_IPv6
-    if (dynamic_cast<IPv6ControlInfo *>(udpPacket->getControlInfo()) != NULL)
+            delete udpPacket;   // drop multicast packet
+    }
+    else if (dynamic_cast<IPv6ControlInfo *>(ctrl) != NULL)
     {
-        if (!icmpv6)
-            icmpv6 = ICMPv6Access().get();
-
         IPv6ControlInfo *ctrl6 = (IPv6ControlInfo *)ctrl;
 
         if (!ctrl6->getDestAddr().isMulticast())
+        {
+#ifdef WITH_IPv6
+            if (!icmpv6)
+                icmpv6 = ICMPv6Access().get();
             icmpv6->sendErrorMessage(udpPacket, ctrl6, ICMPv6_DESTINATION_UNREACHABLE, PORT_UNREACHABLE);
+#endif
+        }
         else
-            delete udpPacket;
+            delete udpPacket;   // drop multicast packet
+    }
+    else if (ctrl == NULL)
+    {
+        error("(%s)%s arrived from lower layer without control info",
+                udpPacket->getClassName(), udpPacket->getName());
     }
     else
-#endif
     {
-        error("(%s)%s arrived from lower layer without control info", udpPacket->getClassName(), udpPacket->getName()); //FIXME rather: with unrecognized control info
+        error("(%s)%s arrived from lower layer with unrecognized control info %s",
+                udpPacket->getClassName(), udpPacket->getName(), ctrl->getClassName());
     }
-    if (ctrl)
-       delete ctrl;
 }
 
 void UDP::bind(int sockId, int gateIndex, const IPvXAddress& localAddr, int localPort)
@@ -663,7 +677,6 @@ void UDP::sendDown(cPacket *appData, const IPvXAddress& srcAddr, ushort srcPort,
 
     if (!destAddr.isIPv6())
     {
-#ifdef WITH_IPv4
         // send to IPv4
         EV << "Sending app packet " << appData->getName() << " over IPv4.\n";
         IPv4ControlInfo *ipControlInfo = new IPv4ControlInfo();
@@ -676,13 +689,9 @@ void UDP::sendDown(cPacket *appData, const IPvXAddress& srcAddr, ushort srcPort,
 
         emit(sentPkSignal, udpPacket);
         send(udpPacket, "ipOut");
-#else
-        throw cRuntimeError("Cannot send packet over IPv4: INET compiled without the IPv4 feature");
-#endif
     }
     else
     {
-#ifdef WITH_IPv6
         // send to IPv6
         EV << "Sending app packet " << appData->getName() << " over IPv6.\n";
         IPv6ControlInfo *ipControlInfo = new IPv6ControlInfo();
@@ -695,9 +704,6 @@ void UDP::sendDown(cPacket *appData, const IPvXAddress& srcAddr, ushort srcPort,
 
         emit(sentPkSignal, udpPacket);
         send(udpPacket, "ipv6Out");
-#else
-        throw cRuntimeError("Cannot send packet over IPv6: INET compiled without the IPv6 feature");
-#endif
     }
     numSent++;
 }
@@ -733,9 +739,15 @@ void UDP::setMulticastOutputInterface(int sockId, int interfaceId)
     sd->multicastOutputInterfaceId = interfaceId;
 }
 
-void UDP::joinMulticastGroup(int sockId, const IPvXAddress& multicastAddr, int interfaceId)
+void UDP::joinMulticastGroups(int sockId, const std::vector<IPvXAddress>& multicastAddresses, const std::vector<int> interfaceIds)
 {
     SockDesc *sd = getSocketById(sockId);
+    int multicastAddressesLen = multicastAddresses.size();
+    int interfaceIdsLen = interfaceIds.size();
+    for (int k = 0; k < multicastAddressesLen; k++)
+    {
+        const IPvXAddress &multicastAddr = multicastAddresses[k];
+        int interfaceId = k < interfaceIdsLen ? interfaceIds[k] : -1;
     ASSERT(multicastAddr.isMulticast());
     sd->multicastAddrs[multicastAddr] = interfaceId;
 
@@ -753,6 +765,7 @@ void UDP::joinMulticastGroup(int sockId, const IPvXAddress& multicastAddr, int i
         int n = ift->getNumInterfaces();
         for (int i = 0; i < n; i++)
             addMulticastAddressToInterface(ift->getInterface(i), multicastAddr);
+    }
     }
 }
 
@@ -772,10 +785,11 @@ void UDP::addMulticastAddressToInterface(InterfaceEntry *ie, const IPvXAddress& 
     }
 }
 
-void UDP::leaveMulticastGroup(int sockId, const IPvXAddress& multicastAddr)
+void UDP::leaveMulticastGroups(int sockId, const std::vector<IPvXAddress>& multicastAddresses)
 {
     SockDesc *sd = getSocketById(sockId);
-    sd->multicastAddrs.erase(multicastAddr);
+    for (unsigned int i = 0; i < multicastAddresses.size(); i++)
+        sd->multicastAddrs.erase(multicastAddresses[i]);
     // note: we cannot remove the address from the interface, because someone else may still use it
 }
 

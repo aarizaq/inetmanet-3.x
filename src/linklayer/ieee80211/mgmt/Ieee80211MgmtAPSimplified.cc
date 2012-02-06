@@ -41,13 +41,19 @@ void Ieee80211MgmtAPSimplified::handleTimer(cMessage *msg)
 
 void Ieee80211MgmtAPSimplified::handleUpperMessage(cPacket *msg)
 {
+    Ieee80211DataFrame *frame = NULL;
+
 #ifdef WITH_ETHERNET
-    // convert Ethernet frames arriving from MACRelayUnit (i.e. from
-    // the AP's other Ethernet or wireless interfaces)
-    Ieee80211DataFrame *frame = convertFromEtherFrame(check_and_cast<EtherFrame *>(msg));
-#else
-    Ieee80211DataFrame *frame = check_and_cast<Ieee80211DataFrame *>(msg);
+    EtherFrame *etherframe = dynamic_cast<EtherFrame *>(msg);
+    if (etherframe)
+    {
+        frame = convertFromEtherFrame(etherframe);
+    }
+    else
 #endif
+    {
+        frame = check_and_cast<Ieee80211DataFrame *>(msg);
+    }
     sendOrEnqueue(frame);
 }
 
@@ -78,11 +84,7 @@ void Ieee80211MgmtAPSimplified::handleDataFrame(Ieee80211DataFrame *frame)
         // We don't need to call distributeReceivedDataFrame() here, because
         // if the frame needs to be distributed onto the wireless LAN too,
         // then relayUnit will send a copy back to us.
-#ifdef WITH_ETHERNET
-        send(convertToEtherFrame(frame->dup()), "upperLayerOut");
-#else
-        send(frame->dup(), "upperLayerOut");
-#endif
+        sendToUpperLayer(frame->dup());
     }
 
     // send it out to the destination STA

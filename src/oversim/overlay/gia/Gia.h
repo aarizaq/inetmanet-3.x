@@ -88,7 +88,7 @@ class Gia : public BaseOverlay
     /**
      * Destructor
      */
-    ~Gia();
+    virtual ~Gia();
 
     void handleTimerEvent(cMessage* msg);
 

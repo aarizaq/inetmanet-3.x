@@ -44,7 +44,7 @@ class KBRTestApp : public BaseApp
 {
 public:
     KBRTestApp();
-    ~KBRTestApp();
+    virtual ~KBRTestApp();
 
 private:
 

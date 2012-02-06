@@ -19,7 +19,7 @@
 #define __INET_INTERFACETABLE_H
 
 #include <vector>
-#include <omnetpp.h>
+
 #include "INETDefs.h"
 #include "IInterfaceTable.h"
 #include "InterfaceEntry.h"
@@ -110,6 +110,11 @@ class INET_API InterfaceTable : public cSimpleModule, public IInterfaceTable, pr
      * occurs to which this client has subscribed.
      */
     virtual void receiveChangeNotification(int category, const cObject *details);
+
+    /**
+     * Returns the host or router this interface table lives in.
+     */
+    virtual cModule *getHostModule();
 
     /**
      * Adds an interface. The second argument should be a module which belongs

@@ -166,7 +166,8 @@ void InterfaceEntry::setIPv6Data(IPv6InterfaceData *p)
 
 bool InterfaceEntry::setEstimateCostProcess(int position, MacEstimateCostProcess *p)
 {
-    if ((int)estimateCostProcessArray.size()<=position)
+    ASSERT(position >= 0);
+    if (estimateCostProcessArray.size() <= (size_t)position)
 	{
         estimateCostProcessArray.resize(position+1, NULL);
 	}
@@ -178,7 +179,8 @@ bool InterfaceEntry::setEstimateCostProcess(int position, MacEstimateCostProcess
 
 MacEstimateCostProcess* InterfaceEntry::getEstimateCostProcess(int position)
 {
-    if (position < (int)estimateCostProcessArray.size())
+    ASSERT(position >= 0);
+    if ((size_t)position < estimateCostProcessArray.size())
 	{
 		return estimateCostProcessArray[position];
 	}

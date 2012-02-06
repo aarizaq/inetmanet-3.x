@@ -18,14 +18,13 @@
 
 #include "ModuleAccess.h"
 #include <vector>
-#include "uint128.h"
-
+#include "MACAddress.h"
+#include "IPv4Address.h"
 
 class INET_API ILocator
 {
     public:
         virtual ~ILocator() {}
-        virtual void handleMessage(cMessage *);
         virtual const MACAddress  getLocatorMacToMac(const MACAddress &) = 0;
         virtual const IPv4Address getLocatorMacToIp(const MACAddress &) = 0;
         virtual const IPv4Address getLocatorIpToIp(const IPv4Address &) = 0;

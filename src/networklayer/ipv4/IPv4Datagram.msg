@@ -31,6 +31,11 @@ const int IP_HEADER_BYTES = 20;
 // maximum IPv4 header length (base+options): 60 = 4 * 15 bytes
 const int IP_MAX_HEADER_BYTES = 60;
 
+// option type fields
+const unsigned char IPOPTION_COPY_MASK   = 0x80;
+const unsigned char IPOPTION_CLASS_MASK  = 0x60;
+const unsigned char IPOPTION_NUMBER_MASK = 0x1F;
+
 // option entry number
 const unsigned int MAX_IPADDR_OPTION_ENTRIES = 9;
 const unsigned int MAX_TIMESTAMP_OPTION_ENTRIES = 4;
@@ -49,19 +54,21 @@ enum IPOptionClass
 };
 
 //
-// IPv4 option numbers
+// IPv4 option types
 //
 enum IPOption
 {
     IPOPTION_END_OF_OPTIONS = 0;
     IPOPTION_NO_OPTION = 1;
-    IPOPTION_SECURITY = 2;
-    IPOPTION_LOOSE_SOURCE_ROUTING = 3;
-    IPOPTION_TIMESTAMP = 4;
-    IPOPTION_RECORD_ROUTE = 7;
     IPOPTION_STREAM_ID = 8;
-    IPOPTION_STRICT_SOURCE_ROUTING = 9;
-    IPOPTION_ROUTER_ALERT = 20;
+
+    IPOPTION_TIMESTAMP = 68;
+
+    IPOPTION_SECURITY = 130;
+    IPOPTION_LOOSE_SOURCE_ROUTING = 131;
+    IPOPTION_RECORD_ROUTE = 136;
+    IPOPTION_STRICT_SOURCE_ROUTING = 137;
+    IPOPTION_ROUTER_ALERT = 148;
 };
 
 
@@ -136,7 +143,7 @@ packet IPv4Datagram
     int identification;
     bool moreFragments;
     bool dontFragment;
-    int fragmentOffset;
+    int fragmentOffset;         // bytes, must be multiple of 8
     unsigned char diffServCodePoint;
 
     int optionCode enum(IPOption) = IPOPTION_NO_OPTION;  //#FIXME modify header length when options are present

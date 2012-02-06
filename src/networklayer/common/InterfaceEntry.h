@@ -38,6 +38,7 @@ class IPv6InterfaceData;
 class INET_API MacEstimateCostProcess
 {
 public:
+    virtual ~MacEstimateCostProcess(){}
     virtual double getCost(int, MACAddress &) = 0;
     virtual double getNumCost() = 0;
     virtual int getNumNeighbors() = 0;
@@ -91,7 +92,7 @@ class INET_API InterfaceEntry : public cNamedObject
     bool loopback;        ///< interface is loopback interface
     double datarate;      ///< data rate in bit/s
     MACAddress macAddr;   ///< link-layer address (for now, only IEEE 802 MAC addresses are supported)
-    InterfaceToken token; ///< for IPv6 stateless autoconfig (RFC 1971)
+    InterfaceToken token; ///< for IPv6 stateless autoconfig (RFC 1971), interface identifier (RFC 2462)
 
     IPv4InterfaceData *ipv4data;   ///< IPv4-specific interface info (IPv4 address, etc)
     IPv6InterfaceData *ipv6data;   ///< IPv6-specific interface info (IPv6 addresses, etc)
@@ -166,10 +167,10 @@ class INET_API InterfaceEntry : public cNamedObject
 
     /** @name Accessing protocol-specific interface data. Note methods are non-virtual, for performance reasons. */
     //@{
-    IPv4InterfaceData *ipv4Data()  {return ipv4data;}
-    IPv6InterfaceData *ipv6Data()  {return ipv6data;}
-    InterfaceProtocolData *getProtocol3Data()  {return protocol3data;}
-    InterfaceProtocolData *getProtocol4Data()  {return protocol4data;}
+    IPv4InterfaceData *ipv4Data() const {return ipv4data;}
+    IPv6InterfaceData *ipv6Data() const  {return ipv6data;}
+    InterfaceProtocolData *getProtocol3Data() const {return protocol3data;}
+    InterfaceProtocolData *getProtocol4Data() const {return protocol4data;}
     //@}
 
     /** @name Installing protocol-specific interface data */

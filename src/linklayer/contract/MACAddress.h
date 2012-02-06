@@ -20,7 +20,6 @@
 #define MACADDRESS_H_
 
 #include <string>
-#include <omnetpp.h>
 #include "INETDefs.h"
 
 #define MAC_ADDRESS_SIZE 6

@@ -58,14 +58,14 @@ static struct path_table PCH;
 
 struct node_cache
 {
-    list_t l;
+    dsr_list_t l;
     struct tbl paths;
     struct in_addr addr;
 };
 
 struct path
 {
-    list_t l;
+    dsr_list_t l;
     struct in_addr *route;
     unsigned int *vector_cost;
     unsigned int size_cost;
@@ -156,7 +156,7 @@ static int __ph_route_tbl_add(struct path_table *rt_t,
     long diff;
     int size;
     rt_aux2=NULL;
-    list_t *pos;
+    dsr_list_t *pos;
 
     size = sizeof(struct in_addr)*(num_hops-1);
     n = __node_cache_find(rt_t,dst);
@@ -256,8 +256,8 @@ static int __ph_route_tbl_add(struct path_table *rt_t,
 
 struct dsr_srt *NSCLASS ph_srt_find(struct in_addr src,struct in_addr dst,int criteria,unsigned int timeout)
 {
-    list_t *tmp;
-    list_t *pos;
+    dsr_list_t *tmp;
+    dsr_list_t *pos;
     struct path * rt;
     struct timeval now;
     struct timeval *expires;
@@ -663,10 +663,10 @@ ph_srt_add_node(struct in_addr node, usecs_t timeout, unsigned short flags,unsig
 
 void NSCLASS ph_srt_delete_node(struct in_addr src)
 {
-    list_t *tmp;
-    list_t *tmp2;
-    list_t *pos1;
-    list_t *pos2;
+    dsr_list_t *tmp;
+    dsr_list_t *tmp2;
+    dsr_list_t *pos1;
+    dsr_list_t *pos2;
     struct path * rt;
     struct timeval now;
     struct node_cache *n_cache;
@@ -732,10 +732,10 @@ void NSCLASS ph_srt_delete_node(struct in_addr src)
 
 void NSCLASS ph_srt_delete_link(struct in_addr src,struct in_addr dst)
 {
-    list_t *tmp;
-    list_t *tmp2;
-    list_t *pos1;
-    list_t *pos2;
+    dsr_list_t *tmp;
+    dsr_list_t *tmp2;
+    dsr_list_t *pos1;
+    dsr_list_t *pos2;
     struct path * rt;
     struct timeval now;
     struct node_cache *n_cache;
@@ -832,10 +832,10 @@ int NSCLASS path_cache_init(void)
 
 void NSCLASS path_cache_cleanup(void)
 {
-    list_t *tmp;
-    list_t *tmp2;
-    list_t *pos1;
-    list_t *pos2;
+    dsr_list_t *tmp;
+    dsr_list_t *tmp2;
+    dsr_list_t *pos1;
+    dsr_list_t *pos2;
     struct path * rt;
     struct node_cache *n_cache;
     int i;

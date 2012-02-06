@@ -47,15 +47,16 @@ simple Ieee80211MgmtAP like IIeee80211Mgmt
         int frameCapacity = default(100); // maximum queue length
         int numAuthSteps = default(4); // use 2 for Open System auth, 4 for WEP
         bool forceRelayUnit=default(false);
+        bool convertToEtherFrame = default(true);   // if true, frames sent up are converted to EthernetIIFrame
         //dataRate: numeric; XXX TBD
         @display("i=block/cogwheel");
         @signal[enqueuePk](type=cMessage);
         @signal[dequeuePk](type=cMessage);
         @signal[dropPkByQueue](type=cMessage);
         @signal[queueingTime](type=simtime_t; unit=s);
-        @signal[dataQueueLen](type=long; interpolationmode=sample-hold);  // number of stored packets
-        @statistic[dataQueueLen](title="Data queue len"; record=histogram,vector; interpolationmode=sample-hold);
-        @statistic[droppedPkBytesByQueue](title="Dropped packet bytes by queue"; source="packetBytes(dropPkByQueue)"; unit=B; record=count,sum,vector; interpolationmode=none);
+        @signal[dataQueueLen](type=long);  // number of stored packets
+        @statistic[dataQueueLen](title="data queue length"; record=max,timeavg,vector; interpolationmode=sample-hold);
+        @statistic[dropPkByQueue](title="packets dropped by queue"; source=dropPkByQueue; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
     gates:
         input upperLayerIn; // from ~IMACRelayUnit; can be left unconnected
         output upperLayerOut; // to ~IMACRelayUnit; can be left unconnected

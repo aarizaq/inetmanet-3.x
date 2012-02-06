@@ -170,7 +170,7 @@ void RoutingTable::updateDisplayString()
 
 void RoutingTable::handleMessage(cMessage *msg)
 {
-    throw cRuntimeError(this, "This module doesn't process messages");
+    throw cRuntimeError("This module doesn't process messages");
 }
 
 void RoutingTable::receiveChangeNotification(int category, const cObject *details)
@@ -206,6 +206,11 @@ void RoutingTable::receiveChangeNotification(int category, const cObject *detail
         // based routes have to be re-built.
         updateNetmaskRoutes();
     }
+}
+
+cModule *RoutingTable::getHostModule()
+{
+    return findContainingNode(this);
 }
 
 bool RoutingTable::deleteInterfaceRoutesFrom(RoutingTable::RouteVector &vector, InterfaceEntry *entry)
@@ -506,12 +511,11 @@ bool RoutingTable::routeLessThan(const IPv4Route *a, const IPv4Route *b)
 
 void RoutingTable::internalAddRoute(IPv4Route *entry)
 {
-    // check for null address and default route
-    if (entry->getDestination().isUnspecified() != entry->getNetmask().isUnspecified())
-        error("addRoute(): to add a default route, set both destination and netmask to zero");
+    if (!entry->getNetmask().isValidNetmask())
+        error("addRoute(): wrong netmask %s in route", entry->getNetmask().str().c_str());
 
     if ((entry->getDestination().getInt() & ~entry->getNetmask().getInt()) != 0)
-        error("addRoute(): suspicious route: destination %s has 1-bits outside netmask %s",
+        error("addRoute(): suspicious route: destination IP address %s has bits set outside netmask %s",
               entry->getDestination().str().c_str(), entry->getNetmask().str().c_str());
 
     // check that the interface exists

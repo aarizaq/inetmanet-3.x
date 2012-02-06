@@ -612,7 +612,7 @@ void NS_CLASS aodv_socket_send(AODV_msg * aodv_msg, struct in_addr dst,
 
         if (dst.s_addr == AODV_BROADCAST)
         {
-            destAdd = IPv4Address::ALLONES_ADDRESS;
+            destAdd = IPv4Address::ALLONES_ADDRESS.getInt();
         }
         else
         {
@@ -664,7 +664,7 @@ void NS_CLASS aodv_socket_send(AODV_msg * aodv_msg, struct in_addr dst,
         Uint128 destAdd;
         if (dst.s_addr == AODV_BROADCAST)
         {
-            destAdd = IPv4Address::ALLONES_ADDRESS;
+            destAdd = IPv4Address::ALLONES_ADDRESS.getInt();
             if (delay>0)
             {
                 if (useIndex)

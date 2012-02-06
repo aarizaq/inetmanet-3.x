@@ -27,7 +27,7 @@
 #include "UDPSocket.h"
 
 
-class LocatorModule : public cSimpleModule, ILocator, protected INotifiable, protected cListener
+class LocatorModule : public cSimpleModule, public ILocator, protected INotifiable, protected cListener
 {
     protected:
         struct LocEntry

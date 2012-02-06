@@ -32,7 +32,7 @@
 
 #ifdef __KERNEL__
 
-typedef struct list_head list_t;
+typedef struct list_head dsr_list_t;
 #define LIST_INIT_HEAD(name) LIST_HEAD_INIT(name)
 
 #define TBL_INIT(name, max_len) { LIST_INIT_HEAD(name.head), \
@@ -80,7 +80,7 @@ typedef struct list_head list_t;
 
 struct tbl
 {
-    list_t head;
+    dsr_list_t head;
     volatile unsigned int len;
     volatile unsigned int max_len;
 #ifdef __KERNEL__
@@ -112,7 +112,7 @@ static inline int tbl_empty(struct tbl *t)
     return res;
 }
 
-static inline int __tbl_add(struct tbl *t, list_t * l, criteria_t crit)
+static inline int __tbl_add(struct tbl *t, dsr_list_t * l, criteria_t crit)
 {
     int len;
 
@@ -128,7 +128,7 @@ static inline int __tbl_add(struct tbl *t, list_t * l, criteria_t crit)
     }
     else
     {
-        list_t *pos;
+        dsr_list_t *pos;
 
         list_for_each(pos, &t->head)
         {
@@ -144,7 +144,7 @@ static inline int __tbl_add(struct tbl *t, list_t * l, criteria_t crit)
     return len;
 }
 
-static inline int __tbl_add_tail(struct tbl *t, list_t * l)
+static inline int __tbl_add_tail(struct tbl *t, dsr_list_t * l)
 {
     int len;
 
@@ -161,7 +161,7 @@ static inline int __tbl_add_tail(struct tbl *t, list_t * l)
     return len;
 }
 
-static inline int tbl_add_tail(struct tbl *t, list_t * l)
+static inline int tbl_add_tail(struct tbl *t, dsr_list_t * l)
 {
     int len;
     DSR_WRITE_LOCK(&t->lock);
@@ -172,7 +172,7 @@ static inline int tbl_add_tail(struct tbl *t, list_t * l)
 
 static inline void *__tbl_find(struct tbl *t, void *id, criteria_t crit)
 {
-    list_t *pos;
+    dsr_list_t *pos;
 
     list_for_each(pos, &t->head)
     {
@@ -182,7 +182,7 @@ static inline void *__tbl_find(struct tbl *t, void *id, criteria_t crit)
     return NULL;
 }
 
-static inline void *__tbl_detach(struct tbl *t, list_t * l)
+static inline void *__tbl_detach(struct tbl *t, dsr_list_t * l)
 {
     //int len;
 
@@ -197,7 +197,7 @@ static inline void *__tbl_detach(struct tbl *t, list_t * l)
     return l;
 }
 
-static inline int __tbl_del(struct tbl *t, list_t * l)
+static inline int __tbl_del(struct tbl *t, dsr_list_t * l)
 {
 
     if (!__tbl_detach(t, l))
@@ -210,7 +210,7 @@ static inline int __tbl_del(struct tbl *t, list_t * l)
 
 static inline int __tbl_find_do(struct tbl *t, void *data, do_t func)
 {
-    list_t *pos, *tmp;
+    dsr_list_t *pos, *tmp;
 
     list_for_each_safe(pos, tmp, &t->head)
     if (func(pos, data))
@@ -232,7 +232,7 @@ static inline int tbl_find_do(struct tbl *t, void *data, do_t func)
 
 static inline int __tbl_do_for_each(struct tbl *t, void *data, do_t func)
 {
-    list_t *pos;
+    dsr_list_t *pos;
     int res = 0;
 
     list_for_each(pos, &t->head)
@@ -254,11 +254,11 @@ static inline int tbl_do_for_each(struct tbl *t, void *data, do_t func)
 
 static inline void *tbl_find_detach(struct tbl *t, void *id, criteria_t crit)
 {
-    list_t *e;
+    dsr_list_t *e;
 
     DSR_WRITE_LOCK(&t->lock);
 
-    e = (list_t *) __tbl_find(t, id, crit);
+    e = (dsr_list_t *) __tbl_find(t, id, crit);
 
     if (!e)
     {
@@ -273,7 +273,7 @@ static inline void *tbl_find_detach(struct tbl *t, void *id, criteria_t crit)
     return e;
 }
 
-static inline void *tbl_detach(struct tbl *t, list_t * l)
+static inline void *tbl_detach(struct tbl *t, dsr_list_t * l)
 {
     void *e;
 
@@ -285,7 +285,7 @@ static inline void *tbl_detach(struct tbl *t, list_t * l)
 
 static inline void *tbl_detach_first(struct tbl *t)
 {
-    list_t *e;
+    dsr_list_t *e;
 
     DSR_WRITE_LOCK(&t->lock);
 
@@ -305,7 +305,7 @@ static inline void *tbl_detach_first(struct tbl *t)
     return e;
 }
 
-static inline int tbl_add(struct tbl *t, list_t * l, criteria_t crit)
+static inline int tbl_add(struct tbl *t, dsr_list_t * l, criteria_t crit)
 {
     int len;
 
@@ -315,7 +315,7 @@ static inline int tbl_add(struct tbl *t, list_t * l, criteria_t crit)
     return len;
 }
 
-static inline int tbl_del(struct tbl *t, list_t * l)
+static inline int tbl_del(struct tbl *t, dsr_list_t * l)
 {
     int res;
 
@@ -329,11 +329,11 @@ static inline int tbl_del(struct tbl *t, list_t * l)
 }
 static inline int tbl_find_del(struct tbl *t, void *id, criteria_t crit)
 {
-    list_t *e;
+    dsr_list_t *e;
 
     DSR_WRITE_LOCK(&t->lock);
 
-    e = (list_t *) __tbl_find(t, id, crit);
+    e = (dsr_list_t *) __tbl_find(t, id, crit);
 
     if (!e)
     {
@@ -351,10 +351,10 @@ static inline int tbl_find_del(struct tbl *t, void *id, criteria_t crit)
 
 static inline int tbl_del_first(struct tbl *t)
 {
-    list_t *l;
+    dsr_list_t *l;
     int n = 0;
 
-    l = (list_t *) tbl_detach_first(t);
+    l = (dsr_list_t *) tbl_detach_first(t);
 
     FREE(l);
 
@@ -362,7 +362,7 @@ static inline int tbl_del_first(struct tbl *t)
 }
 static inline int tbl_for_each_del(struct tbl *t, void *id, criteria_t crit)
 {
-    list_t *pos, *tmp;
+    dsr_list_t *pos, *tmp;
     int n = 0;
 
     DSR_WRITE_LOCK(&t->lock);
@@ -396,7 +396,7 @@ static inline int in_tbl(struct tbl *t, void *id, criteria_t crit)
 
 static inline void tbl_flush(struct tbl *t, do_t at_flush)
 {
-    list_t *pos, *tmp;
+    dsr_list_t *pos, *tmp;
 
     DSR_WRITE_LOCK(&t->lock);
 

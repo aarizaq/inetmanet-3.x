@@ -21,15 +21,8 @@
 #include "TCP_NSC.h"
 
 #include "headers/defs.h"   // for endian macros
-
-#ifdef WITH_IPv4
 #include "IPv4ControlInfo.h"
-#endif
-
-#ifdef WITH_IPv6
 #include "IPv6ControlInfo.h"
-#endif
-
 #include "headers/tcp.h"
 #include "TCPCommand_m.h"
 #include "TCPIPchecksum.h"
@@ -294,7 +287,6 @@ void TCP_NSC::handleIpInputMessage(TCPSegment* tcpsegP)
     // get src/dest addresses
     TCP_NSC_Connection::SockPair nscSockPair, inetSockPair, inetSockPairAny;
 
-#ifdef WITH_IPv4
     if (dynamic_cast<IPv4ControlInfo *>(tcpsegP->getControlInfo())!=NULL)
     {
         IPv4ControlInfo *controlInfo = (IPv4ControlInfo *)tcpsegP->removeControlInfo();
@@ -303,8 +295,6 @@ void TCP_NSC::handleIpInputMessage(TCPSegment* tcpsegP)
         delete controlInfo;
     }
     else
-#endif
-#ifdef WITH_IPv6
     if (dynamic_cast<IPv6ControlInfo *>(tcpsegP->getControlInfo())!=NULL)
     {
         IPv6ControlInfo *controlInfo = (IPv6ControlInfo *)tcpsegP->removeControlInfo();
@@ -330,7 +320,6 @@ void TCP_NSC::handleIpInputMessage(TCPSegment* tcpsegP)
         }
     }
     else
-#endif
     {
         error("(%s)%s arrived without control info", tcpsegP->getClassName(), tcpsegP->getName());
     }
@@ -683,14 +672,14 @@ void TCP_NSC::loadStack(const char* stacknameP, int bufferSizeP)
 
     if (!handle)
     {
-        throw cRuntimeError(this, "The loading of '%s' NSC stack is unsuccessful: %s. Check the LD_LIBRARY_PATH or stackname!", stacknameP, dlerror());
+        throw cRuntimeError("The loading of '%s' NSC stack is unsuccessful: %s. Check the LD_LIBRARY_PATH or stackname!", stacknameP, dlerror());
     }
 
     create = (FCreateStack)dlsym(handle, "nsc_create_stack");
 
     if (!create)
     {
-        throw cRuntimeError(this, "The '%s' NSC stack creation unsuccessful: %s", stacknameP, dlerror());
+        throw cRuntimeError("The '%s' NSC stack creation unsuccessful: %s", stacknameP, dlerror());
     }
 
     pStackM = create(this, this, NULL);
@@ -836,7 +825,6 @@ void TCP_NSC::sendToIP(const void *dataP, int lenP)
 
     if (!dest.isIPv6())
     {
-#ifdef WITH_IPv4
         // send over IPv4
         IPv4ControlInfo *controlInfo = new IPv4ControlInfo();
         controlInfo->setProtocol(IP_PROT_TCP);
@@ -845,13 +833,9 @@ void TCP_NSC::sendToIP(const void *dataP, int lenP)
         tcpseg->setControlInfo(controlInfo);
 
         output = "ipOut";
-#else
-        throw cRuntimeError("INET compiled without IPv4 features!");
-#endif
     }
     else
     {
-#ifdef WITH_IPv6
         // send over IPv6
         IPv6ControlInfo *controlInfo = new IPv6ControlInfo();
         controlInfo->setProtocol(IP_PROT_TCP);
@@ -860,9 +844,6 @@ void TCP_NSC::sendToIP(const void *dataP, int lenP)
         tcpseg->setControlInfo(controlInfo);
 
         output = "ipv6Out";
-#else
-        throw cRuntimeError("INET compiled without IPv6 features!");
-#endif
     }
 
     if (conn)
@@ -895,7 +876,7 @@ void TCP_NSC::processAppCommand(TCP_NSC_Connection& connP, cMessage *msgP)
         case TCP_C_CLOSE: process_CLOSE(connP, tcpCommand, msgP); break;
         case TCP_C_ABORT: process_ABORT(connP, tcpCommand, msgP); break;
         case TCP_C_STATUS: process_STATUS(connP, tcpCommand, msgP); break;
-        default: throw cRuntimeError(this, "wrong command from app: %d", msgP->getKind());
+        default: throw cRuntimeError("Wrong command from app: %d", msgP->getKind());
     }
 
     /*
@@ -916,7 +897,7 @@ void TCP_NSC::process_OPEN_ACTIVE(TCP_NSC_Connection& connP, TCPCommand *tcpComm
     inetSockPair.remoteM.portM = openCmd->getRemotePort();
 
     if (inetSockPair.remoteM.ipAddrM.isUnspecified() || inetSockPair.remoteM.portM == -1)
-        throw cRuntimeError(this, "Error processing command OPEN_ACTIVE: remote address and port must be specified");
+        throw cRuntimeError("Error processing command OPEN_ACTIVE: remote address and port must be specified");
 
     tcpEV << this << ": OPEN: "
         << inetSockPair.localM.ipAddrM << ":" << inetSockPair.localM.portM << " --> "
@@ -955,7 +936,7 @@ void TCP_NSC::process_OPEN_PASSIVE(TCP_NSC_Connection& connP, TCPCommand *tcpCom
     TCPOpenCommand *openCmd = check_and_cast<TCPOpenCommand *>(tcpCommandP);
 
     if (!openCmd->getFork())
-        throw cRuntimeError(this, "TCP_NSC supports Forking mode only");
+        throw cRuntimeError("TCP_NSC supports Forking mode only");
 
 
     TCP_NSC_Connection::SockPair inetSockPair, nscSockPair;
@@ -971,7 +952,7 @@ void TCP_NSC::process_OPEN_PASSIVE(TCP_NSC_Connection& connP, TCPCommand *tcpCom
     (void)nscRemoteAddr; // Eliminate "unused variable" warning.
 
     if (inetSockPair.localM.portM == -1)
-        throw cRuntimeError(this, "Error processing command OPEN_PASSIVE: local port must be specified");
+        throw cRuntimeError("Error processing command OPEN_PASSIVE: local port must be specified");
 
     tcpEV << this << "Starting to listen on: " << inetSockPair.localM.ipAddrM << ":" << inetSockPair.localM.portM << "\n";
 
@@ -1087,6 +1068,7 @@ void TCP_NSC::process_STATUS(TCP_NSC_Connection& connP, TCPCommand *tcpCommandP,
 */
 
     msgP->setControlInfo(statusInfo);
+    msgP->setKind(TCP_I_STATUS);
     send(msgP, "appOut", connP.appGateIndexM);
 }
 

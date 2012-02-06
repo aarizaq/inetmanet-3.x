@@ -27,12 +27,6 @@
 void Ieee80211MgmtAPBase::initialize(int stage)
 {
     Ieee80211MgmtBase::initialize(stage);
-
-//    if (stage==0)
-//    {
-//        hasRelayUnit = gate("upperLayerOut")->getPathEndGate()->isConnected();
-//        WATCH(hasRelayUnit);
-//    }
 #ifdef WITH_DHCP
     // JcM fix: Check if really the module connected in upperLayerOut is a relay unit
     // or a network layer. This is important to encap/decap the packet correctly in the Mgmt module
@@ -47,12 +41,14 @@ void Ieee80211MgmtAPBase::initialize(int stage)
         {
             hasRelayUnit = false;
         }
+        convertToEtherFrameFlag = par("convertToEtherFrame").boolValue();
         WATCH(hasRelayUnit);
     }
 #else
     if (stage==0)
     {
         hasRelayUnit = gate("upperLayerOut")->getPathEndGate()->isConnected();
+        convertToEtherFrameFlag = par("convertToEtherFrame").boolValue();
         WATCH(hasRelayUnit);
     }
 #endif
@@ -74,10 +70,19 @@ void Ieee80211MgmtAPBase::distributeReceivedDataFrame(Ieee80211DataFrame *frame)
     sendOrEnqueue(frame);
 }
 
+void Ieee80211MgmtAPBase::sendToUpperLayer(Ieee80211DataFrame *frame)
+{
+    cPacket *outFrame = frame;
+    if (convertToEtherFrameFlag)
+        outFrame = (cPacket *) convertToEtherFrame(frame);
+    send(outFrame, "upperLayerOut");
+}
+
 EtherFrame *Ieee80211MgmtAPBase::convertToEtherFrame(Ieee80211DataFrame *frame_)
 {
-#ifdef WITH_ETHERNET
     Ieee80211DataFrameWithSNAP *frame = check_and_cast<Ieee80211DataFrameWithSNAP *>(frame_);
+
+#ifdef WITH_ETHERNET
     // create a matching ethernet frame
     EthernetIIFrame *ethframe = new EthernetIIFrame(frame->getName()); //TODO option to use EtherFrameWithSNAP instead
     ethframe->setDest(frame->getAddress3());
@@ -95,7 +100,7 @@ EtherFrame *Ieee80211MgmtAPBase::convertToEtherFrame(Ieee80211DataFrame *frame_)
     // done
     return ethframe;
 #else
-    throw cRuntimeError(this, "INET compiled without ETHERNET feature!");
+    throw cRuntimeError("INET compiled without ETHERNET feature!");
 #endif
 }
 
@@ -128,7 +133,7 @@ Ieee80211DataFrame *Ieee80211MgmtAPBase::convertFromEtherFrame(EtherFrame *ethfr
     // done
     return frame;
 #else
-    throw cRuntimeError(this, "INET compiled without ETHERNET feature!");
+    throw cRuntimeError("INET compiled without ETHERNET feature!");
 #endif
 }
 

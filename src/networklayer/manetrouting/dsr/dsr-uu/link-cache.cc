@@ -54,7 +54,7 @@ static struct lc_graph LC;
 
 struct lc_node
 {
-    list_t l;
+    dsr_list_t l;
     struct in_addr addr;
     unsigned int links;
     unsigned int cost;  /* Cost estimate from source when running Dijkstra */
@@ -67,7 +67,7 @@ struct lc_node
 
 struct lc_link
 {
-    list_t l;
+    dsr_list_t l;
     struct lc_node *src, *dst;
     int status;
     unsigned int cost;
@@ -743,7 +743,7 @@ static char *print_cost(unsigned int cost)
 
 static int lc_print(struct lc_graph *LC, char *buf)
 {
-    list_t *pos;
+    dsr_list_t *pos;
     int len = 0;
     struct timeval now;
 
