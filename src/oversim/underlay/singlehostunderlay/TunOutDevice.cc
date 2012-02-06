@@ -57,7 +57,7 @@ char* TunOutDevice::encapsulate(cPacket *msg,
     volatile iphdr* ip_buf;
     volatile udphdr* udp_buf;
 
-    IPDatagram* IP = check_and_cast<IPDatagram*>(msg);
+    IPv4Datagram* IP = check_and_cast<IPv4Datagram*>(msg);
 
     // FIXME: Cast ICMP-Messages
     UDPPacket* UDP = dynamic_cast<UDPPacket*>(IP->decapsulate());
@@ -161,7 +161,7 @@ cPacket* TunOutDevice::decapsulate(char* buf,
     // Message starts with IP header
     iphdr* ip_buf = (iphdr*) buf;
     udphdr* udp_buf;
-    IPDatagram* IP = new IPDatagram;
+    IPv4Datagram* IP = new IPv4Datagram;
     UDPPacket* UDP = new UDPPacket;
     cPacket* payload = 0;
     unsigned int payloadLen, datagramlen;
@@ -200,8 +200,8 @@ cPacket* TunOutDevice::decapsulate(char* buf,
            << endl;
         goto parse_error;
     }
-    IP->setSrcAddress( IPAddress( ntohl(ip_buf->saddr) ));
-    IP->setDestAddress( IPAddress( ntohl(ip_buf->daddr) ));
+    IP->setSrcAddress( IPv4Address( ntohl(ip_buf->saddr) ));
+    IP->setDestAddress( IPv4Address( ntohl(ip_buf->daddr) ));
     IP->setTransportProtocol( ip_buf->protocol );
     IP->setTimeToLive( ip_buf->ttl );
     IP->setIdentification( ntohs(ip_buf->id) );
