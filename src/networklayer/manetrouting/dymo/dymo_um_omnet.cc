@@ -1444,16 +1444,33 @@ bool  DYMOUM::getNextHop(const Uint128 &dest, Uint128 &add, int &iface, double &
 {
     struct in_addr destAddr;
     destAddr.s_addr = dest;
+    Uint128 apAddr;
     rtable_entry_t * fwd_rt = rtable_find(destAddr);
-    if (!fwd_rt )
-        return false;
-    if (fwd_rt->rt_state != RT_VALID)
-        return false;
-    add = fwd_rt->rt_nxthop_addr.s_addr;
-    InterfaceEntry * ie = getInterfaceEntry(fwd_rt->rt_ifindex);
-    iface = ie->getInterfaceId();
-    cost = fwd_rt->rt_hopcnt;
-    return true;
+    if (fwd_rt)
+    {
+        if (fwd_rt->rt_state != RT_VALID)
+            return false;
+        add = fwd_rt->rt_nxthop_addr.s_addr;
+        InterfaceEntry * ie = getInterfaceEntry(fwd_rt->rt_ifindex);
+        iface = ie->getInterfaceId();
+        cost = fwd_rt->rt_hopcnt;
+        return true;
+    }
+    else if (getAp(dest,apAddr))
+    {
+        destAddr.s_addr = apAddr;
+        fwd_rt = rtable_find(destAddr);
+        if (!fwd_rt)
+            return false;
+        if (fwd_rt->rt_state != RT_VALID)
+            return false;
+        add = fwd_rt->rt_nxthop_addr.s_addr;
+        InterfaceEntry * ie = getInterfaceEntry(fwd_rt->rt_ifindex);
+        iface = ie->getInterfaceId();
+        cost = fwd_rt->rt_hopcnt;
+        return true;
+    }
+    return false;
 }
 
 bool DYMOUM::isProactive()

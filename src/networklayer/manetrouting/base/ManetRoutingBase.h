@@ -317,6 +317,7 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
     virtual bool isProactive() = 0;
     virtual bool isOurType(cPacket *) = 0;
     virtual bool getDestAddress(cPacket *, Uint128 &) = 0;
+    virtual bool addressIsForUs(const Uint128 &) const; // return true if the address is local or is in the proxy list
     virtual TimerMultiMap *getTimerMultimMap() const {return timerMultiMapPtr;}
     virtual void setPtr(void *ptr) {commonPtr = ptr;}
     virtual const void * getPtr()const {return commonPtr;}
@@ -353,10 +354,10 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
     virtual bool isAddressInProxyList(const Uint128 &);
     virtual void setAddressInProxyList(const Uint128 &,const Uint128 &);
     virtual int getNumAddressInProxyList() {return (int)proxyAddress.size();}
-    virtual bool getAddressInProxyList(int,Uint128 &, Uint128 &);
-
+    virtual bool getAddressInProxyList(int,Uint128 &addr, Uint128 &mask);
     // access to locator information
-    bool getAp(Uint128 &, Uint128);
+    bool getAp(const Uint128 &, Uint128 &) const;
+    //
 
 };
 

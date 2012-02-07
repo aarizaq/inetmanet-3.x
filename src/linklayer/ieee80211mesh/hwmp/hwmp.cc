@@ -1706,11 +1706,26 @@ bool HwmpProtocol::getDestAddress(cPacket *msg, Uint128 &addr)
     return true;
 }
 
+
 bool HwmpProtocol::getNextHop(const Uint128 &dest, Uint128 &add, int &iface, double &cost)
 {
     HwmpRtable::LookupResult result = m_rtable->LookupReactive(MACAddress(dest.getLo()));
     if (result.retransmitter.isUnspecified()) // address not valid
     {
+        Uint128 apAddr;
+        if (getAp(dest,apAddr))
+        {
+            MACAddress macAddr(apAddr.getLo());
+            // search this address
+            HwmpRtable::LookupResult result = m_rtable->LookupReactive(macAddr);
+            if (!result.retransmitter.isUnspecified())
+            {
+                add = result.retransmitter.getInt();
+                cost = result.metric;
+                iface = result.ifIndex;
+                return true;
+            }
+        }
         if (m_concurrentReactive && !isRoot())
         {
             if (shouldSendPreq(MACAddress(dest.getLo())))
@@ -1729,6 +1744,10 @@ bool HwmpProtocol::getNextHop(const Uint128 &dest, Uint128 &add, int &iface, dou
         iface = result.ifIndex;
         return true;
     }
+
+    if (isRoot())
+        return false; // the node is root and doesn't have a valid route
+
     HwmpRtable::LookupResult resultProact = m_rtable->LookupProactive();
     if (resultProact.retransmitter.isUnspecified())
         return false; // the Mesh code should send the packet to hwmp
@@ -1747,7 +1766,28 @@ bool HwmpProtocol::getNextHopReactive(const Uint128 &dest, Uint128 &add, int &if
 {
     HwmpRtable::LookupResult result = m_rtable->LookupReactive(MACAddress(dest.getLo()));
     if (result.retransmitter.isUnspecified()) // address not valid
-        return false;
+    {
+        Uint128 apAddr;
+        if (getAp(dest,apAddr))
+        {
+            MACAddress macAddr(apAddr.getLo());
+            if (!macAddr.isUnspecified())
+            {
+                // search this address
+                HwmpRtable::LookupResult result = m_rtable->LookupReactive(macAddr);
+                if (!result.retransmitter.isUnspecified())
+                {
+                    add = result.retransmitter.getInt();
+                    cost = result.metric;
+                    iface = result.ifIndex;
+                    return true;
+                }
+            }
+        }
+        else
+            return false;
+    }
+
     add = result.retransmitter.getInt();
     cost = result.metric;
     iface = result.ifIndex;

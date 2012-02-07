@@ -1741,7 +1741,7 @@ bool ManetRoutingBase::getAddressGroup(std::vector<Uint128> &addressGroup, int g
 
 bool ManetRoutingBase::isAddressInProxyList(const Uint128 & addr)
 {
-    if (!isGateway)
+    if (proxyAddress.empty())
         return false;
     for (unsigned int i = 0; i < proxyAddress.size(); i++)
     {
@@ -1773,3 +1773,40 @@ bool ManetRoutingBase::getAddressInProxyList(int i,Uint128 &addr, Uint128 &mask)
     mask = proxyAddress[i].mask;
     return true;
 }
+
+
+bool ManetRoutingBase::addressIsForUs(const Uint128 &addr) const
+{
+    if (isLocalAddress(addr))
+        return true;
+    if (proxyAddress.empty())
+        return false;
+    for (unsigned int i = 0; i < proxyAddress.size(); i++)
+    {
+        if ((addr & proxyAddress[i].mask) == proxyAddress[i].address)
+            return true;
+    }
+    return false;
+}
+
+bool ManetRoutingBase::getAp(const Uint128 &destination, Uint128& accesPointAddr) const
+{
+    if (locator == NULL)
+        return false;
+    if (isInMacLayer())
+    {
+        MACAddress macAddr = locator->getLocatorMacToMac(MACAddress(destination.getLo()));
+        if (macAddr.isUnspecified())
+            return false;
+        accesPointAddr = macAddr.getInt();
+    }
+    else
+    {
+        IPv4Address ipAddr = locator->getLocatorIpToIp(IPv4Address(destination.getLo()));
+        if (ipAddr.isUnspecified())
+            return false;
+        accesPointAddr = ipAddr.getInt();
+    }
+    return true;
+}
+

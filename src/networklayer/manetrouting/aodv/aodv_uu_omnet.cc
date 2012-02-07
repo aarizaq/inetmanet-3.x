@@ -1053,16 +1053,33 @@ bool  NS_CLASS getNextHop(const Uint128 &dest,Uint128 &add, int &iface,double &c
 {
     struct in_addr destAddr;
     destAddr.s_addr = dest;
-    rt_table_t * fwd_rt = rt_table_find(destAddr);
-    if (!fwd_rt)
-        return false;
-    if (!fwd_rt->state != VALID)
-        return false;
-    add = fwd_rt->next_hop.s_addr;
-    InterfaceEntry * ie = getInterfaceEntry (fwd_rt->ifindex);
-    iface = ie->getInterfaceId();
-    cost = fwd_rt->hcnt;
-    return true;
+    Uint128 apAddr;
+    rt_table_t * fwd_rt = this->rt_table_find(destAddr);
+    if (fwd_rt)
+    {
+        if (fwd_rt->state != VALID)
+            return false;
+        add = fwd_rt->next_hop.s_addr;
+        InterfaceEntry * ie = getInterfaceEntry (fwd_rt->ifindex);
+        iface = ie->getInterfaceId();
+        cost = fwd_rt->hcnt;
+        return true;
+    }
+    else if (getAp(dest,apAddr))
+    {
+        destAddr.s_addr = apAddr;
+        fwd_rt = this->rt_table_find(destAddr);
+        if (!fwd_rt)
+            return false;
+        if (fwd_rt->state != VALID)
+            return false;
+        add = fwd_rt->next_hop.s_addr;
+        InterfaceEntry * ie = getInterfaceEntry (fwd_rt->ifindex);
+        iface = ie->getInterfaceId();
+        cost = fwd_rt->hcnt;
+        return true;
+    }
+    return false;
 }
 
 bool NS_CLASS isProactive()
@@ -1146,6 +1163,7 @@ bool NS_CLASS getDestAddress(cPacket *msg,Uint128 &dest)
     return true;
 
 }
+
 #ifdef AODV_USE_STL_RT
 bool  NS_CLASS setRoute(const Uint128 &dest,const Uint128 &add, const int &ifaceIndex,const int &hops,const Uint128 &mask)
 {
