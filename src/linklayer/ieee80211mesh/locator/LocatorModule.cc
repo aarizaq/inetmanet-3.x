@@ -21,6 +21,7 @@
 #include "UDP.h"
 #include "IPv4InterfaceData.h"
 #include "NotificationBoard.h"
+#include "LocatorNotificationInfo_m.h"
 
 simsignal_t LocatorModule::locatorChangeSignal = SIMSIGNAL_NULL;
 
@@ -288,7 +289,7 @@ void LocatorModule::initialize(int stage)
             myIpAddress = ie->ipv4Data()->getIPAddress();
         }
     }
-    NotificationBoard * nb = NotificationBoardAccess().get();
+    nb = NotificationBoardAccess().get();
     nb->subscribe(this,NF_L2_AP_DISSOCIATED);
     nb->subscribe(this,NF_L2_AP_ASSOCIATED);
 }
@@ -532,6 +533,10 @@ void LocatorModule::setTables(const MACAddress & APaddr, const MACAddress &staAd
                 }
             }
         }
+        LocatorNotificationInfo infoLoc;
+        infoLoc.setMacAddr(staAddr);
+        infoLoc.setIpAddr(staIpAddr);
+        nb->fireChangeNotification(NF_LOCATOR_ASSOC,&infoLoc);
     }
     else if (action == DISASSOCIATION)
     {
@@ -566,6 +571,10 @@ void LocatorModule::setTables(const MACAddress & APaddr, const MACAddress &staAd
             if (itIp != globalLocatorMapIp.end())
                 globalLocatorMapIp.erase(itIp);
         }
+        LocatorNotificationInfo infoLoc;
+        infoLoc.setMacAddr(staAddr);
+        infoLoc.setIpAddr(staIpAddr);
+        nb->fireChangeNotification(NF_LOCATOR_DISASSOC,&infoLoc);
     }
 }
 

@@ -229,6 +229,8 @@ class DYMOUM : public ManetRoutingBase
     virtual void processLinkBreak(const cObject *details);
     virtual void processPromiscuous(const cObject *details);
     virtual void processFullPromiscuous(const cObject *details);
+    virtual void processLocatorAssoc(const cObject *details);
+    virtual void processLocatorDisAssoc(const cObject *details);
 
   public:
     static int  log_file_fd;

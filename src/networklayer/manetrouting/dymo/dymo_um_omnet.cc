@@ -41,6 +41,7 @@
 #include "IPv4Address.h"
 #include "IPvXAddress.h"
 #include "ControlManetRouting_m.h"
+#include "LocatorNotificationInfo_m.h"
 
 
 const int UDP_HEADER_BYTES = 8;
@@ -373,7 +374,7 @@ void DYMOUM::handleMessage(cMessage *msg)
                     processMacPacket(PK(msgAux), control->getDestAddress(), control->getSrcAddress(), NS_IFINDEX);
                 else
                 {
-                    if (!isLocalAddress(control->getSrcAddress()))
+                    if (!addressIsForUs(control->getSrcAddress()))
                     {
                         struct in_addr dest_addr;
                         dest_addr.s_addr = control->getDestAddress();
@@ -1194,7 +1195,7 @@ void DYMOUM::promiscuous_rrep(RE * dymo_re, struct in_addr ip_src)
 
     for (int i=0; i<num_blk; i++)
     {
-        if (isLocalAddress(dymo_re->re_blocks[i].re_node_addr))
+        if (addressIsForUs(dymo_re->re_blocks[i].re_node_addr))
             return;
     }
 
@@ -1672,7 +1673,7 @@ int DYMOUM::re_info_type(struct re_block *b, rtable_entry_t *e, u_int8_t is_rreq
 
     // If the block was issued from one interface of the processing node,
     // then the block is considered stale
-    if (isLocalAddress(b->re_node_addr))
+    if (addressIsForUs(b->re_node_addr))
         return RB_SELF_GEN;
 
     if (e)
@@ -1713,5 +1714,70 @@ int DYMOUM::re_info_type(struct re_block *b, rtable_entry_t *e, u_int8_t is_rreq
         }
     }
     return RB_FRESH;
+}
+
+
+void DYMOUM::processLocatorAssoc(const cObject *details)
+{
+    LocatorNotificationInfo *infoLoc = check_and_cast<LocatorNotificationInfo*>(details);
+    Uint128 destAddr = infoLoc->getMacAddr().getInt();
+    Uint128 apAddr;
+    if (isInMacLayer())
+        destAddr = infoLoc->getMacAddr().getInt();
+    else
+    {
+        if (infoLoc->getIpAddr().isUnspecified())
+            return;
+        destAddr = infoLoc->getIpAddr().getInt();
+    }
+
+    if (getAp(destAddr, apAddr))
+    {
+        struct in_addr dest_addrAux;
+        dest_addrAux.s_addr = destAddr;
+        rtable_entry_t * fwd_rt = rtable_find(dest_addrAux);
+        dest_addrAux.s_addr = apAddr;
+        rtable_entry_t * fwd_rt_ap = rtable_find(dest_addrAux);
+
+        if (!fwd_rt_ap && fwd_rt)
+        {
+            rtable_delete(fwd_rt);
+            return;
+        }
+        if (fwd_rt_ap && fwd_rt && memcmp(fwd_rt_ap, fwd_rt_ap, sizeof(rtable_entry_t)) != 0)
+        {
+            dest_addrAux.s_addr = destAddr;
+            if (fwd_rt)
+                rtable_update(fwd_rt, dest_addrAux, fwd_rt_ap->rt_nxthop_addr, fwd_rt_ap->rt_ifindex,
+                        fwd_rt_ap->rt_seqnum, fwd_rt_ap->rt_prefix, fwd_rt_ap->rt_hopcnt, 0, fwd_rt_ap->cost,
+                        fwd_rt_ap->rt_hopfix);
+            else
+                rtable_insert(dest_addrAux, fwd_rt_ap->rt_nxthop_addr, fwd_rt_ap->rt_ifindex, fwd_rt_ap->rt_seqnum,
+                        fwd_rt_ap->rt_prefix, fwd_rt_ap->rt_hopcnt, 0, fwd_rt_ap->cost, fwd_rt_ap->rt_hopfix);
+        }
+        return;
+    }
+}
+
+void DYMOUM::processLocatorDisAssoc(const cObject *details)
+{
+    LocatorNotificationInfo *infoLoc = check_and_cast<LocatorNotificationInfo*>(details);
+    Uint128 destAddr = infoLoc->getMacAddr().getInt();
+    if (isInMacLayer())
+        destAddr = infoLoc->getMacAddr().getInt();
+    else
+    {
+        if (infoLoc->getIpAddr().isUnspecified())
+            return;
+        destAddr = infoLoc->getIpAddr().getInt();
+    }
+    struct in_addr dest_addrAux;
+    dest_addrAux.s_addr = destAddr;
+    rtable_entry_t * fwd_rt = rtable_find(dest_addrAux);
+    if (fwd_rt)
+    {
+        rtable_delete(fwd_rt);
+        return;
+    }
 }
 

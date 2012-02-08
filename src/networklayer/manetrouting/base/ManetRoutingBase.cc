@@ -279,6 +279,8 @@ void ManetRoutingBase::registerRoutingModule()
             locator->setIpAddress(ie->ipv4Data()->getIPAddress());
         if (locator->getMacAddress().isUnspecified())
             locator->setMacAddress(ie->getMacAddress());
+        nb->subscribe(this,NF_LOCATOR_ASSOC);
+        nb->subscribe(this,NF_LOCATOR_DISASSOC);
     }
  //   WATCH_MAP(*routesVector);
 }
@@ -391,6 +393,9 @@ void ManetRoutingBase::sendToIp(cPacket *msg, int srcPort, const Uint128& destAd
 void ManetRoutingBase::processLinkBreak(const cObject *details) {return;}
 void ManetRoutingBase::processPromiscuous(const cObject *details) {return;}
 void ManetRoutingBase::processFullPromiscuous(const cObject *details) {return;}
+void ManetRoutingBase::processLocatorAssoc(const cObject *details) {return;}
+void ManetRoutingBase::processLocatorDisAssoc(const cObject *details) {return;}
+
 
 void ManetRoutingBase::sendToIp(cPacket *msg, int srcPort, const Uint128& destAddr, int destPort, int ttl, double delay, const Uint128 &iface)
 {
@@ -1131,6 +1136,10 @@ void ManetRoutingBase::receiveChangeNotification(int category, const cObject *de
             }
         }
     }
+    else if(category == NF_LOCATOR_ASSOC)
+        processLocatorAssoc(details);
+    else if(category == NF_LOCATOR_DISASSOC)
+        processLocatorDisAssoc(details);
 }
 
 void ManetRoutingBase::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj)

@@ -222,6 +222,8 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
     virtual void processLinkBreak(const cObject *details);
     virtual void processPromiscuous(const cObject *details);
     virtual void processFullPromiscuous(const cObject *details);
+    virtual void processLocatorAssoc(const cObject *details);
+    virtual void processLocatorDisAssoc(const cObject *details);
 
 //
 //  Replacement for gettimeofday(), used for timers.
@@ -358,7 +360,6 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
     // access to locator information
     bool getAp(const Uint128 &, Uint128 &) const;
     //
-
 };
 
 #define interface80211ptr getInterfaceWlanByAddress()

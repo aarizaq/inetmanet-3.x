@@ -64,7 +64,9 @@ enum
     NF_LINK_FULL_PROMISCUOUS, // Used for manet promiscuous mode, all packets are promiscuous
     NF_LINK_REFRESH,     // Used for refresh a neigbourd adjacency
 
-
+    // Locator signals
+    NF_LOCATOR_ASSOC,
+    NF_LOCATOR_DISASSOC,
     // - layer 3 (network)
     NF_INTERFACE_CREATED,
     NF_INTERFACE_DELETED,

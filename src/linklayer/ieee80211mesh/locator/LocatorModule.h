@@ -69,6 +69,7 @@ class LocatorModule : public cSimpleModule, public ILocator, protected INotifiab
         ARP *arp;
         IInterfaceTable *itable;
         IRoutingTable *rt;
+        NotificationBoard * nb;
         bool isInMacLayer;
 
         enum Action

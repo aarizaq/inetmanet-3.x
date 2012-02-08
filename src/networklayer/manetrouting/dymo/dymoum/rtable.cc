@@ -428,6 +428,27 @@ rtable_entry_t *NS_CLASS rtable_insert(struct in_addr dest_addr,
     {
         packet_queue_set_verdict(dest_addr, PQ_SEND);
     }
+    Uint128 apAdd;
+    if (getAp(dest_addr.s_addr, apAdd))
+    {
+        struct in_addr dest_addrAux;
+        dest_addrAux.s_addr = apAdd;
+        rtable_entry_t * e = rtable_find(dest_addrAux);
+        if (e)
+        {
+            if (
+                e->rt_ifindex   != ifindex &&
+                e->rt_seqnum    != seqnum &&
+                e->rt_prefix    != prefix &&
+                e->rt_hopcnt    != hopcnt &&
+                e->rt_is_gw     != is_gw &&
+                e->cost         != cost &&
+                e->rt_hopfix    != hopfix)
+            rtable_update(e,dest_addrAux,nxthop_addr, ifindex, seqnum, prefix, hopcnt, is_gw, cost, hopfix);
+        }
+        else
+            rtable_insert(dest_addrAux,nxthop_addr, ifindex, seqnum, prefix, hopcnt, is_gw, cost, hopfix);
+    }
     return entry;
 }
 
@@ -485,6 +506,27 @@ rtable_entry_t *NS_CLASS rtable_update(rtable_entry_t *entry,
     if (pending_rreq_remove(pending_rreq_find(dest_addr)))
     {
         packet_queue_set_verdict(dest_addr, PQ_SEND);
+    }
+    Uint128 apAdd;
+    if (getAp(dest_addr.s_addr, apAdd))
+    {
+        struct in_addr dest_addrAux;
+        dest_addrAux.s_addr = apAdd;
+        rtable_entry_t * e = rtable_find(dest_addrAux);
+        if (e)
+        {
+            if (
+                e->rt_ifindex   != ifindex &&
+                e->rt_seqnum    != seqnum &&
+                e->rt_prefix    != prefix &&
+                e->rt_hopcnt    != hopcnt &&
+                e->rt_is_gw     != is_gw &&
+                e->cost         != cost &&
+                e->rt_hopfix    != hopfix)
+            rtable_update(e,dest_addrAux,nxthop_addr, ifindex, seqnum, prefix, hopcnt, is_gw, cost, hopfix);
+        }
+        else
+            rtable_insert(dest_addrAux,nxthop_addr, ifindex, seqnum, prefix, hopcnt, is_gw, cost, hopfix);
     }
     return entry;
 }
