@@ -361,11 +361,45 @@ void NS_CLASS rtable_destroy()
 
 rtable_entry_t *NS_CLASS rtable_find(struct in_addr dest_addr)
 {
+    if (dymoRoutingTable->empty())
+        return NULL;
     DymoRoutingTable::iterator it = dymoRoutingTable->find(dest_addr.s_addr);
     if (it != dymoRoutingTable->end())
     {
         if (it->second)
+        {
+            // sanity check
+            if (it->second->rt_dest_addr.s_addr != dest_addr.s_addr)
+            {
+                opp_error("Dymo routing data base error");
+            }
             return it->second;
+        }
+        else
+            opp_error("Dymo routing data base error, NULL entry");
+    }
+    else
+    {
+        Uint128 apAdd;
+        if (getAp(dest_addr.s_addr, apAdd))
+        {
+            it = dymoRoutingTable->find(apAdd);
+            if (it != dymoRoutingTable->end())
+            {
+                if (it->second)
+                {
+                    // sanity check
+                    if (it->second->rt_dest_addr.s_addr != apAdd)
+                    {
+                        opp_error("Dymo routing data base error AP");
+                    }
+                    return it->second;
+                }
+                else
+                    opp_error("Dymo routing data base error, NULL entry AP");
+            }
+        }
+        return NULL;
     }
     return NULL;
 }
@@ -383,11 +417,41 @@ rtable_entry_t *NS_CLASS rtable_insert(struct in_addr dest_addr,
     rtable_entry_t *entry;
     struct in_addr netmask;
 
-    // Create the new entry
-    if ((entry = new rtable_entry_t)== NULL)
+    Uint128 apAdd;
+    if (getAp(dest_addr.s_addr, apAdd))
     {
-        dlog(LOG_ERR, errno, __FUNCTION__, "malloc() failed");
-        exit(EXIT_FAILURE);
+        struct in_addr dest_addrAux;
+        dest_addrAux.s_addr = apAdd;
+        rtable_entry_t * e = rtable_find(dest_addrAux);
+        if (e)
+        {
+            if (
+                e->rt_ifindex   != ifindex &&
+                e->rt_seqnum    != seqnum &&
+                e->rt_prefix    != prefix &&
+                e->rt_hopcnt    != hopcnt &&
+                e->rt_is_gw     != is_gw &&
+                e->cost         != cost &&
+                e->rt_hopfix    != hopfix)
+            rtable_update(e,dest_addrAux,nxthop_addr, ifindex, seqnum, prefix, hopcnt, is_gw, cost, hopfix);
+            return e;
+        }
+        else
+            return rtable_insert(dest_addrAux,nxthop_addr, ifindex, seqnum, prefix, hopcnt, is_gw, cost, hopfix);
+    }
+
+
+    DymoRoutingTable::iterator it = dymoRoutingTable->find(dest_addr.s_addr);
+    if (it != dymoRoutingTable->end())
+        entry = it->second;
+    else
+    {
+        // Create the new entry
+        if ((entry = new rtable_entry_t)== NULL)
+        {
+            dlog(LOG_ERR, errno, __FUNCTION__, "malloc() failed");
+            exit(EXIT_FAILURE);
+        }
     }
     memset(entry, 0, sizeof(rtable_entry_t));
 
@@ -428,27 +492,6 @@ rtable_entry_t *NS_CLASS rtable_insert(struct in_addr dest_addr,
     {
         packet_queue_set_verdict(dest_addr, PQ_SEND);
     }
-    Uint128 apAdd;
-    if (getAp(dest_addr.s_addr, apAdd))
-    {
-        struct in_addr dest_addrAux;
-        dest_addrAux.s_addr = apAdd;
-        rtable_entry_t * e = rtable_find(dest_addrAux);
-        if (e)
-        {
-            if (
-                e->rt_ifindex   != ifindex &&
-                e->rt_seqnum    != seqnum &&
-                e->rt_prefix    != prefix &&
-                e->rt_hopcnt    != hopcnt &&
-                e->rt_is_gw     != is_gw &&
-                e->cost         != cost &&
-                e->rt_hopfix    != hopfix)
-            rtable_update(e,dest_addrAux,nxthop_addr, ifindex, seqnum, prefix, hopcnt, is_gw, cost, hopfix);
-        }
-        else
-            rtable_insert(dest_addrAux,nxthop_addr, ifindex, seqnum, prefix, hopcnt, is_gw, cost, hopfix);
-    }
     return entry;
 }
 
@@ -464,6 +507,18 @@ rtable_entry_t *NS_CLASS rtable_update(rtable_entry_t *entry,
                                        uint8_t hopfix)
 {
 
+    if (entry->rt_dest_addr.s_addr != dest_addr.s_addr)
+    {
+        // possible AP check
+        Uint128 apAdd;
+        if (getAp(dest_addr.s_addr, apAdd))
+        {
+            if (entry->rt_dest_addr.s_addr == apAdd )
+                return rtable_update(entry,entry->rt_dest_addr,nxthop_addr, ifindex, seqnum, prefix, hopcnt, is_gw, cost, hopfix);
+            else
+                opp_error("DYMO routing data base error");
+        }
+    }
     struct in_addr netmask;
     /* Add route to omnet inet routing table ... */
     //netmask.s_addr = IPv4Address((uint32_t)nxthop_addr.s_addr).getNetworkMask().getInt();
@@ -484,15 +539,6 @@ rtable_entry_t *NS_CLASS rtable_update(rtable_entry_t *entry,
     entry->rt_state     = RT_VALID;
     entry->cost         = cost;
     entry->rt_hopfix    = hopfix;
-    if (entry->rt_dest_addr.s_addr  != dest_addr.s_addr)
-    {
-        DymoRoutingTable::iterator it = dymoRoutingTable->find(entry->rt_dest_addr.s_addr);
-        if (it != dymoRoutingTable->end())
-            dymoRoutingTable->erase(it);
-        entry->rt_dest_addr.s_addr  = dest_addr.s_addr;
-        dymoRoutingTable->insert(std::make_pair(dest_addr.s_addr,entry));
-    }
-
     entry->rt_nxthop_addr.s_addr    = nxthop_addr.s_addr;
 
     timer_set_timeout(&entry->rt_validtimer, ROUTE_TIMEOUT);
@@ -506,27 +552,6 @@ rtable_entry_t *NS_CLASS rtable_update(rtable_entry_t *entry,
     if (pending_rreq_remove(pending_rreq_find(dest_addr)))
     {
         packet_queue_set_verdict(dest_addr, PQ_SEND);
-    }
-    Uint128 apAdd;
-    if (getAp(dest_addr.s_addr, apAdd))
-    {
-        struct in_addr dest_addrAux;
-        dest_addrAux.s_addr = apAdd;
-        rtable_entry_t * e = rtable_find(dest_addrAux);
-        if (e)
-        {
-            if (
-                e->rt_ifindex   != ifindex &&
-                e->rt_seqnum    != seqnum &&
-                e->rt_prefix    != prefix &&
-                e->rt_hopcnt    != hopcnt &&
-                e->rt_is_gw     != is_gw &&
-                e->cost         != cost &&
-                e->rt_hopfix    != hopfix)
-            rtable_update(e,dest_addrAux,nxthop_addr, ifindex, seqnum, prefix, hopcnt, is_gw, cost, hopfix);
-        }
-        else
-            rtable_insert(dest_addrAux,nxthop_addr, ifindex, seqnum, prefix, hopcnt, is_gw, cost, hopfix);
     }
     return entry;
 }
@@ -615,6 +640,5 @@ int NS_CLASS rtable_expire_timeout_all(struct in_addr nxthop_addr, u_int32_t ifi
 
     return count;
 }
-
 #endif
 

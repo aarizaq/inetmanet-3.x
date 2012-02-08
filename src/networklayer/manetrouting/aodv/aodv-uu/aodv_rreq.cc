@@ -225,8 +225,20 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
     uint32_t cost;
     uint8_t  hopfix;
 
-    rreq_dest.s_addr = rreq->dest_addr;
-    rreq_orig.s_addr = rreq->orig_addr;
+    Uint128 aux;
+    if (getAp(rreq->dest_addr, aux) && !isBroadcast(rreq->dest_addr))
+    {
+        rreq_dest.s_addr = aux;
+    }
+    else
+        rreq_dest.s_addr = rreq->dest_addr;
+
+    if (getAp(rreq->orig_addr, aux))
+    {
+        rreq_orig.s_addr = aux;
+    }
+    else
+        rreq_orig.s_addr = rreq->orig_addr;
     rreq_id = ntohl(rreq->rreq_id);
     rreq_dest_seqno = ntohl(rreq->dest_seqno);
     rreq_orig_seqno = ntohl(rreq->orig_seqno);
@@ -284,7 +296,7 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
     {
         life = PATH_DISCOVERY_TIME - 2 * rreq_new_hcnt * NODE_TRAVERSAL_TIME;
 #ifdef OMNETPP
-        if (isBroadcast (rreq_dest.s_addr))
+        if (isBroadcast(rreq_dest.s_addr))
         {
            rev_rt = rt_table_find(rreq_orig);
            if (rev_rt == NULL)

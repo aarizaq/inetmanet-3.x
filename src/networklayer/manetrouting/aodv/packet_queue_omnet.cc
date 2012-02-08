@@ -153,56 +153,85 @@ int NS_CLASS packet_queue_set_verdict(struct in_addr dest_addr, int verdict)
     else
         rt = rt_table_find(dest_addr);
 
-    list_foreach_safe(pos, tmp, &PQ.head)
+    std::vector<Uint128> list;
+    if (isInMacLayer())
     {
-
-        struct q_pkt *qp = (struct q_pkt *)pos;
-        if (qp->dest_addr.s_addr == dest_addr.s_addr)
+        std::vector<MACAddress> listMac;
+        getApList(MACAddress(dest_addr.s_addr.getLo()),listMac);
+        while (!listMac.empty())
         {
-            list_detach(pos);
-
-            switch (verdict)
-            {
-            case PQ_ENC_SEND:
-                if (dynamic_cast <IPv4Datagram *> (qp->p))
-                {
-                    qp->p = pkt_encapsulate(dynamic_cast <IPv4Datagram *> (qp->p), *gateWayAddress);
-                    // now Ip layer decremented again
-                    /* Apparently, the link layer implementation can't handle
-                     a burst of packets. So to keep ARP happy, buffered              *                   *
-                     packets are sent with ARP_DELAY seconds between sends. */
-                    sendDelayed(qp->p, delay, "to_ip");
-                    delay += ARP_DELAY;
-                }
-                else
-                {
-                    // drop(qp->p);
-                    sendICMP(qp->p);
-                }
-                break;
-            case PQ_SEND:
-                if (!rt)
-                    return -1;
-                /* Apparently, the link layer implementation can't handle
-                 * a burst of packets. So to keep ARP happy, buffered
-                 * packets are sent with ARP_DELAY seconds between
-                 * sends. */
-                // now Ip layer decremented again
-                sendDelayed(qp->p, delay, "to_ip");
-                delay += ARP_DELAY;
-                break;
-            case PQ_DROP:
-                //drop(qp->p);
-                sendICMP(qp->p);
-
-//              icmpAccess.get()->sendErrorMessage(qp->p, ICMP_DESTINATION_UNREACHABLE, 0);
-                break;
-            }
-            free(qp);
-            count++;
-            PQ.len--;
+            list.push_back(listMac.back().getInt());
+            listMac.pop_back();
         }
     }
+    else
+    {
+        std::vector<IPv4Address> listIp;
+        getApListIp(IPv4Address(dest_addr.s_addr.getLo()),listIp);
+        while (!listIp.empty())
+        {
+            list.push_back(listIp.back().getInt());
+            listIp.pop_back();
+        }
+    }
+
+    while (!list.empty())
+    {
+        struct in_addr dest_addr;
+        dest_addr.s_addr = list.back();
+        list.pop_back();
+        list_foreach_safe(pos, tmp, &PQ.head)
+        {
+
+            struct q_pkt *qp = (struct q_pkt *)pos;
+            if (qp->dest_addr.s_addr == dest_addr.s_addr)
+            {
+                list_detach(pos);
+
+                switch (verdict)
+                {
+                    case PQ_ENC_SEND:
+                    if (dynamic_cast <IPv4Datagram *> (qp->p))
+                    {
+                        qp->p = pkt_encapsulate(dynamic_cast <IPv4Datagram *> (qp->p), *gateWayAddress);
+                        // now Ip layer decremented again
+                        /* Apparently, the link layer implementation can't handle
+                         a burst of packets. So to keep ARP happy, buffered              *                   *
+                         packets are sent with ARP_DELAY seconds between sends. */
+                        sendDelayed(qp->p, delay, "to_ip");
+                        delay += ARP_DELAY;
+                    }
+                    else
+                    {
+                        // drop(qp->p);
+                        sendICMP(qp->p);
+                    }
+                    break;
+                    case PQ_SEND:
+                    if (!rt)
+                    return -1;
+                    /* Apparently, the link layer implementation can't handle
+                     * a burst of packets. So to keep ARP happy, buffered
+                     * packets are sent with ARP_DELAY seconds between
+                     * sends. */
+                    // now Ip layer decremented again
+                    sendDelayed(qp->p, delay, "to_ip");
+                    delay += ARP_DELAY;
+                    break;
+                    case PQ_DROP:
+                    //drop(qp->p);
+                    sendICMP(qp->p);
+
+//              icmpAccess.get()->sendErrorMessage(qp->p, ICMP_DESTINATION_UNREACHABLE, 0);
+                    break;
+                }
+                free(qp);
+                count++;
+                PQ.len--;
+            }
+        }
+    }
+
     /* Update rt timeouts */
     if (rt && rt->state == VALID &&
             (verdict == PQ_SEND || verdict == PQ_ENC_SEND))

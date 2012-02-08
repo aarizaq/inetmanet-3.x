@@ -84,8 +84,6 @@ rt_table_t *NS_CLASS rt_table_insert(struct in_addr dest_addr,
     Uint128 dest;
     nm.s_addr = 0;
 
-
-
     /* Calculate hash key */
     dest = dest_addr.s_addr;
     /* Check if we already have an entry for dest_addr */
@@ -96,6 +94,31 @@ rt_table_t *NS_CLASS rt_table_insert(struct in_addr dest_addr,
               ip_to_str(dest_addr));
         return NULL;
     }
+
+    Uint128 apAdd;
+    if (getAp(dest, apAdd))
+    {
+        struct in_addr dest_addrAux;
+        dest_addrAux.s_addr = apAdd;
+        rt_table_t * e = rt_table_find(dest_addrAux);
+        if (e)
+        {
+            if (e->next_hop.s_addr != next.s_addr &&
+                    e->dest_seqno != seqno &&
+                    e->flags != flags &&
+                    e->hcnt != hops &&
+                    e->ifindex != ifindex &&
+                    e->state != state &&
+                    e->cost != cost &&
+                    e->hopfix != hopfix)
+                rt_table_update(e, next,hops,  seqno,life,  state, flags, ifindex, cost, hopfix);
+            return NULL;
+        }
+        else
+            rt = rt_table_insert(dest_addrAux, next,hops,  seqno,life,  state, flags, ifindex, cost, hopfix);
+        return rt;
+    }
+
 
     if ((rt = (rt_table_t *) malloc(sizeof(rt_table_t))) == NULL)
     {
@@ -188,28 +211,6 @@ rt_table_t *NS_CLASS rt_table_insert(struct in_addr dest_addr,
         timer_remove(&rt->ack_timer);
         timer_remove(&rt->hello_timer);
     }
-    Uint128 apAdd;
-    if (getAp(dest_addr.s_addr, apAdd))
-    {
-        struct in_addr dest_addrAux;
-        dest_addrAux.s_addr = apAdd;
-        rt_table_t * e = rt_table_find(dest_addrAux);
-
-        if (e)
-        {
-            if (e->next_hop.s_addr != next.s_addr &&
-                e->dest_seqno != seqno &&
-                e->flags != flags &&
-                e->hcnt != hops &&
-                e->ifindex != ifindex &&
-                e->state != state &&
-                e->cost != cost &&
-                e->hopfix != hopfix)
-                rt_table_update(e, next,hops,  seqno,life,  state, flags, ifindex, cost, hopfix);
-        }
-        else
-            rt_table_insert(dest_addrAux, next,hops,  seqno,life,  state, flags, ifindex, cost, hopfix);
-    }
     return rt;
 }
 
@@ -217,18 +218,26 @@ rt_table_t *NS_CLASS rt_table_insert(struct in_addr dest_addr,
 rt_table_t *NS_CLASS rt_table_find(struct in_addr dest_addr)
 {
 
-    Uint128 dest;
-
-    dest = dest_addr.s_addr;
     if (aodvRtTableMap.empty())
         return NULL;
 
     /* Check if we already have an entry for dest_addr */
-    AodvRtTableMap::iterator it = aodvRtTableMap.find(dest);
+    AodvRtTableMap::iterator it = aodvRtTableMap.find(dest_addr.s_addr);
+
     if (it != aodvRtTableMap.end())
         return it->second;
     else
+    {
+        Uint128 apAdd;
+        if (getAp(dest_addr.s_addr, apAdd))
+        {
+            it = aodvRtTableMap.find(apAdd);
+            if (it != aodvRtTableMap.end())
+                return it->second;
+        }
         return NULL;
+    }
+    return NULL;
 }
 
 rt_table_t *NS_CLASS rt_table_find_gateway()
@@ -254,30 +263,7 @@ int NS_CLASS rt_table_update_inet_rt(rt_table_t * gw, u_int32_t life)
 
     if (!gw)
         return -1;
-    Uint128 apAdd;
-    if (getAp(dest_addr.s_addr, apAdd))
-    {
-        struct in_addr dest_addrAux;
-        dest_addrAux.s_addr = apAdd;
-        rt_table_t * e = rt_table_find(dest_addrAux);
 
-        if (e)
-        {
-
-            if (rt->dest_addr != dest_addr &&
-                rt->next_hop != next &&
-                rt->dest_seqno != seqno &&
-                rt->flags != flags &&
-                rt->hcnt != hops &&
-                rt->ifindex != ifindex &&
-                rt->state != state &&
-                rt->cost != cost &&
-                rt->hopfix != hopfix)
-                rt_table_update(e,dest_addrAux, next,hops,  seqno,life,  state, flags, ifindex, cost, hopfix);
-        }
-        else
-            rt_table_update(dest_addrAux, next,hops,  seqno,life,  state, flags, ifindex, cost, hopfix);
-    }
     for (AodvRtTableMap::iterator it = aodvRtTableMap.begin(); it != aodvRtTableMap.end(); it++)
     {
         rt_table_t *rt = it->second;
@@ -1338,29 +1324,6 @@ rt_table_t *NS_CLASS rt_table_update(rt_table_t * rt, struct in_addr next,
         else
             packet_queue_set_verdict(rt->dest_addr, PQ_SEND);
 #endif
-    }
-
-    Uint128 apAdd;
-    if (getAp(rt->dest_addr.s_addr, apAdd))
-    {
-        struct in_addr dest_addrAux;
-        dest_addrAux.s_addr = apAdd;
-        rt_table_t * e = rt_table_find(dest_addrAux);
-
-        if (e)
-        {
-            if (e->next_hop.s_addr != next.s_addr &&
-                e->dest_seqno != seqno &&
-                e->flags != flags &&
-                e->hcnt != hops &&
-                e->state != state &&
-                e->cost != cost &&
-                e->ifindex != iface &&
-                e->hopfix != hopfix)
-                rt_table_update(e, next,hops,  seqno,lifetime,  state, flags,iface, cost, hopfix);
-        }
-        else
-            rt_table_insert(dest_addrAux, next,hops,  seqno,lifetime,  state, flags, iface, cost, hopfix);
     }
     return rt;
 }

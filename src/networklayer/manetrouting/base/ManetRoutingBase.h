@@ -299,6 +299,9 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
     virtual double getSpeed();
     virtual double getDirection();
 
+    virtual void getApList(const MACAddress &,std::vector<MACAddress>&);
+    virtual void getApListIp(const IPv4Address &,std::vector<IPv4Address>&);
+
   public:
 //
     virtual void setColaborativeProtocol(cObject *p) {colaborativeProtocol = dynamic_cast<ManetRoutingBase*>(p);}
@@ -358,7 +361,8 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
     virtual int getNumAddressInProxyList() {return (int)proxyAddress.size();}
     virtual bool getAddressInProxyList(int,Uint128 &addr, Uint128 &mask);
     // access to locator information
-    bool getAp(const Uint128 &, Uint128 &) const;
+    virtual bool getAp(const Uint128 &, Uint128 &) const;
+
     //
 };
 

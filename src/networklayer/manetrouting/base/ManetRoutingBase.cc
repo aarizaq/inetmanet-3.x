@@ -1819,3 +1819,40 @@ bool ManetRoutingBase::getAp(const Uint128 &destination, Uint128& accesPointAddr
     return true;
 }
 
+void ManetRoutingBase::getApList(const MACAddress & dest,std::vector<MACAddress>& list)
+{
+    list.clear();
+    if (locator == NULL)
+    {
+        list.push_back(dest);
+        return;
+    }
+    else
+    {
+        MACAddress ap = locator->getLocatorMacToMac(dest);
+        if (!ap.isUnspecified())
+        {
+            locator->getApList(ap,list);
+        }
+        list.push_back(dest);
+    }
+}
+
+void ManetRoutingBase::getApListIp(const IPv4Address &dest,std::vector<IPv4Address>& list)
+{
+    list.clear();
+    if (locator == NULL)
+    {
+        list.push_back(dest);
+        return;
+    }
+    else
+    {
+        IPv4Address ap = locator->getLocatorIpToIp(dest);
+        if (!ap.isUnspecified())
+        {
+            locator->getApListIp(ap,list);
+        }
+        list.push_back(dest);
+    }
+}
