@@ -53,6 +53,7 @@ class INET_API IPv6NeighbourDiscovery : public cSimpleModule
         typedef std::vector<cMessage*> MsgPtrVector;
         typedef IPv6NeighbourCache::Key Key; //for convenience
         typedef IPv6NeighbourCache::Neighbour Neighbour;  // for convenience
+        typedef IPv6NeighbourCache::DefaultRouterList DefaultRouterList; // for convenience
 
     public:
         IPv6NeighbourDiscovery();
@@ -250,6 +251,12 @@ class INET_API IPv6NeighbourDiscovery : public cSimpleModule
          */
         virtual void processDADTimeout(cMessage *msg);
 
+        /**
+         * Permanently assign the given address for the given interface entry.
+         * To be called after successful DAD.
+         */
+        virtual void makeTentativeAddressPermanent(const IPv6Address& tentativeAddr, InterfaceEntry *ie);
+
         /************Address Autoconfiguration Stuff***************************/
         /**
          *  as it is not possbile to explicitly define RFC 2462. ND is the next
@@ -374,12 +381,16 @@ class INET_API IPv6NeighbourDiscovery : public cSimpleModule
         /************End Of Redirect Message Stuff*****************************/
 
 #ifdef WITH_xMIPv6
-        /* To determine whether a Router's Ethernet Interface is connected to
-         * a WLAN AP or not (Zarrar Yousaf (23.09.07)
+        /* Determine that this router can communicate with wireless nodes
+         * on the LAN connected to the given interface.
+         * The result is true if the interface is a wireless interface
+         * or connected to an wireless access point.
          *
-         * Moved here from InterfaceEntry.h by BT.
+         * If wireless nodes can be present on the LAN, the router sends
+         * RAs more frequently in accordance with the MIPv6 specification
+         * (RFC 3775 7.5.).
          */
-        virtual bool isConnectedToWirelessAP(InterfaceEntry *ie);
+        virtual bool canServeWirelessNodes(InterfaceEntry *ie);
 #endif /* WITH_xMIPv6 */
 
         /**
@@ -396,6 +407,8 @@ class INET_API IPv6NeighbourDiscovery : public cSimpleModule
 
     protected:
         void routersUnreachabilityDetection(const InterfaceEntry* ie); // 3.9.07 - CB
+        bool isWirelessInterface(const InterfaceEntry *ie);
+        bool isWirelessAccessPoint(cModule* module);
 #endif /* WITH_xMIPv6 */
 };
 

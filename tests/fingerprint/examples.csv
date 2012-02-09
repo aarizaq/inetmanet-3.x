@@ -46,7 +46,7 @@
 /examples/inet/flatnet/,             -f fingerprints.ini -c General -r 0,           200s,            72eb-9eaf
 /examples/inet/flatnet/,             -f omnetpp.ini -c General -r 0,                200s,            72eb-9eaf
 /examples/inet/kidsnw1/,             -f omnetpp.ini -c General -r 0,                1000s,           ee0e-fd5b
-/examples/inet/multicast/,           -f omnetpp.ini -c General -r 0,                2000s,           c511-a817
+/examples/inet/multicast/,           -f omnetpp.ini -c General -r 0,                2000s,           ff8c-ade0
 /examples/inet/nclients/,            -f basicHTTP.ini -c General -r 0,              500000s,         a5fb-b172
 /examples/inet/nclients/,            -f filetransfer.ini -c General -r 0,           5s,              7001-cdbd
 /examples/inet/nclients/,            -f fingerprints2.ini -c General -r 0,          50s,             9b76-89e8
@@ -92,7 +92,7 @@
 /examples/inet/tcpwindowscale/,      -f omnetpp.ini -c WS_disabled -r 0,            1.5s,            ce03-a4e3
 /examples/inet/tcpwindowscale/,      -f omnetpp.ini -c WS_enabled -r 0,             1.5s,            ac66-fcda
 /examples/inet/udpburst/,            -f omnetpp.ini -c General -r 0,                1000s,           2b94-1db7
-/examples/ipv6/demonetworketh/,      -f omnetpp.ini -c General -r 0,                50000s,          4180-79e8
+/examples/ipv6/demonetworketh/,      -f omnetpp.ini -c General -r 0,                50000s,          6979-289d
 /examples/ipv6/ipv6bulk/,            -f omnetpp.ini -c inet_inet -r 0,              50s,             996b-dda2
 /examples/ipv6/ipv6bulk/,            -f omnetpp.ini -c inet__lwip -r 0,             50s,             20df-9f24
 /examples/ipv6/ipv6bulk/,            -f omnetpp.ini -c inet_nsc -r 0,               50s,             344b-0a1e
@@ -100,9 +100,10 @@
 /examples/ipv6/ipv6bulk/,            -f omnetpp.ini -c lwip__lwip -r 0,             50s,             33dd-eae7
 /examples/ipv6/ipv6bulk/,            -f omnetpp.ini -c nsc_inet -r 0,               50s,             a476-84b5
 /examples/ipv6/ipv6bulk/,            -f omnetpp.ini -c nsc_nsc -r 0,                50s,             439b-6f8f
-/examples/ipv6/ipv6nclients/,        -f omnetpp.ini -c General -r 0,                50s,             757c-4ede
+/examples/ipv6/ipv6nclients/,        -f omnetpp.ini -c ETH -r 0,                    50s,             757c-4ede
+/examples/ipv6/ipv6nclients/,        -f omnetpp.ini -c PPP -r 0,                    50s,             c6d3-70d0
 /examples/ipv6/nclients/,            -f omnetpp.ini -c ETH -r 0,                    1000s,           714b-443f
-/examples/ipv6/nclients/,            -f omnetpp.ini -c PPP -r 0,                    1000s,           b167-e964
+/examples/ipv6/nclients/,            -f omnetpp.ini -c PPP -r 0,                    1000s,           c784-169c
 /examples/manetrouting/fg80211/,     -f omnetpp.ini -c General -r 0,                100s,            b6cf-2d75
 /examples/manetrouting/fg80211/ini/, -f Mob_DSR_omnetpp.ini -c General -r 0,        100s,            ef6d-8002
 /examples/manetrouting/grid_aodv/,   -f omnetpp.ini -c General -r 0,                25s,             0c9c-28e0
@@ -144,7 +145,7 @@
 /examples/mpls/testte_failure/,      -f omnetpp.ini -c General -r 0,                10s,             b44d-340d
 /examples/mpls/testte_routing/,      -f omnetpp.ini -c General -r 0,                10s,             44d8-e593
 /examples/ospfv2/areas/,             -f omnetpp.ini -c General -r 0,                1000s,           526c-f918
-/examples/ospfv2/fulltest/,          -f omnetpp.ini -c General -r 0,                100s,            4c89-d1f4
+/examples/ospfv2/fulltest/,          -f omnetpp.ini -c General -r 0,                100s,            9093-0ec2
 /examples/ospfv2/simpletest/,        -f omnetpp.ini -c General -r 0,                500s,            547e-7401
 /examples/rtp/unicast2/,             -f omnetpp.ini -c General -r 0,                500s,            4493-d000
 /examples/rtp/unicast/,              -f omnetpp.ini -c General -r 0,                500s,            d609-7d19

@@ -26,9 +26,7 @@
 #include "IPv6InterfaceData.h"
 #include "InterfaceTableAccess.h"
 
-#ifdef WITH_xMIPv6
 #include "IPv6TunnelingAccess.h"
-#endif /* WITH_xMIPv6 */
 
 Define_Module(RoutingTable6);
 
@@ -181,11 +179,8 @@ void RoutingTable6::parseXMLConfigFile()
 
                 configureInterfaceFromXML(ie, ifTag);
             }
-
-#ifdef WITH_xMIPv6
             else if (opp_strcmp(ifTag->getTagName(), "tunnel")==0)
                 configureTunnelFromXML(ifTag);
-#endif /* WITH_xMIPv6 */
         }
     }
 }
@@ -254,6 +249,10 @@ void RoutingTable6::configureInterfaceForIPv6(InterfaceEntry *ie)
     //FIXME TBD fill in the rest
 
     assignRequiredNodeAddresses(ie);
+
+    // add link-local prefix to each interface according to RFC 4861 5.1
+    if (!ie->isLoopback())
+        addStaticRoute(IPv6Address::LINKLOCAL_PREFIX, 10, ie->getInterfaceId(), IPv6Address::UNSPECIFIED_ADDRESS);
 }
 
 void RoutingTable6::assignRequiredNodeAddresses(InterfaceEntry *ie)
@@ -385,7 +384,6 @@ void RoutingTable6::configureInterfaceFromXML(InterfaceEntry *ie, cXMLElement *c
     }
 }
 
-#ifdef WITH_xMIPv6
 void RoutingTable6::configureTunnelFromXML(cXMLElement* cfg)
 {
     IPv6Tunneling* tunneling = IPv6TunnelingAccess().get();
@@ -413,7 +411,6 @@ void RoutingTable6::configureTunnelFromXML(cXMLElement* cfg)
         tunneling->createTunnel(IPv6Tunneling::NORMAL, entry, exit, trigger);
     }
 }
-#endif /* WITH_xMIPv6 */
 
 InterfaceEntry *RoutingTable6::getInterfaceByAddress(const IPv6Address& addr)
 {
@@ -466,18 +463,26 @@ bool RoutingTable6::isLocalAddress(const IPv6Address& dest) const
     return false;
 }
 
-const IPv6Address& RoutingTable6::lookupDestCache(const IPv6Address& dest, int& outInterfaceId) const
+const IPv6Address& RoutingTable6::lookupDestCache(const IPv6Address& dest, int& outInterfaceId)
 {
     Enter_Method("lookupDestCache(%s)", dest.str().c_str());
 
-    DestCache::const_iterator it = destCache.find(dest);
+    DestCache::iterator it = destCache.find(dest);
     if (it == destCache.end())
     {
         outInterfaceId = -1;
         return IPv6Address::UNSPECIFIED_ADDRESS;
     }
-    outInterfaceId = it->second.interfaceId;
-    return it->second.nextHopAddr;
+    DestCacheEntry &entry = it->second;
+    if (entry.expiryTime > 0 && simTime() > entry.expiryTime)
+    {
+        destCache.erase(it);
+        outInterfaceId = -1;
+        return IPv6Address::UNSPECIFIED_ADDRESS;
+    }
+
+    outInterfaceId = entry.interfaceId;
+    return entry.nextHopAddr;
 }
 
 const IPv6Route *RoutingTable6::doLongestPrefixMatch(const IPv6Address& dest)
@@ -521,11 +526,12 @@ bool RoutingTable6::isPrefixPresent(const IPv6Address& prefix) const
     return false;
 }
 
-void RoutingTable6::updateDestCache(const IPv6Address& dest, const IPv6Address& nextHopAddr, int interfaceId)
+void RoutingTable6::updateDestCache(const IPv6Address& dest, const IPv6Address& nextHopAddr, int interfaceId, simtime_t expiryTime)
 {
-    // FIXME this performs 2 lookups -- optimize to do only one
-    destCache[dest].nextHopAddr = nextHopAddr;
-    destCache[dest].interfaceId = interfaceId;
+    DestCacheEntry &entry = destCache[dest];
+    entry.nextHopAddr = nextHopAddr;
+    entry.interfaceId = interfaceId;
+    entry.expiryTime = expiryTime;
 
     updateDisplayString();
 }
@@ -734,15 +740,6 @@ IPv6Route *RoutingTable6::getRoute(int i)
 
 #ifdef WITH_xMIPv6
 //#####Added by Zarrar Yousaf##################################################################
-
-const IPv6Address& RoutingTable6::getDestinationAddress()
-{
-    DestCache::iterator it;
-    for (it = destCache.begin(); it != destCache.end(); ++it)
-        return it -> first;
-
-    return IPv6Address::UNSPECIFIED_ADDRESS; // in case we do not find anything - CB
-}
 
 const IPv6Address& RoutingTable6::getHomeAddress()
 {

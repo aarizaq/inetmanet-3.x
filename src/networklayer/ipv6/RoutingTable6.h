@@ -120,6 +120,7 @@ class INET_API RoutingTable6 : public cSimpleModule, protected INotifiable
     {
         int interfaceId;
         IPv6Address nextHopAddr;
+        simtime_t expiryTime;
         // more destination specific data may be added here, e.g. path MTU
     };
     friend std::ostream& operator<<(std::ostream& os, const DestCacheEntry& e);
@@ -147,10 +148,8 @@ class INET_API RoutingTable6 : public cSimpleModule, protected INotifiable
     // internal
     virtual void configureInterfaceFromXML(InterfaceEntry *ie, cXMLElement *cfg);
 
-#ifdef WITH_xMIPv6
     // internal
     virtual void configureTunnelFromXML(cXMLElement* cfg);
-#endif /* WITH_xMIPv6 */
 
   protected:
     // displays summary above the icon
@@ -233,7 +232,7 @@ class INET_API RoutingTable6 : public cSimpleModule, protected INotifiable
      * NOTE: outInterfaceId is an OUTPUT parameter -- its initial value is ignored,
      * and the lookupDestCache() sets it to the correct value instead.
      */
-    const IPv6Address& lookupDestCache(const IPv6Address& dest, int& outInterfaceId) const;
+    const IPv6Address& lookupDestCache(const IPv6Address& dest, int& outInterfaceId);
 
     /**
      * Performs longest prefix match in the routing table and returns
@@ -253,7 +252,7 @@ class INET_API RoutingTable6 : public cSimpleModule, protected INotifiable
     /**
      * Add or update a destination cache entry.
      */
-    virtual void updateDestCache(const IPv6Address& dest, const IPv6Address& nextHopAddr, int interfaceId);
+    virtual void updateDestCache(const IPv6Address& dest, const IPv6Address& nextHopAddr, int interfaceId, simtime_t expiryTime);
 
     /**
      * Discard all entries in destination cache
@@ -341,7 +340,6 @@ class INET_API RoutingTable6 : public cSimpleModule, protected INotifiable
 #ifdef WITH_xMIPv6
     //================Added by Zarrar Yousaf ===================================
 
-    const IPv6Address& getDestinationAddress();
     //void updateHomeNetworkInfo(const IPv6Address& hoa, const IPv6Address& ha);//10.07.07 This updates the struct HomeNetwork Info{} with the MN's Home Address(HoA) and the global scope address of the MNs Home Agent (ha).
     //const IPv6Address& getHomeAgentAddress() {return homeInfo.homeAgentAddr;} // Zarrar 15.07.07 // return by reference - CB
     //const IPv6Address& getMNHomeAddress() {return homeInfo.HoA;} // Zarrar 15.07.07 // return by reference - CB
