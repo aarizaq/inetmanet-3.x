@@ -22,6 +22,7 @@
 #include "IPv4InterfaceData.h"
 #include "NotificationBoard.h"
 #include "LocatorNotificationInfo_m.h"
+#include "Ieee802Ctrl_m.h"
 
 simsignal_t LocatorModule::locatorChangeSignal = SIMSIGNAL_NULL;
 
@@ -172,12 +173,16 @@ void LocatorModule::processReply(cPacket* msg)
             opp_error("error in tables \n");
 
         for (MapMacIterator itMac = globalLocatorMapMac.begin(); itMac != globalLocatorMapMac.end(); itMac++)
+        {
             if (itMac->second.apMacAddr == destAddr)
                 itMac->second.apIpAddr = iv4Addr;
+        }
 
         for (MapMacIterator itMac = locatorMapMac.begin(); itMac != locatorMapMac.end(); itMac++)
+        {
             if (itMac->second.apMacAddr == destAddr)
                 itMac->second.apIpAddr = iv4Addr;
+        }
 
     }
     else
@@ -319,7 +324,12 @@ void  LocatorModule::sendMessage(const MACAddress &apMac,const MACAddress &staMa
         socket->sendTo(pkt,"255.255.255.255",port, interfaceId);
     }
     else
+    {
+        Ieee802Ctrl *ctrl = new Ieee802Ctrl();
+        ctrl->setDest(MACAddress::BROADCAST_ADDRESS);
+        pkt->setControlInfo(ctrl);
         send(pkt,"outGate");
+    }
 }
 
 void LocatorModule::receiveChangeNotification(int category, const cObject *details)
@@ -540,6 +550,48 @@ void LocatorModule::setTables(const MACAddress & APaddr, const MACAddress &staAd
     }
     else if (action == DISASSOCIATION)
     {
+        // first check validity exist the possibility that the assoc message can have arrived bebore
+
+        MapIpIteartor itIp;
+        MapMacIterator itMac;
+        if (!staAddr.isUnspecified())
+        {
+            itMac = globalLocatorMapMac.find(staAddr);
+            if (itMac != globalLocatorMapMac.end())
+            {
+                if (!APaddr.isUnspecified() && !itMac->second.apMacAddr.isUnspecified() && itMac->second.apMacAddr != APaddr)
+                    return;
+                globalLocatorMapMac.erase(itMac);
+            }
+
+            itMac = locatorMapMac.find(staAddr);
+            if (itMac != locatorMapMac.end())
+            {
+                if (!APaddr.isUnspecified() && !itMac->second.apMacAddr.isUnspecified() && itMac->second.apMacAddr != APaddr)
+                    return;
+                locatorMapMac.erase(itMac);
+            }
+
+        }
+        if (!staIpAddr.isUnspecified())
+        {
+            itIp = globalLocatorMapIp.find(staIpAddr);
+            if (itIp != globalLocatorMapIp.end())
+            {
+                if (!apIpAddr.isUnspecified() && !itIp->second.apIpAddr.isUnspecified() && itIp->second.apIpAddr != apIpAddr)
+                     return;
+                globalLocatorMapIp.erase(itIp);
+            }
+
+            itIp = locatorMapIp.find(staIpAddr);
+            if (itIp != locatorMapIp.end())
+            {
+                if (!apIpAddr.isUnspecified() && !itIp->second.apIpAddr.isUnspecified() && itIp->second.apIpAddr != apIpAddr)
+                     return;
+                locatorMapIp.erase(itIp);
+            }
+        }
+
         if (!staIpAddr.isUnspecified() && rt)
         {
             for (int i = 0; i < rt->getNumRoutes(); i++)
@@ -551,26 +603,7 @@ void LocatorModule::setTables(const MACAddress & APaddr, const MACAddress &staAd
                 }
             }
         }
-        MapIpIteartor itIp;
-        MapMacIterator itMac;
-        if (!staAddr.isUnspecified())
-        {
-            itMac = locatorMapMac.find(staAddr);
-            if (itMac != locatorMapMac.end())
-                locatorMapMac.erase(itMac);
-            if (itMac != globalLocatorMapMac.end())
-                globalLocatorMapMac.erase(itMac);
-        }
-        if (!staIpAddr.isUnspecified())
-        {
-            itIp = locatorMapIp.find(staIpAddr);
-            if (itIp != locatorMapIp.end())
-                locatorMapIp.erase(itIp);
-            itMac = globalLocatorMapMac.find(staAddr);
-            itIp = globalLocatorMapIp.find(staIpAddr);
-            if (itIp != globalLocatorMapIp.end())
-                globalLocatorMapIp.erase(itIp);
-        }
+
         LocatorNotificationInfo infoLoc;
         infoLoc.setMacAddr(staAddr);
         infoLoc.setIpAddr(staIpAddr);
