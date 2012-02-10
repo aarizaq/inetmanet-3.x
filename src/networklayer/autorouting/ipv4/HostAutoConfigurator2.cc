@@ -29,6 +29,8 @@
 #include "IInterfaceTable.h"
 #include "IPv4Address.h"
 
+std::vector<IPvXAddress> HostAutoConfigurator2::asignedAddress;
+
 Define_Module(HostAutoConfigurator2);
 
 static IPv4Address defaultAddr;
@@ -36,6 +38,7 @@ static IPv4Address defaultAddr;
 HostAutoConfigurator2::HostAutoConfigurator2()
 {
     defaultAddr.set(0,0,0,0);
+    asignedAddress.clear();
 }
 
 void HostAutoConfigurator2::initialize(int stage)
@@ -64,6 +67,7 @@ void HostAutoConfigurator2::initialize(int stage)
     else if (stage == 3)
     {
         setupRoutingTable();
+        asignedAddress.clear();
     }
 }
 
@@ -235,22 +239,32 @@ void HostAutoConfigurator2::setupNetworkLayer()
             continue;
         }
         interfaceFound=true;
+        IPv4Address addressBase;
         if (vectorAddressToken.size()>1)
         {
-            IPv4Address addressBase(vectorAddressToken[i].c_str());
-            myAddress = IPv4Address(addressBase.getInt() + uint32(getParentModule()->getId()));
+            addressBase.set(vectorAddressToken[i].c_str());
             netmask = IPv4Address(vectorMaskToken[i].c_str());
         }
         else
         {
-        	IPv4Address addressBase(vectorAddressToken[0].c_str());
-        	myAddress = IPv4Address(addressBase.getInt() + uint32(getParentModule()->getId()));
+        	addressBase.set(vectorAddressToken[0].c_str());
         	netmask = IPv4Address(vectorMaskToken[0].c_str());
         }
+
+        int cont = 0;
+
+        do
+        {
+            cont++;
+            // search other address
+            myAddress = IPv4Address(addressBase.getInt() + cont);
+        }
+        while(checkIfExist(myAddress));
 
         ie->ipv4Data()->setIPAddress(myAddress);
         ie->ipv4Data()->setNetmask(netmask);
         ie->setBroadcast(true);
+        asignedAddress.push_back(myAddress);
         EV << "interface " << ifname << " gets " << myAddress.str() << "/" << netmask.str() << std::endl;
     }
     if (!interfaceFound)
@@ -425,4 +439,15 @@ void HostAutoConfigurator2::fillRoutingTables()
             routingTable->addRoute(e);
         }
     }
+}
+
+
+bool HostAutoConfigurator2::checkIfExist(const IPvXAddress &add)
+{
+    for (unsigned int i=0; i<asignedAddress.size();i++)
+    {
+        if (add == asignedAddress[i])
+            return true;
+    }
+    return false;
 }
