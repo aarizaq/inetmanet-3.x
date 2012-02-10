@@ -33,6 +33,7 @@
 #include "MPLSPacket.h"
 #include "ARPPacket_m.h"
 #include "OSPFPacket_m.h"
+#include "LocatorPkt_m.h"
 #include <string.h>
 
 
@@ -103,6 +104,7 @@ Ieee80211Mesh::Ieee80211Mesh()
     macBaseGateId = -1;
     gateWayIndex = -1;
     isGateWay = false;
+    hasLocator = false;
 }
 
 void Ieee80211Mesh::initialize(int stage)
@@ -195,6 +197,7 @@ void Ieee80211Mesh::initialize(int stage)
         if (par("IsGateWay"))
             startGateWay();
         //end Gateway and group address code
+        hasLocator = par("locatorActive");
     }
 }
 
@@ -1201,6 +1204,8 @@ void Ieee80211Mesh::sendUp(cMessage *msg)
 {
     if (isUpperLayer(msg))
         send(msg, "upperLayerOut");
+    else if (dynamic_cast<LocatorPkt *>(msg) != NULL && hasLocator)
+        send(msg, "locatorOut");
     else
         delete msg;
 }
@@ -1247,19 +1252,6 @@ void Ieee80211Mesh::actualizeReactive(cPacket *pkt,bool out)
     if (!out)
         return;
 */
-    /*
-        if (frame->getAddress4().isUnspecified() || frame->getAddress4().isBroadcast())
-            return;
-
-        ControlManetRouting *ctrlmanet = new ControlManetRouting();
-        dest=frame->getAddress4();
-        src=frame->getAddress3();
-        ctrlmanet->setOptionCode(MANET_ROUTE_UPDATE);
-        ctrlmanet->setDestAddress(dest);
-        ctrlmanet->setSrcAddress(src);
-        send(ctrlmanet,"routingOutReactive");
-        return;
-    */
     bool isReverse=false;
     if (out)
     {

@@ -46,6 +46,7 @@ simple Ieee80211Mesh like IIeee80211Mgmt
  //       int Tc_ival = default(5); // sec
  //       int Mid_ival = default(5); // sec
  //       int use_mac = default(0);
+        bool locatorActive;
         @signal[enqueuePk](type=cMessage);
         @signal[dequeuePk](type=cMessage);
         @signal[dropPkByQueue](type=cMessage);
@@ -68,4 +69,6 @@ simple Ieee80211Mesh like IIeee80211Mgmt
         output macOut;
         input  agentIn;   // optional gates used for the agent in stations
         output agentOut; // optional gates used for the agent in stations
+        input  locatorIn;
+        output  locatorOut;
 }

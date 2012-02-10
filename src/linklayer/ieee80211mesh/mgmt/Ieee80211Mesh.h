@@ -125,6 +125,8 @@ private:
     virtual GateWayDataMap * getGateWayDataMap() {if (isGateWay) return gateWayDataMap; return NULL;}
     virtual bool selectGateWay(const Uint128 &,MACAddress &);
 
+    bool hasLocator;
+
   public:
     Ieee80211Mesh();
     virtual ~Ieee80211Mesh();
