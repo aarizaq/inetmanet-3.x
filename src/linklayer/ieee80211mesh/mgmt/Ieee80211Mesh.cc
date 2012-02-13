@@ -33,7 +33,7 @@
 #include "MPLSPacket.h"
 #include "ARPPacket_m.h"
 #include "OSPFPacket_m.h"
-#include "LocatorPkt_m.h"
+#include "locatorPkt_m.h"
 #include <string.h>
 
 
