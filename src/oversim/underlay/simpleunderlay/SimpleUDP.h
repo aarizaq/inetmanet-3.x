@@ -51,7 +51,6 @@ class ICMP;
 class ICMPv6;
 class UDPPacket;
 
-const int IPv6_HEADER_BYTES = 40;
 
 /**
  * Implements the UDP protocol: encapsulates/decapsulates user data into/from UDP.
