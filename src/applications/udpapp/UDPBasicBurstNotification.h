@@ -34,6 +34,7 @@ class INET_API UDPBasicBurstNotification : public UDPBasicBurst
 {
   protected:
     AddressModule * addressModule;
+    bool forceIpv6;
   protected:
     virtual int numInitStages() const {return 4;}
     virtual void initialize(int stage);

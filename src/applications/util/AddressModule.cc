@@ -24,6 +24,7 @@ AddressModule::AddressModule()
 {
     // TODO Auto-generated constructor stub
     emitSignal = false;
+    isInitialized = false;
 }
 
 AddressModule::~AddressModule()
@@ -36,7 +37,7 @@ AddressModule::~AddressModule()
     }
 }
 
-void AddressModule::initModule(bool mode)
+void AddressModule::initModule(bool mode, bool useIpV6)
 {
 
     cSimpleModule * owner = check_and_cast<cSimpleModule*>(getOwner());
@@ -46,11 +47,23 @@ void AddressModule::initModule(bool mode)
     {
         const char *token;
         cStringTokenizer tokenizer(owner->par("destAddresses"));
-        IPvXAddress myAddr = IPvXAddressResolver().resolve(owner->getParentModule()->getFullPath().c_str());
+        IPvXAddress myAddr;
+        if (useIpV6)
+        {
+            if (!IPvXAddressResolver().tryResolve(owner->getParentModule()->getFullPath().c_str(), myAddr, IPvXAddressResolver::ADDR_IPv6))
+                    return;
+        }
+        else
+            myAddr = IPvXAddressResolver().resolve(owner->getParentModule()->getFullPath().c_str());
         while ((token = tokenizer.nextToken()) != NULL)
         {
             if (strstr(token, "Broadcast") != NULL)
-                destAddresses.push_back(IPv4Address::ALLONES_ADDRESS);
+            {
+                if (!useIpV6)
+                    destAddresses.push_back(IPv4Address::ALLONES_ADDRESS);
+                else
+                    destAddresses.push_back(IPv6Address::ALL_NODES_1);
+            }
             else
             {
                 IPvXAddress addr = IPvXAddressResolver().resolve(token);
@@ -67,6 +80,7 @@ void AddressModule::initModule(bool mode)
             owner->emit(changeAddressSignal, this);
 
     }
+    isInitialized = true;
 }
 
 IPvXAddress AddressModule::getAddress(int val)

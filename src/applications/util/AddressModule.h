@@ -26,6 +26,7 @@
 class AddressModule : public cNoncopyableOwnedObject,cListener
 {
     protected:
+        bool isInitialized;
         bool emitSignal;
         std::vector<IPvXAddress> destAddresses;
         IPvXAddress chosedAddresses;
@@ -33,12 +34,13 @@ class AddressModule : public cNoncopyableOwnedObject,cListener
         virtual void receiveSignal(cComponent *src, simsignal_t id, cObject *obj);
 
     public:
-        virtual void initModule(bool mode);
+        virtual void initModule(bool mode, bool useIpV6); // mode = true, use signals, useIpV6 = true use Ipv6 address
         virtual IPvXAddress getAddress(int val = -1);
         unsigned int getNumAddress() const {return destAddresses.size();}
         virtual IPvXAddress choseNewAddress();
         AddressModule();
         virtual ~AddressModule();
+        virtual bool isInit() const {return isInitialized;}
 };
 
 #endif /* AddressModule_H_ */

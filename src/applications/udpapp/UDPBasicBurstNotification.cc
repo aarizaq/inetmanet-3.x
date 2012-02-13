@@ -103,10 +103,11 @@ void UDPBasicBurstNotification::initialize(int stage)
             throw cRuntimeError(this, "Invalid output interface name : %s",par("outputInterfaceMulticastBroadcast").stringValue());
         outputInterfaceMulticastBroadcast = ie->getInterfaceId();
     }
+    forceIpv6 = par("forceIpv6");
 
     addressModule = new AddressModule();
     //addressModule->initModule(par("chooseNewIfDeleted").boolValue());
-    addressModule->initModule(true);
+    addressModule->initModule(true,forceIpv6);
 
 
     if (strcmp(par("destAddresses").stringValue(),"") != 0)
@@ -131,7 +132,15 @@ void UDPBasicBurstNotification::initialize(int stage)
 
 IPvXAddress UDPBasicBurstNotification::chooseDestAddr()
 {
-    return addressModule->choseNewAddress();
+    if (addressModule->isInit())
+        return addressModule->choseNewAddress();
+    else
+    {
+        addressModule->initModule(true,forceIpv6);
+        if (addressModule->isInit())
+            return addressModule->choseNewAddress();
+        return IPv4Address::UNSPECIFIED_ADDRESS;
+    }
 }
 
 
