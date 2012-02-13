@@ -65,5 +65,6 @@ class IPv6ExtensionHeader
 {
     short extensionType;
     short byteLength = 8;
+    int spi; // HIPSIM
 }
 
