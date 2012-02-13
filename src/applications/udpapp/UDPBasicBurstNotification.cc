@@ -103,11 +103,10 @@ void UDPBasicBurstNotification::initialize(int stage)
             throw cRuntimeError(this, "Invalid output interface name : %s",par("outputInterfaceMulticastBroadcast").stringValue());
         outputInterfaceMulticastBroadcast = ie->getInterfaceId();
     }
-    forceIpv6 = par("forceIpv6");
 
     addressModule = new AddressModule();
     //addressModule->initModule(par("chooseNewIfDeleted").boolValue());
-    addressModule->initModule(true,forceIpv6);
+    addressModule->initModule(true);
 
 
     if (strcmp(par("destAddresses").stringValue(),"") != 0)
@@ -128,6 +127,10 @@ void UDPBasicBurstNotification::initialize(int stage)
     rcvdPkSignal = registerSignal("rcvdPk");
     outOfOrderPkSignal = registerSignal("outOfOrderPk");
     dropPkSignal = registerSignal("dropPk");
+
+    NotificationBoard *nb = NotificationBoardAccess().get();
+    nb->subscribe(this,NF_INTERFACE_IPv4CONFIG_CHANGED);
+    nb->subscribe(this,NF_INTERFACE_IPv6CONFIG_CHANGED);
 }
 
 IPvXAddress UDPBasicBurstNotification::chooseDestAddr()
@@ -136,7 +139,7 @@ IPvXAddress UDPBasicBurstNotification::chooseDestAddr()
         return addressModule->choseNewAddress();
     else
     {
-        addressModule->initModule(true,forceIpv6);
+        addressModule->initModule(true);
         if (addressModule->isInit())
             return addressModule->choseNewAddress();
         return IPv4Address::UNSPECIFIED_ADDRESS;
@@ -200,4 +203,11 @@ void UDPBasicBurstNotification::generateBurst()
     scheduleAt(nextPkt, timerNext);
 }
 
+void UDPBasicBurstNotification::receiveChangeNotification(int category, const cObject *details)
+{
+    Enter_Method_Silent();
+    if (category == NF_INTERFACE_IPv4CONFIG_CHANGED || category == NF_INTERFACE_IPv6CONFIG_CHANGED)
+        addressModule->rebuildAddressList();
+
+}
 

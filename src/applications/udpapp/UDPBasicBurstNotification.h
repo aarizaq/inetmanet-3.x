@@ -30,11 +30,10 @@
 /**
  * UDP application. See NED for more info.
  */
-class INET_API UDPBasicBurstNotification : public UDPBasicBurst
+class INET_API UDPBasicBurstNotification : public UDPBasicBurst, protected INotifiable
 {
   protected:
     AddressModule * addressModule;
-    bool forceIpv6;
   protected:
     virtual int numInitStages() const {return 4;}
     virtual void initialize(int stage);
@@ -42,6 +41,7 @@ class INET_API UDPBasicBurstNotification : public UDPBasicBurst
     // chooses random destination address
     virtual IPvXAddress chooseDestAddr();
     virtual void generateBurst();
+    virtual void receiveChangeNotification(int category, const cObject *details);
   public:
     UDPBasicBurstNotification();
     virtual ~UDPBasicBurstNotification();

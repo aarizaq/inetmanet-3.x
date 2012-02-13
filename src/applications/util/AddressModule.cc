@@ -17,6 +17,7 @@
 
 #include "AddressModule.h"
 #include "IPvXAddressResolver.h"
+#include "NotificationBoard.h"
 #include <string.h>
 
 simsignal_t AddressModule::changeAddressSignal;
@@ -25,6 +26,7 @@ AddressModule::AddressModule()
     // TODO Auto-generated constructor stub
     emitSignal = false;
     isInitialized = false;
+    myAddress.set(IPv4Address::UNSPECIFIED_ADDRESS);
 }
 
 AddressModule::~AddressModule()
@@ -37,29 +39,25 @@ AddressModule::~AddressModule()
     }
 }
 
-void AddressModule::initModule(bool mode, bool useIpV6)
+void AddressModule::initModule(bool mode)
 {
 
     cSimpleModule * owner = check_and_cast<cSimpleModule*>(getOwner());
     emitSignal = mode;
     destAddresses.clear();
+
     if (owner->hasPar("destAddresses"))
     {
         const char *token;
         cStringTokenizer tokenizer(owner->par("destAddresses"));
-        IPvXAddress myAddr;
-        if (useIpV6)
-        {
-            if (!IPvXAddressResolver().tryResolve(owner->getParentModule()->getFullPath().c_str(), myAddr, IPvXAddressResolver::ADDR_IPv6))
-                    return;
-        }
-        else
-            myAddr = IPvXAddressResolver().resolve(owner->getParentModule()->getFullPath().c_str());
+        if (!IPvXAddressResolver().tryResolve(owner->getParentModule()->getFullPath().c_str(), myAddress))
+            return;
+
         while ((token = tokenizer.nextToken()) != NULL)
         {
             if (strstr(token, "Broadcast") != NULL)
             {
-                if (!useIpV6)
+                if (!myAddress.isIPv6())
                     destAddresses.push_back(IPv4Address::ALLONES_ADDRESS);
                 else
                     destAddresses.push_back(IPv6Address::ALL_NODES_1);
@@ -67,7 +65,7 @@ void AddressModule::initModule(bool mode, bool useIpV6)
             else
             {
                 IPvXAddress addr = IPvXAddressResolver().resolve(token);
-                if (addr != myAddr)
+                if (addr != myAddress)
                     destAddresses.push_back(addr);
             }
         }
@@ -149,4 +147,47 @@ void AddressModule::receiveSignal(cComponent *src, simsignal_t id, cObject *obj)
     }
     // choose other address
     chosedAddresses = choseNewAddress();
+    isInitialized = true;
+}
+
+void AddressModule::rebuildAddressList()
+{
+    cSimpleModule * owner = check_and_cast<cSimpleModule*> (getOwner());
+    IPvXAddress myAddr;
+    IPvXAddressResolver().tryResolve(owner->getParentModule()->getFullPath().c_str(), myAddr);
+    if (myAddr == myAddress)
+        return;
+
+    if (isInitialized)
+        return;
+    const char *destAddrs = owner->par("destAddresses");
+    cStringTokenizer tokenizer(destAddrs);
+    const char *token;
+    while ((token = tokenizer.nextToken()) != NULL)
+    {
+        if (strstr(token, "Broadcast") != NULL)
+            destAddresses.push_back(IPv4Address::ALLONES_ADDRESS);
+        else
+        {
+            IPvXAddress addr = IPvXAddressResolver().resolve(token);
+            if (addr != myAddr)
+                destAddresses.push_back(addr);
+        }
+    }
+    if (destAddresses.empty())
+    {
+        IPvXAddress aux;
+        chosedAddresses = aux;
+        return;
+    }
+    // search if the address continue
+    for (unsigned int i = 0; i < destAddresses.size(); i++)
+    {
+        if (chosedAddresses == destAddresses[i])
+            return;
+    }
+    // choose other address
+    chosedAddresses = choseNewAddress();
+    if (emitSignal)
+        owner->emit(changeAddressSignal, this);
 }

@@ -22,25 +22,28 @@
 
 #include "INETDefs.h"
 #include "IPvXAddress.h"
+#include "INotifiable.h"
 
 class AddressModule : public cNoncopyableOwnedObject,cListener
 {
     protected:
+
         bool isInitialized;
         bool emitSignal;
         std::vector<IPvXAddress> destAddresses;
         IPvXAddress chosedAddresses;
         static simsignal_t changeAddressSignal;
+        IPvXAddress myAddress;
         virtual void receiveSignal(cComponent *src, simsignal_t id, cObject *obj);
-
     public:
-        virtual void initModule(bool mode, bool useIpV6); // mode = true, use signals, useIpV6 = true use Ipv6 address
+        virtual void initModule(bool mode); // mode = true, use signals, useIpV6 = true use Ipv6 address
         virtual IPvXAddress getAddress(int val = -1);
         unsigned int getNumAddress() const {return destAddresses.size();}
         virtual IPvXAddress choseNewAddress();
         AddressModule();
         virtual ~AddressModule();
         virtual bool isInit() const {return isInitialized;}
+        virtual void rebuildAddressList();
 };
 
 #endif /* AddressModule_H_ */

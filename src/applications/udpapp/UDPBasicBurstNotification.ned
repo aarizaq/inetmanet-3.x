@@ -121,8 +121,7 @@ simple UDPBasicBurstNotification like IUDPApp
         string outputInterface = default(""); // select the interface in which the packets will be sent
         string outputInterfaceMulticastBroadcast = default(""); // select the interface in which the broadcast packets will be sent
         bool setBroadcast = default(false); // Configure the socket for receive broadcast packets
-        bool chooseNewIfDeleted = default(false); //receive if a node has been deleted and rebuilt destiation table
-        bool forceIpv6 = default(false);                   
+        bool chooseNewIfDeleted = default(false); //receive if a node has been deleted and rebuilt destiation table                 
         @signal[sentPk](type=cPacket);
         @signal[rcvdPk](type=cPacket);
         @signal[dropPk](type=cPacket);
