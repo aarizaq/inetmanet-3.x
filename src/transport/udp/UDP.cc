@@ -660,7 +660,7 @@ void UDP::sendUpErrorIndication(SockDesc *sd, const IPvXAddress& localAddr, usho
     send(notifyMsg, "appOut", sd->appGateIndex);
 }
 
-void UDP::sendDown(cPacket *appData, const IPvXAddress& srcAddr, ushort srcPort, const IPvXAddress& destAddr, ushort destPort, int interfaceId, int ttl)
+void UDP::sendDown(cPacket *appData, const IPvXAddress& srcAddr, ushort srcPort, const IPvXAddress& destAddr, ushort destPort, int interfaceId, int ttl, unsigned int trafficClass)
 {
     if (destAddr.isUnspecified())
         error("send: unspecified destination address");
@@ -685,6 +685,7 @@ void UDP::sendDown(cPacket *appData, const IPvXAddress& srcAddr, ushort srcPort,
         ipControlInfo->setDestAddr(destAddr.get4());
         ipControlInfo->setInterfaceId(interfaceId);
         ipControlInfo->setTimeToLive(ttl);
+        ipControlInfo->setDiffServCodePoint(static_cast<unsigned char>(0x3f & trafficClass));
         udpPacket->setControlInfo(ipControlInfo);
 
         emit(sentPkSignal, udpPacket);
@@ -700,6 +701,7 @@ void UDP::sendDown(cPacket *appData, const IPvXAddress& srcAddr, ushort srcPort,
         ipControlInfo->setDestAddr(destAddr.get6());
         ipControlInfo->setInterfaceId(interfaceId);
         ipControlInfo->setHopLimit(ttl);
+        ipControlInfo->setTrafficClass(trafficClass);
         udpPacket->setControlInfo(ipControlInfo);
 
         emit(sentPkSignal, udpPacket);

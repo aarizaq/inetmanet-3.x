@@ -630,6 +630,8 @@ IPv6Datagram *IPv6::encapsulate(cPacket *transportPacket, IPv6ControlInfo *contr
     datagram->setHopLimit(controlInfo->getHopLimit()>0 ? controlInfo->getHopLimit() : 32); //FIXME use iface hop limit instead of 32?
     datagram->setTransportProtocol(controlInfo->getProtocol());
 
+    datagram->setTrafficClass(controlInfo->getTrafficClass());
+
     // #### Move extension headers from ctrlInfo to datagram if present
     while (0 < controlInfo->getExtensionHeaderArraySize())
     {
