@@ -25,7 +25,7 @@ import inet.underTest.linklayer.Ieee80216.Ieee80216NicBS;
 //    "RoutingTable",
 //    "NetworkLayer",
 import inet.underTest.applications.TrafficGenerator_Erlangen.WiMAXQoSTrafficGenerator;
-import inet.mobility.NoMobility;
+import inet.mobility.models.StationaryMobility;
 //
 // Models a 802.11 Access Point. It can be used in conjunction with
 // WirelessHost, or any other host model containing WirelessNicSTA.
@@ -54,7 +54,7 @@ module WiMAXAP
             gates:
                 macUpperGateIn[5];
         }
-        mobility: NoMobility {
+        mobility: StationaryMobility {
             parameters:
                 @display("p=144,70;i=block/cogwheel_s");
         }

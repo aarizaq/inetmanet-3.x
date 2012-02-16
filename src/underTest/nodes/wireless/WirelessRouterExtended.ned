@@ -31,7 +31,7 @@ import inet.applications.IUDPApp;
 import inet.linklayer.ieee80211.Ieee80211NewNic;
 import inet.transport.udp.UDP;
 import inet.transport.tcp.TCP;
-import inet.mobility.NoMobility;
+import inet.mobility.models.StationaryMobility;
 import inet.linklayer.ieee80211.Ieee80211Nic;
 import  inet.underTest.linklayer.ieee80211.mgmt.Ieee80211NicExtended;
 //
@@ -102,7 +102,7 @@ module WirelessRouterExtended
         pingApp: PingApp {
             @display("p=56,156");
         }
-        nullMobility: NoMobility {
+        nullMobility: StationaryMobility {
             @display("p=393,60");
         }
         wlan: Ieee80211NicExtended {
