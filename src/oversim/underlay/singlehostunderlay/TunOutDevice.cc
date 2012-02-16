@@ -126,7 +126,7 @@ char* TunOutDevice::encapsulate(cPacket *msg,
     ip_buf = (iphdr*) buf;
     ip_buf->version = 4; // IPv4
     ip_buf->ihl = iplen / 4;
-    ip_buf->tos = IP->getDiffServCodePoint();
+    ip_buf->tos = IP->getTypeOfService();
     ip_buf->tot_len = htons(*length);
     ip_buf->id = htons(IP->getIdentification());
     ip_buf->frag_off = htons(IP_DF); // DF, no fragments
@@ -207,8 +207,8 @@ cPacket* TunOutDevice::decapsulate(char* buf,
     IP->setIdentification( ntohs(ip_buf->id) );
     IP->setMoreFragments( false );
     IP->setDontFragment( true );
-    IP->setFragmentOffset( 0 );
-    IP->setDiffServCodePoint( ip_buf->tos );
+    IP->setFragmentOffset(0);
+    IP->setTypeOfService( ip_buf->tos );
     IP->setBitLength( ip_buf->ihl*32 );
     // FIXME: check IP and UDP checksum...
 

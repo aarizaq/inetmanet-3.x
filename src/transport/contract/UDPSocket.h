@@ -121,6 +121,12 @@ class INET_API UDPSocket
     void setTimeToLive(int ttl);
 
     /**
+     * Sets the IPv4 Type of Service / IPv6 Traffic Class fields of packets
+     * sent from the UDP socket.
+     */
+    void setTypeOfService(unsigned char tos);
+
+    /**
      * Set the Broadcast option on the UDP socket. This will cause the
      * socket to receive broadcast packets as well.
      */
@@ -152,7 +158,8 @@ class INET_API UDPSocket
      * arriving to the given multicast address will no longer passed up to the socket.
      */
     void leaveMulticastGroup(const IPvXAddress& multicastAddr);
- /**
+
+    /**
      * Causes the socket to leave each multicast groups that are registered with
      * any of the interfaces.
      */

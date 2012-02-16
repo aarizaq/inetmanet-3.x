@@ -656,7 +656,7 @@ IPv4Datagram * NS_CLASS pkt_encapsulate(IPv4Datagram *p, IPv4Address gateway)
     // when source address was given, use it; otherwise it'll get the address
     // of the outgoing interface after routing
     // set other fields
-    datagram->setDiffServCodePoint(p->getDiffServCodePoint());
+    datagram->setTypeOfService(p->getTypeOfService());
     datagram->setIdentification(p->getIdentification());
     datagram->setMoreFragments(false);
     datagram->setDontFragment (p->getDontFragment());
@@ -1163,7 +1163,6 @@ bool NS_CLASS getDestAddress(cPacket *msg,Uint128 &dest)
     return true;
 
 }
-
 #ifdef AODV_USE_STL_RT
 bool  NS_CLASS setRoute(const Uint128 &dest,const Uint128 &add, const int &ifaceIndex,const int &hops,const Uint128 &mask)
 {

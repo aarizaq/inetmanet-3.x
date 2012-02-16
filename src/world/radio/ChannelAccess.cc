@@ -45,7 +45,6 @@ ChannelAccess::~ChannelAccess()
         myRadioRef = NULL;
     }
 }
-
 /**
  * Upon initialization ChannelAccess registers the nic parent module
  * to have all its connections handled by ChannelControl

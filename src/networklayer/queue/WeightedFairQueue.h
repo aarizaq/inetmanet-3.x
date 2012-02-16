@@ -1,6 +1,6 @@
 //
 // Copyright (C) 2001-2006  Sergio Andreozzi
-// Copyright (C) 2009 A. Ariza Universidad de M�laga
+// Copyright (C) 2009 A. Ariza Universidad de Malaga
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -15,34 +15,37 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-/***************************************************************************
-
- ***************************************************************************/
-
+//
 
 #ifndef __INET_WEIGHTED_FAIR_QUEUE_H
 #define __INET_WEIGHTED_FAIR_QUEUE_H
-#include <omnetpp.h>
+
 #include <vector>
 #include <queue>
+
+#include "INETDefs.h"
+
 #include "PassiveQueueBase.h"
 #include "IQoSClassifier.h"
 
 
+/**
+ * Queue module that implements Weighted Fair Queueing (WFQ).
+ * See NED file for more info.
+ */
 class INET_API WeightedFairQueue : public PassiveQueueBase
 {
   protected:
     class SubQueueData
     {
       public:
-        double finish_t;// for WFQ
+        double finish_t;  // for WFQ
         double queueMaxRate;
         double queueWeight;
-        unsigned int B;            // set of active queues in the GPS reference system
+        unsigned int B;    // set of active queues in the GPS reference system
         // B[]!=0 queue is active, ==0 queue is inactive
 
-        std::queue <double> time;
+        std::queue<double> time;
 
         double wq;    // queue weight
         double minth; // minimum threshold for avg queue length
@@ -58,111 +61,70 @@ class INET_API WeightedFairQueue : public PassiveQueueBase
 
         SubQueueData()
         {
-            finish_t=0;
-            queueMaxRate=0;
-            queueWeight=0;
-            B=0;
-            avg =0;
-            q_time=0; // start of the queue idle time
-            count=0;        // packets since last marked packet
-            numEarlyDrops=0;
+            finish_t = 0;
+            queueMaxRate = 0;
+            queueWeight = 0;
+            B = 0;
+            avg = 0;
+            q_time = 0;
+            count = 0;
+            numEarlyDrops = 0;
         }
 
     };
-    long lotalLength;
 
     // statistics
     static simsignal_t queueLengthSignal;
-    static simsignal_t earlyDropPkBytesSignal;
+    static simsignal_t earlyDropPkByQueueSignal;
 
   protected:
     int frameCapacity;
     std::vector<SubQueueData> subqueueData;
-    std::vector <cQueue>      queueArray;
+    std::vector<cQueue> queueArray;
     int numQueues;
     IQoSClassifier *classifier;
     cGate *outGate;
-    bool useRed;
+    bool useRED;
+    long totalLength;
 
-//  cSubQueue *diffserv_queue;
     double bandwidth; // total link bandwidth
-    double  virt_time, last_vt_update, sum ;
+    double  virt_time, last_vt_update, sum;
     bool GPS_idle;
     double safe_limit;
 
-    bool RedTest(cMessage *msg,int queueIndex);
-
   public:
-    WeightedFairQueue ()
-    {
-        bandwidth=1e6;
-        virt_time = last_vt_update = sum = 0;
-        GPS_idle = true;
-        numQueues=0;
-        safe_limit = 0.001;
-        lotalLength=0;
-    }
-    // Omnet methods
-    ~WeightedFairQueue()
-    {
-        {
-            subqueueData.clear();
-            for (int i=0; i<numQueues; i++)
-            {
-                while (queueArray[i].length()>0)
-                {
-                    delete queueArray[i].pop();
-                }
-            }
-            queueArray.clear();
-        }
-    }
+    WeightedFairQueue();
+    ~WeightedFairQueue();
 
-    virtual void setBandwidth(double val)
-    {
-        bandwidth = val;
+    virtual void setBandwidth(double val) { bandwidth = val; }
 
-    }
-    virtual double getBandwidth()
-    {
-        return bandwidth;
-    }
+    virtual double getBandwidth() const { return bandwidth; }
 
     virtual void setQueueWeight(int i, double val)
     {
-        if (i>=numQueues)
-            opp_error ("nun queue error");
-        subqueueData[i].queueWeight=val;
-
-
+        if (i < 0 || i >= numQueues)
+            opp_error("Queue index out of range");
+        subqueueData[i].queueWeight = val;
     }
-    virtual double getQueueWeight(int i)
+
+    virtual double getQueueWeight(int i) const
     {
-        if (i>=numQueues)
-            opp_error ("nun queue error");
+        if (i < 0 || i >= numQueues)
+            opp_error("Queue index out of range");
         return subqueueData[i].queueWeight;
-
     }
+
   protected:
     virtual void initialize();
-    /**
-     * Redefined from PassiveQueueBase.
-     */
-    virtual cMessage* enqueue(cMessage *msg);
 
-    /**
-     * Redefined from PassiveQueueBase.
-     */
+    virtual bool REDTest(cMessage *msg, int queueIndex);
+
+    // methods redefined from PassiveQueueBase:
+    virtual cMessage *enqueue(cMessage *msg);
     virtual cMessage *dequeue();
-
-    /**
-     * Redefined from PassiveQueueBase.
-     */
     virtual void sendOut(cMessage *msg);
-    /**
-     * Redefined from IPassiveQueue.
-     */
     virtual bool isEmpty();
 };
+
 #endif
 

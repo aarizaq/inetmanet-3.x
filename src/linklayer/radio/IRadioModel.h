@@ -57,8 +57,6 @@ class INET_API IRadioModel : public cObject
      * possible error correction code, etc.
      */
     virtual bool isReceivedCorrectly(AirFrame *airframe, const SnrList& receivedList) = 0;
-
-
     // used by the Airtime Link Metric computation
     virtual bool haveTestFrame()=0;
     virtual double calculateDurationTestFrame(AirFrame *airframe)=0;

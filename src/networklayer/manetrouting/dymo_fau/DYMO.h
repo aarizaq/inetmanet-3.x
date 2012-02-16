@@ -73,7 +73,6 @@ class QueueElement : public cPacket
     unsigned int destAddr;
     unsigned int srcAddr;
     DYMO_Packet* obj;
-
 };
 
 //===========================================================================================
@@ -85,6 +84,8 @@ class DYMO : public ManetRoutingBase
     int numInitStages() const  {return 5;}
     void initialize(int);
     void finish();
+
+    DYMO();
     ~DYMO();
 
     /** @brief Function called whenever a message arrives at the module */
@@ -175,7 +176,9 @@ class DYMO : public ManetRoutingBase
     // MEMBER VARIABLES
     //===============================================================================
     /** @brief pointer to the routing table */
-    DYMO_RoutingTable * dymo_routingTable;
+    DYMO_RoutingTable *dymo_routingTable;
+
+    cMessage* timerMsg; // timer self message, used for DYMO_Timer
 
     /** @brief runs after the node has lost its OwnSeqNum. When either ownSeqNumLossTimeout or ownSeqNumLossTimeoutMax expires, the resumes participation in DYMO */
     DYMO_Timer* ownSeqNumLossTimeout;
@@ -265,8 +268,8 @@ class DYMO : public ManetRoutingBase
     virtual bool getDestAddress(cPacket *, Uint128 &) {return false;};
 
     virtual void processLinkBreak(const cObject *details);
-    void packetFailed(IPv4Datagram *dgram);
-
+    void packetFailed(const IPv4Datagram *dgram);
+    void rescheduleTimer();
 };
 
 #endif

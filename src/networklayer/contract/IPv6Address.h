@@ -86,7 +86,6 @@ class INET_API IPv6Address
 
         /** The link-local prefix (fe80::) */
         static const IPv6Address LINKLOCAL_PREFIX;
-
         static const IPv6Address LL_MANET_ROUTERS;
         //@}
 
@@ -155,10 +154,10 @@ class INET_API IPv6Address
          * (e.g. no slash in the input string, invalid address syntax, prefix
          * length is out of range, etc.).
          */
-         bool tryParseAddrWithPrefix(const char *addr, int& prefixLen);
+        bool tryParseAddrWithPrefix(const char *addr, int& prefixLen);
 
         /**
-         *  Sets the IPv6 address. Given a string.
+         * Sets the IPv6 address. Given a string.
          */
         void set(const char *addr);
 

@@ -105,27 +105,42 @@ void EtherMAC::initializeFlags()
     physInGate->setDeliverOnReceptionStart(true);
 }
 
-void EtherMAC::handleDisconnect()
+void EtherMAC::processConnectDisconnect()
 {
-    delete frameBeingReceived;
-    frameBeingReceived = NULL;
-    cancelEvent(endRxMsg);
-    cancelEvent(endBackoffMsg);
-    cancelEvent(endJammingMsg);
-    bytesSentInBurst = 0;
-    framesSentInBurst = 0;
+    if (!connected)
+    {
+        delete frameBeingReceived;
+        frameBeingReceived = NULL;
+        cancelEvent(endRxMsg);
+        cancelEvent(endBackoffMsg);
+        cancelEvent(endJammingMsg);
+        bytesSentInBurst = 0;
+        framesSentInBurst = 0;
+    }
 
-    EtherMACBase::handleDisconnect();
+    EtherMACBase::processConnectDisconnect();
+
+    if (connected)
+    {
+        if (!duplexMode)
+        {
+            // start RX_RECONNECT_STATE
+            receiveState = RX_RECONNECT_STATE;
+            simtime_t reconnectEndTime = simTime() + 8 * (MAX_ETHERNET_FRAME_BYTES + JAM_SIGNAL_BYTES) / curEtherDescr->txrate;
+            endRxTimeList.clear();
+            addReceptionInReconnectState(-1, reconnectEndTime);
+        }
+    }
 }
 
-void EtherMAC::calculateParameters(bool errorWhenAsymmetric)
+void EtherMAC::readChannelParameters(bool errorWhenAsymmetric)
 {
-    EtherMACBase::calculateParameters(errorWhenAsymmetric);
+    EtherMACBase::readChannelParameters(errorWhenAsymmetric);
 
     if (connected && !duplexMode)
     {
         if (curEtherDescr->halfDuplexFrameMinBytes < 0.0)
-            error("%g bps Ethernet only supports full duplex links", curEtherDescr->txrate);
+            error("%g bps Ethernet only supports full-duplex links", curEtherDescr->txrate);
     }
 }
 
@@ -168,7 +183,7 @@ void EtherMAC::handleSelfMessage(cMessage *msg)
 void EtherMAC::handleMessage(cMessage *msg)
 {
     if (dataratesDiffer)
-        calculateParameters(true);
+        readChannelParameters(true);
 
     printState();
 
@@ -178,10 +193,6 @@ void EtherMAC::handleMessage(cMessage *msg)
 
     if (msg->isSelfMessage())
         handleSelfMessage(msg);
-    else if (!connected)
-        processMessageWhenNotConnected(msg);
-    else if (disabled)
-        processMessageWhenDisabled(msg);
     else if (msg->getArrivalGate() == upperLayerInGate)
         processFrameFromUpperLayer(check_and_cast<EtherFrame *>(msg));
     else if (msg->getArrivalGate() == physInGate)
@@ -216,6 +227,17 @@ void EtherMAC::processFrameFromUpperLayer(EtherFrame *frame)
     {
         error("Packet from higher layer (%d bytes) exceeds maximum Ethernet frame size (%d)",
                 (int)(frame->getByteLength()), MAX_ETHERNET_FRAME_BYTES);
+    }
+
+    if (!connected || disabled)
+    {
+        EV << (!connected ? "Interface is not connected" : "MAC is disabled") << " -- dropping packet " << frame << endl;
+        emit(dropPkFromHLIfaceDownSignal, frame);
+        numDroppedPkFromHLIfaceDown++;
+        delete frame;
+
+        requestNextFrameFromExtQueue();
+        return;
     }
 
     // fill in src address if not set
@@ -258,24 +280,19 @@ void EtherMAC::processFrameFromUpperLayer(EtherFrame *frame)
     }
 }
 
-void EtherMAC::removeExpiredEndRxTimes()
+void EtherMAC::addReceptionInReconnectState(long packetTreeId, simtime_t endRxTime)
 {
-    // remove expired entries from endRxTimeList
+    // note: packetTreeId==-1 is legal, and represents a special entry that marks the end of the reconnect state
+
+    // housekeeping: remove expired entries from endRxTimeList
     simtime_t now = simTime();
     while (!endRxTimeList.empty() && endRxTimeList.front().endTime <= now)
         endRxTimeList.pop_front();
-}
-
-simtime_t EtherMAC::insertEndReception(long packetTreeId, simtime_t endRxTime)
-{
-    ASSERT(packetTreeId != 0);
-
-    // remove expired entries from endRxTimeList
-    removeExpiredEndRxTimes();
 
     EndRxTimeList::iterator i;
 
-    // remove old entry with same packet tree ID
+    // remove old entry with same packet tree ID (typically: a frame reception
+    // doesn't go through but is canceled by a jam signal)
     for (i = endRxTimeList.begin(); i != endRxTimeList.end(); i++)
     {
         if (i->packetTreeId == packetTreeId)
@@ -285,27 +302,47 @@ simtime_t EtherMAC::insertEndReception(long packetTreeId, simtime_t endRxTime)
         }
     }
 
-    // find insertion position
+    // find insertion position and insert new entry (list is ordered by endRxTime)
     for (i = endRxTimeList.begin(); i != endRxTimeList.end() && i->endTime <= endRxTime; i++)
         ;
-
-    // insert
     PkIdRxTime item(packetTreeId, endRxTime);
-    i = endRxTimeList.insert(i, item);
+    endRxTimeList.insert(i, item);
 
-    numConcurrentTransmissions = endRxTimeList.size();
-
-    // return the highest endTime (stored in last element)
+    // adjust endRxMsg if needed (we'll exit reconnect mode when endRxMsg expires)
     simtime_t maxRxTime = endRxTimeList.back().endTime;
-    return maxRxTime;
+    if (endRxMsg->getArrivalTime() != maxRxTime)
+    {
+        cancelEvent(endRxMsg);
+        scheduleAt(maxRxTime, endRxMsg);
+    }
+}
+
+void EtherMAC::addReception(simtime_t endRxTime)
+{
+    numConcurrentTransmissions++;
+
+    if (endRxMsg->getArrivalTime() < endRxTime)
+    {
+        cancelEvent(endRxMsg);
+        scheduleAt(endRxTime, endRxMsg);
+    }
 }
 
 void EtherMAC::processReceivedJam(EtherJam *jam)
 {
-    simtime_t newRxTime = insertEndReception(jam->getAbortedPkTreeID(), simTime() + jam->getDuration());
-    cancelEvent(endRxMsg);
-    scheduleAt(newRxTime, endRxMsg);
+    simtime_t endRxTime = simTime() + jam->getDuration();
     delete jam;
+
+    numConcurrentTransmissions--;
+    if (numConcurrentTransmissions < 0)
+        error("Received JAM without message");
+
+    if (numConcurrentTransmissions == 0 || endRxMsg->getArrivalTime() < endRxTime)
+    {
+        cancelEvent(endRxMsg);
+        scheduleAt(endRxTime, endRxMsg);
+    }
+
     processDetectedCollision();
 }
 
@@ -313,34 +350,51 @@ void EtherMAC::processMsgFromNetwork(EtherTraffic *msg)
 {
     EV << "Received frame from network: " << msg << endl;
 
+    if (!connected || disabled)
+    {
+        EV << (!connected ? "Interface is not connected" : "MAC is disabled") << " -- dropping msg " << msg << endl;
+        if (dynamic_cast<EtherFrame *>(msg))    // do not count JAM and IFG packets
+        {
+            emit(dropPkIfaceDownSignal, msg);
+            numDroppedIfaceDown++;
+        }
+        delete msg;
+
+        return;
+    }
+
     // detect cable length violation in half-duplex mode
     if (!duplexMode)
     {
-        if (simTime() - msg->getSendingTime() >= curEtherDescr->maxPropagationDelay)
+        simtime_t propagationTime = simTime() - msg->getSendingTime();
+        if (propagationTime >= curEtherDescr->maxPropagationDelay)
         {
-            error("Very long frame propagation time detected, "
-                  "maybe cable exceeds maximum allowed length? "
-                  "(%lgs corresponds to an approx. %lgm cable)",
-                  SIMTIME_STR(simTime() - msg->getSendingTime()),
-                  SIMTIME_STR((simTime() - msg->getSendingTime()) * SPEED_OF_LIGHT_IN_CABLE));
+            error("Very long frame propagation time detected, maybe cable exceeds "
+                  "maximum allowed length? (%lgs corresponds to an approx. %lgm cable)",
+                  SIMTIME_STR(propagationTime),
+                  SIMTIME_STR(propagationTime * SPEED_OF_LIGHT_IN_CABLE));
         }
     }
 
     simtime_t endRxTime = simTime() + msg->getDuration();
-    bool isJam = dynamic_cast<EtherJam*>(msg) != NULL;
+    EtherJam *jamMsg = dynamic_cast<EtherJam*>(msg);
 
-    if (!duplexMode && (transmitState == TRANSMITTING_STATE || transmitState == SEND_IFG_STATE))
+    if (!duplexMode && receiveState == RX_RECONNECT_STATE)
     {
-        // since we're halfduplex, receiveState must be RX_IDLE_STATE (asserted at top of handleMessage)
-        if (isJam)
+        long treeId = jamMsg ? jamMsg->getAbortedPkTreeID() : msg->getTreeId();
+        addReceptionInReconnectState(treeId, endRxTime);
+        delete msg;
+    }
+    else if (!duplexMode && (transmitState == TRANSMITTING_STATE || transmitState == SEND_IFG_STATE))
+    {
+        // since we're half-duplex, receiveState must be RX_IDLE_STATE (asserted at top of handleMessage)
+        if (jamMsg)
             error("Stray jam signal arrived while transmitting (usual cause is cable length exceeding allowed maximum)");
 
         // set receive state and schedule end of reception
         receiveState = RX_COLLISION_STATE;
 
-        simtime_t newTime = insertEndReception(msg->getTreeId(), endRxTime);
-        cancelEvent(endRxMsg);
-        scheduleAt(newTime, endRxMsg);
+        addReception(endRxTime);
         delete msg;
 
         EV << "Transmission interrupted by incoming frame, handling collision\n";
@@ -354,20 +408,15 @@ void EtherMAC::processMsgFromNetwork(EtherTraffic *msg)
     }
     else if (receiveState == RX_IDLE_STATE)
     {
+        if (jamMsg)
+            error("Stray jam signal arrived (usual cause is cable length exceeding allowed maximum)");
+
         channelBusySince = simTime();
-        if (isJam)
-        {
-            EV << "Stray jam signal arrived (usual cause is cable length exceeding allowed maximum)";
-            processReceivedJam((EtherJam *)msg);
-        }
-        else
-        {
-            EV << "Start reception of frame\n";
-            scheduleEndRxPeriod(msg);
-        }
+        EV << "Start reception of frame\n";
+        scheduleEndRxPeriod(msg);
     }
     else if (receiveState == RECEIVING_STATE
-            && !isJam
+            && !jamMsg
             && endRxMsg->getArrivalTime() - simTime() < curEtherDescr->halfBitTime)
     {
         // With the above condition we filter out "false" collisions that may occur with
@@ -391,16 +440,14 @@ void EtherMAC::processMsgFromNetwork(EtherTraffic *msg)
     else // (receiveState==RECEIVING_STATE || receiveState==RX_COLLISION_STATE)
     {
         // handle overlapping receptions
-        if (isJam)
+        if (jamMsg)
         {
-            processReceivedJam((EtherJam *)msg);
+            processReceivedJam(jamMsg);
         }
         else // EtherFrame or EtherPauseFrame
         {
             EV << "Overlapping receptions -- setting collision state\n";
-            endRxTime = insertEndReception(msg->getTreeId(), endRxTime);
-            cancelEvent(endRxMsg);
-            scheduleAt(endRxTime, endRxMsg);
+            addReception(endRxTime);
             // delete collided frames: arrived frame as well as the one we're currently receiving
             delete msg;
             processDetectedCollision();
@@ -544,8 +591,14 @@ void EtherMAC::handleEndTxPeriod()
     backoffs = 0;
 
     // check for and obey received PAUSE frames after each transmission
-    if (checkAndScheduleEndPausePeriod())
+    if (pauseUnitsRequested > 0)
+    {
+        // if we received a PAUSE frame recently, go into PAUSE state
+        EV << "Going to PAUSE mode for " << pauseUnitsRequested << " time units\n";
+        scheduleEndPausePeriod(pauseUnitsRequested);
+        pauseUnitsRequested = 0;
         return;
+    }
 
     beginSendFrames();
 }
@@ -553,28 +606,37 @@ void EtherMAC::handleEndTxPeriod()
 void EtherMAC::scheduleEndRxPeriod(EtherTraffic *frame)
 {
     ASSERT(frameBeingReceived == NULL);
+    ASSERT(!endRxMsg->isScheduled());
 
     frameBeingReceived = frame;
     receiveState = RECEIVING_STATE;
-    simtime_t endRxTime = insertEndReception(frame->getTreeId(), simTime() + frame->getDuration());
-    scheduleAt(endRxTime, endRxMsg);
+    addReception(simTime() + frame->getDuration());
 }
 
 void EtherMAC::handleEndRxPeriod()
 {
-    EV << "Frame reception complete\n";
-    removeExpiredEndRxTimes();
-
     simtime_t dt = simTime() - channelBusySince;
 
-    if (receiveState == RECEIVING_STATE) // i.e. not RX_COLLISION_STATE
+    switch (receiveState)
     {
-        frameReceptionComplete();
-        totalSuccessfulRxTxTime += dt;
-    }
-    else
-    {
-        totalCollisionTime += dt;
+        case RECEIVING_STATE:
+            EV << "Frame reception complete\n";
+            frameReceptionComplete();
+            totalSuccessfulRxTxTime += dt;
+            break;
+
+        case RX_COLLISION_STATE:
+            EV << "Incoming signals finished after collision\n";
+            totalCollisionTime += dt;
+            break;
+
+        case RX_RECONNECT_STATE:
+            EV << "Incoming signals finished or reconnect time elapsed after reconnect\n";
+            endRxTimeList.clear();
+            break;
+
+        default:
+            throw cRuntimeError("model error: invalid receiveState %d", receiveState);
     }
 
     receiveState = RX_IDLE_STATE;
@@ -648,8 +710,8 @@ void EtherMAC::handleRetransmission()
     }
 
     EV << "Executing backoff procedure\n";
-    int backoffrange = (backoffs >= BACKOFF_RANGE_LIMIT) ? 1024 : (1 << backoffs);
-    int slotNumber = intuniform(0, backoffrange-1);
+    int backoffRange = (backoffs >= BACKOFF_RANGE_LIMIT) ? 1024 : (1 << backoffs);
+    int slotNumber = intuniform(0, backoffRange-1);
 
     scheduleAt(simTime() + slotNumber *curEtherDescr->slotTime, endBackoffMsg);
     transmitState = BACKOFF_STATE;
@@ -680,6 +742,7 @@ void EtherMAC::printState()
         CASE(RX_IDLE_STATE);
         CASE(RECEIVING_STATE);
         CASE(RX_COLLISION_STATE);
+        CASE(RX_RECONNECT_STATE);
     }
 
     EV << ",  backoffs: " << backoffs;
@@ -706,25 +769,6 @@ void EtherMAC::finish()
     recordScalar("backoffs", numBackoffs);
 }
 
-void EtherMAC::processMessageWhenNotConnected(cMessage *msg)
-{
-    EV << "Interface is not connected -- dropping packet " << msg << endl;
-    emit(dropPkIfaceDownSignal, msg);
-    numDroppedIfaceDown++;
-    delete msg;
-
-    requestNextFrameFromExtQueue();
-}
-
-void EtherMAC::processMessageWhenDisabled(cMessage *msg)
-{
-    EV << "MAC is disabled -- dropping message " << msg << endl;
-    emit(dropPkIfaceDownSignal, msg);
-    delete msg;
-
-    requestNextFrameFromExtQueue();
-}
-
 void EtherMAC::handleEndPausePeriod()
 {
     if (transmitState != PAUSE_STATE)
@@ -739,7 +783,7 @@ void EtherMAC::frameReceptionComplete()
     EtherTraffic *msg = frameBeingReceived;
     frameBeingReceived = NULL;
 
-    if ((dynamic_cast<EtherIFG*>(msg)) != NULL)
+    if (dynamic_cast<EtherIFG*>(msg) != NULL)
     {
         delete msg;
         return;
@@ -763,11 +807,7 @@ void EtherMAC::frameReceptionComplete()
 
     if (dynamic_cast<EtherPauseFrame*>(frame) != NULL)
     {
-        int pauseUnits = ((EtherPauseFrame*)frame)->getPauseTime();
-        delete frame;
-        numPauseFramesRcvd++;
-        emit(rxPausePkUnitsSignal, pauseUnits);
-        processPauseCommand(pauseUnits);
+        processReceivedPauseFrame((EtherPauseFrame*)frame);
     }
     else
     {
@@ -792,8 +832,14 @@ void EtherMAC::processReceivedDataFrame(EtherFrame *frame)
     send(frame, "upperLayerOut");
 }
 
-void EtherMAC::processPauseCommand(int pauseUnits)
+void EtherMAC::processReceivedPauseFrame(EtherPauseFrame *frame)
 {
+    int pauseUnits = frame->getPauseTime();
+    delete frame;
+
+    numPauseFramesRcvd++;
+    emit(rxPausePkUnitsSignal, pauseUnits);
+
     if (transmitState == TX_IDLE_STATE)
     {
         EV << "PAUSE frame received, pausing for " << pauseUnitsRequested << " time units\n";
@@ -864,26 +910,9 @@ void EtherMAC::scheduleEndTxPeriod(EtherFrame *frame)
 void EtherMAC::scheduleEndPausePeriod(int pauseUnits)
 {
     // length is interpreted as 512-bit-time units
-    cPacket pause;
-    pause.setBitLength(pauseUnits * PAUSE_UNIT_BITS);
-    simtime_t pausePeriod = transmissionChannel->calculateDuration(&pause);
+    simtime_t pausePeriod = pauseUnits * PAUSE_UNIT_BITS / curEtherDescr->txrate;
     scheduleAt(simTime() + pausePeriod, endPauseMsg);
     transmitState = PAUSE_STATE;
-}
-
-bool EtherMAC::checkAndScheduleEndPausePeriod()
-{
-    if (pauseUnitsRequested > 0)
-    {
-        // if we received a PAUSE frame recently, go into PAUSE state
-        EV << "Going to PAUSE mode for " << pauseUnitsRequested << " time units\n";
-
-        scheduleEndPausePeriod(pauseUnitsRequested);
-        pauseUnitsRequested = 0;
-        return true;
-    }
-
-    return false;
 }
 
 void EtherMAC::beginSendFrames()
@@ -896,8 +925,8 @@ void EtherMAC::beginSendFrames()
     }
     else
     {
+        // No more frames, set transmitter to idle
         transmitState = TX_IDLE_STATE;
-        // No more frames set transmitter to idle
         EV << "No more frames to send, transmitter set to idle\n";
     }
 }

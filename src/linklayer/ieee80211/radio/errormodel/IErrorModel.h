@@ -13,14 +13,14 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-#ifndef IERRORMODEL_H_
-#define IERRORMODEL_H_
-
-class IErrorModel
-{
-    public:
+#ifndef IERRORMODEL_H_
+#define IERRORMODEL_H_
+
+class IErrorModel
+{
+    public:
         IErrorModel() {};
-        virtual double GetChunkSuccessRate(ModulationType mode, double snr, uint32_t nbits) const = 0;
-};
-
-#endif /* IERRORMODEL_H_ */
+        virtual double GetChunkSuccessRate(ModulationType mode, double snr, uint32_t nbits) const = 0;
+};
+
+#endif /* IERRORMODEL_H_ */

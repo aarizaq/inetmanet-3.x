@@ -115,7 +115,7 @@ simple EtherMAC like IEtherMAC
         string address = default("auto");   // MAC address as hex string (12 hex digits), or
                                             // "auto". "auto" values will be replaced by
                                             // a generated MAC address in init stage 0.
-        bool duplexMode = default(true);    // selects full duplex (true) or half duplex (false) operation
+        bool duplexMode = default(true);    // selects full-duplex (true) or half-duplex (false) operation
         int txQueueLimit = default(1000);   // maximum number of frames queued up for transmission in the internal queue (only used if queueModule==""); additional frames cause a runtime error
         string queueModule = default("");   // name of optional external queue module
         bool frameBursting = default(true); // enable/disable frame bursting mode in Gigabit Ethernet
@@ -129,7 +129,8 @@ simple EtherMAC like IEtherMAC
         @signal[rxPkFromHL](type=EtherFrame);
         @signal[dropPkNotForUs](type=EtherFrame);
         @signal[dropPkBitError](type=EtherFrame);
-        @signal[dropPkIfaceDown](type=cPacket);
+        @signal[dropPkFromHLIfaceDown](type=EtherFrame);
+        @signal[dropPkIfaceDown](type=EtherTraffic);        // emitted at begin of receiving
         @signal[packetSentToLower](type=EtherFrame);
         @signal[packetReceivedFromLower](type=EtherFrame);
         @signal[packetSentToUpper](type=EtherFrame);

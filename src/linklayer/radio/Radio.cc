@@ -37,7 +37,7 @@ simsignal_t Radio::lossRateSignal = SIMSIGNAL_NULL;
 simsignal_t Radio::changeLevelNoise = SIMSIGNAL_NULL;
 
 #define MIN_DISTANCE 0.001 // minimum distance 1 millimeter
-#define BASE_NOISE_LEVEL noiseGenerator?noiseLevel+noiseGenerator->noiseLevel():noiseLevel
+#define BASE_NOISE_LEVEL (noiseGenerator?noiseLevel+noiseGenerator->noiseLevel():noiseLevel)
 
 Define_Module(Radio);
 Radio::Radio() : rs(this->getId())

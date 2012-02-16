@@ -24,10 +24,15 @@
 
 
 class EtherJam;
+class EtherPauseFrame;
 class IPassiveQueue;
 
 /**
- * Ethernet MAC module.
+ * Ethernet MAC module which supports both half-duplex (CSMA/CD) and full-duplex
+ * operation. (See also EtherMACFullDuplex which has a considerably smaller
+ * code with all the CSMA/CD complexity removed.)
+ *
+ * See NED file for more details.
  */
 class INET_API EtherMAC : public EtherMACBase
 {
@@ -44,12 +49,24 @@ class INET_API EtherMAC : public EtherMACBase
 
   protected:
     // states
+    int numConcurrentTransmissions;    // number of colliding frames -- we must receive this many jams (caches endRxTimeList.size())
     int  backoffs;                     // value of backoff for exponential back-off algorithm
     long currentSendPkTreeID;
 
     // other variables
     EtherTraffic *frameBeingReceived;
     cMessage *endRxMsg, *endBackoffMsg, *endJammingMsg;
+
+    // list of receptions during reconnect state; an additional special entry (with packetTreeId=-1)
+    // stores the end time of the reconnect state
+    struct PkIdRxTime
+    {
+        long packetTreeId;             // >=0: tree ID of packet being received; -1: this is a special entry that stores the end time of the reconnect state
+        simtime_t endTime;             // end of reception
+        PkIdRxTime(long id, simtime_t time) {packetTreeId=id; endTime = time;}
+    };
+    typedef std::list<PkIdRxTime> EndRxTimeList;
+    EndRxTimeList endRxTimeList;       // list of incoming packets, ordered by endTime
 
     // statistics
     simtime_t totalCollisionTime;      // total duration of collisions on channel
@@ -59,16 +76,6 @@ class INET_API EtherMAC : public EtherMACBase
     unsigned long numBackoffs;         // number of retransmissions
     unsigned int  framesSentInBurst;   // Number of frames send out in current frame burst
     long bytesSentInBurst;             // Number of bytes transmitted in current frame burst
-
-    struct PkIdRxTime
-    {
-        long packetTreeId;             // tree ID of packet being received.
-        simtime_t endTime;             // end of reception
-        PkIdRxTime(long id, simtime_t time) {packetTreeId=id; endTime = time;}
-    };
-    typedef std::list<PkIdRxTime> EndRxTimeList;
-    EndRxTimeList endRxTimeList;       // list of incoming packets, ordered by endTime
-    int numConcurrentTransmissions;    // number of colliding frames -- we must receive this many jams (caches endRxTimeList.size())
 
     static simsignal_t collisionSignal;
     static simsignal_t backoffSignal;
@@ -85,26 +92,23 @@ class INET_API EtherMAC : public EtherMACBase
     virtual void handleRetransmission();
 
     // helpers
-    virtual void calculateParameters(bool errorWhenAsymmetric);
+    virtual void readChannelParameters(bool errorWhenAsymmetric);
     virtual void processFrameFromUpperLayer(EtherFrame *msg);
     virtual void processMsgFromNetwork(EtherTraffic *msg);
-    virtual void processMessageWhenNotConnected(cMessage *msg);
-    virtual void processMessageWhenDisabled(cMessage *msg);
     virtual void scheduleEndIFGPeriod();
     virtual void scheduleEndTxPeriod(EtherFrame *);
     virtual void scheduleEndRxPeriod(EtherTraffic *);
     virtual void scheduleEndPausePeriod(int pauseUnits);
-    virtual bool checkAndScheduleEndPausePeriod();
     virtual void beginSendFrames();
     virtual void sendJamSignal();
     virtual void startFrameTransmission();
     virtual void frameReceptionComplete();
     virtual void processReceivedDataFrame(EtherFrame *frame);
     virtual void processReceivedJam(EtherJam *jam);
-    virtual void processPauseCommand(int pauseUnits);
-    virtual void handleDisconnect();
-    virtual simtime_t insertEndReception(long id, simtime_t endRxTime);
-    virtual void removeExpiredEndRxTimes();
+    virtual void processReceivedPauseFrame(EtherPauseFrame *frame);
+    virtual void processConnectDisconnect();
+    virtual void addReception(simtime_t endRxTime);
+    virtual void addReceptionInReconnectState(long id, simtime_t endRxTime);
     virtual void processDetectedCollision();
 
     virtual void printState();

@@ -584,6 +584,7 @@ cPacket *IPv6::decapsulate(IPv6Datagram *datagram)
     controlInfo->setProtocol(datagram->getTransportProtocol());
     controlInfo->setSrcAddr(datagram->getSrcAddress());
     controlInfo->setDestAddr(datagram->getDestAddress());
+    controlInfo->setTrafficClass(datagram->getTrafficClass());
     controlInfo->setHopLimit(datagram->getHopLimit());
     controlInfo->setInterfaceId(fromIE ? fromIE->getInterfaceId() : -1);
 
@@ -627,10 +628,9 @@ IPv6Datagram *IPv6::encapsulate(cPacket *transportPacket, IPv6ControlInfo *contr
     }
 
     // set other fields
+    datagram->setTrafficClass(controlInfo->getTrafficClass());
     datagram->setHopLimit(controlInfo->getHopLimit()>0 ? controlInfo->getHopLimit() : 32); //FIXME use iface hop limit instead of 32?
     datagram->setTransportProtocol(controlInfo->getProtocol());
-
-    datagram->setTrafficClass(controlInfo->getTrafficClass());
 
     // #### Move extension headers from ctrlInfo to datagram if present
     while (0 < controlInfo->getExtensionHeaderArraySize())

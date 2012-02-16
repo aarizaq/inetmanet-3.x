@@ -229,7 +229,7 @@ bool RoutingTable::deleteInterfaceRoutesFrom(RoutingTable::RouteVector &vector, 
         }
         else
             ++it;
-        }
+    }
     return deleted;
 }
 
@@ -378,13 +378,13 @@ bool RoutingTable::deleteInvalidRoutesFrom(RoutingTable::RouteVector &vector)
         if (route->isValid())
             ++it;
         else
-     {
+        {
             nb->fireChangeNotification(NF_IPv4_ROUTE_DELETED, route); // rather: going to be deleted
             it = vector.erase(it);
             delete route;
             deleted = true;
-           }
-      }
+        }
+    }
     return deleted;
 }
 
@@ -397,7 +397,7 @@ void RoutingTable::purge()
     {
         invalidateCache();
         updateDisplayString();
-      }
+    }
 }
 
 IPv4Route *RoutingTable::findBestMatchingRoute(const IPv4Address& dest) const
@@ -408,8 +408,8 @@ IPv4Route *RoutingTable::findBestMatchingRoute(const IPv4Address& dest) const
     if (it != routingCache.end())
     {
         if (it->second==NULL || it->second->isValid())
-        return it->second;
-            }
+            return it->second;
+    }
 
     // find best match (one with longest prefix)
     // default route has zero prefix length, so (if exists) it'll be selected as last resort
@@ -423,7 +423,7 @@ IPv4Route *RoutingTable::findBestMatchingRoute(const IPv4Address& dest) const
             {
                 bestRoute = const_cast<IPv4Route *>(e);
                 break;
-           }
+            }
         }
     }
 
@@ -516,7 +516,7 @@ void RoutingTable::internalAddRoute(IPv4Route *entry)
 
     if ((entry->getDestination().getInt() & ~entry->getNetmask().getInt()) != 0)
         error("addRoute(): suspicious route: destination IP address %s has bits set outside netmask %s",
-              entry->getDestination().str().c_str(), entry->getNetmask().str().c_str());
+                entry->getDestination().str().c_str(), entry->getNetmask().str().c_str());
 
     // check that the interface exists
     if (!entry->getInterface())

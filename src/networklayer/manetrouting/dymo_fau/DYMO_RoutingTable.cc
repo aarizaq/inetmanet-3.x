@@ -24,16 +24,16 @@
 #include "DYMO.h"
 
 
-DYMO_RoutingTable::DYMO_RoutingTable(cObject* host, const IPv4Address& myAddr)
+DYMO_RoutingTable::DYMO_RoutingTable(DYMO* host, const IPv4Address& myAddr)
 {
     // get our host module
-    if (!host) throw std::runtime_error("No parent module found");
+    if (!host) throw cRuntimeError("No parent module found");
 
     dymoProcess = host;
 
     // get our routing table
     // routingTable = IPvXAddressResolver().routingTableOf(host);
-    // if (!routingTable) throw std::runtime_error("No routing table found");
+    // if (!routingTable) throw cRuntimeError("No routing table found");
 
     // get our interface table
     // IInterfaceTable *ift = IPvXAddressResolver().interfaceTableOf(host);
@@ -61,7 +61,7 @@ std::string DYMO_RoutingTable::info() const
     ss << getNumRoutes() << " entries";
 
     int broken = 0;
-    for (std::vector<DYMO_RoutingEntry *>::const_iterator iter = routeVector.begin(); iter < routeVector.end(); iter++)
+    for (RouteVector::const_iterator iter = routeVector.begin(); iter < routeVector.end(); iter++)
     {
         DYMO_RoutingEntry* e = *iter;
         if (e->routeBroken) broken++;
@@ -69,7 +69,7 @@ std::string DYMO_RoutingTable::info() const
     ss << " (" << broken << " broken)";
 
     ss << " {" << std::endl;
-    for (std::vector<DYMO_RoutingEntry *>::const_iterator iter = routeVector.begin(); iter < routeVector.end(); iter++)
+    for (RouteVector::const_iterator iter = routeVector.begin(); iter < routeVector.end(); iter++)
     {
         DYMO_RoutingEntry* e = *iter;
         ss << "  " << *e << std::endl;
@@ -131,21 +131,21 @@ void DYMO_RoutingTable::deleteRoute(DYMO_RoutingEntry *entry)
 //  }
 
     // update DYMO routingTable
-    std::vector<DYMO_RoutingEntry *>::iterator iter;
+    RouteVector::iterator iter;
     for (iter = routeVector.begin(); iter < routeVector.end(); iter++)
     {
         if (entry == *iter)
         {
             routeVector.erase(iter);
             Uint128 dest(entry->routeAddress.getInt());
-            (dynamic_cast <DYMO*> (dymoProcess))->omnet_chg_rte(dest, dest, dest, 0, true);
+            dymoProcess->omnet_chg_rte(dest, dest, dest, 0, true);
             //updateDisplayString();
             delete entry;
             return;
         }
     }
 
-    throw std::runtime_error("unknown routing entry requested to be deleted");
+    throw cRuntimeError("unknown routing entry requested to be deleted");
 }
 
 //=================================================================================================
@@ -154,7 +154,7 @@ void DYMO_RoutingTable::deleteRoute(DYMO_RoutingEntry *entry)
 //=================================================================================================
 void DYMO_RoutingTable::maintainAssociatedRoutingTable()
 {
-    std::vector<DYMO_RoutingEntry *>::iterator iter;
+    RouteVector::iterator iter;
     for (iter = routeVector.begin(); iter < routeVector.end(); iter++)
     {
         maintainAssociatedRoutingEntryFor(*iter);
@@ -168,7 +168,7 @@ void DYMO_RoutingTable::maintainAssociatedRoutingTable()
 DYMO_RoutingEntry* DYMO_RoutingTable::getByAddress(IPv4Address addr)
 {
 
-    std::vector<DYMO_RoutingEntry *>::iterator iter;
+    RouteVector::iterator iter;
 
     for (iter = routeVector.begin(); iter < routeVector.end(); iter++)
     {
@@ -189,7 +189,7 @@ DYMO_RoutingEntry* DYMO_RoutingTable::getByAddress(IPv4Address addr)
 //=================================================================================================
 DYMO_RoutingEntry* DYMO_RoutingTable::getForAddress(IPv4Address addr)
 {
-    std::vector<DYMO_RoutingEntry *>::iterator iter;
+    RouteVector::iterator iter;
 
     int longestPrefix = 0;
     DYMO_RoutingEntry* longestPrefixEntry = 0;
@@ -228,12 +228,11 @@ void DYMO_RoutingTable::maintainAssociatedRoutingEntryFor(DYMO_RoutingEntry* ent
         // entry is valid
         Uint128 mask(IPv4Address::ALLONES_ADDRESS.getInt());
         Uint128 gtw(entry->routeNextHopAddress.getInt());
-        (dynamic_cast <DYMO*> (dymoProcess))->setIpEntry(dest, gtw, mask, entry->routeDist);
-
+        dymoProcess->setIpEntry(dest, gtw, mask, entry->routeDist);
     }
     else
     {
-        (dynamic_cast <DYMO*> (dymoProcess))->deleteIpEntry(dest);
+        dymoProcess->deleteIpEntry(dest);
     }
 }
 

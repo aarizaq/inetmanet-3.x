@@ -60,14 +60,10 @@ void EtherMACFullDuplex::initializeFlags()
 void EtherMACFullDuplex::handleMessage(cMessage *msg)
 {
     if (dataratesDiffer)
-        calculateParameters(true);
+        readChannelParameters(true);
 
     if (msg->isSelfMessage())
         handleSelfMessage(msg);
-    else if (!connected)
-        processMessageWhenNotConnected(msg);
-    else if (disabled)
-        processMessageWhenDisabled(msg);
     else if (msg->getArrivalGate() == upperLayerInGate)
         processFrameFromUpperLayer(check_and_cast<EtherFrame *>(msg));
     else if (msg->getArrivalGate() == physInGate)
@@ -139,6 +135,17 @@ void EtherMACFullDuplex::processFrameFromUpperLayer(EtherFrame *frame)
                 (int)(frame->getByteLength()), MAX_ETHERNET_FRAME_BYTES);
     }
 
+    if (!connected || disabled)
+    {
+        EV << (!connected ? "Interface is not connected" : "MAC is disabled") << " -- dropping packet " << frame << endl;
+        emit(dropPkFromHLIfaceDownSignal, frame);
+        numDroppedPkFromHLIfaceDown++;
+        delete frame;
+
+        requestNextFrameFromExtQueue();
+        return;
+    }
+
     // fill in src address if not set
     if (frame->getSrc().isUnspecified())
         frame->setSrc(address);
@@ -179,11 +186,24 @@ void EtherMACFullDuplex::processMsgFromNetwork(EtherTraffic *msg)
 {
     EV << "Received frame from network: " << msg << endl;
 
+    if (!connected || disabled)
+    {
+        EV << (!connected ? "Interface is not connected" : "MAC is disabled") << " -- dropping msg " << msg << endl;
+        if (dynamic_cast<EtherFrame *>(msg))    // do not count JAM and IFG packets
+        {
+            emit(dropPkIfaceDownSignal, msg);
+            numDroppedIfaceDown++;
+        }
+        delete msg;
+
+        return;
+    }
+
     EtherFrame *frame = dynamic_cast<EtherFrame *>(msg);
     if (!frame)
     {
         if (dynamic_cast<EtherIFG *>(msg))
-            throw cRuntimeError("There is no burst mode in full duplex, invalid received EtherIFG frame");
+            throw cRuntimeError("There is no burst mode in full-duplex operation: EtherIFG is unexpected");
         check_and_cast<EtherFrame *>(msg);
     }
 
@@ -281,24 +301,6 @@ void EtherMACFullDuplex::finish()
     simtime_t totalRxChannelIdleTime = t - totalSuccessfulRxTime;
     recordScalar("rx channel idle (%)", 100 * (totalRxChannelIdleTime / t));
     recordScalar("rx channel utilization (%)", 100 * (totalSuccessfulRxTime / t));
-}
-
-void EtherMACFullDuplex::processMessageWhenNotConnected(cMessage *msg)
-{
-    EV << "Interface is not connected -- dropping packet " << msg << endl;
-    emit(dropPkIfaceDownSignal, msg);
-    numDroppedIfaceDown++;
-    delete msg;
-
-    requestNextFrameFromExtQueue();
-}
-
-void EtherMACFullDuplex::processMessageWhenDisabled(cMessage *msg)
-{
-    EV << "MAC is disabled -- dropping message " << msg << endl;
-    delete msg;
-
-    requestNextFrameFromExtQueue();
 }
 
 void EtherMACFullDuplex::handleEndPausePeriod()

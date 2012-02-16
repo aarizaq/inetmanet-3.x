@@ -334,10 +334,10 @@ void SimpleUDP::processMsgFromApp(cPacket *appData)
             std::map<IPvXAddress, int>::iterator it = sd->multicastAddrs.find(destAddr);
             interfaceId = (it != sd->multicastAddrs.end() && it->second != -1) ? it->second : sd->multicastOutputInterfaceId;
         }
-        sendDown(appData, sd->localAddr, sd->localPort, destAddr, destPort, interfaceId, sd->ttl);
+        sendDown(appData, sd->localAddr, sd->localPort, destAddr, destPort, interfaceId, sd->ttl,0);
     }
     else
-        sendDown(appData, sd->localAddr, sd->localPort, destAddr, destPort, ctrl->getInterfaceId(), sd->ttl);
+        sendDown(appData, sd->localAddr, sd->localPort, destAddr, destPort, ctrl->getInterfaceId(), sd->ttl,0);
 
     delete ctrl; // cannot be deleted earlier, due to destAddr
 

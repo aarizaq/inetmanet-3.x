@@ -78,8 +78,8 @@ class INET_API Ieee802154Phy : public ChannelAccess
 
         virtual void disconnectTransceiver() {transceiverConnect = false;}
         virtual void connectTransceiver() {transceiverConnect = true;}
-        virtual void disconnectReceiver() {receiverConnect = false; cc->setDisableReception(this->myRadioRef); }
-        virtual void connectReceiver() {receiverConnect = true; cc->setEnableReception(this->myRadioRef);}
+        virtual void disconnectReceiver() {receiverConnect = false; cc->disableReception(this->myRadioRef); }
+        virtual void connectReceiver() {receiverConnect = true; cc->enableReception(this->myRadioRef);}
 
 
   protected:
@@ -107,8 +107,13 @@ class INET_API Ieee802154Phy : public ChannelAccess
         };
         SnrStruct snrInfo; // stores the snrList and the the recvdPower for the
         // message currently being received, together with a pointer to the message.
-
-        typedef std::map<AirFrame*, double> RecvBuff;
+        struct Compare {
+            bool operator() (AirFrame* const &lhs, AirFrame* const &rhs) const {
+                ASSERT(lhs && rhs);
+                return lhs->getId() < rhs->getId();
+            }
+        };
+        typedef std::map<AirFrame*, double, Compare> RecvBuff;
         RecvBuff recvBuff; // A buffer to store a pointer to a message and the related receive power.
 
         AirFrame* txPktCopy; // duplicated outgoing pkt, accessing encapsulated msg only when transmitter is forcibly turned off

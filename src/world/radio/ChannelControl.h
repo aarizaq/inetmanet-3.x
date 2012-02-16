@@ -42,9 +42,15 @@ struct IChannelControl::RadioEntry {
     int channel;
     Coord pos; // cached radio position
 
+    struct Compare {
+        bool operator() (const RadioRef &lhs, const RadioRef &rhs) const {
+            ASSERT(lhs && rhs);
+            return lhs->radioModule->getId() < rhs->radioModule->getId();
+        }
+    };
     // we cache neighbors set in an std::vector, because std::set iteration is slow;
     // std::vector is created and updated on demand
-    std::set<RadioRef> neighbors; // cached neighbor list
+    std::set<RadioRef, Compare> neighbors; // cached neighbor list
     std::vector<RadioRef> neighborList;
     bool isNeighborListValid;
     bool isActive;
@@ -148,10 +154,10 @@ class INET_API ChannelControl : public cSimpleModule, public IChannelControl
     virtual double getInterferenceRange(RadioRef r) { return maxInterferenceDistance; }
 
     /** disable the reception in the reference module */
-    virtual bool setDisableReception(RadioRef r) { r->isActive = false; };
+    virtual bool disableReception(RadioRef r) { r->isActive = false; };
 
-    /** disable the reception in the reference module */
-    virtual bool setEnableReception(RadioRef r) { r->isActive = true; };
+    /** enable the reception in the reference module */
+    virtual bool enableReception(RadioRef r) { r->isActive = true; };
 };
 
 #endif

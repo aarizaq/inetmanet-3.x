@@ -70,15 +70,16 @@ void IPv4::initialize()
     // check if there is a protocol -> gate mapping
     int gateindex = mapping.getOutputGateForProtocol(IP_PROT_MANET);
     if (gateSize("transportOut")-1<gateindex)
-           return;
+        return;
 
     // check if that gate is connected at all
     cGate *manetgate = gate("transportOut", gateindex)->getPathEndGate();
     if (manetgate==NULL)
-           return;
+        return;
+
     cModule *destmod = manetgate->getOwnerModule();
     if (destmod==NULL)
-           return;
+        return;
 
     // manet routing will be turned on ONLY for routing protocols which has the @reactive property set
     // this prevents performance loss with other protocols that use pro active routing and do not need
@@ -286,7 +287,6 @@ void IPv4::handleARP(ARPPacket *msg)
     send(msg, queueOutGate);
 }
 
-
 void IPv4::handleReceivedICMP(ICMPMessage *msg)
 {
     switch (msg->getType())
@@ -427,27 +427,27 @@ void IPv4::routeUnicastPacket(IPv4Datagram *datagram, InterfaceEntry *destIE, IP
             destIE = re->getInterface();
             nextHopAddr = re->getGateway();
         }
-        }
+    }
 
     if (!destIE) // no route found
-        {
+    {
 #ifdef WITH_MANET
             if (manetRouting)
                sendNoRouteMessageToManet(datagram);
             else
             {
 #endif
-            EV << "unroutable, sending ICMP_DESTINATION_UNREACHABLE\n";
-            numUnroutable++;
-            icmpAccess.get()->sendErrorMessage(datagram, ICMP_DESTINATION_UNREACHABLE, 0);
+                EV << "unroutable, sending ICMP_DESTINATION_UNREACHABLE\n";
+                numUnroutable++;
+                icmpAccess.get()->sendErrorMessage(datagram, ICMP_DESTINATION_UNREACHABLE, 0);
 #ifdef WITH_MANET
-        }
+            }
 #endif
     }
     else // fragment and send
     {
-    EV << "output interface is " << destIE->getName() << ", next-hop address: " << nextHopAddr << "\n";
-    numForwarded++;
+        EV << "output interface is " << destIE->getName() << ", next-hop address: " << nextHopAddr << "\n";
+        numForwarded++;
         fragmentAndSend(datagram, destIE, nextHopAddr);
     }
 }
@@ -462,15 +462,15 @@ void IPv4::routeLocalBroadcastPacket(IPv4Datagram *datagram, InterfaceEntry *des
         fragmentAndSend(datagram, destIE, IPv4Address::ALLONES_ADDRESS);
     }
     else if (forceBroadcast)
-        {
+    {
         // forward to each interface including loopback
         for (int i = 0; i<ift->getNumInterfaces(); i++)
         {
             InterfaceEntry *ie = ift->getInterface(i);
             fragmentAndSend(datagram->dup(), ie, IPv4Address::ALLONES_ADDRESS);
         }
-            delete datagram;
-        }
+        delete datagram;
+    }
     else
     {
         numDropped++;
@@ -579,8 +579,8 @@ void IPv4::reassembleAndDeliver(IPv4Datagram *datagram)
         {
             send(decapsulate(datagram), "transportOut", gateindex);
             numLocalDeliver++;
-        } 
-        else 
+        }
+        else
         {
             EV << "L3 Protocol not connected. discarding packet" << endl;
             icmpAccess.get()->sendErrorMessage(datagram, ICMP_DESTINATION_UNREACHABLE, ICMP_DU_PROTOCOL_UNREACHABLE);
@@ -600,7 +600,7 @@ cPacket *IPv4::decapsulate(IPv4Datagram *datagram)
     controlInfo->setProtocol(datagram->getTransportProtocol());
     controlInfo->setSrcAddr(datagram->getSrcAddress());
     controlInfo->setDestAddr(datagram->getDestAddress());
-    controlInfo->setDiffServCodePoint(datagram->getDiffServCodePoint());
+    controlInfo->setTypeOfService(datagram->getTypeOfService());
     controlInfo->setInterfaceId(fromIE ? fromIE->getInterfaceId() : -1);
     controlInfo->setTimeToLive(datagram->getTimeToLive());
 
@@ -723,7 +723,7 @@ IPv4Datagram *IPv4::encapsulate(cPacket *transportPacket, IPv4ControlInfo *contr
     }
 
     // set other fields
-    datagram->setDiffServCodePoint(controlInfo->getDiffServCodePoint());
+    datagram->setTypeOfService(controlInfo->getTypeOfService());
 
     datagram->setIdentification(curFragmentId++);
     datagram->setMoreFragments(false);
@@ -739,7 +739,6 @@ IPv4Datagram *IPv4::encapsulate(cPacket *transportPacket, IPv4ControlInfo *contr
         ttl = defaultMCTimeToLive;
     else
         ttl = defaultTimeToLive;
-
     datagram->setTimeToLive(ttl);
     datagram->setTransportProtocol(controlInfo->getProtocol());
 
@@ -763,14 +762,13 @@ void IPv4::sendDatagramToOutput(IPv4Datagram *datagram, InterfaceEntry *ie, IPv4
     }
     else
     {
-    // send out datagram to ARP, with control info attached
+        // send out datagram to ARP, with control info attached
         delete datagram->removeControlInfo();
-    IPv4RoutingDecision *routingDecision = new IPv4RoutingDecision();
-    routingDecision->setInterfaceId(ie->getInterfaceId());
-    routingDecision->setNextHopAddr(nextHopAddr);
-    datagram->setControlInfo(routingDecision);
-
-    send(datagram, queueOutGate);
+        IPv4RoutingDecision *routingDecision = new IPv4RoutingDecision();
+        routingDecision->setInterfaceId(ie->getInterfaceId());
+        routingDecision->setNextHopAddr(nextHopAddr);
+        datagram->setControlInfo(routingDecision);
+        send(datagram, queueOutGate);
     }
 }
 
@@ -778,7 +776,7 @@ void IPv4::sendDatagramToOutput(IPv4Datagram *datagram, InterfaceEntry *ie, IPv4
 void IPv4::sendRouteUpdateMessageToManet(IPv4Datagram *datagram)
 {
     if (datagram->getTransportProtocol() != IP_PROT_DSR) // Dsr don't use update code, the Dsr datagram is the update.
-        {
+    {
         ControlManetRouting *control = new ControlManetRouting();
         control->setOptionCode(MANET_ROUTE_UPDATE);
         control->setSrcAddress(datagram->getSrcAddress().getInt());

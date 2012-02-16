@@ -41,7 +41,7 @@ import inet.transport.IUDP;
 // attached with srcPort filled in.
 //
 // When UDP receives an ICMP error (~ICMPMessage or ~ICMPv6Message)
-// that refers to an UDP socket, it reports the error to the corresponding 
+// that refers to an UDP socket, it reports the error to the corresponding
 // application by sending a message with kind UDP_I_ERROR.
 //
 // <b>Communication with the IP (IPv4/IPv6) layer</b>

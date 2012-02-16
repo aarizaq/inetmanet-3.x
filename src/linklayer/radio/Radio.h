@@ -140,18 +140,18 @@ class INET_API Radio : public ChannelAccess, public IPowerControl
 
     virtual void disconnectTransceiver() {transceiverConnect = false;}
     virtual void connectTransceiver() {transceiverConnect = true;}
-    virtual void disconnectReceiver() {receiverConnect = false; cc->setDisableReception(this->myRadioRef); }
-    virtual void connectReceiver() {receiverConnect = true; cc->setEnableReception(this->myRadioRef);}
+    virtual void disconnectReceiver() {receiverConnect = false; cc->disableReception(this->myRadioRef); }
+    virtual void connectReceiver() {receiverConnect = true; cc->enableReception(this->myRadioRef);}
 
     virtual void registerBattery();
 
     virtual void updateDisplayString();
 
     // Power Control methods
-	virtual void enablingInitialization();
-	virtual void disablingInitialization();
-	//
-	double calcDistFreeSpace();
+    virtual void enablingInitialization();
+    virtual void disablingInitialization();
+    //
+    double calcDistFreeSpace();
 
   protected:
 	// Support of noise generators, the noise generators allow that the radio can change between  RECV <-->IDLE without to receive a frame
@@ -203,7 +203,13 @@ class INET_API Radio : public ChannelAccess, public IPowerControl
      * Typedef used to store received messages together with
      * receive power.
      */
-    typedef std::map<AirFrame*,double> RecvBuff;
+    struct Compare {
+        bool operator() (AirFrame* const &lhs, AirFrame* const &rhs) const {
+            ASSERT(lhs && rhs);
+            return lhs->getId() < rhs->getId();
+        }
+    };
+    typedef std::map<AirFrame*, double, Compare> RecvBuff;
 
     /**
      * State: A buffer to store a pointer to a message and the related

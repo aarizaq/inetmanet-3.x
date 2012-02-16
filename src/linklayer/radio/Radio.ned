@@ -34,9 +34,8 @@ simple Radio like IRadio
         double thermalNoise @unit("dBm") = default(-110dBm); // base noise level (dBm)
         double sensitivity @unit("dBm") = default(-85dBm); // received signals with power below sensitivity are ignored
         string radioModel;  // the radio model implementing the IRadioModel interface (C++). e.g. GenericRadioModel, Ieee80211RadioModel
-        
-        string NoiseGenerator = default("");
 
+        string NoiseGenerator = default("");
         // generic FreeSpace model parameters
         double pathLossAlpha = default(2); // used by the path loss calculation
         double TransmissionAntennaGainIndB @unit("dB") = default(0dB);  // Transmission Antenna Gain

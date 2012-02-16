@@ -42,6 +42,17 @@ const double MAXJITTER = 0.001; /**< all messages sent to a lower layer are dela
 const IPv4Address LL_MANET_ROUTERS = "224.0.0.90"; /**< Link-local multicast address of all MANET routers (TBD) */
 }
 
+DYMO::DYMO()
+{
+    dymo_routingTable = NULL;
+    timerMsg = NULL;
+    ownSeqNumLossTimeout = NULL;
+    ownSeqNumLossTimeoutMax = NULL;
+    queuedDataPackets = NULL;
+    rateLimiterRREQ = NULL;
+    DYMO_INTERFACES = NULL;
+}
+
 void DYMO::initialize(int aStage)
 {
     cSimpleModule::initialize(aStage);
@@ -120,9 +131,9 @@ void DYMO::initialize(int aStage)
         // setSendToICMP(true);
         myAddr = getAddress().toUint();
         linkLayerFeeback();
+        timerMsg = new cMessage("DYMO_scheduler");
     }
 }
-
 
 void DYMO::finish()
 {
@@ -165,28 +176,32 @@ void DYMO::finish()
     delete queuedDataPackets;
     queuedDataPackets = NULL;
     // ipLayer->unregisterHook(0, this);
+
+    cancelAndDelete(timerMsg);
+    timerMsg = NULL;
 }
 
 DYMO::~DYMO()
 {
-
-    if (dymo_routingTable)
-        delete dymo_routingTable;
+    delete dymo_routingTable;
 
     outstandingRREQList.delAll();
 
-    if (ownSeqNumLossTimeout)
-        delete ownSeqNumLossTimeout;
-    if (ownSeqNumLossTimeoutMax)
-        delete ownSeqNumLossTimeoutMax;
+    delete ownSeqNumLossTimeout;
+    delete ownSeqNumLossTimeoutMax;
 
-
-    if (rateLimiterRREQ)
-        delete rateLimiterRREQ;
+    delete rateLimiterRREQ;
 
     // IPv4* ipLayer = queuedDataPackets->getIpLayer();
-    if (queuedDataPackets)
-        delete queuedDataPackets;
+    delete queuedDataPackets;
+
+    cancelAndDelete(timerMsg);
+}
+
+void DYMO::rescheduleTimer()
+{
+    if (!timerMsg->isScheduled())
+        scheduleAt(simTime()+1.0, timerMsg);
 }
 
 void DYMO::handleMessage(cMessage* apMsg)
@@ -201,7 +216,6 @@ void DYMO::handleMessage(cMessage* apMsg)
     }
     else
     {
-
         if (dynamic_cast<ControlManetRouting *>(apMsg))
         {
             ControlManetRouting * control = check_and_cast <ControlManetRouting *> (apMsg);
@@ -220,7 +234,6 @@ void DYMO::handleMessage(cMessage* apMsg)
         }
         else if (dynamic_cast<UDPPacket *>(apMsg))
         {
-
             udpPacket = check_and_cast<UDPPacket*>(apMsg);
             if (udpPacket->getDestinationPort() != DYMO_PORT)
             {
@@ -235,6 +248,7 @@ void DYMO::handleMessage(cMessage* apMsg)
                 // local address delete packet
                 delete msg_aux;
                 delete controlInfo;
+                delete apMsg;
                 return;
             }
             msg_aux->setControlInfo(controlInfo);
@@ -308,11 +322,10 @@ void DYMO::processPacket(const IPv4Datagram* datagram)
         outstandingRREQ->destAddr = destAddr.getInt();
         outstandingRREQ->creationTime = simTime();
         outstandingRREQList.add(outstandingRREQ);
+        rescheduleTimer();
     }
     queuedDataPackets->queuePacket(datagram);
 }
-
-
 
 void DYMO::handleLowerMsg(cPacket* apMsg)
 {
@@ -361,8 +374,6 @@ void DYMO::handleLowerRM(DYMO_RM *routingMsg)
         handleLowerRMForRelay(routingMsg);
         return;
     }
-
-
 }
 
 uint32_t DYMO::getNextHopAddress(DYMO_RM *routingMsg)
@@ -387,7 +398,6 @@ InterfaceEntry* DYMO::getNextHopInterface(DYMO_PacketBBMessage* pkt)
 
     int interfaceId = controlInfo->getInterfaceId();
     if (interfaceId == -1) error("received packet's UDPControlInfo did not have information on interfaceId");
-
 
     InterfaceEntry* srcIf = NULL;
 
@@ -432,7 +442,6 @@ void DYMO::handleLowerRMForMe(DYMO_RM *routingMsg)
 
 void DYMO::handleLowerRMForRelay(DYMO_RM *routingMsg)
 {
-
     /** current node is not the message destination -> find route to destination **/
     ev << "current node is not the message destination -> find route to destination" << endl;
 
@@ -599,6 +608,7 @@ void DYMO::handleLowerRERR(DYMO_RERR *my_rerr)
             // start delete timer
             // TODO: not specified in draft, but seems to make sense
             entry->routeDelete.start(ROUTE_DELETE_TIMEOUT);
+            rescheduleTimer();
 
             // update unreachableNode.SeqNum
             // TODO: not specified in draft, but seems to make sense
@@ -659,69 +669,73 @@ void DYMO::handleLowerUERR(DYMO_UERR *my_uerr)
 void DYMO::handleSelfMsg(cMessage* apMsg)
 {
     ev << "handle self message" << endl;
-    if (dynamic_cast<DYMO_Timeout*>(apMsg) != NULL)
+    if (apMsg == timerMsg)
     {
+        bool hasActive = false;
+
         // Something timed out. Let's find out what.
 
         // Maybe it's a ownSeqNumLossTimeout
-        if (ownSeqNumLossTimeout->isExpired() || ownSeqNumLossTimeoutMax->isExpired())
+        if (ownSeqNumLossTimeout->stopWhenExpired() || ownSeqNumLossTimeoutMax->stopWhenExpired())
         {
             ownSeqNumLossTimeout->cancel();
             ownSeqNumLossTimeoutMax->cancel();
             ownSeqNum = 1;
         }
+        hasActive = ownSeqNumLossTimeout->isActive() || ownSeqNumLossTimeoutMax->isActive();
 
         // Maybe it's a outstanding RREQ
-        DYMO_OutstandingRREQ* outstandingRREQ = outstandingRREQList.getExpired();
-        if (outstandingRREQ)
-        {
+        DYMO_OutstandingRREQ* outstandingRREQ;
+        while ((outstandingRREQ = outstandingRREQList.getExpired()) != NULL )
             handleRREQTimeout(*outstandingRREQ);
-        }
+
+        if (!hasActive)
+            hasActive = outstandingRREQList.hasActive();
 
         // Maybe it's a DYMO_RoutingEntry
-        for (int i = 0; i < dymo_routingTable->getNumRoutes(); i++)
+        for (int i = 0; i < dymo_routingTable->getNumRoutes(); )
         {
             DYMO_RoutingEntry *entry = dymo_routingTable->getRoute(i);
-            if (entry->routeAgeMin.isExpired())
-            {
-                break;
-            }
-            if (entry->routeAgeMax.isExpired())
-            {
-                dymo_routingTable->deleteRoute(entry);
-                break; // if other timeouts also expired, they will have gotten their own DYMO_Timeout scheduled, so it's ok to stop here
-            }
-            if (entry->routeNew.isExpired())
-            {
-                if (!entry->routeUsed.isRunning())
-                {
-                    entry->routeDelete.start(ROUTE_DELETE_TIMEOUT);
-                }
-                break;
-            }
-            if (entry->routeUsed.isExpired())
-            {
-                if (!entry->routeNew.isRunning())
-                {
-                    entry->routeDelete.start(ROUTE_DELETE_TIMEOUT);
-                }
-                break;
-            }
-            if (entry->routeDelete.isExpired())
+            bool deleted = false;
+
+            entry->routeAgeMin.stopWhenExpired();
+
+            if (entry->routeAgeMax.stopWhenExpired())
             {
                 dymo_routingTable->deleteRoute(entry);
-                break;
+                // if other timeouts also expired, they will have gotten their own DYMO_Timeout scheduled, so it's ok to stop here
+                deleted = true;
+            }
+            else
+            {
+                bool routeNewStopped = entry->routeNew.stopWhenExpired();
+                bool routeUsedStopped = entry->routeUsed.stopWhenExpired();
+
+                if ((routeNewStopped || routeUsedStopped) && !(entry->routeUsed.isRunning() || entry->routeNew.isRunning()))
+                    entry->routeDelete.start(ROUTE_DELETE_TIMEOUT);
+
+                if (entry->routeDelete.stopWhenExpired())
+                {
+                    dymo_routingTable->deleteRoute(entry);
+                    deleted = true;
+                }
+            }
+
+            if (!deleted)
+            {
+                if (!hasActive)
+                    hasActive = entry->hasActiveTimer();
+                i++;
             }
         }
-
+        if (hasActive)
+            rescheduleTimer();
     }
     else error("unknown message type");
-
 }
 
 void DYMO::sendDown(cPacket* apMsg, int destAddr)
 {
-
     // all messages sent to a lower layer are delayed by 0..MAXJITTER seconds (draft-ietf-manet-jitter-01)
     simtime_t jitter = dblrand() * MAXJITTER;
 
@@ -966,6 +980,7 @@ void DYMO::updateRouteLifetimes(unsigned int targetAddr)
 
     entry->routeUsed.start(ROUTE_USED_TIMEOUT);
     entry->routeDelete.cancel();
+    rescheduleTimer();
 
     dymo_routingTable->maintainAssociatedRoutingTable();
     ev << "lifetimes of route to destination node " << targetAddr << " are up to date "  << endl;
@@ -983,7 +998,6 @@ bool DYMO::isRBlockBetter(DYMO_RoutingEntry * entry, DYMO_AddressBlock ab, bool 
     // loop-possible or inferior?
     if (ab.getSeqNum() == (int)entry->routeSeqNum)
     {
-
         int nodeDist = ab.hasDist() ? (ab.getDist() + 1) : 0; // incremented by one, because draft -10 says to first increment, then compare
         int routeDist = entry->routeDist;
 
@@ -995,7 +1009,6 @@ bool DYMO::isRBlockBetter(DYMO_RoutingEntry * entry, DYMO_AddressBlock ab, bool 
         // inferior?
         if (nodeDist > routeDist) return false;
         if ((nodeDist == routeDist) && (!entry->routeBroken) && (isRREQ)) return false;
-
     }
 
     // superior
@@ -1055,7 +1068,6 @@ void DYMO::handleRREQTimeout(DYMO_OutstandingRREQ& outstandingRREQ)
             sendICMP(dgram);
         }
 
-
         // clean up outstandingRREQList
         outstandingRREQList.del(&outstandingRREQ);
 
@@ -1094,6 +1106,8 @@ bool DYMO::updateRoutesFromAddressBlock(const DYMO_AddressBlock& ab, bool isRREQ
     entry->routeUsed.cancel();
     entry->routeDelete.cancel();
 
+    rescheduleTimer();
+
     dymo_routingTable->maintainAssociatedRoutingTable();
 
     checkAndSendQueuedPkts(entry->routeAddress.getInt(), entry->routePrefix, nextHopAddress);
@@ -1116,7 +1130,6 @@ DYMO_RM* DYMO::updateRoutes(DYMO_RM * pkt)
 
     for (unsigned int i = 0; i < additional_nodes.size(); i++)
     {
-
         // TODO: not specified in draft, but seems to make sense
         if (additional_nodes[i].getAddress()==myAddr) return NULL;
 
@@ -1178,12 +1191,9 @@ cModule* DYMO::getRouterByAddress(IPv4Address address)
     return dynamic_cast<cModule*>(simulation.getModule(address.getInt() - AUTOASSIGN_ADDRESS_BASE.getInt()));
 }
 
-
-
 /* Called for packets whose delivery fails at the link layer */
-void DYMO::packetFailed(IPv4Datagram *dgram)
+void DYMO::packetFailed(const IPv4Datagram *dgram)
 {
-
     /* We don't care about link failures for broadcast or non-data packets */
     if (dgram->getDestAddress() == IPv4Address::ALLONES_ADDRESS || dgram->getDestAddress() == LL_MANET_ROUTERS)
     {
@@ -1207,15 +1217,10 @@ void DYMO::packetFailed(IPv4Datagram *dgram)
     dymo_routingTable->maintainAssociatedRoutingTable();
 }
 
-
 void DYMO::processLinkBreak(const cObject *details)
 {
-    IPv4Datagram  *dgram = NULL;
-    if (dynamic_cast<IPv4Datagram *>(const_cast<cObject*> (details)))
-        dgram = check_and_cast<IPv4Datagram *>(details);
-    else
-        return;
-    packetFailed(dgram);
+    const IPv4Datagram *dgram = dynamic_cast<const IPv4Datagram *>(details);
+    if (dgram)
+        packetFailed(dgram);
 }
-
 

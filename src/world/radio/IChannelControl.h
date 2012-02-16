@@ -74,10 +74,10 @@ class INET_API IChannelControl
     virtual double getInterferenceRange(RadioRef r) = 0;
 
     /** disable the reception in the reference module */
-    virtual bool setDisableReception(RadioRef r) = 0;
+    virtual bool disableReception(RadioRef r) = 0;
 
-    /** disable the reception in the reference module */
-    virtual bool setEnableReception(RadioRef r) = 0;
+    /** enable the reception in the reference module */
+    virtual bool enableReception(RadioRef r) = 0;
 };
 
 #endif

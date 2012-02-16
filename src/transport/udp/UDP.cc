@@ -28,15 +28,17 @@
 
 #ifdef WITH_IPv4
 #include "ICMPAccess.h"
-#include "ICMPMessage_m.h"
-#include "IPv4Datagram_m.h"
+#include "ICMPMessage.h"
+#include "IPv4ControlInfo.h"
+#include "IPv4Datagram.h"
 #include "IPv4InterfaceData.h"
 #endif
 
 #ifdef WITH_IPv6
 #include "ICMPv6Access.h"
 #include "ICMPv6Message_m.h"
-#include "IPv6Datagram_m.h"
+#include "IPv6ControlInfo.h"
+#include "IPv6Datagram.h"
 #include "IPv6InterfaceData.h"
 #endif
 
@@ -88,6 +90,7 @@ UDP::SockDesc::SockDesc(int sockId_, int appGateIndex_) {
     isBroadcast = false;
     multicastOutputInterfaceId = -1;
     ttl = -1;
+    typeOfService = 0;
 }
 
 //--------
@@ -179,6 +182,8 @@ void UDP::processCommandFromApp(cMessage *msg)
             UDPSetOptionCommand *ctrl = check_and_cast<UDPSetOptionCommand *>(msg->getControlInfo());
             if (dynamic_cast<UDPSetTimeToLiveCommand*>(ctrl))
                 setTimeToLive(ctrl->getSockId(), ((UDPSetTimeToLiveCommand*)ctrl)->getTtl());
+            else if (dynamic_cast<UDPSetTypeOfServiceCommand*>(ctrl))
+                setTypeOfService(ctrl->getSockId(), ((UDPSetTypeOfServiceCommand*)ctrl)->getTos());
             else if (dynamic_cast<UDPSetBroadcastCommand*>(ctrl))
                 setBroadcast(ctrl->getSockId(), ((UDPSetBroadcastCommand*)ctrl)->getBroadcast());
             else if (dynamic_cast<UDPSetMulticastInterfaceCommand*>(ctrl))
@@ -237,10 +242,10 @@ void UDP::processPacketFromApp(cPacket *appData)
             std::map<IPvXAddress, int>::iterator it = sd->multicastAddrs.find(destAddr);
             interfaceId = (it != sd->multicastAddrs.end() && it->second != -1) ? it->second : sd->multicastOutputInterfaceId;
         }
-        sendDown(appData, sd->localAddr, sd->localPort, destAddr, destPort, interfaceId, sd->ttl);
+        sendDown(appData, sd->localAddr, sd->localPort, destAddr, destPort, interfaceId, sd->ttl, sd->typeOfService);
     }
     else
-        sendDown(appData, sd->localAddr, sd->localPort, destAddr, destPort, ctrl->getInterfaceId(), sd->ttl);
+        sendDown(appData, sd->localAddr, sd->localPort, destAddr, destPort, ctrl->getInterfaceId(), sd->ttl, sd->typeOfService);
 
     delete ctrl; // cannot be deleted earlier, due to destAddr
 }
@@ -269,6 +274,7 @@ void UDP::processUDPPacket(UDPPacket *udpPacket)
     int destPort = udpPacket->getDestinationPort();
     int interfaceId;
     int ttl;
+    unsigned char tos;
 
     cObject *ctrl = udpPacket->removeControlInfo();
     if (dynamic_cast<IPv4ControlInfo *>(ctrl)!=NULL)
@@ -278,6 +284,7 @@ void UDP::processUDPPacket(UDPPacket *udpPacket)
         destAddr = ctrl4->getDestAddr();
         interfaceId = ctrl4->getInterfaceId();
         ttl = ctrl4->getTimeToLive();
+        tos = ctrl4->getTypeOfService();
         isMulticast = ctrl4->getDestAddr().isMulticast();
         isBroadcast = ctrl4->getDestAddr() == IPv4Address::ALLONES_ADDRESS;  // note: we cannot recognize other broadcast addresses (where the host part is all-ones), because here we don't know the netmask
     }
@@ -288,6 +295,7 @@ void UDP::processUDPPacket(UDPPacket *udpPacket)
         destAddr = ctrl6->getDestAddr();
         interfaceId = ctrl6->getInterfaceId();
         ttl = ctrl6->getHopLimit();
+        tos = ctrl6->getTrafficClass();
         isMulticast = ctrl6->getDestAddr().isMulticast();
         isBroadcast = false;  // IPv6 has no broadcast, just various multicasts
     }
@@ -315,7 +323,7 @@ void UDP::processUDPPacket(UDPPacket *udpPacket)
         else
         {
             cPacket *payload = udpPacket->decapsulate();
-            sendUp(payload, sd, srcAddr, srcPort, destAddr, destPort, interfaceId, ttl);
+            sendUp(payload, sd, srcAddr, srcPort, destAddr, destPort, interfaceId, ttl, tos);
             delete udpPacket;
             delete ctrl;
         }
@@ -335,8 +343,8 @@ void UDP::processUDPPacket(UDPPacket *udpPacket)
             cPacket *payload = udpPacket->decapsulate();
             unsigned int i;
             for (i = 0; i < sds.size()-1; i++)      // sds.size() >= 1
-                sendUp(payload->dup(), sds[i], srcAddr, srcPort, destAddr, destPort, interfaceId, ttl); // dup() to all but the last one
-            sendUp(payload, sds[i], srcAddr, srcPort, destAddr, destPort, interfaceId, ttl);  // send original to last socket
+                sendUp(payload->dup(), sds[i], srcAddr, srcPort, destAddr, destPort, interfaceId, ttl, tos); // dup() to all but the last one
+            sendUp(payload, sds[i], srcAddr, srcPort, destAddr, destPort, interfaceId, ttl, tos);  // send original to last socket
             delete udpPacket;
             delete ctrl;
         }
@@ -424,8 +432,8 @@ void UDP::processUndeliverablePacket(UDPPacket *udpPacket, cObject *ctrl)
                 icmp = ICMPAccess().get();
             icmp->sendErrorMessage(udpPacket, ctrl4, ICMP_DESTINATION_UNREACHABLE, ICMP_DU_PORT_UNREACHABLE);
 #endif
-    }
-    else
+        }
+        else
             delete udpPacket;   // drop multicast packet
     }
     else if (dynamic_cast<IPv6ControlInfo *>(ctrl) != NULL)
@@ -625,7 +633,7 @@ std::vector<UDP::SockDesc*> UDP::findSocketsForMcastBcastPacket(const IPvXAddres
     return result;
 }
 
-void UDP::sendUp(cPacket *payload, SockDesc *sd, const IPvXAddress& srcAddr, ushort srcPort, const IPvXAddress& destAddr, ushort destPort, int interfaceId, int ttl)
+void UDP::sendUp(cPacket *payload, SockDesc *sd, const IPvXAddress& srcAddr, ushort srcPort, const IPvXAddress& destAddr, ushort destPort, int interfaceId, int ttl, unsigned char tos)
 {
     EV << "Sending payload up to socket sockId=" << sd->sockId << "\n";
 
@@ -638,6 +646,7 @@ void UDP::sendUp(cPacket *payload, SockDesc *sd, const IPvXAddress& srcAddr, ush
     udpCtrl->setDestPort(destPort);
     udpCtrl->setInterfaceId(interfaceId);
     udpCtrl->setTtl(ttl);
+    udpCtrl->setTypeOfService(tos);
     payload->setControlInfo(udpCtrl);
     payload->setKind(UDP_I_DATA);
 
@@ -660,7 +669,7 @@ void UDP::sendUpErrorIndication(SockDesc *sd, const IPvXAddress& localAddr, usho
     send(notifyMsg, "appOut", sd->appGateIndex);
 }
 
-void UDP::sendDown(cPacket *appData, const IPvXAddress& srcAddr, ushort srcPort, const IPvXAddress& destAddr, ushort destPort, int interfaceId, int ttl, unsigned int trafficClass)
+void UDP::sendDown(cPacket *appData, const IPvXAddress& srcAddr, ushort srcPort, const IPvXAddress& destAddr, ushort destPort, int interfaceId, int ttl, unsigned char tos)
 {
     if (destAddr.isUnspecified())
         error("send: unspecified destination address");
@@ -685,7 +694,7 @@ void UDP::sendDown(cPacket *appData, const IPvXAddress& srcAddr, ushort srcPort,
         ipControlInfo->setDestAddr(destAddr.get4());
         ipControlInfo->setInterfaceId(interfaceId);
         ipControlInfo->setTimeToLive(ttl);
-        ipControlInfo->setDiffServCodePoint(static_cast<unsigned char>(0x3f & trafficClass));
+        ipControlInfo->setTypeOfService(tos);
         udpPacket->setControlInfo(ipControlInfo);
 
         emit(sentPkSignal, udpPacket);
@@ -701,7 +710,7 @@ void UDP::sendDown(cPacket *appData, const IPvXAddress& srcAddr, ushort srcPort,
         ipControlInfo->setDestAddr(destAddr.get6());
         ipControlInfo->setInterfaceId(interfaceId);
         ipControlInfo->setHopLimit(ttl);
-        ipControlInfo->setTrafficClass(trafficClass);
+        ipControlInfo->setTrafficClass(tos);
         udpPacket->setControlInfo(ipControlInfo);
 
         emit(sentPkSignal, udpPacket);
@@ -729,6 +738,12 @@ void UDP::setTimeToLive(int sockId, int ttl)
     sd->ttl = ttl;
 }
 
+void UDP::setTypeOfService(int sockId, int typeOfService)
+{
+    SockDesc *sd = getSocketById(sockId);
+    sd->typeOfService = typeOfService;
+}
+
 void UDP::setBroadcast(int sockId, bool broadcast)
 {
     SockDesc *sd = getSocketById(sockId);
@@ -750,24 +765,24 @@ void UDP::joinMulticastGroups(int sockId, const std::vector<IPvXAddress>& multic
     {
         const IPvXAddress &multicastAddr = multicastAddresses[k];
         int interfaceId = k < interfaceIdsLen ? interfaceIds[k] : -1;
-    ASSERT(multicastAddr.isMulticast());
-    sd->multicastAddrs[multicastAddr] = interfaceId;
+        ASSERT(multicastAddr.isMulticast());
+        sd->multicastAddrs[multicastAddr] = interfaceId;
 
-    // add the multicast address to the selected interface or all interfaces
-    IInterfaceTable *ift = InterfaceTableAccess().get(this);
-    if (interfaceId != -1)
-    {
-        InterfaceEntry *ie = ift->getInterfaceById(interfaceId);
-        if (!ie)
-            error("Interface id=%d does not exist", interfaceId);
-        addMulticastAddressToInterface(ie, multicastAddr);
-    }
-    else
-    {
-        int n = ift->getNumInterfaces();
-        for (int i = 0; i < n; i++)
-            addMulticastAddressToInterface(ift->getInterface(i), multicastAddr);
-    }
+        // add the multicast address to the selected interface or all interfaces
+        IInterfaceTable *ift = InterfaceTableAccess().get(this);
+        if (interfaceId != -1)
+        {
+            InterfaceEntry *ie = ift->getInterfaceById(interfaceId);
+            if (!ie)
+                error("Interface id=%d does not exist", interfaceId);
+            addMulticastAddressToInterface(ie, multicastAddr);
+        }
+        else
+        {
+            int n = ift->getNumInterfaces();
+            for (int i = 0; i < n; i++)
+                addMulticastAddressToInterface(ift->getInterface(i), multicastAddr);
+        }
     }
 }
 

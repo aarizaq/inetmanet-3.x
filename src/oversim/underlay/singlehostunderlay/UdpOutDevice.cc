@@ -145,7 +145,7 @@ cPacket* UdpOutDevice::decapsulate(char* buf,
     IP->setMoreFragments(false);
     IP->setDontFragment(false);
     IP->setFragmentOffset(0);
-    IP->setDiffServCodePoint(0); // Faked...
+    IP->setTypeOfService(0); // Faked...
     IP->setBitLength(160);
 
     UDP->setSourcePort(ntohs(addrbuf->sin_port));

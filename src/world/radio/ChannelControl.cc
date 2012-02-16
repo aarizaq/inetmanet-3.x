@@ -170,7 +170,7 @@ const ChannelControl::RadioRefVector& ChannelControl::getNeighbors(RadioRef h)
     if (!h->isNeighborListValid)
     {
         h->neighborList.clear();
-        for (std::set<RadioRef>::const_iterator it = h->neighbors.begin(); it != h->neighbors.end(); it++)
+        for (std::set<RadioRef,RadioEntry::Compare>::iterator it = h->neighbors.begin(); it != h->neighbors.end(); it++)
             h->neighborList.push_back(*it);
         h->isNeighborListValid = true;
     }
@@ -300,7 +300,7 @@ void ChannelControl::sendToChannel(RadioRef srcRadio, AirFrame *airFrame)
         RadioRef r = neighbors[i];
         if (!r->isActive)
         {
-            coreEV << "skipping disable radio interface \n";
+            coreEV << "skipping disabled radio interface \n";
             continue;
         }
         if (r->channel == channel)
@@ -318,5 +318,3 @@ void ChannelControl::sendToChannel(RadioRef srcRadio, AirFrame *airFrame)
     // register transmission
     addOngoingTransmission(srcRadio, airFrame);
 }
-
-

@@ -91,7 +91,7 @@ const EtherMACBase::EtherDescr EtherMACBase::etherDescrs[NUM_OF_ETHERDESCRS] =
         MIN_ETHERNET_FRAME_BYTES,
         0,
         0,
-        -1,  // half duplex is not supported
+        -1,  // half-duplex is not supported
         0,
         0.0,
         0.0
@@ -102,7 +102,7 @@ const EtherMACBase::EtherDescr EtherMACBase::etherDescrs[NUM_OF_ETHERDESCRS] =
         MIN_ETHERNET_FRAME_BYTES,
         0,
         0,
-        -1,  // half duplex is not supported
+        -1,  // half-duplex is not supported
         0,
         0.0,
         0.0
@@ -113,7 +113,7 @@ const EtherMACBase::EtherDescr EtherMACBase::etherDescrs[NUM_OF_ETHERDESCRS] =
         MIN_ETHERNET_FRAME_BYTES,
         0,
         0,
-        -1,  // half duplex is not supported
+        -1,  // half-duplex is not supported
         0,
         0.0,
         0.0
@@ -128,6 +128,7 @@ simsignal_t EtherMACBase::rxPkFromHLSignal = SIMSIGNAL_NULL;
 simsignal_t EtherMACBase::dropPkNotForUsSignal = SIMSIGNAL_NULL;
 simsignal_t EtherMACBase::dropPkBitErrorSignal = SIMSIGNAL_NULL;
 simsignal_t EtherMACBase::dropPkIfaceDownSignal = SIMSIGNAL_NULL;
+simsignal_t EtherMACBase::dropPkFromHLIfaceDownSignal = SIMSIGNAL_NULL;
 
 simsignal_t EtherMACBase::packetSentToLowerSignal = SIMSIGNAL_NULL;
 simsignal_t EtherMACBase::packetReceivedFromLowerSignal = SIMSIGNAL_NULL;
@@ -137,7 +138,7 @@ simsignal_t EtherMACBase::packetReceivedFromUpperSignal = SIMSIGNAL_NULL;
 
 EtherMACBase::EtherMACBase()
 {
-    lastTxFinishTime = -1.0; // never equals with current simtime.
+    lastTxFinishTime = -1.0; // never equals to current simtime
     curEtherDescr = &nullEtherDescr;
     transmissionChannel = NULL;
     physInGate = NULL;
@@ -174,7 +175,7 @@ void EtherMACBase::initialize()
 
     registerInterface(); // needs MAC address
 
-    calculateParameters(true);
+    readChannelParameters(true);
 
     lastTxFinishTime = -1.0; // not equals with current simtime.
 
@@ -205,7 +206,7 @@ void EtherMACBase::initializeQueueModule()
         EV << "Requesting first frame from queue module\n";
         txQueue.setExternalQueue(queueModule);
 
-        if (0 == txQueue.extQueue->getNumPendingRequests())
+        if (txQueue.extQueue->getNumPendingRequests() == 0)
             txQueue.extQueue->requestPacket();
     }
     else
@@ -263,7 +264,7 @@ void EtherMACBase::initializeStatistics()
 {
     numFramesSent = numFramesReceivedOK = numBytesSent = numBytesReceivedOK = 0;
     numFramesPassedToHL = numDroppedBitError = numDroppedNotForUs = 0;
-    numFramesFromHL = numDroppedIfaceDown = 0;
+    numFramesFromHL = numDroppedIfaceDown = numDroppedPkFromHLIfaceDown = 0;
     numPauseFramesRcvd = numPauseFramesSent = 0;
 
     WATCH(numFramesSent);
@@ -271,6 +272,7 @@ void EtherMACBase::initializeStatistics()
     WATCH(numBytesSent);
     WATCH(numBytesReceivedOK);
     WATCH(numFramesFromHL);
+    WATCH(numDroppedPkFromHLIfaceDown);
     WATCH(numDroppedIfaceDown);
     WATCH(numDroppedBitError);
     WATCH(numDroppedNotForUs);
@@ -285,6 +287,7 @@ void EtherMACBase::initializeStatistics()
     rxPkFromHLSignal = registerSignal("rxPkFromHL");
     dropPkBitErrorSignal = registerSignal("dropPkBitError");
     dropPkIfaceDownSignal = registerSignal("dropPkIfaceDown");
+    dropPkFromHLIfaceDownSignal = registerSignal("dropPkFromHLIfaceDown");
     dropPkNotForUsSignal = registerSignal("dropPkNotForUs");
 
     packetSentToLowerSignal = registerSignal("packetSentToLower");
@@ -321,8 +324,12 @@ void EtherMACBase::registerInterface()
         ift->addInterface(interfaceEntry, this);
 }
 
-void EtherMACBase::receiveSignal(cComponent *src, simsignal_t id, cObject *obj)
+void EtherMACBase::receiveSignal(cComponent *src, simsignal_t signalId, cObject *obj)
 {
+    Enter_Method_Silent();
+
+    ASSERT(signalId == POST_MODEL_CHANGE);
+
     if (dynamic_cast<cPostPathCreateNotification *>(obj))
     {
         cPostPathCreateNotification *gcobj = (cPostPathCreateNotification *)obj;
@@ -337,7 +344,7 @@ void EtherMACBase::receiveSignal(cComponent *src, simsignal_t id, cObject *obj)
         if ((physOutGate == gcobj->pathStartGate) || (physInGate == gcobj->pathEndGate))
             refreshConnection();
     }
-    else if (transmissionChannel && dynamic_cast<cPostParameterChangeNotification *>(obj))
+    else if (transmissionChannel && dynamic_cast<cPostParameterChangeNotification *>(obj)) // note: we are subscribed to the channel object too
     {
         cPostParameterChangeNotification *gcobj = (cPostParameterChangeNotification *)obj;
         if (transmissionChannel == gcobj->par->getOwner() && !strcmp("datarate", gcobj->par->getName()))
@@ -345,56 +352,71 @@ void EtherMACBase::receiveSignal(cComponent *src, simsignal_t id, cObject *obj)
     }
 }
 
-void EtherMACBase::handleDisconnect()
+void EtherMACBase::processConnectDisconnect()
 {
-    cancelEvent(endTxMsg);
-    cancelEvent(endIFGMsg);
-    cancelEvent(endPauseMsg);
+    if (!connected)
+    {
+        cancelEvent(endTxMsg);
+        cancelEvent(endIFGMsg);
+        cancelEvent(endPauseMsg);
 
-    if (curTxFrame)
-    {
-        delete curTxFrame;
-        curTxFrame = NULL;
-        lastTxFinishTime = -1.0;  // so that it never equals with current simtime, used for Burst mode detection.
-    }
-
-    if (txQueue.extQueue)
-    {
-        // Clear external queue: send a request, and received packet will be deleted in handleMessage()
-        if (0 == txQueue.extQueue->getNumPendingRequests())
-            txQueue.extQueue->requestPacket();
-    }
-    else
-    {
-        //Clear inner queue
-        while (!txQueue.innerQueue->empty())
+        if (curTxFrame)
         {
-            cMessage *msg = check_and_cast<cMessage *>(txQueue.innerQueue->pop());
-            EV << "Interface is not connected, dropping packet " << msg << endl;
-            numDroppedIfaceDown++;
-            emit(dropPkIfaceDownSignal, msg);
-            delete msg;
+            delete curTxFrame;
+            curTxFrame = NULL;
+            lastTxFinishTime = -1.0;  // so that it never equals to the current simtime, used for Burst mode detection.
         }
-    }
 
-    transmitState = TX_IDLE_STATE;
-    receiveState = RX_IDLE_STATE;
+        if (txQueue.extQueue)
+        {
+            // Clear external queue: send a request, and received packet will be deleted in handleMessage()
+            if (txQueue.extQueue->getNumPendingRequests() == 0)
+                txQueue.extQueue->requestPacket();
+        }
+        else
+        {
+            // Clear inner queue
+            while (!txQueue.innerQueue->empty())
+            {
+                cMessage *msg = check_and_cast<cMessage *>(txQueue.innerQueue->pop());
+                EV << "Interface is not connected, dropping packet " << msg << endl;
+                numDroppedPkFromHLIfaceDown++;
+                emit(dropPkIfaceDownSignal, msg);
+                delete msg;
+            }
+        }
+
+        transmitState = TX_IDLE_STATE;
+        receiveState = RX_IDLE_STATE;
+    }
 }
 
 void EtherMACBase::refreshConnection()
 {
     Enter_Method_Silent();
 
-    calculateParameters(false);
+    bool oldConn = connected;
+    readChannelParameters(false);
 
-    if (!connected)
-        handleDisconnect();
+    if (oldConn != connected)
+        processConnectDisconnect();
 }
 
 bool EtherMACBase::dropFrameNotForUs(EtherFrame *frame)
 {
-    // If not set to promiscuous = on, then checks if received frame contains destination MAC address
-    // matching port's MAC address, also checks if broadcast bit is set
+    // Current ethernet mac implementation does not support the configuration of multicast
+    // ethernet address groups. We rather accept all multicast frames (just like they were 
+    // broadcasts) and pass it up to the higher layer where they will be dropped
+    // if not needed.
+    //
+    // PAUSE frames must be handled a bit differently because they are processed at
+    // this level. Multicast PAUSE frames should not be processed unless they have a 
+    // destination of MULTICAST_PAUSE_ADDRESS. We drop all PAUSE frames that have a
+    // different muticast destination. (Note: Would the multicast ethernet addressing
+    // implemented, we could also process the PAUSE frames destined to any of our
+    // multicast adresses)
+    // All NON-PAUSE frames must be passed to the upper layer if the interface is 
+    // in promiscuous mode.
 
     if (frame->getDest().equals(address))
         return false;
@@ -404,17 +426,10 @@ bool EtherMACBase::dropFrameNotForUs(EtherFrame *frame)
 
     bool isPause = (dynamic_cast<EtherPauseFrame *>(frame) != NULL);
 
-    if (!isPause && promiscuous)
+    if (!isPause && (promiscuous || frame->getDest().isMulticast()))
         return false;
 
     if (isPause && frame->getDest().equals(MACAddress::MULTICAST_PAUSE_ADDRESS))
-        return false;
-
-    // TODO: why don't we check here if a multicast message is really for us? where is that done?
-    // FIXME: Checking of !isPause in next line is a hack.
-    //        Without this condition EtherMAC* accepts and processes all received PAUSE frames to any foreign dest multicast address, too.
-    //        Currently we drops all received PAUSE frames to sent to all multicast addresses except MULTICAST_PAUSE_ADDRESS.
-    if (frame->getDest().isMulticast() && !isPause)
         return false;
 
     EV << "Frame `" << frame->getName() <<"' not destined to us, discarding\n";
@@ -424,7 +439,7 @@ bool EtherMACBase::dropFrameNotForUs(EtherFrame *frame)
     return true;
 }
 
-void EtherMACBase::calculateParameters(bool errorWhenAsymmetric)
+void EtherMACBase::readChannelParameters(bool errorWhenAsymmetric)
 {
     cChannel *outTrChannel = physOutGate->findTransmissionChannel();
     cChannel *inTrChannel = physInGate->findIncomingTransmissionChannel();
@@ -499,7 +514,7 @@ void EtherMACBase::getNextFrameFromQueue()
 {
     if (txQueue.extQueue)
     {
-        if (0 == txQueue.extQueue->getNumPendingRequests())
+        if (txQueue.extQueue->getNumPendingRequests() == 0)
             txQueue.extQueue->requestPacket();
     }
     else
@@ -513,7 +528,7 @@ void EtherMACBase::requestNextFrameFromExtQueue()
 {
     if (txQueue.extQueue)
     {
-        if (0 == txQueue.extQueue->getNumPendingRequests())
+        if (txQueue.extQueue->getNumPendingRequests() == 0)
             txQueue.extQueue->requestPacket();
     }
 }
@@ -524,7 +539,7 @@ void EtherMACBase::finish()
     {
         simtime_t t = simTime();
         recordScalar("simulated time", t);
-        recordScalar("full duplex", duplexMode);
+        recordScalar("full-duplex", duplexMode);
 
         if (t > 0)
         {

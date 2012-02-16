@@ -1,6 +1,6 @@
 //
 // Copyright (C) 2001-2006  Sergio Andreozzi
-// Copyright (C) 2009 A. Ariza Universidad de M�laga
+// Copyright (C) 2009 A. Ariza Universidad de Malaga
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -20,27 +20,30 @@
 package inet.networklayer.queue;
 
 //
-// Drop-tail queue with QoS support, to be used in network interfaces.
-// Performs priority queueing.
-// Conforms to the OutputQueue interface.
+// Queue that implements Weighter Fair Queueing (WFQ), to be used in
+// network interfaces.
+//
+// @see ~REDQueue, ~DropTailQoSQueue, ~DropTailQueue
 //
 simple WeightedFairQueue like IOutputQueue
 {
     parameters:
         int frameCapacity = default(100);  // per-subqueue capacity
         string classifierClass;  // class that inherits from IQoSClassifier
-        double Bandwidth @unit(bps) = default(1e6bps);
-        string queueWeight = default(""); // by default the queueues have the same Weight
-        bool UseRed=default(false); // the queue use RED policy
+        double bandwidth @unit(bps) = default(1e6bps);
+        string queueWeight = default(""); // by default the queues have the same weight
+        bool useRED = default(false); // whether to use RED policy
         double wq = default(0.002);  // queue weight
         double minth = default(5);  // minimum threshold for avg queue length
         double maxth = default(50);  // maximum threshold for avg queue length (=buffer capacity)
         double maxp = default(0.02);  // maximum value for pb
         double pkrate = default(150);  // arrivals per sec (see comment above)
         @display("i=block/queue");
-        @statistic[earlyDropPkBytes](title="Early dropped packet bytes"; record=count,sum,vector);
-        @statistic[queueLength](title="Queue length"; record=histogram,stats,vector; interpolationmode=sample-hold);
-        
+        @signal[queueLength](type=long);
+        @signal[earlyDropPkByQueue](type=cMessage);
+        @statistic[earlyDropPk](title="early dropped packets"; source=earlyDropPkByQueue; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[queueLength](title="queue length"; record=max,timeavg,vector; interpolationmode=sample-hold);
+
     gates:
         input in;
         output out;

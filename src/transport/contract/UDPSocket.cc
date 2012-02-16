@@ -140,6 +140,16 @@ void UDPSocket::setTimeToLive(int ttl)
     sendToUDP(msg);
 }
 
+void UDPSocket::setTypeOfService(unsigned char tos)
+{
+    cMessage *msg = new cMessage("SetTOS", UDP_C_SETOPTION);
+    UDPSetTypeOfServiceCommand *ctrl = new UDPSetTypeOfServiceCommand();
+    ctrl->setSockId(sockId);
+    ctrl->setTos(tos);
+    msg->setControlInfo(ctrl);
+    sendToUDP(msg);
+}
+
 void UDPSocket::setMulticastOutputInterface(int interfaceId)
 {
     cMessage *msg = new cMessage("SetMulticastOutputIf", UDP_C_SETOPTION);
@@ -198,10 +208,11 @@ void UDPSocket::joinLocalMulticastGroups()
         }
 
         cMessage *msg = new cMessage("JoinMulticastGroups", UDP_C_SETOPTION);
-    msg->setControlInfo(ctrl);
-    sendToUDP(msg);
+        msg->setControlInfo(ctrl);
+        sendToUDP(msg);
     }
 }
+
 
 void UDPSocket::leaveMulticastGroup(const IPvXAddress& multicastAddr)
 {
@@ -232,7 +243,7 @@ void UDPSocket::leaveLocalMulticastGroups()
     if (numOfAddresses > 0)
     {
         UDPLeaveMulticastGroupsCommand *ctrl = new UDPLeaveMulticastGroupsCommand();
-    ctrl->setSockId(sockId);
+        ctrl->setSockId(sockId);
         ctrl->setMulticastAddrArraySize(numOfAddresses);
 
         unsigned int k = 0;
@@ -252,10 +263,11 @@ void UDPSocket::leaveLocalMulticastGroups()
         }
 
         cMessage *msg = new cMessage("LeaveMulticastGroups", UDP_C_SETOPTION);
-    msg->setControlInfo(ctrl);
-    sendToUDP(msg);
+        msg->setControlInfo(ctrl);
+        sendToUDP(msg);
     }
 }
+
 
 bool UDPSocket::belongsToSocket(cMessage *msg)
 {
