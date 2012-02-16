@@ -33,7 +33,6 @@ import inet.nodes.inet.NetworkLayer;
 import inet.linklayer.ieee80211mesh.Ieee80211NewNicMesh;
 import inet.networklayer.autorouting.ipv4.HostAutoConfigurator2;
 
-
 //
 // BaseHost contains the common lower layers (linklayer and networklayer)
 // of Router, StandardHost, WirelessHost etc. 
@@ -42,14 +41,14 @@ import inet.networklayer.autorouting.ipv4.HostAutoConfigurator2;
 //       - use this model only as a base type. In simulations use Router, StandardHost,
 //         WirelessHost and AndhocHost
 //
-module gateWayMesh
+module ApMeshNode
 {
     parameters:
         @display("bgb=611,448");
         @node;
         @labels(node,ethernet-node,wireless-node);
         int numExtInterfaces = default(0);
-        int numRadios = default(0);               // the number of radios in the router. by default no wireless
+        int numRadios = default(1);               // the number of radios in the router. by default no wireless
         int numPcapRecorders = default(0); // no of PcapRecorders.
         string mobilityType = default("StationaryMobility");
         string routingFile = default("");
@@ -89,12 +88,13 @@ module gateWayMesh
             parameters:
                 @display("p=53,386");
         }
+        
         autoconf: HostAutoConfigurator2 {
             @display("p=53,71");
         }
 
         pcapRecorder[numPcapRecorders]: PcapRecorder {
-            @display("p=183,233");
+            @display("p=204,138");
         }
 
         wlanMesh: Ieee80211NewNicMesh {
@@ -105,10 +105,6 @@ module gateWayMesh
         wlan[numRadios]: <default("Ieee80211Nic")> like IWirelessNic {
             parameters:
                 @display("p=317,392;q=queue");
-        }
-        ethMesh: EthernetInterfaceMesh {
-            parameters:
-                @display("p=222,386,row,90;q=txQueue");
         }
         eth[sizeof(ethg)-1]: <default("EthernetInterface")> like IWiredNic {
             parameters:
@@ -136,15 +132,8 @@ module gateWayMesh
             wlan[i].upperLayerIn <-- networkLayer.ifOut++;
         }
 
-
-        ethg[0] <--> ethMesh.phys;
-        ethMesh.wifiMeshIn <-- wlanMesh.toEthernet;
-        ethMesh.wifiMeshOut --> wlanMesh.fromEthernet;
-        ethMesh.netwOut --> networkLayer.ifIn++;
-        ethMesh.netwIn <-- networkLayer.ifOut++;
-
-        for i=0..sizeof(ethg)-2 {
-            ethg[i+1] <--> eth[i].phys;
+        for i=0..sizeof(ethg)-1 {
+            ethg[i] <--> eth[i].phys;
             eth[i].netwOut --> networkLayer.ifIn++;
             eth[i].netwIn <-- networkLayer.ifOut++;
         }
