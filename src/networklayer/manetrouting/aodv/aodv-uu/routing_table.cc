@@ -246,7 +246,7 @@ rt_table_t *NS_CLASS rt_table_find_gateway()
     for (AodvRtTableMap::iterator it = aodvRtTableMap.begin(); it != aodvRtTableMap.end(); it++)
     {
         rt_table_t *rt = it->second;
-        if (rt->flags & RT_GATEWAY && rt->state == VALID)
+        if ((rt->flags & RT_GATEWAY) && rt->state == VALID)
         {
             if (!gw || rt->hcnt < gw->hcnt)
                 gw = rt;
@@ -1381,7 +1381,7 @@ void NS_CLASS rt_table_update_route_timeouts(rt_table_t * fwd_rt,
 
     if (fwd_rt && fwd_rt->state == VALID)
     {
-        if (llfeedback || fwd_rt->flags & RT_INET_DEST || fwd_rt->hcnt != 1 || fwd_rt->hello_timer.used)
+        if (llfeedback || (fwd_rt->flags & RT_INET_DEST) || fwd_rt->hcnt != 1 || fwd_rt->hello_timer.used)
             rt_table_update_timeout(fwd_rt, ACTIVE_ROUTE_TIMEOUT);
         next_hop_rt = rt_table_find(fwd_rt->next_hop);
 
