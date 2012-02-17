@@ -22,7 +22,7 @@ import inet.linklayer.ieee80211mesh.locator.ILocator;
 simple Locator like ILocator
 {
     parameters:
-        
+        @class(LocatorModule);
     gates:
         input inGate;
         output outGate;

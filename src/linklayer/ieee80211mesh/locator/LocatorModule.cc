@@ -25,13 +25,12 @@
 #include "Ieee802Ctrl_m.h"
 
 simsignal_t LocatorModule::locatorChangeSignal = SIMSIGNAL_NULL;
-
 LocatorModule::LocatorMapIp LocatorModule::globalLocatorMapIp;
-
 LocatorModule::LocatorMapMac LocatorModule::globalLocatorMapMac;
-
 LocatorModule::ApIpSet LocatorModule::globalApIpSet;
 LocatorModule::ApSet LocatorModule::globalApSet;
+
+Define_Module(LocatorModule);
 
 LocatorModule::LocatorModule()
 {
