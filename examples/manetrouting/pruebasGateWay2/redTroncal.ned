@@ -33,62 +33,100 @@ network redTroncal
         int numHostsLower;
         int numFixHosts;
         int numBasic;
-        double nodeSeparation @unit(m)= default(80m);
+        double nodeSeparation @unit(m) = default(80m);
     submodules:
-        fixhost[15]: ApMeshNode {
+        fixhostA[8]: BasicMobileManetMesh {
             parameters:
-                mobility.mgmtType = "LinealNodeDistributionMobility";
-                mobility.initialY = 315;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);                
-                mobility.separation = nodeSeparation;
+                mobilityType = "LinealNodeDistributionMobility";
+                mobility.initialY = 315m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
+                mobility.initialX = nodeSeparation/2.0;
+                mobility.separation = nodeSeparation*2;
+                @display("i=block/wrxtx;r=,,#707070");
+        }
+        fixhostB[7]: ApMeshNode {
+            parameters:
+                mobilityType = "LinealNodeDistributionMobility";
+                mobility.initialY = 315m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
+                mobility.initialX = (nodeSeparation/2.0)+nodeSeparation;
+                mobility.separation = nodeSeparation*2;
+                wlanMesh.hasLocator = true;
                 @display("i=device/accesspoint;r=,,#707070");
+
         }
         fixhost2[8]: ApMeshNode {
             parameters:
-                mobility.mgmtType = "LinealNodeDistributionMobility";
-                mobility.initialY = 235;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
+                mobilityType = "LinealNodeDistributionMobility";
+                mobility.initialY = 235m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
+                mobility.initialX = nodeSeparation/2.0;
                 mobility.separation = nodeSeparation*2;
+                wlanMesh.hasLocator = true;
                 @display("i=device/accesspoint;r=,,#707070");
         }
         fixhost3[8]: ApMeshNode {
             parameters:
-                mobility.mgmtType = "LinealNodeDistributionMobility";
-                mobility.initialY = 395;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
+                mobilityType = "LinealNodeDistributionMobility";
+                mobility.initialY = 395m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.separation = nodeSeparation*2;
+                mobility.initialX = nodeSeparation/2.0;
+                wlanMesh.hasLocator = true;                
                 @display("i=device/accesspoint;r=,,#707070");
         }
 
-        fixhost4[15]: ApMeshNode {
+        fixhost4A[8]: BasicMobileManetMesh {
             parameters:
-                mobility.mgmtType = "LinealNodeDistributionMobility";
-                mobility.initialY = 155;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
-                mobility.separation = nodeSeparation*2;                
+                mobilityType = "LinealNodeDistributionMobility";
+                mobility.initialY = 155m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
+                mobility.separation = nodeSeparation*2;
+                mobility.initialX = nodeSeparation/2.0;
+                @display("i=block/wrxtx;r=,,#707070");
+        }
+        fixhost4B[7]: ApMeshNode {
+            parameters:
+                mobilityType = "LinealNodeDistributionMobility";
+                mobility.initialY = 155m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
+                mobility.separation = nodeSeparation*2;
+                mobility.initialX = (nodeSeparation/2.0) + nodeSeparation;
+                wlanMesh.hasLocator = true;                
                 @display("i=device/accesspoint;r=,,#707070");
         }
-        fixhost5[15]: ApMeshNode {
+        fixhost5A[8]: BasicMobileManetMesh {
             parameters:
-                mobility.mgmtType = "LinealNodeDistributionMobility";
-                mobility.initialY = 475;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
-                mobility.separation = nodeSeparation*2;                
+                mobilityType = "LinealNodeDistributionMobility";
+                mobility.initialY = 475m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
+                mobility.separation = nodeSeparation*2;
+                mobility.initialX = nodeSeparation/2.0;
+                @display("i=block/wrxtx;r=,,#707070");
+        }
+        fixhost5B[7]: ApMeshNode {
+            parameters:
+                mobilityType = "LinealNodeDistributionMobility";
+                mobility.initialY = 475m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
+                mobility.separation = nodeSeparation*2;
+                mobility.initialX = (nodeSeparation/2.0) + nodeSeparation;
+                wlanMesh.hasLocator = true;                
                 @display("i=device/accesspoint;r=,,#707070");
         }
-
         fixhost6[8]: ApMeshNode {
             parameters:
-                mobility.mgmtType = "LinealNodeDistributionMobility";
-                mobility.initialY = 75;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
-                mobility.separation = nodeSeparation*2;                
-                @display("i=device/accesspoint;r=,,#707070");
+                mobilityType = "LinealNodeDistributionMobility";
+                mobility.initialY = 75m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
+                mobility.separation = nodeSeparation*2;
+                mobility.initialX = nodeSeparation/2.0;
+                wlanMesh.hasLocator = true;                
+                @display("i=device/accesspoint");
         }
         fixhost7[8]: ApMeshNode {
             parameters:
-                mobility.mgmtType = "LinealNodeDistributionMobility";
-                mobility.initialY = 555;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
-                mobility.separation = nodeSeparation*2;                
+                mobilityType = "LinealNodeDistributionMobility";
+                mobility.initialY = 555m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
+                mobility.separation = nodeSeparation*2;
+                mobility.initialX = nodeSeparation/2.0;
+                wlanMesh.hasLocator = true;                
                 @display("i=device/accesspoint;r=,,#707070");
         }
         channelControl: ChannelControl {
             parameters:
-                @display("p=60,23;i=misc/sun");
+                @display("p=60,23;i=misc/sun");                
         }
         SW: EtherSwitch {
             @display("p=559,344");
@@ -96,23 +134,28 @@ network redTroncal
         }
         gateWay: gateWayMesh {
             parameters:
+                wlanMesh.hasLocator = true; 
                 @display("i=device/router;r=,,#707070;p=159,127");
         }
         gateWay1: gateWayMesh {
             parameters:
+                wlanMesh.hasLocator = true;
                 @display("i=device/router;r=,,#707070;p=94,507");
         }
         gateWay2: gateWayMesh {
             parameters:
+                wlanMesh.hasLocator = true;
                 @display("i=device/router;r=,,#707070;p=650,345");
         }
 
         gateWay3: gateWayMesh {
             parameters:
+                wlanMesh.hasLocator = true;
                 @display("i=device/router;r=,,#707070;p=1126,127");
         }
         gateWay4: gateWayMesh {
             parameters:
+                wlanMesh.hasLocator = true;
                 @display("i=device/router;r=,,#707070;p=1062,507");
         }
 
