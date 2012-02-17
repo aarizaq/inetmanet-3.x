@@ -49,7 +49,7 @@ module gateWayMesh
         @node;
         @labels(node,ethernet-node,wireless-node);
         int numExtInterfaces = default(0);
-        int numRadios = default(0);               // the number of radios in the router. by default no wireless
+        int numRadios = default(1);               // the number of radios in the router. by default no wireless
         int numPcapRecorders = default(0); // no of PcapRecorders.
         string mobilityType = default("StationaryMobility");
         string routingFile = default("");
@@ -126,9 +126,13 @@ module gateWayMesh
     connections allowunconnected:
         // connections to network outside
 
-        radioIn[1] --> wlanMesh.radioIn;
-        wlanMesh.upperLayerOut --> networkLayer.ifIn++;
-        wlanMesh.upperLayerIn <-- networkLayer.ifOut++;
+        if (sizeof(radioIn)>0) {
+            radioIn[0] --> wlanMesh.radioIn;
+            wlanMesh.upperLayerOut --> networkLayer.ifIn++;
+            wlanMesh.upperLayerIn <-- networkLayer.ifOut++;
+            ethMesh.wifiMeshIn <-- wlanMesh.toEthernet;
+            ethMesh.wifiMeshOut --> wlanMesh.fromEthernet;
+        }
 
         for i=0..sizeof(radioIn)-2 {
             radioIn[i+1] --> wlan[i].radioIn;
@@ -138,8 +142,6 @@ module gateWayMesh
 
 
         ethg[0] <--> ethMesh.phys;
-        ethMesh.wifiMeshIn <-- wlanMesh.toEthernet;
-        ethMesh.wifiMeshOut --> wlanMesh.fromEthernet;
         ethMesh.netwOut --> networkLayer.ifIn++;
         ethMesh.netwIn <-- networkLayer.ifOut++;
 

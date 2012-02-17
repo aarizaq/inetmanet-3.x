@@ -88,7 +88,7 @@ module ApMeshNode
             parameters:
                 @display("p=53,386");
         }
-        
+
         autoconf: HostAutoConfigurator2 {
             @display("p=53,71");
         }
@@ -104,7 +104,7 @@ module ApMeshNode
 
         wlan[numRadios]: <default("Ieee80211Nic")> like IWirelessNic {
             parameters:
-                @display("p=317,392;q=queue");
+                @display("p=271,392;q=queue");
         }
         eth[sizeof(ethg)-1]: <default("EthernetInterface")> like IWiredNic {
             parameters:
@@ -122,9 +122,11 @@ module ApMeshNode
     connections allowunconnected:
         // connections to network outside
 
-        radioIn[1] --> wlanMesh.radioIn;
-        wlanMesh.upperLayerOut --> networkLayer.ifIn++;
-        wlanMesh.upperLayerIn <-- networkLayer.ifOut++;
+        if (sizeof(radioIn)>0) {
+            radioIn[0] --> wlanMesh.radioIn;
+            wlanMesh.upperLayerOut --> networkLayer.ifIn++;
+            wlanMesh.upperLayerIn <-- networkLayer.ifOut++;
+        }
 
         for i=0..sizeof(radioIn)-2 {
             radioIn[i+1] --> wlan[i].radioIn;

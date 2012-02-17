@@ -40,7 +40,7 @@ module Ieee80211NewNicMesh like IWirelessNic
         int numOutputHooks = default(0);
         int numInputHooks = default(0);
         bool _agentNeeded = false;   // internal par. do not use, shows if optional agent module is needed
-        bool hasLocator = default(false); 
+        bool hasLocator = default(false);
         @display("i=block/ifcard;bgb=259,357");
     gates:
         input upperLayerIn; // to upper layers
@@ -51,7 +51,9 @@ module Ieee80211NewNicMesh like IWirelessNic
     submodules:
         outputHook[numOutputHooks]: <default("Nop")> like IHook if numOutputHooks>0;
         inputHook[numInputHooks]: <default("Nop")> like IHook if numInputHooks>0;
-        locator : <default("Locator")> like ILocator if hasLocator;
+        locator: <default("Locator")> like ILocator if hasLocator {
+            @display("i=abstract/people;p=164,182");
+        }
         // optional agent module (can be either 0 or 1 sized vector)
         agent: Ieee80211AgentSTA if _agentNeeded {
             parameters:
@@ -60,7 +62,7 @@ module Ieee80211NewNicMesh like IWirelessNic
         mgmt: Ieee80211Mesh {
             parameters:
                 locatorActive = hasLocator;
-                @display("p=96,136;q=wlanDataQueue");
+                @display("p=96,136;q=wlanDataQueue;i=block/switch");
         }
         mac: Ieee80211NewMac {
             parameters:
@@ -96,10 +98,10 @@ module Ieee80211NewNicMesh like IWirelessNic
             outputHook[i].out --> outputHook[i+1].in;
         }
         mgmt.upperLayerIn <-- outputHook[numOutputHooks-1].out if numOutputHooks > 0;
-        mgmt.locatorIn <-- locator.outGate if hasLocator; 
+        mgmt.locatorIn <-- locator.outGate if hasLocator;
         mgmt.locatorOut --> locator.inGate if hasLocator;
 }
 
 
 
-    
+
