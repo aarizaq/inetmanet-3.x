@@ -375,7 +375,7 @@ void LocatorModule::receiveChangeNotification(int category, const cObject *detai
                 setTables(myMacAddress,infoSta->getStaAddress(),myIpAddress,staIpAdd,ASSOCIATION,ie);
                 sendMessage(myMacAddress,infoSta->getStaAddress(),myIpAddress,staIpAdd,ASSOCIATION);
             }
-            else if (category == NF_L2_DISSOCIATED)
+            else if (category == NF_L2_AP_DISSOCIATED)
             {
                 setTables(myMacAddress,infoSta->getStaAddress(),myIpAddress,staIpAdd,DISASSOCIATION,ie);
                 sendMessage(myMacAddress,infoSta->getStaAddress(),myIpAddress,staIpAdd,DISASSOCIATION);
