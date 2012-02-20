@@ -23,9 +23,11 @@
 #include "IInterfaceTable.h"
 #include "INotifiable.h"
 #include "UDPSocket.h"
+#include "INotifiable.h"
+#include "ARP.h"
 
 
-class LocatorModuleClient : public cSimpleModule
+class LocatorModuleClient : public cSimpleModule, protected INotifiable
 {
     protected:
         IInterfaceTable *itable;
@@ -33,12 +35,15 @@ class LocatorModuleClient : public cSimpleModule
         int port;
         int interfaceId;
         UDPSocket * socket;
+        InterfaceEntry * iface;
+        ARP *arp;
     public:
         LocatorModuleClient();
         virtual ~LocatorModuleClient();
         virtual void handleMessage(cMessage *msg);
         virtual void initialize(int stage);
         virtual int numInitStages() const {return 4;}
+        virtual void receiveChangeNotification(int category, const cObject *details);
 };
 
 #endif /* LOCATORMODULE_H_ */

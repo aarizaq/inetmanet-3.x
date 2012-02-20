@@ -19,6 +19,7 @@
 #include "locatorPkt_m.h"
 #include "UDP.h"
 #include "IPv4InterfaceData.h"
+#include "Ieee80211MgmtSTA.h"
 
 
 LocatorModuleClient::LocatorModuleClient()
@@ -27,6 +28,7 @@ LocatorModuleClient::LocatorModuleClient()
     rt = NULL;
     itable = NULL;
     socket = NULL;
+    iface = NULL;
 }
 
 LocatorModuleClient::~LocatorModuleClient()
@@ -83,7 +85,11 @@ void LocatorModuleClient::initialize(int stage)
         return;
     rt = RoutingTableAccess().get();
     itable = InterfaceTableAccess().get();
+    arp = ArpAccess().get();
 
+    InterfaceEntry *ie = itable->getInterfaceByName(this->par("iface"));
+    if (ie)
+        iface = ie;
     if (dynamic_cast<UDP*>(gate("outGate")->getPathEndGate()->getOwnerModule()))
     {
         // bind the client to the udp port
@@ -92,8 +98,16 @@ void LocatorModuleClient::initialize(int stage)
         port = par("locatorPort").longValue();
         socket->bind(port);
         socket->setBroadcast(true);
-        InterfaceEntry *ie = itable->getInterfaceByName(this->par("iface"));
+
     }
 }
 
+
+void LocatorModuleClient::receiveChangeNotification(int category, const cObject *details)
+{
+    Enter_Method_Silent();
+    if(category == NF_L2_ASSOCIATED)
+    {
+    }
+}
 
