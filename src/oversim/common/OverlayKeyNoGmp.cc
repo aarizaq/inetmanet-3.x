@@ -638,7 +638,7 @@ OverlayKey OverlayKey::sha1(const BinaryValue& input)
     sha1.Update((uint8_t*)(&(*input.begin())), input.size());
     sha1.Final();
     sha1.GetHash(temp);
-    unsigned long int  *ptr = (unsigned long int *) &newKey.key;
+    uint64_t  *ptr = (uint64_t *) &newKey.key;
 
     mpn_set_str(ptr, (const uint8_t*)temp,
                 (int)std::min((uint32_t)(aSize * sizeof(uint32_t)), 16U));
