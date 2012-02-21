@@ -294,7 +294,7 @@ void LocatorModule::initialize(int stage)
         }
     }
     nb = NotificationBoardAccess().get();
-    nb->subscribe(this,NF_L2_AP_DISSOCIATED);
+    nb->subscribe(this,NF_L2_AP_DISASSOCIATED);
     nb->subscribe(this,NF_L2_AP_ASSOCIATED);
 }
 
@@ -334,7 +334,7 @@ void  LocatorModule::sendMessage(const MACAddress &apMac,const MACAddress &staMa
 void LocatorModule::receiveChangeNotification(int category, const cObject *details)
 {
     Enter_Method_Silent();
-    if(category == NF_L2_AP_DISSOCIATED || category == NF_L2_AP_ASSOCIATED)
+    if(category == NF_L2_AP_DISASSOCIATED || category == NF_L2_AP_ASSOCIATED)
     {
         Ieee80211MgmtAP::NotificationInfoSta * infoSta = dynamic_cast<Ieee80211MgmtAP::NotificationInfoSta *>(const_cast<cObject*> (details));
         if (infoSta)
@@ -375,7 +375,7 @@ void LocatorModule::receiveChangeNotification(int category, const cObject *detai
                 setTables(myMacAddress,infoSta->getStaAddress(),myIpAddress,staIpAdd,ASSOCIATION,ie);
                 sendMessage(myMacAddress,infoSta->getStaAddress(),myIpAddress,staIpAdd,ASSOCIATION);
             }
-            else if (category == NF_L2_AP_DISSOCIATED)
+            else if (category == NF_L2_AP_DISASSOCIATED)
             {
                 setTables(myMacAddress,infoSta->getStaAddress(),myIpAddress,staIpAdd,DISASSOCIATION,ie);
                 sendMessage(myMacAddress,infoSta->getStaAddress(),myIpAddress,staIpAdd,DISASSOCIATION);

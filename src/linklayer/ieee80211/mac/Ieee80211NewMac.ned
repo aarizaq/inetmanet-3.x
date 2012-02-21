@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2006 Andras Varga and Levente Meszaros and Lukáš Hlůže 
+// Copyright (C) 2006 Andras Varga, Levente Meszaros and Lukas Hluze
 // Copyright (C) 2011 Alfonso Ariza  
 //
 // This program is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 package inet.linklayer.ieee80211.mac;
 
 //
-// Implementation of the 802.11b MAC protocol. This module is intended
+// Implementation of the 802.11 MAC protocol. This module is intended
 // to be used in combination with the Ieee80211Radio module as the physical
 // layer. (The SnrEval80211 and Decider80211 modules should also work if
 // per-packet bitrate setting gets implemented.)
@@ -62,30 +62,28 @@ simple Ieee80211NewMac
         string queueModule = default("");    // name of optional external queue module
         int maxQueueSize = default(50); // max queue length in frames; only used if queueModule==""
         int maxCategorieQueueSize = default(50); // Max queue length in frames per categorie; only used if queueModule==""
-        int defaultAC = default(0); // what is default AC category
-        int AIFSN0 = default(7); //AIFSN for background
-        int AIFSN1 = default(3); //AIFSN for best effort
-        int AIFSN2 = default(2); //AIFSN for video
-        int AIFSN3 = default(2); //AIFSN for voice
-        int AIFSN  = default(2); //if only exist 1 AC
+        int defaultAC = default(0); // the default AC category
+        int AIFSN0 = default(7); // AIFSN for background
+        int AIFSN1 = default(3); // AIFSN for best effort
+        int AIFSN2 = default(2); // AIFSN for video
+        int AIFSN3 = default(2); // AIFSN for voice
+        int AIFSN  = default(2); // if only exist 1 AC
+
         double TXOP0 @unit(s)= default(0s);
         double TXOP1 @unit(s)= default(0s);
-        double TXOP2 @unit(s)= default(3.008ms);    //3.008ms
-        double TXOP3 @unit(s)= default(1.504ms);    //1.504ms
+        double TXOP2 @unit(s)= default(3.008ms);
+        double TXOP3 @unit(s)= default(1.504ms);
         string classifier = default("Ieee80211eClassifier");
-        bool EDCA = default(true); // enable Enhanced distributed channel access (ieee802.11e)
-        /// WARNING
-        // importan if true slot time, difs and ack time out (aPHY-RX-START-Delay) are funtion of modulation time (standar 2007)
-        bool useModulationParameters = default(false); //if true slot time, difs and ack time out (aPHY-RX-START-Delay) are funtion of modulation time (standar 2007)
-        bool prioritizeMulticast = default(false); //if true prioritize multicast (9.3.2.1 Fundamental access)
+        bool EDCA = default(true); // enable Enhanced Distributed Channel Access (802.11e)
+        bool useModulationParameters = default(false); // if true, slot time, DIFS, and ACK timeout (aPHY-RX-START-Delay) are function of modulation time (2007 standard)
+        bool prioritizeMulticast = default(false); // if true, prioritize multicast frames (9.3.2.1 Fundamental access)
           
-	    /// WARNING
         double bitrate @unit("bps");
-        string opMode@enum ("b","g","a","p") = default("g");
-        string wifiPreambleMode @enum ("LONG","SHORT") = default("LONG"); // Wifi preambre mode Ieee 2007, 19.3.2
+        string opMode @enum("b","g","a","p") = default("g");
+        string wifiPreambleMode @enum("LONG","SHORT") = default("LONG"); // preamble mode; see IEEE 2007, 19.3.2
         
         double basicBitrate @unit("bps") = default(2e6bps);
-        int mtu = default(1500);
+        int mtu @unit("B") = default(1500B);
         double slotTime @unit("s") = default(9us);
         int rtsThresholdBytes @unit("B") = default(2346B); // longer messages will be sent using RTS/CTS
         int retryLimit = default(-1); // maximum number of retries per message, -1 means default
@@ -93,12 +91,12 @@ simple Ieee80211NewMac
         int cwMaxData = default(-1); // contention window for normal data frames, -1 means default
         int cwMinMulticast = default(-1); // contention window for broadcast messages, -1 means default
         bool fixFSM = default(true);
-// If -1 The mac compute the  PHY_HEADER_LENGTH in function of the modulation type      
-        double phyHeaderLength = default(-1);// if negative the code use 26 usec
-        bool forceBitRate = default(false); // if true the mac force the bitrate to the physical layer
-// autobitrate algorithm by default is disabled  
-        int autoBitrate @enum(0,1,2) = default(0);// 0 Constant Bit rate, 1 ARF Rate, 2 AARF Rate
-// parameters used by the autobitrate        
+
+        double phyHeaderLength = default(-1); // if -1, the MAC will compute it in function of the modulation type
+        bool forceBitRate = default(false); // if true, the MAC will force the bitrate to the physical layer
+        int autoBitrate @enum(0,1,2) = default(0); // 0 = constant bit rate (autobitrate algorithm disabled), 1 = ARF Rate, 2 = AARF Rate
+
+        // parameters used by the autobitrate
         int minTimerTimeout = default(15);
         int timerTimeout = default(minTimerTimeout);
         int minSuccessThreshold = default(10);
@@ -106,9 +104,9 @@ simple Ieee80211NewMac
         int maxSuccessThreshold = default(60);
         double successCoeff = default(2.0);
         double timerCoeff = default(2.0);
-        // period of time usef bt the throughput measure
-        double throughputTimePeriod @unit("s") = default(0);
-        bool duplicateDetectionFilter = default(true);
+
+        double throughputTimePeriod @unit("s") = default(0); // period of time used by throughput measurement
+        bool duplicateDetectionFilter = default(true); // whether to detect and filter out duplicate frames
         bool purgeOldTuples = default(true); // delete old tuples in the duplicate list
         double duplicateTimeOut @unit("s") = default(20s);       
         @display("i=block/layer");

@@ -563,6 +563,6 @@ void Ieee80211MgmtAP::sendDisAssocNotification(const MACAddress &addr)
     NotificationInfoSta notif;
     notif.setApAddress(myAddress);
     notif.setStaAddress(addr);
-    nb->fireChangeNotification(NF_L2_AP_DISSOCIATED,&notif);
+    nb->fireChangeNotification(NF_L2_AP_DISASSOCIATED,&notif);
 }
 

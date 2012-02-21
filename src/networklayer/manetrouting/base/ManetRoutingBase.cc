@@ -268,7 +268,7 @@ void ManetRoutingBase::registerRoutingModule()
         }
         arp = ArpAccess().get();
     }
-    nb->subscribe(this,NF_L2_AP_DISSOCIATED);
+    nb->subscribe(this,NF_L2_AP_DISASSOCIATED);
     nb->subscribe(this,NF_L2_AP_ASSOCIATED);
 
     locator = LocatorModuleAccess().getIfExists();
@@ -1108,7 +1108,7 @@ void ManetRoutingBase::receiveChangeNotification(int category, const cObject *de
     {
         processFullPromiscuous(details);
     }
-    else if(category == NF_L2_AP_DISSOCIATED || category == NF_L2_AP_ASSOCIATED)
+    else if(category == NF_L2_AP_DISASSOCIATED || category == NF_L2_AP_ASSOCIATED)
     {
         Ieee80211MgmtAP::NotificationInfoSta * infoSta = dynamic_cast<Ieee80211MgmtAP::NotificationInfoSta *>(const_cast<cObject*> (details));
         if (infoSta)
