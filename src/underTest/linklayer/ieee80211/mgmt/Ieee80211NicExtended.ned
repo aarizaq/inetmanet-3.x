@@ -17,7 +17,7 @@
 //
 package inet.underTest.linklayer.ieee80211.mgmt;
 import inet.linklayer.ieee80211.radio.Ieee80211NewRadio;
-import inet.linklayer.ieee80211.mgmt.Ieee80211AgentSTA;
+import inet.underTest.linklayer.ieee80211.mgmt.Ieee80211AgentSTAExtended;
 import inet.linklayer.ieee80211.mgmt.IIeee80211Mgmt;
 import inet.linklayer.ieee80211.mac.Ieee80211NewMac;
 import inet.linklayer.IWirelessNic;
@@ -31,8 +31,12 @@ import inet.linklayer.ieee80211.mgmt.IIeee80211Mgmt;
 module Ieee80211NicExtended like IWirelessNic
 {
     parameters:
-        string mgmtType; // name of the management module type
-        @display("bgb=220,326;i=block/ifcard");
+        string mgmtType = default("Ieee80211MgmtSTAExtended"); // name of the management module type (implements IIeee80211Mgmt)
+        string opMode @enum("b","g","a","p") = default("g");
+        int numOutputHooks = default(0);
+        int numInputHooks = default(0);
+        bool _agentNeeded = (mgmtType == "Ieee80211MgmtSTAExtended");   // internal par. do not use, shows if optional agent module is needed 
+        @display("i=block/ifcard;bgb=259,357");
     gates:
         input upperLayerIn; // to upper layers
         output upperLayerOut; // from upper layers
@@ -41,19 +45,30 @@ module Ieee80211NicExtended like IWirelessNic
         output agentOut; // from Agent
 
     submodules:
-
+        outputHook[numOutputHooks]: <default("Nop")> like IHook if numOutputHooks>0 {
+            @display("p=96,59");
+        }
+        inputHook[numInputHooks]: <default("Nop")> like IHook if numInputHooks>0 {
+            @display("p=42,103");
+        }
+        // optional agent module (can be either 0 or 1 sized vector)
+        agent: Ieee80211AgentSTAExtended if _agentNeeded {
+            parameters:
+                @display("p=202,136");
+        }
         mgmt: <mgmtType> like IIeee80211Mgmt {
             parameters:
-                @display("p=96,69;q=wlanDataQueue");
+                @display("p=96,136;q=wlanDataQueue");
         }
         mac: Ieee80211NewMac {
             parameters:
+                opMode = opMode;
                 queueModule = "mgmt";
-                @display("p=96,155");
+                @display("p=96,222");
         }
         radio: Ieee80211NewRadio {
             parameters:
-                @display("p=96,240");
+                @display("p=96,307");
         }
     connections:
         radioIn --> radio.radioIn;
@@ -63,9 +78,20 @@ module Ieee80211NicExtended like IWirelessNic
         mac.upperLayerOut --> mgmt.macIn;
         mac.upperLayerIn <-- mgmt.macOut;
 
-        mgmt.upperLayerOut --> upperLayerOut;
-        mgmt.upperLayerIn <-- upperLayerIn;
+        mgmt.agentOut --> agent.mgmtIn if _agentNeeded;
+        mgmt.agentIn <-- agent.mgmtOut if _agentNeeded;
 
-        mgmt.agentOut --> agentOut;
-        agentIn --> mgmt.agentIn;
+        mgmt.upperLayerOut --> upperLayerOut if numInputHooks == 0;
+        mgmt.upperLayerIn <-- upperLayerIn if numOutputHooks == 0;
+
+        mgmt.upperLayerOut --> inputHook[0].in if numInputHooks > 0;
+        for i=0..numInputHooks-2 {
+            inputHook[i].out --> inputHook[i+1].in;
+        }
+        inputHook[numInputHooks-1].out --> upperLayerOut if numInputHooks > 0;
+        outputHook[0].in <-- upperLayerIn if numOutputHooks > 0;
+        for i=0..numOutputHooks-2 {
+            outputHook[i].out --> outputHook[i+1].in;
+        }
+        mgmt.upperLayerIn <-- outputHook[numOutputHooks-1].out if numOutputHooks > 0;
 }
