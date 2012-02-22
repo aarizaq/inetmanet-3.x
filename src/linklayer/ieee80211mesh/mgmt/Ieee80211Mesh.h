@@ -185,6 +185,8 @@ private:
     virtual bool isUpperLayer(cMessage *);
     virtual cPacket * decapsulate(Ieee80211DataFrame *frame);
     virtual void sendOrEnqueue(cPacket *frame);
+
+    virtual bool isAddressForUs(const MACAddress &add);
 };
 
 #endif

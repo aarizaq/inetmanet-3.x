@@ -1831,9 +1831,9 @@ void ManetRoutingBase::getApList(const MACAddress & dest,std::vector<MACAddress>
     {
         MACAddress ap = locator->getLocatorMacToMac(dest);
         if (!ap.isUnspecified())
-        {
             locator->getApList(ap,list);
-        }
+        else
+            locator->getApList(dest,list);
         list.push_back(dest);
     }
 }
@@ -1850,9 +1850,9 @@ void ManetRoutingBase::getApListIp(const IPv4Address &dest,std::vector<IPv4Addre
     {
         IPv4Address ap = locator->getLocatorIpToIp(dest);
         if (!ap.isUnspecified())
-        {
             locator->getApListIp(ap,list);
-        }
+        else
+            locator->getApListIp(dest,list);
         list.push_back(dest);
     }
 }

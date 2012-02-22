@@ -1695,9 +1695,9 @@ void HwmpProtocol::reactivePathResolved(MACAddress dst)
 
     while (!listAddress.empty())
     {
-        QueuedPacket packet = dequeueFirstPacketByDst(dst);
+        QueuedPacket packet = dequeueFirstPacketByDst(listAddress.back());
 
-        std::map<MACAddress, PreqEvent>::iterator i = m_preqTimeouts.find(dst);
+        std::map<MACAddress, PreqEvent>::iterator i = m_preqTimeouts.find(listAddress.back());
         if (i != m_preqTimeouts.end()) // cancel pending preq
         {
             i->second.preqTimeout->removeTimer();
@@ -1714,7 +1714,7 @@ void HwmpProtocol::reactivePathResolved(MACAddress dst)
             ctrl->setDest(result.retransmitter);
             packet.pkt->setControlInfo(ctrl);
             send(packet.pkt, "to_ip");
-            packet = dequeueFirstPacketByDst(dst);
+            packet = dequeueFirstPacketByDst(listAddress.back());
         }
         listAddress.pop_back();
     }

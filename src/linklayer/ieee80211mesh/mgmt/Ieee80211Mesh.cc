@@ -851,17 +851,17 @@ void Ieee80211Mesh::receiveChangeNotification(int category, const cPolymorphic *
 void Ieee80211Mesh::handleDataFrame(Ieee80211DataFrame *frame)
 {
     // The message is forward
-    if (forwardMessage (frame))
+    if (forwardMessage(frame))
         return;
 
     MACAddress finalAddress;
-    MACAddress source= frame->getTransmitterAddress();
+    MACAddress source = frame->getTransmitterAddress();
     Ieee80211MeshFrame *frame2  = dynamic_cast<Ieee80211MeshFrame *>(frame);
     short ttl = maxTTL;
     if (frame2)
     {
         ttl = frame2->getTTL();
-        finalAddress =frame2->getFinalAddress();
+        finalAddress = frame2->getFinalAddress();
     }
     cPacket *msg = decapsulate(frame);
     ///
@@ -1058,9 +1058,15 @@ bool Ieee80211Mesh::macLabelBasedSend(Ieee80211DataFrame *frame)
             if (routingModuleProactive->findInAddressGroup(frame->getAddress4().getInt()))
                  toGateWay = true;
         }
+        else if (routingModuleHwmp)
+        {
+            if (routingModuleHwmp->findInAddressGroup(frame->getAddress4().getInt()))
+                 toGateWay = true;
+        }
+
         if (toGateWay)
             associatedAddress[frame2->getAddress3().getInt()]=simTime();
-        if (toGateWay && frame->getAddress4()!=myAddress)
+        if (toGateWay && !isAddressForUs(frame->getAddress4()))
         {
             frame2->setTransmitterAddress(myAddress);
             if (!frame2->getReceiverAddress().isBroadcast())
@@ -1070,7 +1076,9 @@ bool Ieee80211Mesh::macLabelBasedSend(Ieee80211DataFrame *frame)
         }
     }
 
-    if (frame->getAddress4()==myAddress || frame->getAddress4().isUnspecified())
+    if (frame->getAddress4().isUnspecified())
+        return false;
+    if (isAddressForUs(frame->getAddress4()))
         return false;
 
     uint64_t dest = frame->getAddress4().getInt();
@@ -1744,4 +1752,18 @@ void Ieee80211Mesh::handleWateGayDataReceive(cPacket *pkt)
 void Ieee80211Mesh::handleReroutingGateway(Ieee80211DataFrame *pkt)
 {
     handleDataFrame(pkt);
+}
+
+bool Ieee80211Mesh::isAddressForUs(const MACAddress &add)
+{
+    if (routingModuleReactive)
+        return  routingModuleReactive->addressIsForUs(add.getInt());
+    else if (routingModuleProactive)
+        return routingModuleProactive->addressIsForUs(add.getInt());
+    else if (routingModuleHwmp)
+        return routingModuleHwmp->addressIsForUs(add.getInt());
+    else if (add==myAddress)
+        return true;
+    else
+        return false;
 }

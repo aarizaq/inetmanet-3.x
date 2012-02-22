@@ -282,7 +282,7 @@ void LocatorModule::initialize(int stage)
     arp = ArpAccess().getIfExists();
     rt = RoutingTableAccess().getIfExists();
     itable = InterfaceTableAccess().get();
-
+    InterfaceEntry *ie = NULL;
     if (dynamic_cast<UDP*>(gate("outGate")->getPathEndGate()->getOwnerModule()))
     {
         // bind the client to the udp port
@@ -292,15 +292,30 @@ void LocatorModule::initialize(int stage)
         socket->bind(port);
         socket->setBroadcast(true);
         isInMacLayer = false;
-        InterfaceEntry *ie = itable->getInterfaceByName(this->par("iface"));
+        ie = itable->getInterfaceByName(this->par("iface"));
+    }
+    else
+    {
+        char *interfaceName = new char[strlen(getParentModule()->getFullName()) + 1];
+        char *d = interfaceName;
+        for (const char *s = getParentModule()->getFullName(); *s; s++)
+            if (isalnum(*s))
+                *d++ = *s;
+        *d = '\0';
+        ie = itable->getInterfaceByName(interfaceName);
+        delete [] interfaceName;
+    }
 
-        useGlobal = par("useGlobal").boolValue();
-        if (ie)
-        {
-            interfaceId = ie->getInterfaceId();
-            myMacAddress = ie->getMacAddress();
-            myIpAddress = ie->ipv4Data()->getIPAddress();
-        }
+    useGlobal = par("useGlobal").boolValue();
+    if (ie)
+    {
+        interfaceId = ie->getInterfaceId();
+        myMacAddress = ie->getMacAddress();
+        myIpAddress = ie->ipv4Data()->getIPAddress();
+    }
+    else
+    {
+        opp_error("iface not found");
     }
 
     WATCH_MAP(globalLocatorMapIp);

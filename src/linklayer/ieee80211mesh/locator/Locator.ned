@@ -22,6 +22,8 @@ import inet.linklayer.ieee80211mesh.locator.ILocator;
 simple Locator like ILocator
 {
     parameters:
+        bool useGlobal = default(true);
+        string iface = default("");
         @class(LocatorModule);
     gates:
         input inGate;
