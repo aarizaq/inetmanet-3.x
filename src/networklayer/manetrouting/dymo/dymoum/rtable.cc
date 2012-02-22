@@ -141,11 +141,16 @@ rtable_entry_t *NS_CLASS rtable_insert(struct in_addr dest_addr,
 
     // If there are buffered packets for this destination
     // now we send them
-    if (pending_rreq_remove(pending_rreq_find(dest_addr)))
+    std::vector<Uint128> list;
+    getListRelatedAp(dest_addr.s_addr, list);
+    for (unsigned int i = 0; i < list.size(); i ++)
     {
-#ifdef NS_PORT
-        packet_queue_set_verdict(dest_addr, PQ_SEND);
-#endif  /* NS_PORT */
+        struct in_addr auxAaddr;
+        auxAaddr.s_addr = list[i];
+        if (pending_rreq_remove(pending_rreq_find(auxAaddr)))
+        {
+            packet_queue_set_verdict(auxAaddr, PQ_SEND);
+        }
     }
 
     return entry;
@@ -223,11 +228,16 @@ rtable_entry_t *NS_CLASS rtable_update(rtable_entry_t *entry,
 
     // If there are buffered packets for this destination
     // now we send them
-    if (pending_rreq_remove(pending_rreq_find(dest_addr)))
+    std::vector<Uint128> list;
+    getListRelatedAp(dest_addr.s_addr, list);
+    for (unsigned int i = 0; i < list.size(); i ++)
     {
-#ifdef NS_PORT
-        packet_queue_set_verdict(dest_addr, PQ_SEND);
-#endif  /* NS_PORT */
+        struct in_addr auxAaddr;
+        auxAaddr.s_addr = list[i];
+        if (pending_rreq_remove(pending_rreq_find(auxAaddr)))
+        {
+            packet_queue_set_verdict(auxAaddr, PQ_SEND);
+        }
     }
 
     return entry;
@@ -488,9 +498,16 @@ rtable_entry_t *NS_CLASS rtable_insert(struct in_addr dest_addr,
         omnet_chg_rte(dest_addr, nxthop_addr, netmask, hopcnt,false,DEV_NR(ifindex).ipaddr);
     // If there are buffered packets for this destination
     // now we send them
-    if (pending_rreq_remove(pending_rreq_find(dest_addr)))
+    std::vector<Uint128> list;
+    getListRelatedAp(dest_addr.s_addr, list);
+    for (unsigned int i = 0; i < list.size(); i++)
     {
-        packet_queue_set_verdict(dest_addr, PQ_SEND);
+        struct in_addr auxAaddr;
+        auxAaddr.s_addr = list[i];
+         if (pending_rreq_remove(pending_rreq_find(auxAaddr)))
+         {
+             packet_queue_set_verdict(auxAaddr, PQ_SEND);
+         }
     }
     return entry;
 }
@@ -549,9 +566,16 @@ rtable_entry_t *NS_CLASS rtable_update(rtable_entry_t *entry,
 //  timer_remove(&entry->rt_deltimer);
     // If there are buffered packets for this destination
     // now we send them
-    if (pending_rreq_remove(pending_rreq_find(dest_addr)))
+    std::vector<Uint128> list;
+    getListRelatedAp(dest_addr.s_addr, list);
+    for (unsigned int i = 0; i < list.size(); i ++)
     {
-        packet_queue_set_verdict(dest_addr, PQ_SEND);
+        struct in_addr auxAaddr;
+        auxAaddr.s_addr = list[i];
+        if (pending_rreq_remove(pending_rreq_find(auxAaddr)))
+        {
+            packet_queue_set_verdict(auxAaddr, PQ_SEND);
+        }
     }
     return entry;
 }

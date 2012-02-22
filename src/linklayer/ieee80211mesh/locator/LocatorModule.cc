@@ -30,6 +30,15 @@ LocatorModule::LocatorMapMac LocatorModule::globalLocatorMapMac;
 LocatorModule::ApIpSet LocatorModule::globalApIpSet;
 LocatorModule::ApSet LocatorModule::globalApSet;
 
+std::ostream& operator<<(std::ostream& os, const LocatorModule::LocEntry& e)
+{
+    os << " Mac Address " << e.macAddr << "\n";
+    os << "IP Address " << e.ipAddr << "\n";
+    os << "AP Mac Address"  << e.apMacAddr << "\n";
+    os << "AP Ip Address "  << e.apIpAddr << "\n";
+    return os;
+}
+
 Define_Module(LocatorModule);
 
 LocatorModule::LocatorModule()
@@ -293,6 +302,12 @@ void LocatorModule::initialize(int stage)
             myIpAddress = ie->ipv4Data()->getIPAddress();
         }
     }
+
+    WATCH_MAP(globalLocatorMapIp);
+    WATCH_MAP(globalLocatorMapMac);
+    WATCH_MAP(locatorMapIp);
+    WATCH_MAP(locatorMapMac);
+
     nb = NotificationBoardAccess().get();
     nb->subscribe(this,NF_L2_AP_DISASSOCIATED);
     nb->subscribe(this,NF_L2_AP_ASSOCIATED);

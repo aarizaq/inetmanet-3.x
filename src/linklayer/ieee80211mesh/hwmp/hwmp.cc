@@ -43,7 +43,7 @@ std::ostream& operator<<(std::ostream& os, const HwmpRtable::ReactiveRoute& e)
     os << "seqnum " << e.seqnum << "\n";
     return os;
 }
-;
+
 
 std::ostream& operator<<(std::ostream& os, const HwmpRtable::ProactiveRoute& e)
 {
@@ -60,7 +60,7 @@ std::ostream& operator<<(std::ostream& os, const HwmpRtable::ProactiveRoute& e)
     os << "seqnum " << e.seqnum << "\n";
     return os;
 }
-;
+
 
 Define_Module(HwmpProtocol);
 

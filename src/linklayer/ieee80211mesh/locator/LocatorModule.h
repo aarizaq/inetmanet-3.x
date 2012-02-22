@@ -89,7 +89,9 @@ class LocatorModule : public cSimpleModule, public ILocator, protected INotifiab
 
         virtual void processReply(cPacket* pkt);
         virtual void processRequest(cPacket* pkt);
+
     public:
+        friend std::ostream& operator<<(std::ostream& os, const LocatorModule::LocEntry& e);
         LocatorModule();
         virtual ~LocatorModule();
         virtual void initialize(int stage);

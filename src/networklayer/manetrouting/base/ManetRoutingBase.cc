@@ -1856,3 +1856,27 @@ void ManetRoutingBase::getApListIp(const IPv4Address &dest,std::vector<IPv4Addre
         list.push_back(dest);
     }
 }
+
+void ManetRoutingBase::getListRelatedAp(const Uint128 & add, std::vector<Uint128>& list)
+{
+    if (mac_layer_)
+    {
+        std::vector<MACAddress> listAux;
+        getApList(add.getLo(),listAux);
+        list.clear();
+        for (unsigned int i = 0; i < listAux.size(); i++)
+        {
+            list.push_back(listAux[i].getInt());
+        }
+    }
+    else
+    {
+        std::vector<IPv4Address> listAux;
+        getApListIp(add.getLo(),listAux);
+        list.clear();
+        for (unsigned int i = 0; i < listAux.size(); i++)
+        {
+            list.push_back(listAux[i].getInt());
+        }
+    }
+}

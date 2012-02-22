@@ -197,12 +197,19 @@ rt_table_t *NS_CLASS rt_table_insert(struct in_addr dest_addr,
 //#endif
     /* In case there are buffered packets for this destination, we
      * send them on the new route. */
-    if ((rt->state == VALID || rt->state == IMMORTAL)  && seek_list_remove(seek_list_find(dest_addr)))
+    std::vector<Uint128> list;
+    getListRelatedAp(dest_addr.s_addr, list);
+    for (unsigned int i = 0; i < list.size(); i++)
     {
-        if (rt->flags & RT_INET_DEST)
-            packet_queue_set_verdict(dest_addr, PQ_ENC_SEND);
-        else
-            packet_queue_set_verdict(dest_addr, PQ_SEND);
+        struct in_addr auxAaddr;
+        auxAaddr.s_addr = list[i];
+        if ((rt->state == VALID || rt->state == IMMORTAL)  && seek_list_remove(seek_list_find(auxAaddr)))
+        {
+            if (rt->flags & RT_INET_DEST)
+                packet_queue_set_verdict(auxAaddr, PQ_ENC_SEND);
+            else
+                packet_queue_set_verdict(auxAaddr, PQ_SEND);
+        }
     }
 
     if ( state == IMMORTAL)
@@ -551,12 +558,21 @@ rt_table_t *NS_CLASS modifyAODVTables(struct in_addr dest_addr,
 //#endif
     /* In case there are buffered packets for this destination, we
      * send them on the new route. */
-    if ((rt->state == VALID || rt->state == IMMORTAL)  && seek_list_remove(seek_list_find(dest_addr)))
+
+    std::vector<Uint128> list;
+    getListRelatedAp(dest_addr.s_addr, list);
+
+    for (unsigned int i = 0; i < list.size(); i++)
     {
-        if (rt->flags & RT_INET_DEST)
-            packet_queue_set_verdict(dest_addr, PQ_ENC_SEND);
-        else
-            packet_queue_set_verdict(dest_addr, PQ_SEND);
+        struct in_addr auxAaddr;
+        auxAaddr.s_addr = list[i];
+        if ((rt->state == VALID || rt->state == IMMORTAL) && seek_list_remove(seek_list_find(auxAaddr)))
+        {
+            if (rt->flags & RT_INET_DEST)
+                packet_queue_set_verdict(auxAaddr, PQ_ENC_SEND);
+            else
+                packet_queue_set_verdict(auxAaddr, PQ_SEND);
+        }
     }
     if ( state == IMMORTAL)
     {
@@ -737,13 +753,21 @@ rt_table_t *NS_CLASS rt_table_insert(struct in_addr dest_addr,
 //#endif
     /* In case there are buffered packets for this destination, we
      * send them on the new route. */
-    if ((rt->state == VALID || rt->state == IMMORTAL)  && seek_list_remove(seek_list_find(dest_addr)))
+    std::vector<Uint128> list;
+    getListRelatedAp(dest_addr.s_addr, list);
+    for (unsigned int i = 0; i < list.size(); i++)
     {
+        struct in_addr auxAaddr;
+        auxAaddr.s_addr = list[i];
+        if ((rt->state == VALID || rt->state == IMMORTAL) && seek_list_remove(seek_list_find(auxAaddr)))
+        {
 #ifdef NS_PORT
-        if (rt->flags & RT_INET_DEST)
-            packet_queue_set_verdict(dest_addr, PQ_ENC_SEND);
-        else
-            packet_queue_set_verdict(dest_addr, PQ_SEND);
+
+            if (rt->flags & RT_INET_DEST)
+                packet_queue_set_verdict(auxAaddr, PQ_ENC_SEND);
+            else
+                packet_queue_set_verdict(auxAaddr, PQ_SEND);
+        }
 #endif
     }
 
@@ -1188,13 +1212,21 @@ rt_table_t *NS_CLASS modifyAODVTables(struct in_addr dest_addr,
 //#endif
     /* In case there are buffered packets for this destination, we
      * send them on the new route. */
-    if ((rt->state == VALID || rt->state == IMMORTAL)  && seek_list_remove(seek_list_find(dest_addr)))
+    std::vector<Uint128> list;
+    getListRelatedAp(dest_addr.s_addr, list);
+    for (unsigned int i = 0; i < list.size(); i++)
     {
+        struct in_addr auxAaddr;
+        auxAaddr.s_addr = list[i];
+        if ((rt->state == VALID || rt->state == IMMORTAL) && seek_list_remove(seek_list_find(auxAaddr)))
+        {
 #ifdef NS_PORT
-        if (rt->flags & RT_INET_DEST)
-            packet_queue_set_verdict(dest_addr, PQ_ENC_SEND);
-        else
-            packet_queue_set_verdict(dest_addr, PQ_SEND);
+
+            if (rt->flags & RT_INET_DEST)
+                packet_queue_set_verdict(auxAaddr, PQ_ENC_SEND);
+            else
+                packet_queue_set_verdict(auxAaddr, PQ_SEND);
+        }
 #endif
     }
     if ( state == IMMORTAL)
@@ -1316,13 +1348,21 @@ rt_table_t *NS_CLASS rt_table_update(rt_table_t * rt, struct in_addr next,
 
     /* In case there are buffered packets for this destination, we send
      * them on the new route. */
-    if ((rt->state == VALID || rt->state == IMMORTAL)&& seek_list_remove(seek_list_find(rt->dest_addr)))
+    std::vector<Uint128> list;
+    getListRelatedAp(rt->dest_addr.s_addr, list);
+    for (unsigned int i = 0; i < list.size(); i++)
     {
+        struct in_addr auxAaddr;
+        auxAaddr.s_addr = list[i];
+        if ((rt->state == VALID || rt->state == IMMORTAL)&& seek_list_remove(seek_list_find(auxAaddr)))
+        {
 #ifdef NS_PORT
-        if (rt->flags & RT_INET_DEST)
-            packet_queue_set_verdict(rt->dest_addr, PQ_ENC_SEND);
-        else
-            packet_queue_set_verdict(rt->dest_addr, PQ_SEND);
+
+            if (rt->flags & RT_INET_DEST)
+                packet_queue_set_verdict(auxAaddr, PQ_ENC_SEND);
+            else
+                packet_queue_set_verdict(auxAaddr, PQ_SEND);
+        }
 #endif
     }
     return rt;
