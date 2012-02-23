@@ -99,15 +99,10 @@ IPv6NeighbourCache::Neighbour *IPv6NeighbourCache::addNeighbour(const IPv6Addres
     ASSERT(neighbourMap.find(key) == neighbourMap.end()); // entry must not exist yet
     Neighbour& nbor = neighbourMap[key];
 
-    nbor.nceKey = lookupKeyAddr(key); //a ptr that links to the key.-WEI for convenience.
+    nbor.nceKey = lookupKeyAddr(key);
     nbor.isRouter = false;
-    nbor.isHomeAgent = false;         //Zarrar 09.03.07
+    nbor.isHomeAgent = false;
     nbor.reachabilityState = INCOMPLETE;
-    nbor.reachabilityExpires = 0;
-    nbor.numProbesSent = 0;
-    nbor.nudTimeoutEvent = NULL;
-    nbor.numOfARNSSent = 0;
-    nbor.routerExpiryTime = 0;
     return &nbor;
 }
 
@@ -118,15 +113,11 @@ IPv6NeighbourCache::Neighbour *IPv6NeighbourCache::addNeighbour(
     ASSERT(neighbourMap.find(key) == neighbourMap.end()); // entry must not exist yet
     Neighbour& nbor = neighbourMap[key];
 
-    nbor.nceKey = lookupKeyAddr(key); //a ptr that links to the key.-WEI for convenience.
+    nbor.nceKey = lookupKeyAddr(key);
     nbor.macAddress = macAddress;
     nbor.isRouter = false;
-    nbor.isHomeAgent = false;         //Zarrar 09.03.07
+    nbor.isHomeAgent = false;
     nbor.reachabilityState = STALE;
-    nbor.reachabilityExpires = 0;
-    nbor.numProbesSent = 0;
-    nbor.nudTimeoutEvent = NULL;
-    nbor.routerExpiryTime = 0;
     return &nbor;
 }
 
@@ -142,15 +133,11 @@ IPv6NeighbourCache::Neighbour *IPv6NeighbourCache::addRouter(const IPv6Address& 
     ASSERT(neighbourMap.find(key) == neighbourMap.end()); // entry must not exist yet
     Neighbour& nbor = neighbourMap[key];
 
-    nbor.nceKey = lookupKeyAddr(key); //a ptr that links to the key.-WEI for convenience.
+    nbor.nceKey = lookupKeyAddr(key);
     nbor.macAddress = macAddress;
     nbor.isRouter = true;
-    nbor.isHomeAgent = isHomeAgent; //Zarrar 09.03.07 --- FIXME: NOT EVERY ROUTER IS A HOME AGENT // update 3.9.07 - CB
+    nbor.isHomeAgent = isHomeAgent;
     nbor.reachabilityState = STALE;
-    nbor.reachabilityExpires = 0;
-    nbor.numProbesSent = 0;
-    nbor.nudTimeoutEvent = NULL;
-
     nbor.routerExpiryTime = expiryTime;
 
     defaultRouterList.add(nbor);

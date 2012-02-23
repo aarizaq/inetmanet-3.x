@@ -107,20 +107,15 @@ void Ieee80211NewMac::initialize(int stage)
     if (stage == 0)
     {
         EV << "Initializing stage 0\n";
-        int numQueue = 1;
+        int numQueues = 1;
         if (par("EDCA"))
         {
-            if (hasPar("classifier"))
-            {
-                 const char *classifierClass = par("classifier");
-                 classifier = check_and_cast<IQoSClassifier*>(createOne(classifierClass));
-            }
-            else
-                 classifier = NULL;
-            if (classifier)
-                 numQueue = classifier->getNumQueues();
+            const char *classifierClass = par("classifier");
+            classifier = check_and_cast<IQoSClassifier*>(createOne(classifierClass));
+            numQueues = classifier->getNumQueues();
         }
-        for (int i=0; i<numQueue; i++)
+
+        for (int i=0; i<numQueues; i++)
         {
             Edca catEdca;
             catEdca.backoff = false;
@@ -780,10 +775,7 @@ int Ieee80211NewMac::mappingAccessCategory(Ieee80211DataOrMgmtFrame *frame)
 {
     bool isDataFrame = (dynamic_cast<Ieee80211DataFrame *>(frame) != NULL);
 
-    if (classifier)
-        currentAC = classifier->classifyPacket(frame->getEncapsulatedPacket());
-    else
-        currentAC = 0;
+    currentAC = classifier ? classifier->classifyPacket(frame) : 0;
         // check for queue overflow
     if (isDataFrame && maxCategorieQueueSize && (int)transmissionQueue()->size() >= maxCategorieQueueSize)
     {
@@ -811,10 +803,7 @@ int Ieee80211NewMac::mappingAccessCategory(Ieee80211DataOrMgmtFrame *frame)
 {
     bool isDataFrame = (dynamic_cast<Ieee80211DataFrame *>(frame) != NULL);
 
-    if (classifier)
-        currentAC = classifier->classifyPacket(frame->getEncapsulatedPacket());
-    else
-        currentAC = 0;
+    currentAC = classifier ? classifier->classifyPacket(frame) : 0;
         // check for queue overflow
     if (isDataFrame && maxCategorieQueueSize && (int)transmissionQueue()->size() >= maxCategorieQueueSize)
     {

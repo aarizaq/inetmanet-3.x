@@ -22,6 +22,12 @@
 Register_Class(Ieee80211MacQueueClassifier);
 
 
+Ieee80211MacQueueClassifier::Ieee80211MacQueueClassifier()
+{
+    defaultAC = 0;
+    defaultManagement = getNumQueues();
+}
+
 int Ieee80211MacQueueClassifier::getNumQueues()
 {
     return 3;

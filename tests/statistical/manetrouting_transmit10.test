@@ -160,7 +160,7 @@ description = "Aodv Simple test"
 **.wlan*.radio.berTableFile="per_table_80211g_Trivellato.dat"
 
 
-**.broadcastDelay=uniform(0s,0.005s)
+**.broadCastDelay=uniform(0s,0.005s)
 
 
 %#--------------------------------------------------------------------------------------------------------------
