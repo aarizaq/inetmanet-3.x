@@ -118,6 +118,11 @@ ManetRoutingBase::ManetRoutingBase()
     colaborativeProtocol = NULL;
     arp = NULL;
     locator = NULL;
+    isGateway = false;
+    proxyAddress.clear();
+    addressGroupVector.clear();
+    inAddressGroup.clear();
+
 }
 
 
@@ -309,6 +314,9 @@ ManetRoutingBase::~ManetRoutingBase()
         delete routesVector;
         routesVector = NULL;
     }
+    proxyAddress.clear();
+    addressGroupVector.clear();
+    inAddressGroup.clear();
 }
 
 bool ManetRoutingBase::isIpLocalAddress(const IPv4Address& dest) const
