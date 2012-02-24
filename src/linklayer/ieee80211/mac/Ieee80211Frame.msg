@@ -168,41 +168,6 @@ packet Ieee80211ManagementFrame extends Ieee80211DataOrMgmtFrame
     //short action enum(WirelessNetworkManagementAction); // action
 }
 
-//
-// Format of the 802.11 LBMS frame
-//
-
-struct LBMSRequestElement
-{
-
-        MACAddress multicastAddress;
-        bool MulticastACKPolicy;
-        short RetryLimit;
-}
-
-packet Ieee80211LBMSRequest extends Ieee80211DataOrMgmtFrame
-{
-
-        type = ST_LBMS_REQUEST;
-        LBMSRequestElement element;
-}
-
-struct LBMSReportElement
-{
-
-        MACAddress multicastGroupAddress;
-        bool leader;
-}
-
-packet Ieee80211LBMSReport extends Ieee80211DataOrMgmtFrame
-{
-
-        type = ST_LBMS_REPORT;
-        LBMSReportElement element[];
-        double packetLoss;
-        double snr;
-}
-
 packet Ieee80211MeshFrame extends Ieee80211DataFrame
 {
     type = ST_DATA;
