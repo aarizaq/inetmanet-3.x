@@ -264,14 +264,6 @@ void Ieee80211MgmtBaseExtended::processFrame(Ieee80211DataOrMgmtFrame *frame)
         numMgmtFramesReceived++;
         handleProbeResponseFrame(check_and_cast<Ieee80211ProbeResponseFrame *>(frame));
         break;
-    case ST_LBMS_REQUEST:
-        numMgmtFramesReceived++;
-        handleLbmsRequestFrame(check_and_cast<Ieee80211LBMSRequest *>(frame));
-        break;
-    case ST_LBMS_REPORT:
-        numMgmtFramesReceived++;
-        handleLbmsReportFrame(check_and_cast<Ieee80211LBMSReport *>(frame));
-        break;
     default:
         error("unexpected frame type (%s)%s", frame->getClassName(), frame->getName());
     }

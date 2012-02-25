@@ -22,6 +22,7 @@
 
 #include "ManetRoutingBase.h"
 #include "UDPPacket.h"
+#include "IPv4Datagram_m.h"
 #include "IPv4ControlInfo.h"
 #include "IPv4InterfaceData.h"
 #include "IPv6ControlInfo.h"

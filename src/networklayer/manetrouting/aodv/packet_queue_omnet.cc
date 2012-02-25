@@ -21,7 +21,7 @@
  *****************************************************************************/
 
 #include "aodv_uu_omnet.h"
-
+#include "IPv4Datagram.h"
 
 #define GARBAGE_COLLECT
 

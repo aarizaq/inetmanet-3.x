@@ -23,16 +23,7 @@
 #include "lwmpls_data.h"
 #include "ControlInfoBreakLink_m.h"
 #include "ControlManetRouting_m.h"
-#include "OLSRpkt_m.h"
-#include "dymo_msg_struct.h"
-#include "aodv_msg_struct.h"
 #include "InterfaceTableAccess.h"
-#include "IPv4Datagram.h"
-#include "IPv6Datagram.h"
-#include "LinkStatePacket_m.h"
-#include "MPLSPacket.h"
-#include "ARPPacket_m.h"
-#include "OSPFPacket_m.h"
 #include "locatorPkt_m.h"
 #include <string.h>
 
@@ -423,35 +414,44 @@ void Ieee80211Mesh::handleRoutingMessage(cPacket *msg)
     }
     else
     {
+
+
         Ieee80211DataFrame * frame = encapsulate(msg,ctrl->getDest());
+        Ieee80211MeshFrame *frameMesh = check_and_cast<Ieee80211MeshFrame*>(frame);
+        if (frameMesh->getSubType() == 0)
+            frameMesh->setSubType(ROUTING);
+
         frame->setKind(ctrl->getInputPort());
+
         delete ctrl;
-        if (frame)
-            sendOrEnqueue(frame);
+        sendOrEnqueue(frame);
     }
 }
 
 void Ieee80211Mesh::handleUpperMessage(cPacket *msg)
 {
     Ieee80211DataFrame *frame = encapsulate(msg);
-    if (frame && !isGateWay)
-        sendOrEnqueue(frame);
-    else if (frame)
+    if (frame)
     {
-        MACAddress gw;
-        if (!frame->getAddress4().isBroadcast()&& !frame->getAddress4().isUnspecified())
+        if (!isGateWay)
+            sendOrEnqueue(frame);
+        else
         {
-            if (selectGateWay(frame->getAddress4().getInt(),gw))
+            MACAddress gw;
+            if (!frame->getAddress4().isBroadcast() && !frame->getAddress4().isUnspecified())
             {
-               if (gw!=myAddress)
-               {
-                   frame->setReceiverAddress(gw);
-                   sendOrEnqueue(frame);
-                   return;
-               }
+                if (selectGateWay(frame->getAddress4().getInt(), gw))
+                {
+                    if (gw != myAddress)
+                    {
+                        frame->setReceiverAddress(gw);
+                        sendOrEnqueue(frame);
+                        return;
+                    }
+                }
             }
+            handleReroutingGateway(frame);
         }
-        handleReroutingGateway(frame);
     }
 }
 
@@ -463,6 +463,7 @@ void Ieee80211Mesh::handleCommand(int msgkind, cPolymorphic *ctrl)
 Ieee80211DataFrame *Ieee80211Mesh::encapsulate(cPacket *msg)
 {
     Ieee80211MeshFrame *frame = new Ieee80211MeshFrame(msg->getName());
+    frame->setSubType(UPPERMESSAGE);
     frame->setTTL(maxTTL);
     frame->setTimestamp(msg->getCreationTime());
     LWMPLSPacket *lwmplspk = NULL;
@@ -538,7 +539,7 @@ Ieee80211DataFrame *Ieee80211Mesh::encapsulate(cPacket *msg)
         lwmplspk->setSource(myAddress);
         lwmplspk->setDest(dest);
 
-        if (forwarding_ptr->order==LWMPLS_EXTRACT)
+        if (forwarding_ptr->order == LWMPLS_EXTRACT)
         {
 // Source or destination?
             if (forwarding_ptr->output_label>0 || forwarding_ptr->return_label_output>0)
@@ -857,6 +858,8 @@ void Ieee80211Mesh::handleDataFrame(Ieee80211DataFrame *frame)
     MACAddress finalAddress;
     MACAddress source = frame->getTransmitterAddress();
     Ieee80211MeshFrame *frame2  = dynamic_cast<Ieee80211MeshFrame *>(frame);
+    bool upperPacket = (frame2 && (frame2->getSubType() == UPPERMESSAGE));
+    bool isRouting = (frame2 && (frame2->getSubType() == ROUTING));
     short ttl = maxTTL;
     if (frame2)
     {
@@ -940,12 +943,16 @@ void Ieee80211Mesh::handleDataFrame(Ieee80211DataFrame *frame)
             }
             send(msg,"routingOutReactive");
         }
-        else if (dynamic_cast<OLSR_pkt*>(msg) || dynamic_cast <DYMO_element *>(msg) || dynamic_cast <AODV_msg *>(msg))
+        else if (isRouting)
         {
             delete msg;
         }
-        else // Normal frame test if upper layer frame in other case delete
+        else if (dynamic_cast<LocatorPkt *>(msg) != NULL && hasLocator)
+            send(msg, "locatorOut");
+        else if (upperPacket)// Normal frame test if upper layer frame in other case delete
             sendUp(msg);
+        else
+            delete msg;
         return;
     }
     lwmplspk->setTTL(ttl);
@@ -1208,29 +1215,10 @@ bool Ieee80211Mesh::macLabelBasedSend(Ieee80211DataFrame *frame)
     return true;
 }
 
-void Ieee80211Mesh::sendUp(cMessage *msg)
-{
-    if (isUpperLayer(msg))
-        send(msg, "upperLayerOut");
-    else if (dynamic_cast<LocatorPkt *>(msg) != NULL && hasLocator)
-        send(msg, "locatorOut");
-    else
-        delete msg;
-}
-
 bool Ieee80211Mesh::isUpperLayer(cMessage *msg)
 {
-    if (dynamic_cast<IPv4Datagram*>(msg))
-        return true;
-    else if (dynamic_cast<IPv6Datagram*>(msg))
-        return true;
-    else if (dynamic_cast<OSPFPacket*>(msg))
-        return true;
-    else if (dynamic_cast<MPLSPacket*>(msg))
-        return true;
-    else if (dynamic_cast<LinkStateMsg*>(msg))
-        return true;
-    else if (dynamic_cast<ARPPacket*>(msg))
+
+
         return true;
     return false;
 }
@@ -1627,6 +1615,15 @@ bool Ieee80211Mesh::selectGateWay(const Uint128 &dest,MACAddress &gateway)
 //
 void Ieee80211Mesh::handleWateGayDataReceive(cPacket *pkt)
 {
+
+    if (dynamic_cast<Ieee80211ActionHWMPFrame *>(pkt))
+    {
+        if ((routingModuleHwmp != NULL) && routingModuleHwmp->isOurType(pkt))
+            send(pkt,"routingOutHwmp");
+        else
+            delete pkt;
+        return;
+    }
     Ieee80211MeshFrame *frame2  = dynamic_cast<Ieee80211MeshFrame *>(pkt);
     cPacket *encapPkt=NULL;
     encapPkt = pkt->getEncapsulatedPacket();
@@ -1711,6 +1708,7 @@ void Ieee80211Mesh::handleWateGayDataReceive(cPacket *pkt)
     {
         if (frame2->getFinalAddress()==myAddress)
         {
+            bool isUpper = (frame2->getSubType() == UPPERMESSAGE);
             cPacket *msg = decapsulate(frame2);
             if (dynamic_cast<ETXBasePacket*>(msg))
             {
@@ -1729,9 +1727,11 @@ void Ieee80211Mesh::handleWateGayDataReceive(cPacket *pkt)
                 LWMPLSPacket *lwmplspk = dynamic_cast<LWMPLSPacket*> (msg);
                 encapPkt = decapsulateMpls(lwmplspk);
             }
+            else if (dynamic_cast<LocatorPkt *>(msg) != NULL && hasLocator)
+                send(msg, "locatorOut");
             else
                 encapPkt=msg;
-            if (encapPkt)
+            if (encapPkt && isUpper)
                 sendUp(encapPkt);
         }
         else if (!frame2->getFinalAddress().isUnspecified())

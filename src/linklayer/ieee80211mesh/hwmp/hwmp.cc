@@ -1326,6 +1326,7 @@ void HwmpProtocol::receivePrep(Ieee80211ActionPREPFrame * prepFrame, MACAddress 
     //acceptance cretirea:
     std::map<MACAddress, std::pair<uint32_t, uint32_t> >::const_iterator i;
     Uint128 addAp;
+    Uint128 addApDest;
 
     if (getAp(originatorAddress.getInt(), addAp))
         i = m_hwmpSeqnoMetricDatabase.find(addAp.getLo());
@@ -1363,6 +1364,13 @@ void HwmpProtocol::receivePrep(Ieee80211ActionPREPFrame * prepFrame, MACAddress 
     else
         result = m_rtable->LookupReactive(originatorAddress);
 
+    HwmpRtable::LookupResult resultDest;
+    if (getAp(destinationAddress.getInt(), addApDest))
+        resultDest = m_rtable->LookupReactive(addApDest.getLo());
+    else
+        resultDest = m_rtable->LookupReactive(destinationAddress);
+
+
     if ((freshInfo)
             || (result.retransmitter.isUnspecified())
                     || (result.metric > totalMetric))
@@ -1382,9 +1390,9 @@ void HwmpProtocol::receivePrep(Ieee80211ActionPREPFrame * prepFrame, MACAddress 
         }
         m_rtable->AddPrecursor(destinationAddress, interface, from,
                 ((double) prepFrame->getBody().getLifeTime() * 1024.0) / 1000000.0);
-        if (!result.retransmitter.isUnspecified())
+        if (!resultDest.retransmitter.isUnspecified())
         {
-            m_rtable->AddPrecursor(originatorAddress, interface, result.retransmitter, result.lifetime);
+            m_rtable->AddPrecursor(originatorAddress, interface, resultDest.retransmitter, resultDest.lifetime);
         }
         reactivePathResolved(originatorAddress);
     }
@@ -1396,13 +1404,13 @@ void HwmpProtocol::receivePrep(Ieee80211ActionPREPFrame * prepFrame, MACAddress 
                 ((double) prepFrame->getBody().getLifeTime() * 1024.0) / 1000000.0, originatorSeqNumber, 1, false);
         reactivePathResolved(fromMp);
     }
-    if (destinationAddress == GetAddress() || isAddressInProxyList(destinationAddress.getInt()))
+    if (destinationAddress == GetAddress() || isAddressInProxyList(destinationAddress.getInt()) || (addApDest.getLo() == GetAddress().getInt()))
     {
         EV << "I am " << GetAddress() << ", resolved " << originatorAddress << endl;
         delete prepFrame;
         return;
     }
-    if (result.retransmitter.isUnspecified())
+    if (resultDest.retransmitter.isUnspecified())
     {
         delete prepFrame;
         return;
@@ -1412,7 +1420,7 @@ void HwmpProtocol::receivePrep(Ieee80211ActionPREPFrame * prepFrame, MACAddress 
     // ASSERT (prep_sender != m_interfaces.end ());
     prepFrame->setTransmitterAddress(GetAddress());
     prepFrame->setAddress3(prepFrame->getTransmitterAddress());
-    prepFrame->setReceiverAddress(result.retransmitter);
+    prepFrame->setReceiverAddress(resultDest.retransmitter);
     // TODO: obtain the correct interface ID
     Ieee802Ctrl *ctrl = new Ieee802Ctrl();
     ctrl->setInputPort(interface80211ptr->getInterfaceId());
@@ -1691,7 +1699,10 @@ void HwmpProtocol::reactivePathResolved(MACAddress dst)
     //Send all packets stored for this destination
     Uint128 apAddr;
     std::vector<MACAddress> listAddress;
-    getApList(MACAddress(apAddr.getLo()),listAddress);
+    if (getAp(dst.getInt(), apAddr))
+        getApList(MACAddress(apAddr.getLo()),listAddress);
+    else
+        listAddress.push_back(dst);
 
     while (!listAddress.empty())
     {

@@ -168,11 +168,19 @@ packet Ieee80211ManagementFrame extends Ieee80211DataOrMgmtFrame
     //short action enum(WirelessNetworkManagementAction); // action
 }
 
+enum MeshType
+{
+    UPPERMESSAGE = 0x1;
+    ROUTING = 0x2;
+}
+
 packet Ieee80211MeshFrame extends Ieee80211DataFrame
 {
     type = ST_DATA;
+
     byteLength = 38;
     short TTL = 15; // Is used by experimental 80211 mesh protocol
+    unsigned short subType = 0;
     long seqNumber;
     MACAddress finalAddress; //virtual address used by anycast procedure
                              // contain the initial address and avoid the necessity of search the IP address

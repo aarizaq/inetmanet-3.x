@@ -36,6 +36,7 @@
 #include <limits.h>
 
 #include <omnetpp.h>
+#include "IPv4Datagram.h"
 #include "UDPPacket.h"
 #include "IPv4ControlInfo.h"
 #include "IPv4InterfaceData.h"
