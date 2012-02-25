@@ -33,6 +33,7 @@
 #include "ICMPAccess.h"
 #include "NotifierConsts.h"
 #include "IPv4Datagram.h"
+#include "IPv4InterfaceData.h"
 
 #include "ProtocolMap.h"
 #include "IPv4Address.h"

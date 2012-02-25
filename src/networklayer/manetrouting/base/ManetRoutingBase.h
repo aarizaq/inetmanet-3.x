@@ -28,7 +28,6 @@
 #include "compatibility.h"
 #include "IRoutingTable.h"
 #include "NotificationBoard.h"
-#include "IPv4InterfaceData.h"
 #include "IInterfaceTable.h"
 #include "IPvXAddress.h"
 #include "uint128.h"

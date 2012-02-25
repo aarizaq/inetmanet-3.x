@@ -35,6 +35,7 @@
 #include "NotifierConsts.h"
 #include "Ieee802Ctrl_m.h"
 #include "Ieee80211Frame_m.h"
+#include "IPv4InterfaceData.h"
 
 
 #include "ProtocolMap.h"

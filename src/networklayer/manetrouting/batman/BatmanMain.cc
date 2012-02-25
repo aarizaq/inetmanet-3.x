@@ -4,6 +4,7 @@
 #include "batman.h"
 #include "IPv4ControlInfo.h"
 #include "UDPPacket_m.h"
+#include "IPv4InterfaceData.h"
 
 Define_Module(Batman);
 
