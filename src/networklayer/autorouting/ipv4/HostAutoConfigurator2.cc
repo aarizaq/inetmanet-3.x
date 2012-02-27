@@ -29,7 +29,7 @@
 #include "IInterfaceTable.h"
 #include "IPv4Address.h"
 
-std::vector<IPvXAddress> HostAutoConfigurator2::asignedAddress;
+std::deque<IPvXAddress> HostAutoConfigurator2::asignedAddress;
 
 Define_Module(HostAutoConfigurator2);
 
@@ -258,6 +258,10 @@ void HostAutoConfigurator2::setupNetworkLayer()
             cont++;
             // search other address
             myAddress = IPv4Address(addressBase.getInt() + cont);
+            // check if the address is valid.
+            if (!IPv4Address::maskedAddrAreEqual(myAddress, addressBase, netmask)) // match
+                error("check address asignation, more address that possible with this address base %s and this mask %s",addressBase.str().c_str(),netmask.str().c_str());
+
         }
         while(checkIfExist(myAddress));
 

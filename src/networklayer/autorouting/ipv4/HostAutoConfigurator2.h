@@ -24,6 +24,7 @@
 #include <omnetpp.h>
 #include "INETDefs.h"
 #include "IPvXAddress.h"
+#include <deque>
 
 /**
 * HostAutoConfigurator automatically assigns IP addresses and sets up routing table.
@@ -48,7 +49,7 @@ class INET_API HostAutoConfigurator2 : public cSimpleModule
     void fillRoutingTables();
 
     bool debug; /**< whether to emit debug messages */
-    static std::vector<IPvXAddress>asignedAddress;
+    static std::deque<IPvXAddress>asignedAddress;
     bool checkIfExist(const IPvXAddress &);
 };
 
