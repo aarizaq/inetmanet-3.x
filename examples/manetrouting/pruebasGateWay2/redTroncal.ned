@@ -21,6 +21,7 @@ package inet.examples.manetrouting.pruebasGateWay2;
 
 import inet.nodes.inet.AdhocHost;
 import inet.linklayer.ieee80211mesh.nodes.HostMesh;
+import inet.linklayer.ieee80211mesh.nodes.HostSta;
 import inet.linklayer.ieee80211mesh.nodes.BasicMobileManetMesh;
 import inet.world.radio.ChannelControl;
 import inet.linklayer.ieee80211mesh.nodes.gateWayMesh;
@@ -30,11 +31,14 @@ import inet.nodes.ethernet.EtherSwitch;
 network redTroncal
 {
     parameters:
-        int numHostsLower;
+        int numSta = default(0);
         int numFixHosts;
         int numBasic;
         double nodeSeparation @unit(m) = default(80m);
     submodules:
+        staHost[numSta]: HostSta {
+            @display("p=247,89");
+        }
         fixhostA[8]: BasicMobileManetMesh {
             parameters:
                 mobilityType = "LinealNodeDistributionMobility";
@@ -68,7 +72,7 @@ network redTroncal
                 mobility.initialY = 395m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.separation = nodeSeparation*2;
                 mobility.initialX = nodeSeparation/2.0;
-                wlanMesh.hasLocator = true;                
+                wlanMesh.hasLocator = true;
                 @display("i=device/accesspoint;r=,,#707070");
         }
 
@@ -86,7 +90,7 @@ network redTroncal
                 mobility.initialY = 155m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.separation = nodeSeparation*2;
                 mobility.initialX = (nodeSeparation/2.0) + nodeSeparation;
-                wlanMesh.hasLocator = true;                
+                wlanMesh.hasLocator = true;
                 @display("i=device/accesspoint;r=,,#707070");
         }
         fixhost5A[8]: BasicMobileManetMesh {
@@ -103,7 +107,7 @@ network redTroncal
                 mobility.initialY = 475m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.separation = nodeSeparation*2;
                 mobility.initialX = (nodeSeparation/2.0) + nodeSeparation;
-                wlanMesh.hasLocator = true;                
+                wlanMesh.hasLocator = true;
                 @display("i=device/accesspoint;r=,,#707070");
         }
         fixhost6[8]: ApMeshNode {
@@ -112,7 +116,7 @@ network redTroncal
                 mobility.initialY = 75m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.separation = nodeSeparation*2;
                 mobility.initialX = nodeSeparation/2.0;
-                wlanMesh.hasLocator = true;                
+                wlanMesh.hasLocator = true;
                 @display("i=device/accesspoint");
         }
         fixhost7[8]: ApMeshNode {
@@ -121,12 +125,12 @@ network redTroncal
                 mobility.initialY = 555m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.separation = nodeSeparation*2;
                 mobility.initialX = nodeSeparation/2.0;
-                wlanMesh.hasLocator = true;                
+                wlanMesh.hasLocator = true;
                 @display("i=device/accesspoint;r=,,#707070");
         }
         channelControl: ChannelControl {
             parameters:
-                @display("p=60,23;i=misc/sun");                
+                @display("p=60,23;i=misc/sun");
         }
         SW: EtherSwitch {
             @display("p=559,344");
@@ -134,7 +138,7 @@ network redTroncal
         }
         gateWay: gateWayMesh {
             parameters:
-                wlanMesh.hasLocator = true; 
+                wlanMesh.hasLocator = true;
                 @display("i=device/router;r=,,#707070;p=159,127");
         }
         gateWay1: gateWayMesh {
