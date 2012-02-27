@@ -23,6 +23,8 @@
 #include "NotificationBoard.h"
 #include "LocatorNotificationInfo_m.h"
 #include "Ieee802Ctrl_m.h"
+#include "ARPPacket_m.h"
+#include "Ieee80211Frame_m.h"
 
 simsignal_t LocatorModule::locatorChangeSignal = SIMSIGNAL_NULL;
 LocatorModule::LocatorMapIp LocatorModule::globalLocatorMapIp;
@@ -326,6 +328,7 @@ void LocatorModule::initialize(int stage)
     nb = NotificationBoardAccess().get();
     nb->subscribe(this,NF_L2_AP_DISASSOCIATED);
     nb->subscribe(this,NF_L2_AP_ASSOCIATED);
+    // nb->subscribe(this,NF_LINK_FULL_PROMISCUOUS); // if not global ARP
 }
 
 
@@ -410,6 +413,17 @@ void LocatorModule::receiveChangeNotification(int category, const cObject *detai
                 setTables(myMacAddress,infoSta->getStaAddress(),myIpAddress,staIpAdd,DISASSOCIATION,ie);
                 sendMessage(myMacAddress,infoSta->getStaAddress(),myIpAddress,staIpAdd,DISASSOCIATION);
             }
+        }
+    }
+    else if (category == NF_LINK_FULL_PROMISCUOUS)
+    {
+        Ieee80211DataOrMgmtFrame * frame = dynamic_cast<Ieee80211DataOrMgmtFrame*> (const_cast<cObject*>(details));
+        if (!frame)
+            return;
+        if (dynamic_cast<ARPPacket *>(frame->getEncapsulatedPacket()))
+        {
+            // dispatch ARP packets to ARP
+            processARPPacket(frame->getEncapsulatedPacket());
         }
     }
 }
@@ -525,12 +539,6 @@ void LocatorModule::setTables(const MACAddress & APaddr, const MACAddress &staAd
 {
     if(action == ASSOCIATION)
     {
-        IPv4Address addAP;
-        if (arp)
-        {
-            const IPv4Address add = arp->getInverseAddressResolution(APaddr);
-            addAP = add;
-        }
         LocEntry locEntry;
         locEntry.macAddr = staAddr;
         locEntry.apMacAddr = APaddr;
@@ -553,8 +561,8 @@ void LocatorModule::setTables(const MACAddress & APaddr, const MACAddress &staAd
                 if (ie)
                 {
                     IPv4Route *entry = new IPv4Route();
-                    entry->setDestination(apIpAddr);
-                    entry->setGateway(apIpAddr);
+                    entry->setDestination(staIpAddr);
+                    entry->setGateway(staIpAddr);
                     entry->setNetmask(IPv4Address::ALLONES_ADDRESS);
                     entry->setInterface(ie);
                     rt->addRoute(entry);
@@ -721,3 +729,105 @@ void LocatorModule::sendRequest(const MACAddress &destination)
     pkt->setStaMACAddress(destination);
     socket->sendTo(pkt,"255.255.255.255",port, interfaceId);
 }
+
+
+void LocatorModule::processARPPacket(cPacket *pkt)
+{
+    ARPPacket *arp = dynamic_cast<ARPPacket *>(pkt);
+    // extract input port
+    MACAddress srcMACAddress = arp->getSrcMACAddress();
+    IPv4Address srcIPAddress = arp->getSrcIPAddress();
+
+    if (srcMACAddress.isUnspecified())
+        return;
+    if (srcIPAddress.isUnspecified())
+        return;
+    MapIpIteartor itIp;
+    MapMacIterator itMac;
+    LocEntry locEntry;
+    if (useGlobal)
+    {
+        itMac = globalLocatorMapMac.find(srcMACAddress);
+        itIp = globalLocatorMapIp.find(srcIPAddress);
+        if ((itMac != globalLocatorMapMac.end() && itIp != globalLocatorMapIp.end())
+                || (itMac == globalLocatorMapMac.end() && itIp == globalLocatorMapIp.end()))
+            return;
+        if (itMac != globalLocatorMapMac.end())
+        {
+            if (itMac->second.ipAddr.isUnspecified())
+            {
+                itMac->second.ipAddr = srcIPAddress;
+                globalLocatorMapIp[srcIPAddress] = itMac->second;
+                locEntry = itMac->second;
+            }
+        }
+        else if (itIp != globalLocatorMapIp.end())
+        {
+            if (itIp->second.macAddr.isUnspecified())
+            {
+                itIp->second.macAddr = srcMACAddress;
+                globalLocatorMapMac[srcMACAddress] = itIp->second;
+                locEntry = itIp->second;
+            }
+        }
+        else
+            return;
+    }
+    else
+    {
+        itMac = locatorMapMac.find(srcMACAddress);
+        itIp = locatorMapIp.find(srcIPAddress);
+        if ((itMac != locatorMapMac.end() && itIp != locatorMapIp.end())
+                || (itMac == locatorMapMac.end() && itIp == locatorMapIp.end()))
+            return;
+        if (itMac != locatorMapMac.end())
+        {
+            if (itMac->second.ipAddr.isUnspecified())
+            {
+                itMac->second.ipAddr = srcIPAddress;
+                locatorMapIp[srcIPAddress] = itMac->second;
+                locEntry = itMac->second;
+            }
+        }
+        else if (itIp != locatorMapIp.end())
+        {
+            if (itIp->second.macAddr.isUnspecified())
+            {
+                itIp->second.macAddr = srcMACAddress;
+                locatorMapMac[srcMACAddress] = itIp->second;
+                locEntry = itIp->second;
+            }
+        }
+        else
+            return;
+    }
+    if (rt)
+    {
+        for (int i = 0; i < rt->getNumRoutes(); i++)
+        {
+            IPv4Route *entry = rt->getRoute(i);
+            if (entry->getDestination() == srcIPAddress)
+                return;
+        }
+        InterfaceEntry * ie = NULL;
+        for (int i = 0; i < itable->getNumInterfaces(); i++)
+        {
+            if (itable->getInterface(i)->getMacAddress() == locEntry.apMacAddr)
+            {
+                ie = itable->getInterface(i);
+                break;
+            }
+        }
+        if (ie)
+        {
+            IPv4Route *entry = new IPv4Route();
+            entry->setDestination(locEntry.ipAddr);
+            entry->setGateway(locEntry.ipAddr);
+            entry->setNetmask(IPv4Address::ALLONES_ADDRESS);
+            entry->setInterface(ie);
+            rt->addRoute(entry);
+        }
+    }
+}
+
+
