@@ -89,7 +89,7 @@ module gateWayMesh
             parameters:
                 @display("p=53,386");
         }
-        autoconf: HostAutoConfigurator2 {
+        autoconfigurator: HostAutoConfigurator2 {
             @display("p=53,71");
         }
 
