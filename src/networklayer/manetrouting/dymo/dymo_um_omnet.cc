@@ -174,7 +174,8 @@ void DYMOUM::initialize(int stage)
         if ((RREQ_TRIES = (int) par("RREQTries"))==-1)
             RREQ_TRIES = 3;
 
-        ipNodeId = new IPv4Address(interface80211ptr->ipv4Data()->getIPAddress());
+        if (interface80211ptr->ipv4Data())
+            ipNodeId = new IPv4Address(interface80211ptr->ipv4Data()->getIPAddress());
 
         rtable_init();
 
@@ -252,14 +253,13 @@ DYMOUM::DYMOUM()
 DYMOUM::~ DYMOUM()
 {
 // Clean all internal tables
-    dlist_head_t *pos, *tmp;
-
-    pos = tmp = NULL;
     packet_queue_destroy();
     if (macToIpAdress)
         delete macToIpAdress;
 // Routing table
 #ifndef MAPROUTINGTABLE
+    dlist_head_t *pos, *tmp;
+    pos = tmp = NULL;
     pos = tmp = NULL;
     dlist_for_each_safe(pos, tmp, &rtable.l)
     {
@@ -699,9 +699,6 @@ void DYMOUM::recvDYMOUMPacket(cMessage * msg)
 void DYMOUM::processPacket(IPv4Datagram * p, unsigned int ifindex )
 {
     struct in_addr dest_addr, src_addr;
-    struct ip_data *ipd = NULL;
-
-    ipd = NULL;         /* No ICMP messaging */
     bool isLocal = false;
     IPAddressVector phops;
 
@@ -1429,7 +1426,10 @@ std::string DYMOUM::detailedInfo() const
 {
     std::stringstream out;
 
-    out << "Node  : "  << *ipNodeId  << "  " << ipNodeId->getInt() << "\n";
+    if (ipNodeId)
+        out << "Node  : "  << *ipNodeId  << "  " << ipNodeId->getInt() << "\n";
+    else
+        out << "Node  : "  << interface80211ptr->getMacAddress() << "  " << interface80211ptr->getMacAddress().getInt() << "\n";
     out << "Seq Num  : "  <<this_host.seqnum  << "\n";
 
     return out.str();

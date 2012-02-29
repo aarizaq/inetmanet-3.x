@@ -261,7 +261,8 @@ void LocatorModule::processRequest(cPacket* msg)
          if (itable->getInterface(i)->getMacAddress() == destAddr)
          {
              // ignore, is local information and this information has been set by the  receiveChangeNotification
-             iv4Addr = itable->getInterface(i)->ipv4Data()->getIPAddress();
+             if (itable->getInterface(i)->ipv4Data())
+                 iv4Addr = itable->getInterface(i)->ipv4Data()->getIPAddress();
              break;
          }
      }
@@ -313,7 +314,8 @@ void LocatorModule::initialize(int stage)
     {
         interfaceId = ie->getInterfaceId();
         myMacAddress = ie->getMacAddress();
-        myIpAddress = ie->ipv4Data()->getIPAddress();
+        if (ie->ipv4Data())
+            myIpAddress = ie->ipv4Data()->getIPAddress();
     }
     else
     {

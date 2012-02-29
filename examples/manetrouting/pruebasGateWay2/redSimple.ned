@@ -28,7 +28,7 @@ import inet.linklayer.ieee80211mesh.nodes.gateWayMesh;
 import inet.linklayer.ieee80211mesh.nodes.ApMeshNode;
 import inet.nodes.ethernet.EtherSwitch;
 import inet.nodes.inet.WirelessHost;
-
+import inet.linklayer.ieee80211mesh.nodes.ApMeshRelay;
 network redSimple
 {
     parameters:

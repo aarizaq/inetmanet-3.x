@@ -126,6 +126,7 @@ private:
     virtual bool selectGateWay(const Uint128 &,MACAddress &);
 
     bool hasLocator;
+    bool hasRelay;
 
   public:
     Ieee80211Mesh();

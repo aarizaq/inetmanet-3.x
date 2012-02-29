@@ -146,7 +146,7 @@ void ManetRoutingBase::registerRoutingModule()
     /* Set host parameters */
     isRegistered = true;
     int  num_80211 = 0;
-    inet_rt = RoutingTableAccess().get();
+    inet_rt = RoutingTableAccess().getIfExists();
     inet_ift = InterfaceTableAccess().get();
     nb = NotificationBoardAccess().get();
 
@@ -224,7 +224,8 @@ void ManetRoutingBase::registerRoutingModule()
         }
     }
 
-    routerId = inet_rt->getRouterId().getInt();
+    if (inet_rt)
+        routerId = inet_rt->getRouterId().getInt();
 
     if (interfaceVector->size()==0 || interfaceVector->size() > (unsigned int)maxInterfaces)
         opp_error("Manet routing protocol has found %i wlan interfaces", num_80211);
@@ -281,7 +282,7 @@ void ManetRoutingBase::registerRoutingModule()
     if (locator)
     {
         InterfaceEntry *ie = getInterfaceWlanByAddress();
-        if (locator->getIpAddress().isUnspecified())
+        if (locator->getIpAddress().isUnspecified() && ie->ipv4Data())
             locator->setIpAddress(ie->ipv4Data()->getIPAddress());
         if (locator->getMacAddress().isUnspecified())
             locator->setMacAddress(ie->getMacAddress());

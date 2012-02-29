@@ -26,6 +26,7 @@
 #include "InterfaceTableAccess.h"
 #include "locatorPkt_m.h"
 #include <string.h>
+#include "EtherFrame_m.h"
 
 
 /* WMPLS */
@@ -96,6 +97,7 @@ Ieee80211Mesh::Ieee80211Mesh()
     gateWayIndex = -1;
     isGateWay = false;
     hasLocator = false;
+    hasRelay = false;
 }
 
 void Ieee80211Mesh::initialize(int stage)
@@ -468,16 +470,40 @@ Ieee80211DataFrame *Ieee80211Mesh::encapsulate(cPacket *msg)
     frame->setTimestamp(msg->getCreationTime());
     LWMPLSPacket *lwmplspk = NULL;
     LWmpls_Forwarding_Structure *forwarding_ptr=NULL;
+    MACAddress next;
+    MACAddress dest;
+    if (dynamic_cast<EtherFrame *>(msg))
+    {
+    // create new frame
+        EtherFrame *ethframe =dynamic_cast<EtherFrame *>(msg);
+        frame->setFromDS(true);
+
+        // copy addresses from ethernet frame (transmitter addr will be set to our addr by MAC)
+        frame->setAddress4(ethframe->getDest());
+        frame->setAddress3(ethframe->getSrc());
+        dest = ethframe->getDest();
+        next = ethframe->getDest();
+        frame->setFinalAddress(dest);
+        // encapsulate payload
+        cPacket *payload = ethframe->decapsulate();
+        if (!payload)
+            error("received empty EtherFrame from upper layer");
+        frame->encapsulate(payload);
+        delete ethframe;
+    }
+    else
+    {
 
     // copy receiver address from the control info (sender address will be set in MAC)
-    Ieee802Ctrl *ctrl = check_and_cast<Ieee802Ctrl *>(msg->removeControlInfo());
-    MACAddress dest = ctrl->getDest();
-    MACAddress next = ctrl->getDest();
-    delete ctrl;
-    frame->setFinalAddress(dest);
+        Ieee802Ctrl *ctrl = check_and_cast<Ieee802Ctrl *>(msg->removeControlInfo());
+        dest = ctrl->getDest();
+        next = ctrl->getDest();
+        delete ctrl;
+        frame->setAddress3(myAddress);
+        frame->setFinalAddress(dest);
+        frame->setAddress4(dest);
+    }
 
-    frame->setAddress4(dest);
-    frame->setAddress3(myAddress);
 
 
     if (dest.isBroadcast())
@@ -861,6 +887,8 @@ void Ieee80211Mesh::handleDataFrame(Ieee80211DataFrame *frame)
     bool upperPacket = (frame2 && (frame2->getSubType() == UPPERMESSAGE));
     bool isRouting = (frame2 && (frame2->getSubType() == ROUTING));
     short ttl = maxTTL;
+    MACAddress destination = frame->getAddress4();
+    MACAddress origin = frame->getAddress3();
     if (frame2)
     {
         ttl = frame2->getTTL();
@@ -892,7 +920,7 @@ void Ieee80211Mesh::handleDataFrame(Ieee80211DataFrame *frame)
         if (lwmplspk->getDest()!=myAddress)
         {
             GateWayDataMap::iterator it = getGateWayDataMap()->find((Uint128)lwmplspk->getDest().getInt());
-            if (it!=getGateWayDataMap()->end() && frame2->getAddress4()!=myAddress)
+            if (it!=getGateWayDataMap()->end() && destination != myAddress)
                 associatedAddress[lwmplspk->getSource().getInt()] = simTime();
         }
         else
@@ -950,7 +978,21 @@ void Ieee80211Mesh::handleDataFrame(Ieee80211DataFrame *frame)
         else if (dynamic_cast<LocatorPkt *>(msg) != NULL && hasLocator)
             send(msg, "locatorOut");
         else if (upperPacket)// Normal frame test if upper layer frame in other case delete
-            sendUp(msg);
+        {
+            if (hasRelay)
+            {
+                EthernetIIFrame *ethframe = new EthernetIIFrame(msg->getName()); //TODO option to use EtherFrameWithSNAP instead
+                ethframe->setDest(destination);
+                ethframe->setSrc(origin);
+                ethframe->setEtherType(0);
+                ethframe->encapsulate(msg);
+                if (ethframe->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+                    ethframe->setByteLength(MIN_ETHERNET_FRAME_BYTES);
+                sendUp(ethframe);
+            }
+            else
+                sendUp(msg);
+        }
         else
             delete msg;
         return;
@@ -1767,3 +1809,4 @@ bool Ieee80211Mesh::isAddressForUs(const MACAddress &add)
     else
         return false;
 }
+
