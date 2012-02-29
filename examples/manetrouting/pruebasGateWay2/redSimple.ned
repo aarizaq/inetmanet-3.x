@@ -49,7 +49,7 @@ network redSimple
                 mobility.separation = nodeSeparation*2;
                 @display("i=block/wrxtx;r=,,#707070;p=158,150");
         }
-        fixhostB[1]: ApMeshNode {
+        fixhostB[1]: ApMeshRelay {
             parameters:
                 mobilityType = "LinealNodeDistributionMobility";
                 mobility.initialY = 150m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);

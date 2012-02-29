@@ -41,7 +41,7 @@ import inet.networklayer.autorouting.ipv4.HostAutoConfigurator2;
 //         WirelessHost and AndhocHost
 //
 
-module simpleNet
+module simpleNetLayer
 {
     parameters:
         string relayType;
@@ -96,10 +96,10 @@ module ApMeshRelay
                 @display("p=61,192");
         }
 
-        relayUnit: simpleNet {
+        relayUnit: simpleNetLayer {
             parameters:
                 relayType = relayUnitType;
-                @display("p=206,279");
+                @display("p=223,298");
             gates:
                 ifIn[numRadios+1];
                 ifOut[numRadios+1];
@@ -107,11 +107,13 @@ module ApMeshRelay
 
         wlanMesh: Ieee80211NewNicMesh {
             parameters:
+                mgmt.forceRelayUnit = true;
                 @display("p=159,386;q=queue");
         }
 
         wlan[numRadios]: <default("Ieee80211NewNic")> like IWirelessNic {
             parameters:
+                mgmt.forceRelayUnit = true;
                 @display("p=271,392;q=queue");
         }
 

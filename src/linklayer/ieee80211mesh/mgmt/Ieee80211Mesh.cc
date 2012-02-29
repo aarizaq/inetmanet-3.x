@@ -97,7 +97,7 @@ Ieee80211Mesh::Ieee80211Mesh()
     gateWayIndex = -1;
     isGateWay = false;
     hasLocator = false;
-    hasRelay = false;
+    hasRelayUnit = false;
 }
 
 void Ieee80211Mesh::initialize(int stage)
@@ -113,6 +113,14 @@ void Ieee80211Mesh::initialize(int stage)
         maxHopProactive = par("maxHopProactive");
         maxHopReactive = par("maxHopReactive");
         maxTTL = par("maxTTL");
+        if (gate("upperLayerOut")->getPathEndGate()->isConnected() &&
+                (strcmp(gate("upperLayerOut")->getPathEndGate()->getOwnerModule()->getName(),"relayUnit")==0 || par("forceRelayUnit").boolValue()))
+        {
+            hasRelayUnit = true;
+        }
+        if (gate("locatorOut")->getPathEndGate()->isConnected() &&
+                       (strcmp(gate("locatorOut")->getPathEndGate()->getOwnerModule()->getName(),"locator")==0 || par("locatorActive").boolValue()))
+            hasLocator = true;
     }
     else if (stage==1)
     {
@@ -190,7 +198,6 @@ void Ieee80211Mesh::initialize(int stage)
         if (par("IsGateWay"))
             startGateWay();
         //end Gateway and group address code
-        hasLocator = par("locatorActive");
     }
 }
 
@@ -472,24 +479,32 @@ Ieee80211DataFrame *Ieee80211Mesh::encapsulate(cPacket *msg)
     LWmpls_Forwarding_Structure *forwarding_ptr=NULL;
     MACAddress next;
     MACAddress dest;
-    if (dynamic_cast<EtherFrame *>(msg))
-    {
-    // create new frame
-        EtherFrame *ethframe =dynamic_cast<EtherFrame *>(msg);
-        frame->setFromDS(true);
 
-        // copy addresses from ethernet frame (transmitter addr will be set to our addr by MAC)
-        frame->setAddress4(ethframe->getDest());
-        frame->setAddress3(ethframe->getSrc());
-        dest = ethframe->getDest();
-        next = ethframe->getDest();
-        frame->setFinalAddress(dest);
-        // encapsulate payload
-        cPacket *payload = ethframe->decapsulate();
-        if (!payload)
-            error("received empty EtherFrame from upper layer");
-        frame->encapsulate(payload);
-        delete ethframe;
+    if (hasRelayUnit)
+    {
+        EtherFrame *etherframe = dynamic_cast<EtherFrame *>(msg);
+        if (etherframe)
+        {
+        // create new frame
+            frame->setFromDS(true);
+            // copy addresses from ethernet frame (transmitter addr will be set to our addr by MAC)
+            frame->setAddress4(etherframe->getDest());
+            frame->setAddress3(etherframe->getSrc());
+            dest = etherframe->getDest();
+            next = etherframe->getDest();
+            frame->setFinalAddress(dest);
+            // encapsulate payload
+            cPacket *payload = etherframe->decapsulate();
+            if (!payload)
+                error("received empty EtherFrame from upper layer");
+
+            delete etherframe;
+            msg = payload;
+        }
+        else
+        {
+            frame = check_and_cast<Ieee80211MeshFrame *>(msg);
+        }
     }
     else
     {
@@ -503,8 +518,6 @@ Ieee80211DataFrame *Ieee80211Mesh::encapsulate(cPacket *msg)
         frame->setFinalAddress(dest);
         frame->setAddress4(dest);
     }
-
-
 
     if (dest.isBroadcast())
     {
@@ -979,7 +992,7 @@ void Ieee80211Mesh::handleDataFrame(Ieee80211DataFrame *frame)
             send(msg, "locatorOut");
         else if (upperPacket)// Normal frame test if upper layer frame in other case delete
         {
-            if (hasRelay)
+            if (hasRelayUnit)
             {
                 EthernetIIFrame *ethframe = new EthernetIIFrame(msg->getName()); //TODO option to use EtherFrameWithSNAP instead
                 ethframe->setDest(destination);
@@ -1772,7 +1785,7 @@ void Ieee80211Mesh::handleWateGayDataReceive(cPacket *pkt)
             else if (dynamic_cast<LocatorPkt *>(msg) != NULL && hasLocator)
                 send(msg, "locatorOut");
             else
-                encapPkt=msg;
+                encapPkt = msg;
             if (encapPkt && isUpper)
                 sendUp(encapPkt);
         }

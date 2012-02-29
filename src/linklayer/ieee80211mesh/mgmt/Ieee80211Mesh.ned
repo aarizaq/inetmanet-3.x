@@ -41,12 +41,13 @@ simple Ieee80211Mesh like IIeee80211Mgmt
         bool IsGateWay = default(false);
         double GateWayAnnounceInterval @unit("s") = default(100s);
         volatile double MacBroadcastDelay @unit("s") = default(uniform(0s,0.01s));
+        bool forceRelayUnit  = default(false);
  //       int Willingness = default(3); //ms
  //       int Hello_ival = default(2); // sec
  //       int Tc_ival = default(5); // sec
  //       int Mid_ival = default(5); // sec
  //       int use_mac = default(0);
-        bool locatorActive;
+        bool locatorActive  = default(false);
         @signal[enqueuePk](type=cMessage);
         @signal[dequeuePk](type=cMessage);
         @signal[dropPkByQueue](type=cMessage);
