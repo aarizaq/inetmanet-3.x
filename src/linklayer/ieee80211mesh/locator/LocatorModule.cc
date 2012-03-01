@@ -162,7 +162,7 @@ void LocatorModule::handleMessage(cMessage *msg)
     {
         if (pkt->getControlInfo())
             delete pkt->removeControlInfo();
-        socket->sendTo(pkt,"255.255.255.255",port, interfaceId);
+        socket->sendTo(pkt,IPvXAddress("255.255.255.255"),port, interfaceId);
     }
     else
         delete msg;
@@ -355,7 +355,7 @@ void  LocatorModule::sendMessage(const MACAddress &apMac,const MACAddress &staMa
         pkt->setSequence(mySequence);
         mySequence++;
 
-        socket->sendTo(pkt,"255.255.255.255",port, interfaceId);
+        socket->sendTo(pkt,IPvXAddress("255.255.255.255"),port, interfaceId);
     }
     else
     {
@@ -729,7 +729,7 @@ void LocatorModule::sendRequest(const MACAddress &destination)
     pkt->setOpcode(RequestAddress);
     pkt->setOrigin(myIpAddress);
     pkt->setStaMACAddress(destination);
-    socket->sendTo(pkt,"255.255.255.255",port, interfaceId);
+    socket->sendTo(pkt,IPvXAddress("255.255.255.255"),port, interfaceId);
 }
 
 
