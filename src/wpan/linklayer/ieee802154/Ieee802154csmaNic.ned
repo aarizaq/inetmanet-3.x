@@ -5,7 +5,7 @@ package inet.wpan.linklayer.ieee802154;
 
 import inet.networklayer.queue.IOutputQueue;
 import inet.wpan.linklayer.ieee802154.mac.CSMA802154;
-import inet.wpan.linklayer.ieee802154.phyLayer.Ieee802154Phy;
+import inet.wpan.phyLayer.ieee802154.Ieee802154Phy;
 
 module Ieee802154csmaNic
 {

@@ -1,4 +1,4 @@
-package inet.wpan.linklayer.ieee802154.phyLayer;
+package inet.wpan.phyLayer.ieee802154;
 simple Ieee802154Phy
 {
     parameters:
