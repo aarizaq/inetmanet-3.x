@@ -412,8 +412,8 @@ void DHCPClient::sendRequest()
     request->setXid(this->xid); // transacction id;
     request->setSecs(0); // 0 seconds from transaction started.
     request->setFlags(0); // 0 = Unicast
-    request->setYiaddr("0.0.0.0"); // NO your IP addr.
-    request->setGiaddr("0.0.0.0"); // NO DHCP Gateway Agents
+    request->setYiaddr(IPv4Address("0.0.0.0")); // NO your IP addr.
+    request->setGiaddr(IPv4Address("0.0.0.0")); // NO DHCP Gateway Agents
     request->setChaddr(this->client_mac_address); // my mac address;
     request->setSname(""); // no server name given
     request->setFile(""); // no file given
@@ -431,9 +431,9 @@ void DHCPClient::sendRequest()
         // the request is in response of a offer
         request->getOptions().set(SERVER_ID, this->lease->server_id.str());
         request->getOptions().set(REQUESTED_IP, this->lease->ip.str());
-        request->setCiaddr("0.0.0.0"); // NO client IP addr.
+        request->setCiaddr(IPv4Address("0.0.0.0")); // NO client IP addr.
         EV << "Sending DHCPREQUEST asking for IP " << this->lease->ip << " via broadcast" << endl;
-        sendToUDP(request, this->bootpc_port, "255.255.255.255", this->bootps_port);
+        sendToUDP(request, this->bootpc_port, IPv4Address::ALLONES_ADDRESS, this->bootps_port);
     }
     else if (this->client_state == RENEWING)
     {
@@ -449,7 +449,7 @@ void DHCPClient::sendRequest()
         // the request is for extending the lease
         request->setCiaddr(this->lease->ip); // the client IP
         EV << "Sending DHCPREQUEST renewing the IP " << this->lease->ip << " via broadcast " << endl;
-        sendToUDP(request, this->bootpc_port, "255.255.255.255", this->bootps_port);
+        sendToUDP(request, this->bootpc_port, IPv4Address::ALLONES_ADDRESS, this->bootps_port);
     }
 }
 
@@ -468,9 +468,9 @@ void DHCPClient::sendDiscover()
     discover->setXid(this->xid); // transacction id;
     discover->setSecs(0); // 0 seconds from transaction started.
     discover->setFlags(0); // 0 = Unicast
-    discover->setCiaddr("0.0.0.0"); // NO client IP addr.
-    discover->setYiaddr("0.0.0.0"); // NO your IP addr.
-    discover->setGiaddr("0.0.0.0"); // NO DHCP Gateway Agents
+    discover->setCiaddr(IPv4Address("0.0.0.0")); // NO client IP addr.
+    discover->setYiaddr(IPv4Address("0.0.0.0")); // NO your IP addr.
+    discover->setGiaddr(IPv4Address("0.0.0.0")); // NO DHCP Gateway Agents
     discover->setChaddr(this->client_mac_address); // my mac address;
     discover->setSname(""); // no server name given
     discover->setFile(""); // no file given
@@ -485,7 +485,7 @@ void DHCPClient::sendDiscover()
     discover->getOptions().add(PARAM_LIST, NTP_SRV);
 
     ev << "Sending DHCPDISCOVER" << endl;
-    sendToUDP(discover, this->bootpc_port, "255.255.255.255", this->bootps_port);
+    sendToUDP(discover, this->bootpc_port, IPv4Address::ALLONES_ADDRESS, this->bootps_port);
 }
 
 void DHCPClient::cancelTimer(cMessage* timer)

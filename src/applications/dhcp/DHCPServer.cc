@@ -233,7 +233,7 @@ void DHCPServer::sendACK(DHCPLease* lease)
     ack->setFlags(0); // 0 = Unicast
     ack->setCiaddr(lease->ip); // client IP addr.
     ack->setYiaddr(lease->ip); // clinet IP addr.
-    ack->setGiaddr("0.0.0.0"); // Next server ip
+    ack->setGiaddr(IPv4Address("0.0.0.0")); // Next server ip
 
     ack->setChaddr(lease->mac); // client mac address;
     ack->setSname(""); // no server name given
@@ -273,7 +273,7 @@ void DHCPServer::sendOffer(DHCPLease* lease)
     offer->setXid(lease->xid); // transacction id;
     offer->setSecs(0); // 0 seconds from transaction started.
     offer->setFlags(0); // 0 = Unicast
-    offer->setCiaddr("0.0.0.0"); // NO client IP addr.
+    offer->setCiaddr(IPv4Address("0.0.0.0")); // NO client IP addr.
 
     offer->setYiaddr(lease->ip); // ip offered.
     offer->setGiaddr(lease->gateway); // next server ip

@@ -2526,13 +2526,13 @@ void ControlPlaneMobilestation::recordData(cMessage *msg)
     MACAddress BS_6;
     MACAddress BS_7;
 
-    BS_1 = "0A:00:00:00:00:01";
-    BS_2 = "0A:00:00:00:00:02";
-    BS_3 = "0A:00:00:00:00:03";
-    BS_4 = "0A:00:00:00:00:04";
-    BS_5 = "0A:00:00:00:00:05";
-    BS_6 = "0A:00:00:00:00:06";
-    BS_7 = "0A:00:00:00:00:07";
+    BS_1 = MACAddress("0A:00:00:00:00:01");
+    BS_2 = MACAddress("0A:00:00:00:00:02");
+    BS_3 = MACAddress("0A:00:00:00:00:03");
+    BS_4 = MACAddress("0A:00:00:00:00:04");
+    BS_5 = MACAddress("0A:00:00:00:00:05");
+    BS_6 = MACAddress("0A:00:00:00:00:06");
+    BS_7 = MACAddress("0A:00:00:00:00:07");
 
     if (frame->getBS_ID() == BS_1)
     {
