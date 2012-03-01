@@ -69,6 +69,7 @@ class INET_API UDPBasicBurst : public cSimpleModule
     int numReceived;
     int numDeleted;
     int numDuplicated;
+    cStdDev *pktDelay;
 
     // volatile parameters:
     cPar *messageLengthPar;

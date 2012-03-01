@@ -53,11 +53,13 @@ UDPBasicBurst::UDPBasicBurst()
     timerNext = NULL;
     outputInterface = -1;
     outputInterfaceMulticastBroadcast = -1;
+    pktDelay = new cStdDev("burst pkt delay");
 }
 
 UDPBasicBurst::~UDPBasicBurst()
 {
     cancelAndDelete(timerNext);
+    delete pktDelay;
 }
 
 void UDPBasicBurst::initialize(int stage)
@@ -259,7 +261,7 @@ void UDPBasicBurst::processPacket(cPacket *pk)
             return;
         }
     }
-
+    pktDelay->collect(simTime() - pk->getTimestamp());
     EV << "Received packet: " << UDPSocket::getReceivedPacketInfo(pk) << endl;
     emit(rcvdPkSignal, pk);
     numReceived++;
@@ -326,6 +328,10 @@ void UDPBasicBurst::finish()
     recordScalar("Total sent", numSent);
     recordScalar("Total received", numReceived);
     recordScalar("Total deleted", numDeleted);
+    recordScalar("Mean delay", pktDelay->getMean());
+    recordScalar("Min delay", pktDelay->getMin());
+    recordScalar("Max delay", pktDelay->getMax());
+    recordScalar("Deviation delay", pktDelay->getStddev());
 }
 
 
