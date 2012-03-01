@@ -72,6 +72,7 @@ module Ieee80211NewNicMesh like IWirelessNic
         }
         radio: Ieee80211NewRadio {
             parameters:
+                phyOpMode = opMode;
                 @display("p=96,307");
         }
     connections allowunconnected:
