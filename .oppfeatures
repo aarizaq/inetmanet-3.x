@@ -704,18 +704,4 @@
         compileFlags = ""
         linkerFlags = ""
         />
-    <feature
-        id="OVERSIM"
-        name="OVERSIM"
-        description = "OVERSIM"
-        initiallyEnabled = "false"
-        requires = "TCP_INET UDP IPv6 Ethernet Ieee80211"
-        labels = ""
-        nedPackages = "
-                       inet.oversim
-                      "
-        extraSourceFolders = ""
-        compileFlags = ""
-        linkerFlags = ""
-        />
 </features>
