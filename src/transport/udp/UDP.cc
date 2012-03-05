@@ -229,7 +229,7 @@ void UDP::processPacketFromApp(cPacket *appData)
 
     SockDesc *sd = it->second;
     const IPvXAddress& destAddr = ctrl->getDestAddr().isUnspecified() ? sd->remoteAddr : ctrl->getDestAddr();
-    ushort destPort = ctrl->getDestPort() == -1 ? sd->remotePort : ctrl->getDestPort();
+    int destPort = ctrl->getDestPort() == -1 ? sd->remotePort : ctrl->getDestPort();
     if (destAddr.isUnspecified() || destPort == -1)
         error("send: missing destination address or port when sending over unconnected port");
 
