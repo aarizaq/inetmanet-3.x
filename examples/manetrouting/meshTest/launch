@@ -1,0 +1,12 @@
+#!/bin/bash
+
+./run -c React -u Cmdenv -f omnetpp.ini 
+./run -c ReactNoGate -u Cmdenv -f omnetpp.ini
+./run -c Proact -u Cmdenv -f omnetpp.ini
+./run -c ProactNoGate -u Cmdenv -f omnetpp.ini
+./run -c Hybrid -u Cmdenv -f omnetpp.ini 
+./run -c HybridNoGate -u Cmdenv -f omnetpp.ini
+./run -c Hwmp -u Cmdenv -f omnetpp.ini
+./run -c HwmpNoGate -u Cmdenv -f omnetpp.ini
+./run -c ReactST -u Cmdenv -f omnetpp.ini 
+./run -c ReactSTNoGate -u Cmdenv -f omnetpp.ini
