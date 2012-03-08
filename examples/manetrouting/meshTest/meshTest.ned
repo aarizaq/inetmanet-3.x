@@ -16,7 +16,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
-package inet.examples.manetrouting.pruebasGateWay2;
+package inet.examples.manetrouting.meshTest;
 
 
 import inet.nodes.inet.AdhocHost;
@@ -29,17 +29,17 @@ import inet.linklayer.ieee80211mesh.nodes.ApMeshNode;
 import inet.nodes.ethernet.EtherSwitch;
 import inet.linklayer.ieee80211mesh.nodes.ApMeshRelay;
 
-network redTroncal2
+network meshTest
 {
     parameters:
         int numSta = default(0);
-        int meshHost = default(0);
+        int numMeshHost = default(0);
         double nodeSeparation @unit(m) = default(120m);
     submodules:
         staHost[numSta]: HostSta {
             @display("p=208,59");
         }
-        meshHost[meshHost]: HostMesh {
+        meshHost[numMeshHost]: HostMesh {
             @display("p=309,117");
         }
         fixhostA[5]: BasicMobileManetMesh {
@@ -118,7 +118,7 @@ network redTroncal2
                 @display("p=60,23;i=misc/sun");
         }
         SW: EtherSwitch {
-            @display("p=559,344");
+            @display("p=551,304");
 
         }
         gateWay: gateWayMesh {
@@ -134,7 +134,7 @@ network redTroncal2
         gateWay2: gateWayMesh {
             parameters:
                 wlanMesh.hasLocator = true;
-                @display("i=device/router;r=,,#707070;p=650,345");
+                @display("i=device/router;r=,,#707070;p=575,344");
         }
 
         gateWay3: gateWayMesh {
