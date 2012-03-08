@@ -144,6 +144,7 @@ void Ieee80211Mesh::initialize(int stage)
         else
             proactiveFeedback = false;
         mplsData = new LWMPLSDataStructure;
+        WATCH(hasRelayUnit);
         WATCH_PTRMAP(*(mplsData->forwardingTableOutput));
 
          //
