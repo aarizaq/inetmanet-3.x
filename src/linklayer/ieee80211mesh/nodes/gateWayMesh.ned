@@ -63,7 +63,7 @@ module gateWayMesh
         string sctpType = default(firstAvailable("SCTP","SCTP_None"));
         
         int numExtInterfaces = default(0);
-        int numRadios = default(1);               // the number of radios in the router. by default no wireless
+        int numRadios = default(0);               // the number of radios in the router. by default no wireless
         int numPcapRecorders = default(0); // no of PcapRecorders.
         string mobilityType = default("StationaryMobility");
         string routingFile = default("");
