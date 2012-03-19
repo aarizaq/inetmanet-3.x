@@ -791,7 +791,7 @@ void RSTP::sendTCNtoRoot()
 				frame->setCost(a->RootPathCost);
 				frame->setSrcPriority(priority);
 				frame->setSrc(address);
-				frame->setDest("01-80-C2-00-00-00");
+				frame->setDest(MACAddress("01-80-C2-00-00-00"));
 				frame->setAck(false);
 				frame->setPortNumber(r);  //Src port number.
 				frame->setTC(true);
@@ -830,7 +830,7 @@ void RSTP::sendBPDU(int port)
 		frame->setAge(a->Age);
 		frame->setSrcPriority(priority);
 		frame->setSrc(address);
-		frame->setDest("01-80-C2-00-00-00");
+		frame->setDest(MACAddress("01-80-C2-00-00-00"));
 		frame->setAck(false);
 		frame->setPortNumber(port);  //Src port number.
 		if(simulation.getSimTime()<Puertos[port].TCWhile)

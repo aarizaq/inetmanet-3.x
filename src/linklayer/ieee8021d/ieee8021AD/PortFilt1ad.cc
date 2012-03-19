@@ -183,13 +183,13 @@ void PortFilt1ad::sendMVRPDUs()
 {
 	//Generating MVRPDUs
 	MVRPDU * frame=new MVRPDU();
-	frame->setDest("01-80-C2-00-00-0D");
+	frame->setDest(MACAddress("01-80-C2-00-00-0D"));
 	frame->setVIDSArraySize(1);
 	frame->setVIDS(0,defaultVID);
 	send(frame,"GatesOut",1);
 
 	frame=new MVRPDU();
-	frame->setDest("01-80-C2-00-00-0D");
+	frame->setDest(MACAddress("01-80-C2-00-00-0D"));
 	frame->setVIDSArraySize(registeredCVids.size());
 	for(unsigned int i=0;i<registeredCVids.size();i++)
 	{

@@ -96,13 +96,13 @@ void TesterObject::scheduleMessage(cXMLElement * mens)
 		ev<<"BPDU"<<endl;
 		msg=new BPDUieee8021D();
 		((BPDUieee8021D *)msg)->setRootPriority(getParameterIntValue(mens,"RootP"));
-		((BPDUieee8021D *)msg)->setRootMAC(getParameterStrValue(mens,"RootMAC"));
+		((BPDUieee8021D *)msg)->setRootMAC(MACAddress(getParameterStrValue(mens,"RootMAC")));
 		((BPDUieee8021D *)msg)->setCost(getParameterIntValue(mens,"RPC"));
 		((BPDUieee8021D *)msg)->setSrcPriority(getParameterIntValue(mens,"SrcP"));
-		((BPDUieee8021D *)msg)->setSrc(getParameterStrValue(mens,"SrcMAC"));
+		((BPDUieee8021D *)msg)->setSrc(MACAddress(getParameterStrValue(mens,"SrcMAC")));
 		((BPDUieee8021D *)msg)->setPortPriority(getParameterIntValue(mens,"PortP"));
 		((BPDUieee8021D *)msg)->setPortNumber(getParameterIntValue(mens,"Port"));
-		((BPDUieee8021D *)msg)->setDest(getParameterStrValue(mens,"DestMAC"));
+		((BPDUieee8021D *)msg)->setDest(MACAddress(getParameterStrValue(mens,"DestMAC")));
 		((BPDUieee8021D *)msg)->setTC(getParameterBoolValue(mens,"TC"));
 		if(((BPDUieee8021D *)msg)->getTC()==true)
 		{
@@ -114,8 +114,8 @@ void TesterObject::scheduleMessage(cXMLElement * mens)
 	case 1: //MVRPDU
 		ev<<"MVRPDU"<<endl;
 		msg=new MVRPDU();
-		((MVRPDU *)msg)->setSrc(getParameterStrValue(mens,"SrcMAC"));
-		((MVRPDU *)msg)->setDest(getParameterStrValue(mens,"DestMAC"));
+		((MVRPDU *)msg)->setSrc(MACAddress(getParameterStrValue(mens,"SrcMAC")));
+		((MVRPDU *)msg)->setDest(MACAddress(getParameterStrValue(mens,"DestMAC")));
 		aux=mens->getFirstChildWithTag("VIDs");
 		list=aux->getChildrenByTagName("VID");
 		((MVRPDU *)msg)->setVIDSArraySize(list.size());
@@ -136,8 +136,8 @@ void TesterObject::scheduleMessage(cXMLElement * mens)
 		msg=new EthernetIIFrame(datapacket->getName());
 		((EthernetIIFrame *) msg)->setByteLength(ETHER_MAC_FRAME_BYTES);
 		((EthernetIIFrame *) msg)->encapsulate(datapacket);   // [msg [datapacket] ]
-		((EthernetIIFrame *)msg)->setSrc(getParameterStrValue(mens,"SrcMAC"));
-		((EthernetIIFrame *)msg)->setDest(getParameterStrValue(mens,"DestMAC"));
+		((EthernetIIFrame *)msg)->setSrc(MACAddress(getParameterStrValue(mens,"SrcMAC")));
+		((EthernetIIFrame *)msg)->setDest(MACAddress(getParameterStrValue(mens,"DestMAC")));
 		((EthernetIIFrame *)msg)->setDisplayString(ETHER_II_DISPLAY_STRING);
 		sendDelayed(msg,(simtime_t) getParameterDoubleValue(mens,"Time"),"Out");
 		SentMessages++;
@@ -150,8 +150,8 @@ void TesterObject::scheduleMessage(cXMLElement * mens)
 		datapacket->setByteLength(getParameterIntValue(mens,"ByteLength"));
 		msg=new EthernetIIFrame(datapacket->getName());
 		((EthernetIIFrame *)msg)->setByteLength(ETHER_MAC_FRAME_BYTES);
-		((EthernetIIFrame *)msg)->setSrc(getParameterStrValue(mens,"SrcMAC"));
-		((EthernetIIFrame *)msg)->setDest(getParameterStrValue(mens,"DestMAC"));
+		((EthernetIIFrame *)msg)->setSrc(MACAddress(getParameterStrValue(mens,"SrcMAC")));
+		((EthernetIIFrame *)msg)->setDest(MACAddress(getParameterStrValue(mens,"DestMAC")));
 		tag=new Ethernet1QTag("8021Q");
 		((Ethernet1QTag *)tag)->setByteLength(ETHER_1Q_TAG_LENGTH);
 		((Ethernet1QTag *)tag)->setVID(getParameterIntValue(mens,"VID"));
@@ -179,8 +179,8 @@ void TesterObject::scheduleMessage(cXMLElement * mens)
 		((Ethernet1QTag *) tag)->encapsulate(datapacket);
 		((Ethernet1QTag *)tag2)->encapsulate((Ethernet1QTag *)tag);
 		((EthernetIIFrame *)msg)->encapsulate((Ethernet1QTag *)tag2);   // [msg [tag2 [tag [datapacket] ] ] ]
-		((EthernetIIFrame *)msg)->setSrc(getParameterStrValue(mens,"SrcMAC"));
-		((EthernetIIFrame *)msg)->setDest(getParameterStrValue(mens,"DestMAC"));
+		((EthernetIIFrame *)msg)->setSrc(MACAddress(getParameterStrValue(mens,"SrcMAC")));
+		((EthernetIIFrame *)msg)->setDest(MACAddress(getParameterStrValue(mens,"DestMAC")));
 		((EthernetIIFrame *)msg)->setDisplayString(ETHER_1AD_DISPLAY_STRING);
 		sendDelayed(msg,(simtime_t) getParameterDoubleValue(mens,"Time"),"Out");
 		SentMessages++;
@@ -201,8 +201,8 @@ void TesterObject::scheduleMessage(cXMLElement * mens)
 		((Ethernet1QTag *)tag2)->encapsulate((Ethernet1QTag *)tag);
 		msg=new EthernetIIFrame(datapacket->getName());
 		((EthernetIIFrame *)msg)->setByteLength(ETHER_MAC_FRAME_BYTES);
-		((EthernetIIFrame *)msg)->setSrc(getParameterStrValue(mens,"SrcMAC"));
-		((EthernetIIFrame *)msg)->setDest(getParameterStrValue(mens,"DestMAC"));
+		((EthernetIIFrame *)msg)->setSrc(MACAddress(getParameterStrValue(mens,"SrcMAC")));
+		((EthernetIIFrame *)msg)->setDest(MACAddress(getParameterStrValue(mens,"DestMAC")));
 		((EthernetIIFrame *)msg)->encapsulate((Ethernet1QTag *)tag2);   // [msg [tag2 [tag [datapacket] ] ] ]
 		((EthernetIIFrame *)msg)->setDisplayString(ETHER_1AD_DISPLAY_STRING);
 		itag=new Ethernet1ahITag();
@@ -215,8 +215,8 @@ void TesterObject::scheduleMessage(cXMLElement * mens)
 		tag3->encapsulate((Ethernet1ahITag *)itag);
 		msg2=new EthernetIIFrame("8021ah");
 		msg2->setByteLength(ETHER_MAC_2ND_FRAME_BYTES);
-		msg2->setSrc(getParameterStrValue(mens,"SrcBMAC"));
-		msg2->setDest(getParameterStrValue(mens,"DestBMAC"));
+		msg2->setSrc(MACAddress(getParameterStrValue(mens,"SrcBMAC")));
+		msg2->setDest(MACAddress(getParameterStrValue(mens,"DestBMAC")));
 		msg2->encapsulate(tag3);   								//  [msg2 [tag3 [itag [msg [tag2 [tag [datapacket] ] ] ] ] ] ]
 		((EthernetIIFrame *)msg2)->setDisplayString(ETHER_1AH_DISPLAY_STRING);
 		sendDelayed(msg2,(simtime_t) getParameterDoubleValue(mens,"Time"),"Out");

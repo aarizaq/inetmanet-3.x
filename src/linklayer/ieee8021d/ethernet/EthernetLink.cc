@@ -110,7 +110,7 @@ void EthernetLink::handleSelfMessage(cMessage * msg)
 		MVRPDU * frame=new MVRPDU();
 		frame->setPortIndex(0); //TODO Comprobar si esto viaja de verdad en la trama.
 		frame->setVIDSArraySize(1);
-		frame->setDest("01-80-C2-00-00-0D");
+		frame->setDest(MACAddress("01-80-C2-00-00-0D"));
 		frame->setSrc(address);
 		switch(outputFrame)
 		{
