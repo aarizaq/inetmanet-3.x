@@ -33,6 +33,7 @@ class InterfaceEntry;
 
 const int UDP_HEADER_BYTES = 8;
 
+const bool DEFAULT_MULTICAST_LOOP = true;
 
 /**
  * Implements the UDP protocol: encapsulates/decapsulates user data into/from UDP.
@@ -47,6 +48,7 @@ class INET_API UDP : public cSimpleModule
         SockDesc(int sockId, int appGateIndex);
         int sockId;
         int appGateIndex;
+        bool isBound;
         bool onlyLocalPortIsSet;
         IPvXAddress localAddr;
         IPvXAddress remoteAddr;
@@ -54,6 +56,7 @@ class INET_API UDP : public cSimpleModule
         int remotePort;
         bool isBroadcast;
         int multicastOutputInterfaceId;
+        bool multicastLoop;
         int ttl;
         unsigned char typeOfService;
         std::map<IPvXAddress,int> multicastAddrs; // key: multicast address; value: output interface Id or -1
@@ -91,16 +94,18 @@ class INET_API UDP : public cSimpleModule
 
     // socket handling
     virtual SockDesc *getSocketById(int sockId);
+    virtual SockDesc *getOrCreateSocket(int sockId, int gateIndex);
     virtual SockDesc *createSocket(int sockId, int gateIndex, const IPvXAddress& localAddr, int localPort);
     virtual void bind(int sockId, int gateIndex, const IPvXAddress& localAddr, int localPort);
     virtual void connect(int sockId, int gateIndex, const IPvXAddress& remoteAddr, int remotePort);
     virtual void close(int sockId);
-    virtual void setTimeToLive(int sockId, int ttl);
-    virtual void setTypeOfService(int sockId, int typeOfService);
-    virtual void setBroadcast(int sockId, bool broadcast);
-    virtual void setMulticastOutputInterface(int sockId, int interfaceId);
-    virtual void joinMulticastGroups(int sockId, const std::vector<IPvXAddress>& multicastAddresses, const std::vector<int> interfaceIds);
-    virtual void leaveMulticastGroups(int sockId, const std::vector<IPvXAddress>& multicastAddresses);
+    virtual void setTimeToLive(SockDesc *sd, int ttl);
+    virtual void setTypeOfService(SockDesc *sd, int typeOfService);
+    virtual void setBroadcast(SockDesc *sd, bool broadcast);
+    virtual void setMulticastOutputInterface(SockDesc *sd, int interfaceId);
+    virtual void setMulticastLoop(SockDesc *sd, bool loop);
+    virtual void joinMulticastGroups(SockDesc *sd, const std::vector<IPvXAddress>& multicastAddresses, const std::vector<int> interfaceIds);
+    virtual void leaveMulticastGroups(SockDesc *sd, const std::vector<IPvXAddress>& multicastAddresses);
     virtual void addMulticastAddressToInterface(InterfaceEntry *ie, const IPvXAddress& multicastAddr);
 
     // ephemeral port
@@ -110,7 +115,7 @@ class INET_API UDP : public cSimpleModule
     virtual std::vector<SockDesc*> findSocketsForMcastBcastPacket(const IPvXAddress& localAddr, ushort localPort, const IPvXAddress& remoteAddr, ushort remotePort, bool isMulticast, bool isBroadcast);
     virtual SockDesc *findSocketByLocalAddress(const IPvXAddress& localAddr, ushort localPort);
     virtual void sendUp(cPacket *payload, SockDesc *sd, const IPvXAddress& srcAddr, ushort srcPort, const IPvXAddress& destAddr, ushort destPort, int interfaceId, int ttl, unsigned char tos);
-    virtual void sendDown(cPacket *appData, const IPvXAddress& srcAddr, ushort srcPort, const IPvXAddress& destAddr, ushort destPort, int interfaceId, int ttl, unsigned char tos);
+    virtual void sendDown(cPacket *appData, const IPvXAddress& srcAddr, ushort srcPort, const IPvXAddress& destAddr, ushort destPort, int interfaceId, bool multicastLoop, int ttl, unsigned char tos);
     virtual void processUndeliverablePacket(UDPPacket *udpPacket, cObject *ctrl);
     virtual void sendUpErrorIndication(SockDesc *sd, const IPvXAddress& localAddr, ushort localPort, const IPvXAddress& remoteAddr, ushort remotePort);
 

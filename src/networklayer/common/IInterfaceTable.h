@@ -19,6 +19,7 @@
 #define __INET_IINTERFACETABLE_H
 
 #include "INETDefs.h"
+
 #include "InterfaceEntry.h"  // not strictly required, but clients will need it anyway
 
 
@@ -126,6 +127,12 @@ class INET_API IInterfaceTable
      * loopback interface on startup.)
      */
     virtual InterfaceEntry *getFirstLoopbackInterface() = 0;
+
+    /**
+     * Returns the first multicast capable interface.
+     * If there is no such interface, then returns NULL.
+     */
+    virtual InterfaceEntry *getFirstMulticastInterface() = 0;
 };
 
 #endif

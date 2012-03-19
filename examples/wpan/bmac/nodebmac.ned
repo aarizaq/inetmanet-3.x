@@ -19,7 +19,7 @@
 
 package inet.examples.wpan.bmac;
 
-import inet.applications.pingapp.PingApp;
+import inet.applications.IPingApp;
 import inet.applications.ITCPApp;
 import inet.applications.IUDPApp;
 import inet.base.NotificationBoard;
@@ -47,6 +47,7 @@ module nodebmac
         @node();
         int numTcpApps = default(0);
         int numUdpApps = default(0);
+        int numPingApps = default(0);  // no of PING apps. Specify the app types in INI file with pingApp[0..1].typename="PingApp" syntax
         int x @unit("m");
         int y @unit("m");
         string tcpAppType = default("");
@@ -92,9 +93,9 @@ module nodebmac
             parameters:
                 @display("p=272,154;i=block/transport");
         }
-        pingApp: PingApp {
+        pingApp[numPingApps]: <default("PingApp")> like IPingApp {
             parameters:
-                @display("i=block/app;p=343,200");
+                @display("p=501,230");
         }
         networkLayer: NetworkLayer {
             parameters:
@@ -150,8 +151,10 @@ module nodebmac
         udp.ipOut --> networkLayer.udpIn;
         udp.ipIn <-- networkLayer.udpOut;
 
-        networkLayer.pingOut --> pingApp.pingIn;
-        networkLayer.pingIn <-- pingApp.pingOut;
+        for i=0..numPingApps-1 {
+            networkLayer.pingOut++ --> pingApp[i].pingIn;
+            networkLayer.pingIn++ <-- pingApp[i].pingOut;
+        }
         networkLayer.manetOut --> manetrouting.from_ip if routingProtocol != "";
         networkLayer.manetIn <-- manetrouting.to_ip if routingProtocol != "";
         // connections to network outside

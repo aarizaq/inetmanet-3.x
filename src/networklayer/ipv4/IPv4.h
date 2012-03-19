@@ -76,12 +76,11 @@ class INET_API IPv4 : public QueueBase
     // utility: look up interface from getArrivalGate()
     virtual InterfaceEntry *getSourceInterfaceFrom(cPacket *msg);
 
+    // utility: look up route to the source of the datagram and return its interface
+    virtual InterfaceEntry *getShortestPathInterfaceToSource(IPv4Datagram *datagram);
+
     // utility: show current statistics above the icon
     virtual void updateDisplayString();
-
-    // utility: true if the incoming interface is the same as the
-    //          outgoing interface of the shortest path to the source
-    virtual bool receivedOnTheShortestPath(IPv4Datagram *datagram);
 
     /**
      * Encapsulate packet coming from higher layers into IPv4Datagram, using
@@ -130,9 +129,14 @@ class INET_API IPv4 : public QueueBase
     virtual void routeLocalBroadcastPacket(IPv4Datagram *datagram, InterfaceEntry *destIE);
 
     /**
+     * Determines the output interface for the given multicast datagram.
+     */
+    virtual InterfaceEntry *determineOutgoingInterfaceForMulticastDatagram(IPv4Datagram *datagram, InterfaceEntry *multicastIFOption);
+
+    /**
      * Forwards packets to all multicast destinations, using fragmentAndSend().
      */
-    virtual void routeMulticastPacket(IPv4Datagram *datagram, InterfaceEntry *destIE, InterfaceEntry *fromIE);
+    virtual void forwardMulticastPacket(IPv4Datagram *datagram, InterfaceEntry *fromIE);
 
     /**
      * Perform reassembly of fragmented datagrams, then send them up to the
@@ -172,7 +176,8 @@ class INET_API IPv4 : public QueueBase
      * encapsulation. (?)
      */
     virtual void sendNoRouteMessageToManet(IPv4Datagram *datagram);
- /**
+
+    /**
      * Sends a packet to the Manet module.
      */
     virtual void sendToManet(cPacket *packet);

@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "INETDefs.h"
+
 #include "IInterfaceTable.h"
 #include "InterfaceEntry.h"
 #include "NotificationBoard.h"
@@ -80,6 +81,9 @@ class INET_API InterfaceTable : public cSimpleModule, public IInterfaceTable, pr
   protected:
     // displays summary above the icon
     virtual void updateDisplayString();
+
+    // displays the interface IPv4/IPv6 address on the outgoing link that corresponds to the interface
+    virtual void updateLinkDisplayString(InterfaceEntry *entry);
 
     // discover and store which nwlayer/host gates connect to this interface
     virtual void discoverConnectingGates(InterfaceEntry *entry, cModule *ifmod);
@@ -190,6 +194,12 @@ class INET_API InterfaceTable : public cSimpleModule, public IInterfaceTable, pr
      * loopback interface on startup.)
      */
     virtual InterfaceEntry *getFirstLoopbackInterface();
+
+    /**
+     * Returns the first multicast capable interface.
+     * If there is no such interface, then returns NULL.
+     */
+    virtual InterfaceEntry *getFirstMulticastInterface();
 };
 
 #endif

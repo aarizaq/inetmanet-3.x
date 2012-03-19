@@ -25,28 +25,85 @@
 
 #include "IPv4InterfaceData.h"
 
+std::string IPv4InterfaceData::HostMulticastData::info()
+{
+    std::stringstream out;
+    if (!joinedMulticastGroups.empty() &&
+            (joinedMulticastGroups[0]!=IPv4Address::ALL_HOSTS_MCAST || joinedMulticastGroups.size() > 1))
+    {
+        out << " mcastgrps:";
+        bool addComma = false;
+        for (int i = 0; i < (int)joinedMulticastGroups.size(); ++i)
+        {
+            if (joinedMulticastGroups[i] != IPv4Address::ALL_HOSTS_MCAST)
+            {
+                out << (addComma?",":"") << joinedMulticastGroups[i];
+                addComma = true;
+            }
+        }
+    }
+    return out.str();
+}
+
+std::string IPv4InterfaceData::HostMulticastData::detailedInfo()
+{
+
+    std::stringstream out;
+    out << "Joined Groups:";
+    for (int i = 0; i < (int)joinedMulticastGroups.size(); ++i)
+        out << " " << joinedMulticastGroups[i] << "(" << refCounts[i] << ")";
+    out << "\n";
+    return out.str();
+}
+
+std::string IPv4InterfaceData::RouterMulticastData::info()
+{
+    std::stringstream out;
+    if (reportedMulticastGroups.size() > 0)
+    {
+        out << " mcast_listeners:";
+        for (int i = 0; i < (int)reportedMulticastGroups.size(); ++i)
+            out << (i>0?",":"") << reportedMulticastGroups[i];
+    }
+    if (multicastTtlThreshold > 0)
+        out << " ttl_threshold: " << multicastTtlThreshold;
+    return out.str();
+}
+
+std::string IPv4InterfaceData::RouterMulticastData::detailedInfo()
+{
+    std::stringstream out;
+    out << "TTL Threshold: " << multicastTtlThreshold << "\n";
+    out << "Multicast Listeners:";
+    for (int i = 0; i < (int)reportedMulticastGroups.size(); ++i)
+        out << " " << reportedMulticastGroups[i];
+    out << "\n";
+    return out.str();
+}
 
 IPv4InterfaceData::IPv4InterfaceData()
 {
-    static const IPv4Address allOnes("255.255.255.255");
-    netmask = allOnes;
-
+    netmask = IPv4Address::ALLONES_ADDRESS;
     metric = 0;
+    hostData = NULL;
+    routerData = NULL;
+    nb = NULL;
+}
 
-    // TBD add default multicast groups!
+IPv4InterfaceData::~IPv4InterfaceData()
+{
+    delete hostData;
+    delete routerData;
 }
 
 std::string IPv4InterfaceData::info() const
 {
     std::stringstream out;
     out << "IPv4:{inet_addr:" << getIPAddress() << "/" << getNetmask().getNetmaskLength();
-    if (!getMulticastGroups().empty())
-    {
-        out << " mcastgrps:";
-        for (unsigned int j=0; j<getMulticastGroups().size(); j++)
-            if (!getMulticastGroups()[j].isUnspecified())
-                out << (j>0?",":"") << getMulticastGroups()[j];
-    }
+    if (hostData)
+        out << hostData->info();
+    if (routerData)
+        out << routerData->info();
     out << "}";
     return out.str();
 }
@@ -55,39 +112,99 @@ std::string IPv4InterfaceData::detailedInfo() const
 {
     std::stringstream out;
     out << "inet addr:" << getIPAddress() << "\tMask: " << getNetmask() << "\n";
-
     out << "Metric: " << getMetric() << "\n";
-
-    out << "Groups:";
-    for (unsigned int j=0; j<getMulticastGroups().size(); j++)
-        if (!getMulticastGroups()[j].isUnspecified())
-            out << "  " << getMulticastGroups()[j];
-    out << "\n";
+    if (hostData)
+        out << hostData->detailedInfo();
+    if (routerData)
+        out << routerData->detailedInfo();
     return out.str();
 }
 
-bool IPv4InterfaceData::isMemberOfMulticastGroup(const IPv4Address& multicastAddress) const
+bool IPv4InterfaceData::isMemberOfMulticastGroup(const IPv4Address &multicastAddress) const
 {
-    int n = multicastGroups.size();
-    for (int i=0; i<n; i++)
-        if (multicastGroups[i] == multicastAddress)
-            return true;
-    return false;
+    const IPv4AddressVector &multicastGroups = getJoinedMulticastGroups();
+    return find(multicastGroups.begin(), multicastGroups.end(), multicastAddress) != multicastGroups.end();
 }
 
 void IPv4InterfaceData::joinMulticastGroup(const IPv4Address& multicastAddress)
 {
-    if (!isMemberOfMulticastGroup(multicastAddress))
+    if(!multicastAddress.isMulticast())
+        throw cRuntimeError("IPv4InterfaceData::joinMulticastGroup(): multicast address expected, received %s.", multicastAddress.str().c_str());
+
+    IPv4AddressVector &multicastGroups = getHostData()->joinedMulticastGroups;
+    std::vector<int> &refCounts = getHostData()->refCounts;
+    for (int i = 0; i < (int)multicastGroups.size(); ++i)
     {
-        multicastGroups.push_back(multicastAddress);
-        changed1();
+        if (multicastGroups[i] == multicastAddress)
+        {
+            refCounts[i]++;
+            return;
+        }
     }
+
+    multicastGroups.push_back(multicastAddress);
+    refCounts.push_back(1);
+
+    changed1();
+
+    if (!nb)
+        nb = NotificationBoardAccess().get();
+    IPv4MulticastGroupInfo info(ownerp, multicastAddress);
+    nb->fireChangeNotification(NF_IPv4_MCAST_JOIN, &info);
 }
 
 void IPv4InterfaceData::leaveMulticastGroup(const IPv4Address& multicastAddress)
 {
-    int i;
+    if(!multicastAddress.isMulticast())
+        throw cRuntimeError("IPv4InterfaceData::leaveMulticastGroup(): multicast address expected, received %s.", multicastAddress.str().c_str());
+
+    ASSERT(multicastAddress.isMulticast());
+    IPv4AddressVector &multicastGroups = getHostData()->joinedMulticastGroups;
+    std::vector<int> &refCounts = getHostData()->refCounts;
+    for (int i = 0; i < (int)multicastGroups.size(); ++i)
+    {
+        if (multicastGroups[i] == multicastAddress)
+        {
+            if (--refCounts[i] == 0)
+            {
+                multicastGroups.erase(multicastGroups.begin()+i);
+                refCounts.erase(refCounts.begin()+i);
+
+                changed1();
+
+                if (!nb)
+                    nb = NotificationBoardAccess().get();
+                IPv4MulticastGroupInfo info(ownerp, multicastAddress);
+                nb->fireChangeNotification(NF_IPv4_MCAST_LEAVE, &info);
+            }
+        }
+    }
+}
+
+bool IPv4InterfaceData::hasMulticastListener(const IPv4Address &multicastAddress) const
+{
+    const IPv4AddressVector &multicastGroups = getRouterData()->reportedMulticastGroups;
+    return find(multicastGroups.begin(),  multicastGroups.end(), multicastAddress) != multicastGroups.end();
+}
+
+void IPv4InterfaceData::addMulticastListener(const IPv4Address &multicastAddress)
+{
+    if(!multicastAddress.isMulticast())
+        throw cRuntimeError("IPv4InterfaceData::addMulticastListener(): multicast address expected, received %s.", multicastAddress.str().c_str());
+
+    if (!hasMulticastListener(multicastAddress))
+    {
+        getRouterData()->reportedMulticastGroups.push_back(multicastAddress);
+        changed1();
+    }
+}
+
+void IPv4InterfaceData::removeMulticastListener(const IPv4Address &multicastAddress)
+{
+    IPv4AddressVector &multicastGroups = getRouterData()->reportedMulticastGroups;
+
     int n = multicastGroups.size();
+    int i;
     for (i = 0; i < n; i++)
         if (multicastGroups[i] == multicastAddress)
             break;

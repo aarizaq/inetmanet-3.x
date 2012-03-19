@@ -157,7 +157,7 @@ void Ieee802154Mac::initialize(int stage)
             ++addrCount;
             macaddress.setFlagEui64(true);
 
-            unsigned char addrbytes[MAC_ADDRESS_BYTES64];
+            unsigned char addrbytes[MAC_ADDRESS_SIZE64];
             addrbytes[0] = 0x00;
             addrbytes[1] = 0x00;
             addrbytes[2] = 0x00;
@@ -3868,7 +3868,7 @@ MACAddress Ieee802154Mac::getLongAddress(UINT_16 val)
     MACAddress tmp;
 
 
-    unsigned char addrbytes[MAC_ADDRESS_BYTES64];
+    unsigned char addrbytes[MAC_ADDRESS_SIZE64];
     addrbytes[0] = 0x00;
     addrbytes[1] = 0x00;
     addrbytes[2] = 0x00;

@@ -68,6 +68,8 @@ static std::ostream & operator<<(std::ostream & os, const UDP::SockDesc& sd)
         os << " remoteAddr=" << sd.remoteAddr;
     if (sd.multicastOutputInterfaceId!=-1)
         os << " interfaceId=" << sd.multicastOutputInterfaceId;
+    if (sd.multicastLoop != DEFAULT_MULTICAST_LOOP)
+        os << " multicastLoop=" << sd.multicastLoop;
 
     return os;
 }
@@ -89,6 +91,7 @@ UDP::SockDesc::SockDesc(int sockId_, int appGateIndex_) {
     remotePort = -1;
     isBroadcast = false;
     multicastOutputInterfaceId = -1;
+    multicastLoop = DEFAULT_MULTICAST_LOOP;
     ttl = -1;
     typeOfService = 0;
 }
@@ -180,32 +183,36 @@ void UDP::processCommandFromApp(cMessage *msg)
         }
         case UDP_C_SETOPTION: {
             UDPSetOptionCommand *ctrl = check_and_cast<UDPSetOptionCommand *>(msg->getControlInfo());
+            SockDesc *sd = getOrCreateSocket(ctrl->getSockId(), msg->getArrivalGate()->getIndex());
+
             if (dynamic_cast<UDPSetTimeToLiveCommand*>(ctrl))
-                setTimeToLive(ctrl->getSockId(), ((UDPSetTimeToLiveCommand*)ctrl)->getTtl());
+                setTimeToLive(sd, ((UDPSetTimeToLiveCommand*)ctrl)->getTtl());
             else if (dynamic_cast<UDPSetTypeOfServiceCommand*>(ctrl))
-                setTypeOfService(ctrl->getSockId(), ((UDPSetTypeOfServiceCommand*)ctrl)->getTos());
+                setTypeOfService(sd, ((UDPSetTypeOfServiceCommand*)ctrl)->getTos());
             else if (dynamic_cast<UDPSetBroadcastCommand*>(ctrl))
-                setBroadcast(ctrl->getSockId(), ((UDPSetBroadcastCommand*)ctrl)->getBroadcast());
+                setBroadcast(sd, ((UDPSetBroadcastCommand*)ctrl)->getBroadcast());
             else if (dynamic_cast<UDPSetMulticastInterfaceCommand*>(ctrl))
-                setMulticastOutputInterface(ctrl->getSockId(), ((UDPSetMulticastInterfaceCommand*)ctrl)->getInterfaceId());
+                setMulticastOutputInterface(sd, ((UDPSetMulticastInterfaceCommand*)ctrl)->getInterfaceId());
+            else if (dynamic_cast<UDPSetMulticastLoopCommand*>(ctrl))
+                setMulticastLoop(sd, ((UDPSetMulticastLoopCommand*)ctrl)->getLoop());
             else if (dynamic_cast<UDPJoinMulticastGroupsCommand*>(ctrl))
             {
                 UDPJoinMulticastGroupsCommand *cmd = (UDPJoinMulticastGroupsCommand*)ctrl;
                 std::vector<IPvXAddress> addresses;
                 std::vector<int> interfaceIds;
-                for (int i = 0; i < cmd->getMulticastAddrArraySize(); i++)
+                for (int i = 0; i < (int)cmd->getMulticastAddrArraySize(); i++)
                     addresses.push_back(cmd->getMulticastAddr(i));
-                for (int i = 0; i < cmd->getInterfaceIdArraySize(); i++)
+                for (int i = 0; i < (int)cmd->getInterfaceIdArraySize(); i++)
                     interfaceIds.push_back(cmd->getInterfaceId(i));
-                joinMulticastGroups(cmd->getSockId(), addresses, interfaceIds);
+                joinMulticastGroups(sd, addresses, interfaceIds);
             }
             else if (dynamic_cast<UDPLeaveMulticastGroupsCommand*>(ctrl))
             {
                 UDPLeaveMulticastGroupsCommand *cmd = (UDPLeaveMulticastGroupsCommand*)ctrl;
                 std::vector<IPvXAddress> addresses;
-                for (int i = 0; i < cmd->getMulticastAddrArraySize(); i++)
+                for (int i = 0; i < (int)cmd->getMulticastAddrArraySize(); i++)
                     addresses.push_back(cmd->getMulticastAddr(i));
-                leaveMulticastGroups(cmd->getSockId(), addresses);
+                leaveMulticastGroups(sd, addresses);
             }
             else
                 throw cRuntimeError("Unknown subclass of UDPSetOptionCommand received from app: %s", ctrl->getClassName());
@@ -223,11 +230,7 @@ void UDP::processPacketFromApp(cPacket *appData)
 {
     UDPSendCommand *ctrl = check_and_cast<UDPSendCommand *>(appData->removeControlInfo());
 
-    SocketsByIdMap::iterator it = socketsByIdMap.find(ctrl->getSockId());
-    if (it == socketsByIdMap.end())
-        error("send: no socket with sockId=%d", ctrl->getSockId());
-
-    SockDesc *sd = it->second;
+    SockDesc *sd = getOrCreateSocket(ctrl->getSockId(), appData->getArrivalGate()->getIndex());
     const IPvXAddress& destAddr = ctrl->getDestAddr().isUnspecified() ? sd->remoteAddr : ctrl->getDestAddr();
     int destPort = ctrl->getDestPort() == -1 ? sd->remotePort : ctrl->getDestPort();
     if (destAddr.isUnspecified() || destPort == -1)
@@ -237,15 +240,14 @@ void UDP::processPacketFromApp(cPacket *appData)
     if (ctrl->getInterfaceId() == -1)
     {
         if (destAddr.isMulticast())
-
         {
-            std::map<IPvXAddress, int>::iterator it = sd->multicastAddrs.find(destAddr);
+            std::map<IPvXAddress,int>::iterator it = sd->multicastAddrs.find(destAddr);
             interfaceId = (it != sd->multicastAddrs.end() && it->second != -1) ? it->second : sd->multicastOutputInterfaceId;
         }
-        sendDown(appData, sd->localAddr, sd->localPort, destAddr, destPort, interfaceId, sd->ttl, sd->typeOfService);
+        sendDown(appData, sd->localAddr, sd->localPort, destAddr, destPort, interfaceId, sd->multicastLoop, sd->ttl, sd->typeOfService);
     }
     else
-        sendDown(appData, sd->localAddr, sd->localPort, destAddr, destPort, ctrl->getInterfaceId(), sd->ttl, sd->typeOfService);
+        sendDown(appData, sd->localAddr, sd->localPort, destAddr, destPort, ctrl->getInterfaceId(), sd->multicastLoop, sd->ttl, sd->typeOfService);
 
     delete ctrl; // cannot be deleted earlier, due to destAddr
 }
@@ -348,7 +350,6 @@ void UDP::processUDPPacket(UDPPacket *udpPacket)
             delete udpPacket;
             delete ctrl;
         }
-
     }
 }
 
@@ -465,7 +466,38 @@ void UDP::processUndeliverablePacket(UDPPacket *udpPacket, cObject *ctrl)
 
 void UDP::bind(int sockId, int gateIndex, const IPvXAddress& localAddr, int localPort)
 {
-    createSocket(sockId, gateIndex, localAddr, localPort);
+    if (sockId == -1)
+        error("sockId in BIND message not filled in");
+
+    if (localPort<-1 || localPort>65535) // -1: ephemeral port
+        error("bind: invalid local port number %d", localPort);
+
+    // do not allow two apps to bind to the same address/port combination
+    SockDesc *existing = findSocketByLocalAddress(localAddr, localPort);
+    if (existing != NULL)
+        error("bind: local address/port %s:%u already taken", localAddr.str().c_str(), localPort);
+
+    SocketsByIdMap::iterator it = socketsByIdMap.find(sockId);
+    if (it != socketsByIdMap.end())
+    {
+        SockDesc *sd = it->second;
+        if (sd->isBound)
+            error("bind: socket is already bound (sockId=%d)", sockId);
+
+        sd->isBound = true;
+        sd->localAddr = localAddr;
+        if (localPort != -1 && sd->localPort != localPort)
+        {
+            socketsByPortMap[sd->localPort].remove(sd);
+            sd->localPort = localPort;
+            socketsByPortMap[sd->localPort].push_back(sd);
+        }
+    }
+    else
+    {
+        SockDesc *sd = createSocket(sockId, gateIndex, localAddr, localPort);
+        sd->isBound = true;
+    }
 }
 
 void UDP::connect(int sockId, int gateIndex, const IPvXAddress& remoteAddr, int remotePort)
@@ -475,13 +507,7 @@ void UDP::connect(int sockId, int gateIndex, const IPvXAddress& remoteAddr, int 
     if (remotePort<=0 || remotePort>65535)
         error("connect: invalid remote port number %d", remotePort);
 
-    SocketsByIdMap::iterator it = socketsByIdMap.find(sockId);
-    SockDesc *sd;
-    if (it != socketsByIdMap.end())
-        sd = it->second;
-    else
-        sd = createSocket(sockId, gateIndex, IPvXAddress(), getEphemeralPort());
-
+    SockDesc *sd = getOrCreateSocket(sockId, gateIndex);
     sd->remoteAddr = remoteAddr;
     sd->remotePort = remotePort;
     sd->onlyLocalPortIsSet = false;
@@ -491,22 +517,9 @@ void UDP::connect(int sockId, int gateIndex, const IPvXAddress& remoteAddr, int 
 
 UDP::SockDesc *UDP::createSocket(int sockId, int gateIndex, const IPvXAddress& localAddr, int localPort)
 {
-    // validate sockId
-    if (sockId == -1)
-        error("sockId in BIND or CONNECT message not filled in");
-    if (socketsByIdMap.find(sockId) != socketsByIdMap.end())
-        error("Cannot create socket: sockId=%d is not unique (already taken)", sockId);
-
-    if (localPort<-1 || localPort>65535) // -1: ephemeral port
-        error("connect: invalid local port number %d", localPort);
-
-    // do not allow two apps to bind to the same address/port combination
-    SockDesc *existing = findSocketByLocalAddress(localAddr, localPort);
-    if (existing != NULL)
-        error("bind: local address/port %s:%u already taken", localAddr.str().c_str(), localPort);
-
     // create and fill in SockDesc
     SockDesc *sd = new SockDesc(sockId, gateIndex);
+    sd->isBound = false;
     sd->localAddr = localAddr;
     sd->localPort = localPort == -1 ? getEphemeralPort() : localPort;
     sd->onlyLocalPortIsSet = sd->localAddr.isUnspecified();
@@ -669,7 +682,8 @@ void UDP::sendUpErrorIndication(SockDesc *sd, const IPvXAddress& localAddr, usho
     send(notifyMsg, "appOut", sd->appGateIndex);
 }
 
-void UDP::sendDown(cPacket *appData, const IPvXAddress& srcAddr, ushort srcPort, const IPvXAddress& destAddr, ushort destPort, int interfaceId, int ttl, unsigned char tos)
+void UDP::sendDown(cPacket *appData, const IPvXAddress& srcAddr, ushort srcPort, const IPvXAddress& destAddr, ushort destPort,
+                    int interfaceId, bool multicastLoop, int ttl, unsigned char tos)
 {
     if (destAddr.isUnspecified())
         error("send: unspecified destination address");
@@ -693,6 +707,7 @@ void UDP::sendDown(cPacket *appData, const IPvXAddress& srcAddr, ushort srcPort,
         ipControlInfo->setSrcAddr(srcAddr.get4());
         ipControlInfo->setDestAddr(destAddr.get4());
         ipControlInfo->setInterfaceId(interfaceId);
+        ipControlInfo->setMulticastLoop(multicastLoop);
         ipControlInfo->setTimeToLive(ttl);
         ipControlInfo->setTypeOfService(tos);
         udpPacket->setControlInfo(ipControlInfo);
@@ -709,6 +724,7 @@ void UDP::sendDown(cPacket *appData, const IPvXAddress& srcAddr, ushort srcPort,
         ipControlInfo->setSrcAddr(srcAddr.get6());
         ipControlInfo->setDestAddr(destAddr.get6());
         ipControlInfo->setInterfaceId(interfaceId);
+        ipControlInfo->setMulticastLoop(multicastLoop);
         ipControlInfo->setHopLimit(ttl);
         ipControlInfo->setTrafficClass(tos);
         udpPacket->setControlInfo(ipControlInfo);
@@ -732,33 +748,46 @@ UDP::SockDesc *UDP::getSocketById(int sockId)
     return it->second;
 }
 
-void UDP::setTimeToLive(int sockId, int ttl)
+UDP::SockDesc *UDP::getOrCreateSocket(int sockId, int gateIndex)
 {
-    SockDesc *sd = getSocketById(sockId);
+    // validate sockId
+    if (sockId == -1)
+        error("sockId in UDP command not filled in");
+
+    SocketsByIdMap::iterator it = socketsByIdMap.find(sockId);
+    if (it != socketsByIdMap.end())
+        return it->second;
+
+    return createSocket(sockId, gateIndex, IPvXAddress(), -1);
+}
+
+void UDP::setTimeToLive(SockDesc *sd, int ttl)
+{
     sd->ttl = ttl;
 }
 
-void UDP::setTypeOfService(int sockId, int typeOfService)
+void UDP::setTypeOfService(SockDesc *sd, int typeOfService)
 {
-    SockDesc *sd = getSocketById(sockId);
     sd->typeOfService = typeOfService;
 }
 
-void UDP::setBroadcast(int sockId, bool broadcast)
+void UDP::setBroadcast(SockDesc *sd, bool broadcast)
 {
-    SockDesc *sd = getSocketById(sockId);
     sd->isBroadcast = broadcast;
 }
 
-void UDP::setMulticastOutputInterface(int sockId, int interfaceId)
+void UDP::setMulticastOutputInterface(SockDesc *sd, int interfaceId)
 {
-    SockDesc *sd = getSocketById(sockId);
     sd->multicastOutputInterfaceId = interfaceId;
 }
 
-void UDP::joinMulticastGroups(int sockId, const std::vector<IPvXAddress>& multicastAddresses, const std::vector<int> interfaceIds)
+void UDP::setMulticastLoop(SockDesc *sd, bool loop)
 {
-    SockDesc *sd = getSocketById(sockId);
+    sd->multicastLoop = loop;
+}
+
+void UDP::joinMulticastGroups(SockDesc *sd, const std::vector<IPvXAddress>& multicastAddresses, const std::vector<int> interfaceIds)
+{
     int multicastAddressesLen = multicastAddresses.size();
     int interfaceIdsLen = interfaceIds.size();
     for (int k = 0; k < multicastAddressesLen; k++)
@@ -802,9 +831,8 @@ void UDP::addMulticastAddressToInterface(InterfaceEntry *ie, const IPvXAddress& 
     }
 }
 
-void UDP::leaveMulticastGroups(int sockId, const std::vector<IPvXAddress>& multicastAddresses)
+void UDP::leaveMulticastGroups(SockDesc *sd, const std::vector<IPvXAddress>& multicastAddresses)
 {
-    SockDesc *sd = getSocketById(sockId);
     for (unsigned int i = 0; i < multicastAddresses.size(); i++)
         sd->multicastAddrs.erase(multicastAddresses[i]);
     // note: we cannot remove the address from the interface, because someone else may still use it

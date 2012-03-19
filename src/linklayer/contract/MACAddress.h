@@ -20,14 +20,17 @@
 #define MACADDRESS_H_
 
 #include <string>
+
 #include "INETDefs.h"
 
+
 #define MAC_ADDRESS_SIZE 6
+#define MAC_ADDRESS_SIZE64 8
+
 #define MAC_ADDRESS_MASK 0xffffffffffffL
 #define MAC_ADDRESS_MASK64 0xffffffffffffffffL
 
-#define MAC_ADDRESS_BYTES 6
-#define MAC_ADDRESS_BYTES64 8
+
 
 class InterfaceToken;
 
@@ -94,7 +97,7 @@ class INET_API MACAddress
     /**
      * Returns the address size in bytes, that is, 6.
      */
-    unsigned int getAddressSize() const { return (macAddress64?MAC_ADDRESS_BYTES64:MAC_ADDRESS_SIZE); }
+    unsigned int getAddressSize() const { return (macAddress64?MAC_ADDRESS_SIZE64:MAC_ADDRESS_SIZE); }
 
     /**
      * Returns the kth byte of the address.
@@ -144,7 +147,6 @@ class INET_API MACAddress
      * Returns true if this is a multicast logical address (first byte's lsb is 1).
      */
     bool isMulticast() const  { return getAddressByte(0) & 0x01; };
-
 
     /**
      * Returns true if all address bytes are zero.

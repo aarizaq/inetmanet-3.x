@@ -711,15 +711,7 @@ void DYMOUM::processPacket(IPv4Datagram * p, unsigned int ifindex )
 
     }
     InterfaceEntry *   ie = getInterfaceEntry(ifindex);
-    phops = ie->ipv4Data()->getMulticastGroups();
-    IPv4Address mcastAdd;
-    bool isMcast = false;
-    for (unsigned int  i=0; i<phops.size(); i++)
-    {
-        mcastAdd = phops[i];
-        if (dest_addr.s_addr == mcastAdd.getInt())
-            isMcast = true;
-    }
+    bool isMcast = ie->ipv4Data()->isMemberOfMulticastGroup(IPv4Address(dest_addr.s_addr));
 
     /* If the packet is not interesting we just let it go through... */
     if (dest_addr.s_addr == DYMO_BROADCAST || isMcast)
