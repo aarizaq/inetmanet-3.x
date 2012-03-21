@@ -1,3 +1,5 @@
+2012-03-20  ------ inet-1.99.4 released ------
+
 2012-03-09  Tamas Borbely
 
 	Adapted the IGMPv2 (RFC 2236) implementation received in bug
@@ -32,6 +34,20 @@
 	uninteresting IGMP traffic. Turn it on in multicast routers
 	if you simulate multicast networks by setting the
 	'forwardMulticast' parameter of Router modules.
+
+2012-03-04  Andras Varga
+
+    - Added a RoutingTableRecorder module that records all the changes 
+      in the routing table to a file.
+    - Better dump method for routing table.
+
+2012-03-04  Levente Meszaros
+
+    Fixed routing table change notifications.
+
+2012-02-20  Tamas Borbely
+
+    Added printMulticastRoutingTable() to IRoutingTable
 
 2012-02-15  Tamas Borbely
 
