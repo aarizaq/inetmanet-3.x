@@ -138,6 +138,11 @@ HwmpProtocol::~HwmpProtocol()
     delete m_gannTimer;
     neighborMap.clear();
     ganVector.clear();
+    while (!m_rqueue.empty())
+    {
+        delete m_rqueue.back().pkt;
+        m_rqueue.pop_back();
+    }
 }
 
 void HwmpProtocol::initialize(int stage)
