@@ -34,6 +34,7 @@ UDPVideoStreamCli2::UDPVideoStreamCli2()
 {
     reintentTimer = NULL;
     timeOutMsg = NULL;
+    socketOpened = false;
 }
 
 UDPVideoStreamCli2::~UDPVideoStreamCli2()
@@ -108,8 +109,12 @@ void UDPVideoStreamCli2::requestStream()
 
     EV << "Requesting video stream from " << svrAddr << ":" << svrPort << "\n";
 
-    socket.setOutputGate(gate("udpOut"));
-    socket.bind(localPort);
+    if (!socketOpened)
+    {
+        socket.setOutputGate(gate("udpOut"));
+        socket.bind(localPort);
+        socketOpened = true;
+    }
 
     cPacket *pk = new cPacket("VideoStrmReq");
     socket.sendTo(pk, svrAddr, svrPort);

@@ -36,6 +36,7 @@ class INET_API UDPVideoStreamCli2 : public cSimpleModule
 {
   protected:
     UDPSocket socket;
+    bool socketOpened;
 
     // statistics
     static simsignal_t rcvdPkSignal;
