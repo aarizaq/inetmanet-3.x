@@ -105,6 +105,7 @@ class HwmpProtocol : public ManetRoutingBase
         virtual void handleMessage(cMessage *msg);
         // Detect a transmission fault
         virtual void processLinkBreak(const cPolymorphic *details);
+        virtual void processLinkBreakManagement(const cPolymorphic *details);
         virtual void packetFailedMac(Ieee80211TwoAddressFrame *frame);
         // promiscuous frame process.
         virtual void processFullPromiscuous(const cPolymorphic *details);
@@ -241,13 +242,13 @@ class HwmpProtocol : public ManetRoutingBase
          * \brief forms a path error information element when list of destination fails on a given interface
          * \attention removes all entries from routing table!
          */
-        HwmpProtocol::PathError makePathError(std::vector<HwmpFailedDestination> destinations);
+        HwmpProtocol::PathError makePathError(const std::vector<HwmpFailedDestination> &destinations);
         ///\brief Forwards a received path error
         void forwardPathError(PathError perr);
         ///\brief Passes a self-generated PERR to interface-plugin
         void initiatePathError(PathError perr);
         /// \return list of addresses where a PERR should be sent to
-        std::vector<std::pair<uint32_t, MACAddress> > getPerrReceivers(std::vector<HwmpFailedDestination> failedDest);
+        std::vector<std::pair<uint32_t, MACAddress> > getPerrReceivers(const std::vector<HwmpFailedDestination> &failedDest);
 
         /// \return list of addresses where a PERR should be sent to
         std::vector<MACAddress> getPreqReceivers(uint32_t interface);

@@ -720,7 +720,7 @@ void HwmpProtocol::sendPerr(std::vector<HwmpFailedDestination> failedDestination
         ieee80211ActionPerrFrame->getBody().setPerrElem(i, perr);
     }
 
-    if (receivers.size() >= GetUnicastPerrThreshold())
+    if (receivers.size() >= GetUnicastPerrThreshold() || receivers.empty())
     {
         receivers.clear();
         receivers.push_back(MACAddress::BROADCAST_ADDRESS);
@@ -1475,13 +1475,33 @@ void HwmpProtocol::processLinkBreak(const cPolymorphic *details)
     }
 }
 
+void HwmpProtocol::processLinkBreakManagement(const cPolymorphic *details)
+{
+    Ieee80211ActionPREPFrame *frame = dynamic_cast<Ieee80211ActionPREPFrame *>(const_cast<cPolymorphic*>(details));
+    if (frame)
+    {
+        std::map<MACAddress, Neighbor>::iterator it = neighborMap.find(frame->getTransmitterAddress());
+        if (it != neighborMap.end())
+        {
+            it->second.lost++;
+            if (it->second.lost < (unsigned int) par("lostThreshold").longValue())
+                return;
+            neighborMap.erase(it);
+        }
+        std::vector < HwmpFailedDestination > destinations = m_rtable->GetUnreachableDestinations(
+                frame->getReceiverAddress());
+        initiatePathError (makePathError(destinations));
+    }
+}
+
 void HwmpProtocol::packetFailedMac(Ieee80211TwoAddressFrame *frame)
 {
     std::vector < HwmpFailedDestination > destinations = m_rtable->GetUnreachableDestinations(
             frame->getReceiverAddress());
-    initiatePathError (makePathError(destinations));}
+    initiatePathError (makePathError(destinations));
+}
 
-HwmpProtocol::PathError HwmpProtocol::makePathError(std::vector<HwmpFailedDestination> destinations)
+HwmpProtocol::PathError HwmpProtocol::makePathError(const std::vector<HwmpFailedDestination> &destinations)
 {
     PathError retval;
     //HwmpRtable increments a sequence number as written in 11B.9.7.2
@@ -1527,8 +1547,8 @@ void HwmpProtocol::forwardPathError(PathError perr)
     }
 }
 
-std::vector<std::pair<uint32_t, MACAddress> > HwmpProtocol::getPerrReceivers(
-        std::vector<HwmpFailedDestination> failedDest)
+std::vector<std::pair<uint32_t, MACAddress> > HwmpProtocol::getPerrReceivers(const
+        std::vector<HwmpFailedDestination> &failedDest)
 {
     HwmpRtable::PrecursorList retval;
     for (unsigned int i = 0; i < failedDest.size(); i++)

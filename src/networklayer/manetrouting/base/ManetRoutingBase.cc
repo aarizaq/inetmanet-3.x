@@ -401,6 +401,7 @@ void ManetRoutingBase::sendToIp(cPacket *msg, int srcPort, const Uint128& destAd
 }
 
 void ManetRoutingBase::processLinkBreak(const cObject *details) {return;}
+void ManetRoutingBase::processLinkBreakManagement(const cObject *details) {return;}
 void ManetRoutingBase::processPromiscuous(const cObject *details) {return;}
 void ManetRoutingBase::processFullPromiscuous(const cObject *details) {return;}
 void ManetRoutingBase::processLocatorAssoc(const cObject *details) {return;}
@@ -1093,19 +1094,28 @@ void ManetRoutingBase::receiveChangeNotification(int category, const cObject *de
     {
         if (details==NULL)
             return;
-        Ieee80211DataFrame *frame = check_and_cast<Ieee80211DataFrame *>(details);
-        cPacket * pktAux = frame->getEncapsulatedPacket();
-        if (!mac_layer_ && pktAux!=NULL)
+        Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame *>(const_cast<cObject*>(details));
+        if (frame)
         {
-            cPacket *pkt = pktAux->dup();
-            ControlInfoBreakLink *add = new ControlInfoBreakLink;
-            add->setDest(frame->getReceiverAddress());
-            pkt->setControlInfo(add);
-            processLinkBreak(pkt);
-            delete pkt;
+            cPacket * pktAux = frame->getEncapsulatedPacket();
+            if (!mac_layer_ && pktAux != NULL)
+            {
+                cPacket *pkt = pktAux->dup();
+                ControlInfoBreakLink *add = new ControlInfoBreakLink;
+                add->setDest(frame->getReceiverAddress());
+                pkt->setControlInfo(add);
+                processLinkBreak(pkt);
+                delete pkt;
+            }
+            else
+                processLinkBreak(details);
         }
         else
-            processLinkBreak(details);
+        {
+            Ieee80211ManagementFrame *frame = dynamic_cast<Ieee80211ManagementFrame *>(const_cast<cObject*>(details));
+            if (frame)
+                processLinkBreakManagement(details);
+        }
 
     }
     else if (category == NF_LINK_PROMISCUOUS)

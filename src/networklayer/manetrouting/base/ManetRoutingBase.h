@@ -218,6 +218,7 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
     virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj);
     virtual void receiveChangeNotification(int category, const cObject *details);
     virtual void processLinkBreak(const cObject *details);
+    virtual void processLinkBreakManagement(const cObject *details);
     virtual void processPromiscuous(const cObject *details);
     virtual void processFullPromiscuous(const cObject *details);
     virtual void processLocatorAssoc(const cObject *details);
