@@ -33,6 +33,8 @@ class INET_API ILocator
         virtual void getApListIp(const IPv4Address &,std::vector<IPv4Address>&) = 0;
         virtual bool isAp(const MACAddress &) = 0;
         virtual bool isApIp(const IPv4Address &) = 0;
+        virtual bool isThisAp() = 0;
+        virtual bool isThisApIp() = 0;
 
         virtual void setIpAddress(const IPv4Address &add) = 0;
         virtual void setMacAddress(const MACAddress &add) = 0;

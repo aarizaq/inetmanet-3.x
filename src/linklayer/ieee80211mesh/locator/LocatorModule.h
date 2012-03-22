@@ -108,6 +108,9 @@ class LocatorModule : public cSimpleModule, public ILocator, protected INotifiab
         virtual void getApListIp(const IPv4Address &,std::vector<IPv4Address>&);
         virtual bool isAp(const MACAddress & add);
         virtual bool isApIp(const IPv4Address &add);
+        virtual bool isThisAp();
+        virtual bool isThisApIp();
+
 
 
 
