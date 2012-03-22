@@ -310,6 +310,19 @@ void NS_CLASS re_process(RE *re,struct in_addr ip_src, u_int32_t ifindex)
                         this_host.is_gw,
                         NET_DIAMETER,
                         re->re_blocks[0].re_hopcnt);
+                if (isAp() && !isLocalAddress(target_addr.s_addr))
+                {
+                    rrep->re_blocks[0].useAp = 1;
+                    rrep->newBocks(1);
+                    rrep->re_blocks[1].g       = this_host.is_gw;
+                    rrep->re_blocks[1].prefix  = this_host.prefix;
+                    rrep->re_blocks[1].res     = 0;
+                    rrep->re_blocks[1].re_hopcnt = 0;
+                    rrep->re_blocks[1].re_node_seqnum  = this_host.seqnum;
+                    rrep->re_blocks[1].re_node_addr    = DEV_NR(ifindex).ipaddr.s_addr;
+                    rrep->re_blocks[1].from_proactive = 0;
+                    rrep->re_blocks[1].staticNode = isStaticNode();
+                }
                 re_send_rrep(rrep);
             }
             break;
@@ -509,7 +522,8 @@ int NS_CLASS re_process_block(struct re_block *block, u_int8_t is_rreq,
     // Create/update a route towards RENodeAddress
     //if (entry &&  rb_state == RB_PROACTIVE && (((int32_t) seqnum) - ((int32_t) entry->rt_seqnum))<0)
     //  seqnum = entry->rt_seqnum;
-
+    if (block->useAp)
+        return 0;
     if (entry)
         rtable_update(
             entry,            // routing table entry
