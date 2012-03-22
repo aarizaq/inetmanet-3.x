@@ -1898,3 +1898,14 @@ void ManetRoutingBase::getListRelatedAp(const Uint128 & add, std::vector<Uint128
         }
     }
 }
+
+bool ManetRoutingBase::isAp() const
+{
+    if (!locator)
+        return false;
+    if (mac_layer_)
+        return locator->isThisAp();
+    else
+        return locator->isThisApIp();
+}
+
