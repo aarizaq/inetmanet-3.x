@@ -61,6 +61,7 @@ simple DYMOUM extends BaseRouting like IManetRouting
         int  costStatic = default(1);
         int  costMobile = default(4);
         bool isRoot = default(false); // Proactive RREQ
+        int proactiveRreqTimeout = default(5000);// 5 seconds
         bool propagateProactive = default(true); // propagate proactive RREQ
         bool path_acc_proactive = default(false); // proactive acumulate route
         bool checkNextHop = default(false);

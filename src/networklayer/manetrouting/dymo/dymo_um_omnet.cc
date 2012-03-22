@@ -193,6 +193,7 @@ void DYMOUM::initialize(int stage)
         norouteBehaviour = par("noRouteBehaviour");
         useIndex = par("UseIndex");
         isRoot = par("isRoot");
+        proactive_rreq_timeout= par("proactiveRreqTimeout").longValue();
         if (isRoot)
         {
             timer_init(&proactive_rreq_timer, &DYMOUM::rreq_proactive,NULL);
