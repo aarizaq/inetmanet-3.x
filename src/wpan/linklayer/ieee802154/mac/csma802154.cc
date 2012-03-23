@@ -38,7 +38,6 @@ Define_Module(csma802154);
  * two subscribe to the RadioState.
  */
 
-#define L2BROADCAST def_macCoordExtendedAddress
 void csma802154::sendUp(cMessage *msg)
 {
     mpNb->fireChangeNotification(NF_LINK_PROMISCUOUS, msg);
@@ -251,6 +250,10 @@ void csma802154::handleUpperMsg(cMessage *msg)
         useIeee802Ctrl = true;
         Ieee802Ctrl* cInfo = check_and_cast<Ieee802Ctrl *>(controlInfo);
         dest = cInfo->getDest();
+        if (dest.isBroadcast())
+            dest = MACAddress::BROADCAST_ADDRESS64;
+        else if (!dest.getFlagEui64())
+            dest.convert64();
     }
     else
     {
@@ -554,7 +557,7 @@ void csma802154::updateStatusTransmitFrame(t_mac_event event, cMessage *msg)
         //phy->setRadioState(Radio::RX);
 
         bool expectAck = useMACAcks;
-        if (packet->getDstAddr() != L2BROADCAST)
+        if (!packet->getDstAddr().isBroadcast())
         {
             //unicast
             EV << "(4) FSM State TRANSMITFRAME_4, "
@@ -1032,7 +1035,7 @@ void csma802154::handleLowerMsg(cMessage *msg)
             }
         }
     }
-    else if (dest == L2BROADCAST)
+    else if (dest.isBroadcast())
     {
         executeMac(EV_BROADCAST_RECEIVED, macPkt);
     }
@@ -1100,6 +1103,10 @@ cPacket *csma802154::decapsMsg(Ieee802154Frame * macPkt)
     {
         Ieee802Ctrl* cinfo = new Ieee802Ctrl();
         MACAddress destination = macPkt->getSrcAddr();
+        if (macPkt->getSrcAddr().isBroadcast())
+            destination = MACAddress::BROADCAST_ADDRESS;
+        else
+            destination.convert48();
         cinfo->setSrc(destination);
         msg->setControlInfo(cinfo);
     }
