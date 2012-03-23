@@ -85,6 +85,9 @@ module Ieee80211NewNicMesh like IWirelessNic
 
         mgmt.agentOut --> agent.mgmtIn if _agentNeeded;
         mgmt.agentIn <-- agent.mgmtOut if _agentNeeded;
+        
+        mgmt.toEthernet --> toEthernet;
+        mgmt.fromEthernet <-- fromEthernet;
 
         mgmt.upperLayerOut --> upperLayerOut if numInputHooks == 0;
         mgmt.upperLayerIn <-- upperLayerIn if numOutputHooks == 0;

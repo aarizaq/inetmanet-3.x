@@ -62,7 +62,7 @@ module gateWayMesh
         string tcpType = default(firstAvailable("TCP", "TCP_lwIP", "TCP_NSC", "TCP_None"));  // tcp implementation (e.g. ~TCP, ~TCP_lwIP, ~TCP_NSC) or ~TCPSpoof
         string udpType = default(firstAvailable("UDP","UDP_None"));
         string sctpType = default(firstAvailable("SCTP","SCTP_None"));
-        
+
         int numExtInterfaces = default(0);
         int numRadios = default(0);               // the number of radios in the router. by default no wireless
         int numPcapRecorders = default(0); // no of PcapRecorders.
@@ -75,7 +75,7 @@ module gateWayMesh
         inout pppg[] @labels(PPPFrame-conn);
         inout ethg[] @labels(EtherFrame-conn);
     submodules:
-        
+
         tcpApp[numTcpApps]: <> like ITCPApp {
             parameters:
                 @display("p=186,54,row");
@@ -102,7 +102,7 @@ module gateWayMesh
         pingApp[numPingApps]: <default("PingApp")> like IPingApp {
             parameters:
                 @display("p=501,230");
-        }    
+        }
         notificationBoard: NotificationBoard {
             parameters:
                 @display("p=53,194");
@@ -151,7 +151,7 @@ module gateWayMesh
         }
         ethMesh: EthernetInterfaceMesh {
             parameters:
-                @display("p=222,386,row,90;q=txQueue");
+                @display("p=225,386,row,90;q=txQueue");
         }
         eth[sizeof(ethg)-1]: <default("EthernetInterface")> like IWiredNic {
             parameters:
@@ -167,8 +167,8 @@ module gateWayMesh
         }
 
     connections allowunconnected:
-        
-         for i=0..numTcpApps-1 {
+
+        for i=0..numTcpApps-1 {
             tcpApp[i].tcpOut --> tcp.appIn++;
             tcpApp[i].tcpIn <-- tcp.appOut++;
         }
@@ -195,7 +195,7 @@ module gateWayMesh
             networkLayer.pingOut++ --> pingApp[i].pingIn;
             networkLayer.pingIn++ <-- pingApp[i].pingOut;
         }
-        
+
         // connections to network outside
 
         if (sizeof(radioIn)>0) {

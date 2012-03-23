@@ -46,29 +46,35 @@ module EthernetInterfaceMesh like IWiredNic
         input wifiMeshIn @labels(Ieee80211Frame);   // to Ethernet MAC
         output wifiMeshOut @labels(Ieee80211Frame); // to Ethernet MAC
     submodules:
-        outputHook[numOutputHooks]: <default("Nop")> like IHook if numOutputHooks>0;
-        inputHook[numInputHooks]: <default("Nop")> like IHook if numInputHooks>0;
-        queue: <queueType> like IOutputQueue {
+        outputHook[numOutputHooks]: <default("Nop")> like IHook if numOutputHooks>0 {
+            @display("p=185,94");
+        }
+        inputHook[numInputHooks]: <default("Nop")> like IHook if numInputHooks>0 {
+            @display("p=43,79");
+        }
+        queue: <queueType> like IOutputQueue if queueType != "" {
             parameters:
-                @display("p=154,96;q=l2queue");
+                @display("p=173,171;q=l2queue");
         }
         mac: <macType> like IEtherMAC {
             parameters:
-                queueModule = (queueType == "NoQueue" ? "" : "queue");
+                queueModule = (queueType == "" ? "" : "queue");
                 txQueueLimit = (queueType == "NoQueue" ? 10000 : 1); // queue sends one packet at a time
                 @display("p=98,230");
         }
         encap: EtherEncapMesh {
             parameters:
-                @display("p=98,158");
+                @display("p=98,124");
         }
     connections:
-        queue.out --> encap.upperLayerIn;
-        encap.lowerLayerOut --> mac.upperLayerIn;
+
+        encap.lowerLayerOut --> queue.in if queueType != "";
+        queue.out --> mac.upperLayerIn if queueType != "";
+        encap.lowerLayerOut --> mac.upperLayerIn if queueType == "";
         encap.lowerLayerIn <-- mac.upperLayerOut;
         mac.phys <--> { @display("m=s"); } <--> phys;
 
-        netwIn --> { @display("m=n"); } --> queue.in if numOutputHooks == 0;
+        netwIn --> { @display("m=n"); } --> encap.upperLayerIn if numOutputHooks == 0;
         netwOut <-- { @display("m=n"); } <-- encap.upperLayerOut if numInputHooks == 0;
 
         encap.upperLayerOut --> inputHook[0].in if numInputHooks > 0;
@@ -81,7 +87,8 @@ module EthernetInterfaceMesh like IWiredNic
         for i=0..numOutputHooks-2 {
             outputHook[i].out --> outputHook[i+1].in;
         }
-        outputHook[numOutputHooks-1].out --> queue.in if numOutputHooks > 0;
+        outputHook[numOutputHooks-1].out --> encap.upperLayerIn if numOutputHooks > 0;
+        
         wifiMeshIn --> encap.wifiMeshIn;   // from wifi mesh
         wifiMeshOut <-- encap.wifiMeshOut; // to wifi mesh
 }
