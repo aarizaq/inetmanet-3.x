@@ -2532,8 +2532,25 @@ uint32_t OLSR::getRoute(const Uint128 &dest, std::vector<Uint128> &add)
 {
     add.clear();
     OLSR_rt_entry* rt_entry = rtable_.lookup(dest);
+    Uint128 apAddr;
     if (!rt_entry)
+    {
+        if (getAp(dest, apAddr))
+        {
+            OLSR_rt_entry* rt_entry = rtable_.lookup(apAddr);
+            if (!rt_entry)
+                return 0;
+            for (int i = 0; i < (int) rt_entry->route.size(); i++)
+                add.push_back(rt_entry->route[i]);
+            add.push_back(apAddr);
+            OLSR_rt_entry* rt_entry_aux = rtable_.find_send_entry(rt_entry);
+            if (rt_entry_aux->next_addr() != add[0])
+                opp_error("OLSR Data base error");
+            return rt_entry->dist();
+        }
         return 0;
+    }
+
     for (int i=0; i<(int)rt_entry->route.size(); i++)
         add.push_back(rt_entry->route[i]);
     add.push_back(dest);
@@ -2548,7 +2565,30 @@ bool OLSR::getNextHop(const Uint128 &dest, Uint128 &add, int &iface, double &cos
 {
     OLSR_rt_entry* rt_entry = rtable_.lookup(dest);
     if (!rt_entry)
+    {
+        Uint128 apAddr;
+        if (getAp(dest, apAddr))
+        {
+
+            OLSR_rt_entry* rt_entry = rtable_.lookup(apAddr);
+            if (!rt_entry)
+                return false;
+            if (rt_entry->route.size())
+                add = rt_entry->route[0];
+            else
+                add = rt_entry->next_addr();
+            OLSR_rt_entry* rt_entry_aux = rtable_.find_send_entry(rt_entry);
+            if (rt_entry_aux->next_addr() != add)
+                opp_error("OLSR Data base error");
+
+            InterfaceEntry * ie = getInterfaceWlanByAddress(rt_entry->iface_addr());
+            iface = ie->getInterfaceId();
+            cost = rt_entry->route.size();
+            return true;
+        }
         return false;
+    }
+
     if (rt_entry->route.size())
         add = rt_entry->route[0];
     else
