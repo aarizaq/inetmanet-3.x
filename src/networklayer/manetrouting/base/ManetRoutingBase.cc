@@ -167,42 +167,69 @@ void ManetRoutingBase::registerRoutingModule()
     cStringTokenizer tokenizerInterfaces(interfaces);
     const char *token;
     const char * prefixName;
-    while ((token = tokenizerInterfaces.nextToken())!=NULL)
+    if (!mac_layer_)
     {
-        if ((prefixName = strstr(token, "prefix"))!=NULL)
+        while ((token = tokenizerInterfaces.nextToken()) != NULL)
         {
-            const char *leftparenp = strchr(prefixName, '(');
-            const char *rightparenp = strchr(prefixName, ')');
-            std::string interfacePrefix;
-            interfacePrefix.assign(leftparenp+1, rightparenp-leftparenp-1);
-            for (int i = 0; i < inet_ift->getNumInterfaces(); i++)
+            if ((prefixName = strstr(token, "prefix")) != NULL)
             {
-                ie = inet_ift->getInterface(i);
-                name = ie->getName();
-                if ((strstr(name, interfacePrefix.c_str() )!=NULL) && !isThisInterfaceRegistered(ie))
+                const char *leftparenp = strchr(prefixName, '(');
+                const char *rightparenp = strchr(prefixName, ')');
+                std::string interfacePrefix;
+                interfacePrefix.assign(leftparenp + 1, rightparenp - leftparenp - 1);
+                for (int i = 0; i < inet_ift->getNumInterfaces(); i++)
                 {
-                    InterfaceIdentification interface;
-                    interface.interfacePtr = ie;
-                    interface.index = i;
-                    num_80211++;
-                    interfaceVector->push_back(interface);
+                    ie = inet_ift->getInterface(i);
+                    name = ie->getName();
+                    if ((strstr(name, interfacePrefix.c_str()) != NULL) && !isThisInterfaceRegistered(ie))
+                    {
+                        InterfaceIdentification interface;
+                        interface.interfacePtr = ie;
+                        interface.index = i;
+                        num_80211++;
+                        interfaceVector->push_back(interface);
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < inet_ift->getNumInterfaces(); i++)
+                {
+                    ie = inet_ift->getInterface(i);
+                    name = ie->getName();
+                    if (strcmp(name, token) == 0 && !isThisInterfaceRegistered(ie))
+                    {
+                        InterfaceIdentification interface;
+                        interface.interfacePtr = ie;
+                        interface.index = i;
+                        num_80211++;
+                        interfaceVector->push_back(interface);
+                    }
                 }
             }
         }
-        else
+    }
+    else
+    {
+        cModule *mod = getParentModule()->getParentModule();
+        char *interfaceName = new char[strlen(mod->getFullName()) + 1];
+        char *d = interfaceName;
+        for (const char *s = mod->getFullName(); *s; s++)
+            if (isalnum(*s))
+                *d++ = *s;
+        *d = '\0';
+
+        for (int i = 0; i < inet_ift->getNumInterfaces(); i++)
         {
-            for (int i = 0; i < inet_ift->getNumInterfaces(); i++)
+            ie = inet_ift->getInterface(i);
+            name = ie->getName();
+            if (strcmp(name, interfaceName) == 0 && !isThisInterfaceRegistered(ie))
             {
-                ie = inet_ift->getInterface(i);
-                name = ie->getName();
-                if (strcmp(name, token)==0 && !isThisInterfaceRegistered(ie))
-                {
-                    InterfaceIdentification interface;
-                    interface.interfacePtr = ie;
-                    interface.index = i;
-                    num_80211++;
-                    interfaceVector->push_back(interface);
-                }
+                InterfaceIdentification interface;
+                interface.interfacePtr = ie;
+                interface.index = i;
+                num_80211++;
+                interfaceVector->push_back(interface);
             }
         }
     }
