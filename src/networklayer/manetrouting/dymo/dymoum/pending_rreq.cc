@@ -102,6 +102,7 @@ pending_rreq_t *NS_CLASS pending_rreq_find(struct in_addr dest_addr)
         else
             opp_error("Error in dymoPendingRreq table");
     }
+
     return NULL;
 }
 

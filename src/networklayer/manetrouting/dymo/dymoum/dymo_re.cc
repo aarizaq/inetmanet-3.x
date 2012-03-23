@@ -754,11 +754,22 @@ void NS_CLASS route_discovery(struct in_addr dest_addr)
 
     // If we are already doing a route discovery for dest_addr,
     // then simply return
+    // Send a RREQ
+
     if (pending_rreq_find(dest_addr))
         return;
 
+    Uint128 apDest;
+    struct in_addr dest;
+    if (getAp(dest_addr.s_addr, apDest))
+    {
+        dest.s_addr = apDest;
+    }
+    else
+        dest.s_addr = dest_addr.s_addr;
+
     // Get info from routing table (if there exists an entry)
-    rtable_entry_t *rt_entry = rtable_find(dest_addr);
+    rtable_entry_t *rt_entry = rtable_find(dest);
     if (rt_entry)
     {
         seqnum  = rt_entry->rt_seqnum;
@@ -775,8 +786,9 @@ void NS_CLASS route_discovery(struct in_addr dest_addr)
         seqnum  = 0;
         thopcnt = 0;
     }
-    // Send a RREQ
-    re_send_rreq(dest_addr, seqnum, thopcnt);
+
+
+    re_send_rreq(dest, seqnum, thopcnt);
 
     // Record information for destination and set a timer
     pending_rreq_t *pend_rreq = pending_rreq_add(dest_addr, seqnum);

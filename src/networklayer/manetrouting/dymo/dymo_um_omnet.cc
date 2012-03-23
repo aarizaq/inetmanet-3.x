@@ -1437,26 +1437,30 @@ uint32_t DYMOUM::getRoute(const Uint128 &dest, std::vector<Uint128> &add)
 
 bool  DYMOUM::getNextHop(const Uint128 &dest, Uint128 &add, int &iface, double &cost)
 {
-    struct in_addr destAddr;
-    destAddr.s_addr = dest;
+    Uint128 destAddr = dest;
     Uint128 apAddr;
-    rtable_entry_t * fwd_rt = rtable_find(destAddr);
+    if (getAp(dest,apAddr))
+    {
+        destAddr = apAddr;
+    }
+    rtable_entry_t * fwd_rt = NULL;
+    DymoRoutingTable::iterator it = dymoRoutingTable->find(destAddr);
+    if (it != dymoRoutingTable->end())
+    {
+          if (it->second)
+          {
+              // sanity check
+              if (it->second->rt_dest_addr.s_addr != destAddr)
+              {
+                  opp_error("Dymo routing data base error");
+              }
+              fwd_rt = it->second;
+          }
+          else
+              opp_error("Dymo routing data base error, NULL entry");
+    }
     if (fwd_rt)
     {
-        if (fwd_rt->rt_state != RT_VALID)
-            return false;
-        add = fwd_rt->rt_nxthop_addr.s_addr;
-        InterfaceEntry * ie = getInterfaceEntry(fwd_rt->rt_ifindex);
-        iface = ie->getInterfaceId();
-        cost = fwd_rt->rt_hopcnt;
-        return true;
-    }
-    else if (getAp(dest,apAddr))
-    {
-        destAddr.s_addr = apAddr;
-        fwd_rt = rtable_find(destAddr);
-        if (!fwd_rt)
-            return false;
         if (fwd_rt->rt_state != RT_VALID)
             return false;
         add = fwd_rt->rt_nxthop_addr.s_addr;
@@ -1480,33 +1484,64 @@ void DYMOUM::setRefreshRoute(const Uint128 &destination, const Uint128 & nextHop
     dest_addr.s_addr = destination;
     next_hop.s_addr = nextHop;
 
-
     rtable_entry_t *route = NULL;
     rtable_entry_t *fwd_pre_rt = NULL;
+    Uint128 dest = destination;
+    Uint128 next = nextHop;
 
     bool change = false;
     Uint128 apAddr;
     if (getAp(destination,apAddr))
     {
-        dest_addr.s_addr = apAddr;
+        dest = apAddr;
+    }
+    if (getAp(nextHop,apAddr))
+    {
+        next = apAddr;
     }
 
-    if (destination != (Uint128)0)
-        route = rtable_find(dest_addr);
-    if (nextHop != (Uint128)0)
-        fwd_pre_rt = rtable_find(next_hop);
+    DymoRoutingTable::iterator it = dymoRoutingTable->find(next);
+    if (it != dymoRoutingTable->end())
+    {
+          if (it->second)
+          {
+              // sanity check
+              if (it->second->rt_dest_addr.s_addr != next)
+              {
+                  opp_error("Dymo routing data base error");
+              }
+              route = it->second;
+          }
+          else
+              opp_error("Dymo routing data base error, NULL entry");
+    }
 
+    it = dymoRoutingTable->find(dest);
+    if (it != dymoRoutingTable->end())
+    {
+          if (it->second)
+          {
+              // sanity check
+              if (it->second->rt_dest_addr.s_addr != dest)
+              {
+                  opp_error("Dymo routing data base error");
+              }
+              fwd_pre_rt = it->second;
+          }
+          else
+              opp_error("Dymo routing data base error, NULL entry");
+    }
 
 
     if (par("checkNextHop").boolValue())
     {
-        if (route && (route->rt_nxthop_addr.s_addr == next_hop.s_addr))
+        if (route && (route->rt_nxthop_addr.s_addr == next))
         {
             rtable_update_timeout(route);
             change = true;
         }
 
-        if (fwd_pre_rt && (fwd_pre_rt->rt_nxthop_addr.s_addr == next_hop.s_addr))
+        if (fwd_pre_rt && (fwd_pre_rt->rt_nxthop_addr.s_addr == next))
         {
             rtable_update_timeout(fwd_pre_rt);
             change = true;
