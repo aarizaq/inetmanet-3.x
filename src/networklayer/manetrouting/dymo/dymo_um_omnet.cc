@@ -1485,10 +1485,18 @@ void DYMOUM::setRefreshRoute(const Uint128 &destination, const Uint128 & nextHop
     rtable_entry_t *fwd_pre_rt = NULL;
 
     bool change = false;
+    Uint128 apAddr;
+    if (getAp(destination,apAddr))
+    {
+        dest_addr.s_addr = apAddr;
+    }
+
     if (destination != (Uint128)0)
         route = rtable_find(dest_addr);
     if (nextHop != (Uint128)0)
         fwd_pre_rt = rtable_find(next_hop);
+
+
 
     if (par("checkNextHop").boolValue())
     {
