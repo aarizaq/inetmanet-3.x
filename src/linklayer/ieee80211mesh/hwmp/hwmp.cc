@@ -1965,8 +1965,7 @@ bool HwmpProtocol::getNextHopReactive(const Uint128 &dest, Uint128 &add, int &if
                 }
             }
         }
-        else
-            return false;
+        return false;
     }
 
     add = result.retransmitter.getInt();
