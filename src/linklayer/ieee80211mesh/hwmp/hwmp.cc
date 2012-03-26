@@ -1709,25 +1709,43 @@ HwmpProtocol::QueuedPacket HwmpProtocol::dequeueFirstPacket()
 void HwmpProtocol::reactivePathResolved(MACAddress dst)
 {
 
-    HwmpRtable::LookupResult result = m_rtable->LookupReactive(dst);
-    ASSERT(result.retransmitter != MACAddress::BROADCAST_ADDRESS);
-    if (result.retransmitter.isUnspecified())
-    {
-        // send and error and stop the simulation?
-        EV
-                << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! \n";
-        EV << "!!!!!!!!!!!!!!!! WANING HWMP try to send a packet and the protocol doesnt' know the next hop address \n";
-        EV
-                << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! \n";
-        return;
-    }
+
     //Send all packets stored for this destination
+    HwmpRtable::LookupResult result;
     Uint128 apAddr;
     std::vector<MACAddress> listAddress;
     if (getAp(dst.getInt(), apAddr))
+    {
+        result = m_rtable->LookupReactive(MACAddress(apAddr.getLo()));
+        ASSERT(result.retransmitter != MACAddress::BROADCAST_ADDRESS);
+        if (result.retransmitter.isUnspecified())
+        {
+            // send and error and stop the simulation?
+            EV
+                    << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! \n";
+            EV << "!!!!!!!!!!!!!!!! WANING HWMP try to send a packet and the protocol doesnt' know the next hop address \n";
+            EV
+                    << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! \n";
+            return;
+        }
         getApList(MACAddress(apAddr.getLo()),listAddress);
+    }
     else
-        listAddress.push_back(dst);
+    {
+        result = m_rtable->LookupReactive(dst);
+        ASSERT(result.retransmitter != MACAddress::BROADCAST_ADDRESS);
+        if (result.retransmitter.isUnspecified())
+        {
+            // send and error and stop the simulation?
+            EV
+                    << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! \n";
+            EV << "!!!!!!!!!!!!!!!! WANING HWMP try to send a packet and the protocol doesnt' know the next hop address \n";
+            EV
+                    << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! \n";
+            return;
+        }
+        getApList(dst,listAddress);
+    }
 
     while (!listAddress.empty())
     {
@@ -1909,6 +1927,7 @@ bool HwmpProtocol::getNextHop(const Uint128 &dest, Uint128 &add, int &iface, dou
                 {
                     m_rtable->AddReactivePath(MACAddress(apAddr.getLo()),resultAp.retransmitter,resultAp.ifIndex,
                             resultAp.metric,resultAp.lifetime,resultAp.seqnum,resultAp.hops,true);
+                    reactivePathResolved(MACAddress(apAddr.getLo()));
 
                     add = resultAp.retransmitter.getInt();
                     cost = resultAp.metric;
@@ -2046,6 +2065,7 @@ void HwmpProtocol::setRefreshRoute(const Uint128 &destination, const Uint128 &ne
                     interface80211ptr->getInterfaceId(), HwmpRtable::MAX_METRIC, m_dot11MeshHWMPactivePathTimeout, 0,
                     HwmpRtable::MAX_HOPS, false);
         }
+        reactivePathResolved(MACAddress(destination.getLo()));
     }
     /** the root is only actualized by the proactive mechanism
      HwmpRtable::ProactiveRoute * root = m_rtable->getLookupProactivePtr ();
