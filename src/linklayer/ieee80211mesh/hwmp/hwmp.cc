@@ -252,6 +252,14 @@ void HwmpProtocol::processData(cMessage *msg)
                     return;
                 }
             }
+            simtime_t now = simTime();
+
+            while (!m_rqueue.empty() && (now - m_rqueue.front().queueTime > timeLimitQueue))
+            {
+                delete m_rqueue.front().pkt;
+                m_rqueue.pop_front();
+            }
+
             if (m_rqueue.size() > m_maxQueueSize)
             {
                 delete msg;
@@ -1688,14 +1696,6 @@ std::vector<MACAddress> HwmpProtocol::getBroadcastReceivers(uint32_t interface)
 bool HwmpProtocol::QueuePacket(QueuedPacket packet)
 {
     //delete old packets
-    simtime_t now = simTime();
-
-    while (!m_rqueue.empty() && (now - m_rqueue.front().queueTime > timeLimitQueue))
-    {
-        delete m_rqueue.front().pkt;
-        m_rqueue.pop_front();
-    }
-
     if (m_rqueue.size() > m_maxQueueSize)
     {
         return false;
