@@ -188,6 +188,7 @@ void HwmpProtocol::initialize(int stage)
 
         WATCH_MAP(m_rtable->m_routes);
         WATCH(m_rtable->m_root);
+        WATCH(nextProactive);
         Ieee80211Etx * etx = dynamic_cast<Ieee80211Etx *>(interface80211ptr->getEstimateCostProcess(0));
         if (etx == NULL)
             useEtxProc=false;
@@ -423,7 +424,8 @@ void HwmpProtocol::sendPrep(MACAddress src,
                             uint32_t targetSn,
                             uint32_t lifetime,
                             uint32_t interface,
-                            uint8_t hops)
+                            uint8_t hops,
+                            bool proactive)
 {
     Ieee80211ActionPREPFrame* ieee80211ActionPrepFrame = new Ieee80211ActionPREPFrame();
     ieee80211ActionPrepFrame->getBody().setHopsCount(hops);
@@ -461,7 +463,10 @@ void HwmpProtocol::sendPrep(MACAddress src,
     else
     {
         EV << "Sending prep frame to " << ieee80211ActionPrepFrame->getReceiverAddress() << endl;
-        sendDelayed(ieee80211ActionPrepFrame, par("unicastDelay"), "to_ip");
+        if (proactive)
+            sendDelayed(ieee80211ActionPrepFrame, par("broadcastDelay"), "to_ip");
+        else
+            sendDelayed(ieee80211ActionPrepFrame, par("unicastDelay"), "to_ip");
     }
     m_stats.initiatedPrep++;
 }
@@ -476,6 +481,7 @@ void HwmpProtocol::sendPreqProactive()
     GetNextHwmpSeqno();
     sendPreq(preq, true);
     m_proactivePreqTimer->resched(m_dot11MeshHWMPpathToRootInterval);
+    nextProactive = simTime()+m_dot11MeshHWMPpathToRootInterval;
 }
 
 void HwmpProtocol::sendGann()
@@ -1172,7 +1178,7 @@ void HwmpProtocol::receivePreq(Ieee80211ActionPREQFrame *preqFrame, MACAddress f
             if (proactivePrep)
             {
                 sendPrep(GetAddress(), originatorAddress, from, (uint32_t) 0, GetNextHwmpSeqno(), originatorSeqNumber,
-                        preqFrame->getBody().getLifeTime(), interface, 0);
+                        preqFrame->getBody().getLifeTime(), interface, 0, true);
             }
             break;
         }

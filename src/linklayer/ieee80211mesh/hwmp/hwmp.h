@@ -220,7 +220,7 @@ class HwmpProtocol : public ManetRoutingBase
         void receivePerr(std::vector<HwmpFailedDestination> destinations, MACAddress from, uint32_t interface,
                 MACAddress fromMp);
         void sendPrep(MACAddress src, MACAddress targetAdd, MACAddress retransmitter, uint32_t initMetric,
-                uint32_t originatorSn, uint32_t targetSn, uint32_t lifetime, uint32_t interface, uint8_t hops);
+                uint32_t originatorSn, uint32_t targetSn, uint32_t lifetime, uint32_t interface, uint8_t hops, bool proactive = false);
 
         void sendPreq(PREQElem preq, bool isProactive = false);
         void sendPreq(std::vector<PREQElem> preq, bool isProactive = false);
@@ -359,6 +359,7 @@ class HwmpProtocol : public ManetRoutingBase
         ProactivePreqTimer * m_proactivePreqTimer;
         PreqTimer * m_preqTimer;
         PerrTimer * m_perrTimer;
+        simtime_t nextProactive;
 
         GannTimer *m_gannTimer;
         ///\}
