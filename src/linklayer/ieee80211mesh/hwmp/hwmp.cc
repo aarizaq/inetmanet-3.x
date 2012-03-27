@@ -218,25 +218,20 @@ void HwmpProtocol::processData(cMessage *msg)
         if (pkt) // is data packet, enqueue and search new route
         {
             // seach route to destination
-            // pkt->getAddress4(); hass the destination address
-            HwmpRtable::LookupResult result = m_rtable->LookupReactive(pkt->getAddress4());
-            if (result.retransmitter.isUnspecified()) // address not valid
+            // pkt->getAddress4(); has the destination address
+
+            HwmpRtable::LookupResult result;
+            Uint128 apAddr;
+            if (getAp(pkt->getAddress4().getInt(),apAddr))
             {
-                Uint128 apAddr;
-                if (getAp(pkt->getAddress4().getInt(),apAddr))
-                {
-                    // search this address
-                    result = m_rtable->LookupReactive(MACAddress(apAddr.getLo()));
-                }
+                // search this address
+                result = m_rtable->LookupReactive(MACAddress(apAddr.getLo()));
+            }
+            else
+            {
+                result = m_rtable->LookupReactive(pkt->getAddress4());
             }
             HwmpRtable::LookupResult resultProact = m_rtable->LookupProactive();
-            if (result.retransmitter.isUnspecified())
-            {
-                // check for AP in the locator tables
-                Uint128 apAdd;
-                if (getAp(pkt->getAddress4().getInt(),apAdd))
-                    result = m_rtable->LookupReactive(MACAddress(apAdd.getLo()));
-            }
             // Intermediate search
             if (hasPar("intermediateSeach") && !par("intermediateSeach").boolValue()
                     && !addressIsForUs(pkt->getAddress3().getInt()))
@@ -268,7 +263,11 @@ void HwmpProtocol::processData(cMessage *msg)
                 qpkt.inInterface = ctrl->getInputPort();
                 delete ctrl;
             }
-            this->QueuePacket(qpkt);
+            if (!this->QueuePacket(qpkt))
+            {
+                delete qpkt.pkt;
+                return;
+            }
 //            HwmpRtable::LookupResult result = m_rtable->LookupReactive (qpkt.dst);
 //            HwmpRtable::LookupResult resultProact = m_rtable->LookupProactive ();
             if (result.retransmitter.isUnspecified() && resultProact.retransmitter.isUnspecified())
@@ -593,6 +592,11 @@ HwmpProtocol::createPReq(std::vector<PREQElem> preq, bool individual, MACAddress
 
 void HwmpProtocol::requestDestination(MACAddress dst, uint32_t dst_seqno)
 {
+    Uint128 apAddr;
+    if (getAp(dst.getInt(),apAddr))
+    {
+        dst = apAddr;
+    }
     PREQElem preq;
     preq.targetAddress = dst;
     preq.targetSeqNumber = dst_seqno;
@@ -630,6 +634,11 @@ void HwmpProtocol::sendMyPreq()
 
 bool HwmpProtocol::shouldSendPreq(MACAddress dst)
 {
+    Uint128 apAddr;
+    if (getAp(dst.getInt(),apAddr))
+    {
+        dst = MACAddress(apAddr.getLo());
+    }
     std::map<MACAddress, PreqEvent>::const_iterator i = m_preqTimeouts.find(dst);
     if (i == m_preqTimeouts.end())
     {
