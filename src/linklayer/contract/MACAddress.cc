@@ -169,6 +169,7 @@ void MACAddress::setAddressBytes(unsigned char *addrbytes)
     }
     else
     {
+        address = 0;
         for (int i = 0; i < MAC_ADDRESS_SIZE; i++)
             setAddressByte(i, addrbytes[i]);
     }
