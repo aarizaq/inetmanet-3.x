@@ -26,6 +26,7 @@
 
 #include "hwmp-rtable.h"
 #include <vector>
+#include <deque>
 #include <map>
 #include "ManetRoutingBase.h"
 #include "Ieee80211MgmtFrames_m.h"
@@ -132,6 +133,7 @@ class HwmpProtocol : public ManetRoutingBase
 
         virtual bool getBestGan(Uint128 &, Uint128 &);
     private:
+        simtime_t timeLimitQueue;
         friend class PreqTimeout;
         friend class PreqTimer;
         friend class ProactivePreqTimer;
@@ -189,6 +191,7 @@ class HwmpProtocol : public ManetRoutingBase
                 MACAddress src; ///< src address
                 MACAddress dst; ///< dst address
                 uint16_t protocol; ///< protocol number
+                simtime_t queueTime;
                 uint32_t inInterface; ///< incoming device interface ID. (if packet has come from upper layers, this is Mesh point ID)
                 QueuedPacket()
                 {
@@ -364,7 +367,7 @@ class HwmpProtocol : public ManetRoutingBase
         GannTimer *m_gannTimer;
         ///\}
         /// Packet Queue
-        std::vector<QueuedPacket> m_rqueue;
+        std::deque<QueuedPacket> m_rqueue;
         ///\name HWMP-protocol parameters (attributes of GetTypeId)
         ///\{
         uint16_t m_maxQueueSize;

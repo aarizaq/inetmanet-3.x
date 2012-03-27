@@ -175,6 +175,7 @@ void HwmpProtocol::initialize(int stage)
         m_proactivePreqTimer = new ProactivePreqTimer(this);
         m_gannTimer = new GannTimer(this);
         m_rtable = new HwmpRtable();
+        timeLimitQueue = par("timeLimitInQueue");
         if (isRoot())
             setRoot();
 
@@ -251,6 +252,11 @@ void HwmpProtocol::processData(cMessage *msg)
                     return;
                 }
             }
+            if (m_rqueue.size() > m_maxQueueSize)
+            {
+                delete msg;
+                return;
+            }
             // enqueue and request route
             QueuedPacket qpkt;
             qpkt.pkt = pkt;
@@ -263,11 +269,7 @@ void HwmpProtocol::processData(cMessage *msg)
                 qpkt.inInterface = ctrl->getInputPort();
                 delete ctrl;
             }
-            if (!this->QueuePacket(qpkt))
-            {
-                delete qpkt.pkt;
-                return;
-            }
+            this->QueuePacket(qpkt);
 //            HwmpRtable::LookupResult result = m_rtable->LookupReactive (qpkt.dst);
 //            HwmpRtable::LookupResult resultProact = m_rtable->LookupProactive ();
             if (result.retransmitter.isUnspecified() && resultProact.retransmitter.isUnspecified())
@@ -595,7 +597,7 @@ void HwmpProtocol::requestDestination(MACAddress dst, uint32_t dst_seqno)
     Uint128 apAddr;
     if (getAp(dst.getInt(),apAddr))
     {
-        dst = apAddr;
+        dst = MACAddress(apAddr.getLo());
     }
     PREQElem preq;
     preq.targetAddress = dst;
@@ -1685,10 +1687,20 @@ std::vector<MACAddress> HwmpProtocol::getBroadcastReceivers(uint32_t interface)
 
 bool HwmpProtocol::QueuePacket(QueuedPacket packet)
 {
+    //delete old packets
+    simtime_t now = simTime();
+
+    while (!m_rqueue.empty() && (now - m_rqueue.front().queueTime > timeLimitQueue))
+    {
+        delete m_rqueue.front().pkt;
+        m_rqueue.pop_front();
+    }
+
     if (m_rqueue.size() > m_maxQueueSize)
     {
         return false;
     }
+
     m_rqueue.push_back(packet);
     return true;
 }
@@ -1697,7 +1709,7 @@ HwmpProtocol::QueuedPacket HwmpProtocol::dequeueFirstPacketByDst(MACAddress dst)
 {
     HwmpProtocol::QueuedPacket retval;
     retval.pkt = 0;
-    for (std::vector<QueuedPacket>::iterator i = m_rqueue.begin(); i != m_rqueue.end(); i++)
+    for (std::deque<QueuedPacket>::iterator i = m_rqueue.begin(); i != m_rqueue.end(); i++)
     {
         if ((*i).dst == dst)
         {
