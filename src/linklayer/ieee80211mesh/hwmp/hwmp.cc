@@ -1700,6 +1700,7 @@ bool HwmpProtocol::QueuePacket(QueuedPacket packet)
     {
         return false;
     }
+    packet.queueTime = simTime();
 
     m_rqueue.push_back(packet);
     return true;
