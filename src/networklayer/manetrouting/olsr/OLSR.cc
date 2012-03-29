@@ -2713,6 +2713,8 @@ int  OLSR::getRouteGroup(const Uint128& dest, std::vector<Uint128> &add, Uint128
     {
         getAddressGroup(gr, group);
         distance = getRouteGroup(gr, add);
+        if (distance == 0)
+            return 0;
         gateway = add.back();
         isGroup = true;
 
