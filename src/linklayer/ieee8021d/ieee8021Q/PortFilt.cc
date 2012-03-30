@@ -171,6 +171,9 @@ void PortFilt::TagFrame (EthernetIIFrame *frame)
 	if(temp!=NULL)
 		Tag->encapsulate(temp);
 	frame->encapsulate(Tag);
+    if (frame->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+        frame->setByteLength(MIN_ETHERNET_FRAME_BYTES);
+
 	if (!cSimulation::getActiveEnvir()->isDisabled())
 	    frame->setDisplayString(ETHER_1Q_DISPLAY_STRING);
 }
@@ -180,6 +183,8 @@ void PortFilt::UntagFrame (EthernetIIFrame *frame)
 	Ethernet1QTag * Tag=check_and_cast<Ethernet1QTag *>(((EthernetIIFrame *)frame)->decapsulate());
 	cPacket * Data=check_and_cast<cPacket *>(Tag->decapsulate());
 	((EthernetIIFrame *)frame)->encapsulate(Data);
+    if (frame->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+        frame->setByteLength(MIN_ETHERNET_FRAME_BYTES);
 	delete Tag;
 	if (!cSimulation::getActiveEnvir()->isDisabled())
 	    frame->setDisplayString(ETHER_II_DISPLAY_STRING);

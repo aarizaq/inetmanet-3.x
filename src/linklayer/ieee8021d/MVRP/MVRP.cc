@@ -165,6 +165,8 @@ void MVRP::handleMVRPDUtime(cMessage * msg)
 				{
 					frame->setVIDS(k,VIDS[k]);
 				}
+                if (frame->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+                    frame->setByteLength(MIN_ETHERNET_FRAME_BYTES);
 				Delivery* frame2=new Delivery();
 				frame2->setSendByPort(i);
 				frame2->encapsulate(frame);
