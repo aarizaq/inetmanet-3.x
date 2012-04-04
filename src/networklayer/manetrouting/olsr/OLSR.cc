@@ -1018,7 +1018,6 @@ OLSR::mpr_computation()
 {
     // MPR computation should be done for each interface. See section 8.3.1
     // (RFC 3626) for details.
-    bool increment;
     state_.clear_mprset();
 
     nbset_t N; nb2hopset_t N2;
@@ -1043,12 +1042,11 @@ OLSR::mpr_computation()
             continue;
         }
         // excluding:
-        // (iii) all the symmetric neighbors: the nodes for which there exists a symmetric
-        //       link to this node on some interface.
+        // (i) the nodes only reachable by members of N with willingness WILL_NEVER
         bool ok = false;
-        for (nbset_t::const_iterator it = N.begin(); it != N.end(); it++)
+        for (nbset_t::const_iterator it2 = N.begin(); it2 != N.end(); it2++)
         {
-            OLSR_nb_tuple* neigh = *it;
+            OLSR_nb_tuple* neigh = *it2;
             if (neigh->nb_main_addr() == nb2hop_tuple->nb_main_addr())
             {
                 if (neigh->willingness() == OLSR_WILL_NEVER)
@@ -1061,6 +1059,23 @@ OLSR::mpr_computation()
                     ok = true;
                     break;
                 }
+            }
+        }
+        if (!ok)
+        {
+            continue;
+        }
+
+        // excluding:
+        // (iii) all the symmetric neighbors: the nodes for which there exists a symmetric
+        //       link to this node on some interface.
+        for (nbset_t::iterator it2 = N.begin(); it2 != N.end(); it2++)
+        {
+            OLSR_nb_tuple* neigh = *it2;
+            if (neigh->nb_main_addr() == nb2hop_tuple->nb2hop_addr())
+            {
+                ok = false;
+                break;
             }
         }
         if (ok)
