@@ -2599,8 +2599,9 @@ OLSR::degree(OLSR_nb_tuple* tuple)
         OLSR_nb2hop_tuple* nb2hop_tuple = *it;
         if (nb2hop_tuple->nb_main_addr() == tuple->nb_main_addr())
         {
-            OLSR_nb_tuple* nb_tuple =
-                state_.find_nb_tuple(nb2hop_tuple->nb_main_addr());
+            //OLSR_nb_tuple* nb_tuple =
+            //    state_.find_nb_tuple(nb2hop_tuple->nb_main_addr());
+            OLSR_nb_tuple* nb_tuple = state_.find_nb_tuple(nb2hop_tuple->nb2hop_addr());
             if (nb_tuple == NULL)
                 degree++;
         }
