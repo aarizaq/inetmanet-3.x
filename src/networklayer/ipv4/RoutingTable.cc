@@ -343,6 +343,14 @@ void RoutingTable::configureInterfaceForIPv4(InterfaceEntry *ie)
 
     // metric: some hints: OSPF cost (2e9/bps value), MS KB article Q299540, ...
     d->setMetric((int)ceil(2e9/ie->getDatarate())); // use OSPF cost as default
+
+    // join "224.0.0.1" and "224.0.0.2" (if router) multicast groups automatically
+    if (ie->isMulticast())
+    {
+        d->joinMulticastGroup(IPv4Address::ALL_HOSTS_MCAST);
+        if (IPForward)
+            d->joinMulticastGroup(IPv4Address::ALL_ROUTERS_MCAST);
+    }
 }
 
 InterfaceEntry *RoutingTable::getInterfaceByAddress(const IPv4Address& addr) const
@@ -415,6 +423,19 @@ bool RoutingTable::isLocalBroadcastAddress(const IPv4Address& dest) const
 
     AddressSet::iterator it = localBroadcastAddresses.find(dest);
     return it!=localBroadcastAddresses.end();
+}
+
+InterfaceEntry *RoutingTable::findInterfaceByLocalBroadcastAddress(const IPv4Address& dest) const
+{
+    for (int i=0; i<ift->getNumInterfaces(); i++)
+    {
+        InterfaceEntry *ie = ift->getInterface(i);
+        IPv4Address interfaceAddr = ie->ipv4Data()->getIPAddress();
+        IPv4Address broadcastAddr = interfaceAddr.getBroadcastAddress(ie->ipv4Data()->getNetmask());
+        if (broadcastAddr == dest)
+            return ie;
+    }
+    return NULL;
 }
 
 bool RoutingTable::isLocalMulticastAddress(const IPv4Address& dest) const
