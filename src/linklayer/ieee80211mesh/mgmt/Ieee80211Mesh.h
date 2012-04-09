@@ -131,6 +131,7 @@ private:
   public:
     Ieee80211Mesh();
     virtual ~Ieee80211Mesh();
+    bool getCostNode(const MACAddress &, unsigned int &);
   protected:
     virtual int numInitStages() const {return 6;}
     virtual void initialize(int);

@@ -1826,3 +1826,25 @@ bool Ieee80211Mesh::isAddressForUs(const MACAddress &add)
         return false;
 }
 
+bool Ieee80211Mesh::getCostNode(const MACAddress &add, unsigned int &cost)
+{
+/*
+    if (routingModuleProactive)
+    {
+         routingModuleProactive->getNextHop();
+    }
+    if (routingModuleReactive)
+    {
+        return  routingModuleReactive->addressIsForUs(add.getInt());
+    }
+    if (routingModuleHwmp)
+    {
+        return routingModuleHwmp->addressIsForUs(add.getInt());
+    }
+
+    else if (add==myAddress)
+        return true;
+    else
+    */
+        return false;
+}
