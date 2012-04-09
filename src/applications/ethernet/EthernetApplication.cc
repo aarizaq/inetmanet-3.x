@@ -12,7 +12,6 @@
 ******************************************************/
 
 #include "EthernetApplication.h"
-#include "8021Q.h"
 #include "EtherApp_m.h"
 #include "Ieee802Ctrl_m.h"
 
