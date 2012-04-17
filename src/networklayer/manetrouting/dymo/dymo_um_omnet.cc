@@ -799,10 +799,6 @@ void DYMOUM::processPacket(IPv4Datagram * p, unsigned int ifindex )
 void DYMOUM::processMacPacket(cPacket * p, const Uint128 &dest, const Uint128 &src, int ifindex)
 {
     struct in_addr dest_addr, src_addr;
-    struct ip_data *ipd = NULL;
-
-
-    ipd = NULL;         /* No ICMP messaging */
     bool isLocal = false;
     dest_addr.s_addr = dest;
     src_addr.s_addr = src;
@@ -844,7 +840,7 @@ void DYMOUM::processMacPacket(cPacket * p, const Uint128 &dest, const Uint128 &s
                     Ieee802Ctrl * ctrlmac = check_and_cast<Ieee802Ctrl *> (ctrl);
                     if (ctrlmac)
                     {
-                        MACAddress macAddressConv = ctrlmac->getSrc(); /* destination eth addr */
+                       // MACAddress macAddressConv = ctrlmac->getSrc(); /* destination eth addr */
                         // ctrlmac->getSrc().getAddressBytes(macAddressConv.address);  /* destination eth addr */
                         // ctrlmac->getDest().getAddressBytes(&dest);   /* destination eth addr */
                         delete ctrl;
@@ -1669,7 +1665,7 @@ bool DYMOUM::getNextHopGroup(const Uint128& dest, Uint128 &next, int &iface, Uin
 
 
 //// End group methods
-
+#ifndef DYMO_USE_STL
 cPacket * DYMOUM::get_packet_queue(struct in_addr dest_addr)
 {
     dlist_head_t *pos;
@@ -1684,7 +1680,21 @@ cPacket * DYMOUM::get_packet_queue(struct in_addr dest_addr)
     }
     return NULL;
 }
-
+#else
+cPacket * DYMOUM::get_packet_queue(struct in_addr dest_addr)
+{
+    for (unsigned int i = 0; i < PQ.pkQueue.size(); i++)
+    {
+        struct q_pkt *qp = PQ.pkQueue[i];
+        if (qp->dest_addr.s_addr == dest_addr.s_addr)
+        {
+            qp->inTransit = true;
+            return qp->p;
+        }
+    }
+    return NULL;
+}
+#endif
 // proactive RREQ
 void DYMOUM::rreq_proactive(void *arg)
 {

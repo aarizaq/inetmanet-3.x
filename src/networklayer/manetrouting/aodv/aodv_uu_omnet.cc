@@ -208,7 +208,7 @@ void NS_CLASS initialize(int stage)
 
         NS_DEV_NR = getWlanInterfaceIndexByAddress();
         NS_IFINDEX = getWlanInterfaceIndexByAddress();
-
+#ifndef AODV_USE_STL
         list_t *lista_ptr;
         lista_ptr=&rreq_records;
         INIT_LIST_HEAD(&rreq_records);
@@ -216,7 +216,7 @@ void NS_CLASS initialize(int stage)
         INIT_LIST_HEAD(&rreq_blacklist);
         lista_ptr=&seekhead;
         INIT_LIST_HEAD(&seekhead);
-#ifndef AODV_USE_STL
+
         lista_ptr=&TQ;
         INIT_LIST_HEAD(&TQ);
 #endif
@@ -275,6 +275,7 @@ NS_CLASS ~ AODVUU()
         }
     }
 #endif
+#ifndef AODV_USE_STL
     while (!list_empty(&rreq_records))
     {
         pos = list_first(&rreq_records);
@@ -295,6 +296,25 @@ NS_CLASS ~ AODVUU()
         list_detach(pos);
         if (pos) free(pos);
     }
+#else
+    while (!rreq_records.empty())
+    {
+        free (rreq_records.back());
+        rreq_records.pop_back();
+    }
+
+    while (!rreq_blacklist.empty())
+    {
+        free (rreq_blacklist.begin()->second);
+        rreq_blacklist.erase(rreq_blacklist.begin());
+    }
+
+    while (!seekhead.empty())
+    {
+        delete (seekhead.begin()->second);
+        seekhead.erase(seekhead.begin());
+    }
+#endif
     packet_queue_destroy();
     cancelAndDelete(sendMessageEvent);
     log_cleanup();
