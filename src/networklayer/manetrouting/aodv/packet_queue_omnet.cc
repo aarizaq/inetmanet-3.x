@@ -343,7 +343,6 @@ void NS_CLASS packet_queue_add(cPacket * p, struct in_addr dest_addr)
         fprintf(stderr, "Malloc failed!\n");
         exit(-1);
     }
-
     qp->p = p;
     qp->dest_addr = dest_addr;
 
@@ -413,31 +412,27 @@ int NS_CLASS packet_queue_set_verdict(struct in_addr dest_addr, int verdict)
                             // now Ip layer decremented again
                             /* Apparently, the link layer implementation can't handle a burst of packets. So to keep ARP happy, buffered
                              * packets are sent with ARP_DELAY seconds between sends. */
-                        sendDelayed(qp->p, delay, "to_ip");
-                        delay += ARP_DELAY;
+                            sendDelayed(qp->p, delay, "to_ip");
+                            delay += ARP_DELAY;
                         }
                         else
                         {
-                            // drop(qp->p);
                             sendICMP(qp->p);
                         }
-                        break;
+                    break;
                     case PQ_SEND:
                         if (!rt)
                             return -1;
                         /* Apparently, the link layer implementation can't handle
-                        * a burst of packets. So to keep ARP happy, buffered
-                        * packets are sent with ARP_DELAY seconds between
-                        * sends. */
-                        // now Ip layer decremented again
+                         * a burst of packets. So to keep ARP happy, buffered
+                         * packets are sent with ARP_DELAY seconds between
+                         * sends. */
+                         // now Ip layer decremented again
                         sendDelayed(qp->p, delay, "to_ip");
                         delay += ARP_DELAY;
-                        break;
+                    break;
                     case PQ_DROP:
-                        //drop(qp->p);
                         sendICMP(qp->p);
-
-//              icmpAccess.get()->sendErrorMessage(qp->p, ICMP_DESTINATION_UNREACHABLE, 0);
                     break;
                 }
                 free(qp);
@@ -447,7 +442,6 @@ int NS_CLASS packet_queue_set_verdict(struct in_addr dest_addr, int verdict)
                 i++;
         }
     }
-
     /* Update rt timeouts */
     if (rt && rt->state == VALID &&
             (verdict == PQ_SEND || verdict == PQ_ENC_SEND))
