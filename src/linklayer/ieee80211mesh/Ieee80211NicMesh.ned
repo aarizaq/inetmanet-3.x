@@ -33,6 +33,7 @@ module Ieee80211NicMesh like IWirelessNic
     parameters:
         @display("i=block/ifcard");
         string mgmtType = "Ieee80211Mesh";
+        int numMac = default(1);
     gates:
         input upperLayerIn; // to upper layers
         output upperLayerOut; // from upper layers
@@ -45,7 +46,7 @@ module Ieee80211NicMesh like IWirelessNic
             parameters:
                 @display("p=96,69;q=wlanDataQueue");
         }
-        mac: Ieee80211Mac {
+        mac[numMac]: Ieee80211Mac {
             parameters:
                 queueModule = "mgmt";
                 @display("p=96,155");
@@ -56,11 +57,13 @@ module Ieee80211NicMesh like IWirelessNic
         }
     connections allowunconnected:
         radioIn --> radio.radioIn;
-        radio.upperLayerIn <-- mac.lowerLayerOut;
-        radio.upperLayerOut --> mac.lowerLayerIn;
+        for i=0..numMac-1 {
+            radio.upperLayerIn <-- mac[i].lowerLayerOut;
+            radio.upperLayerOut --> mac[i].lowerLayerIn;
 
-        mac.upperLayerOut --> mgmt.macIn;
-        mac.upperLayerIn <-- mgmt.macOut;
+            mac[i].upperLayerOut --> mgmt.macIn[i];
+            mac[i].upperLayerIn <-- mgmt.macOut[i];
+        }
 
         mgmt.upperLayerOut --> upperLayerOut;
         mgmt.upperLayerIn <-- upperLayerIn;

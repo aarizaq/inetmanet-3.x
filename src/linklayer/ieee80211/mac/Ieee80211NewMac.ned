@@ -112,6 +112,7 @@ simple Ieee80211NewMac
         double duplicateTimeOut @unit("s") = default(20s); // timeout for the duplicate detection
         // statistics
         double throughputTimePeriod @unit("s") = default(0); // period of time used by throughput measurement statistic
+        bool multiMac = default(false); // allows multiples mac interfaces in the same link layer
         @display("i=block/layer");
 
     gates:
