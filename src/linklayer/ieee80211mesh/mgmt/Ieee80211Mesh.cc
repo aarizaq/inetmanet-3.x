@@ -339,6 +339,11 @@ void Ieee80211Mesh::handleMessage(cMessage *msg)
     {
         // process incoming frame
         EV << "Frame arrived from MAC: " << msg << "\n";
+        if (msggate->isVector())
+            msg->setKind(msggate->getIndex());
+        else
+            msg->setKind(-1);
+
         if (dynamic_cast<Ieee80211ActionHWMPFrame *>(msg))
         {
             if ((routingModuleHwmp != NULL) && (routingModuleHwmp->isOurType(PK(msg))))
