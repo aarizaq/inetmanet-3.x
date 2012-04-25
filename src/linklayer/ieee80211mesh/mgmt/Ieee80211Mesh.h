@@ -42,6 +42,8 @@
 class INET_API Ieee80211Mesh : public Ieee80211MgmtBase
 {
 private:
+    unsigned int numMac;
+
     cMessage *WMPLSCHECKMAC;
     cMessage *gateWayTimeOut;
 
@@ -127,6 +129,8 @@ private:
 
     bool hasLocator;
     bool hasRelayUnit;
+  protected:
+    virtual void initializeBase(int stage);
 
   public:
     Ieee80211Mesh();

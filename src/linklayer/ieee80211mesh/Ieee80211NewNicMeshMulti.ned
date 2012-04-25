@@ -24,7 +24,7 @@ import inet.linklayer.ieee80211.mgmt.Ieee80211AgentSTA;
 import inet.linklayer.ieee80211.mgmt.IIeee80211Mgmt;
 import inet.linklayer.ieee80211.mac.Ieee80211NewMac;
 import inet.linklayer.ieee80211mesh.mgmt.Ieee80211Mesh;
-import inet.linklayer.IWirelessNic;
+import inet.linklayer.IWirelessNicMulti;
 import inet.base.IHook;
 import inet.linklayer.ieee80211mesh.locator.ILocator;
 
@@ -32,14 +32,15 @@ import inet.linklayer.ieee80211mesh.locator.ILocator;
 //
 // This NIC implements an 802.11g network interface card in ad-hoc mode.
 //
-module Ieee80211NewNicMesh like IWirelessNic
+module Ieee80211NewNicMeshMulti
 {
     parameters:
         string mgmtType = default("Ieee80211Mesh"); // name of the management module type (implements IIeee80211Mgmt)
-        string opMode @enum("b","g","a","p") = default("g");
+        // string opMode @enum("b","g","a","p") = default("g");
         int numOutputHooks = default(0);
         int numInputHooks = default(0);
-        bool _agentNeeded = false;   // internal par. do not use, shows if optional agent module is needed        
+        bool _agentNeeded = false;   // internal par. do not use, shows if optional agent module is needed
+        int numChannels = default(1);
         bool hasLocator = default(false);
         @display("i=block/ifcard;bgb=259,357");
     gates:
@@ -47,7 +48,7 @@ module Ieee80211NewNicMesh like IWirelessNic
         output upperLayerOut; // from upper layers
         input fromEthernet @labels(Ieee80211Frame);   // to Ethernet MAC
         output toEthernet @labels(Ieee80211Frame); // to Ethernet MAC
-        input radioIn @labels(AirFrame); // to receive AirFrames
+        input radioIn[numChannels] @labels(AirFrame); // to receive AirFrames
     submodules:
         outputHook[numOutputHooks]: <default("Nop")> like IHook if numOutputHooks>0;
         inputHook[numInputHooks]: <default("Nop")> like IHook if numInputHooks>0;
@@ -64,31 +65,31 @@ module Ieee80211NewNicMesh like IWirelessNic
                 locatorActive = hasLocator;
                 @display("p=96,136;q=wlanDataQueue;i=block/switch");
              gates:
-                macIn[1];
-                macOut[1];                
+                macIn[numChannels];
+                macOut[numChannels];
         }
-        mac: Ieee80211NewMac {
+        mac[numChannels]: Ieee80211NewMac {
             parameters:
-                opMode = opMode;
                 queueModule = "mgmt";
                 @display("p=96,222");
         }
-        radio: Ieee80211NewRadio {
+        radio[numChannels]: Ieee80211NewRadio {
             parameters:
-                phyOpMode = opMode;
                 @display("p=96,307");
         }
     connections allowunconnected:
-        radioIn --> radio.radioIn;
-        radio.upperLayerIn <-- mac.lowerLayerOut;
-        radio.upperLayerOut --> mac.lowerLayerIn;
+        for i=0..numChannels-1 {
+            radioIn[i] --> radio[i].radioIn;
+            radio[i].upperLayerIn <-- mac[i].lowerLayerOut;
+            radio[i].upperLayerOut --> mac[i].lowerLayerIn;
 
-        mac.upperLayerOut --> mgmt.macIn[0];
-        mac.upperLayerIn <-- mgmt.macOut[0];
+            mac[i].upperLayerOut --> mgmt.macIn[i];
+            mac[i].upperLayerIn <-- mgmt.macOut[i];
 
+        }
         mgmt.agentOut --> agent.mgmtIn if _agentNeeded;
         mgmt.agentIn <-- agent.mgmtOut if _agentNeeded;
-        
+
         mgmt.toEthernet --> toEthernet;
         mgmt.fromEthernet <-- fromEthernet;
 
@@ -108,7 +109,4 @@ module Ieee80211NewNicMesh like IWirelessNic
         mgmt.locatorIn <-- locator.outGate if hasLocator;
         mgmt.locatorOut --> locator.inGate if hasLocator;
 }
-
-
-
 

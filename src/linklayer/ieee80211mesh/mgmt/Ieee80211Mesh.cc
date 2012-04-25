@@ -100,10 +100,56 @@ Ieee80211Mesh::Ieee80211Mesh()
     hasRelayUnit = false;
 }
 
+void Ieee80211Mesh::initializeBase(int stage)
+{
+    if (stage==0)
+    {
+        PassiveQueueBase::initialize();
+
+        dataQueue.setName("wlanDataQueue");
+        mgmtQueue.setName("wlanMgmtQueue");
+        dataQueueLenSignal = registerSignal("dataQueueLen");
+        emit(dataQueueLenSignal, dataQueue.length());
+
+        numDataFramesReceived = 0;
+        numMgmtFramesReceived = 0;
+        numMgmtFramesDropped = 0;
+        WATCH(numDataFramesReceived);
+        WATCH(numMgmtFramesReceived);
+        WATCH(numMgmtFramesDropped);
+
+        // configuration
+        frameCapacity = par("frameCapacity");
+        numMac = 0;
+    }
+    else if (stage==1)
+    {
+        // obtain our address from MAC
+        cModule *mac = getParentModule()->getSubmodule("mac");
+        if (!mac)
+        {
+            // search for vector of mac:
+            do
+            {
+                mac = getParentModule()->getSubmodule("mac",numMac);
+                if (mac)
+                    numMac++;
+            }
+            while (mac);
+            if (numMac == 0)
+                error("MAC module not found; it is expected to be next to this submodule and called 'mac'");
+            else
+                mac = getParentModule()->getSubmodule("mac",0);
+        }
+        myAddress.setAddress(mac->par("address").stringValue());
+    }
+}
+
+
 void Ieee80211Mesh::initialize(int stage)
 {
     EV << "Init mesh proccess \n";
-    Ieee80211MgmtBase::initialize(stage);
+    initializeBase(stage);
 
     if (stage == 0)
     {
@@ -1079,7 +1125,7 @@ void Ieee80211Mesh::sendOut(cMessage *msg)
     //InterfaceEntry *ie = ift->getInterfaceById(msg->getKind());
     msg->setKind(0);
     //send(msg, macBaseGateId + ie->getNetworkLayerGateIndex());
-    send(msg, "macOut");
+    send(msg, "macOut",msg->getKind());
 }
 
 
