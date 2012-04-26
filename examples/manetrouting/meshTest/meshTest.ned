@@ -28,6 +28,14 @@ import inet.linklayer.ieee80211mesh.nodes.gateWayMesh;
 import inet.linklayer.ieee80211mesh.nodes.ApMeshNode;
 import inet.nodes.ethernet.EtherSwitch;
 import inet.linklayer.ieee80211mesh.nodes.ApMeshRelay;
+import ned.DatarateChannel;
+
+channel cable extends DatarateChannel
+{
+    parameters:
+        delay = 0.1us;
+        datarate = 1000Mbps;
+}
 
 network meshTest
 {
@@ -149,11 +157,11 @@ network meshTest
         }
 
     connections allowunconnected:
-        gateWay.ethg++ <--> SW.ethg++;
-        gateWay1.ethg++ <--> SW.ethg++;
-        gateWay2.ethg++ <--> SW.ethg++;
-        gateWay3.ethg++ <--> SW.ethg++;
-        gateWay4.ethg++ <--> SW.ethg++;
+        gateWay.ethg++  <--> cable <--> SW.ethg++;
+        gateWay1.ethg++ <--> cable <--> SW.ethg++;
+        gateWay2.ethg++ <--> cable <--> SW.ethg++;
+        gateWay3.ethg++ <--> cable <--> SW.ethg++;
+        gateWay4.ethg++ <--> cable <--> SW.ethg++;
 }
 
 

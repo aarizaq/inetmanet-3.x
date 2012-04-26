@@ -791,11 +791,13 @@ void RSTP::sendTCNtoRoot()
 				frame->setCost(a->RootPathCost);
 				frame->setSrcPriority(priority);
 				frame->setSrc(address);
-				frame->setDest("01-80-C2-00-00-00");
+				frame->setDest(MACAddress("01-80-C2-00-00-00"));
 				frame->setAck(false);
 				frame->setPortNumber(r);  //Src port number.
 				frame->setTC(true);
 				frame->setDisplayString("b=,,,#3e3ef3");
+		        if (frame->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+		            frame->setByteLength(MIN_ETHERNET_FRAME_BYTES);
 				frame2->setSendByPort(r);
 				frame2->encapsulate(frame);
 				send(frame2,"RSTPPort$o");
@@ -830,7 +832,7 @@ void RSTP::sendBPDU(int port)
 		frame->setAge(a->Age);
 		frame->setSrcPriority(priority);
 		frame->setSrc(address);
-		frame->setDest("01-80-C2-00-00-00");
+		frame->setDest(MACAddress("01-80-C2-00-00-00"));
 		frame->setAck(false);
 		frame->setPortNumber(port);  //Src port number.
 		if(simulation.getSimTime()<Puertos[port].TCWhile)
@@ -840,6 +842,8 @@ void RSTP::sendBPDU(int port)
 		}
 		else
 			frame->setTC(false);
+        if (frame->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+            frame->setByteLength(MIN_ETHERNET_FRAME_BYTES);
 		frame2->setSendByPort(port);
 		frame2->encapsulate(frame);
 		send(frame2,"RSTPPort$o");

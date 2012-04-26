@@ -29,6 +29,7 @@
 #define TIMERMAPLIST
 // This define activate the new routing table
 #define MAPROUTINGTABLE
+#define DYMO_USE_STL
 
 /* Constants for interface queue packet buffering/dropping */
 #define IFQ_BUFFER 0

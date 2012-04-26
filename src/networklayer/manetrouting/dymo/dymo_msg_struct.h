@@ -87,6 +87,7 @@ struct re_block
     u_int16_t   re_hopcnt : 6;
     u_int16_t   g : 1;
     u_int16_t   prefix : 7;
+    u_int32_t   useAp : 1;
     Uint128     re_node_addr;
     u_int32_t   re_node_seqnum;
     unsigned char from_proactive;

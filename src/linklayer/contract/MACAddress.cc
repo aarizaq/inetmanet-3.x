@@ -32,8 +32,8 @@ unsigned char MACAddress::getAddressByte(unsigned int k) const
 {
     if (macAddress64)
     {
-        if (k>=MAC_ADDRESS_BYTES64) throw cRuntimeError("Array of size 8 indexed with %d", k);
-        int offset = (MAC_ADDRESS_BYTES64-k-1)*8;
+        if (k>=MAC_ADDRESS_SIZE64) throw cRuntimeError("Array of size 8 indexed with %d", k);
+        int offset = (MAC_ADDRESS_SIZE64-k-1)*8;
         return 0xff&(address>>offset);
     }
     else
@@ -48,8 +48,8 @@ void MACAddress::setAddressByte(unsigned int k, unsigned char addrbyte)
 {
     if (macAddress64)
     {
-        if (k>=MAC_ADDRESS_BYTES64) throw cRuntimeError("Array of size 6 indexed with %d", k);
-        int offset = (MAC_ADDRESS_BYTES64-k-1)*8;
+        if (k>=MAC_ADDRESS_SIZE64) throw cRuntimeError("Array of size 6 indexed with %d", k);
+        int offset = (MAC_ADDRESS_SIZE64-k-1)*8;
         address = (address&(~(((uint64)0xff)<<offset)))|(((uint64)addrbyte)<<offset);
     }
     else
@@ -75,7 +75,7 @@ bool MACAddress::tryParse(const char *hexstr)
     }
     if (numHexDigits == 2*MAC_ADDRESS_SIZE)
         macAddress64 = false;
-    else if (numHexDigits == 2*MAC_ADDRESS_BYTES64)
+    else if (numHexDigits == 2*MAC_ADDRESS_SIZE64)
         macAddress64 = true;
     else
         return false;
@@ -83,11 +83,12 @@ bool MACAddress::tryParse(const char *hexstr)
     // Converts hex string into the address
     // if hext string is shorter, address is filled with zeros;
     // Non-hex characters are discarded before conversion.
+    address = 0;
     int k = 0;
     const char *s = hexstr;
     if (macAddress64)
     {
-        for (int pos=0; pos<MAC_ADDRESS_BYTES64; pos++)
+        for (int pos=0; pos<MAC_ADDRESS_SIZE64; pos++)
         {
             if (!s || !*s)
             {
@@ -150,7 +151,7 @@ void MACAddress::getAddressBytes(unsigned char *addrbytes) const
 {
     if (macAddress64)
     {
-        for (int i = 0; i < MAC_ADDRESS_BYTES64; i++)
+        for (int i = 0; i < MAC_ADDRESS_SIZE64; i++)
             addrbytes[i] = getAddressByte(i);
     }
     else
@@ -164,15 +165,15 @@ void MACAddress::setAddressBytes(unsigned char *addrbytes)
 {
     if (macAddress64)
     {
-        for (int i = 0; i < MAC_ADDRESS_BYTES64; i++)
+        for (int i = 0; i < MAC_ADDRESS_SIZE64; i++)
             setAddressByte(i, addrbytes[i]);
     }
     else
     {
+        address = 0;
         for (int i = 0; i < MAC_ADDRESS_SIZE; i++)
             setAddressByte(i, addrbytes[i]);
     }
-
 }
 
 
@@ -182,7 +183,7 @@ std::string MACAddress::str() const
     char *s = buf;
     if (macAddress64)
     {
-        for (int i=0; i<MAC_ADDRESS_BYTES64; i++, s += 3)
+        for (int i=0; i<MAC_ADDRESS_SIZE64; i++, s += 3)
             sprintf(s, "%2.2X-", getAddressByte(i));
         *(s-1) = '\0';
     }
@@ -238,7 +239,7 @@ void MACAddress::convert64()
 {
     if (macAddress64)
         return;
-    unsigned char addrbytes64[MAC_ADDRESS_BYTES64];
+    unsigned char addrbytes64[MAC_ADDRESS_SIZE64];
     unsigned char addrbytes[MAC_ADDRESS_SIZE];
     getAddressBytes(addrbytes);
     macAddress64 = true;
@@ -264,7 +265,7 @@ void MACAddress::convert48()
 {
     if (!macAddress64)
         return;
-    unsigned char addrbytes64[MAC_ADDRESS_BYTES64];
+    unsigned char addrbytes64[MAC_ADDRESS_SIZE64];
     unsigned char addrbytes[MAC_ADDRESS_SIZE];
     getAddressBytes(addrbytes64);
     if (addrbytes64[3] != 0xfe ||  addrbytes64[4] != 0xff)

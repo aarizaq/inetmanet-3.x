@@ -26,6 +26,13 @@
 #include "InterfaceTable.h"
 #include "NotifierConsts.h"
 
+#ifdef WITH_IPv4
+#include "IPv4InterfaceData.h"
+#endif
+
+#ifdef WITH_IPv6
+#include "IPv6InterfaceData.h"
+#endif
 
 Define_Module( InterfaceTable );
 
@@ -151,6 +158,7 @@ void InterfaceTable::addInterface(InterfaceEntry *entry, cModule *ifmod)
     // check name is unique
     if (getInterfaceByName(entry->getName())!=NULL)
         throw cRuntimeError("addInterface(): interface '%s' already registered", entry->getName());
+
     // insert
     entry->setInterfaceId(INTERFACEIDS_START + idToInterface.size());
     entry->setInterfaceTable(this);
@@ -168,7 +176,7 @@ void InterfaceTable::addInterfaceGroup(InterfaceEntry *entry, cModule *ifmod)
 {
     // check name is unique
 
-	entry->setGroupInterface(true);
+    entry->setGroupInterface(true);
     for (unsigned int i=0; i<idToInterface.size(); i++)
     {
         if (idToInterface[i] && !strcmp(entry->getName(), idToInterface[i]->getName()))
@@ -261,6 +269,35 @@ void InterfaceTable::invalidateTmpInterfaceList()
 void InterfaceTable::interfaceChanged(InterfaceEntry *entry, int category)
 {
     nb->fireChangeNotification(category, entry);
+
+    if (ev.isGUI() && par("displayAddresses").boolValue())
+        updateLinkDisplayString(entry);
+}
+
+void InterfaceTable::updateLinkDisplayString(InterfaceEntry *entry)
+{
+    int outputGateId = entry->getNodeOutputGateId();
+    if (outputGateId != -1)
+    {
+        cModule *host = getParentModule();
+        cGate *outputGate = host->gate(outputGateId);
+        cDisplayString& displayString = outputGate->getDisplayString();
+        char buf[128];
+#ifdef WITH_IPv4
+        if (entry->ipv4Data()) {
+            sprintf(buf, "%s\n%s/%d", entry->getFullName(), entry->ipv4Data()->getIPAddress().str().c_str(), entry->ipv4Data()->getNetmask().getNetmaskLength());
+            displayString.setTagArg("t", 0, buf);
+            displayString.setTagArg("t", 1, "l");
+        }
+#endif
+#ifdef WITH_IPv6
+        if (entry->ipv6Data() && entry->ipv6Data()->getNumAddresses() > 0) {
+            sprintf(buf, "%s\n%s", entry->getFullName(), entry->ipv6Data()->getPreferredAddress().str().c_str());
+            displayString.setTagArg("t", 0, buf);
+            displayString.setTagArg("t", 1, "l");
+        }
+#endif
+    }
 }
 
 InterfaceEntry *InterfaceTable::getInterfaceByNodeOutputGateId(int id)
@@ -314,6 +351,16 @@ InterfaceEntry *InterfaceTable::getFirstLoopbackInterface()
     int n = idToInterface.size();
     for (int i=0; i<n; i++)
         if (idToInterface[i] && idToInterface[i]->isLoopback())
+            return idToInterface[i];
+    return NULL;
+}
+
+InterfaceEntry *InterfaceTable::getFirstMulticastInterface()
+{
+    Enter_Method_Silent();
+    int n = idToInterface.size();
+    for (int i=0; i<n; i++)
+        if (idToInterface[i] && idToInterface[i]->isMulticast() && !idToInterface[i]->isLoopback())
             return idToInterface[i];
     return NULL;
 }

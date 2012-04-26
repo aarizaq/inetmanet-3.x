@@ -26,11 +26,13 @@ import inet.networklayer.common.InterfaceTable;
 import inet.mobility.IMobility;
 import inet.linklayer.ieee80211mesh.ethernet.EthernetInterfaceMesh;
 import inet.linklayer.IWirelessNic;
+import inet.linklayer.IWirelessNicMulti;
 import inet.linklayer.IWiredNic;
 import inet.linklayer.IExternalNic;
 import inet.base.NotificationBoard;
 import inet.nodes.inet.NetworkLayer;
 import inet.linklayer.ieee80211mesh.Ieee80211NewNicMesh;
+import inet.linklayer.ieee80211mesh.Ieee80211NewNicMeshMulti;
 import inet.networklayer.autorouting.ipv4.HostAutoConfigurator2;
 
 //
@@ -49,13 +51,14 @@ module ApMeshNode
         @labels(node,ethernet-node,wireless-node);
         int numExtInterfaces = default(0);
         int numRadios = default(1);               // the number of radios in the router. by default no wireless
+        int meshChannels = default(1);
         int numPcapRecorders = default(0); // no of PcapRecorders.
         string mobilityType = default("StationaryMobility");
         string routingFile = default("");
         bool IPForward = default(true);
         wlan[*].mgmtType = default("Ieee80211MgmtAP");
     gates:
-        input radioIn[numRadios+1] @directIn;
+        input radioIn[numRadios+meshChannels] @directIn;
         inout pppg[] @labels(PPPFrame-conn);
         inout ethg[] @labels(EtherFrame-conn);
     submodules:
@@ -97,8 +100,9 @@ module ApMeshNode
             @display("p=204,138");
         }
 
-        wlanMesh: Ieee80211NewNicMesh {
+        wlanMesh: Ieee80211NewNicMeshMulti {
             parameters:
+                numChannels = meshChannels;
                 @display("p=159,386;q=queue");
         }
 
@@ -122,14 +126,15 @@ module ApMeshNode
     connections allowunconnected:
         // connections to network outside
 
-        if (sizeof(radioIn)>0) {
-            radioIn[0] --> wlanMesh.radioIn;
-            wlanMesh.upperLayerOut --> networkLayer.ifIn++;
-            wlanMesh.upperLayerIn <-- networkLayer.ifOut++;
-        }
 
-        for i=0..sizeof(radioIn)-2 {
-            radioIn[i+1] --> wlan[i].radioIn;
+        for i=0..meshChannels-1 {
+            radioIn[i] --> wlanMesh.radioIn[i];
+        }
+        wlanMesh.upperLayerOut --> networkLayer.ifIn++;
+        wlanMesh.upperLayerIn <-- networkLayer.ifOut++;
+
+        for i=0..numRadios-1 {
+            radioIn[i+meshChannels] --> wlan[i].radioIn;
             wlan[i].upperLayerOut --> networkLayer.ifIn++;
             wlan[i].upperLayerIn <-- networkLayer.ifOut++;
         }

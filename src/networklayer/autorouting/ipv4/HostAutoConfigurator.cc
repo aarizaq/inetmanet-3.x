@@ -60,9 +60,10 @@ namespace
 {
 void addToMcastGroup(InterfaceEntry* ie, IRoutingTable* routingTable, const IPv4Address& mcastGroup)
 {
-    IPv4InterfaceData::IPAddressVector mcg = ie->ipv4Data()->getMulticastGroups();
-    if (std::find(mcg.begin(), mcg.end(), mcastGroup) == mcg.end()) mcg.push_back(mcastGroup);
-    ie->ipv4Data()->setMulticastGroups(mcg);
+    IPv4InterfaceData::IPv4AddressVector mcg = ie->ipv4Data()->getJoinedMulticastGroups();
+
+    if (std::find(mcg.begin(), mcg.end(), mcastGroup) == mcg.end())
+        ie->ipv4Data()->joinMulticastGroup(mcastGroup);
 
     IPv4Route* re = new IPv4Route(); //TODO: add @c delete to destructor
     re->setDestination(mcastGroup);

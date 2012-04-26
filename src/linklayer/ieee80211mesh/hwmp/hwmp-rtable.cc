@@ -183,7 +183,14 @@ std::vector<HwmpFailedDestination> HwmpRtable::GetUnreachableDestinations(MACAdd
             dst.destination = i->first; // Uint64ToMac(i->first);
             i->second.seqnum++;
             dst.seqnum = i->second.seqnum;
-            retval.push_back(dst);
+            bool notFind = true;
+            for (unsigned int i = 0; i < retval.size(); i++)
+            {
+                if (retval[i].destination == dst.destination)
+                    notFind = false;
+            }
+            if (notFind)
+                retval.push_back(dst);
         }
     }
     //Lookup a path to root
@@ -191,7 +198,14 @@ std::vector<HwmpFailedDestination> HwmpRtable::GetUnreachableDestinations(MACAdd
     {
         dst.destination = m_root.root;
         dst.seqnum = m_root.seqnum;
-        retval.push_back(dst);
+        bool notFind = true;
+        for (unsigned int i = 0; i < retval.size(); i++)
+        {
+            if (retval[i].destination == dst.destination)
+                notFind = false;
+        }
+        if (notFind)
+            retval.push_back(dst);
     }
     return retval;
 }

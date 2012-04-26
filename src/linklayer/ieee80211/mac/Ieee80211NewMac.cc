@@ -387,15 +387,19 @@ void Ieee80211NewMac::initialize(int stage)
         EV<<" bitrate="<<bitrate/1e6<<"M IDLE="<<IDLE<<" RECEIVE="<<RECEIVE<<endl;
 
         const char *addressString = par("address");
-        if (!strcmp(addressString, "auto"))
+        address = isInterfaceRegistered();
+        if (address.isUnspecified())
         {
-            // assign automatic address
-            address = MACAddress::generateAutoAddress();
-            // change module parameter from "auto" to concrete address
-            par("address").setStringValue(address.str().c_str());
+            if (!strcmp(addressString, "auto"))
+            {
+                // assign automatic address
+                address = MACAddress::generateAutoAddress();
+                // change module parameter from "auto" to concrete address
+                par("address").setStringValue(address.str().c_str());
+            }
+            else
+                address.setAddress(addressString);
         }
-        else
-            address.setAddress(addressString);
 
         // subscribe for the information of the carrier sense
         nb->subscribe(this, NF_RADIOSTATE_CHANGED);
@@ -414,7 +418,8 @@ void Ieee80211NewMac::initialize(int stage)
         mediumStateChange = new cMessage("MediumStateChange");
 
         // interface
-        registerInterface();
+        if (isInterfaceRegistered().isUnspecified())
+            registerInterface();
 
         // obtain pointer to external queue
         initializeQueueModule();
@@ -3007,4 +3012,25 @@ void Ieee80211NewMac::removeOldTuplesFromDuplicateMap()
                 it++;
         }
     }
+}
+
+const MACAddress & Ieee80211NewMac::isInterfaceRegistered()
+{
+    if (!par("multiMac").boolValue())
+        return MACAddress::UNSPECIFIED_ADDRESS;
+
+    IInterfaceTable *ift = InterfaceTableAccess().getIfExists();
+    if (!ift)
+        return MACAddress::UNSPECIFIED_ADDRESS;
+    char *interfaceName = new char[strlen(getParentModule()->getFullName()) + 1];
+    char *d = interfaceName;
+    for (const char *s = getParentModule()->getFullName(); *s; s++)
+        if (isalnum(*s))
+            *d++ = *s;
+    *d = '\0';
+    InterfaceEntry * e = ift->getInterfaceByName(interfaceName);
+    delete interfaceName;
+    if (e)
+        return e->getMacAddress();
+    return MACAddress::UNSPECIFIED_ADDRESS;
 }

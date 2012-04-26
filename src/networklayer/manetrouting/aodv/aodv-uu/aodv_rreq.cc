@@ -848,6 +848,7 @@ void NS_CLASS  rreq_proactive (void *arg)
     timer_set_timeout(&proactive_rreq_timer, proactive_rreq_timeout);
 }
 
+#ifndef AODV_USE_STL
 NS_STATIC struct rreq_record *NS_CLASS rreq_record_insert(struct in_addr orig_addr,
         u_int32_t rreq_id)
 {
@@ -954,4 +955,116 @@ void NS_CLASS rreq_blacklist_timeout(void *arg)
     list_detach(&bl->l);
     free(bl);
 }
+#else
+NS_STATIC struct rreq_record *NS_CLASS rreq_record_insert(struct in_addr orig_addr,
+        u_int32_t rreq_id)
+{
+    struct rreq_record *rec;
+
+    /* First check if this rreq packet is already buffered */
+    rec = rreq_record_find(orig_addr, rreq_id);
+
+    /* If already buffered, should we update the timer???  */
+    if (rec)
+        return rec;
+
+    if ((rec =
+                (struct rreq_record *) malloc(sizeof(struct rreq_record))) == NULL)
+    {
+        fprintf(stderr, "Malloc failed!!!\n");
+        exit(-1);
+    }
+    rec->orig_addr = orig_addr;
+    rec->rreq_id = rreq_id;
+
+    timer_init(&rec->rec_timer, &NS_CLASS rreq_record_timeout, rec);
+    rreq_records.push_back(rec);
+
+
+    DEBUG(LOG_INFO, 0, "Buffering RREQ %s rreq_id=%lu time=%u",
+          ip_to_str(orig_addr), rreq_id, PATH_DISCOVERY_TIME);
+
+    timer_set_timeout(&rec->rec_timer, PATH_DISCOVERY_TIME);
+    return rec;
+}
+
+NS_STATIC struct rreq_record *NS_CLASS rreq_record_find(struct in_addr orig_addr,
+        u_int32_t rreq_id)
+{
+    for (unsigned int i = 0 ; i < rreq_records.size();i++)
+    {
+        struct rreq_record *rec = rreq_records[i];
+        if (rec->orig_addr.s_addr == orig_addr.s_addr &&
+                (rec->rreq_id == rreq_id))
+            return rec;
+    }
+    return NULL;
+}
+
+void NS_CLASS rreq_record_timeout(void *arg)
+{
+    struct rreq_record *rec = (struct rreq_record *) arg;
+    for (RreqRecords::iterator it = rreq_records.begin();it!=rreq_records.end();it++)
+    {
+        struct rreq_record *recAux = *it;
+        if (rec  == recAux)
+        {
+            rreq_records.erase(it);
+            break;
+        }
+    }
+    free(rec);
+}
+
+
+struct blacklist *NS_CLASS rreq_blacklist_insert(struct in_addr dest_addr)
+{
+
+    struct blacklist *bl;
+
+    /* First check if this rreq packet is already buffered */
+    bl = rreq_blacklist_find(dest_addr);
+
+    /* If already buffered, should we update the timer??? */
+    if (bl)
+        return bl;
+
+    if ((bl = (struct blacklist *) malloc(sizeof(struct blacklist))) == NULL)
+    {
+        fprintf(stderr, "Malloc failed!!!\n");
+        exit(-1);
+    }
+    bl->dest_addr.s_addr = dest_addr.s_addr;
+
+    timer_init(&bl->bl_timer, &NS_CLASS rreq_blacklist_timeout, bl);
+    rreq_blacklist.insert(std::make_pair(dest_addr.s_addr,bl));
+
+    timer_set_timeout(&bl->bl_timer, BLACKLIST_TIMEOUT);
+    return bl;
+}
+
+
+struct blacklist *NS_CLASS rreq_blacklist_find(struct in_addr dest_addr)
+{
+    RreqBlacklist::iterator it = rreq_blacklist.find(dest_addr.s_addr);
+    if (it != rreq_blacklist.end())
+        return it->second;
+    return NULL;
+}
+
+void NS_CLASS rreq_blacklist_timeout(void *arg)
+{
+    struct blacklist *bl = (struct blacklist *)arg;
+    for (RreqBlacklist::iterator it = rreq_blacklist.begin();it!=rreq_blacklist.end();it++)
+    {
+        struct blacklist *blAux = it->second;
+        if (bl == blAux)
+        {
+            rreq_blacklist.erase(it);
+
+        }
+    }
+    free(bl);
+}
+#endif
 

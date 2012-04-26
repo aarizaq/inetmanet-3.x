@@ -39,7 +39,7 @@ module Ieee80211NewNicMesh like IWirelessNic
         string opMode @enum("b","g","a","p") = default("g");
         int numOutputHooks = default(0);
         int numInputHooks = default(0);
-        bool _agentNeeded = false;   // internal par. do not use, shows if optional agent module is needed
+        bool _agentNeeded = false;   // internal par. do not use, shows if optional agent module is needed        
         bool hasLocator = default(false);
         @display("i=block/ifcard;bgb=259,357");
     gates:
@@ -63,6 +63,9 @@ module Ieee80211NewNicMesh like IWirelessNic
             parameters:
                 locatorActive = hasLocator;
                 @display("p=96,136;q=wlanDataQueue;i=block/switch");
+             gates:
+                macIn[1];
+                macOut[1];                
         }
         mac: Ieee80211NewMac {
             parameters:
@@ -80,11 +83,14 @@ module Ieee80211NewNicMesh like IWirelessNic
         radio.upperLayerIn <-- mac.lowerLayerOut;
         radio.upperLayerOut --> mac.lowerLayerIn;
 
-        mac.upperLayerOut --> mgmt.macIn;
-        mac.upperLayerIn <-- mgmt.macOut;
+        mac.upperLayerOut --> mgmt.macIn[0];
+        mac.upperLayerIn <-- mgmt.macOut[0];
 
         mgmt.agentOut --> agent.mgmtIn if _agentNeeded;
         mgmt.agentIn <-- agent.mgmtOut if _agentNeeded;
+        
+        mgmt.toEthernet --> toEthernet;
+        mgmt.fromEthernet <-- fromEthernet;
 
         mgmt.upperLayerOut --> upperLayerOut if numInputHooks == 0;
         mgmt.upperLayerIn <-- upperLayerIn if numOutputHooks == 0;

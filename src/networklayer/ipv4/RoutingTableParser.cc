@@ -134,21 +134,20 @@ int RoutingTableParser::readRoutingTableFromFile(const char *filename)
 
     // parse filtered files
     if (ifconfigFile)
-    {
         parseInterfaces(ifconfigFile);
-        delete [] ifconfigFile;
-    }
     if (routeFile)
-    {
         parseRouting(routeFile);
-        delete [] routeFile;
-    }
     if (rulesFile)
-    {
         parseRules(rulesFile);
+
+    if (ifconfigFile)
+        delete [] ifconfigFile;
+   if (routeFile)
+        delete [] routeFile;
+    if (rulesFile)
         delete [] rulesFile;
-    }
     return 0;
+
 }
 
 char *RoutingTableParser::createFilteredFile(char *file, int &charpointer, const char *endtoken)
@@ -297,22 +296,11 @@ char *RoutingTableParser::parseEntry(char *ifconfigFile, const char *tokenStr,
 
 void RoutingTableParser::parseMulticastGroups(char *groupStr, InterfaceEntry *itf)
 {
-    IPv4InterfaceData::IPAddressVector mcg = itf->ipv4Data()->getMulticastGroups();
-
-    // add "224.0.0.1" automatically
-    mcg.push_back(IPv4Address::ALL_HOSTS_MCAST);
-
-    // add 224.0.0.2" only if Router (IPv4 forwarding enabled)
-    if (rt->isIPForwardingEnabled())
-        mcg.push_back(IPv4Address::ALL_ROUTERS_MCAST);
-
     // Parse string (IPv4 addresses separated by colons)
     cStringTokenizer tokenizer(groupStr, ":");
     const char *token;
     while ((token = tokenizer.nextToken())!=NULL)
-        mcg.push_back(IPv4Address(token));
-
-    itf->ipv4Data()->setMulticastGroups(mcg);
+        itf->ipv4Data()->joinMulticastGroup(IPv4Address(token));
 }
 
 void RoutingTableParser::parseRouting(char *routeFile)

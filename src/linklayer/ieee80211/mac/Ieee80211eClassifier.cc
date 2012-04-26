@@ -50,7 +50,6 @@ int Ieee80211eClassifier::getNumQueues()
     return 4;
 }
 
-
 int Ieee80211eClassifier::classifyPacket(cMessage *frame)
 {
     ASSERT(check_and_cast<Ieee80211DataOrMgmtFrame *>(frame));
@@ -92,7 +91,7 @@ int Ieee80211eClassifier::classifyPacket(cMessage *frame)
         if (udp->getDestinationPort() == 4000 || udp->getSourcePort() == 4000)
             return 2;
         if (udp->getDestinationPort() == 5000 || udp->getSourcePort() == 5000)
-           return 3;
+            return 3;
     }
 #endif
 

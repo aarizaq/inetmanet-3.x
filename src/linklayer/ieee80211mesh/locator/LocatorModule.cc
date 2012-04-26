@@ -832,4 +832,13 @@ void LocatorModule::processARPPacket(cPacket *pkt)
     }
 }
 
+bool LocatorModule::isThisAp()
+{
+    return isAp(myMacAddress);
+}
+
+bool LocatorModule::isThisApIp()
+{
+    return isApIp(myIpAddress);
+}
 

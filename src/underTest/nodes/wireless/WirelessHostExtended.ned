@@ -6,7 +6,7 @@
 // Based on WirelessHost from Andras Varga.
 package inet.underTest.nodes.wireless;
 
-import inet.applications.pingapp.PingApp;
+import inet.applications.IPingApp;
 import inet.applications.ITCPApp;
 import inet.applications.IUDPApp;
 import inet.base.NotificationBoard;
@@ -20,8 +20,8 @@ import inet.transport.tcp.TCP;
 import inet.transport.udp.UDP;
 
 import inet.linklayer.ieee80211.mgmt.Ieee80211AgentSTA;
-import  inet.underTest.linklayer.ieee80211.mgmt.Ieee80211NicExtended;
-import  inet.underTest.linklayer.ieee80211.mgmt.Ieee80211AgentInterface;
+import inet.underTest.linklayer.ieee80211.mgmt.Ieee80211NicExtended;
+import inet.underTest.linklayer.ieee80211.mgmt.Ieee80211AgentInterface;
 
 module WirelessHostExtended
 {
@@ -29,6 +29,7 @@ module WirelessHostExtended
         @node();
         int numTcpApps = default(0);
         int numUdpApps = default(0);
+        int numPingApps = default(0);  // no of PING apps. Specify the app types in INI file with pingApp[0..1].typename="PingApp" syntax        
         string tcpAppType = default("");
         string udpAppType = default("");
         bool IPForward = default(false);
@@ -42,7 +43,7 @@ module WirelessHostExtended
         inout ethg[];
         input radioIn @directIn;
     submodules:
-        
+
         notificationBoard: NotificationBoard {
             parameters:
                 @display("p=60,70");
@@ -74,9 +75,9 @@ module WirelessHostExtended
             parameters:
                 @display("p=361,157");
         }
-        pingApp: PingApp {
+        pingApp[numPingApps]: <default("PingApp")> like IPingApp {
             parameters:
-                @display("p=432,203");
+                @display("p=450,140");
         }
         networkLayer: NetworkLayer {
             parameters:
@@ -104,7 +105,7 @@ module WirelessHostExtended
                 @display("p=58,301");
         }
 
-        ieee80211Agent:  <agentType> like Ieee80211AgentInterface {
+        ieee80211Agent: <agentType> like Ieee80211AgentInterface {
             @display("p=167,250");
         }
     connections allowunconnected:
@@ -124,8 +125,10 @@ module WirelessHostExtended
         udp.ipOut --> networkLayer.udpIn;
         udp.ipIn <-- networkLayer.udpOut;
 
-        networkLayer.pingOut --> pingApp.pingIn;
-        networkLayer.pingIn <-- pingApp.pingOut;
+        for i=0..numPingApps-1 {
+            networkLayer.pingOut++ --> pingApp[i].pingIn;
+            networkLayer.pingIn++ <-- pingApp[i].pingOut;
+        }
 
         // connections to network outside
         for i=0..sizeof(pppg)-1 {

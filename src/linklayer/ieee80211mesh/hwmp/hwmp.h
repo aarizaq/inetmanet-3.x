@@ -26,6 +26,7 @@
 
 #include "hwmp-rtable.h"
 #include <vector>
+#include <deque>
 #include <map>
 #include "ManetRoutingBase.h"
 #include "Ieee80211MgmtFrames_m.h"
@@ -105,6 +106,7 @@ class HwmpProtocol : public ManetRoutingBase
         virtual void handleMessage(cMessage *msg);
         // Detect a transmission fault
         virtual void processLinkBreak(const cPolymorphic *details);
+        virtual void processLinkBreakManagement(const cPolymorphic *details);
         virtual void packetFailedMac(Ieee80211TwoAddressFrame *frame);
         // promiscuous frame process.
         virtual void processFullPromiscuous(const cPolymorphic *details);
@@ -131,6 +133,7 @@ class HwmpProtocol : public ManetRoutingBase
 
         virtual bool getBestGan(Uint128 &, Uint128 &);
     private:
+        simtime_t timeLimitQueue;
         friend class PreqTimeout;
         friend class PreqTimer;
         friend class ProactivePreqTimer;
@@ -188,6 +191,7 @@ class HwmpProtocol : public ManetRoutingBase
                 MACAddress src; ///< src address
                 MACAddress dst; ///< dst address
                 uint16_t protocol; ///< protocol number
+                simtime_t queueTime;
                 uint32_t inInterface; ///< incoming device interface ID. (if packet has come from upper layers, this is Mesh point ID)
                 QueuedPacket()
                 {
@@ -219,7 +223,7 @@ class HwmpProtocol : public ManetRoutingBase
         void receivePerr(std::vector<HwmpFailedDestination> destinations, MACAddress from, uint32_t interface,
                 MACAddress fromMp);
         void sendPrep(MACAddress src, MACAddress targetAdd, MACAddress retransmitter, uint32_t initMetric,
-                uint32_t originatorSn, uint32_t targetSn, uint32_t lifetime, uint32_t interface, uint8_t hops);
+                uint32_t originatorSn, uint32_t targetSn, uint32_t lifetime, uint32_t interface, uint8_t hops, bool proactive = false);
 
         void sendPreq(PREQElem preq, bool isProactive = false);
         void sendPreq(std::vector<PREQElem> preq, bool isProactive = false);
@@ -241,13 +245,13 @@ class HwmpProtocol : public ManetRoutingBase
          * \brief forms a path error information element when list of destination fails on a given interface
          * \attention removes all entries from routing table!
          */
-        HwmpProtocol::PathError makePathError(std::vector<HwmpFailedDestination> destinations);
+        HwmpProtocol::PathError makePathError(const std::vector<HwmpFailedDestination> &destinations);
         ///\brief Forwards a received path error
         void forwardPathError(PathError perr);
         ///\brief Passes a self-generated PERR to interface-plugin
         void initiatePathError(PathError perr);
         /// \return list of addresses where a PERR should be sent to
-        std::vector<std::pair<uint32_t, MACAddress> > getPerrReceivers(std::vector<HwmpFailedDestination> failedDest);
+        std::vector<std::pair<uint32_t, MACAddress> > getPerrReceivers(const std::vector<HwmpFailedDestination> &failedDest);
 
         /// \return list of addresses where a PERR should be sent to
         std::vector<MACAddress> getPreqReceivers(uint32_t interface);
@@ -358,11 +362,12 @@ class HwmpProtocol : public ManetRoutingBase
         ProactivePreqTimer * m_proactivePreqTimer;
         PreqTimer * m_preqTimer;
         PerrTimer * m_perrTimer;
+        simtime_t nextProactive;
 
         GannTimer *m_gannTimer;
         ///\}
         /// Packet Queue
-        std::vector<QueuedPacket> m_rqueue;
+        std::deque<QueuedPacket> m_rqueue;
         ///\name HWMP-protocol parameters (attributes of GetTypeId)
         ///\{
         uint16_t m_maxQueueSize;

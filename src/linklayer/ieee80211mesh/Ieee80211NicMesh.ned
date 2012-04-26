@@ -43,6 +43,7 @@ module Ieee80211NicMesh like IWirelessNic
     submodules:
         mgmt: Ieee80211Mesh {
             parameters:
+                
                 @display("p=96,69;q=wlanDataQueue");
         }
         mac: Ieee80211Mac {
@@ -59,8 +60,9 @@ module Ieee80211NicMesh like IWirelessNic
         radio.upperLayerIn <-- mac.lowerLayerOut;
         radio.upperLayerOut --> mac.lowerLayerIn;
 
-        mac.upperLayerOut --> mgmt.macIn;
-        mac.upperLayerIn <-- mgmt.macOut;
+        mac.upperLayerOut --> mgmt.macIn++;
+        mac.upperLayerIn <-- mgmt.macOut++;
+
 
         mgmt.upperLayerOut --> upperLayerOut;
         mgmt.upperLayerIn <-- upperLayerIn;

@@ -25,8 +25,9 @@ import inet.linklayer.ieee80211mesh.nodes.HostSta;
 import inet.linklayer.ieee80211mesh.nodes.BasicMobileManetMesh;
 import inet.world.radio.ChannelControl;
 import inet.linklayer.ieee80211mesh.nodes.gateWayMesh;
-import inet.linklayer.ieee80211mesh.nodes.ApMeshNode;
+import inet.linklayer.ieee80211mesh.nodes.ApMeshRelay;
 import inet.nodes.ethernet.EtherSwitch;
+import inet.linklayer.ieee80211mesh.nodes.ApMeshRelay;
 
 network redTroncal
 {
@@ -47,7 +48,7 @@ network redTroncal
                 mobility.separation = nodeSeparation*2;
                 @display("i=block/wrxtx;r=,,#707070");
         }
-        fixhostB[7]: ApMeshNode {
+        fixhostB[7]: ApMeshRelay {
             parameters:
                 mobilityType = "LinealNodeDistributionMobility";
                 mobility.initialY = 315m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
@@ -57,7 +58,7 @@ network redTroncal
                 @display("i=device/accesspoint;r=,,#707070");
 
         }
-        fixhost2[8]: ApMeshNode {
+        fixhost2[8]: ApMeshRelay {
             parameters:
                 mobilityType = "LinealNodeDistributionMobility";
                 mobility.initialY = 235m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
@@ -66,7 +67,7 @@ network redTroncal
                 wlanMesh.hasLocator = true;
                 @display("i=device/accesspoint;r=,,#707070");
         }
-        fixhost3[8]: ApMeshNode {
+        fixhost3[8]: ApMeshRelay {
             parameters:
                 mobilityType = "LinealNodeDistributionMobility";
                 mobility.initialY = 395m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
@@ -84,7 +85,7 @@ network redTroncal
                 mobility.initialX = nodeSeparation/2.0;
                 @display("i=block/wrxtx;r=,,#707070");
         }
-        fixhost4B[7]: ApMeshNode {
+        fixhost4B[7]: ApMeshRelay {
             parameters:
                 mobilityType = "LinealNodeDistributionMobility";
                 mobility.initialY = 155m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
@@ -101,7 +102,7 @@ network redTroncal
                 mobility.initialX = nodeSeparation/2.0;
                 @display("i=block/wrxtx;r=,,#707070");
         }
-        fixhost5B[7]: ApMeshNode {
+        fixhost5B[7]: ApMeshRelay {
             parameters:
                 mobilityType = "LinealNodeDistributionMobility";
                 mobility.initialY = 475m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
@@ -110,7 +111,7 @@ network redTroncal
                 wlanMesh.hasLocator = true;
                 @display("i=device/accesspoint;r=,,#707070");
         }
-        fixhost6[8]: ApMeshNode {
+        fixhost6[8]: ApMeshRelay {
             parameters:
                 mobilityType = "LinealNodeDistributionMobility";
                 mobility.initialY = 75m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
@@ -119,7 +120,7 @@ network redTroncal
                 wlanMesh.hasLocator = true;
                 @display("i=device/accesspoint");
         }
-        fixhost7[8]: ApMeshNode {
+        fixhost7[8]: ApMeshRelay {
             parameters:
                 mobilityType = "LinealNodeDistributionMobility";
                 mobility.initialY = 555m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);

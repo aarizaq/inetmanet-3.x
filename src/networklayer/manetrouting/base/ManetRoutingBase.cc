@@ -167,42 +167,69 @@ void ManetRoutingBase::registerRoutingModule()
     cStringTokenizer tokenizerInterfaces(interfaces);
     const char *token;
     const char * prefixName;
-    while ((token = tokenizerInterfaces.nextToken())!=NULL)
+    if (!mac_layer_)
     {
-        if ((prefixName = strstr(token, "prefix"))!=NULL)
+        while ((token = tokenizerInterfaces.nextToken()) != NULL)
         {
-            const char *leftparenp = strchr(prefixName, '(');
-            const char *rightparenp = strchr(prefixName, ')');
-            std::string interfacePrefix;
-            interfacePrefix.assign(leftparenp+1, rightparenp-leftparenp-1);
-            for (int i = 0; i < inet_ift->getNumInterfaces(); i++)
+            if ((prefixName = strstr(token, "prefix")) != NULL)
             {
-                ie = inet_ift->getInterface(i);
-                name = ie->getName();
-                if ((strstr(name, interfacePrefix.c_str() )!=NULL) && !isThisInterfaceRegistered(ie))
+                const char *leftparenp = strchr(prefixName, '(');
+                const char *rightparenp = strchr(prefixName, ')');
+                std::string interfacePrefix;
+                interfacePrefix.assign(leftparenp + 1, rightparenp - leftparenp - 1);
+                for (int i = 0; i < inet_ift->getNumInterfaces(); i++)
                 {
-                    InterfaceIdentification interface;
-                    interface.interfacePtr = ie;
-                    interface.index = i;
-                    num_80211++;
-                    interfaceVector->push_back(interface);
+                    ie = inet_ift->getInterface(i);
+                    name = ie->getName();
+                    if ((strstr(name, interfacePrefix.c_str()) != NULL) && !isThisInterfaceRegistered(ie))
+                    {
+                        InterfaceIdentification interface;
+                        interface.interfacePtr = ie;
+                        interface.index = i;
+                        num_80211++;
+                        interfaceVector->push_back(interface);
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < inet_ift->getNumInterfaces(); i++)
+                {
+                    ie = inet_ift->getInterface(i);
+                    name = ie->getName();
+                    if (strcmp(name, token) == 0 && !isThisInterfaceRegistered(ie))
+                    {
+                        InterfaceIdentification interface;
+                        interface.interfacePtr = ie;
+                        interface.index = i;
+                        num_80211++;
+                        interfaceVector->push_back(interface);
+                    }
                 }
             }
         }
-        else
+    }
+    else
+    {
+        cModule *mod = getParentModule()->getParentModule();
+        char *interfaceName = new char[strlen(mod->getFullName()) + 1];
+        char *d = interfaceName;
+        for (const char *s = mod->getFullName(); *s; s++)
+            if (isalnum(*s))
+                *d++ = *s;
+        *d = '\0';
+
+        for (int i = 0; i < inet_ift->getNumInterfaces(); i++)
         {
-            for (int i = 0; i < inet_ift->getNumInterfaces(); i++)
+            ie = inet_ift->getInterface(i);
+            name = ie->getName();
+            if (strcmp(name, interfaceName) == 0 && !isThisInterfaceRegistered(ie))
             {
-                ie = inet_ift->getInterface(i);
-                name = ie->getName();
-                if (strcmp(name, token)==0 && !isThisInterfaceRegistered(ie))
-                {
-                    InterfaceIdentification interface;
-                    interface.interfacePtr = ie;
-                    interface.index = i;
-                    num_80211++;
-                    interfaceVector->push_back(interface);
-                }
+                InterfaceIdentification interface;
+                interface.interfacePtr = ie;
+                interface.index = i;
+                num_80211++;
+                interfaceVector->push_back(interface);
             }
         }
     }
@@ -401,6 +428,7 @@ void ManetRoutingBase::sendToIp(cPacket *msg, int srcPort, const Uint128& destAd
 }
 
 void ManetRoutingBase::processLinkBreak(const cObject *details) {return;}
+void ManetRoutingBase::processLinkBreakManagement(const cObject *details) {return;}
 void ManetRoutingBase::processPromiscuous(const cObject *details) {return;}
 void ManetRoutingBase::processFullPromiscuous(const cObject *details) {return;}
 void ManetRoutingBase::processLocatorAssoc(const cObject *details) {return;}
@@ -1093,19 +1121,28 @@ void ManetRoutingBase::receiveChangeNotification(int category, const cObject *de
     {
         if (details==NULL)
             return;
-        Ieee80211DataFrame *frame = check_and_cast<Ieee80211DataFrame *>(details);
-        cPacket * pktAux = frame->getEncapsulatedPacket();
-        if (!mac_layer_ && pktAux!=NULL)
+        Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame *>(const_cast<cObject*>(details));
+        if (frame)
         {
-            cPacket *pkt = pktAux->dup();
-            ControlInfoBreakLink *add = new ControlInfoBreakLink;
-            add->setDest(frame->getReceiverAddress());
-            pkt->setControlInfo(add);
-            processLinkBreak(pkt);
-            delete pkt;
+            cPacket * pktAux = frame->getEncapsulatedPacket();
+            if (!mac_layer_ && pktAux != NULL)
+            {
+                cPacket *pkt = pktAux->dup();
+                ControlInfoBreakLink *add = new ControlInfoBreakLink;
+                add->setDest(frame->getReceiverAddress());
+                pkt->setControlInfo(add);
+                processLinkBreak(pkt);
+                delete pkt;
+            }
+            else
+                processLinkBreak(details);
         }
         else
-            processLinkBreak(details);
+        {
+            Ieee80211ManagementFrame *frame = dynamic_cast<Ieee80211ManagementFrame *>(const_cast<cObject*>(details));
+            if (frame)
+                processLinkBreakManagement(details);
+        }
 
     }
     else if (category == NF_LINK_PROMISCUOUS)
@@ -1888,3 +1925,14 @@ void ManetRoutingBase::getListRelatedAp(const Uint128 & add, std::vector<Uint128
         }
     }
 }
+
+bool ManetRoutingBase::isAp() const
+{
+    if (!locator)
+        return false;
+    if (mac_layer_)
+        return locator->isThisAp();
+    else
+        return locator->isThisApIp();
+}
+

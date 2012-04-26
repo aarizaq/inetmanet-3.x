@@ -135,6 +135,10 @@ std::string InterfaceEntry::detailedInfo() const
 
     return out.str();
 }
+std::string InterfaceEntry::getFullPath() const
+{
+    return ownerp == NULL ? getFullName() : ownerp->getHostModule()->getFullPath() + "." + getFullName();
+}
 
 void InterfaceEntry::changed(int category)
 {
@@ -168,23 +172,23 @@ bool InterfaceEntry::setEstimateCostProcess(int position, MacEstimateCostProcess
 {
     ASSERT(position >= 0);
     if (estimateCostProcessArray.size() <= (size_t)position)
-	{
+    {
         estimateCostProcessArray.resize(position+1, NULL);
-	}
-	if (estimateCostProcessArray[position]!=NULL)
-		return false;
+    }
+    if (estimateCostProcessArray[position]!=NULL)
+        return false;
     estimateCostProcessArray[position] = p;
-	return true;
+    return true;
 }
 
 MacEstimateCostProcess* InterfaceEntry::getEstimateCostProcess(int position)
 {
     ASSERT(position >= 0);
     if ((size_t)position < estimateCostProcessArray.size())
-	{
-		return estimateCostProcessArray[position];
-	}
-	return NULL;
+    {
+        return estimateCostProcessArray[position];
+    }
+    return NULL;
 }
 
 

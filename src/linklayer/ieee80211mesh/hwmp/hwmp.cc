@@ -138,6 +138,11 @@ HwmpProtocol::~HwmpProtocol()
     delete m_gannTimer;
     neighborMap.clear();
     ganVector.clear();
+    while (!m_rqueue.empty())
+    {
+        delete m_rqueue.back().pkt;
+        m_rqueue.pop_back();
+    }
 }
 
 void HwmpProtocol::initialize(int stage)
@@ -170,6 +175,7 @@ void HwmpProtocol::initialize(int stage)
         m_proactivePreqTimer = new ProactivePreqTimer(this);
         m_gannTimer = new GannTimer(this);
         m_rtable = new HwmpRtable();
+        timeLimitQueue = par("timeLimitInQueue");
         if (isRoot())
             setRoot();
 
@@ -183,6 +189,7 @@ void HwmpProtocol::initialize(int stage)
 
         WATCH_MAP(m_rtable->m_routes);
         WATCH(m_rtable->m_root);
+        WATCH(nextProactive);
         Ieee80211Etx * etx = dynamic_cast<Ieee80211Etx *>(interface80211ptr->getEstimateCostProcess(0));
         if (etx == NULL)
             useEtxProc=false;
@@ -212,25 +219,20 @@ void HwmpProtocol::processData(cMessage *msg)
         if (pkt) // is data packet, enqueue and search new route
         {
             // seach route to destination
-            // pkt->getAddress4(); hass the destination address
-            HwmpRtable::LookupResult result = m_rtable->LookupReactive(pkt->getAddress4());
-            if (result.retransmitter.isUnspecified()) // address not valid
+            // pkt->getAddress4(); has the destination address
+
+            HwmpRtable::LookupResult result;
+            Uint128 apAddr;
+            if (getAp(pkt->getAddress4().getInt(),apAddr))
             {
-                Uint128 apAddr;
-                if (getAp(pkt->getAddress4().getInt(),apAddr))
-                {
-                    // search this address
-                    result = m_rtable->LookupReactive(MACAddress(apAddr.getLo()));
-                }
+                // search this address
+                result = m_rtable->LookupReactive(MACAddress(apAddr.getLo()));
+            }
+            else
+            {
+                result = m_rtable->LookupReactive(pkt->getAddress4());
             }
             HwmpRtable::LookupResult resultProact = m_rtable->LookupProactive();
-            if (result.retransmitter.isUnspecified())
-            {
-                // check for AP in the locator tables
-                Uint128 apAdd;
-                if (getAp(pkt->getAddress4().getInt(),apAdd))
-                    result = m_rtable->LookupReactive(MACAddress(apAdd.getLo()));
-            }
             // Intermediate search
             if (hasPar("intermediateSeach") && !par("intermediateSeach").boolValue()
                     && !addressIsForUs(pkt->getAddress3().getInt()))
@@ -249,6 +251,19 @@ void HwmpProtocol::processData(cMessage *msg)
                     delete msg;
                     return;
                 }
+            }
+            simtime_t now = simTime();
+
+            while (!m_rqueue.empty() && (now - m_rqueue.front().queueTime > timeLimitQueue))
+            {
+                delete m_rqueue.front().pkt;
+                m_rqueue.pop_front();
+            }
+
+            if (m_rqueue.size() > m_maxQueueSize)
+            {
+                delete msg;
+                return;
             }
             // enqueue and request route
             QueuedPacket qpkt;
@@ -418,7 +433,8 @@ void HwmpProtocol::sendPrep(MACAddress src,
                             uint32_t targetSn,
                             uint32_t lifetime,
                             uint32_t interface,
-                            uint8_t hops)
+                            uint8_t hops,
+                            bool proactive)
 {
     Ieee80211ActionPREPFrame* ieee80211ActionPrepFrame = new Ieee80211ActionPREPFrame();
     ieee80211ActionPrepFrame->getBody().setHopsCount(hops);
@@ -456,7 +472,10 @@ void HwmpProtocol::sendPrep(MACAddress src,
     else
     {
         EV << "Sending prep frame to " << ieee80211ActionPrepFrame->getReceiverAddress() << endl;
-        sendDelayed(ieee80211ActionPrepFrame, par("unicastDelay"), "to_ip");
+        if (proactive)
+            sendDelayed(ieee80211ActionPrepFrame, par("broadcastDelay"), "to_ip");
+        else
+            sendDelayed(ieee80211ActionPrepFrame, par("unicastDelay"), "to_ip");
     }
     m_stats.initiatedPrep++;
 }
@@ -471,6 +490,7 @@ void HwmpProtocol::sendPreqProactive()
     GetNextHwmpSeqno();
     sendPreq(preq, true);
     m_proactivePreqTimer->resched(m_dot11MeshHWMPpathToRootInterval);
+    nextProactive = simTime()+m_dot11MeshHWMPpathToRootInterval;
 }
 
 void HwmpProtocol::sendGann()
@@ -582,6 +602,11 @@ HwmpProtocol::createPReq(std::vector<PREQElem> preq, bool individual, MACAddress
 
 void HwmpProtocol::requestDestination(MACAddress dst, uint32_t dst_seqno)
 {
+    Uint128 apAddr;
+    if (getAp(dst.getInt(),apAddr))
+    {
+        dst = MACAddress(apAddr.getLo());
+    }
     PREQElem preq;
     preq.targetAddress = dst;
     preq.targetSeqNumber = dst_seqno;
@@ -619,6 +644,11 @@ void HwmpProtocol::sendMyPreq()
 
 bool HwmpProtocol::shouldSendPreq(MACAddress dst)
 {
+    Uint128 apAddr;
+    if (getAp(dst.getInt(),apAddr))
+    {
+        dst = MACAddress(apAddr.getLo());
+    }
     std::map<MACAddress, PreqEvent>::const_iterator i = m_preqTimeouts.find(dst);
     if (i == m_preqTimeouts.end())
     {
@@ -720,7 +750,7 @@ void HwmpProtocol::sendPerr(std::vector<HwmpFailedDestination> failedDestination
         ieee80211ActionPerrFrame->getBody().setPerrElem(i, perr);
     }
 
-    if (receivers.size() >= GetUnicastPerrThreshold())
+    if (receivers.size() >= GetUnicastPerrThreshold() || receivers.empty())
     {
         receivers.clear();
         receivers.push_back(MACAddress::BROADCAST_ADDRESS);
@@ -1167,7 +1197,7 @@ void HwmpProtocol::receivePreq(Ieee80211ActionPREQFrame *preqFrame, MACAddress f
             if (proactivePrep)
             {
                 sendPrep(GetAddress(), originatorAddress, from, (uint32_t) 0, GetNextHwmpSeqno(), originatorSeqNumber,
-                        preqFrame->getBody().getLifeTime(), interface, 0);
+                        preqFrame->getBody().getLifeTime(), interface, 0, true);
             }
             break;
         }
@@ -1475,13 +1505,33 @@ void HwmpProtocol::processLinkBreak(const cPolymorphic *details)
     }
 }
 
+void HwmpProtocol::processLinkBreakManagement(const cPolymorphic *details)
+{
+    Ieee80211ActionPREPFrame *frame = dynamic_cast<Ieee80211ActionPREPFrame *>(const_cast<cPolymorphic*>(details));
+    if (frame)
+    {
+        std::map<MACAddress, Neighbor>::iterator it = neighborMap.find(frame->getTransmitterAddress());
+        if (it != neighborMap.end())
+        {
+            it->second.lost++;
+            if (it->second.lost < (unsigned int) par("lostThreshold").longValue())
+                return;
+            neighborMap.erase(it);
+        }
+        std::vector < HwmpFailedDestination > destinations = m_rtable->GetUnreachableDestinations(
+                frame->getReceiverAddress());
+        initiatePathError (makePathError(destinations));
+    }
+}
+
 void HwmpProtocol::packetFailedMac(Ieee80211TwoAddressFrame *frame)
 {
     std::vector < HwmpFailedDestination > destinations = m_rtable->GetUnreachableDestinations(
             frame->getReceiverAddress());
-    initiatePathError (makePathError(destinations));}
+    initiatePathError (makePathError(destinations));
+}
 
-HwmpProtocol::PathError HwmpProtocol::makePathError(std::vector<HwmpFailedDestination> destinations)
+HwmpProtocol::PathError HwmpProtocol::makePathError(const std::vector<HwmpFailedDestination> &destinations)
 {
     PathError retval;
     //HwmpRtable increments a sequence number as written in 11B.9.7.2
@@ -1527,8 +1577,8 @@ void HwmpProtocol::forwardPathError(PathError perr)
     }
 }
 
-std::vector<std::pair<uint32_t, MACAddress> > HwmpProtocol::getPerrReceivers(
-        std::vector<HwmpFailedDestination> failedDest)
+std::vector<std::pair<uint32_t, MACAddress> > HwmpProtocol::getPerrReceivers(const
+        std::vector<HwmpFailedDestination> &failedDest)
 {
     HwmpRtable::PrecursorList retval;
     for (unsigned int i = 0; i < failedDest.size(); i++)
@@ -1645,10 +1695,13 @@ std::vector<MACAddress> HwmpProtocol::getBroadcastReceivers(uint32_t interface)
 
 bool HwmpProtocol::QueuePacket(QueuedPacket packet)
 {
+    //delete old packets
     if (m_rqueue.size() > m_maxQueueSize)
     {
         return false;
     }
+    packet.queueTime = simTime();
+
     m_rqueue.push_back(packet);
     return true;
 }
@@ -1657,7 +1710,7 @@ HwmpProtocol::QueuedPacket HwmpProtocol::dequeueFirstPacketByDst(MACAddress dst)
 {
     HwmpProtocol::QueuedPacket retval;
     retval.pkt = 0;
-    for (std::vector<QueuedPacket>::iterator i = m_rqueue.begin(); i != m_rqueue.end(); i++)
+    for (std::deque<QueuedPacket>::iterator i = m_rqueue.begin(); i != m_rqueue.end(); i++)
     {
         if ((*i).dst == dst)
         {
@@ -1684,25 +1737,43 @@ HwmpProtocol::QueuedPacket HwmpProtocol::dequeueFirstPacket()
 void HwmpProtocol::reactivePathResolved(MACAddress dst)
 {
 
-    HwmpRtable::LookupResult result = m_rtable->LookupReactive(dst);
-    ASSERT(result.retransmitter != MACAddress::BROADCAST_ADDRESS);
-    if (result.retransmitter.isUnspecified())
-    {
-        // send and error and stop the simulation?
-        EV
-                << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! \n";
-        EV << "!!!!!!!!!!!!!!!! WANING HWMP try to send a packet and the protocol doesnt' know the next hop address \n";
-        EV
-                << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! \n";
-        return;
-    }
+
     //Send all packets stored for this destination
+    HwmpRtable::LookupResult result;
     Uint128 apAddr;
     std::vector<MACAddress> listAddress;
     if (getAp(dst.getInt(), apAddr))
+    {
+        result = m_rtable->LookupReactive(MACAddress(apAddr.getLo()));
+        ASSERT(result.retransmitter != MACAddress::BROADCAST_ADDRESS);
+        if (result.retransmitter.isUnspecified())
+        {
+            // send and error and stop the simulation?
+            EV
+                    << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! \n";
+            EV << "!!!!!!!!!!!!!!!! WANING HWMP try to send a packet and the protocol doesnt' know the next hop address \n";
+            EV
+                    << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! \n";
+            return;
+        }
         getApList(MACAddress(apAddr.getLo()),listAddress);
+    }
     else
-        listAddress.push_back(dst);
+    {
+        result = m_rtable->LookupReactive(dst);
+        ASSERT(result.retransmitter != MACAddress::BROADCAST_ADDRESS);
+        if (result.retransmitter.isUnspecified())
+        {
+            // send and error and stop the simulation?
+            EV
+                    << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! \n";
+            EV << "!!!!!!!!!!!!!!!! WANING HWMP try to send a packet and the protocol doesnt' know the next hop address \n";
+            EV
+                    << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! \n";
+            return;
+        }
+        getApList(dst,listAddress);
+    }
 
     while (!listAddress.empty())
     {
@@ -1884,6 +1955,7 @@ bool HwmpProtocol::getNextHop(const Uint128 &dest, Uint128 &add, int &iface, dou
                 {
                     m_rtable->AddReactivePath(MACAddress(apAddr.getLo()),resultAp.retransmitter,resultAp.ifIndex,
                             resultAp.metric,resultAp.lifetime,resultAp.seqnum,resultAp.hops,true);
+                    reactivePathResolved(MACAddress(apAddr.getLo()));
 
                     add = resultAp.retransmitter.getInt();
                     cost = resultAp.metric;
@@ -1940,8 +2012,7 @@ bool HwmpProtocol::getNextHopReactive(const Uint128 &dest, Uint128 &add, int &if
                 }
             }
         }
-        else
-            return false;
+        return false;
     }
 
     add = result.retransmitter.getInt();
@@ -2022,6 +2093,7 @@ void HwmpProtocol::setRefreshRoute(const Uint128 &destination, const Uint128 &ne
                     interface80211ptr->getInterfaceId(), HwmpRtable::MAX_METRIC, m_dot11MeshHWMPactivePathTimeout, 0,
                     HwmpRtable::MAX_HOPS, false);
         }
+        reactivePathResolved(MACAddress(destination.getLo()));
     }
     /** the root is only actualized by the proactive mechanism
      HwmpRtable::ProactiveRoute * root = m_rtable->getLookupProactivePtr ();

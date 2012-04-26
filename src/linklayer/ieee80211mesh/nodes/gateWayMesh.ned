@@ -26,17 +26,19 @@ import inet.networklayer.common.InterfaceTable;
 import inet.mobility.IMobility;
 import inet.linklayer.ieee80211mesh.ethernet.EthernetInterfaceMesh;
 import inet.linklayer.IWirelessNic;
+import inet.linklayer.IWirelessNicMulti;
 import inet.linklayer.IWiredNic;
 import inet.linklayer.IExternalNic;
 import inet.base.NotificationBoard;
 import inet.nodes.inet.NetworkLayer;
 import inet.linklayer.ieee80211mesh.Ieee80211NewNicMesh;
+import inet.linklayer.ieee80211mesh.Ieee80211NewNicMeshMulti;
 import inet.networklayer.autorouting.ipv4.HostAutoConfigurator2;
 
 import inet.transport.IUDP;
 import inet.transport.ITCP;
 import inet.transport.ISCTP;
-import inet.applications.pingapp.PingApp;
+import inet.applications.IPingApp;
 import inet.applications.IUDPApp;
 import inet.applications.ITCPApp;
 import inet.applications.ISCTPApp;
@@ -58,23 +60,25 @@ module gateWayMesh
         int numTcpApps = default(0);  // no of TCP apps. Specify the app types in INI file with tcpApp[0..1].typename="TCPEchoApp" syntax
         int numUdpApps = default(0);  // no of UDP apps. Specify the app types in INI file with udpApp[0..1].typename="UDPVideoStreamCli" syntax
         int numSctpApps = default(0); // no of SCTP apps. Specify the app types in INI file with sctpApp[0..1].typename="SCTPServer" syntax
+        int numPingApps = default(0);  // no of PING apps. Specify the app types in INI file with pingApp[0..1].typename="PingApp" syntax        
         string tcpType = default(firstAvailable("TCP", "TCP_lwIP", "TCP_NSC", "TCP_None"));  // tcp implementation (e.g. ~TCP, ~TCP_lwIP, ~TCP_NSC) or ~TCPSpoof
         string udpType = default(firstAvailable("UDP","UDP_None"));
         string sctpType = default(firstAvailable("SCTP","SCTP_None"));
-        
+
         int numExtInterfaces = default(0);
         int numRadios = default(0);               // the number of radios in the router. by default no wireless
         int numPcapRecorders = default(0); // no of PcapRecorders.
         string mobilityType = default("StationaryMobility");
         string routingFile = default("");
         bool IPForward = default(true);
+        int meshChannels = default(1);
         wlan[*].mgmtType = default("Ieee80211MgmtAP");
     gates:
-        input radioIn[numRadios+1] @directIn;
+        input radioIn[numRadios+meshChannels] @directIn;
         inout pppg[] @labels(PPPFrame-conn);
         inout ethg[] @labels(EtherFrame-conn);
     submodules:
-        
+
         tcpApp[numTcpApps]: <> like ITCPApp {
             parameters:
                 @display("p=186,54,row");
@@ -98,12 +102,10 @@ module gateWayMesh
         sctp: <sctpType> like ISCTP if numSctpApps>0 {
             @display("p=501,141");
         }
-        pingApp: PingApp {
+        pingApp[numPingApps]: <default("PingApp")> like IPingApp {
             parameters:
                 @display("p=501,230");
         }
-        
-        
         notificationBoard: NotificationBoard {
             parameters:
                 @display("p=53,194");
@@ -141,8 +143,9 @@ module gateWayMesh
             @display("p=183,233");
         }
 
-        wlanMesh: Ieee80211NewNicMesh {
+        wlanMesh: Ieee80211NewNicMeshMulti {
             parameters:
+                numChannels = meshChannels;
                 @display("p=159,386;q=queue");
         }
 
@@ -152,7 +155,7 @@ module gateWayMesh
         }
         ethMesh: EthernetInterfaceMesh {
             parameters:
-                @display("p=222,386,row,90;q=txQueue");
+                @display("p=225,386,row,90;q=txQueue");
         }
         eth[sizeof(ethg)-1]: <default("EthernetInterface")> like IWiredNic {
             parameters:
@@ -168,8 +171,8 @@ module gateWayMesh
         }
 
     connections allowunconnected:
-        
-         for i=0..numTcpApps-1 {
+
+        for i=0..numTcpApps-1 {
             tcpApp[i].tcpOut --> tcp.appIn++;
             tcpApp[i].tcpIn <-- tcp.appOut++;
         }
@@ -192,21 +195,23 @@ module gateWayMesh
         sctp.to_ip --> networkLayer.sctpIn if numSctpApps>0;
         networkLayer.sctpOut --> sctp.from_ip if numSctpApps>0;
 
-        networkLayer.pingOut --> pingApp.pingIn;
-        networkLayer.pingIn <-- pingApp.pingOut;
-        
-        // connections to network outside
-
-        if (sizeof(radioIn)>0) {
-            radioIn[0] --> wlanMesh.radioIn;
-            wlanMesh.upperLayerOut --> networkLayer.ifIn++;
-            wlanMesh.upperLayerIn <-- networkLayer.ifOut++;
-            ethMesh.wifiMeshIn <-- wlanMesh.toEthernet;
-            ethMesh.wifiMeshOut --> wlanMesh.fromEthernet;
+        for i=0..numPingApps-1 {
+            networkLayer.pingOut++ --> pingApp[i].pingIn;
+            networkLayer.pingIn++ <-- pingApp[i].pingOut;
         }
 
-        for i=0..sizeof(radioIn)-2 {
-            radioIn[i+1] --> wlan[i].radioIn;
+        // connections to network outside
+
+        for i=0..meshChannels-1 {            
+            radioIn[i] --> wlanMesh.radioIn[i];
+
+        }
+        wlanMesh.upperLayerOut --> networkLayer.ifIn++;
+        wlanMesh.upperLayerIn <-- networkLayer.ifOut++;
+        ethMesh.wifiMeshIn <-- wlanMesh.toEthernet;
+        ethMesh.wifiMeshOut --> wlanMesh.fromEthernet;
+        for i=0..numRadios-1 {
+            radioIn[i+meshChannels] --> wlan[i].radioIn;
             wlan[i].upperLayerOut --> networkLayer.ifIn++;
             wlan[i].upperLayerIn <-- networkLayer.ifOut++;
         }

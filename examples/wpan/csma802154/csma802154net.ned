@@ -26,9 +26,7 @@ import inet.examples.wpan.csma802154.nodecsma802154;
 network csma802154net
 {
     parameters:
-        int numHosts;
         int numFixHosts;
-        int numBasic;
         double nodeSeparation @unit("m")=default (40m);
     submodules:
         fixhost[numFixHosts]: nodecsma802154 {

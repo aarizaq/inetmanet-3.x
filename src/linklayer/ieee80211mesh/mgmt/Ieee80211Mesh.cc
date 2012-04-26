@@ -100,10 +100,56 @@ Ieee80211Mesh::Ieee80211Mesh()
     hasRelayUnit = false;
 }
 
+void Ieee80211Mesh::initializeBase(int stage)
+{
+    if (stage==0)
+    {
+        PassiveQueueBase::initialize();
+
+        dataQueue.setName("wlanDataQueue");
+        mgmtQueue.setName("wlanMgmtQueue");
+        dataQueueLenSignal = registerSignal("dataQueueLen");
+        emit(dataQueueLenSignal, dataQueue.length());
+
+        numDataFramesReceived = 0;
+        numMgmtFramesReceived = 0;
+        numMgmtFramesDropped = 0;
+        WATCH(numDataFramesReceived);
+        WATCH(numMgmtFramesReceived);
+        WATCH(numMgmtFramesDropped);
+
+        // configuration
+        frameCapacity = par("frameCapacity");
+        numMac = 0;
+    }
+    else if (stage==1)
+    {
+        // obtain our address from MAC
+        cModule *mac = getParentModule()->getSubmodule("mac");
+        if (!mac)
+        {
+            // search for vector of mac:
+            do
+            {
+                mac = getParentModule()->getSubmodule("mac",numMac);
+                if (mac)
+                    numMac++;
+            }
+            while (mac);
+            if (numMac == 0)
+                error("MAC module not found; it is expected to be next to this submodule and called 'mac'");
+            else
+                mac = getParentModule()->getSubmodule("mac",0);
+        }
+        myAddress.setAddress(mac->par("address").stringValue());
+    }
+}
+
+
 void Ieee80211Mesh::initialize(int stage)
 {
     EV << "Init mesh proccess \n";
-    Ieee80211MgmtBase::initialize(stage);
+    initializeBase(stage);
 
     if (stage == 0)
     {
@@ -266,9 +312,11 @@ void Ieee80211Mesh::startGateWay()
     isGateWay = true;
     if (gateWayDataMap == NULL)
         gateWayDataMap = new GateWayDataMap;
+    char mameclass[60];
     cGate *g = gate("toEthernet")->getPathEndGate();
     MACAddress ethAddr;
-    if (strcmp(g->getOwnerModule()->getClassName(), "EtherEncapMesh")!=0)
+    strcpy(mameclass,g->getOwnerModule()->getClassName());
+    if (strcmp(mameclass, "EtherEncapMesh")!=0)
         return;
     // find the interface
     char interfaceName[100];
@@ -337,6 +385,11 @@ void Ieee80211Mesh::handleMessage(cMessage *msg)
     {
         // process incoming frame
         EV << "Frame arrived from MAC: " << msg << "\n";
+        if (msggate->isVector())
+            msg->setKind(msggate->getIndex());
+        else
+            msg->setKind(-1);
+
         if (dynamic_cast<Ieee80211ActionHWMPFrame *>(msg))
         {
             if ((routingModuleHwmp != NULL) && (routingModuleHwmp->isOurType(PK(msg))))
@@ -1072,7 +1125,7 @@ void Ieee80211Mesh::sendOut(cMessage *msg)
     //InterfaceEntry *ie = ift->getInterfaceById(msg->getKind());
     msg->setKind(0);
     //send(msg, macBaseGateId + ie->getNetworkLayerGateIndex());
-    send(msg, "macOut");
+    send(msg, "macOut",msg->getKind());
 }
 
 
@@ -1824,3 +1877,25 @@ bool Ieee80211Mesh::isAddressForUs(const MACAddress &add)
         return false;
 }
 
+bool Ieee80211Mesh::getCostNode(const MACAddress &add, unsigned int &cost)
+{
+/*
+    if (routingModuleProactive)
+    {
+         routingModuleProactive->getNextHop();
+    }
+    if (routingModuleReactive)
+    {
+        return  routingModuleReactive->addressIsForUs(add.getInt());
+    }
+    if (routingModuleHwmp)
+    {
+        return routingModuleHwmp->addressIsForUs(add.getInt());
+    }
+
+    else if (add==myAddress)
+        return true;
+    else
+    */
+        return false;
+}

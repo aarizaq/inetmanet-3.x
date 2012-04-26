@@ -159,12 +159,14 @@ void MVRP::handleMVRPDUtime(cMessage * msg)
 				MVRPDU * frame=new MVRPDU();
 				frame->setPortIndex(i);   //
 				frame->setVIDSArraySize(VIDS.size());
-				frame->setDest("01-80-C2-00-00-0D");
+				frame->setDest(MACAddress("01-80-C2-00-00-0D"));
 				frame->setSrc(address);
 				for(unsigned int k=0;k<VIDS.size();k++)
 				{
 					frame->setVIDS(k,VIDS[k]);
 				}
+                if (frame->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+                    frame->setByteLength(MIN_ETHERNET_FRAME_BYTES);
 				Delivery* frame2=new Delivery();
 				frame2->setSendByPort(i);
 				frame2->encapsulate(frame);

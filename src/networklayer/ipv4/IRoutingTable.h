@@ -27,15 +27,6 @@
 #include "IPv4RouteRule.h"
 
 
-/** Returned by IRoutingTable as the result of multicast routing */
-struct MulticastRoute
-{
-    InterfaceEntry *interf;
-    IPv4Address gateway;
-};
-typedef std::vector<MulticastRoute> MulticastRoutes;
-
-
 /**
  * A C++ interface to abstract the functionality of IRoutingTable.
  * Referring to IRoutingTable via this interface makes it possible to
@@ -53,6 +44,11 @@ class INET_API IRoutingTable
      * For debugging
      */
     virtual void printRoutingTable() const = 0;
+
+    /**
+     * For debugging
+     */
+    virtual void printMulticastRoutingTable() const = 0;
 
     /**
      * Returns the host or router this routing table lives in.
@@ -73,6 +69,11 @@ class INET_API IRoutingTable
      * IPv4 forwarding on/off
      */
     virtual bool isIPForwardingEnabled() = 0;
+
+    /**
+     * IPv4 multicast forwarding on/off
+     */
+    virtual bool isMulticastForwardingEnabled() = 0;
 
     /**
      * Returns routerId.
@@ -98,6 +99,12 @@ class INET_API IRoutingTable
      * broadcast addresses derived from the interface addresses and netmasks.
      */
     virtual bool isLocalBroadcastAddress(const IPv4Address& dest) const = 0;
+
+    /**
+     * Returns the interface entry having the specified address
+     * as its local broadcast address.
+     */
+    virtual InterfaceEntry *findInterfaceByLocalBroadcastAddress(const IPv4Address& dest) const = 0;
 
     /**
      * The routing function. Performs longest prefix match for the given
@@ -134,17 +141,16 @@ class INET_API IRoutingTable
     virtual bool isLocalMulticastAddress(const IPv4Address& dest) const = 0;
 
     /**
-     * Returns routes for a multicast address.
+     * Returns route for a multicast origin and group.
      */
-    virtual MulticastRoutes getMulticastRoutesFor(const IPv4Address& dest) const = 0;
+    virtual const IPv4MulticastRoute *findBestMatchingMulticastRoute(const IPv4Address &origin, const IPv4Address& group) const = 0;
     //@}
 
     /** @name Route table manipulation */
     //@{
 
     /**
-     * Returns the total number of routes (unicast, multicast, plus the
-     * default route).
+     * Returns the total number of unicast routes.
      */
     virtual int getNumRoutes() const = 0;
 
@@ -179,6 +185,36 @@ class INET_API IRoutingTable
     virtual bool deleteRoute(IPv4Route *entry) = 0;
 
     /**
+     * Returns the total number of multicast routes.
+     */
+    virtual int getNumMulticastRoutes() const = 0;
+
+    /**
+     * Returns the kth multicast route.
+     */
+    virtual IPv4MulticastRoute *getMulticastRoute(int k) const = 0;
+
+    /**
+     * Adds a multicast route to the routing table. Routes are allowed to be modified
+     * while in the routing table. (There is a notification mechanism that
+     * allows routing table internals to be updated on a routing entry change.)
+     */
+    virtual void addMulticastRoute(IPv4MulticastRoute *entry) = 0;
+
+    /**
+     * Removes the given route from the routing table, and returns it.
+     * NULL is returned of the route was not in the routing table.
+     */
+    virtual IPv4MulticastRoute *removeMulticastRoute(IPv4MulticastRoute *entry) = 0;
+
+    /**
+     * Deletes the given multicast route from the routing table.
+     * Returns true if the route was deleted, and false if it was
+     * not in the routing table.
+     */
+    virtual bool deleteMulticastRoute(IPv4MulticastRoute *entry) = 0;
+
+    /**
      * Deletes invalid routes from the routing table. Invalid routes are those
      * where the isValid() method returns false.
      */
@@ -195,6 +231,13 @@ class INET_API IRoutingTable
      * notifications.
      */
     virtual void routeChanged(IPv4Route *entry, int fieldCode) = 0;
+
+    /**
+     * To be called from multicast route objects whenever a field changes. Used for
+     * maintaining internal data structures and firing "routing table changed"
+     * notifications.
+     */
+    virtual void multicastRouteChanged(IPv4MulticastRoute *entry, int fieldCode) = 0;
     //@}
     // Rules (similar to linux iptables)
     virtual void addRule(bool output,IPv4RouteRule *entry) = 0;

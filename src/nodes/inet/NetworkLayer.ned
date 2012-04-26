@@ -19,7 +19,7 @@
 package inet.nodes.inet;
 
 import inet.networklayer.ipv4.IPv4;
-import inet.networklayer.ipv4.IGMP;
+import inet.networklayer.ipv4.IIGMP;
 import inet.networklayer.ipv4.ICMP;
 import inet.networklayer.ipv4.ErrorHandling;
 import inet.networklayer.arp.ARP;
@@ -35,6 +35,7 @@ module NetworkLayer
     parameters:
         @display("i=block/fork");
         bool proxyARP = default(true);
+        string igmpType = default("IGMPv2");
     gates:
         input ifIn[] @labels(IPv4Datagram);
         input tcpIn @labels(TCPSegment,IPv4ControlInfo/down);
@@ -42,16 +43,18 @@ module NetworkLayer
         input sctpIn @labels(IPv4ControlInfo/down,SCTPPacket);
         input rsvpIn @labels(IPv4ControlInfo/down);
         input ospfIn @labels(IPv4ControlInfo/down);
-        input pingIn;
+        input pingIn[];
         input manetIn;
+        input igmpIn;
         output ifOut[] @labels(IPv4Datagram);
         output tcpOut @labels(TCPSegment,IPv4ControlInfo/up);
         output udpOut @labels(UDPPacket,IPv4ControlInfo/up);
         output sctpOut @labels(IPv4ControlInfo/up,SCTPPacket);
         output rsvpOut @labels(IPv4ControlInfo/up);
         output ospfOut @labels(IPv4ControlInfo/up);
-        output pingOut;
+        output pingOut[];
         output manetOut;
+        output igmpOut;
 
     submodules:
         ip: IPv4 {
@@ -74,7 +77,7 @@ module NetworkLayer
             parameters:
                 @display("p=160,63");
         }
-        igmp: IGMP {
+        igmp: <igmpType> like IIGMP {
             parameters:
                 @display("p=39,33");
         }
@@ -94,8 +97,8 @@ module NetworkLayer
         ip.transportOut[2] --> icmp.localIn;
         ip.transportIn[2] <-- icmp.sendOut;
 
-        ip.transportOut[3] --> igmp.localIn;
-        ip.transportIn[3] <-- igmp.sendOut;
+        ip.transportOut[3] --> igmp.ipIn;
+        ip.transportIn[3] <-- igmp.ipOut;
 
         ip.transportOut[4] --> { @display("m=n"); } --> rsvpOut;
         ip.transportIn[4] <-- { @display("m=n"); } <-- rsvpIn;
@@ -109,12 +112,19 @@ module NetworkLayer
         ip.transportOut[7] --> { @display("m=n"); } --> manetOut;
         ip.transportIn[7] <-- { @display("m=n"); } <-- manetIn;
 
-        icmp.pingOut --> { @display("m=n"); } --> pingOut;
-        icmp.pingIn <-- { @display("m=n"); } <-- pingIn;
+        for i=0..sizeof(pingOut)-1 {
+            icmp.pingOut++ --> { @display("m=n"); } --> pingOut[i];
+        }
+        for i=0..sizeof(pingIn)-1 {
+            icmp.pingIn++ <-- { @display("m=n"); } <-- pingIn[i];
+        }
 
         icmp.errorOut --> errorHandling.in;
 
         ip.queueOut --> arp.ipIn;
+
+        igmp.routerOut --> igmpOut;
+        igmp.routerIn <-- igmpIn;
 
         for i=0..sizeof(ifIn)-1 {
             ifIn[i] --> { @display("m=s"); } --> ip.queueIn[i];

@@ -25,7 +25,7 @@ import inet.linklayer.ppp.PPPInterface;
 import inet.networklayer.common.InterfaceTable;
 import inet.networklayer.ipv4.RoutingTable;
 import inet.nodes.inet.NetworkLayer;
-import inet.applications.pingapp.PingApp;
+import inet.applications.IPingApp;
 import inet.applications.ITCPApp;
 import inet.applications.IUDPApp;
 import inet.linklayer.ieee80211.Ieee80211NewNic;
@@ -33,7 +33,7 @@ import inet.transport.udp.UDP;
 import inet.transport.tcp.TCP;
 import inet.mobility.models.StationaryMobility;
 import inet.linklayer.ieee80211.Ieee80211Nic;
-import  inet.underTest.linklayer.ieee80211.mgmt.Ieee80211NicExtended;
+import inet.underTest.linklayer.ieee80211.mgmt.Ieee80211NicExtended;
 //
 // \Wireless IP router.
 //
@@ -44,6 +44,7 @@ module WirelessRouterExtended
         string routingFile = default("");
         int numTcpApps = default(0);
         int numUdpApps = default(0);
+        int numPingApps = default(0);  // no of PING apps. Specify the app types in INI file with pingApp[0..1].typename="PingApp" syntax        
         string tcpAppType = default("n/a");
         string udpAppType = default("n/a");
         string mgmtType = default("IEEE80211MgmtAPExtended");
@@ -99,8 +100,9 @@ module WirelessRouterExtended
             parameters:
                 @display("p=453,194");
         }
-        pingApp: PingApp {
-            @display("p=56,156");
+        pingApp[numPingApps]: <default("PingApp")> like IPingApp {
+            parameters:
+                @display("p=369,254");
         }
         nullMobility: StationaryMobility {
             @display("p=393,60");
@@ -137,8 +139,10 @@ module WirelessRouterExtended
         networkLayer.udpOut --> udp.ipIn;
         tcp.ipOut --> networkLayer.tcpIn;
         networkLayer.tcpOut --> tcp.ipIn;
-        pingApp.pingOut --> networkLayer.pingIn;
-        networkLayer.pingOut --> pingApp.pingIn;
+        for i=0..numPingApps-1 {
+            networkLayer.pingOut++ --> pingApp[i].pingIn;
+            networkLayer.pingIn++ <-- pingApp[i].pingOut;
+        }
         networkLayer.ifOut++ --> wlan.upperLayerIn;
         wlan.upperLayerOut --> networkLayer.ifIn++;
         radioIn --> wlan.radioIn;

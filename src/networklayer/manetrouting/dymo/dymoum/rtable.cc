@@ -443,26 +443,27 @@ rtable_entry_t *NS_CLASS rtable_insert(struct in_addr dest_addr,
                 e->rt_is_gw     != is_gw &&
                 e->cost         != cost &&
                 e->rt_hopfix    != hopfix)
-            rtable_update(e,dest_addrAux,nxthop_addr, ifindex, seqnum, prefix, hopcnt, is_gw, cost, hopfix);
-            return e;
+            return rtable_update(e, dest_addrAux, nxthop_addr, ifindex, seqnum, prefix, hopcnt, is_gw, cost, hopfix);
         }
         else
-            return rtable_insert(dest_addrAux,nxthop_addr, ifindex, seqnum, prefix, hopcnt, is_gw, cost, hopfix);
+            return rtable_insert(dest_addrAux, nxthop_addr, ifindex, seqnum, prefix, hopcnt, is_gw, cost, hopfix);
     }
 
 
     DymoRoutingTable::iterator it = dymoRoutingTable->find(dest_addr.s_addr);
     if (it != dymoRoutingTable->end())
-        entry = it->second;
-    else
     {
-        // Create the new entry
-        if ((entry = new rtable_entry_t)== NULL)
-        {
-            dlog(LOG_ERR, errno, __FUNCTION__, "malloc() failed");
-            exit(EXIT_FAILURE);
-        }
+        delete it->second;
+        dymoRoutingTable->erase(it);
     }
+
+    // Create the new entry
+    if ((entry = new rtable_entry_t)== NULL)
+    {
+        dlog(LOG_ERR, errno, __FUNCTION__, "malloc() failed");
+        exit(EXIT_FAILURE);
+    }
+
     memset(entry, 0, sizeof(rtable_entry_t));
 
     entry->rt_ifindex   = ifindex;
@@ -524,16 +525,29 @@ rtable_entry_t *NS_CLASS rtable_update(rtable_entry_t *entry,
                                        uint8_t hopfix)
 {
 
-    if (entry->rt_dest_addr.s_addr != dest_addr.s_addr)
-    {
         // possible AP check
-        Uint128 apAdd;
-        if (getAp(dest_addr.s_addr, apAdd))
+    Uint128 apAdd;
+    if (getAp(dest_addr.s_addr, apAdd))
+    {
+        if (entry->rt_dest_addr.s_addr == dest_addr.s_addr)
+        {
+            rtable_delete(entry);
+            struct in_addr inapAdd;
+            inapAdd.s_addr = apAdd;
+            entry = rtable_find(inapAdd);
+        }
+        if (entry)
         {
             if (entry->rt_dest_addr.s_addr == apAdd )
                 return rtable_update(entry,entry->rt_dest_addr,nxthop_addr, ifindex, seqnum, prefix, hopcnt, is_gw, cost, hopfix);
             else
                 opp_error("DYMO routing data base error");
+        }
+        else
+        {
+            struct in_addr inapAdd;
+            inapAdd.s_addr = apAdd;
+            return rtable_insert(inapAdd,nxthop_addr, ifindex, seqnum, prefix, hopcnt, is_gw, cost, hopfix);
         }
     }
     struct in_addr netmask;
