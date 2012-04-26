@@ -64,7 +64,7 @@
 Define_Module(OLSR);
 
 
-
+uint32 OlsrAddressSize::ADDR_SIZE = ADDR_SIZE_DEFAULT;
 
 /********** Timers **********/
 
@@ -441,6 +441,8 @@ OLSR::initialize(int stage)
     if (stage==4)
     {
 
+       if (isInMacLayer())
+           OlsrAddressSize::ADDR_SIZE = 6;
        OLSR_HELLO_INTERVAL=par("OLSR_HELLO_INTERVAL");
 
 	/// TC messages emission interval.
