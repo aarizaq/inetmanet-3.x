@@ -98,6 +98,7 @@ Ieee80211Mesh::Ieee80211Mesh()
     isGateWay = false;
     hasLocator = false;
     hasRelayUnit = false;
+    numRoutingBytes = 0;
 }
 
 void Ieee80211Mesh::initializeBase(int stage)
@@ -1125,6 +1126,10 @@ void Ieee80211Mesh::sendOut(cMessage *msg)
     //InterfaceEntry *ie = ift->getInterfaceById(msg->getKind());
     msg->setKind(0);
     //send(msg, macBaseGateId + ie->getNetworkLayerGateIndex());
+    Ieee80211MeshFrame *frameMesh = dynamic_cast<Ieee80211MeshFrame*>(msg);
+    if (frameMesh && frameMesh->getSubType() == ROUTING)
+        numRoutingBytes += frameMesh->getByteLength();
+
     send(msg, "macOut",msg->getKind());
 }
 
@@ -1898,4 +1903,9 @@ bool Ieee80211Mesh::getCostNode(const MACAddress &add, unsigned int &cost)
     else
     */
         return false;
+}
+
+void Ieee80211Mesh::finish()
+{
+    recordScalar("bytes routing ", numRoutingBytes);
 }
