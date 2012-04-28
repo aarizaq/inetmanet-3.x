@@ -1129,6 +1129,11 @@ void Ieee80211Mesh::sendOut(cMessage *msg)
     Ieee80211MeshFrame *frameMesh = dynamic_cast<Ieee80211MeshFrame*>(msg);
     if (frameMesh && frameMesh->getSubType() == ROUTING)
         numRoutingBytes += frameMesh->getByteLength();
+    else if (dynamic_cast<Ieee80211ActionHWMPFrame *>(msg))
+    {
+        Ieee80211ActionHWMPFrame *hwmpFrame = dynamic_cast<Ieee80211ActionHWMPFrame *>(msg);
+        numRoutingBytes += hwmpFrame->getByteLength();
+    }
 
     send(msg, "macOut",msg->getKind());
 }
