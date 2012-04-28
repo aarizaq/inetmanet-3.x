@@ -20,7 +20,7 @@
 #include "ObstacleControl.h"
 
 
-class INET_API Ieee802154Phy : public ChannelAccess
+class INET_API Ieee802154Phy : public ChannelAccess, public IPowerControl
 {
     public:
         static uint16_t aMaxPHYPacketSize; //max PSDU size (in bytes) the PHY shall be able to receive
