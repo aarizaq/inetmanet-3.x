@@ -307,7 +307,7 @@ void Ieee802154Phy::handleMessage(cMessage *msg)
     }
     else if (processAirFrame (check_and_cast<AirFrame*>(msg)))
     {
-        if (phyRadioState == phy_RX_ON)
+        if (this->isEnabled() && receiverConnect)
         {
             // must be an AirFrame
             AirFrame *airframe = (AirFrame *) msg;
@@ -492,9 +492,8 @@ void Ieee802154Phy::handleLowerMsgStart(AirFrame * airframe)
     // Calculate the receive power of the message
 
     // calculate distance
-    const Coord& myPos = getRadioPosition();
     const Coord& framePos = airframe->getSenderPos();
-    double distance = myPos.distance(framePos);
+    double distance = getRadioPosition().distance(framePos);
     if (distance<MIN_DISTANCE)
         distance = MIN_DISTANCE;
 
@@ -529,7 +528,7 @@ void Ieee802154Phy::handleLowerMsgStart(AirFrame * airframe)
     // arrived in time
     // NOTE: a message may have arrival time in the past here when we are
     // processing ongoing transmissions during a channel change
-    if (airframe->getArrivalTime() == simTime() && rcvdPower >= sensitivity && snrInfo.ptr == NULL)
+    if (airframe->getArrivalTime() == simTime() && rcvdPower >= sensitivity && rs.getState() != RadioState::TRANSMIT && snrInfo.ptr == NULL)
     {
         EV << "[PHY]: start receiving " << airframe->getName() << " frame ...\n";
 
@@ -541,7 +540,12 @@ void Ieee802154Phy::handleLowerMsgStart(AirFrame * airframe)
 
         // add initial snr value
         addNewSnr();
-        setRadioState(RadioState::RECV);
+        if (rs.getState() != RadioState::RECV)
+        {
+            // publish new RadioState
+            EV << "publish new RadioState:RECV\n";
+            setRadioState(RadioState::RECV);
+        }
     }
     // receive power is too low or another message is being received
     else
@@ -615,7 +619,6 @@ void Ieee802154Phy::handleLowerMsgEnd(AirFrame * airframe)
             cinfo->setLossRate(-1);
             cinfo->setRecPow(airframe->getPowRec());
             frame->setControlInfo(cinfo);
-            delete airframe;
 
             if (isCollision)
                 frame->setKind(COLLISION);
@@ -632,14 +635,16 @@ void Ieee802154Phy::handleLowerMsgEnd(AirFrame * airframe)
 
         // delete the frame from the recvBuff
         recvBuff.erase(airframe);
-        if (isCorrupt)  delete airframe;
+        delete airframe;
     }
     // all other messages are noise
     else
     {
         EV << "[PHY]: reception of noise message " << airframe->getName() <<" is over, removing recvdPower from noiseLevel....\n";
-        noiseLevel -= recvBuff[airframe];   // get the rcvdPower and subtract it from the noiseLevel
+        noiseLevel -= recvBuff[airframe]; // get the rcvdPower and subtract it from the noiseLevel
         recvBuff.erase(airframe);       // delete message from the recvBuff
+        if (recvBuff.empty())
+            noiseLevel = thermalNoise;
 
         // update snr info for message currently being received if any
         if (snrInfo.ptr != NULL)    addNewSnr();

@@ -42,6 +42,9 @@
 class INET_API Ieee80211Mesh : public Ieee80211MgmtBase
 {
 private:
+    uint64_t numRoutingBytes;
+    unsigned int numMac;
+
     cMessage *WMPLSCHECKMAC;
     cMessage *gateWayTimeOut;
 
@@ -127,12 +130,15 @@ private:
 
     bool hasLocator;
     bool hasRelayUnit;
+  protected:
+    virtual void initializeBase(int stage);
 
   public:
     Ieee80211Mesh();
     virtual ~Ieee80211Mesh();
     bool getCostNode(const MACAddress &, unsigned int &);
   protected:
+    virtual void finish();
     virtual int numInitStages() const {return 6;}
     virtual void initialize(int);
 

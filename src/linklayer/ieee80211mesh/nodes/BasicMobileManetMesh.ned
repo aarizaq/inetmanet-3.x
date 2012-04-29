@@ -22,6 +22,7 @@ package inet.linklayer.ieee80211mesh.nodes;
 import inet.base.MMapBoard;
 import inet.base.NotificationBoard;
 import inet.linklayer.ieee80211mesh.Ieee80211NewNicMesh;
+import inet.linklayer.ieee80211mesh.Ieee80211NewNicMeshMulti;
 import inet.networklayer.common.InterfaceTable;
 import inet.base.Sink;
 
@@ -61,9 +62,9 @@ module BasicMobileManetMesh
         @node();
         @display("i=device/pocketpc_s");
         string mobilityType = default("StationaryMobility");
-        int numRadios = default(1);
+        int meshChannels = default(1);
     gates:
-        input radioIn[numRadios] @directIn;
+        input radioIn[meshChannels] @directIn;
 
     submodules:
         routingTable: RoutingTable {
@@ -86,12 +87,13 @@ module BasicMobileManetMesh
             @display("p=159,294;i=block/sink");
         }
         // the name of radio interface must have "wlan", valid examples wlan, wlan802, localwlan ....
-        wlan[numRadios]: Ieee80211NewNicMesh {
+        wlan: Ieee80211NewNicMeshMulti {
             parameters:
+                numChannels = meshChannels;
                 @display("p=159,386;q=queue");
         }
         // optional mobility module. Required only if wireless cards are present
-        mobility: <mobilityType> like IMobility if mobilityType != "" && numRadios > 0 {
+        mobility: <mobilityType> like IMobility if mobilityType != "" && meshChannels > 0 {
             parameters:
                 @display("p=30,62");
         }
@@ -104,11 +106,12 @@ module BasicMobileManetMesh
     connections allowunconnected:
 
         // connections to network outside
-        for i=0..sizeof(radioIn)-1 {
-            radioIn[i] --> wlan[i].radioIn;
-            wlan[i].upperLayerOut --> sink.ifIn++;
-            wlan[i].upperLayerIn <-- sink.ifOut++;
+        for i=0..sizeof(meshChannels)-1 {
+            radioIn[i] --> wlan.radioIn[i];
+
         }
+        wlan.upperLayerOut --> sink.ifIn++;
+        wlan.upperLayerIn <-- sink.ifOut++;
 }
 
 

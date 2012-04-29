@@ -97,12 +97,15 @@ struct re_block
 };
 
 #define MAX_RERR_BLOCKS 50L
-//#define RE_BLOCK_SIZE (isInMacLayer()?12:10)
-#define RE_BLOCK_SIZE   10U
+#define RE_BLOCK_SIZE (this->isInMacLayer()?12:10)
+#define RE_BASIC_SIZE  (this->isInMacLayer()? 17U: 13U)
+//#define RE_BLOCK_SIZE  10U
 #define RE_BLOCK_LENGTH sizeof(struct re_block)
-#define RE_SIZE     (23+(RE_BLOCK_SIZE*MAX_RERR_BLOCKS))U
+//#define RE_SIZE     (23+(RE_BLOCK_SIZE*MAX_RERR_BLOCKS))U
+#define RE_SIZE    (this->isInMacLayer()? (25+(RE_BLOCK_SIZE*MAX_RERR_BLOCKS))U:(23+(RE_BLOCK_SIZE*MAX_RERR_BLOCKS))U)
 //#define RE_BASIC_SIZE 11U
-#define RE_BASIC_SIZE   13U
+//#define RE_BASIC_SIZE   13U
+
 #define RE Dymo_RE
 
 struct Dymo_RE : public DYMO_element
