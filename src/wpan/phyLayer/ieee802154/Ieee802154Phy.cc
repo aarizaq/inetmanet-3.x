@@ -34,6 +34,8 @@ Ieee802154Phy::Ieee802154Phy() : rs(this->getId())
     updateString =NULL;
     transceiverConnect = true;
     receiverConnect = true;
+    numReceivedCorrectly = 0;
+    numGivenUp = 0;
 
 }
 
@@ -625,6 +627,18 @@ void Ieee802154Phy::handleLowerMsgEnd(AirFrame * airframe)
             else if (CCA_timer->isScheduled())  // during CCA, tell MAC layer to discard this pkt
                 frame->setKind(RX_DURING_CCA);
 
+            if (frame->getKind() == PACKETOK)
+                numReceivedCorrectly++;
+            else
+                numGivenUp++;
+
+            if ( (numReceivedCorrectly+numGivenUp)%50 == 0)
+            {
+                double lossRate = (double)numGivenUp/((double)numReceivedCorrectly+(double)numGivenUp);
+                emit(lossRateSignal, lossRate);
+                numReceivedCorrectly = 0;
+                numGivenUp = 0;
+            }
             sendUp(frame);
         }
 
@@ -1084,6 +1098,7 @@ void Ieee802154Phy::changeChannel(int channel)
 
     // do channel switch
     rs.setBitrate(getRate('b'));  // bitrate also changed
+    emit(bitrateSignal, getRate('b'));
 
     cc->setRadioChannel(myRadioRef, rs.getChannelNumber());
 
@@ -1203,6 +1218,8 @@ uint16_t Ieee802154Phy::calculateEnergyLevel()
 
 void Ieee802154Phy::setRadioState(RadioState::State newState)
 {
+    if (rs.getState() != newState)
+        emit(radioStateSignal, newState);
     rs.setState(newState);
     nb->fireChangeNotification(NF_RADIOSTATE_CHANGED, &rs);
 }

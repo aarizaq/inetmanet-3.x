@@ -49,12 +49,14 @@ simple Ieee802154Phy
         int aMaxFrameOverhead  = default(25);       //max # of octets added by the MAC sublayer to its payload w/o security.//max # of octets that can be transmitted in the MAC frame payload field
 
 
-        @statistic[bitrate](title="Bitrate"; record=timeavg,vector; interpolationmode=sample-hold; );
-        @statistic[channelNo](title="Channel no"; record=histogram,vector; interpolationmode=sample-hold; ); //vector
-        @statistic[radioState](title="Radio state (enum)"; record=histogram,vector; interpolationmode=sample-hold; ); //vector
-        @statistic[lossRate](title="Packet loss rate"; record=timeavg,vector; interpolationmode=sample-hold; );
-        
-
+        @signal[bitrate](type="double";unit=bps); // current transmit bitrate
+        @signal[channelNo](type=long);
+        @signal[radioState](type=long);  // enum
+        @signal[lossRate](type="double"); // 0..1; percentage of frames received incorrectly in the last period
+        @statistic[bitrate](title="tx bitrate"; record=min,max,timeavg,vector; interpolationmode=sample-hold;unit=bps);
+        @statistic[channelNo](title="channel no"; record=histogram,vector; interpolationmode=sample-hold);
+        @statistic[radioState](title="radio state (enum)"; record=count,vector; interpolationmode=sample-hold);
+        @statistic[lossRate](title="packet loss rate"; record=min,max,timeavg,vector; interpolationmode=backward-sample-hold);
 
     gates:
         input upperLayerIn;			// from Mac

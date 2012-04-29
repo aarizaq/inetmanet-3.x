@@ -143,6 +143,8 @@ class INET_API Ieee802154Phy : public ChannelAccess, public IPowerControl
         simtime_t updateStringInterval;
 
         // statistics:
+        unsigned long numReceivedCorrectly;
+        unsigned long numGivenUp;
         static simsignal_t bitrateSignal;
         static simsignal_t radioStateSignal; //enum
         static simsignal_t channelNumberSignal;
