@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2006 Isabel Dietrich <isabel.dietrich@informatik.uni-erlangen.de>
+// Copyright (C) 2012 Alfonso Ariza, Universidad de Malaga
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

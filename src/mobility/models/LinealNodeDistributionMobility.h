@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 Isabel Dietrich <isabel.dietrich@informatik.uni-erlangen.de>
+ *  Copyright (C) 2012 Alfonso Ariza, Universidad de Malaga
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,10 +27,10 @@
 
 /**
  * @brief Mobility model which places all hosts at constant distances
- *  within the simulation area (resulting in a regular grid).
+ * in a line with an orientation
  *
  * @ingroup mobility
- * @author Isabel Dietrich
+ * @author Alfonso Ariza
  */
 class INET_API LinealNodeDistributionMobility : public StationaryMobility
 {
