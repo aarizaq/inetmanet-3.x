@@ -18,17 +18,8 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-package inet.applications.traci;
+package inet.examples.traci_launchd;
 
-//
-// TraCI IVC Demo
-//
-simple TraCIDemo
+network scenario extends Highway
 {
-    parameters:
-        bool debug = default(false);  // output debugging information
-
-        @display("i=block/app2");
-    gates:
-        inout udp;
 }

@@ -18,17 +18,20 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-package inet.applications.traci;
+package inet.examples.traci;
 
-//
-// TraCI IVC Demo
-//
-simple TraCIDemo
+import inet.world.radio.ChannelControl;
+import inet.world.traci.TraCIScenarioManager;
+
+module Highway
 {
-    parameters:
-        bool debug = default(false);  // output debugging information
-
-        @display("i=block/app2");
-    gates:
-        inout udp;
+    submodules:
+        channelControl: ChannelControl {
+            parameters:
+                @display("p=256,128");
+        }
+        manager: TraCIScenarioManager {
+            parameters:
+                @display("p=512,128");
+        }
 }
