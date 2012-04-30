@@ -145,6 +145,7 @@ class INET_API Ieee802154Phy : public ChannelAccess, public IPowerControl
         // statistics:
         unsigned long numReceivedCorrectly;
         unsigned long numGivenUp;
+        double lossRate;
         static simsignal_t bitrateSignal;
         static simsignal_t radioStateSignal; //enum
         static simsignal_t channelNumberSignal;

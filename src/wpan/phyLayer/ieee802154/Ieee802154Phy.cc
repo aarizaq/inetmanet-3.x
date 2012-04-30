@@ -634,7 +634,7 @@ void Ieee802154Phy::handleLowerMsgEnd(AirFrame * airframe)
 
             if ( (numReceivedCorrectly+numGivenUp)%50 == 0)
             {
-                double lossRate = (double)numGivenUp/((double)numReceivedCorrectly+(double)numGivenUp);
+                lossRate = (double)numGivenUp/((double)numReceivedCorrectly+(double)numGivenUp);
                 emit(lossRateSignal, lossRate);
                 numReceivedCorrectly = 0;
                 numGivenUp = 0;
