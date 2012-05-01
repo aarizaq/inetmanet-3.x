@@ -3029,7 +3029,7 @@ const MACAddress & Ieee80211NewMac::isInterfaceRegistered()
             *d++ = *s;
     *d = '\0';
     InterfaceEntry * e = ift->getInterfaceByName(interfaceName);
-    delete interfaceName;
+    delete [] interfaceName;
     if (e)
         return e->getMacAddress();
     return MACAddress::UNSPECIFIED_ADDRESS;

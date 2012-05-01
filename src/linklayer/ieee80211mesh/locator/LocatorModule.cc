@@ -69,6 +69,13 @@ LocatorModule::~LocatorModule()
 void LocatorModule::handleMessage(cMessage *msg)
 {
     LocatorPkt *pkt = dynamic_cast<LocatorPkt*> (msg);
+
+    if (!pkt)
+    {
+        delete msg;
+        return;
+    }
+
     if (pkt->getOpcode() == ReplyAddress)
     {
         processReply(pkt);
@@ -160,7 +167,7 @@ void LocatorModule::handleMessage(cMessage *msg)
     }
     if (socket)
     {
-        if (pkt->getControlInfo())
+        if (pkt && pkt->getControlInfo())
             delete pkt->removeControlInfo();
         socket->sendTo(pkt,IPv4Address::ALLONES_ADDRESS,port, interfaceId);
     }
