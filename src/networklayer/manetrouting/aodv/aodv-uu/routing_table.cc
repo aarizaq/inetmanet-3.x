@@ -78,13 +78,11 @@ rt_table_t *NS_CLASS rt_table_insert(struct in_addr dest_addr,
                                      u_int16_t flags, unsigned int ifindex,
                                      uint32_t cost,uint8_t hopfix)
 {
-    hash_value hash;
     rt_table_t *rt;
     struct in_addr nm;
     Uint128 dest;
     nm.s_addr = 0;
 
-    /* Calculate hash key */
     dest = dest_addr.s_addr;
     /* Check if we already have an entry for dest_addr */
     AodvRtTableMap::iterator it = aodvRtTableMap.find(dest);
@@ -127,14 +125,13 @@ rt_table_t *NS_CLASS rt_table_insert(struct in_addr dest_addr,
     }
 
     memset(rt, 0, sizeof(rt_table_t));
-
     rt->dest_addr = dest_addr;
     rt->next_hop = next;
     rt->dest_seqno = seqno;
     rt->flags = flags;
     rt->hcnt = hops;
     rt->ifindex = ifindex;
-    rt->hash = hash;
+    rt->hash = NULL;
     rt->state = state;
     rt->cost = cost;
     rt->hopfix = hopfix;

@@ -99,7 +99,7 @@ void CommonPartSublayerUp::handleLowerMsg(cPacket *msg)
 //
 void CommonPartSublayerUp::handleMacFrameType(Ieee80216MacHeader *MacFrame)
 {
-    if (MacFrame->getHT() == 0) // Mac Frame ist ein Generic Mac Frame
+    if (MacFrame && MacFrame->getHT() == 0) // Mac Frame ist ein Generic Mac Frame
     {
         Ieee80216GenericMacHeader* GenericMacFrame =
             dynamic_cast<Ieee80216GenericMacHeader *>(MacFrame);
