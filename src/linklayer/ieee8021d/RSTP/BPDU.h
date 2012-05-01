@@ -21,6 +21,7 @@ class BPDUieee8021D : public BPDUieee8021D_Base
 {
     public:
       BPDUieee8021D(); //: BPDU_Base() {}
+      virtual ~BPDUieee8021D() {}
       BPDUieee8021D(const BPDUieee8021D& other) : BPDUieee8021D_Base() {operator=(other);}
       BPDUieee8021D& operator=(const BPDUieee8021D& other) {BPDUieee8021D_Base::operator=(other); return *this;}
       // ADD CODE HERE to redefine and implement pure virtual functions from BPDU_Base

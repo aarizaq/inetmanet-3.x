@@ -31,27 +31,27 @@ class Admacrelay : public Relay1Q
 		Cache1AH *cache;   /// SwTable module pointer.
 	public:
 		Admacrelay();
-		~Admacrelay();
+		virtual ~Admacrelay();
 	protected:
-	virtual void initialize(int stage);
-	virtual int numInitStages() const {return 3;}
+	    virtual void initialize(int stage);
+	    virtual int numInitStages() const {return 3;}
 
 
 
 	/**
 	 * 802.1ah handler. Determines correct output gate and calls relayMsg.
 	 */
-	virtual void handleEtherFrame(EthernetIIFrame *frame);  /// 802.1ah handler.
+	    virtual void handleEtherFrame(EthernetIIFrame *frame);  /// 802.1ah handler.
 
 	/**
 	 * Does the relaying task.
 	 */
-	virtual void relayMsg(cMessage * msg,std::vector <int> outputPorts);
+	    virtual void relayMsg(cMessage * msg,std::vector <int> outputPorts);
 
 	/**
 	 * @brief Checks mac and shows if it is a Backbone Service Instance Group address.
 	 */
-	virtual bool isISidBroadcast(MACAddress mac, int ISid);
+	    virtual bool isISidBroadcast(MACAddress mac, int ISid);
 };
 
 #endif
