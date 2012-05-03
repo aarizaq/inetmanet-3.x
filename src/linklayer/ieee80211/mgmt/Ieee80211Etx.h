@@ -105,7 +105,7 @@ class INET_API Ieee80211Etx : public cSimpleModule, public MacEstimateCostProces
 {
   protected:
     MACAddress myAddress;
-    NeighborsMap neighbors;
+    std::vector<NeighborsMap> neighbors;
     cMessage * etxTimer;
     cMessage * ettTimer;
     simtime_t etxInterval;
@@ -120,11 +120,14 @@ class INET_API Ieee80211Etx : public cSimpleModule, public MacEstimateCostProces
     simtime_t  prevTime;
     int powerWindow;
     simtime_t powerWindowTime;
+    unsigned int numInterfaces;
 
   protected:
     virtual int numInitStages() const {return 3;}
     virtual void initialize(int);
-    ~Ieee80211Etx();
+
+    virtual ~Ieee80211Etx();
+
     virtual void handleMessage(cMessage*);
     /** Implements abstract to use routing protocols in the mac layer */
     virtual void handleEtxMessage(MACETXPacket *);
@@ -134,18 +137,36 @@ class INET_API Ieee80211Etx : public cSimpleModule, public MacEstimateCostProces
     virtual void handleBwMessage(MACBwPacket *);
     virtual void receiveChangeNotification(int category, const cObject *details);
   public:
-    virtual double getEtt(const MACAddress &add);
-    virtual double getEtx(const MACAddress &add);
-    virtual double getPrec(const MACAddress &add);
-    virtual double getSignalToNoise(const MACAddress &add);
-    virtual double getPacketErrorToNeigh(const MACAddress &add);
-    virtual double getPacketErrorFromNeigh(const MACAddress &add);
-    virtual void getNeighbors(std::vector<MACAddress> &);
-    uint32_t getAirtimeMetric(const MACAddress &addr);
-    void getAirtimeMetricNeighbors(std::vector<MACAddress> &addr, std::vector<uint32_t> &cost);
+    virtual double getEtx(const MACAddress &add,const int &iface = 0);
+    virtual int getEtx(const MACAddress &add, double &val);
+
+    virtual double getEtt(const MACAddress &add,const int &iface = 0);
+    virtual int getEtt(const MACAddress &add, double &val);
+
+    virtual double getPrec(const MACAddress &add, const int &iface = 0);
+    virtual int getPrec(const MACAddress &add, double &val);
+
+    virtual double getSignalToNoise(const MACAddress &add, const int &iface = 0);
+    virtual int getSignalToNoise(const MACAddress &add, double &val);
+
+    virtual double getPacketErrorToNeigh(const MACAddress &add, const int &iface = 0);
+    virtual int getPacketErrorToNeigh(const MACAddress &add, double &val);
+
+    virtual double getPacketErrorFromNeigh(const MACAddress &add, const int &iface = 0);
+    virtual int getPacketErrorFromNeigh(const MACAddress &add, double &val);
+
+
+    virtual void getNeighbors(std::vector<MACAddress> &,const int &iface = 0);
+
+    uint32_t getAirtimeMetric(const MACAddress &addr, const int &iface = 0);
+
+    void getAirtimeMetricNeighbors(std::vector<MACAddress> &addr, std::vector<uint32_t> &cost, const int &iface = 0);
+
+    virtual void setNumInterfaces(unsigned int iface);
+    unsigned int  getNumInterfaces() {return numInterfaces;}
 
   public:
-    Ieee80211Etx() {};
+    Ieee80211Etx() {setNumInterfaces(1);}
     void setAddress(const MACAddress &add) {myAddress = add;}
     virtual double getCost(int i, MACAddress &add)
     {
@@ -173,8 +194,13 @@ class INET_API Ieee80211Etx : public cSimpleModule, public MacEstimateCostProces
     virtual int getNumNeighbors() {return neighbors.size();}
     virtual int getNeighbors(MACAddress add[])
     {
+        return getNeighbors(add,0);
+    }
+
+    virtual int getNeighbors(MACAddress add[], const int &iface)
+    {
         int i = 0;
-        for (NeighborsMap::iterator it = neighbors.begin(); it != neighbors.end(); it++)
+        for (NeighborsMap::iterator it = neighbors[iface].begin(); it != neighbors[iface].end(); it++)
         {
             add[i] = it->second->getAddress();
             i++;
