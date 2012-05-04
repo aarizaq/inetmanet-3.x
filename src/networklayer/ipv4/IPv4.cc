@@ -945,8 +945,6 @@ void IPv4::fragmentAndSend(IPv4Datagram *datagram, InterfaceEntry *ie, IPv4Addre
 
 
     // FIXME some IP options should not be copied into each fragment, check their COPY bit
-    int headerLength = datagram->getByteLength();
-    int payloadLength = payload->getByteLength();
     int fragmentLength = ((mtu - headerLength) / 8) * 8; // payload only (without header)
     int offsetBase = datagram->getFragmentOffset();
 
@@ -1034,11 +1032,6 @@ void IPv4::reassembleAndDeliver(IPv4Datagram *datagram)
     }
 
     int protocol = datagram->getTransportProtocol();
-    cPacket *packet = NULL;
-    if (protocol != IP_PROT_DSR)
-    {
-        packet = decapsulateIP(datagram);
-    }
 
     if (protocol==IP_PROT_ICMP)
     {
