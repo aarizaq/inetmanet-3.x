@@ -103,7 +103,15 @@ typedef std::map<MACAddress,MacEtxNeighbor*> NeighborsMap;
 
 class INET_API Ieee80211Etx : public cSimpleModule, public MacEstimateCostProcess, public INotifiable
 {
+    enum CostTypes
+    {
+        ETT,
+        ETX,
+        POWER_REC,
+        SIGNALTONOISE
+    };
   protected:
+
     MACAddress myAddress;
     std::vector<NeighborsMap> neighbors;
     cMessage * etxTimer;
@@ -172,16 +180,16 @@ class INET_API Ieee80211Etx : public cSimpleModule, public MacEstimateCostProces
     {
         switch (i)
         {
-        case 0:
+        case ETT:
             return getEtt(add);
             break;
-        case 1:
+        case ETX:
             return getEtx(add);
             break;
-        case 2:
+        case POWER_REC:
             return getPrec(add);
             break;
-        case 3:
+        case SIGNALTONOISE:
             return getSignalToNoise(add);
             break;
         default:

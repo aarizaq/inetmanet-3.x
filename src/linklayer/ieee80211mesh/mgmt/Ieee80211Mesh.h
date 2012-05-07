@@ -96,6 +96,8 @@ private:
     virtual bool forwardMessage (Ieee80211DataFrame *);
     virtual bool macLabelBasedSend (Ieee80211DataFrame *);
     virtual void actualizeReactive(cPacket *pkt,bool out);
+    virtual bool isSendToGateway(Ieee80211DataOrMgmtFrame *frame);
+    virtual int getBestInterface(Ieee80211DataOrMgmtFrame *frame);
 
     //////////////////////////////////////////
     // Gateway structures

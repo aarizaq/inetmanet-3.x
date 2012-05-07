@@ -221,7 +221,7 @@ double Ieee80211Etx::getEtx(const MACAddress &add, const int &iface)
         if (pr>1) pr = 1;
         if (ps>1) ps = 1;
         if (ps == 0 || pr==0)
-            return 1e100;
+            return 1e300;
         return 1/(ps*pr);
     }
 }
@@ -251,9 +251,9 @@ double Ieee80211Etx::getEtt(const MACAddress &add, const int &iface)
         if (pr>1) pr = 1;
         if (ps>1) ps = 1;
         if (ps == 0 || pr==0)
-            return 1e100;
+            return 1e300;
         double etx =  1/(ps*pr);
-        simtime_t minTime = 100.0;
+        simtime_t minTime = 10000.0;
         for (unsigned int i = 0; i<neig->timeETT.size(); i++)
             if (minTime>neig->timeETT[i])
                 minTime = neig->timeETT[i];

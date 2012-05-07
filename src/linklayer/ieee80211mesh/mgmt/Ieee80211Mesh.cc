@@ -304,6 +304,7 @@ void Ieee80211Mesh::startEtx()
     ETXProcess->buildInside();
     ETXProcess->scheduleStart(simTime());
     ETXProcess->setAddress(myAddress);
+    ETXProcess->setNumInterfaces(numMac);
 }
 
 void Ieee80211Mesh::startGateWay()
@@ -478,8 +479,6 @@ void Ieee80211Mesh::handleRoutingMessage(cPacket *msg)
     }
     else
     {
-
-
         Ieee80211DataFrame * frame = encapsulate(msg,ctrl->getDest());
         Ieee80211MeshFrame *frameMesh = check_and_cast<Ieee80211MeshFrame*>(frame);
         if (frameMesh->getSubType() == 0)
@@ -1408,80 +1407,172 @@ void Ieee80211Mesh::actualizeReactive(cPacket *pkt,bool out)
 void Ieee80211Mesh::sendOrEnqueue(cPacket *frame)
 {
     Ieee80211MeshFrame * frameAux = dynamic_cast<Ieee80211MeshFrame*>(frame);
+    Ieee80211DataOrMgmtFrame *frameDataorMgm = dynamic_cast <Ieee80211DataOrMgmtFrame*> (frame);
     if (frameAux && frameAux->getTTL()<=0)
     {
         delete frame;
         return;
     }
-    // Check if the destination is other gateway if true send to it
+    if (frameDataorMgm)
+        if (isSendToGateway(frameDataorMgm))
+            return;
+    actualizeReactive(frame,true);
+    if (frameDataorMgm->getReceiverAddress().isBroadcast())
+    {
+        if (numMac>1 && this->ETXProcess)
+        {
+            for (unsigned int i = 1; i < numMac; i++)
+            {
+                cPacket *pkt = frame->dup();
+                pkt->setKind(i);
+                PassiveQueueBase::handleMessage(frame);
+            }
+        }
+        frame->setKind(0);
+        PassiveQueueBase::handleMessage(frame);
+    }
+    else
+    {
+        frame->setKind(getBestInterface(frameDataorMgm));
+        PassiveQueueBase::handleMessage(frame);
+    }
+}
+
+bool Ieee80211Mesh::isSendToGateway(Ieee80211DataOrMgmtFrame *frame)
+{
+    if (!isGateWay)
+        return false;
+    if (frame == NULL)
+        return false;
     if (isGateWay)
     {
-        if (frameAux &&  (frame->getControlInfo()==NULL || !dynamic_cast<MeshControlInfo*>(frame->getControlInfo())))
+        if (frame->getControlInfo() == NULL || !dynamic_cast<MeshControlInfo*>(frame->getControlInfo()))
         {
             GateWayDataMap::iterator it;
-            frameAux->setTransmitterAddress(myAddress);
-            if (frameAux->getReceiverAddress().isBroadcast())
+            frame->setTransmitterAddress(myAddress);
+            if (frame->getReceiverAddress().isBroadcast())
             {
                 MACAddress origin;
-                if (dynamic_cast<LWMPLSPacket*> (frameAux->getEncapsulatedPacket()))
+                if (dynamic_cast<LWMPLSPacket*>(frame->getEncapsulatedPacket()))
                 {
-                    int code = dynamic_cast<LWMPLSPacket*> (frameAux->getEncapsulatedPacket())->getType();
-                    if (code==WMPLS_BROADCAST || code == WMPLS_ANNOUNCE_GATEWAY || code== WMPLS_REQUEST_GATEWAY)
-                        origin=dynamic_cast<LWMPLSPacket*> (frameAux->getEncapsulatedPacket())->getSource();
+                    int code = dynamic_cast<LWMPLSPacket*>(frame->getEncapsulatedPacket())->getType();
+                    if (code == WMPLS_BROADCAST
+                            || code == WMPLS_ANNOUNCE_GATEWAY
+                            || code == WMPLS_REQUEST_GATEWAY)
+                        origin = dynamic_cast<LWMPLSPacket*>(frame->getEncapsulatedPacket())->getSource();
                 }
-                for (it=getGateWayDataMap()->begin();it!=getGateWayDataMap()->end();it++)
+                for (it = getGateWayDataMap()->begin(); it != getGateWayDataMap()->end(); it++)
                 {
-                    if (it->second.idAddress==myAddress || it->second.idAddress==origin)
+                    if (it->second.idAddress == myAddress || it->second.idAddress == origin)
                         continue;
                     MeshControlInfo *ctrl = new MeshControlInfo();
                     ctrl->setSrc(MACAddress::UNSPECIFIED_ADDRESS); // the Ethernet will fill the field
                     //ctrl->setDest(frameAux->getReceiverAddress());
                     ctrl->setDest(it->second.ethAddress);
-                    cPacket *pktAux=frameAux->dup();
+                    cPacket *pktAux = frame->dup();
                     pktAux->setControlInfo(ctrl);
                     //sendDirect(pktAux,it->second.gate);
-                    send(pktAux,"toEthernet");
+                    send(pktAux, "toEthernet");
                 }
             }
             else
             {
-                it = getGateWayDataMap()->find((Uint128)frameAux->getAddress4().getInt());
-                if (it!=getGateWayDataMap()->end())
+                if (dynamic_cast<Ieee80211DataFrame*>(frame))
+                    it = getGateWayDataMap()->find((Uint128) dynamic_cast<Ieee80211DataFrame*>(frame)->getAddress4().getInt());
+                else
+                    it = getGateWayDataMap()->end();
+                if (it != getGateWayDataMap()->end())
                 {
                     MeshControlInfo *ctrl = new MeshControlInfo();
-                    ctrl->setSrc(MACAddress::UNSPECIFIED_ADDRESS);  // the Ethernet will fill the field
+                    ctrl->setSrc(MACAddress::UNSPECIFIED_ADDRESS); // the Ethernet will fill the field
                     //ctrl->setDest(frameAux->getReceiverAddress());
                     ctrl->setDest(it->second.ethAddress);
-                    if (frameAux->getControlInfo())
-                         delete frameAux->removeControlInfo();
-                    frameAux->setControlInfo(ctrl);
-                    actualizeReactive(frameAux,true);
-// The packet are fragmented in EtherEncapMesh
+                    if (frame->getControlInfo())
+                        delete frame->removeControlInfo();
+                    frame->setControlInfo(ctrl);
+                    actualizeReactive(frame, true);
+                    // The packet are fragmented in EtherEncapMesh
                     //sendDirect(frameAux,5e-6,frameAux->getBitLength()/1e9,it->second.gate);
-                    send(frameAux,"toEthernet");
-                    return;
+                    send(frame, "toEthernet");
+                    return true;
                 }
-                it = getGateWayDataMap()->find((Uint128)frameAux->getReceiverAddress().getInt());
-                if (it!=getGateWayDataMap()->end())
+                it = getGateWayDataMap()->find((Uint128) frame->getReceiverAddress().getInt());
+                if (it != getGateWayDataMap()->end())
                 {
                     MeshControlInfo *ctrl = new MeshControlInfo();
                     //ctrl->setSrc(myAddress);
-                    ctrl->setSrc(MACAddress::UNSPECIFIED_ADDRESS);  // the Ethernet will fill the field
+                    ctrl->setSrc(MACAddress::UNSPECIFIED_ADDRESS); // the Ethernet will fill the field
                     //ctrl->setDest(frameAux->getReceiverAddress());
                     ctrl->setDest(it->second.ethAddress);
-                    if (frameAux->getControlInfo())
-                        delete frameAux->removeControlInfo();
-                    frameAux->setControlInfo(ctrl);
-                    actualizeReactive(frameAux,true);
+                    if (frame->getControlInfo())
+                        delete frame->removeControlInfo();
+                    frame->setControlInfo(ctrl);
+                    actualizeReactive(frame, true);
                     // sendDirect(frameAux,5e-6,frameAux->getBitLength()/1e9,it->second.gate);
-                    send(frameAux,"toEthernet");
-                    return;
+                    send(frame, "toEthernet");
+                    return true;
                 }
             }
         }
     }
-    actualizeReactive(frame,true);
-    PassiveQueueBase::handleMessage(frame);
+    return false;
+}
+
+int Ieee80211Mesh::getBestInterface(Ieee80211DataOrMgmtFrame *frame)
+{
+    if (numMac<=1)
+        return 0;
+
+    if (ETXProcess)
+    {
+        std::multimap<double,int> cost;
+        for (unsigned int i = 0; i < numMac; i++)
+        {
+            double val = ETXProcess->getEtx(frame->getReceiverAddress(),(int)i);
+            if (val == -1)
+                continue;
+            cost.insert(std::pair<double,int>(val,i));
+        }
+        if (cost.empty())
+            return 0;
+        if (cost.size()==1)
+            return cost.begin()->second;
+        double val = cost.begin()->first;
+        int index = 0;
+        std::multimap<double,int>::iterator it = cost.begin();
+        while (val == it->first)
+        {
+            index++;
+            it++;
+        }
+        if (index==0)
+        {
+            if (frame->getKind() != it->second)
+                return it->second;
+            else
+            {
+                it = cost.begin();
+                it++;
+                return it->second; // avoid the intra frame interference
+                //if ((val/it->first)<0.9)
+                //    return it->second;
+            }
+        }
+        else
+        {
+            // select randomly
+            do
+            {
+                int i = intuniform(0,index);
+                it = cost.begin();
+                for (int j = 0;j < i;j++)
+                    it++;
+            } while (it->second == frame->getKind());
+            return it->second;
+        }
+    }
+    else
+        return 0;
 }
 
 #if 0
@@ -1735,6 +1826,7 @@ bool Ieee80211Mesh::selectGateWay(const Uint128 &dest,MACAddress &gateway)
 void Ieee80211Mesh::handleWateGayDataReceive(cPacket *pkt)
 {
 
+    pkt->setKind(-1);
     if (dynamic_cast<Ieee80211ActionHWMPFrame *>(pkt))
     {
         if ((routingModuleHwmp != NULL) && routingModuleHwmp->isOurType(pkt))
