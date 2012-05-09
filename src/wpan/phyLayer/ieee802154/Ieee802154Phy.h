@@ -78,8 +78,8 @@ class INET_API Ieee802154Phy : public ChannelAccess, public IPowerControl
 
         virtual void disconnectTransceiver() {transceiverConnect = false;}
         virtual void connectTransceiver() {transceiverConnect = true;}
-        virtual void disconnectReceiver() {receiverConnect = false; cc->disableReception(this->myRadioRef); }
-        virtual void connectReceiver() {receiverConnect = true; cc->enableReception(this->myRadioRef);}
+        virtual void disconnectReceiver();
+        virtual void connectReceiver();
 
 
   protected:

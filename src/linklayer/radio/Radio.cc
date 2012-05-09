@@ -820,7 +820,29 @@ void Radio::setBitrate(double bitrate)
 void Radio::setRadioState(RadioState::State newState)
 {
     if (rs.getState() != newState)
+    {
         emit(radioStateSignal, newState);
+        if (rs.getState() != newState)
+        {
+            emit(radioStateSignal, newState);
+            if (newState == RadioState::SLEEP)
+            {
+                disconnectTransceiver();
+                disconnectReceiver();
+            }
+            else if (rs.getState() == RadioState::SLEEP)
+            {
+                connectTransceiver();
+                connectReceiver(); // the connection change the state
+                if (rs.getState() == newState)
+                {
+                    rs.setState(newState);
+                    nb->fireChangeNotification(NF_RADIOSTATE_CHANGED, &rs);
+                    return;
+                }
+            }
+        }
+    }
 
     rs.setState(newState);
     nb->fireChangeNotification(NF_RADIOSTATE_CHANGED, &rs);
@@ -957,5 +979,84 @@ void Radio::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj
                 setRadioState(RadioState::RECV);
         }
     }
+}
+
+void Radio::disconnectReceiver()
+{
+    receiverConnect = false;
+    cc->disableReception(this->myRadioRef);
+    if (rs.getState() == RadioState::TRANSMIT)
+        error("changing channel while transmitting is not allowed");
+
+   // Clear the recvBuff
+   for (RecvBuff::iterator it = recvBuff.begin(); it!=recvBuff.end(); ++it)
+   {
+        AirFrame *airframe = it->first;
+        cMessage *endRxTimer = (cMessage *)airframe->getContextPointer();
+        delete airframe;
+        delete cancelEvent(endRxTimer);
+    }
+    recvBuff.clear();
+
+    // clear snr info
+    snrInfo.ptr = NULL;
+    snrInfo.sList.clear();
+}
+
+void Radio::connectReceiver()
+{
+    receiverConnect = true;
+    cc->enableReception(this->myRadioRef);
+
+    if (rs.getState()!=RadioState::IDLE)
+        rs.setState(RadioState::IDLE); // Force radio to Idle
+
+    cc->setRadioChannel(myRadioRef, rs.getChannelNumber());
+    cModule *myHost = findHost();
+
+    //cGate *radioGate = myHost->gate("radioIn");
+
+    cGate* radioGate = this->gate("radioIn")->getPathStartGate();
+
+    EV << "RadioGate :" << radioGate->getFullPath() << " " << radioGate->getFullName() << endl;
+
+    // pick up ongoing transmissions on the new channel
+    EV << "Picking up ongoing transmissions on new channel:\n";
+    IChannelControl::TransmissionList tlAux = cc->getOngoingTransmissions(rs.getChannelNumber());
+    for (IChannelControl::TransmissionList::const_iterator it = tlAux.begin(); it != tlAux.end(); ++it)
+    {
+        AirFrame *airframe = check_and_cast<AirFrame *> (*it);
+        // time for the message to reach us
+        double distance = getRadioPosition().distance(airframe->getSenderPos());
+        simtime_t propagationDelay = distance / 3.0E+8;
+
+        // if there is a message on the air which will reach us in the future
+        if (airframe->getTimestamp() + propagationDelay >= simTime())
+        {
+            EV << " - (" << airframe->getClassName() << ")" << airframe->getName() << ": ";
+            EV << "will arrive in the future, scheduling it\n";
+
+            // we need to send to each radioIn[] gate of this host
+            //for (int i = 0; i < radioGate->size(); i++)
+            //    sendDirect(airframe->dup(), airframe->getTimestamp() + propagationDelay - simTime(), airframe->getDuration(), myHost, radioGate->getId() + i);
+
+            // JcM Fix: we need to this radio only. no need to send the packet to each radioIn
+            // since other radios might be not in the same channel
+            sendDirect(airframe->dup(), airframe->getTimestamp() + propagationDelay - simTime(), airframe->getDuration(), myHost, radioGate->getId() );
+        }
+        // if we hear some part of the message
+        else if (airframe->getTimestamp() + airframe->getDuration() + propagationDelay > simTime())
+        {
+            EV << "missed beginning of frame, processing it as noise\n";
+
+            AirFrame *frameDup = airframe->dup();
+            frameDup->setArrivalTime(airframe->getTimestamp() + propagationDelay);
+            handleLowerMsgStart(frameDup);
+            bufferMsg(frameDup);
+        }
+    }
+
+    // notify other modules about the channel switch; and actually, radio state has changed too
+    nb->fireChangeNotification(NF_RADIOSTATE_CHANGED, &rs);
 }
 
