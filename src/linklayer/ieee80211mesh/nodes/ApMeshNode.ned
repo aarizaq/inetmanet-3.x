@@ -26,7 +26,6 @@ import inet.networklayer.common.InterfaceTable;
 import inet.mobility.IMobility;
 import inet.linklayer.ieee80211mesh.ethernet.EthernetInterfaceMesh;
 import inet.linklayer.IWirelessNic;
-import inet.linklayer.IWirelessNicMulti;
 import inet.linklayer.IWiredNic;
 import inet.linklayer.IExternalNic;
 import inet.base.NotificationBoard;
