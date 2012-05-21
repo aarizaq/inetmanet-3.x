@@ -1123,7 +1123,9 @@ void Ieee80211Mesh::handleProbeResponseFrame(Ieee80211ProbeResponseFrame *frame)
 void Ieee80211Mesh::sendOut(cMessage *msg)
 {
     //InterfaceEntry *ie = ift->getInterfaceById(msg->getKind());
-    msg->setKind(0);
+    // msg->setKind(0);
+    if (numMac == 1)
+        msg->setKind(0);
     //send(msg, macBaseGateId + ie->getNetworkLayerGateIndex());
     Ieee80211MeshFrame *frameMesh = dynamic_cast<Ieee80211MeshFrame*>(msg);
     if (frameMesh && frameMesh->getSubType() == ROUTING)
@@ -1419,17 +1421,22 @@ void Ieee80211Mesh::sendOrEnqueue(cPacket *frame)
     actualizeReactive(frame,true);
     if (frameDataorMgm->getReceiverAddress().isBroadcast())
     {
-        if (numMac>1 && this->ETXProcess)
+        if (dynamic_cast<ETXBasePacket*>(frame->getEncapsulatedPacket()) && numMac > 1)
+            PassiveQueueBase::handleMessage(frame);
+        else
         {
-            for (unsigned int i = 1; i < numMac; i++)
+            if (numMac > 1)
             {
-                cPacket *pkt = frame->dup();
-                pkt->setKind(i);
-                PassiveQueueBase::handleMessage(pkt);
+                for (unsigned int i = 1; i < numMac; i++)
+                {
+                    cPacket *pkt = frame->dup();
+                    pkt->setKind(i);
+                    PassiveQueueBase::handleMessage(pkt);
+                }
             }
+            frame->setKind(0);
+            PassiveQueueBase::handleMessage(frame);
         }
-        frame->setKind(0);
-        PassiveQueueBase::handleMessage(frame);
     }
     else
     {
@@ -1540,10 +1547,13 @@ int Ieee80211Mesh::getBestInterface(Ieee80211DataOrMgmtFrame *frame)
         double val = cost.begin()->first;
         int index = 0;
         std::multimap<double,int>::iterator it = cost.begin();
-        while (val == it->first)
+        std::multimap<double,int>::iterator itaux = cost.begin();
+        itaux++;
+        while (val == it->first && itaux != cost.end())
         {
             index++;
-            it++;
+            it = itaux;
+            itaux++;
         }
         if (index==0)
         {
@@ -1565,7 +1575,7 @@ int Ieee80211Mesh::getBestInterface(Ieee80211DataOrMgmtFrame *frame)
             {
                 int i = intuniform(0,index);
                 it = cost.begin();
-                for (int j = 0;j < i;j++)
+                for (int j = 0; j < i; j++)
                     it++;
             } while (it->second == frame->getKind());
             return it->second;
@@ -1652,6 +1662,7 @@ void Ieee80211Mesh::handleEtxMessage(cPacket *pk)
     if (etxMsg)
     {
         Ieee80211DataFrame * frame = encapsulate(etxMsg,etxMsg->getDest());
+        frame->setKind(etxMsg->getKind());
         if (frame)
             sendOrEnqueue(frame);
     }

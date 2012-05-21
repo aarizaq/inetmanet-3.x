@@ -60,7 +60,7 @@ Ieee80211Etx::~Ieee80211Etx()
 {
     for (unsigned int i = 0; i<neighbors.size(); i++)
     {
-        while (neighbors[i].empty())
+        while (!neighbors[i].empty())
         {
             delete neighbors[i].begin()->second;
             neighbors[i].erase(neighbors[i].begin());
