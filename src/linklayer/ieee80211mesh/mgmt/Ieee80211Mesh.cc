@@ -1425,7 +1425,7 @@ void Ieee80211Mesh::sendOrEnqueue(cPacket *frame)
             {
                 cPacket *pkt = frame->dup();
                 pkt->setKind(i);
-                PassiveQueueBase::handleMessage(frame);
+                PassiveQueueBase::handleMessage(pkt);
             }
         }
         frame->setKind(0);

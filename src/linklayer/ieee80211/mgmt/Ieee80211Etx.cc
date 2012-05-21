@@ -114,12 +114,12 @@ void Ieee80211Etx::handleTimer(cMessage *msg)
             }
             pkt->setNeighborsArraySize(neighbors[i].size());
             pkt->setRecPacketsArraySize(neighbors[i].size());
-            int i = 0;
+            int j = 0;
             for (NeighborsMap::iterator it = neighbors[i].begin(); it != neighbors[i].end(); it++)
             {
-                pkt->setNeighbors(i, it->second->getAddress());
-                pkt->setRecPackets(i, it->second->timeVector.size());
-                i++;
+                pkt->setNeighbors(j, it->second->getAddress());
+                pkt->setRecPackets(j, it->second->timeVector.size());
+                j++;
             }
             pkt->setKind(i);
             send(pkt, "toMac");
@@ -828,3 +828,21 @@ void Ieee80211Etx::setNumInterfaces(unsigned int iface)
     neighbors.resize(numInterfaces);
 }
 
+std::string Ieee80211Etx::detailedInfo() const
+{
+   return info();
+}
+
+std::string Ieee80211Etx::info() const
+{
+    std::stringstream out;
+    for (unsigned int i = 0; i < neighbors.size(); ++i)
+    {
+        out << "interface : " << i << "num neighbors :" << neighbors[i].size() <<"\n";
+        for (NeighborsMap::const_iterator it = neighbors[i].begin(); it != neighbors[i].end(); it++)
+        {
+            out << "address : " << it->second->getAddress().str() <<"\n";;
+        }
+    }
+    return out.str();
+}

@@ -172,8 +172,9 @@ class INET_API Ieee80211Etx : public cSimpleModule, public MacEstimateCostProces
 
     virtual void setNumInterfaces(unsigned int iface);
     unsigned int  getNumInterfaces() {return numInterfaces;}
-
+    std::string info() const;
   public:
+    std::string detailedInfo() const;
     Ieee80211Etx() {setNumInterfaces(1);}
     void setAddress(const MACAddress &add) {myAddress = add;}
     virtual double getCost(int i, MACAddress &add)

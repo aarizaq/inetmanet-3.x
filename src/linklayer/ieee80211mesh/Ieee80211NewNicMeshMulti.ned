@@ -24,7 +24,6 @@ import inet.linklayer.ieee80211.mgmt.Ieee80211AgentSTA;
 import inet.linklayer.ieee80211.mgmt.IIeee80211Mgmt;
 import inet.linklayer.ieee80211.mac.Ieee80211NewMac;
 import inet.linklayer.ieee80211mesh.mgmt.Ieee80211Mesh;
-import inet.linklayer.IWirelessNicMulti;
 import inet.base.IHook;
 import inet.linklayer.ieee80211mesh.locator.ILocator;
 
