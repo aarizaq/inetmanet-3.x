@@ -178,6 +178,7 @@ void csma802154::finish()
         recordScalar("nbRecvdAcks", nbRecvdAcks);
         recordScalar("nbTxAcks", nbTxAcks);
         recordScalar("nbDuplicates", nbDuplicates);
+        recordScalar("numCollision", numCollision);
         if (nbBackoffs > 0)
         {
             recordScalar("meanBackoff", backoffValues / nbBackoffs);
