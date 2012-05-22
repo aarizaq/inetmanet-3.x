@@ -1384,7 +1384,7 @@ void Ieee80211NewMac::handleWithFSM(cMessage *msg)
                                   resetCurrentBackOff();
                                   );
             FSMA_Event_Transition(Transmit-Data-Failed,
-                                  msg == endTimeout && retryCounter() == transmissionLimit - 1,
+                                  msg == endTimeout && retryCounter(oldcurrentAC) == transmissionLimit - 1,
                                   IDLE,
                                   currentAC = oldcurrentAC;
                                   giveUpCurrentTransmission();
@@ -1400,7 +1400,7 @@ void Ieee80211NewMac::handleWithFSM(cMessage *msg)
                                   if (endTXOP->isScheduled()) cancelEvent(endTXOP);
                                  );
             FSMA_Event_Transition(Interrupted-ACK-Failure,
-                                  isLowerMsg(msg) && retryCounter() == transmissionLimit - 1,
+                                  isLowerMsg(msg) && retryCounter(oldcurrentAC) == transmissionLimit - 1,
                                   RECEIVE,
                                   currentAC=oldcurrentAC;
                                   giveUpCurrentTransmission();
