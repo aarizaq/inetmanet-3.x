@@ -40,6 +40,7 @@ UDPVideoStreamCli2::UDPVideoStreamCli2()
 UDPVideoStreamCli2::~UDPVideoStreamCli2()
 {
     cancelAndDelete(reintentTimer);
+    cancelAndDelete(timeOutMsg);
 }
 
 void UDPVideoStreamCli2::initialize()
