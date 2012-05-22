@@ -66,10 +66,6 @@ InterfaceEntry::InterfaceEntry()
     protocol3data = NULL;
     protocol4data = NULL;
     estimateCostProcessArray.clear();
-    relatedInterfaces.clear();
-    isGroup = false;
-    macAddGroup=MACAddress::UNSPECIFIED_ADDRESS; // share address
-    moduleOwner=NULL;
 }
 
 std::string InterfaceEntry::info() const
@@ -189,37 +185,4 @@ MacEstimateCostProcess* InterfaceEntry::getEstimateCostProcess(int position)
         return estimateCostProcessArray[position];
     }
     return NULL;
-}
-
-
-
-void InterfaceEntry::addRelatedInterface(InterfaceEntry* e)
-{
-    for (unsigned int i=0;i<relatedInterfaces.size();i++)
-    {
-        if (relatedInterfaces[i]==e || e->getMacAddress()==relatedInterfaces[i]->getMacAddress())
-            return;
-    }
-    relatedInterfaces.push_back(e);
-}
-
-InterfaceEntry * InterfaceEntry::getRelatedInterface(int i)
-{
-     if (i>=(int)relatedInterfaces.size())
-         return NULL;
-     if (i<0)
-    	 return NULL;
-     return relatedInterfaces[i];
-}
-
-void InterfaceEntry::deleteRelatedInterface(InterfaceEntry* e)
-{
-    for (unsigned int i=0;i<relatedInterfaces.size();i++)
-    {
-        if (relatedInterfaces[i]==e)
-        {
-        	relatedInterfaces.erase(relatedInterfaces.begin()+i);
-            return;
-        }
-    }
 }

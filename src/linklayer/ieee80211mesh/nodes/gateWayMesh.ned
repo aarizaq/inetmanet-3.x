@@ -217,24 +217,24 @@ module gateWayMesh
 
 
         ethg[0] <--> ethMesh.phys;
-        ethMesh.netwOut --> networkLayer.ifIn++;
-        ethMesh.netwIn <-- networkLayer.ifOut++;
+        ethMesh.upperLayerOut --> networkLayer.ifIn++;
+        ethMesh.upperLayerIn <-- networkLayer.ifOut++;
 
         for i=0..sizeof(ethg)-2 {
             ethg[i+1] <--> eth[i].phys;
-            eth[i].netwOut --> networkLayer.ifIn++;
-            eth[i].netwIn <-- networkLayer.ifOut++;
+            eth[i].upperLayerOut --> networkLayer.ifIn++;
+            eth[i].upperLayerIn <-- networkLayer.ifOut++;
         }
 
         for i=0..sizeof(pppg)-1 {
             pppg[i] <--> ppp[i].phys;
-            ppp[i].netwOut --> networkLayer.ifIn++;
-            ppp[i].netwIn <-- networkLayer.ifOut++;
+            ppp[i].upperLayerOut --> networkLayer.ifIn++;
+            ppp[i].upperLayerIn <-- networkLayer.ifOut++;
         }
 
         for i=0..numExtInterfaces-1 {
-            ext[i].netwOut --> networkLayer.ifIn++;
-            ext[i].netwIn <-- networkLayer.ifOut++;
+            ext[i].upperLayerOut --> networkLayer.ifIn++;
+            ext[i].upperLayerIn <-- networkLayer.ifOut++;
         }
 }
 

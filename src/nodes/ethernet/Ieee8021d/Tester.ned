@@ -3,7 +3,7 @@
 // 
 //
 
-package inet.nodes.ethernet;
+package inet.nodes.ethernet.Ieee8021d;
 import inet.linklayer.ethernet.EtherMAC;
 import inet.linklayer.ieee8021d.Tester.TesterObject;
 

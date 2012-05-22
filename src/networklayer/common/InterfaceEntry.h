@@ -99,10 +99,6 @@ class INET_API InterfaceEntry : public cNamedObject
     InterfaceProtocolData *protocol3data; ///< extension point: data for a 3rd network-layer protocol
     InterfaceProtocolData *protocol4data; ///< extension point: data for a 4th network-layer protocol
     std::vector<MacEstimateCostProcess *> estimateCostProcessArray;
-    std::vector<InterfaceEntry*> relatedInterfaces;
-    bool isGroup; // if virtual several interfaces share IP data
-    MACAddress macAddGroup; // share address
-    cModule *moduleOwner;
 
   private:
     // copying not supported: following are private and also left undefined
@@ -186,18 +182,6 @@ class INET_API InterfaceEntry : public cNamedObject
     //@{
     virtual bool setEstimateCostProcess(int, MacEstimateCostProcess *p);
     virtual MacEstimateCostProcess* getEstimateCostProcess(int);
-
-    virtual void addRelatedInterface(InterfaceEntry*);
-    virtual InterfaceEntry *getRelatedInterface(int i);
-    virtual void deleteRelatedInterface(InterfaceEntry* e);
-    virtual bool existRelatedInterface(){return !relatedInterfaces.empty();}
-    virtual int getNumRelated(){return relatedInterfaces.size();}
-    virtual bool isGroupInterface() {return isGroup;} // if true several interfaces share IP data
-    virtual void setGroupInterface(bool p) {isGroup=p;} // if true several interfaces share IP data
-    virtual MACAddress getMacAddGroup(){return macAddGroup;} // share addres
-    virtual void setMacAddGroup(MACAddress add){macAddGroup=add;} // share addres
-    virtual void setModuleOwner(cModule *p){moduleOwner=p;}
-    virtual cModule * getModuleOwner(){return moduleOwner;}
     //@}
 };
 

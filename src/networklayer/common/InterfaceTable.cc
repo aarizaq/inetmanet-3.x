@@ -172,37 +172,6 @@ void InterfaceTable::addInterface(InterfaceEntry *entry, cModule *ifmod)
     nb->fireChangeNotification(NF_INTERFACE_CREATED, entry);
 }
 
-void InterfaceTable::addInterfaceGroup(InterfaceEntry *entry, cModule *ifmod)
-{
-    // check name is unique
-
-    entry->setGroupInterface(true);
-    for (unsigned int i=0; i<idToInterface.size(); i++)
-    {
-        if (idToInterface[i] && !strcmp(entry->getName(), idToInterface[i]->getName()))
-        {
-            if (idToInterface[i]->getMacAddress()==entry->getMacAddress())
-            	throw cRuntimeError(this, "addInterface(): interface '%s' already registered", entry->getName());
-            else if (idToInterface[i]->getModuleOwner()!=ifmod)
-            	throw cRuntimeError(this, "addInterface(): interface '%s' different owner", entry->getName());
-            else
-            	idToInterface[i]->addRelatedInterface(entry);
-        }
-    }
-    // insert
-    entry->setModuleOwner(ifmod);
-    entry->setInterfaceId(INTERFACEIDS_START + idToInterface.size());
-    entry->setInterfaceTable(this);
-    idToInterface.push_back(entry);
-    invalidateTmpInterfaceList();
-
-    // fill in networkLayerGateIndex, nodeOutputGateId, nodeInputGateId
-    if (ifmod)
-        discoverConnectingGates(entry, ifmod);
-
-    nb->fireChangeNotification(NF_INTERFACE_CREATED, entry);
-}
-
 void InterfaceTable::discoverConnectingGates(InterfaceEntry *entry, cModule *ifmod)
 {
     // ifmod is something like "host.eth[1].mac"; climb up to find "host.eth[1]" from it
@@ -226,17 +195,19 @@ void InterfaceTable::discoverConnectingGates(InterfaceEntry *entry, cModule *ifm
             entry->setNodeInputGateId(g->getPreviousGate()->getId());
 
         // find the gate index of networkLayer/networkLayer6/mpls that connects to this interface
-        if (g->getType()==cGate::OUTPUT && g->getNextGate() && g->getNextGate()->isName("ifIn"))
+        if (g->getType()==cGate::OUTPUT && g->getNextGate() && g->isName("upperLayerOut"))
             nwlayerInGate = g->getNextGate();
-        if (g->getType()==cGate::INPUT && g->getPreviousGate() && g->getPreviousGate()->isName("ifOut"))
+        if (g->getType()==cGate::INPUT && g->getPreviousGate() && g->isName("upperLayerIn"))
             nwlayerOutGate = g->getPreviousGate();
     }
 
     // consistency checks
     // note: we don't check nodeOutputGateId/nodeInputGateId, because wireless interfaces
     // are not connected to the host
-    if (!nwlayerInGate || !nwlayerOutGate || nwlayerInGate->getIndex()!=nwlayerOutGate->getIndex())
-        throw cRuntimeError("addInterface(): interface must be connected to network layer's ifIn[]/ifOut[] gates of the same index");
+    if (!nwlayerInGate && !nwlayerOutGate)
+        return;
+    if (!nwlayerInGate || !nwlayerOutGate || nwlayerInGate->getOwnerModule()!=nwlayerOutGate->getOwnerModule() || nwlayerInGate->getIndex()!=nwlayerOutGate->getIndex())
+        throw cRuntimeError("addInterface(): interface must be connected to network layer's in/out gates to lower layer of the same index");
 
     entry->setNetworkLayerGateIndex(nwlayerInGate->getIndex());
 }
@@ -250,11 +221,6 @@ void InterfaceTable::deleteInterface(InterfaceEntry *entry)
     nb->fireChangeNotification(NF_INTERFACE_DELETED, entry);  // actually, only going to be deleted
 
     idToInterface[id - INTERFACEIDS_START] = NULL;
-    if (entry->existRelatedInterface())
-    {
-         for (int i=0;i<entry->getNumRelated();i++)
-             entry->getRelatedInterface(i)->deleteRelatedInterface(entry);
-    }
     delete entry;
     invalidateTmpInterfaceList();
 }

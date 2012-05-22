@@ -173,18 +173,24 @@ void VoIPSinkApp::createConnection(VoIPPacket *vp)
     curConn.samplesPerPacket = vp->getSamplesPerPacket();
     curConn.lastPacketFinish = simTime() + playOutDelay;
 
+    curConn.pCodecDec = avcodec_find_decoder(curConn.codec);
+    if (curConn.pCodecDec == NULL)
+        error("Codec %d not found", curConn.codec);
+
+#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53,21,0)
     curConn.decCtx = avcodec_alloc_context();
+#else
+    curConn.decCtx = avcodec_alloc_context3(curConn.pCodecDec);
+#endif
 
     curConn.decCtx->bit_rate = curConn.transmitBitrate;
     curConn.decCtx->sample_rate = curConn.sampleRate;
     curConn.decCtx->channels = 1;
+    curConn.decCtx->bits_per_coded_sample = curConn.sampleBits;
 
-    curConn.pCodecDec = avcodec_find_decoder(curConn.codec);
-    if (curConn.pCodecDec == NULL)
-        error("Codec %d not found", curConn.codec);
     int ret = avcodec_open(curConn.decCtx, curConn.pCodecDec);
     if (ret < 0)
-        error("could not open decoding codec");
+        error("could not open decoding codec %d (%s): err=%d", curConn.codec, curConn.pCodecDec->name, ret);
 
     curConn.openAudio(resultFile);
     curConn.offline = false;
@@ -244,11 +250,12 @@ void VoIPSinkApp::decodePacket(VoIPPacket *vp)
         emit(lostPacketsSignal, newSeqNo - (curConn.seqNo + 1));
     if (simTime() > curConn.lastPacketFinish)
     {
-        int lostSamples = (int)SIMTIME_DBL((simTime() - curConn.lastPacketFinish) * curConn.sampleRate);
+        int lostSamples = ceil(SIMTIME_DBL((simTime() - curConn.lastPacketFinish) * curConn.sampleRate));
+        ASSERT(lostSamples > 0);
         ev << "Lost " << lostSamples << " samples\n";
         emit(lostSamplesSignal, lostSamples);
         curConn.writeLostSamples(lostSamples);
-        curConn.lastPacketFinish = simTime();
+        curConn.lastPacketFinish += lostSamples * (1.0 / curConn.sampleRate);
     }
     emit(delaySignal, curConn.lastPacketFinish - vp->getCreationTime());
     curConn.seqNo = newSeqNo;

@@ -3,8 +3,8 @@ package inet.examples.ieee802_1d.RSTP;
 
 
 import ned.DatarateChannel;
-import inet.nodes.ethernet.Tester;
-import inet.nodes.ethernet.BEB;
+import inet.nodes.ethernet.Ieee8021d.Tester;
+import inet.nodes.ethernet.Ieee8021d.BEB;
 
 
 //

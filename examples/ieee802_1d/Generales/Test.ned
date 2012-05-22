@@ -1,9 +1,9 @@
 package inet.examples.ieee802_1d.Generales;
 
-import inet.nodes.ethernet.BEB;
-import inet.nodes.ethernet.Ether1ADBridge;
-import inet.nodes.ethernet.Ether1QBridge;
-import inet.nodes.ethernet.EthernetHost;
+import inet.nodes.ethernet.Ieee8021d.BEB;
+import inet.nodes.ethernet.Ieee8021d.Ether1ADBridge;
+import inet.nodes.ethernet.Ieee8021d.Ether1QBridge;
+import inet.nodes.ethernet.Ieee8021d.EthernetHost;
 import ned.DatarateChannel;
 
 

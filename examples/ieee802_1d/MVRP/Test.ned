@@ -1,9 +1,9 @@
 package inet.examples.ieee802_1d.MVRP;
 
-import inet.nodes.ethernet.BEB;
-import inet.nodes.ethernet.EthernetHost;		//EtherHost. Hosts modificados para que generen tramas 802.1Q y esas necesidades.
+import inet.nodes.ethernet.Ieee8021d.BEB;
+import inet.nodes.ethernet.Ieee8021d.EthernetHost;		//EtherHost. Hosts modificados para que generen tramas 802.1Q y esas necesidades.
 import ned.DatarateChannel;
-import inet.nodes.ethernet.Tester;
+import inet.nodes.ethernet.Ieee8021d.Tester;
 
 
 

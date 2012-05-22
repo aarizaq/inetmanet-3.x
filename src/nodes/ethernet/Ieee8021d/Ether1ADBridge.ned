@@ -1,12 +1,15 @@
 //******************************************************
-// @brief IEEE 802.1Q Bridge
+// @brief IEEE 802.1ad Bridge
 // @author Juan Luis Garrote Molinero
 // @version 1.0
 // @date Feb 2011
 //******************************************************/
 
-package inet.nodes.ethernet;
-import inet.linklayer.ieee8021d.ieee8021Q.PortFilt;
+
+
+
+package inet.nodes.ethernet.Ieee8021d;
+import inet.linklayer.ieee8021d.ieee8021AD.PortFilt1ad;
 import inet.linklayer.ieee8021d.ieee8021Q.Relay1Q;
 import inet.linklayer.ieee8021d.ieee8021Q.Cache1Q;
 import inet.linklayer.ethernet.EtherMAC;
@@ -14,14 +17,15 @@ import inet.linklayer.ieee8021d.RSTP.RSTP;
 import inet.linklayer.ieee8021d.MVRP.MVRP;
 
 //
-// Model IEEE 802.1Q Bridge
+// Models an IEEE 802.1ad Bridge. 
+//
 // This model contains the RSTP (rapid spanning tree) and the MVRP (multiple vlan registration protocol) module
 //
-module Ether1QBridge
+module Ether1ADBridge
 {
     parameters:
         @node();
-        @display("i=device/switch;bgb=643,442");
+        @display("i=device/router;bgb=643,442");
     gates:
         inout ethg[];  //To the backbone
     submodules:
@@ -34,7 +38,7 @@ module Ether1QBridge
                 RSTPGate;
                 MVRPGate;
         }
-        PortFilt[sizeof(ethg)]: PortFilt {
+        PortFilt[sizeof(ethg)]: PortFilt1ad {
             parameters:
                 @display("p=171,248,row;q=queue");
             gates:

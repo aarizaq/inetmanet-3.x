@@ -128,12 +128,7 @@ class INET_API InterfaceTable : public cSimpleModule, public IInterfaceTable, pr
      * a virtual interface (e.g. loopback).
      */
     virtual void addInterface(InterfaceEntry *entry, cModule *ifmod);
-    /**
-     * Adds an interface. The second argument must be a module which belongs
-     * to the physical interface (e.g. PPP or EtherMac) -- it will be used
-     * to discover and fill in getNetworkLayerGateIndex(), getNodeOutputGateId(),
-     */
-    virtual void addInterfaceGroup(InterfaceEntry *entry, cModule *ifmod);
+
     /**
      * Deletes the given interface from the table. Indices of existing
      * interfaces (see getInterface(int)) may change. It is an error if
