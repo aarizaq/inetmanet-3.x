@@ -68,8 +68,18 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
   private:
     static simsignal_t mobilityStateChangedSignal;
     typedef std::map<Uint128,Uint128> RouteMap;
+    class ProtocolRoutingData
+    {
+        public:
+            RouteMap* routesVector;
+            bool isProactive;
+    };
+
+    typedef std::vector<ProtocolRoutingData> ProtocolsRoutes;
+    typedef std::map<Uint128,ProtocolsRoutes>GlobalRouteMap;
     RouteMap *routesVector;
-    bool createInternalStore;
+    static bool createInternalStore;
+    static GlobalRouteMap *globalRouteMap;
 
     IRoutingTable *inet_rt;
     IInterfaceTable *inet_ift;
@@ -364,6 +374,7 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
     virtual bool getAp(const Uint128 &, Uint128 &) const;
     virtual bool isAp() const;
     //
+    static bool getRouteFromGlobal(const Uint128 &src, const Uint128 &dest, std::vector<Uint128> &route);
 };
 
 #define interface80211ptr getInterfaceWlanByAddress()

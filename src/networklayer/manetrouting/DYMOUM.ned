@@ -65,6 +65,7 @@ simple DYMOUM extends BaseRouting like IManetRouting
         bool propagateProactive = default(true); // propagate proactive RREQ
         bool path_acc_proactive = default(false); // proactive acumulate route
         bool checkNextHop = default(false);
+        bool PublicRoutingTables = default(false);
     gates:
         input from_ip;
         output to_ip;

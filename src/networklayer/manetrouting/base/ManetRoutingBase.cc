@@ -39,6 +39,8 @@
 #define UDP_HDR_LEN 8
 
 simsignal_t ManetRoutingBase::mobilityStateChangedSignal = SIMSIGNAL_NULL;
+ManetRoutingBase::GlobalRouteMap *ManetRoutingBase::globalRouteMap = NULL;
+bool ManetRoutingBase::createInternalStore = false;
 
 void ManetTimer::removeTimer()
 {
@@ -112,7 +114,6 @@ ManetRoutingBase::ManetRoutingBase()
     timerMessagePtr = NULL;
     timerMultiMapPtr = NULL;
     commonPtr = NULL;
-    createInternalStore = false;
     routesVector = NULL;
     interfaceVector = new InterfaceVector;
     staticNode = false;
@@ -316,6 +317,34 @@ void ManetRoutingBase::registerRoutingModule()
         nb->subscribe(this,NF_LOCATOR_ASSOC);
         nb->subscribe(this,NF_LOCATOR_DISASSOC);
     }
+
+    if (par("PublicRoutingTables").boolValue())
+    {
+        setInternalStore(true);
+        if (globalRouteMap == NULL)
+        {
+            globalRouteMap = new GlobalRouteMap;
+        }
+
+        GlobalRouteMap::iterator it = globalRouteMap->find(getAddress());
+        if (it == globalRouteMap->end())
+        {
+            ProtocolRoutingData data;
+            ProtocolsRoutes vect;
+            data.isProactive = isProactive();
+            data.routesVector = routesVector;
+            vect.push_back(data);
+            globalRouteMap->insert(std::make_pair<Uint128,ProtocolsRoutes>(getAddress(),vect));
+        }
+        else
+        {
+            ProtocolRoutingData data;
+            data.isProactive = isProactive();
+            data.routesVector = routesVector;
+            it->second.push_back(data);
+        }
+    }
+
  //   WATCH_MAP(*routesVector);
 }
 
@@ -346,6 +375,18 @@ ManetRoutingBase::~ManetRoutingBase()
     proxyAddress.clear();
     addressGroupVector.clear();
     inAddressGroup.clear();
+
+    if (globalRouteMap)
+    {
+        GlobalRouteMap::iterator it = globalRouteMap->find(getAddress());
+        if (it != globalRouteMap->end())
+            globalRouteMap->erase(it);
+        if (globalRouteMap->empty())
+        {
+            delete globalRouteMap;
+            globalRouteMap = NULL;
+        }
+    }
 }
 
 bool ManetRoutingBase::isIpLocalAddress(const IPv4Address& dest) const
@@ -1936,3 +1977,71 @@ bool ManetRoutingBase::isAp() const
         return locator->isThisApIp();
 }
 
+bool ManetRoutingBase::getRouteFromGlobal(const Uint128 &src, const Uint128 &dest, std::vector<Uint128> &route)
+{
+    if (!createInternalStore || globalRouteMap == NULL)
+        return false;
+    Uint128 next = src;
+    route.clear();
+    route.push_back(src);
+    while (1)
+    {
+        GlobalRouteMap::iterator it = globalRouteMap->find(next);
+        if (it==globalRouteMap->end())
+            return false;
+        if (it->second.empty())
+            return false;
+
+        if (it->second.size() == 1)
+        {
+            RouteMap * rt = it->second[0].routesVector;
+            RouteMap::iterator it2 = rt->find(dest);
+            if (it2 == rt->end())
+                return false;
+            if (it2->second == dest)
+            {
+                route.push_back(dest);
+                return true;
+            }
+            else
+            {
+                route.push_back(it2->second);
+                next = it2->second;
+            }
+        }
+        else
+        {
+            if (it->second.size() > 2)
+                throw cRuntimeError("Number of routing protocols bigger that 2");
+            // if several protocols, search before in the proactive
+            RouteMap * rt;
+            if (it->second[0].isProactive)
+                rt = it->second[0].routesVector;
+            else
+                rt = it->second[1].routesVector;
+            RouteMap::iterator it2 = rt->find(dest);
+            if (it2 == rt->end())
+            {
+                // search in the reactive
+
+                if (it->second[0].isProactive)
+                    rt = it->second[1].routesVector;
+                else
+                    rt = it->second[0].routesVector;
+                it2 = rt->find(dest);
+                if (it2 == rt->end())
+                    return false;
+            }
+            if (it2->second == dest)
+            {
+                route.push_back(dest);
+                return true;
+            }
+            else
+            {
+                route.push_back(it2->second);
+                next = it2->second;
+            }
+        }
+    }
+}
