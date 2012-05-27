@@ -15,30 +15,52 @@
 
 #ifndef DINAMICWIRELESSNODEMANAGER_H_
 #define DINAMICWIRELESSNODEMANAGER_H_
+#include <vector>
+#include <map>
 #include <omnetpp.h>
 #include "INETDefs.h"
 #include "Coord.h"
 
+
 class DinamicWirelessNodeManager : public cSimpleModule
 {
     private:
+        class Timer {
+          public:
+            int index;
+            DinamicWirelessNodeManager *module;
+            Timer(int index, DinamicWirelessNodeManager *module): index(index),module(module){}
+            ~Timer();
+            virtual void expire();
+            virtual void removeQueueTimer();
+            virtual void removeTimer();
+            virtual void resched(double time);
+            virtual void resched(simtime_t time);
+            virtual bool isScheduled();
+        };
+
         class NodeInf
         {
             public:
             cModule *module;
+            simtime_t startLife;
             simtime_t endLife;
         };
-        std::map<int,NodeInf> nodeList;
-        int nextNodeVectorIndex;
+    private:
+        std::vector<NodeInf> nodeList;
+        typedef std::multimap <simtime_t, Timer *> TimerMultiMap;
+        TimerMultiMap timerMultimMap;
+        bool checkTimer(cMessage *msg);
+        void scheduleEvent();
+        cMessage *timerMessagePtr;
     public:
         DinamicWirelessNodeManager();
         virtual ~DinamicWirelessNodeManager();
         virtual void initialize();
         virtual void finish();
         virtual void handleMessage(cMessage *msg);
-        virtual void handleSelfMsg(cMessage *msg);
-        void newNode(std::string name, std::string nodeId, const Coord& position, simtime_t);
-        void deleteNode(int nodeId);
+        void newNode(std::string name, std::string nodeId, bool setCoor, const Coord& position, simtime_t, int);
+        void deleteNode(const int &, const simtime_t &);
 };
 
 #endif /* DINAMICWIRELESSNODEMANAGER_H_ */
