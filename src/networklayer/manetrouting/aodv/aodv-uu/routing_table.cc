@@ -131,7 +131,7 @@ rt_table_t *NS_CLASS rt_table_insert(struct in_addr dest_addr,
     rt->flags = flags;
     rt->hcnt = hops;
     rt->ifindex = ifindex;
-    rt->hash = NULL;
+    rt->hash = 0;
     rt->state = state;
     rt->cost = cost;
     rt->hopfix = hopfix;

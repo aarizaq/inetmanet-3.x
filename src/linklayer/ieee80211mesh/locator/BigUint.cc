@@ -418,7 +418,7 @@ BigUint& BigUint::operator<<=(unsigned int n)
     if (rest == 0)
         return *this;
     uint64_t mask = ~((1ull << (64 - n)) - 1);
-    for (int i = value.size()-1 ;i > value.size() - increment -1 ;i--)
+    for (unsigned int i = value.size()-1 ;i > value.size() - increment -1 ;i--)
     {
         value[i] <<=rest;
         value[i] |= (value[i-1] & mask) >> (64 - rest);    
