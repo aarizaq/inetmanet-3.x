@@ -57,7 +57,7 @@ class DinamicWirelessNodeManager : public cSimpleModule
         DinamicWirelessNodeManager();
         virtual ~DinamicWirelessNodeManager();
         virtual void initialize();
-        virtual void finish();
+       // virtual void finish();
         virtual void handleMessage(cMessage *msg);
         void newNode(std::string name, std::string nodeId, bool setCoor, const Coord& position, simtime_t, int);
         void deleteNode(const int &, const simtime_t &);
