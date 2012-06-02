@@ -61,7 +61,7 @@ class INET_API UDPBasicBurst : public cSimpleModule
     bool isSource;
     bool haveSleepDuration;
     int outputInterface;
-    int outputInterfaceMulticastBroadcast;
+    std::vector<int> outputInterfaceMulticastBroadcast;
 
     static int counter; // counter for generating a global number for each packet
 
