@@ -449,6 +449,10 @@ packet Ieee80211ActionHWMPFrame extends Ieee80211ActionFrame
 {
     type = ST_ACTION;
     byteLength = 28+getBody().getBodyLength();
+        // this fiels are used by fragmentation over ethernet, not necesasry, it's possible to use the fields un the Ieee80211 frame 
+    bool isFragment=false;
+    unsigned long realLength=0;
+    
     Ieee80211ActionHWMPFrameBody body;
 }
 
