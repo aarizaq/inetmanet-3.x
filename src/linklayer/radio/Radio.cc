@@ -64,6 +64,8 @@ void Radio::initialize(int stage)
         upperLayerIn = findGate("upperLayerIn");
         upperLayerOut = findGate("upperLayerOut");
 
+        getSensitivityList(par("SensitivityTable").xmlValue());
+
         // read parameters
         transmitterPower = par("transmitterPower");
         if (transmitterPower > (double) (getChannelControlPar("pMax")))
@@ -290,7 +292,7 @@ AirFrame *Radio::encapsulatePacket(cPacket *frame)
     ASSERT(!ctrl || ctrl->getChannelNumber()==-1); // per-packet channel switching not supported
 
     // Note: we don't set length() of the AirFrame, because duration will be used everywhere instead
-    if (ctrl && ctrl->getAdaptiveSensitivity()) updateSensitivity(ctrl->getBitrate());
+    //if (ctrl && ctrl->getAdaptiveSensitivity()) updateSensitivity(ctrl->getBitrate());
     AirFrame *airframe = createAirFrame();
     airframe->setName(frame->getName());
     airframe->setPSend(transmitterPower);
@@ -564,6 +566,7 @@ void Radio::handleLowerMsgStart(AirFrame* airframe)
     airframe->setPowRec(rcvdPower);
     // store the receive power in the recvBuff
     recvBuff[airframe] = rcvdPower;
+    updateSensitivity(airframe->getBitrate());
 
     // if receive power is bigger than sensitivity and if not sending
     // and currently not receiving another message and the message has
@@ -847,7 +850,7 @@ void Radio::setRadioState(RadioState::State newState)
     rs.setState(newState);
     nb->fireChangeNotification(NF_RADIOSTATE_CHANGED, &rs);
 }
-
+/*
 void Radio::updateSensitivity(double rate)
 {
     EV<<"bitrate = "<<rate<<endl;
@@ -884,6 +887,22 @@ void Radio::updateSensitivity(double rate)
     {
         sensitivity = FWMath::dBm2mW(-65);
     }
+    EV <<" sensitivity after updateSensitivity: "<<sensitivity<<endl;
+}
+*/
+
+void Radio::updateSensitivity(double rate)
+{
+    if (sensitivityList.empty())
+    {
+        return;
+    }
+    SensitivityList::iterator it = sensitivityList.find(rate);
+    if (it != sensitivityList.end())
+        sensitivity = it->second;
+    else
+        sensitivity = sensitivityList[0.0];
+    EV<<"bitrate = "<<rate<<endl;
     EV <<" sensitivity after updateSensitivity: "<<sensitivity<<endl;
 }
 
@@ -1058,5 +1077,62 @@ void Radio::connectReceiver()
 
     // notify other modules about the channel switch; and actually, radio state has changed too
     nb->fireChangeNotification(NF_RADIOSTATE_CHANGED, &rs);
+}
+
+
+void Radio::getSensitivityList(cXMLElement* xmlConfig)
+{
+    sensitivityList.empty();
+
+    if (xmlConfig == 0)
+    {
+        sensitivityList[0] = FWMath::dBm2mW(par("sensitivity").doubleValue());
+        return;
+    }
+
+    cXMLElementList sensitivityXmlList = xmlConfig->getElementsByTagName("SensitivityTable");
+
+    if (sensitivityXmlList.empty())
+    {
+        sensitivityList[0] = FWMath::dBm2mW(par("sensitivity").doubleValue());
+        return;
+    }
+
+    // iterate over all AnalogueModel-entries, get a new AnalogueModel instance and add
+    // it to analogueModels
+    for (cXMLElementList::const_iterator it = sensitivityXmlList.begin(); it != sensitivityXmlList.end(); it++)
+    {
+
+        cXMLElement* data = *it;
+
+        cXMLElementList parameters = data->getElementsByTagName("Entry");
+
+        for(cXMLElementList::const_iterator it = parameters.begin();
+            it != parameters.end(); it++)
+        {
+            const char* bitRate = (*it)->getAttribute("BitRate");
+            const char* sensitivity = (*it)->getAttribute("Sensitivity");
+            double rate = atof(bitRate);
+            if (rate == 0)
+                error("invalid bit rate");
+            double sens = atof(sensitivity);
+            sensitivityList[rate] = FWMath::dBm2mW(sens);
+
+        }
+        parameters = data->getElementsByTagName("Default");
+        for(cXMLElementList::const_iterator it = parameters.begin();
+            it != parameters.end(); it++)
+        {
+            const char* sensitivity = (*it)->getAttribute("Sensitivity");
+            double sens = atof(sensitivity);
+            sensitivityList[0.0] = FWMath::dBm2mW(sens);
+        }
+
+        SensitivityList::iterator it = sensitivityList.find(0.0);
+        if (it == sensitivityList.end())
+        {
+            sensitivityList[0] = FWMath::dBm2mW(par("sensitivity").doubleValue());
+        }
+    } // end iterator loop
 }
 
