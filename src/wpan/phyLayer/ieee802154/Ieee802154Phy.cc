@@ -1321,6 +1321,7 @@ void Ieee802154Phy::disconnectReceiver()
 void Ieee802154Phy::connectReceiver()
 {
    cc->enableReception(this->myRadioRef);
+   receiverConnect = true;
    if (rs.getState()!=RadioState::IDLE)
         rs.setState(RadioState::IDLE);// Force radio to Idle
 
