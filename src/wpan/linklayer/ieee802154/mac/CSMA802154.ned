@@ -57,7 +57,8 @@ simple CSMA802154
         double aUnitBackoffPeriod @unit(s) = default(0.00032 s);
         // complete MAC ack message length (in bits) 
         // (! headerLength is not added to this)
-        double ackLength @unit(bit) = default(40 bit);        
+        double ackLength @unit(bit) = default(40 bit);
+        double headerLength @unit(bit) = default(72 bit);   
 
         //backoff method to use. constant, linear or exponential
         string backoffMethod = default("exponential");
