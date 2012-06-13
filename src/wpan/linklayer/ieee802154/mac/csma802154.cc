@@ -243,7 +243,7 @@ void csma802154::handleUpperMsg(cMessage *msg)
     //MacPkt *macPkt = encapsMsg(msg);
     reqtMsgFromIFq();
     Ieee802154Frame *macPkt = new Ieee802154Frame(msg->getName());
-    macPkt->setBitLength(def_phyHeaderLength);
+    macPkt->setBitLength(par("headerLength").doubleValue());
     cObject *controlInfo = msg->removeControlInfo();
     IE3ADDR dest;
     if (dynamic_cast<Ieee802Ctrl *>(controlInfo))
