@@ -43,6 +43,7 @@ simple UDPVideoStreamCli2 like IUDPApp
         double startTime @unit(s) = default(1s);
         volatile double reintent @unit(s) = default(60s);
         double timeOut @unit(s) = default(10s);
+        double limitDelay @unit(s) = default(0.5s);
         @display("i=block/app");
         @signal[rcvdPk](type=cPacket);
         @statistic[rcvdPk](title="packets received"; source=rcvdPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);

@@ -44,6 +44,7 @@ class INET_API UDPVideoStreamCli2 : public cSimpleModule
     cMessage * timeOutMsg;
 
     double timeOut;
+    double limitDelay;
     int numRecPackets;
 
   public:

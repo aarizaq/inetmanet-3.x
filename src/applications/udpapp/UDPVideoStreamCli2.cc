@@ -54,6 +54,8 @@ void UDPVideoStreamCli2::initialize()
 
     timeOut  = par("timeOut");
 
+    limitDelay = par("limitDelay");
+
     if (startTime >= 0)
         scheduleAt(startTime, new cMessage("UDPVideoStreamStart"));
 }
@@ -119,24 +121,35 @@ void UDPVideoStreamCli2::requestStream()
 
     cPacket *pk = new cPacket("VideoStrmReq");
     socket.sendTo(pk, svrAddr, svrPort);
-    scheduleAt(simTime()+par("reintent").longValue(),reintentTimer);
+    double reint = par("reintent").longValue();
+    if (reint > 0)
+        scheduleAt(simTime()+par("reintent").longValue(),reintentTimer);
 }
 
 void UDPVideoStreamCli2::receiveStream(cPacket *pk)
 {
-    EV << "Video stream packet: " << UDPSocket::getReceivedPacketInfo(pk) << endl;
-    emit(rcvdPkSignal, pk);
-    delete pk;
     if (reintentTimer->isScheduled())
         cancelEvent(reintentTimer);
     if (timeOutMsg->isScheduled())
         cancelEvent(timeOutMsg);
+    if (timeOut > 0)
+        scheduleAt(simTime()+timeOut,timeOutMsg);
+
+    if (simTime() - pk->getCreationTime() > limitDelay)
+    {
+        delete pk;
+        return;
+    }
     numRecPackets++;
-    scheduleAt(simTime()+timeOut,timeOutMsg);
+    EV << "Video stream packet: " << UDPSocket::getReceivedPacketInfo(pk) << endl;
+    emit(rcvdPkSignal, pk);
+    delete pk;
 }
 
 void UDPVideoStreamCli2::timeOutData()
 {
-    scheduleAt(simTime()+par("reintent").longValue(),reintentTimer);
+    double reint = par("reintent").longValue();
+    if (reint > 0)
+        scheduleAt(simTime()+par("reintent").longValue(),reintentTimer);
 }
 
