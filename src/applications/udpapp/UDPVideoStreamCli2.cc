@@ -135,14 +135,12 @@ void UDPVideoStreamCli2::receiveStream(cPacket *pk)
     if (timeOut > 0)
         scheduleAt(simTime()+timeOut,timeOutMsg);
 
-    if (simTime() - pk->getCreationTime() > limitDelay)
+    if (simTime() - pk->getCreationTime() < limitDelay)
     {
-        delete pk;
-        return;
+        numRecPackets++;
+        EV << "Video stream packet: " << UDPSocket::getReceivedPacketInfo(pk) << endl;
+        emit(rcvdPkSignal, pk);
     }
-    numRecPackets++;
-    EV << "Video stream packet: " << UDPSocket::getReceivedPacketInfo(pk) << endl;
-    emit(rcvdPkSignal, pk);
     delete pk;
 }
 
