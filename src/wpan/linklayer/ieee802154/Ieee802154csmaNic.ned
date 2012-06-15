@@ -3,7 +3,7 @@
 //
 package inet.wpan.linklayer.ieee802154;
 
-import inet.networklayer.queue.IOutputQueue;
+import inet.linklayer.IOutputQueue;
 import inet.wpan.linklayer.ieee802154.mac.CSMA802154;
 import inet.wpan.phyLayer.ieee802154.Ieee802154Phy;
 

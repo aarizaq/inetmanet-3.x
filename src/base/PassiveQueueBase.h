@@ -38,6 +38,8 @@ class INET_API PassiveQueueBase : public cSimpleModule, public IPassiveQueue
     typedef std::map<long, simtime_t> MsgId2TimeMap;
     MsgId2TimeMap msgId2TimeMap;
 
+    std::list<IPassiveQueueListener*> listeners;
+
     // state
     int packetRequested;
 
@@ -45,11 +47,13 @@ class INET_API PassiveQueueBase : public cSimpleModule, public IPassiveQueue
     int numQueueReceived;
     int numQueueDropped;
 
-    /** Signal with size (or 0 if unknown) of packet when received it */
+    /** Signal with packet when received it */
+    static simsignal_t rcvdPkSignal;
+    /** Signal with packet when enqueued it */
     static simsignal_t enqueuePkSignal;
-    /** Signal with size (or 0 if unknown) of packet when sent out it */
+    /** Signal with packet when sent out it */
     static simsignal_t dequeuePkSignal;
-    /** Signal with size (or 0 if unknown) of packet when dropped it */
+    /** Signal with packet when dropped it */
     static simsignal_t dropPkByQueueSignal;
     /** Signal with value of delaying time when sent out a packet. */
     static simsignal_t queueingTimeSignal;
@@ -58,6 +62,8 @@ class INET_API PassiveQueueBase : public cSimpleModule, public IPassiveQueue
     virtual void initialize();
     virtual void handleMessage(cMessage *msg);
     virtual void finish();
+
+    virtual void notifyListeners();
 
     /**
      * Inserts packet into the queue or the priority queue, or drops it
@@ -92,6 +98,16 @@ class INET_API PassiveQueueBase : public cSimpleModule, public IPassiveQueue
      * Clear all queued packets and stored requests.
      */
     virtual void clear();
+
+    /**
+     * Implementation of IPassiveQueue::addListener().
+     */
+    virtual void addListener(IPassiveQueueListener *listener);
+
+    /**
+     * Implementation of IPassiveQueue::removeListener().
+     */
+    virtual void removeListener(IPassiveQueueListener *listener);
 };
 
 #endif

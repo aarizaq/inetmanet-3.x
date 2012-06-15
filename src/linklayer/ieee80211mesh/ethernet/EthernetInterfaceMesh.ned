@@ -19,10 +19,10 @@
 
 package inet.linklayer.ieee80211mesh.ethernet;
 
-import inet.networklayer.queue.IOutputQueue;
 import inet.linklayer.IWiredNic;
 import inet.linklayer.IEtherMAC;
 import inet.base.IHook;
+import inet.linklayer.ethernet.EtherQoSQueue;
 
 //
 // Ethernet network interface. Complements EtherMAC and EtherEncap
@@ -35,7 +35,7 @@ module EthernetInterfaceMesh like IWiredNic
     parameters:
         bool csmacdSupport = default(false);  // by default no CSMA/CD so only only point-to-point duplex links are supported.
         string macType = default(csmacdSupport ? "EtherMAC" : "EtherMACFullDuplex"); // ~EtherMAC or ~EtherMACFullDuplex
-        string queueType = default("DropTailQueue"); // DropTailQueue, DropTailQoSQueue, REDQueue, NoQueue
+        string queueType = default("DropTailQueue"); // ~DropTailQueue, or a Diffserv queue; set to "" for use of an internal queue
         int numOutputHooks = default(0);
         int numInputHooks = default(0);
         @display("i=block/ifcard;bgb=273,285;bgl=2");
@@ -52,9 +52,10 @@ module EthernetInterfaceMesh like IWiredNic
         inputHook[numInputHooks]: <default("Nop")> like IHook if numInputHooks>0 {
             @display("p=43,79");
         }
-        queue: <queueType> like IOutputQueue if queueType != "" {
+        queue: EtherQoSQueue if queueType != "" {
             parameters:
-                @display("p=173,171;q=l2queue");
+                dataQueueType = queueType;
+                @display("p=165,174;q=l2queue");
         }
         mac: <macType> like IEtherMAC {
             parameters:
@@ -88,7 +89,7 @@ module EthernetInterfaceMesh like IWiredNic
             outputHook[i].out --> outputHook[i+1].in;
         }
         outputHook[numOutputHooks-1].out --> encap.upperLayerIn if numOutputHooks > 0;
-        
+
         wifiMeshIn --> encap.wifiMeshIn;   // from wifi mesh
         wifiMeshOut <-- encap.wifiMeshOut; // to wifi mesh
 }

@@ -34,7 +34,6 @@
 
 package inet.wpan.linklayer.bmac;
 
-import inet.networklayer.queue.IOutputQueue;
 import inet.wpan.linklayer.bmac.BMacLayer;
 import inet.wpan.phyLayer.ieee802154.Ieee802154Phy;
 

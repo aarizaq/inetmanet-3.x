@@ -15,9 +15,11 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <algorithm>
 
 #include "PassiveQueueBase.h"
 
+simsignal_t PassiveQueueBase::rcvdPkSignal = SIMSIGNAL_NULL;
 simsignal_t PassiveQueueBase::enqueuePkSignal = SIMSIGNAL_NULL;
 simsignal_t PassiveQueueBase::dequeuePkSignal = SIMSIGNAL_NULL;
 simsignal_t PassiveQueueBase::dropPkByQueueSignal = SIMSIGNAL_NULL;
@@ -35,6 +37,7 @@ void PassiveQueueBase::initialize()
     WATCH(numQueueReceived);
     WATCH(numQueueDropped);
 
+    rcvdPkSignal = registerSignal("rcvdPk");
     enqueuePkSignal = registerSignal("enqueuePk");
     dequeuePkSignal = registerSignal("dequeuePk");
     dropPkByQueueSignal = registerSignal("dropPkByQueue");
@@ -47,11 +50,12 @@ void PassiveQueueBase::handleMessage(cMessage *msg)
 {
     numQueueReceived++;
 
-    emit(enqueuePkSignal, msg);
+    emit(rcvdPkSignal, msg);
 
     if (packetRequested > 0)
     {
         packetRequested--;
+        emit(enqueuePkSignal, msg);
         emit(dequeuePkSignal, msg);
         emit(queueingTimeSignal, 0L);
         sendOut(msg);
@@ -60,6 +64,9 @@ void PassiveQueueBase::handleMessage(cMessage *msg)
     {
         msgId2TimeMap[msg->getId()] = simTime();
         cMessage *droppedMsg = enqueue(msg);
+        if (msg != droppedMsg)
+            emit(enqueuePkSignal, msg);
+
         if (droppedMsg)
         {
             numQueueDropped++;
@@ -67,6 +74,8 @@ void PassiveQueueBase::handleMessage(cMessage *msg)
             msgId2TimeMap.erase(droppedMsg->getId());
             delete droppedMsg;
         }
+        else
+            notifyListeners();
     }
 
     if (ev.isGUI())
@@ -108,5 +117,25 @@ void PassiveQueueBase::clear()
 void PassiveQueueBase::finish()
 {
     msgId2TimeMap.clear();
+}
+
+void PassiveQueueBase::addListener(IPassiveQueueListener *listener)
+{
+    std::list<IPassiveQueueListener*>::iterator it = find(listeners.begin(), listeners.end(), listener);
+    if (it == listeners.end())
+        listeners.push_back(listener);
+}
+
+void PassiveQueueBase::removeListener(IPassiveQueueListener *listener)
+{
+    std::list<IPassiveQueueListener*>::iterator it = find(listeners.begin(), listeners.end(), listener);
+    if (it != listeners.end())
+        listeners.erase(it);
+}
+
+void PassiveQueueBase::notifyListeners()
+{
+    for (std::list<IPassiveQueueListener*>::iterator it = listeners.begin(); it != listeners.end(); ++it)
+        (*it)->packetEnqueued(this);
 }
 

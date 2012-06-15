@@ -18,8 +18,8 @@
 
 package inet.nodes.ethernet;
 
-import inet.networklayer.queue.IOutputQueue;
 import inet.linklayer.ethernet.EtherLLC;
+import inet.linklayer.ethernet.EtherQoSQueue;
 import inet.linklayer.IEtherMAC;
 import inet.applications.ethernet.EtherAppSrv;
 import inet.applications.ethernet.EtherAppCli;
@@ -36,7 +36,7 @@ module EtherHost
     parameters:
         bool csmacdSupport = default(true);  // by default use CSMA/CD
         string macType = default(csmacdSupport ? "EtherMAC" : "EtherMACFullDuplex"); // ~EtherMAC or ~EtherMACFullDuplex
-        string queueType = default(""); // DropTailQueue, DropTailQoSQueue, REDQueue, or empty to use the internal queue
+        string queueType = default(""); // DropTailQueue, DiffServQueue, or empty to use the internal queue
         @node();
         @labels(node,ethernet-node);
         @display("i=device/pc2");
@@ -60,8 +60,9 @@ module EtherHost
                 upperLayerIn[2];
                 upperLayerOut[2];
         }
-        queue: <queueType> like IOutputQueue if queueType != "" {
+        queue: EtherQoSQueue if queueType != "" {
             parameters:
+                dataQueueType = queueType;
                 @display("p=99,201;q=l2queue");
         }
         mac: <macType> like IEtherMAC {
