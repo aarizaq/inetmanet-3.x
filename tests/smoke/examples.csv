@@ -12,6 +12,10 @@
 /examples/bgpv4/BGPUpdate/,          -f omnetpp.ini -c config1 -r 0
 /examples/bgpv4/BGPandOSPF/,         -f omnetpp.ini -c config1 -r 0
 /examples/bgpv4/BGPandOSPFSimple/,   -f omnetpp.ini -c config1 -r 0
+/examples/diffserv/onedomain,          -f omnetpp.ini -c Exp11 -r 0
+/examples/diffserv/onedomain,          -f omnetpp.ini -c Exp21 -r 0
+/examples/diffserv/onedomain,          -f omnetpp.ini -c Exp31 -r 0
+/examples/diffserv/onedomain,          -f omnetpp.ini -c Exp51 -r 0
 # /examples/emulation/extclient/,      -f omnetpp.ini -c General -r 0   # ext interface tests are not supported as they require pcap drivers and external events
 # /examples/emulation/extserver/,      -f omnetpp.ini -c Uplink_Traffic -r 0   # ext interface tests are not supported as they require pcap drivers and external events
 # /examples/emulation/extserver/,      -f omnetpp.ini -c Downlink_Traffic -r 0   # ext interface tests are not supported as they require pcap drivers and external events
@@ -43,6 +47,7 @@
 /examples/httptools/socket/tenserverssocket/, -f omnetpp.ini -c uniform -r 0
 /examples/httptools/socket/tenserverssocket/, -f omnetpp.ini -c histogram -r 0
 /examples/inet/ber/,                 -f omnetpp.ini -c General -r 0
+/examples/inet/broadcast/,           -f omnetpp.ini -c General -r 0
 /examples/inet/bulktransfer/,        -f omnetpp.ini -c inet__inet -r 0
 /examples/inet/bulktransfer/,        -f omnetpp.ini -c inet_inet_2a -r 0
 /examples/inet/bulktransfer/,        -f omnetpp.ini -c inet_inet_2b -r 0
@@ -75,9 +80,6 @@
 /examples/inet/nclients/,            -f omnetpp.ini -c inet__lwip -r 0
 /examples/inet/nclients/,            -f video.ini -c General -r 0
 /examples/inet/pcaprecorder/,        -f omnetpp.ini -c General -r 0
-/examples/inet/redtest/,             -f omnetpp.ini -c DropTailQueue -r 0
-/examples/inet/redtest/,             -f omnetpp.ini -c REDQueue1 -r 0
-/examples/inet/redtest/,             -f omnetpp.ini -c REDQueue2 -r 0
 /examples/inet/routerperf/,          -f omnetpp.ini -c General -r 0
 /examples/inet/tcp_eth_reconnect/,   -f omnetpp.ini -c with_EtherMACFullDuplex_externalQueue -r 0
 /examples/inet/tcp_eth_reconnect/,   -f omnetpp.ini -c with_EtherMACFullDuplex_internalQueue -r 0

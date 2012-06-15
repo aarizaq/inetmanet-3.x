@@ -104,6 +104,7 @@
                        inet.networklayer.ipv6
                        inet.networklayer.autorouting.ipv6
                        inet.networklayer.icmpv6
+                       inet.networklayer.ipv6tunneling
                        inet.nodes.ipv6
                       "
         extraSourceFolders = ""
@@ -132,7 +133,6 @@
         requires = "IPv6"
         labels = "protocols"
         nedPackages = "
-                       inet.networklayer.ipv6tunneling
                        inet.networklayer.xmipv6
                        inet.nodes.xmipv6
                       "
@@ -252,7 +252,7 @@
         id="Ethernet_examples"
         name="Ethernet examples"
         description = "Examples for Ethernet"
-        requires = "Ethernet IPv4"
+        requires = "Ethernet IPv4 TCP_INET"
         labels = "protocols"
         nedPackages = "
                        inet.examples.ethernet
@@ -265,6 +265,7 @@
         id="PPP"
         name="PPP"
         description = "PPP protocol"
+        initiallyEnabled = "true"
         requires = ""
         labels = "protocols"
         nedPackages = "
@@ -325,7 +326,7 @@
         name="MPLS examples"
         description = "Examples for MPLS support"
         initiallyEnabled = "true"
-        requires = "MPLS"
+        requires = "MPLS Ethernet PPP"
         labels = "routing examples"
         nedPackages = "
                        inet.examples.mpls
@@ -354,7 +355,7 @@
         name="OSPFv2 examples"
         description = "Examples for OSPFv2"
         initiallyEnabled = "true"
-        requires = "OSPFv2 UDP IPv4 Ethernet"
+        requires = "OSPFv2 UDP IPv4 PPP Ethernet"
         labels = "routing examples"
         nedPackages = "
                        inet.examples.ospfv2
@@ -383,7 +384,7 @@
         name="BGPv4 examples"
         description = "Examples for BGPv4"
         initiallyEnabled = "true"
-        requires = "BGPv4 TCP_INET UDP IPv4 Ethernet"
+        requires = "BGPv4 TCP_INET UDP IPv4 PPP Ethernet"
         labels = "routing examples"
         nedPackages = "
                        inet.examples.bgpv4
@@ -493,20 +494,6 @@
         linkerFlags = ""
         />
     <feature
-        id="Ieee80211_mesh"
-        name="802.11a/b/g/e (mesh networking mode)"
-        description = "IEEE 802.11a/b/g/e NIC supporting mesh networking"
-        initiallyEnabled = "true"
-        requires = "mobility radio TCP_INET MANET OSPFv2 MPLS UDP IPv4 IPv6"
-        labels = "nic wireless mesh"
-        nedPackages = "
-                       inet.linklayer.ieee80211mesh
-                      "
-        extraSourceFolders = ""
-        compileFlags = ""
-        linkerFlags = ""
-        />
-    <feature
         id="wireless_examples"
         name="wireless examples"
         description = "wireless examples"
@@ -595,6 +582,35 @@
         compileFlags = ""
         linkerFlags = ""
         />   
+    <feature
+        id="DiffServ"
+        name="DiffServ"
+        description = "Components to implement Differentiated Services"
+        initiallyEnabled = "true"
+        requires = ""
+        labels = ""
+        nedPackages = "
+                       inet.networklayer.diffserv
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
+    <feature
+        id="DiffServ_examples"
+        name="DiffServ examples"
+        description = "DiffServ examples"
+        initiallyEnabled = "true"
+        requires = "DiffServ PPP Ethernet IPv4 UDP"
+        labels = ""
+        nedPackages = "
+                       inet.examples.diffserv
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
+
 <feature
         id="Ieee8021d"
         name="Ieee802.1d Ieee802.1Q Ieee802.1AH protocols"
@@ -714,6 +730,20 @@
                        inet.underTest.hip.application
                        inet.underTest.hip.base
                        inet.underTest.nodes.hip
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
+ <feature
+        id="Ieee80211_mesh"
+        name="802.11a/b/g/e (mesh networking mode)"
+        description = "IEEE 802.11a/b/g/e NIC supporting mesh networking"
+        initiallyEnabled = "true"
+        requires = "mobility radio TCP_INET MANET OSPFv2 MPLS UDP IPv4 IPv6"
+        labels = "nic wireless mesh"
+        nedPackages = "
+                       inet.linklayer.ieee80211mesh
                       "
         extraSourceFolders = ""
         compileFlags = ""
