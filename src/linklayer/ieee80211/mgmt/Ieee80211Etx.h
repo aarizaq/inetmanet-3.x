@@ -124,8 +124,16 @@ class INET_API Ieee80211Etx : public cSimpleModule, public MacEstimateCostProces
     int ettSize1;
     int ettSize2;
     simtime_t maxLive;
-    MACAddress prevAddress;
-    simtime_t  prevTime;
+    long unsigned int ettIndex;
+    class InfoEttData
+    {
+        public:
+            long unsigned int ettIndex;
+            simtime_t  prevTime;
+    };
+    typedef std::map<MACAddress,InfoEttData> InfoEtt;
+    InfoEtt infoEtt;
+
     int powerWindow;
     simtime_t powerWindowTime;
     unsigned int numInterfaces;

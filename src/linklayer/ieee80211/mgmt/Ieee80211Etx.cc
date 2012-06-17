@@ -20,6 +20,7 @@
 #include "Ieee80211Etx.h"
 #include "Ieee80211Frame_m.h"
 #include "Radio80211aControlInfo_m.h"
+#include "GlobalWirelessWirelessLinkInspector.h"
 
 Define_Module(Ieee80211Etx);
 
@@ -27,6 +28,7 @@ void Ieee80211Etx::initialize(int stage)
 {
     if (stage==2)
     {
+        ettIndex = 0;
         etxTimer = new cMessage("etxTimer");
         ettTimer = new cMessage("etxTimer");
         etxInterval = par("ETXInterval");
@@ -152,6 +154,9 @@ void Ieee80211Etx::handleTimer(cMessage *msg)
                 pkt2->setType(0);
                 pkt1->setKind(i);
                 pkt2->setKind(i);
+                pkt1->setIndex(ettIndex);
+                pkt2->setIndex(ettIndex);
+                ettIndex ++;
                 double ranVal = uniform(0, 0.1);
                 sendDelayed(pkt1, ranVal, "toMac");
                 sendDelayed(pkt2, ranVal, "toMac");
@@ -611,6 +616,34 @@ void Ieee80211Etx::handleEtxMessage(MACETXPacket *msg)
             break;
         }
     }
+    //
+    if (GlobalWirelessWirelessLinkInspector::isActive())
+    {
+        // compute and actualize the costs
+        GlobalWirelessWirelessLinkInspector::Link link;
+        Uint128 org = this->myAddress.getInt();
+        Uint128 dest = msg->getSource().getInt();
+
+        double etx;
+        getEtx(msg->getSource(),etx);
+
+        if (GlobalWirelessWirelessLinkInspector::getLinkCost(org,dest,link))
+        {
+            if (link.costEtx != etx)
+            {
+                link.costEtx = etx;
+                GlobalWirelessWirelessLinkInspector::setLinkCost(org,dest,link);
+            }
+        }
+        else
+        {
+            link.costEtt = 0;
+            link.costEtx = etx;
+            link.snr = 0;
+            GlobalWirelessWirelessLinkInspector::setLinkCost(org,dest,link);
+        }
+    }
+
     delete msg;
 }
 
@@ -631,25 +664,29 @@ void Ieee80211Etx::handleBwMessage(MACBwPacket *msg)
     {
         if (msg->getByteLength()==ettSize1)
         {
-            prevAddress = msg->getSource();
-            prevTime = simTime();
-            delete msg;
+            InfoEttData infoEttData;
+            infoEttData.ettIndex = msg->getIndex();
+            infoEttData.prevTime = simTime();
+            infoEtt[msg->getSource()] = infoEttData;
         }
         else if (msg->getByteLength()==ettSize2)
         {
-            if (prevAddress == msg->getSource())
+            InfoEtt::iterator it = infoEtt.find(msg->getSource());
+            if (it != infoEtt.end())
             {
-                msg->setTime(simTime()-prevTime);
-                msg->setType(1);
-                msg->setDest(msg->getSource());
-                msg->setByteLength(ettSize1);
-                msg->setSource(myAddress);
-                send(msg, "toMac");
+                if (msg->getIndex() == it->second.ettIndex) // if different index some packet of the pair has been lost
+                {
+                    msg->setTime(simTime()-it->second.prevTime);
+                    msg->setType(1);
+                    msg->setDest(msg->getSource());
+                    msg->setByteLength(ettSize1);
+                    msg->setSource(myAddress);
+                    send(msg, "toMac");
+                }
+                infoEtt.erase(it);
             }
-            else
-                prevAddress = MACAddress::UNSPECIFIED_ADDRESS;
-
         }
+        delete msg;
         return;
     }
     if (!neig)
@@ -658,12 +695,40 @@ void Ieee80211Etx::handleBwMessage(MACBwPacket *msg)
         neig->setAddress(msg->getSource());
         neighbors[interface][msg->getSource()] = neig;
     }
-    if (msg->getByteLength()==ettSize1)
+    if (msg->getByteLength() == ettSize1)
     {
         if (neig->timeETT.size() > (unsigned int)ettWindow)
             neig->timeETT.erase(neig->timeETT.begin());
         neig->timeETT.push_back(msg->getTime());
+
+        if (GlobalWirelessWirelessLinkInspector::isActive())
+        {
+            // compute and actualize the costs
+            GlobalWirelessWirelessLinkInspector::Link link;
+            Uint128 org = this->myAddress.getInt();
+            Uint128 dest = msg->getSource().getInt();
+            double ett;
+            getEtt(msg->getSource(),ett);
+
+            if (GlobalWirelessWirelessLinkInspector::getLinkCost(org,dest,link))
+            {
+                if (link.costEtt != ett)
+                {
+                    link.costEtt = ett;
+                    GlobalWirelessWirelessLinkInspector::setLinkCost(org,dest,link);
+                }
+            }
+            else
+            {
+                link.costEtx = 0;
+                link.costEtt = ett;
+                link.snr = 0;
+                GlobalWirelessWirelessLinkInspector::setLinkCost(org,dest,link);
+            }
+        }
     }
+    delete msg;
+    return;
 }
 
 void Ieee80211Etx::getNeighbors(std::vector<MACAddress> & add,const int &iface)
@@ -711,7 +776,7 @@ void Ieee80211Etx::receiveChangeNotification(int category, const cObject *detail
                 return;
             if (cinfo)
             {
-                if (it==neighbors[0].end())
+                if (it == neighbors[0].end())
                 {
                     // insert new element
                     MacEtxNeighbor *neig = new MacEtxNeighbor;
@@ -719,12 +784,15 @@ void Ieee80211Etx::receiveChangeNotification(int category, const cObject *detail
                     neighbors[0].insert(std::pair<MACAddress, MacEtxNeighbor*>(frame->getTransmitterAddress(),neig));
                     it = neighbors[0].find(frame->getTransmitterAddress());
                 }
-                if (!it->second->signalToNoiseAndSignal.empty())
+
+                MacEtxNeighbor *ng = it->second;
+
+                if (!ng->signalToNoiseAndSignal.empty())
                 {
-                    while ((int)it->second->signalToNoiseAndSignal.size()>powerWindow-1)
-                        it->second->signalToNoiseAndSignal.erase(it->second->signalToNoiseAndSignal.begin());
-                    while (simTime() - it->second->signalToNoiseAndSignal.front().snrTime>powerWindowTime && !it->second->signalToNoiseAndSignal.empty())
-                        it->second->signalToNoiseAndSignal.erase(it->second->signalToNoiseAndSignal.begin());
+                    while ((int)ng->signalToNoiseAndSignal.size()>powerWindow-1)
+                        ng->signalToNoiseAndSignal.erase(ng->signalToNoiseAndSignal.begin());
+                    while (simTime() - ng->signalToNoiseAndSignal.front().snrTime > powerWindowTime && !ng->signalToNoiseAndSignal.empty())
+                        ng->signalToNoiseAndSignal.erase(ng->signalToNoiseAndSignal.begin());
                 }
 
                 SNRDataTime snrDataTime;
@@ -738,20 +806,22 @@ void Ieee80211Etx::receiveChangeNotification(int category, const cObject *detail
                     snrDataTime.airtimeValue = (uint32_t)ceil((snrDataTime.testFrameDuration/10.24e-6)/(1-snrDataTime.testFrameError));
                 else
                     snrDataTime.airtimeValue = 0xFFFFFFF;
-                it->second->signalToNoiseAndSignal.push_back(snrDataTime);
+                ng->signalToNoiseAndSignal.push_back(snrDataTime);
                 if (snrDataTime.airtimeMetric)
                 {
                     // found the best
                     uint32_t cost = 0xFFFFFFFF;
-                    for (unsigned int i = 0; i < it->second->signalToNoiseAndSignal.size(); i++)
+
+                    for (unsigned int i = 0; i < ng->signalToNoiseAndSignal.size(); i++)
                     {
-                        if (it->second->signalToNoiseAndSignal[i].airtimeMetric && cost > it->second->signalToNoiseAndSignal[i].airtimeValue)
-                            cost = it->second->signalToNoiseAndSignal[i].airtimeValue;
+
+                        if (ng->signalToNoiseAndSignal[i].airtimeMetric && cost > ng->signalToNoiseAndSignal[i].airtimeValue)
+                            cost = ng->signalToNoiseAndSignal[i].airtimeValue;
                     }
-                    it->second->setAirtimeMetric(cost);
+                    ng->setAirtimeMetric(cost);
                 }
                 else
-                    it->second->setAirtimeMetric(0xFFFFFFF);
+                    ng->setAirtimeMetric(0xFFFFFFF);
             }
         }
     }
@@ -763,17 +833,18 @@ uint32_t Ieee80211Etx::getAirtimeMetric(const MACAddress &addr, const int &iface
     NeighborsMap::iterator it = neighbors[iface].find(addr);
     if (it != neighbors[iface].end())
     {
-        while (!it->second->signalToNoiseAndSignal.empty() && (simTime() - it->second->signalToNoiseAndSignal.front().snrTime > powerWindowTime))
-            it->second->signalToNoiseAndSignal.erase(it->second->signalToNoiseAndSignal.begin());
-        if (it->second->signalToNoiseAndSignal.empty() && (simTime() - it->second->getTime() > maxLive))
+        MacEtxNeighbor *ng = it->second;
+        while (!ng->signalToNoiseAndSignal.empty() && (simTime() - ng->signalToNoiseAndSignal.front().snrTime > powerWindowTime))
+            ng->signalToNoiseAndSignal.erase(ng->signalToNoiseAndSignal.begin());
+        if (ng->signalToNoiseAndSignal.empty() && (simTime() - ng->getTime() > maxLive))
         {
             neighbors[iface].erase(it);
             return 0xFFFFFFF;
         }
-        else if (it->second->signalToNoiseAndSignal.empty())
+        else if (ng->signalToNoiseAndSignal.empty())
             return 0xFFFFFFF;
         else
-            return it->second->getAirtimeMetric();
+            return ng->getAirtimeMetric();
     }
     else
         return 0xFFFFFFF;
@@ -785,19 +856,20 @@ void Ieee80211Etx::getAirtimeMetricNeighbors(std::vector<MACAddress> &addr, std:
     cost.clear();
     for (NeighborsMap::iterator it = neighbors[iface].begin(); it != neighbors[iface].end();)
     {
-        while (simTime() - it->second->signalToNoiseAndSignal.front().snrTime > powerWindowTime)
-            it->second->signalToNoiseAndSignal.erase(it->second->signalToNoiseAndSignal.begin());
-        if (it->second->signalToNoiseAndSignal.empty() && (simTime() - it->second->getTime() > maxLive))
+        MacEtxNeighbor *ng = it->second;
+        while (simTime() - ng->signalToNoiseAndSignal.front().snrTime > powerWindowTime)
+            ng->signalToNoiseAndSignal.erase(ng->signalToNoiseAndSignal.begin());
+        if (ng->signalToNoiseAndSignal.empty() && (simTime() - ng->getTime() > maxLive))
         {
             NeighborsMap::iterator itAux = it;
             it++;
             neighbors[iface].erase(itAux);
         }
-        else if (it->second->signalToNoiseAndSignal.empty())
+        else if (ng->signalToNoiseAndSignal.empty())
         {
             it++;
         }
-        else if (it->second->signalToNoiseAndSignal.empty())
+        else if (ng->signalToNoiseAndSignal.empty())
         {
             addr.push_back(it->first);
             cost.push_back(it->second->getAirtimeMetric());
