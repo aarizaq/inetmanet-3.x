@@ -15,10 +15,13 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
+
 #include "OSPFNeighborState.h"
-#include "OSPFInterface.h"
+
 #include "OSPFArea.h"
+#include "OSPFInterface.h"
 #include "OSPFRouter.h"
+
 
 void OSPF::NeighborState::changeState(OSPF::Neighbor* neighbor, OSPF::NeighborState* newState, OSPF::NeighborState* currentState)
 {
@@ -43,7 +46,6 @@ void OSPF::NeighborState::changeState(OSPF::Neighbor* neighbor, OSPF::NeighborSt
                 OSPF::RouterLSA* newLSA = neighbor->getInterface()->getArea()->originateRouterLSA();
 
                 newLSA->getHeader().setLsSequenceNumber(sequenceNumber + 1);
-                newLSA->getHeader().setLsChecksum(0);    // TODO: calculate correct LS checksum
                 shouldRebuildRoutingTable |= routerLSA->update(newLSA);
                 delete newLSA;
 
@@ -52,7 +54,7 @@ void OSPF::NeighborState::changeState(OSPF::Neighbor* neighbor, OSPF::NeighborSt
         }
 
         if (neighbor->getInterface()->getState() == OSPF::Interface::DESIGNATED_ROUTER_STATE) {
-            OSPF::NetworkLSA* networkLSA = neighbor->getInterface()->getArea()->findNetworkLSA(ulongFromIPv4Address(neighbor->getInterface()->getAddressRange().address));
+            OSPF::NetworkLSA* networkLSA = neighbor->getInterface()->getArea()->findNetworkLSA(neighbor->getInterface()->getAddressRange().address);
 
             if (networkLSA != NULL) {
                 long sequenceNumber = networkLSA->getHeader().getLsSequenceNumber();
@@ -65,7 +67,6 @@ void OSPF::NeighborState::changeState(OSPF::Neighbor* neighbor, OSPF::NeighborSt
 
                     if (newLSA != NULL) {
                         newLSA->getHeader().setLsSequenceNumber(sequenceNumber + 1);
-                        newLSA->getHeader().setLsChecksum(0);    // TODO: calculate correct LS checksum
                         shouldRebuildRoutingTable |= networkLSA->update(newLSA);
                         delete newLSA;
                     } else {    // no neighbors on the network -> old NetworkLSA must be flushed

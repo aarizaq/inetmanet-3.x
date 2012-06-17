@@ -42,10 +42,8 @@ void BGPRouting::initialize(int stage)
         _inft = InterfaceTableAccess().get();
 
         // read BGP configuration
-        const char *fileName = par("bgpConfigFile");
-        if (*fileName == 0)
-            error("BGP configuration file name is empty");
-        loadConfigFromXML(fileName);
+        cXMLElement *bgpConfig = par("bgpConfig").xmlValue();
+        loadConfigFromXML(bgpConfig);
         createWatch("myAutonomousSystem", _myAS);
         WATCH_PTRVECTOR(_BGPRoutingTable);
     }
@@ -329,7 +327,6 @@ unsigned char BGPRouting::decisionProcess(const BGPUpdateMessage& msg, BGP::Rout
             newEntry->setGateway(_rt->getRoute(indexIP)->getGateway());
             newEntry->setInterface(_rt->getRoute(indexIP)->getInterface());
             newEntry->setSource(IPv4Route::BGP);
-            newEntry->setType(_rt->getRoute(indexIP)->getType());
             _rt->deleteRoute(_rt->getRoute(indexIP));
             _rt->addRoute(newEntry);
         }
@@ -347,10 +344,13 @@ unsigned char BGPRouting::decisionProcess(const BGPUpdateMessage& msg, BGP::Rout
         if (ospfExist(_rt))
         {
             OSPF::IPv4AddressRange  OSPFnetAddr;
-            OSPFnetAddr.address = ipv4AddressFromULong(entry->getDestination().getInt());
-            OSPFnetAddr.mask = ipv4AddressFromULong(entry->getNetmask().getInt());
+            OSPFnetAddr.address = entry->getDestination();
+            OSPFnetAddr.mask = entry->getNetmask();
             OSPFRouting* ospf = OSPFRoutingAccess().getIfExists();
-            ospf->insertExternalRoute(entry->getInterfaceName(), OSPFnetAddr);
+            InterfaceEntry *ie = entry->getInterface();
+            if (!ie)
+                throw cRuntimeError("Model error: interface entry is NULL");
+            ospf->insertExternalRoute(ie->getInterfaceId(), OSPFnetAddr);
             simulation.setContext(this);
         }
     }
@@ -449,7 +449,7 @@ void BGPRouting::updateSendProcess(const unsigned char type, BGP::SessionID sess
 bool BGPRouting::checkExternalRoute(const IPv4Route* route)
 {
     IPv4Address OSPFRoute;
-    OSPFRoute = ipv4AddressFromULong(route->getDestination().getInt());
+    OSPFRoute = route->getDestination();
     OSPFRouting* ospf = OSPFRoutingAccess().getIfExists();
     bool returnValue = ospf->checkExternalRoute(OSPFRoute);
     simulation.setContext(this);
@@ -598,11 +598,10 @@ std::vector<const char *> BGPRouting::loadASConfig(cXMLElementList& ASConfig)
     return routerInSameASList;
 }
 
-void BGPRouting::loadConfigFromXML(const char * filename)
+void BGPRouting::loadConfigFromXML(cXMLElement *bgpConfig)
 {
-    cXMLElement* bgpConfig = ev.getXMLDocument(filename);
-    if (bgpConfig == NULL)
-        error("Cannot read BGP configuration from file: %s", filename);
+    if (strcmp(bgpConfig->getTagName(), "BGPConfig"))
+        error("Cannot read BGP configuration, unaccepted '%s' node at %s", bgpConfig->getTagName(), bgpConfig->getSourceLocation());
 
     // load bgp timer parameters informations
     simtime_t delayTab[BGP::NB_TIMERS];

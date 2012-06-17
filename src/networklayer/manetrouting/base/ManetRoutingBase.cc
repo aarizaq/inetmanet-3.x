@@ -868,7 +868,6 @@ void ManetRoutingBase::omnet_chg_rte(const Uint128 &dst, const Uint128 &gtwy, co
         netmask = IPv4Address::ALLONES_ADDRESS;
 
     InterfaceEntry *ie = getInterfaceWlanByAddress(iface);
-    IPv4Route::RouteType routeType = gateway.isUnspecified() ? IPv4Route::DIRECT : IPv4Route::REMOTE;
     IPv4Route::RouteSource routeSource = usetManetLabelRouting ? IPv4Route::MANET : IPv4Route::MANET2;
 
     if (found)
@@ -878,7 +877,6 @@ void ManetRoutingBase::omnet_chg_rte(const Uint128 &dst, const Uint128 &gtwy, co
                 && oldentry->getGateway() == gateway
                 && oldentry->getMetric() == hops
                 && oldentry->getInterface() == ie
-                && oldentry->getType() == routeType
                 && oldentry->getSource() == routeSource)
             return;
         inet_rt->deleteRoute(oldentry);
@@ -898,8 +896,6 @@ void ManetRoutingBase::omnet_chg_rte(const Uint128 &dst, const Uint128 &gtwy, co
 
     entry->setInterface(ie);
 
-    /// Route type: Direct or Remote
-    entry->setType(routeType);
     /// Source of route, MANUAL by reading a file,
     /// routing protocol name otherwise
     entry->setSource(routeSource);
@@ -931,8 +927,6 @@ void ManetRoutingBase::omnet_chg_rte(const Uint128 &dst, const Uint128 &gtwy, co
 
             entry->setInterface(ie);
 
-            /// Route type: Direct or Remote
-            entry->setType(routeType);
             /// Source of route, MANUAL by reading a file,
             /// routing protocol name otherwise
             entry->setSource(routeSource);
@@ -1022,7 +1016,6 @@ void ManetRoutingBase::omnet_chg_rte(const Uint128 &dst, const Uint128 &gtwy, co
         netmask = IPv4Address::ALLONES_ADDRESS;
 
     InterfaceEntry *ie = getInterfaceEntry(index);
-    IPv4Route::RouteType routeType = gateway.isUnspecified() ? IPv4Route::DIRECT : IPv4Route::REMOTE;
     IPv4Route::RouteSource routeSource = usetManetLabelRouting ? IPv4Route::MANET : IPv4Route::MANET2;
 
     if (found)
@@ -1032,7 +1025,6 @@ void ManetRoutingBase::omnet_chg_rte(const Uint128 &dst, const Uint128 &gtwy, co
                 && oldentry->getGateway() == gateway
                 && oldentry->getMetric() == hops
                 && oldentry->getInterface() == ie
-                && oldentry->getType() == routeType
                 && oldentry->getSource() == routeSource)
             return;
         inet_rt->deleteRoute(oldentry);
@@ -1052,11 +1044,6 @@ void ManetRoutingBase::omnet_chg_rte(const Uint128 &dst, const Uint128 &gtwy, co
 
     entry->setInterface(getInterfaceEntry(index));
 
-    /// Route type: Direct or Remote
-    if (entry->getGateway().isUnspecified())
-        entry->setType(IPv4Route::DIRECT);
-    else
-        entry->setType(IPv4Route::REMOTE);
     /// Source of route, MANUAL by reading a file,
     /// routing protocol name otherwise
 
@@ -1094,8 +1081,6 @@ void ManetRoutingBase::omnet_chg_rte(const Uint128 &dst, const Uint128 &gtwy, co
 
             e->setInterface(ie);
 
-            /// Route type: Direct or Remote
-            e->setType(entry->getType());
             /// Source of route, MANUAL by reading a file,
             /// routing protocol name otherwise
             e->setSource(entry->getSource());
@@ -1582,7 +1567,6 @@ bool ManetRoutingBase::setRoute(const Uint128 & destination, const Uint128 &next
     if (mask==(Uint128)0)
         netmask = IPv4Address::ALLONES_ADDRESS;
     InterfaceEntry *ie = getInterfaceEntry(ifaceIndex);
-    IPv4Route::RouteType routeType = gateway.isUnspecified() ? IPv4Route::DIRECT : IPv4Route::REMOTE;
 
     if (found)
     {
@@ -1591,7 +1575,6 @@ bool ManetRoutingBase::setRoute(const Uint128 & destination, const Uint128 &next
                 && oldentry->getGateway() == gateway
                 && oldentry->getMetric() == hops
                 && oldentry->getInterface() == ie
-                && oldentry->getType() == routeType
                 && oldentry->getSource() == IPv4Route::MANUAL)
             return true;
         inet_rt->deleteRoute(oldentry);
@@ -1611,7 +1594,6 @@ bool ManetRoutingBase::setRoute(const Uint128 & destination, const Uint128 &next
 
     entry->setInterface(ie);
 
-    entry->setType(routeType);
     /// Source of route, MANUAL by reading a file,
     /// routing protocol name otherwise
     entry->setSource(IPv4Route::MANUAL);
@@ -1645,8 +1627,6 @@ bool ManetRoutingBase::setRoute(const Uint128 & destination, const Uint128 &next
 
             e->setInterface(ie);
 
-            /// Route type: Direct or Remote
-            e->setType(entry->getType());
             /// Source of route, MANUAL by reading a file,
             /// routing protocol name otherwise
             e->setSource(entry->getSource());
@@ -1958,7 +1938,7 @@ void ManetRoutingBase::getListRelatedAp(const Uint128 & add, std::vector<Uint128
     else
     {
         std::vector<IPv4Address> listAux;
-        getApListIp(add.getLo(),listAux);
+        getApListIp(IPv4Address(add.getLo()),listAux);
         list.clear();
         for (unsigned int i = 0; i < listAux.size(); i++)
         {

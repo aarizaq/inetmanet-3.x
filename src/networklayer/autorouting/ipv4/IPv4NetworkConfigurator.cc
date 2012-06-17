@@ -263,7 +263,7 @@ double IPv4NetworkConfigurator::getChannelWeight(cChannel *transmissionChannel)
  */
 void IPv4NetworkConfigurator::extractWirelessTopology(IPv4Topology& topology)
 {
-    std::map<const char *, LinkInfo *> wirelessIdToLinkInfoMap;  // wireless LANs by name
+    std::map<std::string, LinkInfo *> wirelessIdToLinkInfoMap;  // wireless LANs by name
 
     // iterate through all wireless interfaces and determine the wireless id.
     for (int nodeIndex = 0; nodeIndex < topology.getNumNodes(); nodeIndex++)
@@ -295,7 +295,7 @@ void IPv4NetworkConfigurator::extractWirelessTopology(IPv4Topology& topology)
     }
 
     // add links between all pairs of wireless interfaces (full graph)
-    for (std::map<const char *, LinkInfo *>::iterator it = wirelessIdToLinkInfoMap.begin(); it != wirelessIdToLinkInfoMap.end(); it++)
+    for (std::map<std::string, LinkInfo *>::iterator it = wirelessIdToLinkInfoMap.begin(); it != wirelessIdToLinkInfoMap.end(); it++)
     {
         LinkInfo *linkInfo = it->second;
         for (int i = 0; i < (int)linkInfo->interfaceInfos.size(); i++)
@@ -345,7 +345,8 @@ const char *IPv4NetworkConfigurator::getWirelessId(InterfaceEntry *interfaceEntr
             if ((hostMatcher.matchesAny() || hostMatcher.matches(hostShortenedFullPath.c_str()) || hostMatcher.matches(hostFullPath.c_str())) &&
                 (interfaceMatcher.matchesAny() || interfaceMatcher.matches(interfaceEntry->getFullName())))
             {
-                return wirelessElement->getSourceLocation();
+                const char *idAttr = wirelessElement->getAttribute("id");  // identifier of wireless connection
+                return idAttr ? idAttr : wirelessElement->getSourceLocation();
             }
         }
         catch (std::exception& e)
@@ -355,7 +356,10 @@ const char *IPv4NetworkConfigurator::getWirelessId(InterfaceEntry *interfaceEntr
     }
 
     // if the mgmt submodule within the wireless NIC has an "ssid" or "accessPointAddress" parameter, we can use that
-    cSimpleModule *mgmtModule = ModuleAccess<cSimpleModule>("mgmt").getIfExists(hostModule);
+    cModule *module = interfaceEntry->getInterfaceModule();
+    if (!module)
+        module = hostModule;
+    cSimpleModule *mgmtModule = ModuleAccess<cSimpleModule>("mgmt").getIfExists(module);
     if (mgmtModule)
     {
         if (mgmtModule->hasPar("ssid"))
@@ -688,8 +692,8 @@ void IPv4NetworkConfigurator::assignAddresses(IPv4Topology& topology)
                 if (compatibleInterface->configure)
                 {
                     IPv4InterfaceData *interfaceData = compatibleInterface->interfaceEntry->ipv4Data();
-                    interfaceData->setIPAddress(completeAddress);
-                    interfaceData->setNetmask(completeNetmask);
+                    interfaceData->setIPAddress(IPv4Address(completeAddress));
+                    interfaceData->setNetmask(IPv4Address(completeNetmask));
                 }
                 compatibleInterface->address = completeAddress;
                 EV_DEBUG << "Selected interface address: " << IPv4Address(completeAddress) << endl;
@@ -827,9 +831,18 @@ void IPv4NetworkConfigurator::readAddressConfiguration(cXMLElement *root, IPv4To
 
         // TODO: "switch" egyebkent sztem nem muxik most, de kellene!
         const char *towardsAttr = interfaceElement->getAttribute("towards"); // neighbor host names, like "ap switch"
+        const char *amongAttr = interfaceElement->getAttribute("among"); // neighbor host names, like "host[*] router1"
         const char *addressAttr = interfaceElement->getAttribute("address"); // "10.0.x.x"
         const char *netmaskAttr = interfaceElement->getAttribute("netmask"); // "255.255.x.x"
         const char *mtuAttr = interfaceElement->getAttribute("mtu"); // integer
+        const char *metricAttr = interfaceElement->getAttribute("metric"); // integer
+
+        if (amongAttr && *amongAttr)       // among="X Y Z" means hosts = "X Y Z" towards = "X Y Z"
+        {
+            if ((hostAttr && *hostAttr) || (towardsAttr && *towardsAttr))
+                throw cRuntimeError("The 'hosts'/'towards' and 'among' attributes are mutually exclusive, at %s", interfaceElement->getSourceLocation());
+            towardsAttr = hostAttr = amongAttr;
+        }
 
         try
         {
@@ -882,6 +895,13 @@ void IPv4NetworkConfigurator::readAddressConfiguration(cXMLElement *root, IPv4To
                             // mtu
                             if (isNotEmpty(mtuAttr))
                                 interfaceInfo->interfaceEntry->setMtu(atoi(mtuAttr));
+
+                            // metric
+                            if (isNotEmpty(metricAttr))
+                            {
+                                ASSERT(interfaceInfo->interfaceEntry->ipv4Data());
+                                interfaceInfo->interfaceEntry->ipv4Data()->setMetric(atoi(metricAttr));
+                            }
 
                             interfacesSeen.insert(interfaceInfo);
                             EV_DEBUG << hostModule->getFullPath() << ":" << interfaceInfo->interfaceEntry->getFullName() << endl;
@@ -1007,7 +1027,9 @@ void IPv4NetworkConfigurator::dumpConfig(IPv4Topology& topology)
             IPv4InterfaceData *interfaceData = interfaceEntry->ipv4Data();
             std::stringstream stream;
             stream << "   <interface hosts=\"" << interfaceInfo->node->module->getFullPath() << "\" names=\"" << interfaceEntry->getName() <<
-                      "\" address=\"" << interfaceData->getIPAddress() << "\" netmask=\"" << interfaceData->getNetmask() << "\"/>" << endl;
+                      "\" address=\"" << interfaceData->getIPAddress() << "\" netmask=\"" << interfaceData->getNetmask() <<
+                      "\" metric=\"" << interfaceData->getMetric() <<
+                      "\"/>" << endl;
             fprintf(f, "%s", stream.str().c_str());
         }
     }
@@ -1022,19 +1044,16 @@ void IPv4NetworkConfigurator::dumpConfig(IPv4Topology& topology)
             InterfaceEntry *interfaceEntry = interfaceInfo->interfaceEntry;
             IPv4InterfaceData *interfaceData = interfaceEntry->ipv4Data();
             const std::vector<IPv4Address>& multicastAddresses = interfaceData->getJoinedMulticastGroups();
-            bool found = false;
-            for (int k = 0 ; k < (int)multicastAddresses.size(); k++)
-                if (!multicastAddresses[k].isLinkLocalMulticast())
-                    found = true;
-            if (found) {
+
+            if (multicastAddresses.size() > 0)
+            {
                 std::stringstream stream;
                 stream << "   <multicast-group hosts=\"" << interfaceInfo->node->module->getFullPath() << "\" interfaces=\"" << interfaceEntry->getName() << "\" address=\"";
                 for (int k = 0 ; k < (int)multicastAddresses.size(); k++)
                 {
-                    if (k) stream << " ";
                     IPv4Address address = multicastAddresses[k];
-                    if (!address.isLinkLocalMulticast())
-                        stream << address.str();
+                    if (k) stream << " ";
+                    stream << address.str();
                 }
                 stream << "\"/>" << endl;
                 fprintf(f, "%s", stream.str().c_str());
@@ -1128,6 +1147,14 @@ void IPv4NetworkConfigurator::addMulticastGroups(cXMLElement *root, IPv4Topology
         const char *interfaceAttr = multicastGroupElement->getAttribute("interfaces");
         const char *addressAttr = multicastGroupElement->getAttribute("address");
         const char *towardsAttr = multicastGroupElement->getAttribute("towards"); // neighbor host names, like "ap switch"
+        const char *amongAttr = multicastGroupElement->getAttribute("among");
+
+        if (amongAttr && *amongAttr)       // among="X Y Z" means hosts = "X Y Z" towards = "X Y Z"
+        {
+            if ((hostAttr && *hostAttr) || (towardsAttr && *towardsAttr))
+                throw cRuntimeError("The 'hosts'/'towards' and 'among' attributes are mutually exclusive, at %s", multicastGroupElement->getSourceLocation());
+            towardsAttr = hostAttr = amongAttr;
+        }
 
         try
         {
@@ -1532,7 +1559,6 @@ void IPv4NetworkConfigurator::addStaticRoutes(IPv4Topology& topology)
             route->setGateway(IPv4Address::UNSPECIFIED_ADDRESS);
             route->setNetmask(netmask);
             route->setInterface(sourceInterfaceEntry);
-            route->setType(IPv4Route::DIRECT);
             route->setSource(IPv4Route::MANUAL);
             sourceRoutingTable->addRoute(route);
 
@@ -1543,7 +1569,6 @@ void IPv4NetworkConfigurator::addStaticRoutes(IPv4Topology& topology)
             route->setNetmask(IPv4Address::UNSPECIFIED_ADDRESS);
             route->setGateway(gateway);
             route->setInterface(sourceInterfaceEntry);
-            route->setType(IPv4Route::DIRECT);
             route->setSource(IPv4Route::MANUAL);
             sourceRoutingTable->addRoute(route);
 
@@ -1611,7 +1636,6 @@ void IPv4NetworkConfigurator::addStaticRoutes(IPv4Topology& topology)
                         route->setInterface(sourceInterfaceEntry);
                         if (gatewayAddress != destinationAddress)
                             route->setGateway(gatewayAddress);
-                        route->setType(IPv4Route::DIRECT);
                         route->setSource(IPv4Route::MANUAL);
                         if (containsRoute(sourceRoutes, route))
                             delete route;
@@ -1649,7 +1673,7 @@ void IPv4NetworkConfigurator::addStaticRoutes(IPv4Topology& topology)
  */
 bool IPv4NetworkConfigurator::routesHaveSameColor(IPv4Route *route1, IPv4Route *route2)
 {
-    return route1->getType() == route2->getType() && route1->getSource() == route2->getSource() && route1->getMetric() == route2->getMetric() &&
+    return route1->getSource() == route2->getSource() && route1->getMetric() == route2->getMetric() &&
            route1->getGateway() == route2->getGateway() && route1->getInterface() == route2->getInterface();
 }
 
@@ -1949,11 +1973,10 @@ void IPv4NetworkConfigurator::optimizeRoutes(std::vector<IPv4Route *>& originalR
         RouteInfo *routeInfo = routingTableInfo.routeInfos.at(i);
         IPv4Route *routeColor = colorToRoute[routeInfo->color];
         IPv4Route *optimizedRoute = new IPv4Route();
-        optimizedRoute->setDestination(routeInfo->destination);
-        optimizedRoute->setNetmask(routeInfo->netmask);
+        optimizedRoute->setDestination(IPv4Address(routeInfo->destination));
+        optimizedRoute->setNetmask(IPv4Address(routeInfo->netmask));
         optimizedRoute->setInterface(routeColor->getInterface());
         optimizedRoute->setGateway(routeColor->getGateway());
-        optimizedRoute->setType(routeColor->getType());
         optimizedRoute->setSource(routeColor->getSource());
         optimizedRoute->setMetric(routeColor->getMetric());
         optimizedRoutes.push_back(optimizedRoute);

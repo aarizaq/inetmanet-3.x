@@ -112,7 +112,7 @@ void Ieee802154Mac::registerInterface()
     if (!ift)
         return;
 
-    InterfaceEntry *e = new InterfaceEntry();
+    InterfaceEntry *e = new InterfaceEntry(this);
 
     // interface name: NetworkInterface module's name without special characters ([])
     char *interfaceName = new char[strlen(getParentModule()->getFullName()) + 1];
@@ -138,7 +138,7 @@ void Ieee802154Mac::registerInterface()
     e->setPointToPoint(false);
     iface = e;
     // add
-    ift->addInterface(e, this);
+    ift->addInterface(e);
 }
 
 /** Initialization */

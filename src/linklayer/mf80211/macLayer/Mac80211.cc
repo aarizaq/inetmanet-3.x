@@ -87,7 +87,7 @@ void Mac80211::initialize(int stage)
 
 void Mac80211::registerInterface()
 {
-    InterfaceEntry *e = new InterfaceEntry();
+    InterfaceEntry *e = new InterfaceEntry(this);
 
     // interface name: NIC module's name without special characters ([])
     e->setName(OPP_Global::stripnonalnum(getParentModule()->getFullName()).c_str());
@@ -120,7 +120,7 @@ void Mac80211::registerInterface()
 
     // add
     IInterfaceTable *ift = InterfaceTableAccess().get();
-    ift->addInterface(e, this);
+    ift->addInterface(e);
 }
 
 void Mac80211::handleCommand(cMessage *msg)

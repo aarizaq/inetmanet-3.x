@@ -18,13 +18,15 @@
 #ifndef __INET_OSPFINTERFACE_H
 #define __INET_OSPFINTERFACE_H
 
-#include "INETDefs.h"
-#include "OSPFcommon.h"
-#include "OSPFTimer_m.h"
-#include "OSPFNeighbor.h"
 #include <map>
 #include <vector>
 #include <list>
+
+#include "INETDefs.h"
+
+#include "OSPFcommon.h"
+#include "OSPFNeighbor.h"
+#include "OSPFTimer_m.h"
 
 namespace OSPF {
 
@@ -68,7 +70,7 @@ private:
     OSPFInterfaceType                                                   interfaceType;
     InterfaceState*                                                     state;
     InterfaceState*                                                     previousState;
-    unsigned char                                                       ifIndex;
+    int                                                                 ifIndex;
     unsigned short                                                      mtu;
     IPv4AddressRange                                                    interfaceAddressRange;
     AreaID                                                              areaID;
@@ -82,9 +84,9 @@ private:
     OSPFTimer*                                                          waitTimer;
     OSPFTimer*                                                          acknowledgementTimer;
     std::map<RouterID, Neighbor*>                                       neighboringRoutersByID;
-    std::map<IPv4Address, Neighbor*, IPv4Address_Less>                  neighboringRoutersByAddress;
+    std::map<IPv4Address, Neighbor*>                                    neighboringRoutersByAddress;
     std::vector<Neighbor*>                                              neighboringRouters;
-    std::map<IPv4Address, std::list<OSPFLSAHeader>, IPv4Address_Less>   delayedAcknowledgements;
+    std::map<IPv4Address, std::list<OSPFLSAHeader> >                    delayedAcknowledgements;
     DesignatedRouterID                                                  designatedRouter;
     DesignatedRouterID                                                  backupDesignatedRouter;
     Metric                                                              interfaceOutputCost;
@@ -123,8 +125,8 @@ public:
 
     void                    setType(OSPFInterfaceType ifType)  { interfaceType = ifType; }
     OSPFInterfaceType       getType() const  { return interfaceType; }
-    void                    setIfIndex(unsigned char index);
-    unsigned char           getIfIndex() const  { return ifIndex; }
+    void                    setIfIndex(int index);
+    int                     getIfIndex() const  { return ifIndex; }
     void                    setMTU(unsigned short ifMTU)  { mtu = ifMTU; }
     unsigned short          getMTU() const  { return mtu; }
     void                    setAreaID(AreaID areaId)  { areaID = areaId; }

@@ -16,11 +16,13 @@
 //
 
 #include "OSPFInterfaceStateNotDesignatedRouter.h"
+
+#include "MessageHandler.h"
+#include "OSPFArea.h"
 #include "OSPFInterfaceStateDown.h"
 #include "OSPFInterfaceStateLoopback.h"
-#include "OSPFArea.h"
 #include "OSPFRouter.h"
-#include "MessageHandler.h"
+
 
 void OSPF::InterfaceStateNotDesignatedRouter::processEvent(OSPF::Interface* intf, OSPF::Interface::InterfaceEventType event)
 {
@@ -37,7 +39,7 @@ void OSPF::InterfaceStateNotDesignatedRouter::processEvent(OSPF::Interface* intf
     }
     if (event == OSPF::Interface::HELLO_TIMER) {
         if (intf->getType() == OSPF::Interface::BROADCAST) {
-            intf->sendHelloPacket(OSPF::ALL_SPF_ROUTERS);
+            intf->sendHelloPacket(IPv4Address::ALL_OSPF_ROUTERS_MCAST);
         } else {    // OSPF::Interface::NBMA
             if (intf->getRouterPriority() > 0) {
                 unsigned long neighborCount = intf->getNeighborCount();

@@ -70,7 +70,6 @@ void addToMcastGroup(InterfaceEntry* ie, IRoutingTable* routingTable, const IPv4
     re->setNetmask(IPv4Address::ALLONES_ADDRESS); // TODO: can't set this to none?
     re->setGateway(IPv4Address()); // none
     re->setInterface(ie);
-    re->setType(IPv4Route::DIRECT);
     re->setSource(IPv4Route::MANUAL);
     re->setMetric(1);
     routingTable->addRoute(re);

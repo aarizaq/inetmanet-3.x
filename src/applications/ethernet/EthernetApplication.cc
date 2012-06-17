@@ -117,7 +117,7 @@ void EthernetApplication::receivePacket(cMessage *msg)
     EV << "Received packet `" << msg->getName() << "'\n";
 
     packetsReceived++;
-    simtime_t lastEED = simTime() - msg->getCreationTime();
+    // simtime_t lastEED = simTime() - msg->getCreationTime();
 
 
     if (dynamic_cast<EtherAppReq *>(msg))

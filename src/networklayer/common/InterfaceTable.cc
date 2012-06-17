@@ -67,11 +67,11 @@ void InterfaceTable::initialize(int stage)
         nb = NotificationBoardAccess().get();
 
         // register a loopback interface
-        InterfaceEntry *ie = new InterfaceEntry();
+        InterfaceEntry *ie = new InterfaceEntry(NULL);
         ie->setName("lo0");
         ie->setMtu(3924);
         ie->setLoopback(true);
-        addInterface(ie, NULL);
+        addInterface(ie);
     }
     else if (stage==1)
     {
@@ -151,7 +151,7 @@ InterfaceEntry *InterfaceTable::getInterfaceById(int id)
     return (id<0 || id>=(int)idToInterface.size()) ? NULL : idToInterface[id];
 }
 
-void InterfaceTable::addInterface(InterfaceEntry *entry, cModule *ifmod)
+void InterfaceTable::addInterface(InterfaceEntry *entry)
 {
     if (!nb)
         throw cRuntimeError("InterfaceTable must precede all network interface modules in the node's NED definition");
@@ -166,14 +166,17 @@ void InterfaceTable::addInterface(InterfaceEntry *entry, cModule *ifmod)
     invalidateTmpInterfaceList();
 
     // fill in networkLayerGateIndex, nodeOutputGateId, nodeInputGateId
-    if (ifmod)
-        discoverConnectingGates(entry, ifmod);
+    discoverConnectingGates(entry);
 
     nb->fireChangeNotification(NF_INTERFACE_CREATED, entry);
 }
 
-void InterfaceTable::discoverConnectingGates(InterfaceEntry *entry, cModule *ifmod)
+void InterfaceTable::discoverConnectingGates(InterfaceEntry *entry)
 {
+    cModule *ifmod = entry->getInterfaceModule();
+    if (!ifmod)
+        return;  // virtual interface
+
     // ifmod is something like "host.eth[1].mac"; climb up to find "host.eth[1]" from it
     cModule *host = getParentModule();
     while (ifmod && ifmod->getParentModule()!=host)
@@ -204,10 +207,10 @@ void InterfaceTable::discoverConnectingGates(InterfaceEntry *entry, cModule *ifm
     // consistency checks
     // note: we don't check nodeOutputGateId/nodeInputGateId, because wireless interfaces
     // are not connected to the host
-    if (!nwlayerInGate && !nwlayerOutGate)
+    if (!nwlayerInGate && !nwlayerOutGate)      // Accesspoint does not have a network layer so the NIC is not connected
         return;
     if (!nwlayerInGate || !nwlayerOutGate || nwlayerInGate->getOwnerModule()!=nwlayerOutGate->getOwnerModule() || nwlayerInGate->getIndex()!=nwlayerOutGate->getIndex())
-        throw cRuntimeError("addInterface(): interface must be connected to network layer's in/out gates to lower layer of the same index");
+        throw cRuntimeError("addInterface(): interface must be connected to network layer's in/out gates using the same gate index");
 
     entry->setNetworkLayerGateIndex(nwlayerInGate->getIndex());
 }
@@ -247,6 +250,8 @@ void InterfaceTable::updateLinkDisplayString(InterfaceEntry *entry)
     {
         cModule *host = getParentModule();
         cGate *outputGate = host->gate(outputGateId);
+        if (!outputGate->getChannel())
+            return;
         cDisplayString& displayString = outputGate->getDisplayString();
         char buf[128];
 #ifdef WITH_IPv4

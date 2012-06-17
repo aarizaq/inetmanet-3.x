@@ -15,8 +15,11 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
+
 #include "LinkStateAcknowledgementHandler.h"
+
 #include "OSPFRouter.h"
+
 
 OSPF::LinkStateAcknowledgementHandler::LinkStateAcknowledgementHandler(OSPF::Router* containingRouter) :
     OSPF::IMessageHandler(containingRouter)
@@ -44,7 +47,7 @@ void OSPF::LinkStateAcknowledgementHandler::processPacket(OSPFPacket* packet, OS
             EV << "\n";
 
             lsaKey.linkStateID = lsaHeader.getLinkStateID();
-            lsaKey.advertisingRouter = lsaHeader.getAdvertisingRouter().getInt();
+            lsaKey.advertisingRouter = lsaHeader.getAdvertisingRouter();
 
             if ((lsaOnRetransmissionList = neighbor->findOnRetransmissionList(lsaKey)) != NULL) {
                 if (operator==(lsaHeader, lsaOnRetransmissionList->getHeader())) {
@@ -59,3 +62,4 @@ void OSPF::LinkStateAcknowledgementHandler::processPacket(OSPFPacket* packet, OS
         }
     }
 }
+

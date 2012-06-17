@@ -103,4 +103,5 @@ class IPv6EncapsulatingSecurityPayloadHeader extends IPv6ExtensionHeader
 {
     extensionType = IP_PROT_IPv6EXT_ESP;
     byteLength = 8; // FIXME verify
+    int spi; // HIPSIM
 }

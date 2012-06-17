@@ -96,7 +96,7 @@ void BMacLayer::registerInterface()
     IInterfaceTable *ift = InterfaceTableAccess().getIfExists();
     if (!ift)
         return;
-    InterfaceEntry *e = new InterfaceEntry();
+    InterfaceEntry *e = new InterfaceEntry(this);
 
     // interface name: NetworkInterface module's name without special characters ([])
     char *interfaceName = new char[strlen(getParentModule()->getFullName()) + 1];
@@ -123,7 +123,7 @@ void BMacLayer::registerInterface()
     iface = e;
 
     // add
-    ift->addInterface(e, this);
+    ift->addInterface(e);
 }
 /**
  * Initialize method of BMacLayer. Init all parameters, schedule timers.

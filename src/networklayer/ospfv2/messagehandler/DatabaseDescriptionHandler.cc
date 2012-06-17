@@ -15,11 +15,14 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
+
 #include "DatabaseDescriptionHandler.h"
-#include "OSPFNeighbor.h"
-#include "OSPFInterface.h"
-#include "OSPFRouter.h"
+
 #include "OSPFArea.h"
+#include "OSPFInterface.h"
+#include "OSPFNeighbor.h"
+#include "OSPFRouter.h"
+
 
 OSPF::DatabaseDescriptionHandler::DatabaseDescriptionHandler(OSPF::Router* containingRouter) :
     OSPF::IMessageHandler(containingRouter)
@@ -204,7 +207,7 @@ bool OSPF::DatabaseDescriptionHandler::processDDPacket(OSPFDatabaseDescriptionPa
             OSPF::LSAKeyType lsaKey;
 
             lsaKey.linkStateID = currentHeader.getLinkStateID();
-            lsaKey.advertisingRouter = currentHeader.getAdvertisingRouter().getInt();
+            lsaKey.advertisingRouter = currentHeader.getAdvertisingRouter();
 
             OSPFLSA* lsaInDatabase = router->findLSA(lsaType, lsaKey, intf->getArea()->getAreaID());
 

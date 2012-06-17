@@ -628,7 +628,7 @@ void Ieee80211NewMac::registerInterface()
     if (!ift)
         return;
 
-    InterfaceEntry *e = new InterfaceEntry();
+    InterfaceEntry *e = new InterfaceEntry(this);
 
     // interface name: NetworkInterface module's name without special characters ([])
     char *interfaceName = new char[strlen(getParentModule()->getFullName()) + 1];
@@ -654,7 +654,7 @@ void Ieee80211NewMac::registerInterface()
     e->setPointToPoint(false);
 
     // add
-    ift->addInterface(e, this);
+    ift->addInterface(e);
 }
 
 void Ieee80211NewMac::initializeQueueModule()

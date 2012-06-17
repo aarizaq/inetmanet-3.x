@@ -306,7 +306,7 @@ void EtherMACBase::initializeStatistics()
 
 void EtherMACBase::registerInterface()
 {
-    interfaceEntry = new InterfaceEntry();
+    interfaceEntry = new InterfaceEntry(this);
 
     // interface name: NIC module's name without special characters ([])
     interfaceEntry->setName(OPP_Global::stripnonalnum(getParentModule()->getFullName()).c_str());
@@ -329,7 +329,7 @@ void EtherMACBase::registerInterface()
     IInterfaceTable *ift = InterfaceTableAccess().getIfExists();
 
     if (ift)
-        ift->addInterface(interfaceEntry, this);
+        ift->addInterface(interfaceEntry);
 }
 
 void EtherMACBase::receiveSignal(cComponent *src, simsignal_t signalId, cObject *obj)

@@ -1,10 +1,12 @@
 
 package inet.examples.ospfv2.simpletest;
 
-import inet.util.ThruputMeteringChannel;
-import inet.nodes.ospfv2.OSPFRouter;
-import inet.nodes.inet.StandardHost;
+import inet.base.UnimplementedModule;
 import inet.linklayer.ethernet.EtherHub;
+import inet.networklayer.autorouting.ipv4.IPv4NetworkConfigurator;
+import inet.nodes.inet.StandardHost;
+import inet.nodes.ospfv2.OSPFRouter;
+import inet.util.ThruputMeteringChannel;
 
 
 network SimpleTest
@@ -54,6 +56,18 @@ network SimpleTest
                 @display("p=660,92;i=device/laptop");
             gates:
                 ethg[1];
+        }
+        configurator: IPv4NetworkConfigurator {
+            parameters:
+                config = xml("<config>"+
+                            "<interface among='H1 R1' address='192.168.1.x' netmask='255.255.255.0' />"+
+                            "<interface among='H2 R2' address='192.168.2.x' netmask='255.255.255.0' />"+
+                            "<interface among='R1 R2' address='192.168.60.x' netmask='255.255.255.0' />"+
+                            "<route hosts='H1 H2' destination='*' netmask='0.0.0.0' interface='eth0' />"+
+                            "</config>");
+                addStaticRoutes = false;
+                addDefaultRoutes = false;
+                @display("p=75,43");
         }
     connections:
         H1.ethg[0] <--> C <--> N1.ethg[0];

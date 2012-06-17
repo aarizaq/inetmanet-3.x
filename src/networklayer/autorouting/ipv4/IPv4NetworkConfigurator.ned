@@ -127,7 +127,7 @@ package inet.networklayer.autorouting.ipv4;
 //
 // <pre>
 // <config>
-//   <interface hosts='*' address='10.x.x.x' netmask='255.x.x.x'/>
+//   <interface hosts='**' address='10.x.x.x' netmask='255.x.x.x'/>
 // </config>
 // </pre>
 //
@@ -177,6 +177,12 @@ package inet.networklayer.autorouting.ipv4;
 //      of specifying the interface names. The default value is "*".
 //      e.g. "ap" or "server" or "client*"
 //
+//    - @among
+//      Optional selector attribute that specifies a list of host name patterns.
+//      Only interfaces in the specified hosts connected towards the specified
+//      hosts are affected.
+//      The 'among="X Y Z"' is same as 'hosts="X Y Z" towards="X Y Z"'.
+//
 //    - @address
 //      Optional parameter attribute that limits the range of assignable
 //      addresses. Wildcards are allowed with using 'x' as part of the address
@@ -198,7 +204,14 @@ package inet.networklayer.autorouting.ipv4;
 //      Optional parameter attribute to set the MTU parameter in the interface.
 //      When unspecified the interface parameter is left unchanged.
 //
+//    - @metric                number
+//      Optional parameter attribute to set the Metric parameter in the interface.
+//      When unspecified the interface parameter is left unchanged.
+//
 //  - <wireless>
+//
+//    - @id (optional)
+//      identifies wireless network, unique value used if missed
 //
 //    - @hosts
 //      Optional selector attribute that specifies a list of host name patterns.
@@ -223,6 +236,17 @@ package inet.networklayer.autorouting.ipv4;
 //      Optional selector attribute that specifies a list of interface name
 //      patterns. Only interfaces with the specified names are affected. The
 //      default value is "*" that matches all interfaces.
+//
+//    - @towards
+//      Optional selector attribute that specifies a list of host name patterns.
+//      Only interfaces connected towards the specified hosts are affected.
+//      The default value is "*".
+//
+//    - @among
+//      Optional selector attribute that specifies a list of host name patterns.
+//      Only interfaces in the specified hosts connected towards the specified
+//      hosts are affected.
+//      The 'among="X Y Z"' is same as 'hosts="X Y Z" towards="X Y Z"'.
 //
 //    - @address
 //      Mandatory parameter attribute that specifies a list of multicast group

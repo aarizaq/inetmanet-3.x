@@ -73,7 +73,7 @@ void Ieee80211MgmtBaseExtended::initialize(int stage)
         else
         {
             EV << "No interface Table, we can not determine our Interface Entry" << endl;
-            myEntry = new InterfaceEntry();
+            myEntry = new InterfaceEntry(this);
             myEntry->setMACAddress(myAddress);
             myEntry->setName(getParentModule()->getName());
         }
