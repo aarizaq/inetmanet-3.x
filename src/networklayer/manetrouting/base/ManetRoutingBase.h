@@ -311,6 +311,7 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
     virtual void getApList(const MACAddress &,std::vector<MACAddress>&);
     virtual void getApListIp(const IPv4Address &,std::vector<IPv4Address>&);
     virtual void getListRelatedAp(const Uint128 &, std::vector<Uint128>&);
+    virtual void setRouteInternalStorege(const Uint128 &, const Uint128 &, const bool &);
 
   public:
 //

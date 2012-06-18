@@ -20,7 +20,7 @@
 #include "Ieee80211Etx.h"
 #include "Ieee80211Frame_m.h"
 #include "Radio80211aControlInfo_m.h"
-#include "GlobalWirelessWirelessLinkInspector.h"
+#include "GlobalWirelessLinkInspector.h"
 
 Define_Module(Ieee80211Etx);
 
@@ -617,22 +617,22 @@ void Ieee80211Etx::handleEtxMessage(MACETXPacket *msg)
         }
     }
     //
-    if (GlobalWirelessWirelessLinkInspector::isActive())
+    if (GlobalWirelessLinkInspector::isActive())
     {
         // compute and actualize the costs
-        GlobalWirelessWirelessLinkInspector::Link link;
+        GlobalWirelessLinkInspector::Link link;
         Uint128 org = this->myAddress.getInt();
         Uint128 dest = msg->getSource().getInt();
 
         double etx;
         getEtx(msg->getSource(),etx);
 
-        if (GlobalWirelessWirelessLinkInspector::getLinkCost(org,dest,link))
+        if (GlobalWirelessLinkInspector::getLinkCost(org,dest,link))
         {
             if (link.costEtx != etx)
             {
                 link.costEtx = etx;
-                GlobalWirelessWirelessLinkInspector::setLinkCost(org,dest,link);
+                GlobalWirelessLinkInspector::setLinkCost(org,dest,link);
             }
         }
         else
@@ -640,7 +640,7 @@ void Ieee80211Etx::handleEtxMessage(MACETXPacket *msg)
             link.costEtt = 0;
             link.costEtx = etx;
             link.snr = 0;
-            GlobalWirelessWirelessLinkInspector::setLinkCost(org,dest,link);
+            GlobalWirelessLinkInspector::setLinkCost(org,dest,link);
         }
     }
 
@@ -701,21 +701,21 @@ void Ieee80211Etx::handleBwMessage(MACBwPacket *msg)
             neig->timeETT.erase(neig->timeETT.begin());
         neig->timeETT.push_back(msg->getTime());
 
-        if (GlobalWirelessWirelessLinkInspector::isActive())
+        if (GlobalWirelessLinkInspector::isActive())
         {
             // compute and actualize the costs
-            GlobalWirelessWirelessLinkInspector::Link link;
+            GlobalWirelessLinkInspector::Link link;
             Uint128 org = this->myAddress.getInt();
             Uint128 dest = msg->getSource().getInt();
             double ett;
             getEtt(msg->getSource(),ett);
 
-            if (GlobalWirelessWirelessLinkInspector::getLinkCost(org,dest,link))
+            if (GlobalWirelessLinkInspector::getLinkCost(org,dest,link))
             {
                 if (link.costEtt != ett)
                 {
                     link.costEtt = ett;
-                    GlobalWirelessWirelessLinkInspector::setLinkCost(org,dest,link);
+                    GlobalWirelessLinkInspector::setLinkCost(org,dest,link);
                 }
             }
             else
@@ -723,7 +723,7 @@ void Ieee80211Etx::handleBwMessage(MACBwPacket *msg)
                 link.costEtx = 0;
                 link.costEtt = ett;
                 link.snr = 0;
-                GlobalWirelessWirelessLinkInspector::setLinkCost(org,dest,link);
+                GlobalWirelessLinkInspector::setLinkCost(org,dest,link);
             }
         }
     }

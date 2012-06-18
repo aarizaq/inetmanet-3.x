@@ -1,5 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2008 by Alfonso Ariza                                   *
+ *   Copyright (C) 2012 by Alfonso Ariza                                   *
  *   aarizaq@uma.es                                                        *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -35,6 +36,8 @@
 #include "ICMPAccess.h"
 #include "IMobility.h"
 #include "Ieee80211MgmtAP.h"
+#include "GlobalWirelessLinkInspector.h"
+
 #define IP_DEF_TTL 32
 #define UDP_HDR_LEN 8
 
@@ -344,6 +347,8 @@ void ManetRoutingBase::registerRoutingModule()
             it->second.push_back(data);
         }
     }
+
+    GlobalWirelessLinkInspector::initRoutingTables(this,getAddress(),isProactive());
 
  //   WATCH_MAP(*routesVector);
 }
@@ -786,34 +791,8 @@ void ManetRoutingBase::omnet_chg_rte(const Uint128 &dst, const Uint128 &gtwy, co
 
     /* Add route to kernel routing table ... */
     IPv4Address desAddress((uint32_t)dst);
-    if (!createInternalStore && routesVector)
-    {
-        delete routesVector;
-        routesVector = NULL;
-    }
-    else if (createInternalStore && routesVector)
-    {
-        RouteMap::iterator it = routesVector->find(dst);
-        if (it != routesVector->end())
-            routesVector->erase(it);
-        if (!del_entry)
-        {
-            /*
-            Uint128 dest=dst;
-            Uint128 next=gtwy;
-            if (mac_layer_)
-            {
-                dest.setAddresType(Uint128::MAC);
-                next.setAddresType(Uint128::MAC);
-            }
-            else
-            {
-                dest.setAddresType(Uint128::IPV4);
-                next.setAddresType(Uint128::IPV4);
-            }*/
-            routesVector->insert(std::make_pair<Uint128,Uint128>(dst, gtwy));
-        }
-    }
+    setRouteInternalStorege(dst, gtwy, del_entry);
+    GlobalWirelessLinkInspector::setRoute(this,getAddress(),dst,gtwy,del_entry);
 
     if (mac_layer_)
         return;
@@ -950,21 +929,8 @@ void ManetRoutingBase::omnet_chg_rte(const Uint128 &dst, const Uint128 &gtwy, co
 
     /* Add route to kernel routing table ... */
     IPv4Address desAddress((uint32_t)dst);
-    if (!createInternalStore && routesVector)
-    {
-         delete routesVector;
-         routesVector = NULL;
-    }
-    else if (createInternalStore && routesVector)
-    {
-         RouteMap::iterator it = routesVector->find(dst);
-         if (it != routesVector->end())
-             routesVector->erase(it);
-         if (!del_entry)
-         {
-             routesVector->insert(std::make_pair<Uint128,Uint128>(dst, gtwy));
-         }
-    }
+    setRouteInternalStorege(dst, gtwy, del_entry);
+    GlobalWirelessLinkInspector::setRoute(this,getAddress(),dst,gtwy,del_entry);
     if (mac_layer_)
         return;
     bool found = false;
@@ -1492,23 +1458,8 @@ bool ManetRoutingBase::setRoute(const Uint128 & destination, const Uint128 &next
     IPv4Address desAddress((uint32_t)destination);
     bool del_entry = (nextHop == (Uint128)0);
 
-    if (!createInternalStore && routesVector)
-    {
-         delete routesVector;
-         routesVector = NULL;
-    }
-    else if (createInternalStore && routesVector)
-    {
-         //FIXME netmask not stored in internal routesVector, only stored in inet routing table
-         // Is the netmask always ALLONES? If yes, do remove mask parameter...
-         RouteMap::iterator it = routesVector->find(destination);
-         if (it != routesVector->end())
-             routesVector->erase(it);
-         if (!del_entry)
-         {
-             routesVector->insert(std::make_pair<Uint128,Uint128>(destination, nextHop));
-         }
-    }
+    setRouteInternalStorege(destination, nextHop, del_entry);
+    GlobalWirelessLinkInspector::setRoute(this,getAddress(),destination,nextHop,del_entry);
 
     if (mac_layer_)
         return true;
@@ -1955,6 +1906,29 @@ bool ManetRoutingBase::isAp() const
         return locator->isThisAp();
     else
         return locator->isThisApIp();
+}
+
+
+void ManetRoutingBase::setRouteInternalStorege(const Uint128 &dest, const Uint128 &next, const bool &erase)
+{
+    if (!createInternalStore && routesVector)
+     {
+         delete routesVector;
+         routesVector = NULL;
+     }
+     else if (createInternalStore && routesVector)
+     {
+         RouteMap::iterator it = routesVector->find(dest);
+         if (it != routesVector->end())
+         {
+             if (erase)
+                 routesVector->erase(it);
+             else
+                 it->second = next;
+         }
+         else
+             routesVector->insert(std::make_pair<Uint128,Uint128>(dest, next));
+     }
 }
 
 bool ManetRoutingBase::getRouteFromGlobal(const Uint128 &src, const Uint128 &dest, std::vector<Uint128> &route)
