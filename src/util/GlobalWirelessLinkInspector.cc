@@ -18,12 +18,14 @@
 #include "GlobalWirelessLinkInspector.h"
 GlobalWirelessLinkInspector::CostMap* GlobalWirelessLinkInspector::costMap = NULL;
 GlobalWirelessLinkInspector::GlobalRouteMap *GlobalWirelessLinkInspector::globalRouteMap = NULL;
+GlobalWirelessLinkInspector::LocatorMap *GlobalWirelessLinkInspector::globalLocatorMap = NULL;
 
 GlobalWirelessLinkInspector::GlobalWirelessLinkInspector()
 {
     // TODO Auto-generated constructor stub
     costMap = NULL;
     globalRouteMap = NULL;
+    globalLocatorMap = NULL;
 }
 
 GlobalWirelessLinkInspector::~GlobalWirelessLinkInspector()
@@ -51,6 +53,8 @@ GlobalWirelessLinkInspector::~GlobalWirelessLinkInspector()
         }
         delete costMap;
     }
+    if (globalLocatorMap != NULL)
+        delete costMap;
 }
 
 void GlobalWirelessLinkInspector::initialize()
@@ -68,6 +72,14 @@ void GlobalWirelessLinkInspector::initialize()
     if (globalRouteMap == NULL)
     {
         globalRouteMap = new GlobalRouteMap;
+    }
+    else
+    {
+        opp_error("more that an instance of GlobalWirelessWirelessLinkInspector exist");
+    }
+    if (globalLocatorMap == NULL)
+    {
+        globalLocatorMap = new LocatorMap;
     }
     else
     {
@@ -275,3 +287,47 @@ bool GlobalWirelessLinkInspector::getRoute(const Uint128 &src, const Uint128 &de
         }
     }
 }
+
+void GlobalWirelessLinkInspector::setLocatorInfo(Uint128 node, Uint128 ap)
+{
+    if (globalLocatorMap == NULL)
+        return;
+    if (ap.getLo() != 0)
+        (*globalLocatorMap)[node] = ap;
+    else
+    {
+        LocatorIteartor it =  globalLocatorMap->find(node);
+        if (it != globalLocatorMap->end())
+            globalLocatorMap->erase(it);
+    }
+}
+
+bool GlobalWirelessLinkInspector::getLocatorInfo(Uint128 node, Uint128 &ap)
+{
+    if (globalLocatorMap == NULL)
+        return false;
+    LocatorIteartor it =  globalLocatorMap->find(node);
+    if (it == globalLocatorMap->end())
+        return false;
+    ap = it->second;
+    return true;
+}
+
+
+bool GlobalWirelessLinkInspector::getNumNodes(Uint128 node, int &cont)
+{
+    cont = 0;
+    if (globalLocatorMap == NULL)
+        return false;
+    LocatorIteartor it =  globalLocatorMap->find(node);
+    if (it == globalLocatorMap->end())
+        return false;
+    Uint128 ap = it->second;
+    for (it = globalLocatorMap->begin();it != globalLocatorMap->end();it++)
+    {
+        if (it->second == ap)
+            cont++;
+    }
+    return true;
+}
+

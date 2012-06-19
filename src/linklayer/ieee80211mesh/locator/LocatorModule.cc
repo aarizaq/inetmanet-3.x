@@ -25,6 +25,7 @@
 #include "Ieee802Ctrl_m.h"
 #include "ARPPacket_m.h"
 #include "Ieee80211Frame_m.h"
+#include "GlobalWirelessLinkInspector.h"
 
 simsignal_t LocatorModule::locatorChangeSignal = SIMSIGNAL_NULL;
 LocatorModule::LocatorMapIp LocatorModule::globalLocatorMapIp;
@@ -563,6 +564,7 @@ void LocatorModule::setTables(const MACAddress & APaddr, const MACAddress &staAd
             locatorMapIp[staIpAddr] = locEntry;
             globalLocatorMapIp[staIpAddr] = locEntry;
         }
+        GlobalWirelessLinkInspector::setLocatorInfo(staAddr.getInt(), APaddr.getInt());
         if (!staIpAddr.isUnspecified())
         {
             if (rt)
@@ -619,6 +621,7 @@ void LocatorModule::setTables(const MACAddress & APaddr, const MACAddress &staAd
             }
 
         }
+        GlobalWirelessLinkInspector::setLocatorInfo(staAddr.getInt(), 0);
         if (!staIpAddr.isUnspecified())
         {
             itIp = globalLocatorMapIp.find(staIpAddr);

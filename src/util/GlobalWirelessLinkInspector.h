@@ -51,10 +51,18 @@ class GlobalWirelessLinkInspector : public cSimpleModule
         typedef std::map<Uint128,Link> NodeLinkCost;
         typedef std::map<Uint128,NodeLinkCost*> CostMap;
         static CostMap * costMap;
+
+        typedef std::map<Uint128,Uint128> LocatorMap;
+        typedef LocatorMap::iterator  LocatorIteartor;
+
+
+        static LocatorMap *globalLocatorMap;
+
         GlobalWirelessLinkInspector();
         virtual ~GlobalWirelessLinkInspector();
      public:
         static bool isActive() {return (costMap!=NULL);}
+        static bool isActiveLocator() {return (globalLocatorMap!=NULL && !globalLocatorMap->empty());}
         static void setLinkCost(const Uint128& org,const Uint128& dest,const Link &);
         static bool getLinkCost(const Uint128& org,const Uint128& dest,Link &);
         static bool getLinkCost(const std::vector<Uint128>&, Link &);
@@ -64,6 +72,10 @@ class GlobalWirelessLinkInspector : public cSimpleModule
         static void initRoutingTables (const cModule *,const Uint128 &,bool);
         virtual void initialize();
         virtual void handleMessage(cMessage *msg);
+
+        static void setLocatorInfo(Uint128 , Uint128 );
+        static bool getLocatorInfo(Uint128 , Uint128 &);
+        static bool getNumNodes(Uint128,int &);
 };
 
 
