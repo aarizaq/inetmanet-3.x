@@ -1,5 +1,5 @@
 
-package inet.nodes.ethernet.Ieee8021d;
+package inet.nodes.Ieee8021d;
 
 import inet.applications.ethernet.EthernetApplication;
 import inet.linklayer.ieee8021d.ethernet.EthernetLink;

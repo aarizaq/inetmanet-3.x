@@ -663,7 +663,7 @@
         labels = ""
          nedPackages = "
                        inet.linklayer.ieee8021d
-                       inet.nodes.ethernet.Ieee8021d
+                       inet.nodes.Ieee8021d
                       "
         extraSourceFolders = ""
         compileFlags = ""

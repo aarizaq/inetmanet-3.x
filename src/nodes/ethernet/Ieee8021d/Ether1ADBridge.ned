@@ -8,7 +8,7 @@
 
 
 
-package inet.nodes.ethernet.Ieee8021d;
+package inet.nodes.Ieee8021d;
 import inet.linklayer.ieee8021d.ieee8021AD.PortFilt1ad;
 import inet.linklayer.ieee8021d.ieee8021Q.Relay1Q;
 import inet.linklayer.ieee8021d.ieee8021Q.Cache1Q;

@@ -5,7 +5,7 @@
 // @date Feb 2011
 //******************************************************/
 
-package inet.nodes.ethernet.Ieee8021d;
+package inet.nodes.Ieee8021d;
 import inet.linklayer.ieee8021d.ieee8021Q.PortFilt;
 import inet.linklayer.ieee8021d.ieee8021Q.Relay1Q;
 import inet.linklayer.ieee8021d.ieee8021Q.Cache1Q;

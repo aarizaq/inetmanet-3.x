@@ -6,7 +6,7 @@
 //******************************************************/
 
 
-package inet.nodes.ethernet.Ieee8021d;
+package inet.nodes.Ieee8021d;
 import inet.linklayer.ieee8021d.ieee8021AH.IComponent;
 import inet.linklayer.ieee8021d.ieee8021AH.ITagTable;
 import inet.linklayer.ieee8021d.ieee8021AH.BComponent;
