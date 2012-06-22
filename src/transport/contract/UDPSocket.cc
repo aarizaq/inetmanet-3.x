@@ -101,7 +101,6 @@ void UDPSocket::sendTo(cPacket *pk, IPvXAddress destAddr, int destPort, int outI
     pk->setControlInfo(ctrl);
     sendToUDP(pk);
 }
-
 void UDPSocket::send(cPacket *pk)
 {
     pk->setKind(UDP_C_DATA);

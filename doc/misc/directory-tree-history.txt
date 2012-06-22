@@ -42,6 +42,21 @@ Integration (since 2010)
 Folders that appeared due to the integration of code from external projects
 include:
 
+Added DHCP
++ src/applications/dhcp
+
+Added Traci
++ src/world/traci
++ src/applications/traci
++ examples/traci
++ examples/traci_launchd
+
+Added Diffserv
++ src/networklayer/diffserv
++ examples/diffserv
+
+src/networklayer/queue/                -> src/linklayer/queue/
+
 Added HttpTools:
 + src/world/httptools
 + src/applications/httptools
