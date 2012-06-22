@@ -26,11 +26,16 @@ Define_Module(Decider80216);
 
 void Decider80216::initialize(int stage)
 {
-    BasicDecider::initialize(stage);
-
+    BasicModule::initialize(stage);
     if (stage == 0)
     {
         snrThresholdLevel = FWMath::dBm2mW(par("snrThresholdLevel"));
+        upperLayerOut = findGate("upperLayerOut");
+        lowerLayerIn = findGate("lowerLayerIn");
+        numRcvd = 0;
+        numSentUp = 0;
+        WATCH(numRcvd);
+        WATCH(numSentUp);
     }
 }
 
@@ -110,3 +115,69 @@ void Decider80216::handleLowerMsg(AirFrame* af, SnrList& receivedList)
         delete af;
     }
 }
+
+
+/**
+ * The basic handle message function.
+ *
+ * Depending on the gate a message arrives handleMessage just calls
+ * different handle*Msg functions to further process the message.
+ *
+ * The decider module only handles messages from lower layers. All
+ * messages from upper layers are directly passed to the snrEval layer
+ * and cannot be processed in the decider module
+ *
+ * You should not make any changes in this function but implement all
+ * your functionality into the handle*Msg functions called from here.
+ *
+ * @sa handleLowerMsg, handleSelfMsg
+ */
+void Decider80216::handleMessage(cMessage *msg)
+{
+    if (msg->getArrivalGateId() == lowerLayerIn)
+    {
+        numRcvd++;
+
+        //remove the control info from the AirFrame
+        SnrControlInfo *cInfo = static_cast<SnrControlInfo *>(msg->removeControlInfo());
+
+        // read in the snrList from the control info
+        handleLowerMsg(check_and_cast<AirFrame *>(msg), cInfo->getSnrList());
+
+        // delete the control info
+        delete cInfo;
+
+    }
+    else if (msg->isSelfMessage())
+    {
+        handleSelfMsg(msg);
+    }
+}
+
+
+/**
+ * Decapsulate and send message to the upper layer.
+ *
+ * to be called within @ref handleLowerMsg.
+ */
+void Decider80216::sendUp(AirFrame * frame)
+{
+    numSentUp++;
+    cPacket *macMsg = frame->decapsulate();
+    send(macMsg, upperLayerOut);
+    EV << "sending up msg " << frame->getName() << endl;
+    delete frame;
+}
+
+/**
+ * Redefine this function if you want to process messages from the
+ * channel before they are forwarded to upper layers
+ *
+ * In this function it has to be decided whether this message got lost
+ * or not. This can be done with a simple SNR threshold or with
+ * transformations of SNR into bit error probabilities...
+ *
+ * If you want to forward the message to upper layers please use @ref
+ * sendUp which will decapsulate the MAC frame before sending
+ */
+

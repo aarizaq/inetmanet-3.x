@@ -2,16 +2,32 @@
 #ifndef _DECIDER_80216_H
 #define _DECIDER_80216_H
 
-#include <omnetpp.h>
+//#include <BasicDecider.h>
 
-#include <BasicDecider.h>
-//#include "SnrList.h"
-#include <ChannelAccess.h>
+
+#include "INETDefs.h"
+#include "BasicModule.h"
+#include "AirFrame_m.h"
+#include "SnrControlInfo_m.h"
+#include "SnrList.h"
+
 //#include"ControlPlaneBase.h"
 
-class INET_API Decider80216 : public BasicDecider
+//class INET_API Decider80216 : public BasicDecider
+class INET_API Decider80216 : public BasicModule
 {
   protected:
+    /** @brief gate id*/
+    /*@{*/
+    int upperLayerOut;
+    int lowerLayerIn;
+    /*@}*/
+
+    /** @brief statistics*/
+    /*@{*/
+    unsigned long numRcvd;
+    unsigned long numSentUp;
+    /*@}*/
     /** @brief Level for decision [mW]
      *
      * When a packet contains an snr level higher than snrThresholdLevel it
@@ -37,6 +53,9 @@ class INET_API Decider80216 : public BasicDecider
   protected:
     virtual void initialize(int stage);
     void getSnrList(AirFrame *af, SnrList &receivedList);
+    virtual void handleMessage( cMessage* );
+    virtual void handleSelfMsg(cMessage *msg){delete msg;};
+    virtual void sendUp(AirFrame*);
 
   protected:
     bool snrOverThreshold(SnrList &list) const;
