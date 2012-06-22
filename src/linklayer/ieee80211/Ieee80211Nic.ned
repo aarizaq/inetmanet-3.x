@@ -19,11 +19,12 @@
 package inet.linklayer.ieee80211;
 
 import inet.base.IHook;
-import inet.linklayer.ieee80211.radio.Ieee80211Radio;
-import inet.linklayer.ieee80211.mgmt.Ieee80211AgentSTA;
-import inet.linklayer.ieee80211.mgmt.IIeee80211Mgmt;
-import inet.linklayer.ieee80211.mac.Ieee80211Mac;
 import inet.linklayer.IWirelessNic;
+import inet.linklayer.ieee80211.mac.Ieee80211Mac;
+import inet.linklayer.ieee80211.mgmt.IIeee80211Mgmt;
+import inet.linklayer.ieee80211.mgmt.Ieee80211AgentSTA;
+import inet.linklayer.ieee80211.radio.Ieee80211Radio;
+
 
 //
 // This NIC implements an 802.11 network interface card.
@@ -39,6 +40,7 @@ module Ieee80211Nic like IWirelessNic
 {
     parameters:
         string mgmtType = default("Ieee80211MgmtSTA"); // name of the management module type (implements IIeee80211Mgmt)
+        string opMode @enum("b","g","a","p") = default("g");
         int numOutputHooks = default(0);
         int numInputHooks = default(0);
         bool _agentNeeded = (mgmtType == "Ieee80211MgmtSTA");   // internal par. do not use, shows if optional agent module is needed 
@@ -50,7 +52,6 @@ module Ieee80211Nic like IWirelessNic
     submodules:
         outputHook[numOutputHooks]: <default("Nop")> like IHook if numOutputHooks>0;
         inputHook[numInputHooks]: <default("Nop")> like IHook if numInputHooks>0;
-        
         // optional agent module (can be either 0 or 1 sized vector)
         agent: Ieee80211AgentSTA if _agentNeeded {
             parameters:
@@ -62,11 +63,13 @@ module Ieee80211Nic like IWirelessNic
         }
         mac: Ieee80211Mac {
             parameters:
+                opMode = opMode;
                 queueModule = "mgmt";
                 @display("p=96,222");
         }
         radio: Ieee80211Radio {
             parameters:
+                phyOpMode = opMode;
                 @display("p=96,307");
         }
     connections:

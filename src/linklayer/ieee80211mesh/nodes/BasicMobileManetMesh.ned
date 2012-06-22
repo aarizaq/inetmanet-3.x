@@ -21,8 +21,8 @@ package inet.linklayer.ieee80211mesh.nodes;
 
 import inet.base.MMapBoard;
 import inet.base.NotificationBoard;
-import inet.linklayer.ieee80211mesh.Ieee80211NewNicMesh;
-import inet.linklayer.ieee80211mesh.Ieee80211NewNicMeshMulti;
+import inet.linklayer.ieee80211mesh.Ieee80211NicMesh;
+import inet.linklayer.ieee80211mesh.Ieee80211NicMeshMulti;
 import inet.networklayer.common.InterfaceTable;
 import inet.base.Sink;
 
@@ -87,7 +87,7 @@ module BasicMobileManetMesh
             @display("p=159,294;i=block/sink");
         }
         // the name of radio interface must have "wlan", valid examples wlan, wlan802, localwlan ....
-        wlan: Ieee80211NewNicMeshMulti {
+        wlan: Ieee80211NicMeshMulti {
             parameters:
                 numChannels = meshChannels;
                 @display("p=159,386;q=queue");

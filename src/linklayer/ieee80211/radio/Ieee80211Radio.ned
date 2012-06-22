@@ -1,6 +1,6 @@
 //
 // Copyright (C) Andras Varga, Levente Meszaros
-// Based on the Mobility Framework's ~SnrEval by Marc Loebbers
+// Based on the Mobility Framework's SnrEval by Marc Loebbers
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -18,20 +18,14 @@
 
 
 package inet.linklayer.ieee80211.radio;
-
 import inet.linklayer.radio.Radio;
-
-
 //
 // Physical layer for the IEEE 802.11 models. Its external interface
 // (including gates and how it communicates with other modules)
-// is the same as the ~IRadio module's.
+// is the same as the Radio module's.
 //
-// The implementation is largely based on the Mobility Framework's
-// SnrEval80211 and Decider80211 modules.
-//
-// @see ~IRadio
-// @author Andras Varga
+// @see Radio
+// @author Alfonso Ariza Quintana
 //
 simple Ieee80211Radio extends Radio
 {
@@ -39,4 +33,13 @@ simple Ieee80211Radio extends Radio
         @display("i=block/wrxtx");
         radioModel = "Ieee80211RadioModel";  // specify the radio model responsible for modulation, error correction and frame length calculation
         double snirThreshold @unit("dB") = default(4dB); // if signal-noise ratio is below this threshold, frame is considered noise (in dB)
+        string berTableFile = default("");
+        string phyOpMode @enum("b","g","a","p") = default("g");
+        string wifiPreambleMode @enum("LONG","SHORT") = default("LONG"); // Wifi preambre mode Ieee 2007, 19.3.2
+        string errorModel @enum("YansModel","NistModel") = default("NistModel");
+        int btSize @unit("b") = default(8192b);// test size frame for Airtime Link Metric
+        bool airtimeLinkComputation = default(false);
+
+        bool AutoHeaderSize = default(false); // in the receiver the radio model compute the header size in function of timers and bitrate
 }
+

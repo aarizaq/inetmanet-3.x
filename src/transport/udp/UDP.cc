@@ -236,18 +236,13 @@ void UDP::processPacketFromApp(cPacket *appData)
     if (destAddr.isUnspecified() || destPort == -1)
         error("send: missing destination address or port when sending over unconnected port");
 
-    int interfaceId = -1;
-    if (ctrl->getInterfaceId() == -1)
+    int interfaceId = ctrl->getInterfaceId();
+    if (interfaceId == -1 && destAddr.isMulticast())
     {
-        if (destAddr.isMulticast())
-        {
-            std::map<IPvXAddress,int>::iterator it = sd->multicastAddrs.find(destAddr);
-            interfaceId = (it != sd->multicastAddrs.end() && it->second != -1) ? it->second : sd->multicastOutputInterfaceId;
-        }
-        sendDown(appData, sd->localAddr, sd->localPort, destAddr, destPort, interfaceId, sd->multicastLoop, sd->ttl, sd->typeOfService);
+        std::map<IPvXAddress,int>::iterator it = sd->multicastAddrs.find(destAddr);
+        interfaceId = (it != sd->multicastAddrs.end() && it->second != -1) ? it->second : sd->multicastOutputInterfaceId;
     }
-    else
-        sendDown(appData, sd->localAddr, sd->localPort, destAddr, destPort, ctrl->getInterfaceId(), sd->multicastLoop, sd->ttl, sd->typeOfService);
+    sendDown(appData, sd->localAddr, sd->localPort, destAddr, destPort, interfaceId, sd->multicastLoop, sd->ttl, sd->typeOfService);
 
     delete ctrl; // cannot be deleted earlier, due to destAddr
 }
@@ -423,34 +418,33 @@ void UDP::processUndeliverablePacket(UDPPacket *udpPacket, cObject *ctrl)
     // send back ICMP PORT_UNREACHABLE
     if (dynamic_cast<IPv4ControlInfo *>(ctrl) != NULL)
     {
-        IPv4ControlInfo *ctrl4 = (IPv4ControlInfo *)ctrl;
-        bool isMulticast = ctrl4->getDestAddr().isMulticast();
-        bool isBroadcast = ctrl4->getDestAddr() == IPv4Address::ALLONES_ADDRESS;
-        if (!isMulticast && !isBroadcast)
-        {
 #ifdef WITH_IPv4
+        IPv4ControlInfo *ctrl4 = (IPv4ControlInfo *)ctrl;
+
+        if (!ctrl4->getDestAddr().isMulticast() && !ctrl4->getDestAddr().isLimitedBroadcastAddress())
+        {
             if (!icmp)
                 icmp = ICMPAccess().get();
             icmp->sendErrorMessage(udpPacket, ctrl4, ICMP_DESTINATION_UNREACHABLE, ICMP_DU_PORT_UNREACHABLE);
-#endif
         }
         else
-            delete udpPacket;   // drop multicast packet
+#endif
+            delete udpPacket;
     }
     else if (dynamic_cast<IPv6ControlInfo *>(ctrl) != NULL)
     {
+#ifdef WITH_IPv6
         IPv6ControlInfo *ctrl6 = (IPv6ControlInfo *)ctrl;
 
         if (!ctrl6->getDestAddr().isMulticast())
         {
-#ifdef WITH_IPv6
             if (!icmpv6)
                 icmpv6 = ICMPv6Access().get();
             icmpv6->sendErrorMessage(udpPacket, ctrl6, ICMPv6_DESTINATION_UNREACHABLE, PORT_UNREACHABLE);
-#endif
         }
         else
-            delete udpPacket;   // drop multicast packet
+#endif
+            delete udpPacket;
     }
     else if (ctrl == NULL)
     {

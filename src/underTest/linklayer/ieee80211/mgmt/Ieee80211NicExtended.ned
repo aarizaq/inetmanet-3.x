@@ -16,10 +16,10 @@
 // @author: Juan-Carlos Maureira
 //
 package inet.underTest.linklayer.ieee80211.mgmt;
-import inet.linklayer.ieee80211.radio.Ieee80211NewRadio;
+import inet.linklayer.ieee80211.radio.Ieee80211Radio;
 import inet.underTest.linklayer.ieee80211.mgmt.Ieee80211AgentSTAExtended;
 import inet.linklayer.ieee80211.mgmt.IIeee80211Mgmt;
-import inet.linklayer.ieee80211.mac.Ieee80211NewMac;
+import inet.linklayer.ieee80211.mac.Ieee80211Mac;
 import inet.linklayer.IWirelessNic;
 import inet.base.IHook;
 import inet.linklayer.ieee80211.mgmt.IIeee80211Mgmt;
@@ -60,13 +60,13 @@ module Ieee80211NicExtended like IWirelessNic
             parameters:
                 @display("p=96,136;q=wlanDataQueue");
         }
-        mac: Ieee80211NewMac {
+        mac: Ieee80211Mac {
             parameters:
                 opMode = opMode;
                 queueModule = "mgmt";
                 @display("p=96,222");
         }
-        radio: Ieee80211NewRadio {
+        radio: Ieee80211Radio {
             parameters:
                 @display("p=96,307");
         }

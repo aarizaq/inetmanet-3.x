@@ -28,7 +28,7 @@ import inet.nodes.inet.NetworkLayer;
 import inet.applications.IPingApp;
 import inet.applications.ITCPApp;
 import inet.applications.IUDPApp;
-import inet.linklayer.ieee80211.Ieee80211NewNic;
+import inet.linklayer.ieee80211.Ieee80211Nic;
 import inet.transport.udp.UDP;
 import inet.transport.tcp.TCP;
 import inet.mobility.models.StationaryMobility;

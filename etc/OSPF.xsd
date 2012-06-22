@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
 
-<xsd:simpleType name="IPv4AddressType">
+<xsd:simpleType name="AreaIdType">
   <xsd:annotation>
     <xsd:documentation xml:lang="en">
       A string containing an IPv4 address in dotted decimal notation.
@@ -10,6 +10,39 @@
 
   <xsd:restriction base="xsd:string">
     <xsd:pattern value="(([0-1]?[0-9]?[0-9]|2([0-4][0-9]|5[0-5]))\.){3}([0-1]?[0-9]?[0-9]|2([0-4][0-9]|5[0-5]))" />
+  </xsd:restriction>
+</xsd:simpleType>
+
+<xsd:simpleType name="IPv4AddressResolvType">
+  <xsd:annotation>
+    <xsd:documentation xml:lang="en">
+      A string containing a string which resolvable by IPvXAddressResolver class in INET.
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:restriction base="xsd:string">
+  </xsd:restriction>
+</xsd:simpleType>
+
+<xsd:simpleType name="NodePathType">
+  <xsd:annotation>
+    <xsd:documentation xml:lang="en">
+      A string containing a node path, for example "Area1.Router2".
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:restriction base="xsd:string">
+  </xsd:restriction>
+</xsd:simpleType>
+
+<xsd:simpleType name="InterfaceNameType">
+  <xsd:annotation>
+    <xsd:documentation xml:lang="en">
+      A string containing an interface name.
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:restriction base="xsd:string">
   </xsd:restriction>
 </xsd:simpleType>
 
@@ -95,6 +128,13 @@
 </xsd:simpleType>
 
 
+<xsd:attributeGroup name="ifAttr">
+    <xsd:attribute name="ifName" type="InterfaceNameType" use="optional" />
+    <xsd:attribute name="toward" type="NodePathType" use="optional" />
+    <!-- TODO: only one from @ifName and @toward is required!!! -->
+</xsd:attributeGroup>
+
+
 <xsd:element name="AddressRange">
   <xsd:annotation>
     <xsd:documentation xml:lang="en">
@@ -103,11 +143,9 @@
   </xsd:annotation>
 
   <xsd:complexType>
-    <xsd:sequence>
-      <xsd:element name="Address" type="IPv4AddressType" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="Mask" type="IPv4AddressType" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="Status" type="StatusTypeEnum" minOccurs="1" maxOccurs="1" />
-    </xsd:sequence>
+    <xsd:attribute name="address" type="IPv4AddressResolvType" use="required" />
+    <xsd:attribute name="mask" type="IPv4AddressResolvType" use="required" />
+    <xsd:attribute name="status" type="StatusTypeEnum" use="required" />
   </xsd:complexType>
 </xsd:element>
 
@@ -121,9 +159,7 @@
   </xsd:annotation>
 
   <xsd:complexType>
-    <xsd:sequence>
-      <xsd:element name="DefaultCost" type="MetricType" minOccurs="1" maxOccurs="1" />
-    </xsd:sequence>
+    <xsd:attribute name="defaultCost" type="MetricType" use="required" />
   </xsd:complexType>
 </xsd:element>
 
@@ -140,7 +176,7 @@
       <xsd:element ref="AddressRange" minOccurs="1" maxOccurs="unbounded" />
       <xsd:element ref="Stub" minOccurs="0" maxOccurs="1" />
     </xsd:sequence>
-    <xsd:attribute name="id" type="IPv4AddressType" use="required" />
+    <xsd:attribute name="id" type="AreaIdType" use="required" />
   </xsd:complexType>
 </xsd:element>
 
@@ -148,24 +184,22 @@
   <xsd:annotation>
     <xsd:documentation xml:lang="en">
       Describes the parameters of a point-to-point interface. It is identified
-      in the router by its ifIndex value.
+      in the router by its ifName value, or name of toward module.
       HelloInterval and RouterDeadInterval must be the same for all router
       interfaces attached to the same network.
     </xsd:documentation>
   </xsd:annotation>
 
   <xsd:complexType>
-    <xsd:sequence>
-      <xsd:element name="AreaID" type="IPv4AddressType" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="InterfaceOutputCost" type="MetricType" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="RetransmissionInterval" type="xsd:unsignedShort" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="InterfaceTransmissionDelay" type="xsd:unsignedByte" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="HelloInterval" type="xsd:unsignedShort" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="RouterDeadInterval" type="xsd:unsignedShort" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="AuthenticationType" type="AuthenticationTypeEnum" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="AuthenticationKey" type="AuthenticationKeyType" minOccurs="1" maxOccurs="1" />
-    </xsd:sequence>
-    <xsd:attribute name="ifIndex" type="xsd:unsignedByte" use="required" />
+    <xsd:attributeGroup ref="ifAttr" />
+    <xsd:attribute name="areaID" type="AreaIdType" use="optional" />
+    <xsd:attribute name="interfaceOutputCost" type="MetricType" use="optional" />
+    <xsd:attribute name="retransmissionInterval" type="xsd:unsignedShort" use="optional" />
+    <xsd:attribute name="interfaceTransmissionDelay" type="xsd:unsignedByte" use="optional" />
+    <xsd:attribute name="helloInterval" type="xsd:unsignedShort" use="optional" />
+    <xsd:attribute name="routerDeadInterval" type="xsd:unsignedShort" use="optional" />
+    <xsd:attribute name="authenticationType" type="AuthenticationTypeEnum" use="optional" />
+    <xsd:attribute name="authenticationKey" type="AuthenticationKeyType" use="optional" />
   </xsd:complexType>
 </xsd:element>
 
@@ -173,25 +207,23 @@
   <xsd:annotation>
     <xsd:documentation xml:lang="en">
       Describes the parameters of a broadcast interface. It is identified in
-      the router by its ifIndex value.
+      the router by its ifName value, or name of toward module.
       HelloInterval and RouterDeadInterval must be the same for all router
       interfaces attached to the same network.
     </xsd:documentation>
   </xsd:annotation>
 
   <xsd:complexType>
-    <xsd:sequence>
-      <xsd:element name="AreaID" type="IPv4AddressType" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="InterfaceOutputCost" type="MetricType" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="RetransmissionInterval" type="xsd:unsignedShort" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="InterfaceTransmissionDelay" type="xsd:unsignedByte" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="RouterPriority" type="xsd:unsignedByte" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="HelloInterval" type="xsd:unsignedShort" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="RouterDeadInterval" type="xsd:unsignedShort" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="AuthenticationType" type="AuthenticationTypeEnum" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="AuthenticationKey" type="AuthenticationKeyType" minOccurs="1" maxOccurs="1" />
-    </xsd:sequence>
-    <xsd:attribute name="ifIndex" type="xsd:unsignedByte" use="required" />
+    <xsd:attributeGroup ref="ifAttr" />
+    <xsd:attribute name="areaID" type="AreaIdType" use="optional" />
+    <xsd:attribute name="interfaceOutputCost" type="MetricType" use="optional" />
+    <xsd:attribute name="retransmissionInterval" type="xsd:unsignedShort" use="optional" />
+    <xsd:attribute name="interfaceTransmissionDelay" type="xsd:unsignedByte" use="optional" />
+    <xsd:attribute name="routerPriority" type="xsd:unsignedByte" use="optional" />
+    <xsd:attribute name="helloInterval" type="xsd:unsignedShort" use="optional" />
+    <xsd:attribute name="routerDeadInterval" type="xsd:unsignedShort" use="optional" />
+    <xsd:attribute name="authenticationType" type="AuthenticationTypeEnum" use="optional" />
+    <xsd:attribute name="authenticationKey" type="AuthenticationKeyType" use="optional" />
   </xsd:complexType>
 </xsd:element>
 
@@ -203,10 +235,8 @@
   </xsd:annotation>
 
   <xsd:complexType>
-    <xsd:sequence>
-      <xsd:element name="NetworkInterfaceAddress" type="IPv4AddressType" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="NeighborPriority" type="xsd:unsignedByte" minOccurs="1" maxOccurs="1" />
-    </xsd:sequence>
+    <xsd:attribute name="networkInterfaceAddress" type="IPv4AddressResolvType" use="required" />
+    <xsd:attribute name="neighborPriority" type="xsd:unsignedByte" use="required" />
   </xsd:complexType>
 </xsd:element>
 
@@ -228,7 +258,7 @@
   <xsd:annotation>
     <xsd:documentation xml:lang="en">
       Describes the parameters of an NBMA interface. It is identified in the
-      router by its ifIndex value.
+      router by its ifName value, or name of toward module.
       HelloInterval and RouterDeadInterval must be the same for all router
       interfaces attached to the same network.
     </xsd:documentation>
@@ -236,19 +266,19 @@
 
   <xsd:complexType>
     <xsd:sequence>
-      <xsd:element name="AreaID" type="IPv4AddressType" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="InterfaceOutputCost" type="MetricType" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="RetransmissionInterval" type="xsd:unsignedShort" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="InterfaceTransmissionDelay" type="xsd:unsignedByte" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="RouterPriority" type="xsd:unsignedByte" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="HelloInterval" type="xsd:unsignedShort" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="RouterDeadInterval" type="xsd:unsignedShort" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="AuthenticationType" type="AuthenticationTypeEnum" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="AuthenticationKey" type="AuthenticationKeyType" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="PollInterval" type="xsd:unsignedShort" minOccurs="1" maxOccurs="1" />
       <xsd:element ref="NBMANeighborList" minOccurs="1" maxOccurs="1" />
     </xsd:sequence>
-    <xsd:attribute name="ifIndex" type="xsd:unsignedByte" use="required" />
+    <xsd:attributeGroup ref="ifAttr" />
+    <xsd:attribute name="areaID" type="AreaIdType" use="optional" />
+    <xsd:attribute name="interfaceOutputCost" type="MetricType" use="optional" />
+    <xsd:attribute name="retransmissionInterval" type="xsd:unsignedShort" use="optional" />
+    <xsd:attribute name="interfaceTransmissionDelay" type="xsd:unsignedByte" use="optional" />
+    <xsd:attribute name="routerPriority" type="xsd:unsignedByte" use="optional" />
+    <xsd:attribute name="helloInterval" type="xsd:unsignedShort" use="optional" />
+    <xsd:attribute name="routerDeadInterval" type="xsd:unsignedShort" use="optional" />
+    <xsd:attribute name="authenticationType" type="AuthenticationTypeEnum" use="optional" />
+    <xsd:attribute name="authenticationKey" type="AuthenticationKeyType" use="optional" />
+    <xsd:attribute name="pollInterval" type="xsd:unsignedShort" use="optional" />
   </xsd:complexType>
 </xsd:element>
 
@@ -261,7 +291,7 @@
 
   <xsd:complexType>
     <xsd:sequence>
-      <xsd:element name="PointToMultiPointNeighbor" type="IPv4AddressType" minOccurs="1" maxOccurs="unbounded" />
+      <xsd:element name="PointToMultiPointNeighbor" type="IPv4AddressResolvType" minOccurs="1" maxOccurs="unbounded" />
     </xsd:sequence>
   </xsd:complexType>
 </xsd:element>
@@ -270,7 +300,7 @@
   <xsd:annotation>
     <xsd:documentation xml:lang="en">
       Describes the parameters of a point-to-multipoint interface. It is
-      identified in the router by its ifIndex value.
+      identified in the router by its ifName value, or name of toward module.
       HelloInterval and RouterDeadInterval must be the same for all router
       interfaces attached to the same network.
     </xsd:documentation>
@@ -278,47 +308,17 @@
 
   <xsd:complexType>
     <xsd:sequence>
-      <xsd:element name="AreaID" type="IPv4AddressType" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="InterfaceOutputCost" type="MetricType" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="RetransmissionInterval" type="xsd:unsignedShort" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="InterfaceTransmissionDelay" type="xsd:unsignedByte" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="HelloInterval" type="xsd:unsignedShort" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="RouterDeadInterval" type="xsd:unsignedShort" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="AuthenticationType" type="AuthenticationTypeEnum" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="AuthenticationKey" type="AuthenticationKeyType" minOccurs="1" maxOccurs="1" />
       <xsd:element ref="PointToMultiPointNeighborList" minOccurs="1" maxOccurs="1" />
     </xsd:sequence>
-    <xsd:attribute name="ifIndex" type="xsd:unsignedByte" use="required" />
-  </xsd:complexType>
-</xsd:element>
-
-<xsd:element name="AdvertisedExternalNetwork">
-  <xsd:annotation>
-    <xsd:documentation xml:lang="en">
-      The address of an external network to advertise in AS External LSAs.
-    </xsd:documentation>
-  </xsd:annotation>
-
-  <xsd:complexType>
-    <xsd:sequence>
-      <xsd:element name="Address" type="IPv4AddressType" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="Mask" type="IPv4AddressType" minOccurs="1" maxOccurs="1" />
-    </xsd:sequence>
-  </xsd:complexType>
-</xsd:element>
-
-<xsd:element name="ExternalInterfaceOutputParameters">
-  <xsd:annotation>
-    <xsd:documentation xml:lang="en">
-      The output cost parameters of an external interface.
-    </xsd:documentation>
-  </xsd:annotation>
-
-  <xsd:complexType>
-    <xsd:sequence>
-      <xsd:element name="ExternalInterfaceOutputType" type="ExternalInterfaceOutputCostType" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="ExternalInterfaceOutputCost" type="MetricType" minOccurs="1" maxOccurs="1" />
-    </xsd:sequence>
+    <xsd:attributeGroup ref="ifAttr" />
+    <xsd:attribute name="areaID" type="AreaIdType" use="optional" />
+    <xsd:attribute name="interfaceOutputCost" type="MetricType" use="optional" />
+    <xsd:attribute name="retransmissionInterval" type="xsd:unsignedShort" use="optional" />
+    <xsd:attribute name="interfaceTransmissionDelay" type="xsd:unsignedByte" use="optional" />
+    <xsd:attribute name="helloInterval" type="xsd:unsignedShort" use="optional" />
+    <xsd:attribute name="routerDeadInterval" type="xsd:unsignedShort" use="optional" />
+    <xsd:attribute name="authenticationType" type="AuthenticationTypeEnum" use="optional" />
+    <xsd:attribute name="authenticationKey" type="AuthenticationKeyType" use="optional" />
   </xsd:complexType>
 </xsd:element>
 
@@ -327,18 +327,18 @@
     <xsd:documentation xml:lang="en">
       Describes the parameters of an external interface. These parameters will
       be advertised in the AS External LSA for this external route. The
-      interface is identified in the router by its ifIndex value.
+      interface is identified in the router by its ifName value, or name of toward module.
     </xsd:documentation>
   </xsd:annotation>
 
   <xsd:complexType>
-    <xsd:sequence>
-      <xsd:element ref="AdvertisedExternalNetwork" minOccurs="1" maxOccurs="1" />
-      <xsd:element ref="ExternalInterfaceOutputParameters" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="ForwardingAddress" type="IPv4AddressType" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="ExternalRouteTag" type="ExternalRouteTagType" minOccurs="1" maxOccurs="1" />
-    </xsd:sequence>
-    <xsd:attribute name="ifIndex" type="xsd:unsignedByte" use="required" />
+    <xsd:attributeGroup ref="ifAttr" />
+    <xsd:attribute name="advertisedExternalNetworkAddress" type="IPv4AddressResolvType" use="optional" />
+    <xsd:attribute name="advertisedExternalNetworkMask" type="IPv4AddressResolvType" use="optional" />
+    <xsd:attribute name="externalInterfaceOutputType" type="ExternalInterfaceOutputCostType" use="optional" />
+    <xsd:attribute name="externalInterfaceOutputCost" type="MetricType" use="optional" />
+    <xsd:attribute name="forwardingAddress" type="IPv4AddressResolvType" use="optional" />
+    <xsd:attribute name="externalRouteTag" type="ExternalRouteTagType" use="optional" />
   </xsd:complexType>
 </xsd:element>
 
@@ -347,17 +347,15 @@
     <xsd:documentation xml:lang="en">
       Describes the parameters of a host interface (an interface to which a
       single host is attached). The interface is identified in the router by
-      its ifIndex value.
+      its ifName value, or name of toward module.
     </xsd:documentation>
   </xsd:annotation>
 
   <xsd:complexType>
-    <xsd:sequence>
-      <xsd:element name="AreaID" type="IPv4AddressType" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="AttachedHost" type="IPv4AddressType" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="LinkCost" type="MetricType" minOccurs="1" maxOccurs="1" />
-    </xsd:sequence>
-    <xsd:attribute name="ifIndex" type="xsd:unsignedByte" use="required" />
+    <xsd:attributeGroup ref="ifAttr" />
+    <xsd:attribute name="areaID" type="AreaIdType" use="optional" />
+    <xsd:attribute name="attachedHost" type="IPv4AddressResolvType" use="optional" />
+    <xsd:attribute name="linkCost" type="MetricType" use="optional" />
   </xsd:complexType>
 </xsd:element>
 
@@ -372,23 +370,21 @@
   </xsd:annotation>
 
   <xsd:complexType>
-    <xsd:sequence>
-      <xsd:element name="TransitAreaID" type="IPv4AddressType" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="RetransmissionInterval" type="xsd:unsignedShort" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="InterfaceTransmissionDelay" type="xsd:unsignedByte" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="HelloInterval" type="xsd:unsignedShort" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="RouterDeadInterval" type="xsd:unsignedShort" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="AuthenticationType" type="AuthenticationTypeEnum" minOccurs="1" maxOccurs="1" />
-      <xsd:element name="AuthenticationKey" type="AuthenticationKeyType" minOccurs="1" maxOccurs="1" />
-    </xsd:sequence>
-    <xsd:attribute name="endPointRouterID" type="IPv4AddressType" use="required" />
+    <xsd:attribute name="endPointRouterID" type="IPv4AddressResolvType" use="optional" />  <!-- must use '_nodename_%routerId' -->
+    <xsd:attribute name="transitAreaID" type="AreaIdType" use="optional" />
+    <xsd:attribute name="retransmissionInterval" type="xsd:unsignedShort" use="optional" />
+    <xsd:attribute name="interfaceTransmissionDelay" type="xsd:unsignedByte" use="optional" />
+    <xsd:attribute name="helloInterval" type="xsd:unsignedShort" use="optional" />
+    <xsd:attribute name="routerDeadInterval" type="xsd:unsignedShort" use="optional" />
+    <xsd:attribute name="authenticationType" type="AuthenticationTypeEnum" use="optional" />
+    <xsd:attribute name="authenticationKey" type="AuthenticationKeyType" use="optional" />
   </xsd:complexType>
 </xsd:element>
 
 <xsd:element name="Router">
   <xsd:annotation>
     <xsd:documentation xml:lang="en">
-      Describes an OSPF router with its interfaces. Interface ifIndex values
+      Describes an OSPF router with its interfaces. Interface 'ifName' and 'toward' module name values
       must be unique within the same router. A router is identified by its
       Router ID, which is given as an IPv4 address (but isn't necessarily one).
     </xsd:documentation>
@@ -396,7 +392,6 @@
 
   <xsd:complexType>
     <xsd:sequence>
-      <xsd:element name="RFC1583Compatible" minOccurs="0" maxOccurs="1" />
       <xsd:choice minOccurs="1" maxOccurs="255">
         <xsd:element ref="PointToPointInterface" />
         <xsd:element ref="BroadcastInterface" />
@@ -407,11 +402,16 @@
       </xsd:choice>
       <xsd:element ref="VirtualLink" minOccurs="0" maxOccurs="unbounded" />
     </xsd:sequence>
-    <xsd:attribute name="id" type="IPv4AddressType" use="required" />
+    <xsd:attribute name="name" type="NodePathType" use="required" />
+    <xsd:attribute name="RFC1583Compatible" type="xsd:boolean" use="optional" />
   </xsd:complexType>
   <xsd:unique name="IfIndexConstraint">
     <xsd:selector xpath="PointToPointInterface|BroadcastInterface|NBMAInterface|PointToMultiPointInterface|ExternalInterface|HostInterface" />
-    <xsd:field xpath="@ifIndex" />
+    <xsd:field xpath="@ifName" />
+  </xsd:unique>
+  <xsd:unique name="towardConstraint">
+    <xsd:selector xpath="PointToPointInterface|BroadcastInterface|NBMAInterface|PointToMultiPointInterface|ExternalInterface|HostInterface" />
+    <xsd:field xpath="@toward" />
   </xsd:unique>
   <xsd:unique name="VirtualLinkEndPointConstraint">
     <xsd:selector xpath="VirtualLink" />

@@ -228,7 +228,6 @@ void Ieee80211MgmtAP::sendBeacon()
     sendOrEnqueue(frame);
 }
 
-#ifdef WITH_DHCP
 void Ieee80211MgmtAP::handleDataFrame(Ieee80211DataFrame *frame)
 {
     // check toDS bit
@@ -289,56 +288,6 @@ void Ieee80211MgmtAP::handleDataFrame(Ieee80211DataFrame *frame)
         }
     }
 }
-
-#else
-void Ieee80211MgmtAP::handleDataFrame(Ieee80211DataFrame *frame)
-{
-    // check toDS bit
-    if (!frame->getToDS())
-    {
-        // looks like this is not for us - discard
-        EV << "Frame is not for us (toDS=false) -- discarding\n";
-        delete frame;
-        return;
-    }
-
-    // handle broadcast/multicast frames
-    if (frame->getAddress3().isMulticast())
-    {
-        EV << "Handling multicast frame\n";
-
-        if (hasRelayUnit)
-            sendToUpperLayer(frame->dup());
-
-        distributeReceivedDataFrame(frame);
-        return;
-    }
-
-    // look up destination address in our STA list
-    STAList::iterator it = staList.find(frame->getAddress3());
-    if (it==staList.end())
-    {
-        // not our STA -- pass up frame to relayUnit for LAN bridging if we have one
-        if (hasRelayUnit)
-            sendToUpperLayer(frame);
-        else
-        {
-            EV << "Frame's destination address is not in our STA list -- dropping frame\n";
-            delete frame;
-        }
-    }
-    else
-    {
-        // dest address is our STA, but is it already associated?
-        if (it->second.status == ASSOCIATED)
-            distributeReceivedDataFrame(frame); // send it out to the destination STA
-        else {
-            EV << "Frame's destination STA is not in associated state -- dropping frame\n";
-            delete frame;
-        }
-    }
-}
-#endif
 
 void Ieee80211MgmtAP::handleAuthenticationFrame(Ieee80211AuthenticationFrame *frame)
 {

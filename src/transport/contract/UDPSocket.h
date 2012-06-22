@@ -178,8 +178,8 @@ class INET_API UDPSocket
     void sendTo(cPacket *msg, IPvXAddress destAddr, int destPort);
   
     /**
-     * Causes the socket to leave each multicast groups that are registered with
-     * any of the interfaces.
+     * Sends a data packet to the given address and port using the provided
+     * interface.
      */
     void sendTo(cPacket *msg, IPvXAddress destAddr, int destPort, int outInterface);
 

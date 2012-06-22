@@ -30,8 +30,8 @@ import inet.linklayer.IWiredNic;
 import inet.linklayer.IExternalNic;
 import inet.base.NotificationBoard;
 import inet.nodes.inet.NetworkLayer;
-import inet.linklayer.ieee80211mesh.Ieee80211NewNicMesh;
-import inet.linklayer.ieee80211mesh.Ieee80211NewNicMeshMulti;
+import inet.linklayer.ieee80211mesh.Ieee80211NicMesh;
+import inet.linklayer.ieee80211mesh.Ieee80211NicMeshMulti;
 import inet.networklayer.autorouting.ipv4.HostAutoConfigurator2;
 
 //
@@ -99,7 +99,7 @@ module ApMeshNode
             @display("p=204,138");
         }
 
-        wlanMesh: Ieee80211NewNicMeshMulti {
+        wlanMesh: Ieee80211NicMeshMulti {
             parameters:
                 numChannels = meshChannels;
                 @display("p=159,386;q=queue");

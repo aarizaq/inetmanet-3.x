@@ -19,10 +19,10 @@
 
 package inet.linklayer.ieee80211mesh;
 
-import inet.linklayer.ieee80211.radio.Ieee80211NewRadio;
+import inet.linklayer.ieee80211.radio.Ieee80211Radio;
 import inet.linklayer.ieee80211.mgmt.Ieee80211AgentSTA;
 import inet.linklayer.ieee80211.mgmt.IIeee80211Mgmt;
-import inet.linklayer.ieee80211.mac.Ieee80211NewMac;
+import inet.linklayer.ieee80211.mac.Ieee80211Mac;
 import inet.linklayer.ieee80211mesh.mgmt.Ieee80211Mesh;
 import inet.base.IHook;
 import inet.linklayer.ieee80211mesh.locator.ILocator;
@@ -31,7 +31,7 @@ import inet.linklayer.ieee80211mesh.locator.ILocator;
 //
 // This NIC implements an 802.11g network interface card in ad-hoc mode.
 //
-module Ieee80211NewNicMeshMulti
+module Ieee80211NicMeshMulti
 {
     parameters:
         string mgmtType = default("Ieee80211Mesh"); // name of the management module type (implements IIeee80211Mgmt)
@@ -67,12 +67,12 @@ module Ieee80211NewNicMeshMulti
                 macIn[numChannels];
                 macOut[numChannels];
         }
-        mac[numChannels]: Ieee80211NewMac {
+        mac[numChannels]: Ieee80211Mac {
             parameters:
                 queueModule = "mgmt";
                 @display("p=96,222");
         }
-        radio[numChannels]: Ieee80211NewRadio {
+        radio[numChannels]: Ieee80211Radio {
             parameters:
                 @display("p=96,307");
         }
