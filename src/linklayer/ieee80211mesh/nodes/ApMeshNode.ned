@@ -105,7 +105,7 @@ module ApMeshNode
                 @display("p=159,386;q=queue");
         }
 
-        wlan[numRadios]: <default("Ieee80211NewNic")> like IWirelessNic {
+        wlan[numRadios]: <default("Ieee80211Nic")> like IWirelessNic {
             parameters:
                 @display("p=271,392;q=queue");
         }
