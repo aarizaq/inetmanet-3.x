@@ -68,6 +68,7 @@ class GlobalWirelessLinkInspector : public cSimpleModule
         static bool getLinkCost(const std::vector<Uint128>&, Link &);
         static bool initRoutingProtocol (cModule *,bool);
         static bool getRoute(const Uint128 &src, const Uint128 &dest, std::vector<Uint128> &route);
+        static bool getRouteWithLocator(const Uint128 &src, const Uint128 &dest, std::vector<Uint128> &route);
         static bool setRoute(const cModule *,const Uint128 &, const Uint128 &dest, const Uint128 &gw, const bool &erase);
         static void initRoutingTables (const cModule *,const Uint128 &,bool);
         virtual void initialize();

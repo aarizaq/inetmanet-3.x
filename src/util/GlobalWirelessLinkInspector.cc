@@ -226,10 +226,12 @@ bool GlobalWirelessLinkInspector::getRoute(const Uint128 &src, const Uint128 &de
     Uint128 next = src;
     route.clear();
     route.push_back(src);
+    if (src == dest)
+        return true;
     while (1)
     {
         GlobalRouteMap::iterator it = globalRouteMap->find(next);
-        if (it==globalRouteMap->end())
+        if (it == globalRouteMap->end())
             return false;
         if (it->second.empty())
             return false;
@@ -287,6 +289,28 @@ bool GlobalWirelessLinkInspector::getRoute(const Uint128 &src, const Uint128 &de
         }
     }
 }
+
+
+bool GlobalWirelessLinkInspector::getRouteWithLocator(const Uint128 &src, const Uint128 &dest, std::vector<Uint128> &route)
+{
+    if (globalRouteMap == NULL)
+        return false;
+    // search in the locator tables
+    //
+    Uint128 origin;
+    Uint128 destination;
+    if (!getLocatorInfo(src, origin))
+    {
+        origin = src;
+    }
+    if (!getLocatorInfo(dest, destination))
+    {
+        destination = dest;
+    }
+    return getRoute(origin,destination,route);
+}
+
+
 
 void GlobalWirelessLinkInspector::setLocatorInfo(Uint128 node, Uint128 ap)
 {
