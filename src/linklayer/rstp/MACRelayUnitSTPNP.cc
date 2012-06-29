@@ -1233,6 +1233,9 @@ void MACRelayUnitSTPNP::sendBPDU(BPDU* bpdu,int port)
         b->setLearning(this->port_status[port].state == LEARNING ? true : false);
 
         frame->encapsulate(b);
+        if (frame->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+                frame->setByteLength(MIN_ETHERNET_FRAME_BYTES);  // "padding"
+
         send(frame, "lowerLayerOut", port);
         this->scheduleHoldTimer(port);
 
