@@ -112,7 +112,7 @@ module ApMeshRelay
                 @display("p=159,386;q=queue");
         }
 
-        wlan[numRadios]: <default("Ieee80211NewNic")> like IWirelessNic {
+        wlan[numRadios]: <default("Ieee80211Nic")> like IWirelessNic {
             parameters:
                 mgmt.forceRelayUnit = true;
                 @display("p=271,392;q=queue");

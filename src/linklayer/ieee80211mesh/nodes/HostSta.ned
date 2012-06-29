@@ -37,7 +37,7 @@ module HostSta extends WirelessHost
 {
     parameters:
         @display("i=device/cellphone");
-        wlan[*].typename = "Ieee80211NewNic";
+        wlan[*].typename = "Ieee80211Nic";
         IPForward = default(true);
     submodules:
         autoconfigurator: HostAutoConfigurator2 {

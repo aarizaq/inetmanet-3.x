@@ -37,7 +37,7 @@ module HostMesh extends WirelessHost
 {
     parameters:
         @display("i=device/cellphone");
-        wlan[*].typename = "Ieee80211NewNicMesh";
+        wlan[*].typename = "Ieee80211NicMesh";
         IPForward = default(true);
     submodules:
         autoconfigurator: HostAutoConfigurator2 {
