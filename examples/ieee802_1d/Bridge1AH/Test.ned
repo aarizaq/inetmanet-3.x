@@ -3,8 +3,8 @@ package inet.examples.ieee802_1d.Bridge1AH;
 
 
 import ned.DatarateChannel;
-import inet.nodes.ethernet.Ieee8021d.Tester;
-import inet.nodes.ethernet.Ieee8021d.BEB;
+import inet.nodes.Ieee8021d.Tester;
+import inet.nodes.Ieee8021d.BEB;
 
 
 //
