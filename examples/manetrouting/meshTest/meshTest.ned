@@ -52,7 +52,7 @@ network meshTest
         }
         fixhostA[5]: BasicMobileManetMesh {
             parameters:
-                mobilityType = "LinealNodeDistributionMobility";
+                mobilityType = "LinearNodeDistributionMobility";
                 mobility.initialY = 315m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.initialX = nodeSeparation/2.0;
                 mobility.separation = nodeSeparation*2;
@@ -60,7 +60,7 @@ network meshTest
         }
         fixhostB[4]: ApMeshRelay {
             parameters:
-                mobilityType = "LinealNodeDistributionMobility";
+                mobilityType = "LinearNodeDistributionMobility";
                 mobility.initialY = 315m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.initialX = (nodeSeparation/2.0)+nodeSeparation;
                 mobility.separation = nodeSeparation*2;
@@ -70,7 +70,7 @@ network meshTest
         }
         fixhost2[5]: ApMeshRelay {
             parameters:
-                mobilityType = "LinealNodeDistributionMobility";
+                mobilityType = "LinearNodeDistributionMobility";
                 mobility.initialY = 195m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.initialX = nodeSeparation/2.0;
                 mobility.separation = nodeSeparation*2;
@@ -79,7 +79,7 @@ network meshTest
         }
         fixhost3[5]: ApMeshRelay {
             parameters:
-                mobilityType = "LinealNodeDistributionMobility";
+                mobilityType = "LinearNodeDistributionMobility";
                 mobility.initialY = 435m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.separation = nodeSeparation*2;
                 mobility.initialX = nodeSeparation/2.0;
@@ -89,7 +89,7 @@ network meshTest
 
         fixhost6A[4]: BasicMobileManetMesh {
             parameters:
-                mobilityType = "LinealNodeDistributionMobility";
+                mobilityType = "LinearNodeDistributionMobility";
                 mobility.initialY = 75m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.separation = nodeSeparation*2;
                 mobility.initialX = nodeSeparation/2.0+nodeSeparation;
@@ -97,7 +97,7 @@ network meshTest
         }
         fixhost6[5]: ApMeshRelay {
             parameters:
-                mobilityType = "LinealNodeDistributionMobility";
+                mobilityType = "LinearNodeDistributionMobility";
                 mobility.initialY = 75m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.separation = nodeSeparation*2;
                 mobility.initialX = nodeSeparation/2.0;
@@ -106,7 +106,7 @@ network meshTest
         }
         fixhost7[5]: ApMeshRelay {
             parameters:
-                mobilityType = "LinealNodeDistributionMobility";
+                mobilityType = "LinearNodeDistributionMobility";
                 mobility.initialY = 555m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.separation = nodeSeparation*2;
                 mobility.initialX = nodeSeparation/2.0;
@@ -115,7 +115,7 @@ network meshTest
         }
         fixhost7A[4]: BasicMobileManetMesh {
             parameters:
-                mobilityType = "LinealNodeDistributionMobility";
+                mobilityType = "LinearNodeDistributionMobility";
                 mobility.initialY = 555m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.separation = nodeSeparation*2;
                 mobility.initialX = nodeSeparation/2.0+nodeSeparation;
@@ -129,39 +129,39 @@ network meshTest
             @display("p=551,304");
 
         }
-        gateWay: gateWayMesh {
+        MPP: gateWayMesh {
             parameters:
                 wlanMesh.hasLocator = true;
                 @display("i=device/router;r=,,#707070;p=159,127");
         }
-        gateWay1: gateWayMesh {
+        MPP1: gateWayMesh {
             parameters:
                 wlanMesh.hasLocator = true;
                 @display("i=device/router;r=,,#707070;p=94,507");
         }
-        gateWay2: gateWayMesh {
+        MPP2: gateWayMesh {
             parameters:
                 wlanMesh.hasLocator = true;
                 @display("i=device/router;r=,,#707070;p=575,344");
         }
 
-        gateWay3: gateWayMesh {
+        MPP3: gateWayMesh {
             parameters:
                 wlanMesh.hasLocator = true;
                 @display("i=device/router;r=,,#707070;p=979,156");
         }
-        gateWay4: gateWayMesh {
+        MPP4: gateWayMesh {
             parameters:
                 wlanMesh.hasLocator = true;
                 @display("i=device/router;r=,,#707070;p=1014,507");
         }
 
     connections allowunconnected:
-        gateWay.ethg++  <--> cable <--> SW.ethg++;
-        gateWay1.ethg++ <--> cable <--> SW.ethg++;
-        gateWay2.ethg++ <--> cable <--> SW.ethg++;
-        gateWay3.ethg++ <--> cable <--> SW.ethg++;
-        gateWay4.ethg++ <--> cable <--> SW.ethg++;
+        MPP.ethg++  <--> cable <--> SW.ethg++;
+        MPP1.ethg++ <--> cable <--> SW.ethg++;
+        MPP2.ethg++ <--> cable <--> SW.ethg++;
+        MPP3.ethg++ <--> cable <--> SW.ethg++;
+        MPP4.ethg++ <--> cable <--> SW.ethg++;
 }
 
 
