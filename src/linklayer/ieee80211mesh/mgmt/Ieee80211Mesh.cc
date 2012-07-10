@@ -1419,6 +1419,8 @@ void Ieee80211Mesh::sendOrEnqueue(cPacket *frame)
         if (isSendToGateway(frameDataorMgm))
             return;
     actualizeReactive(frame,true);
+    if (frame->getControlInfo())
+        delete frame->removeControlInfo();
     if (frameDataorMgm->getReceiverAddress().isBroadcast())
     {
         if (dynamic_cast<ETXBasePacket*>(frame->getEncapsulatedPacket()) && numMac > 1)
