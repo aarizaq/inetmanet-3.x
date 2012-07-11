@@ -1960,10 +1960,14 @@ void Ieee80211Mesh::handleWateGayDataReceive(cPacket *pkt)
         }
         else if (!frame2->getFinalAddress().isUnspecified())
         {
+            if (frame2->getControlInfo())
+                delete frame2->removeControlInfo();
             handleReroutingGateway(frame2);
         }
         else
         {
+            if (frame2->getControlInfo())
+                delete frame2->removeControlInfo();
             frame2->setTTL(frame2->getTTL()-1);
             actualizeReactive(frame2,false);
             processFrame(frame2);
