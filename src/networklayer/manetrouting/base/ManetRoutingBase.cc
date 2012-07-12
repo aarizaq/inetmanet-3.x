@@ -2017,3 +2017,17 @@ bool ManetRoutingBase::getRouteFromGlobal(const Uint128 &src, const Uint128 &des
         }
     }
 }
+
+
+// Auxiliary function that return a string with the address
+std::string ManetRoutingBase::convertAddressToString(const Uint128& add)
+{
+    if (mac_layer_)
+    {
+        return MACAddress(add.getLo()).str();
+    }
+    else
+    {
+        return IPv4Address(add.getLo()).str();
+    }
+}
