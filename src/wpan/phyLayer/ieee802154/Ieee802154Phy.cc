@@ -429,7 +429,8 @@ void Ieee802154Phy::handleUpperMsg(AirFrame *airframe)
 {
     if (phyRadioState == phy_TX_ON)
     {
-        ASSERT(rs.getState() != RadioState::TRANSMIT);
+        if (par("forceIdle").boolValue())
+           ASSERT(rs.getState() != RadioState::TRANSMIT);
         EV << "[PHY]: transmitter is on, start sending message ..." << endl;
         setRadioState(RadioState::TRANSMIT);
         ASSERT(txPktCopy == NULL);
@@ -585,7 +586,7 @@ void Ieee802154Phy::handleLowerMsgEnd(AirFrame * airframe)
         // my receiver was turned off during reception
         if (airframe->getKind() == BITERROR_FORCE_TRX_OFF)
         {
-            EV << "[PHY]: reception of " << airframe->getName() << " frame failed because MAC layer turned off the receiver forcibly during the reception, drop it \n";
+            EV << "[PHY]: reception of r/ieee802154/Ieee802154Phy.cc line 432." << airframe->getName() << " frame failed because MAC layer turned off the receiver forcibly during the reception, drop it \n";
             noiseLevel -= recvBuff[airframe];
             isCorrupt = true;
         }
@@ -711,7 +712,8 @@ void Ieee802154Phy::handleSelfMsg(cMessage *msg)
     case PHY_TX_OVER_TIMER:     // Tx over
     {
         EV << "[PHY]: transmitting of " << txPktCopy->getName() << " completes!" << endl;
-        setRadioState(RadioState::IDLE);
+        if (par("forceIdle").boolValue())
+            setRadioState(RadioState::IDLE);
         delete txPktCopy;
         txPktCopy = NULL;
         EV << "[PHY]: send a PD_DATA_confirm with success to MAC layer" << endl;

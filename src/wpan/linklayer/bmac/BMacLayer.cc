@@ -196,6 +196,7 @@ void BMacLayer::initialize(int stage)
         //catDroppedPacket = utility->getCategory(&droppedPacket);
         WATCH(macState);
         WATCH(myMacAddr);
+        WATCH(radioState);
     }
 
     else if(stage == 1) {

@@ -47,7 +47,7 @@ simple Ieee802154Phy
         int aTurnaroundTime    = default(12);       //Rx-to-Tx or Tx-to-Rx max turnaround time (in symbol period)
         int aMaxBeaconOverhead = default(75);       //max # of octets added by the MAC sublayer to the payload of its beacon frame
         int aMaxFrameOverhead  = default(25);       //max # of octets added by the MAC sublayer to its payload w/o security.//max # of octets that can be transmitted in the MAC frame payload field
-
+        bool forceIdle = default(true);
 
         @signal[bitrate](type="double";unit=bps); // current transmit bitrate
         @signal[channelNo](type=long);
