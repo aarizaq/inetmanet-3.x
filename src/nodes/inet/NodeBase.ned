@@ -25,7 +25,6 @@ import inet.linklayer.IWirelessNic;
 import inet.linklayer.IWiredNic;
 import inet.linklayer.IExternalNic;
 import inet.base.NotificationBoard;
-import inet.battery.IBattery;
 
 
 //
@@ -48,7 +47,6 @@ module NodeBase
         int numPcapRecorders = default(0); // no of PcapRecorders.
         string mobilityType = default("StationaryMobility");
         string routingFile = default("");
-        string batteryType = default("");
         bool IPForward = default(true);
         bool forwardMulticast = default(false);
     gates:
@@ -106,9 +104,6 @@ module NodeBase
         ext[numExtInterfaces]: <default("ExtInterface")> like IExternalNic {
             parameters:
                 @display("p=547,386,row,90;q=txQueue;i=block/ifcard");
-        }
-        battery: <batteryType> like IBattery if batteryType != ""{
-            @display("p=53,50;is=s");
         }
 
     connections allowunconnected:
