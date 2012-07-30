@@ -188,6 +188,8 @@ class INET_API IPvXAddressResolver
      * Like notificationBoardOf(), but doesn't throw error if not found.
      */
     virtual NotificationBoard *findNotificationBoardOf(cModule *host);
+
+    virtual cModule * findModuleWithAddress(const IPvXAddress &);
     //@}
 };
 
