@@ -27,6 +27,14 @@
 #include "IPv4Address.h"
 #include "Ieee802Ctrl_m.h"
 #include "Ieee80211Frame_m.h"
+#ifdef WITH_80215
+#include "Ieee802154Frame_m.h"
+#endif
+
+#ifdef WITH_BMAC
+#include "BmacPkt_m.h"
+#endif
+
 #include "ICMPMessage_m.h"
 
 unsigned int DSRUU::confvals[CONFVAL_MAX];
@@ -595,15 +603,52 @@ void DSRUU::receiveChangeNotification(int category, const cObject *details)
     if (category == NF_LINK_BREAK)
     {
         Enter_Method("Dsr Link Break");
-        Ieee80211DataFrame *frame = check_and_cast<Ieee80211DataFrame *>(details);
-        if (dynamic_cast<IPv4Datagram *>(frame->getEncapsulatedPacket()))
-            dgram = check_and_cast<IPv4Datagram *>(frame->getEncapsulatedPacket());
-        else
-            return;
-
-        if (!get_confval(UseNetworkLayerAck))
+        Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame *>(const_cast<cObject *>(details));
+        if (frame)
         {
-            packetFailed(dgram);
+            if (dynamic_cast<IPv4Datagram *>(frame->getEncapsulatedPacket()))
+                dgram = check_and_cast<IPv4Datagram *>(frame->getEncapsulatedPacket());
+            else
+                return;
+
+            if (!get_confval(UseNetworkLayerAck))
+            {
+                packetFailed(dgram);
+            }
+        }
+        else
+        {
+#ifdef WITH_80215
+        	Ieee802154Frame *frame15 = dynamic_cast<Ieee802154Frame *>(const_cast<cObject *>(details));
+            if (frame15)
+            {
+                if (dynamic_cast<IPv4Datagram *>(frame->getEncapsulatedPacket()))
+                    dgram = check_and_cast<IPv4Datagram *>(frame->getEncapsulatedPacket());
+                else
+                    return;
+
+                if (!get_confval(UseNetworkLayerAck))
+                {
+                    packetFailed(dgram);
+                }
+            }
+#endif
+
+#ifdef WITH_BMAC
+        	BmacPkt *frameB = dynamic_cast<BmacPkt *>(const_cast<cObject *>(details));
+            if (frameB)
+            {
+                if (dynamic_cast<IPv4Datagram *>(frame->getEncapsulatedPacket()))
+                    dgram = check_and_cast<IPv4Datagram *>(frame->getEncapsulatedPacket());
+                else
+                    return;
+
+                if (!get_confval(UseNetworkLayerAck))
+                {
+                    packetFailed(dgram);
+                }
+            }
+#endif
         }
     }
     else if (category == NF_LINK_PROMISCUOUS)

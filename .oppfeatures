@@ -715,7 +715,7 @@
                        inet.wpan.nodes
                       "
         extraSourceFolders = ""
-        compileFlags = ""
+        compileFlags = "-DWITH_80215"
         linkerFlags = ""
         />
     <feature
@@ -729,7 +729,7 @@
                        inet.wpan.linklayer.bmac
                       "
         extraSourceFolders = ""
-        compileFlags = ""
+        compileFlags = "-DWITH_BMAC"
         linkerFlags = ""
         />
     <feature
