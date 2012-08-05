@@ -1,3 +1,9 @@
+2012-07-18  Alfonso Ariza Quintana
+
+	Bugfix in Ns2MotionMobility when the node is stopped.
+
+2012-06-25  ------ inet-1.99.5 released ------
+	
 2012-05-18  Rudolf Hornig
 
 	Mobility models now correctly refer to the constraint area.

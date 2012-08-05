@@ -39,6 +39,7 @@ module Ieee80211NicMesh like IWirelessNic
         string opMode @enum("b","g","a","p") = default("g");
         int numOutputHooks = default(0);
         int numInputHooks = default(0);
+        double bitrate @unit("bps");
         bool _agentNeeded = false;   // internal par. do not use, shows if optional agent module is needed        
         bool hasLocator = default(false);
         @display("i=block/ifcard;bgb=259,357");
@@ -71,11 +72,13 @@ module Ieee80211NicMesh like IWirelessNic
             parameters:
                 opMode = opMode;
                 queueModule = "mgmt";
+                bitrate = bitrate;
                 @display("p=96,222");
         }
         radio: Ieee80211Radio {
             parameters:
                 phyOpMode = opMode;
+                bitrate = bitrate;
                 @display("p=96,307");
         }
     connections allowunconnected:

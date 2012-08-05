@@ -1,12 +1,7 @@
 examples
 src
--inet.underTest.hip.application
--inet.oversim
 -inet.applications.voiptool
--inet.underTest.hip.base
+-inet.oversim
 -inet.transport.tcp_lwip
--inet.linklayer.ieee8021d
--inet.transport.tcp_nsc
 -inet.examples.voiptool
--inet.underTest.nodes.hip
--inet.underTest.hip
+-inet.transport.tcp_nsc

@@ -77,111 +77,24 @@ void Ieee80211MgmtAPExtended::handleTimer(cMessage *msg)
     }
 }
 
-// Incoming message must come always decapsulated already.
-// for relays units, use a EtherEncap module
 
-#ifdef WITH_DHCP
 void Ieee80211MgmtAPExtended::handleUpperMessage(cPacket *msg)
 {
-    if (hasRelayUnit)
+    Ieee80211DataFrame *frame = encapsulate(msg);
+    MACAddress macAddr = frame->getReceiverAddress();
+    if (!macAddr.isMulticast())
     {
-        Ieee80211DataFrame *frame = NULL;
-
-#ifdef WITH_ETHERNET
-        EtherFrame *etherframe = dynamic_cast<EtherFrame *>(msg);
-        if (etherframe)
+        STAList::iterator it = staList.find(macAddr);
+        if (it==staList.end() || it->second.status!=ASSOCIATED)
         {
-            frame = convertFromEtherFrame(etherframe);
+            EV << "STA with MAC address " << macAddr << " not associated with this AP, dropping frame\n";
+            delete frame; // XXX count drops?
+            return;
         }
-        else
-#endif
-        {
-            frame = check_and_cast<Ieee80211DataFrame *>(msg);
-        }
-
-        MACAddress macAddr = frame->getReceiverAddress();
-        if (!macAddr.isMulticast())
-        {
-            STAList::iterator it = staList.find(macAddr);
-            if (it == staList.end() || it->second.status != ASSOCIATED)
-            {
-                EV << "STA with MAC address " << macAddr << " not associated with this AP, dropping frame\n";
-                delete msg; // XXX count drops?
-                return;
-            }
-        }
-        sendOrEnqueue(frame);
     }
-    else
-    {
-        // JcM Add: we assume the packet comes in raw way.
 
-        EV << "Handling upper message from Network Layer" << endl;
-
-        Ieee802Ctrl* ctrl = check_and_cast<Ieee802Ctrl*>(msg->removeControlInfo());
-        if (!ctrl->getDest().isMulticast())
-        {
-            // check if the destination address is our STA (or broadcast)
-            STAList::iterator it = staList.find(ctrl->getDest());
-            if (it==staList.end() || it->second.status!=ASSOCIATED)
-            {
-                EV << "STA with MAC address " << ctrl->getDest() << " not associated with this AP, dropping frame\n";
-                delete msg; // XXX count drops?
-                return;
-            }
-        }
-        Ieee80211DataFrame *frame = new Ieee80211DataFrame(msg->getName());
-        frame->setFromDS(true);
-
-        // copy addresses from ethernet frame (transmitter addr will be set to our addr by MAC)
-        frame->setReceiverAddress(ctrl->getDest());
-        frame->setAddress3(ctrl->getSrc());
-
-        // encapsulate payload
-        frame->encapsulate(msg);
-        sendOrEnqueue(frame);
-    }
+    sendOrEnqueue(frame);
 }
-
-#else
-void Ieee80211MgmtAPExtended::handleUpperMessage(cPacket *msg)
-{
-
-    EV << "Handling upper message from Network Layer" << endl;
-
-    Ieee802Ctrl* ctrl = check_and_cast<Ieee802Ctrl*>(msg->removeControlInfo());
-
-    if (ctrl!=NULL)
-    {
-        if (!ctrl->getDest().isMulticast())
-        {
-            // check if the destination address is our STA (or broadcast)
-            STAList::iterator it = staList.find(ctrl->getDest());
-            if (it==staList.end() || it->second.status!=ASSOCIATED)
-            {
-                EV << "STA with MAC address " << ctrl->getDest() << " not associated with this AP, dropping frame\n";
-                delete msg; // XXX count drops?
-                return;
-            }
-        }
-
-        Ieee80211DataFrame *frame = new Ieee80211DataFrame(msg->getName());
-        frame->setFromDS(true);
-
-        // copy addresses from ethernet frame (transmitter addr will be set to our addr by MAC)
-        frame->setReceiverAddress(ctrl->getDest());
-        frame->setAddress3(ctrl->getSrc());
-
-        // encapsulate payload
-        frame->encapsulate(msg);
-        sendOrEnqueue(frame);
-    }
-    else
-    {
-        error("Incoming packet has no Control Info data (src and dst)");
-    }
-}
-#endif
 
 void Ieee80211MgmtAPExtended::handleCommand(int msgkind, cPolymorphic *ctrl)
 {
@@ -251,31 +164,15 @@ void Ieee80211MgmtAPExtended::handleDataFrame(Ieee80211DataFrame *frame)
         return;
     }
 
-    // handle broadcast frames
+    // handle broadcast/multicast frames
     if (frame->getAddress3().isMulticast())
     {
-        EV << "Handling broadcast frame\n";
+        EV << "Handling multicast frame\n";
 
-        // Broadcast the frame to the upper layers
-        // JcM Fix: we pass the payload as it is to the upper layers.
-        // if there is an relay unit, use a EtherEncap Module
-
-        if (hasRelayUnit)
+        if (isConnectedToHL)
             sendToUpperLayer(frame->dup());
-        else if (isConnected)
-        {
-            // JcM add: we dont have a relayunit, so, send the decap packet
 
-            cPacket* payload = frame->getEncapsulatedPacket()->dup();
-            // set the control info
-            Ieee802Ctrl *ctrl = new Ieee802Ctrl();
-            ctrl->setSrc(frame->getTransmitterAddress());
-            ctrl->setDest(frame->getAddress3());
-
-            payload->setControlInfo(ctrl);
-            send(payload,"upperLayerOut");
-        }
-        distributeReceivedDataFrame(frame->dup());
+        distributeReceivedDataFrame(frame);
         return;
     }
 
@@ -286,19 +183,9 @@ void Ieee80211MgmtAPExtended::handleDataFrame(Ieee80211DataFrame *frame)
     if (it==staList.end())
     {
         // not our STA -- pass up frame to relayUnit for LAN bridging if we have one
-        if (hasRelayUnit)
-            sendToUpperLayer(frame);
-        else if (isConnected)
+        if (isConnectedToHL)
         {
-            cPacket* payload = frame->decapsulate();
-            // set the control info
-            Ieee802Ctrl *ctrl = new Ieee802Ctrl();
-            ctrl->setSrc(frame->getAddress4());
-            ctrl->setDest(frame->getAddress3());
-
-            payload->setControlInfo(ctrl);
-            delete frame;
-            send(payload,"upperLayerOut");
+            sendToUpperLayer(frame);
         }
         else
         {

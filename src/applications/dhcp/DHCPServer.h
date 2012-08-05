@@ -63,7 +63,7 @@ class INET_API DHCPServer : public cSimpleModule
         }
         virtual void initialize(int stage);
         virtual void handleMessage(cMessage *msg);
-        virtual void handleIncommingPacket(cPacket* pkt);
+        virtual void handleIncomingPacket(DHCPMessage *pkt);
     protected:
         // search for a mac into the leased ip
         DHCPLease* getLeaseByMac(MACAddress mac);
@@ -71,8 +71,10 @@ class INET_API DHCPServer : public cSimpleModule
         DHCPLease* getAvailableLease();
 
     public:
+        DHCPServer();
+        ~DHCPServer();
         void handleTimer(cMessage *msg);
-        void processPacket(cPacket *msg);
+        void processPacket(DHCPMessage *packet);
         void sendOffer(DHCPLease* lease);
         void sendACK(DHCPLease* lease);
         virtual void sendToUDP(cPacket *msg, int srcPort, const IPvXAddress& destAddr, int destPort);

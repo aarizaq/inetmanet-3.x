@@ -1821,7 +1821,6 @@ void Ieee80211Mac::scheduleDataTimeoutPeriod(Ieee80211DataOrMgmtFrame *frameToSe
     }
     if (!endTimeout->isScheduled())
     {
-
         EV << "scheduling data timeout period\n";
         if (useModulationParameters)
         {
@@ -2099,7 +2098,6 @@ Ieee80211DataOrMgmtFrame *Ieee80211Mac::buildDataFrame(Ieee80211DataOrMgmtFrame 
             opp_error("control info is not PhyControlInfo type %s");
         frame->setControlInfo(ctrl->dup());
     }
-
     if (isMulticast(frameToSend))
         frame->setDuration(0);
     else if (!frameToSend->getMoreFragments())
@@ -2519,7 +2517,7 @@ void Ieee80211Mac::reportDataOk()
     failedCounter = 0;
     recovery = false;
     if ((successCounter == getSuccessThreshold() || timer == getTimerTimeout())
-            && (rateIndex < (getMaxBitrate())))
+            && (rateIndex+1 < (getMaxBitrate())))
     {
         if (rateControlMode != RATE_CR)
         {
@@ -2672,22 +2670,24 @@ void Ieee80211Mac::setBitrate(double rate)
 }
 
 
+//FIXME rename it! suggestion: getBitrateArraySize()
 int Ieee80211Mac::getMaxBitrate(void)
 {
     if (opMode=='b')
-        return (NUM_BITERATES_80211b-1);
+        return (NUM_BITERATES_80211b);
     else if (opMode=='g')
-        return (NUM_BITERATES_80211g-1);
+        return (NUM_BITERATES_80211g);
     else if (opMode=='a')
-        return (NUM_BITERATES_80211a-1);
+        return (NUM_BITERATES_80211a);
     else if (opMode=='p')
-        return (NUM_BITERATES_80211p-1);
+        return (NUM_BITERATES_80211p);
 //
 // If arrives here there is an error
     opp_error("Mode not supported");
     return 0;
 }
 
+//FIXME: remove or rename it!
 int Ieee80211Mac::getMinBitrate(void)
 {
     return 0;

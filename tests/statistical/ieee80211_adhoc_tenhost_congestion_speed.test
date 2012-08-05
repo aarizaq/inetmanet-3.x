@@ -126,7 +126,7 @@ network = Throughput
 #cmdenv-output-file = omnetpp.log
 #debug-on-errors = true
 tkenv-plugin-path = ../../../etc/plugins
-sim-time-limit = 100s
+sim-time-limit = 50s
 **.vector-recording = false
 
 **.constraintAreaMinX = 0m
@@ -157,15 +157,14 @@ sim-time-limit = 100s
 # access point
 
 # nic settings
+**.wlan*.bitrate = 11Mbps
 **.mac.address = "auto"
 **.mac.maxQueueSize = 14
 **.mac.rtsThresholdBytes = 3000B
-**.mac.bitrate = 11Mbps
-**.wlan.mac.retryLimit = 7
-**.wlan.mac.cwMinData = 31
-**.wlan.mac.cwMinBroadcast = 31
+**.wlan*.mac.retryLimit = 7
+**.wlan*.mac.cwMinData = 31
+**.wlan*.mac.cwMinBroadcast = 31
 
-**.radio.bitrate = 11Mbps
 **.radio.transmitterPower = 20.0mW
 **.radio.thermalNoise = -110dBm
 **.radio.sensitivity = -85dBm
@@ -196,7 +195,7 @@ linecount <- 10 # count of client-server pairs
 rcvdBytes <-  11000000/8 # bytes
 expectedRate <- 52.0 # %
 maxDeviation <- 2.0 # %   (checking expectedRate +/- maxDeviation)
-unbalancedRate <- 5.0 # %
+unbalancedRate <- 15.0 # %
 # begin TEST:
 expectedRateMin <- expectedRate - maxDeviation
 expectedRateMax <- expectedRate + maxDeviation

@@ -1,11 +1,13 @@
+2012-06-25  ------ inet-1.99.5 released ------
+
 2012-07-11  Zoltan Bojthe
 
-    Fixed connection detection:
-    When two modules are connected, EtherMAC now throws error if
-    the phys gates are not connected using a transmission channel.
-    Previously, connection status was set to "not connected" if
-    modules were connected via idealChannel or other non-transmission
-    channel which was very misleading.
+	Fixed connection detection:
+	When two modules are connected, EtherMAC now throws error if
+	the phys gates are not connected using a transmission channel.
+	Previously, connection status was set to "not connected" if
+	modules were connected via idealChannel or other non-transmission
+	channel which was very misleading.
 
 2012-06-15  Zoltan Bojthe
 

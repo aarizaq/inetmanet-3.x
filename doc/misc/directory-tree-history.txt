@@ -101,10 +101,6 @@ Added MANETRouting from INETMANET:
 + examples/manetrouting/net80211_aodv
 + examples/manetrouting/net80211_control
 
-Added IEEE 802.11 Mesh radio from INETMANET:
-+ src/linklayer/ieee80211mesh
-+ src/linklayer/ieee80211mesh/mgmt
-
 Added xMIPv6:
 + src/networklayer/ipv6tunneling
 + src/networklayer/xmipv6
