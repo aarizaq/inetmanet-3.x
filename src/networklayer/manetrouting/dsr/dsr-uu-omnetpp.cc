@@ -619,7 +619,7 @@ void DSRUU::receiveChangeNotification(int category, const cObject *details)
         else
         {
 #ifdef WITH_80215
-        	Ieee802154Frame *frame15 = dynamic_cast<Ieee802154Frame *>(const_cast<cObject *>(details));
+            Ieee802154Frame *frame15 = dynamic_cast<Ieee802154Frame *>(const_cast<cObject *>(details));
             if (frame15)
             {
                 if (dynamic_cast<IPv4Datagram *>(frame->getEncapsulatedPacket()))
@@ -635,7 +635,7 @@ void DSRUU::receiveChangeNotification(int category, const cObject *details)
 #endif
 
 #ifdef WITH_BMAC
-        	BmacPkt *frameB = dynamic_cast<BmacPkt *>(const_cast<cObject *>(details));
+            BmacPkt *frameB = dynamic_cast<BmacPkt *>(const_cast<cObject *>(details));
             if (frameB)
             {
                 if (dynamic_cast<IPv4Datagram *>(frame->getEncapsulatedPacket()))
