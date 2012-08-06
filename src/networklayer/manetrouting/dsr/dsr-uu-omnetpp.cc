@@ -1096,9 +1096,10 @@ bool DSRUU::proccesICMP(cMessage *msg)
     bogusPacket->setTransportProtocol(bogusPacket->getEncapProtocol());
     IPv4Address dst(this->my_addr().s_addr);
     newdgram->setDestAddress(dst);
-    newdgram->encapsulate(bogusPacket);
+    newdgram->encapsulate(pk->decapsulate());
     newdgram->setTransportProtocol(IP_PROT_ICMP);
     send(newdgram,"to_ip");
+    delete msg;
     return true;
  }
 
