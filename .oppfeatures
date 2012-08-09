@@ -234,7 +234,7 @@
         name="DHCP"
         description = "DHCP protocol that can be installed as an UDP application"
         initiallyEnabled = "true"
-        requires = "UDP IPv4 Ethernet"
+        requires = "UDP IPv4"
         labels = "protocols dhcp"
         nedPackages = "
                        inet.applications.dhcp
@@ -245,11 +245,11 @@
         />
     <feature
         id="DHCP_examples"
-        name="DHCP examples"
-        description = "DHCP examples"
+        name="DHCP examples (Ethernet)"
+        description = "examples for DHCP protocol"
         initiallyEnabled = "true"
-        requires = "DHCP"
-        labels = ""
+        requires = "DHCP Ethernet mobility radio Ieee80211"
+        labels = "protocols dhcp"
         nedPackages = "
                        inet.examples.dhcp
                       "

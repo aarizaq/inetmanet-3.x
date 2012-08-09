@@ -16,6 +16,7 @@
 //
 
 
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -34,6 +35,7 @@
 
 Define_Module(IPv4);
 
+#define NEWFRAGMENT
 
 void IPv4::initialize()
 {
