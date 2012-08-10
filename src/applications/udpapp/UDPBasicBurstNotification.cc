@@ -56,6 +56,8 @@ void UDPBasicBurstNotification::initialize(int stage)
 
     delayLimit = par("delayLimit");
     simtime_t startTime = par("startTime");
+    if (startTime < simTime())
+        startTime = simTime();
     stopTime = par("stopTime");
 
     messageLengthPar = &par("messageLength");
@@ -65,6 +67,7 @@ void UDPBasicBurstNotification::initialize(int stage)
     nextSleep = startTime;
     nextBurst = startTime;
     nextPkt = startTime;
+
 
     destAddrRNG = par("destAddrRNG");
     const char *addrModeStr = par("chooseDestAddrMode").stringValue();
