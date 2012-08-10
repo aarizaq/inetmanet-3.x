@@ -32,7 +32,7 @@
 #endif
 
 #ifdef WITH_BMAC
-#include "BmacPkt_m.h"
+#include "bmacpkt_m.h"
 #endif
 
 #include "ICMPMessage_m.h"
