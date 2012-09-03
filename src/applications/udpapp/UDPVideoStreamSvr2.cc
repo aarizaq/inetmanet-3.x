@@ -54,6 +54,7 @@ void UDPVideoStreamSvr2::initialize()
     sendInterval = &par("sendInterval");
     packetLen = &par("packetLen");
     videoSize = &par("videoSize");
+    stopTime = &par("stopTime");
     localPort = par("localPort");
 
     // statistics
@@ -118,6 +119,11 @@ void UDPVideoStreamSvr2::processStreamRequest(cMessage *msg)
     d->clientPort = ctrl->getSrcPort();
     d->videoSize = (*videoSize);
     d->bytesLeft = d->videoSize;
+    double stop = (*stopTime);
+    if (stop > 0)
+        d->stopTime = simTime() + stop;
+    else
+        d->stopTime = 0;
     d->numPkSent = 0;
 
     streamVector.push_back(d);
@@ -140,6 +146,21 @@ void UDPVideoStreamSvr2::sendStreamData(cMessage *timer)
     // generate and send a packet
     UDPVideoDataPacket *pkt = new UDPVideoDataPacket("VideoStrmPk");
     long pktLen = packetLen->longValue();
+
+    if (d->stopTime > 0 && d->stopTime < simTime())
+    {
+        for (unsigned int i = 0 ; i < streamVector.size(); i++)
+        {
+            if (d == streamVector[i])
+            {
+                streamVector.erase(streamVector.begin()+i);
+                delete d;
+                break;
+            }
+        }
+        delete timer;
+        return;
+    }
 
     if (pktLen > d->bytesLeft)
         pktLen = d->bytesLeft;

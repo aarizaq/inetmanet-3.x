@@ -50,6 +50,7 @@ class INET_API UDPVideoStreamSvr2 : public cSimpleModule
         long videoSize;           ///< total size of video
         long bytesLeft;           ///< bytes left to transmit
         long numPkSent;           ///< number of packets sent
+        simtime_t stopTime;       ///< stop connection
     };
 
   protected:
@@ -62,6 +63,7 @@ class INET_API UDPVideoStreamSvr2 : public cSimpleModule
     cPar *sendInterval;
     cPar *packetLen;
     cPar *videoSize;
+    cPar *stopTime;
 
     // statistics
     unsigned int numStreams;  // number of video streams served

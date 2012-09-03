@@ -49,6 +49,7 @@ simple UDPVideoStreamSvr2 like IUDPApp
         volatile double sendInterval @unit(s); // interval between sending video stream packets
         volatile int packetLen @unit(B);  // length of a video packet in bytes
         volatile int videoSize @unit(B);  // length of full a video stream in bytes
+        volatile double stopTime @unit(s) = default(0);
         @display("i=block/app");
         @signal[sentPk](type=cPacket);
         @signal[reqStreamBytes](type=long);
