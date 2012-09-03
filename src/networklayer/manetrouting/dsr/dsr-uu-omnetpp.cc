@@ -1090,13 +1090,16 @@ bool DSRUU::proccesICMP(cMessage *msg)
         delete msg;
         return true;
     }
-    if (pk->getControlInfo())
-        delete pk->removeControlInfo();
+
     IPv4Datagram *newdgram = new IPv4Datagram();
     bogusPacket->setTransportProtocol(bogusPacket->getEncapProtocol());
     IPv4Address dst(this->my_addr().s_addr);
     newdgram->setDestAddress(dst);
-    newdgram->encapsulate(pk->decapsulate());
+    ICMPMessage * icmpMsg = new ICMPMessage();
+    icmpMsg->setType(pk->getType());
+    icmpMsg->setCode(pk->getCode());
+    icmpMsg->encapsulate(bogusPacket->dup());
+    newdgram->encapsulate(icmpMsg);
     newdgram->setTransportProtocol(IP_PROT_ICMP);
     send(newdgram,"to_ip");
     delete msg;
