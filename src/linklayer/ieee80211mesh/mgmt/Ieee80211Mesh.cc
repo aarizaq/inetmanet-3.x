@@ -27,6 +27,7 @@
 #include "locatorPkt_m.h"
 #include <string.h>
 #include "EtherFrame_m.h"
+#include "OLSR.h"
 
 
 /* WMPLS */

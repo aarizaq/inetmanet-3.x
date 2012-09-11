@@ -1,5 +1,10 @@
 //
-// Copyright (C) 2006 Andras Varga
+// Copyright (C) 2008 Alfonso Ariza
+// Copyright (C) 2009 Alfonso Ariza
+// Copyright (C) 2009 Alfonso Ariza
+// Copyright (C) 2010 Alfonso Ariza
+// Copyright (C) 2011 Alfonso Ariza
+// Copyright (C) 2012 Alfonso Ariza
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -42,6 +47,15 @@
 class INET_API Ieee80211Mesh : public Ieee80211MgmtBase
 {
 private:
+    class SeqNumberData
+    {
+        uint64_t seqNum;
+        int numTimes;
+    };
+    typedef std::vector<SeqNumberData> SeqNumberVector;
+    typedef std::map<uint64_t,SeqNumberVector> SeqNumberInfo;
+    SeqNumberInfo seqNumberInfo;
+
     uint64_t numRoutingBytes;
     unsigned int numMac;
 
