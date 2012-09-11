@@ -1349,7 +1349,11 @@ void DYMOUM::packetFailedMac(Ieee80211DataFrame *dgram)
     	int iface;
     	double cost;
         if (getColaborativeProtocol()->getNextHop(next_hop.s_addr, next, iface, cost))
-            if(next == next_hop.s_addr) return; // both nodes are static, do nothing
+            if(next == next_hop.s_addr)
+            {
+                scheduleNextEvent();
+                return; // both nodes are static, do nothing
+            }
     }
 #ifndef MAPROUTINGTABLE
     dlist_head_t *pos;
