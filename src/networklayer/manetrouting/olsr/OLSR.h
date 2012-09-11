@@ -389,6 +389,12 @@ class OLSR : public ManetRoutingBase
     std::vector<OLSR_msg>   msgs_;
     /// Routing table.
     OLSR_rtable     rtable_;
+
+    typedef std::map<nsaddr_t,OLSR_rtable*> GlobalRtable;
+    static GlobalRtable globalRtable;
+    typedef std::map<nsaddr_t,std::vector<nsaddr_t> > DistributionPath;
+    static DistributionPath distributionPath;
+    bool computed;
     /// Internal state with all needed data structs.
 
     OLSR_state      *state_ptr;
@@ -401,11 +407,11 @@ class OLSR : public ManetRoutingBase
     uint16_t    ansn_;
 
     /// HELLO messages' emission interval.
-    int     hello_ival_;
+    SimTime     hello_ival_;
     /// TC messages' emission interval.
-    int     tc_ival_;
+    SimTime     tc_ival_;
     /// MID messages' emission interval.
-    int     mid_ival_;
+    SimTime     mid_ival_;
     /// Willingness for forwarding packets on behalf of other nodes.
     int     willingness_;
     /// Determines if layer 2 notifications are enabled or not.
@@ -451,9 +457,9 @@ class OLSR : public ManetRoutingBase
 
     inline nsaddr_t&    ra_addr()   { return ra_addr_;}
 
-    inline int&     hello_ival()    { return hello_ival_;}
-    inline int&     tc_ival()   { return tc_ival_;}
-    inline int&     mid_ival()  { return mid_ival_;}
+    inline SimTime&     hello_ival()    { return hello_ival_;}
+    inline SimTime&     tc_ival()   { return tc_ival_;}
+    inline SimTime&     mid_ival()  { return mid_ival_;}
     inline int&     willingness()   { return willingness_;}
     inline int&     use_mac()   { return use_mac_;}
 
@@ -530,6 +536,8 @@ class OLSR : public ManetRoutingBase
 
     const char * getNodeId(const nsaddr_t &addr);
 
+    void computeDistributionPath(const nsaddr_t &initNode);
+
   public:
     OLSR() {}
     virtual ~OLSR();
@@ -550,6 +558,9 @@ class OLSR : public ManetRoutingBase
     virtual bool getNextHopGroup(const AddressGroup &gr, Uint128 &add, int &iface, Uint128&);
     virtual int  getRouteGroup(const Uint128&, std::vector<Uint128> &, Uint128&, bool &, int group = 0);
     virtual bool getNextHopGroup(const Uint128&, Uint128 &add, int &iface, Uint128&, bool &, int group = 0);
+
+    //
+    virtual void getDistributionPath(const Uint128&,std::vector<Uint128> &path);
 };
 
 #endif

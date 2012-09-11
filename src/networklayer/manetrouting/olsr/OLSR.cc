@@ -65,6 +65,8 @@ Define_Module(OLSR);
 
 
 uint32 OlsrAddressSize::ADDR_SIZE = ADDR_SIZE_DEFAULT;
+OLSR::GlobalRtable OLSR::globalRtable;
+OLSR::DistributionPath OLSR::distributionPath;
 
 /********** Timers **********/
 
@@ -445,14 +447,6 @@ OLSR::initialize(int stage)
 
        if (isInMacLayer())
            OlsrAddressSize::ADDR_SIZE = 6;
-       OLSR_HELLO_INTERVAL=par("OLSR_HELLO_INTERVAL");
-
-	/// TC messages emission interval.
-	    OLSR_TC_INTERVAL=par("OLSR_TC_INTERVAL");
-
-	/// MID messages emission interval.
-	    OLSR_MID_INTERVAL=par("OLSR_MID_INTERVAL");//   OLSR_TC_INTERVAL
-
 	///
 	/// \brief Period at which a node must cite every link and every neighbor.
 	///
@@ -467,6 +461,15 @@ OLSR::initialize(int stage)
         tc_ival_ = par("Tc_ival");
         mid_ival_ = par("Mid_ival");
         use_mac_ = par("use_mac");
+
+        OLSR_HELLO_INTERVAL = SIMTIME_DBL(tc_ival_);
+
+     /// TC messages emission interval.
+         OLSR_TC_INTERVAL = SIMTIME_DBL(tc_ival_);
+
+     /// MID messages emission interval.
+         OLSR_MID_INTERVAL = SIMTIME_DBL(mid_ival_);//   OLSR_TC_INTERVAL
+
 
         if (par("reduceFuncionality"))
             EV << "reduceFuncionality true" << endl;
@@ -513,14 +516,17 @@ OLSR::initialize(int stage)
         }
 
 
-        hello_timer_.resched(hello_ival_);
-        tc_timer_.resched(hello_ival_);
-        mid_timer_.resched(hello_ival_);
+        hello_timer_.resched(SIMTIME_DBL(hello_ival_));
+        tc_timer_.resched(SIMTIME_DBL(hello_ival_));
+        mid_timer_.resched(SIMTIME_DBL(hello_ival_));
         if (use_mac())
         {
             linkLayerFeeback();
         }
         scheduleNextEvent();
+
+        globalRtable[ra_addr()] = &rtable_;
+        computed = false;
     }
 }
 
@@ -1449,6 +1455,7 @@ OLSR::rtable_computation()
             break;
     }
     setTopologyChanged(false);
+    computeDistributionPath(ra_addr());
 }
 
 ///
@@ -1811,7 +1818,7 @@ OLSR::send_hello()
     msg.msg_seq_num() = msg_seq();
 
     msg.hello().reserved() = 0;
-    msg.hello().htime() = OLSR::seconds_to_emf(hello_ival());
+    msg.hello().htime() = OLSR::seconds_to_emf(SIMTIME_DBL(hello_ival()));
     msg.hello().willingness() = willingness();
     msg.hello().count = 0;
 
@@ -2243,7 +2250,7 @@ OLSR::mac_failed(IPv4Datagram* p)
 void
 OLSR::set_hello_timer()
 {
-    hello_timer_.resched((double)(hello_ival() - JITTER));
+    hello_timer_.resched((double)(SIMTIME_DBL(hello_ival()) - JITTER));
 }
 
 ///
@@ -2252,7 +2259,7 @@ OLSR::set_hello_timer()
 void
 OLSR::set_tc_timer()
 {
-    tc_timer_.resched((double)(tc_ival() - JITTER));
+    tc_timer_.resched((double)(SIMTIME_DBL(tc_ival()) - JITTER));
 }
 
 ///
@@ -2261,7 +2268,7 @@ OLSR::set_tc_timer()
 void
 OLSR::set_mid_timer()
 {
-    mid_timer_.resched((double)(mid_ival() - JITTER));
+    mid_timer_.resched((double)(SIMTIME_DBL(mid_ival()) - JITTER));
 }
 
 ///
@@ -3077,3 +3084,56 @@ Uint128 OLSR::getIfaceAddressFromIndex(int index)
         return entry->ipv4Data()->getIPAddress().getInt();
 }
 
+void OLSR::computeDistributionPath(const nsaddr_t &initNode)
+{
+    std::vector<nsaddr_t> route;
+    unsigned int size = rtable_.size();
+    mprset_t mpr = state_.mprset();
+    nsaddr_t actualNode= initNode;
+    while(!mpr.empty())
+    {
+        // search the minimum
+        GlobalRtable::iterator it = globalRtable.find(actualNode);
+        if (it==globalRtable.end())
+            return;
+        OLSR_rtable *val = it->second;
+        mprset_t::iterator itMin = mpr.end();
+        int hops = 1000;
+        OLSR_rt_entry* segmentRoute = NULL;
+        for (mprset_t::iterator it2 = mpr.begin();it2 != mpr.end();it2++)
+        {
+            OLSR_rt_entry*  entry = val->lookup(*it2);
+            if (hops > entry->dist())
+            {
+                hops = entry->dist();
+                itMin = it2;
+                segmentRoute = entry;
+            }
+        }
+        //
+        actualNode = *itMin;
+        mpr.erase(itMin);
+        if (segmentRoute->dist() > 1 && segmentRoute->route.empty())
+            opp_error("error in entry route");
+        for (unsigned int i = 0; i< segmentRoute->route.size(); i++)
+        {
+            route.push_back(segmentRoute->route[i]);
+        }
+        route.push_back(actualNode);
+    }
+    distributionPath[initNode] = route;
+}
+
+void OLSR::getDistributionPath(const Uint128 &addr,std::vector<Uint128> &path)
+{
+
+    DistributionPath::iterator it;
+    path.clear();
+    it = distributionPath.find(addr);
+    if (it != distributionPath.end())
+    {
+        if (it->second.empty())
+            opp_error("error in distribution route");
+        path = it->second;
+    }
+}
