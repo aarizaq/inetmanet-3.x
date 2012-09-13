@@ -1,6 +1,7 @@
 //
 // Copyright (C) 2008 Alfonso Ariza
 // Copyright (C) 2010 Alfonso Ariza
+// Copyright (C) 2012 Alfonso Ariza
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -28,7 +29,7 @@
 #include <string.h>
 #include "EtherFrame_m.h"
 #include "OLSR.h"
-
+#include <algorithm>
 
 /* WMPLS */
 
@@ -40,6 +41,8 @@
 #ifdef CHEAT_IEEE80211MESH
 Ieee80211Mesh::GateWayDataMap * Ieee80211Mesh::gateWayDataMap;
 #endif
+
+const int Ieee80211Mesh::MaxSeqNum = 1;
 
 std::ostream& operator<<(std::ostream& os, const LWmpls_Forwarding_Structure& e)
 {
@@ -2023,4 +2026,146 @@ bool Ieee80211Mesh::getCostNode(const MACAddress &add, unsigned int &cost)
 void Ieee80211Mesh::finish()
 {
     recordScalar("bytes routing ", numRoutingBytes);
+}
+
+
+int Ieee80211Mesh::findSeqNum(const uint64_t &addr, const uint64_t &sqnum)
+{
+    SeqNumberInfo::iterator it = seqNumberInfo.find(addr);
+    if (it == seqNumberInfo.end())
+        return 0;
+    if (it->second.back().getSeqNum() < sqnum)
+        return 0;
+    for (unsigned int i = 0; i < it->second.size(); i++)
+    {
+        if (it->second[i].getSeqNum() ==  sqnum)
+            return it->second[i].getNumTimes();
+
+    }
+    return -1; // too old
+}
+
+bool Ieee80211Mesh::setSeqNum(const uint64_t &addr, const uint64_t &sqnum, const int &numTimes)
+{
+    SeqNumberInfo::iterator it = seqNumberInfo.find(addr);
+    if (it == seqNumberInfo.end())
+    {
+        SeqNumberData sinfo(sqnum,numTimes);
+        SeqNumberVector v;
+        v.push_back(sinfo);
+        seqNumberInfo[addr] = v;
+        return true;
+    }
+
+    if (it->second.back().getSeqNum()<sqnum)
+    {
+        if (MaxSeqNum == 1)
+        {
+            it->second[0].setSeqNum(sqnum);
+            return true;
+        }
+        SeqNumberData sinfo(sqnum,numTimes);
+        SeqNumberVector v;
+        it->second.push_back(sinfo);
+        if ((int)it->second.size() > MaxSeqNum)
+            it->second.pop_front();
+        return true;
+    }
+    if (it->second.front().getSeqNum()>sqnum)
+        return false;
+
+    for (unsigned int i = 0; i < it->second.size(); i++)
+    {
+        if (it->second[i].getSeqNum() ==  sqnum)
+        {
+            it->second[i].setNumTimes(numTimes);
+            return true;
+        }
+    }
+    if (it->second.back().getSeqNum()<sqnum)
+    {
+        SeqNumberData sinfo(sqnum,numTimes);
+        SeqNumberVector v;
+        it->second.push_back(sinfo);
+        std::sort(it->second.begin(),it->second.end());
+        if ((int)it->second.size() > MaxSeqNum)
+            it->second.pop_front();
+        return true;
+    }
+    return false; // too old
+}
+
+int Ieee80211Mesh::getNumVisit(const uint64_t &addr, const std::vector<Uint128> &path)
+{
+    int numVisit = 0;
+    for (unsigned int i = 0; i< path.size(); i++)
+        if (addr == path[i].getLo())
+            numVisit++;
+    return numVisit;
+}
+
+int Ieee80211Mesh::getNumVisit(const std::vector<Uint128> &path)
+{
+    return getNumVisit(myAddress.getInt(), path);
+}
+
+bool Ieee80211Mesh::getNextInPath(const uint64_t &addr, const std::vector<Uint128> &path, std::vector<uint64_t> &next)
+{
+    next.clear();
+    // search the address in the path
+    std::vector<unsigned int> position;
+    for (unsigned int i = 0; i< path.size(); i++)
+    {
+        if (addr == path[i].getLo())
+            position.push_back(i);
+    }
+    if (position.empty())
+        return false;
+    if (position.size() == 1 && position[0] != path.size()-1)
+    {
+        next.push_back(path[position[0]+1].getLo());
+    }
+    else if (position.size() == 1 && position[0] == path.size()-1) // last node, send the packet to the previous
+    {
+        next.push_back(path[position[0]-1].getLo());
+        return true;
+    }
+    else
+    {
+    // several instances
+        for (unsigned int i = 0; i< position.size(); i++)
+        {
+            if (position[i]+1<path.size())
+                next.push_back(path[position[i]+1].getLo());
+        }
+    }
+    // check if the next has been visited several times
+
+    for (unsigned int i = 0; i < next.size(); i++)
+    {
+        std::vector<unsigned int> position2;
+        for (unsigned int j = 0; j< path.size(); j++)
+        {
+            if (next[i] == path[j].getLo())
+                position2.push_back(i);
+        }
+        if (position2.empty())
+            opp_error("!!!!!!");
+        if (position2.size() > 1)
+        {
+            // check if the node has been visited previously
+            if (position2[0]<position[0])
+            {
+                next.erase(next.begin()+i);
+                i--;
+                continue;
+            }
+        }
+    }
+    return true;
+}
+
+bool Ieee80211Mesh::getNextInPath(const std::vector<Uint128> &path, std::vector<uint64_t> &next)
+{
+    return getNextInPath(myAddress.getInt(), path, next);
 }

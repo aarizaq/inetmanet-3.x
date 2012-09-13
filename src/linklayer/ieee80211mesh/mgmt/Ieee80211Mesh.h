@@ -34,6 +34,7 @@
 #include "uint128.h"
 #include "ManetRoutingBase.h"
 #include "Ieee80211Etx.h"
+#include<deque>
 
 /**
  * Used in 802.11 ligh wireless mpls  mode. See corresponding NED file for a detailed description.
@@ -46,173 +47,210 @@
 
 class INET_API Ieee80211Mesh : public Ieee80211MgmtBase
 {
-private:
-    class SeqNumberData
-    {
-        uint64_t seqNum;
-        int numTimes;
-    };
-    typedef std::vector<SeqNumberData> SeqNumberVector;
-    typedef std::map<uint64_t,SeqNumberVector> SeqNumberInfo;
-    SeqNumberInfo seqNumberInfo;
+    private:
+        static const int MaxSeqNum;
+        class SeqNumberData
+        {
+            uint64_t seqNum;
+            int numTimes;
+            public:
+                SeqNumberData() {seqNum = 0; numTimes = 0;}
+                SeqNumberData(uint64_t s, int t ) {seqNum = s; numTimes = t;}
+                uint64_t getSeqNum() const {return seqNum;}
+                int getNumTimes() const {return numTimes;}
+                void setSeqNum(uint64_t s) {seqNum = s;}
+                void  setNumTimes(int t) {numTimes = t;}
+                inline bool operator<(const SeqNumberData& b) const
+                {
+                    return seqNum < b.seqNum;
+                }
 
-    uint64_t numRoutingBytes;
-    unsigned int numMac;
+                inline bool operator>(const SeqNumberData& b) const
+                {
+                    return seqNum > b.seqNum;
+                }
+                inline bool operator==(const SeqNumberData& b) const
+                {
+                    return seqNum == b.seqNum;
+                }
+        };
+        typedef std::deque<SeqNumberData> SeqNumberVector;
+        typedef std::map<uint64_t, SeqNumberVector> SeqNumberInfo;
+        SeqNumberInfo seqNumberInfo;
 
-    cMessage *WMPLSCHECKMAC;
-    cMessage *gateWayTimeOut;
+        uint64_t numRoutingBytes;
+        unsigned int numMac;
 
-    double limitDelay;
-    NotificationBoard *nb;
-    bool proactiveFeedback;
-    int maxHopProactiveFeedback; // Maximun number of hops for to use the proactive feedback
-    int maxHopProactive; // Maximun number of hops in the fix part of the network with the proactive feedback
-    int maxHopReactive; // Maximun number of hops by the reactive part for to use the proactive feedback
+        cMessage *WMPLSCHECKMAC;
+        cMessage *gateWayTimeOut;
 
-    ManetRoutingBase *routingModuleProactive;
-    ManetRoutingBase *routingModuleReactive;
-    ManetRoutingBase *routingModuleHwmp;
-    Ieee80211Etx * ETXProcess;
+        double limitDelay;
+        NotificationBoard *nb;
+        bool proactiveFeedback;
+        int maxHopProactiveFeedback; // Maximun number of hops for to use the proactive feedback
+        int maxHopProactive; // Maximun number of hops in the fix part of the network with the proactive feedback
+        int maxHopReactive; // Maximun number of hops by the reactive part for to use the proactive feedback
 
-    IInterfaceTable *ift;
-    bool useLwmpls;
-    int maxTTL;
+        ManetRoutingBase *routingModuleProactive;
+        ManetRoutingBase *routingModuleReactive;
+        ManetRoutingBase *routingModuleHwmp;
+        Ieee80211Etx * ETXProcess;
 
-    LWMPLSDataStructure * mplsData;
+        IInterfaceTable *ift;
+        bool useLwmpls;
+        int maxTTL;
 
-    double multipler_active_break;
-    simtime_t timer_active_refresh;
-    bool activeMacBreak;
-    int macBaseGateId;  // id of the nicOut[0] gate  // FIXME macBaseGateId is unused, what is it?
+        LWMPLSDataStructure * mplsData;
 
-    // start routing proccess
-    virtual void startReactive();
-    virtual void startProactive();
-    virtual void startHwmp();
-    virtual void startEtx();
-    virtual void startGateWay();
+        double multipler_active_break;
+        simtime_t timer_active_refresh;
+        bool activeMacBreak;
+        int macBaseGateId; // id of the nicOut[0] gate  // FIXME macBaseGateId is unused, what is it?
+
+        // start routing proccess
+        virtual void startReactive();
+        virtual void startProactive();
+        virtual void startHwmp();
+        virtual void startEtx();
+        virtual void startGateWay();
 
 // LWMPLS methods
-    cPacket * decapsulateMpls(LWMPLSPacket *frame);
-    Ieee80211DataFrame *encapsulate(cPacket *msg,MACAddress dest);
-    virtual void mplsSendAck(int label);
-    virtual void mplsCreateNewPath(int label,LWMPLSPacket *mpls_pk_ptr,MACAddress sta_addr);
-    virtual void mplsBreakPath(int label,LWMPLSPacket *mpls_pk_ptr,MACAddress sta_addr);
-    virtual void mplsNotFoundPath(int label,LWMPLSPacket *mpls_pk_ptr,MACAddress sta_addr);
-    virtual void mplsForwardData(int label,LWMPLSPacket *mpls_pk_ptr,MACAddress sta_addr,LWmpls_Forwarding_Structure *forwarding_data);
-    virtual void mplsBasicSend (LWMPLSPacket *mpls_pk_ptr,MACAddress sta_addr);
-    virtual void mplsAckPath(int label,LWMPLSPacket *mpls_pk_ptr,MACAddress sta_addr);
-    virtual void mplsDataProcess(LWMPLSPacket * mpls_pk_ptr,MACAddress sta_addr);
-    virtual void mplsBreakMacLink (MACAddress mac_id);
-    void mplsCheckRouteTime ();
-    virtual void mplsInitializeCheckMac();
-    virtual void mplsPurge (LWmpls_Forwarding_Structure *forwarding_ptr,bool purge_break);
-    virtual bool forwardMessage (Ieee80211DataFrame *);
-    virtual bool macLabelBasedSend (Ieee80211DataFrame *);
-    virtual void actualizeReactive(cPacket *pkt,bool out);
-    virtual bool isSendToGateway(Ieee80211DataOrMgmtFrame *frame);
-    virtual int getBestInterface(Ieee80211DataOrMgmtFrame *frame);
+        cPacket * decapsulateMpls(LWMPLSPacket *frame);
+        Ieee80211DataFrame *encapsulate(cPacket *msg, MACAddress dest);
+        virtual void mplsSendAck(int label);
+        virtual void mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACAddress sta_addr);
+        virtual void mplsBreakPath(int label, LWMPLSPacket *mpls_pk_ptr, MACAddress sta_addr);
+        virtual void mplsNotFoundPath(int label, LWMPLSPacket *mpls_pk_ptr, MACAddress sta_addr);
+        virtual void mplsForwardData(int label, LWMPLSPacket *mpls_pk_ptr, MACAddress sta_addr,
+                LWmpls_Forwarding_Structure *forwarding_data);
+        virtual void mplsBasicSend(LWMPLSPacket *mpls_pk_ptr, MACAddress sta_addr);
+        virtual void mplsAckPath(int label, LWMPLSPacket *mpls_pk_ptr, MACAddress sta_addr);
+        virtual void mplsDataProcess(LWMPLSPacket * mpls_pk_ptr, MACAddress sta_addr);
+        virtual void mplsBreakMacLink(MACAddress mac_id);
+        void mplsCheckRouteTime();
+        virtual void mplsInitializeCheckMac();
+        virtual void mplsPurge(LWmpls_Forwarding_Structure *forwarding_ptr, bool purge_break);
+        virtual bool forwardMessage(Ieee80211DataFrame *);
+        virtual bool macLabelBasedSend(Ieee80211DataFrame *);
+        virtual void actualizeReactive(cPacket *pkt, bool out);
+        virtual bool isSendToGateway(Ieee80211DataOrMgmtFrame *frame);
+        virtual int getBestInterface(Ieee80211DataOrMgmtFrame *frame);
 
-    //////////////////////////////////////////
-    // Gateway structures
-    /////////////////////////////////////////////////
-    bool isGateWay;
-    typedef std::map<Uint128,simtime_t> AssociatedAddress;
-    AssociatedAddress associatedAddress;
-    struct GateWayData
-    {
-       MACAddress idAddress;
-       MACAddress ethAddress;
-       ManetRoutingBase *proactive;
-       ManetRoutingBase *reactive;
-       AssociatedAddress *associatedAddress;
-    };
-    typedef std::map<Uint128,GateWayData> GateWayDataMap;
+        //////////////////////////////////////////
+        // Gateway structures
+        /////////////////////////////////////////////////
+        bool isGateWay;
+        typedef std::map<Uint128, simtime_t> AssociatedAddress;
+        AssociatedAddress associatedAddress;
+        struct GateWayData
+        {
+                MACAddress idAddress;
+                MACAddress ethAddress;
+                ManetRoutingBase *proactive;
+                ManetRoutingBase *reactive;
+                AssociatedAddress *associatedAddress;
+        };
+        typedef std::map<Uint128, GateWayData> GateWayDataMap;
 #ifdef CHEAT_IEEE80211MESH
-    // cheat, we suppose that the information between gateway is interchanged with the wired
-    static GateWayDataMap *gateWayDataMap;
+        // cheat, we suppose that the information between gateway is interchanged with the wired
+        static GateWayDataMap *gateWayDataMap;
 #else
-    GateWayDataMap *gateWayDataMap;
+        GateWayDataMap *gateWayDataMap;
 #endif
-    int gateWayIndex;
+        int gateWayIndex;
 
-    ///////////////////////
-    // gateWay methods
-    ///////////////////////
-    void publishGateWayIdentity();
-    void processControlPacket (LWMPLSControl *);
-    virtual GateWayDataMap * getGateWayDataMap() {if (isGateWay) return gateWayDataMap; return NULL;}
-    virtual bool selectGateWay(const Uint128 &,MACAddress &);
+        ///////////////////////
+        // gateWay methods
+        ///////////////////////
+        void publishGateWayIdentity();
+        void processControlPacket(LWMPLSControl *);
+        virtual GateWayDataMap * getGateWayDataMap()
+        {
+            if (isGateWay)
+                return gateWayDataMap;
+            return NULL;
+        }
+        virtual bool selectGateWay(const Uint128 &, MACAddress &);
 
-    bool hasLocator;
-    bool hasRelayUnit;
-  protected:
-    virtual void initializeBase(int stage);
+        bool hasLocator;
+        bool hasRelayUnit;
+    protected:
+        virtual void initializeBase(int stage);
 
-  public:
-    Ieee80211Mesh();
-    virtual ~Ieee80211Mesh();
-    bool getCostNode(const MACAddress &, unsigned int &);
-  protected:
-    virtual void finish();
-    virtual int numInitStages() const {return 6;}
-    virtual void initialize(int);
+    public:
+        Ieee80211Mesh();
+        virtual ~Ieee80211Mesh();
+        bool getCostNode(const MACAddress &, unsigned int &);
+    protected:
+        // methos for efficient distribution of packets
+        bool setSeqNum(const uint64_t &addr, const uint64_t &sqnum, const int &numTimes);
+        int findSeqNum(const uint64_t &addr, const uint64_t &sqnum);
+        int getNumVisit(const std::vector<Uint128> &path);
+        int getNumVisit(const uint64_t &addr, const std::vector<Uint128> &path);
+        bool getNextInPath(const uint64_t &addr, const std::vector<Uint128> &path, std::vector<uint64_t> &next);
+        bool getNextInPath(const std::vector<Uint128> &path, std::vector<uint64_t> &next);
 
-    virtual void handleMessage(cMessage*);
+    protected:
+        virtual void finish();
+        virtual int numInitStages() const
+        {
+            return 6;
+        }
+        virtual void initialize(int);
 
-    /** Implements abstract to use ETX packets */
-    virtual void handleEtxMessage(cPacket*);
+        virtual void handleMessage(cMessage*);
 
-    /** Implements abstract to use routing protocols in the mac layer */
-    virtual void handleRoutingMessage(cPacket*);
+        /** Implements abstract to use ETX packets */
+        virtual void handleEtxMessage(cPacket*);
 
-    /** Implements abstract to use inter gateway communication */
-    virtual void handleWateGayDataReceive(cPacket *);
+        /** Implements abstract to use routing protocols in the mac layer */
+        virtual void handleRoutingMessage(cPacket*);
 
-    /** Implements the redirection of a data packets from a gateway to other */
-    virtual void handleReroutingGateway(Ieee80211DataFrame *);
+        /** Implements abstract to use inter gateway communication */
+        virtual void handleWateGayDataReceive(cPacket *);
 
-    /** Implements abstract Ieee80211MgmtBase method */
-    virtual void handleTimer(cMessage *msg);
+        /** Implements the redirection of a data packets from a gateway to other */
+        virtual void handleReroutingGateway(Ieee80211DataFrame *);
 
-    /** Implements abstract Ieee80211MgmtBase method */
-    virtual void handleUpperMessage(cPacket *msg);
+        /** Implements abstract Ieee80211MgmtBase method */
+        virtual void handleTimer(cMessage *msg);
 
-    /** Implements abstract Ieee80211MgmtBase method -- throws an error (no commands supported) */
-    virtual void handleCommand(int msgkind, cPolymorphic *ctrl);
+        /** Implements abstract Ieee80211MgmtBase method */
+        virtual void handleUpperMessage(cPacket *msg);
 
-    /** Utility function for handleUpperMessage() */
-    virtual Ieee80211DataFrame *encapsulate(cPacket *msg);
+        /** Implements abstract Ieee80211MgmtBase method -- throws an error (no commands supported) */
+        virtual void handleCommand(int msgkind, cPolymorphic *ctrl);
 
-    /** Called by the NotificationBoard whenever a change occurs we're interested in */
-    virtual void receiveChangeNotification(int category, const cPolymorphic *details);
+        /** Utility function for handleUpperMessage() */
+        virtual Ieee80211DataFrame *encapsulate(cPacket *msg);
 
-    /** @name Processing of different frame types */
-    //@{
-    virtual void handleDataFrame(Ieee80211DataFrame *frame);
-    virtual void handleAuthenticationFrame(Ieee80211AuthenticationFrame *frame);
-    virtual void handleDeauthenticationFrame(Ieee80211DeauthenticationFrame *frame);
-    virtual void handleAssociationRequestFrame(Ieee80211AssociationRequestFrame *frame);
-    virtual void handleAssociationResponseFrame(Ieee80211AssociationResponseFrame *frame);
-    virtual void handleReassociationRequestFrame(Ieee80211ReassociationRequestFrame *frame);
-    virtual void handleReassociationResponseFrame(Ieee80211ReassociationResponseFrame *frame);
-    virtual void handleDisassociationFrame(Ieee80211DisassociationFrame *frame);
-    virtual void handleBeaconFrame(Ieee80211BeaconFrame *frame);
-    virtual void handleProbeRequestFrame(Ieee80211ProbeRequestFrame *frame);
-    virtual void handleProbeResponseFrame(Ieee80211ProbeResponseFrame *frame);
-    //@}
-    /** Redefined from Ieee80211MgmtBase: send message to MAC */
-    virtual void sendOut(cMessage *msg);
-    /** Redefined from Ieee80211MgmtBase Utility method: sends the packet to the upper layer */
-    //virtual void sendUp(cMessage *msg);
+        /** Called by the NotificationBoard whenever a change occurs we're interested in */
+        virtual void receiveChangeNotification(int category, const cPolymorphic *details);
 
-    virtual bool isUpperLayer(cMessage *);
-    virtual cPacket * decapsulate(Ieee80211DataFrame *frame);
-    virtual void sendOrEnqueue(cPacket *frame);
+        /** @name Processing of different frame types */
+        //@{
+        virtual void handleDataFrame(Ieee80211DataFrame *frame);
+        virtual void handleAuthenticationFrame(Ieee80211AuthenticationFrame *frame);
+        virtual void handleDeauthenticationFrame(Ieee80211DeauthenticationFrame *frame);
+        virtual void handleAssociationRequestFrame(Ieee80211AssociationRequestFrame *frame);
+        virtual void handleAssociationResponseFrame(Ieee80211AssociationResponseFrame *frame);
+        virtual void handleReassociationRequestFrame(Ieee80211ReassociationRequestFrame *frame);
+        virtual void handleReassociationResponseFrame(Ieee80211ReassociationResponseFrame *frame);
+        virtual void handleDisassociationFrame(Ieee80211DisassociationFrame *frame);
+        virtual void handleBeaconFrame(Ieee80211BeaconFrame *frame);
+        virtual void handleProbeRequestFrame(Ieee80211ProbeRequestFrame *frame);
+        virtual void handleProbeResponseFrame(Ieee80211ProbeResponseFrame *frame);
+        //@}
+        /** Redefined from Ieee80211MgmtBase: send message to MAC */
+        virtual void sendOut(cMessage *msg);
+        /** Redefined from Ieee80211MgmtBase Utility method: sends the packet to the upper layer */
+        //virtual void sendUp(cMessage *msg);
+        virtual bool isUpperLayer(cMessage *);
+        virtual cPacket * decapsulate(Ieee80211DataFrame *frame);
+        virtual void sendOrEnqueue(cPacket *frame);
 
-    virtual bool isAddressForUs(const MACAddress &add);
+        virtual bool isAddressForUs(const MACAddress &add);
 };
 
 #endif
-
 
