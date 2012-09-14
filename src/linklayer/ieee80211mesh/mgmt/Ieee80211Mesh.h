@@ -189,6 +189,7 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase
         int getNumVisit(const uint64_t &addr, const std::vector<Uint128> &path);
         bool getNextInPath(const uint64_t &addr, const std::vector<Uint128> &path, std::vector<uint64_t> &next);
         bool getNextInPath(const std::vector<Uint128> &path, std::vector<uint64_t> &next);
+        void processDistributionPacket(Ieee80211MeshFrame *frame);
 
     protected:
         virtual void finish();

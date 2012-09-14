@@ -2169,3 +2169,37 @@ bool Ieee80211Mesh::getNextInPath(const std::vector<Uint128> &path, std::vector<
 {
     return getNextInPath(myAddress.getInt(), path, next);
 }
+
+void Ieee80211Mesh::processDistributionPacket(Ieee80211MeshFrame *frame)
+{
+    double  delay = SIMTIME_DBL(simTime() - frame->getTimestamp());
+    if ((frame->getTTL()<=0) || (delay > limitDelay))
+    {
+        delete frame;
+        return;
+    }
+    uint64_t sqNum = frame->getSeqNumber();
+    uint64_t srcAddr = frame->getAddress3().getInt();
+    if (0 == findSeqNum(srcAddr, sqNum) && (frame->getSubType() == UPPERMESSAGE))
+    {
+        setSeqNum(srcAddr, sqNum, 1);
+        OLSR * olsr = dynamic_cast<OLSR *> (routingModuleProactive);
+        std::vector<Uint128> path;
+        std::vector<uint64_t> next;
+        olsr->getDistributionPath(srcAddr, path);
+        getNextInPath(path, next);
+        if (!next.empty())
+        {
+            while (!next.empty())
+            {
+                Ieee80211MeshFrame *frameAux = frame->dup();
+                frameAux->setReceiverAddress(MACAddress(next.back()));
+                sendOrEnqueue(frameAux);
+                next.pop_back();
+            }
+        }
+        cPacket *msg = decapsulate(frame);
+        sendUp(msg);
+    }
+    delete frame;
+}
