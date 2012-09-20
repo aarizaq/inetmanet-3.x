@@ -57,10 +57,10 @@ class GlobalWirelessLinkInspector : public cSimpleModule
 
 
         static LocatorMap *globalLocatorMap;
-
+     public:
         GlobalWirelessLinkInspector();
         virtual ~GlobalWirelessLinkInspector();
-     public:
+
         static bool isActive() {return (costMap!=NULL);}
         static bool isActiveLocator() {return (globalLocatorMap!=NULL && !globalLocatorMap->empty());}
         static void setLinkCost(const Uint128& org,const Uint128& dest,const Link &);
@@ -77,6 +77,7 @@ class GlobalWirelessLinkInspector : public cSimpleModule
         static void setLocatorInfo(Uint128 , Uint128 );
         static bool getLocatorInfo(Uint128 , Uint128 &);
         static bool getNumNodes(Uint128,int &);
+        static bool areNeighbour(const Uint128 &node1, const Uint128 &node2,bool &areN);
 };
 
 

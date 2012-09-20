@@ -20,6 +20,8 @@ GlobalWirelessLinkInspector::CostMap* GlobalWirelessLinkInspector::costMap = NUL
 GlobalWirelessLinkInspector::GlobalRouteMap *GlobalWirelessLinkInspector::globalRouteMap = NULL;
 GlobalWirelessLinkInspector::LocatorMap *GlobalWirelessLinkInspector::globalLocatorMap = NULL;
 
+Define_Module(GlobalWirelessLinkInspector);
+
 GlobalWirelessLinkInspector::GlobalWirelessLinkInspector()
 {
     // TODO Auto-generated constructor stub
@@ -349,9 +351,28 @@ bool GlobalWirelessLinkInspector::getNumNodes(Uint128 node, int &cont)
     Uint128 ap = it->second;
     for (it = globalLocatorMap->begin();it != globalLocatorMap->end();it++)
     {
-        if (it->second == ap)
+        if (it->second == ap && it->first != node)
             cont++;
     }
+    return true;
+}
+
+bool GlobalWirelessLinkInspector::areNeighbour(const Uint128 &node1, const Uint128 &node2,bool &areNei)
+{
+    if (globalLocatorMap == NULL)
+        return false;
+    LocatorIteartor it1 =  globalLocatorMap->find(node1);
+    if (it1 == globalLocatorMap->end())
+        return false;
+    LocatorIteartor it2 =  globalLocatorMap->find(node2);
+    if (it2 == globalLocatorMap->end())
+        return false;
+    Uint128 ap1 = it1->second;
+    Uint128 ap2 = it2->second;
+    if (ap1 == ap2)
+        areNei = true;
+    else
+        areNei = false;
     return true;
 }
 

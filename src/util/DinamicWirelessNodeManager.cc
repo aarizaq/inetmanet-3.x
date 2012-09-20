@@ -16,6 +16,8 @@
 #include "DinamicWirelessNodeManager.h"
 #include "MobilityBase.h"
 
+Define_Module(DinamicWirelessNodeManager);
+
 void DinamicWirelessNodeManager::Timer::removeTimer()
 {
     removeQueueTimer();
