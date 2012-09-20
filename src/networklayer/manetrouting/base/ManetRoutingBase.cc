@@ -1561,7 +1561,8 @@ bool ManetRoutingBase::setRoute(const Uint128 & destination, const Uint128 &next
 
     /// Source of route, MANUAL by reading a file,
     /// routing protocol name otherwise
-    entry->setSource(IPv4Route::MANUAL);
+    IPv4Route::RouteSource routeSource = usetManetLabelRouting ? IPv4Route::MANET : IPv4Route::MANET2;
+    entry->setSource(routeSource);
 
     inet_rt->addRoute(entry);
 
