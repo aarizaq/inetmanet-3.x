@@ -25,6 +25,7 @@ simple Ieee80211Etx
         double ETXInterval @unit(s) = default(1s);
         double ETTInterval @unit(s) = default(60s);
         double ETXMeasureInterval @unit(s) = default(10s);
+        int EttWindow = default(5); 
         int ETXSize @unit(byte) = default(150byte);
         int ETTSize1 @unit(byte) = default(100byte);
         int ETTSize2 @unit(byte) = default(1300byte);
@@ -33,7 +34,10 @@ simple Ieee80211Etx
         double powerWindowTime @unit(s) = default(10s);// window time size for measure the S/N and Power received
 
         int Index = default(0);
-        volatile double jitter @unit(s) = uniform(0s,0.01s);
+        volatile double jitter @unit(s) = uniform(-0.01s,0.01s);
+        double startEtx @unit(s) = uniform(0s,1s);
+        double startEtt @unit(s) = uniform(0s,10s);
+        double histeresis @unit(s) = 0.1s;
     gates:
         output toMac;
         input fromMac;

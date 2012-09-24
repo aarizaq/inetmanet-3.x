@@ -124,6 +124,8 @@ class INET_API Ieee80211Etx : public cSimpleModule, public MacEstimateCostProces
     int ettSize1;
     int ettSize2;
     simtime_t maxLive;
+
+    double histeresis;
     long unsigned int ettIndex;
     class InfoEttData
     {
@@ -137,6 +139,14 @@ class INET_API Ieee80211Etx : public cSimpleModule, public MacEstimateCostProces
     int powerWindow;
     simtime_t powerWindowTime;
     unsigned int numInterfaces;
+
+    void checkSizeEtxArray(MacEtxNeighbor *neig)
+    {
+        while (!neig->timeVector.empty() && (simTime() - neig->timeVector.front() > (etxMeasureInterval + histeresis)))
+            neig->timeVector.erase(neig->timeVector.begin());
+        while (neig->timeVector.size() > etxMeasureInterval / etxInterval)
+            neig->timeVector.erase(neig->timeVector.begin());
+    }
 
   protected:
     virtual int numInitStages() const {return 3;}
@@ -155,6 +165,8 @@ class INET_API Ieee80211Etx : public cSimpleModule, public MacEstimateCostProces
   public:
     virtual double getEtx(const MACAddress &add,const int &iface = 0);
     virtual int getEtx(const MACAddress &add, double &val);
+    virtual int getEtxEtt(const MACAddress &add, double &etx, double &ett);
+
 
     virtual double getEtt(const MACAddress &add,const int &iface = 0);
     virtual int getEtt(const MACAddress &add, double &val);

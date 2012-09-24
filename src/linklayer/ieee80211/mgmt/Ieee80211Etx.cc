@@ -1,5 +1,6 @@
 //
 // Copyright (C) 2008 Alfonso Ariza
+// Copyright (C) 2012 Alfonso Ariza
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -37,9 +38,11 @@ void Ieee80211Etx::initialize(int stage)
         etxSize = par("ETXSize");
         ettSize1 = par("ETTSize1");
         ettSize2 = par("ETTSize2");
+        ettWindow = par("EttWindow");
         maxLive = par("TimeToLive");
         powerWindow = par("powerWindow");
         powerWindowTime = par("powerWindowTime");
+        histeresis = par("histeresis");
         NotificationBoard *nb = NotificationBoardAccess().get();
         nb->subscribe(this, NF_LINK_BREAK);
         nb->subscribe(this, NF_LINK_FULL_PROMISCUOUS);
@@ -51,9 +54,9 @@ void Ieee80211Etx::initialize(int stage)
                 ie->setEstimateCostProcess(par("Index").longValue(), this);
         }
         if (etxSize>0 && etxInterval>0)
-            scheduleAt(simTime()+par("jitter")+etxInterval, etxTimer);
+            scheduleAt(simTime()+par("startEtx"), etxTimer);
         if (ettInterval>0 && ettSize1>0 && ettSize2>0)
-            scheduleAt(simTime()+par("jitter")+ettInterval, ettTimer);
+            scheduleAt(simTime()+par("startEtt"), ettTimer);
     }
 }
 
@@ -99,7 +102,7 @@ void Ieee80211Etx::handleTimer(cMessage *msg)
         for (unsigned int i = 0; i< neighbors.size(); i++)
         {
             MACETXPacket *pkt = new MACETXPacket();
-            pkt->setBitLength(etxSize);
+            pkt->setByteLength(etxSize);
             pkt->setSource(myAddress);
             pkt->setDest(MACAddress::BROADCAST_ADDRESS);
             for (NeighborsMap::iterator it = neighbors[i].begin(); it != neighbors[i].end();)
@@ -120,6 +123,7 @@ void Ieee80211Etx::handleTimer(cMessage *msg)
             for (NeighborsMap::iterator it = neighbors[i].begin(); it != neighbors[i].end(); it++)
             {
                 pkt->setNeighbors(j, it->second->getAddress());
+                checkSizeEtxArray(it->second);
                 pkt->setRecPackets(j, it->second->timeVector.size());
                 j++;
             }
@@ -145,8 +149,8 @@ void Ieee80211Etx::handleTimer(cMessage *msg)
                 MACBwPacket *pkt2 = new MACBwPacket();
                 pkt1->setSource(myAddress);
                 pkt2->setSource(myAddress);
-                pkt1->setBitLength(ettSize1);
-                pkt2->setBitLength(ettSize2);
+                pkt1->setByteLength(ettSize1);
+                pkt2->setByteLength(ettSize2);
                 pkt1->setDest(it->second->getAddress());
                 pkt2->setDest(it->second->getAddress());
                 it->second->setEttTime(simTime());
@@ -183,11 +187,9 @@ int Ieee80211Etx::getEtx(const MACAddress &add, double &val)
         {
             neig = it->second;
             int expectedPk = etxMeasureInterval / etxInterval;
-            while (!neig->timeVector.empty() && (simTime() - neig->timeVector.front() > etxMeasureInterval))
-                neig->timeVector.erase(neig->timeVector.begin());
             int pkRec = neig->timeVector.size();
-            double pr = pkRec / expectedPk;
-            double ps = neig->getPackets() / expectedPk;
+            double pr = (double) pkRec / (double) expectedPk;
+            double ps = (double) neig->getPackets() / (double) expectedPk;
             if (pr > 1)
                 pr = 1;
             if (ps > 1)
@@ -218,11 +220,9 @@ double Ieee80211Etx::getEtx(const MACAddress &add, const int &iface)
     {
         neig = it->second;
         int expectedPk = etxMeasureInterval/etxInterval;
-        while (!neig->timeVector.empty() && (simTime()-neig->timeVector.front() >  etxMeasureInterval))
-            neig->timeVector.erase(neig->timeVector.begin());
         int pkRec = neig->timeVector.size();
-        double pr = pkRec/expectedPk;
-        double ps = neig->getPackets()/expectedPk;
+        double pr = (double) pkRec/(double) expectedPk;
+        double ps = (double) neig->getPackets()/(double)expectedPk;
         if (pr>1) pr = 1;
         if (ps>1) ps = 1;
         if (ps == 0 || pr==0)
@@ -230,6 +230,59 @@ double Ieee80211Etx::getEtx(const MACAddress &add, const int &iface)
         return 1/(ps*pr);
     }
 }
+
+
+int Ieee80211Etx::getEtxEtt(const MACAddress &add, double &etx, double &ett)
+{
+    ett = 1e300;
+    etx = 1e300;
+    int interface = -1;
+    for (unsigned int i = 0; i < neighbors.size(); i++)
+    {
+        NeighborsMap::iterator it = neighbors[i].find(add);
+        MacEtxNeighbor *neig;
+        if (it == neighbors[i].end())
+        {
+            continue;
+        }
+        else
+        {
+
+            neig = it->second;
+            int expectedPk = etxMeasureInterval / etxInterval;
+            int pkRec = neig->timeVector.size();
+            double pr = (double) pkRec / (double) expectedPk;
+            double ps = (double) neig->getPackets() / (double) expectedPk;
+            if (pr > 1)
+                pr = 1;
+            if (ps > 1)
+                ps = 1;
+            double resultEtx;
+            if (ps == 0 || pr == 0)
+                resultEtx = 1e100;
+            resultEtx = 1 / (ps * pr);
+
+            simtime_t minTime = 100.0;
+            double resultEtt = 1e300;
+            if (!neig->timeETT.empty())
+            {
+                for (unsigned int i = 0; i < neig->timeETT.size(); i++)
+                    if (minTime > neig->timeETT[i])
+                        minTime = neig->timeETT[i];
+                double bw = (double) ettSize2 / SIMTIME_DBL(minTime);
+                resultEtt = etx * (etxSize / bw);
+            }
+            if (resultEtx < etx || (resultEtx <=etx && resultEtt < ett ))
+            {
+                etx = resultEtx;
+                ett = resultEtt;
+                interface = (int)i;
+            }
+        }
+    }
+    return interface;
+}
+
 
 double Ieee80211Etx::getEtt(const MACAddress &add, const int &iface)
 {
@@ -248,11 +301,9 @@ double Ieee80211Etx::getEtt(const MACAddress &add, const int &iface)
         if (neig->timeETT.empty())
             return -1;
         int expectedPk = etxMeasureInterval/etxInterval;
-        while (!neig->timeVector.empty() && (simTime()-neig->timeVector.front() >  etxMeasureInterval))
-            neig->timeVector.erase(neig->timeVector.begin());
         int pkRec = neig->timeVector.size();
-        double pr = pkRec/expectedPk;
-        double ps = neig->getPackets()/expectedPk;
+        double pr = (double) pkRec/ (double)expectedPk;
+        double ps = (double) neig->getPackets()/(double) expectedPk;
         if (pr>1) pr = 1;
         if (ps>1) ps = 1;
         if (ps == 0 || pr==0)
@@ -286,13 +337,11 @@ int Ieee80211Etx::getEtt(const MACAddress &add, double &val)
         {
             neig = it->second;
             if (neig->timeETT.empty())
-                return -1;
+                continue;
             int expectedPk = etxMeasureInterval / etxInterval;
-            while (!neig->timeVector.empty() && (simTime() - neig->timeVector.front() > etxMeasureInterval))
-                neig->timeVector.erase(neig->timeVector.begin());
             int pkRec = neig->timeVector.size();
-            double pr = pkRec / expectedPk;
-            double ps = neig->getPackets() / expectedPk;
+            double pr = (double) pkRec / (double)expectedPk;
+            double ps = (double) neig->getPackets() / (double) expectedPk;
             if (pr > 1)
                 pr = 1;
             if (ps > 1)
@@ -307,7 +356,7 @@ int Ieee80211Etx::getEtt(const MACAddress &add, double &val)
                 for (unsigned int i = 0; i < neig->timeETT.size(); i++)
                     if (minTime > neig->timeETT[i])
                         minTime = neig->timeETT[i];
-                double bw = ettSize2 / minTime;
+                double bw = (double) ettSize2 / SIMTIME_DBL(minTime);
                 result = etx * (etxSize / bw);
             }
             if (result<val)
@@ -388,7 +437,7 @@ int Ieee80211Etx::getPrec(const MACAddress &add, double &val)
                 itNeig++;
             }
 
-            double result = sum / neig->signalToNoiseAndSignal.size();
+            double result = sum / (double) neig->signalToNoiseAndSignal.size();
             if (result>val)
             {
                 val = result;
@@ -465,7 +514,7 @@ int Ieee80211Etx::getSignalToNoise(const MACAddress &add, double &val)
                 sum += itNeig->snrData;
                 itNeig++;
             }
-            double result = sum / neig->signalToNoiseAndSignal.size();
+            double result = sum / (double) neig->signalToNoiseAndSignal.size();
             if (result>val)
             {
                 val = result;
@@ -489,9 +538,7 @@ double Ieee80211Etx::getPacketErrorToNeigh(const MACAddress &add, const int &ifa
     {
         neig = it->second;
         int expectedPk = etxMeasureInterval / etxInterval;
-        while (!neig->timeVector.empty() && (simTime() - neig->timeVector.front() > etxMeasureInterval))
-            neig->timeVector.erase(neig->timeVector.begin());
-        double ps = neig->getPackets() / expectedPk;
+        double ps = (double) neig->getPackets() / (double) expectedPk;
         if (ps > 1)
             ps = 1;
         return 1 - ps;
@@ -515,9 +562,7 @@ int Ieee80211Etx::getPacketErrorToNeigh(const MACAddress &add, double &val)
         {
             neig = it->second;
             int expectedPk = etxMeasureInterval / etxInterval;
-            while (!neig->timeVector.empty() && (simTime() - neig->timeVector.front() > etxMeasureInterval))
-                neig->timeVector.erase(neig->timeVector.begin());
-            double ps = neig->getPackets() / expectedPk;
+            double ps = (double) neig->getPackets() / (double) expectedPk;
             if (ps > 1)
                 ps = 1;
             double resul = 1 - ps;
@@ -543,10 +588,8 @@ double Ieee80211Etx::getPacketErrorFromNeigh(const MACAddress &add, const int &i
     {
         neig = it->second;
         int expectedPk = etxMeasureInterval/etxInterval;
-        while (!neig->timeVector.empty() && (simTime()-neig->timeVector.front() >  etxMeasureInterval))
-            neig->timeVector.erase(neig->timeVector.begin());
         int pkRec = neig->timeVector.size();
-        double pr = pkRec/expectedPk;
+        double pr = (double) pkRec/ (double)expectedPk;
         if (pr>1) pr = 1;
         return 1-pr;
     }
@@ -568,10 +611,8 @@ int Ieee80211Etx::getPacketErrorFromNeigh(const MACAddress &add, double &val)
         {
             neig = it->second;
             int expectedPk = etxMeasureInterval / etxInterval;
-            while (!neig->timeVector.empty() && (simTime() - neig->timeVector.front() > etxMeasureInterval))
-                neig->timeVector.erase(neig->timeVector.begin());
             int pkRec = neig->timeVector.size();
-            double pr = pkRec / expectedPk;
+            double pr = (double) pkRec / (double)expectedPk;
             if (pr > 1)
                 pr = 1;
             double resul = 1 - pr;
@@ -601,9 +642,7 @@ void Ieee80211Etx::handleEtxMessage(MACETXPacket *msg)
     }
     else
         neig = it->second;
-    while (!neig->timeVector.empty() && (simTime()-neig->timeVector.front() >  etxMeasureInterval))
-        neig->timeVector.erase(neig->timeVector.begin());
-
+    checkSizeEtxArray(neig);
     neig->timeVector.push_back(simTime());
     neig->setTime(simTime());
     neig->setPackets(0);
@@ -625,19 +664,18 @@ void Ieee80211Etx::handleEtxMessage(MACETXPacket *msg)
         Uint128 dest = msg->getSource().getInt();
 
         double etx;
-        getEtx(msg->getSource(),etx);
+        double ett;
+        getEtxEtt(msg->getSource(),etx,ett);
 
         if (GlobalWirelessLinkInspector::getLinkCost(org,dest,link))
         {
-            if (link.costEtx != etx)
-            {
-                link.costEtx = etx;
-                GlobalWirelessLinkInspector::setLinkCost(org,dest,link);
-            }
+            link.costEtx = etx;
+            link.costEtt = ett;
+            GlobalWirelessLinkInspector::setLinkCost(org,dest,link);
         }
         else
         {
-            link.costEtt = 0;
+            link.costEtt = ett;
             link.costEtx = etx;
             link.snr = 0;
             GlobalWirelessLinkInspector::setLinkCost(org,dest,link);
@@ -662,14 +700,15 @@ void Ieee80211Etx::handleBwMessage(MACBwPacket *msg)
 
     if (!msg->getType())
     {
-        if (msg->getByteLength()==ettSize1)
+        if (msg->getByteLength() == ettSize1)
         {
             InfoEttData infoEttData;
             infoEttData.ettIndex = msg->getIndex();
             infoEttData.prevTime = simTime();
             infoEtt[msg->getSource()] = infoEttData;
+            delete msg;
         }
-        else if (msg->getByteLength()==ettSize2)
+        else if (msg->getByteLength() == ettSize2)
         {
             InfoEtt::iterator it = infoEtt.find(msg->getSource());
             if (it != infoEtt.end())
@@ -683,10 +722,11 @@ void Ieee80211Etx::handleBwMessage(MACBwPacket *msg)
                     msg->setSource(myAddress);
                     send(msg, "toMac");
                 }
+                else
+                    delete msg;
                 infoEtt.erase(it);
             }
         }
-        delete msg;
         return;
     }
     if (!neig)
