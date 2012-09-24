@@ -39,6 +39,8 @@ void Ieee80211Etx::initialize(int stage)
         ettSize1 = par("ETTSize1");
         ettSize2 = par("ETTSize2");
         ettWindow = par("EttWindow");
+        if (ettInterval > 0)
+            ettMeasureInterval = (ettInterval*(ettWindow+1));
         maxLive = par("TimeToLive");
         powerWindow = par("powerWindow");
         powerWindowTime = par("powerWindowTime");
@@ -56,7 +58,14 @@ void Ieee80211Etx::initialize(int stage)
         if (etxSize>0 && etxInterval>0)
             scheduleAt(simTime()+par("startEtx"), etxTimer);
         if (ettInterval>0 && ettSize1>0 && ettSize2>0)
+        {
+            // integrity check
+            if (etxSize <0  || etxInterval < 0)
+                opp_error("ETT need ETX");
+            if (ettInterval/etxInterval < 2)
+                opp_error("ETT interval must be at least 2 times the ETX interval");
             scheduleAt(simTime()+par("startEtt"), ettTimer);
+        }
     }
 }
 
@@ -124,6 +133,7 @@ void Ieee80211Etx::handleTimer(cMessage *msg)
             {
                 pkt->setNeighbors(j, it->second->getAddress());
                 checkSizeEtxArray(it->second);
+                checkSizeEttArray(it->second);
                 pkt->setRecPackets(j, it->second->timeVector.size());
                 j++;
             }
@@ -267,10 +277,10 @@ int Ieee80211Etx::getEtxEtt(const MACAddress &add, double &etx, double &ett)
             if (!neig->timeETT.empty())
             {
                 for (unsigned int i = 0; i < neig->timeETT.size(); i++)
-                    if (minTime > neig->timeETT[i])
-                        minTime = neig->timeETT[i];
+                    if (minTime > neig->timeETT[i].delay)
+                        minTime = neig->timeETT[i].delay;
                 double bw = (double) ettSize2 / SIMTIME_DBL(minTime);
-                resultEtt = etx * (etxSize / bw);
+                resultEtt = resultEtx * (etxSize / bw);
             }
             if (resultEtx < etx || (resultEtx <=etx && resultEtt < ett ))
             {
@@ -311,8 +321,8 @@ double Ieee80211Etx::getEtt(const MACAddress &add, const int &iface)
         double etx =  1/(ps*pr);
         simtime_t minTime = 10000.0;
         for (unsigned int i = 0; i<neig->timeETT.size(); i++)
-            if (minTime>neig->timeETT[i])
-                minTime = neig->timeETT[i];
+            if (minTime>neig->timeETT[i].delay)
+                minTime = neig->timeETT[i].delay;
         double bw = ettSize2/minTime;
         return etx*(etxSize/bw);
     }
@@ -354,8 +364,8 @@ int Ieee80211Etx::getEtt(const MACAddress &add, double &val)
                 double etx = 1 / (ps * pr);
                 simtime_t minTime = 100.0;
                 for (unsigned int i = 0; i < neig->timeETT.size(); i++)
-                    if (minTime > neig->timeETT[i])
-                        minTime = neig->timeETT[i];
+                    if (minTime > neig->timeETT[i].delay)
+                        minTime = neig->timeETT[i].delay;
                 double bw = (double) ettSize2 / SIMTIME_DBL(minTime);
                 result = etx * (etxSize / bw);
             }
@@ -739,7 +749,12 @@ void Ieee80211Etx::handleBwMessage(MACBwPacket *msg)
     {
         if (neig->timeETT.size() > (unsigned int)ettWindow)
             neig->timeETT.erase(neig->timeETT.begin());
-        neig->timeETT.push_back(msg->getTime());
+        MacEtxNeighbor::ETTData data;
+        data.delay = msg->getTime();
+        data.recordTime = simTime();
+        neig->timeETT.push_back(data);
+
+
 
         if (GlobalWirelessLinkInspector::isActive())
         {

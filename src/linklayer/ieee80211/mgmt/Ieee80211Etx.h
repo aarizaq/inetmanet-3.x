@@ -66,7 +66,13 @@ class MacEtxNeighbor
     int     numFailures;
   public:
     std::vector<simtime_t> timeVector;
-    std::vector<simtime_t> timeETT;
+    class ETTData
+    {
+        public:
+            simtime_t recordTime;
+            simtime_t delay;
+    };
+    std::vector<ETTData> timeETT;
     std::vector<SNRDataTime> signalToNoiseAndSignal; // S/N received
   public:
     MacEtxNeighbor() {packets = 0; time = 0; numFailures = 0;}
@@ -119,6 +125,7 @@ class INET_API Ieee80211Etx : public cSimpleModule, public MacEstimateCostProces
     simtime_t etxInterval;
     simtime_t ettInterval;
     simtime_t etxMeasureInterval;
+    simtime_t ettMeasureInterval;
     int ettWindow;
     int etxSize;
     int ettSize1;
@@ -146,6 +153,14 @@ class INET_API Ieee80211Etx : public cSimpleModule, public MacEstimateCostProces
             neig->timeVector.erase(neig->timeVector.begin());
         while (neig->timeVector.size() > etxMeasureInterval / etxInterval)
             neig->timeVector.erase(neig->timeVector.begin());
+    }
+
+    void checkSizeEttArray(MacEtxNeighbor *neig)
+    {
+        if (neig->timeETT.empty())
+            return;
+        while (simTime() - neig->timeETT.front().recordTime > ettMeasureInterval)
+            neig->timeETT.erase(neig->timeETT.begin());
     }
 
   protected:
