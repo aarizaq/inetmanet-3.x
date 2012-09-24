@@ -37,6 +37,10 @@
 #include "IMobility.h"
 #include "Ieee80211MgmtAP.h"
 #include "GlobalWirelessLinkInspector.h"
+#ifdef WITH_80215
+#include "Ieee802154Frame_m.h"
+#endif
+
 
 #define IP_DEF_TTL 32
 #define UDP_HDR_LEN 8
@@ -1122,31 +1126,50 @@ void ManetRoutingBase::receiveChangeNotification(int category, const cObject *de
         opp_error("Manet routing protocol is not register");
     if (category == NF_LINK_BREAK)
     {
-        if (details==NULL)
+        if (details == NULL)
             return;
-        Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame *>(const_cast<cObject*>(details));
-        if (frame)
+        if (dynamic_cast<Ieee80211DataOrMgmtFrame *>(const_cast<cObject*>(details)))
         {
+            Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame *>(const_cast<cObject*>(details));
+            if (frame)
+            {
+                cPacket * pktAux = frame->getEncapsulatedPacket();
+                if (!mac_layer_ && pktAux != NULL)
+                {
+                    cPacket *pkt = pktAux->dup();
+                    ControlInfoBreakLink *add = new ControlInfoBreakLink;
+                    add->setDest(frame->getReceiverAddress());
+                    pkt->setControlInfo(add);
+                    processLinkBreak(pkt);
+                    delete pkt;
+                }
+                else
+                    processLinkBreak(details);
+            }
+            else
+            {
+                Ieee80211ManagementFrame *frame =
+                        dynamic_cast<Ieee80211ManagementFrame *>(const_cast<cObject*>(details));
+                if (frame)
+                    processLinkBreakManagement(details);
+            }
+        }
+#ifdef WITH_80215
+        else if (dynamic_cast<Ieee802154Frame *>(const_cast<cObject*>(details)))
+        {
+            Ieee802154Frame *frame = dynamic_cast<Ieee802154Frame *>(const_cast<cObject*>(details));
             cPacket * pktAux = frame->getEncapsulatedPacket();
             if (!mac_layer_ && pktAux != NULL)
             {
                 cPacket *pkt = pktAux->dup();
                 ControlInfoBreakLink *add = new ControlInfoBreakLink;
-                add->setDest(frame->getReceiverAddress());
+                add->setDest(frame->getDstAddr());
                 pkt->setControlInfo(add);
                 processLinkBreak(pkt);
                 delete pkt;
             }
-            else
-                processLinkBreak(details);
         }
-        else
-        {
-            Ieee80211ManagementFrame *frame = dynamic_cast<Ieee80211ManagementFrame *>(const_cast<cObject*>(details));
-            if (frame)
-                processLinkBreakManagement(details);
-        }
-
+#endif
     }
     else if (category == NF_LINK_PROMISCUOUS)
     {
