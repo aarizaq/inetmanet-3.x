@@ -22,10 +22,11 @@ package inet.linklayer.ieee80211.mgmt;
 simple Ieee80211Etx
 {
     parameters:
-        double ETXInterval @unit(s) = default(1s);
-        double ETTInterval @unit(s) = default(60s);
+        double ETXInterval @unit(s) = default(1s); //
+        double ETTInterval @unit(s) = default(60s); // if 0 disabled
         double ETXMeasureInterval @unit(s) = default(10s);
-        int EttWindow = default(5); 
+        int EttWindow = default(5);  // number of EET values in vecto to compute the Bandwith
+        bool EttTimeLimit = default(false); // if true delete values in the ETT vector older than  (EttWindow+1)*ETTInterval
         int ETXSize @unit(byte) = default(150byte);
         int ETTSize1 @unit(byte) = default(100byte);
         int ETTSize2 @unit(byte) = default(1300byte);
@@ -35,9 +36,9 @@ simple Ieee80211Etx
 
         int Index = default(0);
         volatile double jitter @unit(s) = uniform(-0.01s,0.01s);
-        double startEtx @unit(s) = uniform(0s,1s);
-        double startEtt @unit(s) = uniform(0s,10s);
-        double histeresis @unit(s) = 0.1s;
+        double startEtx @unit(s) = uniform(0s,1s); // start time for the ETX process
+        double startEtt @unit(s) = uniform(0s,10s);// start time for the ETT process
+        double Hysteresis @unit(s) = 0.1s;
     gates:
         output toMac;
         input fromMac;

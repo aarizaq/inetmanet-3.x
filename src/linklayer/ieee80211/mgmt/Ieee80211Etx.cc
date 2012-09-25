@@ -41,10 +41,12 @@ void Ieee80211Etx::initialize(int stage)
         ettWindow = par("EttWindow");
         if (ettInterval > 0)
             ettMeasureInterval = (ettInterval*(ettWindow+1));
+        if (!par("EttTimeLimit").boolValue() || ettInterval <= 0)
+            ettMeasureInterval = SimTime::getMaxTime();
         maxLive = par("TimeToLive");
         powerWindow = par("powerWindow");
         powerWindowTime = par("powerWindowTime");
-        histeresis = par("histeresis");
+        hysteresis = par("Hysteresis");
         NotificationBoard *nb = NotificationBoardAccess().get();
         nb->subscribe(this, NF_LINK_BREAK);
         nb->subscribe(this, NF_LINK_FULL_PROMISCUOUS);

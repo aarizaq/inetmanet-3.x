@@ -132,7 +132,7 @@ class INET_API Ieee80211Etx : public cSimpleModule, public MacEstimateCostProces
     int ettSize2;
     simtime_t maxLive;
 
-    double histeresis;
+    double hysteresis;
     long unsigned int ettIndex;
     class InfoEttData
     {
@@ -149,7 +149,7 @@ class INET_API Ieee80211Etx : public cSimpleModule, public MacEstimateCostProces
 
     void checkSizeEtxArray(MacEtxNeighbor *neig)
     {
-        while (!neig->timeVector.empty() && (simTime() - neig->timeVector.front() > (etxMeasureInterval + histeresis)))
+        while (!neig->timeVector.empty() && (simTime() - neig->timeVector.front() > (etxMeasureInterval + hysteresis)))
             neig->timeVector.erase(neig->timeVector.begin());
         while (neig->timeVector.size() > etxMeasureInterval / etxInterval)
             neig->timeVector.erase(neig->timeVector.begin());
