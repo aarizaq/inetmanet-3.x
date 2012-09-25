@@ -972,7 +972,11 @@ route_discovery:
         if (fwd_rt && (fwd_rt->flags & RT_REPAIR))
             rreq_local_repair(fwd_rt, src_addr, ipd);
         else
+        {
+            if (par("targetOnlyRreq").boolValue())
+                rreq_flags |= RREQ_DEST_ONLY;
             rreq_route_discovery(dest_addr, rreq_flags, ipd);
+        }
 
         return;
 
