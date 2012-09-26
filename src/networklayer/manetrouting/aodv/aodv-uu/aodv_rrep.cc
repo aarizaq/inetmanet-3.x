@@ -71,6 +71,8 @@ RREP *NS_CLASS rrep_create(u_int8_t flags,
     rrep->dest_seqno = htonl(dest_seqno);
     rrep->orig_addr = orig_addr.s_addr;
     rrep->lifetime = htonl(life);
+    rrep->a = 0;
+    rrep->r = 0;
 
     if (flags & RREP_REPAIR)
         rrep->r = 1;
