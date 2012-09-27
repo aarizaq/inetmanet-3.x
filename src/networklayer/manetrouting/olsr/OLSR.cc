@@ -3102,22 +3102,37 @@ void OLSR::computeDistributionPath(const nsaddr_t &initNode)
         OLSR_rt_entry* segmentRoute = NULL;
         for (mprset_t::iterator it2 = mpr.begin();it2 != mpr.end();it2++)
         {
-            OLSR_rt_entry*  entry = val->lookup(*it2);
-            if (hops > entry->dist())
+
+            if (*it2 == actualNode)
             {
-                hops = entry->dist();
+                hops = 0;
                 itMin = it2;
-                segmentRoute = entry;
+                segmentRoute;
+            }
+            else
+            {
+                OLSR_rt_entry*  entry = val->lookup(*it2);
+                if (entry == NULL)
+                    return;
+                if (hops > entry->dist())
+                {
+                    hops = entry->dist();
+                    itMin = it2;
+                    segmentRoute = entry;
+                }
             }
         }
         //
         actualNode = *itMin;
         mpr.erase(itMin);
-        if (segmentRoute->dist() > 1 && segmentRoute->route.empty())
-            opp_error("error in entry route");
-        for (unsigned int i = 0; i< segmentRoute->route.size(); i++)
+        if (segmentRoute)
         {
-            route.push_back(segmentRoute->route[i]);
+            if (segmentRoute->dist() > 1 && segmentRoute->route.empty())
+                opp_error("error in entry route");
+            for (unsigned int i = 0; i< segmentRoute->route.size(); i++)
+            {
+                route.push_back(segmentRoute->route[i]);
+            }
         }
         route.push_back(actualNode);
     }
