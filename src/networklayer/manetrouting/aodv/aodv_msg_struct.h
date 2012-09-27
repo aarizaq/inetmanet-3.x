@@ -74,7 +74,15 @@ struct RERR : public AODV_msg
     unsigned short res2;
     u_int8_t dest_count;
     RERR_udest *   _udest;
-    explicit RERR(const char *name="RERRAodvMsg") : AODV_msg (name) {setBitLength(12*8); dest_count=0; _udest=NULL;}
+    explicit RERR(const char *name="RERRAodvMsg") : AODV_msg (name)
+    {
+        res1 = 0;
+        n = 0;
+        res2 = 0;
+        dest_count = 0;
+        _udest = NULL;
+        setBitLength(12*8);
+    }
     ~RERR ();
     RERR (const RERR &m);
     void addUdest(const Uint128 &,unsigned int);
@@ -107,8 +115,22 @@ struct RREP : public AODV_msg
     u_int32_t lifetime;
     uint32_t cost;
     uint8_t  hopfix;
-    AODV_ext *extension;
-    explicit RREP (const char *name="RREPAodvMsg") : AODV_msg (name) {setBitLength(20*8);}
+    explicit RREP (const char *name="RREPAodvMsg") : AODV_msg (name)
+    {
+        setBitLength(20*8);
+        res1 = 0;
+        a = 0;
+        r = 0;
+        prefix = 0;
+        res2 = 0;
+        hcnt = 0;
+        dest_addr = 0;
+        dest_seqno = 0;
+        orig_addr = 0;
+        lifetime = 0;
+        cost = 0;
+        hopfix = 0;
+    }
     RREP (const RREP &m);
     RREP &  operator= (const RREP &m);
     virtual RREP *dup() const {return new RREP(*this);}
@@ -121,7 +143,7 @@ struct RREP : public AODV_msg
 struct RREP_ack : public AODV_msg
 {
     u_int8_t reserved;
-    explicit RREP_ack (const char *name="RREPAckAodvMsg") : AODV_msg (name) {setBitLength(2*8);}
+    explicit RREP_ack (const char *name="RREPAckAodvMsg") : AODV_msg (name) {setBitLength(2*8); reserved = 0;}
     RREP_ack (const RREP_ack  &m);
     RREP_ack &  operator= (const RREP_ack &m);
     virtual RREP_ack *dup() const {return new RREP_ack(*this);}
@@ -148,7 +170,25 @@ struct RREQ : public AODV_msg
     u_int32_t orig_seqno;
     uint32_t   cost;
     uint8_t  hopfix;
-    explicit RREQ(const char *name="RREQAodvMsg") : AODV_msg (name) {setBitLength(24*8);}
+    explicit RREQ(const char *name="RREQAodvMsg") : AODV_msg (name)
+    {
+        j = 0;
+        r = 0;;     /* Repair flag */
+        g = 0;;     /* Gratuitous RREP flag */
+        d = 0;;     /* Destination only respond */
+        res1 = 0;
+        res2 = 0;
+        hcnt  = 0;
+        rreq_id = 0;
+        dest_addr = 0;
+        dest_seqno = 0;
+        orig_addr = 0;
+        orig_seqno = 0;
+        cost = 0;
+        hopfix = 0;
+        setBitLength(24*8);
+    }
+
     RREQ (const RREQ &m);
     RREQ &  operator= (const RREQ &m);
     virtual RREQ *dup() const {return new RREQ(*this);}
