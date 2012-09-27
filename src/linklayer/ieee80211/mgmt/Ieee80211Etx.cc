@@ -173,9 +173,8 @@ void Ieee80211Etx::handleTimer(cMessage *msg)
                 pkt1->setIndex(ettIndex);
                 pkt2->setIndex(ettIndex);
                 ettIndex ++;
-                double ranVal = uniform(0, 0.1);
-                sendDelayed(pkt1, ranVal, "toMac");
-                sendDelayed(pkt2, ranVal, "toMac");
+                send(pkt1, "toMac");
+                send(pkt2, "toMac");
                 it++;
             }
         }
@@ -718,7 +717,6 @@ void Ieee80211Etx::handleBwMessage(MACBwPacket *msg)
             infoEttData.ettIndex = msg->getIndex();
             infoEttData.prevTime = simTime();
             infoEtt[msg->getSource()] = infoEttData;
-            delete msg;
         }
         else if (msg->getByteLength() == ettSize2)
         {
@@ -733,12 +731,13 @@ void Ieee80211Etx::handleBwMessage(MACBwPacket *msg)
                     msg->setByteLength(ettSize1);
                     msg->setSource(myAddress);
                     send(msg, "toMac");
+                    msg = NULL;
                 }
-                else
-                    delete msg;
                 infoEtt.erase(it);
             }
         }
+        if (msg)
+            delete msg;
         return;
     }
     if (!neig)
@@ -755,8 +754,6 @@ void Ieee80211Etx::handleBwMessage(MACBwPacket *msg)
         data.delay = msg->getTime();
         data.recordTime = simTime();
         neig->timeETT.push_back(data);
-
-
 
         if (GlobalWirelessLinkInspector::isActive())
         {
