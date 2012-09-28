@@ -165,6 +165,7 @@ void IPv4::handlePacketFromNetwork(IPv4Datagram *datagram, InterfaceEntry *fromI
     else if (rule && rule->getRule()==IPv4RouteRule::ACCEPT)
     {
         InterfaceEntry *destIE = rule->getInterface();
+        EV << "Received datagram `" << datagram->getName() << "' with dest=" << datagram->getDestAddress()  << " processing by rule accept \n";
         // hop counter decrement; FIXME but not if it will be locally delivered
         datagram->setTimeToLive(datagram->getTimeToLive()-1);
         if (!datagram->getDestAddress().isMulticast())
@@ -191,6 +192,7 @@ void IPv4::handlePacketFromNetwork(IPv4Datagram *datagram, InterfaceEntry *fromI
         if (udpPkt)
         {
             EV << "IP UDP Helper. Allowing local delivery" << endl;
+            EV << "Received datagram `" << datagram->getName() << "' with dest=" << datagram->getDestAddress() << "\n";
             numLocalDeliver++;
             reassembleAndDeliver(datagram);
 
@@ -446,7 +448,7 @@ void IPv4::routeUnicastPacket(IPv4Datagram *datagram, InterfaceEntry *destIE, IP
 {
     IPv4Address destAddr = datagram->getDestAddress();
 
-    EV << "Routing datagram `" << datagram->getName() << "' with dest=" << destAddr << ": ";
+    EV << "Routing datagram `" << datagram->getName() << "' with dest=" << destAddr << ": \n";
     const IPv4RouteRule *rule = checkOutputRule(datagram,destIE);
     if (rule && rule->getRule() == IPv4RouteRule::DROP)
     {

@@ -265,11 +265,9 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
     DEBUG(LOG_DEBUG, 0, "ip_src=%s rreq_orig=%s rreq_dest=%s",
           ip_to_str(ip_src), ip_to_str(rreq_orig), ip_to_str(rreq_dest));
 #ifdef OMNETPP
-
     totalRreqRec++;
-    if (!ev.isDisabled())
-        ev.printf("ip_src=%s rreq_orig=%s rreq_dest=%s",ip_to_str(ip_src),
-                  ip_to_str(rreq_orig), ip_to_str(rreq_dest));
+    EV << "RREQ received, Src Address :" << convertAddressToString(ip_src.s_addr) << "  RREQ origin :" <<
+            convertAddressToString(rreq_orig.s_addr) << "  RREQ dest :" << convertAddressToString(rreq_dest.s_addr) << "\n";
 #endif
 
     if (rreqlen < (int) RREQ_SIZE)
@@ -286,7 +284,7 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
     {
         DEBUG(LOG_DEBUG, 0, "prev hop of RREQ blacklisted, ignoring!");
 #ifdef OMNETPP
-        EV << "prev hop of RREQ blacklisted, ignoring!";
+        EV << "prev hop of RREQ blacklisted, ignoring!" << "\n";
 #endif
         return;
     }
@@ -519,7 +517,7 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
                            this_host.seqno, rev_rt->dest_addr,
                            MY_ROUTE_TIMEOUT);
 #ifdef OMNETPP
-        EV << " create a rrep" << ip_to_str(DEV_IFINDEX(rev_rt->ifindex).ipaddr) << "seq n" << this_host.seqno << " to " << ip_to_str(rev_rt->dest_addr);
+        EV << " create a rrep" << convertAddressToString(DEV_IFINDEX(rev_rt->ifindex).ipaddr.s_addr) << "seq n" << this_host.seqno << " to " << convertAddressToString(rev_rt->dest_addr.s_addr) << "\n";
 #endif
 
         rrep_send(rrep, rev_rt, NULL, RREP_SIZE);
@@ -537,7 +535,7 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
            one in the RREQ. */
         seqno_incr(this_host.seqno);
         rrep = rrep_create(0, 0, 0, DEV_IFINDEX(rev_rt->ifindex).ipaddr,this_host.seqno, rev_rt->dest_addr, MY_ROUTE_TIMEOUT);
-        EV << " create a rrep" << ip_to_str(DEV_IFINDEX(rev_rt->ifindex).ipaddr) << "seq n" << this_host.seqno << " to " << ip_to_str(rev_rt->dest_addr);
+        EV << "Create a rrep" << convertAddressToString(DEV_IFINDEX(rev_rt->ifindex).ipaddr.s_addr) << "seq n" << this_host.seqno << " to " << convertAddressToString(rev_rt->dest_addr.s_addr) << "\n";
         rrep_send(rrep, rev_rt, NULL, RREP_SIZE);
         if (ip_ttl > 0)
         {
@@ -546,7 +544,7 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
         else
         {
             DEBUG(LOG_DEBUG, 0, "RREQ not forwarded - ttl=0");
-            EV << "RREQ not forwarded - ttl=0";
+            EV << "RREQ not forwarded - ttl=0" << "\n";
         }
         return;
     }
@@ -691,7 +689,7 @@ forward:
         {
             DEBUG(LOG_DEBUG, 0, "RREQ not forwarded - ttl=0");
 #ifdef OMNETPP
-            EV << "RREQ not forwarded - ttl=0";
+            EV << "RREQ not forwarded - ttl=0" << "\n";
 #endif
         }
     }

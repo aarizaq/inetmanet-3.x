@@ -349,6 +349,10 @@ void NS_CLASS rrep_process(RREP * rrep, int rreplen, struct in_addr ip_src,
         return;
     if (addressIsForUs(rrep_orig.s_addr))
         DEBUG(LOG_DEBUG, 0, "rrep for us");
+
+    EV << "RREP received, Src Address :" << convertAddressToString(ip_src.s_addr) << "  RREP origin :" <<
+            convertAddressToString(rrep_orig.s_addr) << "  RREP dest :" << convertAddressToString(rrep_dest.s_addr) << "\n";
+
 #endif
 
     DEBUG(LOG_DEBUG, 0, "from %s about %s->%s",
