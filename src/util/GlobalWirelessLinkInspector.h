@@ -57,6 +57,10 @@ class GlobalWirelessLinkInspector : public cSimpleModule
 
 
         static LocatorMap *globalLocatorMap;
+
+        typedef std::map<Uint128,uint64_t> QueueSize;
+        static QueueSize *queueSize;
+
      public:
         GlobalWirelessLinkInspector();
         virtual ~GlobalWirelessLinkInspector();
@@ -78,6 +82,9 @@ class GlobalWirelessLinkInspector : public cSimpleModule
         static bool getLocatorInfo(Uint128 , Uint128 &);
         static bool getNumNodes(Uint128,int &);
         static bool areNeighbour(const Uint128 &node1, const Uint128 &node2,bool &areN);
+        static bool setQueueSize(const Uint128 &node, const uint64_t &);
+        static bool getQueueSize(const Uint128 &node, uint64_t &);
+
 };
 
 

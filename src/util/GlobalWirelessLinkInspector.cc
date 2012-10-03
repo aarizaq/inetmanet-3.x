@@ -19,6 +19,7 @@
 GlobalWirelessLinkInspector::CostMap* GlobalWirelessLinkInspector::costMap = NULL;
 GlobalWirelessLinkInspector::GlobalRouteMap *GlobalWirelessLinkInspector::globalRouteMap = NULL;
 GlobalWirelessLinkInspector::LocatorMap *GlobalWirelessLinkInspector::globalLocatorMap = NULL;
+GlobalWirelessLinkInspector::QueueSize *GlobalWirelessLinkInspector::queueSize;
 
 Define_Module(GlobalWirelessLinkInspector);
 
@@ -28,6 +29,7 @@ GlobalWirelessLinkInspector::GlobalWirelessLinkInspector()
     costMap = NULL;
     globalRouteMap = NULL;
     globalLocatorMap = NULL;
+    queueSize = NULL;
 }
 
 GlobalWirelessLinkInspector::~GlobalWirelessLinkInspector()
@@ -82,6 +84,14 @@ void GlobalWirelessLinkInspector::initialize()
     if (globalLocatorMap == NULL)
     {
         globalLocatorMap = new LocatorMap;
+    }
+    else
+    {
+        opp_error("more that an instance of GlobalWirelessWirelessLinkInspector exist");
+    }
+    if (queueSize == NULL)
+    {
+        queueSize = new QueueSize;
     }
     else
     {
@@ -373,6 +383,26 @@ bool GlobalWirelessLinkInspector::areNeighbour(const Uint128 &node1, const Uint1
         areNei = true;
     else
         areNei = false;
+    return true;
+}
+
+
+bool GlobalWirelessLinkInspector::setQueueSize(const Uint128 &node, const uint64_t &val)
+{
+    if (queueSize == NULL)
+        return false;
+    (*queueSize)[node] = val;
+    return true;
+}
+
+bool GlobalWirelessLinkInspector::getQueueSize(const Uint128 &node, uint64_t & val)
+{
+    if (queueSize == NULL)
+        return false;
+    QueueSize::iterator it = queueSize->find(node);
+    if (it == queueSize->end())
+        return false;
+    val = it->second;
     return true;
 }
 
