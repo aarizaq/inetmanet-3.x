@@ -771,7 +771,7 @@
         requires = "mobility radio TCP_INET MANET OSPFv2 MPLS UDP IPv4 IPv6 SCTP"
         labels = ""
         nedPackages = "
-                       inet._4gsim
+                       inet.underTest._4gsim
                       "
         extraSourceFolders = ""
         compileFlags = "-DWITH_4GSIM"
