@@ -241,6 +241,31 @@ void SCTPSocket::send(cPacket *msg, bool last, bool primary)
     sendToSCTP(msg);
 }
 
+void SCTPSocket::send(cPacket *msg, bool last, bool primary, unsigned int ppid)
+{
+    if (oneToOne && sockstate!=CONNECTED && sockstate!=CONNECTING && sockstate!=PEER_CLOSED) {
+        throw cRuntimeError("SCTPSocket::send(): not connected or connecting");
+    }
+    else if (!oneToOne && sockstate!=LISTENING) {
+        throw cRuntimeError( "SCTPSocket::send: One-to-many style socket must be listening");
+    }
+
+    SCTPSendCommand *cmd = new SCTPSendCommand();
+    cmd->setAssocId(assocId);
+    if (msg->getKind() == SCTP_C_SEND_ORDERED)
+        cmd->setSendUnordered(COMPLETE_MESG_ORDERED);
+    else
+        cmd->setSendUnordered(COMPLETE_MESG_UNORDERED);
+    lastStream = (lastStream+1)%outboundStreams;
+    cmd->setSid(lastStream);
+    cmd->setLast(last);
+    cmd->setPrimary(primary);
+    cmd->setPpid(ppid);
+    msg->setKind(SCTP_C_SEND);
+    msg->setControlInfo(cmd);
+    sendToSCTP(msg);
+}
+
 
 void SCTPSocket::sendNotification(cPacket *msg)
 {

@@ -763,4 +763,19 @@
         compileFlags = "-DWITH_80211MESH"
         linkerFlags = ""
         />
+ <feature
+        id="LTE4Gsim"
+        name="4 gsim LTE model"
+        description = "4 gsim LTE model"
+        initiallyEnabled = "false"
+        requires = "mobility radio TCP_INET MANET OSPFv2 MPLS UDP IPv4 IPv6 SCTP"
+        labels = ""
+        nedPackages = "
+                       inet._4gsim
+                      "
+        extraSourceFolders = ""
+        compileFlags = "-DWITH_4GSIM"
+        linkerFlags = ""
+        />
 </features>
+

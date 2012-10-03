@@ -193,6 +193,7 @@ class  INET_API SCTPSocket
      * Sends data packet.
      */
     void send(cPacket *msg, bool last = true, bool primary = true);
+    void send(cPacket *msg, bool last, bool primary ,unsigned int );
 
     void sendNotification(cPacket *msg);
     void sendRequest(cPacket *msg);
