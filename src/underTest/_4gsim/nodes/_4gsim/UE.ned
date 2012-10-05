@@ -80,8 +80,8 @@ module UE
 
         lteRadio.uppergateIn <-- nas.radioOut;
         lteRadio.uppergateOut --> nas.radioIn;
-        lteRadio.netOut --> networkLayer.ifIn++;
-        networkLayer.ifOut++ --> lteRadio.netIn;
+        lteRadio.upperLayerOut --> networkLayer.ifIn++;
+        networkLayer.ifOut++ --> lteRadio.upperLayerIn;
         networkLayer.pingOut++ --> pingApp.pingIn;
         pingApp.pingOut --> networkLayer.pingIn++;
 }
