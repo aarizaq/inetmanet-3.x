@@ -35,7 +35,7 @@
 
 Define_Module(IPv4);
 
-simsignal_t IPv4::promiscousPacket = SIMSIGNAL_NULL;
+simsignal_t IPv4::iPv4PromiscousPacket = SIMSIGNAL_NULL;
 
 #define NEWFRAGMENT
 
@@ -69,7 +69,7 @@ void IPv4::initialize()
     // by default no MANET routing
     manetRouting = false;
 
-    promiscousPacket = registerSignal("promiscousPacket");
+    iPv4PromiscousPacket = registerSignal("iPv4PromiscousPacket");
 
 #ifdef WITH_MANET
     // test for the presence of MANET routing
@@ -109,8 +109,8 @@ void IPv4::updateDisplayString()
 void IPv4::endService(cPacket *msg)
 {
 
-    if (mayHaveListeners(promiscousPacket))
-        emit(promiscousPacket, msg);
+    if (mayHaveListeners(iPv4PromiscousPacket))
+        emit(iPv4PromiscousPacket, msg);
     if (msg->getArrivalGate()->isName("transportIn"))
     {
         handleMessageFromHL( msg );

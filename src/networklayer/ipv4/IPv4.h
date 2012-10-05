@@ -72,7 +72,7 @@ class INET_API IPv4 : public QueueBase
     int numForwarded;
 
 
-    static simsignal_t promiscousPacket;
+    static simsignal_t iPv4PromiscousPacket;
   protected:
     // utility: look up interface from getArrivalGate()
     virtual InterfaceEntry *getSourceInterfaceFrom(cPacket *msg);
