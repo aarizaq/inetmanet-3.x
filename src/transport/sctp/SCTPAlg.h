@@ -1,6 +1,6 @@
 //
 // Copyright (C) 2008 Irene Ruengeler
-// Copyright (C) 2010 Thomas Dreibholz
+// Copyright (C) 2010-2012 Thomas Dreibholz
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -9,7 +9,7 @@
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -19,8 +19,7 @@
 #ifndef __PLAINSCTP_H
 #define __PLAINSCTP_H
 
-#include "INETDefs.h"
-
+#include <omnetpp.h>
 #include "SCTPAlgorithm.h"
 
 
@@ -30,48 +29,48 @@
 class INET_API SCTPAlgStateVariables : public SCTPStateVariables
 {
   public:
-     //...
+    //...
 };
 
 
 class INET_API SCTPAlg : public SCTPAlgorithm
 {
   protected:
-     SCTPAlgStateVariables *state;
+    SCTPAlgStateVariables *state;
 
   public:
-     /**
-      * Ctor.
-      */
-     SCTPAlg();
+    /**
+     * Ctor.
+     */
+    SCTPAlg();
 
-     /**
-      * Virtual dtor.
-      */
-     virtual ~SCTPAlg();
+    /**
+     * Virtual dtor.
+     */
+    virtual ~SCTPAlg();
 
-     /**
-      * Creates and returns a SCTPStateVariables object.
-      */
-     virtual SCTPStateVariables* createStateVariables();
+    /**
+     * Creates and returns a SCTPStateVariables object.
+     */
+    virtual SCTPStateVariables* createStateVariables();
 
-     virtual void established(bool active);
+    virtual void established(bool active);
 
-     virtual void connectionClosed();
+    virtual void connectionClosed();
 
-     virtual void processTimer(cMessage* timer, SCTPEventCode& event);
+    virtual void processTimer(cMessage* timer, SCTPEventCode& event);
 
-     virtual void sendCommandInvoked(SCTPPathVariables* path);
+    virtual void sendCommandInvoked(SCTPPathVariables* path);
 
-     virtual void receivedDataAck(uint32 firstSeqAcked);
+    virtual void receivedDataAck(uint32 firstSeqAcked);
 
-     virtual void receivedDuplicateAck();
+    virtual void receivedDuplicateAck();
 
-     virtual void receivedAckForDataNotYetSent(uint32 seq);
+    virtual void receivedAckForDataNotYetSent(uint32 seq);
 
-     virtual void sackSent();
+    virtual void sackSent();
 
-     virtual void dataSent(uint32 fromseq);
+    virtual void dataSent(uint32 fromseq);
 
 };
 

@@ -19,17 +19,15 @@
 #ifndef __SCTPSOCKET_H
 #define __SCTPSOCKET_H
 
-#include <vector>
 
-#include "INETDefs.h"
-
+#include <omnetpp.h>
+#include "SCTPCommand_m.h"
 #include "IPvXAddress.h"
+#include "RoutingTable.h"
 
 
 class SCTPStatusInfo;
 class SCTP;
-
-typedef std::vector<IPvXAddress> AddressVector;
 
 
 class  INET_API SCTPSocket
@@ -39,9 +37,9 @@ class  INET_API SCTPSocket
      * Abstract base class for your callback objects. See setCallbackObject()
      * and processMessage() for more info.
      *
-     * Note: this class is not subclassed from cObject, because
+     * Note: this class is not subclassed from cPolymorphic, because
      * classes may have both this class and cSimpleModule as base class,
-     * and cSimpleModule is already a cObject.
+     * and cSimpleModule is already a cPolymorphic.
      */
     class CallbackInterface
     {
@@ -55,6 +53,7 @@ class  INET_API SCTPSocket
         virtual void socketFailure(int assocId, void *yourPtr, int code) {}
         virtual void socketStatusArrived(int assocId, void *yourPtr, SCTPStatusInfo *status){}// {delete status;}
         virtual void sendRequestArrived() {}
+        virtual void msgAbandonedArrived(int assocId) {}
         virtual void shutdownReceivedArrived(int connId) {}
         virtual void sendqueueFullArrived(int connId) {}
         virtual void sendqueueAbatedArrived(int connId, uint64 buffer) {}
@@ -130,11 +129,11 @@ class  INET_API SCTPSocket
 
     /** @name Getter functions */
     //@{
-    //  IPvXAddress localAddress() {return localAddr;}
-    AddressVector getLocalAddresses()  {return localAddresses;}
+  //  IPvXAddress localAddress() {return localAddr;}
+  AddressVector getLocalAddresses()  {return localAddresses;}
     int getLocalPort() {return localPrt;}
-    //  IPvXAddress remoteAddress() {return remoteAddr;}
-    AddressVector getRemoteAddresses()  {return remoteAddresses;}
+  //  IPvXAddress remoteAddress() {return remoteAddr;}
+  AddressVector getRemoteAddresses()  {return remoteAddresses;}
     int getRemotePort() {return remotePrt;}
     IPvXAddress getRemoteAddr() {return remoteAddr;}
     //@}
@@ -151,7 +150,7 @@ class  INET_API SCTPSocket
     void setInboundStreams(int streams) {inboundStreams = streams;};
     int getOutboundStreams() {return outboundStreams;};
     int getLastStream() {return lastStream;};
-
+    void setStreamPriority(uint32 stream, uint32 priority);
     /**
      * Bind the socket to a local port number.
      */
@@ -180,20 +179,21 @@ class  INET_API SCTPSocket
      * connection will be accepted, and SCTP will refuse subsequent ones.
      * See SCTPOpenCommand documentation (neddoc) for more info.
      */
-    void listen(bool fork = false, uint32 requests = 0, uint32 messagesToPush = 0);
+    void listen(bool fork=false, bool streamReset=false, uint32 requests=0, uint32 messagesToPush=0);
 
     /**
      * Active OPEN to the given remote socket.
      */
-    void connect(IPvXAddress remoteAddress, int32 remotePort, uint32 numRequests);
-
-    void connectx(AddressVector remoteAddresses, int32 remotePort, uint32 numRequests = 0);
+    void connect(IPvXAddress remoteAddress, int32 remotePort, bool streamReset, int32 prMethod, uint32 numRequests);
+    void connect(IPvXAddress remoteAddress, int32 remotePort);
+    void connectx(AddressVector remoteAddresses, int32 remotePort, bool streamReset=false, int32 prMethod=0, uint32 numRequests=0);
 
     /**
      * Sends data packet.
      */
-    void send(cPacket *msg, bool last = true, bool primary = true);
-    void send(cPacket *msg, bool last, bool primary ,unsigned int );
+    void send(cPacket *msg, bool last=true, bool primary=true);
+    void send(cPacket *msg, int prMethod, double prValue, bool last);
+    void send(cPacket *msg, int prMethod, double prValue, bool last, int32 streamId);
 
     void sendNotification(cPacket *msg);
     void sendRequest(cPacket *msg);
@@ -257,7 +257,7 @@ class  INET_API SCTPSocket
      * in that case you don't have to look it up by assocId in the callbacks,
      * you can have it passed to you as yourPtr.
      */
-    void setCallbackObject(CallbackInterface *cb, void *yourPtr = NULL);
+    void setCallbackObject(CallbackInterface *cb, void *yourPtr=NULL);
 
     /**
      * Examines the message (which should have arrived from SCTPMain),
@@ -283,4 +283,3 @@ class  INET_API SCTPSocket
 };
 
 #endif
-

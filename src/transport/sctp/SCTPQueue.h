@@ -1,6 +1,6 @@
 //
-// Copyright (C) 2005-2009 Irene Ruengeler
-// Copyright (C) 2009-2010 Thomas Dreibholz
+// Copyright (C) 2008 Irene Ruengeler
+// Copyright (C) 2009-2012 Thomas Dreibholz
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -9,7 +9,7 @@
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -19,8 +19,8 @@
 #ifndef __SCTPQUEUE_H
 #define __SCTPQUEUE_H
 
+#include <omnetpp.h>
 #include "INETDefs.h"
-
 #include "IPvXAddress.h"
 #include "SCTP.h"
 
@@ -46,55 +46,60 @@ class SCTPAssociation;
  *
  * @see SCTPSendQueue
  */
-class INET_API SCTPQueue : public cObject
+class INET_API SCTPQueue : public cPolymorphic
 {
-    public:
+   public:
+   /**
+     * Constructor.
+     */
+    SCTPQueue();
+
     /**
-      * Constructor.
-      */
-     SCTPQueue();
+     * Virtual destructor.
+     */
+    ~SCTPQueue();
 
-     /**
-      * Virtual destructor.
-      */
-     ~SCTPQueue();
+   bool checkAndInsertChunk(const uint32 key, SCTPDataVariables* chunk);
+   /* returns true if new data is inserted and false if data was present */
 
-    bool checkAndInsertChunk(const uint32 key, SCTPDataVariables* chunk);
-    /* returns true if new data is inserted and false if data was present */
+   SCTPDataVariables* getAndExtractChunk(const uint32 tsn);
+   SCTPDataVariables* extractMessage();
 
-    SCTPDataVariables* getAndExtractChunk(const uint32 tsn);
-    SCTPDataVariables* extractMessage();
+   void printQueue() const;
 
-    void printQueue() const;
+   uint32 getQueueSize() const;
 
-    uint32 getQueueSize() const;
+   SCTPDataVariables* getFirstChunk() const;
 
-    SCTPDataVariables* getFirstChunk() const;
+   cMessage* getMsg(const uint32 key) const;
 
-    cMessage* getMsg(const uint32 key) const;
+   SCTPDataVariables* getChunk(const uint32 key) const;
 
-    SCTPDataVariables* getChunk(const uint32 key) const;
+   SCTPDataVariables* getChunkFast(const uint32 tsn, bool& firstTime);
 
-    SCTPDataVariables* getChunkFast(const uint32 tsn, bool& firstTime);
+   void removeMsg(const uint32 key);
 
-    void removeMsg(const uint32 key);
+   bool deleteMsg(const uint32 tsn);
 
-    bool deleteMsg(const uint32 tsn);
+   int32 getNumBytes() const;
 
-    int32 getNumBytes() const;
+   SCTPDataVariables* dequeueChunkBySSN(const uint16 ssn);
 
-    SCTPDataVariables* dequeueChunkBySSN(const uint16 ssn);
+   uint32 getSizeOfFirstChunk(const IPvXAddress& remoteAddress);
 
+   void findEarliestOutstandingTSNsForPath(const IPvXAddress& remoteAddress,
+                                           uint32&            earliestOutstandingTSN,
+                                           uint32&            rtxEarliestOutstandingTSN) const;
 
   public:
-     typedef std::map<uint32, SCTPDataVariables*> PayloadQueue;
-     PayloadQueue payloadQueue;
+    typedef std::map<uint32, SCTPDataVariables*> PayloadQueue;
+    PayloadQueue payloadQueue;
 
   protected:
-     SCTPAssociation* assoc;    // SCTP connection object
+    SCTPAssociation* assoc;   // SCTP connection object
 
   private:
-     PayloadQueue::iterator GetChunkFastIterator;
+    PayloadQueue::iterator GetChunkFastIterator;
 };
 
 #endif

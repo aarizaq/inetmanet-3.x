@@ -1,0 +1,6 @@
+Sequence Number wrapping will not work properly, since in many places of
+SCTPAssociationRcvMessage.cc the sequence numbers are simply handled as
+uint32 in "for" loops, "if" clauses, etc.
+
+Idea:
+Replace uint32 type by class which properly handles wraps.
