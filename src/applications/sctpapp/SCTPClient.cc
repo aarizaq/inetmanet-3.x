@@ -17,7 +17,7 @@
 //
 
 
-#include "IPVxAddressResolver.h"
+#include "IPvXAddressResolver.h"
 #include "SCTPAssociation.h"
 #include "SCTPClient.h"
 
