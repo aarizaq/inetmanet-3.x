@@ -236,7 +236,7 @@ void NS_CLASS initialize(int stage)
         if (isRoot)
         {
             timer_init(&proactive_rreq_timer,&NS_CLASS rreq_proactive, NULL);
-            timer_set_timeout(&proactive_rreq_timer, proactive_rreq_timeout);
+            timer_set_timeout(&proactive_rreq_timer, par("startRreqProactive").longValue());
         }
 
         propagateProactive = par("propagateProactive");
