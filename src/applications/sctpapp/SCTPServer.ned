@@ -18,8 +18,9 @@
 //
 
 package inet.applications.sctpapp;
+import inet.applications.ISCTPApp;
 
-simple SCTPServer like SCTPApp
+simple SCTPServer like ISCTPApp
 {
    parameters:
        string address = default(""); // may be left empty ("")
