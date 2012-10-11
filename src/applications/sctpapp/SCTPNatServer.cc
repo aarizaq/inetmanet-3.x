@@ -41,7 +41,7 @@ void SCTPNatServer::initialize()
    //WATCH(rcvdBytesPerAssoc);
    WATCH(numRequestsToSend);
    // parameters
-   const char* address = par("address");
+   const char* address = par("localAddress");
    token = strtok((char*)address,",");
    while (token != NULL)
    {
@@ -49,7 +49,7 @@ void SCTPNatServer::initialize()
       addresses.push_back(IPvXAddress(token));
       token = strtok(NULL, ",");
    }
-   int32 port = par("port");
+   int32 port = par("localPort");
    echoFactor = par("echoFactor");
    delay = par("echoDelay");
    outboundStreams = par("outboundStreams");

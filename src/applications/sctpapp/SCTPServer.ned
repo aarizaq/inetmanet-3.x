@@ -23,8 +23,8 @@ import inet.applications.ISCTPApp;
 simple SCTPServer like ISCTPApp
 {
    parameters:
-       string address = default(""); // may be left empty ("")
-      int port = default(0); // port number to listen on
+       string localAddress = default(""); // may be left empty ("")
+      int localPort = default(0); // port number to listen on
       int echoFactor = default(0);
       volatile double echoDelay @unit(s) = default(0s);
       double delayFirstRead @unit(s) = default(0s);

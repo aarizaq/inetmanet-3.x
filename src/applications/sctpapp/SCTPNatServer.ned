@@ -22,8 +22,8 @@ import inet.applications.ISCTPApp;
 simple SCTPNatServer like ISCTPApp
 {
    parameters:
-      string address = default(""); // may be left empty ("")
-      int port = default(0); // port number to listen on
+      string localAddress= default(""); // may be left empty ("")
+      int localPort= default(0); // port number to listen on
       int numPacketsToSendPerClient = default(0);  // number of requests sent per session
       int numPacketsToReceivePerClient = default(1);
       double echoDelay @unit(s) = default(0s);

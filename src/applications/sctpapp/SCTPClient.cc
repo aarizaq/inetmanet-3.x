@@ -47,7 +47,7 @@ void SCTPClient::initialize()
    WATCH(bytesSent);
    WATCH(bytesRcvd);
    // parameters
-   address=par("address");
+   address = par("localAddress");
 
    token = strtok((char*)address,",");
    while (token != NULL)
@@ -55,7 +55,7 @@ void SCTPClient::initialize()
       addresses.push_back(IPvXAddress(token));
       token = strtok(NULL, ",");
    }
-   int32 port = par("port");
+   int32 port = par("localPort");
    echoFactor = par("echoFactor");
    if (!echoFactor) echoFactor = false;
    ordered = (bool)par("ordered");

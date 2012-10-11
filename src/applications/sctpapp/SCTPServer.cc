@@ -46,14 +46,14 @@ void SCTPServer::initialize()
    WATCH(numRequestsToSend);
    // parameters
    finishEndsSimulation = (bool)par("finishEndsSimulation");
-   const char* address = par("address");
+   const char* address = par("localAddress");
    token = strtok((char*)address,",");
    while (token != NULL)
    {
       addresses.push_back(IPvXAddress(token));
       token = strtok(NULL, ",");
    }
-   int32 port = par("port");
+   int32 port = par("localPort");
    echoFactor = par("echoFactor");
    delay = par("echoDelay");
    delayFirstRead = par("delayFirstRead");
