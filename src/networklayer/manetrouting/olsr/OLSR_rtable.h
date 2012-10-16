@@ -52,6 +52,7 @@ class OLSR_rtable : public cObject
 
   public:
 
+    OLSR_rtable(OLSR_rtable*);
     OLSR_rtable();
     ~OLSR_rtable();
     const rtable_t * getInternalTable() {return &rt_;}
@@ -67,6 +68,8 @@ class OLSR_rtable : public cObject
     uint32_t    size();
 
     virtual std::string detailedInfo();
+
+    virtual OLSR_rtable *dup() {return new OLSR_rtable(this);}
 
 //  void        print(Trace*);
 };
