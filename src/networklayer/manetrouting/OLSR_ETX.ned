@@ -70,7 +70,8 @@ simple OLSR_ETX extends BaseRouting like IManetRouting
 	    double OLSR_REFRESH_INTERVAL @unit("s")=default(2s);
 	    bool PublicRoutingTables = default(false);
 	    
-	    bool optimizedMid = default(false);// only nodes with more that a interface sends mid messages 
+	    bool optimizedMid = default(false);// only nodes with more that a interface sends mid messages	    
+	    bool DelOnlyRtEntriesInrtable_ = default(false); // delete only ip entries that are in the interal routing table 
     gates:
         input from_ip;
         output to_ip;

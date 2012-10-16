@@ -1206,13 +1206,23 @@ OLSR_ETX::rtable_default_computation()
 void
 OLSR_ETX::rtable_dijkstra_computation()
 {
+    nsaddr_t netmask (IPv4Address::ALLONES_ADDRESS.getInt());
     // Declare a class that will run the dijkstra algorithm
     Dijkstra *dijkstra = new Dijkstra();
 
     // All the entries from the routing table are removed.
+    if (par("DelOnlyRtEntriesInrtable_").boolValue())
+    {
+        for (rtable_t::const_iterator itRtTable = rtable_.getInternalTable()->begin();itRtTable != rtable_.getInternalTable()->begin();++itRtTable)
+        {
+            nsaddr_t addr = itRtTable->first;
+            omnet_chg_rte(addr, addr,netmask,1, true, addr);
+        }
+    }
+    else
+        omnet_clean_rte(); // clean IP tables
     rtable_.clear();
-    omnet_clean_rte();
-    nsaddr_t netmask (IPv4Address::ALLONES_ADDRESS.getInt());
+
 
     debug("Current node %s:\n", getNodeId(ra_addr()));
     // Iterate through all out 1 hop neighbors

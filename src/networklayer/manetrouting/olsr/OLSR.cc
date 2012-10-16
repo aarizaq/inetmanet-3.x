@@ -1266,13 +1266,27 @@ OLSR::mpr_computation()
 void
 OLSR::rtable_computation()
 {
+    nsaddr_t netmask(IPv4Address::ALLONES_ADDRESS.getInt());
     // 1. All the entries from the routing table are removed.
+    //
+
+    if (par("DelOnlyRtEntriesInrtable_").boolValue())
+    {
+        for (rtable_t::const_iterator itRtTable = rtable_.getInternalTable()->begin();itRtTable != rtable_.getInternalTable()->begin();++itRtTable)
+        {
+            nsaddr_t addr = itRtTable->first;
+            omnet_chg_rte(addr, addr,netmask,1, true, addr);
+        }
+    }
+    else
+        omnet_clean_rte(); // clean IP tables
+
     rtable_.clear();
-    omnet_clean_rte(); // clean IP tables
+
 
     // 2. The new routing entries are added starting with the
     // symmetric neighbors (h=1) as the destination nodes.
-    nsaddr_t netmask(IPv4Address::ALLONES_ADDRESS.getInt());
+
     for (nbset_t::iterator it = nbset().begin(); it != nbset().end(); it++)
     {
         OLSR_nb_tuple* nb_tuple = *it;
@@ -3087,7 +3101,6 @@ Uint128 OLSR::getIfaceAddressFromIndex(int index)
 void OLSR::computeDistributionPath(const nsaddr_t &initNode)
 {
     std::vector<nsaddr_t> route;
-    unsigned int size = rtable_.size();
     mprset_t mpr = state_.mprset();
     nsaddr_t actualNode= initNode;
     while(!mpr.empty())
@@ -3100,21 +3113,19 @@ void OLSR::computeDistributionPath(const nsaddr_t &initNode)
         mprset_t::iterator itMin = mpr.end();
         int hops = 1000;
         OLSR_rt_entry* segmentRoute = NULL;
-        for (mprset_t::iterator it2 = mpr.begin();it2 != mpr.end();it2++)
+        for (mprset_t::iterator it2 = mpr.begin();it2 != mpr.end();++it2)
         {
 
             if (*it2 == actualNode)
             {
-                hops = 0;
-                itMin = it2;
-                segmentRoute;
+                continue;
             }
             else
             {
                 OLSR_rt_entry*  entry = val->lookup(*it2);
                 if (entry == NULL)
                     return;
-                if (hops > entry->dist())
+                if (hops > (int)entry->dist())
                 {
                     hops = entry->dist();
                     itMin = it2;

@@ -54,6 +54,8 @@ class OLSR_rtable : public cObject
 
     OLSR_rtable();
     ~OLSR_rtable();
+    const rtable_t * getInternalTable() {return &rt_;}
+
 
     void        clear();
     void        rm_entry(const nsaddr_t &dest);
