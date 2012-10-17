@@ -641,10 +641,14 @@ void Radio::handleLowerMsgEnd(AirFrame * airframe)
 
         // delete the pointer to indicate that no message is currently
         // being received and clear the list
+
+        double snirMin = snrInfo.sList.begin()->snr;
+        for (SnrList::const_iterator iter = snrInfo.sList.begin(); iter != snrInfo.sList.end(); iter++)
+            if (iter->snr < snirMin)
+                snirMin = iter->snr;
         snrInfo.ptr = NULL;
         snrInfo.sList.clear();
-
-        airframe->setSnr(10*log10(recvBuff[airframe]/ (BASE_NOISE_LEVEL))); //ahmed
+        airframe->setSnr(10*log10(recvBuff[airframe]/ snirMin)); //ahmed
         airframe->setLossRate(lossRate);
         // delete the frame from the recvBuff
         recvBuff.erase(airframe);
