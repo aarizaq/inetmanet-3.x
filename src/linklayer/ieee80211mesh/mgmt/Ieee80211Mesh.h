@@ -246,7 +246,6 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase
         virtual void sendOut(cMessage *msg);
         /** Redefined from Ieee80211MgmtBase Utility method: sends the packet to the upper layer */
         //virtual void sendUp(cMessage *msg);
-        virtual bool isUpperLayer(cMessage *);
         virtual cPacket * decapsulate(Ieee80211DataFrame *frame);
         virtual void sendOrEnqueue(cPacket *frame);
 

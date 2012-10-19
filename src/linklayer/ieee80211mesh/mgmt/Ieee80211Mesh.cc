@@ -1339,13 +1339,6 @@ bool Ieee80211Mesh::macLabelBasedSend(Ieee80211DataFrame *frame)
     return true;
 }
 
-bool Ieee80211Mesh::isUpperLayer(cMessage *msg)
-{
-
-
-        return true;
-    return false;
-}
 
 cPacket *Ieee80211Mesh::decapsulate(Ieee80211DataFrame *frame)
 {
