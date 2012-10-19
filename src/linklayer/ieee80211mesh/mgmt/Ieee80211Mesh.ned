@@ -55,22 +55,22 @@ simple Ieee80211Mesh
         @signal[queueingTime](type=simtime_t; unit=s);
         @signal[dataQueueLen](type=long);  // number of stored packets
     gates:
-        input  ETXProcIn;
-        output ETXProcOut;
-        input  routingInProactive;
-        output routingOutProactive;
-        input  routingInReactive;
-        output routingOutReactive;
-        input  routingInHwmp;
-        output routingOutHwmp;
+        input  ETXProcIn @loose;
+        output ETXProcOut @loose;
+        input  routingInProactive @loose;
+        output routingOutProactive @loose;
+        input  routingInReactive @loose;
+        output routingOutReactive @loose;
+        input  routingInHwmp @loose;
+        output routingOutHwmp @loose;
         input  upperLayerIn @labels(Ieee802Ctrl/down);
         output upperLayerOut @labels(Ieee802Ctrl/up);
         input  fromEthernet @labels(Ieee80211Frame);
         output toEthernet @labels(Ieee80211Frame);
         input  macIn[];
         output macOut[];
-        input  agentIn;   // optional gates used for the agent in stations
-        output agentOut; // optional gates used for the agent in stations
-        input  locatorIn;
-        output  locatorOut;
+        input  agentIn @loose;   // optional gates used for the agent in stations
+        output agentOut @loose; // optional gates used for the agent in stations
+        input  locatorIn @loose;
+        output  locatorOut @loose;
 }
