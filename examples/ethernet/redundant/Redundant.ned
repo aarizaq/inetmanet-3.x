@@ -21,8 +21,24 @@ import inet.nodes.ethernet.EtherSwitch;
 import inet.linklayer.ethernet.EtherBus;
 import inet.linklayer.ethernet.EtherHub;
 
-import inet.linklayer.channels.ProgramedFailureChannel;
+import inet.linklayer.channels.ProgramedFailureDataRateChannel;
 import inet.linklayer.channels.LinkFailureManager;
+import ned.DatarateChannel;
+
+import inet.linklayer.channels.ProgramedFailureDataRateChannel;
+
+channel cable extends DatarateChannel
+{
+     datarate = 1000Mbps;
+}
+
+channel cableFailure extends ProgramedFailureDataRateChannel
+{
+     datarate = 1000Mbps;
+     failureAt = "70s";
+     recoveryAt = "280s";
+}
+
 
 network Redundant
 {
@@ -67,18 +83,18 @@ network Redundant
             routingFile = "D.rt";
         }
     connections:
-        B.ethg++ <--> SW_B.ethg++;
-        A.ethg++ <--> SW_A.ethg++;
-        SW_A.ethg++ <--> SW_C.ethg++;
-        SW_C.ethg++ <--> etherHub1.ethg++;
-        SW_D.ethg++ <--> etherHub1.ethg++;
-        SW_B.ethg++ <--> etherHub.ethg++;
-        etherHub.ethg++ <--> SW_D.ethg++;
-        etherHub1.ethg++ <--> C.ethg++;
-        D.ethg++ <--> etherHub.ethg++;
+        B.ethg++ <--> cable <--> SW_B.ethg++;
+        A.ethg++ <--> cable <--> SW_A.ethg++;
+        SW_A.ethg++ <--> cable <--> SW_C.ethg++;
+        SW_C.ethg++ <--> cable <--> etherHub1.ethg++;
+        SW_D.ethg++ <--> cable <--> etherHub1.ethg++;
+        SW_B.ethg++ <--> cable <--> etherHub.ethg++;
+        etherHub.ethg++ <--> cable <--> SW_D.ethg++;
+        etherHub1.ethg++ <--> cable <--> C.ethg++;
+        D.ethg++ <--> cable <--> etherHub.ethg++;
 
         // link between SW A and SW B programed to failed at 70s
-        SW_A.ethg++ <--> ProgramedFailureChannel { failureAt="70s"; recoveryAt="280s"; } <--> SW_B.ethg++;
+        SW_A.ethg++ <--> cableFailure <--> SW_B.ethg++;
 
 }
 
@@ -125,27 +141,27 @@ network Redundant2
             routingFile = "D.rt";
         }
     connections:
-        B.ethg++ <--> SW_B.ethg++;
-        A.ethg++ <--> SW_A.ethg++;
-        C.ethg++ <--> etherHub1.ethg++;
-        D.ethg++ <--> etherHub.ethg++;
+        B.ethg++ <--> cable <--> SW_B.ethg++;
+        A.ethg++ <--> cable <--> SW_A.ethg++;
+        C.ethg++ <--> cable <--> etherHub1.ethg++;
+        D.ethg++ <--> cable <--> etherHub.ethg++;
 
-        SW_A.ethg++ <--> SW_C.ethg++;
-        SW_C.ethg++ <--> etherHub1.ethg++;
+        SW_A.ethg++ <--> cable <--> SW_C.ethg++;
+        SW_C.ethg++ <--> cable <--> etherHub1.ethg++;
 
         // redundant link to the segment 1 from SW_D
-        SW_D.ethg++ <--> etherHub1.ethg++;
-        SW_D.ethg++ <--> etherHub1.ethg++;
+        SW_D.ethg++ <--> cable <--> etherHub1.ethg++;
+        SW_D.ethg++ <--> cable <--> etherHub1.ethg++;
 
         // redundant link to the segment from SW_B
-        SW_B.ethg++ <--> etherHub.ethg++;
-        SW_B.ethg++ <--> etherHub.ethg++;
+        SW_B.ethg++ <--> cable <--> etherHub.ethg++;
+        SW_B.ethg++ <--> cable <--> etherHub.ethg++;
 
         // redundant link to the segment 2 from SW_D
-        etherHub.ethg++ <--> SW_D.ethg++;
-        etherHub.ethg++ <--> SW_D.ethg++;
+        etherHub.ethg++ <--> cable <--> SW_D.ethg++;
+        etherHub.ethg++ <--> cable <--> SW_D.ethg++;
 
         // link between SW A and SW B programed to failed at 70s
-        SW_A.ethg++ <--> ProgramedFailureChannel { failureAt="70s"; recoveryAt="280s"; } <--> SW_B.ethg++;
+        SW_A.ethg++ <--> cableFailure <--> SW_B.ethg++;
 }
 
