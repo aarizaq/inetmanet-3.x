@@ -26,9 +26,6 @@ import inet.networklayer.autorouting.ipv4.FlatNetworkConfigurator;
 
 network HandoverNetwork
 {
-    parameters:
-        double playgroundSizeX;
-        double playgroundSizeY;
     submodules:
         bild: Bild {
             parameters:
@@ -66,7 +63,7 @@ network HandoverNetwork
         //    display: "p=1144,884;i=device/antennatower_l;r=,,#707070";
         //bs9: WiMAXAP;
         //    display: "p=1544,972;i=device/antennatower_l;r=,,#707070";
-        channelcontrol: ChannelControl {
+        channelControl: ChannelControl {
             parameters:
                 @display("p=60,50;i=misc/sun");
         }

@@ -16,38 +16,33 @@
 //
 
 
-
 package inet.nodes.ethernet;
 
-import inet.networklayer.queue.IOutputQueue;
 import inet.linklayer.ethernet.EtherLLC;
+import inet.linklayer.ethernet.EtherQoSQueue;
 import inet.linklayer.IEtherMAC;
 import inet.applications.ethernet.EtherAppSrv;
 import inet.applications.ethernet.EtherAppCli;
 
 
 //
-// An example host with one Ethernet port and traffic generators that
-// generate Ethernet traffic directly. This host model does not contain
-// higher layer protocols (IP, TCP). By default is configured to use
-// half duplex MAC (CSMA/CD).
+// An example host with one Ethernet port and a traffic generator that
+// generates request-reply traffic directly over Ethernet. This host model
+// does not contain higher layer protocols (IP, TCP). By default it is
+// configured to use half-duplex MAC (CSMA/CD).
 //
 module EtherHost
 {
     parameters:
-        bool csmacdSupport = default(true);  // by default use CSMA/CD 
+        bool csmacdSupport = default(true);  // by default use CSMA/CD
         string macType = default(csmacdSupport ? "EtherMAC" : "EtherMACFullDuplex"); // ~EtherMAC or ~EtherMACFullDuplex
-        string queueType = default("NoQueue"); // DropTailQueue, DropTailQoSQueue, REDQueue, NoQueue
+        string queueType = default(""); // DropTailQueue, DiffServQueue, or empty to use the internal queue
         @node();
         @labels(node,ethernet-node);
         @display("i=device/pc2");
     gates:
         inout ethg @labels(EtherFrame-conn);
     submodules:
-        queue: <queueType> like IOutputQueue if queueType != "NoQueue" {
-            parameters:
-                @display("p=99,201;q=l2queue");
-        }
         cli: EtherAppCli {
             parameters:
                 registerSAP = true;
@@ -65,21 +60,27 @@ module EtherHost
                 upperLayerIn[2];
                 upperLayerOut[2];
         }
+        queue: EtherQoSQueue if queueType != "" {
+            parameters:
+                dataQueueType = queueType;
+                @display("p=99,201;q=l2queue");
+        }
         mac: <macType> like IEtherMAC {
             parameters:
-                queueModule = (queueType == "NoQueue" ? "" : "queue");
-                @display("p=155,272;q=queue");
+                queueModule = (queueType == "" ? "" : "queue");
+                @display("p=155,272;q=txQueue");
         }
     connections:
-        mac.phys <--> ethg;
 
         cli.out --> llc.upperLayerIn[0];
         cli.in <-- llc.upperLayerOut[0];
-
         srv.out --> llc.upperLayerIn[1];
         srv.in <-- llc.upperLayerOut[1];
-        llc.lowerLayerOut --> queue.in if queueType != "NoQueue";
-        queue.out --> mac.upperLayerIn if queueType != "NoQueue";
-        llc.lowerLayerOut --> mac.upperLayerIn if queueType == "NoQueue";
+
+        llc.lowerLayerOut --> queue.in if queueType != "";
+        queue.out --> mac.upperLayerIn if queueType != "";
+        llc.lowerLayerOut --> mac.upperLayerIn if queueType == "";
         mac.upperLayerOut --> llc.lowerLayerIn;
+
+        mac.phys <--> ethg;
 }

@@ -95,11 +95,8 @@ class SIM_API MyThroughputMeteringChannel : public cDatarateChannel
     /**
      * Performs bit error rate, delay and transmission time modeling.
      */
-#if OMNETPP_VERSION>0x0400
     virtual void processMessage(cMessage *msg, simtime_t t, result_t& result);
-#else
-    virtual bool deliver(cMessage *msg, simtime_t at);
-#endif
+
     /**
      * Initialize Channel
      */

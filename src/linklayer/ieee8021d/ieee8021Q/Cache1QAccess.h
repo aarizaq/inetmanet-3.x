@@ -11,7 +11,6 @@
 
 
 
-#include <omnetpp.h>
 #include "ModuleAccess.h"
 #include "Cache1Q.h"
 

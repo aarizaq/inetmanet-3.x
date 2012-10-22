@@ -26,12 +26,12 @@ class ByteArrayMessage : public ByteArrayMessage_Base
     /**
      * Constructor
      */
-    ByteArrayMessage(const char *name=NULL, int kind=0) : ByteArrayMessage_Base(name,kind) {}
+    ByteArrayMessage(const char *name = NULL, int kind = 0) : ByteArrayMessage_Base(name, kind) {}
 
     /**
      * Copy constructor
      */
-    ByteArrayMessage(const ByteArrayMessage& other) : ByteArrayMessage_Base(other.getName()) {operator=(other);}
+    ByteArrayMessage(const ByteArrayMessage& other) : ByteArrayMessage_Base(other) { }
 
     /**
      * operator =
@@ -74,6 +74,4 @@ class ByteArrayMessage : public ByteArrayMessage_Base
 };
 
 #endif
-
-
 

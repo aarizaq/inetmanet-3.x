@@ -19,7 +19,8 @@
 #ifndef __INET_TCPBASEALG_H
 #define __INET_TCPBASEALG_H
 
-#include <omnetpp.h>
+#include "INETDefs.h"
+
 #include "TCPAlgorithm.h"
 
 
@@ -113,7 +114,7 @@ class INET_API TCPBaseAlg : public TCPAlgorithm
     cOutVector *ssthreshVector; // will record changes to ssthresh
     cOutVector *rttVector;   // will record measured RTT
     cOutVector *srttVector;  // will record smoothed RTT
-    cOutVector *rttvarVector;// will record RTT variance (rttvar)
+    cOutVector *rttvarVector; // will record RTT variance (rttvar)
     cOutVector *rtoVector;   // will record retransmission timeout
     cOutVector *numRtosVector; // will record total number of RTOs
 

@@ -27,7 +27,7 @@ simple HostAutoConfigurator2
 {
     parameters:
         bool debug = default(false);                 // emit debug messages?
-        string interfaces = default("wlan eth0 ppp0");         // list of interfaces to autoassign addresses to, separated by a single space characters
+        string interfaces = default("wlan0 eth0 ppp0");         // list of interfaces to autoassign addresses to, separated by a single space characters
         string defaultInterface = default("eth0"); // only if a node has been defined like   isDefaultRoute=true for all nodes
         string defaultAddressInterface = default("eth0"); // only if a node has been defined like   isDefaultRoute=true, is the interface that will be used for search the ip address, only for the default
         bool isDefaultRoute = default(false); // we use this route like default route for all address

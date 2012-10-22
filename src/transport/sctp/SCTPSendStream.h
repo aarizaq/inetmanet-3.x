@@ -20,8 +20,10 @@
 #ifndef __SCTPSENDSTREAM_H
 #define __SCTPSENDSTREAM_H
 
-#include <omnetpp.h>
 #include <list>
+
+#include "INETDefs.h"
+
 #include "SCTPAssociation.h"
 #include "SCTPQueue.h"
 
@@ -30,7 +32,7 @@ class SCTPCommand;
 class SCTPDataVariables;
 
 
-class INET_API SCTPSendStream : public cPolymorphic
+class INET_API SCTPSendStream : public cObject
 {
     protected:
         uint16  streamId;

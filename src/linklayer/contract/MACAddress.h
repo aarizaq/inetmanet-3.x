@@ -1,8 +1,6 @@
 /*
  * Copyright (C) 2003 Andras Varga; CTIE, Monash University, Australia
  *
- *  2011 Alfonso Ariza; Universidad de Malaga, Spain, EUI-64 Support
- *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation; either version 2
@@ -17,18 +15,24 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
 
+
 #ifndef MACADDRESS_H_
 #define MACADDRESS_H_
 
 #include <string>
-#include <omnetpp.h>
+
 #include "INETDefs.h"
 
 
-#define MAC_ADDRESS_BYTES 6
+#define MAC_ADDRESS_SIZE 6
+#define MAC_ADDRESS_SIZE64 8
+
+#define MAC_ADDRESS_MASK 0xffffffffffffL
+#define MAC_ADDRESS_MASK64 0xffffffffffffffffL
+
+
 
 class InterfaceToken;
-class MACAddress64;
 
 /**
  * Stores an IEEE 802 MAC address (6 octets = 48 bits).
@@ -36,42 +40,64 @@ class MACAddress64;
 class INET_API MACAddress
 {
   private:
-    unsigned char address[6];   // 6*8=48 bit address
+    uint64 address;   // 6*8=48 bit address, lowest 6 bytes are used, highest 2 bytes are always zero
     static unsigned int autoAddressCtr; // global counter for generateAutoAddress()
-    friend class MACAddress64;
+    bool macAddress64;
 
   public:
-    /** Returns the unspecified (null) MAC address */
+    /** The unspecified MAC address, 00:00:00:00:00:00 */
     static const MACAddress UNSPECIFIED_ADDRESS;
 
-    /** Returns the broadcast (ff:ff:ff:ff:ff:ff) MAC address */
+    /** The broadcast MAC address, ff:ff:ff:ff:ff:ff */
     static const MACAddress BROADCAST_ADDRESS;
+
+    /** The special multicast PAUSE MAC address, 01:80:C2:00:00:01 */
+    static const MACAddress MULTICAST_PAUSE_ADDRESS;
+
+  static const MACAddress BROADCAST_ADDRESS64;
 
     /**
      * Default constructor initializes address bytes to zero.
      */
-    MACAddress();
+    MACAddress()
+    {
+        address = 0;
+        macAddress64 = false;
+    }
+
+    /**
+     * Initializes the address from a 48-bit integer
+     */
+    MACAddress(uint64 bits)
+    {
+        if (bits & !MAC_ADDRESS_MASK)
+            macAddress64 = true;
+        else
+            macAddress64 = false;
+        address = bits;
+    }
+
 
     /**
      * Constructor which accepts a hex string (12 hex digits, may also
      * contain spaces, hyphens and colons)
      */
-    MACAddress(const char *hexstr);
+    explicit MACAddress(const char *hexstr) { setAddress(hexstr); }
 
     /**
      * Copy constructor.
      */
-    MACAddress(const MACAddress& other) {operator=(other);}
+    MACAddress(const MACAddress& other) { address = other.address; macAddress64 = other.macAddress64;}
 
     /**
      * Assignment.
      */
-    MACAddress& operator=(const MACAddress& other);
+    MACAddress& operator=(const MACAddress& other) { address = other.address; macAddress64 = other.macAddress64; return *this; }
 
     /**
-     * Returns 6.
+     * Returns the address size in bytes, that is, 6.
      */
-    unsigned int getAddressSize() const;
+    unsigned int getAddressSize() const { return (macAddress64?MAC_ADDRESS_SIZE64:MAC_ADDRESS_SIZE); }
 
     /**
      * Returns the kth byte of the address.
@@ -96,35 +122,36 @@ class INET_API MACAddress
     void setAddress(const char *hexstr);
 
     /**
-     * Returns pointer to internal binary representation of address
-     * (array of 6 unsigned chars).
+     * Copies the address to the given pointer (array of 6 unsigned chars).
      */
-    unsigned char *getAddressBytes() {return address;}
+    void getAddressBytes(unsigned char *addrbytes) const;
+    void getAddressBytes(char *addrbytes) const { getAddressBytes((unsigned char *)addrbytes); }
 
     /**
      * Sets address bytes. The argument should point to an array of 6 unsigned chars.
      */
     void setAddressBytes(unsigned char *addrbytes);
+    void setAddressBytes(char *addrbytes) { setAddressBytes((unsigned char *)addrbytes); }
 
     /**
      * Sets the address to the broadcast address (hex ff:ff:ff:ff:ff:ff).
      */
-    void setBroadcast();
+    void setBroadcast() {address = (macAddress64 ? (uint64_t)MAC_ADDRESS_MASK64 :(uint64_t)MAC_ADDRESS_MASK); }
 
     /**
-     * Returns true this is the broadcast address (hex ff:ff:ff:ff:ff:ff).
+     * Returns true if this is the broadcast address (hex ff:ff:ff:ff:ff:ff).
      */
-    bool isBroadcast() const;
+    bool isBroadcast() const {return (macAddress64 ? address == (uint64_t)MAC_ADDRESS_MASK64 : address == MAC_ADDRESS_MASK); }
 
     /**
-     * Returns true this is a multicast logical address (starts with bit 1).
+     * Returns true if this is a multicast logical address (first byte's lsb is 1).
      */
-    bool isMulticast() const  {return address[0]&0x80;};
+    bool isMulticast() const  { return getAddressByte(0) & 0x01; };
 
     /**
      * Returns true if all address bytes are zero.
      */
-    bool isUnspecified() const;
+    bool isUnspecified() const { return address == 0; }
 
     /**
      * Converts address to a hex string.
@@ -132,19 +159,24 @@ class INET_API MACAddress
     std::string str() const;
 
     /**
-     * Returns true if the two addresses are equal.
+     * Converts address to 48 bits integer.
      */
-    bool equals(const MACAddress& other) const;
+    uint64 getInt() const { return address; }
 
     /**
      * Returns true if the two addresses are equal.
      */
-    bool operator==(const MACAddress& other) const {return (*this).equals(other);}
+    bool equals(const MACAddress& other) const { return address == other.address; }
+
+    /**
+     * Returns true if the two addresses are equal.
+     */
+    bool operator==(const MACAddress& other) const { return address == other.address; }
 
     /**
      * Returns true if the two addresses are not equal.
      */
-    bool operator!=(const MACAddress& other) const {return !(*this).equals(other);}
+    bool operator!=(const MACAddress& other) const { return address != other.address; }
 
     /**
      * Returns -1, 0 or 1 as result of comparison of 2 addresses.
@@ -163,69 +195,32 @@ class INET_API MACAddress
      */
     static MACAddress generateAutoAddress();
 
-    bool operator<(const MACAddress& addr) const {return compare (addr)<0;}
+    bool operator<(const MACAddress& other) const { return address < other.address; }
 
-    bool operator>(const MACAddress& addr) const {return compare (addr)>0;}
-
-    /**
-     * Compares two MAC addresses.
-     * Returns -1, 0 or 1.
-     */
-    int compare(const MACAddress& addr) const
-    {
-        return address[0] < addr.address[0] ? -1 : address[0] > addr.address[0] ? 1 :
-               address[1] < addr.address[1] ? -1 : address[1] > addr.address[1] ? 1 :
-               address[2] < addr.address[2] ? -1 : address[2] > addr.address[2] ? 1 :
-               address[3] < addr.address[3] ? -1 : address[3] > addr.address[3] ? 1 :
-               address[4] < addr.address[4] ? -1 : address[4] > addr.address[4] ? 1 :
-               address[5] < addr.address[5] ? -1 : address[5] > addr.address[5] ? 1 : 0;
-    }
-
+    bool operator>(const MACAddress& other) const { return address > other.address; }
 
     // works with MACaddress (64 bits)
+    // convert EUI-48 to EUI64
+    void convert64();
 
-    /**
-         * Copy constructor.
-         */
-     MACAddress(const MACAddress64& other) {operator=(other);}
+    // get the address like EUI64, with independence if it is EUI64 or EUI48
+    MACAddress getEui64();
 
-    /**
-        * Returns true if the two addresses are equal.
-        */
-    bool equals(const MACAddress64& other) const;
+    // try to convert EUI-64 to EUI-48 if us possible
+    void convert48();
 
+    // try to get the address like EUI-48, if is possible
+    MACAddress getEui48();
 
-       /**
-        * Returns true if the two addresses are equal.
-        */
-    bool operator==(const MACAddress64& other) const {return (*this).equals(other);}
+    MACAddress getMaskEUI48() { return MACAddress(MAC_ADDRESS_MASK); }
 
-       /**
-        * Returns true if the two addresses are not equal.
-        */
-    bool operator!=(const MACAddress64& other) const {return !(*this).equals(other);}
+    MACAddress getMaskEUI64() { return MACAddress((uint64_t)MAC_ADDRESS_MASK64); }
 
-       /**
-        * Returns -1, 0 or 1 as result of comparison of 2 addresses.
-        */
+    bool getFlagEui64() const {return macAddress64; }
+    void setFlagEui64(bool v)  {macAddress64 = v; }
 
-    int compare(const MACAddress64& addr) const;
-
-    bool operator<(const MACAddress64& addr) const {return compare (addr)<0;}
-
-    bool operator>(const MACAddress64& addr) const {return compare (addr)>0;}
-
-
-       /**
-        * Assignment.
-        */
-    MACAddress& operator=(const MACAddress64& other);
-
-    MACAddress64 getMacAddress64();
-
-    void setAddressUint64(uint64_t val);
-
-    uint64_t getAddressUint64();
+    bool operator&(const MACAddress& other) const { return address & other.address; }
+    bool operator|(const MACAddress& other) const { return address | other.address; }
 
 };
 

@@ -305,11 +305,11 @@ class  csma802154 : public Ieee802154Mac
     //sequence number for sending, map for the general case with more senders
     //also in initialisation phase multiple potential parents
     //std::map<int, unsigned long> SeqNrParent; //parent -> sequence number
-    std::map<int, uint8_t> SeqNrParent; //parent -> sequence number
+    std::map<MACAddress, uint8_t> SeqNrParent; //parent -> sequence number
 
     //sequence numbers for receiving
     //std::map<int, unsigned long> SeqNrChild; //child -> sequence number
-    std::map<int, uint8_t> SeqNrChild; //child -> sequence number
+    std::map<MACAddress, uint8_t> SeqNrChild; //child -> sequence number
 
 };
 

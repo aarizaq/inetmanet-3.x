@@ -42,7 +42,7 @@ network HandoverNetworkThreeBS
             parameters:
                 @display("p=500,300;i=device/antennatower_l;r=,,#707070");
         }
-        channelcontrol: ChannelControl {
+        channelControl: ChannelControl {
             parameters:
                 @display("p=60,50;i=misc/sun");
         }

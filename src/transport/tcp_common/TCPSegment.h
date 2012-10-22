@@ -30,6 +30,8 @@ inline bool seqLess(uint32 a, uint32 b) {return a != b && (b - a) < (1UL << 31);
 inline bool seqLE(uint32 a, uint32 b) {return (b - a) < (1UL << 31);}
 inline bool seqGreater(uint32 a, uint32 b) {return a != b && (a - b) < (1UL << 31);}
 inline bool seqGE(uint32 a, uint32 b) {return (a - b) < (1UL << 31);}
+inline uint32 seqMin(uint32 a, uint32 b) {return ((b - a) < (1UL << 31)) ? a : b;}
+inline uint32 seqMax(uint32 a, uint32 b) {return ((a - b) < (1UL << 31)) ? a : b;}
 //@}
 
 
@@ -38,7 +40,7 @@ class Sack : public Sack_Base
   public:
     Sack() : Sack_Base() {}
     Sack(unsigned int start_par, unsigned int end_par) { setSegment(start_par, end_par); }
-    Sack(const Sack& other) : Sack_Base() {operator=(other);}
+    Sack(const Sack& other) : Sack_Base(other) {}
     Sack& operator=(const Sack& other) {Sack_Base::operator=(other); return *this;}
     virtual Sack *dup() const {return new Sack(*this);}
     // ADD CODE HERE to redefine and implement pure virtual functions from Sack_Base
@@ -59,9 +61,13 @@ class INET_API TCPSegment : public TCPSegment_Base
     typedef std::list<TCPPayloadMessage> PayloadList;
     PayloadList payloadList;
 
+  private:
+    void copy(const TCPSegment& other);
+    void clean();
+
   public:
-    TCPSegment(const char *name=NULL, int kind=0) : TCPSegment_Base(name,kind) {}
-    TCPSegment(const TCPSegment& other) : TCPSegment_Base(other.getName()) {operator=(other);}
+    TCPSegment(const char *name = NULL, int kind = 0) : TCPSegment_Base(name, kind) {}
+    TCPSegment(const TCPSegment& other) : TCPSegment_Base(other) { copy(other); }
     ~TCPSegment();
     TCPSegment& operator=(const TCPSegment& other);
     virtual TCPSegment *dup() const {return new TCPSegment(*this);}

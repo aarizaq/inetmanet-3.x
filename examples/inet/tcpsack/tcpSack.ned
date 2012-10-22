@@ -4,9 +4,10 @@
 
 package inet.examples.inet.tcpsack;
 
-import ned.DatarateChannel;
-import inet.nodes.inet.StandardHost;
+import inet.networklayer.autorouting.ipv4.IPv4NetworkConfigurator;
 import inet.nodes.inet.Router;
+import inet.nodes.inet.StandardHost;
+import ned.DatarateChannel;
 
 
 network tcpsack
@@ -26,14 +27,15 @@ network tcpsack
             gates:
                 pppg[1];
         }
-        server: StandardHost { // for config 1-5
-            //        server: StandardHostWithDLDuplicatesGenerator { // for config 6
+        server: StandardHost {
             parameters:
                 @display("p=350,100;i=device/server");
             gates:
                 pppg[1];
         }
-    connections allowunconnected:
+        networkConfigurator: IPv4NetworkConfigurator {
+        }
+    connections:
         router.pppg[0] <--> NormalPath <--> client.pppg[0];
         router.pppg[1] <--> NormalPath <--> server.pppg[0];
 }

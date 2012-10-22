@@ -266,17 +266,17 @@ void NS_CLASS dymo_socket_send(struct in_addr dest_addr, struct dev_info *dev,do
         p->previousStatic=true;
         if (rePkt)
         {
-            for (int i=0;i<rePkt->numBlocks();i++)
-            	rePkt->re_blocks[i].cost+=costStatic;
+            for (int i=0; i<rePkt->numBlocks(); i++)
+            	rePkt->re_blocks[i].cost += costStatic;
         }
     }
     else
     {
-        p->previousStatic=false;
+        p->previousStatic = false;
         if (rePkt)
         {
-            for (int i=0;i<rePkt->numBlocks();i++)
-            	rePkt->re_blocks[i].cost+= costMobile;
+            for (int i=0; i<rePkt->numBlocks(); i++)
+            	rePkt->re_blocks[i].cost += costMobile;
         }
     }
 
@@ -348,7 +348,7 @@ void NS_CLASS dymo_socket_send(struct in_addr dest_addr, struct dev_info *dev,do
     Uint128 destAdd;
     if (dest_addr.s_addr == DYMO_BROADCAST)
     {
-        destAdd = IPv4Address::ALLONES_ADDRESS;
+        destAdd = IPv4Address::ALLONES_ADDRESS.getInt();
         if (delay>0)
         {
             if (useIndex)
@@ -360,9 +360,9 @@ void NS_CLASS dymo_socket_send(struct in_addr dest_addr, struct dev_info *dev,do
         else
         {
             if (useIndex)
-                sendToIp(p, DYMO_PORT, destAdd, DYMO_PORT,DYMO_IPTTL,par("broadCastDelay"),dev->ifindex);
+                sendToIp(p, DYMO_PORT, destAdd, DYMO_PORT,DYMO_IPTTL,par("broadcastDelay"),dev->ifindex);
             else
-                sendToIp(p, DYMO_PORT, destAdd, DYMO_PORT,DYMO_IPTTL,par("broadCastDelay"),dev->ipaddr.s_addr);
+                sendToIp(p, DYMO_PORT, destAdd, DYMO_PORT,DYMO_IPTTL,par("broadcastDelay"),dev->ipaddr.s_addr);
         }
     }
     else
@@ -379,9 +379,9 @@ void NS_CLASS dymo_socket_send(struct in_addr dest_addr, struct dev_info *dev,do
         else
         {
             if (useIndex)
-                sendToIp(p, DYMO_PORT, destAdd, DYMO_PORT,DYMO_IPTTL,par("uniCastDelay"),dev->ifindex);
+                sendToIp(p, DYMO_PORT, destAdd, DYMO_PORT,DYMO_IPTTL,par("unicastDelay"),dev->ifindex);
             else
-                sendToIp(p, DYMO_PORT, destAdd, DYMO_PORT,DYMO_IPTTL,par("uniCastDelay"),dev->ipaddr.s_addr);
+                sendToIp(p, DYMO_PORT, destAdd, DYMO_PORT,DYMO_IPTTL,par("unicastDelay"),dev->ipaddr.s_addr);
         }
     }
     totalSend++;

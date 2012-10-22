@@ -22,19 +22,15 @@
 #include "IInterfaceTable.h"
 #include "InterfaceTableAccess.h"
 #include "EtherMAC.h"
+#include "Ieee80211MgmtFrames_m.h"
 
 
 Define_Module(EtherEncapMesh);
 
 void EtherEncapMesh::initialize()
 {
-    seqNum = 0;
-    WATCH(seqNum);
-
-    totalFromHigherLayer = totalFromMAC = totalPauseSent = totalFromWifi =totalToWifi=0;
-    WATCH(totalFromHigherLayer);
-    WATCH(totalFromMAC);
-    WATCH(totalPauseSent);
+    EtherEncap::initialize();
+    totalFromWifi =totalToWifi=0;
     WATCH(totalFromWifi);
 }
 
@@ -98,6 +94,22 @@ void EtherEncapMesh::processFrameFromMAC(EtherFrame *frame)
            }
        }
     }
+
+    Ieee80211ActionHWMPFrame *frameAction = dynamic_cast<Ieee80211ActionHWMPFrame *>(higherlayermsg);
+    if (frameAction)
+    {
+       if (frameAction->getRealLength()>0) // fragmented frame
+       {
+           // Fragment, is the last?
+           EV << "reassemble wifi frame over ethernet " << endl;
+           if (frameAction->getIsFragment())
+           {
+               delete higherlayermsg;
+               delete frame;
+               return;
+           }
+       }
+    }
     // add Ieee802Ctrl to packet
     Ieee802Ctrl *etherctrl = new Ieee802Ctrl();
     etherctrl->setSrc(frame->getSrc());
@@ -124,6 +136,18 @@ void EtherEncapMesh::processFrameFromMAC(EtherFrame *frame)
        totalToWifi++;
        send(higherlayermsg,"wifiMeshOut");
     }
+    else if (frameAction)
+    {
+       // check if is a fragment frame
+       if (frameAction->getRealLength()>0)
+       {
+           // set to real Length
+           EV << "reassemble wifi frame over ethernet : last" << endl;
+           higherlayermsg->setByteLength(frameAction->getRealLength());
+       }
+       totalToWifi++;
+       send(higherlayermsg,"wifiMeshOut");
+    }
     else
     {
        EV << "Decapsulating frame `" << frame->getName() <<"', passing up contained "
@@ -141,7 +165,7 @@ void EtherEncapMesh::processFrameFromWifiMesh(Ieee80211Frame *msg)
 {
 // TODO: fragment packets before send to ethernet
 	totalFromWifi++;
-    if (msg->getByteLength() > MAX_ETHERNET_DATA)
+    if (msg->getByteLength() > MAX_ETHERNET_DATA_BYTES)
     {
         if (dynamic_cast<Ieee80211MeshFrame *>(msg))
         {
@@ -149,37 +173,143 @@ void EtherEncapMesh::processFrameFromWifiMesh(Ieee80211Frame *msg)
            EV << "Fragment wifi frame over ethernet" << endl;
            Ieee80211MeshFrame *frameMesh=dynamic_cast<Ieee80211MeshFrame *>(msg);
            frameMesh->setRealLength(msg->getByteLength());
-           int numFrames = ceil((double)msg->getByteLength()/(double)MAX_ETHERNET_DATA);
+           int numFrames = ceil((double)msg->getByteLength()/(double)MAX_ETHERNET_DATA_BYTES);
            uint64_t remain = msg->getByteLength();
            Ieee802Ctrl *etherctrl = check_and_cast<Ieee802Ctrl*>(msg->removeControlInfo());
-           for (int i=0;i<numFrames-1;i++)
+           for (int i = 0; i < numFrames - 1; i++)
            {
-        	   Ieee80211MeshFrame *frameAux = frameMesh->dup();
-        	   frameAux->setByteLength(MAX_ETHERNET_DATA);
-        	   frameAux->setIsFragment(true);
-        	   remain-=MAX_ETHERNET_DATA;
-               EthernetIIFrame *frame = new EthernetIIFrame(msg->getName());
-               frame->setSrc(etherctrl->getSrc());  // if blank, will be filled in by MAC
-               frame->setDest(etherctrl->getDest());
-               frame->setEtherType(etherctrl->getEtherType());
-               frame->setByteLength(ETHER_MAC_FRAME_BYTES);
-
+               Ieee80211MeshFrame *frameAux = frameMesh->dup();
+               frameAux->setByteLength(MAX_ETHERNET_DATA_BYTES);
+               frameAux->setIsFragment(true);
+               remain -= MAX_ETHERNET_DATA_BYTES;
+               EtherFrame *frame = NULL;
+               if (useSNAP)
+               {
+                   EtherFrameWithSNAP *snapFrame = new EtherFrameWithSNAP(msg->getName());
+                   snapFrame->setSrc(etherctrl->getSrc()); // if blank, will be filled in by MAC
+                   snapFrame->setDest(etherctrl->getDest());
+                   snapFrame->setOrgCode(0);
+                   snapFrame->setLocalcode(etherctrl->getEtherType());
+                   snapFrame->setByteLength(ETHER_MAC_FRAME_BYTES + ETHER_LLC_HEADER_LENGTH + ETHER_SNAP_HEADER_LENGTH);
+                   frame = snapFrame;
+               }
+               else
+               {
+                   EthernetIIFrame *eth2Frame = new EthernetIIFrame(msg->getName());
+                   eth2Frame->setSrc(etherctrl->getSrc()); // if blank, will be filled in by MAC
+                   eth2Frame->setDest(etherctrl->getDest());
+                   eth2Frame->setEtherType(etherctrl->getEtherType());
+                   eth2Frame->setByteLength(ETHER_MAC_FRAME_BYTES);
+                   frame = eth2Frame;
+               }
                frame->encapsulate(frameAux);
-               if (frame->getByteLength() < MIN_ETHERNET_FRAME)
-                    frame->setByteLength(MIN_ETHERNET_FRAME);  // "padding"
+               if (frame->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+                    frame->setByteLength(MIN_ETHERNET_FRAME_BYTES); // "padding"
                send(frame, "lowerLayerOut");
            }
-           if (remain>0 && remain<=MAX_ETHERNET_DATA)
+
+
+
+           if (remain>0 && remain<=MAX_ETHERNET_DATA_BYTES)
            {
-               frameMesh->setByteLength(remain);
-               EthernetIIFrame *frame = new EthernetIIFrame(msg->getName());
-               frame->setSrc(etherctrl->getSrc());  // if blank, will be filled in by MAC
-               frame->setDest(etherctrl->getDest());
-               frame->setEtherType(etherctrl->getEtherType());
-               frame->setByteLength(ETHER_MAC_FRAME_BYTES);
+               EtherFrame *frame = NULL;
+               if (useSNAP)
+               {
+                   EtherFrameWithSNAP *snapFrame = new EtherFrameWithSNAP(msg->getName());
+                   snapFrame->setSrc(etherctrl->getSrc()); // if blank, will be filled in by MAC
+                   snapFrame->setDest(etherctrl->getDest());
+                   snapFrame->setOrgCode(0);
+                   snapFrame->setLocalcode(etherctrl->getEtherType());
+                   snapFrame->setByteLength(ETHER_MAC_FRAME_BYTES + ETHER_LLC_HEADER_LENGTH + ETHER_SNAP_HEADER_LENGTH);
+                   frame = snapFrame;
+               }
+               else
+               {
+                   EthernetIIFrame *eth2Frame = new EthernetIIFrame(msg->getName());
+                   eth2Frame->setSrc(etherctrl->getSrc()); // if blank, will be filled in by MAC
+                   eth2Frame->setDest(etherctrl->getDest());
+                   eth2Frame->setEtherType(etherctrl->getEtherType());
+                   eth2Frame->setByteLength(ETHER_MAC_FRAME_BYTES);
+                   frame = eth2Frame;
+               }
                frame->encapsulate(msg);
-               if (frame->getByteLength() < MIN_ETHERNET_FRAME)
-                   frame->setByteLength(MIN_ETHERNET_FRAME);  // "padding"
+               if (frame->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+                   frame->setByteLength(MIN_ETHERNET_FRAME_BYTES);  // "padding"
+               send(frame, "lowerLayerOut");
+               delete etherctrl;
+               return;
+           }
+           else
+               error("""Error in fragmentation");
+        }
+        else if (dynamic_cast<Ieee80211ActionHWMPFrame *>(msg) )
+        {
+     // check if fragment
+           EV << "Fragment wifi frame over ethernet" << endl;
+           Ieee80211ActionHWMPFrame *frameMesh=dynamic_cast<Ieee80211ActionHWMPFrame *>(msg);
+           frameMesh->setRealLength(msg->getByteLength());
+           int numFrames = ceil((double)msg->getByteLength()/(double)MAX_ETHERNET_DATA_BYTES);
+           uint64_t remain = msg->getByteLength();
+           Ieee802Ctrl *etherctrl = check_and_cast<Ieee802Ctrl*>(msg->removeControlInfo());
+           for (int i = 0; i < numFrames - 1; i++)
+           {
+               Ieee80211ActionHWMPFrame *frameAux = frameMesh->dup();
+               frameAux->setByteLength(MAX_ETHERNET_DATA_BYTES);
+               frameAux->setIsFragment(true);
+               remain -= MAX_ETHERNET_DATA_BYTES;
+               EtherFrame *frame = NULL;
+               if (useSNAP)
+               {
+                   EtherFrameWithSNAP *snapFrame = new EtherFrameWithSNAP(msg->getName());
+                   snapFrame->setSrc(etherctrl->getSrc()); // if blank, will be filled in by MAC
+                   snapFrame->setDest(etherctrl->getDest());
+                   snapFrame->setOrgCode(0);
+                   snapFrame->setLocalcode(etherctrl->getEtherType());
+                   snapFrame->setByteLength(ETHER_MAC_FRAME_BYTES + ETHER_LLC_HEADER_LENGTH + ETHER_SNAP_HEADER_LENGTH);
+                   frame = snapFrame;
+               }
+               else
+               {
+                   EthernetIIFrame *eth2Frame = new EthernetIIFrame(msg->getName());
+                   eth2Frame->setSrc(etherctrl->getSrc()); // if blank, will be filled in by MAC
+                   eth2Frame->setDest(etherctrl->getDest());
+                   eth2Frame->setEtherType(etherctrl->getEtherType());
+                   eth2Frame->setByteLength(ETHER_MAC_FRAME_BYTES);
+                   frame = eth2Frame;
+               }
+               frame->encapsulate(frameAux);
+               if (frame->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+                    frame->setByteLength(MIN_ETHERNET_FRAME_BYTES); // "padding"
+               send(frame, "lowerLayerOut");
+           }
+
+
+
+           if (remain>0 && remain<=MAX_ETHERNET_DATA_BYTES)
+           {
+               EtherFrame *frame = NULL;
+               if (useSNAP)
+               {
+                   EtherFrameWithSNAP *snapFrame = new EtherFrameWithSNAP(msg->getName());
+                   snapFrame->setSrc(etherctrl->getSrc()); // if blank, will be filled in by MAC
+                   snapFrame->setDest(etherctrl->getDest());
+                   snapFrame->setOrgCode(0);
+                   snapFrame->setLocalcode(etherctrl->getEtherType());
+                   snapFrame->setByteLength(ETHER_MAC_FRAME_BYTES + ETHER_LLC_HEADER_LENGTH + ETHER_SNAP_HEADER_LENGTH);
+                   frame = snapFrame;
+               }
+               else
+               {
+                   EthernetIIFrame *eth2Frame = new EthernetIIFrame(msg->getName());
+                   eth2Frame->setSrc(etherctrl->getSrc()); // if blank, will be filled in by MAC
+                   eth2Frame->setDest(etherctrl->getDest());
+                   eth2Frame->setEtherType(etherctrl->getEtherType());
+                   eth2Frame->setByteLength(ETHER_MAC_FRAME_BYTES);
+                   frame = eth2Frame;
+               }
+               frame->encapsulate(msg);
+               if (frame->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+                   frame->setByteLength(MIN_ETHERNET_FRAME_BYTES);  // "padding"
                send(frame, "lowerLayerOut");
                delete etherctrl;
                return;
@@ -188,7 +318,7 @@ void EtherEncapMesh::processFrameFromWifiMesh(Ieee80211Frame *msg)
                error("""Error in fragmentation");
         }
         else
-            error("packet from higher layer (%d bytes) exceeds maximum Ethernet payload length (%d)", (int)msg->getByteLength(), MAX_ETHERNET_DATA);
+            error("packet from higher layer (%d bytes) exceeds maximum Ethernet payload length (%d)", (int)msg->getByteLength(), MAX_ETHERNET_DATA_BYTES);
     }
 
     // Creates MAC header information and encapsulates received higher layer data
@@ -207,8 +337,8 @@ void EtherEncapMesh::processFrameFromWifiMesh(Ieee80211Frame *msg)
     delete etherctrl;
 
     frame->encapsulate(msg);
-    if (frame->getByteLength() < MIN_ETHERNET_FRAME)
-        frame->setByteLength(MIN_ETHERNET_FRAME);  // "padding"
+    if (frame->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+        frame->setByteLength(MIN_ETHERNET_FRAME_BYTES);  // "padding"
 
     send(frame, "lowerLayerOut");
 }

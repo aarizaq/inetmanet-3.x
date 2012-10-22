@@ -16,13 +16,14 @@
 #define ENERGY_H
 
 // SYSTEM INCLUDES
-#include <omnetpp.h>
+#include "INETDefs.h"
 
-class Energy : public cPolymorphic
+
+class Energy : public cObject
 {
   public:
     // LIFECYCLE
-    Energy(double e=250) : cPolymorphic(), mEnergy(e) {};
+    Energy(double e = 250) : cObject(), mEnergy(e) {};
 
     // OPERATIONS
     double  GetEnergy() const        { return mEnergy; }

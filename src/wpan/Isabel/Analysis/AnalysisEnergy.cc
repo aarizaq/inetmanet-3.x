@@ -1,12 +1,13 @@
 
 #include "AnalysisEnergy.h"
+#include "IMobility.h"
 
 #define coreEV (ev.isDisabled()||!mCoreDebug) ? std::cout : ev << "AnalysisEnergy: "
 
 Define_Module(AnalysisEnergy);
 
 /////////////////////////////// PUBLIC ///////////////////////////////////////
-
+simsignal_t AnalysisEnergy::mobilityStateChangedSignal = SIMSIGNAL_NULL;
 //============================= LIFECYCLE ===================================
 
 void AnalysisEnergy::initialize(int aStage)
@@ -30,8 +31,16 @@ void AnalysisEnergy::initialize(int aStage)
     }
     if (aStage==3)
     {
-         nb = NotificationBoardAccess().get();
-         nb->subscribe(this, NF_HOSTPOSITION_UPDATED);
+        mobilityStateChangedSignal = registerSignal("mobilityStateChanged");
+        cModule *mod;
+        for (mod = getParentModule(); mod != 0; mod = mod->getParentModule())
+        {
+                cProperties *properties = mod->getProperties();
+                if (properties && properties->getAsBool("node"))
+                    break;
+        }
+        if (mod)
+           mod->subscribe(mobilityStateChangedSignal, this);
     }
 }
 
@@ -172,12 +181,13 @@ void AnalysisEnergy::SnapshotLifetimes()
 
 }
 
-void AnalysisEnergy::receiveChangeNotification(int category, const cPolymorphic *details)
+void AnalysisEnergy::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj)
 {
-    if (category == NF_HOSTPOSITION_UPDATED)
+    if (signalID == mobilityStateChangedSignal)
     {
-        Coord *pos = check_and_cast<Coord*>(details);
-        myCord = *pos;
+         IMobility *mobility = check_and_cast<IMobility*>(obj);
+         myCord = mobility->getCurrentPosition();;
     }
 }
+
 

@@ -102,8 +102,13 @@ void NS_CLASS route_discovery_timeout(void *arg)
            before 2 * NET_TRAVERSAL_TIME... */
         rt = rt_table_find(seek_entry->dest_addr);
 
+#ifdef AODV_USE_STL
+        if (rt && ((rt->rt_timer.timeout - simTime() ) < (2 * NET_TRAVERSAL_TIME)))
+            rt_table_update_timeout(rt, 2 * NET_TRAVERSAL_TIME);
+#else
         if (rt && timeval_diff(&rt->rt_timer.timeout, &now) < (2 * NET_TRAVERSAL_TIME))
             rt_table_update_timeout(rt, 2 * NET_TRAVERSAL_TIME);
+#endif
         rreq_send(seek_entry->dest_addr, seek_entry->dest_seqno,
                   TTL_VALUE, seek_entry->flags);
 
@@ -114,7 +119,14 @@ void NS_CLASS route_discovery_timeout(void *arg)
         DEBUG(LOG_DEBUG, 0, "NO ROUTE FOUND!");
 
 #ifdef NS_PORT
-        packet_queue_set_verdict(seek_entry->dest_addr, PQ_DROP);
+        std::vector<Uint128> list;
+        getListRelatedAp(seek_entry->dest_addr.s_addr, list);
+        for (unsigned int i = 0; i < list.size();i ++)
+        {
+            struct in_addr auxAaddr;
+            auxAaddr.s_addr = list[i];
+            packet_queue_set_verdict(auxAaddr, PQ_DROP);
+        }
 #else
         nl_send_no_route_found_msg(seek_entry->dest_addr);
 #endif
@@ -176,7 +188,11 @@ void NS_CLASS local_repair_timeout(void *arg)
 
         if (rt->nprec == 1)
         {
+#ifdef AODV_USE_STL_RT
+            rerr_dest = rt->precursors[0].neighbor;
+#else
             rerr_dest = FIRST_PREC(rt->precursors)->neighbor;
+#endif
 
             aodv_socket_send((AODV_msg *) rerr, rerr_dest,
                              RERR_CALC_SIZE(rerr), 1,

@@ -68,6 +68,7 @@ class INET_API ARP : public cSimpleModule, public INotifiable
     simtime_t cacheTimeout;
     bool doProxyARP;
     bool globalARP;
+    bool silentDeletion;
 
     long numResolutions;
     long numFailedResolutions;
@@ -81,6 +82,7 @@ class INET_API ARP : public cSimpleModule, public INotifiable
 
     ARPCache arpCache;
     static ARPCache globalArpCache;
+    static int globalArpCacheRefCnt;
 
     cQueue pendingQueue; // outbound packets waiting for ARP resolution
     int nicOutBaseGateId;  // id of the nicOut[0] gate
@@ -88,9 +90,11 @@ class INET_API ARP : public cSimpleModule, public INotifiable
     IInterfaceTable *ift;
     IRoutingTable *rt;  // for Proxy ARP
     NotificationBoard* nb;
+    // Maps an IP multicast address to an Ethernet multicast address.
+    MACAddress mapMulticastAddress(IPv4Address addr);
 
   public:
-    ARP() {}
+    ARP();
     virtual ~ARP();
     int numInitStages() const {return 5;}
     const MACAddress getDirectAddressResolution(const IPv4Address &) const;
@@ -104,7 +108,7 @@ class INET_API ARP : public cSimpleModule, public INotifiable
     virtual void finish();
 
     virtual void processOutboundPacket(cMessage *msg);
-    virtual void sendPacketToNIC(cMessage *msg, InterfaceEntry *ie, const MACAddress& macAddress);
+    virtual void sendPacketToNIC(cMessage *msg, InterfaceEntry *ie, const MACAddress& macAddress, int etherType);
 
     virtual void initiateARPResolution(ARPCacheEntry *entry);
     virtual void sendARPRequest(InterfaceEntry *ie, IPv4Address ipAddress);

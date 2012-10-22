@@ -20,12 +20,16 @@
 #ifndef VOIPTOOL_VOIPSOURCEAPP_H
 #define VOIPTOOL_VOIPSOURCEAPP_H
 
+#ifndef HAVE_FFMPEG
+#error Please install libavcodec, libavformat, libavutil or disable 'VoIPTool' feature
+#endif
+
 #include <fnmatch.h>
 #include <vector>
 
 #define __STDC_CONSTANT_MACROS
 
-#include <omnetpp.h>
+#include "INETDefs.h"
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -34,13 +38,12 @@ extern "C" {
 
 #include "AudioOutFile.h"
 #include "IPvXAddressResolver.h"
-#include "UDPAppBase.h"
-#include "UDPControlInfo_m.h"
+#include "UDPSocket.h"
 #include "VoIPPacket_m.h"
 
 //using namespace std;
 
-class INET_API VoIPSourceApp : public UDPAppBase
+class INET_API VoIPSourceApp : public cSimpleModule
 {
   public:
     ~VoIPSourceApp();
@@ -80,6 +83,7 @@ class INET_API VoIPSourceApp : public UDPAppBase
         void align();
     };
 
+  protected:
     // general parameters
     int localPort;
     int destPort;
@@ -107,6 +111,7 @@ class INET_API VoIPSourceApp : public UDPAppBase
     AVCodec *pCodecEncoder;         // output encoder codec
 
     // state variables
+    UDPSocket socket;
     int streamIndex;
     uint32_t pktID;                 // increasing packet sequence number
     int samplesPerPacket;
@@ -114,6 +119,9 @@ class INET_API VoIPSourceApp : public UDPAppBase
     Buffer sampleBuffer;
 
     cMessage *timer;
+
+    // statistics:
+    static simsignal_t sentPkSignal;
 };
 
 #endif //VOIPTOOL_VOIPSOURCEAPP_H

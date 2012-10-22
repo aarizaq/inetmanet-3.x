@@ -30,7 +30,7 @@ network Ieee802154StarNet
             parameters:
                 @display("i=device/pocketpc_s;r=,,#707070;p=84,57");
         }
-        channelcontrol: ChannelControl {
+        channelControl: ChannelControl {
             parameters:
                 @display("p=-65,20;i=misc/sun");
         }

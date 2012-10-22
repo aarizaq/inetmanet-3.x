@@ -21,14 +21,14 @@
 
 Define_Module(TCPEchoApp);
 
-simsignal_t TCPEchoApp::rcvdPkBytesSignal = SIMSIGNAL_NULL;
-simsignal_t TCPEchoApp::sentPkBytesSignal = SIMSIGNAL_NULL;
+simsignal_t TCPEchoApp::rcvdPkSignal = SIMSIGNAL_NULL;
+simsignal_t TCPEchoApp::sentPkSignal = SIMSIGNAL_NULL;
 
 void TCPEchoApp::initialize()
 {
     cSimpleModule::initialize();
-    const char *address = par("address");
-    int port = par("port");
+    const char *localAddress = par("localAddress");
+    int localPort = par("localPort");
     delay = par("echoDelay");
     echoFactor = par("echoFactor");
 
@@ -36,13 +36,13 @@ void TCPEchoApp::initialize()
     WATCH(bytesRcvd);
     WATCH(bytesSent);
 
-    rcvdPkBytesSignal = registerSignal("rcvdPkBytes");
-    sentPkBytesSignal = registerSignal("sentPkBytes");
+    rcvdPkSignal = registerSignal("rcvdPk");
+    sentPkSignal = registerSignal("sentPk");
 
     TCPSocket socket;
     socket.setOutputGate(gate("tcpOut"));
     socket.readDataTransferModePar(*this);
-    socket.bind(address[0] ? IPvXAddress(address) : IPvXAddress(), port);
+    socket.bind(localAddress[0] ? IPvXAddress(localAddress) : IPvXAddress(), localPort);
     socket.listen();
 }
 
@@ -51,7 +51,7 @@ void TCPEchoApp::sendDown(cMessage *msg)
     if (msg->isPacket())
     {
         bytesSent += ((cPacket *)msg)->getByteLength();
-        emit(sentPkBytesSignal, (long)(((cPacket *)msg)->getByteLength()));
+        emit(sentPkSignal, (cPacket *)msg);
     }
 
     send(msg, "tcpOut");
@@ -76,8 +76,8 @@ void TCPEchoApp::handleMessage(cMessage *msg)
     else if (msg->getKind() == TCP_I_DATA || msg->getKind() == TCP_I_URGENT_DATA)
     {
         cPacket *pkt = check_and_cast<cPacket *>(msg);
+        emit(rcvdPkSignal, pkt);
         bytesRcvd += pkt->getByteLength();
-        emit(rcvdPkBytesSignal, (long)(pkt->getByteLength()));
 
         if (echoFactor == 0)
         {
@@ -93,7 +93,7 @@ void TCPEchoApp::handleMessage(cMessage *msg)
             pkt->setControlInfo(cmd);
             delete ind;
 
-            long byteLen = pkt->getByteLength()*echoFactor;
+            long byteLen = pkt->getByteLength() * echoFactor;
 
             if (byteLen < 1)
                 byteLen = 1;

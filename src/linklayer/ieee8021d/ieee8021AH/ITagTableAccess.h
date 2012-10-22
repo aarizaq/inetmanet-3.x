@@ -11,7 +11,6 @@
 
 
 
-#include <omnetpp.h>
 #include "ModuleAccess.h"
 #include "ITagTable.h"
 

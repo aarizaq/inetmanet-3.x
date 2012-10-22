@@ -16,7 +16,8 @@
 //
 
 
-#include <omnetpp.h>
+#include "INETDefs.h"
+
 #include "ProtocolMap.h"
 
 
@@ -29,16 +30,16 @@ void ProtocolMapping::parseProtocolMapping(const char *s)
         Entry entry;
 
         if (!isdigit(*s))
-            throw cRuntimeError("syntax error: protocol number expected");
+            throw cRuntimeError("Syntax error: protocol number expected");
         entry.protocolNumber = atoi(s);
         while (isdigit(*s)) s++;
 
         if (*s++!=':')
-            throw cRuntimeError("syntax error: colon expected");
+            throw cRuntimeError("Syntax error: colon expected");
 
         while (isspace(*s)) s++;
         if (!isdigit(*s))
-            throw cRuntimeError("syntax error in script: output gate index expected");
+            throw cRuntimeError("Syntax error in script: output gate index expected");
         entry.outGateIndex = atoi(s);
         while (isdigit(*s)) s++;
 
@@ -49,7 +50,7 @@ void ProtocolMapping::parseProtocolMapping(const char *s)
         while (isspace(*s)) s++;
         if (!*s) break;
         if (*s++!=',')
-            throw cRuntimeError("syntax error: comma expected");
+            throw cRuntimeError("Syntax error: comma expected");
         while (isspace(*s)) s++;
     }
 
@@ -57,7 +58,7 @@ void ProtocolMapping::parseProtocolMapping(const char *s)
 
 int ProtocolMapping::getOutputGateForProtocol(int protocol)
 {
-    for (Entries::iterator i=entries.begin();i!=entries.end();++i)
+    for (Entries::iterator i=entries.begin(); i!=entries.end(); ++i)
         if (i->protocolNumber==protocol)
             return i->outGateIndex;
 

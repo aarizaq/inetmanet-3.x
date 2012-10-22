@@ -48,18 +48,28 @@ simple PPP
     parameters:
         int txQueueLimit = default(1000);  // only used if queueModule==""; zero means infinite
         string queueModule = default("");  // name of external (QoS,RED,etc) queue module
-        int mtu = default(4470);
+        int mtu @unit("B") = default(4470B);
         @display("i=block/rxtx");
-        @statistic[txState](title="TX State"; record=timeavg,vector; interpolationmode=sample-hold);
-        @statistic[txPkBytes](title="TX packet bytes"; record=sum,count,vector);
-        @statistic[rxPkBytesOk](title="RX packet bytes OK"; record=sum,count,vector);
-        @statistic[droppedPkBytesBitError](title="Dropped packet bytes bit error"; record=sum,count,vector);
-        @statistic[droppedPkBytesIfaceDown](title="Dropped packet bytes Iface down"; record=sum,count,vector);
-        @statistic[rcvdPkBytesFromHL](title="Received packet bytes from higher layer"; record=sum,count,vector);
-        @statistic[passedUpPkBytes](title="Passed packet bytes to higher layer"; record=sum,count,vector);
+
+        @signal[txState](type=long);    // 1:transmit, 0:idle
+        @signal[rxPkOk](type=PPPFrame);
+        @signal[dropPkIfaceDown](type=PPPFrame);
+        @signal[dropPkBitError](type=PPPFrame);
+        @signal[packetSentToLower](type=PPPFrame);
+        @signal[packetReceivedFromLower](type=PPPFrame);
+        @signal[packetSentToUpper](type=cPacket);
+        @signal[packetReceivedFromUpper](type=cPacket);
+        @statistic[txState](title="tx state"; record=timeavg,vector; interpolationmode=sample-hold);
+        @statistic[txPk](title="packets transmitted"; source=packetSentToLower; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[rxPkOk](title="packets received OK"; source=rxPkOk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[droppedPkBitError](title="packets dropped/bit error"; source=dropPkBitError; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[droppedPkIfaceDown](title="packets dropped/interface down"; source=dropPkIfaceDown; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[rcvdPkFromHL](title="packets received from higher layer"; source=packetReceivedFromUpper; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[passedUpPk](title="packets passed to higher layer"; source=packetSentToUpper; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
 
     gates:
         input netwIn;
         output netwOut;
         inout phys @labels(PPPFrame);
 }
+

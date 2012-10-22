@@ -18,7 +18,8 @@
 #ifndef IEEE80211_MGMT_SIMPLIFIEDAP_H
 #define IEEE80211_MGMT_SIMPLIFIEDAP_H
 
-#include <omnetpp.h>
+#include "INETDefs.h"
+
 #include "Ieee80211MgmtAPBase.h"
 #include "NotificationBoard.h"
 
@@ -44,10 +45,10 @@ class INET_API Ieee80211MgmtAPSimplified : public Ieee80211MgmtAPBase
     virtual void handleUpperMessage(cPacket *msg);
 
     /** Implements abstract Ieee80211MgmtBase method -- throws an error (no commands supported) */
-    virtual void handleCommand(int msgkind, cPolymorphic *ctrl);
+    virtual void handleCommand(int msgkind, cObject *ctrl);
 
     /** Called by the NotificationBoard whenever a change occurs we're interested in */
-    virtual void receiveChangeNotification(int category, const cPolymorphic *details);
+    virtual void receiveChangeNotification(int category, const cObject *details);
 
     /** @name Processing of different frame types */
     //@{

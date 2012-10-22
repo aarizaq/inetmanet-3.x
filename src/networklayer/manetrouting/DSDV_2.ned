@@ -41,7 +41,8 @@ simple DSDV_2 like IManetRouting
         string netmask = default("255.255.0.0");  // netmask for the ad-hoc network
         int RNGseed_DSDV = default(1); // WARNING: this is not a seed. It is the RNG which will be used
         double MaxVariance_DSDV = default(1); // This is the maximum of a random value to determine when the first hello message will be sent out
-        double timetolive_routing_entry @unit("s") = default(5s);  // the expiry time of the routing entries
+        double routeLifetime @unit("s") = default(5s);  // the expiry time of the routing entries
+        bool manetPurgeRoutingTables = default(true);
     gates:
         input from_ip;
         output to_ip;

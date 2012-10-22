@@ -64,14 +64,14 @@ typedef struct hop
 class Dijkstra : public cOwnedObject
 {
   private:
-	typedef std::set<nsaddr_t> NodesSet;
-	typedef std::map<nsaddr_t, std::vector<edge*> > LinkArray;
-	NodesSet * nonprocessed_nodes_;
-	LinkArray * link_array_;
+    typedef std::set<nsaddr_t> NodesSet;
+    typedef std::map<nsaddr_t, std::vector<edge*> > LinkArray;
+    NodesSet * nonprocessed_nodes_;
+    LinkArray * link_array_;
     int highest_hop_;
 
     NodesSet::iterator best_cost();
-    edge* get_edge (const nsaddr_t &, const nsaddr_t &);
+    edge* get_edge(const nsaddr_t &, const nsaddr_t &);
     OLSR_ETX_parameter *parameter;
 
   public:
@@ -86,7 +86,7 @@ class Dijkstra : public cOwnedObject
     Dijkstra();
     ~Dijkstra();
 
-    void add_edge (const nsaddr_t &, const nsaddr_t &, double, double, bool);
+    void add_edge(const nsaddr_t &, const nsaddr_t &, double, double, bool);
     void run();
     void clear();
 

@@ -17,22 +17,23 @@
 
 
 #include "TCP.h"
+
+#include "IPv4ControlInfo.h"
+#include "IPv6ControlInfo.h"
 #include "TCPConnection.h"
 #include "TCPSegment.h"
 #include "TCPCommand_m.h"
 
 #ifdef WITH_IPv4
-#include "IPv4ControlInfo.h"
 #include "ICMPMessage_m.h"
 #endif
 
 #ifdef WITH_IPv6
-#include "IPv6ControlInfo.h"
 #include "ICMPv6Message_m.h"
 #endif
 
-#include "TCPDataStreamRcvQueue.h"
-#include "TCPDataStreamSendQueue.h"
+#include "TCPByteStreamRcvQueue.h"
+#include "TCPByteStreamSendQueue.h"
 #include "TCPMsgBasedRcvQueue.h"
 #include "TCPMsgBasedSendQueue.h"
 #include "TCPVirtualDataRcvQueue.h"
@@ -134,7 +135,6 @@ void TCP::handleMessage(cMessage *msg)
             // get src/dest addresses
             IPvXAddress srcAddr, destAddr;
 
-#ifdef WITH_IPv4
             if (dynamic_cast<IPv4ControlInfo *>(tcpseg->getControlInfo()) != NULL)
             {
                 IPv4ControlInfo *controlInfo = (IPv4ControlInfo *)tcpseg->removeControlInfo();
@@ -142,10 +142,7 @@ void TCP::handleMessage(cMessage *msg)
                 destAddr = controlInfo->getDestAddr();
                 delete controlInfo;
             }
-            else
-#endif
-#ifdef WITH_IPv6
-            if (dynamic_cast<IPv6ControlInfo *>(tcpseg->getControlInfo()) != NULL)
+            else if (dynamic_cast<IPv6ControlInfo *>(tcpseg->getControlInfo()) != NULL)
             {
                 IPv6ControlInfo *controlInfo = (IPv6ControlInfo *)tcpseg->removeControlInfo();
                 srcAddr = controlInfo->getSrcAddr();
@@ -153,7 +150,6 @@ void TCP::handleMessage(cMessage *msg)
                 delete controlInfo;
             }
             else
-#endif
             {
                 error("(%s)%s arrived without control info", tcpseg->getClassName(), tcpseg->getName());
             }
@@ -221,7 +217,7 @@ void TCP::updateDisplayString()
     {
         // in express mode, we don't bother to update the display
         // (std::map's iteration is not very fast if map is large)
-        getDisplayString().setTagArg("t",0,"");
+        getDisplayString().setTagArg("t", 0, "");
         return;
     }
 
@@ -237,7 +233,7 @@ void TCP::updateDisplayString()
     {
         int state = (*i).second->getFsmState();
 
-        switch(state)
+        switch (state)
         {
            case TCP_S_INIT:        numINIT++; break;
            case TCP_S_CLOSED:      numCLOSED++; break;
@@ -262,7 +258,7 @@ void TCP::updateDisplayString()
     if (numLISTEN > 0)     sprintf(buf2+strlen(buf2), "listen:%d ", numLISTEN);
     if (numSYN_SENT > 0)   sprintf(buf2+strlen(buf2), "syn_sent:%d ", numSYN_SENT);
     if (numSYN_RCVD > 0)   sprintf(buf2+strlen(buf2), "syn_rcvd:%d ", numSYN_RCVD);
-    if (numESTABLISHED > 0) sprintf(buf2+strlen(buf2),"estab:%d ", numESTABLISHED);
+    if (numESTABLISHED > 0) sprintf(buf2+strlen(buf2), "estab:%d ", numESTABLISHED);
     if (numCLOSE_WAIT > 0) sprintf(buf2+strlen(buf2), "close_wait:%d ", numCLOSE_WAIT);
     if (numLAST_ACK > 0)   sprintf(buf2+strlen(buf2), "last_ack:%d ", numLAST_ACK);
     if (numFIN_WAIT_1 > 0) sprintf(buf2+strlen(buf2), "fin_wait_1:%d ", numFIN_WAIT_1);
@@ -270,7 +266,7 @@ void TCP::updateDisplayString()
     if (numCLOSING > 0)    sprintf(buf2+strlen(buf2), "closing:%d ", numCLOSING);
     if (numTIME_WAIT > 0)  sprintf(buf2+strlen(buf2), "time_wait:%d ", numTIME_WAIT);
 
-    getDisplayString().setTagArg("t",0,buf2);
+    getDisplayString().setTagArg("t", 0, buf2);
 }
 
 TCPConnection *TCP::findConnForSegment(TCPSegment *tcpseg, IPvXAddress srcAddr, IPvXAddress destAddr)
@@ -460,7 +456,7 @@ TCPSendQueue* TCP::createSendQueue(TCPDataTransferMode transferModeP)
     {
         case TCP_TRANSFER_BYTECOUNT:   return new TCPVirtualDataSendQueue();
         case TCP_TRANSFER_OBJECT:      return new TCPMsgBasedSendQueue();
-        case TCP_TRANSFER_BYTESTREAM:  return new TCPDataStreamSendQueue();
+        case TCP_TRANSFER_BYTESTREAM:  return new TCPByteStreamSendQueue();
         default: throw cRuntimeError("Invalid TCP data transfer mode: %d", transferModeP);
     }
 }
@@ -471,7 +467,7 @@ TCPReceiveQueue* TCP::createReceiveQueue(TCPDataTransferMode transferModeP)
     {
         case TCP_TRANSFER_BYTECOUNT:   return new TCPVirtualDataRcvQueue();
         case TCP_TRANSFER_OBJECT:      return new TCPMsgBasedRcvQueue();
-        case TCP_TRANSFER_BYTESTREAM:  return new TCPDataStreamRcvQueue;
+        case TCP_TRANSFER_BYTESTREAM:  return new TCPByteStreamRcvQueue();
         default: throw cRuntimeError("Invalid TCP data transfer mode: %d", transferModeP);
     }
 }

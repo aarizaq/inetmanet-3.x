@@ -14,21 +14,17 @@
 
 #include "TCPSpoof.h"
 
-#ifdef WITH_IPv4
 #include "IPv4ControlInfo.h"
-#endif
-
-#ifdef WITH_IPv6
 #include "IPv6ControlInfo.h"
-#endif
+
 
 Define_Module(TCPSpoof);
 
-simsignal_t TCPSpoof::sentPkBytesSignal = SIMSIGNAL_NULL;
+simsignal_t TCPSpoof::sentPkSignal = SIMSIGNAL_NULL;
 
 void TCPSpoof::initialize()
 {
-    sentPkBytesSignal = registerSignal("sentPkBytes");
+    sentPkSignal = registerSignal("sentPk");
     simtime_t t = par("t").doubleValue();
     scheduleAt(t, new cMessage("timer"));
 }
@@ -72,7 +68,6 @@ void TCPSpoof::sendToIP(TCPSegment *tcpseg, IPvXAddress src, IPvXAddress dest)
 
     if (!dest.isIPv6())
     {
-#ifdef WITH_IPv4
         // send over IPv4
         IPv4ControlInfo *controlInfo = new IPv4ControlInfo();
         controlInfo->setProtocol(IP_PROT_TCP);
@@ -80,15 +75,11 @@ void TCPSpoof::sendToIP(TCPSegment *tcpseg, IPvXAddress src, IPvXAddress dest)
         controlInfo->setDestAddr(dest.get4());
         tcpseg->setControlInfo(controlInfo);
 
-        emit(sentPkBytesSignal, (long)(tcpseg->getByteLength()));
-        send(tcpseg,"ipv4Out");
-#else
-        throw cRuntimeError("INET compiled without IPv4 features!");
-#endif
+        emit(sentPkSignal, tcpseg);
+        send(tcpseg, "ipv4Out");
     }
     else
     {
-#ifdef WITH_IPv6
         // send over IPv6
         IPv6ControlInfo *controlInfo = new IPv6ControlInfo();
         controlInfo->setProtocol(IP_PROT_TCP);
@@ -96,11 +87,8 @@ void TCPSpoof::sendToIP(TCPSegment *tcpseg, IPvXAddress src, IPvXAddress dest)
         controlInfo->setDestAddr(dest.get6());
         tcpseg->setControlInfo(controlInfo);
 
-        emit(sentPkBytesSignal, (long)(tcpseg->getByteLength()));
-        send(tcpseg,"ipv6Out");
-#else
-        throw cRuntimeError("INET compiled without IPv6 features!");
-#endif
+        emit(sentPkSignal, tcpseg);
+        send(tcpseg, "ipv6Out");
     }
 }
 

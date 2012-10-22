@@ -14,7 +14,8 @@
 //
 
 
-#include <omnetpp.h>
+#include "INETDefs.h"
+
 #include "MPLSPacket.h"
 
 // constructors
@@ -23,16 +24,17 @@ MPLSPacket::MPLSPacket(const char *name) : cPacket(name)
 }
 
 MPLSPacket::MPLSPacket(const MPLSPacket & p)
+    : cPacket(p)
 {
-    setName(p.getName());
-    operator=(p);
+    copy(p);
 }
 
 // assignment operator
 MPLSPacket & MPLSPacket::operator=(const MPLSPacket & p)
 {
-    cPacket::operator=(p);
-    labels = p.labels;
+    if (this == &p) return *this;
+    cPacket::operator =(p);
+    copy(p);
     return *this;
 }
 
@@ -43,5 +45,4 @@ std::string MPLSPacket::info() const
         out << labels[i] << (i==0?"":" ");
     return out.str();
 }
-
 

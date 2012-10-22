@@ -18,11 +18,12 @@
 #ifndef __INET_OSPFNEIGHBOR_H
 #define __INET_OSPFNEIGHBOR_H
 
+#include <list>
+
+#include "LSA.h"
+#include "OSPFcommon.h"
 #include "OSPFPacket_m.h"
 #include "OSPFTimer_m.h"
-#include "OSPFcommon.h"
-#include "LSA.h"
-#include <list>
 
 namespace OSPF {
 
@@ -196,16 +197,16 @@ public:
 
 } // namespace OSPF
 
-inline bool operator== (OSPF::Neighbor::DDPacketID leftID, OSPF::Neighbor::DDPacketID rightID)
+inline bool operator==(OSPF::Neighbor::DDPacketID leftID, OSPF::Neighbor::DDPacketID rightID)
 {
-    return ((leftID.ddOptions.I_Init         == rightID.ddOptions.I_Init) &&
-            (leftID.ddOptions.M_More         == rightID.ddOptions.M_More) &&
+    return ((leftID.ddOptions.I_Init == rightID.ddOptions.I_Init) &&
+            (leftID.ddOptions.M_More == rightID.ddOptions.M_More) &&
             (leftID.ddOptions.MS_MasterSlave == rightID.ddOptions.MS_MasterSlave) &&
-            (leftID.options                  == rightID.options) &&
-            (leftID.sequenceNumber           == rightID.sequenceNumber));
+            (leftID.options == rightID.options) &&
+            (leftID.sequenceNumber == rightID.sequenceNumber));
 }
 
-inline bool operator!= (OSPF::Neighbor::DDPacketID leftID, OSPF::Neighbor::DDPacketID rightID)
+inline bool operator!=(OSPF::Neighbor::DDPacketID leftID, OSPF::Neighbor::DDPacketID rightID)
 {
     return (!(leftID == rightID));
 }

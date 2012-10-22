@@ -26,6 +26,13 @@
 #include "InterfaceTable.h"
 #include "NotifierConsts.h"
 
+#ifdef WITH_IPv4
+#include "IPv4InterfaceData.h"
+#endif
+
+#ifdef WITH_IPv6
+#include "IPv6InterfaceData.h"
+#endif
 
 Define_Module( InterfaceTable );
 
@@ -40,6 +47,7 @@ std::ostream& operator<<(std::ostream& os, const InterfaceEntry& e)
 
 InterfaceTable::InterfaceTable()
 {
+    nb = NULL;
     tmpNumInterfaces = -1;
     tmpInterfaceList = NULL;
 }
@@ -59,11 +67,11 @@ void InterfaceTable::initialize(int stage)
         nb = NotificationBoardAccess().get();
 
         // register a loopback interface
-        InterfaceEntry *ie = new InterfaceEntry();
+        InterfaceEntry *ie = new InterfaceEntry(NULL);
         ie->setName("lo0");
         ie->setMtu(3924);
         ie->setLoopback(true);
-        addInterface(ie, NULL);
+        addInterface(ie);
     }
     else if (stage==1)
     {
@@ -79,15 +87,15 @@ void InterfaceTable::updateDisplayString()
 
     char buf[80];
     sprintf(buf, "%d interfaces", getNumInterfaces());
-    getDisplayString().setTagArg("t",0,buf);
+    getDisplayString().setTagArg("t", 0, buf);
 }
 
 void InterfaceTable::handleMessage(cMessage *msg)
 {
-    throw cRuntimeError(this, "This module doesn't process messages");
+    throw cRuntimeError("This module doesn't process messages");
 }
 
-void InterfaceTable::receiveChangeNotification(int category, const cPolymorphic *details)
+void InterfaceTable::receiveChangeNotification(int category, const cObject *details)
 {
     // nothing needed here at the moment
     Enter_Method_Silent();
@@ -95,6 +103,11 @@ void InterfaceTable::receiveChangeNotification(int category, const cPolymorphic 
 }
 
 //---
+
+cModule *InterfaceTable::getHostModule()
+{
+    return findContainingNode(this);
+}
 
 int InterfaceTable::getNumInterfaces()
 {
@@ -116,7 +129,7 @@ InterfaceEntry *InterfaceTable::getInterface(int pos)
 {
     int n = getNumInterfaces(); // also fills tmpInterfaceList
     if (pos<0 || pos>=n)
-        throw cRuntimeError(this, "getInterface(): interface index %d out of range 0..%d", pos, n-1);
+        throw cRuntimeError("getInterface(): interface index %d out of range 0..%d", pos, n-1);
 
     if (!tmpInterfaceList)
     {
@@ -138,11 +151,14 @@ InterfaceEntry *InterfaceTable::getInterfaceById(int id)
     return (id<0 || id>=(int)idToInterface.size()) ? NULL : idToInterface[id];
 }
 
-void InterfaceTable::addInterface(InterfaceEntry *entry, cModule *ifmod)
+void InterfaceTable::addInterface(InterfaceEntry *entry)
 {
+    if (!nb)
+        throw cRuntimeError("InterfaceTable must precede all network interface modules in the node's NED definition");
     // check name is unique
     if (getInterfaceByName(entry->getName())!=NULL)
-        throw cRuntimeError(this, "addInterface(): interface '%s' already registered", entry->getName());
+        throw cRuntimeError("addInterface(): interface '%s' already registered", entry->getName());
+
     // insert
     entry->setInterfaceId(INTERFACEIDS_START + idToInterface.size());
     entry->setInterfaceTable(this);
@@ -150,57 +166,26 @@ void InterfaceTable::addInterface(InterfaceEntry *entry, cModule *ifmod)
     invalidateTmpInterfaceList();
 
     // fill in networkLayerGateIndex, nodeOutputGateId, nodeInputGateId
-    if (ifmod)
-        discoverConnectingGates(entry, ifmod);
+    discoverConnectingGates(entry);
 
     nb->fireChangeNotification(NF_INTERFACE_CREATED, entry);
 }
 
-void InterfaceTable::addInterfaceGroup(InterfaceEntry *entry, cModule *ifmod)
+void InterfaceTable::discoverConnectingGates(InterfaceEntry *entry)
 {
-    // check name is unique
+    cModule *ifmod = entry->getInterfaceModule();
+    if (!ifmod)
+        return;  // virtual interface
 
-	entry->setGroupInterface(true);
-    for (unsigned int i=0; i<idToInterface.size(); i++)
-        if (idToInterface[i] && !strcmp(entry->getName(), idToInterface[i]->getName()))
-        {
-            if (idToInterface[i]->getMacAddress()==entry->getMacAddress())
-            {
-            	throw cRuntimeError(this, "addInterface(): interface '%s' already registered", entry->getName());
-            }
-            else if (idToInterface[i]->getModuleOwner()!=ifmod)
-            	throw cRuntimeError(this, "addInterface(): interface '%s' different owner", entry->getName());
-            else
-            {
-            	idToInterface[i]->addRelatedInterface(entry);
-
-            }
-        }
-    // insert
-    entry->setModuleOwner(ifmod);
-    entry->setInterfaceId(INTERFACEIDS_START + idToInterface.size());
-    entry->setInterfaceTable(this);
-    idToInterface.push_back(entry);
-    invalidateTmpInterfaceList();
-
-    // fill in networkLayerGateIndex, nodeOutputGateId, nodeInputGateId
-    if (ifmod)
-        discoverConnectingGates(entry, ifmod);
-
-    nb->fireChangeNotification(NF_INTERFACE_CREATED, entry);
-}
-
-void InterfaceTable::discoverConnectingGates(InterfaceEntry *entry, cModule *ifmod)
-{
     // ifmod is something like "host.eth[1].mac"; climb up to find "host.eth[1]" from it
     cModule *host = getParentModule();
     while (ifmod && ifmod->getParentModule()!=host)
         ifmod = ifmod->getParentModule();
     if (!ifmod)
-        throw cRuntimeError(this, "addInterface(): specified module is not in this host/router");
+        throw cRuntimeError("addInterface(): specified module is not in this host/router");
 
     // find gates connected to host / network layer
-    cGate *nwlayerInGate=NULL, *nwlayerOutGate=NULL;
+    cGate *nwlayerInGate = NULL, *nwlayerOutGate = NULL;
     for (GateIterator i(ifmod); !i.end(); i++)
     {
         cGate *g = i();
@@ -213,17 +198,19 @@ void InterfaceTable::discoverConnectingGates(InterfaceEntry *entry, cModule *ifm
             entry->setNodeInputGateId(g->getPreviousGate()->getId());
 
         // find the gate index of networkLayer/networkLayer6/mpls that connects to this interface
-        if (g->getType()==cGate::OUTPUT && g->getNextGate() && g->getNextGate()->isName("ifIn"))
+        if (g->getType()==cGate::OUTPUT && g->getNextGate() && g->isName("upperLayerOut"))
             nwlayerInGate = g->getNextGate();
-        if (g->getType()==cGate::INPUT && g->getPreviousGate() && g->getPreviousGate()->isName("ifOut"))
+        if (g->getType()==cGate::INPUT && g->getPreviousGate() && g->isName("upperLayerIn"))
             nwlayerOutGate = g->getPreviousGate();
     }
 
     // consistency checks
     // note: we don't check nodeOutputGateId/nodeInputGateId, because wireless interfaces
     // are not connected to the host
-    if (!nwlayerInGate || !nwlayerOutGate || nwlayerInGate->getIndex()!=nwlayerOutGate->getIndex())
-        throw cRuntimeError(this, "addInterface(): interface must be connected to network layer's ifIn[]/ifOut[] gates of the same index");
+    if (!nwlayerInGate && !nwlayerOutGate)      // Accesspoint does not have a network layer so the NIC is not connected
+        return;
+    if (!nwlayerInGate || !nwlayerOutGate || nwlayerInGate->getOwnerModule()!=nwlayerOutGate->getOwnerModule() || nwlayerInGate->getIndex()!=nwlayerOutGate->getIndex())
+        throw cRuntimeError("addInterface(): interface must be connected to network layer's in/out gates using the same gate index");
 
     entry->setNetworkLayerGateIndex(nwlayerInGate->getIndex());
 }
@@ -232,16 +219,11 @@ void InterfaceTable::deleteInterface(InterfaceEntry *entry)
 {
     int id = entry->getInterfaceId();
     if (entry != getInterfaceById(id))
-        throw cRuntimeError(this, "deleteInterface(): interface '%s' not found in interface table", entry->getName());
+        throw cRuntimeError("deleteInterface(): interface '%s' not found in interface table", entry->getName());
 
     nb->fireChangeNotification(NF_INTERFACE_DELETED, entry);  // actually, only going to be deleted
 
     idToInterface[id - INTERFACEIDS_START] = NULL;
-    if (entry->existRelatedInterface())
-    {
-         for (int i=0;i<entry->getNumRelated();i++)
-             entry->getRelatedInterface(i)->deleteRelatedInterface(entry);
-    }
     delete entry;
     invalidateTmpInterfaceList();
 }
@@ -249,13 +231,44 @@ void InterfaceTable::deleteInterface(InterfaceEntry *entry)
 void InterfaceTable::invalidateTmpInterfaceList()
 {
     tmpNumInterfaces = -1;
-    delete[] tmpInterfaceList;
+    delete [] tmpInterfaceList;
     tmpInterfaceList = NULL;
 }
 
 void InterfaceTable::interfaceChanged(InterfaceEntry *entry, int category)
 {
     nb->fireChangeNotification(category, entry);
+
+    if (ev.isGUI() && par("displayAddresses").boolValue())
+        updateLinkDisplayString(entry);
+}
+
+void InterfaceTable::updateLinkDisplayString(InterfaceEntry *entry)
+{
+    int outputGateId = entry->getNodeOutputGateId();
+    if (outputGateId != -1)
+    {
+        cModule *host = getParentModule();
+        cGate *outputGate = host->gate(outputGateId);
+        if (!outputGate->getChannel())
+            return;
+        cDisplayString& displayString = outputGate->getDisplayString();
+        char buf[128];
+#ifdef WITH_IPv4
+        if (entry->ipv4Data()) {
+            sprintf(buf, "%s\n%s/%d", entry->getFullName(), entry->ipv4Data()->getIPAddress().str().c_str(), entry->ipv4Data()->getNetmask().getNetmaskLength());
+            displayString.setTagArg("t", 0, buf);
+            displayString.setTagArg("t", 1, "l");
+        }
+#endif
+#ifdef WITH_IPv6
+        if (entry->ipv6Data() && entry->ipv6Data()->getNumAddresses() > 0) {
+            sprintf(buf, "%s\n%s", entry->getFullName(), entry->ipv6Data()->getPreferredAddress().str().c_str());
+            displayString.setTagArg("t", 0, buf);
+            displayString.setTagArg("t", 1, "l");
+        }
+#endif
+    }
 }
 
 InterfaceEntry *InterfaceTable::getInterfaceByNodeOutputGateId(int id)
@@ -291,6 +304,38 @@ InterfaceEntry *InterfaceTable::getInterfaceByNetworkLayerGateIndex(int index)
     return NULL;
 }
 
+InterfaceEntry *InterfaceTable::getInterfaceByInterfaceModule(cModule *ifmod)
+{
+    // ifmod is something like "host.eth[1].mac"; climb up to find "host.eth[1]" from it
+    cModule *host = getParentModule();
+    while (ifmod && ifmod->getParentModule()!=host)
+        ifmod = ifmod->getParentModule();
+    if (!ifmod)
+        throw cRuntimeError("addInterface(): specified module is not in this host/router");
+
+    int nodeInputGateId = -1, nodeOutputGateId = -1;
+    for (GateIterator i(ifmod); !i.end(); i++)
+    {
+        cGate *g = i();
+        if (!g) continue;
+
+        // find the host/router's gates that internally connect to this interface
+        if (g->getType()==cGate::OUTPUT && g->getNextGate() && g->getNextGate()->getOwnerModule()==host)
+            nodeOutputGateId = g->getNextGate()->getId();
+        if (g->getType()==cGate::INPUT && g->getPreviousGate() && g->getPreviousGate()->getOwnerModule()==host)
+            nodeInputGateId = g->getPreviousGate()->getId();
+    }
+
+    InterfaceEntry *ie = NULL;
+    if (nodeInputGateId >= 0)
+        ie = getInterfaceByNodeInputGateId(nodeInputGateId);
+    if (!ie && nodeOutputGateId >= 0)
+        ie = getInterfaceByNodeOutputGateId(nodeOutputGateId);
+
+    ASSERT(!ie || (ie->getNodeInputGateId() == nodeInputGateId && ie->getNodeOutputGateId() == nodeOutputGateId));
+    return ie;
+}
+
 InterfaceEntry *InterfaceTable::getInterfaceByName(const char *name)
 {
     Enter_Method_Silent();
@@ -309,6 +354,16 @@ InterfaceEntry *InterfaceTable::getFirstLoopbackInterface()
     int n = idToInterface.size();
     for (int i=0; i<n; i++)
         if (idToInterface[i] && idToInterface[i]->isLoopback())
+            return idToInterface[i];
+    return NULL;
+}
+
+InterfaceEntry *InterfaceTable::getFirstMulticastInterface()
+{
+    Enter_Method_Silent();
+    int n = idToInterface.size();
+    for (int i=0; i<n; i++)
+        if (idToInterface[i] && idToInterface[i]->isMulticast() && !idToInterface[i]->isLoopback())
             return idToInterface[i];
     return NULL;
 }

@@ -23,11 +23,10 @@
 #include "EtherApp_m.h"
 #include "Ieee802Ctrl_m.h"
 
-Define_Module (EtherAppSrv);
+Define_Module(EtherAppSrv);
 
-simsignal_t EtherAppSrv::endToEndDelaySignal = SIMSIGNAL_NULL;
-simsignal_t EtherAppSrv::sentPkBytesSignal = SIMSIGNAL_NULL;
-simsignal_t EtherAppSrv::rcvdPkBytesSignal = SIMSIGNAL_NULL;
+simsignal_t EtherAppSrv::sentPkSignal = SIMSIGNAL_NULL;
+simsignal_t EtherAppSrv::rcvdPkSignal = SIMSIGNAL_NULL;
 
 void EtherAppSrv::initialize()
 {
@@ -36,9 +35,8 @@ void EtherAppSrv::initialize()
 
     // statistics
     packetsSent = packetsReceived = 0;
-    endToEndDelaySignal = registerSignal("endToEndDelay");
-    sentPkBytesSignal = registerSignal("sentPkBytes");
-    rcvdPkBytesSignal = registerSignal("rcvdPkBytes");
+    sentPkSignal = registerSignal("sentPk");
+    rcvdPkSignal = registerSignal("rcvdPk");
 
     WATCH(packetsSent);
     WATCH(packetsReceived);
@@ -53,9 +51,7 @@ void EtherAppSrv::handleMessage(cMessage *msg)
     EV << "Received packet `" << msg->getName() << "'\n";
     EtherAppReq *req = check_and_cast<EtherAppReq *>(msg);
     packetsReceived++;
-    simtime_t lastEED = simTime() - msg->getCreationTime();
-    emit(rcvdPkBytesSignal, (long)(req->getByteLength()));
-    emit(endToEndDelaySignal, lastEED);
+    emit(rcvdPkSignal, req);
 
     Ieee802Ctrl *ctrl = check_and_cast<Ieee802Ctrl *>(req->removeControlInfo());
     MACAddress srcAddr = ctrl->getSrc();
@@ -77,7 +73,7 @@ void EtherAppSrv::handleMessage(cMessage *msg)
         int l = replyBytes > MAX_REPLY_CHUNK_SIZE ? MAX_REPLY_CHUNK_SIZE : replyBytes;
         replyBytes -= l;
 
-        sprintf(s,"%d", k);
+        sprintf(s, "%d", k);
 
         EV << "Generating packet `" << msgname << "'\n";
 
@@ -97,9 +93,9 @@ void EtherAppSrv::sendPacket(cPacket *datapacket, const MACAddress& destAddr)
     etherctrl->setDsap(remoteSAP);
     etherctrl->setDest(destAddr);
     datapacket->setControlInfo(etherctrl);
+    emit(sentPkSignal, datapacket);
     send(datapacket, "out");
     packetsSent++;
-    emit(sentPkBytesSignal, (long)(datapacket->getByteLength()));
 }
 
 void EtherAppSrv::registerDSAP(int dsap)

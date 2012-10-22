@@ -27,10 +27,10 @@ class Ieee802154StarRouting : public cSimpleModule
     const char*     m_moduleName;
 
     // module gate ID
-    int             mUppergateIn;
-    int             mUppergateOut;
-    int             mLowergateIn;
-    int             mLowergateOut;
+    int             mUpperLayerIn;
+    int             mUpperLayerOut;
+    int             mLowerLayerIn;
+    int             mLowerLayerOut;
 
     // for statistical data
     double          numForward;

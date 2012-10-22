@@ -21,12 +21,13 @@ package inet.linklayer.ieee80211mesh.mgmt;
 
 import inet.linklayer.ieee80211.mgmt.IIeee80211Mgmt;
 
-simple Ieee80211Mesh like IIeee80211Mgmt
+//simple Ieee80211Mesh like IIeee80211Mgmt
+simple Ieee80211Mesh
 {
     parameters:
         @macRouting;  // Mac layer with routing protocol working in the level 2
         int frameCapacity = default(100);
-        bool useHwmp=default(false); // If active automatically deactivate useProactive and useReactive and activate ETXEstimate
+        bool useHwmp = default(false); // If active automatically deactivate useProactive and useReactive and activate ETXEstimate
         bool useProactive = default(false);
         bool useReactive = default(true);
         bool FixNode = default(false); // used by routing protocol to indicate no mobility node
@@ -41,26 +42,35 @@ simple Ieee80211Mesh like IIeee80211Mgmt
         bool IsGateWay = default(false);
         double GateWayAnnounceInterval @unit("s") = default(100s);
         volatile double MacBroadcastDelay @unit("s") = default(uniform(0s,0.01s));
+        bool forceRelayUnit  = default(false);
  //       int Willingness = default(3); //ms
  //       int Hello_ival = default(2); // sec
  //       int Tc_ival = default(5); // sec
  //       int Mid_ival = default(5); // sec
  //       int use_mac = default(0);
+        bool locatorActive  = default(false);
+        @signal[enqueuePk](type=cMessage);
+        @signal[dequeuePk](type=cMessage);
+        @signal[dropPkByQueue](type=cMessage);
+        @signal[queueingTime](type=simtime_t; unit=s);
+        @signal[dataQueueLen](type=long);  // number of stored packets
     gates:
-        input  ETXProcIn;
-        output ETXProcOut;
-        input  routingInProactive;
-        output routingOutProactive;
-        input  routingInReactive;
-        output routingOutReactive;
-        input  routingInHwmp;
-        output routingOutHwmp;
-        input  uppergateIn @labels(Ieee802Ctrl/down);
-        output uppergateOut @labels(Ieee802Ctrl/up);
+        input  ETXProcIn @loose;
+        output ETXProcOut @loose;
+        input  routingInProactive @loose;
+        output routingOutProactive @loose;
+        input  routingInReactive @loose;
+        output routingOutReactive @loose;
+        input  routingInHwmp @loose;
+        output routingOutHwmp @loose;
+        input  upperLayerIn @labels(Ieee802Ctrl/down);
+        output upperLayerOut @labels(Ieee802Ctrl/up);
         input  fromEthernet @labels(Ieee80211Frame);
         output toEthernet @labels(Ieee80211Frame);
-        input  macIn;
-        output macOut;
-        input  agentIn;   // optional gates used for the agent in stations
-        output agentOut; // optional gates used for the agent in stations
+        input  macIn[];
+        output macOut[];
+        input  agentIn @loose;   // optional gates used for the agent in stations
+        output agentOut @loose; // optional gates used for the agent in stations
+        input  locatorIn @loose;
+        output  locatorOut @loose;
 }

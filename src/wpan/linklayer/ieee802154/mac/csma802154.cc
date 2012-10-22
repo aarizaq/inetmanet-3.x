@@ -38,11 +38,10 @@ Define_Module(csma802154);
  * two subscribe to the RadioState.
  */
 
-#define L2BROADCAST def_macCoordExtendedAddress
 void csma802154::sendUp(cMessage *msg)
 {
     mpNb->fireChangeNotification(NF_LINK_PROMISCUOUS, msg);
-    send(msg, mUppergateOut);
+    send(msg, mUpperLayerOut);
 }
 
 void csma802154::initialize(int stage)
@@ -68,10 +67,10 @@ void csma802154::initialize(int stage)
         registerInterface();
 
         // get gate ID
-        mUppergateIn  = findGate("uppergateIn");
-        mUppergateOut = findGate("uppergateOut");
-        mLowergateIn  = findGate("lowergateIn");
-        mLowergateOut = findGate("lowergateOut");
+        mUpperLayerIn  = findGate("upperLayerIn");
+        mUpperLayerOut = findGate("upperLayerOut");
+        mLowerLayerIn  = findGate("lowerLayerIn");
+        mLowerLayerOut = findGate("lowerLayerOut");
 
         // get a pointer to the NotificationBoard module
         mpNb = NotificationBoardAccess().get();
@@ -179,6 +178,7 @@ void csma802154::finish()
         recordScalar("nbRecvdAcks", nbRecvdAcks);
         recordScalar("nbTxAcks", nbTxAcks);
         recordScalar("nbDuplicates", nbDuplicates);
+        recordScalar("numCollision", numCollision);
         if (nbBackoffs > 0)
         {
             recordScalar("meanBackoff", backoffValues / nbBackoffs);
@@ -211,7 +211,7 @@ csma802154::~csma802154()
 void csma802154::handleMessage(cMessage* msg)
 {
 
-    if (msg->getArrivalGateId() == mLowergateIn && !msg->isPacket())
+    if (msg->getArrivalGateId() == mLowerLayerIn && !msg->isPacket())
     {
         if (msg->getKind()==0)
             error("[MAC]: message '%s' with length==0 is supposed to be a primitive, but msg kind is also zero", msg->getName());
@@ -219,7 +219,7 @@ void csma802154::handleMessage(cMessage* msg)
         return;
     }
 
-    if (msg->getArrivalGateId() == mLowergateIn)
+    if (msg->getArrivalGateId() == mLowerLayerIn)
     {
         mpNb->fireChangeNotification(NF_LINK_FULL_PROMISCUOUS, msg);
         handleLowerMsg(msg);
@@ -243,15 +243,18 @@ void csma802154::handleUpperMsg(cMessage *msg)
     //MacPkt *macPkt = encapsMsg(msg);
     reqtMsgFromIFq();
     Ieee802154Frame *macPkt = new Ieee802154Frame(msg->getName());
-    macPkt->setBitLength(def_phyHeaderLength);
+    macPkt->setBitLength(par("headerLength").doubleValue());
     cObject *controlInfo = msg->removeControlInfo();
     IE3ADDR dest;
     if (dynamic_cast<Ieee802Ctrl *>(controlInfo))
     {
         useIeee802Ctrl = true;
         Ieee802Ctrl* cInfo = check_and_cast<Ieee802Ctrl *>(controlInfo);
-        MACAddress destination = cInfo->getDest();
-        dest = static_cast<IE3ADDR> (MacToUint64(destination));
+        dest = cInfo->getDest();
+        if (dest.isBroadcast())
+            dest = MACAddress::BROADCAST_ADDRESS64;
+        else if (!dest.getFlagEui64())
+            dest.convert64();
     }
     else
     {
@@ -452,7 +455,7 @@ void csma802154::updateStatusCCA(t_mac_event event, cMessage *msg)
             Ieee802154Frame * mac = check_and_cast<Ieee802154Frame *>(macQueue.front()->dup());
             //sendDown(msg);
             // give time for the radio to be in Tx state before transmitting
-            //sendDelayed(mac, aTurnaroundTime, mLowergateOut);
+            //sendDelayed(mac, aTurnaroundTime, mLowerLayerOut);
             sendNewPacketInTx(mac);
             nbTxFrames++;
         }
@@ -555,7 +558,7 @@ void csma802154::updateStatusTransmitFrame(t_mac_event event, cMessage *msg)
         //phy->setRadioState(Radio::RX);
 
         bool expectAck = useMACAcks;
-        if (packet->getDstAddr() != L2BROADCAST)
+        if (!packet->getDstAddr().isBroadcast())
         {
             //unicast
             EV << "(4) FSM State TRANSMITFRAME_4, "
@@ -668,7 +671,7 @@ void csma802154::updateStatusSIFS(t_mac_event event, cMessage *msg)
         //sendDown(ackMessage);
         sendNewPacketInTx(ackMessage);
         nbTxAcks++;
-        //      sendDelayed(ackMessage, aTurnaroundTime, lowergateOut);
+        //      sendDelayed(ackMessage, aTurnaroundTime, lowerLayerOut);
         ackMessage = NULL;
         break;
     case EV_TIMER_BACKOFF:
@@ -922,8 +925,8 @@ void csma802154::handleSelfMsg(cMessage *msg)
 void csma802154::handleLowerMsg(cMessage *msg)
 {
     Ieee802154Frame *macPkt = static_cast<Ieee802154Frame *> (msg);
-    long src = macPkt->getSrcAddr();
-    long dest = macPkt->getDstAddr();
+    MACAddress src = macPkt->getSrcAddr();
+    MACAddress dest = macPkt->getDstAddr();
     //long ExpectedNr = 0;
     uint8_t ExpectedNr = 0;
     if (msg->getControlInfo())
@@ -1033,7 +1036,7 @@ void csma802154::handleLowerMsg(cMessage *msg)
             }
         }
     }
-    else if (dest == L2BROADCAST)
+    else if (dest.isBroadcast())
     {
         executeMac(EV_BROADCAST_RECEIVED, macPkt);
     }
@@ -1100,14 +1103,18 @@ cPacket *csma802154::decapsMsg(Ieee802154Frame * macPkt)
     if (useIeee802Ctrl)
     {
         Ieee802Ctrl* cinfo = new Ieee802Ctrl();
-        MACAddress destination = Uint64ToMac (macPkt->getSrcAddr());
+        MACAddress destination = macPkt->getSrcAddr();
+        if (macPkt->getSrcAddr().isBroadcast())
+            destination = MACAddress::BROADCAST_ADDRESS;
+        else
+            destination.convert48();
         cinfo->setSrc(destination);
         msg->setControlInfo(cinfo);
     }
     else
     {
         Ieee802154NetworkCtrlInfo * cinfo = new Ieee802154NetworkCtrlInfo();
-        cinfo->setNetwAddr(macPkt->getSrcAddr());
+        cinfo->setNetwAddr(macPkt->getSrcAddr().getInt());
     }
     return msg;
 }

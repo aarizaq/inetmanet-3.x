@@ -3,7 +3,7 @@
  * Copyright (c) 2005,2006,2007 INRIA
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as 
+ * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful,
@@ -82,8 +82,8 @@ class ModulationType
   /**
    * \returns the number of Hz used by this signal
    */
-  uint32_t getBandwidth (void) const {return bandwidth;}
-  void setBandwidth(uint32_t p) {bandwidth =p;}
+  uint32_t getBandwidth(void) const {return bandwidth;}
+  void setBandwidth(uint32_t p) {bandwidth = p;}
   /**
    * \returns the physical bit rate of this signal.
    *
@@ -93,7 +93,7 @@ class ModulationType
   /// MANDATORY it is necessary set the dataRate before the codeRate
    void setCodeRate(enum CodeRate cRate)
    {
-    codeRate =cRate;
+    codeRate = cRate;
     switch (cRate)
     {
       case CODE_RATE_3_4:
@@ -111,40 +111,41 @@ class ModulationType
       break;
     }
    };
-   uint32_t getPhyRate (void) const {return phyRate;}
+   uint32_t getPhyRate(void) const {return phyRate;}
   /**
    * \returns the data bit rate of this signal.
    */
-  uint32_t getDataRate (void) const {return dataRate;}
-  void setDataRate (uint32_t p) {dataRate =p;}
+  uint32_t getDataRate(void) const {return dataRate;}
+  void setDataRate(uint32_t p) {dataRate = p;}
   /**
    * \returns the coding rate of this transmission mode
    */
-  enum CodeRate getCodeRate (void) const {return codeRate;}
+  enum CodeRate getCodeRate(void) const {return codeRate;}
 
   /**
    * \returns the size of the modulation constellation.
    */
-  uint8_t getConstellationSize (void) const {return constellationSize;}
-  void setConstellationSize (uint8_t p) {constellationSize =p;}
+  uint8_t getConstellationSize(void) const {return constellationSize;}
+  void setConstellationSize(uint8_t p) {constellationSize = p;}
 
   /**
    * \returns true if this mode is a mandatory mode, false
    *          otherwise.
    */
-  enum ModulationClass getModulationClass () const {return modulationClass;}
-  void setModulationClass (enum ModulationClass p) {modulationClass=p;}
+  enum ModulationClass getModulationClass() const {return modulationClass;}
+  void setModulationClass(enum ModulationClass p) {modulationClass = p;}
 
   void setIsMandatory(bool val){isMandatory = val;}
   bool getIsMandatory(){return isMandatory;}
-  ModulationType ()
+  ModulationType()
   {
-	  isMandatory=false;
-	  bandwidth=0;
-	  codeRate=CODE_RATE_UNDEFINED;
-	  dataRate=0;
-	  phyRate=0;
-	  constellationSize=0;
+      isMandatory = false;
+      bandwidth = 0;
+      codeRate = CODE_RATE_UNDEFINED;
+      dataRate = 0;
+      phyRate = 0;
+      constellationSize = 0;
+      modulationClass = MOD_CLASS_UNKNOWN;
   }
 private:
   bool isMandatory;
@@ -156,7 +157,7 @@ private:
   enum ModulationClass modulationClass;
 };
 
-bool operator == (const ModulationType &a, const ModulationType &b);
+bool operator==(const ModulationType &a, const ModulationType &b);
 
 
-#endif 
+#endif

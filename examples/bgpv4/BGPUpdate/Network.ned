@@ -1,7 +1,8 @@
 package inet.examples.bgpv4.BGPUpdate;
 
-import inet.util.ThruputMeteringChannel;
+import inet.base.UnimplementedModule;
 import inet.nodes.inet.StandardHost;
+import inet.util.ThruputMeteringChannel;
 
 
 network BGPTest
@@ -12,7 +13,7 @@ network BGPTest
             parameters:
                 delay = 0;
                 datarate = 100Mbps;
-				thruputDisplayFormat = "#N";
+                thruputDisplayFormat = "#N";
         }
     submodules:
         A: BGPRouter {
@@ -40,6 +41,9 @@ network BGPTest
                 @display("p=364,92;i=device/laptop");
             gates:
                 ethg[1];
+        }
+        configurator: UnimplementedModule {
+            @display("p=208,23");
         }
     connections:
         H1.ethg[0] <--> LINK_100 <--> A.ethg[0];

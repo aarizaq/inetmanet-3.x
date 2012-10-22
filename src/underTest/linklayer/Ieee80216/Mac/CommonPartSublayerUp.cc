@@ -30,9 +30,9 @@ void CommonPartSublayerUp::handleMessage(cMessage *msg)
 */
     if (msg->arrivedOn("controlIn"))
     {
-        //send(msg,"lowergateOut");
+        //send(msg,"lowerLayerOut");
     }
-    else if (msg->arrivedOn("lowergateIn")) // Nachricht vom physikal Layer empfangen
+    else if (msg->arrivedOn("lowerLayerIn")) // Nachricht vom physikal Layer empfangen
     {
         handleLowerMsg(check_and_cast<cPacket *>(msg));
     }
@@ -99,7 +99,7 @@ void CommonPartSublayerUp::handleLowerMsg(cPacket *msg)
 //
 void CommonPartSublayerUp::handleMacFrameType(Ieee80216MacHeader *MacFrame)
 {
-    if (MacFrame->getHT() == 0) // Mac Frame ist ein Generic Mac Frame
+    if (MacFrame && MacFrame->getHT() == 0) // Mac Frame ist ein Generic Mac Frame
     {
         Ieee80216GenericMacHeader* GenericMacFrame =
             dynamic_cast<Ieee80216GenericMacHeader *>(MacFrame);

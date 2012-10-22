@@ -20,95 +20,14 @@
 #include "IPvXTrafGen.h"
 
 #include "IPvXAddressResolver.h"
-
-#ifdef WITH_IPv4
 #include "IPv4ControlInfo.h"
-#endif
-
-#ifdef WITH_IPv6
 #include "IPv6ControlInfo.h"
-#endif
-
-
-Define_Module(IPvXTrafSink);
-
-
-simsignal_t IPvXTrafSink::rcvdPkBytesSignal = SIMSIGNAL_NULL;
-simsignal_t IPvXTrafSink::endToEndDelaySignal = SIMSIGNAL_NULL;
-
-void IPvXTrafSink::initialize()
-{
-    numReceived = 0;
-    WATCH(numReceived);
-    rcvdPkBytesSignal = registerSignal("rcvdPkBytes");
-    endToEndDelaySignal = registerSignal("endToEndDelay");
-}
-
-void IPvXTrafSink::handleMessage(cMessage *msg)
-{
-    processPacket(check_and_cast<cPacket *>(msg));
-
-    if (ev.isGUI())
-    {
-        char buf[32];
-        sprintf(buf, "rcvd: %d pks", numReceived);
-        getDisplayString().setTagArg("t", 0, buf);
-    }
-}
-
-void IPvXTrafSink::printPacket(cPacket *msg)
-{
-    IPvXAddress src, dest;
-    int protocol = -1;
-
-#ifdef WITH_IPv4
-    if (dynamic_cast<IPv4ControlInfo *>(msg->getControlInfo()) != NULL)
-    {
-        IPv4ControlInfo *ctrl = (IPv4ControlInfo *)msg->getControlInfo();
-        src = ctrl->getSrcAddr();
-        dest = ctrl->getDestAddr();
-        protocol = ctrl->getProtocol();
-    }
-    else
-#endif
-#ifdef WITH_IPv6
-    if (dynamic_cast<IPv6ControlInfo *>(msg->getControlInfo()) != NULL)
-    {
-        IPv6ControlInfo *ctrl = (IPv6ControlInfo *)msg->getControlInfo();
-        src = ctrl->getSrcAddr();
-        dest = ctrl->getDestAddr();
-        protocol = ctrl->getProtocol();
-    }
-    else
-#endif
-    {}
-
-    ev  << msg << endl;
-    ev  << "Payload length: " << msg->getByteLength() << " bytes" << endl;
-
-    if (protocol != -1)
-        ev  << "src: " << src << "  dest: " << dest << "  protocol=" << protocol << "\n";
-}
-
-void IPvXTrafSink::processPacket(cPacket *msg)
-{
-    emit(rcvdPkBytesSignal, (long)(msg->getByteLength()));
-    emit(endToEndDelaySignal, simTime()-msg->getCreationTime());
-    EV << "Received packet: ";
-    printPacket(msg);
-    delete msg;
-
-    numReceived++;
-}
-
-
-
-//===============================================
 
 
 Define_Module(IPvXTrafGen);
 
 int IPvXTrafGen::counter;
+simsignal_t IPvXTrafGen::sentPkSignal = SIMSIGNAL_NULL;
 
 void IPvXTrafGen::initialize(int stage)
 {
@@ -118,18 +37,22 @@ void IPvXTrafGen::initialize(int stage)
         return;
 
     IPvXTrafSink::initialize();
-    sentPkBytesSignal = registerSignal("sentPkBytes");
+    sentPkSignal = registerSignal("sentPk");
 
     protocol = par("protocol");
-    msgByteLength = par("packetLength");
     numPackets = par("numPackets");
     simtime_t startTime = par("startTime");
+    stopTime = par("stopTime");
+    if (stopTime != 0 && stopTime <= startTime)
+        error("Invalid startTime/stopTime parameters");
 
     const char *destAddrs = par("destAddresses");
     cStringTokenizer tokenizer(destAddrs);
     const char *token;
     while ((token = tokenizer.nextToken()) != NULL)
         destAddresses.push_back(IPvXAddressResolver().resolve(token));
+
+    packetLengthPar = &par("packetLength");
 
     counter = 0;
 
@@ -155,48 +78,36 @@ IPvXAddress IPvXTrafGen::chooseDestAddr()
 void IPvXTrafGen::sendPacket()
 {
     char msgName[32];
-    sprintf(msgName,"appData-%d", counter++);
+    sprintf(msgName, "appData-%d", counter++);
 
     cPacket *payload = new cPacket(msgName);
-    payload->setByteLength(msgByteLength);
+    payload->setByteLength(packetLengthPar->longValue());
 
     IPvXAddress destAddr = chooseDestAddr();
+    const char *gate;
 
     if (!destAddr.isIPv6())
     {
-#ifdef WITH_IPv4
         // send to IPv4
         IPv4ControlInfo *controlInfo = new IPv4ControlInfo();
         controlInfo->setDestAddr(destAddr.get4());
         controlInfo->setProtocol(protocol);
         payload->setControlInfo(controlInfo);
-
-        EV << "Sending packet: ";
-        printPacket(payload);
-
-        emit(sentPkBytesSignal, (long)(payload->getByteLength()));
-        send(payload, "ipOut");
-#else
-        throw cRuntimeError("INET compiled without IPv4 features!");
-#endif
+        gate = "ipOut";
     }
     else
     {
-#ifdef WITH_IPv6
         // send to IPv6
         IPv6ControlInfo *controlInfo = new IPv6ControlInfo();
         controlInfo->setDestAddr(destAddr.get6());
         controlInfo->setProtocol(protocol);
         payload->setControlInfo(controlInfo);
-
-        EV << "Sending packet: ";
-        printPacket(payload);
-
-        send(payload, "ipv6Out");
-#else
-        throw cRuntimeError("INET compiled without IPv6 features!");
-#endif
-	}
+        gate = "ipv6Out";
+    }
+    EV << "Sending packet: ";
+    printPacket(payload);
+    emit(sentPkSignal, payload);
+    send(payload, gate);
     numSent++;
 }
 
@@ -207,8 +118,9 @@ void IPvXTrafGen::handleMessage(cMessage *msg)
         // send, then reschedule next sending
         sendPacket();
 
-        if (!numPackets || numSent<numPackets)
-            scheduleAt(simTime()+(double)par("packetInterval"), msg);
+        simtime_t d = simTime() + par("sendInterval").doubleValue();
+        if ((!numPackets || numSent<numPackets) && (stopTime == 0 || stopTime > d))
+            scheduleAt(d, msg);
         else
             delete msg;
     }

@@ -10,8 +10,6 @@
 #define __RSTP_ACCESS_H
 
 
-
-#include <omnetpp.h>
 #include "ModuleAccess.h"
 #include "RSTP.h"
 

@@ -20,6 +20,11 @@
 #ifndef __TCP_NSC_CONNECTION_H
 #define __TCP_NSC_CONNECTION_H
 
+#ifndef HAVE_NSC
+#error Please install NSC or disable 'TCP_NSC' feature
+#endif
+
+
 #include "INETDefs.h"
 
 #include "IPvXAddress.h"
@@ -86,8 +91,6 @@ class INET_API TCP_NSC_Connection
     void abort();
     void send(cPacket *msgP);
     void do_SEND();
-    INetStreamSocket* getSocket();
-    void do_checkedclose();
 
   public:
     int connIdM;

@@ -20,7 +20,7 @@ void CommonPartSublayerDown::initialize()
     queue.setName("queue");
     endTransmissionEvent = new cMessage("endTxEvent");
 
-    gateToWatch = gate("lowergateOut");
+    gateToWatch = gate("lowerLayerOut");
 }
 
 void CommonPartSublayerDown::handleMessage(cMessage *msg)
@@ -29,7 +29,7 @@ void CommonPartSublayerDown::handleMessage(cMessage *msg)
     {
         handleControlPlaneMsg(msg);
     }
-    else if (msg->arrivedOn("uppergateIn"))
+    else if (msg->arrivedOn("upperLayerIn"))
     {
         //handleUpperMsg(msg);
     }
@@ -45,10 +45,10 @@ void CommonPartSublayerDown::handleCommand(int msgkind, cPolymorphic *ctrl)
 
 void CommonPartSublayerDown::handleControlPlaneMsg(cMessage *msg)
 {
-    send(msg, "lowergateOut");
+    send(msg, "lowerLayerOut");
 }
 
 void CommonPartSublayerDown::handleUpperMsg(cMessage *msg)
 {
-    send(msg, "lowergateOut");
+    send(msg, "lowerLayerOut");
 }

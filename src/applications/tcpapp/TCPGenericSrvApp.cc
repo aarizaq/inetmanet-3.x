@@ -20,21 +20,20 @@
 
 Define_Module(TCPGenericSrvApp);
 
-simsignal_t TCPGenericSrvApp::rcvdPkBytesSignal = SIMSIGNAL_NULL;
-simsignal_t TCPGenericSrvApp::sentPkBytesSignal = SIMSIGNAL_NULL;
+simsignal_t TCPGenericSrvApp::rcvdPkSignal = SIMSIGNAL_NULL;
+simsignal_t TCPGenericSrvApp::sentPkSignal = SIMSIGNAL_NULL;
 
 void TCPGenericSrvApp::initialize()
 {
-    const char *address = par("address");
-    int port = par("port");
+    const char *localAddress = par("localAddress");
+    int localPort = par("localPort");
     delay = par("replyDelay");
     maxMsgDelay = 0;
 
     //statistics
     msgsRcvd = msgsSent = bytesRcvd = bytesSent = 0;
-    rcvdPkBytesSignal = registerSignal("rcvdPkBytes");
-    sentPkBytesSignal = registerSignal("sentPkBytes");
-
+    rcvdPkSignal = registerSignal("rcvdPk");
+    sentPkSignal = registerSignal("sentPk");
 
     WATCH(msgsRcvd);
     WATCH(msgsSent);
@@ -44,7 +43,7 @@ void TCPGenericSrvApp::initialize()
     TCPSocket socket;
     socket.setOutputGate(gate("tcpOut"));
     socket.setDataTransferMode(TCP_TRANSFER_OBJECT);
-    socket.bind(address[0] ? IPvXAddress(address) : IPvXAddress(), port);
+    socket.bind(localAddress[0] ? IPvXAddress(localAddress) : IPvXAddress(), localPort);
     socket.listen();
 }
 
@@ -64,7 +63,7 @@ void TCPGenericSrvApp::sendBack(cMessage *msg)
     {
         msgsSent++;
         bytesSent += appmsg->getByteLength();
-        emit(sentPkBytesSignal, (long)(appmsg->getByteLength()));
+        emit(sentPkSignal, appmsg);
 
         EV << "sending \"" << appmsg->getName() << "\" to TCP, " << appmsg->getByteLength() << " bytes\n";
     }
@@ -88,7 +87,7 @@ void TCPGenericSrvApp::handleMessage(cMessage *msg)
         // pending to be sent back in this connection
         msg->setName("close");
         msg->setKind(TCP_C_CLOSE);
-        sendOrSchedule(msg,delay+maxMsgDelay);
+        sendOrSchedule(msg, delay+maxMsgDelay);
     }
     else if (msg->getKind()==TCP_I_DATA || msg->getKind()==TCP_I_URGENT_DATA)
     {
@@ -102,7 +101,7 @@ void TCPGenericSrvApp::handleMessage(cMessage *msg)
 
         msgsRcvd++;
         bytesRcvd += appmsg->getByteLength();
-        emit(rcvdPkBytesSignal, (long)(appmsg->getByteLength()));
+        emit(rcvdPkSignal, appmsg);
 
         long requestedBytes = appmsg->getExpectedReplyLength();
 
@@ -151,7 +150,7 @@ void TCPGenericSrvApp::handleMessage(cMessage *msg)
     {
         char buf[64];
         sprintf(buf, "rcvd: %ld pks %ld bytes\nsent: %ld pks %ld bytes", msgsRcvd, bytesRcvd, msgsSent, bytesSent);
-        getDisplayString().setTagArg("t",0,buf);
+        getDisplayString().setTagArg("t", 0, buf);
     }
 }
 

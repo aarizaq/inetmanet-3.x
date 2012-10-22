@@ -145,11 +145,7 @@ struct dsr_srt *dsr_srt_new(struct in_addr src, struct in_addr dst,
             int size = sizeAdd<sizeEtx?sizeAdd:sizeEtx;
             for (int i=0; i<size; i++)
             {
-#ifdef MobilityFramework
-                addrs1 = cost[i].address;
-#else
-addrs1 = cost[i].address.getInt();
-#endif
+                addrs1 = cost[i].address.getInt();
                 addrs2 = sr->addrs[i].s_addr;
                 if (addrs2 != addrs1)
                 {
@@ -166,17 +162,11 @@ addrs1 = cost[i].address.getInt();
             {
                 for (int i=0; i<size; i++)
                 {
-#ifdef MobilityFramework
-                    if (cost[sizeEtx-1].address==src.s_addr || cost[sizeEtx-1].address==dst.s_addr )
-                        addrs1 = cost[sizeEtx-2-i].address;
+
+                    if (cost[sizeEtx-1].address.getInt()==src.s_addr || cost[sizeEtx-1].address.getInt()==dst.s_addr )
+                        addrs1 = cost[sizeEtx-2-i].address.getInt();
                     else
-                        addrs1 = cost[sizeEtx-1-i].address;
-#else
-if (cost[sizeEtx-1].address.getInt()==src.s_addr || cost[sizeEtx-1].address.getInt()==dst.s_addr )
-    addrs1 = cost[sizeEtx-2-i].address.getInt();
-else
-    addrs1 = cost[sizeEtx-1-i].address.getInt();
-#endif
+                        addrs1 = cost[sizeEtx-1-i].address.getInt();
                     addrs2 = sr->addrs[i].s_addr;
                     if (addrs2 != addrs1)
                         opp_error("Dsr error, Etx address and dsr are different");
@@ -191,11 +181,8 @@ else
             int j=-1;
             for (int i=0; i<sizeEtx; i++)
             {
-#ifdef MobilityFramework
-                if (cost[i].address==src.s_addr)
-#else
-if (cost[i].address.getInt()==src.s_addr)
-#endif
+
+                if (cost[i].address.getInt()==src.s_addr)
                 {
                     j=i;
                     break;
@@ -209,11 +196,8 @@ if (cost[i].address.getInt()==src.s_addr)
                 int l=0;
                 for (int i=j-1; i>=0; i--)
                 {
-#ifdef MobilityFramework
-                    addrs1 = cost[i].address;
-#else
-addrs1 = cost[i].address.getInt();
-#endif
+
+                    addrs1 = cost[i].address.getInt();
                     addrs2 = sr->addrs[l].s_addr;
                     l++;
                     if (addrs2 != addrs1)
@@ -235,11 +219,7 @@ addrs1 = cost[i].address.getInt();
                 {
                     for (int i=0; i<sizeAdd; i++)
                     {
-#ifdef MobilityFramework
-                        addrs1 = cost[j+1+i].address;
-#else
-addrs1 = cost[j+1+i].address.getInt();
-#endif
+                        addrs1 = cost[j+1+i].address.getInt();
                         addrs2 = sr->addrs[i].s_addr;
                         if (addrs2 != addrs1)
                             opp_error("Dsr error, Etx address and dsr are different");
@@ -477,6 +457,8 @@ struct dsr_srt *dsr_srt_new_rev(struct dsr_srt *srt)
         size_cost=srt->cost_size*sizeof(unsigned int);
     srt_rev = (struct dsr_srt *)MALLOC(sizeof(struct dsr_srt) + srt->laddrs+size_cost,
                                        GFP_ATOMIC);
+    if (!srt_rev)
+        return NULL;
 
     char *aux = (char *) srt_rev;
     aux += sizeof(struct dsr_srt);
@@ -494,9 +476,9 @@ struct dsr_srt *dsr_srt_new_rev(struct dsr_srt *srt)
 #else
     srt_rev = (struct dsr_srt *)MALLOC(sizeof(struct dsr_srt) +
                                        srt->laddrs, GFP_ATOMIC);
-#endif
     if (!srt_rev)
         return NULL;
+#endif
 
     srt_rev->src.s_addr = srt->dst.s_addr;
     srt_rev->dst.s_addr = srt->src.s_addr;
@@ -541,6 +523,8 @@ split:
     srt_split = (struct dsr_srt *)MALLOC(sizeof(struct dsr_srt) +
                                          (i * sizeof(struct in_addr)),
                                          GFP_ATOMIC);
+    if (!srt_split)
+        return NULL;
 #else
     int size_cost = 0;
     if (srt->cost_size>0)
@@ -548,6 +532,9 @@ split:
     srt_split = (struct dsr_srt *)MALLOC(sizeof(struct dsr_srt) +
                                          (i * sizeof(struct in_addr))+size_cost,
                                          GFP_ATOMIC);
+
+    if (!srt_split)
+        return NULL;
 
     char *aux = (char *) srt_split;
     aux += sizeof(struct dsr_srt);
@@ -563,9 +550,6 @@ split:
     }
     srt_split->flags = srt->flags;
 #endif
-
-    if (!srt_split)
-        return NULL;
 
     srt_split->src.s_addr = srt->src.s_addr;
     srt_split->dst.s_addr = srt->addrs[i].s_addr;
@@ -635,6 +619,8 @@ struct dsr_srt *dsr_srt_shortcut(struct dsr_srt *srt, struct in_addr a1,
     srt_cut = (struct dsr_srt *)MALLOC(sizeof(struct dsr_srt) +
                                        (n_cut*sizeof(struct in_addr)),
                                        GFP_ATOMIC);
+    if (!srt_cut)
+        return NULL;
 #else
     int size_cost = 0;
     if (srt->cost_size>0)
@@ -642,6 +628,8 @@ struct dsr_srt *dsr_srt_shortcut(struct dsr_srt *srt, struct in_addr a1,
     srt_cut = (struct dsr_srt *)MALLOC(sizeof(struct dsr_srt) +
                                        (n_cut * sizeof(struct in_addr))+size_cost,
                                        GFP_ATOMIC);
+    if (!srt_cut)
+        return NULL;
 
     char *aux = (char *) srt_cut;
     aux += sizeof(struct dsr_srt);
@@ -661,10 +649,6 @@ struct dsr_srt *dsr_srt_shortcut(struct dsr_srt *srt, struct in_addr a1,
     }
     srt_cut->flags = srt->flags;
 #endif
-
-
-    if (!srt_cut)
-        return NULL;
 
     srt_cut->src = srt->src;
     srt_cut->dst = srt->dst;
@@ -719,6 +703,8 @@ struct dsr_srt *dsr_srt_concatenate(struct dsr_srt *srt1, struct dsr_srt *srt2)
     srt_cat = (struct dsr_srt *)MALLOC(sizeof(struct dsr_srt) +
                                        (n * sizeof(struct in_addr)),
                                        GFP_ATOMIC);
+    if (!srt_cat)
+        return NULL;
 #else
     int size_cost = 0;
     if (srt1->cost_size>0 || srt2->cost_size>0)
@@ -726,6 +712,8 @@ struct dsr_srt *dsr_srt_concatenate(struct dsr_srt *srt1, struct dsr_srt *srt2)
     srt_cat = (struct dsr_srt *)MALLOC(sizeof(struct dsr_srt) +
                                        (n * sizeof(struct in_addr))+size_cost,
                                        GFP_ATOMIC);
+    if (!srt_cat)
+        return NULL;
 
     char *aux = (char *) srt_cat;
     aux += sizeof(struct dsr_srt);
@@ -742,9 +730,6 @@ struct dsr_srt *dsr_srt_concatenate(struct dsr_srt *srt1, struct dsr_srt *srt2)
         srt_cat->cost_size=srt1->cost_size+srt2->cost_size;
     srt_cat->flags = srt1->flags & srt2->flags;
 #endif
-
-    if (!srt_cat)
-        return NULL;
 
     srt_cat->src = srt1->src;
     srt_cat->dst = srt2->dst;
@@ -870,6 +855,9 @@ int NSCLASS dsr_srt_add(struct dsr_pkt *dp)
     tot_len = ntohs(dp->nh.iph->tot_len) + len;
     ttl = dp->nh.iph->ttl;
 #endif
+#ifdef OMNETPP
+    ip_len = dp->nh.iph->ihl;
+#endif
     dp->nh.iph = dsr_build_ip(dp, dp->src, dp->dst, ip_len, tot_len,
                               IPPROTO_DSR, ttl);
 
@@ -950,11 +938,7 @@ int NSCLASS dsr_srt_opt_recv(struct dsr_pkt *dp, struct dsr_srt_opt *srt_opt)
     {
         if (etxActive)
         {
-#ifdef MobilityFramework
-            ph_srt_add_node (dp->prv_hop,ConfValToUsecs(RouteCacheTimeout), 0,(unsigned int)getCost(dp->prv_hop.s_addr));
-#else
             ph_srt_add_node (dp->prv_hop,ConfValToUsecs(RouteCacheTimeout), 0,(unsigned int)getCost(IPv4Address((uint32_t)dp->prv_hop.s_addr)));
-#endif
         }
         else
             ph_srt_add_node (dp->prv_hop,ConfValToUsecs(RouteCacheTimeout), 0,0);
@@ -988,13 +972,8 @@ int NSCLASS dsr_srt_opt_recv(struct dsr_pkt *dp, struct dsr_srt_opt *srt_opt)
     {
         if (etxActive)
         {
-#ifdef MobilityFramework
-            lc_link_add(my_addr(), dp->prv_hop,
-                        ConfValToUsecs(RouteCacheTimeout), 0, (unsigned int)getCost(dp->prv_hop.s_addr));
-#else
             lc_link_add(my_addr(), dp->prv_hop,
                         ConfValToUsecs(RouteCacheTimeout), 0, (unsigned int)getCost(IPv4Address((uint32_t)dp->prv_hop.s_addr)));
-#endif
         }
         else
             lc_link_add(my_addr(), dp->prv_hop,
@@ -1039,13 +1018,8 @@ int NSCLASS dsr_srt_opt_recv(struct dsr_pkt *dp, struct dsr_srt_opt *srt_opt)
                 if (myaddr.s_addr==srt_cut->addrs[i].s_addr)
                     break;
             }
-#ifdef MobilityFramework
-            if (srt_cut->cost_size>j)
-                srt_cut->cost[j] = (unsigned int)getCost(dp->prv_hop.s_addr);
-#else
             if (srt_cut->cost_size>j)
                 srt_cut->cost[j] = (unsigned int)getCost(IPv4Address((uint32_t)dp->prv_hop.s_addr));
-#endif
         }
 #endif
 
@@ -1094,18 +1068,10 @@ int NSCLASS dsr_srt_opt_recv(struct dsr_pkt *dp, struct dsr_srt_opt *srt_opt)
 
         for (i=0 ; i< dp->costVectorSize; i++)
         {
-#ifdef MobilityFramework
-            if (myaddr.s_addr==dp->costVector[i].address)
-#else
             if (myaddr.s_addr==dp->costVector[i].address.getInt())
-#endif
             {
                 if (i==0)
-#ifdef MobilityFramework
-                    dp->costVector[i].cost = getCost(dp->src.s_addr);
-#else
                     dp->costVector[i].cost = getCost(IPv4Address((uint32_t)dp->src.s_addr));
-#endif
                 else
                     dp->costVector[i].cost = getCost(dp->costVector[i-1].address);
                 break;

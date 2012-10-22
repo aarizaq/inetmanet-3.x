@@ -27,7 +27,6 @@ const char *notificationCategoryName(int category)
     {
         case NF_SUBSCRIBERLIST_CHANGED: return "SUBSCRIBERS";
 
-        case NF_HOSTPOSITION_UPDATED: return "POS";
         case NF_NODE_FAILURE: return "FAILURE";
         case NF_NODE_RECOVERY: return "RECOVERY";
 
@@ -50,8 +49,10 @@ const char *notificationCategoryName(int category)
 
         case NF_IPv4_ROUTE_ADDED: return "IPv4-ROUTE-ADD";
         case NF_IPv4_ROUTE_DELETED: return "IPv4-ROUTE-DEL";
+        case NF_IPv4_ROUTE_CHANGED: return "IPv4-ROUTE-CHG";
         case NF_IPv6_ROUTE_ADDED: return "IPv6-ROUTE-ADD";
         case NF_IPv6_ROUTE_DELETED: return "IPv6-ROUTE-DEL";
+        case NF_IPv6_ROUTE_CHANGED: return "IPv6-ROUTE-CHG";
 
         case NF_IPv6_HANDOVER_OCCURRED: return "IPv6-HANDOVER";
         case NF_MIPv6_RO_COMPLETED: return "MIPv6 RO COMPLETED";
@@ -62,12 +63,12 @@ const char *notificationCategoryName(int category)
         case NF_BATTERY_CHANGED: return "NF_BATTERY_CHANGED";
         case NF_BATTERY_CPUTIME_CONSUMED: return "NF_BATTERY_CPUTIME_CONSUMED";
 
-        default: sprintf(buf, "%d", category); s = buf;
+        default: sprintf(buf, "%d", category); s = buf; break;
     }
     return s;
 }
 
-void printNotificationBanner(int category, const cPolymorphic *details)
+void printNotificationBanner(int category, const cObject *details)
 {
     EV << "** Notification at T=" << simTime()
        << " to " << simulation.getContextModule()->getFullPath() << ": "

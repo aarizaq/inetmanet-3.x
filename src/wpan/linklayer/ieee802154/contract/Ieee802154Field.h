@@ -21,7 +21,7 @@ struct PAN_ELE
     UINT_8          CoordAddrMode;
     UINT_16         CoordPANId;
 
-    UINT_16         CoordAddress_16_or_64;      // shared by both 16 bit short address or 64 bit extended address
+    MACAddress      CoordAddress_16_or_64;      // shared by both 16 bit short address or 64 bit extended address
 
     UINT_8          LogicalChannel;
     //UINT_16           SuperframeSpec;     // ignored, store in txSfSpec or rxSfSpec instead

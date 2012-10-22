@@ -40,14 +40,14 @@ import inet.transport.IUDP;
 // arbitrary message with message kind UDP_C_BIND and an ~UDPControlInfo
 // attached with srcPort filled in.
 //
-// If there is only one app which doesn't bind to any port, it will
-// receive all packets.
+// When UDP receives an ICMP error (~ICMPMessage or ~ICMPv6Message)
+// that refers to an UDP socket, it reports the error to the corresponding
+// application by sending a message with kind UDP_I_ERROR.
 //
 // <b>Communication with the IP (IPv4/IPv6) layer</b>
 //
 // The ~UDP model relies on sending and receiving ~IPv4ControlInfo/~IPv6ControlInfo
-// objects attached to ~UDPPacket objects as control info
-// (see cMessage::setControlInfo()).
+// objects attached to ~UDPPacket objects as control info.
 //
 // @see ~UDPPacket, ~UDPControlInfo, ~UDPCommandCode
 //
@@ -56,12 +56,12 @@ simple UDP like IUDP
     parameters:
         @display("i=block/transport");
         @signal[sentPk](type=cPacket);
-        @signal[recvPk](type=cPacket);
+        @signal[rcvdPk](type=cPacket);
         @signal[passedUpPk](type=cPacket);
         @signal[droppedPkWrongPort](type=cPacket);
         @signal[droppedPkBadChecksum](type=cPacket);
-        @statistic[sentPk](title="packets sent"; record=count,"vector(count)"; interpolationmode=none);
-        @statistic[recvPk](title="packets received"; record=count,"vector(count)"; interpolationmode=none);
+        @statistic[sentPk](title="packets sent"; source=sentPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[rcvdPk](title="packets received"; source=rcvdPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
         @statistic[passedUpPk](title="packets passed up"; record=count,"vector(count)"; interpolationmode=none);
         @statistic[droppedPkWrongPort](title="packets dropped (wrong port)"; record=count,"vector(count)"; interpolationmode=none);
         @statistic[droppedPkBadChecksum](title="packets dropped (checksum error)"; record=count,"vector(count)"; interpolationmode=none);

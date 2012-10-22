@@ -17,19 +17,19 @@
 #include "DSDV_2.h"
 
 #define NOforwardHello
-Define_Module (DSDV_2);
+Define_Module(DSDV_2);
 
 void DSDV_2::initialize(int stage)
 {
     //reads from omnetpp.ini
     if (stage==4)
     {
-        sequencenumber=0;
-        ift=NULL;
-        rt=NULL;
-        ift = InterfaceTableAccess ().get();
+        sequencenumber = 0;
+        ift = NULL;
+        rt = NULL;
+        ift = InterfaceTableAccess().get();
         /* Search the 80211 interface */
-        int  num_80211=0;
+        int  num_80211 = 0;
         InterfaceEntry *   ie;
         InterfaceEntry *   i_face;
         const char *name;
@@ -37,7 +37,7 @@ void DSDV_2::initialize(int stage)
         {
             ie = ift->getInterface(i);
             name = ie->getName();
-            if (strstr (name,"wlan")!=NULL)
+            if (strstr(name, "wlan")!=NULL)
             {
                 i_face = ie;
                 num_80211++;
@@ -47,13 +47,29 @@ void DSDV_2::initialize(int stage)
 
         // One enabled network interface (in total)
         if (num_80211==1)
-            interface80211ptr=i_face;
+            interface80211ptr = i_face;
         else
-            opp_error ("DSDV has found %i 80211 interfaces",num_80211);
+            opp_error("DSDV has found %i 80211 interfaces", num_80211);
+        rt = RoutingTableAccess().get();
+        if (par("manetPurgeRoutingTables").boolValue())
+        {
+            IPv4Route *entry;
+            // clean the route table wlan interface entry
+            for (int i=rt->getNumRoutes()-1; i>=0; i--)
+            {
+                entry = rt->getRoute(i);
+                const InterfaceEntry *ie = entry->getInterface();
+                if (strstr(ie->getName(), "wlan")!=NULL)
+                {
+                    rt->deleteRoute(entry);
+                }
+            }
+        }
+        interface80211ptr->ipv4Data()->joinMulticastGroup(IPv4Address::LL_MANET_ROUTERS);
 
         // schedules a random periodic event: the hello message broadcast from DSDV module
-        rt = RoutingTableAccess().get();
-        rt->setTimeToLiveRoutingEntry(par("timetolive_routing_entry"));
+
+        routeLifetime = par("routeLifetime").doubleValue();
 
         //reads from omnetpp.ini
         hellomsgperiod_DSDV = (simtime_t) par("hellomsgperiod_DSDV");
@@ -61,7 +77,7 @@ void DSDV_2::initialize(int stage)
         // schedules a random periodic event: the hello message broadcast from DSDV module
         forwardList = new list<forwardHello*>;
         event = new cMessage("event");
-        scheduleAt( uniform(0, par("MaxVariance_DSDV"), par("RNGseed_DSDV") ) , event);
+        scheduleAt( uniform(0, par("MaxVariance_DSDV").doubleValue(), par("RNGseed_DSDV").doubleValue()), event);
 
     }
 }
@@ -97,10 +113,10 @@ DSDV_2::~DSDV_2()
         forwardHello *fh = forwardList->front();
         if (fh->event)
             cancelAndDelete(fh->event);
-        if (fh->event)
+        if (fh->hello)
             cancelAndDelete(fh->hello);
-        fh->event=NULL;
-        fh->hello=NULL;
+        fh->event = NULL;
+        fh->hello = NULL;
         forwardList->pop_front();
         delete fh;
     }
@@ -111,7 +127,7 @@ DSDV_2::~DSDV_2()
 void DSDV_2::handleMessage(cMessage *msg)
 {
 
-    DSDV_HelloMessage * recHello=NULL;
+    DSDV_HelloMessage * recHello = NULL;
     // When DSDV module receives selfmessage (scheduled event)
     // it means that it's time for Hello message broadcast event
     // i.e. Brodcast Hello messages to other nodes when selfmessage=event
@@ -130,7 +146,7 @@ void DSDV_2::handleMessage(cMessage *msg)
             if (!rt)
                 rt = RoutingTableAccess().get();
 
-            rt->dsdvTestAndDelete();
+            rt->purge();
 
             // count non-loopback interfaces
             // int numIntf = 0;
@@ -142,9 +158,9 @@ void DSDV_2::handleMessage(cMessage *msg)
             // Filling the DSDV_HelloMessage fields
             // IPv4Address source = (ie->ipv4()->getIPAddress());
             IPv4Address source = (interface80211ptr->ipv4Data()->getIPAddress());
-            Hello->setBitLength(128);///size of Hello message in bits
+            Hello->setBitLength(128); ///size of Hello message in bits
             Hello->setSrcIPAddress(source);
-            sequencenumber+=2;
+            sequencenumber += 2;
             Hello->setSequencenumber(sequencenumber);
             Hello->setNextIPAddress(source);
             Hello->setHopdistance(1);
@@ -163,18 +179,18 @@ void DSDV_2::handleMessage(cMessage *msg)
             */
             //new control info for DSDV_HelloMessage
             IPv4ControlInfo *controlInfo = new IPv4ControlInfo();
-            controlInfo->setDestAddr(IPv4Address(255,255,255,255));//let's try the limited broadcast 255.255.255.255 but multicast goes from 224.0.0.0 to 239.255.255.255
-            controlInfo->setSrcAddr(source);//let's try the limited broadcast
+            controlInfo->setDestAddr(IPv4Address(255, 255, 255, 255)); //let's try the limited broadcast 255.255.255.255 but multicast goes from 224.0.0.0 to 239.255.255.255
+            controlInfo->setSrcAddr(source); //let's try the limited broadcast
             controlInfo->setProtocol(IP_PROT_MANET);
             controlInfo->setInterfaceId(interface80211ptr->getInterfaceId());
             Hello->setControlInfo(controlInfo);
 
             //broadcast to other nodes the hello message
             send(Hello, "to_ip");
-            Hello=NULL;
+            Hello = NULL;
 
             //schedule new brodcast hello message event
-            scheduleAt(simTime()+hellomsgperiod_DSDV+uniform(0,0.01), event);
+            scheduleAt(simTime()+hellomsgperiod_DSDV+uniform(0, 0.01), event);
             bubble("Sending new hello message");
         }
         else
@@ -191,7 +207,7 @@ void DSDV_2::handleMessage(cMessage *msg)
                         send((*it)->hello, "to_ip");
                         (*it)->hello = NULL;
                         delete (*it)->event;
-                        (*it)->event=NULL;
+                        (*it)->event = NULL;
                         delete (*it);
                         forwardList->erase(it);
                     }
@@ -215,7 +231,7 @@ void DSDV_2::handleMessage(cMessage *msg)
             if (msg->getControlInfo() != NULL )
                 delete msg->removeControlInfo();
             IPv4ControlInfo *controlInfo = new IPv4ControlInfo();
-            controlInfo->setDestAddr(IPv4Address(255,255,255,255));//let's try the limited broadcast 255.255.255.255 but multicast goes from 224.0.0.0 to 239.255.255.255
+            controlInfo->setDestAddr(IPv4Address(255, 255, 255, 255)); //let's try the limited broadcast 255.255.255.255 but multicast goes from 224.0.0.0 to 239.255.255.255
 
             // int numIntf = 0;
             if (ift!=NULL)
@@ -318,41 +334,31 @@ void DSDV_2::handleMessage(cMessage *msg)
 
 
 
-            IPv4Route *entrada_routing =const_cast<IPv4Route *> (rt->findBestMatchingRoute(src));
+            IPv4Route *_entrada_routing = rt->findBestMatchingRoute(src);
+            DSDVIPv4Route *entrada_routing = dynamic_cast<DSDVIPv4Route *>(_entrada_routing);
 
             //Tests if the DSDV hello message that arrived is useful
-            if (entrada_routing == NULL || (entrada_routing != NULL && (msgsequencenumber>(entrada_routing->getSequencenumber()) || (msgsequencenumber == (entrada_routing->getSequencenumber()) && numHops < (entrada_routing->getMetric())))))
+            if (_entrada_routing == NULL
+                    || (_entrada_routing != NULL && _entrada_routing->getNetmask() != IPv4Address::ALLONES_ADDRESS)
+                    || (entrada_routing != NULL && (msgsequencenumber>(entrada_routing->getSequencenumber()) || (msgsequencenumber == (entrada_routing->getSequencenumber()) && numHops < (entrada_routing->getMetric())))))
             {
 
-                //changes information that exists in routing table according to information in hello message
+                //remove old entry
                 if (entrada_routing != NULL)
-                {
-                    IPv4Address netmask = IPv4Address(par("netmask").stringValue());//reads from omnetpp.ini
-                    entrada_routing->setHost(src);
-                    entrada_routing->setNetmask(netmask);
-                    entrada_routing->setGateway(next);
-                    entrada_routing->setInterface(interface80211ptr);
-                    entrada_routing->setType(IPv4Route::REMOTE);
-                    entrada_routing->setSource(IPv4Route::MANET);
-                    entrada_routing->setMetric(numHops);
-                    entrada_routing->setSequencenumber(msgsequencenumber);
-                    entrada_routing->setInstallTime(simTime());
+                    rt->deleteRoute(entrada_routing);
 
-                }
                 //adds new information to routing table according to information in hello message
-                else
                 {
-                    IPv4Address netmask = IPv4Address(par("netmask").stringValue());
-                    IPv4Route *e = new IPv4Route();
-                    e->setHost (src);
-                    e->setNetmask (netmask);
-                    e->setGateway (next);
+                    IPv4Address netmask = IPv4Address::ALLONES_ADDRESS; // IPv4Address(par("netmask").stringValue());
+                    DSDVIPv4Route *e = new DSDVIPv4Route();
+                    e->setDestination(src);
+                    e->setNetmask(netmask);
+                    e->setGateway(next);
                     e->setInterface(interface80211ptr);
-                    e->setType (IPv4Route::REMOTE);
                     e->setSource(IPv4Route::MANET);
-                    e->setMetric (numHops);
+                    e->setMetric(numHops);
                     e->setSequencenumber(msgsequencenumber);
-                    e->setInstallTime (simTime());
+                    e->setExpiryTime(simTime()+routeLifetime);
                     rt->addRoute(e);
                 }
 #ifdef      NOforwardHello
@@ -361,12 +367,12 @@ void DSDV_2::handleMessage(cMessage *msg)
                 recHello->setHopdistance(numHops);
                 //send(HelloForward, "to_ip");//
                 //HelloForward=NULL;//
-                double waitTime = intuniform(1,50);
+                double waitTime = intuniform(1, 50);
                 waitTime = waitTime/100;
                 EV << "waitime for forward before was " << waitTime <<" And host is " << source << "\n";
                 //waitTime= SIMTIME_DBL (simTime())+waitTime;
                 EV << "waitime for forward is " << waitTime <<" And host is " << source << "\n";
-                sendDelayed(recHello,waitTime,"to_ip");
+                sendDelayed(recHello, waitTime, "to_ip");
 #else
                 try
                 {
@@ -376,10 +382,10 @@ void DSDV_2::handleMessage(cMessage *msg)
                     fhp->hello->setHopdistance(numHops);
                     //send(HelloForward, "to_ip");//
                     //HelloForward=NULL;//
-                    double waitTime = intuniform(1,50);
+                    double waitTime = intuniform(1, 50);
                     waitTime = waitTime/100;
                     EV << "waitime for forward before was " << waitTime <<" And host is " << source << "\n";
-                    waitTime= SIMTIME_DBL (simTime())+waitTime;
+                    waitTime = SIMTIME_DBL(simTime())+waitTime;
                     EV << "waitime for forward is " << waitTime <<" And host is " << source << "\n";
                     fhp->event = new cMessage("event2");
                     scheduleAt(waitTime, fhp->event);
@@ -408,7 +414,7 @@ void DSDV_2::handleMessage(cMessage *msg)
     }
     else
     {
-        error ("Message not supported %s",msg->getName());
+        error("Message not supported %s", msg->getName());
     }
 }
 

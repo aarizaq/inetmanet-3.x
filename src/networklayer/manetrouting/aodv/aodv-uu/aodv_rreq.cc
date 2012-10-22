@@ -142,7 +142,7 @@ void NS_CLASS rreq_send(struct in_addr dest_addr, u_int32_t dest_seqno,
 #ifdef OMNETPP
     double delay = -1;
     if (par("EqualDelay"))
-        delay = par("broadCastDelay");
+        delay = par("broadcastDelay");
 #endif
 
     for (i = 0; i < MAX_NR_INTERFACES; i++)
@@ -194,7 +194,7 @@ void NS_CLASS rreq_forward(RREQ * rreq, int size, int ttl)
     /* Send out on all interfaces */
     double delay = -1;
     if (par("EqualDelay"))
-        delay = par("broadCastDelay");
+        delay = par("broadcastDelay");
 
     for (i = 0; i < MAX_NR_INTERFACES; i++)
     {
@@ -225,8 +225,20 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
     uint32_t cost;
     uint8_t  hopfix;
 
-    rreq_dest.s_addr = rreq->dest_addr;
-    rreq_orig.s_addr = rreq->orig_addr;
+    Uint128 aux;
+    if (getAp(rreq->dest_addr, aux) && !isBroadcast(rreq->dest_addr))
+    {
+        rreq_dest.s_addr = aux;
+    }
+    else
+        rreq_dest.s_addr = rreq->dest_addr;
+
+    if (getAp(rreq->orig_addr, aux))
+    {
+        rreq_orig.s_addr = aux;
+    }
+    else
+        rreq_orig.s_addr = rreq->orig_addr;
     rreq_id = ntohl(rreq->rreq_id);
     rreq_dest_seqno = ntohl(rreq->dest_seqno);
     rreq_orig_seqno = ntohl(rreq->orig_seqno);
@@ -253,11 +265,9 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
     DEBUG(LOG_DEBUG, 0, "ip_src=%s rreq_orig=%s rreq_dest=%s",
           ip_to_str(ip_src), ip_to_str(rreq_orig), ip_to_str(rreq_dest));
 #ifdef OMNETPP
-
     totalRreqRec++;
-    if (!ev.isDisabled())
-        ev.printf("ip_src=%s rreq_orig=%s rreq_dest=%s",ip_to_str(ip_src),
-                  ip_to_str(rreq_orig), ip_to_str(rreq_dest));
+    EV << "RREQ received, Src Address :" << convertAddressToString(ip_src.s_addr) << "  RREQ origin :" <<
+            convertAddressToString(rreq_orig.s_addr) << "  RREQ dest :" << convertAddressToString(rreq_dest.s_addr) << "\n";
 #endif
 
     if (rreqlen < (int) RREQ_SIZE)
@@ -274,7 +284,7 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
     {
         DEBUG(LOG_DEBUG, 0, "prev hop of RREQ blacklisted, ignoring!");
 #ifdef OMNETPP
-        EV << "prev hop of RREQ blacklisted, ignoring!";
+        EV << "prev hop of RREQ blacklisted, ignoring!" << "\n";
 #endif
         return;
     }
@@ -284,8 +294,13 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
     {
         life = PATH_DISCOVERY_TIME - 2 * rreq_new_hcnt * NODE_TRAVERSAL_TIME;
 #ifdef OMNETPP
-        if (isBroadcast (rreq_dest.s_addr))
+        if (isBroadcast(rreq_dest.s_addr))
         {
+
+           if (par("proactiveLifeTime").longValue() > 0 )
+               life = par("proactiveLifeTime").longValue() ;
+           else
+               life = PATH_DISCOVERY_TIME - 2 * rreq_new_hcnt * NODE_TRAVERSAL_TIME;
            rev_rt = rt_table_find(rreq_orig);
            if (rev_rt == NULL)
            {
@@ -307,6 +322,7 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
         else
 #endif
         {
+            life = PATH_DISCOVERY_TIME - 2 * rreq_new_hcnt * NODE_TRAVERSAL_TIME;
             rev_rt = rt_table_find(rreq_orig);
             if (rev_rt == NULL)
             {
@@ -451,6 +467,38 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
         }
     }
 #endif
+
+#ifdef OMNETPP
+    if (getIsGateway())
+    {
+        /* Subnet locality decision */
+        // search address
+        if (isAddressInProxyList(rreq_dest.s_addr))
+        {
+            /* We must increase the gw's sequence number before sending a RREP,
+             * otherwise intermediate nodes will not forward the RREP. */
+            seqno_incr(this_host.seqno);
+            rrep = rrep_create(0, 0, 0, DEV_IFINDEX(rev_rt->ifindex).ipaddr,
+                               this_host.seqno, rev_rt->dest_addr,
+                               ACTIVE_ROUTE_TIMEOUT);
+
+            ext = rrep_add_ext(rrep, RREP_INET_DEST_EXT, rrep_size,
+                               sizeof(struct in_addr), (char *) &rreq_dest);
+
+            rrep_size += AODV_EXT_SIZE(ext);
+
+
+            DEBUG(LOG_DEBUG, 0,
+                  "Responding for INTERNET dest: %s rrep_size=%d",
+                  ip_to_str(rreq_dest), rrep_size);
+
+            rrep_send(rrep, rev_rt, NULL, rrep_size);
+
+            return;
+
+        }
+    }
+#endif
     /* Are we the destination of the RREQ?, if so we should immediately send a
        RREP.. */
 #ifndef OMNETPP
@@ -475,7 +523,7 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
                            this_host.seqno, rev_rt->dest_addr,
                            MY_ROUTE_TIMEOUT);
 #ifdef OMNETPP
-        EV << " create a rrep" << ip_to_str(DEV_IFINDEX(rev_rt->ifindex).ipaddr) << "seq n" << this_host.seqno << " to " << ip_to_str(rev_rt->dest_addr);
+        EV << " create a rrep" << convertAddressToString(DEV_IFINDEX(rev_rt->ifindex).ipaddr.s_addr) << "seq n" << this_host.seqno << " to " << convertAddressToString(rev_rt->dest_addr.s_addr) << "\n";
 #endif
 
         rrep_send(rrep, rev_rt, NULL, RREP_SIZE);
@@ -493,7 +541,7 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
            one in the RREQ. */
         seqno_incr(this_host.seqno);
         rrep = rrep_create(0, 0, 0, DEV_IFINDEX(rev_rt->ifindex).ipaddr,this_host.seqno, rev_rt->dest_addr, MY_ROUTE_TIMEOUT);
-        EV << " create a rrep" << ip_to_str(DEV_IFINDEX(rev_rt->ifindex).ipaddr) << "seq n" << this_host.seqno << " to " << ip_to_str(rev_rt->dest_addr);
+        EV << "Create a rrep" << convertAddressToString(DEV_IFINDEX(rev_rt->ifindex).ipaddr.s_addr) << "seq n" << this_host.seqno << " to " << convertAddressToString(rev_rt->dest_addr.s_addr) << "\n";
         rrep_send(rrep, rev_rt, NULL, RREP_SIZE);
         if (ip_ttl > 0)
         {
@@ -502,7 +550,7 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
         else
         {
             DEBUG(LOG_DEBUG, 0, "RREQ not forwarded - ttl=0");
-            EV << "RREQ not forwarded - ttl=0";
+            EV << "RREQ not forwarded - ttl=0" << "\n";
         }
         return;
     }
@@ -568,11 +616,20 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
             {
 //      if (fwd_rt->dest_seqno != 0 &&
 //      (int32_t) fwd_rt->dest_seqno >= (int32_t) rreq_dest_seqno) {
-
+#ifdef AODV_USE_STL
+                if (fwd_rt->state==IMMORTAL)
+                    lifetime = 10000;
+                else
+                {
+                    double val = SIMTIME_DBL(fwd_rt->rt_timer.timeout - simTime());
+                    lifetime = (val * 1000.0);
+                }
+#else
                 if (fwd_rt->state==IMMORTAL)
                     lifetime = 10000;
                 else
                     lifetime = timeval_diff(&fwd_rt->rt_timer.timeout, &now);
+#endif
                 rrep = rrep_create(0, 0, fwd_rt->hcnt, fwd_rt->dest_addr,
                                    fwd_rt->dest_seqno, rev_rt->dest_addr,
                                    lifetime);
@@ -611,6 +668,30 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
                         return;
             */
         }
+#ifdef OMNETPP
+        // collaborative protocol
+        if (getCollaborativeProtocol())
+        {
+            struct in_addr next_hop;
+            int iface;
+            double cost;
+            if (getCollaborativeProtocol()->getNextHop(rreq_dest.s_addr,next_hop.s_addr,iface,cost))
+            {
+
+                u_int8_t hops = cost;
+                std::map<Uint128,u_int32_t *>::iterator it =  mapSeqNum.find(rreq_dest.s_addr);
+                if (it == mapSeqNum.end())
+                    opp_error("node not found in mapSeqNum");
+                u_int32_t sqnum = *(it->second);
+
+                rrep = rrep_create(0, 0, hops, rreq_dest , sqnum, rev_rt->dest_addr, MY_ROUTE_TIMEOUT);
+                rrep_send(rrep, rev_rt, NULL, rrep_size);
+                return;
+            }
+        }
+
+#endif
+
 forward:
 #ifndef OMNETPP
         if (ip_ttl > 1)
@@ -638,7 +719,7 @@ forward:
         {
             DEBUG(LOG_DEBUG, 0, "RREQ not forwarded - ttl=0");
 #ifdef OMNETPP
-            EV << "RREQ not forwarded - ttl=0";
+            EV << "RREQ not forwarded - ttl=0" << "\n";
 #endif
         }
     }
@@ -688,9 +769,14 @@ void NS_CLASS rreq_route_discovery(struct in_addr dest_addr, u_int8_t flags,
 
         /* A routing table entry waiting for a RREP should not be expunged
            before 2 * NET_TRAVERSAL_TIME... */
+#ifdef AODV_USE_STL
+        if ((rt->rt_timer.timeout - simTime()) < (2 * NET_TRAVERSAL_TIME))
+            rt_table_update_timeout(rt, 2 * NET_TRAVERSAL_TIME);
+#else
         if (timeval_diff(&rt->rt_timer.timeout, &now) <
                 (2 * NET_TRAVERSAL_TIME))
             rt_table_update_timeout(rt, 2 * NET_TRAVERSAL_TIME);
+#endif
     }
 
     rreq_send(dest_addr, dest_seqno, ttl, flags);
@@ -750,9 +836,13 @@ void NS_CLASS rreq_local_repair(rt_table_t * rt, struct in_addr src_addr,
        local_repair_timeout */
     rt->rt_timer.handler = &NS_CLASS route_expire_timeout;
 
+#ifdef AODV_USE_STL
+    if ((rt->rt_timer.timeout -simTime()) < (2 * NET_TRAVERSAL_TIME))
+        rt_table_update_timeout(rt, 2 * NET_TRAVERSAL_TIME);
+#else
     if (timeval_diff(&rt->rt_timer.timeout, &now) < (2 * NET_TRAVERSAL_TIME))
         rt_table_update_timeout(rt, 2 * NET_TRAVERSAL_TIME);
-
+#endif
 
     rreq_send(rt->dest_addr, rt->dest_seqno, ttl, flags);
 
@@ -779,13 +869,14 @@ void NS_CLASS  rreq_proactive (void *arg)
     if (!isRoot)
          return;
     if (this->isInMacLayer())
-         dest.s_addr= MACAddress::BROADCAST_ADDRESS;
+         dest.s_addr= MACAddress::BROADCAST_ADDRESS.getInt();
     else
-         dest.s_addr= IPv4Address::ALLONES_ADDRESS;
+         dest.s_addr= IPv4Address::ALLONES_ADDRESS.getInt();
     rreq_send(dest,0,NET_DIAMETER, RREQ_DEST_ONLY);
     timer_set_timeout(&proactive_rreq_timer, proactive_rreq_timeout);
 }
 
+#ifndef AODV_USE_STL
 NS_STATIC struct rreq_record *NS_CLASS rreq_record_insert(struct in_addr orig_addr,
         u_int32_t rreq_id)
 {
@@ -841,6 +932,7 @@ void NS_CLASS rreq_record_timeout(void *arg)
     free(rec);
 }
 
+
 struct blacklist *NS_CLASS rreq_blacklist_insert(struct in_addr dest_addr)
 {
 
@@ -868,6 +960,7 @@ struct blacklist *NS_CLASS rreq_blacklist_insert(struct in_addr dest_addr)
     return bl;
 }
 
+
 struct blacklist *NS_CLASS rreq_blacklist_find(struct in_addr dest_addr)
 {
     list_t *pos;
@@ -890,4 +983,116 @@ void NS_CLASS rreq_blacklist_timeout(void *arg)
     list_detach(&bl->l);
     free(bl);
 }
+#else
+NS_STATIC struct rreq_record *NS_CLASS rreq_record_insert(struct in_addr orig_addr,
+        u_int32_t rreq_id)
+{
+    struct rreq_record *rec;
+
+    /* First check if this rreq packet is already buffered */
+    rec = rreq_record_find(orig_addr, rreq_id);
+
+    /* If already buffered, should we update the timer???  */
+    if (rec)
+        return rec;
+
+    if ((rec =
+                (struct rreq_record *) malloc(sizeof(struct rreq_record))) == NULL)
+    {
+        fprintf(stderr, "Malloc failed!!!\n");
+        exit(-1);
+    }
+    rec->orig_addr = orig_addr;
+    rec->rreq_id = rreq_id;
+
+    timer_init(&rec->rec_timer, &NS_CLASS rreq_record_timeout, rec);
+    rreq_records.push_back(rec);
+
+
+    DEBUG(LOG_INFO, 0, "Buffering RREQ %s rreq_id=%lu time=%u",
+          ip_to_str(orig_addr), rreq_id, PATH_DISCOVERY_TIME);
+
+    timer_set_timeout(&rec->rec_timer, PATH_DISCOVERY_TIME);
+    return rec;
+}
+
+NS_STATIC struct rreq_record *NS_CLASS rreq_record_find(struct in_addr orig_addr,
+        u_int32_t rreq_id)
+{
+    for (unsigned int i = 0 ; i < rreq_records.size();i++)
+    {
+        struct rreq_record *rec = rreq_records[i];
+        if (rec->orig_addr.s_addr == orig_addr.s_addr &&
+                (rec->rreq_id == rreq_id))
+            return rec;
+    }
+    return NULL;
+}
+
+void NS_CLASS rreq_record_timeout(void *arg)
+{
+    struct rreq_record *rec = (struct rreq_record *) arg;
+    for (RreqRecords::iterator it = rreq_records.begin();it!=rreq_records.end();it++)
+    {
+        struct rreq_record *recAux = *it;
+        if (rec  == recAux)
+        {
+            rreq_records.erase(it);
+            break;
+        }
+    }
+    free(rec);
+}
+
+
+struct blacklist *NS_CLASS rreq_blacklist_insert(struct in_addr dest_addr)
+{
+
+    struct blacklist *bl;
+
+    /* First check if this rreq packet is already buffered */
+    bl = rreq_blacklist_find(dest_addr);
+
+    /* If already buffered, should we update the timer??? */
+    if (bl)
+        return bl;
+
+    if ((bl = (struct blacklist *) malloc(sizeof(struct blacklist))) == NULL)
+    {
+        fprintf(stderr, "Malloc failed!!!\n");
+        exit(-1);
+    }
+    bl->dest_addr.s_addr = dest_addr.s_addr;
+
+    timer_init(&bl->bl_timer, &NS_CLASS rreq_blacklist_timeout, bl);
+    rreq_blacklist.insert(std::make_pair(dest_addr.s_addr,bl));
+
+    timer_set_timeout(&bl->bl_timer, BLACKLIST_TIMEOUT);
+    return bl;
+}
+
+
+struct blacklist *NS_CLASS rreq_blacklist_find(struct in_addr dest_addr)
+{
+    RreqBlacklist::iterator it = rreq_blacklist.find(dest_addr.s_addr);
+    if (it != rreq_blacklist.end())
+        return it->second;
+    return NULL;
+}
+
+void NS_CLASS rreq_blacklist_timeout(void *arg)
+{
+    struct blacklist *bl = (struct blacklist *)arg;
+    for (RreqBlacklist::iterator it = rreq_blacklist.begin();it!=rreq_blacklist.end();it++)
+    {
+        struct blacklist *blAux = it->second;
+        if (bl == blAux)
+        {
+            rreq_blacklist.erase(it);
+
+        }
+    }
+    free(bl);
+}
+#endif
 

@@ -39,11 +39,10 @@ class INET_API IChannelControl
     typedef std::list<AirFrame*> TransmissionList;
 
   public:
+    virtual ~IChannelControl() {}
 
     /** Registers the given radio. If radioInGate==NULL, the "radioIn" gate is assumed */
-    virtual RadioRef registerRadio(cModule *radioModule, cGate *radioInGate=NULL) = 0;
-
-    virtual bool isRadioRegistered(RadioRef radio)=0;
+    virtual RadioRef registerRadio(cModule *radioModule, cGate *radioInGate = NULL) = 0;
 
     /** Unregisters the given radio */
     virtual void unregisterRadio(RadioRef r) = 0;
@@ -74,6 +73,12 @@ class INET_API IChannelControl
 
     /** Returns the maximal interference distance*/
     virtual double getInterferenceRange(RadioRef r) = 0;
+
+    /** Disable the reception in the reference module */
+    virtual void disableReception(RadioRef r) = 0;
+
+    /** Enable the reception in the reference module */
+    virtual void enableReception(RadioRef r) = 0;
 };
 
 #endif

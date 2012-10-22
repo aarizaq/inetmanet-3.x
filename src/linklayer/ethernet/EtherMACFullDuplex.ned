@@ -23,11 +23,11 @@ import inet.linklayer.IEtherMAC;
 
 
 //
-// Ethernet MAC which supports full duplex operation ONLY.
+// Ethernet MAC which supports full-duplex operation ONLY.
 // See the ~IEtherMAC for general informations.
 //
 // Most of today's Ethernet networks are switched, and operate
-// in full duplex mode. Full-duplex transmission can be used for
+// in full-duplex mode. Full-duplex transmission can be used for
 // point-to-point connections only. Since full-duplex connections
 // cannot be shared, collisions are eliminated. This setup eliminates
 // most of the need for the CSMA/CD access control mechanism because
@@ -44,9 +44,12 @@ import inet.linklayer.IEtherMAC;
 // for that.
 //
 // Supported variations:
-// - 10Mb Ethernet (full duplex mode)
-// - 100Mb Ethernet (full duplex mode)
-// - 1Gb Ethernet (full duplex mode)
+// - 10Mb Ethernet (full-duplex mode)
+// - 100Mb Ethernet (full-duplex mode)
+// - 1Gb Ethernet (full-duplex mode)
+// - 10Gb Ethernet (full-duplex mode)
+// - 40Gb Ethernet (full-duplex mode)
+// - 100Gb Ethernet (full-duplex mode)
 //
 // Supports all three Ethernet frame types. (It handles ~EtherFrame message class;
 // specific frame classes (Ethernet-II, IEEE 802.3) are subclassed from that one.)
@@ -57,12 +60,12 @@ import inet.linklayer.IEtherMAC;
 // Processing of frames received from higher layers:
 // - if src address in the frame is empty, fill it out
 // - frames get queued up until transmission
-// - transmit according to the CSMA/CD protocol
+// - transmits the frame when the transmitter is ready
 // - can send PAUSE message if requested by higher layers (PAUSE protocol,
 //   used in switches).
 //
 // Processing of frames incoming from the network:
-// - receive according to the CSMA/CD protocol
+// - receive frame from the network
 // - CRC checking (frames with the error bit set are discarded).
 // - respond to PAUSE frames
 // - in promiscuous mode, pass up all received frames;
@@ -75,14 +78,15 @@ import inet.linklayer.IEtherMAC;
 // When a frame is received from the higher layers, it must be an ~EtherFrame,
 // and with all protocol fields filled out
 // (including the destination MAC address). The source address, if left empty,
-// will be filled in. Then frame is queued and transmitted according
-// to the CSMA/CD protocol.
+// will be filled in. Then frame is queued and transmitted.
 //
 // Data frames received from the network are EtherFrames. They are passed to
 // the higher layers without modification.
 // Also, the module properly responds to PAUSE frames, but never sends them
 // by itself -- however, it transmits PAUSE frames received from upper layers.
 // See <a href="ether-pause.html">PAUSE handling</a> for more info.
+//
+// For more info see <a href="ether-overview.html">Ethernet Model Overview</a>.
 //
 // <b>Disabling and disconnecting</b>
 //
@@ -109,52 +113,52 @@ import inet.linklayer.IEtherMAC;
 //
 // Please see <a href="physical.html">Messaging on the physical layer</a>.
 //
-// <b>Statistics</b>
-//
-// Output vectors:
-// - txPkBytes: bytes sent, including Ethernet frame fields (but excluding preamble and SFD)
-// - rxPkBytesOK: total bytes received  without collision or CRC error,
-//   including Ethernet frame fields (but excluding preamble and SFD)
-// - passedUpPkBytes: number of bytes of frames actually passed up to higher layer
-// - txPausePkUnits: number of PAUSE frames sent out
-// - rxPausePkUnits: number of PAUSE frames received from network
-// - rxPkBytesFromHL: number of bytes of frames received from higher layer
-// - droppedPkBytesIfaceDown: number of bytes of frames from higher layer dropped
-// - droppedPkBytesBitError: number of bytes of frames dropped because of bit errors
-// - droppedPkBytesNotForUs: number of bytes of frames dropped because destination address didn't match
-//
-// Output scalars (written in the finish() function) include the final values of
-// the above variables and throughput.
-//
-// @see ~EthernetInterface, ~EthernetInterface, ~IOutputQueue, ~EtherEncap, ~EtherLLC
+// @see ~EtherMAC, ~EthernetInterface, ~IOutputQueue, ~EtherEncap, ~EtherLLC
 // @see ~EtherFrame, ~EthernetIIFrame, ~EtherFrameWithLLC, ~Ieee802Ctrl
 //
 simple EtherMACFullDuplex like IEtherMAC
 {
     parameters:
-        bool promiscuous = default(false);     // if true, all packets are received, otherwise only the
-                                // ones with matching destination MAC address
-        string address = default("auto");       // MAC address as hex string (12 hex digits), or
-                                // "auto". "auto" values will be replaced by
-                                // a generated MAC address in init stage 0.
-        bool duplexEnabled = true;   // duplex mode can be enabled;
-        int txQueueLimit = default(1000); // maximum number of frames queued up for transmission;
-                                // additional frames are dropped. Only used if queueModule==""
-        string queueModule = default("");    // name of optional external queue module
-        bool frameBursting = default(true);     // enable/disable frame bursting mode in Gigabit Ethernet
-        int mtu = default(1500);
+        bool promiscuous = default(false);  // if true, all packets are received, otherwise only the
+                                            // ones with matching destination MAC address
+        string address = default("auto");   // MAC address as hex string (12 hex digits), or
+                                            // "auto". "auto" values will be replaced by
+                                            // a generated MAC address in init stage 0.
+        bool duplexMode = default(true);    // must be set to "true", as EtherMACFullDuplex does not support half-duplex operation
+                                            // (parameter is present to reduce the risk of accidental misconfiguration)
+        int txQueueLimit = default(1000);   // maximum number of frames queued up for transmission in the internal queue
+                                            // (only used if queueModule==""); additional frames cause a runtime error
+        string queueModule = default("");   // name of optional external queue module
+        int mtu @unit("B") = default(1500B);
         @display("i=block/rxtx");
-        @statistic[txPkBytes](title="Sent bytes"; record=sum,count,vector);
-        @statistic[rxPkBytesOk](title="Received bytes"; record=sum,count,vector);
-        @statistic[droppedPkBytesIfaceDown](title="Dropped msg Iface down"; record=sum,count,vector);
-        @statistic[droppedPkBytesBitError](title="Dropped bytes bit error"; record=sum,count,vector);
-        @statistic[droppedPkBytesNotForUs](title="Dropped bytes not for us"; record=sum,count,vector);
-        @statistic[passedUpPkBytes](title="Passed bytes to higher layer"; record=sum,count,vector);
-        @statistic[rxPausePkUnits](title="Received pause"; record=count,stats,vector);
-        @statistic[txPausePkUnits](title="Sent pause"; record=count,stats,vector);
-        @statistic[rxPkBytesFromHL](title="Received bytes from higher layer"; record=sum,count,vector);
+
+        @signal[txPk](type=EtherFrame);
+        @signal[rxPkOk](type=EtherFrame);
+        @signal[txPausePkUnits](type=long);
+        @signal[rxPausePkUnits](type=long);
+        @signal[rxPkFromHL](type=EtherFrame);
+        @signal[dropPkNotForUs](type=EtherFrame);
+        @signal[dropPkBitError](type=EtherFrame);
+        @signal[dropPkIfaceDown](type=EtherTraffic);        // emitted at end of receiving
+        @signal[dropPkFromHLIfaceDown](type=EtherFrame);
+        @signal[packetSentToLower](type=EtherFrame);
+        @signal[packetReceivedFromLower](type=EtherFrame);
+        @signal[packetSentToUpper](type=EtherFrame);
+        @signal[packetReceivedFromUpper](type=EtherFrame);
+
+        @statistic[txPk](title="packets transmitted"; source=txPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[rxPkOk](title="packets received OK"; source=rxPkOk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[passedUpPk](title="packets passed to higher layer"; source=packetSentToUpper; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[txPausePkUnits](title="pause units sent"; record=count,sum,vector; interpolationmode=none);
+        @statistic[rxPausePkUnits](title="pause units received"; record=count,sum,vector; interpolationmode=none);
+        @statistic[rxPkFromHL](title="packet bytes from higher layer"; source=rxPkFromHL; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[droppedPkIfaceDown](title="packets dropped/interface down"; source=dropPkIfaceDown; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[droppedPkBitError](title="packets dropped/bit error"; source=dropPkBitError; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[droppedPkNotForUs](title="packets dropped/not for us"; source=dropPkNotForUs; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+
     gates:
-        input upperLayerIn @labels(EtherFrame);    // to ~EtherLLC or ~MACRelayUnitPP
-        output upperLayerOut @labels(EtherFrame);  // to ~EtherLLC or ~MACRelayUnitPP
+        input upperLayerIn @labels(EtherFrame);    // to ~EtherLLC or ~EtherEncap or ~MACRelayUnitPP
+        output upperLayerOut @labels(EtherFrame);  // to ~EtherLLC or ~EtherEncap or ~MACRelayUnitPP
         inout phys @labels(EtherFrame);            // to physical layer or the network
 }
+

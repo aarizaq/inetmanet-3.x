@@ -17,8 +17,11 @@
 
 
 #include "ChannelAccess.h"
+#include "IMobility.h"
 
 #define coreEV (ev.isDisabled()||!coreDebug) ? ev : ev << logName() << "::ChannelAccess: "
+
+simsignal_t ChannelAccess::mobilityStateChangedSignal = SIMSIGNAL_NULL;
 
 static int parseInt(const char *s, int defaultValue)
 {
@@ -30,6 +33,18 @@ static int parseInt(const char *s, int defaultValue)
     return *endptr == '\0' ? value : defaultValue;
 }
 
+// the destructor unregister the radio module
+ChannelAccess::~ChannelAccess()
+{
+    if (cc && myRadioRef)
+    {
+        // check if channel control exist
+        IChannelControl *cc = dynamic_cast<IChannelControl *>(simulation.getModuleByPath("channelControl"));
+        if (cc)
+             cc->unregisterRadio(myRadioRef);
+        myRadioRef = NULL;
+    }
+}
 /**
  * Upon initialization ChannelAccess registers the nic parent module
  * to have all its connections handled by ChannelControl
@@ -40,12 +55,14 @@ void ChannelAccess::initialize(int stage)
 
     if (stage == 0)
     {
-    	cc = getChannelControl();
+        cc = getChannelControl();
+        nb = NotificationBoardAccess().get();
         hostModule = findHost();
 
         positionUpdateArrived = false;
         // register to get a notification when position changes
-        nb->subscribe(this, NF_HOSTPOSITION_UPDATED);
+        mobilityStateChangedSignal = registerSignal("mobilityStateChanged");
+        hostModule->subscribe(mobilityStateChangedSignal, this);
     }
     else if (stage == 2)
     {
@@ -54,10 +71,10 @@ void ChannelAccess::initialize(int stage)
             radioPos.x = parseInt(hostModule->getDisplayString().getTagArg("p", 0), -1);
             radioPos.y = parseInt(hostModule->getDisplayString().getTagArg("p", 1), -1);
 
-			if (radioPos.x == -1 || radioPos.y == -1)
-				error("The coordinates of '%s' host are invalid. Please set coordinates in "
-						"'@display' attribute, or configure Mobility for this host.",
-						hostModule->getFullPath().c_str());
+            if (radioPos.x == -1 || radioPos.y == -1)
+                error("The coordinates of '%s' host are invalid. Please set coordinates in "
+                        "'@display' attribute, or configure Mobility for this host.",
+                        hostModule->getFullPath().c_str());
 
             const char *s = hostModule->getDisplayString().getTagArg("p", 2);
             if (s && *s)
@@ -72,25 +89,9 @@ void ChannelAccess::initialize(int stage)
     }
 }
 
-ChannelAccess::~ChannelAccess()
-{
-    // check if exist channel control
-    IChannelControl *ccAux = dynamic_cast<IChannelControl *>(simulation.getModuleByPath("channelControl"));
-    if (!ccAux)
-    	ccAux = dynamic_cast<IChannelControl *>(simulation.getModuleByPath("channelcontrol"));
-    if (!ccAux)
-        return;
-
-    if (cc->isRadioRegistered(myRadioRef))
-       cc->unregisterRadio(myRadioRef);
-}
-
-
 IChannelControl *ChannelAccess::getChannelControl()
 {
     IChannelControl *cc = dynamic_cast<IChannelControl *>(simulation.getModuleByPath("channelControl"));
-    if (!cc)
-        cc = dynamic_cast<IChannelControl *>(simulation.getModuleByPath("channelcontrol"));
     if (!cc)
         throw cRuntimeError("Could not find ChannelControl module with name 'channelControl' in the toplevel network.");
     return cc;
@@ -111,17 +112,16 @@ void ChannelAccess::sendToChannel(AirFrame *msg)
     cc->sendToChannel(myRadioRef, msg);
 }
 
-void ChannelAccess::receiveChangeNotification(int category, const cPolymorphic *details)
+void ChannelAccess::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj)
 {
-    if (category == NF_HOSTPOSITION_UPDATED)
+    if (signalID == mobilityStateChangedSignal)
     {
-        radioPos = *check_and_cast<const Coord*>(details);
+        IMobility *mobility = check_and_cast<IMobility*>(obj);
+        radioPos = mobility->getCurrentPosition();
         positionUpdateArrived = true;
 
         if (myRadioRef)
             cc->setRadioPosition(myRadioRef, radioPos);
     }
-
-    BasicModule::receiveChangeNotification(category, details);
 }
 

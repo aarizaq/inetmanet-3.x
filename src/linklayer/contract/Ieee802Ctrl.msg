@@ -56,10 +56,12 @@ enum SAPCode
 //
 enum EtherType
 {
-    ETHERTYPE_IP = 0x0800;
+    ETHERTYPE_IPv4 = 0x0800;
     ETHERTYPE_ARP = 0x0806;
     ETHERTYPE_RARP = 0x8035;
     ETHERTYPE_IPv6 = 0x86DD;
+    ETHERTYPE_MPLS_UNICAST = 0x8847;
+    ETHERTYPE_MPLS_MULTICAST = 0x8848;
 }
 
 
@@ -74,5 +76,5 @@ class Ieee802Ctrl
     int ssap;        // used with IEEE 802 LLC (see ~EtherFrameWithLLC)
     int dsap;        // used with IEEE 802 LLC (see ~EtherFrameWithLLC)
     int pauseUnits;  // used with IEEE802CTRL_SENDPAUSE
-    int inputPort;   // convenience field, used between ~IPv6 and ~IPv6NeighborDiscovery
+    int inputPort;   // convenience field, used between ~IPv6 and ~IPv6NeighbourDiscovery
 }

@@ -8,6 +8,6 @@ simple WiMAXQoSTrafficGenerator
 		//ugs_station: string;
 
     gates:
-        input lowergateIn;
-        output lowergateOut;
+        input lowerLayerIn;
+        output lowerLayerOut;
 }

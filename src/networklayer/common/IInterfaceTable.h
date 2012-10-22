@@ -18,8 +18,8 @@
 #ifndef __INET_IINTERFACETABLE_H
 #define __INET_IINTERFACETABLE_H
 
-#include <omnetpp.h>
 #include "INETDefs.h"
+
 #include "InterfaceEntry.h"  // not strictly required, but clients will need it anyway
 
 
@@ -48,20 +48,18 @@ class INET_API IInterfaceTable
     virtual std::string getFullPath() const = 0;
 
     /**
-     * Adds an interface. The second argument should be a module which belongs
-     * to the physical interface (e.g. PPP or EtherMac) -- it will be used
+     * Returns the host or router this interface table lives in.
+     */
+    virtual cModule *getHostModule() = 0;
+
+    /**
+     * Adds an interface. The entry->getInterfaceModule() will be used
      * to discover and fill in getNetworkLayerGateIndex(), getNodeOutputGateId(),
      * and getNodeInputGateId() in InterfaceEntry. It should be NULL if this is
      * a virtual interface (e.g. loopback).
      */
-    virtual void addInterface(InterfaceEntry *entry, cModule *ifmod) = 0;
+    virtual void addInterface(InterfaceEntry *entry) = 0;
 
-    /**
-     * Adds an interface. The second argument must be a module which belongs
-     * to the physical interface (e.g. PPP or EtherMac) -- it will be used
-     * to discover and fill in getNetworkLayerGateIndex(), getNodeOutputGateId(),
-     */
-    virtual void addInterfaceGroup(InterfaceEntry *entry, cModule *ifmod) = 0;
     /**
      * Deletes the given interface from the table. Indices of existing
      * interfaces (see getInterface(int)) may change. It is an error if
@@ -111,6 +109,12 @@ class INET_API IInterfaceTable
     virtual InterfaceEntry *getInterfaceByNetworkLayerGateIndex(int index) = 0;
 
     /**
+     * Returns an interface by one of its component module (e.g. PPP).
+     * Returns NULL if not found.
+     */
+    virtual InterfaceEntry *getInterfaceByInterfaceModule(cModule *ifmod) = 0;
+
+    /**
      * Returns an interface given by its name. Returns NULL if not found.
      */
     virtual InterfaceEntry *getInterfaceByName(const char *name) = 0;
@@ -122,6 +126,12 @@ class INET_API IInterfaceTable
      * loopback interface on startup.)
      */
     virtual InterfaceEntry *getFirstLoopbackInterface() = 0;
+
+    /**
+     * Returns the first multicast capable interface.
+     * If there is no such interface, then returns NULL.
+     */
+    virtual InterfaceEntry *getFirstMulticastInterface() = 0;
 };
 
 #endif

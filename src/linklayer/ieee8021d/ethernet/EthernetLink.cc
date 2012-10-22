@@ -110,7 +110,7 @@ void EthernetLink::handleSelfMessage(cMessage * msg)
 		MVRPDU * frame=new MVRPDU();
 		frame->setPortIndex(0); //TODO Comprobar si esto viaja de verdad en la trama.
 		frame->setVIDSArraySize(1);
-		frame->setDest("01-80-C2-00-00-0D");
+		frame->setDest(MACAddress("01-80-C2-00-00-0D"));
 		frame->setSrc(address);
 		switch(outputFrame)
 		{
@@ -139,8 +139,8 @@ void EthernetLink::updateDisplayString()
 
 void EthernetLink::processPacketFromHigherLayer(cPacket *msg)
 {
-    if (msg->getByteLength() > (MAX_ETHERNET_DATA))
-        error("packet from higher layer (%d bytes) exceed maximum Ethernet payload length (%d)", (int)(msg->getByteLength()), MAX_ETHERNET_DATA);
+    if (msg->getByteLength() > (MAX_ETHERNET_DATA_BYTES))
+        error("packet from higher layer (%d bytes) exceed maximum Ethernet payload length (%d)", (int)(msg->getByteLength()), MAX_ETHERNET_DATA_BYTES);
 
     totalFromHigherLayer++;
 
@@ -185,8 +185,8 @@ void EthernetLink::processPacketFromHigherLayer(cPacket *msg)
 
     EthIIF->encapsulate(frame);
     delete etherctrl;
-    if (EthIIF->getByteLength() < MIN_ETHERNET_FRAME)
-        EthIIF->setByteLength(MIN_ETHERNET_FRAME);
+    if (EthIIF->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+        EthIIF->setByteLength(MIN_ETHERNET_FRAME_BYTES);
     send(EthIIF, "lowerLayerOut");
 }
 

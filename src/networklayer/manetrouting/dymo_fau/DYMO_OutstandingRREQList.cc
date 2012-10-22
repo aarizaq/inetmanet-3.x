@@ -34,6 +34,7 @@ std::ostream& operator<<(std::ostream& os, const DYMO_OutstandingRREQ& o)
 }
 
 DYMO_OutstandingRREQList::DYMO_OutstandingRREQList()
+  : host(NULL)
 {
 }
 
@@ -74,7 +75,7 @@ DYMO_OutstandingRREQ* DYMO_OutstandingRREQList::getByDestAddr(unsigned int destA
 {
     for (std::vector<DYMO_OutstandingRREQ*>::iterator iter = outstandingRREQs.begin(); iter < outstandingRREQs.end(); iter++)
     {
-        if (IPv4Address(destAddr).prefixMatches((*iter)->destAddr, prefix)) return *iter;
+        if (IPv4Address(destAddr).prefixMatches(IPv4Address((*iter)->destAddr), prefix)) return *iter;
     }
     return 0;
 }
@@ -83,9 +84,19 @@ DYMO_OutstandingRREQ* DYMO_OutstandingRREQList::getExpired()
 {
     for (std::vector<DYMO_OutstandingRREQ*>::iterator iter = outstandingRREQs.begin(); iter < outstandingRREQs.end(); iter++)
     {
-        if ((*iter)->wait_time->isExpired()) return *iter;
+        if ((*iter)->wait_time->stopWhenExpired()) return *iter;
     }
     return 0;
+}
+
+bool DYMO_OutstandingRREQList::hasActive() const
+{
+    for (std::vector<DYMO_OutstandingRREQ*>::const_iterator iter = outstandingRREQs.begin(); iter < outstandingRREQs.end(); iter++)
+    {
+        if ((*iter)->wait_time->isActive())
+            return true;
+    }
+    return false;
 }
 
 void DYMO_OutstandingRREQList::add(DYMO_OutstandingRREQ* outstandingRREQ)

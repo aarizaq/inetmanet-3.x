@@ -19,7 +19,7 @@
 // @titlepage
 //
 // <center><h1>INET Framework for OMNeT++/OMNEST</h1></center>
-// <center>release 1.99.1-4f9f16b</center>
+// <center>release ##BUILDID##</center>
 //
 // INET Framework contains IPv4, IPv6, TCP, SCTP, UDP protocol implementations,
 // and several application models. The framework also includes an MPLS model
@@ -27,26 +27,22 @@
 // Static routing can be set up using network autoconfigurators, or one can use
 // routing protocol implementations.
 //
-// The INET Framework supports wireless and mobile simulations as well. Support
-// for mobility and wireless communication has been derived from the
-// <a href="http://mobility-fw.sourceforge.net" target="_blank">Mobility Framework</a>.
+// The INET Framework supports wireless and mobile simulations as well.
 //
-// There are several other bugfixes and improvements as well; see the
-// <tt><a href="../doxy/whatsnew.html">WHATSNEW</a></tt> file in the distribution.
+// See the <tt><a href="whatsnew.html">WHATSNEW</a></tt> file in the distribution 
+// for the list of recent changes.
 //
 // Introductory material:
 //  - <a href="inet-architecture.html">INET Framework architecture</a>
+//  - <a href="../inet-manual-draft.pdf">INET Framework Manual (draft) (pdf)</a>
 //  - <a href="../walkthrough/tutorial.html" target="_top">Guided Tour</a>
 //
 // A few useful starting points for browsing the documentation:
-//  - the <a href="full-ned-usage-diagram.html">Usage Diagram</a>
-//    includes all modules and networks
-//  - example networks: ~NClients, ~BulkTransfer, ~MulticastNetwork,
-//    ~ARPTest, ~MixedLAN, etc.
+//  - example networks: ~BulkTransfer, ~MulticastNetwork,
+//    ~MixedLAN, etc.
 //  - hosts, routers, switches: ~StandardHost, ~Router, ~EtherSwitch, ~EtherHub,
 //    etc.
-//  - network interfaces: ~EthernetInterface, ~PPPInterface, ~Ieee80211NicAdhoc,
-//    ~Ieee80211NicSTA
+//  - network interfaces: ~EthernetInterface, ~PPPInterface, ~Ieee80211Nic
 //  - <a href="ieee80211.html">IEEE 802.11 models</a>, both ad-hoc and infrastructure
 //    mode are supported
 //  - IPv4 layer: ~IPv4, ~ARP and ~ICMP; ~RoutingTable
@@ -55,9 +51,8 @@
 //  - transport layer: ~TCP, ~UDP, ~SCTP
 //  - ~InterfaceTable and ~NotificationBoard are there in every
 //    host and router model
-//  - queues in router network interfaces: ~DropTailQueue, ~REDQueue,
-//    ~DropTailQoSQueue.
-//  - ~FlatNetworkConfigurator automatically assigns IPv4 addresses and
+//  - queues in router network interfaces: ~DropTailQueue, ~DiffservQueue.
+//  - ~IPv4NetworkConfigurator automatically assigns IPv4 addresses and
 //    sets up static routes;
 //  - ~ScenarioManager lets you change things in the model in the middle
 //    of the simulation to study transient behaviour
@@ -65,21 +60,19 @@
 //    ~ARPPacket, ~PPPFrame, ~GenericAppMsg, ~EtherAppReq, etc.
 //  - control info classes (used in communication between protocol layers):
 //    ~IPv4ControlInfo, ~TCPCommand, ~UDPControlInfo, ~Ieee802Ctrl, etc.
-//  - application models: ~UDPVideoStreamSvr, ~UDPVideoStreamCli, ~UDPApp,
+//  - application models: ~UDPVideoStreamSvr, ~UDPVideoStreamCli, ~UDPBasicApp, ~UDPEchoApp,
 //    ~TCPSessionApp, ~TCPBasicClientApp, ~TCPGenericSrvApp, ~TCPSinkApp,
 //    ~TCPSrvHostApp, ~EtherAppCli, ~EtherAppSrv, ~PingApp, etc.
-//  - wireless support: ~ChannelControl, ~Nic80211
+//  - wireless support: ~ChannelControl, ~Ieee80211Nic
 //  - mobility: ~MobileHost; mobility models such as ~TurtleMobility,
 //    ~BonnMotionMobility, ~ANSimMobility, ~RandomWPMobility, ~MassMobility
 //  - MPLS models: the core modules are ~MPLS, ~LIBTable, ~LDP, ~RSVP, ~TED,
 //    ~LinkStateRouting; MPLS-enabled routers are ~LDP_LSR, ~RSVP_LSR;
 //    see also the list of <a href="standards.html">implemented standards</a>
-//  - dynamic routing is provided by the ~Daemon module (the Quagga routing
-//    daemon ported into the INET Framework) used inside ~QuaggaRouter;
-//    alternatively one can run ~OSPFRouter which relies on the ~OSPFRouting
-//    module;
-//  - support for recording <i>nam</i> traces is provided by ~NAMTrace and
-//    ~NAMTraceWriter
+//  - dynamic routing is provided by the Daemon module (the Quagga routing
+//    daemon ported into the INET Framework, currently in a different project)
+//    used inside QuaggaRouter; alternatively one can run ~OSPFRouter which relies
+//    on the ~OSPFRouting module;
 //
 // Related documentation:
 //   - <a href="../doxy/index.html" target="_top">C++ source documentation (Doxygen)</a>

@@ -3,7 +3,7 @@
  *
  * author:      Oliver Graute, Andreas Kuntz, Felix Schmidt-Eisenlohr
  *
- * copyright:	(c) 2008 Institute of Telematics, University of Karlsruhe (TH)
+ * copyright:   (c) 2008 Institute of Telematics, University of Karlsruhe (TH)
  *
  ** author:      Alfonso Ariza
  *              Malaga university
@@ -26,13 +26,15 @@
 #ifndef __FREE_SPACE_MODEL_H__
 #define __FREE_SPACE_MODEL_H__
 
-#include <omnetpp.h>
-#include "INETDefs.h"
-#include "FWMath.h"
-#include "IReceptionModel.h"
 #include <list>
 #include <string>
 #include <math.h>
+
+#include "INETDefs.h"
+
+#include "FWMath.h"
+#include "IReceptionModel.h"
+
 using namespace std;
 
 /**
@@ -50,7 +52,7 @@ using namespace std;
 class INET_API FreeSpaceModel : public IReceptionModel {
 
 public:
-	virtual void initializeFrom(cModule *radioModule);
+    virtual void initializeFrom(cModule *radioModule);
     /**
      * To be redefined to calculate the received power of a transmission.
      */
@@ -58,10 +60,10 @@ public:
     ~FreeSpaceModel() { };
 
     protected:
-		double Gr, Gt, L;
-		double pathLossAlpha;
-		virtual void initializeFreeSpace(cModule *);
-		virtual double freeSpace(double Gt, double Gr, double L,double Pt, double lambda, double distance, double pathLossAlpha);
+        double Gr, Gt, L;
+        double pathLossAlpha;
+        virtual void initializeFreeSpace(cModule *);
+        virtual double freeSpace(double Gt, double Gr, double L, double Pt, double lambda, double distance, double pathLossAlpha);
 };
 
 

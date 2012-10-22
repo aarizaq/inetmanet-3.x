@@ -25,7 +25,7 @@ import inet.underTest.linklayer.Ieee80216.Ieee80216NicBS;
 //    "RoutingTable",
 //    "NetworkLayer",
 import inet.underTest.applications.TrafficGenerator_Erlangen.WiMAXQoSTrafficGenerator;
-import inet.mobility.NoMobility;
+import inet.mobility.models.StationaryMobility;
 //
 // Models a 802.11 Access Point. It can be used in conjunction with
 // WirelessHost, or any other host model containing WirelessNicSTA.
@@ -39,7 +39,7 @@ module WiMAXAP
     parameters:
         bool IPForward;
         string routingFile;
-
+        @node();
     gates:
         input radioIn;
 
@@ -54,7 +54,7 @@ module WiMAXAP
             gates:
                 macUpperGateIn[5];
         }
-        mobility: NoMobility {
+        mobility: StationaryMobility {
             parameters:
                 @display("p=144,70;i=block/cogwheel_s");
         }
@@ -81,11 +81,11 @@ module WiMAXAP
     connections allowunconnected:
         radioIn --> { @display("m=s"); } --> wimax.radioIn;
 
-        trafGen_ftp.lowergateOut --> wimax.macUpperGateIn[0];
-        trafGen_voice_no_supr.lowergateOut --> wimax.macUpperGateIn[1];
-        trafGen_voice_supr.lowergateOut --> wimax.macUpperGateIn[2];
-        trafGen_video_stream.lowergateOut --> wimax.macUpperGateIn[3];
-        trafGen_guaranteed_minbw_web_access.lowergateOut --> wimax.macUpperGateIn[4];
+        trafGen_ftp.lowerLayerOut --> wimax.macUpperGateIn[0];
+        trafGen_voice_no_supr.lowerLayerOut --> wimax.macUpperGateIn[1];
+        trafGen_voice_supr.lowerLayerOut --> wimax.macUpperGateIn[2];
+        trafGen_video_stream.lowerLayerOut --> wimax.macUpperGateIn[3];
+        trafGen_guaranteed_minbw_web_access.lowerLayerOut --> wimax.macUpperGateIn[4];
 
 }
 

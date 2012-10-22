@@ -10,8 +10,6 @@
 #define __ADMACRELAY_ACCESS_H
 
 
-
-#include <omnetpp.h>
 #include "ModuleAccess.h"
 #include "Admacrelay.h"
 

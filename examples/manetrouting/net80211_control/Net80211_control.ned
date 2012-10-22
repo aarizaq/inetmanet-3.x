@@ -18,10 +18,9 @@
 
 package inet.examples.manetrouting.net80211_control;
 
-
+import inet.networklayer.autorouting.ipv4.IPv4NetworkConfigurator;
+import inet.nodes.inet.AdhocHost;
 import inet.world.radio.ChannelControl;
-import inet.nodes.wireless.AdhocHost;
-import inet.networklayer.autorouting.ipv4.FlatNetworkConfigurator;
 
 
 network Net80211_control
@@ -42,10 +41,9 @@ network Net80211_control
             parameters:
                 @display("p=60,50;i=misc/sun");
         }
-        configurator: FlatNetworkConfigurator {
+        configurator: IPv4NetworkConfigurator {
             parameters:
-                networkAddress = "145.236.0.0";
-                netmask = "255.255.0.0";
+                config=xml("<config><interface hosts='*' address='145.236.x.x' netmask='255.255.0.0'/></config>");
                 @display("p=140,50;i=block/cogwheel_s");
         }
     connections allowunconnected:

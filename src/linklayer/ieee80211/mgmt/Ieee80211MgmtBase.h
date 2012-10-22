@@ -18,7 +18,8 @@
 #ifndef IEEE80211_MGMT_BASE_H
 #define IEEE80211_MGMT_BASE_H
 
-#include <omnetpp.h>
+#include "INETDefs.h"
+
 #include "MACAddress.h"
 #include "PassiveQueueBase.h"
 #include "NotificationBoard.h"
@@ -66,7 +67,7 @@ class INET_API Ieee80211MgmtBase : public PassiveQueueBase, public INotifiable
     virtual void handleUpperMessage(cPacket *msg) = 0;
 
     /** Should be redefined to handle commands from the "agent" (if present) */
-    virtual void handleCommand(int msgkind, cPolymorphic *ctrl) = 0;
+    virtual void handleCommand(int msgkind, cObject *ctrl) = 0;
 
     /** Utility method for implementing handleUpperMessage(): gives the message to PassiveQueueBase */
     virtual void sendOrEnqueue(cPacket *frame);

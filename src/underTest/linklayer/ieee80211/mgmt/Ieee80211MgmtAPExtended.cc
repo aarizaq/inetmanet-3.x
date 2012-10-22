@@ -50,16 +50,17 @@ void Ieee80211MgmtAPExtended::initialize(int stage)
         WATCH(beaconInterval);
         WATCH(numAuthSteps);
         WATCH_MAP(staList);
+        isConnected = gate("upperLayerOut")->getPathEndGate()->isConnected();
 
         //TBD fill in supportedRates
 
         // subscribe for notifications
-        NotificationBoard *nb = NotificationBoardAccess().get();
+        nb = NotificationBoardAccess().get();
         nb->subscribe(this, NF_RADIO_CHANNEL_CHANGED);
 
         // start beacon timer (randomize startup time)
         beaconTimer = new cMessage("beaconTimer");
-        scheduleAt(simTime()+uniform(0,beaconInterval), beaconTimer);
+        scheduleAt(simTime()+uniform(0, beaconInterval), beaconTimer);
     }
 }
 
@@ -76,46 +77,24 @@ void Ieee80211MgmtAPExtended::handleTimer(cMessage *msg)
     }
 }
 
-// Incoming message must come always decapsulated already.
-// for relays units, use a EtherEncap module
+
 void Ieee80211MgmtAPExtended::handleUpperMessage(cPacket *msg)
 {
-
-    EV << "Handling upper message from Network Layer" << endl;
-
-    Ieee802Ctrl* ctrl = check_and_cast<Ieee802Ctrl*>(msg->removeControlInfo());
-
-    if (ctrl!=NULL)
+    Ieee80211DataFrame *frame = encapsulate(msg);
+    MACAddress macAddr = frame->getReceiverAddress();
+    if (!macAddr.isMulticast())
     {
-        if (ctrl->getDest()!= MACAddress::BROADCAST_ADDRESS)
+        STAList::iterator it = staList.find(macAddr);
+        if (it==staList.end() || it->second.status!=ASSOCIATED)
         {
-            // check if the destination address is our STA (or broadcast)
-            STAList::iterator it = staList.find(ctrl->getDest());
-            if (it==staList.end() || it->second.status!=ASSOCIATED)
-            {
-                EV << "STA with MAC address " << ctrl->getDest() << " not associated with this AP, dropping frame\n";
-                delete msg; // XXX count drops?
-                return;
-            }
+            EV << "STA with MAC address " << macAddr << " not associated with this AP, dropping frame\n";
+            delete frame; // XXX count drops?
+            return;
         }
-
-        Ieee80211DataFrame *frame = new Ieee80211DataFrame(msg->getName());
-        frame->setFromDS(true);
-
-        // copy addresses from ethernet frame (transmitter addr will be set to our addr by MAC)
-        frame->setReceiverAddress(ctrl->getDest());
-        frame->setAddress3(ctrl->getSrc());
-
-        // encapsulate payload
-        frame->encapsulate(msg);
-        sendOrEnqueue(frame);
     }
-    else
-    {
-        error("Incoming packet has no Control Info data (src and dst)");
-    }
+
+    sendOrEnqueue(frame);
 }
-
 
 void Ieee80211MgmtAPExtended::handleCommand(int msgkind, cPolymorphic *ctrl)
 {
@@ -185,28 +164,15 @@ void Ieee80211MgmtAPExtended::handleDataFrame(Ieee80211DataFrame *frame)
         return;
     }
 
-    // handle broadcast frames
-    if (frame->getAddress3().isBroadcast())
+    // handle broadcast/multicast frames
+    if (frame->getAddress3().isMulticast())
     {
-        EV << "Handling broadcast frame\n";
-        // JcM Fix: Redistribute the Frame to the associated STAs
-        distributeReceivedDataFrame(frame->dup());
+        EV << "Handling multicast frame\n";
 
-        // Broadcast the frame to the upper layers
-        // JcM Fix: we pass the payload as it is to the upper layers.
-        // if there is an relay unit, use a EtherEncap Module
-        cPacket* payload = frame->decapsulate();
+        if (isConnectedToHL)
+            sendToUpperLayer(frame->dup());
 
-        // set the control info
-        Ieee802Ctrl *ctrl = new Ieee802Ctrl();
-        ctrl->setSrc(frame->getTransmitterAddress());
-        ctrl->setDest(frame->getAddress3());
-
-        payload->setControlInfo(ctrl);
-
-        send(payload,"uppergateOut");
-
-        delete(frame);
+        distributeReceivedDataFrame(frame);
         return;
     }
 
@@ -216,19 +182,17 @@ void Ieee80211MgmtAPExtended::handleDataFrame(Ieee80211DataFrame *frame)
     STAList::iterator it = staList.find(frame->getAddress3());
     if (it==staList.end())
     {
-        // not our STA, only pass the frame to the upper layers as it is.
-        // if there is an relay unit, use a EtherEncap Module
-        cPacket* payload = frame->decapsulate();
+        // not our STA -- pass up frame to relayUnit for LAN bridging if we have one
+        if (isConnectedToHL)
+        {
+            sendToUpperLayer(frame);
+        }
+        else
+        {
+            EV << "Frame's destination address is not in our STA list -- dropping frame\n";
+            delete frame;
+        }
 
-        // set the control info
-        Ieee802Ctrl *ctrl = new Ieee802Ctrl();
-        ctrl->setSrc(frame->getAddress4());
-        ctrl->setDest(frame->getAddress3());
-
-        payload->setControlInfo(ctrl);
-        delete frame;
-
-        send(payload,"uppergateOut");
     }
     else
     {
@@ -290,6 +254,8 @@ void Ieee80211MgmtAPExtended::handleAuthenticationFrame(Ieee80211AuthenticationF
     // update status
     if (isLast)
     {
+        if (sta->status == ASSOCIATED)
+            sendDisAssocNotification(sta->address);
         sta->status = AUTHENTICATED; // XXX only when ACK of this frame arrives
         EV << "STA authenticated\n";
     }
@@ -310,6 +276,8 @@ void Ieee80211MgmtAPExtended::handleDeauthenticationFrame(Ieee80211Deauthenticat
     if (sta)
     {
         // mark STA as not authenticated; alternatively, it could also be removed from staList
+        if (sta->status == ASSOCIATED)
+            sendDisAssocNotification(sta->address);
         sta->status = NOT_AUTHENTICATED;
         sta->authSeqExpected = 1;
     }
@@ -334,6 +302,8 @@ void Ieee80211MgmtAPExtended::handleAssociationRequestFrame(Ieee80211Association
     delete frame;
 
     // mark STA as associated
+    if (sta->status != ASSOCIATED)
+        sendAssocNotification(sta->address);
     sta->status = ASSOCIATED; // XXX this should only take place when MAC receives the ACK for the response
 
     // send OK response
@@ -392,6 +362,8 @@ void Ieee80211MgmtAPExtended::handleDisassociationFrame(Ieee80211DisassociationF
 
     if (sta)
     {
+        if (sta->status == ASSOCIATED)
+            sendDisAssocNotification(sta->address);
         sta->status = AUTHENTICATED;
     }
 }
@@ -430,4 +402,19 @@ void Ieee80211MgmtAPExtended::handleProbeResponseFrame(Ieee80211ProbeResponseFra
     dropManagementFrame(frame);
 }
 
+void Ieee80211MgmtAPExtended::sendAssocNotification(const MACAddress &addr)
+{
+    NotificationInfoSta notif;
+    notif.setApAddress(myAddress);
+    notif.setStaAddress(addr);
+    nb->fireChangeNotification(NF_L2_AP_ASSOCIATED,&notif);
+}
+
+void Ieee80211MgmtAPExtended::sendDisAssocNotification(const MACAddress &addr)
+{
+    NotificationInfoSta notif;
+    notif.setApAddress(myAddress);
+    notif.setStaAddress(addr);
+    nb->fireChangeNotification(NF_L2_AP_DISASSOCIATED,&notif);
+}
 

@@ -15,6 +15,7 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
+
 #include "BonnMotionMobility.h"
 #include "BonnMotionFileCache.h"
 #include "FWMath.h"
@@ -23,36 +24,11 @@
 Define_Module(BonnMotionMobility);
 
 
-void BonnMotionMobility::initialize(int stage)
+BonnMotionMobility::BonnMotionMobility()
 {
-    LineSegmentsMobilityBase::initialize(stage);
-
-    EV << "initializing BonnMotionMobility stage " << stage << endl;
-
-    if (stage == 1)
-    {
-        int nodeId = par("nodeId");
-        if (nodeId == -1)
-            nodeId = getParentModule()->getIndex();
-
-        const char *fname = par("traceFile");
-        const BonnMotionFile *bmFile = BonnMotionFileCache::getInstance()->getFile(fname);
-
-        vecp = bmFile->getLine(nodeId);
-        if (!vecp)
-            throw cRuntimeError("invalid nodeId %d -- no such line in file '%s'", nodeId, fname);
-        vecpos = 0;
-
-        // obtain initial position
-        const BonnMotionFile::Line& vec = *vecp;
-        if (vec.size()>=3)
-        {
-            pos.x = vec[1];
-            pos.y = vec[2];
-            targetPos = pos;
-        }
-        positionUpdated();
-    }
+    is3D = false;
+    lines = NULL;
+    currentLine = -1;
 }
 
 BonnMotionMobility::~BonnMotionMobility()
@@ -60,26 +36,55 @@ BonnMotionMobility::~BonnMotionMobility()
     BonnMotionFileCache::deleteInstance();
 }
 
+void BonnMotionMobility::initialize(int stage)
+{
+    LineSegmentsMobilityBase::initialize(stage);
+    EV << "initializing BonnMotionMobility stage " << stage << endl;
+    if (stage == 0)
+    {
+        is3D  = par("is3D").boolValue();
+        int nodeId = par("nodeId");
+        if (nodeId == -1)
+            nodeId = getParentModule()->getIndex();
+        const char *fname = par("traceFile");
+        const BonnMotionFile *bmFile = BonnMotionFileCache::getInstance()->getFile(fname);
+        lines = bmFile->getLine(nodeId);
+        if (!lines)
+            throw cRuntimeError("Invalid nodeId %d -- no such line in file '%s'", nodeId, fname);
+        currentLine = 0;
+    }
+}
+
+void BonnMotionMobility::initializePosition()
+{
+    const BonnMotionFile::Line& vec = *lines;
+    if (lines->size() >= 3)
+    {
+        lastPosition.x = vec[1];
+        lastPosition.y = vec[2];
+    }
+}
+
 void BonnMotionMobility::setTargetPosition()
 {
-    const BonnMotionFile::Line& vec = *vecp;
-
-    if (vecpos+2 >= (int)vec.size())
+    const BonnMotionFile::Line& vec = *lines;
+    if (currentLine + (is3D ? 3 : 2) >= (int)vec.size())
     {
+        nextChange = -1;
         stationary = true;
+        targetPosition = lastPosition;
         return;
     }
-
-    targetTime = vec[vecpos];
-    targetPos.x = vec[vecpos+1];
-    targetPos.y = vec[vecpos+2];
-    vecpos += 3;
-
-    EV << "TARGET: t=" << targetTime << " (" << targetPos.x << "," << targetPos.y << ")\n";
+    nextChange = vec[currentLine];
+    targetPosition.x = vec[currentLine+1];
+    targetPosition.y = vec[currentLine+2];
+    targetPosition.z = is3D ? vec[currentLine+3] : 0;
+    currentLine += (is3D ? 4 : 3);
+    EV << "TARGET: t=" << nextChange << " (" << targetPosition.x << "," << targetPosition.y << ")\n";
 }
 
-void BonnMotionMobility::fixIfHostGetsOutside()
+void BonnMotionMobility::move()
 {
+    LineSegmentsMobilityBase::move();
     raiseErrorIfOutside();
 }
-

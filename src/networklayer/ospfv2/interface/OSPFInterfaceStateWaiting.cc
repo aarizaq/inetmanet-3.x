@@ -15,12 +15,15 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
+
 #include "OSPFInterfaceStateWaiting.h"
+
+#include "MessageHandler.h"
+#include "OSPFArea.h"
 #include "OSPFInterfaceStateDown.h"
 #include "OSPFInterfaceStateLoopback.h"
-#include "OSPFArea.h"
 #include "OSPFRouter.h"
-#include "MessageHandler.h"
+
 
 void OSPF::InterfaceStateWaiting::processEvent(OSPF::Interface* intf, OSPF::Interface::InterfaceEventType event)
 {
@@ -39,7 +42,7 @@ void OSPF::InterfaceStateWaiting::processEvent(OSPF::Interface* intf, OSPF::Inte
     }
     if (event == OSPF::Interface::HELLO_TIMER) {
         if (intf->getType() == OSPF::Interface::BROADCAST) {
-            intf->sendHelloPacket(OSPF::ALL_SPF_ROUTERS);
+            intf->sendHelloPacket(IPv4Address::ALL_OSPF_ROUTERS_MCAST);
         } else {    // OSPF::Interface::NBMA
             unsigned long neighborCount = intf->getNeighborCount();
             int ttl = (intf->getType() == OSPF::Interface::VIRTUAL) ? VIRTUAL_LINK_TTL : 1;

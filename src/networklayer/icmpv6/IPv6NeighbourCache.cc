@@ -19,6 +19,42 @@
 
 #include "IPv6NeighbourCache.h"
 
+void IPv6NeighbourCache::DefaultRouterList::add(Neighbour &router)
+{
+    ASSERT(router.isRouter);
+    ASSERT(!router.nextDefaultRouter);
+    ASSERT(!router.prevDefaultRouter);
+
+    if (head)
+    {
+        // insert before head
+        head->prevDefaultRouter->nextDefaultRouter = &router;
+        router.prevDefaultRouter = head;
+        head->prevDefaultRouter = &router;
+        router.nextDefaultRouter = head;
+    }
+    else
+    {
+        head = router.nextDefaultRouter = router.prevDefaultRouter = &router;
+    }
+}
+
+void IPv6NeighbourCache::DefaultRouterList::remove(Neighbour &router)
+{
+    ASSERT(router.isDefaultRouter());
+    if (router.nextDefaultRouter == &router)
+    {
+        head = NULL;
+    }
+    else
+    {
+        if (head == &router)
+            head = router.nextDefaultRouter;
+        router.nextDefaultRouter->prevDefaultRouter = router.prevDefaultRouter;
+        router.prevDefaultRouter->nextDefaultRouter = router.nextDefaultRouter;
+    }
+    router.nextDefaultRouter = router.prevDefaultRouter = NULL;
+}
 
 std::ostream& operator<<(std::ostream& os, const IPv6NeighbourCache::Key& e)
 {
@@ -29,8 +65,8 @@ std::ostream& operator<<(std::ostream& os, const IPv6NeighbourCache::Neighbour& 
 {
     os << e.macAddress;
     if (e.isRouter) os << " ROUTER";
-    if (e.isDefaultRouter) os << "DefaultRtr";
-    if(e.isHomeAgent) os <<" Home Agent";
+    if (e.isDefaultRouter()) os << "DefaultRtr";
+    if (e.isHomeAgent) os <<" Home Agent";
     os << " " << IPv6NeighbourCache::stateName(e.reachabilityState);
     os << " reachabilityExp:"  << e.reachabilityExpires;
     if (e.numProbesSent) os << " probesSent:" << e.numProbesSent;
@@ -63,16 +99,10 @@ IPv6NeighbourCache::Neighbour *IPv6NeighbourCache::addNeighbour(const IPv6Addres
     ASSERT(neighbourMap.find(key) == neighbourMap.end()); // entry must not exist yet
     Neighbour& nbor = neighbourMap[key];
 
-    nbor.nceKey = lookupKeyAddr(key);//a ptr that links to the key.-WEI for convenience.
+    nbor.nceKey = lookupKeyAddr(key);
     nbor.isRouter = false;
-    nbor.isDefaultRouter = false;
-    nbor.isHomeAgent = false;         //Zarrar 09.03.07
+    nbor.isHomeAgent = false;
     nbor.reachabilityState = INCOMPLETE;
-    nbor.reachabilityExpires = 0;
-    nbor.numProbesSent = 0;
-    nbor.nudTimeoutEvent = NULL;
-    nbor.numOfARNSSent = 0;
-    nbor.routerExpiryTime = 0;
     return &nbor;
 }
 
@@ -83,40 +113,11 @@ IPv6NeighbourCache::Neighbour *IPv6NeighbourCache::addNeighbour(
     ASSERT(neighbourMap.find(key) == neighbourMap.end()); // entry must not exist yet
     Neighbour& nbor = neighbourMap[key];
 
-    nbor.nceKey = lookupKeyAddr(key);//a ptr that links to the key.-WEI for convenience.
+    nbor.nceKey = lookupKeyAddr(key);
     nbor.macAddress = macAddress;
     nbor.isRouter = false;
-    nbor.isDefaultRouter = false;
-    nbor.isHomeAgent = false;         //Zarrar 09.03.07
+    nbor.isHomeAgent = false;
     nbor.reachabilityState = STALE;
-    nbor.reachabilityExpires = 0;
-    nbor.numProbesSent = 0;
-    nbor.nudTimeoutEvent = NULL;
-    nbor.routerExpiryTime = 0;
-    return &nbor;
-}
-
-/**
- * Creates and initializes a router entry (isRouter=isDefaultRouter=true), state=INCOMPLETE.
- *
- * Update by CB: Added an optional parameter which is false by default. Specifies whether a router is also a home agent.
- */
-IPv6NeighbourCache::Neighbour *IPv6NeighbourCache::addRouter(
-        const IPv6Address& addr, int interfaceID, simtime_t expiryTime, bool isHomeAgent)
-{
-    Key key(addr, interfaceID);
-    ASSERT(neighbourMap.find(key) == neighbourMap.end()); // entry must not exist yet
-    Neighbour& nbor = neighbourMap[key];
-
-    nbor.nceKey = lookupKeyAddr(key);//a ptr that links to the key.-WEI for convenience.
-    nbor.isRouter = true;
-    nbor.isDefaultRouter = true;//FIXME: a router may advertise itself it self as a router but not as a default one.-WEI
-    nbor.isHomeAgent = isHomeAgent; //Zarrar 09.03.07 --- FIXME: NOT EVERY ROUTER IS A HOME AGENT // update 3.9.07 - CB
-    nbor.reachabilityState = INCOMPLETE;
-    nbor.reachabilityExpires = 0;
-    nbor.numProbesSent = 0;
-    nbor.nudTimeoutEvent = NULL;
-    nbor.routerExpiryTime = expiryTime;
     return &nbor;
 }
 
@@ -132,17 +133,15 @@ IPv6NeighbourCache::Neighbour *IPv6NeighbourCache::addRouter(const IPv6Address& 
     ASSERT(neighbourMap.find(key) == neighbourMap.end()); // entry must not exist yet
     Neighbour& nbor = neighbourMap[key];
 
-    nbor.nceKey = lookupKeyAddr(key);//a ptr that links to the key.-WEI for convenience.
+    nbor.nceKey = lookupKeyAddr(key);
     nbor.macAddress = macAddress;
     nbor.isRouter = true;
-    nbor.isDefaultRouter = true;
-    nbor.isHomeAgent = isHomeAgent; //Zarrar 09.03.07 --- FIXME: NOT EVERY ROUTER IS A HOME AGENT // update 3.9.07 - CB
+    nbor.isHomeAgent = isHomeAgent;
     nbor.reachabilityState = STALE;
-    nbor.reachabilityExpires = 0;
-    nbor.numProbesSent = 0;
-    nbor.nudTimeoutEvent = NULL;
-
     nbor.routerExpiryTime = expiryTime;
+
+    defaultRouterList.add(nbor);
+
     return &nbor;
 }
 
@@ -153,7 +152,10 @@ void IPv6NeighbourCache::remove(const IPv6Address& addr, int interfaceID)
     ASSERT(it!=neighbourMap.end()); // entry must exist
     neighbourDiscovery.cancelAndDelete(it->second.nudTimeoutEvent);
     it->second.nudTimeoutEvent = NULL;
+    if (it->second.isDefaultRouter())
+        defaultRouterList.remove(it->second);
     neighbourMap.erase(it);
+
 }
 
 void IPv6NeighbourCache::remove(NeighbourMap::iterator it)
@@ -161,6 +163,8 @@ void IPv6NeighbourCache::remove(NeighbourMap::iterator it)
     //delete it->second.nudTimeoutEvent;
     neighbourDiscovery.cancelAndDelete(it->second.nudTimeoutEvent); // 20.9.07 - CB
     it->second.nudTimeoutEvent = NULL;
+    if (it->second.isDefaultRouter())
+        defaultRouterList.remove(it->second);
     neighbourMap.erase(it);
 }
 
@@ -186,6 +190,8 @@ void IPv6NeighbourCache::invalidateAllEntries()
         NeighbourMap::iterator it = neighbourMap.begin();
         remove(it);
     }
+    defaultRouterList.clear();
+
     /*
     int size = neighbourMap.size();
     EV << "size: " << size << endl;

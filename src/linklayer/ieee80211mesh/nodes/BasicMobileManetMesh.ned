@@ -21,7 +21,8 @@ package inet.linklayer.ieee80211mesh.nodes;
 
 import inet.base.MMapBoard;
 import inet.base.NotificationBoard;
-import inet.linklayer.ieee80211mesh.Ieee80211NewNicMesh;
+import inet.linklayer.ieee80211mesh.Ieee80211NicMesh;
+import inet.linklayer.ieee80211mesh.Ieee80211NicMeshMulti;
 import inet.networklayer.common.InterfaceTable;
 import inet.base.Sink;
 
@@ -59,11 +60,11 @@ module BasicMobileManetMesh
 {
     parameters:
         @node();
-        string mobilityType = default("NullMobility");
         @display("i=device/pocketpc_s");
-
+        string mobilityType = default("StationaryMobility");
+        int meshChannels = default(1);
     gates:
-        input radioIn @directIn;
+        input radioIn[meshChannels] @directIn;
 
     submodules:
         routingTable: RoutingTable {
@@ -71,40 +72,46 @@ module BasicMobileManetMesh
                 IPForward = true;
                 routerId = "";
                 routingFile = "";
-                @display("p=47,146");
+                @display("p=38,146");
         }
 
         notificationBoard: NotificationBoard {
             parameters:
-                @display("p=146,148");
+                @display("p=159,146");
         }
         interfaceTable: InterfaceTable {
             parameters:
-                @display("p=142,77");
+                @display("p=159,62");
         }
         sink: BasicNetLayer {
-            @display("p=101,205;i=block/sink");
+            @display("p=159,294;i=block/sink");
         }
         // the name of radio interface must have "wlan", valid examples wlan, wlan802, localwlan ....
-        wlan: Ieee80211NewNicMesh {
+        wlan: Ieee80211NicMeshMulti {
             parameters:
-                @display("p=101,275;q=queue");
+                numChannels = meshChannels;
+                @display("p=159,386;q=queue");
         }
-        mobility: <default("NullMobility")>  like IMobility {
+        // optional mobility module. Required only if wireless cards are present
+        mobility: <mobilityType> like IMobility if mobilityType != "" && meshChannels > 0 {
             parameters:
-                @display("p=38,73");
+                @display("p=30,62");
         }
+
 
         mmapBoard: MMapBoard {
             parameters:
-                @display("p=38,224;i=block/blackboard");
+                @display("p=38,294;i=block/blackboard");
         }
     connections allowunconnected:
 
         // connections to network outside
-        radioIn --> wlan.radioIn;
-        wlan.uppergateOut --> sink.ifIn[0];
-        wlan.uppergateIn <-- sink.ifOut[0];
+        for i=0..sizeof(meshChannels)-1 {
+            radioIn[i] --> wlan.radioIn[i];
+
+        }
+        wlan.upperLayerOut --> sink.ifIn++;
+        wlan.upperLayerIn <-- sink.ifOut++;
 }
 
 

@@ -26,7 +26,7 @@
  * A simplified version of EtherMAC. Since modern Ethernets typically
  * operate over duplex links where's no contention, the original CSMA/CD
  * algorithm is no longer needed. This simplified implementation doesn't
- * contain CSMA/CD, frames are just simply queued and sent out one by one.
+ * contain CSMA/CD, frames are just simply queued up and sent out one by one.
  */
 class INET_API EtherMACFullDuplex : public EtherMACBase
 {
@@ -43,14 +43,21 @@ class INET_API EtherMACFullDuplex : public EtherMACBase
     virtual void finish();
 
     // event handlers
+    virtual void handleEndIFGPeriod();
+    virtual void handleEndTxPeriod();
+    virtual void handleEndPausePeriod();
+    virtual void handleSelfMessage(cMessage *msg);
+
+    // helpers
     virtual void startFrameTransmission();
     virtual void processFrameFromUpperLayer(EtherFrame *frame);
     virtual void processMsgFromNetwork(EtherTraffic *msg);
-    virtual void handleEndIFGPeriod();
-    virtual void handleEndTxPeriod();
+    virtual void processReceivedDataFrame(EtherFrame *frame);
+    virtual void processPauseCommand(int pauseUnits);
+    virtual void scheduleEndIFGPeriod();
+    virtual void scheduleEndPausePeriod(int pauseUnits);
+    virtual void beginSendFrames();
 
-    // notifications
-    virtual void updateHasSubcribers();
 
     // statistics
     simtime_t totalSuccessfulRxTime; // total duration of successful transmissions on channel

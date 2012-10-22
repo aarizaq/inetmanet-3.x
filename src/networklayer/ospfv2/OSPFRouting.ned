@@ -19,7 +19,25 @@ package inet.networklayer.ospfv2;
 simple OSPFRouting
 {
     parameters:
-        string ospfConfigFile; // xml file containing the full OSPF AS configuration
+        xml ospfConfig; // xml containing the full OSPF AS configuration
+
+        // default values for attributes of interface xml entries:
+        int helloInterval @unit(s) = default(10s);
+        int pollInterval @unit(s) = default(120s);
+        int routerDeadInterval @unit(s) = default(40s);
+        int retransmissionInterval @unit(s) = default(5s);
+        int interfaceOutputCost = default(1);
+        int interfaceTransmissionDelay = default(1);
+        int routerPriority = default(1);
+        string authenticationType = default("NullType");    // SimplePasswordType|CrytographicType|NullType
+        string authenticationKey = default("0x00");         // 0xnn..nn
+        int linkCost = default(1);
+        bool RFC1583Compatible = default(false);
+
+        string areaID = default("");
+        int externalInterfaceOutputCost = default(1);
+        string externalInterfaceOutputType = default("");  // Type1|Type2
+
         @display("i=block/network2");
     gates:
         input ipIn @labels(IPv4ControlInfo/up);

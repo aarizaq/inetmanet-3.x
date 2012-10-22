@@ -31,7 +31,7 @@
 
 
 // macro for normal ev<< logging (note: deliberately no parens in macro def)
-#define tcpEV ((ev.disable_tracing)||(TCP_lwIP::testingS)) ? ev : ev
+#define tcpEV ((ev.isDisabled())||(TCP_lwIP::testingS)) ? ev : ev
 
 
 TcpLwipConnection::Stats::Stats()
@@ -39,23 +39,10 @@ TcpLwipConnection::Stats::Stats()
     sndWndVector("send window"),
     sndSeqVector("sent seq"),
     sndAckVector("sent ack"),
-    sndSacksVector("sent sacks"),
 
     rcvWndVector("receive window"),
     rcvSeqVector("rcvd seq"),
-    rcvAdvVector("advertised window"),
-    rcvAckVector("rcvd ack"),
-    rcvSacksVector("rcvd sacks"),
-
-    unackedVector("unacked bytes"),
-
-    dupAcksVector("rcvd dupAcks"),
-    pipeVector("pipe"),
-    rcvOooSegVector("rcvd oooseg"),
-
-    sackedBytesVector("rcvd sackedBytes"),
-    tcpRcvQueueBytesVector("tcpRcvQueueBytes"),
-    tcpRcvQueueDropsVector("tcpRcvQueueDrops")
+    rcvAckVector("rcvd ack")
 {
 }
 
@@ -294,7 +281,7 @@ int TcpLwipConnection::send_data(void *data, int datalen)
         // Chances are that datalen is too large to fit in the send
         // buffer. If it is really large (larger than a typical MSS,
         // say), we should try segmenting the data ourselves.
-        while(1)
+        while (1)
         {
             u16_t snd_buf = pcbM->snd_buf;
             if (0 == snd_buf)
@@ -329,7 +316,7 @@ void TcpLwipConnection::do_SEND()
     int bytes;
     int allsent = 0;
 
-    while(0 != (bytes = sendQueueM->getBytesForTcpLayer(buffer, sizeof(buffer))))
+    while (0 != (bytes = sendQueueM->getBytesForTcpLayer(buffer, sizeof(buffer))))
     {
         int sent = send_data(buffer, bytes);
 

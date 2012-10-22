@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Authors: Erik Nordström, <erik.nordstrom@it.uu.se>
+ * Authors: Erik NordstrÃ¶m, <erik.nordstrom@it.uu.se>
  *
  *****************************************************************************/
 #ifndef _PACKET_QUEUE_H
@@ -38,7 +38,7 @@ enum
     PQ_SEND = 1,
     PQ_ENC_SEND = 2
 };
-
+#ifndef AODV_USE_STL
 struct q_pkt
 {
     list_t l;
@@ -52,7 +52,24 @@ struct packet_queue
     list_t head;
     unsigned int len;
     struct timer garbage_collect_timer;
+    unsigned int length() { return len; }
 };
+#else
+struct q_pkt
+{
+    struct in_addr  dest_addr;
+    struct timeval q_time;
+    cPacket *p;
+};
+
+struct packet_queue
+{
+    std::vector<q_pkt*> pkQueue;
+    struct timer garbage_collect_timer;
+    unsigned int length() { return pkQueue.size(); }
+};
+
+#endif
 
 #endif              /* NS_NO_GLOBALS */
 

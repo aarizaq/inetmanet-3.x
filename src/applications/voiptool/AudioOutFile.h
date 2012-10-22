@@ -22,11 +22,12 @@
 
 #define __STDC_CONSTANT_MACROS
 
-#include <omnetpp.h>
+#include "INETDefs.h"
 
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
+#include <libavutil/mathematics.h>
 };
 
 /**
@@ -35,13 +36,13 @@ extern "C" {
 class AudioOutFile
 {
   public:
-    AudioOutFile() : opened(false) {};
+    AudioOutFile() : opened(false), audio_st(NULL), oc(NULL) {};
     ~AudioOutFile();
 
-    bool open(const char *resultFile, int sampleRate, short int sampleBits);
-    bool write(void *inbuf, int inbytes);
+    void open(const char *resultFile, int sampleRate, short int sampleBits);
+    void write(void *inbuf, int inbytes);
     bool close();
-    bool isOpen() { return opened; }
+    bool isOpen() const { return opened; }
 
   protected:
     void addAudioStream(enum CodecID codec_id, int sampleRate, short int sampleBits);

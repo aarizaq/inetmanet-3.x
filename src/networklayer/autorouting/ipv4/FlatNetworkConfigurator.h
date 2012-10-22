@@ -18,8 +18,8 @@
 #ifndef __INET_FLATNETWORKCONFIGURATOR_H
 #define __INET_FLATNETWORKCONFIGURATOR_H
 
-#include <omnetpp.h>
 #include "INETDefs.h"
+
 #include "IPv4Address.h"
 
 class IInterfaceTable;
@@ -37,12 +37,13 @@ class INET_API FlatNetworkConfigurator : public cSimpleModule
 {
   protected:
     struct NodeInfo {
-        NodeInfo() {isIPNode=false;ift=NULL;rt=NULL;usesDefaultRoute=false;}
+        NodeInfo() {isIPNode = false; ift = NULL; rt = NULL; usesDefaultRoute = false;}
         bool isIPNode;
         IInterfaceTable *ift;
         IRoutingTable *rt;
         IPv4Address address;
         bool usesDefaultRoute;
+        bool ipForwardEnabled;
     };
     typedef std::vector<NodeInfo> NodeInfoVector;
 

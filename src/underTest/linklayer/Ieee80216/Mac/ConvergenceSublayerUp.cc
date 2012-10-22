@@ -20,9 +20,9 @@ void ConvergenceSublayerUp::initialize()
 
 void ConvergenceSublayerUp::handleMessage(cMessage *msg)
 {
-    if (msg->arrivedOn("lowergateIn"))
+    if (msg->arrivedOn("lowerLayerIn"))
     {
-        send(msg, "uppergateOut");
+        send(msg, "upperLayerOut");
     }
     else
     {

@@ -20,9 +20,10 @@
 #ifndef DYMO_ROUTINGENTRY_H
 #define DYMO_ROUTINGENTRY_H
 
-#include <omnetpp.h>
 #include <string.h>
 #include <sstream>
+
+#include "INETDefs.h"
 
 #include <IPv4Address.h>
 #include <InterfaceTable.h>
@@ -71,13 +72,12 @@ class DYMO_RoutingEntry
     DYMO_Timer routeDelete; /**< After the ROUTE_DELETE timeout, the routing table entry should be deleted. */
     /*@}*/
 
-    IPv4Route* routingEntry; /**< Forwarding Route (entry in standard OMNeT++ routingTable) */
-
   protected:
     DYMO* dymo; /**< DYMO module */
 
   public:
     friend std::ostream& operator<<(std::ostream& os, const DYMO_RoutingEntry& e);
+    bool hasActiveTimer() { return routeAgeMin.isActive() || routeAgeMax.isActive() || routeNew.isActive() || routeUsed.isActive() || routeDelete.isActive(); }
 };
 
 #endif

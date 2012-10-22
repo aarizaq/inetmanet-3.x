@@ -37,7 +37,6 @@ import inet.linklayer.IMACRelayUnit;
 simple MACRelayUnitPP like IMACRelayUnit
 {
     parameters:
-        int numWirelessPorts = default(0); // see ~IMACRelayUnit
         string addressTableFile = default("");  // see ~IMACRelayUnit
         int addressTableSize = default(100); // see ~IMACRelayUnit
         double agingTime @unit("s") = default(120s); // see ~IMACRelayUnit
@@ -48,7 +47,7 @@ simple MACRelayUnitPP like IMACRelayUnit
         @display("i=block/switch");
         @statistic[processedBytes](title="Processed bytes"; record=sum,count,vector);
         @statistic[droppedBytes](title="Processed bytes"; record=sum,count,vector);
-        @statistic[usedBufferBytes](title="Used buffer bytes"; record=histogram,vector);
+        @statistic[usedBufferBytes](title="used buffer bytes"; record=max,timeavg,vector; unit=B; interpolationmode=none);
     gates:
         input lowerLayerIn[] @labels(EtherFrame);
         output lowerLayerOut[] @labels(EtherFrame);

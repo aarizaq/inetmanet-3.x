@@ -120,7 +120,8 @@ class INET_API LDP: public cSimpleModule, public TCPSocket::CallbackInterface, p
     TED *tedmod;
     NotificationBoard *nb;
 
-    UDPSocket udpSocket;     // for sending/receiving Hello
+    UDPSocket udpSocket; // for receiving Hello
+    std::vector<UDPSocket> udpSockets;  // for sending Hello, one socket for each multicast interface
     TCPSocket serverSocket;  // for listening on LDP_PORT
     TCPSocketMap socketMap;  // holds TCP connections with peers
 
@@ -210,7 +211,7 @@ class INET_API LDP: public cSimpleModule, public TCPSocket::CallbackInterface, p
     virtual bool lookupLabel(IPv4Datagram *ipdatagram, LabelOpVector& outLabel, std::string& outInterface, int& color);
 
     // INotifiable
-    virtual void receiveChangeNotification(int category, const cPolymorphic *details);
+    virtual void receiveChangeNotification(int category, const cObject *details);
 };
 
 #endif

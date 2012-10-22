@@ -18,12 +18,18 @@
 
 package inet.applications.pingapp;
 
+import inet.applications.IPingApp;
+
+
 //
 // Generates ping requests and calculates the packet loss and round trip
 // parameters of the replies.
 //
-// Start/stop time, interval etc can be specified via parameters. To disable,
-// specify empty destAddr or stopTime<=startTime.
+// Start/stop time, sendInterval etc. can be specified via parameters. An address
+// may be given in the dotted decimal notation (or, for IPv6, in the usual
+// notation with colons), or with the module name.
+// (The IPvXAddressResolver class is used to resolve the address.)
+// To disable send, specify empty destAddr.
 //
 // Every ping request is sent out with a sequence number, and replies are
 // expected to arrive in the same order. Whenever there's a jump in the
@@ -36,30 +42,35 @@ package inet.applications.pingapp;
 //
 // Uses ~PingPayload as payload for the ICMP(v6) Echo Request/Reply packets.
 //
-// @see ~PingPayload, ~ICMP, ~ICMPv6Core
+// @see ~PingPayload, ~ICMP, ~ICMPv6
 //
-simple PingApp
+simple PingApp like IPingApp
 {
     parameters:
-        string destAddr = default(""); // destination IPv4 or IPv6 address
-        string srcAddr = default(""); // source IPv4 or IPv6 address (useful with multi-homing)
+        string destAddr = default(""); // destination address
+        string srcAddr = default(""); // source address (useful with multi-homing)
         double packetSize @unit("B") = default(56B); // of ping payload, in bytes
-        volatile double interval @unit("s") = default(1s); // time to wait between pings (can be random)
+        volatile double sendInterval @unit("s") = default(1s); // time to wait between pings (can be random)
         double hopLimit = default(32); // TTL or hopLimit for IP packets
         double count = default(0); // stop after count ping requests, 0 means continuously
-        double startTime @unit("s") = default(uniform(0s,this.interval)); // send first ping at startTime
-        double stopTime @unit("s") = default(0s); // send no pings after stopTime, 0 means forever
-        bool printPing = default(true); // dump on stdout
+        double startTime @unit("s") = default(uniform(0s,this.sendInterval)); // send first ping at startTime
+        double stopTime @unit("s") = default(0s); // time to finish sending, 0 means forever
+        bool printPing = default(false); // log to stdout
         @display("i=block/app");
-        @statistic[endToEndDelay](title="delay";record=histogram,stats,vector);
-        @statistic[drop](title="dropped packets";record=count,vector);
-        @statistic[sentPacket](title="sent packets";record=count,vector);
-        @statistic[outOfOrderArrival](title="Out of order arrival packets";record=count,vector);
-        @statistic[pingTx](title="sent ping seq.no.";record=count,vector);
-        @statistic[pingRx](title="received ping seq.no.";record=count,vector);
+        @signal[rtt](type=simtime_t);
+        @signal[numLost](type=long);
+        @signal[outOfOrderArrivals](type=long);
+        @signal[pingTxSeq](type=long);
+        @signal[pingRxSeq](type=long);
+        @statistic[rtt](title="ping round-trip time"; unit=s; record=histogram,vector; interpolationmode=none);
+        @statistic[numLost](title="pings lost"; record=last,vector; interpolationmode=none);
+        @statistic[numOutOfOrderArrivals](title="ping out-of-order arrivals"; record=last,vector; interpolationmode=none);
+        @statistic[pingTxSeq](title="ping tx seq"; record=count,vector; interpolationmode=none);
+        @statistic[pingRxSeq](title="ping rx seq"; record=count,vector; interpolationmode=none);
     gates:
-        input pingIn;
-        output pingOut;
-        input pingv6In;
-        output pingv6Out;
+        input pingIn @labels(PingPayload/up);
+        output pingOut @labels(PingPayload/down);
+        input pingv6In @labels(PingPayload/up);
+        output pingv6Out @labels(PingPayload/down);
 }
+

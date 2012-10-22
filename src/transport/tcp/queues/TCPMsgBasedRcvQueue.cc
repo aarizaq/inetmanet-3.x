@@ -34,10 +34,10 @@ TCPMsgBasedRcvQueue::~TCPMsgBasedRcvQueue()
     while (! payloadList.empty())
     {
         EV << "SendQueue Destructor: Drop msg from " << this->getFullPath() <<
-                " Queue: offset=" << payloadList.begin()->first <<
-                ", length=" << payloadList.begin()->second->getByteLength() << endl;
-        delete payloadList.begin()->second;
-        payloadList.erase(payloadList.begin());
+                " Queue: offset=" << payloadList.front().seqNo <<
+                ", length=" << payloadList.front().packet->getByteLength() << endl;
+        delete payloadList.front().packet;
+        payloadList.pop_front();
     }
 }
 
@@ -68,14 +68,20 @@ uint32 TCPMsgBasedRcvQueue::insertBytesFromSegment(TCPSegment *tcpseg)
 
     cPacket *msg;
     uint32 endSeqNo;
+    PayloadList::iterator i = payloadList.begin();
     while (NULL != (msg = tcpseg->removeFirstPayloadMessage(endSeqNo)))
     {
+        while (i != payloadList.end() && seqLess(i->seqNo, endSeqNo))
+            ++i;
+
         // insert, avoiding duplicates
-        PayloadList::iterator i = payloadList.find(endSeqNo);
-        if (i != payloadList.end())
+        if (i != payloadList.end() && i->seqNo == endSeqNo)
             delete msg;
         else
-            payloadList[endSeqNo] = msg;
+        {
+            i = payloadList.insert(i,PayloadItem(endSeqNo, msg));
+            ASSERT(seqLE(payloadList.front().seqNo, payloadList.back().seqNo));
+        }
     }
 
     return rcv_nxt;
@@ -83,13 +89,19 @@ uint32 TCPMsgBasedRcvQueue::insertBytesFromSegment(TCPSegment *tcpseg)
 
 cPacket *TCPMsgBasedRcvQueue::extractBytesUpTo(uint32 seq)
 {
-    extractTo(seq);
+    cPacket *msg = NULL;
+    if (!payloadList.empty() && seqLess(payloadList.begin()->seqNo, seq))
+        seq = payloadList.begin()->seqNo;
 
-    // pass up payload messages, in sequence number order
-    if (payloadList.empty() || seqGreater(payloadList.begin()->first, seq))
-        return NULL;
-
-    cPacket *msg = payloadList.begin()->second;
-    payloadList.erase(payloadList.begin());
+    Region *reg = extractTo(seq);
+    if (reg)
+    {
+        if (!payloadList.empty() && payloadList.begin()->seqNo == reg->getEnd())
+        {
+            msg = payloadList.begin()->packet;
+            payloadList.erase(payloadList.begin());
+        }
+        delete reg;
+    }
     return msg;
 }

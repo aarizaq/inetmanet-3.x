@@ -23,13 +23,14 @@
 #pragma warning(disable : 4786)
 #endif
 
-#include "INETDefs.h"
-
 #include <map>
 
+#include "INETDefs.h"
+
 #include "IPvXAddress.h"
+#include "UDPSocket.h"
 
-
+#define SCTP_UDP_PORT  9899
 
 class SCTPAssociation;
 class SCTPMessage;
@@ -163,10 +164,12 @@ class INET_API SCTP : public cSimpleModule
         typedef std::map<AppConnKey,SCTPAssociation*> SctpAppConnMap;
         typedef std::map<SockPair,SCTPAssociation*> SctpConnMap;
 
-
         SctpAppConnMap sctpAppConnMap;
         SctpConnMap sctpConnMap;
         std::list<SCTPAssociation*>assocList;
+
+        UDPSocket udpSocket;
+
     protected:
         int32 sizeConnMap;
         static int32 nextConnId;
@@ -200,10 +203,10 @@ class INET_API SCTP : public cSimpleModule
 
         inline AssocStat* getAssocStat(uint32 assocId) {
             SCTP::AssocStatMap::iterator found = assocStatMap.find(assocId);
-            if(found != assocStatMap.end()) {
-              return(&found->second);
+            if (found != assocStatMap.end()) {
+              return (&found->second);
             }
-            return(NULL);
+            return (NULL);
         }
 
         /**

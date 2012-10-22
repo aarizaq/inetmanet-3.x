@@ -264,32 +264,6 @@ struct taskPending
 
 class INET_API Ieee802154Mac: public cSimpleModule, public INotifiable
 {
-protected:
-	static uint64_t MacToUint64(const MACAddress &add)
-	{
-	    uint64_t aux;
-	    uint64_t lo=0;
-	    for (int i=0; i<MAC_ADDRESS_BYTES; i++)
-	    {
-	        aux  = add.getAddressByte(MAC_ADDRESS_BYTES-i-1);
-	        aux <<= 8*i;
-	        lo  |= aux ;
-	    }
-	    return lo;
-	}
-
-	static MACAddress Uint64ToMac(uint64_t lo)
-	{
-	    MACAddress add;
-	    add.setAddressByte(0, (lo>>40)&0xff);
-	    add.setAddressByte(1, (lo>>32)&0xff);
-	    add.setAddressByte(2, (lo>>24)&0xff);
-	    add.setAddressByte(3, (lo>>16)&0xff);
-	    add.setAddressByte(4, (lo>>8)&0xff);
-	    add.setAddressByte(5, lo&0xff);
-	    return add;
-	}
-
   public:
     /**
     * @name Constructor and destructor
@@ -301,6 +275,7 @@ protected:
 
     /** @brief called by other MAC modules in order to translate host name into MAC address */
     IE3ADDR getMacAddr() {return aExtendedAddress;}
+    /** @brief called by other MAC modules in order to translate host name into MAC address */
 
   protected:
     /** @brief the bit rate at which we transmit */
@@ -490,6 +465,8 @@ protected:
   public:
 
   protected:
+    UINT_16 getShortAddress(MACAddress v) {return (UINT_16) v.getInt();}
+    MACAddress getLongAddress(UINT_16 v);
     /**
     * @name User-adjustable MAC parameters
     */
@@ -533,7 +510,7 @@ protected:
     */
     //@{
     /** @brief global counter for generating unique MAC extended address */
-    static IE3ADDR addrCount;
+    static UINT_16 addrCount;
 
     /** @brief default MAC PIB attributes */
     static MAC_PIB MPIB;
@@ -543,10 +520,10 @@ protected:
     * @name Module gate ID
     */
     //@{
-    int mUppergateIn;
-    int mUppergateOut;
-    int mLowergateIn;
-    int mLowergateOut;
+    int mUpperLayerIn;
+    int mUpperLayerOut;
+    int mLowerLayerIn;
+    int mLowerLayerOut;
     //@}
 
     /** @brief  pointer to the NotificationBoard module */

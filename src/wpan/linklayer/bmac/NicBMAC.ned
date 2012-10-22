@@ -34,9 +34,8 @@
 
 package inet.wpan.linklayer.bmac;
 
-import inet.networklayer.queue.IOutputQueue;
 import inet.wpan.linklayer.bmac.BMacLayer;
-import inet.wpan.linklayer.ieee802154.phyLayer.Ieee802154Phy;
+import inet.wpan.phyLayer.ieee802154.Ieee802154Phy;
 
 module NicBMAC
 {
@@ -44,8 +43,8 @@ module NicBMAC
         // name of the interface queue type
         string ifqType; // name of the interface queue type
     gates:
-        input uppergateIn; // to upper layers
-        output uppergateOut; // from upper layers
+        input upperLayerIn; // to upper layers
+        output upperLayerOut; // from upper layers
         input radioIn; // to receive AirFrames
     submodules:
         mac: BMacLayer {
@@ -58,9 +57,9 @@ module NicBMAC
         }
     connections:
         radioIn --> phy.radioIn;
-        phy.uppergateOut --> { @display("m=m,50,50,75,0"); } --> mac.lowergateIn;
-        phy.uppergateIn <-- { @display("m=m,25,0,25,0"); } <-- mac.lowergateOut;
-        mac.uppergateOut --> uppergateOut;
-        mac.uppergateIn <-- uppergateIn;
+        phy.upperLayerOut --> { @display("m=m,50,50,75,0"); } --> mac.lowerLayerIn;
+        phy.upperLayerIn <-- { @display("m=m,25,0,25,0"); } <-- mac.lowerLayerOut;
+        mac.upperLayerOut --> upperLayerOut;
+        mac.upperLayerIn <-- upperLayerIn;
 }
 

@@ -29,6 +29,8 @@
 #include "IInterfaceTable.h"
 #include "IPv4Address.h"
 
+std::deque<IPvXAddress> HostAutoConfigurator2::asignedAddress;
+
 Define_Module(HostAutoConfigurator2);
 
 static IPv4Address defaultAddr;
@@ -36,6 +38,7 @@ static IPv4Address defaultAddr;
 HostAutoConfigurator2::HostAutoConfigurator2()
 {
     defaultAddr.set(0,0,0,0);
+    asignedAddress.clear();
 }
 
 void HostAutoConfigurator2::initialize(int stage)
@@ -64,6 +67,7 @@ void HostAutoConfigurator2::initialize(int stage)
     else if (stage == 3)
     {
         setupRoutingTable();
+        asignedAddress.clear();
     }
 }
 
@@ -83,16 +87,16 @@ namespace
 
 void addToMcastGroup(InterfaceEntry* ie, IRoutingTable* routingTable, const IPv4Address& mcastGroup)
 {
-    IPv4InterfaceData::IPAddressVector mcg = ie->ipv4Data()->getMulticastGroups();
-    if (std::find(mcg.begin(), mcg.end(), mcastGroup) == mcg.end()) mcg.push_back(mcastGroup);
-    ie->ipv4Data()->setMulticastGroups(mcg);
+    IPv4InterfaceData::IPv4AddressVector mcg = ie->ipv4Data()->getJoinedMulticastGroups();
+
+    if (std::find(mcg.begin(), mcg.end(), mcastGroup) == mcg.end())
+        ie->ipv4Data()->joinMulticastGroup(mcastGroup);
 
     IPv4Route* re = new IPv4Route(); //TODO: add @c delete to destructor
-    re->setHost(mcastGroup);
+    re->setDestination(mcastGroup);
     re->setNetmask(IPv4Address::ALLONES_ADDRESS); // TODO: can't set this to none?
     re->setGateway(IPv4Address()); // none
     re->setInterface(ie);
-    re->setType(IPv4Route::DIRECT);
     re->setSource(IPv4Route::MANUAL);
     re->setMetric(1);
     routingTable->addRoute(re);
@@ -103,11 +107,10 @@ void addRoute(InterfaceEntry* ie, IRoutingTable* routingTable, const IPv4Address
     //
 	//
 	IPv4Route* re = new IPv4Route(); //TODO: add @c delete to destructor
-    re->setHost(ipaddress);
+    re->setDestination(ipaddress);
     re->setNetmask(maskaddress); // TODO: can't set this to none?
     re->setGateway(IPv4Address::UNSPECIFIED_ADDRESS); // none
     re->setInterface(ie);
-    re->setType(IPv4Route::DIRECT);
     re->setSource(IPv4Route::MANUAL);
     re->setMetric(1);
     routingTable->addRoute(re);
@@ -148,10 +151,9 @@ void HostAutoConfigurator2::addDefaultRoutes()
     	    i++;
     }
     IPv4Route *e = new IPv4Route();
-    e->setHost(IPv4Address());
+    e->setDestination(IPv4Address());
     e->setNetmask(IPv4Address());
     e->setInterface(ie);
-    e->setType(IPv4Route::REMOTE);
     e->setSource(IPv4Route::MANUAL);
      //e->getMetric() = 1;
     rt->addRoute(e);
@@ -235,22 +237,36 @@ void HostAutoConfigurator2::setupNetworkLayer()
             continue;
         }
         interfaceFound=true;
+        IPv4Address addressBase;
         if (vectorAddressToken.size()>1)
         {
-            IPv4Address addressBase(vectorAddressToken[i].c_str());
-            myAddress = IPv4Address(addressBase.getInt() + uint32(getParentModule()->getId()));
+            addressBase.set(vectorAddressToken[i].c_str());
             netmask = IPv4Address(vectorMaskToken[i].c_str());
         }
         else
         {
-        	IPv4Address addressBase(vectorAddressToken[0].c_str());
-        	myAddress = IPv4Address(addressBase.getInt() + uint32(getParentModule()->getId()));
+        	addressBase.set(vectorAddressToken[0].c_str());
         	netmask = IPv4Address(vectorMaskToken[0].c_str());
         }
+
+        int cont = 0;
+
+        do
+        {
+            cont++;
+            // search other address
+            myAddress = IPv4Address(addressBase.getInt() + cont);
+            // check if the address is valid.
+            if (!IPv4Address::maskedAddrAreEqual(myAddress, addressBase, netmask)) // match
+                error("check address asignation, more address that possible with this address base %s and this mask %s",addressBase.str().c_str(),netmask.str().c_str());
+
+        }
+        while(checkIfExist(myAddress));
 
         ie->ipv4Data()->setIPAddress(myAddress);
         ie->ipv4Data()->setNetmask(netmask);
         ie->setBroadcast(true);
+        asignedAddress.push_back(myAddress);
         EV << "interface " << ifname << " gets " << myAddress.str() << "/" << netmask.str() << std::endl;
     }
     if (!interfaceFound)
@@ -344,11 +360,10 @@ void HostAutoConfigurator2::setupRoutingTable()
         if (ie==NULL)
             opp_error("default ID interface doesn't exist");
         IPv4Route *e = new IPv4Route();
-        e->setHost(IPv4Address());
+        e->setDestination(IPv4Address());
         e->setNetmask(IPv4Address());
         e->setGateway(defaultAddr);
         e->setInterface(ie);
-        e->setType(IPv4Route::REMOTE);
         e->setSource(IPv4Route::MANUAL);
          //e->getMetric() = 1;
         routingTable->addRoute(e);
@@ -416,13 +431,23 @@ void HostAutoConfigurator2::fillRoutingTables()
                 error("%s has no interface for output gate id %d", iftN->getFullPath().c_str(), outputGateId);
 
             IPv4Route *e = new IPv4Route();
-            e->setHost(ieTarget->ipv4Data()->getIPAddress());
+            e->setDestination(ieTarget->ipv4Data()->getIPAddress());
             e->setNetmask(IPv4Address(255,255,255,255)); // full match needed
             e->setInterface(ie);
-            e->setType(IPv4Route::DIRECT);
             e->setSource(IPv4Route::MANUAL);
             //e->getMetric() = 1;
             routingTable->addRoute(e);
         }
     }
+}
+
+
+bool HostAutoConfigurator2::checkIfExist(const IPvXAddress &add)
+{
+    for (unsigned int i=0; i<asignedAddress.size();i++)
+    {
+        if (add == asignedAddress[i])
+            return true;
+    }
+    return false;
 }

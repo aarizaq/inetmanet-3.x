@@ -5,6 +5,7 @@ cplusplus {{
 #include "Ieee802154Field.h"
 }}
 
+class noncobject MACAddress;
 
 struct FrameCtrl;
 
@@ -32,10 +33,10 @@ packet Ieee802154Frame
     unsigned char bdsn;
 
     //	Addressing fields
-    uint64_t dstPanId;
-    uint64_t dstAddr;
-    uint64_t srcPanId;
-    uint64_t srcAddr;
+    uint16_t dstPanId;
+    MACAddress dstAddr;
+    uint16_t srcPanId;
+    MACAddress srcAddr;
 
     bool isIndirect = false;
     bool isGTS = false;

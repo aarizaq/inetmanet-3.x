@@ -1671,7 +1671,7 @@ void ControlPlaneBasestation::registerInterface()
         return;
     }
 
-    InterfaceEntry *e = new InterfaceEntry();
+    InterfaceEntry *e = new InterfaceEntry(this);
 
     e->setName(interfaceName);
     delete [] interfaceName;
@@ -1690,7 +1690,7 @@ void ControlPlaneBasestation::registerInterface()
     e->setPointToPoint(false);
 
     // add
-    ift->addInterface(e, this);
+    ift->addInterface(e);
 }
 
 void ControlPlaneBasestation::setMobilestationScanmodus(cMessage *msg)

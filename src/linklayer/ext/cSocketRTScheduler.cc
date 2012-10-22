@@ -59,16 +59,14 @@ cSocketRTScheduler::~cSocketRTScheduler()
 
 void cSocketRTScheduler::startRun()
 {
-#ifdef HAVE_PCAP
-    const int32 on = 1;
-
-#endif
     gettimeofday(&baseTime, NULL);
+
 #ifdef HAVE_PCAP
     // Enabling sending makes no sense when we can't receive...
     fd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
     if (fd == INVALID_SOCKET)
-        throw cRuntimeError("cSocketRTScheduler: Root priviledges needed");
+        throw cRuntimeError("cSocketRTScheduler: Root privileges needed");
+    const int32 on = 1;
     if (setsockopt(fd, IPPROTO_IP, IP_HDRINCL, (char *)&on, sizeof(on)) < 0)
         throw cRuntimeError("cSocketRTScheduler: couldn't set sockopt for raw socket");
 #endif
@@ -77,18 +75,15 @@ void cSocketRTScheduler::startRun()
 
 void cSocketRTScheduler::endRun()
 {
-#ifdef HAVE_PCAP
-    pcap_stat ps;
-
-#endif
     close(fd);
     fd = INVALID_SOCKET;
-#ifdef HAVE_PCAP
 
+#ifdef HAVE_PCAP
     for (uint16 i=0; i<pds.size(); i++)
     {
+        pcap_stat ps;
         if (pcap_stats(pds.at(i), &ps) < 0)
-            throw cRuntimeError("cSocketRTScheduler::endRun(): Can not get pcap statistics: %s", pcap_geterr(pds.at(i)));
+            throw cRuntimeError("cSocketRTScheduler::endRun(): Cannot query pcap statistics: %s", pcap_geterr(pds.at(i)));
         else
             EV << modules.at(i)->getFullPath() << ": Received Packets: " << ps.ps_recv << " Dropped Packets: " << ps.ps_drop << ".\n";
         pcap_close(pds.at(i));
@@ -123,24 +118,24 @@ void cSocketRTScheduler::setInterfaceModule(cModule *mod, const char *dev, const
     /* get pcap handle */
     memset(&errbuf, 0, sizeof(errbuf));
     if ((pd = pcap_open_live(dev, PCAP_SNAPLEN, 0, PCAP_TIMEOUT, errbuf)) == NULL)
-        throw cRuntimeError("cSocketRTScheduler::setInterfaceModule(): Can not open pcap device, error = %s", errbuf);
-    else if(strlen(errbuf) > 0)
-        EV << "cSocketRTScheduler::setInterfaceModule: pcap_open_live returned waring: " << errbuf << "\n";
+        throw cRuntimeError("cSocketRTScheduler::setInterfaceModule(): Cannot open pcap device, error = %s", errbuf);
+    else if (strlen(errbuf) > 0)
+        EV << "cSocketRTScheduler::setInterfaceModule(): pcap_open_live returned warning: " << errbuf << "\n";
 
     /* compile this command into a filter program */
     if (pcap_compile(pd, &fcode, (char *)filter, 0, 0) < 0)
-        throw cRuntimeError("cSocketRTScheduler::setInterfaceModule(): Can not compile filter: %s", pcap_geterr(pd));
+        throw cRuntimeError("cSocketRTScheduler::setInterfaceModule(): Cannot compile pcap filter: %s", pcap_geterr(pd));
 
     /* apply the compiled filter to the packet capture device */
     if (pcap_setfilter(pd, &fcode) < 0)
-        throw cRuntimeError("cSocketRTScheduler::setInterfaceModule(): Can not apply compiled filter: %s", pcap_geterr(pd));
+        throw cRuntimeError("cSocketRTScheduler::setInterfaceModule(): Cannot apply compiled pcap filter: %s", pcap_geterr(pd));
 
     if ((datalink = pcap_datalink(pd)) < 0)
-        throw cRuntimeError("cSocketRTScheduler::setInterfaceModule(): Can not get datalink: %s", pcap_geterr(pd));
+        throw cRuntimeError("cSocketRTScheduler::setInterfaceModule(): Cannot query pcap link-layer header type: %s", pcap_geterr(pd));
 
 #ifndef LINUX
     if (pcap_setnonblock(pd, 1, errbuf) < 0)
-        throw cRuntimeError("cSocketRTScheduler::pcap_setnonblock(): Can not put pcap device into non-blocking mode, error = %s", errbuf);
+        throw cRuntimeError("cSocketRTScheduler::setInterfaceModule(): Cannot put pcap device into non-blocking mode, error: %s", errbuf);
 #endif
 
     switch (datalink) {
@@ -166,7 +161,7 @@ void cSocketRTScheduler::setInterfaceModule(cModule *mod, const char *dev, const
 
     EV << "Opened pcap device " << dev << " with filter " << filter << " and datalink " << datalink << ".\n";
 #else
-    throw cRuntimeError("cSocketRTScheduler::setInterfaceModule(): pcap devices not supported");
+    throw cRuntimeError("cSocketRTScheduler::setInterfaceModule(): code was compiled without pcap support");
 #endif
 }
 
@@ -195,7 +190,7 @@ static void packet_handler(u_char *user, const struct pcap_pkthdr *hdr, const u_
     // put the IP packet from wire into data[] array of ExtFrame
     ExtFrame *notificationMsg = new ExtFrame("rtEvent");
     notificationMsg->setDataArraySize(hdr->caplen - headerLength);
-    for (uint16 j=0; j< hdr->caplen - headerLength; j++)
+    for (uint16 j=0; j < hdr->caplen - headerLength; j++)
         notificationMsg->setData(j, bytes[j + headerLength]);
 
     // signalize new incoming packet to the interface via cMessage
@@ -224,7 +219,7 @@ bool cSocketRTScheduler::receiveWithTimeout()
 #endif
 
     found = false;
-    timeout.tv_sec  = 0;
+    timeout.tv_sec = 0;
     timeout.tv_usec = PCAP_TIMEOUT * 1000;
 #ifdef HAVE_PCAP
 #ifdef LINUX
@@ -249,7 +244,7 @@ bool cSocketRTScheduler::receiveWithTimeout()
             continue;
 #endif
         if ((n = pcap_dispatch(pds.at(i), 1, packet_handler, (uint8 *)&i)) < 0)
-            throw cRuntimeError("cSocketRTScheduler::pcap_dispatch(): An error occired: %s", pcap_geterr(pds.at(i)));
+            throw cRuntimeError("cSocketRTScheduler::pcap_dispatch(): An error occured: %s", pcap_geterr(pds.at(i)));
         if (n > 0)
             found = true;
     }
@@ -323,7 +318,7 @@ void cSocketRTScheduler::sendBytes(uint8 *buf, size_t numBytes, struct sockaddr 
 
     int sent = sendto(fd, (char *)buf, numBytes, 0, to, addrlen);  //note: no ssize_t on MSVC
 
-    if (sent == numBytes)
+    if ((size_t)sent == numBytes)
         EV << "Sent an IP packet with length of " << sent << " bytes.\n";
     else
         EV << "Sending of an IP packet FAILED! (sendto returned " << sent << " (" << strerror(errno) << ") instead of " << numBytes << ").\n";

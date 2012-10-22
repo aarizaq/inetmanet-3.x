@@ -15,8 +15,10 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
+
 #include <fstream>
 #include <sstream>
+
 #include "BonnMotionFileCache.h"
 
 
@@ -63,7 +65,7 @@ void BonnMotionFileCache::parseFile(const char *filename, BonnMotionFile& bmFile
 {
     std::ifstream in(filename, std::ios::in);
     if (in.fail())
-        throw cRuntimeError("Cannot open file '%s'",filename);
+        throw cRuntimeError("Cannot open file '%s'", filename);
 
     std::string line;
     while (std::getline(in, line))
@@ -78,6 +80,3 @@ void BonnMotionFileCache::parseFile(const char *filename, BonnMotionFile& bmFile
     }
     in.close();
 }
-
-
-

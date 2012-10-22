@@ -7,8 +7,8 @@ simple SecuritySublayerUp
     parameters:
 
     gates:
-        input lowergateIn;
-        output uppergateOut;
+        input lowerLayerIn;
+        output upperLayerOut;
 }
 
 

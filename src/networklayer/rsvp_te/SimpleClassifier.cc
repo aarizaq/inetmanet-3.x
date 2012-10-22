@@ -56,14 +56,14 @@ bool SimpleClassifier::lookupLabel(IPv4Datagram *ipdatagram, LabelOpVector& outL
 {
     // never label OSPF(TED) and RSVP traffic
 
-    switch(ipdatagram->getTransportProtocol())
+    switch (ipdatagram->getTransportProtocol())
     {
         case IP_PROT_OSPF:
         case IP_PROT_RSVP:
             return false;
 
         default:
-            ;
+            break;
     }
 
     // forwarding decision for non-labeled datagrams

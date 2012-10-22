@@ -29,9 +29,10 @@
 Define_Module(UDPVideoStreamSvr);
 
 simsignal_t UDPVideoStreamSvr::reqStreamBytesSignal = SIMSIGNAL_NULL;
-simsignal_t UDPVideoStreamSvr::sentPkBytesSignal = SIMSIGNAL_NULL;
+simsignal_t UDPVideoStreamSvr::sentPkSignal = SIMSIGNAL_NULL;
 
-inline std::ostream& operator<<(std::ostream& out, const UDPVideoStreamSvr::VideoStreamData& d) {
+inline std::ostream& operator<<(std::ostream& out, const UDPVideoStreamSvr::VideoStreamData& d)
+{
     out << "client=" << d.clientAddr << ":" << d.clientPort
         << "  size=" << d.videoSize << "  pksent=" << d.numPkSent << "  bytesleft=" << d.bytesLeft;
     return out;
@@ -49,22 +50,21 @@ UDPVideoStreamSvr::~UDPVideoStreamSvr()
 
 void UDPVideoStreamSvr::initialize()
 {
-    this->UDPAppBase::initialize();
-
-    waitInterval = &par("waitInterval");
+    sendInterval = &par("sendInterval");
     packetLen = &par("packetLen");
     videoSize = &par("videoSize");
-    serverPort = par("serverPort");
+    localPort = par("localPort");
 
     // statistics
     numStreams = 0;
     numPkSent = 0;
     reqStreamBytesSignal = registerSignal("reqStreamBytes");
-    sentPkBytesSignal = registerSignal("sentPkBytes");
+    sentPkSignal = registerSignal("sentPk");
 
     WATCH_PTRVECTOR(streamVector);
 
-    bindToPort(serverPort);
+    socket.setOutputGate(gate("udpOut"));
+    socket.bind(localPort);
 }
 
 void UDPVideoStreamSvr::finish()
@@ -78,18 +78,26 @@ void UDPVideoStreamSvr::handleMessage(cMessage *msg)
         // timer for a particular video stream expired, send packet
         sendStreamData(msg);
     }
-    else
+    else if (msg->getKind() == UDP_I_DATA)
     {
         // start streaming
         processStreamRequest(msg);
     }
+    else if (msg->getKind() == UDP_I_ERROR)
+    {
+        EV << "Ignoring UDP error report\n";
+        delete msg;
+    }
+    else
+    {
+        error("Unrecognized message (%s)%s", msg->getClassName(), msg->getName());
+    }
 }
-
 
 void UDPVideoStreamSvr::processStreamRequest(cMessage *msg)
 {
     // register video stream...
-    UDPControlInfo *ctrl = check_and_cast<UDPControlInfo *>(msg->getControlInfo());
+    UDPDataIndication *ctrl = check_and_cast<UDPDataIndication *>(msg->getControlInfo());
 
     VideoStreamData *d = new VideoStreamData;
     d->clientAddr = ctrl->getSrcAddr();
@@ -98,6 +106,7 @@ void UDPVideoStreamSvr::processStreamRequest(cMessage *msg)
     d->bytesLeft = d->videoSize;
     d->numPkSent = 0;
     streamVector.push_back(d);
+    delete msg;
 
     cMessage *timer = new cMessage("VideoStreamTmr");
     timer->setContextPointer(d);
@@ -121,17 +130,17 @@ void UDPVideoStreamSvr::sendStreamData(cMessage *timer)
         pktLen = d->bytesLeft;
 
     pkt->setByteLength(pktLen);
-    sendToUDP(pkt, serverPort, d->clientAddr, d->clientPort);
+    emit(sentPkSignal, pkt);
+    socket.sendTo(pkt, d->clientAddr, d->clientPort);
 
     d->bytesLeft -= pktLen;
     d->numPkSent++;
     numPkSent++;
-    emit(sentPkBytesSignal, pktLen);
 
     // reschedule timer if there's bytes left to send
-    if (d->bytesLeft!=0)
+    if (d->bytesLeft != 0)
     {
-        simtime_t interval = (*waitInterval);
+        simtime_t interval = (*sendInterval);
         scheduleAt(simTime()+interval, timer);
     }
     else
@@ -140,3 +149,4 @@ void UDPVideoStreamSvr::sendStreamData(cMessage *timer)
         // TBD find VideoStreamData in streamVector and delete it
     }
 }
+

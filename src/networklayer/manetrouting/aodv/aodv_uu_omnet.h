@@ -47,6 +47,14 @@
 #error "To compile the ported version, NS_PORT must be defined!"
 #endif /* NS_PORT */
 
+#ifndef AODV_USE_STL
+#define AODV_USE_STL
+#endif
+
+#ifndef AODV_USE_STL_RT
+#define AODV_USE_STL_RT
+#endif
+
 #define AODV_GLOBAL_STATISTISTIC
 
 /* Global definitions and lib functions */
@@ -108,7 +116,6 @@ class AODVUU : public ManetRoutingBase
 {
 
   private:
-
     char nodeName[50];
     ICMPAccess icmpAccess;
     bool useIndex;
@@ -121,18 +128,25 @@ class AODVUU : public ManetRoutingBase
     long proactive_rreq_timeout;
     bool isBroadcast (Uint128 add)
     {
-        if (this->isInMacLayer() && add==MACAddress::BROADCAST_ADDRESS)
+        if (this->isInMacLayer() && add==MACAddress::BROADCAST_ADDRESS.getInt())
              return true;
-        if (!this->isInMacLayer() && add==IPv4Address::ALLONES_ADDRESS)
+        if (!this->isInMacLayer() && add==IPv4Address::ALLONES_ADDRESS.getInt())
         	return true;
         return false;
     }
     // cMessage  messageEvent;
+    typedef std::multimap<simtime_t, struct timer*> AodvTimerMap;
+    AodvTimerMap aodvTimerMap;
+    typedef std::map<Uint128, struct rt_table*> AodvRtTableMap;
+    AodvRtTableMap aodvRtTableMap;
+
+    // this static map simulate the exchange of seq num by the proactive protocol.
+    static std::map<Uint128,u_int32_t *> mapSeqNum;
 
   public:
     static int  log_file_fd;
     static bool log_file_fd_init;
-    AODVUU() {isRoot= false; is_init =false; log_file_fd_init=false; sendMessageEvent = new cMessage();/*&messageEvent;*/}
+    AODVUU() {isRoot = false; is_init = false; log_file_fd_init = false; sendMessageEvent = new cMessage(); mapSeqNum.clear(); /*&messageEvent;*/}
     ~AODVUU();
 
     void packetFailed(IPv4Datagram *p);
@@ -250,7 +264,7 @@ class AODVUU : public ManetRoutingBase
 
     /* From aodv_hello.c */
     struct timer hello_timer;
-
+#ifndef AODV_USE_STL
     /* From aodv_rreq.c */
     list_t rreqRecords;
 #define rreq_records this->rreqRecords
@@ -264,7 +278,15 @@ class AODVUU : public ManetRoutingBase
     /* From timer_queue_aodv.c */
     list_t timeList;
 #define TQ this->timeList
+#else
+    typedef std::vector <rreq_record *>RreqRecords;
+    typedef std::map <Uint128, struct blacklist *>RreqBlacklist;
+    typedef std::map <Uint128, seek_list_t*>SeekHead;
 
+    RreqRecords rreq_records;
+    RreqBlacklist rreq_blacklist;
+    SeekHead seekhead;
+#endif
     /* From debug.c */
 // int  log_file_fd;
     int log_rt_fd;
@@ -304,9 +326,9 @@ class AODVUU : public ManetRoutingBase
     int totalRerrRec;
 #endif
 // used for break link notification
-    //virtual void processPromiscuous(const cPolymorphic *details){};
-    virtual void processLinkBreak(const cPolymorphic *details);
-    //virtual void processFullPromiscuous(const cPolymorphic *details){}
+    //virtual void processPromiscuous(const cObject *details){};
+    virtual void processLinkBreak(const cObject *details);
+    //virtual void processFullPromiscuous(const cObject *details){}
     virtual bool isOurType(cPacket *);
     virtual bool getDestAddress(cPacket *,Uint128 &);
 

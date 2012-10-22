@@ -20,19 +20,13 @@
 
 #include <string.h>
 #include <algorithm>   // min,max
+
 #include "TCP.h"
 #include "TCPConnection.h"
 #include "TCPSegment.h"
 #include "TCPCommand_m.h"
-
-#ifdef WITH_IPv4
 #include "IPv4ControlInfo.h"
-#endif
-
-#ifdef WITH_IPv6
 #include "IPv6ControlInfo.h"
-#endif
-
 #include "TCPSendQueue.h"
 #include "TCPSACKRexmitQueue.h"
 #include "TCPReceiveQueue.h"
@@ -237,7 +231,6 @@ void TCPConnection::sendToIP(TCPSegment *tcpseg)
 
     if (!remoteAddr.isIPv6())
     {
-#ifdef WITH_IPv4
         // send over IPv4
         IPv4ControlInfo *controlInfo = new IPv4ControlInfo();
         controlInfo->setProtocol(IP_PROT_TCP);
@@ -245,14 +238,10 @@ void TCPConnection::sendToIP(TCPSegment *tcpseg)
         controlInfo->setDestAddr(remoteAddr.get4());
         tcpseg->setControlInfo(controlInfo);
 
-        tcpMain->send(tcpseg,"ipOut");
-#else
-        throw cRuntimeError("INET compiled without IPv4 features!");
-#endif
+        tcpMain->send(tcpseg, "ipOut");
     }
     else
     {
-#ifdef WITH_IPv6
         // send over IPv6
         IPv6ControlInfo *controlInfo = new IPv6ControlInfo();
         controlInfo->setProtocol(IP_PROT_TCP);
@@ -260,10 +249,7 @@ void TCPConnection::sendToIP(TCPSegment *tcpseg)
         controlInfo->setDestAddr(remoteAddr.get6());
         tcpseg->setControlInfo(controlInfo);
 
-        tcpMain->send(tcpseg,"ipv6Out");
-#else
-        throw cRuntimeError("INET compiled without IPv6 features!");
-#endif
+        tcpMain->send(tcpseg, "ipv6Out");
     }
 }
 
@@ -274,7 +260,6 @@ void TCPConnection::sendToIP(TCPSegment *tcpseg, IPvXAddress src, IPvXAddress de
 
     if (!dest.isIPv6())
     {
-#ifdef WITH_IPv4
         // send over IPv4
         IPv4ControlInfo *controlInfo = new IPv4ControlInfo();
         controlInfo->setProtocol(IP_PROT_TCP);
@@ -282,14 +267,10 @@ void TCPConnection::sendToIP(TCPSegment *tcpseg, IPvXAddress src, IPvXAddress de
         controlInfo->setDestAddr(dest.get4());
         tcpseg->setControlInfo(controlInfo);
 
-        check_and_cast<TCP *>(simulation.getContextModule())->send(tcpseg,"ipOut");
-#else
-        throw cRuntimeError("INET compiled without IPv4 features!");
-#endif
+        check_and_cast<TCP *>(simulation.getContextModule())->send(tcpseg, "ipOut");
     }
     else
     {
-#ifdef WITH_IPv6
         // send over IPv6
         IPv6ControlInfo *controlInfo = new IPv6ControlInfo();
         controlInfo->setProtocol(IP_PROT_TCP);
@@ -297,10 +278,7 @@ void TCPConnection::sendToIP(TCPSegment *tcpseg, IPvXAddress src, IPvXAddress de
         controlInfo->setDestAddr(dest.get6());
         tcpseg->setControlInfo(controlInfo);
 
-        check_and_cast<TCP *>(simulation.getContextModule())->send(tcpseg,"ipv6Out");
-#else
-        throw cRuntimeError("INET compiled without IPv6 features!");
-#endif
+        check_and_cast<TCP *>(simulation.getContextModule())->send(tcpseg, "ipv6Out");
     }
 }
 
@@ -844,26 +822,41 @@ void TCPConnection::retransmitOneSegment(bool called_at_rto)
     ulong bytes = std::min((ulong)std::min(state->snd_mss, state->snd_max - state->snd_nxt),
             sendQueue->getBytesAvailable(state->snd_nxt));
 
-    ASSERT(bytes != 0);
-
-    sendSegment(bytes);
-
-    if (!called_at_rto)
+    // FIN (without user data) needs to be resent
+    if (bytes == 0 && state->send_fin && state->snd_fin_seq == sendQueue->getBufferEndSeq())
     {
-        if (seqGreater(old_snd_nxt, state->snd_nxt))
-            state->snd_nxt = old_snd_nxt;
+        state->snd_max = sendQueue->getBufferEndSeq();
+        tcpEV << "No outstanding DATA, resending FIN, advancing snd_nxt over the FIN\n";
+        state->snd_nxt = state->snd_max;
+        sendFin();
+        state->snd_max = ++state->snd_nxt;
+
+        if (unackedVector)
+            unackedVector->record(state->snd_max - state->snd_una);
     }
-
-    // notify
-    tcpAlgorithm->ackSent();
-
-    if (state->sack_enabled)
+    else
     {
-        // RFC 3517, page 7: "(3) Retransmit the first data segment presumed dropped -- the segment
-        // starting with sequence number HighACK + 1.  To prevent repeated
-        // retransmission of the same data, set HighRxt to the highest
-        // sequence number in the retransmitted segment."
-        state->highRxt = rexmitQueue->getHighestRexmittedSeqNum();
+        ASSERT(bytes != 0);
+
+        sendSegment(bytes);
+
+        if (!called_at_rto)
+        {
+            if (seqGreater(old_snd_nxt, state->snd_nxt))
+                state->snd_nxt = old_snd_nxt;
+        }
+
+        // notify
+        tcpAlgorithm->ackSent();
+
+        if (state->sack_enabled)
+        {
+            // RFC 3517, page 7: "(3) Retransmit the first data segment presumed dropped -- the segment
+            // starting with sequence number HighACK + 1.  To prevent repeated
+            // retransmission of the same data, set HighRxt to the highest
+            // sequence number in the retransmitted segment."
+            state->highRxt = rexmitQueue->getHighestRexmittedSeqNum();
+        }
     }
 }
 
@@ -904,7 +897,7 @@ void TCPConnection::readHeaderOptions(TCPSegment *tcpseg)
 
         tcpEV << "Option type " << kind << " (" << optionName(kind) << "), length " << length << "\n";
 
-        switch(kind)
+        switch (kind)
         {
             case TCPOPTION_END_OF_OPTION_LIST: // EOL=0
             case TCPOPTION_NO_OPERATION: // NOP=1

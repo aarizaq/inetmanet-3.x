@@ -18,8 +18,6 @@
 
 package inet.mobility.models;
 
-import inet.mobility.MobilityBase;
-
 
 //
 // Uses the <position_change> elements of the ANSim tool's
@@ -27,17 +25,10 @@ import inet.mobility.MobilityBase;
 //
 // @author Andras Varga
 //
-simple ANSimMobility extends MobilityBase
+simple ANSimMobility extends MovingMobilityBase
 {
     parameters:
-        bool debug = default(false); // debug switch
         xml ansimTrace; // the ANSim trace file in XML
-        int nodeId; // <position_change> elements to match;
-                               // -1 gets substituted to parent module's index
-        double updateInterval @unit("s") = default(100ms); // time interval to update the hosts position
-        @display("i=block/cogwheel_s");
+        int nodeId; // <position_change> elements to match; -1 gets substituted to parent module's index
         @class(ANSimMobility);
 }
-
-
-

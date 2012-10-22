@@ -33,6 +33,7 @@ namespace INETFw // load headers into a namespace, to avoid conflicts with platf
 #include "IPv4Serializer.h"
 
 #include "ICMPSerializer.h"
+#include "IGMPSerializer.h"
 #include "IPProtocolId_m.h"
 
 #ifdef WITH_UDP
@@ -71,16 +72,21 @@ int IPv4Serializer::serialize(const IPv4Datagram *dgram, unsigned char *buf, uns
     int packetLength;
     struct ip *ip = (struct ip *) buf;
 
-    ip->ip_hl         = IP_HEADER_BYTES >> 2;
-    ip->ip_v          = dgram->getVersion();
-    ip->ip_tos        = dgram->getDiffServCodePoint();
-    ip->ip_id         = htons(dgram->getIdentification());
-    ip->ip_off        = htons(dgram->getFragmentOffset());
-    ip->ip_ttl        = dgram->getTimeToLive();
-    ip->ip_p          = dgram->getTransportProtocol();
+    ip->ip_hl = IP_HEADER_BYTES >> 2;
+    ip->ip_v = dgram->getVersion();
+    ip->ip_tos = dgram->getTypeOfService();
+    ip->ip_id = htons(dgram->getIdentification());
+    uint16_t ip_off = dgram->getFragmentOffset()/8;
+    if (dgram->getMoreFragments())
+        ip_off |= IP_MF;
+    if (dgram->getDontFragment())
+        ip_off |= IP_DF;
+    ip->ip_off = htons(ip_off);
+    ip->ip_ttl = dgram->getTimeToLive();
+    ip->ip_p = dgram->getTransportProtocol();
     ip->ip_src.s_addr = htonl(dgram->getSrcAddress().getInt());
     ip->ip_dst.s_addr = htonl(dgram->getDestAddress().getInt());
-    ip->ip_sum        = 0;
+    ip->ip_sum = 0;
 
     if (dgram->getHeaderLength() > IP_HEADER_BYTES)
         EV << "Serializing an IPv4 packet with options. Dropping the options.\n";
@@ -93,6 +99,11 @@ int IPv4Serializer::serialize(const IPv4Datagram *dgram, unsigned char *buf, uns
     {
       case IP_PROT_ICMP:
         packetLength += ICMPSerializer().serialize(check_and_cast<ICMPMessage *>(encapPacket),
+                                                   buf+IP_HEADER_BYTES, bufsize-IP_HEADER_BYTES);
+        break;
+
+      case IP_PROT_IGMP:
+        packetLength += IGMPSerializer().serialize(check_and_cast<IGMPMessage *>(encapPacket),
                                                    buf+IP_HEADER_BYTES, bufsize-IP_HEADER_BYTES);
         break;
 
@@ -124,7 +135,7 @@ int IPv4Serializer::serialize(const IPv4Datagram *dgram, unsigned char *buf, uns
 
     ip->ip_len = htons(packetLength);
 
-    if(hasCalcChkSum)
+    if (hasCalcChkSum)
     {
         ip->ip_sum = TCPIPchecksum::checksum(buf, IP_HEADER_BYTES);
     }
@@ -139,15 +150,16 @@ void IPv4Serializer::parse(const unsigned char *buf, unsigned int bufsize, IPv4D
 
     dest->setVersion(ip->ip_v);
     dest->setHeaderLength(IP_HEADER_BYTES);
-    dest->setSrcAddress(ntohl(ip->ip_src.s_addr));
-    dest->setDestAddress(ntohl(ip->ip_dst.s_addr));
+    dest->setSrcAddress(IPv4Address(ntohl(ip->ip_src.s_addr)));
+    dest->setDestAddress(IPv4Address(ntohl(ip->ip_dst.s_addr)));
     dest->setTransportProtocol(ip->ip_p);
     dest->setTimeToLive(ip->ip_ttl);
     dest->setIdentification(ntohs(ip->ip_id));
-    dest->setMoreFragments((ip->ip_off) & !IP_OFFMASK & IP_MF);
-    dest->setDontFragment((ip->ip_off) & !IP_OFFMASK & IP_DF);
-    dest->setFragmentOffset((ntohs(ip->ip_off)) & IP_OFFMASK);
-    dest->setDiffServCodePoint(ip->ip_tos);
+    uint16_t ip_off = ntohs(ip->ip_off);
+    dest->setMoreFragments((ip_off & IP_MF) != 0);
+    dest->setDontFragment((ip_off & IP_DF) != 0);
+    dest->setFragmentOffset((ntohs(ip->ip_off) & IP_OFFMASK)*8);
+    dest->setTypeOfService(ip->ip_tos);
     totalLength = ntohs(ip->ip_len);
     headerLength = ip->ip_hl << 2;
 
@@ -167,6 +179,11 @@ void IPv4Serializer::parse(const unsigned char *buf, unsigned int bufsize, IPv4D
       case IP_PROT_ICMP:
         encapPacket = new ICMPMessage("icmp-from-wire");
         ICMPSerializer().parse(buf + headerLength, encapLength, (ICMPMessage *)encapPacket);
+        break;
+
+      case IP_PROT_IGMP:
+        encapPacket = new IGMPMessage("igmp-from-wire");
+        IGMPSerializer().parse(buf + headerLength, encapLength, (IGMPMessage *)encapPacket);
         break;
 
 #ifdef WITH_UDP

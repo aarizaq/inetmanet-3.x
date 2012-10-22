@@ -16,7 +16,6 @@
 //
 
 
-#include <omnetpp.h>
 #include "INETDefs.h"
 
 class INET_API Join : public cSimpleModule
@@ -37,7 +36,7 @@ void Join::initialize()
 
 void Join::handleMessage(cMessage *msg)
 {
-    send(msg,outg);
+    send(msg, outg);
 }
 
 

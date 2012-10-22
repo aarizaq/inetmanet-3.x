@@ -23,7 +23,7 @@
 
 simsignal_t Ieee80211MgmtBase::dataQueueLenSignal = SIMSIGNAL_NULL;
 
-static std::ostream& operator<< (std::ostream& out, cMessage *msg)
+static std::ostream& operator<<(std::ostream& out, cMessage *msg)
 {
     out << "(" << msg->getClassName() << ")" << msg->getFullName();
     return out;
@@ -38,6 +38,7 @@ void Ieee80211MgmtBase::initialize(int stage)
         dataQueue.setName("wlanDataQueue");
         mgmtQueue.setName("wlanMgmtQueue");
         dataQueueLenSignal = registerSignal("dataQueueLen");
+        emit(dataQueueLenSignal, dataQueue.length());
 
         numDataFramesReceived = 0;
         numMgmtFramesReceived = 0;
@@ -79,7 +80,7 @@ void Ieee80211MgmtBase::handleMessage(cMessage *msg)
         // process command from agent
         EV << "Command arrived from agent: " << msg << "\n";
         int msgkind = msg->getKind();
-        cPolymorphic *ctrl = msg->removeControlInfo();
+        cObject *ctrl = msg->removeControlInfo();
         delete msg;
 
         handleCommand(msgkind, ctrl);
@@ -170,6 +171,9 @@ cPacket *Ieee80211MgmtBase::decapsulate(Ieee80211DataFrame *frame)
     Ieee802Ctrl *ctrl = new Ieee802Ctrl();
     ctrl->setSrc(frame->getAddress3());
     ctrl->setDest(frame->getReceiverAddress());
+    Ieee80211DataFrameWithSNAP *frameWithSNAP = dynamic_cast<Ieee80211DataFrameWithSNAP *>(frame);
+    if (frameWithSNAP)
+        ctrl->setEtherType(frameWithSNAP->getEtherType());
     payload->setControlInfo(ctrl);
 
     delete frame;
@@ -178,12 +182,12 @@ cPacket *Ieee80211MgmtBase::decapsulate(Ieee80211DataFrame *frame)
 
 void Ieee80211MgmtBase::sendUp(cMessage *msg)
 {
-    send(msg, "uppergateOut");
+    send(msg, "upperLayerOut");
 }
 
 void Ieee80211MgmtBase::processFrame(Ieee80211DataOrMgmtFrame *frame)
 {
-    switch(frame->getType())
+    switch (frame->getType())
     {
       case ST_DATA:
         numDataFramesReceived++;
@@ -241,7 +245,7 @@ void Ieee80211MgmtBase::processFrame(Ieee80211DataOrMgmtFrame *frame)
         break;
 
       default:
-        error("unexpected frame type (%s)%s", frame->getClassName(), frame->getName());
+        throw cRuntimeError("Unexpected frame type (%s)%s", frame->getClassName(), frame->getName());
     }
 }
 

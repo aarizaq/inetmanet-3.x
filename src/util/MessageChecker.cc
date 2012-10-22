@@ -123,7 +123,7 @@ void MessageChecker::checkFieldValue(void* object, cClassDescriptor* descriptor,
     // check field value into the client object
     if (value.find(attr["value"])!=0) //allow to keep reference values even if
                                      //simtime precision changed...
-        throw cRuntimeError(this, "mismatch: field \"%s\" in the message %d (\"%s\" != \"%s\")",
+        throw cRuntimeError("Mismatch: field \"%s\" in the message %d (\"%s\" != \"%s\")",
             attr["name"].data(), forwardedMsg, value.data(), attr["value"].data());
 }
 
@@ -134,7 +134,7 @@ void MessageChecker::checkFieldObject(void* object, cClassDescriptor* descriptor
 
     // get the client object associated to the field, and its descriptor class
     cClassDescriptor* descr = descriptor->getFieldIsCObject(object, field) ?
-        cClassDescriptor::getDescriptorFor((cPolymorphic*)obj) :
+        cClassDescriptor::getDescriptorFor((cObject*)obj) :
         cClassDescriptor::getDescriptorFor(descriptor->getFieldStructName(object, field));
 
     checkFields(obj, descr, pattern.getChildren());
@@ -143,13 +143,17 @@ void MessageChecker::checkFieldObject(void* object, cClassDescriptor* descriptor
 int MessageChecker::checkFieldArray(void* object, cClassDescriptor* descriptor, int field, cXMLAttributeMap& attr) const
 {
     if (!descriptor->getFieldIsArray(object, field))
-        throw cRuntimeError(this, "the field \"%s\" in message %d isn't an array", attr["name"].data(), forwardedMsg);
+        throw cRuntimeError("The field \"%s\" in message %d isn't an array", attr["name"].data(), forwardedMsg);
 
     // check the size of the field array into the client object
     int size = atol(attr["size"].data());
+#if (OMNETPP_VERSION < 0x0403)
     int fieldSize = descriptor->getArraySize(object, field);
+#else
+    int fieldSize = descriptor->getFieldArraySize(object, field);
+#endif
     if (size != fieldSize)
-        throw cRuntimeError(this, "field array \"%s\" contains %d element(s) (and not %d) in message %d",
+        throw cRuntimeError("Field array \"%s\" contains %d element(s) (and not %d) in message %d",
             attr["name"].data(), fieldSize, size, forwardedMsg);
 
     return fieldSize;
@@ -163,7 +167,7 @@ void MessageChecker::checkFieldValueInArray(void* object, cClassDescriptor* desc
     int i = atol(attr["index"].data());
 
     if (i >= fieldSize)
-        throw cRuntimeError(this, "field \"%s\" in message %d has no entry for index %d", attr["name"].data(), forwardedMsg, i);
+        throw cRuntimeError("Field \"%s\" in message %d has no entry for index %d", attr["name"].data(), forwardedMsg, i);
 
     // check field value into the client object
     checkFieldValue(object, descriptor, field, attr, i);
@@ -177,7 +181,7 @@ void MessageChecker::checkFieldObjectInArray(void* object, cClassDescriptor* des
     int i = atol(attr["index"].data());
 
     if (i >= fieldSize)
-        throw cRuntimeError(this, "field \"%s\" in message %d has no entry for index %d", attr["name"].data(), forwardedMsg, i);
+        throw cRuntimeError("Field \"%s\" in message %d has no entry for index %d", attr["name"].data(), forwardedMsg, i);
 
     // check field object into the client object
     checkFieldObject(object, descriptor, field, attr, pattern, i);
@@ -188,12 +192,12 @@ void MessageChecker::checkFieldType(void* object, cClassDescriptor* descriptor, 
     std::string type;
 
     if (descriptor->getFieldIsCObject(object, field))
-        type = ((cPolymorphic*)descriptor->getFieldStructPointer(object, field, i))->getClassName();
+        type = ((cObject*)descriptor->getFieldStructPointer(object, field, i))->getClassName();
     else
         type = descriptor->getFieldTypeString(object, field);
 
     if (type != attr["type"])
-        throw cRuntimeError(this, "type mismatch for field \"%s\" in message %d (\"%s\" != \"%s\")",
+        throw cRuntimeError("Type mismatch for field \"%s\" in message %d (\"%s\" != \"%s\")",
             attr["name"].data(), forwardedMsg, type.data(), attr["type"].data());
 }
 
@@ -207,7 +211,7 @@ int MessageChecker::findFieldIndex(void* object, cClassDescriptor* descriptor, c
             return i;
     }
 
-    throw cRuntimeError(this, "unknown field \"%s\" in message %d\nAvailable fields in \"%s\" are : %s"
+    throw cRuntimeError("Unknown field \"%s\" in message %d\nAvailable fields in \"%s\" are : %s"
         , fieldName.data(), forwardedMsg, descriptor->getClassName(), availableFields.str().data());
     return 0;
 }
@@ -217,19 +221,19 @@ void MessageChecker::forwardMessage(cMessage* msg)
     cGate* gateOut = gate("out");
     cChannel* channel = gateOut->getChannel();
     simtime_t now = simTime();
-    simtime_t endTransmissionTime =  channel->getTransmissionFinishTime();
+    simtime_t endTransmissionTime = channel->getTransmissionFinishTime();
     simtime_t delayToWait = 0;
     if (endTransmissionTime>now)
         delayToWait = endTransmissionTime - now;
-    sendDelayed(msg,delayToWait,"out");
+    sendDelayed(msg, delayToWait, "out");
 }
 
 void MessageChecker::finish()
 {
     if (forwardedMsg > checkedMsg)
-        throw cRuntimeError(this, "%d message(s) has not been checked", forwardedMsg - checkedMsg);
+        throw cRuntimeError("%d message(s) has not been checked", forwardedMsg - checkedMsg);
 
     if (m_iterChk != m_checkingInfo.end())
-        throw cRuntimeError(this, "several message(s) have to be checked");
+        throw cRuntimeError("Several message(s) have to be checked");
 }
 

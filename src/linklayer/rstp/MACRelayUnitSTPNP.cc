@@ -41,7 +41,19 @@ MACRelayUnitSTPNP::MACRelayUnitSTPNP():MACRelayUnitNP()
 
 MACRelayUnitSTPNP::~MACRelayUnitSTPNP()
 {
-
+    while (!port_status.empty())
+    {
+        if (this->port_status.begin()->second.forward_timer)
+            cancelAndDelete(this->port_status.begin()->second.forward_timer);
+        if (this->port_status.begin()->second.hold_timer)
+            cancelAndDelete(this->port_status.begin()->second.hold_timer);
+        if (this->port_status.begin()->second.edge_timer)
+            cancelAndDelete(this->port_status.begin()->second.edge_timer);
+        if (this->port_status.begin()->second.bpdu_timeout_timer)
+            cancelAndDelete(this->port_status.begin()->second.bpdu_timeout_timer);
+        this->port_status.begin()->second.BPDUQueue.clear();
+        this->port_status.erase(this->port_status.begin());
+    }
 }
 
 void MACRelayUnitSTPNP::setAllPortsStatus(PortStatus status)
@@ -508,11 +520,7 @@ void MACRelayUnitSTPNP::handleMessage(cMessage* msg)
         {
             if (dynamic_cast<EtherFrame*>(msg))
             {
-#if OMNETPP_VERSION > 0x0400
                 cPacket* frame = ((EtherFrame*)msg)->getEncapsulatedPacket();
-#else
-                cPacket* frame = ((EtherFrame*)msg)->getEncapsulatedMsg();
-#endif
                 if (dynamic_cast<BPDU*>(frame))
                 {
                     cPacket* frame = ((EtherFrame*)msg)->decapsulate();
@@ -1225,6 +1233,9 @@ void MACRelayUnitSTPNP::sendBPDU(BPDU* bpdu,int port)
         b->setLearning(this->port_status[port].state == LEARNING ? true : false);
 
         frame->encapsulate(b);
+        if (frame->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+                frame->setByteLength(MIN_ETHERNET_FRAME_BYTES);  // "padding"
+
         send(frame, "lowerLayerOut", port);
         this->scheduleHoldTimer(port);
 

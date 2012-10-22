@@ -44,12 +44,12 @@ TCPVirtualDataRcvQueue::Region* TCPVirtualDataRcvQueue::Region::split(uint32 seq
 
 TCPVirtualDataRcvQueue::Region::CompareStatus TCPVirtualDataRcvQueue::Region::compare(const TCPVirtualDataRcvQueue::Region& other) const
 {
-    if (seqLess(end, other.begin))
-        return BEFORE;
     if (end == other.begin)
         return BEFORE_TOUCH;
     if (begin == other.end)
         return AFTER_TOUCH;
+    if (seqLess(end, other.begin))
+        return BEFORE;
     if (seqLess(other.end, begin))
         return AFTER;
     return OVERLAP;
@@ -102,12 +102,12 @@ std::string TCPVirtualDataRcvQueue::info() const
 {
     std::string res;
     char buf[32];
-    sprintf(buf, "rcv_nxt=%u ", rcv_nxt);
+    sprintf(buf, "rcv_nxt=%u", rcv_nxt);
     res = buf;
 
     for (RegionList::const_iterator i=regionList.begin(); i!=regionList.end(); ++i)
     {
-        sprintf(buf, "[%u..%u) ", (*i)->getBegin(), (*i)->getEnd());
+        sprintf(buf, " [%u..%u)", (*i)->getBegin(), (*i)->getEnd());
         res += buf;
     }
     return res;
@@ -121,6 +121,21 @@ TCPVirtualDataRcvQueue::Region* TCPVirtualDataRcvQueue::createRegionFromSegment(
 uint32 TCPVirtualDataRcvQueue::insertBytesFromSegment(TCPSegment *tcpseg)
 {
     Region *region = createRegionFromSegment(tcpseg);
+
+#ifndef NDEBUG
+    if (!regionList.empty())
+    {
+        uint32 ob = regionList.front()->getBegin();
+        uint32 oe = regionList.back()->getEnd();
+        uint32 nb = region->getBegin();
+        uint32 ne = region->getEnd();
+        uint32 minb = seqMin(ob, nb);
+        uint32 maxe = seqMax(oe, ne);
+        if (seqGE(minb, oe) || seqGE(minb, ne) || seqGE(ob, maxe) || seqGE(nb, maxe))
+            throw cRuntimeError("The new segment is [%u, %u) out of the acceptable range at the queue %s",
+                    region->getBegin(), region->getEnd(), info().c_str());
+    }
+#endif
 
     merge(region);
 
@@ -138,21 +153,26 @@ void TCPVirtualDataRcvQueue::merge(TCPVirtualDataRcvQueue::Region *seg)
     // existing regions; we also may have to merge existing regions if
     // they become overlapping (or touching) after adding tcpseg.
 
-    RegionList::iterator i = regionList.begin();
+    RegionList::reverse_iterator i = regionList.rbegin();
     Region::CompareStatus cmp;
 
-    while (i != regionList.end() && Region::AFTER != (cmp = (*i)->compare(*seg)))
+    while (i != regionList.rend() && Region::BEFORE != (cmp = (*i)->compare(*seg)))
     {
-        RegionList::iterator old = i++;
-        if (cmp != Region::BEFORE)
+        if (cmp != Region::AFTER)
         {
-            seg->merge(*old);
-            delete *old;
-            regionList.erase(old);
+            if (seg->merge(*i))
+            {
+                delete *i;
+                i = (RegionList::reverse_iterator)(regionList.erase((++i).base()));
+                continue;
+            }
+            else
+                throw cRuntimeError("Model error: merge of region [%u,%u) with [%u,%u) unsuccessful", (*i)->getBegin(), (*i)->getEnd(), seg->getBegin(), seg->getEnd());
         }
+        ++i;
     }
 
-    regionList.insert(i, seg);
+    regionList.insert(i.base(), seg);
 }
 
 cPacket *TCPVirtualDataRcvQueue::extractBytesUpTo(uint32 seq)
@@ -164,17 +184,16 @@ cPacket *TCPVirtualDataRcvQueue::extractBytesUpTo(uint32 seq)
     {
         msg = new cPacket("data");
         reg->copyTo(msg);
+        delete reg;
     }
-
-    delete reg;
     return msg;
 }
 
 TCPVirtualDataRcvQueue::Region* TCPVirtualDataRcvQueue::extractTo(uint32 seq)
 {
-    ASSERT(seqLE(seq,rcv_nxt));
+    ASSERT(seqLE(seq, rcv_nxt));
 
-    if(regionList.empty())
+    if (regionList.empty())
         return NULL;
 
     Region *reg = regionList.front();
@@ -194,7 +213,7 @@ TCPVirtualDataRcvQueue::Region* TCPVirtualDataRcvQueue::extractTo(uint32 seq)
 
 uint32 TCPVirtualDataRcvQueue::getAmountOfBufferedBytes()
 {
-    uint32 bytes=0;
+    uint32 bytes = 0;
 
     for (RegionList::iterator i = regionList.begin(); i != regionList.end(); i++)
         bytes += (*i)->getLength();

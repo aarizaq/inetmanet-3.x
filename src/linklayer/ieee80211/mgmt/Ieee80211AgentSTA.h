@@ -19,7 +19,9 @@
 #define IEEE80211_AGENT_STA_H
 
 #include <vector>
-#include <omnetpp.h>
+
+#include "INETDefs.h"
+
 #include "Ieee80211Primitives_m.h"
 #include "NotificationBoard.h"
 #include "InterfaceTable.h"
@@ -48,6 +50,8 @@ class INET_API Ieee80211AgentSTA : public cSimpleModule, public INotifiable
     simtime_t authenticationTimeout;
     simtime_t associationTimeout;
 
+    std::string default_ssid;
+
     //Statistics:
     static simsignal_t sentRequestSignal;
     static simsignal_t acceptConfirmSignal;
@@ -67,7 +71,7 @@ class INET_API Ieee80211AgentSTA : public cSimpleModule, public INotifiable
     virtual void handleResponse(cMessage *msg);
 
     /** Redefined from INotifiable; called by NotificationBoard */
-    virtual void receiveChangeNotification(int category, const cPolymorphic *details);
+    virtual void receiveChangeNotification(int category, const cObject *details);
 
     // utility method: attaches object to a message as controlInfo, and sends it to mgmt
     virtual void sendRequest(Ieee80211PrimRequest *req);

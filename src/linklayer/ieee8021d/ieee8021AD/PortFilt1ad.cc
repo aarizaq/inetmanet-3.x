@@ -139,8 +139,12 @@ void PortFilt1ad::handleMessage(cMessage *msg)
 					Ethernet1QTag * STag=check_and_cast<Ethernet1QTag *>(((EthernetIIFrame *)msg)->decapsulate());
 					if(STag==NULL)
 						error("Wrong frame format");
+					EthernetIIFrame *frame = dynamic_cast<EthernetIIFrame *> (msg);
 					Ethernet1QTag * CTag=check_and_cast<Ethernet1QTag *>(STag->decapsulate());
-					((EthernetIIFrame *)msg)->encapsulate(CTag);
+					frame->encapsulate(CTag);
+					if (frame->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+					    frame->setByteLength(MIN_ETHERNET_FRAME_BYTES);  // "padding"
+
 					((EthernetIIFrame *)msg)->setDisplayString(ETHER_1Q_DISPLAY_STRING);
 					bool registered=false;
 					vid CVid=CTag->getVID();
@@ -183,18 +187,20 @@ void PortFilt1ad::sendMVRPDUs()
 {
 	//Generating MVRPDUs
 	MVRPDU * frame=new MVRPDU();
-	frame->setDest("01-80-C2-00-00-0D");
+	frame->setDest(MACAddress("01-80-C2-00-00-0D"));
 	frame->setVIDSArraySize(1);
 	frame->setVIDS(0,defaultVID);
 	send(frame,"GatesOut",1);
 
 	frame=new MVRPDU();
-	frame->setDest("01-80-C2-00-00-0D");
+	frame->setDest(MACAddress("01-80-C2-00-00-0D"));
 	frame->setVIDSArraySize(registeredCVids.size());
 	for(unsigned int i=0;i<registeredCVids.size();i++)
 	{
 		frame->setVIDS(i,registeredCVids[i]);
 	}
+    if (frame->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+        frame->setByteLength(MIN_ETHERNET_FRAME_BYTES);
 	send(frame,"GatesOut",0);
 }
 
@@ -217,6 +223,8 @@ void PortFilt1ad::processUntaggedFrame (EthernetIIFrame *frame)
 		STag->setByteLength(ETHER_1Q_TAG_LENGTH);
 		STag->encapsulate(CTag);
 		frame->encapsulate(STag);
+	    if (frame->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+	        frame->setByteLength(MIN_ETHERNET_FRAME_BYTES);
 		frame->setDisplayString(ETHER_1AD_DISPLAY_STRING);
 		processTaggedFrame(frame);
 	}

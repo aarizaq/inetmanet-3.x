@@ -22,16 +22,16 @@ ByteArrayBuffer::ByteArrayBuffer()
 }
 
 ByteArrayBuffer::ByteArrayBuffer(const ByteArrayBuffer& other)
- :
-    dataLengthM(other.dataLengthM),
-    dataListM(other.dataListM)
+    : cObject(other)
 {
+    copy(other);
 }
 
 ByteArrayBuffer& ByteArrayBuffer::operator=(const ByteArrayBuffer& other)
 {
-    dataLengthM = other.dataLengthM;
-    dataListM = other.dataListM;
+    if (this==&other) return *this;
+    cObject::operator=(other);
+    copy(other);
     return *this;
 }
 
@@ -54,7 +54,7 @@ unsigned int ByteArrayBuffer::getBytesToBuffer(void* bufferP, unsigned int buffe
     unsigned int copiedBytes = 0;
     DataList::const_iterator i;
 
-    for(i = this->dataListM.begin(); (copiedBytes < bufferLengthP) && (i != dataListM.end()); ++i)
+    for (i = this->dataListM.begin(); (copiedBytes < bufferLengthP) && (i != dataListM.end()); ++i)
     {
         unsigned int cbytes = i->copyDataToBuffer((char *)bufferP + copiedBytes,
                 bufferLengthP - copiedBytes, srcOffsP);

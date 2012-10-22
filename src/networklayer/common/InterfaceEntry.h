@@ -38,17 +38,18 @@ class IPv6InterfaceData;
 class INET_API MacEstimateCostProcess
 {
 public:
-	virtual double getCost(int,MACAddress &)=0;
-	virtual double getNumCost()=0;
-	virtual int getNumNeighbors()=0;
-	virtual int getNeighbors(MACAddress [])=0;
+    virtual ~MacEstimateCostProcess() {};
+    virtual double getCost(int, MACAddress &) = 0;
+    virtual double getNumCost() = 0;
+    virtual int getNumNeighbors() = 0;
+    virtual int getNeighbors(MACAddress []) = 0;
 };
 
 /**
  * Base class for protocol-specific data on an interface.
  * Notable subclasses are IPv4InterfaceData and IPv6InterfaceData.
  */
-class INET_API InterfaceProtocolData : public cPolymorphic
+class INET_API InterfaceProtocolData : public cObject
 {
     friend class InterfaceEntry; //only this guy is allowed to set ownerp
 
@@ -79,6 +80,7 @@ class INET_API InterfaceEntry : public cNamedObject
     friend class InterfaceProtocolData; // to call protocolDataChanged()
   protected:
     IInterfaceTable *ownerp; ///< IInterfaceTable that contains this interface, or NULL
+    cModule *interfaceModule;  ///< interface module, or NULL
     int interfaceId;      ///< identifies the interface in the IInterfaceTable
     int nwLayerGateIndex; ///< index of ifIn[],ifOut[] gates to that interface (or -1 if virtual interface)
     int nodeOutputGateId; ///< id of the output gate of this host/router (or -1 if this is a virtual interface)
@@ -91,17 +93,13 @@ class INET_API InterfaceEntry : public cNamedObject
     bool loopback;        ///< interface is loopback interface
     double datarate;      ///< data rate in bit/s
     MACAddress macAddr;   ///< link-layer address (for now, only IEEE 802 MAC addresses are supported)
-    InterfaceToken token; ///< for IPv6 stateless autoconfig (RFC 1971)
+    InterfaceToken token; ///< for IPv6 stateless autoconfig (RFC 1971), interface identifier (RFC 2462)
 
     IPv4InterfaceData *ipv4data;   ///< IPv4-specific interface info (IPv4 address, etc)
     IPv6InterfaceData *ipv6data;   ///< IPv6-specific interface info (IPv6 addresses, etc)
     InterfaceProtocolData *protocol3data; ///< extension point: data for a 3rd network-layer protocol
     InterfaceProtocolData *protocol4data; ///< extension point: data for a 4th network-layer protocol
     std::vector<MacEstimateCostProcess *> estimateCostProcessArray;
-    std::vector<InterfaceEntry*> relatedInterfaces;
-    bool isGroup; // if virtual several interfaces share IP data
-    MACAddress macAddGroup; // share address
-    cModule *moduleOwner;
 
   private:
     // copying not supported: following are private and also left undefined
@@ -120,10 +118,11 @@ class INET_API InterfaceEntry : public cNamedObject
     virtual void setInterfaceId(int id) {interfaceId = id;}
 
   public:
-    InterfaceEntry();
+    InterfaceEntry(cModule *interfaceModule);
     virtual ~InterfaceEntry() {}
     virtual std::string info() const;
     virtual std::string detailedInfo() const;
+    virtual std::string getFullPath() const;
 
     /**
      * Returns the IInterfaceTable this interface is in, or NULL
@@ -133,6 +132,7 @@ class INET_API InterfaceEntry : public cNamedObject
     /** @name Field getters. Note they are non-virtual and inline, for performance reasons. */
     //@{
     int getInterfaceId() const        {return interfaceId;}
+    cModule *getInterfaceModule() const  {return interfaceModule;}
     int getNetworkLayerGateIndex() const {return nwLayerGateIndex;}
     int getNodeOutputGateId() const   {return nodeOutputGateId;}
     int getNodeInputGateId() const    {return nodeInputGateId;}
@@ -166,10 +166,10 @@ class INET_API InterfaceEntry : public cNamedObject
 
     /** @name Accessing protocol-specific interface data. Note methods are non-virtual, for performance reasons. */
     //@{
-    IPv4InterfaceData *ipv4Data()  {return ipv4data;}
-    IPv6InterfaceData *ipv6Data()  {return ipv6data;}
-    InterfaceProtocolData *getProtocol3Data()  {return protocol3data;}
-    InterfaceProtocolData *getProtocol4Data()  {return protocol4data;}
+    IPv4InterfaceData *ipv4Data() const {return ipv4data;}
+    IPv6InterfaceData *ipv6Data() const  {return ipv6data;}
+    InterfaceProtocolData *getProtocol3Data() const {return protocol3data;}
+    InterfaceProtocolData *getProtocol4Data() const {return protocol4data;}
     //@}
 
     /** @name Installing protocol-specific interface data */
@@ -182,20 +182,8 @@ class INET_API InterfaceEntry : public cNamedObject
 
     /** @name access to the cost process estimation  */
     //@{
-    virtual bool setEstimateCostProcess(int,MacEstimateCostProcess *p);
+    virtual bool setEstimateCostProcess(int, MacEstimateCostProcess *p);
     virtual MacEstimateCostProcess* getEstimateCostProcess(int);
-
-    virtual void addRelatedInterface(InterfaceEntry*);
-    virtual InterfaceEntry *getRelatedInterface(int i);
-    virtual void deleteRelatedInterface(InterfaceEntry* e);
-    virtual bool existRelatedInterface(){return !relatedInterfaces.empty();}
-    virtual int getNumRelated(){return relatedInterfaces.size();}
-    virtual bool isGroupInterface() {return isGroup;} // if true several interfaces share IP data
-    virtual void setGroupInterface(bool p) {isGroup=p;} // if true several interfaces share IP data
-    virtual MACAddress getMacAddGroup(){return macAddGroup;} // share addres
-    virtual void setMacAddGroup(MACAddress add){macAddGroup=add;} // share addres
-    virtual void setModuleOwner(cModule *p){moduleOwner=p;}
-    virtual cModule * getModuleOwner(){return moduleOwner;}
     //@}
 };
 

@@ -46,6 +46,18 @@ class INET_API Ieee80211MgmtAPExtended : public Ieee80211MgmtAPBase
         //double expiry;          //XXX association should expire after a while if STA is silent?
     };
 
+    class NotificationInfoSta : public cObject
+    {
+          MACAddress apAddress;
+          MACAddress staAddress;
+        public:
+          void setApAddress(const MACAddress & a){apAddress = a;}
+          void setStaAddress(const MACAddress & a){staAddress = a;}
+          const MACAddress & getApAddress() const {return apAddress;}
+          const MACAddress & getStaAddress() const {return staAddress;}
+    };
+
+
     struct MAC_compare
     {
         bool operator()(const MACAddress& u1, const MACAddress& u2) const {return u1.compareTo(u2) < 0;}
@@ -53,6 +65,7 @@ class INET_API Ieee80211MgmtAPExtended : public Ieee80211MgmtAPBase
     typedef std::map<MACAddress,STAInfo, MAC_compare> STAList;
 
   protected:
+    NotificationBoard *nb;
     // configuration
     std::string ssid;
     int channelNumber;
@@ -63,6 +76,7 @@ class INET_API Ieee80211MgmtAPExtended : public Ieee80211MgmtAPBase
     // state
     STAList staList; ///< list of STAs
     cMessage *beaconTimer;
+    bool isConnected;
 
   protected:
     virtual int numInitStages() const {return 2;}
@@ -103,6 +117,10 @@ class INET_API Ieee80211MgmtAPExtended : public Ieee80211MgmtAPBase
     virtual void handleProbeRequestFrame(Ieee80211ProbeRequestFrame *frame);
     virtual void handleProbeResponseFrame(Ieee80211ProbeResponseFrame *frame);
     //@}
+
+    void sendAssocNotification(const MACAddress &addr);
+
+    void sendDisAssocNotification(const MACAddress &addr);
 };
 
 #endif

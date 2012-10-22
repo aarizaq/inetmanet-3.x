@@ -18,14 +18,16 @@
 #ifndef __INET_BGPSESSION_H
 #define __INET_BGPSESSION_H
 
-#include <omnetpp.h>
 #include <vector>
+
+#include "INETDefs.h"
+
 #include "BGPCommon.h"
 #include "TCPSocket.h"
 #include "BGPRouting.h"
 #include "BGPFSM.h"
 
-class  INET_API BGPSession : public cPolymorphic
+class  INET_API BGPSession : public cObject
 {
 public:
     BGPSession(BGPRouting& _bgpRouting);
@@ -69,10 +71,10 @@ private:
     BGP::SessionInfo    _info;
     BGPRouting&         _bgpRouting;
 
-    static const int    BGP_RETRY_TIME              = 120;
-    static const int    BGP_HOLD_TIME               = 180;
-    static const int    BGP_KEEP_ALIVE              = 60;// 1/3 of BGP_HOLD_TIME
-    static const int    NB_SEC_START_EGP_SESSION    = 1;
+    static const int    BGP_RETRY_TIME = 120;
+    static const int    BGP_HOLD_TIME = 180;
+    static const int    BGP_KEEP_ALIVE = 60; // 1/3 of BGP_HOLD_TIME
+    static const int    NB_SEC_START_EGP_SESSION = 1;
 
     //Timers
     simtime_t       _StartEventTime;

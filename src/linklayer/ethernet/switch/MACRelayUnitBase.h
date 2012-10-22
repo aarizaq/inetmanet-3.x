@@ -19,9 +19,11 @@
 #ifndef __INET_MACRELAYUNITBASE_H
 #define __INET_MACRELAYUNITBASE_H
 
-#include <omnetpp.h>
 #include <map>
 #include <string>
+
+#include "INETDefs.h"
+
 #include "MACAddress.h"
 
 class EtherFrame;
@@ -54,14 +56,17 @@ class INET_API MACRelayUnitBase : public cSimpleModule
 
     // Parameters controlling how the switch operates
     int numPorts;               // Number of ports of the switch
-    int numWirelessPorts;       // Number of ports attached to wireless interfaces
-                                // The wireless IFs must be the first ports followed by the eth IFs
     int addressTableSize;       // Maximum size of the Address Table
     simtime_t agingTime;        // Determines when Ethernet entries are to be removed
 
     AddressTable addresstable;  // Address Lookup Table
 
     int seqNum;                 // counter for PAUSE frames
+    simtime_t *pauseFinished;   // finish time of last PAUSE (array of numPorts element)
+
+  public:
+    MACRelayUnitBase() { pauseFinished = NULL; }
+    ~MACRelayUnitBase() { delete [] pauseFinished; }
 
   protected:
     /**
@@ -120,8 +125,12 @@ class INET_API MACRelayUnitBase : public cSimpleModule
      */
     virtual void sendPauseFrame(int portno, int pauseUnits);
 
+    /**
+     * Utility function (for use by subclasses) to send flow control
+     * PAUSE frame on the ports, which previous PAUSE time is terminated.
+     */
+    virtual void sendPauseFramesIfNeeded(int pauseUnits);
 };
 
 #endif
-
 

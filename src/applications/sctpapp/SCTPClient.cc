@@ -25,23 +25,21 @@
 
 
 #define MSGKIND_CONNECT  0
-#define MSGKIND_SEND         1
+#define MSGKIND_SEND     1
 #define MSGKIND_ABORT    2
 #define MSGKIND_PRIMARY  3
-#define MSGKIND_STOP         5
+#define MSGKIND_STOP     5
 
 
 Define_Module(SCTPClient);
 
-simsignal_t SCTPClient::sentPkBytesSignal = SIMSIGNAL_NULL;
-simsignal_t SCTPClient::rcvdPkBytesSignal = SIMSIGNAL_NULL;
-simsignal_t SCTPClient::sentEchoedPkBytesSignal = SIMSIGNAL_NULL;
+simsignal_t SCTPClient::sentPkSignal = SIMSIGNAL_NULL;
+simsignal_t SCTPClient::rcvdPkSignal = SIMSIGNAL_NULL;
+simsignal_t SCTPClient::echoedPkSignal = SIMSIGNAL_NULL;
 
 void SCTPClient::initialize()
 {
-    const char * address;
-    AddressVector addresses;
-    sctpEV3<<"initialize SCTP Client\n";
+    sctpEV3 << "initialize SCTP Client\n";
     numSessions = numBroken = packetsSent = packetsRcvd = bytesSent = echoedBytesSent = bytesRcvd = 0;
     WATCH(numSessions);
     WATCH(numBroken);
@@ -50,34 +48,22 @@ void SCTPClient::initialize()
     WATCH(bytesSent);
     WATCH(bytesRcvd);
 
-    sentPkBytesSignal = registerSignal("sentPkBytes");
-    rcvdPkBytesSignal = registerSignal("rcvdPkBytes");
-    sentEchoedPkBytesSignal = registerSignal("sentEchoedPkBytes");
+    sentPkSignal = registerSignal("sentPk");
+    rcvdPkSignal = registerSignal("rcvdPk");
+    echoedPkSignal = registerSignal("echoedPk");
 
     // parameters
-    address = par("address");
-
-    cStringTokenizer tok(address, ",");
-
-    while (tok.hasMoreTokens())
-    {
-        addresses.push_back(IPvXAddress(tok.nextToken()));
-    }
-
-    int32 port = par("port");
-    echoFactor = par("echoFactor");
-    if (!echoFactor) echoFactor = false;
-    ordered = (bool)par("ordered");
+    const char *addressesString = par("localAddress");
+    AddressVector addresses = IPvXAddressResolver().resolve(cStringTokenizer(addressesString).asVector());
+    int32 port = par("localPort");
+    echo = par("echo").boolValue();
+    ordered = par("ordered").boolValue();
     finishEndsSimulation = (bool)par("finishEndsSimulation");
 
-    if (address[0] == 0)
-    {
+    if (addresses.size() == 0)
         socket.bind(port);
-    }
     else
-    {
         socket.bindx(addresses, port);
-    }
 
     socket.setCallbackObject(this);
     socket.setOutputGate(gate("sctpOut"));
@@ -122,7 +108,9 @@ void SCTPClient::initialize()
 void SCTPClient::handleMessage(cMessage *msg)
 {
     if (msg->isSelfMessage())
+    {
         handleTimer(msg);
+    }
     else
     {
         socket.processMessage(PK(msg));
@@ -139,7 +127,7 @@ void SCTPClient::connect()
     socket.setOutboundStreams(outStreams);
     ev << "issuing OPEN command\n";
     setStatusString("connecting");
-    ev<<"connect to address "<<connectAddress<<"\n";
+    ev << "connect to address " << connectAddress << "\n";
     socket.connect(IPvXAddressResolver().resolve(connectAddress, 1), connectPort, (uint32)par("numRequestsPerSession"));
     numSessions++;
 }
@@ -153,13 +141,14 @@ void SCTPClient::close()
 
 void SCTPClient::setStatusString(const char *s)
 {
-    if (ev.isGUI()) getDisplayString().setTagArg("t", 0, s);
+    if (ev.isGUI())
+        getDisplayString().setTagArg("t", 0, s);
 }
 
 void SCTPClient::socketEstablished(int32, void *, uint64 buffer )
 {
-      int32 count = 0;
-     ev<<"SCTPClient: connected\n";
+    int32 count = 0;
+    ev << "SCTPClient: connected\n";
     setStatusString("connected");
     bufferSize = buffer;
     // determine number of requests in this session
@@ -232,7 +221,7 @@ void SCTPClient::socketEstablished(int32, void *, uint64 buffer )
 
         if ((!timer && numRequestsToSend == 0) && (simtime_t)par("waitToClose")==0)
         {
-            sctpEV3<<"socketEstablished:no more packets to send, call shutdown\n";
+            sctpEV3 << "socketEstablished:no more packets to send, call shutdown\n";
             socket.shutdown();
 
             if (timeMsg->isScheduled())
@@ -266,10 +255,7 @@ void SCTPClient::sendRequestArrived()
 
     while (((!timer && numRequestsToSend > 0) || timer) && count++ < queueSize && sendAllowed)
     {
-        if (count == queueSize)
-            sendRequest();
-        else
-            sendRequest(false);
+        sendRequest(count == queueSize);
 
         if (!timer)
             numRequestsToSend--;
@@ -283,9 +269,7 @@ void SCTPClient::sendRequestArrived()
                 cancelEvent(timeMsg);
 
             if (finishEndsSimulation)
-            {
                 endSimulation();
-            }
         }
     }
 }
@@ -294,41 +278,34 @@ void SCTPClient::socketDataArrived(int32, void *, cPacket *msg, bool)
 {
     packetsRcvd++;
 
-    sctpEV3<<"Client received packet Nr "<<packetsRcvd<<" from SCTP\n";
+    sctpEV3 << "Client received packet Nr " << packetsRcvd << " from SCTP\n";
     SCTPCommand* ind = check_and_cast<SCTPCommand*>(msg->removeControlInfo());
-    emit(rcvdPkBytesSignal, (long)(msg->getByteLength()));
+    emit(rcvdPkSignal, msg);
     bytesRcvd += msg->getByteLength();
 
-    if (echoFactor > 0)
+    if (echo)
     {
-        SCTPSimpleMessage *smsg=check_and_cast<SCTPSimpleMessage*>(msg->dup());
+        // FIXME why do it: msg->dup(); delete msg;
+        SCTPSimpleMessage *smsg = check_and_cast<SCTPSimpleMessage*>(msg->dup());
+        delete msg;
         cPacket* cmsg = new cPacket("SVData");
         echoedBytesSent += smsg->getByteLength();
-        emit(sentEchoedPkBytesSignal, (long)(smsg->getByteLength()));
+        emit(echoedPkSignal, smsg);
         cmsg->encapsulate(smsg);
-
-        if (ind->getSendUnordered())
-            cmsg->setKind(SCTP_C_SEND_UNORDERED);
-        else
-            cmsg->setKind(SCTP_C_SEND_ORDERED);
-
+        cmsg->setKind(ind->getSendUnordered() ? SCTP_C_SEND_UNORDERED : SCTP_C_SEND_ORDERED);
         packetsSent++;
-        delete msg;
         socket.send(cmsg, 1);
     }
 
-    if ((long)par("numPacketsToReceive")>0)
+    if (par("numPacketsToReceive").longValue() > 0)
     {
         numPacketsToReceive--;
         if (numPacketsToReceive == 0)
-        {
             close();
-        }
     }
 
     delete ind;
 }
-
 
 void SCTPClient::sendRequest(bool last)
 {
@@ -337,26 +314,21 @@ void SCTPClient::sendRequest(bool last)
     sendBytes = par("requestLength");
 
     if (sendBytes < 1)
-        sendBytes=1;
+        sendBytes = 1;
 
     cPacket* cmsg = new cPacket("AppData");
-    SCTPSimpleMessage* msg=new SCTPSimpleMessage("data");
+    SCTPSimpleMessage* msg = new SCTPSimpleMessage("data");
 
     msg->setDataArraySize(sendBytes);
 
     for (i=0; i < sendBytes; i++)
-    {
         msg->setData(i, 'a');
-    }
+
     msg->setDataLen(sendBytes);
     msg->setByteLength(sendBytes);
     msg->setCreationTime(simulation.getSimTime());
     cmsg->encapsulate(msg);
-
-    if (ordered)
-        cmsg->setKind(SCTP_C_SEND_ORDERED);
-    else
-        cmsg->setKind(SCTP_C_SEND_UNORDERED);
+    cmsg->setKind(ordered ? SCTP_C_SEND_ORDERED : SCTP_C_SEND_UNORDERED);
 
     // send SCTPMessage with SCTPSimpleMessage enclosed
     sctpEV3 << "Sending request ..." << endl;
@@ -365,9 +337,9 @@ void SCTPClient::sendRequest(bool last)
     if (bufferSize < 0)
         last = true;
 
+    emit(sentPkSignal, msg);
     socket.send(cmsg, last);
-    bytesSent+=sendBytes;
-    emit(sentPkBytesSignal, (long)sendBytes);
+    bytesSent += sendBytes;
 }
 
 void SCTPClient::handleTimer(cMessage *msg)
@@ -425,7 +397,7 @@ void SCTPClient::handleTimer(cMessage *msg)
             break;
 
         case MSGKIND_STOP:
-            numRequestsToSend=0;
+            numRequestsToSend = 0;
             sendAllowed = false;
             socket.abort();
             socket.close();
@@ -443,7 +415,7 @@ void SCTPClient::handleTimer(cMessage *msg)
             break;
 
         default:
-            ev<<"MsgKind ="<<msg->getKind()<<" unknown\n";
+            ev << "MsgKind =" << msg->getKind() << " unknown\n";
             break;
     }
 }
@@ -518,18 +490,18 @@ void SCTPClient::socketStatusArrived(int32 assocId, void *yourPtr, SCTPStatusInf
     if (i != sctpPathStatus.end())
     {
         ps = i->second;
-        ps.active=status->getActive();
+        ps.active = status->getActive();
     }
     else
     {
         ps.active = status->getActive();
         ps.pid = status->getPathId();
         ps.primaryPath = false;
-        sctpPathStatus[ps.pid]=ps;
+        sctpPathStatus[ps.pid] = ps;
     }
 }
 
-void SCTPClient::setPrimaryPath (const char* str)
+void SCTPClient::setPrimaryPath(const char* str)
 {
 
     cPacket* cmsg = new cPacket("CMSG-SetPrimary");
@@ -581,7 +553,7 @@ void SCTPClient::sendqueueAbatedArrived(int32 assocId, uint64 buffer)
 
     if ((!timer && numRequestsToSend == 0) && (simtime_t) par("waitToClose") == 0)
     {
-        sctpEV3<<"socketEstablished:no more packets to send, call shutdown\n";
+        sctpEV3 << "socketEstablished:no more packets to send, call shutdown\n";
         socket.shutdown();
 
         if (timeMsg->isScheduled())
@@ -621,6 +593,6 @@ void SCTPClient::finish()
     ev << getFullPath() << ": opened " << numSessions << " sessions\n";
     ev << getFullPath() << ": sent " << bytesSent << " bytes in " << packetsSent << " packets\n";
     ev << getFullPath() << ": received " << bytesRcvd << " bytes in " << packetsRcvd << " packets\n";
-    sctpEV3<<"Client finished\n";
+    sctpEV3 << "Client finished\n";
 }
 

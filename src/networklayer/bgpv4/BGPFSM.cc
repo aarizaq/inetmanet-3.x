@@ -390,9 +390,9 @@ void Established::entry()
     {
         rtEntry = IPRoutingTable->getRoute(i);
         if (rtEntry->getNetmask() == IPv4Address::ALLONES_ADDRESS ||
-            rtEntry->getSource()  == IPv4Route::IFACENETMASK      ||
-            rtEntry->getSource()  == IPv4Route::MANUAL            ||
-            rtEntry->getSource()  == IPv4Route::BGP)
+            rtEntry->getSource() == IPv4Route::IFACENETMASK ||
+            rtEntry->getSource() == IPv4Route::MANUAL ||
+            rtEntry->getSource() == IPv4Route::BGP)
         {
             continue;
         }
@@ -404,7 +404,7 @@ void Established::entry()
                 continue;
             }
             BGPEntry = new BGP::RoutingTableEntry(rtEntry);
-            std::string entryh = rtEntry->getHost().str();
+            std::string entryh = rtEntry->getDestination().str();
             std::string entryn = rtEntry->getNetmask().str();
             BGPEntry->addAS(session._info.ASValue);
             session.updateSendProcess(BGPEntry);
@@ -412,14 +412,14 @@ void Established::entry()
     }
 
     std::vector<BGP::RoutingTableEntry*> BGPRoutingTable = session.getBGPRoutingTable();
-    for (std::vector<BGP::RoutingTableEntry*>::iterator it = BGPRoutingTable.begin(); it != BGPRoutingTable.end (); it++)
+    for (std::vector<BGP::RoutingTableEntry*>::iterator it = BGPRoutingTable.begin(); it != BGPRoutingTable.end(); it++)
     {
         session.updateSendProcess((*it));
     }
 
     //when all EGP Session is in established state, start IGP Session(s)
     BGP::SessionID nextSession = session.findAndStartNextSession(BGP::EGP);
-    if (nextSession == -1)
+    if (nextSession == (BGP::SessionID)-1)
     {
         session.findAndStartNextSession(BGP::IGP);
     }

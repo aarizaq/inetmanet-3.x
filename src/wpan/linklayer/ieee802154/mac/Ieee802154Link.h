@@ -17,7 +17,7 @@ class HLISTLINK
     UINT_8 SN;              //SN of packet last received
     HLISTLINK *last;
     HLISTLINK *next;
-    HLISTLINK(UINT_16 hostid, uint16_t sn)
+    HLISTLINK(MACAddress hostid, uint16_t sn)
     {
         hostID = hostid;
         SN = sn;

@@ -18,7 +18,6 @@
 #ifndef __INET_THRUPUTMETERINGCHANNEL_H
 #define __INET_THRUPUTMETERINGCHANNEL_H
 
-#include <omnetpp.h>
 #include "INETDefs.h"
 
 /**
@@ -44,7 +43,7 @@
  * PROBLEM: display only gets updated if there's traffic! (For example, a
  * high pk/sec value might stay displayed even when the link becomes idle!)
  */
-class SIM_API ThruputMeteringChannel : public cDatarateChannel
+class INET_API ThruputMeteringChannel : public cDatarateChannel
 {
   protected:
     // configuration
@@ -76,7 +75,7 @@ class SIM_API ThruputMeteringChannel : public cDatarateChannel
     /**
      * Constructor.
      */
-    explicit ThruputMeteringChannel(const char *name=NULL);
+    explicit ThruputMeteringChannel(const char *name = NULL);
 
     /**
      * Copy constructor.
@@ -95,7 +94,7 @@ class SIM_API ThruputMeteringChannel : public cDatarateChannel
 
     /**
      * Creates and returns an exact copy of this object.
-     * See cPolymorphic for more details.
+     * See cObject for more details.
      */
 //    virtual ThruputMeteringChannel *dup() const {return new ThruputMeteringChannel(*this);}
 

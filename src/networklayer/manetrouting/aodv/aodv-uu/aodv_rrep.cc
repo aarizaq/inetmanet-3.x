@@ -71,6 +71,8 @@ RREP *NS_CLASS rrep_create(u_int8_t flags,
     rrep->dest_seqno = htonl(dest_seqno);
     rrep->orig_addr = orig_addr.s_addr;
     rrep->lifetime = htonl(life);
+    rrep->a = 0;
+    rrep->r = 0;
 
     if (flags & RREP_REPAIR)
         rrep->r = 1;
@@ -192,7 +194,6 @@ void NS_CLASS rrep_send(RREP * rrep, rt_table_t * rev_rt,
     if (!omnet_exist_rte (rev_rt->next_hop))
     {
         struct in_addr nm;
-        //nm.s_addr = IPv4Address((uint32_t)rev_rt->next_hop.s_addr).getNetworkMask().getInt();
         nm.s_addr = IPv4Address::ALLONES_ADDRESS.getInt();
         if (useIndex)
             omnet_chg_rte(rev_rt->next_hop,rev_rt->next_hop, nm, 1,false,rev_rt->ifindex);
@@ -299,8 +300,21 @@ void NS_CLASS rrep_process(RREP * rrep, int rreplen, struct in_addr ip_src,
 #endif
 
     /* Convert to correct byte order on affeected fields: */
-    rrep_dest.s_addr = rrep->dest_addr;
-    rrep_orig.s_addr = rrep->orig_addr;
+    Uint128 aux;
+    if (getAp(rrep->dest_addr, aux))
+    {
+        rrep_dest.s_addr = aux;
+    }
+    else
+        rrep_dest.s_addr = rrep->dest_addr;
+
+    if (getAp(rrep->orig_addr, aux))
+    {
+        rrep_orig.s_addr = aux;
+    }
+    else
+        rrep_orig.s_addr = rrep->orig_addr;
+
     rrep_seqno = ntohl(rrep->dest_seqno);
     rrep_lifetime = ntohl(rrep->lifetime);
     /* Increment RREP hop count to account for intermediate node... */
@@ -333,8 +347,12 @@ void NS_CLASS rrep_process(RREP * rrep, int rreplen, struct in_addr ip_src,
 
     if (isLocalAddress (rrep_dest.s_addr))
         return;
-    if (isLocalAddress(rrep_orig.s_addr))
+    if (addressIsForUs(rrep_orig.s_addr))
         DEBUG(LOG_DEBUG, 0, "rrep for us");
+
+    EV << "RREP received, Src Address :" << convertAddressToString(ip_src.s_addr) << "  RREP origin :" <<
+            convertAddressToString(rrep_orig.s_addr) << "  RREP dest :" << convertAddressToString(rrep_dest.s_addr) << "\n";
+
 #endif
 
     DEBUG(LOG_DEBUG, 0, "from %s about %s->%s",
@@ -395,7 +413,7 @@ void NS_CLASS rrep_process(RREP * rrep, int rreplen, struct in_addr ip_src,
     {
         /* We didn't have an existing entry, so we insert a new one. */
         fwd_rt = rt_table_insert(rrep_dest, ip_src, rrep_new_hcnt, rrep_seqno,
-                                 rrep_lifetime, VALID, rt_flags, ifindex,cost,hopfix);
+                                 rrep_lifetime, VALID, rt_flags, ifindex, cost, hopfix);
     }
     else if (useHover && (fwd_rt->dest_seqno == 0 ||
              (int32_t) rrep_seqno > (int32_t) fwd_rt->dest_seqno ||
@@ -408,7 +426,7 @@ void NS_CLASS rrep_process(RREP * rrep, int rreplen, struct in_addr ip_src,
 
         fwd_rt = rt_table_update(fwd_rt, ip_src, rrep_new_hcnt, rrep_seqno,
                                  rrep_lifetime, VALID,
-                                 rt_flags | fwd_rt->flags,ifindex,cost,hopfix);
+                                 rt_flags | fwd_rt->flags, ifindex, cost, hopfix);
     }
     else if (!useHover && (fwd_rt->dest_seqno == 0 ||
              (int32_t) rrep_seqno > (int32_t) fwd_rt->dest_seqno ||
@@ -421,7 +439,7 @@ void NS_CLASS rrep_process(RREP * rrep, int rreplen, struct in_addr ip_src,
 
         fwd_rt = rt_table_update(fwd_rt, ip_src, rrep_new_hcnt, rrep_seqno,
                                  rrep_lifetime, VALID,
-                                 rt_flags | fwd_rt->flags,ifindex,cost,hopfix);
+                                 rt_flags | fwd_rt->flags, ifindex, cost, hopfix);
     }
     else
     {
@@ -475,7 +493,7 @@ void NS_CLASS rrep_process(RREP * rrep, int rreplen, struct in_addr ip_src,
             {
                 rt_table_update(inet_rt, rrep_dest, rrep_new_hcnt, 0,
                                 rrep_lifetime, VALID, RT_INET_DEST |
-                                inet_rt->flags,ifindex);
+                                inet_rt->flags, ifindex);
             }
             else
             {

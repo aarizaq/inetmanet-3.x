@@ -71,7 +71,7 @@ void HIP::initialize()
 	WATCH(currentIfId);
 
 	NotificationBoard * nb = NotificationBoardAccess().get();
-	nb->subscribe(this, NF_L2_DISSOCIATED); // NF_L2_BEACON_LOST
+	nb->subscribe(this, NF_L2_DISASSOCIATED); // NF_L2_BEACON_LOST
 	nb->subscribe(this, NF_L2_ASSOCIATED_OLDAP);
 	nb->subscribe(this, NF_L2_ASSOCIATED_NEWAP);
 	nb->subscribe(this, NF_IPv6_HANDOVER_OCCURRED);
@@ -100,12 +100,12 @@ void HIP::receiveChangeNotification(int category, const cObject * details) {
 	printNotificationBanner(category, details);
 
 	// OLD AP, or disassociating, update is needed
-    if (category==NF_L2_DISSOCIATED || category==NF_L2_ASSOCIATED_OLDAP)
+    if (category==NF_L2_DISASSOCIATED || category==NF_L2_ASSOCIATED_OLDAP)
     {
         InterfaceEntry *ie = dynamic_cast<InterfaceEntry *>(const_cast<cObject*> (details));
         if(!(ie->isLoopback()) && !(ie->isDown()))
             return;
-        if (category==NF_L2_DISSOCIATED )
+        if (category==NF_L2_DISASSOCIATED)
         {
             mapIfaceToConnected[ie] = false;
             std::map<InterfaceEntry *, bool>::iterator it;
@@ -171,7 +171,7 @@ void HIP::handleRvsRegistration(cMessage *msg)
 			strcat(reqstring, par("RVSAddr"));
 			dnsReqMsg->setData(reqstring);
 			//UDP controlinfo
-			UDPControlInfo *ctrl = new UDPControlInfo();
+			UDPDataIndication *ctrl = new UDPDataIndication();
 			ctrl->setSrcPort(0);
 			InterfaceTable* ift = (InterfaceTable*) InterfaceTableAccess().get();
 
@@ -341,7 +341,7 @@ void HIP::handleMsgFromTransport(cMessage *msg)
 		dnsReqMsg->setId(this->getId());
 		dnsReqMsg->setAddrData(originalHIT);
 		//UDP controlinfo
-		UDPControlInfo *ctrl = new UDPControlInfo();
+		UDPDataIndication *ctrl = new UDPDataIndication();
 		ctrl->setSrcPort(0);
 		InterfaceTable* ift = (InterfaceTable*)InterfaceTableAccess().get();
 

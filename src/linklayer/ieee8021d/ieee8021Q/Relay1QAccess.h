@@ -10,8 +10,6 @@
 #define __RELAY1Q_ACCESS_H
 
 
-
-#include <omnetpp.h>
 #include "ModuleAccess.h"
 #include "Relay1Q.h"
 

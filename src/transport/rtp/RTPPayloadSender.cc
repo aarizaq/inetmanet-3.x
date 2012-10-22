@@ -72,7 +72,7 @@ void RTPPayloadSender::handleMessage(cMessage *msg)
         {
             RTPSenderControlMessage *rscm = (RTPSenderControlMessage *)(rinpIn->decapsulate());
             delete rinpIn;
-            switch(rscm->getCommand())
+            switch (rscm->getCommand())
             {
             case RTP_CONTROL_PLAY:
                 play();
@@ -134,9 +134,7 @@ void RTPPayloadSender::openSourceFile(const char *fileName)
 {
     _inputFileStream.open(fileName);
     if (!_inputFileStream)
-    {
-        throw cRuntimeError(this, "sender module: error open data file");
-    }
+        throw cRuntimeError("Error opening data file '%s'", fileName);
 }
 
 void RTPPayloadSender::closeSourceFile()

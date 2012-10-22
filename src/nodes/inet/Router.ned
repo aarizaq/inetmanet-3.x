@@ -18,22 +18,22 @@
 package inet.nodes.inet;
 
 //
-// \IPv4 router supporting wireless, ethernet, ppp and external interfaces.
-// by default no wireless and external if is configured. The number of
-// ethernet and ppp ports depend on the external connections.
+// IPv4 router that supports wireless, Ethernet, PPP and external interfaces.
+// By default, no wireless and external interfaces are added; the number of
+// Ethernet and PPP ports depends on the external connections.
+//
 // - Can be connected via ethernet interface to other nodes using
-//   the ethg gate. By default full duplex connections are supported
+//   the ethg gate. By default full-duplex connections are supported
 //   only (twisted pair). Set **.eth.typename="EthernetInterface" for
-//   a full/half duplex CSMA/CD implementation (coaxial cable)
+//   a full/half-duplex CSMA/CD implementation (coaxial cable)
 // - By default contains no wireless cards, however it can be configured
 //   by the numRadios parameter. Wirless card type is configured by the
 //   **.wlan.typename parameter. see:  inet.linklayer.ieee80211 or other
 //   modules implementing ~IWirelessNic
 // - Also external interfaces can be configured for HW in the loop simulation
 //   using the numExtInterfaces parameter and setting the type using
-//   **.ext.typename in the INI file. see: ~ExtInerface and ~IExternalNic
-// - PPP interface type can be set using **.ppp.typename see: ~PPPInterface
-//   and ~PPPInterfaceNoQueue
+//   **.ext.typename in the INI file. see: ~ExtInterface and ~IExternalNic
+// - PPP queueing type can be set using **.ppp.queueType see: ~PPPInterface
 // - If wireless card is present, node mobility can be set using **.mobility.typename
 //   see: inet.mobility and ~IMobility
 //

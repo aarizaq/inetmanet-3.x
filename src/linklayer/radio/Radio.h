@@ -64,6 +64,10 @@
  */
 class INET_API Radio : public ChannelAccess, public IPowerControl
 {
+  protected:
+    typedef std::map<double,double> SensitivityList; // Sensitivity list
+    SensitivityList sensitivityList;
+    virtual void getSensitivityList(cXMLElement* xmlConfig);
   public:
     Radio();
     virtual ~Radio();
@@ -78,7 +82,7 @@ class INET_API Radio : public ChannelAccess, public IPowerControl
 
     virtual void handleSelfMsg(cMessage*);
 
-    virtual void handleCommand(int msgkind, cPolymorphic *ctrl);
+    virtual void handleCommand(int msgkind, cObject *ctrl);
 
     /** @brief Buffer the frame and update noise levels and snr information */
     virtual void handleLowerMsgStart(AirFrame *airframe);
@@ -138,23 +142,27 @@ class INET_API Radio : public ChannelAccess, public IPowerControl
      * Routines to connect or disconnect the transmission and reception  of packets
      */
 
-    virtual void disconnectTransceiver() {transceiverConnect=false;}
-    virtual void connectTransceiver() {transceiverConnect=true;}
-    virtual void disconnectReceiver() {receiverConnect=false;}
-    virtual void connectReceiver() {receiverConnect=true;}
+    virtual void disconnectTransceiver() {transceiverConnect = false;}
+    virtual void connectTransceiver() {transceiverConnect = true;}
+    virtual void disconnectReceiver();
+    virtual void connectReceiver();
 
     virtual void registerBattery();
 
     virtual void updateDisplayString();
 
     // Power Control methods
-	virtual void enablingInitialization();
-	virtual void disablingInitialization();
-	//
-	double calcDistFreeSpace();
+    virtual void enablingInitialization();
+    virtual void disablingInitialization();
+    //
+    double calcDistFreeSpace();
 
   protected:
-	INoiseGenerator *noiseGenerator;
+	// Support of noise generators, the noise generators allow that the radio can change between  RECV <-->IDLE without to receive a frame
+    static simsignal_t changeLevelNoise;
+    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj);
+
+    INoiseGenerator *noiseGenerator;
     cMessage *updateString;
     simtime_t updateStringInterval;
     ObstacleControl* obstacles;
@@ -173,8 +181,8 @@ class INET_API Radio : public ChannelAccess, public IPowerControl
 
     /** @name Gate Ids */
     //@{
-    int uppergateOut;
-    int uppergateIn;
+    int upperLayerOut;
+    int upperLayerIn;
     //@}
 
     /**
@@ -199,7 +207,13 @@ class INET_API Radio : public ChannelAccess, public IPowerControl
      * Typedef used to store received messages together with
      * receive power.
      */
-    typedef std::map<AirFrame*,double> RecvBuff;
+    struct Compare {
+        bool operator() (AirFrame* const &lhs, AirFrame* const &rhs) const {
+            ASSERT(lhs && rhs);
+            return lhs->getId() < rhs->getId();
+        }
+    };
+    typedef std::map<AirFrame*, double, Compare> RecvBuff;
 
     /**
      * State: A buffer to store a pointer to a message and the related

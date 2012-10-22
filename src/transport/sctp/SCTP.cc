@@ -21,17 +21,14 @@
 #include "SCTPAssociation.h"
 #include "SCTPCommand_m.h"
 #include "IPv4ControlInfo.h"
-
-#ifdef WITH_IPv6
 #include "IPv6ControlInfo.h"
+
+#ifdef WITH_IPv4
+#include "IPv4Datagram.h"
 #endif
 
-#include "IPv4Datagram.h"
-
-#ifdef WITH_UDP
 #include "UDPControlInfo_m.h"
 #include "UDPSocket.h"
-#endif
 
 Define_Module(SCTP);
 
@@ -86,18 +83,10 @@ void SCTP::printVTagMap()
 
 void SCTP::bindPortForUDP()
 {
-    EV << "Binding to UDP port " << 9899 << endl;
+    EV << "Binding to UDP port " << SCTP_UDP_PORT << endl;
 
-#ifdef WITH_UDP
-    cMessage *msg = new cMessage("UDP_C_BIND", UDP_C_BIND);
-    UDPControlInfo *ctrl = new UDPControlInfo();
-    ctrl->setSrcPort(9899);
-    ctrl->setSockId(UDPSocket::generateSocketId());
-    msg->setControlInfo(ctrl);
-    send(msg, "to_ip");
-#else
-    throw cRuntimeError("SCTP feature compiled without UDP feature.");
-#endif
+    udpSocket.setOutputGate(gate("to_ip"));
+    udpSocket.bind(SCTP_UDP_PORT);
 }
 
 void SCTP::initialize()
@@ -109,15 +98,15 @@ void SCTP::initialize()
     cModule *netw = simulation.getSystemModule();
 
     testing = netw->hasPar("testing") && netw->par("testing").boolValue();
-    if(testing) {
+    if (testing) {
     }
     if (netw->hasPar("testTimeout"))
     {
         testTimeout = (simtime_t)netw->par("testTimeout");
     }
     numPacketsReceived = 0;
-    numPacketsDropped    = 0;
-    sizeConnMap          = 0;
+    numPacketsDropped = 0;
+    sizeConnMap = 0;
     if ((bool)par("udpEncapsEnabled"))
         bindPortForUDP();
 }
@@ -188,42 +177,30 @@ void SCTP::handleMessage(cMessage *msg)
         }
         if (msg->arrivedOn("from_ip"))
         {
-#ifdef WITH_IPv4
             if (par("udpEncapsEnabled"))
             {
-                std::cout<<"Laenge SCTPMSG="<<sctpmsg->getByteLength()<<"\n";
-#ifdef WITH_UDP
-                UDPControlInfo *ctrl = check_and_cast<UDPControlInfo *>(msg->removeControlInfo());
+                std::cout<<"Size of SCTPMSG="<<sctpmsg->getByteLength()<<"\n";
+                UDPDataIndication *ctrl = check_and_cast<UDPDataIndication *>(msg->removeControlInfo());
                 srcAddr = ctrl->getSrcAddr();
                 destAddr = ctrl->getDestAddr();
                 std::cout<<"controlInfo srcAddr="<<srcAddr<<"  destAddr="<<destAddr<<"\n";
                 std::cout<<"VTag="<<sctpmsg->getTag()<<"\n";
-#else
-                throw cRuntimeError("SCTP feature compiled without UDP feature.");
-#endif
             }
             else
             {
-            	IPv4ControlInfo *controlInfo = check_and_cast<IPv4ControlInfo *>(msg->removeControlInfo());
+                IPv4ControlInfo *controlInfo = check_and_cast<IPv4ControlInfo *>(msg->removeControlInfo());
                 IPv4Datagram *datagram = controlInfo->removeOrigDatagram();
                 delete datagram;
                 sctpEV3<<"controlInfo srcAddr="<<controlInfo->getSrcAddr()<<"   destAddr="<<controlInfo->getDestAddr()<<"\n";
                 srcAddr = controlInfo->getSrcAddr();
                 destAddr = controlInfo->getDestAddr();
             }
-#else
-        throw cRuntimeError("INET compiled without IPv4 features!");
-#endif
         }
         else
         {
-#ifdef WITH_IPv6
-        	IPv6ControlInfo *controlInfoV6 = check_and_cast<IPv6ControlInfo *>(msg->removeControlInfo());
+            IPv6ControlInfo *controlInfoV6 = check_and_cast<IPv6ControlInfo *>(msg->removeControlInfo());
             srcAddr = controlInfoV6->getSrcAddr();
             destAddr = controlInfoV6->getDestAddr();
-#else
-        throw cRuntimeError("INET compiled without IPv6 features!");
-#endif
         }
 
 
@@ -233,9 +210,9 @@ void SCTP::handleMessage(cMessage *msg)
             if (((SCTPChunk*)(sctpmsg->getChunks(0)))->getChunkType()==INIT || ((SCTPChunk*)(sctpmsg->getChunks(0)))->getChunkType()==INIT_ACK )
                 findListen = true;
 
-            SCTPAssociation *assoc = findAssocForMessage(srcAddr, destAddr, sctpmsg->getSrcPort(),sctpmsg->getDestPort(), findListen);
+            SCTPAssociation *assoc = findAssocForMessage(srcAddr, destAddr, sctpmsg->getSrcPort(), sctpmsg->getDestPort(), findListen);
             if (!assoc && sctpConnMap.size()>0)
-                assoc = findAssocWithVTag(sctpmsg->getTag(),sctpmsg->getSrcPort(), sctpmsg->getDestPort());
+                assoc = findAssocWithVTag(sctpmsg->getTag(), sctpmsg->getSrcPort(), sctpmsg->getDestPort());
             if (!assoc)
             {
                 sctpEV3<<"no assoc found msg="<<sctpmsg->getName()<<"\n";
@@ -246,7 +223,7 @@ void SCTP::handleMessage(cMessage *msg)
                 }
                 if (((SCTPChunk*)(sctpmsg->getChunks(0)))->getChunkType()==SHUTDOWN_ACK)
                     sendShutdownCompleteFromMain(sctpmsg, destAddr, srcAddr);
-                else if (((SCTPChunk*)(sctpmsg->getChunks(0)))->getChunkType()!=ABORT  &&
+                else if (((SCTPChunk*)(sctpmsg->getChunks(0)))->getChunkType()!=ABORT &&
                     ((SCTPChunk*)(sctpmsg->getChunks(0)))->getChunkType()!=SHUTDOWN_COMPLETE)
                 {
                     sendAbortFromMain(sctpmsg, destAddr, srcAddr);
@@ -291,7 +268,7 @@ void SCTP::handleMessage(cMessage *msg)
         {
             sctpEV3 << "no assoc found. msg="<<msg->getName()<<" number of assocs = "<<assocList.size()<<"\n";
 
-            if (strcmp(msg->getName(),"PassiveOPEN")==0 || strcmp(msg->getName(),"Associate")==0)
+            if (strcmp(msg->getName(), "PassiveOPEN")==0 || strcmp(msg->getName(), "Associate")==0)
             {
                 if (assocList.size()>0)
                 {
@@ -310,7 +287,7 @@ void SCTP::handleMessage(cMessage *msg)
                 }
                 if (assoc==NULL)
                 {
-                    assoc = new SCTPAssociation(this,appGateIndex,assocId);
+                    assoc = new SCTPAssociation(this, appGateIndex, assocId);
 
                     AppConnKey key;
                     key.appGateIndex = appGateIndex;
@@ -368,17 +345,8 @@ void SCTP::sendAbortFromMain(SCTPMessage* sctpmsg, IPvXAddress srcAddr, IPvXAddr
     msg->addChunk(abortChunk);
     if ((bool)par("udpEncapsEnabled"))
     {
-#ifdef WITH_UDP
-        msg->setKind(UDP_C_DATA);
         std::cout<<"VTag="<<msg->getTag()<<"\n";
-        UDPControlInfo *ctrl = new UDPControlInfo();
-        ctrl->setSrcPort(9899);
-        ctrl->setDestAddr(destAddr.get4());
-        ctrl->setDestPort(9899);
-        msg->setControlInfo(ctrl);
-#else
-        throw cRuntimeError("SCTP feature compiled without UDP feature.");
-#endif
+        udpSocket.sendTo(msg, destAddr, SCTP_UDP_PORT);
     }
     else
     {
@@ -387,8 +355,8 @@ void SCTP::sendAbortFromMain(SCTPMessage* sctpmsg, IPvXAddress srcAddr, IPvXAddr
         controlInfo->setSrcAddr(srcAddr.get4());
         controlInfo->setDestAddr(destAddr.get4());
         msg->setControlInfo(controlInfo);
+        send(msg, "to_ip");
     }
-    send(msg,"to_ip");
 }
 
 void SCTP::sendShutdownCompleteFromMain(SCTPMessage* sctpmsg, IPvXAddress srcAddr, IPvXAddress destAddr)
@@ -414,20 +382,60 @@ void SCTP::sendShutdownCompleteFromMain(SCTPMessage* sctpmsg, IPvXAddress srcAdd
     controlInfo->setSrcAddr(srcAddr.get4());
     controlInfo->setDestAddr(destAddr.get4());
     msg->setControlInfo(controlInfo);
-    send(msg,"to_ip");
+    send(msg, "to_ip");
 }
 
 
 void SCTP::updateDisplayString()
 {
+#if 0
     if (ev.disable_tracing)
     {
         // in express mode, we don't bother to update the display
         // (std::map's iteration is not very fast if map is large)
-        getDisplayString().setTagArg("t",0,"");
+        getDisplayString().setTagArg("t", 0, "");
         return;
     }
 
+    //char buf[40];
+    //sprintf(buf,"%d conns", sctpAppConnMap.size());
+    //displayString().setTagArg("t",0,buf);
+
+    int32 numCLOSED=0, numLISTEN=0, numSYN_SENT=0, numSYN_RCVD=0,
+       numESTABLISHED=0, numCLOSE_WAIT=0, numLAST_ACK=0, numFIN_WAIT_1=0,
+       numFIN_WAIT_2=0, numCLOSING=0, numTIME_WAIT=0;
+
+    for (SctpAppConnMap::iterator i=sctpAppConnMap.begin(); i!=sctpAppConnMap.end(); ++i)
+    {
+       int32 state = (*i).second->getFsmState();
+       switch(state)
+       {
+           // case SCTP_S_INIT:           numINIT++; break;
+           case SCTP_S_CLOSED:            numCLOSED++; break;
+           case SCTP_S_COOKIE_WAIT:       numLISTEN++; break;
+           case SCTP_S_COOKIE_ECHOED:     numSYN_SENT++; break;
+           case SCTP_S_ESTABLISHED:       numESTABLISHED++; break;
+           case SCTP_S_SHUTDOWN_PENDING:  numCLOSE_WAIT++; break;
+           case SCTP_S_SHUTDOWN_SENT:     numLAST_ACK++; break;
+           case SCTP_S_SHUTDOWN_RECEIVED: numFIN_WAIT_1++; break;
+           case SCTP_S_SHUTDOWN_ACK_SENT: numFIN_WAIT_2++; break;
+       }
+    }
+    char buf2[300];
+    buf2[0] = '\0';
+    if (numCLOSED>0)     sprintf(buf2+strlen(buf2), "closed:%d ", numCLOSED);
+    if (numLISTEN>0)     sprintf(buf2+strlen(buf2), "listen:%d ", numLISTEN);
+    if (numSYN_SENT>0)   sprintf(buf2+strlen(buf2), "syn_sent:%d ", numSYN_SENT);
+    if (numSYN_RCVD>0)   sprintf(buf2+strlen(buf2), "syn_rcvd:%d ", numSYN_RCVD);
+    if (numESTABLISHED>0) sprintf(buf2+strlen(buf2),"estab:%d ", numESTABLISHED);
+    if (numCLOSE_WAIT>0) sprintf(buf2+strlen(buf2), "close_wait:%d ", numCLOSE_WAIT);
+    if (numLAST_ACK>0)   sprintf(buf2+strlen(buf2), "last_ack:%d ", numLAST_ACK);
+    if (numFIN_WAIT_1>0) sprintf(buf2+strlen(buf2), "fin_wait_1:%d ", numFIN_WAIT_1);
+    if (numFIN_WAIT_2>0) sprintf(buf2+strlen(buf2), "fin_wait_2:%d ", numFIN_WAIT_2);
+    if (numCLOSING>0)    sprintf(buf2+strlen(buf2), "closing:%d ", numCLOSING);
+    if (numTIME_WAIT>0)  sprintf(buf2+strlen(buf2), "time_wait:%d ", numTIME_WAIT);
+    getDisplayString().setTagArg("t", 0, buf2);
+#endif
 }
 
 SCTPAssociation *SCTP::findAssocWithVTag(uint32 peerVTag, uint32 remotePort, uint32 localPort)
@@ -438,7 +446,7 @@ SCTPAssociation *SCTP::findAssocWithVTag(uint32 peerVTag, uint32 remotePort, uin
     printInfoConnMap();
 
     // try with fully qualified SockPair
-    for (SctpVTagMap::iterator i=sctpVTagMap.begin(); i!=sctpVTagMap.end();i++)
+    for (SctpVTagMap::iterator i=sctpVTagMap.begin(); i!=sctpVTagMap.end(); i++)
     {
         if ((i->second.peerVTag==peerVTag && i->second.localPort==localPort
             && i->second.remotePort==remotePort)
@@ -765,9 +773,9 @@ void SCTP::addForkedAssociation(SCTPAssociation *assoc, SCTPAssociation *newAsso
 
 void SCTP::removeAssociation(SCTPAssociation *conn)
 {
-    bool            ok    = false;
+    bool            ok = false;
     bool            find = false;
-    const int32 id    = conn->assocId;
+    const int32 id = conn->assocId;
 
     sctpEV3 << "Deleting SCTP connection " << conn << " id= "<< id << endl;
 
@@ -775,8 +783,8 @@ void SCTP::removeAssociation(SCTPAssociation *conn)
     if (sizeConnMap > 0) {
         AssocStatMap::iterator assocStatMapIterator = assocStatMap.find(conn->assocId);
         if (assocStatMapIterator != assocStatMap.end()) {
-            assocStatMapIterator->second.stop        = simulation.getSimTime();
-            assocStatMapIterator->second.lifeTime    = assocStatMapIterator->second.stop - assocStatMapIterator->second.start;
+            assocStatMapIterator->second.stop = simulation.getSimTime();
+            assocStatMapIterator->second.lifeTime = assocStatMapIterator->second.stop - assocStatMapIterator->second.start;
             assocStatMapIterator->second.throughput = assocStatMapIterator->second.ackedBytes*8 / assocStatMapIterator->second.lifeTime.dbl();
         }
         while (!ok) {
@@ -853,7 +861,7 @@ void SCTP::removeAssociation(SCTPAssociation *conn)
     for (SCTPQueue::PayloadQueue::iterator i = conn->getRetransmissionQueue()->payloadQueue.begin();
           i != conn->getRetransmissionQueue()->payloadQueue.end(); i++) {
         SCTPQueue::PayloadQueue::iterator j = conn->getTransmissionQueue()->payloadQueue.find(i->second->tsn);
-        if(j != conn->getTransmissionQueue()->payloadQueue.end()) {
+        if (j != conn->getTransmissionQueue()->payloadQueue.end()) {
             conn->getTransmissionQueue()->payloadQueue.erase(j);
         }
     }
@@ -863,7 +871,7 @@ void SCTP::removeAssociation(SCTPAssociation *conn)
 
     AppConnKey key;
     key.appGateIndex = conn->appGateIndex;
-    key.assocId       = conn->assocId;
+    key.assocId = conn->assocId;
     sctpAppConnMap.erase(key);
     assocList.remove(conn);
     delete conn;

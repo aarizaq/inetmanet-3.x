@@ -13,8 +13,9 @@
 // See the GNU Lesser General Public License for more details.
 //
 
-#include <omnetpp.h>
 #include <string.h>
+
+#include "INETDefs.h"
 
 #include "MPLS.h"
 #include "Utils.h"
@@ -169,7 +170,7 @@ void MPLS::doStackOps(MPLSPacket *mplsPacket, const LabelOpVector& outLabel)
 
     ASSERT(n >= 0);
 
-    for (unsigned int i = 0; i <  n; i++)
+    for (unsigned int i = 0; i < n; i++)
     {
         switch (outLabel[i].optcode)
         {
@@ -189,6 +190,7 @@ void MPLS::doStackOps(MPLSPacket *mplsPacket, const LabelOpVector& outLabel)
 
             default:
                 error("Unknown MPLS OptCode %d", outLabel[i].optcode);
+                break;
         }
     }
 }

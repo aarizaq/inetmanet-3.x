@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2006 Andras Varga
+// Copyright (C) 2010 Alfonso Ariza Quintana
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -18,7 +18,8 @@
 #ifndef IEEE80211_MGMT_ADHOC_ETX_H
 #define IEEE80211_MGMT_ADHOC_ETX_H
 
-#include <omnetpp.h>
+#include "INETDefs.h"
+
 #include "Ieee80211MgmtAdhoc.h"
 #include "Ieee80211Etx.h"
 

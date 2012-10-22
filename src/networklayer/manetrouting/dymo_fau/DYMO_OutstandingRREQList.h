@@ -20,11 +20,11 @@
 #ifndef DYMO_OUTSTANDINGRREQLIST_H
 #define DYMO_OUTSTANDINGRREQLIST_H
 
-#include <omnetpp.h>
 #include <vector>
-#include "DYMO_Timer.h"
+
 #include "INETDefs.h"
 
+#include "DYMO_Timer.h"
 #include "NotificationBoard.h"
 
 
@@ -65,6 +65,8 @@ class DYMO_OutstandingRREQList : public cObject
      * @returns a DYMO_OutstandingRREQ whose wait_time is expired or 0 if none is found
      */
     DYMO_OutstandingRREQ* getExpired();
+
+    bool hasActive() const;
 
     void add(DYMO_OutstandingRREQ* outstandingRREQ);
 

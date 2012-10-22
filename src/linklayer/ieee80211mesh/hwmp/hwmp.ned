@@ -33,33 +33,35 @@ simple HwmpProtocol extends BaseRouting like IManetRouting
 {
     parameters:
         @class(HwmpProtocol);
-        int maxQueueSize=default(255);
-        int dot11MeshHWMPmaxPREQretries=default(3);
-        double dot11MeshHWMPnetDiameterTraversalTime @unit("s")=default(102400us);
-        double dot11MeshHWMPpreqMinInterval @unit("s")=default(102400us);
-        double dot11MeshHWMPperrMinInterval @unit("s")=default(102400us);
-        double dot11MeshHWMPactiveRootTimeout @unit("s")=default(1024*5000 us);
-        double dot11MeshHWMPactivePathTimeout @unit("s")=default(1024*5000 us);
-        double dot11MeshHWMPpathToRootInterval @unit("s")=default(1024*2000 us);
-        double dot11MeshHWMPrannInterval @unit("s")=default(1024*5000 us);
-        double dot11MeshHWMPgannInterval @unit("s")=default(1024*5000 us);
+        int maxQueueSize = default(255);
+        int dot11MeshHWMPmaxPREQretries = default(3);
+        double dot11MeshHWMPnetDiameterTraversalTime @unit("s") = default(102400us);
+        double dot11MeshHWMPpreqMinInterval @unit("s") = default(102400us);
+        double dot11MeshHWMPperrMinInterval @unit("s") = default(102400us);
+        double dot11MeshHWMPactiveRootTimeout @unit("s") = default(1024*5000 us);
+        double dot11MeshHWMPactivePathTimeout @unit("s") = default(1024*5000 us);
+        double dot11MeshHWMPpathToRootInterval @unit("s") = default(1024*2000 us);
+        double dot11MeshHWMPrannInterval @unit("s") = default(1024*5000 us);
+        double dot11MeshHWMPgannInterval @unit("s") = default(1024*5000 us);
         bool   isGan=default(false);
         double neighborLive @unit("s")=default(1024*5000 us);  // dot11MeshHWMPactivePathTimeout, maximun time to considere a neighbor live without receive a message
         int    lostThreshold = default(1); // number of consecutive lost packet to consider break path and lost the neighbor
-        bool concurrentReactive=default(false); // it allows that a reactive can be search at the same time that the proactive route is used 
-        bool isRoot=default(false); // this node is root, only must be one per network
-        bool minHopCost=default(true); // use the min-hop like cost, if false use the airlink metric.
-        int maxTtl=default(32);
-        bool updateLifetimeInFrowarding=default(true); // refress the route life time every time that this route is used
+        bool concurrentReactive = default(false); // it allows that a reactive can be search at the same time that the proactive route is used 
+        bool isRoot = default(false); // this node is root, only must be one per network
+        bool minHopCost = default(true); // use the min-hop like cost, if false use the airlink metric.
+        int maxTtl = default(32);
+        bool updateLifetimeInFrowarding = default(true); // refress the route life time every time that this route is used
         int unicastPerrThreshold = default(32);
         int unicastPreqThreshold = default(1);
         int unicastDataThreshold = default(1);
         volatile double randomStart = default(uniform(0,0.1));
         bool ToFlag=default(false);
+        double timeLimitInQueue @unit("s") = default(20s);
         bool gratuitousReverseRoute = default (false);// use the data packet to create the reverse route if this route doesn't exist
-        volatile double broadCastDelay @unit("s") = default (uniform(0s,0.01s));  // the delay added to broadcast operations if EqualDelay is set (used to model processing time) 
-        volatile double uniCastDelay @unit("s") = default (uniform(0s,0.001s));  // a delay added to unicast messaged (i.e. data packet forwarding) (used to model processing time)
+        volatile double broadcastDelay @unit("s") = default (uniform(0s,0.01s));  // the delay added to broadcast operations if EqualDelay is set (used to model processing time) 
+        volatile double unicastDelay @unit("s") = default (uniform(0s,0.001s));  // a delay added to unicast messaged (i.e. data packet forwarding) (used to model processing time)
         bool checkNextHop=default(false);
+        bool PublicRoutingTables = default(false);
     gates:
         input from_ip;
         output to_ip;

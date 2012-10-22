@@ -58,12 +58,9 @@ class INET_API PPP : public cSimpleModule, public INotifiable, public cListener
     long numDroppedIfaceDown;
 
     static simsignal_t txStateSignal;
-    static simsignal_t txPkBytesSignal;
-    static simsignal_t rxPkBytesOkSignal;
-    static simsignal_t droppedPkBytesIfaceDownSignal;
-    static simsignal_t droppedPkBytesBitErrorSignal;
-    static simsignal_t passedUpPkBytesSignal;
-    static simsignal_t rcvdPkBytesFromHLSignal;
+    static simsignal_t rxPkOkSignal;
+    static simsignal_t dropPkIfaceDownSignal;
+    static simsignal_t dropPkBitErrorSignal;
     static simsignal_t packetSentToLowerSignal;
     static simsignal_t packetReceivedFromLowerSignal;
     static simsignal_t packetSentToUpperSignal;
@@ -78,7 +75,7 @@ class INET_API PPP : public cSimpleModule, public INotifiable, public cListener
     virtual void displayIdle();
     virtual void updateDisplayString();
     virtual void updateHasSubcribers();
-    virtual void receiveChangeNotification(int category, const cPolymorphic *details);
+    virtual void receiveChangeNotification(int category, const cObject *details);
     virtual void receiveSignal(cComponent *src, simsignal_t id, cObject *obj);
     virtual void refreshOutGateConnection(bool connected);
 

@@ -26,26 +26,12 @@
 
 static uint64_t MacToUint64(const MACAddress &add)
 {
-    uint64_t aux;
-    uint64_t lo=0;
-    for (int i=0; i<MAC_ADDRESS_BYTES; i++)
-    {
-        aux  = add.getAddressByte(MAC_ADDRESS_BYTES-i-1);
-        aux <<= 8*i;
-        lo  |= aux ;
-    }
-    return lo;
+    return add.getInt();
 }
 
 static MACAddress Uint64ToMac(uint64_t lo)
 {
-    MACAddress add;
-    add.setAddressByte(0, (lo>>40)&0xff);
-    add.setAddressByte(1, (lo>>32)&0xff);
-    add.setAddressByte(2, (lo>>24)&0xff);
-    add.setAddressByte(3, (lo>>16)&0xff);
-    add.setAddressByte(4, (lo>>8)&0xff);
-    add.setAddressByte(5, lo&0xff);
+    MACAddress add(lo & !MAC_ADDRESS_MASK);
     return add;
 }
 
@@ -110,7 +96,7 @@ void BMacLayer::registerInterface()
     IInterfaceTable *ift = InterfaceTableAccess().getIfExists();
     if (!ift)
         return;
-    InterfaceEntry *e = new InterfaceEntry();
+    InterfaceEntry *e = new InterfaceEntry(this);
 
     // interface name: NetworkInterface module's name without special characters ([])
     char *interfaceName = new char[strlen(getParentModule()->getFullName()) + 1];
@@ -137,7 +123,7 @@ void BMacLayer::registerInterface()
     iface = e;
 
     // add
-    ift->addInterface(e, this);
+    ift->addInterface(e);
 }
 /**
  * Initialize method of BMacLayer. Init all parameters, schedule timers.
@@ -205,11 +191,12 @@ void BMacLayer::initialize(int stage)
         // init the dropped packet info
         //droppedPacket.setReason(DroppedPacket::NONE);
         nicId = getParentModule()->getId();
-        radioModule = gate("lowergateOut")->getNextGate()->getOwnerModule()->getId();
+        radioModule = gate("lowerLayerOut")->getNextGate()->getOwnerModule()->getId();
 
         //catDroppedPacket = utility->getCategory(&droppedPacket);
         WATCH(macState);
         WATCH(myMacAddr);
+        WATCH(radioState);
     }
 
     else if(stage == 1) {

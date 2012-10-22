@@ -146,6 +146,7 @@ void ControlPlaneBaseMS::handleManagmentFrame(Ieee80216GenericMacHeader *Generic
 
     default:
         error("Invalid management message type: %i",Mgmtframe->getManagement_Message_Type());
+        break;
     }
 }
 
@@ -259,7 +260,7 @@ bool ControlPlaneBaseMS::scanNextChannel()
     if (scanning.scanChannel == 6) // Es sindnur fünf Kanäle, wenn der Zähler bei sechs ist von neuem Anfangen
         scanning.scanChannel = 1;
     changeDownlinkChannel(scanning.scanChannel);
-    scanning.scanChannel = ++scanning.scanChannel;
+    scanning.scanChannel = ++(scanning.scanChannel);
     ScanChannelTimer = new cMessage("ScanChannelTimer", MK_Scan_Channel_Timer);
     scheduleAt(simTime() + MSInfo.ScanTimeInterval, ScanChannelTimer);
     EV << "Scan next channel " << scanning.scanChannel << "\n";

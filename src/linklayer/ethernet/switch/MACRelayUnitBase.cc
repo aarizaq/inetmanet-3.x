@@ -18,6 +18,7 @@
 #include "MACRelayUnitBase.h"
 #include "MACAddress.h"
 #include "EtherFrame_m.h"
+#include "EtherMACBase.h"
 #include "Ethernet.h"
 
 
@@ -32,7 +33,7 @@ static std::ostream& operator<< (std::ostream& os, cMessage *msg)
 }
 */
 
-static std::ostream& operator<< (std::ostream& os, const MACRelayUnitBase::AddressEntry& e)
+static std::ostream& operator<<(std::ostream& os, const MACRelayUnitBase::AddressEntry& e)
 {
     os << "port=" << e.portno << " insTime=" << e.insertionTime;
     return os;
@@ -45,18 +46,21 @@ static std::ostream& operator<< (std::ostream& os, const MACRelayUnitBase::Addre
  * also note that if on a line containing useful data that EOF occurs, then
  * that line will not be read in, hence must terminate file with unused line.
  */
-static char *fgetline (FILE *fp)
+static char *fgetline(FILE *fp)
 {
     // alloc buffer and read a line
     char *line = new char[MAX_LINE];
-    if (fgets(line,MAX_LINE,fp)==NULL)
+    if (fgets(line, MAX_LINE, fp)==NULL)
+    {
+        delete [] line;
         return NULL;
+    }
 
     // chop CR/LF
     line[MAX_LINE-1] = '\0';
     int len = strlen(line);
     while (len>0 && (line[len-1]=='\n' || line[len-1]=='\r'))
-        line[--len]='\0';
+        line[--len] = '\0';
 
     return line;
 }
@@ -64,12 +68,11 @@ static char *fgetline (FILE *fp)
 void MACRelayUnitBase::initialize()
 {
     // number of ports
-    numPorts = gate("lowerLayerOut",0)->size();
-    if (gate("lowerLayerIn",0)->size()!=numPorts)
+    numPorts = gate("lowerLayerOut", 0)->size();
+    if (gate("lowerLayerIn", 0)->size()!=numPorts)
         error("the sizes of the lowerLayerIn[] and lowerLayerOut[] gate vectors must be the same");
 
     // other parameters
-    numWirelessPorts = par("numWirelessPorts");
     addressTableSize = par("addressTableSize");
     addressTableSize = addressTableSize >= 0 ? addressTableSize : 0;
 
@@ -80,6 +83,14 @@ void MACRelayUnitBase::initialize()
     const char *addressTableFile = par("addressTableFile");
     if (addressTableFile && *addressTableFile)
         readAddressTable(addressTableFile);
+
+    pauseFinished = new simtime_t[numPorts];
+#ifdef USE_DOUBLE_SIMTIME
+    for (int i=0; i<numPorts; i++)
+        pauseFinished[i] = SIMTIME_ZERO;
+#else
+    // simtime_t constructor already initialize by SIMTIME_ZERO
+#endif
 
     seqNum = 0;
 
@@ -104,14 +115,14 @@ void MACRelayUnitBase::handleAndDispatchFrame(EtherFrame *frame, int inputport)
     int outputport = getPortForAddress(frame->getDest());
     // should not send out the same frame on the same ethernet port
     // (although wireless ports are ok to receive the same message)
-    if (inputport==outputport && outputport>=numWirelessPorts)
+    if (inputport == outputport)
     {
         EV << "Output port is same as input port, " << frame->getFullName() <<
               " dest " << frame->getDest() << ", discarding frame\n";
         delete frame;
         return;
     }
-    if (outputport>=0)
+    if (outputport >= 0)
     {
         EV << "Sending frame " << frame << " with dest address " << frame->getDest() << " to port " << outputport << endl;
         send(frame, "lowerLayerOut", outputport);
@@ -126,7 +137,7 @@ void MACRelayUnitBase::handleAndDispatchFrame(EtherFrame *frame, int inputport)
 void MACRelayUnitBase::broadcastFrame(EtherFrame *frame, int inputport)
 {
     for (int i=0; i<numPorts; ++i)
-        if (i!=inputport || i<numWirelessPorts)  // we always send out on a wireless port even if we received it from the same port
+        if (i != inputport)
             send((EtherFrame*)frame->dup(), "lowerLayerOut", i);
     delete frame;
 }
@@ -274,6 +285,8 @@ void MACRelayUnitBase::readAddressTable(const char* fileName)
         AddressEntry entry;
         entry.insertionTime = 0;
         entry.portno = atoi(portno);
+        if (addresstable.size() >= (unsigned int)addressTableSize)
+            error("Too many entries in address table file '%s'", fileName);
         addresstable[MACAddress(hexaddress)] = entry;
 
         // Garbage collection before next iteration
@@ -287,16 +300,38 @@ void MACRelayUnitBase::sendPauseFrame(int portno, int pauseUnits)
 {
     EV << "Creating and sending PAUSE frame on port " << portno << " with duration=" << pauseUnits << " units\n";
 
-    // create Ethernet frame
-    char framename[40];
-    sprintf(framename, "pause-%d-%d", getId(), seqNum++);
-    EtherPauseFrame *frame = new EtherPauseFrame(framename);
-    frame->setPauseTime(pauseUnits);
+    cGate* gate = this->gate("lowerLayerOut", portno);
+    EtherMACBase *destModule = check_and_cast<EtherMACBase*>(gate->getPathEndGate()->getOwnerModule());
 
-    frame->setByteLength(ETHER_MAC_FRAME_BYTES+ETHER_PAUSE_COMMAND_BYTES);
-    if (frame->getByteLength() < MIN_ETHERNET_FRAME)
-        frame->setByteLength(MIN_ETHERNET_FRAME);
+    if (destModule->isActive())
+    {
+        // create Ethernet frame
+        char framename[40];
+        sprintf(framename, "pause-%d-%d", getId(), seqNum++);
+        EtherPauseFrame *frame = new EtherPauseFrame(framename);
+        frame->setDest(MACAddress::MULTICAST_PAUSE_ADDRESS);
+        frame->setPauseTime(pauseUnits);
 
-    send(frame, "lowerLayerOut", portno);
+        frame->setByteLength(ETHER_PAUSE_COMMAND_PADDED_BYTES);
+
+        send(frame, gate);
+        pauseFinished[portno] = simTime() + ((double)PAUSE_UNIT_BITS) * pauseUnits / destModule->getTxRate();
+    }
+    else //disconnected or disabled
+    {
+        pauseFinished[portno] = SIMTIME_ZERO;
+    }
+}
+
+void MACRelayUnitBase::sendPauseFramesIfNeeded(int pauseUnits)
+{
+    simtime_t now = simTime();
+
+    // send PAUSE on all ports, when need
+    for (int i=0; i < numPorts; ++i)
+    {
+        if (pauseFinished[i] <= now)
+            sendPauseFrame(i, pauseUnits);
+    }
 }
 

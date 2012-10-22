@@ -19,7 +19,7 @@
 #ifndef __INET_INOTIFIABLE_H
 #define __INET_INOTIFIABLE_H
 
-#include <omnetpp.h>
+#include "INETDefs.h"
 
 
 /**
@@ -38,7 +38,7 @@ class INET_API INotifiable
      * Called by the NotificationBoard whenever a change of a category
      * occurs to which this client has subscribed.
      */
-    virtual void receiveChangeNotification(int category, const cPolymorphic *details) = 0;
+    virtual void receiveChangeNotification(int category, const cObject *details) = 0;
 };
 
 #endif

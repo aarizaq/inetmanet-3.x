@@ -34,8 +34,8 @@ simple Ieee80211MgmtWDSExtended like IIeee80211Mgmt
         string WDSClients = default(""); // modules's names or MAC address of next-hop WDS clients. separated by comma (,)
         @display("i=block/cogwheel");
     gates:
-        input uppergateIn; // from upper layers; can be unconnected
-        output uppergateOut; // to upper layers; can be unconnected
+        input upperLayerIn; // from upper layers; can be unconnected
+        output upperLayerOut; // to upper layers; can be unconnected
         input macIn; // from Ieee80211Mac
         output macOut; // to Ieee80211Mac
         

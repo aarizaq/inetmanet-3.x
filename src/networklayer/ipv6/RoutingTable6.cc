@@ -26,9 +26,7 @@
 #include "IPv6InterfaceData.h"
 #include "InterfaceTableAccess.h"
 
-#ifdef WITH_xMIPv6
 #include "IPv6TunnelingAccess.h"
-#endif /* WITH_xMIPv6 */
 
 Define_Module(RoutingTable6);
 
@@ -159,16 +157,16 @@ void RoutingTable6::parseXMLConfigFile()
         //std::cout << "configuring interfaces from XML file." << endl;
         //std::cout << "selected element is: " << child->getTagName() << endl;
         // we ensure that the selected element is local.
-        if (opp_strcmp(child->getTagName(),"local")!=0) continue;
+        if (opp_strcmp(child->getTagName(), "local")!=0) continue;
         //ensure that this is the right parent module we are configuring.
-        if (opp_strcmp(child->getAttribute("node"),getParentModule()->getFullName())!=0)
+        if (opp_strcmp(child->getAttribute("node"), getParentModule()->getFullName())!=0)
             continue;
         //Go one level deeper.
         //child = child->getFirstChild();
         for (cXMLElement *ifTag=child->getFirstChild(); ifTag; ifTag = ifTag->getNextSibling())
         {
             //The next tag should be "interface".
-            if (opp_strcmp(ifTag->getTagName(),"interface")==0)
+            if (opp_strcmp(ifTag->getTagName(), "interface")==0)
             {
                 //std::cout << "Getting attribute: name" << endl;
                 const char *ifname = ifTag->getAttribute("name");
@@ -181,11 +179,8 @@ void RoutingTable6::parseXMLConfigFile()
 
                 configureInterfaceFromXML(ie, ifTag);
             }
-
-#ifdef WITH_xMIPv6
-            else if (opp_strcmp(ifTag->getTagName(),"tunnel")==0)
+            else if (opp_strcmp(ifTag->getTagName(), "tunnel")==0)
                 configureTunnelFromXML(ifTag);
-#endif /* WITH_xMIPv6 */
         }
     }
 }
@@ -203,10 +198,10 @@ void RoutingTable6::updateDisplayString()
 
 void RoutingTable6::handleMessage(cMessage *msg)
 {
-    throw cRuntimeError(this, "This module doesn't process messages");
+    throw cRuntimeError("This module doesn't process messages");
 }
 
-void RoutingTable6::receiveChangeNotification(int category, const cPolymorphic *details)
+void RoutingTable6::receiveChangeNotification(int category, const cObject *details)
 {
     if (simulation.getContextType()==CTX_INITIALIZE)
         return;  // ignore notifications during initialize
@@ -247,13 +242,17 @@ void RoutingTable6::configureInterfaceForIPv6(InterfaceEntry *ie)
     //FIXME: we will use this isRouter flag for now. what if future implementations
     //have 2 interfaces where one interface is configured as a router and the other
     //as a host?
-    ipv6IfData->setAdvSendAdvertisements(isrouter);//Added by WEI
+    ipv6IfData->setAdvSendAdvertisements(isrouter); //Added by WEI
 
     // metric: some hints: OSPF cost (2e9/bps value), MS KB article Q299540, ...
     //d->setMetric((int)ceil(2e9/ie->getDatarate())); // use OSPF cost as default
     //FIXME TBD fill in the rest
 
     assignRequiredNodeAddresses(ie);
+
+    // add link-local prefix to each interface according to RFC 4861 5.1
+    if (!ie->isLoopback())
+        addStaticRoute(IPv6Address::LINKLOCAL_PREFIX, 10, ie->getInterfaceId(), IPv6Address::UNSPECIFIED_ADDRESS);
 }
 
 void RoutingTable6::assignRequiredNodeAddresses(InterfaceEntry *ie)
@@ -307,17 +306,17 @@ static const char *getRequiredAttr(cXMLElement *elem, const char *attrName)
 {
     const char *s = elem->getAttribute(attrName);
     if (!s)
-        throw cRuntimeError("element <%s> misses required attribute %s at %s",
+        throw cRuntimeError("Element <%s> misses required attribute %s at %s",
                   elem->getTagName(), attrName, elem->getSourceLocation());
     return s;
 }
 
-static bool toBool(const char *s, bool defaultValue=false)
+static bool toBool(const char *s, bool defaultValue = false)
 {
     if (!s)
         return defaultValue;
 
-    return !strcmp(s,"on") || !strcmp(s,"true") || !strcmp(s,"yes");
+    return !strcmp(s, "on") || !strcmp(s, "true") || !strcmp(s, "yes");
 }
 
 void RoutingTable6::configureInterfaceFromXML(InterfaceEntry *ie, cXMLElement *cfg)
@@ -362,8 +361,8 @@ void RoutingTable6::configureInterfaceFromXML(InterfaceEntry *ie, cXMLElement *c
         // store (absolute) expiry time (if >0) or lifetime (delta) (if <0);
         // 0 should be treated as infinity
         int pfxLen;
-        if (!prefix.prefix.tryParseAddrWithPrefix(node->getNodeValue(),pfxLen))
-            throw cRuntimeError(this, "element <%s> at %s: wrong IPv6Address/prefix syntax %s",
+        if (!prefix.prefix.tryParseAddrWithPrefix(node->getNodeValue(), pfxLen))
+            throw cRuntimeError("Element <%s> at %s: wrong IPv6Address/prefix syntax %s",
                       node->getTagName(), node->getSourceLocation(), node->getNodeValue());
 
         prefix.prefixLength = pfxLen;
@@ -379,13 +378,12 @@ void RoutingTable6::configureInterfaceFromXML(InterfaceEntry *ie, cXMLElement *c
     for (unsigned int k=0; k<addrList.size(); k++)
     {
         cXMLElement *node = addrList[k];
-        IPv6Address address = node->getNodeValue();
+        IPv6Address address = IPv6Address(node->getNodeValue());
         //We can now decide if the address is tentative or not.
         d->assignAddress(address, toBool(getRequiredAttr(node, "tentative")), 0, 0);  // set up with infinite lifetimes
     }
 }
 
-#ifdef WITH_xMIPv6
 void RoutingTable6::configureTunnelFromXML(cXMLElement* cfg)
 {
     IPv6Tunneling* tunneling = IPv6TunnelingAccess().get();
@@ -413,7 +411,6 @@ void RoutingTable6::configureTunnelFromXML(cXMLElement* cfg)
         tunneling->createTunnel(IPv6Tunneling::NORMAL, entry, exit, trigger);
     }
 }
-#endif /* WITH_xMIPv6 */
 
 InterfaceEntry *RoutingTable6::getInterfaceByAddress(const IPv6Address& addr)
 {
@@ -466,18 +463,26 @@ bool RoutingTable6::isLocalAddress(const IPv6Address& dest) const
     return false;
 }
 
-const IPv6Address& RoutingTable6::lookupDestCache(const IPv6Address& dest, int& outInterfaceId) const
+const IPv6Address& RoutingTable6::lookupDestCache(const IPv6Address& dest, int& outInterfaceId)
 {
     Enter_Method("lookupDestCache(%s)", dest.str().c_str());
 
-    DestCache::const_iterator it = destCache.find(dest);
+    DestCache::iterator it = destCache.find(dest);
     if (it == destCache.end())
     {
         outInterfaceId = -1;
         return IPv6Address::UNSPECIFIED_ADDRESS;
     }
-    outInterfaceId = it->second.interfaceId;
-    return it->second.nextHopAddr;
+    DestCacheEntry &entry = it->second;
+    if (entry.expiryTime > 0 && simTime() > entry.expiryTime)
+    {
+        destCache.erase(it);
+        outInterfaceId = -1;
+        return IPv6Address::UNSPECIFIED_ADDRESS;
+    }
+
+    outInterfaceId = entry.interfaceId;
+    return entry.nextHopAddr;
 }
 
 const IPv6Route *RoutingTable6::doLongestPrefixMatch(const IPv6Address& dest)
@@ -488,10 +493,10 @@ const IPv6Route *RoutingTable6::doLongestPrefixMatch(const IPv6Address& dest)
     // by prefix lengths and metric (see addRoute())
 
     // bugfix - CB
-    RouteList::iterator it=routeList.begin();
+    RouteList::iterator it = routeList.begin();
     while (it!=routeList.end())
     {
-        if (dest.matches((*it)->getDestPrefix(),(*it)->getPrefixLength()))
+        if (dest.matches((*it)->getDestPrefix(), (*it)->getPrefixLength()))
         {
             if (simTime() > (*it)->getExpiryTime() && (*it)->getExpiryTime() != 0)//since 0 represents infinity.
             {
@@ -516,16 +521,17 @@ const IPv6Route *RoutingTable6::doLongestPrefixMatch(const IPv6Address& dest)
 bool RoutingTable6::isPrefixPresent(const IPv6Address& prefix) const
 {
     for (RouteList::const_iterator it=routeList.begin(); it!=routeList.end(); it++)
-        if (prefix.matches((*it)->getDestPrefix(),128))
+        if (prefix.matches((*it)->getDestPrefix(), 128))
             return true;
     return false;
 }
 
-void RoutingTable6::updateDestCache(const IPv6Address& dest, const IPv6Address& nextHopAddr, int interfaceId)
+void RoutingTable6::updateDestCache(const IPv6Address& dest, const IPv6Address& nextHopAddr, int interfaceId, simtime_t expiryTime)
 {
-    // FIXME this performs 2 lookups -- optimize to do only one
-    destCache[dest].nextHopAddr = nextHopAddr;
-    destCache[dest].interfaceId = interfaceId;
+    DestCacheEntry &entry = destCache[dest];
+    entry.nextHopAddr = nextHopAddr;
+    entry.interfaceId = interfaceId;
+    entry.expiryTime = expiryTime;
 
     updateDisplayString();
 }
@@ -668,7 +674,7 @@ void RoutingTable6::addDefaultRoute(const IPv6Address& nextHop, unsigned int ifI
     IPv6Route *route = new IPv6Route(IPv6Address(), 0, IPv6Route::FROM_RA);
     route->setInterfaceId(ifID);
     route->setNextHop(nextHop);
-    route->setMetric(10);//FIXME:should be filled from interface metric
+    route->setMetric(10); //FIXME:should be filled from interface metric
 
 #ifdef WITH_xMIPv6
     route->setExpiryTime(routerLifetime); // lifetime useful after transitioning to new AR // 27.07.08 - CB
@@ -734,15 +740,6 @@ IPv6Route *RoutingTable6::getRoute(int i)
 
 #ifdef WITH_xMIPv6
 //#####Added by Zarrar Yousaf##################################################################
-
-const IPv6Address& RoutingTable6::getDestinationAddress()
-{
-    DestCache::iterator it;
-    for (it = destCache.begin(); it != destCache.end(); ++it)
-        return it -> first;
-
-    return IPv6Address::UNSPECIFIED_ADDRESS; // in case we do not find anything - CB
-}
 
 const IPv6Address& RoutingTable6::getHomeAddress()
 {

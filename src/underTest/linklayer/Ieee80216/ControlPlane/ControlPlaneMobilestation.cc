@@ -498,6 +498,7 @@ void ControlPlaneMobilestation::handleManagementFrame(Ieee80216GenericMacHeader 
         default:
             error("error: Management Message Type not in switch-statement");
             delete mgmtFrame;
+            break;
         }
     }
 }
@@ -1866,7 +1867,7 @@ void ControlPlaneMobilestation::registerInterface()
     if (!ift)
         return;
 
-    InterfaceEntry *e = new InterfaceEntry();
+    InterfaceEntry *e = new InterfaceEntry(this);
 
     // interface name: NetworkInterface module's name without special characters ([])
     char *interfaceName = new char[strlen(getParentModule()->getFullName()) + 1];
@@ -1893,7 +1894,7 @@ void ControlPlaneMobilestation::registerInterface()
     e->setPointToPoint(false);
 
     // add
-    ift->addInterface(e, this);
+    ift->addInterface(e);
 }
 
 /**
@@ -2246,7 +2247,7 @@ void ControlPlaneMobilestation::getCalculateSNR(cMessage *msg)
     SNRQueue.push_back(frame->getSNR());
 
     //Es wird der mittlere SNR von "FrameAnzahl" Frames bestimmt
-    if (SNRQueue.size() >= FrameAnzahl)
+    if ((int)SNRQueue.size() >= FrameAnzahl)
     {
         for (SNRList::const_iterator ci = SNRQueue.begin(); ci != SNRQueue.end(); ++ci)
         {
@@ -2525,13 +2526,13 @@ void ControlPlaneMobilestation::recordData(cMessage *msg)
     MACAddress BS_6;
     MACAddress BS_7;
 
-    BS_1 = "0A:00:00:00:00:01";
-    BS_2 = "0A:00:00:00:00:02";
-    BS_3 = "0A:00:00:00:00:03";
-    BS_4 = "0A:00:00:00:00:04";
-    BS_5 = "0A:00:00:00:00:05";
-    BS_6 = "0A:00:00:00:00:06";
-    BS_7 = "0A:00:00:00:00:07";
+    BS_1 = MACAddress("0A:00:00:00:00:01");
+    BS_2 = MACAddress("0A:00:00:00:00:02");
+    BS_3 = MACAddress("0A:00:00:00:00:03");
+    BS_4 = MACAddress("0A:00:00:00:00:04");
+    BS_5 = MACAddress("0A:00:00:00:00:05");
+    BS_6 = MACAddress("0A:00:00:00:00:06");
+    BS_7 = MACAddress("0A:00:00:00:00:07");
 
     if (frame->getBS_ID() == BS_1)
     {

@@ -81,7 +81,7 @@ struct ethhdr
 
 struct iphdr
 {
-    unsigned int ihl:4;
+    unsigned short ihl;
     unsigned int version:4;
     u_int8_t tos;
     u_int16_t tot_len;

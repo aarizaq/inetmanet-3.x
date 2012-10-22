@@ -24,10 +24,10 @@
 
 Define_Module(VoIPSinkApp);
 
-simsignal_t VoIPSinkApp::receivedBytesSignal = SIMSIGNAL_NULL;
+simsignal_t VoIPSinkApp::rcvdPkSignal = SIMSIGNAL_NULL;
 simsignal_t VoIPSinkApp::lostSamplesSignal = SIMSIGNAL_NULL;
 simsignal_t VoIPSinkApp::lostPacketsSignal = SIMSIGNAL_NULL;
-simsignal_t VoIPSinkApp::droppedBytesSignal = SIMSIGNAL_NULL;
+simsignal_t VoIPSinkApp::dropPkSignal = SIMSIGNAL_NULL;
 simsignal_t VoIPSinkApp::packetHasVoiceSignal = SIMSIGNAL_NULL;
 simsignal_t VoIPSinkApp::connStateSignal = SIMSIGNAL_NULL;
 simsignal_t VoIPSinkApp::delaySignal = SIMSIGNAL_NULL;
@@ -39,13 +39,10 @@ VoIPSinkApp::~VoIPSinkApp()
 
 void VoIPSinkApp::initSignals()
 {
-    if (receivedBytesSignal != SIMSIGNAL_NULL)
-        return;
-
-    receivedBytesSignal = registerSignal("receivedBytes");
+    rcvdPkSignal = registerSignal("rcvdPk");
     lostSamplesSignal = registerSignal("lostSamples");
     lostPacketsSignal = registerSignal("lostPackets");
-    droppedBytesSignal  = registerSignal("droppedBytes");
+    dropPkSignal = registerSignal("dropPk");
     packetHasVoiceSignal = registerSignal("packetHasVoice");
     connStateSignal = registerSignal("connState");
     delaySignal = registerSignal("delay");
@@ -53,8 +50,10 @@ void VoIPSinkApp::initSignals()
 
 void VoIPSinkApp::initialize()
 {
-    UDPAppBase::initialize();
     initSignals();
+
+    // Hack for create results folder
+    recordScalar("hackForCreateResultsFolder", 0);
 
     // Say Hello to the world
     ev << "VoIPSinkApp initialize()" << endl;
@@ -62,23 +61,44 @@ void VoIPSinkApp::initialize()
     // read parameters
     localPort = par("localPort");
     resultFile = par("resultFile");
+    playOutDelay = par("delay");
 
     // initialize avcodec library
     av_register_all();
 
-    bindToPort(localPort);
+    socket.setOutputGate(gate("udpOut"));
+    socket.bind(localPort);
 }
 
 void VoIPSinkApp::handleMessage(cMessage *msg)
 {
-    VoIPPacket *vp = dynamic_cast<VoIPPacket *>(msg);
-    if (vp)
-        handleVoIPMessage(vp);
-    else
+    if (msg->getKind() == UDP_I_ERROR)
+    {
         delete msg;
+        return;
+    }
+
+    VoIPPacket *vp = check_and_cast<VoIPPacket *>(msg);
+    bool ok = true;
+    if (curConn.offline)
+        createConnection(vp);
+    else
+    {
+        checkSourceAndParameters(vp);
+        ok = vp->getSeqNo() > curConn.seqNo && vp->getTimeStamp() > curConn.timeStamp;
+    }
+    if (ok)
+    {
+        emit(rcvdPkSignal, vp);
+        decodePacket(vp);
+    }
+    else
+        emit(dropPkSignal, msg);
+
+    delete msg;
 }
 
-bool VoIPSinkApp::Connection::openAudio(const char *fileName)
+void VoIPSinkApp::Connection::openAudio(const char *fileName)
 {
 /*
     AVCodecContext *c;
@@ -89,34 +109,44 @@ bool VoIPSinkApp::Connection::openAudio(const char *fileName)
     // find the audio encoder
     avcodec = avcodec_find_encoder(c->codec_id);
     if (!avcodec)
-        throw cRuntimeError("codec %d not found", c->codec_id);
+        throw cRuntimeError("Codec %d not found", c->codec_id);
 
     // open it
     if (avcodec_open(c, avcodec) < 0)
-        throw cRuntimeError("could not open codec %d", c->codec_id);
+        throw cRuntimeError("Could not open codec %d", c->codec_id);
 */
-    return outFile.open(fileName, sampleRate, av_get_bits_per_sample_format(decCtx->sample_fmt));
+    outFile.open(fileName, sampleRate, av_get_bits_per_sample_format(decCtx->sample_fmt));
 }
 
 void VoIPSinkApp::Connection::writeLostSamples(int sampleCount)
 {
     int pktBytes = sampleCount * av_get_bits_per_sample_format(decCtx->sample_fmt) / 8;
-    uint8_t decBuf[pktBytes];
-    memset(decBuf, 0, pktBytes);
-    outFile.write(decBuf, pktBytes);
+    if (outFile.isOpen())
+    {
+        uint8_t decBuf[pktBytes];
+        memset(decBuf, 0, pktBytes);
+        outFile.write(decBuf, pktBytes);
+    }
 }
 
 void VoIPSinkApp::Connection::writeAudioFrame(uint8_t *inbuf, int inbytes)
 {
+    AVPacket avpkt;
+    av_init_packet(&avpkt);
+    avpkt.data = inbuf;
+    avpkt.size = inbytes;
+
     int decBufSize = AVCODEC_MAX_AUDIO_FRAME_SIZE;
     int16_t *decBuf = new int16_t[decBufSize]; // output is 16bit
-    int ret = avcodec_decode_audio2(decCtx, decBuf, &decBufSize, inbuf, inbytes);
+//    int ret = avcodec_decode_audio2(decCtx, decBuf, &decBufSize, inbuf, inbytes);
+    int ret = avcodec_decode_audio3(decCtx, decBuf, &decBufSize, &avpkt);
     if (ret < 0)
         throw cRuntimeError("avcodec_decode_audio2(): received packet decoding error: %d", ret);
 
     lastPacketFinish += simtime_t(1.0) * (decBufSize * 8 / av_get_bits_per_sample_format(decCtx->sample_fmt)) / sampleRate;
-    outFile.write(decBuf, decBufSize);
-    delete[] decBuf;
+    if (outFile.isOpen())
+        outFile.write(decBuf, decBufSize);
+    delete [] decBuf;
 }
 
 void VoIPSinkApp::Connection::closeAudio()
@@ -124,15 +154,16 @@ void VoIPSinkApp::Connection::closeAudio()
     outFile.close();
 }
 
-
-bool VoIPSinkApp::createConnect(VoIPPacket *vp)
+void VoIPSinkApp::createConnection(VoIPPacket *vp)
 {
-    if (!curConn.offline)
-        return false;
+    ASSERT(curConn.offline);
 
-    emit(connStateSignal, 1);
+    UDPDataIndication *udpCtrl = check_and_cast<UDPDataIndication *>(vp->getControlInfo());
 
-    curConn.offline = false;
+    curConn.srcAddr = udpCtrl->getSrcAddr();
+    curConn.srcPort = udpCtrl->getSrcPort();
+    curConn.destAddr = udpCtrl->getDestAddr();
+    curConn.destPort = udpCtrl->getDestPort();
     curConn.seqNo = vp->getSeqNo() - 1;
     curConn.timeStamp = vp->getTimeStamp();
     curConn.ssrc = vp->getSsrc();
@@ -143,34 +174,49 @@ bool VoIPSinkApp::createConnect(VoIPPacket *vp)
     curConn.samplesPerPacket = vp->getSamplesPerPacket();
     curConn.lastPacketFinish = simTime() + playOutDelay;
 
+    curConn.pCodecDec = avcodec_find_decoder(curConn.codec);
+    if (curConn.pCodecDec == NULL)
+        error("Codec %d not found", curConn.codec);
+
+#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53,21,0)
     curConn.decCtx = avcodec_alloc_context();
+#else
+    curConn.decCtx = avcodec_alloc_context3(curConn.pCodecDec);
+#endif
 
     curConn.decCtx->bit_rate = curConn.transmitBitrate;
     curConn.decCtx->sample_rate = curConn.sampleRate;
     curConn.decCtx->channels = 1;
+    curConn.decCtx->bits_per_coded_sample = curConn.sampleBits;
 
-    curConn.pCodecDec = avcodec_find_decoder(curConn.codec);
-    if (curConn.pCodecDec == NULL)
-        error("Codec %d not found", curConn.codec);
     int ret = avcodec_open(curConn.decCtx, curConn.pCodecDec);
     if (ret < 0)
-        error("could not open decoding codec");
+        error("could not open decoding codec %d (%s): err=%d", curConn.codec, curConn.pCodecDec->name, ret);
 
-    return curConn.openAudio(resultFile);
+    curConn.openAudio(resultFile);
+    curConn.offline = false;
+    emit(connStateSignal, 1);
 }
 
-bool VoIPSinkApp::checkConnect(VoIPPacket *vp)
+void VoIPSinkApp::checkSourceAndParameters(VoIPPacket *vp)
 {
-    return  (!curConn.offline)
-            && vp->getSsrc() == curConn.ssrc
-            && vp->getCodec() == curConn.codec
-            && vp->getSampleBits() == curConn.sampleBits
-            && vp->getSampleRate() == curConn.sampleRate
-            && vp->getSamplesPerPacket() == curConn.samplesPerPacket
-            && vp->getTransmitBitrate() == curConn.transmitBitrate
-            && vp->getSeqNo() > curConn.seqNo
-            && vp->getTimeStamp() > curConn.timeStamp
-            ;
+    ASSERT(!curConn.offline);
+
+    UDPDataIndication *udpCtrl = check_and_cast<UDPDataIndication *>(vp->getControlInfo());
+    if (curConn.srcAddr != udpCtrl->getSrcAddr()
+            || curConn.srcPort != udpCtrl->getSrcPort()
+            || curConn.destAddr != udpCtrl->getDestAddr()
+            || curConn.destPort != udpCtrl->getDestPort()
+            || vp->getSsrc() != curConn.ssrc)
+        throw cRuntimeError("Voice packet received from third party during a voice session (concurrent voice sessions not supported)");
+
+    if (vp->getCodec() != curConn.codec
+            || vp->getSampleBits() != curConn.sampleBits
+            || vp->getSampleRate() != curConn.sampleRate
+            || vp->getSamplesPerPacket() != curConn.samplesPerPacket
+            || vp->getTransmitBitrate() != curConn.transmitBitrate
+        )
+        throw cRuntimeError("Cannot change voice encoding parameters a during session");
 }
 
 void VoIPSinkApp::closeConnection()
@@ -180,25 +226,13 @@ void VoIPSinkApp::closeConnection()
         curConn.offline = true;
         avcodec_close(curConn.decCtx);
         curConn.outFile.close();
-        emit(connStateSignal, 0);
+        emit(connStateSignal, -1L); // so that sum() yields the number of active sessions
     }
-}
-
-void VoIPSinkApp::handleVoIPMessage(VoIPPacket *vp)
-{
-    long int bytes = (long int)vp->getByteLength();
-    bool ok = (curConn.offline) ? createConnect(vp) : checkConnect(vp);
-    emit(ok ? receivedBytesSignal : droppedBytesSignal, bytes);
-
-    if (ok)
-        decodePacket(vp);
-
-    delete vp;
 }
 
 void VoIPSinkApp::decodePacket(VoIPPacket *vp)
 {
-    switch(vp->getType())
+    switch (vp->getType())
     {
         case VOICE:
             emit(packetHasVoiceSignal, 1);
@@ -217,14 +251,16 @@ void VoIPSinkApp::decodePacket(VoIPPacket *vp)
         emit(lostPacketsSignal, newSeqNo - (curConn.seqNo + 1));
     if (simTime() > curConn.lastPacketFinish)
     {
-        int lostSamples = (int)SIMTIME_DBL((simTime() - curConn.lastPacketFinish) * curConn.sampleRate);
+        int lostSamples = ceil(SIMTIME_DBL((simTime() - curConn.lastPacketFinish) * curConn.sampleRate));
+        ASSERT(lostSamples > 0);
         ev << "Lost " << lostSamples << " samples\n";
         emit(lostSamplesSignal, lostSamples);
         curConn.writeLostSamples(lostSamples);
-        curConn.lastPacketFinish = simTime();
+        curConn.lastPacketFinish += lostSamples * (1.0 / curConn.sampleRate);
     }
     emit(delaySignal, curConn.lastPacketFinish - vp->getCreationTime());
     curConn.seqNo = newSeqNo;
+
     int len = vp->getByteArray().getDataArraySize();
     uint8_t buff[len];
     vp->copyDataToBuffer(buff, len);
@@ -236,3 +272,4 @@ void VoIPSinkApp::finish()
     ev << "Sink finish()" << endl;
     closeConnection();
 }
+

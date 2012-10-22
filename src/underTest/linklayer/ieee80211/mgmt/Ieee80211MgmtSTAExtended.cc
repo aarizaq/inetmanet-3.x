@@ -96,6 +96,7 @@ void Ieee80211MgmtSTAExtended::initialize(int stage)
     else if (stage==1)
     {
 
+        nb->subscribe(this, NF_LINK_FULL_PROMISCUOUS);
         IInterfaceTable *ift = InterfaceTableAccess().getIfExists();
         if (ift)
         {
@@ -185,18 +186,15 @@ void Ieee80211MgmtSTAExtended::handleTimer(cMessage *msg)
 
 void Ieee80211MgmtSTAExtended::handleUpperMessage(cPacket *msg)
 {
-    if (this->isAssociated)
+    if (!this->isAssociated || this->assocAP.address.isUnspecified())
     {
-        Ieee80211DataFrame *frame = this->encapsulate(msg);
-        sendOrEnqueue(frame);
+        EV << "STA is not associated with an access point, discarding packet" << msg << "\n";
+        delete msg;
+        return;
     }
-    else
-    {
-        EV << "STA not associated, buffering the packet" << endl;
-        Ieee80211DataFrame *frame = this->encapsulate(msg);
-        cMessage *m= enqueue(frame);
-        if (m) delete m;
-    }
+
+    Ieee80211DataFrame *frame = this->encapsulate(msg);
+    sendOrEnqueue(frame);
 }
 
 void Ieee80211MgmtSTAExtended::handleCommand(int msgkind, cPolymorphic *ctrl)
@@ -295,7 +293,7 @@ cMessage* Ieee80211MgmtSTAExtended::dequeue()
 
 Ieee80211DataFrame *Ieee80211MgmtSTAExtended::encapsulate(cPacket *msg)
 {
-    Ieee80211DataFrame *frame = new Ieee80211DataFrame(msg->getName());
+    Ieee80211DataFrameWithSNAP *frame = new Ieee80211DataFrameWithSNAP(msg->getName());
 
     // frame goes to the AP
     frame->setToDS(true);
@@ -306,6 +304,7 @@ Ieee80211DataFrame *Ieee80211MgmtSTAExtended::encapsulate(cPacket *msg)
     // destination address is in address3
     Ieee802Ctrl *ctrl = check_and_cast<Ieee802Ctrl *>(msg->removeControlInfo());
     frame->setAddress3(ctrl->getDest());
+    frame->setEtherType(ctrl->getEtherType());
     delete ctrl;
 
     frame->encapsulate(msg);
@@ -434,6 +433,21 @@ void Ieee80211MgmtSTAExtended::receiveChangeNotification(int category, const cPo
             EV << "busy radio channel detected during scanning\n";
             scanning.busyChannelDetected = true;
         }
+    }
+    else if (category==NF_LINK_FULL_PROMISCUOUS)
+    {
+        Ieee80211DataOrMgmtFrame *frame = dynamic_cast<Ieee80211DataOrMgmtFrame*>(const_cast<cPolymorphic*>(details));
+        if (!frame || frame->getControlInfo()==NULL)
+            return;
+        if (frame->getType()!=ST_BEACON)
+            return;
+        if (dynamic_cast <Radio80211aControlInfo*> (frame->getControlInfo())==NULL)
+            return;
+        Radio80211aControlInfo *ctl= dynamic_cast <Radio80211aControlInfo*> (frame->getControlInfo());
+        Ieee80211BeaconFrame *beacon= (check_and_cast<Ieee80211BeaconFrame *>(frame));
+        APInfo *ap = lookupAP(beacon->getTransmitterAddress());
+        if (ap)
+            ap->rxPower=ctl->getRecPow();
     }
 }
 

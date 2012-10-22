@@ -107,7 +107,7 @@ class INET_API BindingUpdateList : public cSimpleModule
     };
 
     friend std::ostream& operator<<(std::ostream& os, const BindingUpdateListEntry& bul);
-    typedef std::map<IPv6Address,BindingUpdateListEntry> BindingUpdateList6; 
+    typedef std::map<IPv6Address,BindingUpdateListEntry> BindingUpdateList6;
     BindingUpdateList6 bindingUpdateList;
 
   public:
@@ -128,7 +128,7 @@ class INET_API BindingUpdateList : public cSimpleModule
      * Sets entry in the Binding Update List with provided values. If entry does not yet exist, a new one is created.
      */
     virtual void addOrUpdateBUL(const IPv6Address& dest, const IPv6Address& hoa,
-           const IPv6Address& coa, const uint lifetime, const uint seq, const simtime_t buSentTime);//,const simtime_t& nextBUSentTime );
+           const IPv6Address& coa, const uint lifetime, const uint seq, const simtime_t buSentTime); //,const simtime_t& nextBUSentTime );
 
     /**
      * Creates a new entry in the BUL for the provided address.
@@ -139,7 +139,7 @@ class INET_API BindingUpdateList : public cSimpleModule
      * Initializes the values of a BUL entry to initial values.
      * Called by addOrUpdateBUL() if new entry is created.
      */
-    virtual void initializeBUValues(BindingUpdateListEntry& entry); // 28.08.07 - CB 
+    virtual void initializeBUValues(BindingUpdateListEntry& entry); // 28.08.07 - CB
 
     /**
      * Sets HoTI and/or CoTI values (transmission time, etc.) for the BUL entry.
@@ -190,7 +190,7 @@ class INET_API BindingUpdateList : public cSimpleModule
     virtual int generateHomeToken(const IPv6Address& HoA, int nonce);
 
     /**
-     * Generates a care-of token from the provided paramters.
+     * Generates a care-of token from the provided parameters.
      * Returns a static value for now.
      */
     virtual int generateCareOfToken(const IPv6Address& CoA, int nonce);

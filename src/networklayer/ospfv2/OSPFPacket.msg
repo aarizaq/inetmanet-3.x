@@ -51,12 +51,10 @@ packet OSPFPacket
 {
     char version = 2;
     char type enum(OSPFPacketType) = HELLO_PACKET;
-    short packetLength = 0;
 
     IPv4Address routerID;
     IPv4Address areaID;
 
-    short checksum = 0;
     short authenticationType = 0;
     char authentication[8];
 }
@@ -98,10 +96,9 @@ class OSPFLSAHeader
     unsigned short lsAge = 0;
     OSPFOptions lsOptions;
     char lsType enum(LSAType) = ROUTERLSA_TYPE;
-    unsigned long linkStateID;
+    IPv4Address linkStateID;
     IPv4Address advertisingRouter;
     long lsSequenceNumber = 0;
-    short lsChecksum = 0;
     unsigned short lsaLength = 0;
 }
 
@@ -226,7 +223,7 @@ packet OSPFDatabaseDescriptionPacket extends OSPFPacket
 struct LSARequest
 {
     unsigned long lsType;
-    unsigned long linkStateID;
+    IPv4Address linkStateID;
     IPv4Address advertisingRouter;
 }
 

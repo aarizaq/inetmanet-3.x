@@ -18,7 +18,8 @@
 #ifndef IEEE80211_MGMT_ADHOC_H
 #define IEEE80211_MGMT_ADHOC_H
 
-#include <omnetpp.h>
+#include "INETDefs.h"
+
 #include "Ieee80211MgmtBase.h"
 #include "NotificationBoard.h"
 
@@ -42,13 +43,13 @@ class INET_API Ieee80211MgmtAdhoc : public Ieee80211MgmtBase
     virtual void handleUpperMessage(cPacket *msg);
 
     /** Implements abstract Ieee80211MgmtBase method -- throws an error (no commands supported) */
-    virtual void handleCommand(int msgkind, cPolymorphic *ctrl);
+    virtual void handleCommand(int msgkind, cObject *ctrl);
 
     /** Utility function for handleUpperMessage() */
     virtual Ieee80211DataFrame *encapsulate(cPacket *msg);
 
     /** Called by the NotificationBoard whenever a change occurs we're interested in */
-    virtual void receiveChangeNotification(int category, const cPolymorphic *details);
+    virtual void receiveChangeNotification(int category, const cObject *details);
 
     /** @name Processing of different frame types */
     //@{
@@ -63,6 +64,7 @@ class INET_API Ieee80211MgmtAdhoc : public Ieee80211MgmtBase
     virtual void handleBeaconFrame(Ieee80211BeaconFrame *frame);
     virtual void handleProbeRequestFrame(Ieee80211ProbeRequestFrame *frame);
     virtual void handleProbeResponseFrame(Ieee80211ProbeResponseFrame *frame);
+    virtual cPacket *decapsulate(Ieee80211DataFrame *frame);
     //@}
 };
 

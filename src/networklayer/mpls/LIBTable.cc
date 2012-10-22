@@ -208,7 +208,7 @@ std::ostream & operator<<(std::ostream & os, const LabelOpVector& label)
     os << "{";
     for (unsigned int i = 0; i < label.size(); i++)
     {
-        switch(label[i].optcode)
+        switch (label[i].optcode)
         {
             case PUSH_OPER:
                 os << "PUSH " << label[i].label;
@@ -224,6 +224,7 @@ std::ostream & operator<<(std::ostream & os, const LabelOpVector& label)
 
             default:
                 ASSERT(false);
+                break;
         }
 
         if (i < label.size() - 1)

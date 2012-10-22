@@ -4,8 +4,9 @@
 
 package inet.examples.inet.tcpwindowscale;
 
-import ned.DatarateChannel;
+import inet.networklayer.autorouting.ipv4.IPv4NetworkConfigurator;
 import inet.nodes.inet.StandardHost;
+import ned.DatarateChannel;
 
 
 network tcpwindowscale
@@ -25,7 +26,10 @@ network tcpwindowscale
             gates:
                 pppg[1];
         }
-    connections allowunconnected:
+        networkConfigurator: IPv4NetworkConfigurator {
+            @display("p=187,34");
+        }
+    connections:
         client.pppg[0] <--> LFNPath <--> server.pppg[0];
 }
 

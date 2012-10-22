@@ -14,8 +14,8 @@
 #ifndef __INET_TCPSPOOF_H
 #define __INET_TCPSPOOF_H
 
-#include <omnetpp.h>
 #include "INETDefs.h"
+
 #include "TCPSegment.h"
 #include "IPvXAddressResolver.h"
 
@@ -35,7 +35,7 @@ class INET_API TCPSpoof : public cSimpleModule
     virtual void handleMessage(cMessage *msg);
 
   protected:
-    static simsignal_t sentPkBytesSignal;
+    static simsignal_t sentPkSignal;
 };
 
 #endif

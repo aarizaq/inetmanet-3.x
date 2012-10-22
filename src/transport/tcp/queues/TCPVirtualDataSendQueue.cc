@@ -46,6 +46,8 @@ void TCPVirtualDataSendQueue::enqueueAppData(cPacket *msg)
 {
     //tcpEV << "sendQ: " << info() << " enqueueAppData(bytes=" << msg->getByteLength() << ")\n";
     end += msg->getByteLength();
+    if (seqLess(end, begin))
+        throw cRuntimeError("Send queue is full");
     delete msg;
 }
 

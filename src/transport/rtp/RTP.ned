@@ -28,7 +28,7 @@ package inet.transport.rtp;
 //   - ~RTPCILeaveSession: Leave session
 //         Delete ~RTPProfile module.
 //         params: ---
-//   - 
+//   -
 // Az ~RTP az appOut gate-en a következő üzeneteket küldi az application-nek:
 // Olyan ~RTPControlMsg msg-t, ami ~RTPControlInfo leszármazottat tartalmaz:
 //   - ~RTPCISenderModuleCreated:
@@ -51,8 +51,9 @@ simple RTP
 {
     parameters:
         @display("i=block/buffer");
-        @statistic[rcvdPkBytes](title="Received packet bytes"; record=count,sum,vector);
-        @statistic[endToEndDelay](title="End to end delay"; record=stats,histogram,vector);
+        @signal[rcvdPk](type=cPacket);
+        @statistic[rcvdPk](title="packets received"; source=rcvdPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[endToEndDelay](title="end-to-end delay"; source="messageAge(rcvdPk)"; unit=s; record=histogram,vector; interpolationmode=none);
 
     gates:
         input appIn @labels(RTPInterfacePacket/down);

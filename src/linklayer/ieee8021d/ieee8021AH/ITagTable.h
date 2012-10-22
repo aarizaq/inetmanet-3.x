@@ -11,7 +11,6 @@
 #ifndef __A_ITAGTABLE_H
 #define __A_ITAGTABLE_H
 
-//#include <omnetpp.h>
 #include "MACAddress.h"
 #include "8021Q.h"
 

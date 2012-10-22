@@ -9,9 +9,6 @@
 #ifndef __MVRP_ACCESS_H
 #define __MVRP_ACCESS_H
 
-
-
-#include <omnetpp.h>
 #include "ModuleAccess.h"
 #include "MVRP.h"
 

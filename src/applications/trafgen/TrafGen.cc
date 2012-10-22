@@ -32,10 +32,8 @@
  * Initialization routine
  */
 
-TrafGen::TrafGen()
-        :
-        mpSendMessage(NULL),
-        mpOnOffSwitch(NULL)
+TrafGen::TrafGen() :
+        mpSendMessage(NULL), mpOnOffSwitch(NULL)
 {
 }
 
@@ -97,12 +95,10 @@ void TrafGen::initialize(int aStage)
             }
 
             // if the offInterArrivalTime attribute is present: packets are sent during the off interval too
-            if (mOnOff == TRAFFIC_ON
-                    && rootelement->getElementById(id)->getAttribute("offInterDepartureTime") != NULL)
+            if (mOnOff == TRAFFIC_ON && rootelement->getElementById(id)->getAttribute("offInterDepartureTime") != NULL)
             {
                 mOffTraffic = true;
-                mOffInterDepartureTime.parse(rootelement->getElementById(id)->
-                                             getAttribute("offInterDepartureTime"));
+                mOffInterDepartureTime.parse(rootelement->getElementById(id)->getAttribute("offInterDepartureTime"));
             }
             else
             {
@@ -117,8 +113,7 @@ void TrafGen::initialize(int aStage)
 
         // if the onIdenticalTrafDest attribute is present: packets are
         // sent to the same destination during on intervals
-        if (mOnOff == TRAFFIC_ON
-                && rootelement->getElementById(id)->getAttribute("onIdenticalTrafDest") != NULL)
+        if (mOnOff == TRAFFIC_ON && rootelement->getElementById(id)->getAttribute("onIdenticalTrafDest") != NULL)
         {
             cMsgPar temp;
             if (!temp.parse(rootelement->getElementById(id)->getAttribute("onIdenticalTrafDest")))
@@ -349,12 +344,10 @@ void TrafGen::setParams(int aNewTrafficPattern)
         }
 
         // if the offInterArrivalTime attribute is present: packets are sent during the off interval too
-        if (mOnOff == TRAFFIC_ON
-                && rootelement->getElementById(buf)->getAttribute("offInterDepartureTime") != NULL)
+        if (mOnOff == TRAFFIC_ON && rootelement->getElementById(buf)->getAttribute("offInterDepartureTime") != NULL)
         {
             mOffTraffic = true;
-            mOffInterDepartureTime.parse(rootelement->getElementById(buf)->
-                                         getAttribute("offInterDepartureTime"));
+            mOffInterDepartureTime.parse(rootelement->getElementById(buf)->getAttribute("offInterDepartureTime"));
         }
         else
         {
@@ -363,8 +356,7 @@ void TrafGen::setParams(int aNewTrafficPattern)
 
         // if the onIdenticalTrafDest attribute is present: packets are
         // sent to the same destination during on intervals
-        if (mOnOff == TRAFFIC_ON
-                && rootelement->getElementById(buf)->getAttribute("onIdenticalTrafDest") != NULL)
+        if (mOnOff == TRAFFIC_ON && rootelement->getElementById(buf)->getAttribute("onIdenticalTrafDest") != NULL)
         {
             cMsgPar temp;
             temp.parse(rootelement->getElementById(buf)->getAttribute("onIdenticalTrafDest"));

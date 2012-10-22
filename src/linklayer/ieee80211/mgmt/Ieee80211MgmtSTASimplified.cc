@@ -40,11 +40,17 @@ void Ieee80211MgmtSTASimplified::handleTimer(cMessage *msg)
 
 void Ieee80211MgmtSTASimplified::handleUpperMessage(cPacket *msg)
 {
+    if (accessPointAddress.isUnspecified())
+    {
+        EV << "STA is not associated with an access point, discarding packet " << msg << "\n";
+        delete msg;
+        return;
+    }
     Ieee80211DataFrame *frame = encapsulate(msg);
     sendOrEnqueue(frame);
 }
 
-void Ieee80211MgmtSTASimplified::handleCommand(int msgkind, cPolymorphic *ctrl)
+void Ieee80211MgmtSTASimplified::handleCommand(int msgkind, cObject *ctrl)
 {
     error("handleCommand(): no commands supported");
 }
@@ -70,7 +76,7 @@ Ieee80211DataFrame *Ieee80211MgmtSTASimplified::encapsulate(cPacket *msg)
     return frame;
 }
 
-void Ieee80211MgmtSTASimplified::receiveChangeNotification(int category, const cPolymorphic *details)
+void Ieee80211MgmtSTASimplified::receiveChangeNotification(int category, const cObject *details)
 {
     Enter_Method_Silent();
     printNotificationBanner(category, details);

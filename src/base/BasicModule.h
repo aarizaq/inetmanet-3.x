@@ -22,7 +22,8 @@
 #ifndef BASIC_MODULE_H
 #define BASIC_MODULE_H
 
-#include <omnetpp.h>
+#include "INETDefs.h"
+
 #include "NotificationBoard.h"
 #include "NotifierConsts.h"
 
@@ -53,9 +54,6 @@
 class INET_API BasicModule: public cSimpleModule, public INotifiable
 {
   protected:
-    /** @brief Cached pointer to the NotificationBoard module*/
-    NotificationBoard *nb;
-
     /** @brief Debug switch for the core modules*/
     bool coreDebug;
 
@@ -67,7 +65,7 @@ class INET_API BasicModule: public cSimpleModule, public INotifiable
 
   protected:
     /** @brief Function to get a pointer to the host module*/
-    virtual cModule *findHost(void) const;
+    virtual cModule *findHost(bool errorIfNotFound = true) const;
 
     /** @brief Function to get the logging name of id*/
     const char* getLogName(int);
@@ -103,7 +101,7 @@ class INET_API BasicModule: public cSimpleModule, public INotifiable
      * @brief Called by the NotificationBoard whenever a change of a category occurs
      * to which we have subscribed. Redefined from INotifiable.
      */
-    virtual void receiveChangeNotification(int category, const cPolymorphic *details) {}
+    virtual void receiveChangeNotification(int category, const cObject *details) {}
 };
 
 #endif

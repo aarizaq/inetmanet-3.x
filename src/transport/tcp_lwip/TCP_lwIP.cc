@@ -23,19 +23,21 @@
 #include "lwip/ip.h"
 
 #ifdef WITH_IPv4
-#include "IPv4ControlInfo.h"
+#include "ICMPMessage_m.h"
 #endif
+#include "IPv4ControlInfo.h"
 
 #ifdef WITH_IPv6
-#include "IPv6ControlInfo.h"
+#include "ICMPv6Message_m.h"
 #endif
+#include "IPv6ControlInfo.h"
 
 #include "headers/tcp.h"
 #include "lwip/tcp.h"
 #include "TCPCommand_m.h"
 #include "TCPIPchecksum.h"
 #include "TcpLwipConnection.h"
-#include "TcpLwipDataStreamQueues.h"
+#include "TcpLwipByteStreamQueues.h"
 #include "TcpLwipMsgBasedQueues.h"
 #include "TcpLwipVirtualDataQueues.h"
 #include "TCPSegment.h"
@@ -51,7 +53,7 @@ bool TCP_lwIP::logverboseS;
 #undef tcpEV
 #endif
 // macro for normal ev<< logging (note: deliberately no parens in macro def)
-#define tcpEV ((ev.disable_tracing) || (TCP_lwIP::testingS)) ? ev : ev
+#define tcpEV ((ev.isDisabled()) || (TCP_lwIP::testingS)) ? ev : ev
 
 TCP_lwIP::TCP_lwIP()
   :
@@ -136,7 +138,6 @@ void TCP_lwIP::handleIpInputMessage(TCPSegment* tcpsegP)
     int interfaceId = -1;
 
     // get src/dest addresses
-#ifdef WITH_IPv4
     if (dynamic_cast<IPv4ControlInfo *>(tcpsegP->getControlInfo()) != NULL)
     {
         IPv4ControlInfo *controlInfo = (IPv4ControlInfo *)tcpsegP->removeControlInfo();
@@ -145,10 +146,7 @@ void TCP_lwIP::handleIpInputMessage(TCPSegment* tcpsegP)
         interfaceId = controlInfo->getInterfaceId();
         delete controlInfo;
     }
-    else
-#endif
-#ifdef WITH_IPv6
-    if (dynamic_cast<IPv6ControlInfo *>(tcpsegP->getControlInfo()) != NULL)
+    else if (dynamic_cast<IPv6ControlInfo *>(tcpsegP->getControlInfo()) != NULL)
     {
         IPv6ControlInfo *controlInfo = (IPv6ControlInfo *)tcpsegP->removeControlInfo();
         srcAddr = controlInfo->getSrcAddr();
@@ -157,7 +155,6 @@ void TCP_lwIP::handleIpInputMessage(TCPSegment* tcpsegP)
         delete controlInfo;
     }
     else
-#endif
     {
         error("(%s)%s arrived without control info", tcpsegP->getClassName(), tcpsegP->getName());
     }
@@ -265,7 +262,7 @@ err_t TCP_lwIP::lwip_tcp_event(void *arg, LwipTcpLayer::tcp_pcb *pcb,
     TcpLwipConnection *conn = (TcpLwipConnection *)arg;
     ASSERT(conn != NULL);
 
-    switch(event)
+    switch (event)
     {
     case LwipTcpLayer::LWIP_EVENT_ACCEPT:
         err = tcp_event_accept(*conn, pcb, err);
@@ -394,7 +391,7 @@ err_t TCP_lwIP::tcp_event_err(TcpLwipConnection &conn, err_t err)
         break;
 
     default:
-        throw cRuntimeError("invalid LWIP error code: %d", err);
+        throw cRuntimeError("Invalid LWIP error code: %d", err);
     }
 
     return err;
@@ -465,18 +462,25 @@ void TCP_lwIP::handleMessage(cMessage *msgP)
     }
     else if (msgP->arrivedOn("ipIn") || msgP->arrivedOn("ipv6In"))
     {
-        tcpEV << this << ": handle msg: " << msgP->getName() << "\n";
-        // must be a TCPSegment
-        TCPSegment *tcpseg = dynamic_cast<TCPSegment *>(msgP);
 
-        if (tcpseg)
+        if (false
+#ifdef WITH_IPv4
+                || dynamic_cast<ICMPMessage *>(msgP)
+#endif
+#ifdef WITH_IPv6
+                || dynamic_cast<ICMPv6Message *>(msgP)
+#endif
+        )
         {
-            handleIpInputMessage(tcpseg);
+            tcpEV << "ICMP error received -- discarding\n"; // FIXME can ICMP packets really make it up to TCP???
+            delete msgP;
         }
         else
         {
-            //TODO came some other message:
-            //e.g: ICMPMessage
+            tcpEV << this << ": handle msg: " << msgP->getName() << "\n";
+            // must be a TCPSegment
+            TCPSegment *tcpseg = check_and_cast<TCPSegment *>(msgP);
+            handleIpInputMessage(tcpseg);
         }
     }
     else // must be from app
@@ -600,7 +604,6 @@ void TCP_lwIP::ip_output(LwipTcpLayer::tcp_pcb *pcb, IPvXAddress const& srcP,
 
     if (!destP.isIPv6())
     {
-#ifdef WITH_IPv4
         // send over IPv4
         IPv4ControlInfo *controlInfo = new IPv4ControlInfo();
         controlInfo->setProtocol(IP_PROT_TCP);
@@ -609,13 +612,9 @@ void TCP_lwIP::ip_output(LwipTcpLayer::tcp_pcb *pcb, IPvXAddress const& srcP,
         tcpseg->setControlInfo(controlInfo);
 
         output = "ipOut";
-#else
-        throw cRuntimeError("INET compiled without IPv6 features!");
-#endif
     }
     else
     {
-#ifdef WITH_IPv6
         // send over IPv6
         IPv6ControlInfo *controlInfo = new IPv6ControlInfo();
         controlInfo->setProtocol(IP_PROT_TCP);
@@ -625,9 +624,6 @@ void TCP_lwIP::ip_output(LwipTcpLayer::tcp_pcb *pcb, IPvXAddress const& srcP,
 
         output = "ipv6Out";
         // send over IPv6
-#else
-        throw cRuntimeError("INET compiled without IPv6 features!");
-#endif
     }
 
     if (conn)
@@ -673,7 +669,7 @@ void TCP_lwIP::processAppCommand(TcpLwipConnection& connP, cMessage *msgP)
             break;
 
         default:
-            throw cRuntimeError("wrong command from app: %d", msgP->getKind());
+            throw cRuntimeError("Wrong command from app: %d", msgP->getKind());
     }
 }
 
@@ -754,6 +750,7 @@ void TCP_lwIP::process_STATUS(TcpLwipConnection& connP, TCPCommand *tcpCommandP,
     TCPStatusInfo *statusInfo = new TCPStatusInfo();
     connP.fillStatusInfo(*statusInfo);
     msgP->setControlInfo(statusInfo);
+    msgP->setKind(TCP_I_STATUS);
     send(msgP, "appOut", connP.appGateIndexM);
 }
 
@@ -763,7 +760,7 @@ TcpLwipSendQueue* TCP_lwIP::createSendQueue(TCPDataTransferMode transferModeP)
     {
         case TCP_TRANSFER_BYTECOUNT:    return new TcpLwipVirtualDataSendQueue();
         case TCP_TRANSFER_OBJECT:       return new TcpLwipMsgBasedSendQueue();
-        case TCP_TRANSFER_BYTESTREAM:   return new TcpLwipDataStreamSendQueue();
+        case TCP_TRANSFER_BYTESTREAM:   return new TcpLwipByteStreamSendQueue();
         default: throw cRuntimeError("Invalid TCP data transfer mode: %d", transferModeP);
     }
 }
@@ -774,7 +771,7 @@ TcpLwipReceiveQueue* TCP_lwIP::createReceiveQueue(TCPDataTransferMode transferMo
     {
         case TCP_TRANSFER_BYTECOUNT:    return new TcpLwipVirtualDataReceiveQueue();
         case TCP_TRANSFER_OBJECT:       return new TcpLwipMsgBasedReceiveQueue();
-        case TCP_TRANSFER_BYTESTREAM:   return new TcpLwipDataStreamReceiveQueue();
+        case TCP_TRANSFER_BYTESTREAM:   return new TcpLwipByteStreamReceiveQueue();
         default: throw cRuntimeError("Invalid TCP data transfer mode: %d", transferModeP);
     }
 }

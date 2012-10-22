@@ -112,7 +112,7 @@ protected:
     CostVector limitsData;
 public:
     DijkstraKshortest();
-    ~DijkstraKshortest();
+    virtual ~DijkstraKshortest();
     virtual void setFromTopo(const cTopology *);
     virtual void setLimits(const std::vector<double> &);
     virtual void resetLimits(){limitsData.clear();}

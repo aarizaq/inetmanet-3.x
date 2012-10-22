@@ -25,25 +25,7 @@
 #include "INETDefs.h"
 
 #include "IPvXAddress.h"
-
-
-/**
- * Consumes and prints packets received from the IP module. See NED for more info.
- */
-class INET_API IPvXTrafSink : public cSimpleModule
-{
-  protected:
-    int numReceived;
-    static simsignal_t rcvdPkBytesSignal;
-    static simsignal_t endToEndDelaySignal;
-
-    virtual void printPacket(cPacket *msg);
-    virtual void processPacket(cPacket *msg);
-
-  protected:
-    virtual void initialize();
-    virtual void handleMessage(cMessage *msg);
-};
+#include "IPvXTrafSink.h"
 
 
 /**
@@ -52,27 +34,26 @@ class INET_API IPvXTrafSink : public cSimpleModule
 class INET_API IPvXTrafGen : public IPvXTrafSink
 {
   protected:
-    std::string nodeName;
     int protocol;
-    int msgByteLength;
     int numPackets;
+    simtime_t stopTime;
     std::vector<IPvXAddress> destAddresses;
+    cPar *packetLengthPar;  // volatile packetLength parameter
 
     static int counter; // counter for generating a global number for each packet
 
     int numSent;
-    simsignal_t sentPkBytesSignal;
+    static simsignal_t sentPkSignal;
 
+  protected:
     // chooses random destination address
     virtual IPvXAddress chooseDestAddr();
     virtual void sendPacket();
 
-  protected:
     virtual int numInitStages() const {return 4;}
     virtual void initialize(int stage);
     virtual void handleMessage(cMessage *msg);
 };
 
 #endif
-
 

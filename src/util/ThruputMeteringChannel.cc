@@ -111,9 +111,9 @@ void ThruputMeteringChannel::updateDisplay()
                 if (bytes<1024)
                     p += sprintf(p, "%gB", bytes);
                 else if (bytes<1024*1024)
-                    p += sprintf(p, "%.3gKB", bytes/1024);
+                    p += sprintf(p, "%.3gKiB", bytes/1024);
                 else
-                    p += sprintf(p, "%.3gMB", bytes/1024/1024);
+                    p += sprintf(p, "%.3gMiB", bytes/1024/1024);
                 break;
 
             case 'p': // current packet/sec
@@ -149,6 +149,7 @@ void ThruputMeteringChannel::updateDisplay()
                 break;
             default:
                 *p++ = *fp;
+                break;
         }
     }
     *p = '\0';

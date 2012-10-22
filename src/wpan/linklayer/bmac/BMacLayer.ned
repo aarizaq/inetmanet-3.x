@@ -74,9 +74,9 @@ simple BMacLayer
         bool useIeee802Ctrl=default(true);
         bool forceBitRateAndPower=default(false); // the mac layer force the transmission parameter, if false the physical layer uses its configuration parameters.  
     gates:  
-        input uppergateIn; // from upper layer
-        output uppergateOut; // to uppe layer
-        input lowergateIn; // from lower layer
-        output lowergateOut; // to lower layer    
+        input upperLayerIn; // from upper layer
+        output upperLayerOut; // to uppe layer
+        input lowerLayerIn; // from lower layer
+        output lowerLayerOut; // to lower layer    
 }
 

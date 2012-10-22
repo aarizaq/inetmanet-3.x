@@ -33,55 +33,47 @@ public:
     RoutingTableEntry(const IPv4Route* entry);
     virtual ~RoutingTableEntry(void) {}
 
-    void            setDestinationID(IPv4Address destID)              { host = destID; }
-    IPv4Address       getDestinationID(void) const                    { return host; }
-    void            setAddressMask(IPv4Address destMask)              { netmask = destMask; }
-    IPv4Address       getAddressMask(void) const                      { return netmask; }
-    void            setNextHop(NextHop hop)                         { _nextHop = hop; }
-    NextHop         getNextHop(void) const                          { return _nextHop; }
     void            setPathType(RoutingPathType type)               { _pathType = type; }
     RoutingPathType getPathType(void) const                         { return _pathType; }
     void            addAS(ASID newAS)                               { _ASList.push_back(newAS); }
-    unsigned int    getASCount(void) const                          { return _ASList.size (); }
+    unsigned int    getASCount(void) const                          { return _ASList.size(); }
     ASID            getAS(unsigned int index) const                 { return _ASList[index]; }
 
     private:
     // destinationID is RoutingEntry::host
     // addressMask is RoutingEntry::netmask
     RoutingPathType         _pathType;
-    NextHop                 _nextHop;
     std::vector<ASID>       _ASList;
 };
 
 } // namespace BGP
 
-inline BGP::RoutingTableEntry::RoutingTableEntry (void) :
-    IPv4Route(), _pathType (BGP::Incomplete)
+inline BGP::RoutingTableEntry::RoutingTableEntry(void) :
+    IPv4Route(), _pathType(BGP::Incomplete)
 {
-    netmask = 0xFFFFFFFF;
-    metric  = BGP::DEFAULT_COST;
-    source  = IPv4Route::BGP;
+    setNetmask(IPv4Address::ALLONES_ADDRESS);
+    setMetric(BGP::DEFAULT_COST);
+    setSource(IPv4Route::BGP);
 }
 
 inline BGP::RoutingTableEntry::RoutingTableEntry(const IPv4Route* entry)
 {
-    host          = entry->getHost();
-    netmask       = entry->getNetmask();
-    gateway       = entry->getGateway();
-    interfacePtr  = entry->getInterface();
-    type          = entry->getType();
-    metric        = BGP::DEFAULT_COST;
-    source        = IPv4Route::BGP;
+    setDestination(entry->getDestination());
+    setNetmask(entry->getNetmask());
+    setGateway(entry->getGateway());
+    setInterface(entry->getInterface());
+    setMetric(BGP::DEFAULT_COST);
+    setSource(IPv4Route::BGP);
 }
 
-inline std::ostream& operator<< (std::ostream& out, BGP::RoutingTableEntry& entry)
+inline std::ostream& operator<<(std::ostream& out, BGP::RoutingTableEntry& entry)
 {
     out << "BGP - Destination: "
-        << entry.getDestinationID().str()
+        << entry.getDestination().str()
         << '/'
-        << entry.getAddressMask().str()
+        << entry.getNetmask().str()
         << " , PathType: ";
-    switch (entry.getPathType ()) {
+    switch (entry.getPathType()) {
         case BGP::EGP:          out << "EGP";           break;
         case BGP::IGP:          out << "IGP";           break;
         case BGP::Incomplete:   out << "Incomplete";    break;
@@ -89,7 +81,7 @@ inline std::ostream& operator<< (std::ostream& out, BGP::RoutingTableEntry& entr
     }
 
     out << " , NextHops: "
-        << entry.getNextHop()
+        << entry.getGateway()
         << " , AS: ";
     unsigned int ASCount = entry.getASCount();
     for (unsigned int i = 0; i < ASCount; i++) {

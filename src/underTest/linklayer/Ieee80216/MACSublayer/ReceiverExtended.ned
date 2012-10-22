@@ -54,8 +54,8 @@ module ReceiverExtended
         cpsReceiver.securityGateOut --> securityReceiver.commonPartGateIn;
         cpsReceiver.securityGateIn <-- securityReceiver.commonPartGateOut;
 
-        radioReceiver.uppergateIn <-- securityReceiver.receiverRadioGateOut;
-        radioReceiver.uppergateOut --> securityReceiver.receiverRadioGateIn;
+        radioReceiver.upperLayerIn <-- securityReceiver.receiverRadioGateOut;
+        radioReceiver.upperLayerOut --> securityReceiver.receiverRadioGateIn;
 
         radioIn --> radioReceiver.radioIn;
 

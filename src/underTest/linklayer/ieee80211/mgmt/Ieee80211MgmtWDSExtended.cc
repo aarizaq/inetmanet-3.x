@@ -76,7 +76,7 @@ void Ieee80211MgmtWDSExtended::initialize(int stage)
                 {
                     if (wds_client_mac_module->hasPar("address"))
                     {
-                        wds_client_mac = wds_client_mac_module->par("address").stringValue();
+                        wds_client_mac = MACAddress(wds_client_mac_module->par("address").stringValue());
                         EV << " MAC Address: " << wds_client_mac << endl;
                     }
                     else
@@ -228,7 +228,7 @@ void Ieee80211MgmtWDSExtended::handleDataFrame(Ieee80211DataFrame *frame)
     cPacket* payload = this->decapsulate(frame);
     if (payload!=NULL)
     {
-        send(payload,"uppergateOut");
+        send(payload,"upperLayerOut");
     }
 }
 

@@ -1,6 +1,6 @@
 //
 // Copyright (C) 2000 Institut fuer Telematik, Universitaet Karlsruhe
-// Copyright (C) 2004,2005 Andras Varga
+// Copyright (C) 2004-2011 Andras Varga
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -17,26 +17,23 @@
 //
 
 
-//
-// Author: Jochen Reber
-// Rewrite: Andras Varga 2004,2005
-//
-
 #ifndef __INET_UDP_H
 #define __INET_UDP_H
 
 #include <map>
 #include <list>
-#include "UDPControlInfo_m.h"
+#include "UDPControlInfo.h"
 
 class IPv4ControlInfo;
 class IPv6ControlInfo;
 class ICMP;
 class ICMPv6;
 class UDPPacket;
+class InterfaceEntry;
 
 const int UDP_HEADER_BYTES = 8;
 
+const bool DEFAULT_MULTICAST_LOOP = true;
 
 /**
  * Implements the UDP protocol: encapsulates/decapsulates user data into/from UDP.
@@ -48,15 +45,21 @@ class INET_API UDP : public cSimpleModule
   public:
     struct SockDesc
     {
-        int sockId; // supposed to be unique across apps
-        int userId; // we just send it back, but don't do anything with it
+        SockDesc(int sockId, int appGateIndex);
+        int sockId;
         int appGateIndex;
+        bool isBound;
         bool onlyLocalPortIsSet;
         IPvXAddress localAddr;
         IPvXAddress remoteAddr;
-        ushort localPort;
-        ushort remotePort;
-        int interfaceId; // FIXME do real sockets allow filtering by input interface??
+        int localPort;
+        int remotePort;
+        bool isBroadcast;
+        int multicastOutputInterfaceId;
+        bool multicastLoop;
+        int ttl;
+        unsigned char typeOfService;
+        std::map<IPvXAddress,int> multicastAddrs; // key: multicast address; value: output interface Id or -1
     };
 
     typedef std::list<SockDesc *> SockDescList;
@@ -89,25 +92,32 @@ class INET_API UDP : public cSimpleModule
     // utility: show current statistics above the icon
     virtual void updateDisplayString();
 
-    // bind socket
-    virtual void bind(int gateIndex, UDPControlInfo *ctrl);
-
-    // connect socket
-    virtual void connect(int sockId, IPvXAddress addr, int port);
-
-    // unbind socket
-    virtual void unbind(int sockId);
+    // socket handling
+    virtual SockDesc *getSocketById(int sockId);
+    virtual SockDesc *getOrCreateSocket(int sockId, int gateIndex);
+    virtual SockDesc *createSocket(int sockId, int gateIndex, const IPvXAddress& localAddr, int localPort);
+    virtual void bind(int sockId, int gateIndex, const IPvXAddress& localAddr, int localPort);
+    virtual void connect(int sockId, int gateIndex, const IPvXAddress& remoteAddr, int remotePort);
+    virtual void close(int sockId);
+    virtual void setTimeToLive(SockDesc *sd, int ttl);
+    virtual void setTypeOfService(SockDesc *sd, int typeOfService);
+    virtual void setBroadcast(SockDesc *sd, bool broadcast);
+    virtual void setMulticastOutputInterface(SockDesc *sd, int interfaceId);
+    virtual void setMulticastLoop(SockDesc *sd, bool loop);
+    virtual void joinMulticastGroups(SockDesc *sd, const std::vector<IPvXAddress>& multicastAddresses, const std::vector<int> interfaceIds);
+    virtual void leaveMulticastGroups(SockDesc *sd, const std::vector<IPvXAddress>& multicastAddresses);
+    virtual void addMulticastAddressToInterface(InterfaceEntry *ie, const IPvXAddress& multicastAddr);
 
     // ephemeral port
     virtual ushort getEphemeralPort();
 
-    virtual bool matchesSocket(SockDesc *sd, UDPPacket *udp, IPv4ControlInfo *ctrl);
-    virtual bool matchesSocket(SockDesc *sd, UDPPacket *udp, IPv6ControlInfo *ctrl);
-    virtual bool matchesSocket(SockDesc *sd, const IPvXAddress& localAddr, const IPvXAddress& remoteAddr, ushort remotePort);
-    virtual void sendUp(cPacket *payload, UDPPacket *udpHeader, IPv4ControlInfo *ctrl, SockDesc *sd);
-    virtual void sendUp(cPacket *payload, UDPPacket *udpHeader, IPv6ControlInfo *ctrl, SockDesc *sd);
-    virtual void processUndeliverablePacket(UDPPacket *udpPacket, cPolymorphic *ctrl);
-    virtual void sendUpErrorNotification(SockDesc *sd, int msgkind, const IPvXAddress& localAddr, const IPvXAddress& remoteAddr, ushort remotePort);
+    virtual SockDesc *findSocketForUnicastPacket(const IPvXAddress& localAddr, ushort localPort, const IPvXAddress& remoteAddr, ushort remotePort);
+    virtual std::vector<SockDesc*> findSocketsForMcastBcastPacket(const IPvXAddress& localAddr, ushort localPort, const IPvXAddress& remoteAddr, ushort remotePort, bool isMulticast, bool isBroadcast);
+    virtual SockDesc *findSocketByLocalAddress(const IPvXAddress& localAddr, ushort localPort);
+    virtual void sendUp(cPacket *payload, SockDesc *sd, const IPvXAddress& srcAddr, ushort srcPort, const IPvXAddress& destAddr, ushort destPort, int interfaceId, int ttl, unsigned char tos);
+    virtual void sendDown(cPacket *appData, const IPvXAddress& srcAddr, ushort srcPort, const IPvXAddress& destAddr, ushort destPort, int interfaceId, bool multicastLoop, int ttl, unsigned char tos);
+    virtual void processUndeliverablePacket(UDPPacket *udpPacket, cObject *ctrl);
+    virtual void sendUpErrorIndication(SockDesc *sd, const IPvXAddress& localAddr, ushort localPort, const IPvXAddress& remoteAddr, ushort remotePort);
 
     // process an ICMP error packet
     virtual void processICMPError(cPacket *icmpErrorMsg); // TODO use ICMPMessage
@@ -116,7 +126,7 @@ class INET_API UDP : public cSimpleModule
     virtual void processUDPPacket(UDPPacket *udpPacket);
 
     // process packets from application
-    virtual void processMsgFromApp(cPacket *appData);
+    virtual void processPacketFromApp(cPacket *appData);
 
     // process commands from application
     virtual void processCommandFromApp(cMessage *msg);

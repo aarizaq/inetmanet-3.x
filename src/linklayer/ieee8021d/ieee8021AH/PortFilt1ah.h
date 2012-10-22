@@ -24,7 +24,7 @@ class PortFilt1ah : public PortFilt
 {
 	public:
 	PortFilt1ah();
-	~PortFilt1ah();
+	virtual ~PortFilt1ah();
 	protected:
 
     virtual void initialize();

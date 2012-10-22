@@ -10,7 +10,6 @@
 #ifndef __A_CACHE1AH_H
 #define __A_CACHE1AH_H
 
-#include <omnetpp.h>
 #include "MACAddress.h"
 #include "8021Q.h"
 #include "Cache1Q.h"
@@ -29,7 +28,7 @@ class Cache1AH: public Cache1Q
     	cModule* admac;
     public:
     	Cache1AH();
-    	~Cache1AH();
+    	virtual ~Cache1AH();
     protected:
     	std::vector <AhRelayEntry> RelayTable;		/// BVid/ISid/BMAC/Gate/insertedTime
     	typedef std::vector <vid> ISIDregister;

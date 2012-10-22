@@ -25,9 +25,9 @@
 
 Define_Module(EtherEncap);
 
-simsignal_t EtherEncap::rcvdPkBytesFromHLSignal = SIMSIGNAL_NULL;
-simsignal_t EtherEncap::rcvdPkBytesFromMACSignal = SIMSIGNAL_NULL;
-simsignal_t EtherEncap::sentPauseSignal = SIMSIGNAL_NULL;
+simsignal_t EtherEncap::encapPkSignal = SIMSIGNAL_NULL;
+simsignal_t EtherEncap::decapPkSignal = SIMSIGNAL_NULL;
+simsignal_t EtherEncap::pauseSentSignal = SIMSIGNAL_NULL;
 
 void EtherEncap::initialize()
 {
@@ -35,10 +35,11 @@ void EtherEncap::initialize()
     WATCH(seqNum);
 
     totalFromHigherLayer = totalFromMAC = totalPauseSent = 0;
+    useSNAP = par("useSNAP").boolValue();
 
-    rcvdPkBytesFromHLSignal =  registerSignal("rcvdPkBytesFromHL");
-    rcvdPkBytesFromMACSignal = registerSignal("rcvdPkBytesFromMAC");
-    sentPauseSignal = registerSignal("sentPause");
+    encapPkSignal = registerSignal("encapPk");
+    decapPkSignal = registerSignal("decapPk");
+    pauseSentSignal = registerSignal("pauseSent");
 
     WATCH(totalFromHigherLayer);
     WATCH(totalFromMAC);
@@ -54,7 +55,7 @@ void EtherEncap::handleMessage(cMessage *msg)
     else
     {
         // from higher layer
-        switch(msg->getKind())
+        switch (msg->getKind())
         {
             case IEEE802CTRL_DATA:
             case 0: // default message kind (0) is also accepted
@@ -67,7 +68,7 @@ void EtherEncap::handleMessage(cMessage *msg)
               break;
 
             default:
-              error("received message `%s' with unknown message kind %d", msg->getName(), msg->getKind());
+              throw cRuntimeError("Received message `%s' with unknown message kind %d", msg->getName(), msg->getKind());
         }
     }
 
@@ -79,16 +80,16 @@ void EtherEncap::updateDisplayString()
 {
     char buf[80];
     sprintf(buf, "passed up: %ld\nsent: %ld", totalFromMAC, totalFromHigherLayer);
-    getDisplayString().setTagArg("t",0,buf);
+    getDisplayString().setTagArg("t", 0, buf);
 }
 
 void EtherEncap::processPacketFromHigherLayer(cPacket *msg)
 {
-    if (msg->getByteLength() > MAX_ETHERNET_DATA)
-        error("packet from higher layer (%d bytes) exceeds maximum Ethernet payload length (%d)", (int)msg->getByteLength(), MAX_ETHERNET_DATA);
+    if (msg->getByteLength() > MAX_ETHERNET_DATA_BYTES)
+        error("packet from higher layer (%d bytes) exceeds maximum Ethernet payload length (%d)", (int)msg->getByteLength(), MAX_ETHERNET_DATA_BYTES);
 
     totalFromHigherLayer++;
-    emit(rcvdPkBytesFromHLSignal, (long)(msg->getByteLength()));
+    emit(encapPkSignal, msg);
 
     // Creates MAC header information and encapsulates received higher layer data
     // with this information and transmits resultant frame to lower layer
@@ -97,26 +98,40 @@ void EtherEncap::processPacketFromHigherLayer(cPacket *msg)
     EV << "Encapsulating higher layer packet `" << msg->getName() <<"' for MAC\n";
 
     Ieee802Ctrl *etherctrl = check_and_cast<Ieee802Ctrl*>(msg->removeControlInfo());
-    EthernetIIFrame *frame = new EthernetIIFrame(msg->getName());
+    EtherFrame *frame = NULL;
 
-    frame->setSrc(etherctrl->getSrc());  // if blank, will be filled in by MAC
-    frame->setDest(etherctrl->getDest());
-    frame->setEtherType(etherctrl->getEtherType());
-    frame->setByteLength(ETHER_MAC_FRAME_BYTES);
+    if (useSNAP)
+    {
+        EtherFrameWithSNAP *snapFrame = new EtherFrameWithSNAP(msg->getName());
+
+        snapFrame->setSrc(etherctrl->getSrc());  // if blank, will be filled in by MAC
+        snapFrame->setDest(etherctrl->getDest());
+        snapFrame->setOrgCode(0);
+        snapFrame->setLocalcode(etherctrl->getEtherType());
+        snapFrame->setByteLength(ETHER_MAC_FRAME_BYTES + ETHER_LLC_HEADER_LENGTH + ETHER_SNAP_HEADER_LENGTH);
+        frame = snapFrame;
+    }
+    else
+    {
+        EthernetIIFrame *eth2Frame = new EthernetIIFrame(msg->getName());
+
+        eth2Frame->setSrc(etherctrl->getSrc());  // if blank, will be filled in by MAC
+        eth2Frame->setDest(etherctrl->getDest());
+        eth2Frame->setEtherType(etherctrl->getEtherType());
+        eth2Frame->setByteLength(ETHER_MAC_FRAME_BYTES);
+        frame = eth2Frame;
+    }
     delete etherctrl;
 
     frame->encapsulate(msg);
-    if (frame->getByteLength() < MIN_ETHERNET_FRAME)
-        frame->setByteLength(MIN_ETHERNET_FRAME);  // "padding"
+    if (frame->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+        frame->setByteLength(MIN_ETHERNET_FRAME_BYTES);  // "padding"
 
     send(frame, "lowerLayerOut");
 }
 
 void EtherEncap::processFrameFromMAC(EtherFrame *frame)
 {
-    totalFromMAC++;
-    emit(rcvdPkBytesFromMACSignal, (long)(frame->getByteLength()));
-
     // decapsulate and attach control info
     cPacket *higherlayermsg = frame->decapsulate();
 
@@ -124,10 +139,17 @@ void EtherEncap::processFrameFromMAC(EtherFrame *frame)
     Ieee802Ctrl *etherctrl = new Ieee802Ctrl();
     etherctrl->setSrc(frame->getSrc());
     etherctrl->setDest(frame->getDest());
+    if (dynamic_cast<EthernetIIFrame *>(frame) != NULL)
+        etherctrl->setEtherType(((EthernetIIFrame *)frame)->getEtherType());
+    else if (dynamic_cast<EtherFrameWithSNAP *>(frame) != NULL)
+        etherctrl->setEtherType(((EtherFrameWithSNAP *)frame)->getLocalcode());
     higherlayermsg->setControlInfo(etherctrl);
 
     EV << "Decapsulating frame `" << frame->getName() <<"', passing up contained "
           "packet `" << higherlayermsg->getName() << "' to higher layer\n";
+
+    totalFromMAC++;
+    emit(decapPkSignal, higherlayermsg);
 
     // pass up to higher layers.
     send(higherlayermsg, "upperLayerOut");
@@ -145,22 +167,20 @@ void EtherEncap::handleSendPause(cMessage *msg)
     EV << "Creating and sending PAUSE frame, with duration=" << pauseUnits << " units\n";
 
     // create Ethernet frame
-    char framename[30];
+    char framename[40];
     sprintf(framename, "pause-%d-%d", getId(), seqNum++);
     EtherPauseFrame *frame = new EtherPauseFrame(framename);
     frame->setPauseTime(pauseUnits);
-
-    frame->setByteLength(ETHER_MAC_FRAME_BYTES+ETHER_PAUSE_COMMAND_BYTES);
-    if (frame->getByteLength() < MIN_ETHERNET_FRAME)
-        frame->setByteLength(MIN_ETHERNET_FRAME);
+    MACAddress dest = etherctrl->getDest();
+    if (dest.isUnspecified())
+        dest = MACAddress::MULTICAST_PAUSE_ADDRESS;
+    frame->setDest(dest);
+    frame->setByteLength(ETHER_PAUSE_COMMAND_PADDED_BYTES);
 
     send(frame, "lowerLayerOut");
     delete msg;
 
-    emit(sentPauseSignal, pauseUnits);
+    emit(pauseSentSignal, pauseUnits);
     totalPauseSent++;
 }
 
-void EtherEncap::finish()
-{
-}

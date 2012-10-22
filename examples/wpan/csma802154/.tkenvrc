@@ -1,3 +1,0 @@
-# Partial Tkenv config file -- see $HOME/.tkenvrc as well
-inspector "csma802454net.fixhost[19]" "nodecsma802154" "2" "632x341+175+175:normal"
-

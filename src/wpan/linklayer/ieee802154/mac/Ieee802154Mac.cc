@@ -7,8 +7,6 @@
 //#define EV (ev.isDisabled() || !m_debug) ? std::cout : ev ==> EV is now part of <omnetpp.h>
 
 
-IE3ADDR Ieee802154Mac::addrCount = 0;
-
 /** Default MAC PIB Attributes */
 MAC_PIB Ieee802154Mac::MPIB =
 {
@@ -28,6 +26,8 @@ MAC_PIB Ieee802154Mac::MPIB =
     def_macDefaultSecurityMaterial, def_macDefaultSecuritySuite,
     def_macSecurityMode*/
 };
+
+UINT_16 Ieee802154Mac::addrCount = 0;
 
 Define_Module(Ieee802154Mac);
 
@@ -95,7 +95,8 @@ Ieee802154Mac::~Ieee802154Mac()
 void Ieee802154Mac::registerInterface()
 {
     iface=NULL;
-    aExtendedAddress = MacToUint64(macaddress);
+    macaddress.convert64();
+    aExtendedAddress = macaddress;
     /*
     int size = sizeof(IE3ADDR);
     for (int i=0; i<size; i++)
@@ -111,7 +112,7 @@ void Ieee802154Mac::registerInterface()
     if (!ift)
         return;
 
-    InterfaceEntry *e = new InterfaceEntry();
+    InterfaceEntry *e = new InterfaceEntry(this);
 
     // interface name: NetworkInterface module's name without special characters ([])
     char *interfaceName = new char[strlen(getParentModule()->getFullName()) + 1];
@@ -137,7 +138,7 @@ void Ieee802154Mac::registerInterface()
     e->setPointToPoint(false);
     iface = e;
     // add
-    ift->addInterface(e, this);
+    ift->addInterface(e);
 }
 
 /** Initialization */
@@ -152,7 +153,20 @@ void Ieee802154Mac::initialize(int stage)
         if (!strcmp(addressString, "auto"))
         {
             // assign automatic address
-            macaddress = MACAddress::generateAutoAddress();
+
+            ++addrCount;
+            macaddress.setFlagEui64(true);
+
+            unsigned char addrbytes[MAC_ADDRESS_SIZE64];
+            addrbytes[0] = 0x00;
+            addrbytes[1] = 0x00;
+            addrbytes[2] = 0x00;
+            addrbytes[3] = 0xff;
+            addrbytes[4] = 0xfe;
+            addrbytes[5] = 0x00;
+            addrbytes[6] = (addrCount>>8)&0xff;
+            addrbytes[7] = (addrCount>>0)&0xff;
+            macaddress.setAddressBytes(addrbytes);
             // change module parameter from "auto" to concrete address
             par("address").setStringValue(macaddress.str().c_str());
         }
@@ -162,10 +176,10 @@ void Ieee802154Mac::initialize(int stage)
         registerInterface();
 
         // get gate ID
-        mUppergateIn  = findGate("uppergateIn");
-        mUppergateOut = findGate("uppergateOut");
-        mLowergateIn  = findGate("lowergateIn");
-        mLowergateOut = findGate("lowergateOut");
+        mUpperLayerIn  = findGate("upperLayerIn");
+        mUpperLayerOut = findGate("upperLayerOut");
+        mLowerLayerIn  = findGate("lowerLayerIn");
+        mLowerLayerOut = findGate("lowerLayerOut");
 
         // get a pointer to the NotificationBoard module
         mpNb = NotificationBoardAccess().get();
@@ -308,7 +322,7 @@ void Ieee802154Mac::initialize(int stage)
         WATCH(numRxAckPkt);
 
         WATCH(numTxAckInactive);
-        radioModule = gate("lowergateOut")->getNextGate()->getOwnerModule()->getId();
+        radioModule = gate("lowerLayerOut")->getNextGate()->getOwnerModule()->getId();
     }
     else if (1 == stage)
     {
@@ -435,8 +449,8 @@ void Ieee802154Mac::receiveChangeNotification(int category, const cPolymorphic *
 //------------------------------------------------------------------------------------------------------------/
 void Ieee802154Mac::startPANCoor()
 {
-    mpib.macShortAddress = aExtendedAddress;    // simpley use mac extended address
-    mpib.macPANId = aExtendedAddress;       // simpley use mac extended address
+    mpib.macShortAddress = getShortAddress(aExtendedAddress);    // simpley use mac extended address
+    mpib.macPANId = getShortAddress(aExtendedAddress);       // simpley use mac extended address
     mpib.macAssociationPermit = true;
     txSfSlotDuration = aBaseSlotDuration * (1 << mpib.macSuperframeOrder);
     startBcnTxTimer(true);              // start to transmit my first beacon immediately
@@ -460,7 +474,7 @@ void Ieee802154Mac::startDevice()
 void Ieee802154Mac::handleMessage(cMessage* msg)
 {
 
-    if (msg->getArrivalGateId() == mLowergateIn && dynamic_cast<cPacket*>(msg)==NULL)
+    if (msg->getArrivalGateId() == mLowerLayerIn && dynamic_cast<cPacket*>(msg)==NULL)
     {
         if (msg->getKind()==0)
             error("[MAC]: message '%s' with length==0 is supposed to be a primitive, but msg kind is also zero", msg->getName());
@@ -468,7 +482,7 @@ void Ieee802154Mac::handleMessage(cMessage* msg)
         return;
     }
 
-    if (msg->getArrivalGateId() == mLowergateIn)
+    if (msg->getArrivalGateId() == mLowerLayerIn)
     {
         handleLowerMsg(msg);
     }
@@ -558,7 +572,7 @@ void Ieee802154Mac::handleUpperMsg(cMessage* msg)
         destAddr = macModule->getMacAddr();
 
         // check if dest node is in my device list (associated or not)
-        if (deviceList.find(destAddr) == deviceList.end())
+        if (deviceList.find(getShortAddress(destAddr)) == deviceList.end())
         {
             EV << "[MAC]: an " << msg->getName() <<" destined for the device with MAC address " << destAddr << " received from the upper layer, but drop it due to no device with this address found in my device list" << endl;
             delete msg;
@@ -575,7 +589,7 @@ void Ieee802154Mac::handleUpperMsg(cMessage* msg)
             // check if there is a receive GTS allocated for the dest node in my GTS list
             for (index = 0; index<gtsCount; index++)
             {
-                if (gtsList[index].devShortAddr == destAddr && gtsList[index].isRecvGTS)
+                if (gtsList[index].devShortAddr == getShortAddress(destAddr) && gtsList[index].isRecvGTS)
                 {
                     gtsFound = true;
                     break;
@@ -640,7 +654,7 @@ void Ieee802154Mac::handleLowerMsg(cMessage* msg)
         if (isPANCoor)
         {
             // check if I'm supposed to receive the data from this device in this GTS
-            if (indexCurrGts == 99 || gtsList[indexCurrGts].isRecvGTS || gtsList[indexCurrGts].devShortAddr != frame->getSrcAddr())
+            if (indexCurrGts == 99 || gtsList[indexCurrGts].isRecvGTS || gtsList[indexCurrGts].devShortAddr != getShortAddress(frame->getSrcAddr()))
                 error("[GTS]: timing error, PAN coordinator is not supposed to receive this DATA pkt at this time!");
         }
         else
@@ -766,6 +780,7 @@ void Ieee802154Mac::handleLowerMsg(cMessage* msg)
 
     default:
         error("[MAC]: undefined MAC frame type: %d", frmType);
+        break;
     }
 }
 
@@ -825,6 +840,7 @@ void Ieee802154Mac::handleSelfMsg(cMessage* msg)
 
     default:
         error("[MAC]: unknown MAC timer type!");
+        break;
     }
 }
 
@@ -848,7 +864,7 @@ void Ieee802154Mac::sendDown(Ieee802154Frame* frame)
 
     // TBD: energy model
     inTransmission = true;              // cleared by PD_DATA_confirm
-    send(frame, mLowergateOut);     // send a duplication
+    send(frame, mLowerLayerOut);     // send a duplication
     EV << "[MAC]: sending frame " << frame->getName() << " (" << frame->getByteLength() << " Bytes) to PHY layer" << endl;
     EV << "[MAC]: the estimated transmission time is " << calDuration(frame) << " s" << endl;
 }
@@ -871,7 +887,6 @@ void Ieee802154Mac::handleBeacon(Ieee802154Frame* frame)
     EV << "[MAC]: starting processing received Beacon frame" << endl;
     Ieee802154BeaconFrame *bcnFrame = check_and_cast<Ieee802154BeaconFrame *>(frame);
     FrameCtrl frmCtrl;
-    bool pending;
     simtime_t now,  tmpf, w_time,duration;
     uint16_t ifs;
     int  dataFrmLength;
@@ -905,7 +920,7 @@ void Ieee802154Mac::handleBeacon(Ieee802154Frame* frame)
     //gtsFields = bcnFrame->getGtsFields();
 
     //update PAN descriptor
-    rxPanDescriptor.CoordAddrMode       = frmCtrl.srcAddrMode;
+    rxPanDescriptor.CoordAddrMode   = frmCtrl.srcAddrMode;
     rxPanDescriptor.CoordPANId      = frame->getSrcPanId();
     rxPanDescriptor.CoordAddress_16_or_64   = frame->getSrcAddr();
     rxPanDescriptor.LogicalChannel      = ppib.phyCurrentChannel;
@@ -931,7 +946,7 @@ void Ieee802154Mac::handleBeacon(Ieee802154Frame* frame)
         notAssociated = false;
 
         mpib.macPANId = frame->getSrcPanId();           // store PAN id
-        mpib.macCoordShortAddress = frame->getSrcAddr();    // store coordinator address, always use short address
+        mpib.macCoordShortAddress = getShortAddress(frame->getSrcAddr());    // store coordinator address, always use short address
         mpib.macCoordExtendedAddress = frame->getSrcAddr(); // PAN coordinator uses the same address for both its own 16 and 64 bit address
         //mpib.macShortAddress = aExtendedAddress;  // set my short address the same as the extended address by myself, instead from an association response, TBD
 
@@ -1370,8 +1385,8 @@ bool Ieee802154Mac::frameFilter(Ieee802154Frame* frame)
         //check dest. address
         if (frmCtrl.dstAddrMode == defFrmCtrl_AddrMode16)   // short address
         {
-            if ((frame->getDstAddr() != 0xffff)
-                    && (frame->getDstAddr() != mpib.macShortAddress))
+            UINT_16 addr = (UINT_16)frame->getDstAddr().getInt();
+            if ((addr != 0xffff) && (addr != mpib.macShortAddress))
             {
                 return true;
             }
@@ -1392,9 +1407,18 @@ bool Ieee802154Mac::frameFilter(Ieee802154Frame* frame)
         // it should be checked when received only by its sn (bdsn)
         // but for convenience, we add a hidden dsr address to ACK when constructing it
         // it's called hidden, because its dstAddrMode is still set to 0
-        if (frmType == Ieee802154_ACK && frame->getDstAddr() != aExtendedAddress)
+        if (frmType == Ieee802154_ACK)
+        {
+            if (frmCtrl.dstAddrMode == defFrmCtrl_AddrMode16 && frame->getDstAddr() != getShortAddress(aExtendedAddress))
             // if dsr addr does not match
-            return true;
+                return true;
+            else
+            {
+                if (frame->getDstAddr() != aExtendedAddress)
+                    // if dsr addr does not match
+                    return true;
+            }
+        }
 
         //check for Data/Cmd frame only with source address:: destined for PAN coordinator
         // temporary solution, consider only star topology
@@ -1453,8 +1477,10 @@ void Ieee802154Mac::constructACK(Ieee802154Frame* rxFrame)
     // for the convenience of filtering ACK pkts in <frameFilter>
     // and locating backoff boundary before txing ACK in <handle_PLME_SET_TRX_STATE_confirm>
     // we still set a hidden dsr addr (it's hidden, because dstAddrMode has been set to 0 above)
-    tmpAck->setDstAddr(rxFrame->getSrcAddr());              // TO CHECK: if src addr alway exists
-
+    if (rxFrame->getFrmCtrl().srcAddrMode == defFrmCtrl_AddrMode16)
+        tmpAck->setDstAddr(getLongAddress((UINT_16)rxFrame->getSrcAddr().getInt()));              // TO CHECK: if src addr alway exists
+    else
+        tmpAck->setDstAddr(rxFrame->getSrcAddr());              // TO CHECK: if src addr alway exists
     tmpAck->setFrmCtrl(ackFrmCtrl);
     tmpAck->setBdsn(rxFrame->getBdsn());                                // copy from original frame
     tmpAck->setByteLength(calFrmByteLength(tmpAck));    // constant size for ACK
@@ -1509,7 +1535,7 @@ void Ieee802154Mac::PLME_SET_TRX_STATE_request(PHYenum state)
     Ieee802154MacPhyPrimitives *primitive = new Ieee802154MacPhyPrimitives();
     primitive->setKind(PLME_SET_TRX_STATE_REQUEST);
     primitive->setStatus(state);
-    send(primitive, mLowergateOut);
+    send(primitive, mLowerLayerOut);
     trx_state_req = state;      // store requested radio state
 }
 
@@ -1546,7 +1572,7 @@ void Ieee802154Mac::PLME_SET_request(PHYPIBenum attribute)
         break;
     }
 
-    send(primitive, mLowergateOut);
+    send(primitive, mLowerLayerOut);
 }
 
 void Ieee802154Mac::PLME_CCA_request()
@@ -1554,7 +1580,7 @@ void Ieee802154Mac::PLME_CCA_request()
     // construct PLME_CCA_request primitive
     Ieee802154MacPhyPrimitives *primitive = new Ieee802154MacPhyPrimitives();
     primitive->setKind(PLME_CCA_REQUEST);
-    send(primitive, mLowergateOut);
+    send(primitive, mLowerLayerOut);
     EV << "[MAC]: send PLME_CCA_request to PHY layer" << endl;
 }
 
@@ -1563,7 +1589,7 @@ void Ieee802154Mac::PLME_bitrate_request()
     // construct PLME_CCA_request primitive
     Ieee802154MacPhyPrimitives *primitive = new Ieee802154MacPhyPrimitives();
     primitive->setKind(PLME_GET_BITRATE);
-    send(primitive, mLowergateOut);
+    send(primitive, mLowerLayerOut);
     EV << "[MAC]: send PLME_GET_BITRATE to PHY layer" << endl;
 }
 
@@ -1744,7 +1770,8 @@ void Ieee802154Mac::handle_PLME_SET_TRX_STATE_confirm(PHYenum status)
         else                                //beacon enabled
         {
             // here we use the hidden dst addr that we already set in ACK on purpose
-            delay  = csmacaLocateBoundary((txAck->getDstAddr() == mpib.macCoordShortAddress),0.0);
+
+            delay  = csmacaLocateBoundary((getShortAddress(txAck->getDstAddr()) == mpib.macCoordShortAddress),0.0);
             ASSERT(delay < bPeriod);
         }
 
@@ -1861,6 +1888,7 @@ void Ieee802154Mac::MCPS_DATA_request(uint16_t SrcAddrMode, UINT_16 SrcPANId, IE
 
     default:
         error("[MAC]: undefined txOption: %d!", TxOption);
+        break;
     }
 }
 
@@ -1883,7 +1911,7 @@ void Ieee802154Mac::MCPS_DATA_indication(Ieee802154Frame* tmpData)
     cMessage *appframe = tmpData->decapsulate();
     delete tmpData;
     EV << "[MAC]: sending received " << appframe->getName() << " frame to upper layer" << endl;
-    send(appframe, mUppergateOut);
+    send(appframe, mUpperLayerOut);
 }
 
 //-------------------------------------------------------------------------------/
@@ -2771,7 +2799,7 @@ void Ieee802154Mac::handleBcnTxTimer()
             tmpBcn->setFrmCtrl(frmCtrl);
             tmpBcn->setBdsn(mpib.macBSN++);
             tmpBcn->setDstPanId(0);     // ignored upon reception
-            tmpBcn->setDstAddr(0);  // ignored upon reception
+            tmpBcn->setDstAddr(MACAddress::UNSPECIFIED_ADDRESS);  // ignored upon reception
             tmpBcn->setSrcPanId(mpib.macPANId);
 
             // construct superframe specification
@@ -3306,6 +3334,7 @@ void Ieee802154Mac::FSM_MCPS_DATA_request(PHYenum pStatus, MACenum mStatus)
             taskP.taskStatus(task) = false; // task ends successfully
             EV << "[GTS]: GTS transmission completes successfully, prepared for next GTS request" << endl;
             taskSuccess('g');
+            break;
 
         default:
             break;
@@ -3557,6 +3586,7 @@ int Ieee802154Mac::calMHRByteLength(uint16_t addrModeSum)
         return 23;
     default:
         error("[MAC]: impossible address mode sum!");
+        break;
     }
     return 0;
 }
@@ -3801,9 +3831,10 @@ UINT_16 Ieee802154Mac::associate_request_cmd(IE3ADDR extAddr, const DevCapabilit
     Enter_Method_Silent();
     // store MAC address and capability info
     // here simply assign short address with its extended address
-    deviceList[extAddr] = capaInfo;
+    UINT_16 shortAddr = getShortAddress(extAddr);
+    deviceList[shortAddr] = capaInfo;
     EV << "[MAC]: associate request received from " << capaInfo.hostName << " with MAC address: " << extAddr << endl;
-    return extAddr;
+    return shortAddr;
 }
 
 /**
@@ -3832,3 +3863,21 @@ bool Ieee802154Mac::gtsCanProceed()
     }
 }
 
+MACAddress Ieee802154Mac::getLongAddress(UINT_16 val)
+{
+    MACAddress tmp;
+
+
+    unsigned char addrbytes[MAC_ADDRESS_SIZE64];
+    addrbytes[0] = 0x00;
+    addrbytes[1] = 0x00;
+    addrbytes[2] = 0x00;
+    addrbytes[3] = 0xff;
+    addrbytes[4] = 0xfe;
+    addrbytes[5] = 0x00;
+    addrbytes[6] = (val>>8)&0xff;
+    addrbytes[7] = (val>>0)&0xff;
+    tmp.setFlagEui64(true);
+    tmp.setAddressBytes(addrbytes);
+    return tmp;
+}

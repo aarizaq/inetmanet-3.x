@@ -77,19 +77,19 @@ enum Ieee80211ReasonCode
     RC_NONAUTH_ASS_REQUEST = 9;
     RC_MESH_PEERING_CANCELLED = 52;
     RC_MESH_MAX_PEERS = 53;
-    RC_MESH_CONFIGURATION_POLICY_VIOLATION=54;
-    RC_MESH_CLOSE_RCVD=55;
-    RC_MESH_MAX_RETRIES=56;
-    RC_MESH_CONFIRM_TIMEOUT=57;
-    RC_MESH_INVALID_GTK=58;
-    RC_MESH_INCONSISTENT_PARAMETERS=59;
-    RC_MESH_INVALID_SECURITY_CAPABILITY=60;
-    RC_MESH_PATH_ERROR_NO_PROXY_INFORMATION=61;
-    RC_MESH_PATH_ERROR_NO_FORWARDING_INFORMATION=60;
-    RC_MESH_PATH_ERROR_DESTINATION_UNREACHABLE=63;
-    RC_MAC_ADDRESS_ALREADY_EXISTS_IN_MBSS=64;
-    RC_MESH_CHANNEL_SWITCH_REGULATORY_REQUIREMENTS=65;
-    RC_MESH_CHANNEL_SWITCH_UNSPECIFIED=66;
+    RC_MESH_CONFIGURATION_POLICY_VIOLATION = 54;
+    RC_MESH_CLOSE_RCVD = 55;
+    RC_MESH_MAX_RETRIES = 56;
+    RC_MESH_CONFIRM_TIMEOUT = 57;
+    RC_MESH_INVALID_GTK = 58;
+    RC_MESH_INCONSISTENT_PARAMETERS = 59;
+    RC_MESH_INVALID_SECURITY_CAPABILITY = 60;
+    RC_MESH_PATH_ERROR_NO_PROXY_INFORMATION = 61;
+    RC_MESH_PATH_ERROR_NO_FORWARDING_INFORMATION = 60;
+    RC_MESH_PATH_ERROR_DESTINATION_UNREACHABLE = 63;
+    RC_MAC_ADDRESS_ALREADY_EXISTS_IN_MBSS = 64;
+    RC_MESH_CHANNEL_SWITCH_REGULATORY_REQUIREMENTS = 65;
+    RC_MESH_CHANNEL_SWITCH_UNSPECIFIED = 66;
 }
 
 //
@@ -109,8 +109,8 @@ enum Ieee80211StatusCode
     SC_AUTH_TIMEOUT = 16;
     SC_ASS_TOO_MANY_MS = 17;
     SC_DATARATE_UNSUP = 18;
-    SC_AUTH_REJECT_ANTI_CLOGING =76;
-    SC_AUTH_REJECT_FINITE_CYC_GROUP_UNS =77;
+    SC_AUTH_REJECT_ANTI_CLOGING = 76;
+    SC_AUTH_REJECT_FINITE_CYC_GROUP_UNS = 77;
     SC_TBTT_REQUEST = 78;
 }
 
@@ -251,16 +251,16 @@ class Ieee80211ActionHWMPFrameBody extends Ieee80211ActionFrameBody
 {
      int id enum(Ieee80211HWMPCode);
      //unsigned char length; 
-     unsigned char flags;
-     unsigned char hopsCount;
-     unsigned char TTL;
+     unsigned char flags = 0;
+     unsigned char hopsCount = 0;
+     unsigned char TTL = 32;
  }
 
 
 struct PREQElem
 {
-     bool TO;
-     bool USN;
+     bool TO = true;
+     bool USN = false;
      MACAddress targetAddress;
      unsigned int targetSeqNumber;
 }
@@ -283,7 +283,7 @@ class Ieee80211ActionRANNFrameBody extends Ieee80211ActionHWMPFrameBody
      MACAddress root;
      unsigned int seqNumber;
      unsigned int interval;
-     unsigned int metric;
+     unsigned int metric = 0;
 }
 
 class  Ieee80211ActionPREQFrameBody extends Ieee80211ActionHWMPFrameBody
@@ -295,7 +295,7 @@ class  Ieee80211ActionPREQFrameBody extends Ieee80211ActionHWMPFrameBody
      unsigned int originatorSeqNumber;
      MACAddress originatorExternalAddr;
      unsigned int lifeTime;
-     unsigned int metric;
+     unsigned int metric = 0;
      unsigned char targetCount;
      PREQElem preqElem[];
 }
@@ -308,7 +308,7 @@ class  Ieee80211ActionPREPFrameBody extends Ieee80211ActionHWMPFrameBody
      unsigned int targetSeqNumber;
      MACAddress tagetExternalAddr;
      unsigned int lifeTime;
-     unsigned int metric;
+     unsigned int metric = 0;
      MACAddress originator;
      unsigned int originatorSeqNumber;
 }
@@ -449,6 +449,10 @@ packet Ieee80211ActionHWMPFrame extends Ieee80211ActionFrame
 {
     type = ST_ACTION;
     byteLength = 28+getBody().getBodyLength();
+        // this fiels are used by fragmentation over ethernet, not necesasry, it's possible to use the fields un the Ieee80211 frame 
+    bool isFragment=false;
+    unsigned long realLength=0;
+    
     Ieee80211ActionHWMPFrameBody body;
 }
 

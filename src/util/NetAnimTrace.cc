@@ -17,11 +17,15 @@
 
 #include "NetAnimTrace.h"
 
-#if OMNETPP_VERSION >= 0x0401
+#include "Coord.h"
+#include "IMobility.h"
+#include "ModuleAccess.h"
+
 
 Define_Module(NetAnimTrace);
 
 simsignal_t NetAnimTrace::messageSentSignal = SIMSIGNAL_NULL;
+simsignal_t NetAnimTrace::mobilityStateChangedSignal = SIMSIGNAL_NULL;
 
 // TODO: after release of OMNeT++ 4.1 final, update this code to similar class in omnetpp/contrib/util
 
@@ -37,9 +41,11 @@ void NetAnimTrace::initialize()
 
     dump();
 
-    messageSentSignal  = registerSignal("messageSent");
+    messageSentSignal = registerSignal("messageSent");
+    mobilityStateChangedSignal = registerSignal("mobilityStateChanged");
     simulation.getSystemModule()->subscribe(POST_MODEL_CHANGE, this);
     simulation.getSystemModule()->subscribe(messageSentSignal, this);
+    simulation.getSystemModule()->subscribe(mobilityStateChangedSignal, this);
 }
 
 void NetAnimTrace::handleMessage(cMessage *msg)
@@ -97,6 +103,17 @@ void NetAnimTrace::receiveSignal(cComponent *source, simsignal_t signalID, cObje
             }
         }
     }
+    else if (signalID == mobilityStateChangedSignal)
+    {
+        IMobility* mobility = dynamic_cast<IMobility*>(source);
+        if (mobility)
+        {
+            Coord c = mobility->getCurrentPosition();
+            cModule *mod = findContainingNode(dynamic_cast<cModule*>(source));
+            if (mod && isRelevantModule(mod))
+                f << simTime() << " N " << mod->getId() << " " << c.x << " " << c.y << "\n";
+        }
+    }
     else if (signalID == POST_MODEL_CHANGE)
     {
         // record dynamic "node created" and "link created" lines.
@@ -133,6 +150,7 @@ void NetAnimTrace::addLink(cGate *gate)
     f << simTime() << " L " << gate->getOwnerModule()->getId() << " " << gate->getNextGate()->getOwnerModule()->getId() << "\n";
 }
 
+namespace {
 double toDouble(const char *s, double defaultValue)
 {
    if (!s || !*s)
@@ -140,6 +158,7 @@ double toDouble(const char *s, double defaultValue)
    char *end;
    double d = strtod(s, &end);
    return (end && *end) ? 0.0 : d; // return 0.0 on error, instead of throwing an exception
+}
 }
 
 void NetAnimTrace::resolveNodeCoordinates(cModule *submod, double& x, double& y)
@@ -156,59 +175,55 @@ void NetAnimTrace::resolveNodeCoordinates(cModule *submod, double& x, double& y)
     // the following code is based on Tkenv (modinsp.cc, getSubmoduleCoords())
 
     // read x,y coordinates from "p" tag
-    x = toDouble(ds.getTagArg("p",0), x);
-    y = toDouble(ds.getTagArg("p",1), y);
+    x = toDouble(ds.getTagArg("p", 0), x);
+    y = toDouble(ds.getTagArg("p", 1), y);
 
     double sx = 20;
     double sy = 20;
 
-    const char *layout = ds.getTagArg("p",2); // matrix, row, column, ring, exact etc.
+    const char *layout = ds.getTagArg("p", 2); // matrix, row, column, ring, exact etc.
 
     // modify x,y using predefined layouts
     if (!layout || !*layout)
     {
         // we're happy
     }
-    else if (!strcmp(layout,"e") || !strcmp(layout,"x") || !strcmp(layout,"exact"))
+    else if (!strcmp(layout, "e") || !strcmp(layout, "x") || !strcmp(layout, "exact"))
     {
-        int dx = toDouble(ds.getTagArg("p",3), 0);
-        int dy = toDouble(ds.getTagArg("p",4), 0);
+        int dx = toDouble(ds.getTagArg("p", 3), 0);
+        int dy = toDouble(ds.getTagArg("p", 4), 0);
         x += dx;
         y += dy;
     }
-    else if (!strcmp(layout,"r") || !strcmp(layout,"row"))
+    else if (!strcmp(layout, "r") || !strcmp(layout, "row"))
     {
-        int dx = toDouble(ds.getTagArg("p",3), 2*sx);
+        int dx = toDouble(ds.getTagArg("p", 3), 2*sx);
         x += submod->getIndex()*dx;
     }
-    else if (!strcmp(layout,"c") || !strcmp(layout,"col") || !strcmp(layout,"column"))
+    else if (!strcmp(layout, "c") || !strcmp(layout, "col") || !strcmp(layout, "column"))
     {
-        int dy = toDouble(ds.getTagArg("p",3), 2*sy);
+        int dy = toDouble(ds.getTagArg("p", 3), 2*sy);
         y += submod->getIndex()*dy;
     }
-    else if (!strcmp(layout,"m") || !strcmp(layout,"matrix"))
+    else if (!strcmp(layout, "m") || !strcmp(layout, "matrix"))
     {
-        int columns = toDouble(ds.getTagArg("p",3), 5);
-        int dx = toDouble(ds.getTagArg("p",4), 2*sx);
-        int dy = toDouble(ds.getTagArg("p",5), 2*sy);
+        int columns = toDouble(ds.getTagArg("p", 3), 5);
+        int dx = toDouble(ds.getTagArg("p", 4), 2*sx);
+        int dy = toDouble(ds.getTagArg("p", 5), 2*sy);
         x += (submod->getIndex() % columns)*dx;
         y += (submod->getIndex() / columns)*dy;
     }
-    else if (!strcmp(layout,"i") || !strcmp(layout,"ri") || !strcmp(layout,"ring"))
+    else if (!strcmp(layout, "i") || !strcmp(layout, "ri") || !strcmp(layout, "ring"))
     {
-        int rx = toDouble(ds.getTagArg("p",3), (sx+sy)*submod->size()/4);
-        int ry = toDouble(ds.getTagArg("p",4), rx);
+        int rx = toDouble(ds.getTagArg("p", 3), (sx+sy)*submod->size()/4);
+        int ry = toDouble(ds.getTagArg("p", 4), rx);
 
         x += (int) floor(rx - rx*sin(submod->getIndex()*2*PI/submod->size()));
         y += (int) floor(ry - ry*cos(submod->getIndex()*2*PI/submod->size()));
     }
     else
     {
-        throw cRuntimeError("invalid layout `%s' in `p' tag of display string", layout);
+        throw cRuntimeError("Invalid layout `%s' in `p' tag of display string", layout);
     }
 }
-
-#endif  // OMNETPP_VERSION
-
-
 

@@ -18,10 +18,10 @@
 
 package inet.examples.wireless.handover;
 
-import inet.world.radio.ChannelControl;
-import inet.nodes.wireless.WirelessHost;
+import inet.networklayer.autorouting.ipv4.IPv4NetworkConfigurator;
+import inet.nodes.inet.WirelessHost;
 import inet.nodes.wireless.AccessPoint;
-import inet.networklayer.autorouting.ipv4.FlatNetworkConfigurator;
+import inet.world.radio.ChannelControl;
 
 
 network HandoverNetwork
@@ -40,7 +40,7 @@ network HandoverNetwork
         channelControl: ChannelControl {
             @display("p=60,50");
         }
-        configurator: FlatNetworkConfigurator {
+        configurator: IPv4NetworkConfigurator {
             @display("p=140,50");
         }
 }

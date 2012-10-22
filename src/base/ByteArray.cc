@@ -15,11 +15,12 @@
 
 #include "ByteArray.h"
 
+
 void ByteArray::setDataFromBuffer(const void *ptr, unsigned int length)
 {
     if (length != data_arraysize)
     {
-        delete[] data_var;
+        delete [] data_var;
         data_var = length ? new char[length] : NULL;
         data_arraysize = length;
     }
@@ -43,7 +44,7 @@ void ByteArray::addDataFromBuffer(const void *ptr, unsigned int length)
     if (data_arraysize)
         memcpy(ndata_var, data_var, data_arraysize);
     memcpy(ndata_var, data_var + data_arraysize, length);
-    delete[] data_var;
+    delete [] data_var;
     data_var = ndata_var;
 }
 
@@ -60,7 +61,7 @@ unsigned int ByteArray::copyDataToBuffer(void *ptr, unsigned int length, unsigne
 
 void ByteArray::assignBuffer(void *ptr, unsigned int length)
 {
-    delete[] data_var;
+    delete [] data_var;
     data_var = (char *)ptr;
     data_arraysize = length;
 }
@@ -78,7 +79,7 @@ void ByteArray::truncateData(unsigned int truncleft, unsigned int truncright)
             ndata_var = new char[nlength];
             memcpy(ndata_var, data_var+truncleft, nlength);
         }
-        delete[] data_var;
+        delete [] data_var;
         data_var = ndata_var;
         data_arraysize = nlength;
     }

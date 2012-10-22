@@ -15,12 +15,15 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
+
 #include "OSPFInterfaceStatePointToPoint.h"
+
+#include "MessageHandler.h"
+#include "OSPFArea.h"
 #include "OSPFInterfaceStateDown.h"
 #include "OSPFInterfaceStateLoopback.h"
-#include "OSPFArea.h"
 #include "OSPFRouter.h"
-#include "MessageHandler.h"
+
 
 void OSPF::InterfaceStatePointToPoint::processEvent(OSPF::Interface* intf, OSPF::Interface::InterfaceEventType event)
 {
@@ -38,7 +41,7 @@ void OSPF::InterfaceStatePointToPoint::processEvent(OSPF::Interface* intf, OSPF:
                 intf->sendHelloPacket(intf->getNeighbor(0)->getAddress(), VIRTUAL_LINK_TTL);
             }
         } else {
-            intf->sendHelloPacket(OSPF::ALL_SPF_ROUTERS);
+            intf->sendHelloPacket(IPv4Address::ALL_OSPF_ROUTERS_MCAST);
         }
         intf->getArea()->getRouter()->getMessageHandler()->startTimer(intf->getHelloTimer(), intf->getHelloInterval());
     }

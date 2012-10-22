@@ -161,10 +161,10 @@ void RSTP::finish()
 			{
 				fprintf(pFile,"*******ROOT BPDU INFO***********\n");
 				fprintf(pFile,"Root Priority %d\n",Puertos[r].PortRstpVector.RootPriority);
-				fprintf(pFile,"Root MAC %s\n",Puertos[r].PortRstpVector.RootMAC->str().c_str());
+				fprintf(pFile,"Root MAC %s\n",Puertos[r].PortRstpVector.RootMAC.str().c_str());
 				fprintf(pFile,"Cost %d\n",Puertos[r].PortRstpVector.RootPathCost);
 				fprintf(pFile,"Src Priority %d\n",Puertos[r].PortRstpVector.srcPriority);
-				fprintf(pFile,"Src MAC %s\n",Puertos[r].PortRstpVector.srcAddress->str().c_str());
+				fprintf(pFile,"Src MAC %s\n",Puertos[r].PortRstpVector.srcAddress.str().c_str());
 				fprintf(pFile,"Src Tx Gate Priority %d\n",Puertos[r].PortRstpVector.srcPortPriority);
 				fprintf(pFile,"Src Tx Gate %d\n",Puertos[r].PortRstpVector.srcPort);
 				fprintf(pFile,"********************************\n");
@@ -205,7 +205,7 @@ void RSTP::finish()
 				if((Puertos[i].PortRole!=DISABLED)&&(Puertos[i].PortRole!=NOTASIGNED)&&(Puertos[i].PortRole!=DESIGNATED))
 				{// Best received BPDUs are random for time dependent DISABLED, NOTASIGNED and DESIGNATED
 				// Not useful for validation purposes
-					fprintf(pFile,"Best BPDU: Root %s  / Src %s\n\n",Puertos[i].PortRstpVector.RootMAC->str().c_str(),Puertos[i].PortRstpVector.srcAddress->str().c_str());
+					fprintf(pFile,"Best BPDU: Root %s  / Src %s\n\n",Puertos[i].PortRstpVector.RootMAC.str().c_str(),Puertos[i].PortRstpVector.srcAddress.str().c_str());
 				}
 			}
 			fclose (pFile);
@@ -623,7 +623,7 @@ void RSTP::handleIncomingFrame(Delivery *frame2)
 					}
 				}
 			}
-			else if((frame->getSrc().compareTo(* Puertos[arrival].PortRstpVector.srcAddress)==0) //Worse or similar, but the same source
+			else if((frame->getSrc().compareTo(Puertos[arrival].PortRstpVector.srcAddress)==0) //Worse or similar, but the same source
 					&&(frame->getRootMAC().compareTo(address)!=0))   // Root will not participate
 			{//Source has updated BPDU information.
 
@@ -783,19 +783,21 @@ void RSTP::sendTCNtoRoot()
 			{
 				BPDUieee8021D * frame = new BPDUieee8021D();
 				Delivery * frame2= new Delivery();
-				RSTPVector* a=new RSTPVector(getRootRstpVector());
+				RSTPVector a = getRootRstpVector();
 
-				frame->setRootPriority(a->RootPriority);
-				frame->setRootMAC(*(a->RootMAC));
-				frame->setAge(a->Age);
-				frame->setCost(a->RootPathCost);
+				frame->setRootPriority(a.RootPriority);
+				frame->setRootMAC(a.RootMAC);
+				frame->setAge(a.Age);
+				frame->setCost(a.RootPathCost);
 				frame->setSrcPriority(priority);
 				frame->setSrc(address);
-				frame->setDest("01-80-C2-00-00-00");
+				frame->setDest(MACAddress("01-80-C2-00-00-00"));
 				frame->setAck(false);
 				frame->setPortNumber(r);  //Src port number.
 				frame->setTC(true);
 				frame->setDisplayString("b=,,,#3e3ef3");
+		        if (frame->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+		            frame->setByteLength(MIN_ETHERNET_FRAME_BYTES);
 				frame2->setSendByPort(r);
 				frame2->encapsulate(frame);
 				send(frame2,"RSTPPort$o");
@@ -823,14 +825,14 @@ void RSTP::sendBPDU(int port)
 	{
 		BPDUieee8021D * frame = new BPDUieee8021D();
 		Delivery * frame2=new Delivery();
-		RSTPVector* a=new RSTPVector(getRootRstpVector());
-		frame->setRootPriority(a->RootPriority);
-		frame->setRootMAC(*(a->RootMAC));
-		frame->setCost(a->RootPathCost);
-		frame->setAge(a->Age);
+		RSTPVector a = getRootRstpVector();
+		frame->setRootPriority(a.RootPriority);
+		frame->setRootMAC(a.RootMAC);
+		frame->setCost(a.RootPathCost);
+		frame->setAge(a.Age);
 		frame->setSrcPriority(priority);
 		frame->setSrc(address);
-		frame->setDest("01-80-C2-00-00-00");
+		frame->setDest(MACAddress("01-80-C2-00-00-00"));
 		frame->setAck(false);
 		frame->setPortNumber(port);  //Src port number.
 		if(simulation.getSimTime()<Puertos[port].TCWhile)
@@ -840,6 +842,8 @@ void RSTP::sendBPDU(int port)
 		}
 		else
 			frame->setTC(false);
+        if (frame->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+            frame->setByteLength(MIN_ETHERNET_FRAME_BYTES);
 		frame2->setSendByPort(port);
 		frame2->encapsulate(frame);
 		send(frame2,"RSTPPort$o");
@@ -892,7 +896,7 @@ void RSTP::colorRootPorts()
 				sprintf(buf,"MAC: %s",mac->c_str());
 				Parent->getDisplayString().setTagArg("tt",0,buf);
 				std::string * rootM=new std::string();
-				* rootM=Puertos[l].PortRstpVector.RootMAC->str();
+				* rootM=Puertos[l].PortRstpVector.RootMAC.str();
 				sprintf(buf,"Root: %s",rootM->c_str());
 				getDisplayString().setTagArg("t",0,buf);
 				found=true;
@@ -971,11 +975,11 @@ void RSTP::printState()
 	if(r>=0)
 	{
 		ev<<"Root Priority: "<<Puertos[r].PortRstpVector.RootPriority<<endl;
-		ev<<"Root MAC: "<<Puertos[r].PortRstpVector.RootMAC->str()<<endl;
+		ev<<"Root MAC: "<<Puertos[r].PortRstpVector.RootMAC.str()<<endl;
 		ev<<"cost: "<<Puertos[r].PortRstpVector.RootPathCost<<endl;
 		ev<<"age:  "<<Puertos[r].PortRstpVector.Age<<endl;
 		ev<<"Src priority: "<<Puertos[r].PortRstpVector.srcPriority<<endl;
-		ev<<"Src address: "<<Puertos[r].PortRstpVector.srcAddress->str()<<endl;
+		ev<<"Src address: "<<Puertos[r].PortRstpVector.srcAddress.str()<<endl;
 		ev<<"Src TxGate Priority: "<<Puertos[r].PortRstpVector.srcPortPriority<<endl;
 		ev<<"Src TxGate: "<<Puertos[r].PortRstpVector.srcPort<<endl;
 	}
@@ -1015,7 +1019,7 @@ void RSTP::printState()
 	ev<<"Per port best source. Root/Src"<<endl;
 	for(unsigned int i=0;i<Puertos.size();i++)
 	{
-		ev<<Puertos[i].PortRstpVector.RootMAC->str()<<"/"<<Puertos[i].PortRstpVector.srcAddress->str()<<endl;
+		ev<<Puertos[i].PortRstpVector.RootMAC.str()<<"/"<<Puertos[i].PortRstpVector.srcAddress.str()<<endl;
 	}
 }
 void RSTP::initPorts()
@@ -1071,11 +1075,11 @@ PortStateT RSTP::getPortState(int index)
 void RSTPVector::init(int priority, MACAddress address)
 {//Initializing PortRstpVector.
 	this->RootPriority=priority;
-	this->RootMAC=new MACAddress(address);
+	this->RootMAC = address;
 	this->RootPathCost=0;
 	this->Age=0;
 	this->srcPriority=priority;
-	this->srcAddress=new MACAddress(address);
+	this->srcAddress = address;
 	this->srcPortPriority=-1;
 	this->srcPort=-1;
 	this->arrivalPort=-1;
@@ -1083,18 +1087,17 @@ void RSTPVector::init(int priority, MACAddress address)
 
 RSTPVector RSTP::getRootRstpVector()
 {//Gets root gate rstp vector. (Cost not incremented)
-	RSTPVector* RootVect=new RSTPVector();
 	int RootIndex=getRootIndex();
 	if(RootIndex>=0)
 	{ //Selects the best known RstpVector.
-		*RootVect=Puertos[RootIndex].PortRstpVector;
+		return Puertos[RootIndex].PortRstpVector;
 	}
 	else
 	{
-		RootVect->init(priority,address);
+	    RSTPVector RootVect;
+		RootVect.init(priority,address);
+	    return RootVect;
 	}
-
-	return *RootVect;
 }
 
 
@@ -1102,17 +1105,17 @@ int RSTP::contestRstpVector(RSTPVector vect2,int v2Port)
 {//Compares vect2 with the vector that would be sent if this were the root node for the arrival LAN.
 	//>0 if vect2 better than own vector. =0 if they are similar.
 	// -1=Worse   0= Similar  1=Better Root. 2= Better RPC  3= Better Src   4= Better Port
-	RSTPVector * vect=new RSTPVector();
+	RSTPVector vect;
 	int r=getRootIndex();
-	vect->RootPriority=Puertos[r].PortRstpVector.RootPriority;
-	vect->RootMAC=Puertos[r].PortRstpVector.RootMAC;
-	vect->RootPathCost=Puertos[r].PortRstpVector.RootPathCost+Puertos[v2Port].PortCost; //Compensating incoming added cost
-	vect->srcPriority=priority;
-	vect->srcAddress=new MACAddress(address);
-	vect->srcPortPriority=Puertos[vect2.arrivalPort].PortPriority;
-	vect->srcPort=vect2.arrivalPort;
+	vect.RootPriority=Puertos[r].PortRstpVector.RootPriority;
+	vect.RootMAC=Puertos[r].PortRstpVector.RootMAC;
+	vect.RootPathCost=Puertos[r].PortRstpVector.RootPathCost+Puertos[v2Port].PortCost; //Compensating incoming added cost
+	vect.srcPriority=priority;
+	vect.srcAddress = address;
+	vect.srcPortPriority=Puertos[vect2.arrivalPort].PortPriority;
+	vect.srcPort=vect2.arrivalPort;
 	int result=0;
-	result=vect->compareRstpVector(vect2);
+	result=vect.compareRstpVector(vect2);
 	return result;
 }
 
@@ -1120,18 +1123,18 @@ int RSTP::contestRstpVector(BPDUieee8021D* msg,int arrival)
 {//Compares msg with the vector that would be sent if this were the root node for the arrival LAN.
 	// >0 if frame vector better than own vector. =0 if they are similar.
 	// -1=Worse   0= Similar  1=Better Root. 2= Better RPC  3= Better Src   4= Better Port
-	RSTPVector * vect=new RSTPVector();
+	RSTPVector vect;
 	int r=getRootIndex();
-	vect->RootPriority=Puertos[r].PortRstpVector.RootPriority;
-	vect->RootMAC=Puertos[r].PortRstpVector.RootMAC;
-	vect->RootPathCost=Puertos[r].PortRstpVector.RootPathCost;
-	vect->srcPriority=priority;
-	vect->srcAddress=new MACAddress(address);
-	vect->srcPortPriority=Puertos[arrival].PortPriority;
-	vect->srcPort=msg->getPortNumber();
-	vect->arrivalPort=arrival;
+	vect.RootPriority=Puertos[r].PortRstpVector.RootPriority;
+	vect.RootMAC=Puertos[r].PortRstpVector.RootMAC;
+	vect.RootPathCost=Puertos[r].PortRstpVector.RootPathCost;
+	vect.srcPriority=priority;
+	vect.srcAddress = address;
+	vect.srcPortPriority=Puertos[arrival].PortPriority;
+	vect.srcPort=msg->getPortNumber();
+	vect.arrivalPort=arrival;
 	int result=0;
-	result=vect->compareRstpVector(msg,0);
+	result=vect.compareRstpVector(msg,0);
 	return result;
 }
 
@@ -1144,17 +1147,15 @@ int RSTPVector::compareRstpVector(BPDUieee8021D * msg,int PortCost)
 	// -4=Worse Port  -3=Worse Src -2=Worse RPC -1=Worse Root  0= Similar  1=Better Root. 2= Better RPC  3= Better Src   4= Better Port
 	//Adds Port cost to msg.
 	int result=0;
-	RSTPVector * vect2=new RSTPVector();
-	vect2->RootPriority=msg->getRootPriority();
-	vect2->RootMAC=new MACAddress();
-	* vect2->RootMAC=msg->getRootMAC();
-	vect2->RootPathCost=msg->getCost()+PortCost;
-	vect2->srcPriority=msg->getSrcPriority();
-	vect2->srcAddress=new MACAddress();
-	* vect2->srcAddress=msg->getSrc();
-	vect2->srcPortPriority=msg->getPortPriority();
-	vect2->srcPort=msg->getPortNumber();
-	result=this->compareRstpVector(*vect2);
+	RSTPVector vect2;
+	vect2.RootPriority=msg->getRootPriority();
+	vect2.RootMAC = msg->getRootMAC();
+	vect2.RootPathCost=msg->getCost()+PortCost;
+	vect2.srcPriority=msg->getSrcPriority();
+	vect2.srcAddress = msg->getSrc();
+	vect2.srcPortPriority=msg->getPortPriority();
+	vect2.srcPort=msg->getPortNumber();
+	result=this->compareRstpVector(vect2);
 	return result;
 }
 
@@ -1164,30 +1165,30 @@ int RSTPVector::compareRstpVector(RSTPVector vect2)
 	int result=0;
 	if((vect2.RootPriority<this->RootPriority)
 			||((vect2.RootPriority==this->RootPriority)
-					&&(vect2.RootMAC->compareTo(* this->RootMAC)<0)))
+					&&(vect2.RootMAC.compareTo(this->RootMAC)<0)))
 	{
 		result=1;   //Better Root
 	}
 	else if ((vect2.RootPriority==this->RootPriority)
-			&&(vect2.RootMAC->compareTo(* this->RootMAC)==0)
+			&&(vect2.RootMAC.compareTo(this->RootMAC)==0)
 			&&(vect2.RootPathCost<this->RootPathCost))
 	{
 		result=2;  //Better RPC
 	}
 	else if ((vect2.RootPriority==this->RootPriority)
-			&&(vect2.RootMAC->compareTo(* this->RootMAC)==0)
+			&&(vect2.RootMAC.compareTo(this->RootMAC)==0)
 			&&(vect2.RootPathCost==this->RootPathCost)
 			&&((vect2.srcPriority<this->srcPriority)
 					||((vect2.srcPriority==this->srcPriority)
-							&&(vect2.srcAddress->compareTo(* this->srcAddress)<0))))
+							&&(vect2.srcAddress.compareTo(this->srcAddress)<0))))
 	{
 		result=3;	//Better Src
 	}
 	else if ((vect2.RootPriority==this->RootPriority)
-			&&(vect2.RootMAC->compareTo(* this->RootMAC)==0)
+			&&(vect2.RootMAC.compareTo(this->RootMAC)==0)
 			&&(vect2.RootPathCost==this->RootPathCost)
 			&&(vect2.srcPriority==this->srcPriority)
-			&&(vect2.srcAddress->compareTo(* this->srcAddress)==0)
+			&&(vect2.srcAddress.compareTo(this->srcAddress)==0)
 			&&((vect2.srcPortPriority<this->srcPortPriority)
 					||((vect2.srcPortPriority==this->srcPortPriority)
 							&&(vect2.srcPort<this->srcPort))))
@@ -1195,41 +1196,41 @@ int RSTPVector::compareRstpVector(RSTPVector vect2)
 		result=4;  //Better Src port
 	}
 	else if ((vect2.RootPriority==this->RootPriority)
-			&&(vect2.RootMAC->compareTo(* this->RootMAC)==0)
+			&&(vect2.RootMAC.compareTo(this->RootMAC)==0)
 			&&(vect2.RootPathCost==this->RootPathCost)
 			&&(vect2.srcPriority==this->srcPriority)
-			&&(vect2.srcAddress->compareTo(* this->srcAddress)==0)
+			&&(vect2.srcAddress.compareTo(this->srcAddress)==0)
 			&&(vect2.srcPortPriority==this->srcPortPriority)
 			&&(vect2.srcPort==this->srcPort))
 	{
 		result=0;  // Same BPDU
 	}
 	else if((vect2.RootPriority>this->RootPriority)
-			||((vect2.RootPriority==this->RootPriority)
-					&&(vect2.RootMAC->compareTo(* this->RootMAC)>0)))
+			||((vect2.RootPriority == this->RootPriority)
+					&&(vect2.RootMAC.compareTo(this->RootMAC)>0)))
 	{
 		result=-1;  // Worse Root
 	}
 	else if ((vect2.RootPriority==this->RootPriority)
-				&&(vect2.RootMAC->compareTo(* this->RootMAC)==0)
+				&&(vect2.RootMAC.compareTo(this->RootMAC)==0)
 				&&(vect2.RootPathCost>this->RootPathCost)>0)
 		{
 			result=-2;  //Worse RPC
 		}
 	else if ((vect2.RootPriority==this->RootPriority)
-			&&(vect2.RootMAC->compareTo(* this->RootMAC)==0)
+			&&(vect2.RootMAC.compareTo(this->RootMAC)==0)
 			&&(vect2.RootPathCost==this->RootPathCost)
 			&&((vect2.srcPriority>this->srcPriority)
 					||((vect2.srcPriority==this->srcPriority)
-							&&(vect2.srcAddress->compareTo(* this->srcAddress)>0))))
+							&&(vect2.srcAddress.compareTo(this->srcAddress)>0))))
 		{
 			result=-3;	//Worse Src
 		}
 		else if ((vect2.RootPriority==this->RootPriority)
-				&&(vect2.RootMAC->compareTo(* this->RootMAC)==0)
+				&&(vect2.RootMAC.compareTo(this->RootMAC)==0)
 				&&(vect2.RootPathCost==this->RootPathCost)
 				&&(vect2.srcPriority==this->srcPriority)
-				&&(vect2.srcAddress->compareTo(* this->srcAddress)==0)
+				&&(vect2.srcAddress.compareTo(this->srcAddress)==0)
 				&&((vect2.srcPortPriority>this->srcPortPriority)
 						||((vect2.srcPortPriority==this->srcPortPriority)
 								&&(vect2.srcPort>this->srcPort))))
@@ -1262,9 +1263,9 @@ int RSTP::getBestAlternate()
 		{
 			if(((candidato<0)||(Puertos[j].PortRstpVector.RootPathCost<Puertos[candidato].PortRstpVector.RootPathCost)
 							||((Puertos[j].PortRstpVector.RootPathCost==Puertos[candidato].PortRstpVector.RootPathCost)&&(Puertos[j].PortRstpVector.srcPriority<Puertos[candidato].PortRstpVector.srcPriority))
-							||((Puertos[j].PortRstpVector.RootPathCost==Puertos[candidato].PortRstpVector.RootPathCost)&&(Puertos[j].PortRstpVector.srcPriority==Puertos[candidato].PortRstpVector.srcPriority)&&(Puertos[j].PortRstpVector.srcAddress->compareTo(* Puertos[candidato].PortRstpVector.srcAddress)<0))
-							||((Puertos[j].PortRstpVector.RootPathCost==Puertos[candidato].PortRstpVector.RootPathCost)&&(Puertos[j].PortRstpVector.srcPriority==Puertos[candidato].PortRstpVector.srcPriority)&&(Puertos[j].PortRstpVector.srcAddress->compareTo(* Puertos[candidato].PortRstpVector.srcAddress)==0)&&(Puertos[j].PortRstpVector.srcPortPriority<Puertos[candidato].PortRstpVector.srcPortPriority))
-							||((Puertos[j].PortRstpVector.RootPathCost==Puertos[candidato].PortRstpVector.RootPathCost)&&(Puertos[j].PortRstpVector.srcPriority==Puertos[candidato].PortRstpVector.srcPriority)&&(Puertos[j].PortRstpVector.srcAddress->compareTo(* Puertos[candidato].PortRstpVector.srcAddress)==0)&&(Puertos[j].PortRstpVector.srcPortPriority==Puertos[candidato].PortRstpVector.srcPortPriority)&&(Puertos[j].PortRstpVector.srcPort<Puertos[candidato].PortRstpVector.srcPort))))
+							||((Puertos[j].PortRstpVector.RootPathCost==Puertos[candidato].PortRstpVector.RootPathCost)&&(Puertos[j].PortRstpVector.srcPriority==Puertos[candidato].PortRstpVector.srcPriority)&&(Puertos[j].PortRstpVector.srcAddress.compareTo(Puertos[candidato].PortRstpVector.srcAddress)<0))
+							||((Puertos[j].PortRstpVector.RootPathCost==Puertos[candidato].PortRstpVector.RootPathCost)&&(Puertos[j].PortRstpVector.srcPriority==Puertos[candidato].PortRstpVector.srcPriority)&&(Puertos[j].PortRstpVector.srcAddress.compareTo(Puertos[candidato].PortRstpVector.srcAddress)==0)&&(Puertos[j].PortRstpVector.srcPortPriority<Puertos[candidato].PortRstpVector.srcPortPriority))
+							||((Puertos[j].PortRstpVector.RootPathCost==Puertos[candidato].PortRstpVector.RootPathCost)&&(Puertos[j].PortRstpVector.srcPriority==Puertos[candidato].PortRstpVector.srcPriority)&&(Puertos[j].PortRstpVector.srcAddress.compareTo(Puertos[candidato].PortRstpVector.srcAddress)==0)&&(Puertos[j].PortRstpVector.srcPortPriority==Puertos[candidato].PortRstpVector.srcPortPriority)&&(Puertos[j].PortRstpVector.srcPort<Puertos[candidato].PortRstpVector.srcPort))))
 			{//It is the first alternate or better than the found one
 				candidato=j; //New candidate
 			}
@@ -1299,11 +1300,11 @@ PortStatus::PortStatus()
 void PortStatus::updatePortVector(BPDUieee8021D *frame,int arrival)
 {//Updates this port status with frame information, received at arrival.
 	this->PortRstpVector.RootPriority=frame->getRootPriority();
-	* this->PortRstpVector.RootMAC= frame->getRootMAC();
+	this->PortRstpVector.RootMAC = frame->getRootMAC();
 	this->PortRstpVector.RootPathCost=frame->getCost()+this->PortCost;
 	this->PortRstpVector.Age=frame->getAge()+1;
 	this->PortRstpVector.srcPriority=frame->getSrcPriority();
-	* this->PortRstpVector.srcAddress=frame->getSrc();
+	this->PortRstpVector.srcAddress = frame->getSrc();
 	this->PortRstpVector.srcPortPriority=frame->getPortPriority();
 	this->PortRstpVector.srcPort=frame->getPortNumber();
 	this->PortRstpVector.arrivalPort=arrival;

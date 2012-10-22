@@ -4,11 +4,12 @@
 
 package inet.examples.wireless.multiradio;
 
-import ned.DatarateChannel;
-import inet.world.radio.ChannelControl;
-import inet.nodes.wireless.WirelessHost;
-import inet.nodes.wireless.AccessPoint;
+import inet.networklayer.autorouting.ipv4.IPv4NetworkConfigurator;
 import inet.nodes.inet.Router;
+import inet.nodes.inet.WirelessHost;
+import inet.nodes.wireless.AccessPoint;
+import inet.world.radio.ChannelControl;
+import ned.DatarateChannel;
 
 
 network MultiRadio
@@ -34,8 +35,12 @@ network MultiRadio
         accessPoint2: AccessPoint {
             @display("p=354,99");
         }
-        router[useRouting ? 1 : 0]: Router {
+        router: Router if useRouting {
             @display("p=255,168");
+        }
+        configurator: IPv4NetworkConfigurator {
+            parameters:
+                @display("p=187,34");
         }
     connections:
         accessPoint1.ethg++ <--> DatarateChannel {  datarate = 100Mbps; } <--> accessPoint2.ethg++ if useEthernetSwitching;

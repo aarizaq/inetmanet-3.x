@@ -28,9 +28,11 @@ simple EtherAppSrv
     parameters:
         bool registerSAP; // whether to sent IEEE802CTRL_REGISTER_DSAP on startup
         @display("i=block/app");
-        @statistic[endToEndDelay](title="end-to-end delay";record=histogram,stats,vector);
-        @statistic[rcvdPkBytes](title="Received packet bytes";record=count,sum,vector);
-        @statistic[sentPkBytes](title="Sent packet bytes";record=count,sum,vector);
+        @signal[sentPk](type=cPacket);
+        @signal[rcvdPk](type=cPacket);
+        @statistic[rcvdPk](title="packets received"; source=rcvdPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[sentPk](title="packets sent"; source=sentPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[endToEndDelay](title="end-to-end delay"; source="messageAge(rcvdPk)"; unit=s; record=histogram,vector; interpolationmode=none);
     gates:
         input in @labels(Ieee802Ctrl/up);
         output out @labels(Ieee802Ctrl/down);

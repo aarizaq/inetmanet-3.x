@@ -33,16 +33,17 @@
 
 #include <vector>
 #include <omnetpp.h>
-#include "UDPAppBase.h"
 #include "DNSBaseMsg_m.h"
 #include "DNSRegRvsMsg_m.h"
 #include "IPvXAddress.h"
 #include <string.h>
+#include "UDPSocket.h"
+
 using namespace std;
 
 
 
-class DNSBase : public UDPAppBase
+class DNSBase : public cSimpleModule
 {
   public:
     /**
@@ -57,6 +58,7 @@ class DNSBase : public UDPAppBase
     };
 
   protected:
+    UDPSocket socket;
     typedef std::vector<DNSData *> DNSVector;
     DNSVector dnsVector;
 

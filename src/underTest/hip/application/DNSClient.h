@@ -30,16 +30,17 @@
 #define __DNSCLIENT_H__
 
 #include <omnetpp.h>
-#include "UDPAppBase.h"
+#include "UDPSocket.h"
 
 /**
  simple DNS client module to provide DNS access to tcp apps
  */
 
 
-class INET_API DNSClient : public UDPAppBase
+class INET_API DNSClient : public cSimpleModule
 {
   protected:
+    UDPSocket socket;
     ///@name Overridden cSimpleModule functions
     //@{
     virtual void initialize();

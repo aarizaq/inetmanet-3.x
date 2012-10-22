@@ -15,9 +15,8 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-package inet.mobility.models;
 
-import inet.mobility.MobilityBase;
+package inet.mobility.models;
 
 
 //
@@ -26,14 +25,10 @@ import inet.mobility.MobilityBase;
 // @see ~ChannelControl
 // @author Andras Varga
 //
-simple RectangleMobility extends MobilityBase
+simple RectangleMobility extends MovingMobilityBase
 {
     parameters:
-        bool debug = default(false); // debug switch
         double startPos; // in range [0.0,4.0): topleft=0, topright=1, bottomright=2, bottomleft=3
-        double speed @unit("mps") = default(2mps); // speed of the host (in m/s)
-        double updateInterval @unit("s") = default(0.1s); // time interval to update the hosts position
-        @display("i=block/cogwheel_s");
+        double speed @unit(mps); // speed of the host
         @class(RectangleMobility);
 }
-

@@ -52,8 +52,7 @@ ChannelControl::~ChannelControl()
 }
 
 /**
- * Sets up the playgroundSize and calculates the
- * maxInterferenceDistance
+ * Calculates maxInterferenceDistance.
  *
  * @ref calcInterfDist
  */
@@ -125,6 +124,7 @@ ChannelControl::RadioRef ChannelControl::registerRadio(cModule *radio, cGate *ra
     re.radioInGate = radioInGate->getPathStartGate();
     re.isNeighborListValid = false;
     re.channel = 0;  // for now
+    re.isActive = true;
     radios.push_back(re);
     return &radios.back(); // last element
 }
@@ -164,25 +164,13 @@ ChannelControl::RadioRef ChannelControl::lookupRadio(cModule *radio)
     return 0;
 }
 
-
-bool ChannelControl::isRadioRegistered(RadioRef r)
-{
-    Enter_Method_Silent();
-    for (RadioList::iterator it = radios.begin(); it != radios.end(); it++)
-    {
-        if (it->radioModule == r->radioModule)
-            return true;
-    }
-    return false;
-}
-
 const ChannelControl::RadioRefVector& ChannelControl::getNeighbors(RadioRef h)
 {
     Enter_Method_Silent();
     if (!h->isNeighborListValid)
     {
         h->neighborList.clear();
-        for (std::set<RadioRef>::const_iterator it = h->neighbors.begin(); it != h->neighbors.end(); it++)
+        for (std::set<RadioRef,RadioEntry::Compare>::iterator it = h->neighbors.begin(); it != h->neighbors.end(); it++)
             h->neighborList.push_back(*it);
         h->isNeighborListValid = true;
     }
@@ -310,6 +298,11 @@ void ChannelControl::sendToChannel(RadioRef srcRadio, AirFrame *airFrame)
     for (int i=0; i<n; i++)
     {
         RadioRef r = neighbors[i];
+        if (!r->isActive)
+        {
+            coreEV << "skipping disabled radio interface \n";
+            continue;
+        }
         if (r->channel == channel)
         {
             coreEV << "sending message to radio listening on the same channel\n";

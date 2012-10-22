@@ -27,7 +27,7 @@
  * radio transmission. The calculation may include the effects of
  * path loss, antenna gain, etc.
  */
-class INET_API IRadioModel : public cPolymorphic
+class INET_API IRadioModel : public cObject
 {
   public:
     /**
@@ -57,6 +57,11 @@ class INET_API IRadioModel : public cPolymorphic
      * possible error correction code, etc.
      */
     virtual bool isReceivedCorrectly(AirFrame *airframe, const SnrList& receivedList) = 0;
+    // used by the Airtime Link Metric computation
+    virtual bool haveTestFrame()=0;
+    virtual double calculateDurationTestFrame(AirFrame *airframe)=0;
+    virtual double getTestFrameError(double snirMin, double bitrate)=0;
+    virtual int getTestFrameSize()=0;
 };
 
 #endif

@@ -5,8 +5,8 @@
 const cXMLElement* getUniqueChild(const cXMLElement *node, const char *name)
 {
     const cXMLElement *child = getUniqueChildIfExists(node, name);
-    if(!child)
-        throw cRuntimeError("xml error: exactly one %s element expected", name);
+    if (!child)
+        throw cRuntimeError("XML error: exactly one %s element expected", name);
 
     return child;
 }
@@ -14,9 +14,9 @@ const cXMLElement* getUniqueChild(const cXMLElement *node, const char *name)
 const cXMLElement* getUniqueChildIfExists(const cXMLElement *node, const char *name)
 {
     cXMLElementList list = node->getChildrenByTagName(name);
-    if(list.size() > 1)
-        throw cRuntimeError("xml error: at most one %s element expected", name);
-    else if(list.size() == 1)
+    if (list.size() > 1)
+        throw cRuntimeError("XML error: at most one %s element expected", name);
+    else if (list.size() == 1)
         return (*list.begin());
     else
         return NULL;
@@ -24,28 +24,28 @@ const cXMLElement* getUniqueChildIfExists(const cXMLElement *node, const char *n
 
 bool parseBool(const char *text)
 {
-    if(!strcasecmp(text, "down"))
+    if (!strcasecmp(text, "down"))
         return false;
-    else if(!strcasecmp(text, "off"))
+    else if (!strcasecmp(text, "off"))
         return false;
-    else if(!strcasecmp(text, "false"))
+    else if (!strcasecmp(text, "false"))
         return false;
-    else if(!strcasecmp(text, "no"))
+    else if (!strcasecmp(text, "no"))
         return false;
-    else if(!strcasecmp(text, "0"))
+    else if (!strcasecmp(text, "0"))
         return false;
-    else if(!strcasecmp(text, "up"))
+    else if (!strcasecmp(text, "up"))
         return true;
-    else if(!strcasecmp(text, "on"))
+    else if (!strcasecmp(text, "on"))
         return true;
-    else if(!strcasecmp(text, "true"))
+    else if (!strcasecmp(text, "true"))
         return true;
-    else if(!strcasecmp(text, "yes"))
+    else if (!strcasecmp(text, "yes"))
         return true;
-    else if(!strcasecmp(text, "1"))
+    else if (!strcasecmp(text, "1"))
         return true;
     else
-        throw cRuntimeError("unknown bool constant: %s", text);
+        throw cRuntimeError("Unknown bool constant: %s", text);
 }
 
 void checkTags(const cXMLElement *node, const char *allowed)
@@ -54,17 +54,17 @@ void checkTags(const cXMLElement *node, const char *allowed)
 
     cStringTokenizer st(allowed, " ");
     const char *nt;
-    while((nt = st.nextToken())!=NULL)
+    while ((nt = st.nextToken())!=NULL)
         tags.push_back(nt);
 
-    for(cXMLElement *child=node->getFirstChild(); child; child=child->getNextSibling())
+    for (cXMLElement *child=node->getFirstChild(); child; child=child->getNextSibling())
     {
         unsigned int i;
-        for(i = 0; i < tags.size(); i++)
-            if(!strcmp(child->getTagName(), tags[i]))
+        for (i = 0; i < tags.size(); i++)
+            if (!strcmp(child->getTagName(), tags[i]))
                 break;
-        if(i == tags.size())
-            throw cRuntimeError("subtag <%s> not expected in <%s>",
+        if (i == tags.size())
+            throw cRuntimeError("Subtag <%s> not expected in <%s>",
                     child->getTagName(), node->getTagName());
     }
 }
@@ -72,7 +72,7 @@ void checkTags(const cXMLElement *node, const char *allowed)
 const char* getParameterStrValue(const cXMLElement *ptr, const char *name, const char *def)
 {
     const cXMLElement *xvalue = getUniqueChildIfExists(ptr, name);
-    if(xvalue)
+    if (xvalue)
         return xvalue->getNodeValue();
     else
         return def;
@@ -81,7 +81,7 @@ const char* getParameterStrValue(const cXMLElement *ptr, const char *name, const
 bool getParameterBoolValue(const cXMLElement *ptr, const char *name, bool def)
 {
     const cXMLElement *xvalue = getUniqueChildIfExists(ptr, name);
-    if(xvalue)
+    if (xvalue)
         return parseBool(xvalue->getNodeValue());
     else
         return def;
@@ -102,7 +102,7 @@ const char* getParameterStrValue(const cXMLElement *ptr, const char *name)
 int getParameterIntValue(const cXMLElement *ptr, const char *name, int def)
 {
     const cXMLElement *xvalue = getUniqueChildIfExists(ptr, name);
-    if(xvalue)
+    if (xvalue)
         return atoi(xvalue->getNodeValue());
     else
         return def;
@@ -117,7 +117,7 @@ int getParameterIntValue(const cXMLElement *ptr, const char *name)
 IPv4Address getParameterIPAddressValue(const cXMLElement *ptr, const char *name, IPv4Address def)
 {
     const cXMLElement *xvalue = getUniqueChildIfExists(ptr, name);
-    if(xvalue)
+    if (xvalue)
         return IPv4Address(xvalue->getNodeValue());
     else
         return def;
@@ -132,7 +132,7 @@ IPv4Address getParameterIPAddressValue(const cXMLElement *ptr, const char *name)
 double getParameterDoubleValue(const cXMLElement *ptr, const char *name, double def)
 {
     const cXMLElement *xvalue = getUniqueChildIfExists(ptr, name);
-    if(xvalue)
+    if (xvalue)
         return strtod(xvalue->getNodeValue(), NULL);
     else
         return def;
@@ -143,3 +143,13 @@ double getParameterDoubleValue(const cXMLElement *ptr, const char *name)
     const cXMLElement *xvalue = getUniqueChild(ptr, name);
     return strtod(xvalue->getNodeValue(), NULL);
 }
+
+const char *getRequiredAttribute(const cXMLElement& node, const char *attr)
+{
+    const char *s = node.getAttribute(attr);
+    if (!(s && *s))
+        throw cRuntimeError("required attribute %s of <%s> missing at %s",
+                attr, node.getTagName(), node.getSourceLocation());
+    return s;
+}
+

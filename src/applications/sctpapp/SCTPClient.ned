@@ -20,12 +20,15 @@ package inet.applications.sctpapp;
 
 import inet.applications.ISCTPApp;
 
-
+//
+// Client app for SCTP-based request-reply protocols.
+// Handles a single session (and SCTP connection) at a time.
+//
 simple SCTPClient like ISCTPApp
 {
     parameters:
-        string address = default(""); // may be left empty ("")
-        int port = default(0); // port number to listen on
+        string localAddress = default(""); // comma separated list of addresses
+        int localPort = default(0); // port number to listen on
         string connectAddress;  // server address (may be symbolic)
         int connectPort; // port number to connect to
         double startTime @unit(s) = default(1s); // time first session begins
@@ -37,16 +40,19 @@ simple SCTPClient like ISCTPApp
         double reconnectInterval @unit(s) = default(0);  // if connection breaks, waits this much before trying to reconnect
         int inboundStreams = default(17);
         int outboundStreams = default(1);
-        int echoFactor = default(0);
+        bool echo = default(false);  // echoes received packages when true
         bool ordered = default(true);
         int queueSize = default(0);
         double stopTime @unit(s) = default(0s);
         double primaryTime @unit(s) = default(0s);
         string newPrimary = default("");
         bool finishEndsSimulation = default(false);
-        @statistic[sentPkBytes](title="Sent packet bytes"; record=count,sum,vector);
-        @statistic[rcvdPkBytes](title="Received packet bytes"; record=count,sum,vector);
-        @statistic[sentEchoedPkBytes](title="Sent echoed packet bytes"; record=count,sum,vector);
+        @signal[sentPk](type=SCTPSimpleMessage);
+        @signal[rcvdPk](type=cPacket);
+        @signal[echoedPk](type=SCTPSimpleMessage);
+        @statistic[rcvdPk](title="packets received"; source=rcvdPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[sentPk](title="packets sent"; source=sentPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[echoedPk](title="packets echoed"; source=echoedPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
 
     gates:
         input sctpIn;

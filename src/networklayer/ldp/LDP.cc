@@ -13,10 +13,11 @@
 // See the GNU Lesser General Public License for more details.
 //
 
-#include <omnetpp.h>
 #include <iostream>
 #include <fstream>
 #include <algorithm>
+
+#include "INETDefs.h"
 
 #include "LDP.h"
 
@@ -28,6 +29,7 @@
 #include "LIBTableAccess.h"
 #include "TEDAccess.h"
 #include "NotifierConsts.h"
+#include "UDPControlInfo_m.h"
 #include "UDPPacket.h"
 #include "TCPSegment.h"
 
@@ -127,6 +129,17 @@ void LDP::initialize(int stage)
     // bind UDP socket
     udpSocket.setOutputGate(gate("udpOut"));
     udpSocket.bind(LDP_PORT);
+    for (int i = 0; i < ift->getNumInterfaces(); ++i)
+    {
+        InterfaceEntry *ie = ift->getInterface(i);
+        if (ie->isMulticast())
+        {
+            udpSockets.push_back(UDPSocket());
+            udpSockets.back().setOutputGate(gate("udpOut"));
+            udpSockets.back().setMulticastLoop(false);
+            udpSockets.back().setMulticastOutputInterface(ie->getInterfaceId());
+        }
+    }
 
     // start listening for incoming TCP conns
     EV << "Starting to listen on port " << LDP_PORT << " for incoming LDP sessions\n";
@@ -276,23 +289,23 @@ void LDP::rebuildFecList()
         const IPv4Route *re = rt->getRoute(i);
 
         // ignore multicast routes
-        if (re->getHost().isMulticast())
+        if (re->getDestination().isMulticast())
             continue;
 
         // find out current next hop according to routing table
-        IPv4Address nextHop = (re->getType() == IPv4Route::DIRECT) ? re->getHost() : re->getGateway();
+        IPv4Address nextHop = (re->getGateway().isUnspecified()) ? re->getDestination() : re->getGateway();
         ASSERT(!nextHop.isUnspecified());
 
         EV << "nextHop <-- " << nextHop << endl;
 
-        FecVector::iterator it = findFecEntry(oldList, re->getHost(), re->getNetmask().getNetmaskLength());
+        FecVector::iterator it = findFecEntry(oldList, re->getDestination(), re->getNetmask().getNetmaskLength());
 
         if (it == oldList.end())
         {
             // fec didn't exist, it was just created
             fec_t newItem;
             newItem.fecid = ++maxFecid;
-            newItem.addr = re->getHost();
+            newItem.addr = re->getDestination();
             newItem.length = re->getNetmask().getNetmaskLength();
             newItem.nextHop = nextHop;
             updateFecListEntry(newItem);
@@ -318,7 +331,7 @@ void LDP::rebuildFecList()
 
     // our own addresses (XXX is it needed?)
 
-    for (int i = 0; i< ift->getNumInterfaces(); ++i)
+    for (int i = 0; i < ift->getNumInterfaces(); ++i)
     {
         InterfaceEntry *ie = ift->getInterface(i);
         if (ie->getNetworkLayerGateIndex() < 0)
@@ -408,7 +421,16 @@ void LDP::sendHelloTo(IPv4Address dest)
     //hello->setTbit(...);
     hello->addPar("color") = LDP_HELLO_TRAFFIC;
 
-    udpSocket.sendTo(hello, dest, LDP_PORT);
+    if (dest.isMulticast())
+    {
+        for (int i = 0; i < (int)udpSockets.size(); ++i)
+        {
+            LDPHello *msg = i== (int)udpSockets.size() - 1 ? hello : hello->dup();
+            udpSockets[i].sendTo(msg, dest, LDP_PORT);
+        }
+    }
+    else
+        udpSocket.sendTo(hello, dest, LDP_PORT);
 }
 
 void LDP::processHelloTimeout(cMessage *msg)
@@ -486,7 +508,7 @@ void LDP::processHelloTimeout(cMessage *msg)
 
 void LDP::processLDPHello(LDPHello *msg)
 {
-    UDPControlInfo *controlInfo = check_and_cast<UDPControlInfo *>(msg->getControlInfo());
+    UDPDataIndication *controlInfo = check_and_cast<UDPDataIndication *>(msg->getControlInfo());
     //IPv4Address peerAddr = controlInfo->getSrcAddr().get4();
     IPv4Address peerAddr = msg->getSenderAddress();
     int interfaceId = controlInfo->getInterfaceId();
@@ -655,6 +677,7 @@ void LDP::processLDPPacketFromTCP(LDPPacket *ldpPacket)
     {
     case HELLO:
         error("Received LDP HELLO over TCP (should arrive over UDP)");
+        break;
 
     case ADDRESS:
         // processADDRESS(ldpPacket);
@@ -688,6 +711,7 @@ void LDP::processLDPPacketFromTCP(LDPPacket *ldpPacket)
 
     default:
         error("LDP PROC DEBUG: Unrecognized LDP Message Type, type is %d", ldpPacket->getType());
+        break;
     }
 }
 
@@ -738,7 +762,7 @@ IPv4Address LDP::findPeerAddrFromInterface(std::string interfaceName)
         for (k = 0; k < (int)myPeers.size(); k++)
         {
             anEntry = rt->getRoute(i);
-            if (anEntry->getHost()==myPeers[k].peerIP && anEntry->getInterface()==ie)
+            if (anEntry->getDestination()==myPeers[k].peerIP && anEntry->getInterface()==ie)
             {
                 return myPeers[k].peerIP;
             }
@@ -752,7 +776,7 @@ IPv4Address LDP::findPeerAddrFromInterface(std::string interfaceName)
         for (k = 0; k < rt->getNumRoutes(); k++)
         {
             anEntry = rt->getRoute(i);
-            if (anEntry->getHost() == myPeers[i].peerIP)
+            if (anEntry->getDestination() == myPeers[i].peerIP)
                 break;
         }
         if (k == rt->getNumRoutes())
@@ -882,7 +906,7 @@ void LDP::processNOTIFICATION(LDPNotify *packet)
         EV << "notification received from=" << srcAddr << " fec=" << fec << " status=" << status << endl;
     }
 
-    switch(status)
+    switch (status)
     {
         case NO_ROUTE:
         {
@@ -918,6 +942,7 @@ void LDP::processNOTIFICATION(LDPNotify *packet)
 
         default:
             ASSERT(false);
+            break;
     }
 
     delete packet;
@@ -1237,7 +1262,7 @@ bool LDP::lookupLabel(IPv4Datagram *ipdatagram, LabelOpVector& outLabel, std::st
     return false;
 }
 
-void LDP::receiveChangeNotification(int category, const cPolymorphic *details)
+void LDP::receiveChangeNotification(int category, const cObject *details)
 {
     Enter_Method_Silent();
     printNotificationBanner(category, details);

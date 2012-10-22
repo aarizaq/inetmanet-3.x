@@ -76,7 +76,7 @@ void IComponent::initialize(int stage)
 		//Registers the vid in the MVRP module. A MVRPDU is sent.
 		MVRPDU * frame=new MVRPDU();
 		frame->setVIDSArraySize(1);
-		frame->setDest("01-80-C2-00-00-0D");
+		frame->setDest(MACAddress("01-80-C2-00-00-0D"));
 		frame->setVIDS(0,VID);
 		send(frame,"IGatesOut");
 		//It could be easy to register more than one vid. Just another or a bigger message.
@@ -94,7 +94,7 @@ void IComponent::sendMVRPDUs(cMessage *msg)
 	for(int i=0;i<gateSize("CGatesOut");i++)
 	{
 		MVRPDU * frame=new MVRPDU();
-		frame->setDest("01-80-C2-00-00-0D");
+		frame->setDest(MACAddress("01-80-C2-00-00-0D"));
 		frame->setSrc(address);
 		if(outputFrame==1) // Output frame IEEE 802.1Q
 		{
@@ -320,8 +320,8 @@ void IComponent::handle1adFrame(EthernetIIFrame *frame)
 		ITag->encapsulate(frame);
 		BTag->encapsulate(ITag);
 		frameAH->encapsulate(BTag);
-		if (frameAH->getByteLength() < MIN_ETHERNET_FRAME)   //This will never happen
-			frameAH->setByteLength(MIN_ETHERNET_FRAME);
+		if (frameAH->getByteLength() < MIN_ETHERNET_FRAME_BYTES)   //This will never happen
+			frameAH->setByteLength(MIN_ETHERNET_FRAME_BYTES);
 		send(frameAH,"IGatesOut");
 		ev<<"Frame sent."<<endl;
 	}

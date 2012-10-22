@@ -33,7 +33,7 @@ class InterfaceEntry;
  *
  * @see IRoutingTable, IRoutingTable
  */
-class NatElement : public cPolymorphic
+class NatElement : public cObject
 {
   public:
     IPv4Address addr;
@@ -45,7 +45,7 @@ class NatElement : public cPolymorphic
     NatElement& operator=(const NatElement& obj);
 };
 
-class INET_API IPv4RouteRule : public cPolymorphic
+class INET_API IPv4RouteRule : public cObject
 {
   public:
     /** Specifies where the route comes from */
@@ -102,7 +102,7 @@ class INET_API IPv4RouteRule : public cPolymorphic
 
 
     void setInterface(InterfaceEntry *interfacePtr)  {this->interfacePtr = interfacePtr;}
-    void setRoule(Rule rule);
+    void setRule(Rule rule);
     void setProtocol(IPProtocolId protocol){this->protocol = protocol;}
 
     IPv4Address getSrcAddress() const {return srcAddress;}

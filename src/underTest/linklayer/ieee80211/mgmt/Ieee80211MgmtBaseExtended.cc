@@ -73,7 +73,7 @@ void Ieee80211MgmtBaseExtended::initialize(int stage)
         else
         {
             EV << "No interface Table, we can not determine our Interface Entry" << endl;
-            myEntry = new InterfaceEntry();
+            myEntry = new InterfaceEntry(this);
             myEntry->setMACAddress(myAddress);
             myEntry->setName(getParentModule()->getName());
         }
@@ -214,7 +214,7 @@ cPacket *Ieee80211MgmtBaseExtended::decapsulate(Ieee80211DataFrame *frame)
 
 void Ieee80211MgmtBaseExtended::sendUp(cMessage *msg)
 {
-    send(msg, "uppergateOut");
+    send(msg, "upperLayerOut");
 }
 
 void Ieee80211MgmtBaseExtended::processFrame(Ieee80211DataOrMgmtFrame *frame)
@@ -263,14 +263,6 @@ void Ieee80211MgmtBaseExtended::processFrame(Ieee80211DataOrMgmtFrame *frame)
     case ST_PROBERESPONSE:
         numMgmtFramesReceived++;
         handleProbeResponseFrame(check_and_cast<Ieee80211ProbeResponseFrame *>(frame));
-        break;
-    case ST_LBMS_REQUEST:
-        numMgmtFramesReceived++;
-        handleLbmsRequestFrame(check_and_cast<Ieee80211LBMSRequest *>(frame));
-        break;
-    case ST_LBMS_REPORT:
-        numMgmtFramesReceived++;
-        handleLbmsReportFrame(check_and_cast<Ieee80211LBMSReport *>(frame));
         break;
     default:
         error("unexpected frame type (%s)%s", frame->getClassName(), frame->getName());

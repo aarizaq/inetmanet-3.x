@@ -59,7 +59,7 @@ long NS_CLASS hello_jitter()
         return (long) (((float) Random::integer(RAND_MAX + 1) / RAND_MAX - 0.5)
                        * JITTER_INTERVAL);
 #else
-        return (long) (((float) intuniform(0,RAND_MAX) / (RAND_MAX-1) - 0.5)
+        return (long) (((float) intuniform(0, RAND_MAX) / RAND_MAX - 0.5)
                        * JITTER_INTERVAL);
 #endif
 #else
@@ -120,7 +120,7 @@ void NS_CLASS hello_send(void *arg)
 #ifdef OMNETPP
     double delay = -1;
     if (par("EqualDelay"))
-        delay = par("broadCastDelay");
+        delay = par("broadcastDelay");
 #endif
 
     time_diff = timeval_diff(&now, &this_host.bcast_time);
@@ -160,6 +160,29 @@ void NS_CLASS hello_send(void *arg)
                 ext->length = 0;
 #endif
 
+#ifdef AODV_USE_STL_RT
+                for (i = 0; i < RT_TABLESIZE; i++)
+                {
+                    for (AodvRtTableMap::iterator it = aodvRtTableMap.begin(); it != aodvRtTableMap.end(); it++)
+                    {
+                        rt_table_t *rt = it->second;
+                        /* If an entry has an active hello timer, we assume
+                           that we are receiving hello messages from that
+                           node... */
+                        if (rt->hello_timer.used)
+                        {
+#ifdef DEBUG_HELLO
+                            DEBUG(LOG_INFO, 0,
+                                  "Adding %s to hello neighbor set ext",
+                                  ip_to_str(rt->dest_addr));
+#endif
+                            memcpy(buffer_ptr, &rt->dest_addr,
+                                   sizeof(struct in_addr));
+                            buffer_ptr+=sizeof(struct in_addr);
+                        }
+                    }
+                }
+#else
                 for (i = 0; i < RT_TABLESIZE; i++)
                 {
                     list_t *pos;
@@ -189,6 +212,8 @@ void NS_CLASS hello_send(void *arg)
                         }
                     }
                 }
+
+#endif
 #ifdef OMNETPP
                 if (ext->length)
                 {
@@ -381,7 +406,7 @@ void NS_CLASS hello_process(RREP * hello, int rreplen, unsigned int ifindex)
             memcpy(&rt->last_hello_time, &now, sizeof(struct timeval));
             return;
         }
-        rt_table_update(rt, hello_dest, 1, hello_seqno, timeout, VALID, flags,ifindex,cost,fixhop);
+        rt_table_update(rt, hello_dest, 1, hello_seqno, timeout, VALID, flags, ifindex, cost, fixhop);
     }
 
 hello_update:

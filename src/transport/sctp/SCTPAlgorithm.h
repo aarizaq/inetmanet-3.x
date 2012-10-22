@@ -18,7 +18,8 @@
 #ifndef __SCTPALGORITHM_H
 #define __SCTPALGORITHM_H
 
-#include <omnetpp.h>
+#include "INETDefs.h"
+
 #include "SCTPAssociation.h"
 #include "SCTPQueue.h"
 
@@ -30,7 +31,7 @@
  * retransmit/recovery, selective acknowledgement etc. Subclasses
  * may implement various sets and flavours of the above algorithms.
  */
-class INET_API SCTPAlgorithm : public cPolymorphic
+class INET_API SCTPAlgorithm : public cObject
 {
   protected:
     SCTPAssociation *assoc; // we belong to this association
@@ -49,8 +50,8 @@ class INET_API SCTPAlgorithm : public cPolymorphic
     virtual ~SCTPAlgorithm() {}
 
     inline void setAssociation(SCTPAssociation* _assoc)  {
-        assoc           = _assoc;
-        transmissionQ   = assoc->getTransmissionQueue();
+        assoc = _assoc;
+        transmissionQ = assoc->getTransmissionQueue();
         retransmissionQ = assoc->getRetransmissionQueue();
     }
 

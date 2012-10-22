@@ -37,6 +37,14 @@ OLSR_rtable::OLSR_rtable()
 {
 }
 
+OLSR_rtable::OLSR_rtable(OLSR_rtable *rtable)
+{
+    for (rtable_t::const_iterator itRtTable = rtable->getInternalTable()->begin();itRtTable != rtable->getInternalTable()->begin();++itRtTable)
+    {
+        rt_[itRtTable->first] = itRtTable->second->dup();
+    }
+}
+
 ///
 /// \brief Destroys the routing table and all its entries.
 ///
@@ -128,15 +136,17 @@ OLSR_rtable::find_send_entry(OLSR_rt_entry* entry)
 /// \return     the routing table entry which has been added.
 ///
 OLSR_rt_entry*
-OLSR_rtable::add_entry(const nsaddr_t &dest, const nsaddr_t & next,const nsaddr_t & iface, uint32_t dist,const int &index)
+OLSR_rtable::add_entry(const nsaddr_t &dest, const nsaddr_t & next, const nsaddr_t & iface, uint32_t dist, const int &index, double quality, double delay)
 {
     // Creates a new rt entry with specified values
     OLSR_rt_entry* entry = new OLSR_rt_entry();
-    entry->dest_addr()  = dest;
-    entry->next_addr()  = next;
+    entry->dest_addr() = dest;
+    entry->next_addr() = next;
     entry->iface_addr() = iface;
-    entry->dist()       = dist;
-    entry->local_iface_index()=index;
+    entry->dist() = dist;
+    entry->quality = quality;
+    entry->delay = delay;
+    entry->local_iface_index() = index;
     if (entry->dist()==2)
     {
         entry->route.push_back(next);
@@ -153,15 +163,17 @@ OLSR_rtable::add_entry(const nsaddr_t &dest, const nsaddr_t & next,const nsaddr_
 }
 
 OLSR_rt_entry*
-OLSR_rtable::add_entry(const nsaddr_t & dest, const nsaddr_t & next, const nsaddr_t & iface, uint32_t dist,const int &index,OLSR_rt_entry *entryAux)
+OLSR_rtable::add_entry(const nsaddr_t & dest, const nsaddr_t & next, const nsaddr_t & iface, uint32_t dist, const int &index, OLSR_rt_entry *entryAux, double quality, double delay)
 {
     // Creates a new rt entry with specified values
     OLSR_rt_entry* entry = new OLSR_rt_entry();
-    entry->dest_addr()  = dest;
-    entry->next_addr()  = next;
+    entry->dest_addr() = dest;
+    entry->next_addr() = next;
     entry->iface_addr() = iface;
-    entry->dist()       = dist;
-    entry->local_iface_index()=index;
+    entry->dist() = dist;
+    entry->quality = quality;
+    entry->delay = delay;
+    entry->local_iface_index() = index;
     entry->route = entryAux->route;
     if (entryAux->dist()==(entry->dist()-1))
         entry->route.push_back(entryAux->dest_addr());

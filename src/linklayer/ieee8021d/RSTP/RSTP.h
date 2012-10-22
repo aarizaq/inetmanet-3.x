@@ -46,14 +46,15 @@ class RSTPVector
 {
 public:
 	int RootPriority;
-	MACAddress * RootMAC;
+	MACAddress RootMAC;
 	int RootPathCost;
 	int Age;
 	int srcPriority;
-	MACAddress *srcAddress;
+	MACAddress srcAddress;
 	int srcPortPriority;
 	int srcPort;
 	int arrivalPort;
+
 
 	/**
 	 * @brief Gets the RSTP vector i to the initial case. (auto proposed)
@@ -92,6 +93,7 @@ public:
 	PortFilt * portfilt;
 
 	PortStatus();
+	virtual ~PortStatus(){}
 	virtual void updatePortVector(BPDUieee8021D *frame,int arrival);
 }; /// Global per port state info
 
@@ -132,7 +134,7 @@ class RSTP: public cSimpleModule
 
   public:
 	RSTP();
-	~RSTP();
+	virtual ~RSTP();
 	virtual int numInitStages() const {return 2;}
 
 	/**

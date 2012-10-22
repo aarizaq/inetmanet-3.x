@@ -28,6 +28,10 @@ network HandoverNetworkClusterB
     parameters:
         @display("bgb=1000,1000");
     submodules:
+        channelControl: ChannelControl {
+            parameters:
+                @display("p=60,50;i=misc/sun");
+        }
         ms2: WiMAXMS {
             parameters:
                 @display("p=250,300;i=device/cellphone_s;r=,,#707070");
@@ -60,10 +64,6 @@ network HandoverNetworkClusterB
             parameters:
                 @display("p=200,127;i=device/antennatower_l;r=,,#707070");
 
-        }
-        channelcontrol: ChannelControl {
-            parameters:
-                @display("p=60,50;i=misc/sun");
         }
     connections allowunconnected:
 }

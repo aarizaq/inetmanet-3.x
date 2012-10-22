@@ -25,15 +25,15 @@ import inet.linklayer.ppp.PPPInterface;
 import inet.networklayer.common.InterfaceTable;
 import inet.networklayer.ipv4.RoutingTable;
 import inet.nodes.inet.NetworkLayer;
-import inet.applications.pingapp.PingApp;
+import inet.applications.IPingApp;
 import inet.applications.ITCPApp;
 import inet.applications.IUDPApp;
-import inet.linklayer.ieee80211.Ieee80211NewNic;
+import inet.linklayer.ieee80211.Ieee80211Nic;
 import inet.transport.udp.UDP;
 import inet.transport.tcp.TCP;
-import inet.mobility.NoMobility;
+import inet.mobility.models.StationaryMobility;
 import inet.linklayer.ieee80211.Ieee80211Nic;
-import  inet.underTest.linklayer.ieee80211.mgmt.Ieee80211NicExtended;
+import inet.underTest.linklayer.ieee80211.mgmt.Ieee80211NicExtended;
 //
 // \Wireless IP router.
 //
@@ -44,6 +44,7 @@ module WirelessRouterExtended
         string routingFile = default("");
         int numTcpApps = default(0);
         int numUdpApps = default(0);
+        int numPingApps = default(0);  // no of PING apps. Specify the app types in INI file with pingApp[0..1].typename="PingApp" syntax        
         string tcpAppType = default("n/a");
         string udpAppType = default("n/a");
         string mgmtType = default("IEEE80211MgmtAPExtended");
@@ -99,10 +100,11 @@ module WirelessRouterExtended
             parameters:
                 @display("p=453,194");
         }
-        pingApp: PingApp {
-            @display("p=56,156");
+        pingApp[numPingApps]: <default("PingApp")> like IPingApp {
+            parameters:
+                @display("p=369,254");
         }
-        nullMobility: NoMobility {
+        nullMobility: StationaryMobility {
             @display("p=393,60");
         }
         wlan: Ieee80211NicExtended {
@@ -114,14 +116,14 @@ module WirelessRouterExtended
         // connections to network outside
         for i=0..sizeof(pppg)-1 {
             pppg[i] <--> ppp[i].phys;
-            ppp[i].netwOut --> networkLayer.ifIn[i];
-            ppp[i].netwIn <-- networkLayer.ifOut[i];
+            ppp[i].upperLayerOut --> networkLayer.ifIn[i];
+            ppp[i].upperLayerIn <-- networkLayer.ifOut[i];
         }
 
         for i=0..sizeof(ethg)-1 {
             ethg[i] <--> eth[i].phys;
-            eth[i].netwOut --> networkLayer.ifIn[sizeof(pppg)+i];
-            eth[i].netwIn <-- networkLayer.ifOut[sizeof(pppg)+i];
+            eth[i].upperLayerOut --> networkLayer.ifIn[sizeof(pppg)+i];
+            eth[i].upperLayerIn <-- networkLayer.ifOut[sizeof(pppg)+i];
         }
         for i=0..numTcpApps-1 {
             tcpApp[i].tcpOut --> tcp.appIn++;
@@ -137,10 +139,12 @@ module WirelessRouterExtended
         networkLayer.udpOut --> udp.ipIn;
         tcp.ipOut --> networkLayer.tcpIn;
         networkLayer.tcpOut --> tcp.ipIn;
-        pingApp.pingOut --> networkLayer.pingIn;
-        networkLayer.pingOut --> pingApp.pingIn;
-        networkLayer.ifOut++ --> wlan.uppergateIn;
-        wlan.uppergateOut --> networkLayer.ifIn++;
+        for i=0..numPingApps-1 {
+            networkLayer.pingOut++ --> pingApp[i].pingIn;
+            networkLayer.pingIn++ <-- pingApp[i].pingOut;
+        }
+        networkLayer.ifOut++ --> wlan.upperLayerIn;
+        wlan.upperLayerOut --> networkLayer.ifIn++;
         radioIn --> wlan.radioIn;
 }
 

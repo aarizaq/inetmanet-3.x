@@ -19,6 +19,8 @@
 #include "IPv6NeighbourDiscovery.h"
 
 #include "ICMPv6Access.h"
+#include "IPv6ControlInfo.h"
+#include "IPv6Datagram.h"
 #include "IPv6InterfaceData.h"
 #include "InterfaceTableAccess.h"
 #include "RoutingTable6Access.h"
@@ -102,9 +104,9 @@ void IPv6NeighbourDiscovery::initialize(int stage)
         //We want routers to boot up faster!
 
         if (rt6->isRouter())
-            scheduleAt(simTime() + uniform(0, 0.3), msg);//Random Router bootup time
+            scheduleAt(simTime() + uniform(0, 0.3), msg); //Random Router bootup time
         else
-            scheduleAt(simTime() + uniform(0.4, 1), msg);//Random Host bootup time
+            scheduleAt(simTime() + uniform(0.4, 1), msg); //Random Host bootup time
 
         startDADSignal = registerSignal("startDAD");
     }
@@ -157,7 +159,7 @@ void IPv6NeighbourDiscovery::handleMessage(cMessage *msg)
             processARTimeout(msg);
         }
         else
-            error("Unrecognized Timer");//stops sim w/ error msg.
+            error("Unrecognized Timer"); //stops sim w/ error msg.
     }
     else if (dynamic_cast<ICMPv6Message *>(msg))
     {
@@ -237,42 +239,39 @@ void IPv6NeighbourDiscovery::processIPv6Datagram(IPv6Datagram *msg)
 
     if (nce == NULL)
     {
-        //If no entry exists,
         EV << "No Entry exists in the Neighbour Cache.\n";
+        InterfaceEntry *ie = ift->getInterfaceById(nextHopIfID);
+        if (ie->isPointToPoint())
+        {
+            //the sender creates one, sets its state to STALE,
+            EV << "Creating an STALE entry in the neighbour cache.\n";
+            nce = neighbourCache.addNeighbour(nextHopAddr, nextHopIfID, MACAddress::UNSPECIFIED_ADDRESS);
+        }
+        else
+        {
+            //the sender creates one, sets its state to INCOMPLETE,
+            EV << "Creating an INCOMPLETE entry in the neighbour cache.\n";
+            nce = neighbourCache.addNeighbour(nextHopAddr, nextHopIfID);
 
-        //the sender creates one, sets its state to INCOMPLETE,
-        EV << "Creating an INCOMPLETE entry in the neighbour cache.\n";
-        nce = neighbourCache.addNeighbour(nextHopAddr, nextHopIfID);
+            //initiates Address Resolution,
+            EV << "Initiating Address Resolution for:" << nextHopAddr
+               << " on Interface:" << nextHopIfID << endl;
+            initiateAddressResolution(msg->getSrcAddress(), nce);
+        }
+    }
 
-        //initiates Address Resolution,
-        EV << "Initiating Address Resolution for:" << nextHopAddr
-           << " on Interface:" << nextHopIfID << endl;
-        initiateAddressResolution(msg->getSrcAddress(), nce);
-
-        //and then queues the data packet pending completion of address resolution.
+    if (nce->reachabilityState == IPv6NeighbourCache::INCOMPLETE)
+    {
+        EV << "Reachability State is INCOMPLETE. Address Resolution already initiated.\n";
         EV << "Add packet to entry's queue until Address Resolution is complete.\n";
-        nce->pendingPackets.push_back(msg);
-        pendingQueue.insert(msg);
-    }
-    else if (nce->reachabilityState == IPv6NeighbourCache::INCOMPLETE)
-    {
-        EV << "Reachability State is INCOMPLETE.Address Resolution already initiated.\n";
         bubble("Packet added to queue until Address Resolution is complete.");
-        nce->pendingPackets.push_back(msg);
-        pendingQueue.insert(msg);
-    }
-    else if (nce->macAddress.isUnspecified())
-    {
-        EV << "NCE's MAC address is unspecified.\n";
-        EV << "Initiate Address Resolution and add packet to queue.\n";
-        initiateAddressResolution(msg->getSrcAddress(), nce);
         nce->pendingPackets.push_back(msg);
         pendingQueue.insert(msg);
     }
     else if (nce->reachabilityState == IPv6NeighbourCache::STALE)
     {
         EV << "Reachability State is STALE.\n";
-        send(msg,"ipv6Out");
+        send(msg, "ipv6Out");
         initiateNeighbourUnreachabilityDetection(nce);
     }
     else if (nce->reachabilityState == IPv6NeighbourCache::REACHABLE)
@@ -418,6 +417,7 @@ IPv6Address IPv6NeighbourDiscovery::determineNextHop(
     const IPv6Address& destAddr, int& outIfID)
 {
     IPv6Address nextHopAddr;
+    simtime_t expiryTime;
 
     //RFC 2461 Section 5.2
     //Next-hop determination for a given unicast destination operates as follows.
@@ -429,19 +429,20 @@ IPv6Address IPv6NeighbourDiscovery::determineNextHop(
 
     if (route != NULL)
     {
+        expiryTime = route->getExpiryTime();
+        outIfID = route->getInterfaceId();
+
         //If the destination is on-link, the next-hop address is the same as the
         //packet's destination address.
         if (route->getNextHop().isUnspecified())
         {
             EV << "Dest is on-link, next-hop addr is same as dest addr.\n";
-            outIfID = route->getInterfaceId();
             nextHopAddr = destAddr;
         }
         else
         {
             EV << "A next-hop address was found with the route, dest is off-link\n";
             EV << "Assume next-hop address as the selected default router.\n";
-            outIfID = route->getInterfaceId();
             nextHopAddr = route->getNextHop();
         }
     }
@@ -452,6 +453,7 @@ IPv6Address IPv6NeighbourDiscovery::determineNextHop(
 
         EV << "No routes were found, Dest addr is off-link.\n";
         nextHopAddr = selectDefaultRouter(outIfID);
+        expiryTime = 0;
 
         if (outIfID == -1)
             EV << "No Default Routers were found.";
@@ -461,7 +463,7 @@ IPv6Address IPv6NeighbourDiscovery::determineNextHop(
 
     /*the results of next-hop determination computations are saved in the Destination
     Cache (which also contains updates learned from Redirect messages).*/
-    rt6->updateDestCache(destAddr, nextHopAddr, outIfID);
+    rt6->updateDestCache(destAddr, nextHopAddr, outIfID, expiryTime);
     return nextHopAddr;
 }
 
@@ -491,7 +493,7 @@ void IPv6NeighbourDiscovery::processNUDTimeout(cMessage *timeoutMsg)
 
     const Key *nceKey = nce->nceKey;
     if ( nceKey == NULL )
-        throw cRuntimeError(this, "The nceKey is NULL at nce->MAC=%s, isRouter=%d",
+        throw cRuntimeError("The nceKey is NULL at nce->MAC=%s, isRouter=%d",
                 nce->macAddress.str().c_str(), nce->isRouter);
 
     InterfaceEntry *ie = ift->getInterfaceById(nceKey->interfaceID);
@@ -549,40 +551,6 @@ IPv6Address IPv6NeighbourDiscovery::selectDefaultRouter(int& outIfID)
     The policy for selecting routers from the Default Router List is as
     follows:*/
 
-    IPv6Address routerAddr;
-    //Cycle through all entries in the neighbour cache entry.
-    for(IPv6NeighbourCache::iterator it = neighbourCache.begin(); it != neighbourCache.end(); it++)
-    {
-        Key key = it->first;
-        Neighbour nce = it->second;
-        bool routerExpired = false;
-
-        if (nce.isDefaultRouter)
-        {
-            if (simTime()>nce.routerExpiryTime)
-            {
-                EV << "Found an expired default router. Deleting entry...\n";
-                neighbourCache.remove(key.address,key.interfaceID);
-                routerExpired = true;
-            }
-        }
-
-        if (routerExpired == false)
-        {
-            if (nce.reachabilityState == IPv6NeighbourCache::REACHABLE ||
-                nce.reachabilityState == IPv6NeighbourCache::STALE ||
-                nce.reachabilityState == IPv6NeighbourCache::DELAY)//TODO: Need to improve this algorithm!
-            {
-                EV << "Found a router in the neighbour cache(default router list).\n";
-                outIfID = key.interfaceID;
-
-                if (routerExpired == false)
-                    return key.address;
-            }
-        }
-    }
-    EV << "No suitable routers found.\n";
-
     /*1) Routers that are reachable or probably reachable (i.e., in any state
     other than INCOMPLETE) SHOULD be preferred over routers whose reachability
     is unknown or suspect (i.e., in the INCOMPLETE state, or for which no Neighbor
@@ -590,6 +558,26 @@ IPv6Address IPv6NeighbourDiscovery::selectDefaultRouter(int& outIfID)
     router or cycle through the router list in a round-robin fashion as long as
     it always returns a reachable or a probably reachable router when one is
     available.*/
+    DefaultRouterList &defaultRouters = neighbourCache.getDefaultRouterList();
+    for (DefaultRouterList::iterator it = defaultRouters.begin(); it != defaultRouters.end();)
+    {
+        Neighbour &nce = *it;
+        if (simTime() > nce.routerExpiryTime)
+        {
+            EV << "Found an expired default router. Deleting entry...\n";
+            ++it;
+            neighbourCache.remove(nce.nceKey->address, nce.nceKey->interfaceID);
+            continue;
+        }
+        if (nce.reachabilityState != IPv6NeighbourCache::INCOMPLETE)
+        {
+            EV << "Found a probably reachable router in the default router list.\n";
+            defaultRouters.setHead(*nce.nextDefaultRouter);
+            outIfID = nce.nceKey->interfaceID;
+            return nce.nceKey->address;
+        }
+        ++it;
+    }
 
     /*2) When no routers on the list are known to be reachable or probably
     reachable, routers SHOULD be selected in a round-robin fashion, so that
@@ -601,9 +589,18 @@ IPv6Address IPv6NeighbourDiscovery::selectDefaultRouter(int& outIfID)
     A request for a default router is made in conjunction with the sending of a
     packet to a router, and the selected router will be probed for reachability
     as a side effect.*/
+    Neighbour *defaultRouter = defaultRouters.getHead();
+    if (defaultRouter != NULL)
+    {
+        EV << "Found a router in the neighbour cache (default router list).\n";
+        defaultRouters.setHead(*defaultRouter->nextDefaultRouter);
+        outIfID = defaultRouter->nceKey->interfaceID;
+        return defaultRouter->nceKey->address;
+    }
 
-    outIfID = -1;//nothing found yet
-    return IPv6Address();
+    EV << "No suitable routers found.\n";
+    outIfID = -1;
+    return IPv6Address::UNSPECIFIED_ADDRESS;
 }
 
 void IPv6NeighbourDiscovery::timeoutPrefixEntry(const IPv6Address& destPrefix,
@@ -658,8 +655,8 @@ void IPv6NeighbourDiscovery::initiateAddressResolution(const IPv6Address& dgSrcA
     //(in this case, the target address is the address we are trying to resolve)
     EV << "Preparing to send NS to solicited-node multicast group\n";
     EV << "on the next hop interface\n";
-    IPv6Address nsDestAddr = neighbourAddr.formSolicitedNodeMulticastAddress();//for NS datagram
-    IPv6Address nsTargetAddr = neighbourAddr;//for the field within the NS
+    IPv6Address nsDestAddr = neighbourAddr.formSolicitedNodeMulticastAddress(); //for NS datagram
+    IPv6Address nsTargetAddr = neighbourAddr; //for the field within the NS
     IPv6Address nsSrcAddr;
 
     /*If the source address of the packet prompting the solicitation is the
@@ -682,7 +679,7 @@ void IPv6NeighbourDiscovery::initiateAddressResolution(const IPv6Address& dgSrcA
     messages approximately every RetransTimer milliseconds, even in the absence
     of additional traffic to the neighbor. Retransmissions MUST be rate-limited
     to at most one solicitation per neighbor every RetransTimer milliseconds.*/
-    cMessage *msg = new cMessage("arTimeout", MK_AR_TIMEOUT);//AR msg timer
+    cMessage *msg = new cMessage("arTimeout", MK_AR_TIMEOUT); //AR msg timer
     nce->arTimer = msg;
     msg->setContextPointer(nce);
     scheduleAt(simTime() + ie->ipv6Data()->_getRetransTimer(), msg);
@@ -756,7 +753,7 @@ void IPv6NeighbourDiscovery::sendPacketToIPv6Module(cMessage *msg, const IPv6Add
     controlInfo->setInterfaceId(interfaceId);
     msg->setControlInfo(controlInfo);
 
-    send(msg,"ipv6Out");
+    send(msg, "ipv6Out");
 }
 
 /**Not used yet-unsure if we really need it. --DELETED, Andras*/
@@ -765,14 +762,14 @@ void IPv6NeighbourDiscovery::sendQueuedPacketsToIPv6Module(Neighbour *nce)
 {
     MsgPtrVector& pendingPackets = nce->pendingPackets;
 
-    while(!pendingPackets.empty())//FIXME: pendingPackets are always empty!!!!
+    while (!pendingPackets.empty())//FIXME: pendingPackets are always empty!!!!
     {
         MsgPtrVector::iterator i = pendingPackets.begin();
         cMessage *msg = (*i);
         pendingPackets.erase(i);
         pendingQueue.remove(msg);
         EV << "Sending queued packet " << msg << endl;
-        send(msg,"ipv6Out");
+        send(msg, "ipv6Out");
     }
 }
 
@@ -797,7 +794,13 @@ void IPv6NeighbourDiscovery::assignLinkLocalAddress(cMessage *timerMsg)
         }
 
         //Before we can use this address, we MUST initiate DAD first.
-        initiateDAD(linkLocalAddr, ie);
+        if (ie->ipv6Data()->isTentativeAddress(linkLocalAddr))
+        {
+            if (ie->ipv6Data()->getDupAddrDetectTransmits() > 0)
+                initiateDAD(linkLocalAddr, ie);
+            else
+                makeTentativeAddressPermanent(linkLocalAddr, ie);
+        }
     }
     delete timerMsg;
 }
@@ -865,94 +868,101 @@ void IPv6NeighbourDiscovery::processDADTimeout(cMessage *msg)
     else
     {
         bubble("Max number of DAD messages for interface sent. Address is unique.");
-        ie->ipv6Data()->permanentlyAssign(tentativeAddr);
         dadList.erase(dadEntry);
         EV << "delete dadEntry and msg\n";
         delete dadEntry;
         delete msg;
 
-#ifdef WITH_xMIPv6
-        ie->ipv6Data()->setDADInProgress(false);
-
-        // update 28.09.07 - CB
-        // after the link-local address was verified to be unique
-        // we can assign the address and initiate the MIPv6 protocol
-        // in case there are any pending entries in the list
-        DADGlobalList::iterator it = dadGlobalList.find(ie);
-        if ( it != dadGlobalList.end() )
-        {
-            DADGlobalEntry& entry = it->second;
-
-            ie->ipv6Data()->assignAddress(entry.addr, false, simTime()+entry.validLifetime,
-                    simTime()+entry.preferredLifetime, entry.hFlag);
-
-            // moved from processRAPrefixInfoForAddrAutoConf()
-            // we can remove the old CoA now
-            if ( !entry.CoA.isUnspecified() )
-                ie->ipv6Data()->removeAddress(entry.CoA);
-
-            // set addresses on this interface to tentative=false
-            for (int i = 0; i < ie->ipv6Data()->getNumAddresses(); i++)
-            {
-                // TODO improve this code so that only addresses are permanently assigned
-                // which are formed based on the new prefix from the RA
-                IPv6Address addr = ie->ipv6Data()->getAddress(i);
-                ie->ipv6Data()->permanentlyAssign(addr);
-            }
-
-            // if we have MIPv6 protocols on this node we will eventually have to
-            // call some appropriate methods
-            if (rt6->isMobileNode())
-            {
-                if (entry.hFlag == false) // if we are not in the home network, send BUs
-                      mipv6->initiateMIPv6Protocol(ie, tentativeAddr);
-                  /*
-                else if ( entry.returnedHome ) // if we are again in the home network
-                  {
-                      ASSERT(entry.CoA.isUnspecified() == false);
-                      mipv6->returningHome(entry.CoA, ie); // initiate the returning home procedure
-                  }*/
-            }
-
-            dadGlobalList.erase(it->first);
-        }
-
-        // an optimization to make sure that the access router on the link gets our L2 address
-        //sendUnsolicitedNA(ie);
-
-        // =================================Start: Zarrar Yousaf 08.07.07 ===============================================
-        /* == Calling the routine to assign global scope adddresses to the the routers only. At present during the simulation initialization, the FlatNetworkConfigurator6 assigns a 64 bit prefix to the routers but for xMIPv6 operation, we need full 128bit global scope address, only for routers. The call to  autoConfRouterGlobalScopeAddress() will autoconfigure the full 128 bit global scope address, which will be used by the MN in its BU message destination address, especially for home registeration.
-        */
-        if (rt6->isRouter() && !(ie->isLoopback()))
-        {
-            for(int i = 0; i < ie->ipv6Data()->getNumAdvPrefixes(); i++)
-            {
-                IPv6Address globalAddress = ie->ipv6Data()->autoConfRouterGlobalScopeAddress(i);
-                ie->ipv6Data()->assignAddress(globalAddress, false, 0, 0);
-                // ie->ipv6Data()->deduceAdvPrefix(); //commented out but the above two statements can be replaced with this single statement. But i am using the above two statements for clarity reasons.
-            }
-        }
-        // ==================================End: Zarrar Yousaf 08.07.07===========================================
-#endif /* WITH_xMIPv6 */
-
-        /*RFC 2461: Section 6.3.7 2nd Paragraph
-        Before a host sends an initial solicitation, it SHOULD delay the
-        transmission for a random amount of time between 0 and
-        MAX_RTR_SOLICITATION_DELAY.  This serves to alleviate congestion when
-        many hosts start up on a link at the same time, such as might happen
-        after recovery from a power failure.*/
-        //TODO: Placing these operations here means fast router solicitation is
-        //not adopted. Will relocate.
-        if (ie->ipv6Data()->getAdvSendAdvertisements() == false)
-        {
-            EV << "creating router discovery message timer\n";
-            cMessage *rtrDisMsg = new cMessage("initiateRTRDIS",MK_INITIATE_RTRDIS);
-            rtrDisMsg->setContextPointer(ie);
-            simtime_t interval = uniform(0, ie->ipv6Data()->_getMaxRtrSolicitationDelay()); // random delay
-            scheduleAt(simTime()+interval, rtrDisMsg);
-        }
+        makeTentativeAddressPermanent(tentativeAddr, ie);
     }
 }
+
+void IPv6NeighbourDiscovery::makeTentativeAddressPermanent(const IPv6Address& tentativeAddr, InterfaceEntry *ie)
+{
+    ie->ipv6Data()->permanentlyAssign(tentativeAddr);
+
+#ifdef WITH_xMIPv6
+    ie->ipv6Data()->setDADInProgress(false);
+
+    // update 28.09.07 - CB
+    // after the link-local address was verified to be unique
+    // we can assign the address and initiate the MIPv6 protocol
+    // in case there are any pending entries in the list
+    DADGlobalList::iterator it = dadGlobalList.find(ie);
+    if ( it != dadGlobalList.end() )
+    {
+        DADGlobalEntry& entry = it->second;
+
+        ie->ipv6Data()->assignAddress(entry.addr, false, simTime()+entry.validLifetime,
+                simTime()+entry.preferredLifetime, entry.hFlag);
+
+        // moved from processRAPrefixInfoForAddrAutoConf()
+        // we can remove the old CoA now
+        if ( !entry.CoA.isUnspecified() )
+            ie->ipv6Data()->removeAddress(entry.CoA);
+
+        // set addresses on this interface to tentative=false
+        for (int i = 0; i < ie->ipv6Data()->getNumAddresses(); i++)
+        {
+            // TODO improve this code so that only addresses are permanently assigned
+            // which are formed based on the new prefix from the RA
+            IPv6Address addr = ie->ipv6Data()->getAddress(i);
+            ie->ipv6Data()->permanentlyAssign(addr);
+        }
+
+        // if we have MIPv6 protocols on this node we will eventually have to
+        // call some appropriate methods
+        if (rt6->isMobileNode())
+        {
+            if (entry.hFlag == false) // if we are not in the home network, send BUs
+                  mipv6->initiateMIPv6Protocol(ie, tentativeAddr);
+              /*
+            else if ( entry.returnedHome ) // if we are again in the home network
+              {
+                  ASSERT(entry.CoA.isUnspecified() == false);
+                  mipv6->returningHome(entry.CoA, ie); // initiate the returning home procedure
+              }*/
+        }
+
+        dadGlobalList.erase(it->first);
+    }
+
+    // an optimization to make sure that the access router on the link gets our L2 address
+    //sendUnsolicitedNA(ie);
+
+    // =================================Start: Zarrar Yousaf 08.07.07 ===============================================
+    /* == Calling the routine to assign global scope adddresses to the the routers only. At present during the simulation initialization, the FlatNetworkConfigurator6 assigns a 64 bit prefix to the routers but for xMIPv6 operation, we need full 128bit global scope address, only for routers. The call to  autoConfRouterGlobalScopeAddress() will autoconfigure the full 128 bit global scope address, which will be used by the MN in its BU message destination address, especially for home registeration.
+    */
+    if (rt6->isRouter() && !(ie->isLoopback()))
+    {
+        for (int i = 0; i < ie->ipv6Data()->getNumAdvPrefixes(); i++)
+        {
+            IPv6Address globalAddress = ie->ipv6Data()->autoConfRouterGlobalScopeAddress(i);
+            ie->ipv6Data()->assignAddress(globalAddress, false, 0, 0);
+            // ie->ipv6Data()->deduceAdvPrefix(); //commented out but the above two statements can be replaced with this single statement. But i am using the above two statements for clarity reasons.
+        }
+    }
+    // ==================================End: Zarrar Yousaf 08.07.07===========================================
+#endif /* WITH_xMIPv6 */
+
+    /*RFC 2461: Section 6.3.7 2nd Paragraph
+    Before a host sends an initial solicitation, it SHOULD delay the
+    transmission for a random amount of time between 0 and
+    MAX_RTR_SOLICITATION_DELAY.  This serves to alleviate congestion when
+    many hosts start up on a link at the same time, such as might happen
+    after recovery from a power failure.*/
+    //TODO: Placing these operations here means fast router solicitation is
+    //not adopted. Will relocate.
+    if (ie->ipv6Data()->getAdvSendAdvertisements() == false)
+    {
+        EV << "creating router discovery message timer\n";
+        cMessage *rtrDisMsg = new cMessage("initiateRTRDIS", MK_INITIATE_RTRDIS);
+        rtrDisMsg->setContextPointer(ie);
+        simtime_t interval = uniform(0, ie->ipv6Data()->_getMaxRtrSolicitationDelay()); // random delay
+        scheduleAt(simTime()+interval, rtrDisMsg);
+    }
+}
+
 
 IPv6RouterSolicitation *IPv6NeighbourDiscovery::createAndSendRSPacket(InterfaceEntry *ie)
 {
@@ -964,12 +974,12 @@ IPv6RouterSolicitation *IPv6NeighbourDiscovery::createAndSendRSPacket(InterfaceE
     IPv6Address myIPv6Address = ie->ipv6Data()->getPreferredAddress();
 
     if (myIPv6Address.isUnspecified())
-        myIPv6Address = ie->ipv6Data()->getLinkLocalAddress();//so we use the link local address instead
+        myIPv6Address = ie->ipv6Data()->getLinkLocalAddress(); //so we use the link local address instead
 
     if (ie->ipv6Data()->isTentativeAddress(myIPv6Address))
-        myIPv6Address = IPv6Address::UNSPECIFIED_ADDRESS;//set my IPv6 address to unspecified.
+        myIPv6Address = IPv6Address::UNSPECIFIED_ADDRESS; //set my IPv6 address to unspecified.
 
-    IPv6Address destAddr = IPv6Address::ALL_ROUTERS_2;//all_routers multicast
+    IPv6Address destAddr = IPv6Address::ALL_ROUTERS_2; //all_routers multicast
     IPv6RouterSolicitation *rs = new IPv6RouterSolicitation("RSpacket");
     rs->setType(ICMPv6_ROUTER_SOL);
 
@@ -1075,7 +1085,7 @@ void IPv6NeighbourDiscovery::processRSPacket(IPv6RouterSolicitation *rs,
 
     //Find out which interface the RS message arrived on.
     InterfaceEntry *ie = ift->getInterfaceById(rsCtrlInfo->getInterfaceId());
-    AdvIfEntry *advIfEntry = fetchAdvIfEntry(ie);//fetch advertising interface entry.
+    AdvIfEntry *advIfEntry = fetchAdvIfEntry(ie); //fetch advertising interface entry.
 
     //RFC 2461: Section 6.2.6
     //A host MUST silently discard any received Router Solicitation messages.
@@ -1322,10 +1332,10 @@ void IPv6NeighbourDiscovery::processRAPacket(IPv6RouterAdvertisement *ra,
         }
 #endif /* WITH_xMIPv6 */
 
-        cancelRouterDiscovery(ie);//Cancel router discovery if it is in progress.
+        cancelRouterDiscovery(ie); //Cancel router discovery if it is in progress.
         EV << "Interface is a host, processing RA.\n";
 
-        processRAForRouterUpdates(ra, raCtrlInfo);//See RFC2461: Section 6.3.4
+        processRAForRouterUpdates(ra, raCtrlInfo); //See RFC2461: Section 6.3.4
 
         //Possible options
         MACAddress macAddress = ra->getSourceLinkLayerAddress();
@@ -1336,7 +1346,7 @@ void IPv6NeighbourDiscovery::processRAPacket(IPv6RouterAdvertisement *ra,
             if (prefixInfo.getAutoAddressConfFlag() == true)//If auto addr conf is set
             {
 #ifndef WITH_xMIPv6
-                processRAPrefixInfoForAddrAutoConf(prefixInfo, ie);//We process prefix Info and form an addr
+                processRAPrefixInfoForAddrAutoConf(prefixInfo, ie); //We process prefix Info and form an addr
 #else /* WITH_xMIPv6 */
                 processRAPrefixInfoForAddrAutoConf(prefixInfo, ie, ra->getHomeAgentFlag() ); // then calling the overloaded function for address configuration. The address conf for MN is different from other nodes as it needs to classify the newly formed address as HoA or CoA, depending on the status of the H-Flag. (Zarrar Yousaf 20.07.07)
 #endif /* WITH_xMIPv6 */
@@ -1400,27 +1410,14 @@ void IPv6NeighbourDiscovery::processRAForRouterUpdates(IPv6RouterAdvertisement *
 
             //If a Neighbor Cache entry is created for the router its reachability
             //state MUST be set to STALE as specified in Section 7.3.3.
-            if (ra->getSourceLinkLayerAddress().isUnspecified())
-            {
-                neighbour = neighbourCache.addRouter(raSrcAddr, ifID,
+            neighbour = neighbourCache.addRouter(raSrcAddr, ifID,
 #ifndef WITH_xMIPv6
-                    simTime() + ra->getRouterLifetime());
+                ra->getSourceLinkLayerAddress(), simTime() + ra->getRouterLifetime());
 #else /* WITH_xMIPv6 */
-                    simTime() + ra->getRouterLifetime(), ra->getHomeAgentFlag() );
+                ra->getSourceLinkLayerAddress(), simTime() + ra->getRouterLifetime(), ra->getHomeAgentFlag() );
 #endif /* WITH_xMIPv6 */
-                //Note:invalidation timers are not explicitly defined.
-            }
-            else
-            {
-                neighbour = neighbourCache.addRouter(raSrcAddr, ifID,
-#ifndef WITH_xMIPv6
-                    ra->getSourceLinkLayerAddress(), simTime() + ra->getRouterLifetime());
-#else /* WITH_xMIPv6 */
-                    ra->getSourceLinkLayerAddress(), simTime() + ra->getRouterLifetime(), ra->getHomeAgentFlag() );
-#endif /* WITH_xMIPv6 */
-                //According to Greg, we should add a default route for hosts as well!
-                rt6->addDefaultRoute(raSrcAddr, ifID, simTime() + ra->getRouterLifetime());
-            }
+            //According to Greg, we should add a default route for hosts as well!
+            rt6->addDefaultRoute(raSrcAddr, ifID, simTime() + ra->getRouterLifetime());
         }
         else
         {
@@ -1531,7 +1528,7 @@ void IPv6NeighbourDiscovery::processRAPrefixInfo(IPv6RouterAdvertisement *ra,
     for (int i = 0; i < (int)ra->getPrefixInformationArraySize(); i++)
     {
         prefixInfo = ra->getPrefixInformation(i);
-        if (!prefixInfo.getOnlinkFlag()) break;//skip to next prefix option
+        if (!prefixInfo.getOnlinkFlag()) break; //skip to next prefix option
 
         //with the on-link flag set, a host does the following:
         EV << "Fetching Prefix Information:" << i+1 << " of "
@@ -1692,7 +1689,7 @@ void IPv6NeighbourDiscovery::createRATimer(InterfaceEntry *ie)
     }*/
     // update 23.10.07 - CB
 
-    if( isConnectedToWirelessAP(ie) )
+    if ( canServeWirelessNodes(ie) )
     {
         EV << "This Interface is connected to a WLAN AP, hence using MIPv6 Default Values"<<endl;
         simtime_t minRAInterval = par("minIntervalBetweenRAs"); //reading from the omnetpp.ini (ZY 23.07.09)
@@ -1776,7 +1773,7 @@ void IPv6NeighbourDiscovery::sendPeriodicRA(cMessage *msg)
     EV << "Num RA sent is: " << advIfEntry->numRASent << endl;
     EV << "maxInitialRtrAdvertisements is: " << ie->ipv6Data()->_getMaxInitialRtrAdvertisements() << endl;
 
-    if(advIfEntry->numRASent <= ie->ipv6Data()->_getMaxInitialRtrAdvertisements())
+    if (advIfEntry->numRASent <= ie->ipv6Data()->_getMaxInitialRtrAdvertisements())
     {
         if (interval > ie->ipv6Data()->_getMaxInitialRtrAdvertInterval())
         {
@@ -1873,7 +1870,7 @@ IPv6NeighbourSolicitation *IPv6NeighbourDiscovery::createAndSendNSPacket(
     /*If the solicitation is being sent to a solicited-node multicast
     address, the sender MUST include its link-layer address (if it has
     one) as a Source Link-Layer Address option.*/
-    if (dgDestAddr.matches(IPv6Address("FF02::1:FF00:0"),104) && // FIXME what's this? make constant...
+    if (dgDestAddr.matches(IPv6Address("FF02::1:FF00:0"), 104) && // FIXME what's this? make constant...
             !dgSrcAddr.isUnspecified())
         ns->setSourceLinkLayerAddress(myMacAddr);
 
@@ -1951,7 +1948,7 @@ bool IPv6NeighbourDiscovery::validateNSPacket(IPv6NeighbourSolicitation *ns,
         EV << "Source Address is unspecified\n";
 
         //the IP destination address is a solicited-node multicast address.
-        if (nsCtrlInfo->getDestAddr().matches(IPv6Address::SOLICITED_NODE_PREFIX,104) == false)
+        if (nsCtrlInfo->getDestAddr().matches(IPv6Address::SOLICITED_NODE_PREFIX, 104) == false)
         {
             EV << " but IP dest address is not a solicited-node multicast address! NS validation failed!\n";
             result = false;
@@ -2077,7 +2074,7 @@ void IPv6NeighbourDiscovery::sendSolicitedNA(IPv6NeighbourSolicitation *ns,
     cached value must already be current in order for the solicitation to have
     been received. If the solicitation's IP Destination Address is a multicast
     address, the Target Link-Layer option MUST be included in the advertisement.*/
-    na->setTargetLinkLayerAddress(ie->getMacAddress());//here, we always include the MAC addr.
+    na->setTargetLinkLayerAddress(ie->getMacAddress()); //here, we always include the MAC addr.
 
     /*Furthermore, if the node is a router, it MUST set the Router flag to one;
     otherwise it MUST set the flag to zero.*/
@@ -2101,7 +2098,7 @@ void IPv6NeighbourDiscovery::sendSolicitedNA(IPv6NeighbourSolicitation *ns,
 
     IPv6Address naDestAddr;
     //If the source of the solicitation is the unspecified address,
-    if(nsCtrlInfo->getSrcAddr().isUnspecified())
+    if (nsCtrlInfo->getSrcAddr().isUnspecified())
     {
         /*the node MUST set the Solicited flag to zero and multicast the advertisement
         to the all-nodes address.*/
@@ -2268,7 +2265,7 @@ void IPv6NeighbourDiscovery::processNAPacket(IPv6NeighbourAdvertisement *na,
 bool IPv6NeighbourDiscovery::validateNAPacket(IPv6NeighbourAdvertisement *na,
         IPv6ControlInfo *naCtrlInfo)
 {
-    bool result = true;//adopt optimistic approach
+    bool result = true; //adopt optimistic approach
 
     //RFC 2461:7.1.2 Validation of Neighbor Advertisments(some checks are omitted)
     //A node MUST silently discard any received Neighbor Advertisment messages
@@ -2348,6 +2345,8 @@ void IPv6NeighbourDiscovery::processNAForIncompleteNCEState(
         //- It sets the IsRouter flag in the cache entry based on the Router
         //  flag in the received advertisement.
         nce->isRouter = naRouterFlag;
+        if (nce->isDefaultRouter() && !nce->isRouter)
+            neighbourCache.getDefaultRouterList().remove(*nce);
 
         //- It sends any packets queued for the neighbour awaiting address
         //  resolution.
@@ -2452,13 +2451,16 @@ void IPv6NeighbourDiscovery:: processNAForOtherNCEStates(
         EV << "Updating NCE's router flag to " << naRouterFlag << endl;
         nce->isRouter = naRouterFlag;
 
-        //TODO: To be implemented
         /*In those cases where the IsRouter flag changes from TRUE to FALSE as a
         result of this update, the node MUST remove that router from the Default
         Router List and update the Destination Cache entries for all destinations
         using that neighbor as a router as specified in Section 7.3.3. This is
         needed to detect when a node that is used as a router stops forwarding
         packets due to being configured as a host.*/
+        if (nce->isDefaultRouter() && !nce->isRouter)
+            neighbourCache.getDefaultRouterList().remove(*nce);
+
+        //TODO: remove destination cache entries
     }
 }
 
@@ -2482,8 +2484,8 @@ void IPv6NeighbourDiscovery::processRedirectPacket(IPv6Redirect *redirect,
         IPv6ControlInfo *ctrlInfo)
 {
     //First we need to extract information from the redirect message
-    IPv6Address targetAddr = redirect->getTargetAddress();//Addressed to me
-    IPv6Address destAddr = redirect->getDestinationAddress();//new dest addr
+    IPv6Address targetAddr = redirect->getTargetAddress(); //Addressed to me
+    IPv6Address destAddr = redirect->getDestinationAddress(); //new dest addr
 
     //Optional
     MACAddress macAddr = redirect->getTargetLinkLayerAddress();
@@ -2645,9 +2647,9 @@ void IPv6NeighbourDiscovery::routersUnreachabilityDetection(const InterfaceEntry
     rt6->removeDefaultRoutes( ie->getInterfaceId() );
     rt6->removePrefixes( ie->getInterfaceId() );
 
-    for(IPv6NeighbourCache::iterator it = neighbourCache.begin(); it != neighbourCache.end(); )
+    for (IPv6NeighbourCache::iterator it = neighbourCache.begin(); it != neighbourCache.end(); )
     {
-        if ((*it).first.interfaceID == ie->getInterfaceId() &&  it->second.isDefaultRouter)
+        if ((*it).first.interfaceID == ie->getInterfaceId() && it->second.isDefaultRouter())
         {
             // update 14.9.07 - CB
             IPv6Address rtrLnkAddress = (*it).first.address;
@@ -2674,29 +2676,41 @@ void IPv6NeighbourDiscovery::invalidateNeigbourCache()
     neighbourCache.invalidateAllEntries();
 }
 
-bool IPv6NeighbourDiscovery::isConnectedToWirelessAP(InterfaceEntry *ie)
+bool IPv6NeighbourDiscovery::canServeWirelessNodes(InterfaceEntry *ie)
 {
-    //EV<<"Determination of whether an interface is connected to a WLAN AP or not."<<endl;
+    if (isWirelessInterface(ie))
+        return true;
+
+    // check if this interface is directly connected to an AccessPoint.
     cModule* node = findContainingNode(this);
     cGate* gate = node->gate(ie->getNodeOutputGateId());
-    ASSERT(gate != NULL); //to make sure that the gate exists
-    // TODO generalize
-
+    ASSERT(gate != NULL);
     cGate* connectedGate = gate->getNextGate();
     if (connectedGate != NULL)
     {
-        cModule* ownerModule = connectedGate->getOwnerModule();
-        ASSERT(isNode(ownerModule));
-
-        cModule* wlanMAC = ownerModule->getSubmodule("relayUnit");
-        if (wlanMAC != NULL)
+        cModule* connectedNode = connectedGate->getOwnerModule();
+        ASSERT(isNode(connectedNode));
+        if (isWirelessAccessPoint(connectedNode))
             return true;
-
-        wlanMAC = ownerModule->getSubmodule("wlan");//to search for a "wlan" module which, in the INET fw scheme of things, resides inside a WLAN AP
-        return wlanMAC != NULL;
     }
 
+    // FIXME The AccessPoint can be connected to this router via Ethernet switches and/or hubs.
+
     return false;
+}
+
+bool IPv6NeighbourDiscovery::isWirelessInterface(const InterfaceEntry *ie)
+{
+    // TODO should be a flag in the InterfaceEntry
+    return (strncmp("wlan", ie->getName(), 4) == 0);
+}
+
+bool IPv6NeighbourDiscovery::isWirelessAccessPoint(cModule* module)
+{
+    // AccessPoint is defined as a node containing "relayUnit" and
+    // "wlan" submodules
+    return (isNode(module) && module->getSubmodule("relayUnit") &&
+            (module->getSubmodule("wlan", 0) || module->getSubmodule("wlan")));
 }
 #endif /* WITH_xMIPv6 */
 

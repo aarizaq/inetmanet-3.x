@@ -97,17 +97,19 @@ void Ieee80211MgmtSTA::initialize(int stage)
 
         nb = NotificationBoardAccess().get();
 
-        // determine numChannels (needed when we're told to scan "all" channels)
-        IChannelControl *cc = ChannelAccess::getChannelControl();
-        numChannels = cc->getNumChannels();
-        nb->subscribe(this, NF_LINK_FULL_PROMISCUOUS);
-
         WATCH(isScanning);
         WATCH(isAssociated);
 
         WATCH(scanning);
         WATCH(assocAP);
         WATCH_LIST(apList);
+    }
+    else if (stage == 1)
+    {
+        // determine numChannels (needed when we're told to scan "all" channels)
+        IChannelControl *cc = ChannelAccess::getChannelControl();
+        numChannels = cc->getNumChannels();
+        nb->subscribe(this, NF_LINK_FULL_PROMISCUOUS);
     }
 }
 
@@ -178,16 +180,18 @@ void Ieee80211MgmtSTA::handleTimer(cMessage *msg)
 
 void Ieee80211MgmtSTA::handleUpperMessage(cPacket *msg)
 {
-    Ieee80211DataFrame *frame = encapsulate(msg);
+    if (!isAssociated || assocAP.address.isUnspecified())
+    {
+        EV << "STA is not associated with an access point, discarding packet" << msg << "\n";
+        delete msg;
+        return;
+    }
 
-    // Discard frame if STA is not associated (assocAP.address is unspecified).
-    if (frame->getReceiverAddress().isUnspecified())
-        delete frame;
-    else
-        sendOrEnqueue(frame);
+    Ieee80211DataFrame *frame = encapsulate(msg);
+    sendOrEnqueue(frame);
 }
 
-void Ieee80211MgmtSTA::handleCommand(int msgkind, cPolymorphic *ctrl)
+void Ieee80211MgmtSTA::handleCommand(int msgkind, cObject *ctrl)
 {
     if (dynamic_cast<Ieee80211Prim_ScanRequest *>(ctrl))
         processScanCommand((Ieee80211Prim_ScanRequest *)ctrl);
@@ -324,7 +328,7 @@ void Ieee80211MgmtSTA::startAssociation(APInfo *ap, simtime_t timeout)
     scheduleAt(simTime()+timeout, assocTimeoutMsg);
 }
 
-void Ieee80211MgmtSTA::receiveChangeNotification(int category, const cPolymorphic *details)
+void Ieee80211MgmtSTA::receiveChangeNotification(int category, const cObject *details)
 {
     Enter_Method_Silent();
     printNotificationBanner(category, details);

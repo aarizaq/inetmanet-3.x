@@ -31,6 +31,12 @@ package inet.linklayer.ieee80211.mgmt;
 // This module never switches channels, that is, it will operate on the channel
 // the physical layer is configured for (see channelNumber in ~Ieee80211Radio).
 //
+// This module checks if there is an other module connected above the management
+// module (e.g. RelayUnit) and sends the frame there if the frame's destination
+// is not on the associated station's list. Multicast frames are broadcasted on
+// the wireless card and a copy sent also up to the relay unit so it can broadcast 
+// it on other interfaces.
+//
 // @author Andras Varga
 //
 simple Ieee80211MgmtAP like IIeee80211Mgmt
@@ -40,12 +46,19 @@ simple Ieee80211MgmtAP like IIeee80211Mgmt
         double beaconInterval @unit("s") = default(100ms);
         int frameCapacity = default(100); // maximum queue length
         int numAuthSteps = default(4); // use 2 for Open System auth, 4 for WEP
-        bool forceRelayUnit=default(false);
+        string encapDecap = default("eth") @enum("true", "false", "eth");   // if "eth", frames sent up are converted to EthernetIIFrame
         //dataRate: numeric; XXX TBD
         @display("i=block/cogwheel");
+        @signal[enqueuePk](type=cMessage);
+        @signal[dequeuePk](type=cMessage);
+        @signal[dropPkByQueue](type=cMessage);
+        @signal[queueingTime](type=simtime_t; unit=s);
+        @signal[dataQueueLen](type=long);  // number of stored packets
+        @statistic[dataQueueLen](title="data queue length"; record=max,timeavg,vector; interpolationmode=sample-hold);
+        @statistic[dropPkByQueue](title="packets dropped by queue"; source=dropPkByQueue; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
     gates:
-        input uppergateIn; // from ~IMACRelayUnit; can be left unconnected
-        output uppergateOut; // to ~IMACRelayUnit; can be left unconnected
+        input upperLayerIn; // from ~IMACRelayUnit; can be left unconnected
+        output upperLayerOut; // to ~IMACRelayUnit; can be left unconnected
         input macIn @labels(Ieee80211Frame); // from ~Ieee80211Mac
         output macOut @labels(Ieee80211Frame); // to ~Ieee80211Mac
         input agentIn @loose;   // unused dummy to statisfy the IIeee80211Mgmt interface

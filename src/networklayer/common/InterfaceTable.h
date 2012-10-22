@@ -19,8 +19,9 @@
 #define __INET_INTERFACETABLE_H
 
 #include <vector>
-#include <omnetpp.h>
+
 #include "INETDefs.h"
+
 #include "IInterfaceTable.h"
 #include "InterfaceEntry.h"
 #include "NotificationBoard.h"
@@ -81,8 +82,11 @@ class INET_API InterfaceTable : public cSimpleModule, public IInterfaceTable, pr
     // displays summary above the icon
     virtual void updateDisplayString();
 
+    // displays the interface IPv4/IPv6 address on the outgoing link that corresponds to the interface
+    virtual void updateLinkDisplayString(InterfaceEntry *entry);
+
     // discover and store which nwlayer/host gates connect to this interface
-    virtual void discoverConnectingGates(InterfaceEntry *entry, cModule *ifmod);
+    virtual void discoverConnectingGates(InterfaceEntry *entry);
 
     // called from InterfaceEntry
     virtual void interfaceChanged(InterfaceEntry *entry, int category);
@@ -109,22 +113,21 @@ class INET_API InterfaceTable : public cSimpleModule, public IInterfaceTable, pr
      * Called by the NotificationBoard whenever a change of a category
      * occurs to which this client has subscribed.
      */
-    virtual void receiveChangeNotification(int category, const cPolymorphic *details);
+    virtual void receiveChangeNotification(int category, const cObject *details);
 
     /**
-     * Adds an interface. The second argument should be a module which belongs
-     * to the physical interface (e.g. PPP or EtherMac) -- it will be used
+     * Returns the host or router this interface table lives in.
+     */
+    virtual cModule *getHostModule();
+
+    /**
+     * Adds an interface. The entry->getInterfaceModule() will be used
      * to discover and fill in getNetworkLayerGateIndex(), getNodeOutputGateId(),
      * and getNodeInputGateId() in InterfaceEntry. It should be NULL if this is
      * a virtual interface (e.g. loopback).
      */
-    virtual void addInterface(InterfaceEntry *entry, cModule *ifmod);
-    /**
-     * Adds an interface. The second argument must be a module which belongs
-     * to the physical interface (e.g. PPP or EtherMac) -- it will be used
-     * to discover and fill in getNetworkLayerGateIndex(), getNodeOutputGateId(),
-     */
-    virtual void addInterfaceGroup(InterfaceEntry *entry, cModule *ifmod);
+    virtual void addInterface(InterfaceEntry *entry);
+
     /**
      * Deletes the given interface from the table. Indices of existing
      * interfaces (see getInterface(int)) may change. It is an error if
@@ -174,6 +177,13 @@ class INET_API InterfaceTable : public cSimpleModule, public IInterfaceTable, pr
     virtual InterfaceEntry *getInterfaceByNetworkLayerGateIndex(int index);
 
     /**
+     * Returns an interface by one of its component module (e.g. PPP).
+     * Returns NULL if not found.
+     */
+    virtual InterfaceEntry *getInterfaceByInterfaceModule(cModule *ifmod);
+
+
+    /**
      * Returns an interface given by its name. Returns NULL if not found.
      */
     virtual InterfaceEntry *getInterfaceByName(const char *name);
@@ -185,6 +195,12 @@ class INET_API InterfaceTable : public cSimpleModule, public IInterfaceTable, pr
      * loopback interface on startup.)
      */
     virtual InterfaceEntry *getFirstLoopbackInterface();
+
+    /**
+     * Returns the first multicast capable interface.
+     * If there is no such interface, then returns NULL.
+     */
+    virtual InterfaceEntry *getFirstMulticastInterface();
 };
 
 #endif

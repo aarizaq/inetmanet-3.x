@@ -12,8 +12,8 @@ simple Ieee80211MgmtSTAExtended like IIeee80211Mgmt
         double max_beacons_missed = default(5); // maximum number of beacon missed to notify agent about beacon lost event
         @display("i=block/cogwheel");
     gates:
-        input uppergateIn;
-        output uppergateOut;
+        input upperLayerIn;
+        output upperLayerOut;
         input macIn;
         output macOut;
         input agentIn;

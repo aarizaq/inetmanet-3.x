@@ -10,14 +10,17 @@
 #include <set>
 #include <vector>
 #include <map>
-#include <omnetpp.h>
+
+#include "INETDefs.h"
+
 #include "ManetRoutingBase.h"
 #include "BatmanMsg_m.h"
+
 #define TYPE_OF_WORD uint64_t /* you should choose something big, if you don't want to waste cpu */
 #define WORD_BIT_SIZE  (sizeof(TYPE_OF_WORD)*8)
 
 
-const_simtime_t PURGE_TIMEOUT = 200;// 200000 msec /* purge originators after time in ms if no valid packet comes in -> TODO: check influence on TQ_LOCAL_WINDOW_SIZE */
+const_simtime_t PURGE_TIMEOUT = 200; // 200000 msec /* purge originators after time in ms if no valid packet comes in -> TODO: check influence on TQ_LOCAL_WINDOW_SIZE */
 //#define BATMANMAXJITTER  0.1
 //#define JITTER (uniform(0,(double)BATMANMAXJITTER))
 #define TTL 32                 /* Time To Live of broadcast messages */
@@ -140,7 +143,7 @@ public:
     void clear();
     ~NeighNode();
     NeighNode() {clear();}
-    NeighNode(OrigNode *, OrigNode* ,const Uint128 &, BatmanIf *,const uint32_t&, const uint32_t&);
+    NeighNode(OrigNode *, OrigNode*, const Uint128 &, BatmanIf *, const uint32_t&, const uint32_t&);
     virtual std::string info() const;
 };
 
@@ -192,8 +195,8 @@ class Hna_task
     uint8_t route_action;
     Hna_task()
     {
-       netmask=route_action=0;
-       addr=(Uint128)0;
+       netmask = route_action = 0;
+       addr = (Uint128)0;
     }
 };
 
@@ -212,27 +215,25 @@ class Hna_global_entry
     uint8_t netmask;
     OrigNode *curr_orig_node;
     std::vector<OrigNode *> orig_list;
+    Hna_global_entry() { curr_orig_node = NULL; }
     ~Hna_global_entry()
     {
-        while (orig_list.empty())
+        while (!orig_list.empty())
         {
             delete orig_list.back();
             orig_list.pop_back();
         }
     }
-    Hna_global_entry& operator = (const Hna_global_entry& m)
-    {
-        addr=m.addr;
-        netmask=m.netmask;
-        curr_orig_node=m.curr_orig_node;
-        orig_list=m.orig_list;
-        return *this;
-    }
-    friend bool operator <  (const Hna_global_entry &, const Hna_global_entry &);
-    friend bool operator == (const Hna_global_entry &, const Hna_global_entry &);
+
+   private:     // noncopyable
+    Hna_global_entry(const Hna_global_entry& m);
+    Hna_global_entry& operator=(const Hna_global_entry& m);
+   public:
+    friend bool operator<(const Hna_global_entry &, const Hna_global_entry &);
+    friend bool operator==(const Hna_global_entry &, const Hna_global_entry &);
 };
 
-inline bool operator <  (const Hna_global_entry & a, const Hna_global_entry & b)
+inline bool operator<(const Hna_global_entry & a, const Hna_global_entry & b)
 {
     if (a.addr==b.addr)
     {
@@ -241,7 +242,7 @@ inline bool operator <  (const Hna_global_entry & a, const Hna_global_entry & b)
     return a.addr<b.addr;
 }
 
-inline bool operator == (const Hna_global_entry & a, const Hna_global_entry & b)
+inline bool operator==(const Hna_global_entry & a, const Hna_global_entry & b)
 {
     if (a.addr==b.addr && a.netmask==b.netmask)
         return true;

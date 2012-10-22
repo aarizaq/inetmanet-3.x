@@ -51,8 +51,9 @@ class INET_API IPv6NeighbourDiscovery : public cSimpleModule
 {
     public:
         typedef std::vector<cMessage*> MsgPtrVector;
-        typedef IPv6NeighbourCache::Key Key;//for convenience
+        typedef IPv6NeighbourCache::Key Key; //for convenience
         typedef IPv6NeighbourCache::Neighbour Neighbour;  // for convenience
+        typedef IPv6NeighbourCache::DefaultRouterList DefaultRouterList; // for convenience
 
     public:
         IPv6NeighbourDiscovery();
@@ -105,17 +106,17 @@ class INET_API IPv6NeighbourDiscovery : public cSimpleModule
 #endif /* WITH_xMIPv6 */
 
         IPv6NeighbourCache neighbourCache;
-        typedef std::set<cMessage*> RATimerList;
+        typedef std::set<cMessage*> RATimerList;    //FIXME add comparator for stable fingerprints!
 
         // stores information about a pending Duplicate Address Detection for
         // an interface
         struct DADEntry {
-            int interfaceId;// interface on which DAD is performed
-            IPv6Address address;// link-local address subject to DAD
-            int numNSSent;// number of DAD solicitations sent since start of sim
-            cMessage *timeoutMsg;// the message to cancel when NA is received
+            int interfaceId; // interface on which DAD is performed
+            IPv6Address address; // link-local address subject to DAD
+            int numNSSent; // number of DAD solicitations sent since start of sim
+            cMessage *timeoutMsg; // the message to cancel when NA is received
         };
-        typedef std::set<DADEntry*> DADList; //FIXME why ptrs are stored?
+        typedef std::set<DADEntry*> DADList; //FIXME why ptrs are stored?    //FIXME add comparator for stable fingerprints!
 
         //stores information about Router Discovery for an interface
         struct RDEntry {
@@ -123,16 +124,16 @@ class INET_API IPv6NeighbourDiscovery : public cSimpleModule
             unsigned int numRSSent; //number of Router Solicitations sent since start of sim
             cMessage *timeoutMsg; //the message to cancel when RA is received
         };
-        typedef std::set<RDEntry*> RDList; //FIXME why ptrs are stored?
+        typedef std::set<RDEntry*> RDList; //FIXME why ptrs are stored?    //FIXME add comparator for stable fingerprints!
 
         //An entry that stores information for an Advertising Interface
         struct AdvIfEntry {
             int interfaceId;
-            unsigned int numRASent;//number of Router Advertisements sent since start of sim
-            simtime_t nextScheduledRATime;//stores time when next RA will be sent.
-            cMessage *raTimeoutMsg;//the message to cancel when resetting RA timer
+            unsigned int numRASent; //number of Router Advertisements sent since start of sim
+            simtime_t nextScheduledRATime; //stores time when next RA will be sent.
+            cMessage *raTimeoutMsg; //the message to cancel when resetting RA timer
         };
-        typedef std::set<AdvIfEntry*> AdvIfList; //FIXME why ptrs are stored?
+        typedef std::set<AdvIfEntry*> AdvIfList; //FIXME why ptrs are stored?    //FIXME add comparator for stable fingerprints!
 
         //List of periodic RA msgs(used only for router interfaces)
         RATimerList raTimerList;
@@ -156,7 +157,7 @@ class INET_API IPv6NeighbourDiscovery : public cSimpleModule
             //bool returnedHome; // MIPv6-related: whether we returned home after a visit in a foreign network
             IPv6Address CoA; // MIPv6-related: the old CoA, in case we returned home
         };
-        typedef std::map<InterfaceEntry*, DADGlobalEntry> DADGlobalList;
+        typedef std::map<InterfaceEntry*, DADGlobalEntry> DADGlobalList;    //FIXME add comparator for stable fingerprints!
         DADGlobalList dadGlobalList;
 #endif /* WITH_xMIPv6 */
 
@@ -249,6 +250,12 @@ class INET_API IPv6NeighbourDiscovery : public cSimpleModule
          *  address as permanent address for given interface entry.
          */
         virtual void processDADTimeout(cMessage *msg);
+
+        /**
+         * Permanently assign the given address for the given interface entry.
+         * To be called after successful DAD.
+         */
+        virtual void makeTentativeAddressPermanent(const IPv6Address& tentativeAddr, InterfaceEntry *ie);
 
         /************Address Autoconfiguration Stuff***************************/
         /**
@@ -374,12 +381,16 @@ class INET_API IPv6NeighbourDiscovery : public cSimpleModule
         /************End Of Redirect Message Stuff*****************************/
 
 #ifdef WITH_xMIPv6
-        /* To determine whether a Router's Ethernet Interface is connected to
-         * a WLAN AP or not (Zarrar Yousaf (23.09.07)
+        /* Determine that this router can communicate with wireless nodes
+         * on the LAN connected to the given interface.
+         * The result is true if the interface is a wireless interface
+         * or connected to an wireless access point.
          *
-         * Moved here from InterfaceEntry.h by BT.
+         * If wireless nodes can be present on the LAN, the router sends
+         * RAs more frequently in accordance with the MIPv6 specification
+         * (RFC 3775 7.5.).
          */
-        virtual bool isConnectedToWirelessAP(InterfaceEntry *ie);
+        virtual bool canServeWirelessNodes(InterfaceEntry *ie);
 #endif /* WITH_xMIPv6 */
 
         /**
@@ -396,6 +407,8 @@ class INET_API IPv6NeighbourDiscovery : public cSimpleModule
 
     protected:
         void routersUnreachabilityDetection(const InterfaceEntry* ie); // 3.9.07 - CB
+        bool isWirelessInterface(const InterfaceEntry *ie);
+        bool isWirelessAccessPoint(cModule* module);
 #endif /* WITH_xMIPv6 */
 };
 

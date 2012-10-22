@@ -37,8 +37,8 @@ void WiMAXQoSTrafficGenerator::initialize(int aStage)
 
     if (0 == aStage)
     {
-        mLowergateIn = findGate("lowergateIn");
-        mLowergateOut = findGate("lowergateOut");
+        mLowerLayerIn = findGate("lowerLayerIn");
+        mLowerLayerOut = findGate("lowerLayerOut");
 
         // if needed, change the current traffic pattern
         //mCurrentTrafficPattern = 0;
@@ -127,5 +127,5 @@ void WiMAXQoSTrafficGenerator::SendTraf(cPacket * apMsg, const char *apDest)
 
     ip_d->setControlInfo(ci);
     mNumTrafficMsgs++;
-    send(ip_d, mLowergateOut);
+    send(ip_d, mLowerLayerOut);
 }

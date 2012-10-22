@@ -19,10 +19,10 @@
 
 package inet.linklayer.ieee80211mesh.ethernet;
 
-import inet.networklayer.queue.IOutputQueue;
 import inet.linklayer.IWiredNic;
 import inet.linklayer.IEtherMAC;
 import inet.base.IHook;
+import inet.linklayer.ethernet.EtherQoSQueue;
 
 //
 // Ethernet network interface. Complements EtherMAC and EtherEncap
@@ -35,53 +35,61 @@ module EthernetInterfaceMesh like IWiredNic
     parameters:
         bool csmacdSupport = default(false);  // by default no CSMA/CD so only only point-to-point duplex links are supported.
         string macType = default(csmacdSupport ? "EtherMAC" : "EtherMACFullDuplex"); // ~EtherMAC or ~EtherMACFullDuplex
-        string queueType = default("DropTailQueue"); // DropTailQueue, DropTailQoSQueue, REDQueue, NoQueue
+        string queueType = default("DropTailQueue"); // ~DropTailQueue, or a Diffserv queue; set to "" for use of an internal queue
         int numOutputHooks = default(0);
         int numInputHooks = default(0);
         @display("i=block/ifcard;bgb=273,285;bgl=2");
     gates:
-        input netwIn;
-        output netwOut;
+        input upperLayerIn;
+        output upperLayerOut;
         inout phys @labels(EtherFrame);
         input wifiMeshIn @labels(Ieee80211Frame);   // to Ethernet MAC
         output wifiMeshOut @labels(Ieee80211Frame); // to Ethernet MAC
     submodules:
-        outputHook[numOutputHooks]: <default("Nop")> like IHook if numOutputHooks>0;
-        inputHook[numInputHooks]: <default("Nop")> like IHook if numInputHooks>0;
-        queue: <queueType> like IOutputQueue {
+        outputHook[numOutputHooks]: <default("Nop")> like IHook if numOutputHooks>0 {
+            @display("p=185,94");
+        }
+        inputHook[numInputHooks]: <default("Nop")> like IHook if numInputHooks>0 {
+            @display("p=43,79");
+        }
+        queue: EtherQoSQueue if queueType != "" {
             parameters:
-                @display("p=154,96;q=l2queue");
+                dataQueueType = queueType;
+                @display("p=165,174;q=l2queue");
         }
         mac: <macType> like IEtherMAC {
             parameters:
-                queueModule = (queueType == "NoQueue" ? "" : "queue");
+                queueModule = (queueType == "" ? "" : "queue");
                 txQueueLimit = (queueType == "NoQueue" ? 10000 : 1); // queue sends one packet at a time
                 @display("p=98,230");
         }
         encap: EtherEncapMesh {
             parameters:
-                @display("p=98,158");
+                @display("p=98,124");
         }
     connections:
-        queue.out --> encap.upperLayerIn;
-        encap.lowerLayerOut --> mac.upperLayerIn;
+
+        encap.lowerLayerOut --> queue.in if queueType != "";
+        queue.out --> mac.upperLayerIn if queueType != "";
+        encap.lowerLayerOut --> mac.upperLayerIn if queueType == "";
         encap.lowerLayerIn <-- mac.upperLayerOut;
         mac.phys <--> { @display("m=s"); } <--> phys;
 
-        netwIn --> { @display("m=n"); } --> queue.in if numOutputHooks == 0;
-        netwOut <-- { @display("m=n"); } <-- encap.upperLayerOut if numInputHooks == 0;
+        upperLayerIn --> { @display("m=n"); } --> encap.upperLayerIn if numOutputHooks == 0;
+        upperLayerOut <-- { @display("m=n"); } <-- encap.upperLayerOut if numInputHooks == 0;
 
         encap.upperLayerOut --> inputHook[0].in if numInputHooks > 0;
         for i=0..numInputHooks-2 {
             inputHook[i].out --> inputHook[i+1].in;
         }
-        inputHook[numInputHooks-1].out --> { @display("m=n"); } --> netwOut if numInputHooks > 0;
+        inputHook[numInputHooks-1].out --> { @display("m=n"); } --> upperLayerOut if numInputHooks > 0;
 
-        netwIn --> { @display("m=n"); } --> outputHook[0].in if numOutputHooks > 0;
+        upperLayerIn --> { @display("m=n"); } --> outputHook[0].in if numOutputHooks > 0;
         for i=0..numOutputHooks-2 {
             outputHook[i].out --> outputHook[i+1].in;
         }
-        outputHook[numOutputHooks-1].out --> queue.in if numOutputHooks > 0;
+        outputHook[numOutputHooks-1].out --> encap.upperLayerIn if numOutputHooks > 0;
+
         wifiMeshIn --> encap.wifiMeshIn;   // from wifi mesh
         wifiMeshOut <-- encap.wifiMeshOut; // to wifi mesh
 }

@@ -12,10 +12,10 @@
 
 package inet.examples.mpls.net37;
 
-import inet.util.ThruputMeteringChannel;
-import inet.nodes.mpls.RSVP_LSR;
+import inet.networklayer.autorouting.ipv4.IPv4NetworkConfigurator;
 import inet.nodes.inet.StandardHost;
-import inet.networklayer.autorouting.ipv4.NetworkConfigurator;
+import inet.nodes.mpls.RSVP_LSR;
+import inet.util.ThruputMeteringChannel;
 
 
 network R37
@@ -25,10 +25,10 @@ network R37
         {
             delay = 15ms;
             datarate = 128kbps;
-			thruputDisplayFormat = "u";
+            thruputDisplayFormat = "u";
         }
     submodules:
-        configurator: NetworkConfigurator {
+        configurator: IPv4NetworkConfigurator {
             parameters:
                 @display("p=100,100");
         }

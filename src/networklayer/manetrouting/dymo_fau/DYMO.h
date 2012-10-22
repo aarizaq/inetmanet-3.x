@@ -20,7 +20,7 @@
 #ifndef DYMO_H
 #define DYMO_H
 
-#include <omnetpp.h>
+#include "INETDefs.h"
 
 #include "IPv4Address.h"
 #include "IPv4.h"
@@ -73,7 +73,6 @@ class QueueElement : public cPacket
     unsigned int destAddr;
     unsigned int srcAddr;
     DYMO_Packet* obj;
-
 };
 
 //===========================================================================================
@@ -85,6 +84,8 @@ class DYMO : public ManetRoutingBase
     int numInitStages() const  {return 5;}
     void initialize(int);
     void finish();
+
+    DYMO();
     ~DYMO();
 
     /** @brief Function called whenever a message arrives at the module */
@@ -106,7 +107,7 @@ class DYMO : public ManetRoutingBase
   private:
     friend class DYMO_RoutingTable;
 
-    void processPacket (const IPv4Datagram* datagram);
+    void processPacket(const IPv4Datagram* datagram);
     //===============================================================================
     // OPERATIONS
     //===============================================================================
@@ -175,7 +176,9 @@ class DYMO : public ManetRoutingBase
     // MEMBER VARIABLES
     //===============================================================================
     /** @brief pointer to the routing table */
-    DYMO_RoutingTable * dymo_routingTable;
+    DYMO_RoutingTable *dymo_routingTable;
+
+    cMessage* timerMsg; // timer self message, used for DYMO_Timer
 
     /** @brief runs after the node has lost its OwnSeqNum. When either ownSeqNumLossTimeout or ownSeqNumLossTimeoutMax expires, the resumes participation in DYMO */
     DYMO_Timer* ownSeqNumLossTimeout;
@@ -249,8 +252,8 @@ class DYMO : public ManetRoutingBase
     int BUFFER_SIZE_BYTES; /**< NED configuration parameter: maximum total size of queued packets, -1 for no limit */
 
 
-    virtual uint32_t getRoute(const Uint128 &,std::vector<Uint128> &add) {return 0;};
-    virtual bool getNextHop(const Uint128 &,Uint128 &add,int &iface, double &val) {return false;};
+    virtual uint32_t getRoute(const Uint128 &, std::vector<Uint128> &add) {return 0;};
+    virtual bool getNextHop(const Uint128 &, Uint128 &add, int &iface, double &val) {return false;};
     virtual void setRefreshRoute(const Uint128 &destination, const Uint128 & nextHop,bool isReverse) {};
     virtual bool isProactive() {return false;};
     virtual bool isOurType(cPacket * msg)
@@ -262,11 +265,11 @@ class DYMO : public ManetRoutingBase
         else
             return false;
     };
-    virtual bool getDestAddress(cPacket *,Uint128 &) {return false;};
+    virtual bool getDestAddress(cPacket *, Uint128 &) {return false;};
 
-    virtual void processLinkBreak(const cPolymorphic *details);
-    void packetFailed(IPv4Datagram *dgram);
-
+    virtual void processLinkBreak(const cObject *details);
+    void packetFailed(const IPv4Datagram *dgram);
+    void rescheduleTimer();
 };
 
 #endif

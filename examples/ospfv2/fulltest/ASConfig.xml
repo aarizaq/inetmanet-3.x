@@ -1,538 +1,115 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<OSPFASConfig xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-              xsi:schemaLocation="OSPF.xsd">
+<?xml version="1.0"?>
+<OSPFASConfig xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="OSPF.xsd">
 
   <!-- Areas -->
   <Area id="0.0.0.0">
-    <AddressRange>
-      <Address>192.168.20.1</Address>
-      <Mask>255.255.255.255</Mask>
-      <Status>Advertise</Status>
-    </AddressRange>
-    <AddressRange>
-      <Address>192.168.20.2</Address>
-      <Mask>255.255.255.255</Mask>
-      <Status>Advertise</Status>
-    </AddressRange>
-    <AddressRange>
-      <Address>192.168.20.3</Address>
-      <Mask>255.255.255.255</Mask>
-      <Status>Advertise</Status>
-    </AddressRange>
-    <AddressRange>
-      <Address>192.168.20.4</Address>
-      <Mask>255.255.255.255</Mask>
-      <Status>Advertise</Status>
-    </AddressRange>
-    <AddressRange>
-      <Address>192.168.20.5</Address>
-      <Mask>255.255.255.255</Mask>
-      <Status>Advertise</Status>
-    </AddressRange>
-    <AddressRange>
-      <Address>192.168.20.6</Address>
-      <Mask>255.255.255.255</Mask>
-      <Status>Advertise</Status>
-    </AddressRange>
-    <AddressRange>
-      <Address>192.168.20.7</Address>
-      <Mask>255.255.255.255</Mask>
-      <Status>Advertise</Status>
-    </AddressRange>
-    <AddressRange>
-      <Address>192.168.20.8</Address>
-      <Mask>255.255.255.255</Mask>
-      <Status>Advertise</Status>
-    </AddressRange>
-    <AddressRange>
-      <Address>192.168.20.9</Address>
-      <Mask>255.255.255.255</Mask>
-      <Status>Advertise</Status>
-    </AddressRange>
-    <AddressRange>
-      <Address>192.168.20.10</Address>
-      <Mask>255.255.255.255</Mask>
-      <Status>Advertise</Status>
-    </AddressRange>
+    <AddressRange address="RT3>RT6" mask="RT3>RT6" status="Advertise" />
+    <AddressRange address="RT4>RT5" mask="RT4>RT5" status="Advertise" />
+    <AddressRange address="RT5>RT4" mask="RT5>RT4" status="Advertise" />
+    <AddressRange address="RT5>RT6" mask="RT5>RT6" status="Advertise" />
+    <AddressRange address="RT5>RT7" mask="RT5>RT7" status="Advertise" />
+    <AddressRange address="RT6>RT3" mask="RT6>RT3" status="Advertise" />
+    <AddressRange address="RT6>RT10" mask="RT6>RT10" status="Advertise" />
+    <AddressRange address="RT6>RT5" mask="RT6>RT5" status="Advertise" />
+    <AddressRange address="RT7>RT5" mask="RT7>RT5" status="Advertise" />
+    <AddressRange address="RT10>RT6" mask="RT10>RT6" status="Advertise" />
   </Area>
 
   <Area id="0.0.0.1">
-    <AddressRange>
-      <Address>192.168.1.0</Address>
-      <Mask>255.255.255.0</Mask>
-      <Status>Advertise</Status>
-    </AddressRange>
-    <AddressRange>
-      <Address>192.168.2.0</Address>
-      <Mask>255.255.255.0</Mask>
-      <Status>Advertise</Status>
-    </AddressRange>
-    <AddressRange>
-      <Address>192.168.3.0</Address>
-      <Mask>255.255.255.0</Mask>
-      <Status>Advertise</Status>
-    </AddressRange>
-    <AddressRange>
-      <Address>192.168.4.0</Address>
-      <Mask>255.255.255.0</Mask>
-      <Status>Advertise</Status>
-    </AddressRange>
+    <AddressRange address="Area1.RT1>Area1.N1" mask="Area1.RT1>Area1.N1" status="Advertise" />
+    <AddressRange address="Area1.RT2>Area1.N2" mask="Area1.RT2>Area1.N2" status="Advertise" />
+    <AddressRange address="Area1.N3.host[0]" mask="Area1.N3.host[0]" status="Advertise" />
+    <AddressRange address="RT3>Area1.N4" mask="RT3>Area1.N4" status="Advertise" />
   </Area>
 
   <Area id="0.0.0.2">
-    <AddressRange>
-      <Address>192.168.6.0</Address>
-      <Mask>255.255.255.0</Mask>
-      <Status>Advertise</Status>
-    </AddressRange>
-    <AddressRange>
-      <Address>192.168.7.0</Address>
-      <Mask>255.255.255.0</Mask>
-      <Status>Advertise</Status>
-    </AddressRange>
-    <AddressRange>
-      <Address>192.168.8.0</Address>
-      <Mask>255.255.255.0</Mask>
-      <Status>Advertise</Status>
-    </AddressRange>
+    <AddressRange address="Area2.RT8>Area2.N6" mask="Area2.RT8>Area2.N6" status="Advertise" />
+    <AddressRange address="Area2.RT8>Area2.N7" mask="Area2.RT8>Area2.N7" status="Advertise" />
+    <AddressRange address="RT10>Area2.N8" mask="RT10>Area2.N8" status="Advertise" />
+    <AddressRange address="RT11>Area2.N8" mask="RT11>Area2.N8" status="Advertise" />
   </Area>
 
   <Area id="0.0.0.3">
-    <AddressRange>
-      <Address>192.168.100.0</Address>
-      <Mask>255.255.252.0</Mask>
-      <Status>Advertise</Status>
-    </AddressRange>
+    <AddressRange address="RT11>Area3.N9" mask="RT11>Area3.N9" status="Advertise" />
+    <AddressRange address="Area3.RT9>Area3.N9" mask="Area3.RT9>Area3.N9" status="Advertise" />
+    <AddressRange address="Area3.RT9>Area3.N11" mask="Area3.RT9>Area3.N11" status="Advertise" />
+    <AddressRange address="Area3.RT12>Area3.N9" mask="Area3.RT12>Area3.N9" status="Advertise" />
+    <AddressRange address="Area3.RT12>Area3.H1" mask="Area3.RT12>Area3.H1" status="Advertise" />
+    <AddressRange address="Area3.RT12>Area3.N10" mask="Area3.RT12>Area3.N10" status="Advertise" />
   </Area>
 
   <!-- Routers -->
-  <Router id="192.168.3.2"> <!-- RT1 -->
-    <RFC1583Compatible />
-    <BroadcastInterface ifName="eth0">
-      <AreaID>0.0.0.1</AreaID>
-      <InterfaceOutputCost>3</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <RouterPriority>1</RouterPriority>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </BroadcastInterface>
-    <BroadcastInterface ifName="eth1">
-      <AreaID>0.0.0.1</AreaID>
-      <InterfaceOutputCost>1</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <RouterPriority>1</RouterPriority>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </BroadcastInterface>
+  <Router name="Area1.RT1" RFC1583Compatible="true">
+    <BroadcastInterface toward="Area1.N1" areaID="0.0.0.1" interfaceOutputCost="3" routerPriority="1" />
+    <BroadcastInterface toward="Area1.N3" areaID="0.0.0.1" interfaceOutputCost="1" routerPriority="1" />
   </Router>
 
-  <Router id="192.168.3.3"> <!-- RT2 -->
-    <RFC1583Compatible />
-    <BroadcastInterface ifName="eth0">
-      <AreaID>0.0.0.1</AreaID>
-      <InterfaceOutputCost>3</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <RouterPriority>1</RouterPriority>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </BroadcastInterface>
-    <BroadcastInterface ifName="eth1">
-      <AreaID>0.0.0.1</AreaID>
-      <InterfaceOutputCost>1</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <RouterPriority>1</RouterPriority>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </BroadcastInterface>
+  <Router name="Area1.RT2" RFC1583Compatible="true">
+    <BroadcastInterface toward="Area1.N2" areaID="0.0.0.1" interfaceOutputCost="3" routerPriority="1" />
+    <BroadcastInterface toward="Area1.N3" areaID="0.0.0.1" interfaceOutputCost="1" routerPriority="1" />
   </Router>
 
-  <Router id="192.168.20.1"> <!-- RT3 -->
-    <RFC1583Compatible />
-    <BroadcastInterface ifName="eth0">
-      <AreaID>0.0.0.1</AreaID>
-      <InterfaceOutputCost>1</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <RouterPriority>1</RouterPriority>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </BroadcastInterface>
-    <BroadcastInterface ifName="eth1">
-      <AreaID>0.0.0.1</AreaID>
-      <InterfaceOutputCost>2</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <RouterPriority>1</RouterPriority>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </BroadcastInterface>
-    <PointToPointInterface ifName="eth2">
-      <AreaID>0.0.0.0</AreaID>
-      <InterfaceOutputCost>8</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </PointToPointInterface>
+  <Router name="RT3" RFC1583Compatible="true">
+    <BroadcastInterface toward="Area1.N3" areaID="0.0.0.1" interfaceOutputCost="1" routerPriority="1" />
+    <BroadcastInterface toward="Area1.N4" areaID="0.0.0.1" interfaceOutputCost="2" routerPriority="1" />
+    <PointToPointInterface toward="RT6" areaID="0.0.0.0" interfaceOutputCost="8" />
   </Router>
 
-  <Router id="192.168.20.2"> <!-- RT4 -->
-    <RFC1583Compatible />
-    <BroadcastInterface ifName="eth0">
-      <AreaID>0.0.0.1</AreaID>
-      <InterfaceOutputCost>1</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <RouterPriority>1</RouterPriority>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </BroadcastInterface>
-    <PointToPointInterface ifName="eth1">
-      <AreaID>0.0.0.0</AreaID>
-      <InterfaceOutputCost>8</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </PointToPointInterface>
+  <Router name="RT4" RFC1583Compatible="true">
+    <BroadcastInterface toward="Area1.N3" areaID="0.0.0.1" interfaceOutputCost="1" routerPriority="1" />
+    <PointToPointInterface toward="RT5" areaID="0.0.0.0" interfaceOutputCost="8" />
   </Router>
 
-  <Router id="192.168.20.5"> <!-- RT5 -->
-    <RFC1583Compatible />
-    <ExternalInterface ifName="eth0">
-      <AdvertisedExternalNetwork>
-        <Address>192.168.13.0</Address>
-        <Mask>255.255.255.0</Mask>
-      </AdvertisedExternalNetwork>
-      <ExternalInterfaceOutputParameters>
-        <ExternalInterfaceOutputType>Type2</ExternalInterfaceOutputType>
-        <ExternalInterfaceOutputCost>8</ExternalInterfaceOutputCost>
-      </ExternalInterfaceOutputParameters>
-      <ForwardingAddress>0.0.0.0</ForwardingAddress>
-      <ExternalRouteTag>0x00</ExternalRouteTag>
-    </ExternalInterface>
-    <PointToPointInterface ifName="eth1">
-      <AreaID>0.0.0.0</AreaID>
-      <InterfaceOutputCost>8</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </PointToPointInterface>
-    <PointToPointInterface ifName="eth2">
-      <AreaID>0.0.0.0</AreaID>
-      <InterfaceOutputCost>7</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </PointToPointInterface>
-    <PointToPointInterface ifName="eth3">
-      <AreaID>0.0.0.0</AreaID>
-      <InterfaceOutputCost>6</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </PointToPointInterface>
-    <ExternalInterface ifName="eth4">
-      <AdvertisedExternalNetwork>
-        <Address>192.168.12.0</Address>
-        <Mask>255.255.255.0</Mask>
-      </AdvertisedExternalNetwork>
-      <ExternalInterfaceOutputParameters>
-        <ExternalInterfaceOutputType>Type2</ExternalInterfaceOutputType>
-        <ExternalInterfaceOutputCost>8</ExternalInterfaceOutputCost>
-      </ExternalInterfaceOutputParameters>
-      <ForwardingAddress>0.0.0.0</ForwardingAddress>
-      <ExternalRouteTag>0x00</ExternalRouteTag>
-    </ExternalInterface>
-    <ExternalInterface ifName="eth5">
-      <AdvertisedExternalNetwork>
-        <Address>192.168.14.0</Address>
-        <Mask>255.255.255.0</Mask>
-      </AdvertisedExternalNetwork>
-      <ExternalInterfaceOutputParameters>
-        <ExternalInterfaceOutputType>Type2</ExternalInterfaceOutputType>
-        <ExternalInterfaceOutputCost>8</ExternalInterfaceOutputCost>
-      </ExternalInterfaceOutputParameters>
-      <ForwardingAddress>0.0.0.0</ForwardingAddress>
-      <ExternalRouteTag>0x00</ExternalRouteTag>
-    </ExternalInterface>
+  <Router name="RT5" RFC1583Compatible="true">
+    <ExternalInterface toward="N13" advertisedExternalNetworkAddress="RT5>N13" advertisedExternalNetworkMask="RT5>N13" externalInterfaceOutputCost="8" externalInterfaceOutputType="Type2" forwardingAddress="0.0.0.0" externalRouteTag="0x00" />
+    <PointToPointInterface toward="RT4" areaID="0.0.0.0" interfaceOutputCost="8" />
+    <PointToPointInterface toward="RT6" areaID="0.0.0.0" interfaceOutputCost="7" />
+    <PointToPointInterface toward="RT7" areaID="0.0.0.0" interfaceOutputCost="6" />
+    <ExternalInterface toward="N12" advertisedExternalNetworkAddress="RT5>N12" advertisedExternalNetworkMask="RT5>N12" externalInterfaceOutputCost="8" externalInterfaceOutputType="Type2" forwardingAddress="0.0.0.0" externalRouteTag="0x00" />
+    <ExternalInterface toward="N14" advertisedExternalNetworkAddress="RT5>N14" advertisedExternalNetworkMask="RT5>N14" externalInterfaceOutputCost="8" externalInterfaceOutputType="Type2" forwardingAddress="0.0.0.0" externalRouteTag="0x00" />
   </Router>
 
-  <Router id="192.168.20.8"> <!-- RT6 -->
-    <RFC1583Compatible />
-    <PointToPointInterface ifName="eth0">
-      <AreaID>0.0.0.0</AreaID>
-      <InterfaceOutputCost>6</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </PointToPointInterface>
-    <PointToPointInterface ifName="eth1">
-      <AreaID>0.0.0.0</AreaID>
-      <InterfaceOutputCost>7</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </PointToPointInterface>
-    <PointToPointInterface ifName="eth2">
-      <AreaID>0.0.0.0</AreaID>
-      <InterfaceOutputCost>6</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </PointToPointInterface>
+  <Router name="RT6" RFC1583Compatible="true">
+    <PointToPointInterface toward="RT3" areaID="0.0.0.0" interfaceOutputCost="6" />
+    <PointToPointInterface toward="RT10" areaID="0.0.0.0" interfaceOutputCost="7" />
+    <PointToPointInterface toward="RT5" areaID="0.0.0.0" interfaceOutputCost="6" />
   </Router>
 
-  <Router id="192.168.20.9"> <!-- RT7 -->
-    <RFC1583Compatible />
-    <PointToPointInterface ifName="eth0">
-      <AreaID>0.0.0.0</AreaID>
-      <InterfaceOutputCost>6</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </PointToPointInterface>
-    <BroadcastInterface ifName="eth1">
-      <AreaID>0.0.0.2</AreaID>
-      <InterfaceOutputCost>1</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <RouterPriority>1</RouterPriority>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </BroadcastInterface>
-    <ExternalInterface ifName="eth2">
-      <AdvertisedExternalNetwork>
-        <Address>192.168.15.0</Address>
-        <Mask>255.255.255.0</Mask>
-      </AdvertisedExternalNetwork>
-      <ExternalInterfaceOutputParameters>
-        <ExternalInterfaceOutputType>Type2</ExternalInterfaceOutputType>
-        <ExternalInterfaceOutputCost>9</ExternalInterfaceOutputCost>
-      </ExternalInterfaceOutputParameters>
-      <ForwardingAddress>0.0.0.0</ForwardingAddress>
-      <ExternalRouteTag>0x00</ExternalRouteTag>
-    </ExternalInterface>
-    <ExternalInterface ifName="eth3">
-      <AdvertisedExternalNetwork>
-        <Address>192.168.12.0</Address>
-        <Mask>255.255.255.0</Mask>
-      </AdvertisedExternalNetwork>
-      <ExternalInterfaceOutputParameters>
-        <ExternalInterfaceOutputType>Type2</ExternalInterfaceOutputType>
-        <ExternalInterfaceOutputCost>2</ExternalInterfaceOutputCost>
-      </ExternalInterfaceOutputParameters>
-      <ForwardingAddress>0.0.0.0</ForwardingAddress>
-      <ExternalRouteTag>0x00</ExternalRouteTag>
-    </ExternalInterface>
+  <Router name="RT7" RFC1583Compatible="true">
+    <PointToPointInterface toward="RT5" areaID="0.0.0.0" interfaceOutputCost="6" />
+    <BroadcastInterface toward="Area2.N6" areaID="0.0.0.2" interfaceOutputCost="1" routerPriority="1" />
+    <ExternalInterface toward="N15" advertisedExternalNetworkAddress="RT7>N15" advertisedExternalNetworkMask="RT7>N15" externalInterfaceOutputCost="9" externalInterfaceOutputType="Type2" forwardingAddress="0.0.0.0" externalRouteTag="0x00" />
+    <ExternalInterface toward="N12" advertisedExternalNetworkAddress="RT7>N12" advertisedExternalNetworkMask="RT7>N12" externalInterfaceOutputCost="2" externalInterfaceOutputType="Type2" forwardingAddress="0.0.0.0" externalRouteTag="0x00" />
   </Router>
 
-  <Router id="192.168.7.1"> <!-- RT8 -->
-    <RFC1583Compatible />
-    <BroadcastInterface ifName="eth0">
-      <AreaID>0.0.0.2</AreaID>
-      <InterfaceOutputCost>1</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <RouterPriority>1</RouterPriority>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </BroadcastInterface>
-    <BroadcastInterface ifName="eth1">
-      <AreaID>0.0.0.2</AreaID>
-      <InterfaceOutputCost>4</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <RouterPriority>1</RouterPriority>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </BroadcastInterface>
+  <Router name="Area2.RT8" RFC1583Compatible="true">
+    <BroadcastInterface toward="Area2.N6" areaID="0.0.0.2" interfaceOutputCost="1" routerPriority="1" />
+    <BroadcastInterface toward="Area2.N7" areaID="0.0.0.2" interfaceOutputCost="4" routerPriority="1" />
   </Router>
 
-  <Router id="192.168.102.2"> <!-- RT9 -->
-    <RFC1583Compatible />
-    <BroadcastInterface ifName="eth0">
-      <AreaID>0.0.0.3</AreaID>
-      <InterfaceOutputCost>3</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <RouterPriority>1</RouterPriority>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </BroadcastInterface>
-    <BroadcastInterface ifName="eth1">
-      <AreaID>0.0.0.3</AreaID>
-      <InterfaceOutputCost>1</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <RouterPriority>1</RouterPriority>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </BroadcastInterface>
+  <Router name="Area3.RT9" RFC1583Compatible="true">
+    <BroadcastInterface toward="Area3.N11" areaID="0.0.0.3" interfaceOutputCost="3" routerPriority="1" />
+    <BroadcastInterface toward="Area3.N9" areaID="0.0.0.3" interfaceOutputCost="1" routerPriority="1" />
   </Router>
 
-  <Router id="192.168.20.10"> <!-- RT10 -->
-    <RFC1583Compatible />
-    <PointToPointInterface ifName="eth0">
-      <AreaID>0.0.0.0</AreaID>
-      <InterfaceOutputCost>5</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </PointToPointInterface>
-    <BroadcastInterface ifName="eth1">
-      <AreaID>0.0.0.2</AreaID>
-      <InterfaceOutputCost>3</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <RouterPriority>1</RouterPriority>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </BroadcastInterface>
-    <BroadcastInterface ifName="eth2">
-      <AreaID>0.0.0.2</AreaID>
-      <InterfaceOutputCost>1</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <RouterPriority>1</RouterPriority>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </BroadcastInterface>
-    <VirtualLink endPointRouterID="192.168.9.4">
-      <TransitAreaID>0.0.0.2</TransitAreaID>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </VirtualLink>
+  <Router name="RT10" RFC1583Compatible="true">
+    <PointToPointInterface toward="RT6" areaID="0.0.0.0" interfaceOutputCost="5" />
+    <BroadcastInterface toward="Area2.N8" areaID="0.0.0.2" interfaceOutputCost="3" routerPriority="1" />
+    <BroadcastInterface toward="Area2.N6" areaID="0.0.0.2" interfaceOutputCost="1" routerPriority="1" />
+    <VirtualLink endPointRouterID="RT11%routerId" transitAreaID="0.0.0.2" />
   </Router>
 
-  <Router id="192.168.100.4"> <!-- RT11 -->
-    <RFC1583Compatible />
-    <BroadcastInterface ifName="eth0">
-      <AreaID>0.0.0.3</AreaID>
-      <InterfaceOutputCost>1</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <RouterPriority>1</RouterPriority>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </BroadcastInterface>
-    <BroadcastInterface ifName="eth1">
-      <AreaID>0.0.0.2</AreaID>
-      <InterfaceOutputCost>2</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <RouterPriority>1</RouterPriority>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </BroadcastInterface>
-    <VirtualLink endPointRouterID="192.168.20.10">
-      <TransitAreaID>0.0.0.2</TransitAreaID>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </VirtualLink>
+  <Router name="RT11" RFC1583Compatible="true">
+    <BroadcastInterface toward="Area3" areaID="0.0.0.3" interfaceOutputCost="1" routerPriority="1" />
+    <BroadcastInterface toward="Area2" areaID="0.0.0.2" interfaceOutputCost="2" routerPriority="1" />
+    <VirtualLink endPointRouterID="RT10%routerId" transitAreaID="0.0.0.2" />
   </Router>
 
-  <Router id="192.168.103.11"> <!-- RT12 -->
-    <RFC1583Compatible />
-    <BroadcastInterface ifName="eth0">
-      <AreaID>0.0.0.3</AreaID>
-      <InterfaceOutputCost>1</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <RouterPriority>1</RouterPriority>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </BroadcastInterface>
-    <HostInterface ifName="eth1">
-      <AreaID>0.0.0.3</AreaID>
-      <AttachedHost>192.168.20.12</AttachedHost>
-      <LinkCost>10</LinkCost>
-    </HostInterface>
-    <BroadcastInterface ifName="eth2">
-      <AreaID>0.0.0.3</AreaID>
-      <InterfaceOutputCost>2</InterfaceOutputCost>
-      <RetransmissionInterval>5</RetransmissionInterval>
-      <InterfaceTransmissionDelay>1</InterfaceTransmissionDelay>
-      <RouterPriority>1</RouterPriority>
-      <HelloInterval>10</HelloInterval>
-      <RouterDeadInterval>40</RouterDeadInterval>
-      <AuthenticationType>NullType</AuthenticationType>
-      <AuthenticationKey>0x00</AuthenticationKey>
-    </BroadcastInterface>
+  <Router name="Area3.RT12" RFC1583Compatible="true">
+    <BroadcastInterface toward="Area3.N9" areaID="0.0.0.3" interfaceOutputCost="1" routerPriority="1" />
+<!--    <BroadcastInterface toward="Area3.H1" areaID="0.0.0.3" linkCost="10"/> -->
+    <HostInterface toward="Area3.H1" areaID="0.0.0.3" attachedHost="Area3.H1" linkCost="10" />
+    <BroadcastInterface toward="Area3.N10" areaID="0.0.0.3" interfaceOutputCost="2" routerPriority="1" />
   </Router>
 
 </OSPFASConfig>

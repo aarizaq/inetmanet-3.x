@@ -32,7 +32,7 @@ class ByteArray : public ByteArray_Base
     /**
      * Copy constructor
      */
-    ByteArray(const ByteArray& other) : ByteArray_Base() {operator=(other);}
+    ByteArray(const ByteArray& other) : ByteArray_Base(other) { }
 
     /**
      * operator =
@@ -73,7 +73,7 @@ class ByteArray : public ByteArray_Base
      * @param srcOffs: number of skipped bytes from source
      * @return: length of copied data
      */
-    virtual unsigned int copyDataToBuffer(void *ptr, unsigned int length, unsigned int srcOffs=0) const;
+    virtual unsigned int copyDataToBuffer(void *ptr, unsigned int length, unsigned int srcOffs = 0) const;
 
     /**
      * Set buffer pointer and buffer length

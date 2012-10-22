@@ -18,7 +18,8 @@
 #ifndef __INET_TCPSENDQUEUE_H
 #define __INET_TCPSENDQUEUE_H
 
-#include <omnetpp.h>
+#include "INETDefs.h"
+
 #include "TCPConnection.h"
 #include "TCPSegment.h"
 
@@ -75,7 +76,7 @@
  *
  * @see TCPReceiveQueue
  */
-class INET_API TCPSendQueue : public cPolymorphic
+class INET_API TCPSendQueue : public cObject
 {
   protected:
     TCPConnection *conn; // the connection that owns this queue

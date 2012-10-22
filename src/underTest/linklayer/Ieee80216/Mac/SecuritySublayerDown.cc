@@ -20,9 +20,9 @@ void SecuritySublayerDown::initialize()
 
 void SecuritySublayerDown::handleMessage(cMessage *msg)
 {
-    if (msg->arrivedOn("uppergateIn"))
+    if (msg->arrivedOn("upperLayerIn"))
     {
-        send(msg, "lowergateOut");
+        send(msg, "lowerLayerOut");
     }
     else
     {

@@ -38,7 +38,6 @@ import inet.linklayer.IMACRelayUnit;
 simple MACRelayUnitNP like IMACRelayUnit
 {
     parameters:
-        int numWirelessPorts = default(0); // see ~IMACRelayUnit
         string addressTableFile = default("");  // see ~IMACRelayUnit
         int addressTableSize = default(100); // see ~IMACRelayUnit
         double agingTime @unit("s") = default(120s); // see ~IMACRelayUnit
@@ -48,7 +47,7 @@ simple MACRelayUnitNP like IMACRelayUnit
         int highWatermark @unit("B") = default(512KiB);  // buffer usage threshold to send PAUSE frame
         int pauseUnits = default(300);  // time to put in PAUSE frames (in units of 512 bit times)
         @display("i=block/switch");
-        @statistic[usedBufferBytes](title="Used buffer bytes"; record=histogram,vector);
+        @statistic[usedBufferBytes](title="Used buffer bytes"; record=max,timeavg,vector);
         @statistic[processedBytes](title="Processed bytes"; record=count,sum,vector);
         @statistic[droppedBytes](title="Dropped bytes"; record=count,sum,vector);
     gates:

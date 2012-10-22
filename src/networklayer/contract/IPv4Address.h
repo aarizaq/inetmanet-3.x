@@ -26,9 +26,9 @@
 #ifndef __INET_IPADDRESS_H
 #define __INET_IPADDRESS_H
 
-#include <omnetpp.h>
 #include <iostream>
 #include <string>
+
 #include "INETDefs.h"
 
 
@@ -50,8 +50,53 @@ class INET_API IPv4Address
   protected:
     // Parses IPv4 address into the given bytes, and returns true if syntax was OK.
     static bool parseIPAddress(const char *text, unsigned char tobytes[]);
+    // Throws error if length is outside 0..32
+    static void _checkNetmaskLength(int length);
+    // Returns a netmask with the given length (Implementation note: MSVC refuses to shift by 32 bits!)
+    static uint32 _makeNetmask(int length) {return length>=32 ? 0xffffffffu : ~(0xffffffffu >> length);}
 
   public:
+    /**
+     * IPv4 address category
+     *
+     * RFC 5735               Special Use IPv4 Addresses           January 2010
+     * 4.  Summary Table
+     * Address Block       Present Use                Reference
+     * ------------------------------------------------------------------
+     * 0.0.0.0/8           "This" Network             RFC 1122, Section 3.2.1.3
+     * 10.0.0.0/8          Private-Use Networks       RFC 1918
+     * 127.0.0.0/8         Loopback                   RFC 1122, Section 3.2.1.3
+     * 169.254.0.0/16      Link Local                 RFC 3927
+     * 172.16.0.0/12       Private-Use Networks       RFC 1918
+     * 192.0.0.0/24        IETF Protocol Assignments  RFC 5736
+     * 192.0.2.0/24        TEST-NET-1                 RFC 5737
+     * 192.88.99.0/24      6to4 Relay Anycast         RFC 3068
+     * 192.168.0.0/16      Private-Use Networks       RFC 1918
+     * 198.18.0.0/15       Network Interconnect
+     *                     Device Benchmark Testing   RFC 2544
+     * 198.51.100.0/24     TEST-NET-2                 RFC 5737
+     * 203.0.113.0/24      TEST-NET-3                 RFC 5737
+     * 224.0.0.0/4         Multicast                  RFC 3171
+     * 240.0.0.0/4         Reserved for Future Use    RFC 1112, Section 4
+     * 255.255.255.255/32  Limited Broadcast          RFC 919, Section 7; RFC 922, Section 7
+     */
+    enum AddressCategory
+    {
+        UNSPECIFIED,        // 0.0.0.0
+        THIS_NETWORK,       // 0.0.0.0/8
+        LOOPBACK,           // 127.0.0.0/8
+        MULTICAST,          // 224.0.0.0/4
+        BROADCAST,          // 255.255.255.255/32
+        IETF,               // 192.0.0.0/24
+        TEST_NET,           // 192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24
+        IPv6_TO_IPv4_RELAY, // 192.88.99.0/24
+        BENCHMARK,          // 198.18.0.0/15
+        RESERVED,           // 240.0.0.0/4
+        LINKLOCAL,          // 169.254.0.0/16
+        PRIVATE_NETWORK,    // 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
+        GLOBAL
+    };
+
     /** @name Predefined addresses */
     //@{
     static const IPv4Address UNSPECIFIED_ADDRESS; ///< 0.0.0.0
@@ -64,6 +109,7 @@ class INET_API IPv4Address
     static const IPv4Address ALL_DVMRP_ROUTERS_MCAST;  ///< 224.0.0.4 All DVMRP routers
     static const IPv4Address ALL_OSPF_ROUTERS_MCAST;   ///< 224.0.0.5 All OSPF routers (DR Others)
     static const IPv4Address ALL_OSPF_DESIGNATED_ROUTERS_MCAST;  ///< 224.0.0.6 All OSPF Designated Routers
+    static const IPv4Address LL_MANET_ROUTERS;  ///< 224.0.0.109 Manet all designated routers
     //@}
 
     /** name Constructors, destructor */
@@ -77,7 +123,7 @@ class INET_API IPv4Address
     /**
      * IPv4 address as int
      */
-    IPv4Address(uint32 ip) {addr = ip;}
+    explicit IPv4Address(uint32 ip) {addr = ip;}
 
     /**
      * IPv4 address bytes: "i0.i1.i2.i3" format
@@ -87,12 +133,12 @@ class INET_API IPv4Address
     /**
      * IPv4 address given as text: "192.66.86.1"
      */
-    IPv4Address(const char *text) {set(text);}
+    explicit IPv4Address(const char *text) {set(text);}
 
     /**
      * Copy constructor
      */
-    IPv4Address(const IPv4Address& obj) {operator=(obj);}
+    IPv4Address(const IPv4Address& obj) { addr = obj.addr; }
 
     ~IPv4Address() {}
     //@}
@@ -135,12 +181,13 @@ class INET_API IPv4Address
     /**
      * Returns binary AND of the two addresses
      */
-    IPv4Address doAnd(const IPv4Address& ip) const {return addr & ip.addr;}
+    IPv4Address doAnd(const IPv4Address& ip) const {return IPv4Address(addr & ip.addr);}
 
     /**
      * Returns the string representation of the address (e.g. "152.66.86.92")
+     * @param printUnspec: show 0.0.0.0 as "<unspec>" if true
      */
-    std::string str() const;
+    std::string str(bool printUnspec = true) const;
 
     /**
      * Returns the address as an int.
@@ -158,6 +205,17 @@ class INET_API IPv4Address
      * or '?' (returned when the address begins with at least five 1 bits.)
      */
     char getIPClass() const;
+
+    /**
+     * Get the IPv4 address category.
+     */
+    AddressCategory getAddressCategory() const;
+
+    /**
+     * Returns true if this address is the limited broadcast address,
+     * i.e. 255.255.255.255.
+     */
+    bool isLimitedBroadcastAddress() const {return addr == 0xFFFFFFFF; }
 
     /**
      * Returns true if this address is in the multicast address range,
@@ -212,6 +270,12 @@ class INET_API IPv4Address
     int getNetmaskLength() const;
 
     /**
+     * Returns true if the address is a valid netmask, i.e. ones are contiguous
+     * and shifted fully to the left in the binary representation.
+     */
+    bool isValidNetmask() const {return addr == _makeNetmask(getNetmaskLength());}
+
+    /**
      * Test if the masked addresses (ie the mask is applied to addr1 and
      * addr2) are equal.
      */
@@ -222,7 +286,7 @@ class INET_API IPv4Address
     /**
       * Returns the broadcast address for the given netmask
       */
-	IPv4Address getBroadcastAddress(IPv4Address netmask);
+    IPv4Address getBroadcastAddress(IPv4Address netmask);
 
     /**
      * Returns equals(addr).
@@ -253,11 +317,10 @@ class INET_API IPv4Address
     static bool isWellFormed(const char *text);
 
     /**
-     * Only keeps the n first bits of the address, completing it with zeros.
-     * Typical usage is when the length of an IPv4 prefix is done and to check
-     * the address ends with the right number of 0.
+     * Creates and returns a netmask with the given length. For example,
+     * for length=23 it will return 255.255.254.0.
      */
-    void keepFirstBits (unsigned int n);
+    static IPv4Address makeNetmask(int length) {_checkNetmaskLength(length); return IPv4Address(_makeNetmask(length));}
 };
 
 inline std::ostream& operator<<(std::ostream& os, const IPv4Address& ip)

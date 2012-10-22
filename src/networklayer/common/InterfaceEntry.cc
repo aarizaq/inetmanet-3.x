@@ -44,9 +44,10 @@ void InterfaceProtocolData::changed(int category)
 }
 
 
-InterfaceEntry::InterfaceEntry()
+InterfaceEntry::InterfaceEntry(cModule* ifmod)
 {
     ownerp = NULL;
+    interfaceModule = ifmod;
 
     nwLayerGateIndex = -1;
     nodeOutputGateId = -1;
@@ -57,7 +58,7 @@ InterfaceEntry::InterfaceEntry()
     down = false;
     broadcast = false;
     multicast = false;
-    pointToPoint= false;
+    pointToPoint = false;
     loopback = false;
     datarate = 0;
 
@@ -66,10 +67,6 @@ InterfaceEntry::InterfaceEntry()
     protocol3data = NULL;
     protocol4data = NULL;
     estimateCostProcessArray.clear();
-    relatedInterfaces.clear();
-    isGroup = false;
-    macAddGroup=MACAddress::UNSPECIFIED_ADDRESS; // share address
-    moduleOwner=NULL;
 }
 
 std::string InterfaceEntry::info() const
@@ -93,9 +90,9 @@ std::string InterfaceEntry::info() const
         out << getMacAddress();
 
     if (ipv4data)
-        out << " " << ((cPolymorphic*)ipv4data)->info(); // Khmm...
+        out << " " << ((cObject*)ipv4data)->info(); // Khmm...
     if (ipv6data)
-        out << " " << ((cPolymorphic*)ipv6data)->info(); // Khmm...
+        out << " " << ((cObject*)ipv6data)->info(); // Khmm...
     if (protocol3data)
         out << " " << protocol3data->info();
     if (protocol4data)
@@ -125,15 +122,19 @@ std::string InterfaceEntry::detailedInfo() const
         out << getMacAddress();
     out << "\n";
     if (ipv4data)
-        out << " " << ((cPolymorphic*)ipv4data)->info() << "\n"; // Khmm...
+        out << " " << ((cObject*)ipv4data)->info() << "\n"; // Khmm...
     if (ipv6data)
-        out << " " << ((cPolymorphic*)ipv6data)->info() << "\n"; // Khmm...
+        out << " " << ((cObject*)ipv6data)->info() << "\n"; // Khmm...
     if (protocol3data)
         out << " " << protocol3data->info() << "\n";
     if (protocol4data)
         out << " " << protocol4data->info() << "\n";
 
     return out.str();
+}
+std::string InterfaceEntry::getFullPath() const
+{
+    return ownerp == NULL ? getFullName() : ownerp->getHostModule()->getFullPath() + "." + getFullName();
 }
 
 void InterfaceEntry::changed(int category)
@@ -164,58 +165,25 @@ void InterfaceEntry::setIPv6Data(IPv6InterfaceData *p)
 #endif
 }
 
-bool InterfaceEntry::setEstimateCostProcess(int position,MacEstimateCostProcess *p)
+bool InterfaceEntry::setEstimateCostProcess(int position, MacEstimateCostProcess *p)
 {
-	int size=estimateCostProcessArray.size();
-	if(size<=position)
-	{
-		estimateCostProcessArray.resize(position+1,NULL);
-	}
-	if (estimateCostProcessArray[position]!=NULL)
-		return false;
-	estimateCostProcessArray[position]=p;
-	return true;
+    ASSERT(position >= 0);
+    if (estimateCostProcessArray.size() <= (size_t)position)
+    {
+        estimateCostProcessArray.resize(position+1, NULL);
+    }
+    if (estimateCostProcessArray[position]!=NULL)
+        return false;
+    estimateCostProcessArray[position] = p;
+    return true;
 }
 
 MacEstimateCostProcess* InterfaceEntry::getEstimateCostProcess(int position)
 {
-	int size=estimateCostProcessArray.size();
-	if(position <size)
-	{
-		return estimateCostProcessArray[position];
-	}
-	return NULL;
-}
-
-
-
-void InterfaceEntry::addRelatedInterface(InterfaceEntry* e)
-{
-    for (unsigned int i=0;i<relatedInterfaces.size();i++)
+    ASSERT(position >= 0);
+    if ((size_t)position < estimateCostProcessArray.size())
     {
-        if (relatedInterfaces[i]==e || e->getMacAddress()==relatedInterfaces[i]->getMacAddress())
-            return;
+        return estimateCostProcessArray[position];
     }
-    relatedInterfaces.push_back(e);
-}
-
-InterfaceEntry * InterfaceEntry::getRelatedInterface(int i)
-{
-     if (i>=relatedInterfaces.size())
-         return NULL;
-     if (i<0)
-    	 return NULL;
-     return relatedInterfaces[i];
-}
-
-void InterfaceEntry::deleteRelatedInterface(InterfaceEntry* e)
-{
-    for (unsigned int i=0;i<relatedInterfaces.size();i++)
-    {
-        if (relatedInterfaces[i]==e)
-        {
-        	relatedInterfaces.erase(relatedInterfaces.begin()+i);
-            return;
-        }
-    }
+    return NULL;
 }

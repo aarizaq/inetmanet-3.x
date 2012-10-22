@@ -19,13 +19,12 @@
 #ifndef __INET_ENQUEUEHOOK_H
 #define __INET_ENQUEUEHOOK_H
 
-#include <omnetpp.h>
 #include "INETDefs.h"
 
 /**
  * Abstract base class for enqueue hooks.
  */
-class INET_API EnqueueHook : public cPolymorphic
+class INET_API EnqueueHook : public cObject
 {
   public:
     /**

@@ -87,9 +87,12 @@ void NS_CLASS dlog(int pri, int errnum, const char *func, const char *format, ..
 const char *NS_CLASS ip2str(Uint128 &ipaddr)
 {
     if (isInMacLayer())
-        return ipaddr.getMACAddress().str().c_str();
+        return MACAddress(ipaddr.getLo()).str().c_str();
     else
-        return ipaddr.getIPAddress().str().c_str();
+    {
+        IPv4Address ipAdr(ipaddr.getLo());
+        return ipAdr.str().c_str();
+    }
 
 }
 

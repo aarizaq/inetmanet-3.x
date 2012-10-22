@@ -18,7 +18,8 @@
 #ifndef __INET_BGPROUTING_H
 #define __INET_BGPROUTING_H
 
-#include <omnetpp.h>
+#include "INETDefs.h"
+
 #include "TCPSocket.h"
 #include "TCPSocketMap.h"
 #include "RoutingTableAccess.h"
@@ -116,13 +117,14 @@ private:
 
     std::vector<const char *> loadASConfig(cXMLElementList& ASConfig);
     void loadSessionConfig(cXMLElementList& sessionList, simtime_t* delayTab);
-    void loadConfigFromXML(const char* filename);
+    void loadConfigFromXML(cXMLElement *bgpConfig);
     BGP::ASID findMyAS(cXMLElementList& ASList, int& outRouterPosition);
     bool ospfExist(IRoutingTable* rtTable);
     void loadTimerConfig(cXMLElementList& timerConfig, simtime_t* delayTab);
     unsigned char asLoopDetection(BGP::RoutingTableEntry* entry, BGP::ASID myAS);
     BGP::SessionID findIdFromPeerAddr(std::map<BGP::SessionID, BGPSession*> sessions, IPv4Address peerAddr);
-    int isInIPTable(IRoutingTable* rtTable, IPv4Address addr);
+    int isInRoutingTable(IRoutingTable* rtTable, IPv4Address addr);
+    int isInInterfaceTable(IInterfaceTable* rtTable, IPv4Address addr);
     BGP::SessionID findIdFromSocketConnId(std::map<BGP::SessionID, BGPSession*> sessions, int connId);
     unsigned int calculateStartDelay(int rtListSize, unsigned char rtPosition, unsigned char rtPeerPosition);
 
@@ -139,11 +141,11 @@ private:
     std::vector<BGP::ASID>                  _ASListOUT;
     std::map<BGP::SessionID, BGPSession*>   _BGPSessions;
 
-    static const int  BGP_TCP_CONNECT_VALID     = 71;
-    static const int  BGP_TCP_CONNECT_CONFIRM   = 72;
-    static const int  BGP_TCP_CONNECT_FAILED    = 73;
-    static const int  BGP_TCP_CONNECT_OPEN_RCV  = 74;
-    static const int  BGP_TCP_KEEP_ALIVE_RCV    = 75;
+    static const int  BGP_TCP_CONNECT_VALID = 71;
+    static const int  BGP_TCP_CONNECT_CONFIRM = 72;
+    static const int  BGP_TCP_CONNECT_FAILED = 73;
+    static const int  BGP_TCP_CONNECT_OPEN_RCV = 74;
+    static const int  BGP_TCP_KEEP_ALIVE_RCV = 75;
 };
 
 #endif

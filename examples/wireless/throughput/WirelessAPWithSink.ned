@@ -20,7 +20,7 @@
 
 package inet.examples.wireless.throughput;
 
-import inet.mobility.models.NullMobility;
+import inet.mobility.models.StationaryMobility;
 import inet.linklayer.ieee80211.Ieee80211Nic;
 import inet.base.Sink;
 import inet.base.NotificationBoard;
@@ -46,17 +46,18 @@ module WirelessAPWithSink
             parameters:
                 @display("p=89,225;q=queue");
                 mgmtType = default("Ieee80211MgmtAPSimplified");
+                mgmt.encapDecap = "false";
         }
         notificationBoard: NotificationBoard {
             parameters:
                 @display("p=78,60");
         }
-        mobility: NullMobility {
+        mobility: StationaryMobility {
             parameters:
                 @display("p=71,121");
         }
     connections allowunconnected:
         radioIn --> { @display("m=s"); } --> wlan.radioIn;
-        wlan.uppergateOut --> sink.in++;
+        wlan.upperLayerOut --> sink.in++;
 }
 

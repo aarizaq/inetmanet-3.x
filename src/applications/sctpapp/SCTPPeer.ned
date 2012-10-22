@@ -23,9 +23,9 @@ import inet.applications.ISCTPApp;
 simple SCTPPeer like ISCTPApp
 {
     parameters:
-        string address = default(""); // may be left empty ("")
-        int port = default(0); // port number to listen on
-        int echoFactor = default(0);
+        string localAddress = default(""); // comma separated list of addresses
+        int localPort = default(0); // port number to listen on
+        bool echo = default(false);  // echoes received packages when true
         double echoDelay @unit(s) = default(0s);
         double delayFirstRead @unit(s) = default(0s);
         int numPacketsToSendPerClient = default(0); // number of requests sent per session
@@ -42,10 +42,12 @@ simple SCTPPeer like ISCTPApp
         int numRequestsPerSession = default(1);  // number of requests sent per session
         int numPacketsToReceive = default(0);
         @display("i=block/app");
-        @statistic[sentPkBytes](title="Sent packet bytes"; record=count,sum,vector);
-        @statistic[rcvdPkBytes](title="Received packet bytes"; record=count,sum,vector);
-        @statistic[sentEchoedPkBytes](title="Sent echoed packet bytes"; record=count,sum,vector);
-
+        @signal[sentPk](type=SCTPSimpleMessage);
+        @signal[rcvdPk](type=cPacket);
+        @signal[echoedPk](type=SCTPSimpleMessage);
+        @statistic[rcvdPk](title="packets received"; source=rcvdPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[sentPk](title="packets sent"; source=sentPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[echoedPk](title="packets echoed"; source=echoedPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
     gates:
         input sctpIn @labels(SCTPCommand/up);
         output sctpOut @labels(SCTPCommand/down);

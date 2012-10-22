@@ -30,11 +30,19 @@ simple Ieee80211MgmtSTA like IIeee80211Mgmt
     parameters:
         int frameCapacity = default(100); // maximum queue length
         @display("i=block/cogwheel");
+        @signal[enqueuePk](type=cMessage);
+        @signal[dequeuePk](type=cMessage);
+        @signal[dropPkByQueue](type=cMessage);
+        @signal[queueingTime](type=simtime_t; unit=s);
+        @signal[dataQueueLen](type=long);  // number of stored packets
+        @statistic[dataQueueLen](title="data queue length"; record=max,timeavg,vector; interpolationmode=sample-hold);
+        @statistic[dropPkByQueue](title="packets dropped by queue"; source=dropPkByQueue; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
     gates:
-        input uppergateIn;
-        output uppergateOut;
+        input upperLayerIn;
+        output upperLayerOut;
         input macIn @labels(Ieee80211Frame);
         output macOut @labels(Ieee80211Frame);
         input agentIn;   // used for attaching an agent algorithm
         output agentOut; // used for attaching an agent algorithm
 }
+

@@ -15,7 +15,8 @@
 #ifndef __INET_LINKSTATEROUTING_H
 #define __INET_LINKSTATEROUTING_H
 
-#include <omnetpp.h>
+#include "INETDefs.h"
+
 #include "NotificationBoard.h"
 #include "LinkStatePacket_m.h"
 #include "IntServ.h"
@@ -74,7 +75,7 @@ class LinkStateRouting : public cSimpleModule, public INotifiable
     virtual void processLINK_STATE_MESSAGE(LinkStateMsg* msg, IPv4Address sender);
 
     // INotifiable method
-    virtual void receiveChangeNotification(int category, const cPolymorphic *details);
+    virtual void receiveChangeNotification(int category, const cObject *details);
 
     virtual void sendToPeers(const std::vector<TELinkStateInfo>& list, bool req, IPv4Address exceptPeer);
     virtual void sendToPeer(IPv4Address peer, const std::vector<TELinkStateInfo> & list, bool req);

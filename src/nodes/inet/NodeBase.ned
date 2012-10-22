@@ -25,15 +25,17 @@ import inet.linklayer.IWirelessNic;
 import inet.linklayer.IWiredNic;
 import inet.linklayer.IExternalNic;
 import inet.base.NotificationBoard;
+import inet.battery.IBattery;
 
 
 //
-// BaseHost contains the common lower layers (linklayer and networklayer)
+// Contains the common lower layers (linklayer and networklayer)
 // of Router, StandardHost, WirelessHost etc. 
 // 
-// NOTE: - IPForward is turned on by default.
-//       - use this model only as a base type. In simulations use Router, StandardHost,
-//         WirelessHost and AndhocHost
+// NOTE:
+//    - IPForward is turned on by default.
+//    - use this model only as a base type. In simulations use ~Router,
+//      ~StandardHost, ~WirelessHost and ~AdhocHost
 //
 module NodeBase
 {
@@ -44,9 +46,11 @@ module NodeBase
         int numExtInterfaces = default(0);
         int numRadios = default(0);               // the number of radios in the router. by default no wireless
         int numPcapRecorders = default(0); // no of PcapRecorders.
-        string mobilityType = default("NullMobility");
+        string mobilityType = default("StationaryMobility");
         string routingFile = default("");
         bool IPForward = default(true);
+        bool forwardMulticast = default(false);
+        string batteryType = default("");
     gates:
         input radioIn[numRadios] @directIn;
         inout pppg[] @labels(PPPFrame-conn);
@@ -57,8 +61,13 @@ module NodeBase
                 @display("p=53,194");
         }
 
+        battery: <batteryType> like IBattery if batteryType != "" {
+            parameters:
+                @display("p=53,77;i=block/plug;is=s");
+        }
+
         // optional mobility module. Required only if wireless cards are present
-        mobility: <mobilityType> like IMobility if numRadios>0 {
+        mobility: <mobilityType> like IMobility if mobilityType != "" && numRadios > 0 {
             parameters:
                 @display("p=53,121");
         }
@@ -73,6 +82,7 @@ module NodeBase
             parameters:
                 @display("p=53,287");
                 IPForward = IPForward;
+                forwardMulticast = forwardMulticast;
                 routingFile = routingFile;
         }
 
@@ -89,7 +99,6 @@ module NodeBase
         wlan[numRadios]: <default("Ieee80211Nic")> like IWirelessNic {
             parameters:
                 @display("p=159,386;q=queue");
-                mgmtType = default("Ieee80211MgmtSTA");
         }
         eth[sizeof(ethg)]: <default("EthernetInterface")> like IWiredNic {
             parameters:
@@ -108,25 +117,25 @@ module NodeBase
         // connections to network outside
         for i=0..sizeof(radioIn)-1 {
             radioIn[i] --> wlan[i].radioIn;
-            wlan[i].uppergateOut --> networkLayer.ifIn++;
-            wlan[i].uppergateIn <-- networkLayer.ifOut++;
+            wlan[i].upperLayerOut --> networkLayer.ifIn++;
+            wlan[i].upperLayerIn <-- networkLayer.ifOut++;
         }
 
         for i=0..sizeof(ethg)-1 {
             ethg[i] <--> eth[i].phys;
-            eth[i].netwOut --> networkLayer.ifIn++;
-            eth[i].netwIn <-- networkLayer.ifOut++;
+            eth[i].upperLayerOut --> networkLayer.ifIn++;
+            eth[i].upperLayerIn <-- networkLayer.ifOut++;
         }
 
         for i=0..sizeof(pppg)-1 {
             pppg[i] <--> ppp[i].phys;
-            ppp[i].netwOut --> networkLayer.ifIn++;
-            ppp[i].netwIn <-- networkLayer.ifOut++;
+            ppp[i].upperLayerOut --> networkLayer.ifIn++;
+            ppp[i].upperLayerIn <-- networkLayer.ifOut++;
         }
 
         for i=0..numExtInterfaces-1 {
-            ext[i].netwOut --> networkLayer.ifIn++;
-            ext[i].netwIn <-- networkLayer.ifOut++;
+            ext[i].upperLayerOut --> networkLayer.ifIn++;
+            ext[i].upperLayerIn <-- networkLayer.ifOut++;
         }
 }
 

@@ -96,7 +96,7 @@ void ConvergenceSublayerControlModule::handleSelfMessage(cMessage *msg)
 {
     //dummy-content until MobileIP is integrated
     IPv4Datagram *ipd = new IPv4Datagram();
-    ipd->setDestAddress("123.123.123.123");
+    ipd->setDestAddress(IPv4Address("123.123.123.123"));
     ipd->setHeaderLength(IP_HEADER_BYTES);
 
     EV << "Created new IPDatagram - sending it to TrafficClassification\n";

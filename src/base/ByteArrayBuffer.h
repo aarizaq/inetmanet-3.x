@@ -27,6 +27,9 @@ class ByteArrayBuffer : public cObject
     uint64 dataLengthM;
     DataList dataListM;
 
+  private:
+    void copy(const ByteArrayBuffer& other) { dataLengthM = other.dataLengthM; dataListM = other.dataListM; }
+
   public:
     /** Ctor. */
     ByteArrayBuffer();
@@ -56,7 +59,7 @@ class ByteArrayBuffer : public cObject
      * @param srcOffsP: source offset
      * @return count of copied bytes
      */
-    virtual unsigned int getBytesToBuffer(void* bufferP, unsigned int bufferLengthP, unsigned int srcOffsP=0) const;
+    virtual unsigned int getBytesToBuffer(void* bufferP, unsigned int bufferLengthP, unsigned int srcOffsP = 0) const;
 
     /**
      * Move bytes to an external buffer

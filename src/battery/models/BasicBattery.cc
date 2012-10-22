@@ -20,8 +20,6 @@
 
 #include "BasicBattery.h"
 
-//#undef EV
-//#define EV (ev.isDisabled()||!mDebug) ? std::cout : ev ==> EV is now part of <omnetpp.h>
 
 Define_Module( BasicBattery );
 
@@ -53,9 +51,9 @@ void BasicBattery::finish()
 
 
 
-void BasicBattery::receiveChangeNotification (
+void BasicBattery::receiveChangeNotification(
     int aCategory,
-    const cPolymorphic* aDetails)
+    const cObject* aDetails)
 {
     ev << "this text should not appear. error in BasicBattery.cc" << endl;
 }
