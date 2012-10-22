@@ -101,7 +101,7 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
     bool   isRegistered;
     void *commonPtr;
     bool sendToICMP;
-    ManetRoutingBase *colaborativeProtocol;
+    ManetRoutingBase *collaborativeProtocol;
 
     ARP *arp;
 
@@ -319,8 +319,8 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
   public:
 //
     std::string convertAddressToString(const Uint128&);
-    virtual void setColaborativeProtocol(cObject *p) {colaborativeProtocol = dynamic_cast<ManetRoutingBase*>(p);}
-    virtual ManetRoutingBase * getColaborativeProtocol() const {return colaborativeProtocol;}
+    virtual void setCollaborativeProtocol(cObject *p) {collaborativeProtocol = dynamic_cast<ManetRoutingBase*>(p);}
+    virtual ManetRoutingBase * getCollaborativeProtocol() const {return collaborativeProtocol;}
     virtual void setStaticNode(bool v) {staticNode=v;}
     virtual bool isStaticNode() {return staticNode;}
 // Routing information access

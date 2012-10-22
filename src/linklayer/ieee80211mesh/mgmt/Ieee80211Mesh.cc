@@ -244,8 +244,8 @@ void Ieee80211Mesh::initialize(int stage)
             routingModuleReactive->setStaticNode(par("FixNode").boolValue());
         if (routingModuleReactive && routingModuleProactive)
         {
-            routingModuleReactive->setColaborativeProtocol(routingModuleProactive);
-            routingModuleProactive->setColaborativeProtocol(routingModuleReactive);
+            routingModuleReactive->setCollaborativeProtocol(routingModuleProactive);
+            routingModuleProactive->setCollaborativeProtocol(routingModuleReactive);
         }
         if (par("IsGateWay"))
             startGateWay();

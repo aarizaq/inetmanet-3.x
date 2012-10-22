@@ -127,7 +127,7 @@ ManetRoutingBase::ManetRoutingBase()
     routesVector = NULL;
     interfaceVector = new InterfaceVector;
     staticNode = false;
-    colaborativeProtocol = NULL;
+    collaborativeProtocol = NULL;
     arp = NULL;
     isGateway = false;
     proxyAddress.clear();

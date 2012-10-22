@@ -1343,12 +1343,12 @@ void DYMOUM::packetFailedMac(Ieee80211DataFrame *dgram)
     next_hop.s_addr = dgram->getReceiverAddress().getInt();
     int count = 0;
 
-    if (isStaticNode() && getColaborativeProtocol())
+    if (isStaticNode() && getCollaborativeProtocol())
     {
     	Uint128 next;
     	int iface;
     	double cost;
-        if (getColaborativeProtocol()->getNextHop(next_hop.s_addr, next, iface, cost))
+        if (getCollaborativeProtocol()->getNextHop(next_hop.s_addr, next, iface, cost))
             if(next == next_hop.s_addr)
             {
                 scheduleNextEvent();
