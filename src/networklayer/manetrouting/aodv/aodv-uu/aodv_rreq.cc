@@ -667,6 +667,30 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
                         return;
             */
         }
+#ifdef OMNETPP
+        // collaborative protocol
+        if (getCollaborativeProtocol())
+        {
+            struct in_addr next_hop;
+            int iface;
+            double cost;
+            if (getCollaborativeProtocol()->getNextHop(rreq_dest.s_addr,next_hop.s_addr,iface,cost))
+            {
+
+                u_int8_t hops = cost;
+                std::map<Uint128,u_int32_t *>::iterator it =  mapSeqNum.find(rreq_dest.s_addr);
+                if (it == mapSeqNum.end())
+                    opp_error("node not found in mapSeqNum");
+                u_int32_t sqnum = *(it->second);
+
+                rrep = rrep_create(0, 0, hops, rreq_dest , sqnum, rev_rt->dest_addr, MY_ROUTE_TIMEOUT);
+                rrep_send(rrep, rev_rt, NULL, rrep_size);
+                return;
+            }
+        }
+
+#endif
+
 forward:
 #ifndef OMNETPP
         if (ip_ttl > 1)

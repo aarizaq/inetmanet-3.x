@@ -64,6 +64,7 @@ int AODVUU::totalRrepAckRec=0;
 int AODVUU::totalRerrSend=0;
 int AODVUU::totalRerrRec=0;
 #endif
+std::map<Uint128,u_int32_t *> AODVUU::mapSeqNum;
 
 void NS_CLASS initialize(int stage)
 {
@@ -196,6 +197,10 @@ void NS_CLASS initialize(int stage)
                 DEV_NR(i).netmask.s_addr = MACAddress::BROADCAST_ADDRESS.getInt();
                 DEV_NR(i).ipaddr.s_addr = getInterfaceEntry(i)->getMacAddress().getInt();
 
+            }
+            if (isInMacLayer())
+            {
+                mapSeqNum[DEV_NR(i).ipaddr.s_addr] = &this_host.seqno;
             }
         }
         /* Set network interface parameters */
@@ -419,6 +424,20 @@ void NS_CLASS packetFailedMac(Ieee80211DataFrame *dgram)
         packet_queue_add(dgram->dup(), dest_addr);
         scheduleNextEvent();
         return;
+    }
+
+    next_hop.s_addr = dgram->getReceiverAddress().getInt();
+    if (isStaticNode() && getCollaborativeProtocol())
+    {
+        Uint128 next;
+        int iface;
+        double cost;
+        if (getCollaborativeProtocol()->getNextHop(next_hop.s_addr, next, iface, cost))
+            if(next == next_hop.s_addr)
+            {
+                scheduleNextEvent();
+                return; // both nodes are static, do nothing
+            }
     }
 
     rt = rt_table_find(dest_addr);

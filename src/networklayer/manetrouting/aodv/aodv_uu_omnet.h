@@ -140,11 +140,13 @@ class AODVUU : public ManetRoutingBase
     typedef std::map<Uint128, struct rt_table*> AodvRtTableMap;
     AodvRtTableMap aodvRtTableMap;
 
+    // this static map simulate the exchange of seq num by the proactive protocol.
+    static std::map<Uint128,u_int32_t *> mapSeqNum;
 
   public:
     static int  log_file_fd;
     static bool log_file_fd_init;
-    AODVUU() {isRoot = false; is_init = false; log_file_fd_init = false; sendMessageEvent = new cMessage();/*&messageEvent;*/}
+    AODVUU() {isRoot = false; is_init = false; log_file_fd_init = false; sendMessageEvent = new cMessage(); mapSeqNum.clear(); /*&messageEvent;*/}
     ~AODVUU();
 
     void packetFailed(IPv4Datagram *p);
