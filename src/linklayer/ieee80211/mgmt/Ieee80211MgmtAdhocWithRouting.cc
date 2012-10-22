@@ -333,7 +333,9 @@ bool Ieee80211MgmtAdhocWithRouting::macLabelBasedSend(Ieee80211DataFrame *frame)
                 it->second.pop_front();
         }
         frame->setKind(0);
-        sendOrEnqueue(frame);
+        sendOrEnqueue(frame->dup());
+        sendUp(decapsulate(frame));
+        return true;
     }
 
     uint64_t dest = frame->getAddress4().getInt();

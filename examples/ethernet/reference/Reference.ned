@@ -21,6 +21,14 @@ import inet.nodes.ethernet.EtherSwitch;
 import inet.linklayer.ethernet.EtherHub;
 
 import inet.linklayer.channels.ProgramedFailureChannel;
+import ned.DatarateChannel;
+
+import inet.linklayer.channels.ProgramedFailureDataRateChannel;
+
+channel cable extends DatarateChannel
+{
+     datarate = 1000Mbps;
+}
 
 //
 // Reference Topology according IEEE 802.1w document. Page 140
@@ -62,18 +70,18 @@ network Reference
             relayUnitType = "MACRelayUnitSTPNP";
         }
     connections:
-        SW_111.ethg++ <--> SW_222.ethg++;
-        SW_111.ethg++ <--> SW_222.ethg++;
-        SW_111.ethg++ <--> SW_444.ethg++;
-        SW_111.ethg++ <--> SW_333.ethg++;
-        SW_222.ethg++ <--> SW_333.ethg++;
-        SW_222.ethg++ <--> SW_444.ethg++;
-        SW_333.ethg++ <--> SW_888.ethg++;
-        SW_333.ethg++ <--> SW_777.ethg++;
-        SW_333.ethg++ <--> SW_666.ethg++;
-        SW_333.ethg++ <--> SW_555.ethg++;
-        SW_444.ethg++ <--> SW_888.ethg++;
-        SW_444.ethg++ <--> SW_777.ethg++;
-        SW_444.ethg++ <--> SW_666.ethg++;
-        SW_444.ethg++ <--> SW_555.ethg++;
+        SW_111.ethg++ <--> cable <--> SW_222.ethg++;
+        SW_111.ethg++ <--> cable <--> SW_222.ethg++;
+        SW_111.ethg++ <--> cable <--> SW_444.ethg++;
+        SW_111.ethg++ <--> cable <--> SW_333.ethg++;
+        SW_222.ethg++ <--> cable <--> SW_333.ethg++;
+        SW_222.ethg++ <--> cable <--> SW_444.ethg++;
+        SW_333.ethg++ <--> cable <--> SW_888.ethg++;
+        SW_333.ethg++ <--> cable <--> SW_777.ethg++;
+        SW_333.ethg++ <--> cable <--> SW_666.ethg++;
+        SW_333.ethg++ <--> cable <--> SW_555.ethg++;
+        SW_444.ethg++ <--> cable <--> SW_888.ethg++;
+        SW_444.ethg++ <--> cable <--> SW_777.ethg++;
+        SW_444.ethg++ <--> cable <--> SW_666.ethg++;
+        SW_444.ethg++ <--> cable <--> SW_555.ethg++;
 }

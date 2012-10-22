@@ -18,12 +18,26 @@ package inet.examples.ethernet.twoSwitch;
 import inet.nodes.inet.StandardHost;
 import inet.nodes.ethernet.EtherSwitch;
 import inet.linklayer.ethernet.EtherHub;
+import ned.DatarateChannel;
 
-import inet.linklayer.channels.ProgramedFailureChannel;
+import inet.linklayer.channels.ProgramedFailureDataRateChannel;
+
+channel cable extends DatarateChannel
+{
+     datarate = 1000Mbps;
+}
 
 network twoSwitch
 {
     @display("bgb=586,362");
+    types:
+        channel cableFailure extends ProgramedFailureDataRateChannel
+        {
+            datarate = 1000Mbps;
+            failureAt = "70s";
+            recoveryAt = "280s";
+        }
+
     submodules:
         SW_A: EtherSwitch {
             @display("p=278,93");
@@ -42,20 +56,28 @@ network twoSwitch
             routingFile = "A.rt";
         }
     connections:
-        A.ethg++ <--> SW_A.ethg++;
-        B.ethg++ <--> SW_B.ethg++;
+        A.ethg++ <--> cable <--> SW_A.ethg++;
+        B.ethg++ <--> cable <--> SW_B.ethg++;
         
         // Main link between SW_A and SW_B
         // Programed to fail at 70 sec (1m10s) and recover at 280s (4m40s) (210 second of failure)
-        SW_A.ethg++  <--> ProgramedFailureChannel { failureAt="70s"; recoveryAt="280s"; } <-->  SW_B.ethg++;
+        SW_A.ethg++  <--> cableFailure <-->  SW_B.ethg++;
         // Backup link between SW_A and SW_B
-        SW_A.ethg++  <--> SW_B.ethg++;
+        SW_A.ethg++  <--> cable <--> SW_B.ethg++;
 
 }
 
 network twoSwitchHub_Down
 {
     @display("bgb=586,362");
+    types:
+        channel cableFailure extends ProgramedFailureDataRateChannel
+        {
+            datarate = 1000Mbps;
+            failureAt = "70s";
+            recoveryAt = "280s";
+        }
+
     submodules:
         SW_A: EtherSwitch {
             @display("p=278,93");
@@ -77,17 +99,25 @@ network twoSwitchHub_Down
             @display("p=278,192");
         }
     connections:
-        A.ethg++ <--> SW_A.ethg++;
-        B.ethg++ <--> SW_B.ethg++;
-        etherHub.ethg++ <--> SW_A.ethg++;
-        etherHub.ethg++ <--> ProgramedFailureChannel { failureAt="70s"; recoveryAt="280s"; } <-->  SW_B.ethg++;
-        etherHub.ethg++ <--> SW_B.ethg++;
-        etherHub.ethg++ <--> SW_B.ethg++;
+        A.ethg++ <--> cable <--> SW_A.ethg++;
+        B.ethg++ <--> cable <--> SW_B.ethg++;
+        etherHub.ethg++ <--> cable <--> SW_A.ethg++;
+        etherHub.ethg++ <--> cableFailure <-->  SW_B.ethg++;
+        etherHub.ethg++ <--> cable <--> SW_B.ethg++;
+        etherHub.ethg++ <--> cable <--> SW_B.ethg++;
 }
 
 network twoSwitchHub_Up
 {
     @display("bgb=586,362");
+    types:
+        channel cableFailure extends ProgramedFailureDataRateChannel
+        {
+            datarate = 1000Mbps;
+            failureAt = "70s";
+            recoveryAt = "270s";
+        }
+    
     submodules:
         SW_A: EtherSwitch {
             @display("p=278,93");
@@ -109,10 +139,10 @@ network twoSwitchHub_Up
             @display("p=278,192");
         }
     connections:
-        A.ethg++ <--> SW_A.ethg++;
-        B.ethg++ <--> SW_B.ethg++;
-        etherHub.ethg++ <--> ProgramedFailureChannel { failureAt="70s"; recoveryAt="270s"; } <--> SW_A.ethg++;
-        etherHub.ethg++ <--> SW_A.ethg++; 
-        etherHub.ethg++ <--> SW_B.ethg++;
+        A.ethg++ <--> cable <--> SW_A.ethg++;
+        B.ethg++ <--> cable <--> SW_B.ethg++;
+        etherHub.ethg++ <--> cableFailure <--> SW_A.ethg++;
+        etherHub.ethg++ <--> cable <--> SW_A.ethg++; 
+        etherHub.ethg++ <--> cable <--> SW_B.ethg++;
         
 }

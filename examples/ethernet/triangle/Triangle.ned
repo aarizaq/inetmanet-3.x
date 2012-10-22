@@ -18,8 +18,21 @@ package inet.examples.ethernet.triangle;
 import inet.nodes.inet.StandardHost;
 import inet.nodes.ethernet.EtherSwitch;
 import inet.linklayer.ethernet.EtherHub;
+import ned.DatarateChannel;
 
-import inet.linklayer.channels.ProgramedFailureChannel;
+import inet.linklayer.channels.ProgramedFailureDataRateChannel;
+
+channel cable extends DatarateChannel
+{
+     datarate = 1000Mbps;
+}
+
+channel cableFailure extends ProgramedFailureDataRateChannel
+{
+     datarate = 1000Mbps;
+     failureAt = "70s";
+     recoveryAt = "280s";
+}
 
 network Triangle
 {
@@ -50,13 +63,13 @@ network Triangle
             routingFile = "B.rt";
         }
     connections:
-        B.ethg++ <--> SW_B.ethg++;
-        A.ethg++ <--> SW_A.ethg++;
-        C.ethg++ <--> SW_C.ethg++;
-        SW_A.ethg++ <--> SW_C.ethg++;
-        SW_A.ethg++ <--> SW_C.ethg++;
-        SW_C.ethg++ <--> SW_B.ethg++;
-        SW_B.ethg++ <--> ProgramedFailureChannel { failureAt="70s"; recoveryAt="280s"; } <--> SW_A.ethg++;
+        B.ethg++ <--> cable <--> SW_B.ethg++;
+        A.ethg++ <--> cable <--> SW_A.ethg++;
+        C.ethg++ <--> cable <--> SW_C.ethg++;
+        SW_A.ethg++ <--> cable <--> SW_C.ethg++;
+        SW_A.ethg++ <--> cable <--> SW_C.ethg++;
+        SW_C.ethg++ <--> cable <--> SW_B.ethg++;
+        SW_B.ethg++ <--> cableFailure <--> SW_A.ethg++;
 }
 
 network TriangleHub_BC
@@ -95,23 +108,23 @@ network TriangleHub_BC
             routingFile = "D.rt";
         }
     connections:
-        B.ethg++ <--> SW_B.ethg++;
-        A.ethg++ <--> SW_A.ethg++;
-        C.ethg++ <--> SW_C.ethg++;
-        D.ethg++ <--> etherHub.ethg++;
+        B.ethg++ <--> cable <--> SW_B.ethg++;
+        A.ethg++ <--> cable <--> SW_A.ethg++;
+        C.ethg++ <--> cable <--> SW_C.ethg++;
+        D.ethg++ <--> cable <--> etherHub.ethg++;
 
         // Backup links between SW_A and SW_C  
-        SW_A.ethg++ <--> SW_C.ethg++;
-        SW_A.ethg++ <--> SW_C.ethg++;
+        SW_A.ethg++ <--> cable <--> SW_C.ethg++;
+        SW_A.ethg++ <--> cable <--> SW_C.ethg++;
 
         // link between SW_B and SW_A 
-        SW_B.ethg++ <--> ProgramedFailureChannel { failureAt="70s"; recoveryAt="280s"; } <--> SW_A.ethg++;
+        SW_B.ethg++ <--> cableFailure <--> SW_A.ethg++;
 
         // redundant link between C and the network segment
-        SW_C.ethg++ <--> etherHub.ethg++; // alternate
-        SW_C.ethg++ <--> etherHub.ethg++; // alternate
+        SW_C.ethg++ <--> cable <--> etherHub.ethg++; // alternate
+        SW_C.ethg++ <--> cable <--> etherHub.ethg++; // alternate
 
         // redundant link between B and the network segment 
-        SW_B.ethg++ <--> etherHub.ethg++;  // designated link to the segment
-        SW_B.ethg++ <--> etherHub.ethg++;  // backup
+        SW_B.ethg++ <--> cable <--> etherHub.ethg++;  // designated link to the segment
+        SW_B.ethg++ <--> cable <--> etherHub.ethg++;  // backup
 }
