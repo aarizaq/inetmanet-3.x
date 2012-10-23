@@ -123,6 +123,7 @@ class HwmpProtocol : public ManetRoutingBase
             return false;
         }
         ;
+        virtual bool supportGetRoute() {return false;}
         virtual bool isOurType(cPacket *);
         virtual bool getDestAddress(cPacket *, Uint128 &);
         virtual uint32_t getRoute(const Uint128 &, std::vector<Uint128> &);

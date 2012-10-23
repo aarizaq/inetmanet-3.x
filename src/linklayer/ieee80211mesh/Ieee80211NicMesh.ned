@@ -39,7 +39,7 @@ module Ieee80211NicMesh like IWirelessNic
         string opMode @enum("b","g","a","p") = default("g");
         int numOutputHooks = default(0);
         int numInputHooks = default(0);
-        double bitrate @unit("bps");
+        double bitrate @unit("bps") = default(opMode == "b" ? 11Mbps : opMode == "p" ? 27Mbps : 54Mbps);
         bool _agentNeeded = false;   // internal par. do not use, shows if optional agent module is needed        
         bool hasLocator = default(false);
         @display("i=block/ifcard;bgb=259,357");

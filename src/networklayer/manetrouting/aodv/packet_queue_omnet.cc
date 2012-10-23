@@ -423,6 +423,18 @@ int NS_CLASS packet_queue_set_verdict(struct in_addr dest_addr, int verdict)
                     case PQ_SEND:
                         if (!rt)
                             return -1;
+                        // now Ip layer decremented again
+                        if (isInMacLayer())
+                        {
+                            Ieee802Ctrl *ctrl = new Ieee802Ctrl();
+                            Uint128 nextHop;
+                            int iface;
+                            double cost;
+                            getNextHop(dest_addr.s_addr, nextHop, iface, cost);
+                            ctrl->setDest(MACAddress(nextHop.getLo()));
+                            //TODO ctrl->setEtherType(...);
+                            qp->p->setControlInfo(ctrl);
+                        }
                         /* Apparently, the link layer implementation can't handle
                          * a burst of packets. So to keep ARP happy, buffered
                          * packets are sent with ARP_DELAY seconds between

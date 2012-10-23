@@ -329,6 +329,8 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
     virtual bool getInternalStore() const { return createInternalStore;}
     // it should return 0 if not route, if complete route number of hops and, if only next hop
     // it should return -1
+    // if the protocol has implemented supportGetRoute()
+    virtual bool supportGetRoute () = 0;
     virtual uint32_t getRoute(const Uint128 &, std::vector<Uint128> &) = 0;
     virtual bool getNextHop(const Uint128 &, Uint128 &add, int &iface, double &cost) = 0;
     virtual void setRefreshRoute(const Uint128 &destination, const Uint128 & nextHop,bool isReverse) = 0;

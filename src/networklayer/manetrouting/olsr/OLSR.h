@@ -548,6 +548,7 @@ class OLSR : public ManetRoutingBase
     static int      node_id(const nsaddr_t&);
 
     // Routing information access
+    virtual bool supportGetRoute() {return true;}
     virtual uint32_t getRoute(const Uint128 &, std::vector<Uint128> &);
     virtual bool getNextHop(const Uint128 &, Uint128 &add, int &iface, double &);
     virtual bool isProactive();

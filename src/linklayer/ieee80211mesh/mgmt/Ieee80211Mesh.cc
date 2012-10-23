@@ -274,7 +274,7 @@ void Ieee80211Mesh::startReactive()
 {
     cModuleType *moduleType;
     cModule *module;
-    moduleType = cModuleType::find("inet.networklayer.manetrouting.DYMOUM");
+    moduleType = cModuleType::find(par("meshReactiveRoutingProtocol").stringValue());
     module = moduleType->create("ManetRoutingProtocolReactive", this);
     routingModuleReactive = dynamic_cast <ManetRoutingBase*> (module);
     routingModuleReactive->gate("to_ip")->connectTo(gate("routingInReactive"));
@@ -1018,27 +1018,19 @@ void Ieee80211Mesh::handleDataFrame(Ieee80211DataFrame *frame)
             *ctrlAux=*ctrl;
             delete ctrl;
             Uint128 dest;
+            controlInfo->setCollaborativeFeedback(proactiveFeedback);
+            controlInfo->setMaxHopCollaborative(maxHopProactive);
             msg->setControlInfo(controlInfo);
             if (routingModuleReactive->getDestAddress(msg, dest))
             {
                 std::vector<Uint128>add;
-                int dist = 0;
                 if (routingModuleProactive && proactiveFeedback)
                 {
                     // int neig = routingModuleProactive))->getRoute(src,add);
                     controlInfo->setPreviousFix(true); // This node is fix
-                    dist = routingModuleProactive->getRoute(dest,add);
                 }
                 else
                     controlInfo->setPreviousFix(false); // This node is not fix
-                if (maxHopProactive>0 && dist>maxHopProactive)
-                    dist = 0;
-                if (dist!=0 && proactiveFeedback)
-                {
-                    controlInfo->setVectorAddressArraySize(dist);
-                    for (int i=0; i<dist; i++)
-                        controlInfo->setVectorAddress(i,add[i]);
-                }
             }
             send(msg,"routingOutReactive");
         }
@@ -1907,18 +1899,9 @@ void Ieee80211Mesh::handleWateGayDataReceive(cPacket *pkt)
             {
                 // int neig = routingModuleProactive))->getRoute(src,add);
                 controlInfo->setPreviousFix(true); // This node is fix
-                dist = routingModuleProactive->getRoute(dest,add);
             }
             else
                 controlInfo->setPreviousFix(false); // This node is not fix
-            if (maxHopProactive>0 && dist>maxHopProactive)
-                dist = 0;
-            if (dist!=0 && proactiveFeedback)
-            {
-                controlInfo->setVectorAddressArraySize(dist);
-                for (int i=0; i<dist; i++)
-                    controlInfo->setVectorAddress(i,add[i]);
-            }
         }
         send(encapPkt,"routingOutReactive");
         delete pkt;

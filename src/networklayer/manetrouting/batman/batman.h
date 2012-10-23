@@ -156,6 +156,7 @@ protected:
 public:
     Batman();
     ~Batman();
+    virtual bool supportGetRoute() {return false;}
     virtual uint32_t getRoute(const Uint128 &, std::vector<Uint128> &add);
     virtual bool getNextHop(const Uint128 &, Uint128 &add, int &iface, double &val);
     virtual void setRefreshRoute(const Uint128 &destination, const Uint128 & nextHop, bool isReverse) {};

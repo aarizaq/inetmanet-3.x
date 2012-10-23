@@ -508,24 +508,71 @@ void NS_CLASS handleMessage (cMessage *msg)
         ControlManetRouting * control =  check_and_cast <ControlManetRouting *> (msg);
         if (control->getOptionCode()== MANET_ROUTE_NOROUTE)
         {
-            ipDgram = (IPv4Datagram*) control->decapsulate();
-            cPolymorphic * ctrl = ipDgram->removeControlInfo();
-            unsigned int ifindex = NS_IFINDEX;  /* Always use ns interface */
-            if (ctrl)
+            if (isInMacLayer())
             {
-                if (dynamic_cast<Ieee802Ctrl*> (ctrl))
+                if (MACAddress(control->getDestAddress().getLo()).isBroadcast())
                 {
-                    Ieee802Ctrl *ieeectrl = dynamic_cast<Ieee802Ctrl*> (ctrl);
-                    Uint128 address = ieeectrl->getDest().getInt();
-                    int index = getWlanInterfaceIndexByAddress(address);
-                    if (index!=-1)
-                        ifindex = index;
+                    delete control;
+                    return;
                 }
-                delete ctrl;
-            }
+                cMessage* msgAux = control->decapsulate();
 
-            EV << "Aodv rec datagram  " << ipDgram->getName() << " with dest=" << ipDgram->getDestAddress().str() << "\n";
-            processPacket(ipDgram,ifindex);   // Data path
+                if (msgAux)
+                    processMacPacket(PK(msgAux), control->getDestAddress(), control->getSrcAddress(), NS_IFINDEX);
+                else
+                {
+                    if (!addressIsForUs(control->getSrcAddress()))
+                    {
+                        struct in_addr dest_addr;
+                        dest_addr.s_addr = control->getDestAddress();
+                        rt_table_t * fwd_rt = rt_table_find(dest_addr);
+
+                        RERR *rerr;
+                        DEBUG(LOG_DEBUG, 0,
+                                "No route, src=%s dest=%s prev_hop=%s - DROPPING!",
+                                ip_to_str(src_addr), ip_to_str(dest_addr));
+                        if (fwd_rt)
+                        {
+                            rerr = rerr_create(0, fwd_rt->dest_addr,fwd_rt->dest_seqno);
+                            rt_table_update_timeout(fwd_rt, DELETE_PERIOD);
+                        }
+                        else
+                            rerr = rerr_create(0, dest_addr, 0);
+                        struct in_addr src_addr;
+                        src_addr.s_addr = control->getSrcAddress();
+                        rt_table_t * rev_rt = rt_table_find(src_addr);
+
+                        struct in_addr rerr_dest;
+
+                        if (rev_rt && rev_rt->state == VALID)
+                            rerr_dest = rev_rt->next_hop;
+                        else
+                            rerr_dest.s_addr = AODV_BROADCAST;
+
+                        aodv_socket_send((AODV_msg *) rerr, rerr_dest,RERR_CALC_SIZE(rerr), 1, &DEV_IFINDEX(NS_IFINDEX));
+                    }
+                }
+            }
+            else
+            {
+                ipDgram = (IPv4Datagram*) control->decapsulate();
+                cPolymorphic * ctrl = ipDgram->removeControlInfo();
+                unsigned int ifindex = NS_IFINDEX;  /* Always use ns interface */
+                if (ctrl)
+                {
+                    if (dynamic_cast<Ieee802Ctrl*> (ctrl))
+                    {
+                        Ieee802Ctrl *ieeectrl = dynamic_cast<Ieee802Ctrl*> (ctrl);
+                        Uint128 address = ieeectrl->getDest().getInt();
+                        int index = getWlanInterfaceIndexByAddress(address);
+                        if (index!=-1)
+                            ifindex = index;
+                    }
+                    delete ctrl;
+                }
+                EV << "Aodv rec datagram  " << ipDgram->getName() << " with dest=" << ipDgram->getDestAddress().str() << "\n";
+                processPacket(ipDgram,ifindex);   // Data path
+            }
         }
         else if (control->getOptionCode()== MANET_ROUTE_UPDATE)
         {
@@ -570,7 +617,7 @@ void NS_CLASS handleMessage (cMessage *msg)
             }
             else
             {
-                Ieee802Ctrl *controlInfo = check_and_cast<Ieee802Ctrl*>(udpPacket->getControlInfo());
+                Ieee802Ctrl *controlInfo = check_and_cast<Ieee802Ctrl*>(aodvMsg->getControlInfo());
                 src_addr.s_addr = controlInfo->getSrc().getInt();
             }
         }
@@ -855,6 +902,115 @@ void NS_CLASS recvAODVUUPacket(cMessage * msg)
     aodv_socket_process_packet(aodv_msg, len, src, dst, ttl, ifIndex);
     delete   aodv_msg;
 }
+
+
+void NS_CLASS processMacPacket(cPacket * p, const Uint128 &dest, const Uint128 &src, int ifindex)
+{
+    struct in_addr dest_addr, src_addr;
+    bool isLocal = false;
+    struct ip_data *ipd = NULL;
+    u_int8_t rreq_flags = 0;
+
+    dest_addr.s_addr = dest;
+    src_addr.s_addr = src;
+    rt_table_t *fwd_rt, *rev_rt;
+
+    //InterfaceEntry *   ie = getInterfaceEntry(ifindex);
+    isLocal = isLocalAddress(src);
+
+    rev_rt = rt_table_find(src_addr);
+    fwd_rt = rt_table_find(dest_addr);
+
+
+    rt_table_update_route_timeouts(fwd_rt, rev_rt);
+
+    /* OK, the timeouts have been updated. Now see if either: 1. The
+       packet is for this node -> ACCEPT. 2. The packet is not for this
+       node -> Send RERR (someone want's this node to forward packets
+       although there is no route) or Send RREQ. */
+
+    if (!fwd_rt || fwd_rt->state == INVALID ||
+            (fwd_rt->hcnt == 1 && (fwd_rt->flags & RT_UNIDIR)))
+    {
+        // If I am the originating node, then a route discovery
+        // must be performed
+        if (isLocal || (fwd_rt && (fwd_rt->flags & RT_REPAIR)))
+        {
+            if (p->getControlInfo())
+                delete p->removeControlInfo();
+            packet_queue_add(p, dest_addr);
+            if (fwd_rt && (fwd_rt->flags & RT_REPAIR))
+                rreq_local_repair(fwd_rt, src_addr, ipd);
+            else
+            {
+                if (par("targetOnlyRreq").boolValue())
+                    rreq_flags |= RREQ_DEST_ONLY;
+                rreq_route_discovery(dest_addr, rreq_flags, ipd);
+            }
+        }
+        // Else we must send a RERR message to the source if
+        // the route has been previously used
+        else
+        {
+
+            RERR *rerr;
+            DEBUG(LOG_DEBUG, 0,
+                    "No route, src=%s dest=%s prev_hop=%s - DROPPING!",
+                    ip_to_str(src_addr), ip_to_str(dest_addr));
+            if (fwd_rt)
+            {
+                rerr = rerr_create(0, fwd_rt->dest_addr,fwd_rt->dest_seqno);
+                rt_table_update_timeout(fwd_rt, DELETE_PERIOD);
+            }
+            else
+                rerr = rerr_create(0, dest_addr, 0);
+            DEBUG(LOG_DEBUG, 0, "Sending RERR to prev hop %s for unknown dest %s",
+                    ip_to_str(src_addr), ip_to_str(dest_addr));
+
+                /* Unicast the RERR to the source of the data transmission
+                 * if possible, otherwise we broadcast it. */
+            struct in_addr rerr_dest;
+            if (rev_rt && rev_rt->state == VALID)
+                rerr_dest = rev_rt->next_hop;
+            else
+                rerr_dest.s_addr = AODV_BROADCAST;
+            aodv_socket_send((AODV_msg *) rerr, rerr_dest,RERR_CALC_SIZE(rerr),
+                    1, &DEV_IFINDEX(ifindex));
+            if (wait_on_reboot)
+            {
+                DEBUG(LOG_DEBUG, 0, "Wait on reboot timer reset.");
+                timer_set_timeout(&worb_timer, DELETE_PERIOD);
+            }
+            //drop (p);
+            sendICMP(p);
+            /* DEBUG(LOG_DEBUG, 0, "Dropping pkt uid=%d", ch->uid()); */
+            //  icmpAccess.get()->sendErrorMessage(p, ICMP_DESTINATION_UNREACHABLE, 0);
+            return;
+        }
+        scheduleNextEvent();
+        return;
+    }
+    else
+    {
+        /* DEBUG(LOG_DEBUG, 0, "Sending pkt uid=%d", ch->uid()); */
+        if (p->getControlInfo())
+            delete p->removeControlInfo();
+        if (isInMacLayer())
+        {
+            Ieee802Ctrl *ctrl = new Ieee802Ctrl();
+            ctrl->setDest(MACAddress(fwd_rt->next_hop.s_addr.getLo()));
+            //TODO ctrl->setEtherType(...);
+            p->setControlInfo(ctrl);
+        }
+
+        send(p, "to_ip");
+        /* When forwarding data, make sure we are sending HELLO messages */
+        //gettimeofday(&this_host.fwd_time, NULL);
+        if (!llfeedback && optimized_hellos)
+            hello_start();
+    }
+}
+
 
 
 void NS_CLASS processPacket(IPv4Datagram * p,unsigned int ifindex)

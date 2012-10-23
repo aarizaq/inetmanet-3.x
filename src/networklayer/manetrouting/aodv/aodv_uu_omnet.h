@@ -153,6 +153,7 @@ class AODVUU : public ManetRoutingBase
     void packetFailedMac(Ieee80211DataFrame *);
 
     // Routing information access
+    virtual bool supportGetRoute() {return false;}
     virtual uint32_t getRoute(const Uint128 &,std::vector<Uint128> &);
     virtual bool getNextHop(const Uint128 &,Uint128 &add,int &iface,double &);
     virtual bool isProactive();
@@ -183,6 +184,7 @@ class AODVUU : public ManetRoutingBase
 
     void recvAODVUUPacket(cMessage * p);
     void processPacket(IPv4Datagram *,unsigned int);
+    void processMacPacket(cPacket * p, const Uint128 &dest, const Uint128 &src, int ifindex);
 
     int initialized;
     int  node_id;

@@ -243,6 +243,7 @@ class DYMOUM : public ManetRoutingBase
     virtual std::string detailedInfo() const;
 
     // Routing information access
+    virtual bool supportGetRoute() {return false;}
     virtual uint32_t getRoute(const Uint128 &, std::vector<Uint128> &);
     virtual bool getNextHop(const Uint128 &, Uint128 &add, int &iface, double &);
     virtual bool isProactive();

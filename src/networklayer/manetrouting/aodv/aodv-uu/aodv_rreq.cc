@@ -560,6 +560,49 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
 
         fwd_rt = rt_table_find(rreq_dest);
 
+#ifdef OMNETPP
+        // collaborative protocol
+        if (getCollaborativeProtocol())
+        {
+            struct in_addr next_hop;
+            int iface;
+            double cost;
+            if (getCollaborativeProtocol()->getNextHop(rreq_dest.s_addr,next_hop.s_addr,iface,cost))
+            {
+
+                u_int8_t hops = cost;
+                std::map<Uint128,u_int32_t *>::iterator it =  mapSeqNum.find(rreq_dest.s_addr);
+                if (it == mapSeqNum.end())
+                    opp_error("node not found in mapSeqNum");
+                u_int32_t sqnum = *(it->second);
+                life = PATH_DISCOVERY_TIME - 2 * hops * NODE_TRAVERSAL_TIME;
+                if (fwd_rt)
+                {
+                    fwd_rt = rt_table_update(fwd_rt, next_hop, hops, sqnum, life, VALID, fwd_rt->flags,iface, cost, cost+1);
+                }
+                else
+                {
+                    fwd_rt = rt_table_insert(rreq_dest, next_hop, hops, sqnum, life, VALID, 0, iface, cost, cost+1);
+                }
+                hops = 1;
+                rt_table_t * fwd_rtAux = rt_table_find(next_hop);
+                it =  mapSeqNum.find(next_hop.s_addr);
+                if (it == mapSeqNum.end())
+                    opp_error("node not found in mapSeqNum");
+                sqnum = *(it->second);
+                life = PATH_DISCOVERY_TIME - 2 * (int)hops * NODE_TRAVERSAL_TIME;
+                if (fwd_rtAux)
+                {
+                    fwd_rtAux = rt_table_update(fwd_rtAux, next_hop, hops, sqnum, life, VALID, fwd_rt->flags,iface, hops, hops+1);
+                }
+                else
+                {
+                    fwd_rtAux = rt_table_insert(next_hop, next_hop, hops, sqnum, life, VALID, 0, iface, hops, hops+1);
+                }
+            }
+        }
+
+#endif
 
         if (fwd_rt && (fwd_rt->state == VALID || fwd_rt->state == IMMORTAL) && !rreq->d)
         {
@@ -667,29 +710,6 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
                         return;
             */
         }
-#ifdef OMNETPP
-        // collaborative protocol
-        if (getCollaborativeProtocol())
-        {
-            struct in_addr next_hop;
-            int iface;
-            double cost;
-            if (getCollaborativeProtocol()->getNextHop(rreq_dest.s_addr,next_hop.s_addr,iface,cost))
-            {
-
-                u_int8_t hops = cost;
-                std::map<Uint128,u_int32_t *>::iterator it =  mapSeqNum.find(rreq_dest.s_addr);
-                if (it == mapSeqNum.end())
-                    opp_error("node not found in mapSeqNum");
-                u_int32_t sqnum = *(it->second);
-
-                rrep = rrep_create(0, 0, hops, rreq_dest , sqnum, rev_rt->dest_addr, MY_ROUTE_TIMEOUT);
-                rrep_send(rrep, rev_rt, NULL, rrep_size);
-                return;
-            }
-        }
-
-#endif
 
 forward:
 #ifndef OMNETPP

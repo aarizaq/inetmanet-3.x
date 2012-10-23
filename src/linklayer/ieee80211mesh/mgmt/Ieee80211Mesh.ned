@@ -26,6 +26,7 @@ simple Ieee80211Mesh
 {
     parameters:
         @macRouting;  // Mac layer with routing protocol working in the level 2
+        string meshReactiveRoutingProtocol = default("inet.networklayer.manetrouting.DYMOUM");
         int frameCapacity = default(100);
         bool useHwmp = default(false); // If active automatically deactivate useProactive and useReactive and activate ETXEstimate
         bool useProactive = default(false);
