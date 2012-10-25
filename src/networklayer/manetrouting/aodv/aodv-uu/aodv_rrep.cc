@@ -147,7 +147,7 @@ AODV_ext *NS_CLASS rrep_add_ext(RREP * rrep, int type, unsigned int offset,
 }
 
 void NS_CLASS rrep_send(RREP * rrep, rt_table_t * rev_rt,
-                        rt_table_t * fwd_rt, int size)
+                        rt_table_t * fwd_rt, int size, double delay)
 {
     u_int8_t rrep_flags = 0;
     struct in_addr dest;
@@ -203,8 +203,8 @@ void NS_CLASS rrep_send(RREP * rrep, rt_table_t * rev_rt,
     totalRrepSend++;
 #endif
     rrep->ttl=MAXTTL;
-    aodv_socket_send((AODV_msg *) rrep, rev_rt->next_hop, size, 1,
-                     &DEV_IFINDEX(rev_rt->ifindex));
+    aodv_socket_send_delayed((AODV_msg *) rrep, rev_rt->next_hop, size, 1,
+                             &DEV_IFINDEX(rev_rt->ifindex),delay);
 
     /* Update precursor lists */
     if (fwd_rt)

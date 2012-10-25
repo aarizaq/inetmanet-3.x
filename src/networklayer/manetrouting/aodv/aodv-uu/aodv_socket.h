@@ -54,6 +54,9 @@ int num_rerr;
 void aodv_socket_init();
 void aodv_socket_send(AODV_msg * aodv_msg, struct in_addr dst, int len,
                       u_int8_t ttl, struct dev_info *dev,double delay=-1);
+
+void aodv_socket_send_delayed(AODV_msg * aodv_msg, struct in_addr dst, int len,
+                      u_int8_t ttl, struct dev_info *dev,double delay);
 #ifndef OMNETPP
 AODV_msg *aodv_socket_new_msg();
 AODV_msg *aodv_socket_queue_msg(AODV_msg * aodv_msg, int size);

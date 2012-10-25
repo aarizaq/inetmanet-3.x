@@ -1357,35 +1357,32 @@ void Ieee80211Mesh::actualizeReactive(cPacket *pkt,bool out)
     if (!out)
         return;
 */
+
     bool isReverse=false;
     if (out)
     {
         if (!frame->getAddress4().isUnspecified() && !frame->getAddress4().isBroadcast())
-            dest=frame->getAddress4().getInt();
-        else
-            return;
+            dest = frame->getAddress4().getInt();
         if (!frame->getReceiverAddress().isUnspecified() && !frame->getReceiverAddress().isBroadcast())
-            next=frame->getReceiverAddress().getInt();
+            next = frame->getReceiverAddress().getInt();
         else
             return;
 
     }
     else
     {
-        if (!frame->getAddress3().isUnspecified() && !frame->getAddress3().isBroadcast() )
+        if (!frame->getAddress3().isUnspecified() && !frame->getAddress3().isBroadcast())
             dest=frame->getAddress3().getInt();
-        else
-            return;
         if (!frame->getTransmitterAddress().isUnspecified() && !frame->getTransmitterAddress().isBroadcast())
-            next=frame->getTransmitterAddress().getInt();
+            next = frame->getTransmitterAddress().getInt();
         else
             return;
         isReverse=true;
-
     }
-    if (routingModuleHwmp)
+
+    if (routingModuleHwmp && dest != 0)
         routingModuleHwmp->setRefreshRoute(dest,next,isReverse);
-    if (routingModuleReactive)
+    if (routingModuleReactive && dest != 0)
         routingModuleReactive->setRefreshRoute(dest,next,isReverse);
     // actualize route to neighbor
     if (routingModuleHwmp)

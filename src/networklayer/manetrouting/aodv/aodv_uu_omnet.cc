@@ -494,6 +494,36 @@ void NS_CLASS handleMessage (cMessage *msg)
     struct in_addr src_addr;
     struct in_addr dest_addr;
 
+    if (msg->isSelfMessage() && dynamic_cast<AODV_msg*> (msg))
+    {
+        DelayInfo * delayInfo = check_and_cast<DelayInfo *> (msg->removeControlInfo());
+
+
+        RREP * rrep = dynamic_cast<RREP *> (msg);
+        bool sendPkt = true;
+        if (rrep)
+        {
+            PacketDestOrigin destOrigin(rrep->dest_addr,rrep->orig_addr);
+            std::map<PacketDestOrigin,RREPProcessed>::iterator it = rrepProc.find(destOrigin);
+            if (it !=  rrepProc.end())
+            {
+                if (it->second.dest_seqno > rrep->dest_seqno)
+                {
+                    delete msg;
+                    msg = NULL;
+                }
+                else if (it->second.dest_seqno == rrep->dest_seqno && it->second.hcnt <= rrep->hcnt)
+                {
+                    delete msg;
+                    msg = NULL;
+                }
+            }
+        }
+        if (msg)
+            aodv_socket_send((AODV_msg *) msg, delayInfo->dst , delayInfo->len, delayInfo->ttl, delayInfo->dev);
+        delete delayInfo;
+        return;
+    }
     if (is_init==false)
         opp_error ("Aodv has not been initialized ");
     if (msg==sendMessageEvent)
@@ -1209,6 +1239,77 @@ void NS_CLASS processLinkBreak(const cPolymorphic *details)
     }
 }
 
+void NS_CLASS processPromiscuous(const cObject *details)
+{
+
+    if (dynamic_cast<Ieee80211DataFrame *>(const_cast<cPolymorphic*> (details)))
+    {
+        Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame *>(const_cast<cObject*>(details));
+        cPacket * pktAux = frame->getEncapsulatedPacket();
+        if (!isInMacLayer() && pktAux != NULL)
+        {
+            /*
+            if (dynamic_cast<IPv4Datagram *>(pktAux))
+            {
+                cPacket * pktAux1 = pktAux->getEncapsulatedPacket(); // Transport
+                if (pktAux1)
+                {
+                    cPacket * pktAux2 = pktAux->getEncapsulatedPacket(); // protocol
+                    if (pktAux2 && dynamic_cast<RREP *> (pktAux2))
+                    {
+
+                    }
+                }
+            }
+            */
+        }
+        else if (isInMacLayer() && dynamic_cast<Ieee80211MeshFrame *>(frame))
+        {
+            Ieee80211MeshFrame *meshFrame = dynamic_cast<Ieee80211MeshFrame *>(frame);
+            if (meshFrame->getSubType() == ROUTING)
+            {
+                cPacket * pktAux2 = meshFrame->getEncapsulatedPacket(); // protocol
+                if (pktAux2 && dynamic_cast<RREP *> (pktAux2))
+                {
+                    RREP* rrep = dynamic_cast<RREP *> (pktAux2);
+                    PacketDestOrigin destOrigin(rrep->dest_addr,rrep->orig_addr);
+                    std::map<PacketDestOrigin,RREPProcessed>::iterator it = rrepProc.find(destOrigin);
+                    if (it == rrepProc.end())
+                    {
+                        // new
+                        RREPProcessed rproc;
+                        rproc.cost = rrep->cost;
+                        rproc.dest_seqno = rrep->dest_seqno;
+                        rproc.hcnt = rrep->hcnt;
+                        rproc.hopfix = rrep->hopfix;
+                        rproc.next = meshFrame->getReceiverAddress().getInt();
+                    }
+                    else if (it->second.dest_seqno < rrep->dest_seqno)
+                    {
+                        // actualize
+                        it->second.cost = rrep->cost;
+                        it->second.dest_seqno = rrep->dest_seqno;
+                        it->second.hcnt = rrep->hcnt;
+                        it->second.hopfix = rrep->hopfix;
+                        it->second.next = meshFrame->getReceiverAddress().getInt();
+                    }
+                    else if (it->second.dest_seqno == rrep->dest_seqno)
+                    {
+                        // equal seq num check
+                        if (it->second.hcnt > rrep->hcnt)
+                        {
+                            it->second.cost = rrep->cost;
+                            it->second.dest_seqno = rrep->dest_seqno;
+                            it->second.hcnt = rrep->hcnt;
+                            it->second.hopfix = rrep->hopfix;
+                            it->second.next = meshFrame->getReceiverAddress().getInt();
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 void NS_CLASS finish()
 {
@@ -1283,6 +1384,20 @@ void NS_CLASS setRefreshRoute(const Uint128 &destination, const Uint128 & nextHo
     next_hop.s_addr = nextHop;
     rt_table_t * route  = rt_table_find(dest_addr);
 
+    bool change = false;
+    Uint128 apAddr;
+    bool gratuitus = false;
+
+
+    if (getAp(destination,apAddr))
+    {
+        dest_addr.s_addr = apAddr;
+    }
+    if (getAp(nextHop,apAddr))
+    {
+        next_hop.s_addr = apAddr;
+    }
+
     if(par ("checkNextHop").boolValue())
     {
         if (nextHop == (Uint128)0)
@@ -1294,7 +1409,7 @@ void NS_CLASS setRefreshRoute(const Uint128 &destination, const Uint128 & nextHo
         }
 
 
-        if (isReverse && !route)
+        if (isReverse && !route && gratuitus)
         {
             // Gratuitous Return Path
             struct in_addr node_addr;
@@ -1303,7 +1418,7 @@ void NS_CLASS setRefreshRoute(const Uint128 &destination, const Uint128 & nextHo
             ip_src.s_addr = nextHop;
             rt_table_insert(node_addr, ip_src,0,0, ACTIVE_ROUTE_TIMEOUT, VALID, 0,NS_DEV_NR,0xFFFFFFF,100);
         }
-        else if (route && (route->next_hop.s_addr==nextHop))
+        else if (route && (route->next_hop.s_addr == nextHop))
             rt_table_update_route_timeouts(NULL, route);
 
     }
@@ -1316,7 +1431,7 @@ void NS_CLASS setRefreshRoute(const Uint128 &destination, const Uint128 & nextHo
         }
 
 
-        if (isReverse && !route && nextHop != (Uint128)0)
+        if (isReverse && !route && nextHop != (Uint128)0 && gratuitus)
         {
             // Gratuitous Return Path
             struct in_addr node_addr;

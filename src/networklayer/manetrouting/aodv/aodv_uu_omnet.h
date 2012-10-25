@@ -143,6 +143,64 @@ class AODVUU : public ManetRoutingBase
     // this static map simulate the exchange of seq num by the proactive protocol.
     static std::map<Uint128,u_int32_t *> mapSeqNum;
 
+
+  protected:
+
+    class PacketDestOrigin
+    {
+        private:
+            Uint128 dest;
+            Uint128 origin;
+        public:
+            PacketDestOrigin() {}
+            PacketDestOrigin(const Uint128 &s,const Uint128 &o)
+            {
+                dest = s;
+                origin = o;
+            }
+            Uint128 getDest() {return dest;}
+            void setDests(const Uint128 & s) {dest = s;}
+            Uint128 getOrigin() {return origin;}
+            void setOrigin(const Uint128 & s) {origin = s;}
+            inline bool operator<(const PacketDestOrigin& b) const
+            {
+                if (dest != b.dest)
+                    return dest < b.dest;
+                else
+                    return origin < b.origin;
+            }
+            inline bool operator == (const PacketDestOrigin& b) const
+            {
+                if (dest == b.dest && origin == b.origin)
+                    return true;
+                else
+                    return false;
+            }
+            PacketDestOrigin& operator=(const PacketDestOrigin& a)
+            {
+                dest = a.dest; origin = a.origin; return *this;
+            }
+    };
+
+    struct RREPProcessed
+    {
+        u_int8_t hcnt;
+        u_int32_t dest_seqno;
+        u_int32_t origin_seqno;
+        uint32_t cost;
+        uint8_t  hopfix;
+        Uint128 next;
+    };
+
+    std::map<PacketDestOrigin,RREPProcessed> rrepProc;
+
+    struct DelayInfo : public cObject
+    {
+        struct in_addr dst;
+        int len;
+        u_int8_t ttl;
+        struct dev_info *dev;
+    };
   public:
     static int  log_file_fd;
     static bool log_file_fd_init;
@@ -327,8 +385,8 @@ class AODVUU : public ManetRoutingBase
     int totalRerrSend;
     int totalRerrRec;
 #endif
-// used for break link notification
-    //virtual void processPromiscuous(const cObject *details){};
+    virtual void processPromiscuous(const cObject *details);
+    // used for break link notification
     virtual void processLinkBreak(const cObject *details);
     //virtual void processFullPromiscuous(const cObject *details){}
     virtual bool isOurType(cPacket *);

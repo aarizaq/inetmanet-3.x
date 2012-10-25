@@ -752,3 +752,25 @@ void aodv_socket_cleanup(void)
 #endif              /* NS_PORT */
 }
 
+
+
+void NS_CLASS aodv_socket_send_delayed (AODV_msg * aodv_msg, struct in_addr dst,
+                                   int len, u_int8_t ttl, struct dev_info *dev,double delay)
+{
+    if (delay > 0)
+    {
+        DelayInfo *info = new DelayInfo;
+        info->dst = dst;
+        info->len = len;
+        info->ttl = ttl;
+        info->dev = dev;
+        aodv_msg->setControlInfo(info);
+        scheduleAt(simTime()+delay,aodv_msg);
+    }
+    else
+        aodv_socket_send(aodv_msg,dst,len,ttl,dev);
+
+}
+
+
+

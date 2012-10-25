@@ -507,7 +507,6 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
     if (isLocalAddress (rreq_dest.s_addr))
     {
 #endif
-
         /* WE are the RREQ DESTINATION. Update the node's own
            sequence number to the maximum of the current seqno and the
            one in the RREQ. */
@@ -643,6 +642,12 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
                       "Intermediate node response for INTERNET dest: %s rrep_size=%d",
                       ip_to_str(rreq_dest), rrep_size);
 
+                // clean entry
+#ifdef OMNETPP
+                PacketDestOrigin destOrigin(rrep->dest_addr,rrep->orig_addr);
+                std::map<PacketDestOrigin,RREPProcessed>::iterator it = rrepProc.find(destOrigin);
+                rrepProc.erase(it);
+#endif
                 rrep_send(rrep, rev_rt, gw_rt, rrep_size);
                 return;
             }
@@ -675,7 +680,18 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
                 rrep = rrep_create(0, 0, fwd_rt->hcnt, fwd_rt->dest_addr,
                                    fwd_rt->dest_seqno, rev_rt->dest_addr,
                                    lifetime);
-                rrep_send(rrep, rev_rt, fwd_rt, rrep_size);
+#ifdef OMNETPP
+                // collaborative protocol
+                if (getCollaborativeProtocol())
+                {
+                    PacketDestOrigin destOrigin(rrep->dest_addr,rrep->orig_addr);
+                    std::map<PacketDestOrigin,RREPProcessed>::iterator it = rrepProc.find(destOrigin);
+                    rrepProc.erase(it);
+                    rrep_send(rrep, rev_rt, fwd_rt, rrep_size,uniform(0,0.005));
+                }
+                else
+#endif
+                    rrep_send(rrep, rev_rt, fwd_rt, rrep_size);
                 /* If the GRATUITOUS flag is set, we must also unicast a
                    gratuitous RREP to the destination. */
                 if (rreq->g)
