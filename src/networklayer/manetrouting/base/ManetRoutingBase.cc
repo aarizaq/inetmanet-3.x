@@ -177,6 +177,10 @@ void ManetRoutingBase::registerRoutingModule()
     cStringTokenizer tokenizerInterfaces(interfaces);
     const char *token;
     const char * prefixName;
+
+    if (!mac_layer_)
+         setStaticNode(par("isStaticNode").boolValue());
+
     if (!mac_layer_)
     {
         while ((token = tokenizerInterfaces.nextToken()) != NULL)
