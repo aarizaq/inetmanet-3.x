@@ -189,8 +189,8 @@ void DijkstraKshortest::run ()
         routeMap[rootNode].push_back(state);
     }
     SetElem elem;
-    elem.iD=rootNode;
-    elem.idx=0;
+    elem.iD = rootNode;
+    elem.idx = 0;
     elem.cost=minimumCost;
     heap.insert(elem);
     while (!heap.empty())

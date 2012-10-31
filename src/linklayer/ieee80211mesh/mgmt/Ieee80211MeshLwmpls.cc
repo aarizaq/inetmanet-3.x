@@ -420,11 +420,11 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
         forwarding_ptr->label_life_limit = mplsData->mplsMaxTime();
         forwarding_ptr->last_use = simTime();
 
-        forwarding_ptr->path.push_back((Uint128)mpls_pk_ptr->getSource().getInt());
+        forwarding_ptr->path.push_back(mpls_pk_ptr->getSource().getInt());
         for (unsigned int i=0; i<mpls_pk_ptr->getVectorAddressArraySize(); i++)
             //for (int i=0 ;i<mpls_pk_ptr->getDist();i++)
-            forwarding_ptr->path.push_back((Uint128)mpls_pk_ptr->getVectorAddress(i).getInt());
-        forwarding_ptr->path.push_back((Uint128)mpls_pk_ptr->getDest().getInt());
+            forwarding_ptr->path.push_back(mpls_pk_ptr->getVectorAddress(i).getInt());
+        forwarding_ptr->path.push_back(mpls_pk_ptr->getDest().getInt());
 
         // Add structure
         mplsData->lwmpls_forwarding_input_data_add(label_in, forwarding_ptr);

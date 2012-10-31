@@ -40,13 +40,13 @@ import inet.battery.IBattery;
 module NodeBase
 {
     parameters:
-        @display("bgb=611,448");
+        @display("bgb=,448");
         @node;
         @labels(node,ethernet-node,wireless-node);
         int numExtInterfaces = default(0);
         int numRadios = default(0);               // the number of radios in the router. by default no wireless
         int numPcapRecorders = default(0); // no of PcapRecorders.
-        string mobilityType = default("StationaryMobility");
+        string mobilityType = default(numRadios > 0 ? "StationaryMobility" : "");
         string routingFile = default("");
         bool IPForward = default(true);
         bool forwardMulticast = default(false);
@@ -58,7 +58,7 @@ module NodeBase
     submodules:
         notificationBoard: NotificationBoard {
             parameters:
-                @display("p=53,194");
+                 @display("p=53,155;is=s");
         }
 
         battery: <batteryType> like IBattery if batteryType != "" {
@@ -67,9 +67,9 @@ module NodeBase
         }
 
         // optional mobility module. Required only if wireless cards are present
-        mobility: <mobilityType> like IMobility if mobilityType != "" && numRadios > 0 {
+        mobility: <mobilityType> like IMobility if mobilityType != "" {
             parameters:
-                @display("p=53,121");
+                @display("p=53,111");
         }
 
         // network layer
@@ -80,7 +80,7 @@ module NodeBase
 
         routingTable: RoutingTable {
             parameters:
-                @display("p=53,287");
+                @display("p=53,225;is=s");
                 IPForward = IPForward;
                 forwardMulticast = forwardMulticast;
                 routingFile = routingFile;
@@ -89,28 +89,28 @@ module NodeBase
         // linklayer
         interfaceTable: InterfaceTable {
             parameters:
-                @display("p=53,386");
+                @display("p=53,287;is=s");
         }
 
         pcapRecorder[numPcapRecorders]: PcapRecorder {
-            @display("p=159,259");
+            @display("p=53,338,r,10");
         }
 
         wlan[numRadios]: <default("Ieee80211Nic")> like IWirelessNic {
             parameters:
-                @display("p=159,386;q=queue");
+                @display("p=132,406,row,60;q=queue");
         }
         eth[sizeof(ethg)]: <default("EthernetInterface")> like IWiredNic {
             parameters:
-                @display("p=282,386,row,90;q=txQueue");
+                @display("p=329,406,row,60;q=txQueue");
         }
         ppp[sizeof(pppg)]: <default("PPPInterface")> like IWiredNic {
             parameters:
-                @display("p=407,386,row,90;q=txQueue");
+                @display("p=558,406,row,60;q=txQueue");
         }
         ext[numExtInterfaces]: <default("ExtInterface")> like IExternalNic {
             parameters:
-                @display("p=547,386,row,90;q=txQueue;i=block/ifcard");
+                @display("p=45,406,row,10;q=txQueue;i=block/ifcard");
         }
 
     connections allowunconnected:

@@ -56,13 +56,13 @@ protected:
     class SetElem
     {
     public:
-        int iD;
+        Uint128 iD;
         int idx;
         DijkstraKshortest::CostVector cost;
         SetElem()
         {
-            iD=InvalidId;
-            idx=-1;
+            iD = InvalidId;
+            idx = -1;
         }
         SetElem& operator=(const SetElem& val)
         {

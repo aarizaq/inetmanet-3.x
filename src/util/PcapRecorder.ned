@@ -48,14 +48,16 @@ package inet.util;
 //
 // <b>Bugs:</b> IPv6 datagrams cannot be recorded into PCAP. (To be implemented).
 //
-simple PcapRecorder {
+simple PcapRecorder
+{
     parameters:
         bool verbose = default(false);  // whether to log packets on the module output
         string pcapFile = default(""); // the PCAP file to be written
         int snaplen = default(65535);  // maximum number of bytes to record per packet
         bool dumpBadFrames = default(true); // enable dump of frames with hasBitError
-        string moduleNamePatterns = default("wlan[*] eth[*] ppp[*]"); // space-separated list of sibling module names to listen on
+        string moduleNamePatterns = default("wlan[*] eth[*] ppp[*] ext[*]"); // space-separated list of sibling module names to listen on
         string sendingSignalNames = default("packetSentToLower"); // space-separated list of outbound packet signals to subscribe to
         string receivingSignalNames = default("packetReceivedFromLower"); // space-separated list of inbound packet signals to subscribe to
+        @display("i=block/process;is=s");
 }
 
