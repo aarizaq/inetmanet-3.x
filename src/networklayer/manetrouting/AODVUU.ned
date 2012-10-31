@@ -66,7 +66,7 @@ simple AODVUU extends BaseRouting like IManetRouting
         int startRreqProactive = default(intuniform(1000,2000));
         bool propagateProactive = default(true); // Proactive feedback
         bool checkNextHop = default(false);
-        bool PublicRoutingTables =default(false);
+        bool PublicRoutingTables = default(false);
     gates:
         input from_ip;
         output to_ip;
