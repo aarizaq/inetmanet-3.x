@@ -56,6 +56,7 @@ simple AODVUU extends BaseRouting like IManetRouting
         bool EqualDelay = default(true);       // add a jitter to broadcast operations (RREQ, HELLO broadcast) (non RFC - omnetpp specific)
         volatile double broadcastDelay @unit("s") = default(uniform(0s,0.005s));  // the delay added to broadcast operations if EqualDelay is set (used to model processing time) 
         volatile double unicastDelay @unit("s") = default(0s);  // a delay added to unicast messaged (i.e. data packet forwarding) (used to model processing time)
+        volatile double hoverBroascastDelay @unit("s") = default(uniform(0.006s,0.01s));  // the delay added to broadcast operations if hover is active for mobile nodes
         bool UseIndex = default(false);         // use the interface index instead the ip to identify the interface
         bool useHover = default(false);
         int  costStatic = default(1);
