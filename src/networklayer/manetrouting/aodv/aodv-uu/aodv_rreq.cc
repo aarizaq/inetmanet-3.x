@@ -646,7 +646,8 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
 #ifdef OMNETPP
                 PacketDestOrigin destOrigin(rrep->dest_addr,rrep->orig_addr);
                 std::map<PacketDestOrigin,RREPProcessed>::iterator it = rrepProc.find(destOrigin);
-                rrepProc.erase(it);
+                if (it != rrepProc.end())
+                    rrepProc.erase(it);
 #endif
                 rrep_send(rrep, rev_rt, gw_rt, rrep_size);
                 return;
@@ -686,8 +687,10 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
                 {
                     PacketDestOrigin destOrigin(rrep->dest_addr,rrep->orig_addr);
                     std::map<PacketDestOrigin,RREPProcessed>::iterator it = rrepProc.find(destOrigin);
-                    rrepProc.erase(it);
-                    rrep_send(rrep, rev_rt, fwd_rt, rrep_size,uniform(0,0.005));
+                    if (it !=  rrepProc.end())
+                        rrepProc.erase(it);
+                    //rrep_send(rrep, rev_rt, fwd_rt, rrep_size,uniform(0,0.005));
+                    rrep_send(rrep, rev_rt, fwd_rt, rrep_size);
                 }
                 else
 #endif
