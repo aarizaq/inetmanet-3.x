@@ -1256,7 +1256,7 @@ rt_table_t *NS_CLASS rt_table_update(rt_table_t * rt, struct in_addr next,
 
         if (rt->flags & RT_REPAIR)
             flags &= ~RT_REPAIR;
-        if (iface >=0 && rt->ifindex!=(uint32_t)iface)
+        if (iface >=0 && rt->ifindex != (uint32_t)iface)
             rt->ifindex=iface;
 
 #ifndef NS_PORT

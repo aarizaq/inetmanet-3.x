@@ -575,13 +575,25 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
                     opp_error("node not found in mapSeqNum");
                 u_int32_t sqnum = *(it->second);
                 life = PATH_DISCOVERY_TIME - 2 * hops * NODE_TRAVERSAL_TIME;
+                int ifindex = -1;
+                for (int i = 0; i < getNumInterfaces(); i++)
+                {
+                    if (getInterfaceEntry(i)->getInterfaceId() == iface)
+                    {
+                        ifindex = i;
+                        break;
+                    }
+                }
+                if (ifindex == -1)
+                    opp_error("interface not found");
+
                 if (fwd_rt)
                 {
-                    fwd_rt = rt_table_update(fwd_rt, next_hop, hops, sqnum, life, VALID, fwd_rt->flags,iface, cost, cost+1);
+                    fwd_rt = rt_table_update(fwd_rt, next_hop, hops, sqnum, life, VALID, fwd_rt->flags,ifindex, cost, cost+1);
                 }
                 else
                 {
-                    fwd_rt = rt_table_insert(rreq_dest, next_hop, hops, sqnum, life, VALID, 0, iface, cost, cost+1);
+                    fwd_rt = rt_table_insert(rreq_dest, next_hop, hops, sqnum, life, VALID, 0, ifindex, cost, cost+1);
                 }
                 hops = 1;
                 rt_table_t * fwd_rtAux = rt_table_find(next_hop);
@@ -592,11 +604,11 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
                 life = PATH_DISCOVERY_TIME - 2 * (int)hops * NODE_TRAVERSAL_TIME;
                 if (fwd_rtAux)
                 {
-                    fwd_rtAux = rt_table_update(fwd_rtAux, next_hop, hops, sqnum, life, VALID, fwd_rt->flags,iface, hops, hops+1);
+                    fwd_rtAux = rt_table_update(fwd_rtAux, next_hop, hops, sqnum, life, VALID, fwd_rt->flags,ifindex, hops, hops+1);
                 }
                 else
                 {
-                    fwd_rtAux = rt_table_insert(next_hop, next_hop, hops, sqnum, life, VALID, 0, iface, hops, hops+1);
+                    fwd_rtAux = rt_table_insert(next_hop, next_hop, hops, sqnum, life, VALID, 0, ifindex, hops, hops+1);
                 }
             }
         }

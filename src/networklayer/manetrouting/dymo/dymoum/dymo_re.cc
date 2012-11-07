@@ -1015,6 +1015,8 @@ void NS_CLASS re_answer(RE *re,u_int32_t ifindex)
     if (!getCollaborativeProtocol())
         opp_error("re_answer no CollaborativeProtocol");
 
+    addressVector.clear();
+
     if (getCollaborativeProtocol()->supportGetRoute())
     {
         getCollaborativeProtocol()->getRoute(re->target_addr,addressVector);
@@ -1022,13 +1024,32 @@ void NS_CLASS re_answer(RE *re,u_int32_t ifindex)
             opp_error("re_answer route not found");
         cost = addressVector.size();
     }
+    int ifaceIndexNextHop = -1;
+    Uint128 nextAddr;
+    int ifaceId;
+    if (!getCollaborativeProtocol()->getNextHop(re->target_addr, nextAddr, ifaceId, cost))
+        opp_error("re_answer route not found");
+    if (addressVector.empty())
+        addressVector.push_back(nextAddr);
     else
     {
-        addressVector.resize(1);
-        int iface;
-        if (!getCollaborativeProtocol()->getNextHop(re->target_addr, addressVector[0], iface, cost))
-            opp_error("re_answer route not found");
+        if (addressVector[0] != nextAddr)
+        {
+            opp_error("CollaborativeProtocol inconsistency");
+        }
     }
+
+    for (int i = 0; i < getNumInterfaces(); i++)
+    {
+        if (getInterfaceEntry(i)->getInterfaceId() == ifaceId)
+        {
+            ifaceIndexNextHop = i;
+            break;
+        }
+    }
+    if (ifaceIndexNextHop == -1)
+        opp_error("Interface not found");
+
     // Process list of nodes
     unsigned int sizeVector = addressVector.size();
     if (sizeVector>0)
@@ -1046,7 +1067,7 @@ void NS_CLASS re_answer(RE *re,u_int32_t ifindex)
                 {
                     if (entry->rt_hopcnt>i+1 || entry->rt_hopcnt==0)
                     {
-                        rtable_update(entry, node_addr, next_addr, ifindex, seqNum,entry->rt_prefix, i+1, 0, cost, (i+2));
+                        rtable_update(entry, node_addr, next_addr, ifaceIndexNextHop, seqNum,entry->rt_prefix, i+1, 0, cost, (i+2));
                     }
                 }
                 else
@@ -1054,7 +1075,7 @@ void NS_CLASS re_answer(RE *re,u_int32_t ifindex)
                     rtable_insert(
                             node_addr, // dest
                             next_addr, // nxt hop
-                            ifindex,   // iface
+                            ifaceIndexNextHop,   // iface
                             seqNum,    // seqnum
                             0,         // prefix
                             i+1,       // hop count
@@ -1073,13 +1094,13 @@ void NS_CLASS re_answer(RE *re,u_int32_t ifindex)
             uint32_t costInt = costStatic;
             if (entry)
             {
-                rtable_update(entry, node_addr, next_addr, ifindex, seqNum,entry->rt_prefix, 1, 0, costInt, 2);
+                rtable_update(entry, node_addr, next_addr, ifaceIndexNextHop, seqNum,entry->rt_prefix, 1, 0, costInt, 2);
             }
             else
             {
                 rtable_insert(node_addr, // dest
                               next_addr, // nxt hop
-                              ifindex,   // iface
+                              ifaceIndexNextHop,   // iface
                               seqNum,    // seqnum
                               0,         // prefix
                               1,       // hop count
@@ -1097,7 +1118,7 @@ void NS_CLASS re_answer(RE *re,u_int32_t ifindex)
             {
                 if (entry->rt_hopcnt > cost + 1 || entry->rt_hopcnt==0)
                 {
-                    rtable_update(entry, node_addr, next_addr, ifindex, seqNum,entry->rt_prefix, (int) cost, 0, costInt, (int)(cost+1));
+                    rtable_update(entry, node_addr, next_addr, ifaceIndexNextHop, seqNum,entry->rt_prefix, (int) cost, 0, costInt, (int)(cost+1));
                 }
             }
             else
@@ -1105,7 +1126,7 @@ void NS_CLASS re_answer(RE *re,u_int32_t ifindex)
                 rtable_insert(
                             node_addr, // dest
                             next_addr, // nxt hop
-                            ifindex,   // iface
+                            ifaceIndexNextHop,   // iface
                             seqNum,    // seqnum
                             0,         // prefix
                             cost,       // hop count

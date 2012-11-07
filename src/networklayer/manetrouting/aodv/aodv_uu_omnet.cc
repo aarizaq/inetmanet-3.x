@@ -882,7 +882,7 @@ void NS_CLASS recvAODVUUPacket(cMessage * msg)
 
     AODV_msg *aodv_msg = check_and_cast<AODV_msg *> (msg);
     int len = aodv_msg->getByteLength();
-    int ifIndex=NS_IFINDEX;
+    int ifIndex = NS_IFINDEX;
 
     ttl =  aodv_msg->ttl-1;
     if (!isInMacLayer())
@@ -903,29 +903,23 @@ void NS_CLASS recvAODVUUPacket(cMessage * msg)
         dst.s_addr =  ctrl->getDest().getInt();
     }
 
-    InterfaceEntry *   ie;
-    for (int i = 0; i < getNumWlanInterfaces(); i++)
+    if (isLocalAddress(src.s_addr))
     {
-        ie = getWlanInterfaceEntry(i);
-        if (!isInMacLayer())
-        {
-            IPv4InterfaceData *ipv4data = ie->ipv4Data();
-            if (interfaceId ==ie->getInterfaceId())
-                ifIndex=getWlanInterfaceIndex(i);
+        delete   aodv_msg;
+        return;
+    }
 
-            if (ipv4data->getIPAddress().getInt()== src.s_addr)
-            {
-                delete   aodv_msg;
-                return;
-            }
-        }
-        else
+    InterfaceEntry *   ie;
+    if (!isInMacLayer())
+    {
+        for (int i = 0; i < getNumWlanInterfaces(); i++)
         {
-            Uint128 add = ie->getMacAddress().getInt();
-            if (add== src.s_addr)
+            ie = getWlanInterfaceEntry(i);
+
             {
-                delete   aodv_msg;
-                return;
+                IPv4InterfaceData *ipv4data = ie->ipv4Data();
+                if (interfaceId == ie->getInterfaceId())
+                    ifIndex=getWlanInterfaceIndex(i);
             }
         }
     }
