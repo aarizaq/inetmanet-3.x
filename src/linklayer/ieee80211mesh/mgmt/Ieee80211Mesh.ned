@@ -55,6 +55,12 @@ simple Ieee80211Mesh
         @signal[dropPkByQueue](type=cMessage);
         @signal[queueingTime](type=simtime_t; unit=s);
         @signal[dataQueueLen](type=long);  // number of stored packets
+        @signal[numHopsSignal](type=long);
+        @signal[numFixHopsSignal](type=long);
+        @statistic[numHops](title="numHops"; source=numHopsSignal; record=histogram ; interpolationmode=none);
+        @statistic[numFixHops](title="numHops fix"; source=numFixHopsSignal; record=histogram ; interpolationmode=none);        
+        @statistic[dataQueueLen](title="data queue length"; record=max,timeavg,vector; interpolationmode=sample-hold);
+        @statistic[dropPkByQueue](title="packets dropped by queue"; source=dropPkByQueue; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
     gates:
         input  ETXProcIn @loose;
         output ETXProcOut @loose;

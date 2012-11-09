@@ -48,6 +48,9 @@
 class INET_API Ieee80211Mesh : public Ieee80211MgmtBase
 {
     private:
+        static simsignal_t numHopsSignal;
+        static simsignal_t numFixHopsSignal;
+
         static const int MaxSeqNum;
         class SeqNumberData
         {

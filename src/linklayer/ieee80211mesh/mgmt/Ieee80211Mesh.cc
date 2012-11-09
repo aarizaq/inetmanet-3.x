@@ -42,6 +42,9 @@
 Ieee80211Mesh::GateWayDataMap * Ieee80211Mesh::gateWayDataMap;
 #endif
 
+simsignal_t Ieee80211Mesh::numHopsSignal = SIMSIGNAL_NULL;
+simsignal_t Ieee80211Mesh::numFixHopsSignal = SIMSIGNAL_NULL;
+
 const int Ieee80211Mesh::MaxSeqNum = 1;
 
 std::ostream& operator<<(std::ostream& os, const LWmpls_Forwarding_Structure& e)
@@ -224,6 +227,9 @@ void Ieee80211Mesh::initialize(int stage)
 
         if (ETXEstimate)
             startEtx();
+
+        numHopsSignal = registerSignal("numHopsSignal");
+        numFixHopsSignal = registerSignal("numFixHopsSignal");
 
     }
     else if (stage == 4)
@@ -408,7 +414,14 @@ void Ieee80211Mesh::handleMessage(cMessage *msg)
             Ieee80211DataOrMgmtFrame *frame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg);
             Ieee80211MeshFrame *frame2  = dynamic_cast<Ieee80211MeshFrame *>(msg);
             if (frame2)
+            {
                 frame2->setTTL(frame2->getTTL()-1);
+                frame2->setTotalHops(frame2->getTotalHops()+1);
+                if (par("FixNode").boolValue())
+                {
+                    frame2->setTotalStaticHops(frame2->getTotalStaticHops()+1);
+                }
+            }
             actualizeReactive(frame,false);
             processFrame(frame);
         }
@@ -960,11 +973,16 @@ void Ieee80211Mesh::handleDataFrame(Ieee80211DataFrame *frame)
     short ttl = maxTTL;
     MACAddress destination = frame->getAddress4();
     MACAddress origin = frame->getAddress3();
+    int totalHops = -1;
+    int totalFixHops = -1;
     if (frame2)
     {
         ttl = frame2->getTTL();
         finalAddress = frame2->getFinalAddress();
+        totalHops = frame2->getTotalHops();
+        totalFixHops = frame2->getTotalStaticHops();
     }
+
     cPacket *msg = decapsulate(frame);
     ///
     /// If it's a ETX packet to send to the appropriate module
@@ -1054,7 +1072,14 @@ void Ieee80211Mesh::handleDataFrame(Ieee80211DataFrame *frame)
                 sendUp(ethframe);
             }
             else
+            {
+                if (totalHops >= 0)
+                {
+                    emit(numHopsSignal,totalHops);
+                    emit(numFixHopsSignal,totalFixHops);
+                }
                 sendUp(msg);
+            }
         }
         else
             delete msg;
@@ -1910,6 +1935,9 @@ void Ieee80211Mesh::handleWateGayDataReceive(cPacket *pkt)
         if (frame2->getFinalAddress()==myAddress)
         {
             bool isUpper = (frame2->getSubType() == UPPERMESSAGE);
+            int totalHops = frame2->getTotalHops();
+            int totalFixHops = frame2->getTotalStaticHops();
+
             cPacket *msg = decapsulate(frame2);
             if (dynamic_cast<ETXBasePacket*>(msg))
             {
@@ -1933,7 +1961,11 @@ void Ieee80211Mesh::handleWateGayDataReceive(cPacket *pkt)
             else
                 encapPkt = msg;
             if (encapPkt && isUpper)
+            {
                 sendUp(encapPkt);
+                emit(numHopsSignal,totalHops);
+                emit(numFixHopsSignal,totalFixHops);
+            }
         }
         else if (!frame2->getFinalAddress().isUnspecified())
         {
@@ -2171,6 +2203,9 @@ void Ieee80211Mesh::processDistributionPacket(Ieee80211MeshFrame *frame)
                 next.pop_back();
             }
         }
+        emit(numHopsSignal,frame->getTotalHops());
+        emit(numFixHopsSignal,frame->getTotalStaticHops());
+
         cPacket *msg = decapsulate(frame);
         sendUp(msg);
     }

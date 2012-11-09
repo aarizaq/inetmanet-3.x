@@ -184,7 +184,9 @@ packet Ieee80211MeshFrame extends Ieee80211DataFrame
     long seqNumber;
     MACAddress finalAddress; //virtual address used by anycast procedure
                              // contain the initial address and avoid the necessity of search the IP address
-                             
+   // used for statistics
+    unsigned int totalHops = 0;
+    unsigned int totalStaticHops = 0;
     // this fiels are used by fragmentation over ethernet, not necesasry, it's possible to use the fields un the Ieee80211 frame 
     bool isFragment=false;
     unsigned long realLength=0;
