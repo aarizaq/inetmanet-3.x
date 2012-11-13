@@ -63,6 +63,8 @@ class INET_API MACRelayUnitSTPNP : public MACRelayUnitNP
 
         long packet_forwarded;
 
+        long cost;
+
         PortStatus(int port)
         {
             state = BLOCKING;
@@ -261,7 +263,8 @@ class INET_API MACRelayUnitSTPNP : public MACRelayUnitNP
     };
 
     // switch port status
-    typedef std::map<int,PortStatus> PortStatusList;
+    //typedef std::map<int,PortStatus> PortStatusList;
+    typedef std::vector<PortStatus> PortStatusList;
     PortStatusList port_status;
 
     // timer timeouts
@@ -294,6 +297,7 @@ class INET_API MACRelayUnitSTPNP : public MACRelayUnitNP
     PriorityVector priority_vector;
 
     // helper methods
+    double readChannelBitRate(int index);
     void setRootPort(int port);
     int getRootPort();
     void recordPriorityVector(BPDU* bpdu, int port_idx);

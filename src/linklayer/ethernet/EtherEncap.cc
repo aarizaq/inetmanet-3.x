@@ -132,6 +132,14 @@ void EtherEncap::processPacketFromHigherLayer(cPacket *msg)
 
 void EtherEncap::processFrameFromMAC(EtherFrame *frame)
 {
+    if (dynamic_cast<EtherFrameWithLLC *>(frame) != NULL)
+    {
+        if (((EtherFrameWithLLC *)frame)->getDsap() == SAP_STP)
+        {
+            delete frame;
+            return;
+        }
+    }
     // decapsulate and attach control info
     cPacket *higherlayermsg = frame->decapsulate();
 

@@ -19,7 +19,7 @@
 #include "EtherFrame_m.h"
 #include "Ethernet.h"
 #include "MACAddress.h"
-
+#define DELTATIME 0.01
 // TODO:
 // 1. paint links when changing to forward state. now it only paints blocking links.
 //    and when they turn into forwarding state they remain painted in red.
@@ -43,7 +43,7 @@ MACRelayUnitSTPNP::~MACRelayUnitSTPNP()
 {
     while (!port_status.empty())
     {
-        if (this->port_status.begin()->second.forward_timer)
+/*        if (this->port_status.begin()->second.forward_timer)
             cancelAndDelete(this->port_status.begin()->second.forward_timer);
         if (this->port_status.begin()->second.hold_timer)
             cancelAndDelete(this->port_status.begin()->second.hold_timer);
@@ -52,7 +52,17 @@ MACRelayUnitSTPNP::~MACRelayUnitSTPNP()
         if (this->port_status.begin()->second.bpdu_timeout_timer)
             cancelAndDelete(this->port_status.begin()->second.bpdu_timeout_timer);
         this->port_status.begin()->second.BPDUQueue.clear();
-        this->port_status.erase(this->port_status.begin());
+        this->port_status.erase(this->port_status.begin());*/
+        if (this->port_status.back().forward_timer)
+            cancelAndDelete(this->port_status.back().forward_timer);
+        if (this->port_status.back().hold_timer)
+            cancelAndDelete(this->port_status.back().hold_timer);
+        if (this->port_status.back().edge_timer)
+            cancelAndDelete(this->port_status.back().edge_timer);
+        if (this->port_status.back().bpdu_timeout_timer)
+            cancelAndDelete(this->port_status.back().bpdu_timeout_timer);
+        this->port_status.back().BPDUQueue.clear();
+        this->port_status.pop_back();
     }
 }
 
@@ -66,7 +76,8 @@ void MACRelayUnitSTPNP::setAllPortsStatus(PortStatus status)
 
 void MACRelayUnitSTPNP::setPortStatus(int port_idx, PortStatus status)
 {
-    if (this->port_status.find(port_idx) != this->port_status.end())
+    //if (this->port_status.find(port_idx) != this->port_status.end())
+    if (port_idx >=0 &&  port_idx < (int)this->port_status.size())
     {
 
         if (this->port_status[port_idx].role == status.role && this->port_status[port_idx].state == status.state)
@@ -257,7 +268,7 @@ void MACRelayUnitSTPNP::setPortStatus(int port_idx, PortStatus status)
         {
             if (!this->port_status[i].synced)
             {
-                // there are still ports to be synced.
+                // there are still ports to be synced.FORWARDING
                 this->allSynced = false;
             }
         }
@@ -439,6 +450,40 @@ void MACRelayUnitSTPNP::moveMACAddresses(int from_port,int to_port)
     }
 }
 
+double MACRelayUnitSTPNP::readChannelBitRate(int index)
+{
+    cModule* mac = this->gate("lowerLayerOut",index)->getPathEndGate()->getOwnerModule();
+    cGate* physOutGate = mac->gate("phys$o");
+    cGate* physInGate = mac->gate("phys$i");
+
+    cChannel *outTrChannel = physOutGate->findTransmissionChannel();
+    cChannel *inTrChannel = physInGate->findIncomingTransmissionChannel();
+
+    bool connected = physOutGate->getPathEndGate()->isConnected() && physInGate->getPathStartGate()->isConnected();
+
+    if (connected && ((!outTrChannel) || (!inTrChannel)))
+        throw cRuntimeError("Ethernet phys gate must be connected using a transmission channel");
+
+    double txRate = outTrChannel ? outTrChannel->getNominalDatarate() : 0.0;
+    double rxRate = inTrChannel ? inTrChannel->getNominalDatarate() : 0.0;
+    bool dataratesDiffer;
+    if (!connected)
+    {
+        dataratesDiffer = (outTrChannel != NULL) || (inTrChannel != NULL);
+    }
+    else
+    {
+        dataratesDiffer = (txRate != rxRate);
+    }
+
+    if (dataratesDiffer)
+    {
+        throw cRuntimeError("The input/output datarates differ (%g / %g bps)", rxRate, txRate);
+    }
+
+    return txRate;
+
+}
 
 void MACRelayUnitSTPNP::initialize()
 {
@@ -490,10 +535,26 @@ void MACRelayUnitSTPNP::initialize()
     this->port_status.clear();
     for (int i=0; i<this->gateSize("lowerLayerOut"); i++)
     {
-        this->port_status.insert(std::make_pair(i,PortStatus(i)));
-        WATCH(this->port_status[i]);
-    }
+        //this->port_status.insert(std::make_pair(i,PortStatus(i)));
+        this->port_status.push_back(PortStatus(i));
+        this->port_status[i].port_index = i;
+        //WATCH(this->port_status[i]);
+        double bitRate = readChannelBitRate(i);
 
+        if (bitRate == ETHERNET_TXRATE)
+            this->port_status[i].cost   = 2000000;
+        else if (bitRate == FAST_ETHERNET_TXRATE)
+            this->port_status[i].cost   = 200000;
+        else if (bitRate == GIGABIT_ETHERNET_TXRATE)
+            this->port_status[i].cost   =   20000;
+        else if (bitRate == FAST_GIGABIT_ETHERNET_TXRATE)
+            this->port_status[i].cost   =   2000;
+        else if (bitRate == FOURTY_GIGABIT_ETHERNET_TXRATE)
+            this->port_status[i].cost   = 500;
+        else if (bitRate == HUNDRED_GIGABIT_ETHERNET_TXRATE)
+            this->port_status[i].cost   = 200;
+    }
+    WATCH_VECTOR(port_status);
     WATCH(bridge_id);
     WATCH(priority_vector);
     WATCH(message_age);
@@ -551,9 +612,11 @@ void MACRelayUnitSTPNP::handleMessage(cMessage* msg)
 
 void MACRelayUnitSTPNP::handleIncomingFrame(EtherFrame *msg)
 {
-    if (this->port_status[msg->getArrivalGate()->getIndex()].state != BLOCKING)
+    int inputPort = msg->getArrivalGate()->getIndex();
+    if (this->port_status[inputPort].state != BLOCKING)
     {
-        int outputport = getPortForAddress(msg->getDest());
+        MACAddress dest(msg->getDest());
+        int outputport = getPortForAddress(dest);
         if (outputport>=0 && this->port_status[outputport].state!=FORWARDING)
         {
             if (this->port_status[outputport].state==LEARNING)
@@ -579,7 +642,18 @@ void MACRelayUnitSTPNP::handleIncomingFrame(EtherFrame *msg)
             //EV << "Port " << outputport << " forwarded frames " << this->port_status[outputport].packet_forwarded << endl;
         }
         // handle the frame with the legacy method to process it
-        MACRelayUnitNP::handleIncomingFrame(msg);
+
+        if (this->port_status[inputPort].state == FORWARDING)
+            MACRelayUnitNP::handleIncomingFrame(msg);
+        else if (this->port_status[inputPort].state == LEARNING)
+        {
+            AddressTable::iterator iter = addresstable.find(msg->getSrc());
+            if (iter == addresstable.end() ||
+                    !(this->port_status[iter->second.portno].state == FORWARDING && iter->second.insertionTime + DELTATIME > simTime()))
+                updateTableWithAddress(msg->getSrc(), inputPort);
+             delete msg;
+             return;
+        }
     }
     else
     {
@@ -1222,7 +1296,9 @@ void MACRelayUnitSTPNP::sendBPDU(BPDU* bpdu,int port)
         // bpdu is meant to be send via the port id
         EV << "Sending " << bpdu->getName() << " via port " << port << endl;
 
-        EtherFrame* frame = new EtherFrame(bpdu->getName());
+        EtherFrameWithLLC* frame = new EtherFrameWithLLC(bpdu->getName());
+        frame->setDsap(SAP_STP);
+        frame->setSsap(SAP_STP);
         frame->setDest(MACRelayUnitSTPNP::STPMCAST_ADDRESS);
         frame->setSrc(this->bridge_id.address);
 
