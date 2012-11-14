@@ -58,6 +58,7 @@
 #define AODV_GLOBAL_STATISTISTIC
 
 /* Global definitions and lib functions */
+#include <deque>
 #include "aodv-uu/params.h"
 #include "aodv-uu/defs_aodv.h"
 
@@ -192,7 +193,24 @@ class AODVUU : public ManetRoutingBase
         Uint128 next;
     };
 
+    struct RREQInfo
+    {
+        u_int8_t hcnt;
+        u_int32_t dest_seqno;
+        u_int32_t origin_seqno;
+        uint32_t cost;
+        uint8_t  hopfix;
+        cPacket *pkt;
+    };
+
+    struct RREQProcessed : cMessage
+    {
+        PacketDestOrigin destOrigin;
+        std::deque<RREQInfo> infoList;
+    };
+
     std::map<PacketDestOrigin,RREPProcessed> rrepProc;
+    std::map<PacketDestOrigin,RREQProcessed*> rreqProc;
 
     struct DelayInfo : public cObject
     {
@@ -201,10 +219,12 @@ class AODVUU : public ManetRoutingBase
         u_int8_t ttl;
         struct dev_info *dev;
     };
+    bool storeRreq;
+    virtual bool getDestAddressRreq(cPacket *msg,PacketDestOrigin &orgDest,RREQInfo &rreqInfo);
   public:
     static int  log_file_fd;
     static bool log_file_fd_init;
-    AODVUU() {isRoot = false; is_init = false; log_file_fd_init = false; sendMessageEvent = new cMessage(); mapSeqNum.clear(); /*&messageEvent;*/}
+    AODVUU() {isRoot = false; is_init = false; log_file_fd_init = false; sendMessageEvent = new cMessage(); mapSeqNum.clear(); /*&messageEvent;*/storeRreq = false;}
     ~AODVUU();
 
     void packetFailed(IPv4Datagram *p);

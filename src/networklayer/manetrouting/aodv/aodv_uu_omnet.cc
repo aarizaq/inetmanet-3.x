@@ -494,11 +494,12 @@ void NS_CLASS handleMessage (cMessage *msg)
     struct in_addr src_addr;
     struct in_addr dest_addr;
 
+    if (is_init==false)
+        opp_error ("Aodv has not been initialized ");
+
     if (msg->isSelfMessage() && dynamic_cast<AODV_msg*> (msg))
     {
         DelayInfo * delayInfo = check_and_cast<DelayInfo *> (msg->removeControlInfo());
-
-
         RREP * rrep = dynamic_cast<RREP *> (msg);
         bool sendPkt = true;
         if (rrep)
@@ -524,8 +525,33 @@ void NS_CLASS handleMessage (cMessage *msg)
         delete delayInfo;
         return;
     }
-    if (is_init==false)
-        opp_error ("Aodv has not been initialized ");
+    else if (msg->isSelfMessage() && dynamic_cast<RREQProcessed*> (msg))
+    {
+        RREQProcessed* rreqList = dynamic_cast<RREQProcessed*> (msg);
+        if (rreqList)
+        {
+            while (!rreqList->infoList.empty())
+            {
+                cPacket *pkt = rreqList->infoList.front().pkt;
+                rreqList->infoList.pop_front();
+                recvAODVUUPacket(pkt);
+            }
+        }
+        // delete rreqList from the list
+        for (std::map<PacketDestOrigin,RREQProcessed*>::iterator it = rreqProc.begin(); it != rreqProc.end(); ++it)
+        {
+            if (it->second == rreqList)
+            {
+                rreqProc.erase(it);
+                break;
+            }
+        }
+
+        delete msg;
+        scheduleNextEvent();
+        return;
+    }
+
     if (msg==sendMessageEvent)
     {
         // timer event
@@ -677,6 +703,44 @@ void NS_CLASS handleMessage (cMessage *msg)
         aodvMsg=NULL;
         scheduleNextEvent();
         return;
+    }
+    if (storeRreq)
+    {
+        RREQInfo rreqInfo;
+        PacketDestOrigin orgDest;
+
+        if (getDestAddressRreq(aodvMsg,orgDest,rreqInfo))
+        {
+            rreqInfo.pkt = aodvMsg;
+            std::map<PacketDestOrigin,RREQProcessed*>::iterator it = rreqProc.find(orgDest);
+            if (it == rreqProc.end())
+            {
+                RREQProcessed* proc = new RREQProcessed;
+                proc->destOrigin = orgDest;
+                proc->infoList.push_back(rreqInfo);
+                rreqProc.insert(std::make_pair(orgDest,proc));
+                scheduleAt(simTime()+par("broadcastDelay").longValue(),proc);
+            }
+            else
+            {
+                // store the packet in function if the cost and seq num
+                RREQProcessed* proc = it->second;
+                std::deque<RREQInfo>::iterator it2;
+                for (it2 = proc->infoList.begin(); it2 != proc->infoList.end(); ++it2)
+                {
+                    if (((*it2).origin_seqno < rreqInfo.origin_seqno) || ((*it2).origin_seqno == rreqInfo.origin_seqno && (*it2).cost > rreqInfo.cost))
+                    {
+                        proc->infoList.insert(it2,rreqInfo);
+                        break;
+                    }
+                    if (it2 == proc->infoList.end())
+                    {
+                        proc->infoList.push_back(rreqInfo);
+                    }
+                }
+            }
+            return;
+        }
     }
     recvAODVUUPacket(aodvMsg);
     scheduleNextEvent();
@@ -1461,6 +1525,24 @@ bool NS_CLASS getDestAddress(cPacket *msg,Uint128 &dest)
     return true;
 
 }
+
+bool AODVUU::getDestAddressRreq(cPacket *msg,PacketDestOrigin &orgDest,RREQInfo &rreqInfo)
+{
+    RREQ *rreq = dynamic_cast <RREQ *>(msg);
+    if (!rreq)
+        return false;
+    orgDest.setDests(rreq->dest_addr);
+    orgDest.setOrigin(rreq->orig_addr);
+    rreqInfo.origin_seqno = rreq->orig_seqno;
+    rreqInfo.dest_seqno = rreq->dest_seqno;
+    rreqInfo.hcnt = rreq->hcnt;
+    rreqInfo.cost = rreq->cost;
+    rreqInfo.hopfix = rreq->hopfix;
+    return true;
+}
+
+
+
 #ifdef AODV_USE_STL_RT
 bool  NS_CLASS setRoute(const Uint128 &dest,const Uint128 &add, const int &ifaceIndex,const int &hops,const Uint128 &mask)
 {

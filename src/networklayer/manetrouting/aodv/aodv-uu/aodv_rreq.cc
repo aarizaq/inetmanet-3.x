@@ -195,6 +195,8 @@ void NS_CLASS rreq_forward(RREQ * rreq, int size, int ttl)
     double delay = -1;
     if (par("EqualDelay"))
         delay = par("broadcastDelay");
+    if (storeRreq) // in this case the delay was at the packet input
+        delay = 0;
 
     for (i = 0; i < MAX_NR_INTERFACES; i++)
     {
