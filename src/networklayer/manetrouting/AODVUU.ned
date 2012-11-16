@@ -67,6 +67,8 @@ simple AODVUU extends BaseRouting like IManetRouting
         bool propagateProactive = default(true); // Proactive feedback
         bool checkNextHop = default(false);
         bool PublicRoutingTables = default(false);
+        bool RreqDelayInReception = default(false); // if true the delay introduced to the RREq is in reception
+        volatile double rreqWait @unit("s") = default(0.01s);
     gates:
         input from_ip;
         output to_ip;

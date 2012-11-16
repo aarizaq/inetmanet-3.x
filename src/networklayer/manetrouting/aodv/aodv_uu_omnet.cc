@@ -120,6 +120,9 @@ void NS_CLASS initialize(int stage)
         if ((bool)par("debug"))
             debug = 1;
 
+        if (hasPar("RreqDelayInReception"))
+            storeRreq = par(("RreqDelayInReception")).boolValue();
+
         useIndex = par("UseIndex");
         unidir_hack = (int) par("unidir_hack");
 
@@ -719,7 +722,7 @@ void NS_CLASS handleMessage (cMessage *msg)
                 proc->destOrigin = orgDest;
                 proc->infoList.push_back(rreqInfo);
                 rreqProc.insert(std::make_pair(orgDest,proc));
-                scheduleAt(simTime()+par("broadcastDelay").longValue(),proc);
+                scheduleAt(simTime()+par("rreqWait").longValue(),proc);
             }
             else
             {
@@ -730,13 +733,13 @@ void NS_CLASS handleMessage (cMessage *msg)
                 {
                     if (((*it2).origin_seqno < rreqInfo.origin_seqno) || ((*it2).origin_seqno == rreqInfo.origin_seqno && (*it2).cost > rreqInfo.cost))
                     {
-                        proc->infoList.insert(it2,rreqInfo);
+                        it2 = proc->infoList.insert(it2,rreqInfo);
                         break;
                     }
-                    if (it2 == proc->infoList.end())
-                    {
-                        proc->infoList.push_back(rreqInfo);
-                    }
+                }
+                if (it2 == proc->infoList.end())
+                {
+                    proc->infoList.push_back(rreqInfo);
                 }
             }
             return;
