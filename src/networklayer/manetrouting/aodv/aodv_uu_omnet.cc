@@ -722,7 +722,7 @@ void NS_CLASS handleMessage (cMessage *msg)
                 proc->destOrigin = orgDest;
                 proc->infoList.push_back(rreqInfo);
                 rreqProc.insert(std::make_pair(orgDest,proc));
-                scheduleAt(simTime()+par("rreqWait").longValue(),proc);
+                scheduleAt(simTime()+par("rreqWait").doubleValue(),proc);
             }
             else
             {
