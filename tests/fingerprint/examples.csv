@@ -137,6 +137,14 @@
 /examples/inet/tcpwindowscale/,      -f omnetpp.ini -c WS_enabled -r 0,             1.5s,            b6be-e1f5
 /examples/inet/udpburst/,            -f omnetpp.ini -c General -r 0,                1000s,           bc26-623c
 
+/examples/internetcloud/cloudandhosts/, -f omnetpp.ini -c simple -r 0,                 100s,            ba3f-82ec
+/examples/internetcloud/cloudandhosts/, -f omnetpp.ini -c two_senders -r 0,            100s,            4c30-7368
+/examples/internetcloud/cloudandhosts/, -f omnetpp.ini -c ten_senders -r 0,            100s,            a056-296a
+/examples/internetcloud/cloudandrouters/, -f omnetpp.ini -c simple -r 0,                 100s,            656d-0608
+/examples/internetcloud/cloudandrouters/, -f omnetpp.ini -c two_senders -r 0,            100s,            9ea7-49c9
+/examples/internetcloud/cloudandrouters/, -f omnetpp.ini -c ten_senders -r 0,            100s,            aa6f-2a01
+/examples/internetcloud/earthcloud/, -f omnetpp.ini -c General -r 0,                100s,            c5f9-2538
+
 # /examples/ipv6/demonetworketh/,      -f omnetpp.ini -c General -r 0,                100s,            34b1-536e    # unstable fingerprint
 # /examples/ipv6/ipv6bulk/,            -f omnetpp.ini -c inet_inet -r 0,              100s,            c980-8b04    # unstable fingerprint
 # /examples/ipv6/ipv6bulk/,            -f omnetpp.ini -c nsc_nsc -r 0,                100s,            17ed-8b28    # unstable fingerprint
@@ -216,12 +224,13 @@
 /examples/sctp/multihomed/,          -f omnetpp.ini -c General -r 0,                500s,            f252-459d
 /examples/sctp/nclients/,            -f omnetpp.ini -c General -r 0,                500s,            d999-82c6
 
-/examples/voiptool/VoIPToolLargeNet/, -f omnetpp.ini -c General -r 0,                5s,              d535-b1ff
-/examples/voiptool/VoIPToolTest/,    -f omnetpp.ini -c g726 -r 0,                   5s,              f0e7-8839
-/examples/voiptool/VoIPToolTest/,    -f omnetpp.ini -c g711_aLaw -r 0,              5s,              b3f2-edae
-/examples/voiptool/VoIPToolTest/,    -f omnetpp.ini -c g711_muLaw -r 0,             5s,              b3f2-edae
-/examples/voiptool/VoIPToolTest/,    -f omnetpp.ini -c pcm_s16le -r 0,              5s,              1a6d-102c
-/examples/voiptool/VoIPToolTrafficTest/, -f omnetpp.ini -c General -r 0,                2s,              9617-db37
+/examples/voipstream/VoIPStreamLargeNet/, -f omnetpp.ini -c General -r 0,                5s,              efd9-bec0
+/examples/voipstream/VoIPStreamTest/, -f omnetpp.ini -c g726 -r 0,                   5s,              4058-6015
+/examples/voipstream/VoIPStreamTest/, -f omnetpp.ini -c g711_aLaw -r 0,              5s,              47f1-5bf8
+/examples/voipstream/VoIPStreamTest/, -f omnetpp.ini -c g711_muLaw -r 0,             5s,              4621-67d9
+/examples/voipstream/VoIPStreamTest/, -f omnetpp.ini -c pcm_s16le -r 0,              5s,              aad3-4d08
+/examples/voipstream/VoIPStreamTrafficTest/, -f omnetpp.ini -c General -r 0,                2s,              c034-2bd0
+
 /examples/wireless/handover/,        -f omnetpp.ini -c General -r 0,                1500s,           61db-0a60
 /examples/wireless/hosttohost/,      -f omnetpp.ini -c Throughput1 -r 0,            5s,              7bcb-0f6e
 /examples/wireless/lan80211/,        -f omnetpp-ftp.ini -c TwoHosts -r 0,           100s,            6c1b-1738
@@ -236,3 +245,4 @@
 /examples/wireless/synchronized/,    -f omnetpp.ini -c NonSynchronized -r 0,        2s,              da44-c60b
 /examples/wireless/throughput/,      -f omnetpp.ini -c Throughput1 -r 0,            20s,             e023-1ed2
 /examples/wireless/throughput/,      -f omnetpp.ini -c Throughput2 -r 0,            10s,             8a77-7fb2
+/examples/wireless/wiredandwirelesshostswithap/, -f omnetpp.ini -c General -r 0,                100s,            b457-7c3c
