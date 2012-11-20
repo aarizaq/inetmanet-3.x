@@ -1,0 +1,517 @@
+To: aarizaq@uma.es
+Subject: Fwd: problem in OLSR routing
+Date: Fri, 13 Jul 2012 11:49:31 +0530
+From: actarkar@tatapowersed.com
+MIME-Version: 1.0
+Content-Type: MULTIPART/mixed; BOUNDARY="346817223-1564843329-1342160367=:16089"
+X-Originating-IP: 14.97.228.221
+X-Mailer: Alice-Webmail
+
+
+
+--346817223-1564843329-1342160367=:16089
+Content-Type: TEXT/plain; CHARSET=US-ASCII
+
+Hi,
+              This with reference to the Multiple interface support for OLSR which you have updated day before yesterday. I am facing following problems
+
+1) Whenever I use OLSR_ETX as routing protocol in any example It gives segmentation fault. I am not able to figure out segmentation fault using omnet pp IDE. Please let me know exactly how and where you will have figured it out.
+2) If I use "OLSR" then I face different problems in different examples (files attached) as scenario described below:
+
+1)Scenario for "3_nodes.ini" file attached -:
+
+a) Confiuration:- I have created 3 nodes. In which MobileHost[1] (client)
+has been configured with "TCPSessionApp" and MobileHost[2](server) has been
+configured with "TCPSinkApp"
+
+b) channel assignment-:
+
+
+
+**.mobileHost[0].wlan[0].radio.channelNumber = 0
+
+**.mobileHost[0].wlan[1].radio.channelNumber = 1
+
+
+
+**.mobileHost[1].wlan[0].radio.channelNumber = 0
+
+**.mobileHost[2].wlan[0].radio.channelNumber = 1
+
+
+
+mobileHost[0] has two channels and one of them i.e. channel 0 is connected
+to mobileHost[1] and the other one i.e. channel 1 is connected to
+mobileHost[2] so MobileHost[0] is supposed to be a router for mobileHost[1]
+and mobileHost[2].
+
+
+
+c)Observation -: i)when I use AODVUU as routing protocol everything works
+fine and mobileHost[2] is able to receive data from mobileHost[1].
+
+ii) when we run the example using  "OLSR" as routing protocol
+then mobileHost[2] is  able to receive only sync segment from mobileHost[1].  but do not receive any other data. From
+routing table also we can observe that route from mobileHost[1] to
+mobileHost[2] has been formed but reverse route has not been formed (I guess that is why mobileHost[2] is not able to send 'sync-ack' to mobileHost[1] and hence  mobileHost[1]  can not send any further data.)
+
+
+
+
+
+2)Scenario for "4_nodes.ini" file attached -:
+
+
+
+a) configuration:- In this we have created 4 nodes. Here mobileHost[0] pings to mobileHost[3].
+
+
+
+b)channel assignment:-
+
+Here every host has two NIC's with channel assignment as follows:
+
+
+
+**.mobileHost[0].wlan[0].radio.channelNumber = 0
+
+**.mobileHost[0].wlan[1].radio.channelNumber = 1
+
+
+
+**.mobileHost[1].wlan[0].radio.channelNumber = 1
+
+**.mobileHost[1].wlan[1].radio.channelNumber = 1
+
+
+
+**.mobileHost[2].wlan[0].radio.channelNumber = 1
+
+**.mobileHost[2].wlan[1].radio.channelNumber = 1
+
+
+
+**.mobileHost[3].wlan[0].radio.channelNumber = 0
+
+**.mobileHost[3].wlan[1].radio.channelNumber = 1
+
+
+
+c) Observation:When we used AODVUU, routes gets properly formed and hosts are able to ping. but with OLSR routes are not formed and hence the hosts are not able to ping.
+
+
+3) In ping16.ini file everything is working fine with "OLSR" after you had updated the git repo but "OLSR_ETX" gives segmentation fault.
+
+So please help me to sort out the issue
+
+Thanks and regards
+Amit Tarkar
+
+
+
+--346817223-1564843329-1342160367=:16089
+Content-Type: MESSAGE/rfc822
+Content-Description: Forwarded Message
+
+To: rudolf.hornig@googlemail.com, rudolf.hornig@omnest.com
+Subject: problem in OLSR routing
+Date: Mon, 09 Jul 2012 20:38:38 +0530
+From: actarkar@tatapowersed.com
+cc: rudolf.hornig@gmail.com, andras@omnetpp.org, apai@tatapowersed.com, 
+    ymishra@tatapowersed.com, csvenkat@tatapowersed.com, 
+    poojamaiya@gmail.com, pushpa.kumbhare@gmail.com
+MIME-Version: 1.0
+Content-Type: MULTIPART/mixed; BOUNDARY="346817223-1127197150-1341846516=:29891"
+X-Originating-IP: 172.20.110.30
+X-Mailer: Alice-Webmail
+
+
+
+--346817223-1127197150-1341846516=:29891
+Content-Type: TEXT/plain; CHARSET=US-ASCII
+
+Dear Rudolph,
+
+We had observed that there is no support for OLSR with MID messages by
+default (OLSR with multiple interface support), so as per instructions given
+in OLSR_ETX.ned, we have added "-DMULTIPLE_IFACES_SUPPORT to CFLAGS" in the
+makefile.
+
+
+
+Then our makefile looks as follows:-
+
+
+
+
+
+COPTS = $(CFLAGS) \
+
+-DWITH_TCP_COMMON \
+
+-DWITH_TCP_INET \
+
+-DWITH_IPv4 \
+
+-DWITH_IPv6 \
+
+-DWITH_xMIPv6 \
+
+-DWITH_UDP \
+
+-DWITH_RTP \
+
+-DWITH_SCTP \
+
+-DWITH_ETHERNET \
+
+-DWITH_PPP \
+
+-DWITH_EXT_IF \
+
+-DWITH_MPLS \
+
+-DWITH_OSPFv2 \
+
+-DWITH_BGPv4 \
+
+-DWITH_MANET \
+
+-DWITH_DHCP \
+
+-DWITH_VOIPTOOL \
+
+-DWITH_TCP_LWIP \
+
+-DMULTIPLE_IFACES_SUPPORT \
+
+-DWITH_TCP_NSC $(INCLUDE_PATH) -I$(OMNETPP_INCL_DIR) MSGCOPTS =
+$(INCLUDE_PATH)
+
+
+
+
+
+then we applied "make clean" and then did "make" again, but we observed
+that the Omnetpp IDE workspace automatically erases the
+"-DMULTIPLE_IFACES_SUPPORT" option.
+
+
+
+So we denied the write permission of Makefile for normal unix user so that
+the Omnetpp IDE will not be able to modify it, but then we got following
+compilation error given below:-
+
+
+
+netrouting/olsr/OLSR.cc
+
+networklayer/manetrouting/olsr/OLSR.cc: In member function b__virtual void
+OLSR_MidTimer::expire()b__:
+
+networklayer/manetrouting/olsr/OLSR.cc:155:13: error: b__class OLSRb__ has
+no member named b__timerQueueb__
+
+make: *** [../out/gcc-debug/src/networklayer/manetrouting/olsr/OLSR.o] Error
+1
+
+
+
+We tried to add the above options because we concluded that in all the
+simulation scenarios that we had created using OLSR_ETX or OLSR.; it
+considers only wlan0 interface of all the hosts in the simulation. we are
+sending 3 simulation scenarios that we had created to elaborate this fact.
+
+
+
+1)Scenario for "3_nodes.ini" file attached -:
+
+a) Confiuration:- we have created 3 nodes. In which MobileHost[1] (client)
+has been configured with "TCPSessionApp" and MobileHost[2](server) has been
+configured with "TCPSinkApp"
+
+b) channel assignment-:
+
+
+
+**.mobileHost[0].wlan[0].radio.channelNumber = 0
+
+**.mobileHost[0].wlan[1].radio.channelNumber = 1
+
+
+
+**.mobileHost[1].wlan[0].radio.channelNumber = 0
+
+**.mobileHost[2].wlan[0].radio.channelNumber = 1
+
+
+
+mobileHost[0] has two channels and one of them i.e. channel 0 is connected
+to mobileHost[1] and the other one i.e. channel 1 is connected to
+mobileHost[2] so MobileHost[0] is supposed to be a router for mobileHost[1]
+and mobileHost[2].
+
+
+
+c)Observation -: i)when we use AODVUU as routing protocol everything works
+fine and mobileHost[2] is able to receive data from mobileHost[1].
+
+ii) when we run the example using "OLSR_ETX" or "OLSR" as routing protocol
+then mobileHost[2] is not able to receive any data from mobileHost[1]. from
+routing table also we can observe that route from mobileHost[1] to
+mobileHost[2] has not been formed.
+
+
+
+
+
+2)Scenario for "4_nodes.ini" file attached -:
+
+
+
+a) configuration:- In this we have created 4 nodes. Here mobileHost[0]
+pings to mobileHost[3].
+
+
+
+b)channel assignment:-
+
+Here every host has two NIC's with channel assignment as follows:
+
+
+
+**.mobileHost[0].wlan[0].radio.channelNumber = 0
+
+**.mobileHost[0].wlan[1].radio.channelNumber = 1
+
+
+
+**.mobileHost[1].wlan[0].radio.channelNumber = 1
+
+**.mobileHost[1].wlan[1].radio.channelNumber = 1
+
+
+
+**.mobileHost[2].wlan[0].radio.channelNumber = 1
+
+**.mobileHost[2].wlan[1].radio.channelNumber = 1
+
+
+
+**.mobileHost[3].wlan[0].radio.channelNumber = 0
+
+**.mobileHost[3].wlan[1].radio.channelNumber = 1
+
+
+
+c) Observation:When we used AODVUU, route from mobileHost[0] to
+mobileHost[1] gets properly formed and they are able to ping. but with OLSR
+and OLSR_ETX routes are not formed and hence the hosts are not able to ping.
+
+
+
+3)a)Scenario for "ping16.ini" file attached -:
+
+In this mobileHost[0] pings to mobileHost[15] this is the same multiradio
+example for 16 host as discussed earlier.
+
+
+
+b)
+
+Observation-: when we used OLSR_ETX, mobileHost[0] is able to ping
+mobileHost[15] but everywhere in the routing table we can see only wlan0
+interface, we have two interfaces wlan0 (10.0.0.31) and wlan1 (10.0.0.32) on
+mobileHost[15], If we see the routing table of mobileHost[15], then for
+10.0.0.32 destination ip it has 10.0.0.19 as default gateway! which is wlan0
+interface of mobileHost[9]. In short it is considering only the wlan0
+interfaces of all hosts. this is not the case with AODV.
+
+
+
+So we seek your help in above issue.
+
+
+
+Thnaks and Regards
+
+Amit Tarkar
+
+
+
+
+
+
+
+
+
+
+--346817223-1127197150-1341846516=:29891
+Content-Type: APPLICATION/octet-stream
+Content-Transfer-Encoding: BASE64
+Content-Description: 3_nodes.ini
+Content-Disposition: attachment; filename=3_nodes.ini
+
+W0dlbmVyYWxdCgpyZWNvcmQtZXZlbnRsb2cgPSBmYWxzZQoqKi52ZWN0b3It
+cmVjb3JkaW5nID0gZmFsc2UKI3NpbS10aW1lLWxpbWl0ID0gMTAwcwpuZXR3
+b3JrID0gTXVsdGlSYWRpbwoKIyBudW1iZXIgb2YgaG9zdHMKKi5udW1Ib3N0
+cyA9IDMKCiMgbW9iaWxpdHkgc2V0dXAKKioubW9iaWxlSG9zdFsqXS5tb2Jp
+bGl0eVR5cGUgPSAiU3RhdGljR3JpZE1vYmlsaXR5IgoqKi5tb2JpbGVIb3N0
+WypdLm1vYmlsaXR5Lm51bUhvc3RzID0gMwoqKi5tb2JpbGVIb3N0WypdLm1v
+YmlsaXR5Lm1hcmdpblggPSA1MG0KKioubW9iaWxlSG9zdFsqXS5tb2JpbGl0
+eS5tYXJnaW5ZID0gNTBtCgojTUFDCioqLm1hYy5tYXhRdWV1ZVNpemUgPSAx
+NQoqKi5tYWMuYml0cmF0ZSA9IDU0TWJwcwoKI1JBRElPCioqLnJhZGlvLmJp
+dHJhdGUgPSA1NE1icHMKKioucmFkaW8uc2Vuc2l0aXZpdHkgPSAtODVkQm0K
+KioucmFkaW8udHJhbnNtaXR0ZXJQb3dlciA9IDJtVwoKIyBhcHBsaWNhdGlv
+biBzZXR0aW5ncwoKKioubW9iaWxlSG9zdFsxXS5udW1UY3BBcHBzID0gMQoq
+Ki5tb2JpbGVIb3N0WzFdLnRjcEFwcFswXS50eXBlbmFtZSA9ICJUQ1BTZXNz
+aW9uQXBwIgoqKi5tb2JpbGVIb3N0WzFdLnRjcEFwcFswXS5jb25uZWN0QWRk
+cmVzcyA9ICJtb2JpbGVIb3N0WzJdIgoqKi5tb2JpbGVIb3N0WzFdLnRjcEFw
+cFswXS5sb2NhbFBvcnQgPSAxMDAwCgoqKi5tb2JpbGVIb3N0WzJdLm51bVRj
+cEFwcHMgPSAxCioqLm1vYmlsZUhvc3RbMl0udGNwQXBwWzBdLnR5cGVuYW1l
+ID0gIlRDUFNpbmtBcHAiCgojIGNvbmZpZ3VyZSByb3V0aW5nIGluZm8KKiou
+bW9iaWxlSG9zdFsqXS5yb3V0aW5nUHJvdG9jb2wgPSAiQU9EVlVVIgoKIyBj
+b25maWd1cmUgSVB2NCBhZGRyZXNzZXMKKioubmV0d29ya0NvbmZpZ3VyYXRv
+ci5jb25maWc9eG1sKCI8Y29uZmlnPjxpbnRlcmZhY2UgaG9zdHM9JyonIGFk
+ZHJlc3M9JzEwLjAuMC54JyBuZXRtYXNrPScyNTUuMjU1LjI1NS4wJy8+PC9j
+b25maWc+IikKCiMgY29uZmlndXJlIENoYW5uZWxDb250cm9sCioqLmNvbnN0
+cmFpbnRBcmVhTWluWCA9IDBtCioqLmNvbnN0cmFpbnRBcmVhTWluWSA9IDBt
+CioqLmNvbnN0cmFpbnRBcmVhTWF4WCA9IDMwMG0KKiouY29uc3RyYWludEFy
+ZWFNYXhZID0gMzAwbQoqKi5jaGFubmVsQ29udHJvbC5wTWF4ID0gMm1XCgpb
+Q29uZmlnIE11bHRpUmFkaW9dCmRlc2NyaXB0aW9uID0gVXNlIGR1YWwtcmFk
+aW8gaG9zdHMgb24gbXVsdGlwbGUgY2hhbm5lbHMgKDMpCgojIG51bWJlciBv
+ZiByYWRpb3MgcGVyIGhvc3QKKiptb2JpbGVIb3N0WzBdLm51bVJhZGlvcyA9
+IDIKKiptb2JpbGVIb3N0WzFdLm51bVJhZGlvcyA9IDEKKiptb2JpbGVIb3N0
+WzJdLm51bVJhZGlvcyA9IDEKCiMgbnVtYmVyIG9mIGNoYW5uZWxzIHVzZWQK
+KiouY2hhbm5lbENvbnRyb2wubnVtQ2hhbm5lbHMgPSAyCgojIHdsYW4gaW50
+ZXJmYWNlIC0gcmFkaW8gY2hhbm5lbCBhc3NpZ25lbW50CioqLm1vYmlsZUhv
+c3RbMF0ud2xhblswXS5yYWRpby5jaGFubmVsTnVtYmVyID0gMAoqKi5tb2Jp
+bGVIb3N0WzBdLndsYW5bMV0ucmFkaW8uY2hhbm5lbE51bWJlciA9IDEKCioq
+Lm1vYmlsZUhvc3RbMV0ud2xhblswXS5yYWRpby5jaGFubmVsTnVtYmVyID0g
+MAoKKioubW9iaWxlSG9zdFsyXS53bGFuWzBdLnJhZGlvLmNoYW5uZWxOdW1i
+ZXIgPSAxCgoK
+
+--346817223-1127197150-1341846516=:29891
+Content-Type: APPLICATION/octet-stream
+Content-Transfer-Encoding: BASE64
+Content-Description: 4_nodes.ini
+Content-Disposition: attachment; filename=4_nodes.ini
+
+W0dlbmVyYWxdCgpyZWNvcmQtZXZlbnRsb2cgPSB0cnVlCioqLnZlY3Rvci1y
+ZWNvcmRpbmcgPSB0cnVlCiNzaW0tdGltZS1saW1pdCA9IDIwcwpuZXR3b3Jr
+ID0gTXVsdGlSYWRpbwoKIyBudW1iZXIgb2YgaG9zdHMKKi5udW1Ib3N0cyA9
+IDQKCiMgbW9iaWxpdHkgc2V0dXAKKioubW9iaWxlSG9zdFsqXS5tb2JpbGl0
+eVR5cGUgPSAiU3RhdGljR3JpZE1vYmlsaXR5IgoqKi5tb2JpbGVIb3N0Wypd
+Lm1vYmlsaXR5Lm51bUhvc3RzID0gMgoqKi5tb2JpbGVIb3N0WypdLm1vYmls
+aXR5Lm1hcmdpblggPSA1MG0KKioubW9iaWxlSG9zdFsqXS5tb2JpbGl0eS5t
+YXJnaW5ZID0gNTBtCgojTUFDCioqLm1hYy5tYXhRdWV1ZVNpemUgPSAxNQoq
+Ki5tYWMuYml0cmF0ZSA9IDU0TWJwcwoKI1JBRElPCioqLnJhZGlvLmJpdHJh
+dGUgPSA1NE1icHMKKioucmFkaW8uc2Vuc2l0aXZpdHkgPSAtODVkQm0KKiou
+cmFkaW8udHJhbnNtaXR0ZXJQb3dlciA9IDJtVwoKIyBhcHBsaWNhdGlvbiBz
+ZXR0aW5ncwoKKioubW9iaWxlSG9zdFswXS5udW1QaW5nQXBwcyA9IDEKKiou
+bW9iaWxlSG9zdFswXS5waW5nQXBwWzBdLmRlc3RBZGRyID0gIm1vYmlsZUhv
+c3RbM10iCioqLm1vYmlsZUhvc3RbMF0ucGluZ0FwcFswXS5zdGFydFRpbWUg
+PSAwcwoqKi5waW5nQXBwWypdLnByaW50UGluZyA9IHRydWUKCgoqKi5tb2Jp
+bGVIb3N0WypdLnJvdXRpbmdQcm90b2NvbCA9ICJPTFNSX0VUWCIKCiMgY29u
+ZmlndXJlIElQdjQgYWRkcmVzc2VzCioqLm5ldHdvcmtDb25maWd1cmF0b3Iu
+Y29uZmlnPXhtbCgiPGNvbmZpZz48aW50ZXJmYWNlIGhvc3RzPScqJyBhZGRy
+ZXNzPScxMC4wLjAueCcgbmV0bWFzaz0nMjU1LjI1NS4yNTUuMCcvPjwvY29u
+ZmlnPiIpCgojIGNvbmZpZ3VyZSBDaGFubmVsQ29udHJvbAoqKi5jb25zdHJh
+aW50QXJlYU1pblggPSAwbQoqKi5jb25zdHJhaW50QXJlYU1pblkgPSAwbQoq
+Ki5jb25zdHJhaW50QXJlYU1heFggPSAzMDBtCioqLmNvbnN0cmFpbnRBcmVh
+TWF4WSA9IDMwMG0KKiouY2hhbm5lbENvbnRyb2wucE1heCA9IDJtVwoKW0Nv
+bmZpZyBNdWx0aVJhZGlvXQpkZXNjcmlwdGlvbiA9IFVzZSBkdWFsLXJhZGlv
+IGhvc3RzIG9uIG11bHRpcGxlIGNoYW5uZWxzICgzKQoKIyBudW1iZXIgb2Yg
+cmFkaW9zIHBlciBob3N0CioqLm51bVJhZGlvcyA9IDIKCiMgbnVtYmVyIG9m
+IGNoYW5uZWxzIHVzZWQKKiouY2hhbm5lbENvbnRyb2wubnVtQ2hhbm5lbHMg
+PSAyCgojIHdsYW4gaW50ZXJmYWNlIC0gcmFkaW8gY2hhbm5lbCBhc3NpZ25l
+bW50CioqLm1vYmlsZUhvc3RbMF0ud2xhblswXS5yYWRpby5jaGFubmVsTnVt
+YmVyID0gMAoqKi5tb2JpbGVIb3N0WzBdLndsYW5bMV0ucmFkaW8uY2hhbm5l
+bE51bWJlciA9IDEKCioqLm1vYmlsZUhvc3RbMV0ud2xhblswXS5yYWRpby5j
+aGFubmVsTnVtYmVyID0gMQoqKi5tb2JpbGVIb3N0WzFdLndsYW5bMV0ucmFk
+aW8uY2hhbm5lbE51bWJlciA9IDEKCioqLm1vYmlsZUhvc3RbMl0ud2xhblsw
+XS5yYWRpby5jaGFubmVsTnVtYmVyID0gMQoqKi5tb2JpbGVIb3N0WzJdLnds
+YW5bMV0ucmFkaW8uY2hhbm5lbE51bWJlciA9IDEKCioqLm1vYmlsZUhvc3Rb
+M10ud2xhblswXS5yYWRpby5jaGFubmVsTnVtYmVyID0gMAoqKi5tb2JpbGVI
+b3N0WzNdLndsYW5bMV0ucmFkaW8uY2hhbm5lbE51bWJlciA9IDEKCltDb25m
+aWcgU2luZ2xlUmFkaW9dCmRlc2NyaXB0aW9uID0gRWFjaCBub2RlIGhhcyBh
+IHNpbmdsZSByYWRpbyBvbmx5IHVzaW5nIHRoZSBzYW1lIGNoYW5uZWwKCgoK
+Cgo=
+
+--346817223-1127197150-1341846516=:29891
+Content-Type: APPLICATION/octet-stream
+Content-Transfer-Encoding: BASE64
+Content-Description: ping16.ini
+Content-Disposition: attachment; filename=ping16.ini
+
+W0dlbmVyYWxdCgpyZWNvcmQtZXZlbnRsb2cgPSB0cnVlCioqLnZlY3Rvci1y
+ZWNvcmRpbmcgPSB0cnVlCiNzaW0tdGltZS1saW1pdCA9IDEwMHMKbmV0d29y
+ayA9IE11bHRpUmFkaW8KCiMgbnVtYmVyIG9mIGhvc3RzCioubnVtSG9zdHMg
+PSAxNgoKIyBtb2JpbGl0eSBzZXR1cAoqKi5tb2JpbGVIb3N0WypdLm1vYmls
+aXR5VHlwZSA9ICJTdGF0aWNHcmlkTW9iaWxpdHkiCioqLm1vYmlsZUhvc3Rb
+Kl0ubW9iaWxpdHkubnVtSG9zdHMgPSAxNgoqKi5tb2JpbGVIb3N0WypdLm1v
+YmlsaXR5Lm1hcmdpblggPSA1MG0KKioubW9iaWxlSG9zdFsqXS5tb2JpbGl0
+eS5tYXJnaW5ZID0gNTBtCgojTUFDCioqLm1hYy5tYXhRdWV1ZVNpemUgPSAx
+NQoqKi5tYWMuYml0cmF0ZSA9IDU0TWJwcwoKI1JBRElPCioqLnJhZGlvLmJp
+dHJhdGUgPSA1NE1icHMKKioucmFkaW8uc2Vuc2l0aXZpdHkgPSAtODVkQm0K
+KioucmFkaW8udHJhbnNtaXR0ZXJQb3dlciA9IDJtVwoKIyBhcHBsaWNhdGlv
+biBzZXR0aW5ncwoKKioubW9iaWxlSG9zdFswXS5udW1QaW5nQXBwcyA9IDEK
+KioubW9iaWxlSG9zdFswXS5waW5nQXBwWzBdLmRlc3RBZGRyPSIxMC4wLjAu
+MzEiCioqLm1vYmlsZUhvc3RbMF0ucGluZ0FwcFswXS5zdGFydFRpbWUgPSAw
+cwoqKi5waW5nQXBwWypdLnByaW50UGluZyA9IHRydWUKCgoKIyBjb25maWd1
+cmUgcm91dGluZyBpbmZvCioqLm1vYmlsZUhvc3RbKl0ucm91dGluZ1Byb3Rv
+Y29sID0gIk9MU1JfRVRYIgoKIyBjb25maWd1cmUgSVB2NCBhZGRyZXNzZXMK
+KioubmV0d29ya0NvbmZpZ3VyYXRvci5jb25maWc9eG1sKCI8Y29uZmlnPjxp
+bnRlcmZhY2UgaG9zdHM9JyonIGFkZHJlc3M9JzEwLjAuMC54JyBuZXRtYXNr
+PScyNTUuMjU1LjI1NS4wJy8+PC9jb25maWc+IikKCiMgY29uZmlndXJlIENo
+YW5uZWxDb250cm9sCioqLmNvbnN0cmFpbnRBcmVhTWluWCA9IDBtCioqLmNv
+bnN0cmFpbnRBcmVhTWluWSA9IDBtCioqLmNvbnN0cmFpbnRBcmVhTWF4WCA9
+IDQwMG0KKiouY29uc3RyYWludEFyZWFNYXhZID0gNDAwbQoqKi5jaGFubmVs
+Q29udHJvbC5wTWF4ID0gMm1XCgpbQ29uZmlnIE11bHRpUmFkaW9dCmRlc2Ny
+aXB0aW9uID0gVXNlIGR1YWwtcmFkaW8gaG9zdHMgb24gbXVsdGlwbGUgY2hh
+bm5lbHMgKDMpCgojIG51bWJlciBvZiByYWRpb3MgcGVyIGhvc3QKKioubnVt
+UmFkaW9zID0gMgoKIyBudW1iZXIgb2YgY2hhbm5lbHMgdXNlZAoqKi5jaGFu
+bmVsQ29udHJvbC5udW1DaGFubmVscyA9IDMKCiMgd2xhbiBpbnRlcmZhY2Ug
+LSByYWRpbyBjaGFubmVsIGFzc2lnbmVtbnQKKioubW9iaWxlSG9zdFswXS53
+bGFuWzBdLnJhZGlvLmNoYW5uZWxOdW1iZXIgPSAwCioqLm1vYmlsZUhvc3Rb
+MF0ud2xhblsxXS5yYWRpby5jaGFubmVsTnVtYmVyID0gMQoKKioubW9iaWxl
+SG9zdFsxXS53bGFuWzBdLnJhZGlvLmNoYW5uZWxOdW1iZXIgPSAwCioqLm1v
+YmlsZUhvc3RbMV0ud2xhblsxXS5yYWRpby5jaGFubmVsTnVtYmVyID0gMQoK
+KioubW9iaWxlSG9zdFsyXS53bGFuWzBdLnJhZGlvLmNoYW5uZWxOdW1iZXIg
+PSAwCioqLm1vYmlsZUhvc3RbMl0ud2xhblsxXS5yYWRpby5jaGFubmVsTnVt
+YmVyID0gMgoKKioubW9iaWxlSG9zdFszXS53bGFuWzBdLnJhZGlvLmNoYW5u
+ZWxOdW1iZXIgPSAxCioqLm1vYmlsZUhvc3RbM10ud2xhblsxXS5yYWRpby5j
+aGFubmVsTnVtYmVyID0gMgoKKioubW9iaWxlSG9zdFs0XS53bGFuWzBdLnJh
+ZGlvLmNoYW5uZWxOdW1iZXIgPSAwCioqLm1vYmlsZUhvc3RbNF0ud2xhblsx
+XS5yYWRpby5jaGFubmVsTnVtYmVyID0gMQoKKioubW9iaWxlSG9zdFs1XS53
+bGFuWzBdLnJhZGlvLmNoYW5uZWxOdW1iZXIgPSAxCioqLm1vYmlsZUhvc3Rb
+NV0ud2xhblsxXS5yYWRpby5jaGFubmVsTnVtYmVyID0gMgoKKioubW9iaWxl
+SG9zdFs2XS53bGFuWzBdLnJhZGlvLmNoYW5uZWxOdW1iZXIgPSAxCioqLm1v
+YmlsZUhvc3RbNl0ud2xhblsxXS5yYWRpby5jaGFubmVsTnVtYmVyID0gMgoK
+KioubW9iaWxlSG9zdFs3XS53bGFuWzBdLnJhZGlvLmNoYW5uZWxOdW1iZXIg
+PSAwCioqLm1vYmlsZUhvc3RbN10ud2xhblsxXS5yYWRpby5jaGFubmVsTnVt
+YmVyID0gMgoKKioubW9iaWxlSG9zdFs4XS53bGFuWzBdLnJhZGlvLmNoYW5u
+ZWxOdW1iZXIgPSAwCioqLm1vYmlsZUhvc3RbOF0ud2xhblsxXS5yYWRpby5j
+aGFubmVsTnVtYmVyID0gMQoKKioubW9iaWxlSG9zdFs5XS53bGFuWzBdLnJh
+ZGlvLmNoYW5uZWxOdW1iZXIgPSAwCioqLm1vYmlsZUhvc3RbOV0ud2xhblsx
+XS5yYWRpby5jaGFubmVsTnVtYmVyID0gMgoKKioubW9iaWxlSG9zdFsxMF0u
+d2xhblswXS5yYWRpby5jaGFubmVsTnVtYmVyID0gMAoqKi5tb2JpbGVIb3N0
+WzEwXS53bGFuWzFdLnJhZGlvLmNoYW5uZWxOdW1iZXIgPSAxCgoqKi5tb2Jp
+bGVIb3N0WzExXS53bGFuWzBdLnJhZGlvLmNoYW5uZWxOdW1iZXIgPSAwCioq
+Lm1vYmlsZUhvc3RbMTFdLndsYW5bMV0ucmFkaW8uY2hhbm5lbE51bWJlciA9
+IDEKCioqLm1vYmlsZUhvc3RbMTJdLndsYW5bMF0ucmFkaW8uY2hhbm5lbE51
+bWJlciA9IDEKKioubW9iaWxlSG9zdFsxMl0ud2xhblsxXS5yYWRpby5jaGFu
+bmVsTnVtYmVyID0gMgoKKioubW9iaWxlSG9zdFsxM10ud2xhblswXS5yYWRp
+by5jaGFubmVsTnVtYmVyID0gMAoqKi5tb2JpbGVIb3N0WzEzXS53bGFuWzFd
+LnJhZGlvLmNoYW5uZWxOdW1iZXIgPSAyCgoqKi5tb2JpbGVIb3N0WzE0XS53
+bGFuWzBdLnJhZGlvLmNoYW5uZWxOdW1iZXIgPSAxCioqLm1vYmlsZUhvc3Rb
+MTRdLndsYW5bMV0ucmFkaW8uY2hhbm5lbE51bWJlciA9IDIKCioqLm1vYmls
+ZUhvc3RbMTVdLndsYW5bMF0ucmFkaW8uY2hhbm5lbE51bWJlciA9IDAKKiou
+bW9iaWxlSG9zdFsxNV0ud2xhblsxXS5yYWRpby5jaGFubmVsTnVtYmVyID0g
+MgoKW0NvbmZpZyBTaW5nbGVSYWRpb10KZGVzY3JpcHRpb24gPSBFYWNoIG5v
+ZGUgaGFzIGEgc2luZ2xlIHJhZGlvIG9ubHkgdXNpbmcgdGhlIHNhbWUgY2hh
+bm5lbAoKCg==
+
+--346817223-1127197150-1341846516=:29891--
+
+--346817223-1564843329-1342160367=:16089--

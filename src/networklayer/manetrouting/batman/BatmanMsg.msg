@@ -29,100 +29,42 @@ cplusplus {{
 #define BatPacketSize 16
 #endif
 
-class BatmanHnaMsg
-{
-   public:
-    Uint128 addr;
-    unsigned char  netmask;
-    BatmanHnaMsg& operator=(const BatmanHnaMsg& m)
-    {
-           addr=m.addr;
-           netmask=m.netmask;
-           return *this;
-    }
-    bool operator < (BatmanHnaMsg const &o) const
-    {
-        if (addr < o.addr)
-            return true;
-        else if (addr == o.addr)
-        {
-            if (netmask < o.netmask)
-                return true;
-            else
-                return false;
-        }
-        else
-            return false;
-    }
-
-    bool operator > (BatmanHnaMsg const &o) const
-    {
-        if (addr > o.addr)
-            return true;
-        else if (addr == o.addr)
-        {
-            if (netmask > o.netmask)
-                return true;
-            else
-                return false;
-        }
-        else
-            return false;
-    }
-    bool operator == (BatmanHnaMsg const &o) const
-    {
-        if (addr == o.addr && netmask == o.netmask)
-            return true;
-        else
-            return false;
-    }
-    bool operator != (BatmanHnaMsg const &o) const
-    {
-        if (addr == o.addr && netmask == o.netmask)
-            return false;
-        else
-            return true;
-    }
-    BatmanHnaMsg * dup()
-    {
-        BatmanHnaMsg *aux = new BatmanHnaMsg;
-        *aux=*this;
-        return aux;
-    }
-};
-
-struct vis_data
-{
-    unsigned char type;
-    unsigned char data;
-    Uint128 ip;
-};
+#define BATMAN_HNA_MSG_SIZE 5
 
 }}
 
 
 class noncobject IPv4Address;
-class noncobject BatmanHnaMsg;
 class noncobject Uint128;
-class noncobject vis_data;
+
+struct vis_data
+{
+    uint8_t type;
+    uint8_t data;
+    Uint128 ip;
+};
+
+struct HnaElement
+{
+    Uint128 addr;
+    uint8_t  netmask;
+};
 
 packet BatmanPacket
 {
     byteLength = BatPacketSize;
-    unsigned char  version;  // batman version field
-    unsigned char  flags;    // 0x80: UNIDIRECTIONAL link, 0x40: DIRECTLINK flag, ...
-    unsigned char  ttl;
-    unsigned char  gatewayFlags;  // flags related to gateway functions: gateway class
+    uint8_t        version;  // batman version field
+    uint8_t        flags;    // 0x80: UNIDIRECTIONAL link, 0x40: DIRECTLINK flag, ...
+    uint8_t        ttl;
+    uint8_t        gatewayFlags;  // flags related to gateway functions: gateway class
     unsigned short seqNumber;
     unsigned short gatewayPort;
     Uint128        orig;
     Uint128        prevSender;
-    unsigned char  tq;           // Quality
-    unsigned char  hops;
-    unsigned char  hnaLen;
-    BatmanHnaMsg   hnaMsg[];    ///< Packet body.
+    uint8_t        tq;           // Quality
+    uint8_t        hops;
+    HnaElement   hnaMsg[];    ///< Packet body.
 }
-
 
 
 packet visPacket {
@@ -132,5 +74,4 @@ packet visPacket {
     unsigned char tqMax;
     vis_data visData[];
 }
-
 

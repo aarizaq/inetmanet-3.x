@@ -552,28 +552,28 @@
         linkerFlags = ""
         />
     <feature
-        id="VoIPTool"
-        name="VoIPTool"
+        id="VoIPStream"
+        name="VoIPStream"
         description = "Voice over IP tool. Required external libraries: libavcodec, libavformat libavutil"
         initiallyEnabled = "false"
         requires = "UDP"
         labels = ""
         nedPackages = "
-                       inet.applications.voiptool
+                       inet.applications.voipstream
                       "
         extraSourceFolders = ""
-        compileFlags = "-DWITH_VOIPTOOL"
+        compileFlags = "-DWITH_VOIPSTREAM"
         linkerFlags = ""
         />
     <feature
-        id="VoIPTool_examples"
-        name="VoIP examples"
+        id="VoIPStream_examples"
+        name="VoIPStream examples"
         description = "Example VoIP simulations"
         initiallyEnabled = "false"
-        requires = "VoIPTool IPv4 Ethernet"
+        requires = "VoIPStream IPv4 Ethernet"
         labels = "examples"
         nedPackages = "
-                       inet.examples.voiptool
+                       inet.examples.voipstream
                       "
         extraSourceFolders = ""
         compileFlags = ""
@@ -653,8 +653,37 @@
         compileFlags = ""
         linkerFlags = ""
         />
+    <feature
+        id="InternetCloud"
+        name="Internet Cloud"
+        description = "Components for simulate internet cloud"
+        initiallyEnabled = "true"
+        requires = "IPv4"
+        labels = ""
+        nedPackages = "
+                       inet.networklayer.internetcloud
+                       inet.nodes.internetcloud
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
+    <feature
+        id="InternetCloud_examples"
+        name="Internet Cloud examples"
+        description = "Internet Cloud examples."
+        initiallyEnabled = "true"
+        requires = "InternetCloud PPP Ethernet"
+        labels = ""
+        nedPackages = "
+                       inet.examples.internetcloud
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
 
-<feature
+    <feature
         id="Ieee8021d"
         name="Ieee802.1d Ieee802.1Q Ieee802.1AH protocols"
         description = "Ieee802.1d Ieee802.1Q Ieee802.1AH protocols"
@@ -669,7 +698,7 @@
         compileFlags = ""
         linkerFlags = ""
         />
-<feature
+    <feature
         id="Ieee8021d_examples"
         name="Ieee802.1d Ieee802.1Q Ieee802.1AH protocols Examples"
         description = "Ieee802.1d Ieee802.1Q Ieee802.1AH protocols Examples"
@@ -749,7 +778,7 @@
         compileFlags = ""
         linkerFlags = ""
         />
- <feature
+    <feature
         id="Ieee80211_mesh"
         name="802.11a/b/g/e (mesh networking mode)"
         description = "IEEE 802.11a/b/g/e NIC supporting mesh networking"
@@ -763,7 +792,7 @@
         compileFlags = "-DWITH_80211MESH"
         linkerFlags = ""
         />
- <feature
+    <feature
         id="LTE4Gsim"
         name="4 gsim LTE model"
         description = "4 gsim LTE model"

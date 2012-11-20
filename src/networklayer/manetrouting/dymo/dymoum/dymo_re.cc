@@ -208,7 +208,7 @@ void NS_CLASS re_process(RE *re,struct in_addr ip_src, u_int32_t ifindex)
                 0,      // prefix
                 1,      // hop count
                 0,     // is gw
-                cost, 
+                cost,
                 fixhop);
         icmp_reply_send(ip_src, &DEV_IFINDEX(ifindex));
     }
@@ -546,7 +546,7 @@ int NS_CLASS re_process_block(struct re_block *block, u_int8_t is_rreq,
             block->re_hopcnt,  // hop count
             block->g,          // is gw
             block->cost,
-            block->re_hopfix);   
+            block->re_hopfix);
 
     return 0;
 }
@@ -1116,23 +1116,23 @@ void NS_CLASS re_answer(RE *re,u_int32_t ifindex)
             costInt = costStatic * cost;
             if (entry)
             {
-                if (entry->rt_hopcnt > cost + 1 || entry->rt_hopcnt==0)
+                if (entry->rt_hopcnt > cost+1 || entry->rt_hopcnt==0)
                 {
-                    rtable_update(entry, node_addr, next_addr, ifaceIndexNextHop, seqNum,entry->rt_prefix, (int) cost, 0, costInt, (int)(cost+1));
+                    rtable_update(entry, node_addr, next_addr, ifaceIndexNextHop, seqNum,entry->rt_prefix, (int)cost, 0, costInt, (int)(cost+1));
                 }
             }
             else
             {
                 rtable_insert(
-                            node_addr, // dest
-                            next_addr, // nxt hop
-                            ifaceIndexNextHop,   // iface
-                            seqNum,    // seqnum
-                            0,         // prefix
-                            cost,       // hop count
-                            0,         // is gw
-                            costInt,
-                            (cost+1));
+                    node_addr, // dest
+                    next_addr, // nxt hop
+                    ifaceIndexNextHop,   // iface
+                    seqNum,    // seqnum
+                    0,         // prefix
+                    cost,       // hop count
+                    0,         // is gw
+                    costInt,
+                    (cost+1));
             }
         }
     }
