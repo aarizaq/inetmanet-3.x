@@ -33,6 +33,14 @@ class INET_API MobilityAccess : public ModuleAccess<IMobility>
 {
     public:
         MobilityAccess() : ModuleAccess<IMobility>("mobility") {}
+        static IMobility *getNodeMobilityModule(const char * nodeName)
+        {
+            cModule *module = simulation.getModuleByPath(nodeName);
+            if (module == NULL) // node not found
+                  return NULL;
+            IMobility *mobModule = dynamic_cast<IMobility*>(module->getSubmodule("mobility"));
+            return mobModule;
+        }
 };
 
 #endif
