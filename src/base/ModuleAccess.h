@@ -84,6 +84,13 @@ class INET_API ModuleAccess
         return p;
     }
 
+    virtual T *get(const char *nameModule)
+    {
+        cModule *module = simulation.getModuleByPath(nameModule);
+        cModule *node = findContainingNode(module); // find node that contain the module
+        return get(node);
+    }
+
     virtual T *getIfExists(cModule *from = simulation.getContextModule())
     {
         if (!p)
