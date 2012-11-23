@@ -201,6 +201,25 @@ void DijkstraKshortest::run ()
         it = routeMap.find(elem.iD);
         if (it==routeMap.end())
             opp_error("node not found in routeMap");
+
+        if (elem.iD != rootNode)
+        {
+            if (it->second.size() == K_LIMITE)
+            {
+                bool continueLoop = true;
+                for (int i=0;i<K_LIMITE;i++)
+                {
+                    if (it->second[i].label != perm)
+                    {
+                        continueLoop = false;
+                        break;
+                    }
+                }
+                if (continueLoop)
+                    continue;
+            }
+        }
+
         if ((int)it->second.size()<=elem.idx)
         {
             for (int i = elem.idx -((int)it->second.size()-1);i>=0;i--)
@@ -294,6 +313,25 @@ void DijkstraKshortest::runUntil (const NodeId &target)
         it = routeMap.find(elem.iD);
         if (it==routeMap.end())
             opp_error("node not found in routeMap");
+
+        if (elem.iD != rootNode)
+        {
+            if (it->second.size() == K_LIMITE)
+            {
+                bool continueLoop = true;
+                for (int i=0;i<K_LIMITE;i++)
+                {
+                    if (it->second[i].label != perm)
+                    {
+                        continueLoop = false;
+                        break;
+                    }
+                }
+                if (continueLoop)
+                    continue;
+            }
+        }
+
         if ((int)it->second.size()<=elem.idx)
         {
             for (int i = elem.idx -((int)it->second.size()-1);i>=0;i--)
