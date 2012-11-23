@@ -123,6 +123,16 @@ void Radio::initialize(int stage)
         receptionModel = (IReceptionModel *) createOne(propModel.c_str());
         receptionModel->initializeFrom(this);
 
+        // adjust the sensitivity in function of maxDistance and reception model
+        if (par("maxDistance").doubleValue() > 0)
+        {
+            if (sensitivityList.size() == 1 && sensitivityList.begin()->second == sensitivity)
+            {
+                sensitivity = receptionModel->calculateReceivedPower(transmitterPower, carrierFrequency, par("maxDistance").doubleValue());
+                sensitivityList[0] = sensitivity;
+            }
+        }
+
         // radio model to handle frame length and reception success calculation (modulation, error correction etc.)
         std::string rModel = par("radioModel").stdstringValue();
         if (rModel=="")
