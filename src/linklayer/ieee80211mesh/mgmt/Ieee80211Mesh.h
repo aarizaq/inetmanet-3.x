@@ -34,7 +34,8 @@
 #include "uint128.h"
 #include "ManetRoutingBase.h"
 #include "Ieee80211Etx.h"
-#include<deque>
+#include <deque>
+#include "WirelessNumHops.h"
 
 /**
  * Used in 802.11 ligh wireless mpls  mode. See corresponding NED file for a detailed description.
@@ -48,6 +49,8 @@
 class INET_API Ieee80211Mesh : public Ieee80211MgmtBase
 {
     private:
+        WirelessNumHops *getOtpimunRoute;
+
         static simsignal_t numHopsSignal;
         static simsignal_t numFixHopsSignal;
 

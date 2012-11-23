@@ -255,6 +255,9 @@ void Ieee80211Mesh::initialize(int stage)
         }
         if (par("IsGateWay"))
             startGateWay();
+
+        getOtpimunRoute = new WirelessNumHops();
+        getOtpimunRoute->setRoot(myAddress);
         //end Gateway and group address code
     }
 }
@@ -1078,6 +1081,8 @@ void Ieee80211Mesh::handleDataFrame(Ieee80211DataFrame *frame)
                     emit(numHopsSignal,totalHops);
                     emit(numFixHopsSignal,totalFixHops);
                 }
+                std::vector<MACAddress> path;
+                getOtpimunRoute->findRoute(120,origin,path);
                 sendUp(msg);
             }
         }
@@ -1916,7 +1921,6 @@ void Ieee80211Mesh::handleWateGayDataReceive(cPacket *pkt)
         if (routingModuleReactive->getDestAddress(encapPkt,dest))
         {
             std::vector<Uint128>add;
-            int dist = 0;
             if (routingModuleProactive && proactiveFeedback)
             {
                 // int neig = routingModuleProactive))->getRoute(src,add);
