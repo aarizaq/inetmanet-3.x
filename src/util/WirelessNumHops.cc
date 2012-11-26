@@ -41,9 +41,8 @@ WirelessNumHops::WirelessNumHops()
     for (int i = 0; i < topo.getNumNodes(); i++)
     {
         cTopology::Node *destNode = topo.getNode(i);
-        std::string nodName = destNode->getModule()->getFullName();
         IMobility *mod;
-        mod = MobilityAccess().get(nodName.c_str());
+        mod = MobilityAccess().get(destNode->getModule());
         if (mod == NULL)
             opp_error("node or mobility module not found");
         nodeInfo info;
