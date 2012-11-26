@@ -66,8 +66,10 @@ void ChannelControl::initialize()
     transmissions.resize(numChannels);
 
     lastOngoingTransmissionsUpdate = 0;
-
-    maxInterferenceDistance = calcInterfDist();
+    if (par("maxInterferenceDistance").doubleValue() > 0)
+        maxInterferenceDistance = par("maxInterferenceDistance").doubleValue();
+    else
+        maxInterferenceDistance = calcInterfDist();
 
     WATCH(maxInterferenceDistance);
     WATCH_LIST(radios);

@@ -45,6 +45,7 @@ simple ChannelControl
         double carrierFrequency @unit("Hz") = default(2.4GHz); // base carrier frequency of all the channels (in Hz)
         int numChannels = default(1); // number of radio channels (frequencies)
         string propagationModel @enum("FreeSpaceModel","TwoRayGroundModel","RiceModel","RayleighModel","NakagamiModel","LogNormalShadowingModel") = default("FreeSpaceModel");
+        double maxInterferenceDistance @unit("m") = default(-1m);
         @display("i=misc/sun");
         @labels(node);
 }
