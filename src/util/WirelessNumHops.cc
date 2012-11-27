@@ -52,8 +52,13 @@ WirelessNumHops::WirelessNumHops()
         for (int j = 0 ; j < vectorList[i].itable->getNumInterfaces(); j++)
         {
             InterfaceEntry *e = vectorList[i].itable->getInterface(j);
+            if (e->getMacAddress().isUnspecified())
+                continue;
+            if (e->isLoopback())
+                continue;
             related[e->getMacAddress()] = i;
         }
+
     }
 }
 
