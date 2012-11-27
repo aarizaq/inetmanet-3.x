@@ -372,6 +372,10 @@ bool WirelessNumHops::findRoute(const double &coverageArea, const MACAddress des
         {
             opp_error("node id not found");
         }
+        pathNode = path;
+        // include path in the cache
+        routeCache[dest] = path;
+        return true;
     }
     else
     {
@@ -391,6 +395,8 @@ bool WirelessNumHops::findRoute(const double &coverageArea, const MACAddress des
              {
                  opp_error("node id not found");
              }
+             pathNode = path;
+             routeCache[dest] = path;
              return true;
          }
     }
