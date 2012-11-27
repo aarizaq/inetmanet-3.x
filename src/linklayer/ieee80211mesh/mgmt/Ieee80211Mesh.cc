@@ -83,6 +83,8 @@ Ieee80211Mesh::~Ieee80211Mesh()
         delete gateWayDataMap;
         gateWayDataMap = NULL;
     }
+    if (getOtpimunRoute)
+        delete getOtpimunRoute;
 }
 
 Ieee80211Mesh::Ieee80211Mesh()
@@ -106,6 +108,8 @@ Ieee80211Mesh::Ieee80211Mesh()
     hasLocator = false;
     hasRelayUnit = false;
     numRoutingBytes = 0;
+
+    getOtpimunRoute = NULL;
 }
 
 void Ieee80211Mesh::initializeBase(int stage)
@@ -237,7 +241,7 @@ void Ieee80211Mesh::initialize(int stage)
         // macBaseGateId = gateSize("macOut")==0 ? -1 : gate("macOut",0)->getId(); // FIXME macBaseGateId is unused, what is it?
         macBaseGateId = 0;
         EV << "macBaseGateId :" << macBaseGateId << "\n";
-        ift = InterfaceTableAccess ().get();
+        ift = InterfaceTableAccess().get();
         nb = NotificationBoardAccess().get();
         nb->subscribe(this, NF_LINK_BREAK);
         nb->subscribe(this, NF_LINK_REFRESH);
@@ -1078,11 +1082,16 @@ void Ieee80211Mesh::handleDataFrame(Ieee80211DataFrame *frame)
             {
                 if (totalHops >= 0)
                 {
-                    emit(numHopsSignal,totalHops);
-                    emit(numFixHopsSignal,totalFixHops);
+                    std::vector<MACAddress> path;
+                    int patSize = 0;
+                    if (getOtpimunRoute)
+                    {
+                        getOtpimunRoute->findRoute(120,origin,path);
+                        patSize = path.size();
+                    }
+                    emit(numHopsSignal,totalHops - patSize);
+                    emit(numFixHopsSignal,totalFixHops/totalHops);
                 }
-                std::vector<MACAddress> path;
-                getOtpimunRoute->findRoute(120,origin,path);
                 sendUp(msg);
             }
         }
@@ -1941,6 +1950,7 @@ void Ieee80211Mesh::handleWateGayDataReceive(cPacket *pkt)
             bool isUpper = (frame2->getSubType() == UPPERMESSAGE);
             int totalHops = frame2->getTotalHops();
             int totalFixHops = frame2->getTotalStaticHops();
+            MACAddress origin = frame2->getAddress3();
 
             cPacket *msg = decapsulate(frame2);
             if (dynamic_cast<ETXBasePacket*>(msg))
@@ -1964,11 +1974,20 @@ void Ieee80211Mesh::handleWateGayDataReceive(cPacket *pkt)
                 send(msg, "locatorOut");
             else
                 encapPkt = msg;
+
             if (encapPkt && isUpper)
             {
                 sendUp(encapPkt);
-                emit(numHopsSignal,totalHops);
-                emit(numFixHopsSignal,totalFixHops);
+                std::vector<MACAddress> path;
+                int patSize = 0;
+                if (getOtpimunRoute)
+                {
+                    getOtpimunRoute->findRoute(120,origin,path);
+                    patSize = path.size();
+                }
+
+                emit(numHopsSignal,totalHops - patSize);
+                emit(numFixHopsSignal,totalFixHops/totalHops);
             }
         }
         else if (!frame2->getFinalAddress().isUnspecified())
