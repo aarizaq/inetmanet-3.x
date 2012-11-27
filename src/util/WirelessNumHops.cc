@@ -357,7 +357,7 @@ bool WirelessNumHops::findRoute(const double &coverageArea, const MACAddress des
         std::vector<MACAddress> path;
         for (unsigned int i = 0; i < route.size(); i++)
         {
-            for (std::map<MACAddress,int>::iterator it2 = related.begin(); it2 != related.begin(); ++it2)
+            for (std::map<MACAddress,int>::iterator it2 = related.begin(); it2 != related.end(); ++it2)
             {
                 if (it2->second ==  route[i])
                     path.push_back(it2->first);
