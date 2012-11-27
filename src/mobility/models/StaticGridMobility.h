@@ -38,6 +38,7 @@ class INET_API StaticGridMobility : public StationaryMobility
     double marginX;
     double marginY;
     int numHosts;
+    double separation;
 
   protected:
     /** @brief Initializes mobility model parameters.*/

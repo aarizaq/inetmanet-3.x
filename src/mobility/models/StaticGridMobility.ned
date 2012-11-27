@@ -31,6 +31,7 @@ simple StaticGridMobility extends MobilityBase
     parameters:
         int marginX @unit(m);
         int marginY @unit(m);
+        double separation @unit(m) = default(-1m);
         int numHosts;
         @class(StaticGridMobility);
 }

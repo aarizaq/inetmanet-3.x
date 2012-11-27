@@ -39,6 +39,7 @@ void StaticGridMobility::initialize(int stage)
         numHosts = par("numHosts");
         marginX = par("marginX");
         marginY = par("marginY");
+        separation = par("separation");
     }
 }
 
@@ -48,14 +49,28 @@ void StaticGridMobility::initializePosition()
     int size = (int)ceil(sqrt((double)numHosts));
     int row = (int)floor((double)index / (double)size);
     int col = index % size;
-    lastPosition.x = constraintAreaMin.x + marginX
-            + col * ((constraintAreaMax.x - constraintAreaMin.x) - 2 * marginX) / (size - 1);
-    if (lastPosition.x >= constraintAreaMax.x)
-        lastPosition.x -= 1;
-    lastPosition.y = constraintAreaMin.y + marginY
-            + row * ((constraintAreaMax.y - constraintAreaMin.y) - 2 * marginY) / (size - 1);
-    if (lastPosition.y >= constraintAreaMax.y)
-        lastPosition.y -= 1;
+    if (separation > 0)
+    {
+        lastPosition.x = constraintAreaMin.x + marginX
+                + col * separation;
+        if (lastPosition.x >= constraintAreaMax.x)
+            lastPosition.x -= 1;
+        lastPosition.y = constraintAreaMin.y + marginY
+                + row * separation;
+        if (lastPosition.y >= constraintAreaMax.y)
+            lastPosition.y -= 1;
+    }
+    else
+    {
+        lastPosition.x = constraintAreaMin.x + marginX
+                + col * ((constraintAreaMax.x - constraintAreaMin.x) - 2 * marginX) / (size - 1);
+        if (lastPosition.x >= constraintAreaMax.x)
+            lastPosition.x -= 1;
+        lastPosition.y = constraintAreaMin.y + marginY
+                + row * ((constraintAreaMax.y - constraintAreaMin.y) - 2 * marginY) / (size - 1);
+        if (lastPosition.y >= constraintAreaMax.y)
+            lastPosition.y -= 1;
+    }
     lastPosition.z = 0;
 }
 
