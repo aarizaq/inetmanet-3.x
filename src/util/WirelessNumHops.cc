@@ -20,6 +20,7 @@
 #include "MobilityAccess.h"
 #include "IPvXAddressResolver.h"
 #include "IInterfaceTable.h"
+#include "IPv4InterfaceData.h"
 
 WirelessNumHops::WirelessNumHops()
 {
@@ -37,6 +38,7 @@ WirelessNumHops::WirelessNumHops()
     vectorList.clear();
     routeCache.clear();
     linkCache.clear();
+    routeCacheIp.clear();
 
     for (int i = 0; i < topo.getNumNodes(); i++)
     {
@@ -57,6 +59,9 @@ WirelessNumHops::WirelessNumHops()
             if (e->isLoopback())
                 continue;
             related[e->getMacAddress()] = i;
+            IPv4Address adr = e->ipv4Data()->getIPAddress();
+            if (!adr.isUnspecified())
+                relatedIp [adr] = i;
         }
 
     }
@@ -66,6 +71,11 @@ WirelessNumHops::~WirelessNumHops()
 {
     // TODO Auto-generated destructor stub
     cleanLinkArray();
+    vectorList.clear();
+    routeCache.clear();
+    linkCache.clear();
+    routeCacheIp.clear();
+
 }
 
 void WirelessNumHops::fillRoutingTables(const double &tDistance)
@@ -80,7 +90,7 @@ void WirelessNumHops::fillRoutingTables(const double &tDistance)
                 continue;
             Coord ci = vectorList[i].mob->getCurrentPosition();
             Coord cj = vectorList[j].mob->getCurrentPosition();
-            if (ci.distance(cj)<= tDistance)
+            if (ci.distance(cj) <= tDistance)
             {
                 templinkCache.insert(LinkPair(i,j));
             }
@@ -95,6 +105,7 @@ void WirelessNumHops::fillRoutingTables(const double &tDistance)
     linkCache = templinkCache;
     routeCache.clear();
     routeMap.clear();
+    routeCacheIp.clear();
     // clean edges
     cleanLinkArray();
     for (LinkCache::iterator it = linkCache.begin(); it != linkCache.end(); ++it)
@@ -163,6 +174,15 @@ int WirelessNumHops::getIdNode(const MACAddress &add)
 {
     std::map<MACAddress,int>::iterator it = related.find(add);
     if (it != related.end())
+        return it->second;
+    opp_error("node not found");
+    return -1;
+}
+
+int WirelessNumHops::getIdNode(const IPv4Address &add)
+{
+    std::map<IPv4Address,int>::iterator it = relatedIp.find(add);
+    if (it != relatedIp.end())
         return it->second;
     opp_error("node not found");
     return -1;
@@ -345,7 +365,24 @@ bool WirelessNumHops::getRoute(const int &nodeId,std::vector<int> &pathNode)
 }
 
 
-bool WirelessNumHops::findRoute(const double &coverageArea, const MACAddress dest,std::vector<MACAddress> &pathNode)
+bool WirelessNumHops::findRoute(const double &coverageArea, const int &nodeId,std::vector<int> &pathNode)
+{
+    std::vector<int> route;
+    if (getRoute(nodeId,pathNode))
+        return true;
+    else
+    {
+        run();
+        if (getRoute(nodeId,pathNode))
+             return true;
+    }
+    return false;
+}
+
+
+
+
+bool WirelessNumHops::findRoute(const double &coverageArea, const MACAddress &dest,std::vector<MACAddress> &pathNode)
 {
     fillRoutingTables(coverageArea);
 
@@ -355,9 +392,10 @@ bool WirelessNumHops::findRoute(const double &coverageArea, const MACAddress des
         pathNode = it->second;
         return true;
     }
+
     std::vector<int> route;
     int nodeId = getIdNode(dest);
-    if (getRoute(nodeId,route))
+    if (findRoute(coverageArea, nodeId, route))
     {
         std::vector<MACAddress> path;
         for (unsigned int i = 0; i < route.size(); i++)
@@ -377,28 +415,43 @@ bool WirelessNumHops::findRoute(const double &coverageArea, const MACAddress des
         routeCache[dest] = path;
         return true;
     }
-    else
+    return false;
+}
+
+
+bool WirelessNumHops::findRoute(const double &coverageArea, const IPv4Address &dest,std::vector<IPv4Address> &pathNode)
+{
+    fillRoutingTables(coverageArea);
+
+    RouteCacheIp::iterator it = routeCacheIp.find(dest);
+    if (it!=routeCacheIp.end())
     {
-        run();
-        if (getRoute(nodeId,route))
-         {
-             std::vector<MACAddress> path;
-             for (unsigned int i = 0; i < route.size(); i++)
-             {
-                 for (std::map<MACAddress,int>::iterator it2 = related.begin(); it2 != related.end(); ++it2)
-                 {
-                     if (it2->second ==  route[i])
-                         path.push_back(it2->first);
-                 }
-             }
-             if (path.size() != route.size())
-             {
-                 opp_error("node id not found");
-             }
-             pathNode = path;
-             routeCache[dest] = path;
-             return true;
-         }
+        pathNode = it->second;
+        return true;
+    }
+
+    std::vector<int> route;
+    int nodeId = getIdNode(dest);
+    if (findRoute(coverageArea, nodeId, route))
+    {
+        std::vector<IPv4Address> path;
+        for (unsigned int i = 0; i < route.size(); i++)
+        {
+            for (std::map<IPv4Address,int>::iterator it2 = relatedIp.begin(); it2 != relatedIp.end(); ++it2)
+            {
+                if (it2->second ==  route[i])
+                    path.push_back(it2->first);
+            }
+        }
+        if (path.size() != route.size())
+        {
+            opp_error("node id not found");
+        }
+        // include path in the cache
+        pathNode = path;
+        routeCacheIp[dest] = path;
+        return true;
     }
     return false;
 }
+

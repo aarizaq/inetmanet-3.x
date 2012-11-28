@@ -23,6 +23,8 @@
 #include <vector>
 #include <map>
 #include "MACAddress.h"
+#include "IPv4Address.h"
+
 class IInterfaceTable;
 class IMobility;
 
@@ -57,11 +59,15 @@ class WirelessNumHops : public cOwnedObject
 
         std::vector<nodeInfo> vectorList;
         std::map<MACAddress,int> related;
+        std::map<IPv4Address,int> relatedIp;
         typedef std::map<MACAddress,std::vector<MACAddress> > RouteCache;
+        typedef std::map<IPv4Address,std::vector<IPv4Address> > RouteCacheIp;
+
         typedef std::set<LinkPair> LinkCache;
         RouteCache routeCache;
+        RouteCacheIp routeCacheIp;
         LinkCache linkCache;
-    public:
+    protected:
         enum StateLabel {perm,tent};
         class DijkstraShortest
         {
@@ -116,20 +122,33 @@ class WirelessNumHops : public cOwnedObject
         virtual void cleanLinkArray();
         virtual void addEdge (const int & dest_node, const int & last_node,unsigned int cost);
         virtual bool getRoute(const int &nodeId,std::vector<int> &pathNode);
+        virtual void setRoot(const int & dest_node);
+        virtual void run();
+        virtual void runUntil (const int &);
+        virtual int getIdNode(const MACAddress &add);
+        virtual int getIdNode(const  IPv4Address &add);
+        virtual void fillRoutingTables(const double &tDistance);
+        virtual bool findRoute(const double &, const int &dest,std::vector<int> &pathNode);
 
     public:
         friend bool operator < (const WirelessNumHops::LinkPair& x, const WirelessNumHops::LinkPair& y );
         friend bool operator > (const WirelessNumHops::LinkPair& x, const WirelessNumHops::LinkPair& y );
         friend bool operator == (const WirelessNumHops::LinkPair& x, const WirelessNumHops::LinkPair& y );
+        friend bool operator < ( const WirelessNumHops::DijkstraShortest::SetElem& x, const WirelessNumHops::DijkstraShortest::SetElem& y );
+        friend bool operator > ( const WirelessNumHops::DijkstraShortest::SetElem& x, const WirelessNumHops::DijkstraShortest::SetElem& y );
+        friend bool operator == ( const WirelessNumHops::DijkstraShortest::SetElem& x, const WirelessNumHops::DijkstraShortest::SetElem& y );
+
         WirelessNumHops();
         virtual ~WirelessNumHops();
-        virtual void fillRoutingTables(const double &tDistance);
-        virtual int getIdNode(const MACAddress &add);
-        virtual void setRoot(const int & dest_node);
-        virtual void run();
-        virtual void runUntil (const int &);
-        virtual bool findRoute(const double &, const MACAddress dest,std::vector<MACAddress> &pathNode);
+        virtual bool findRoute(const double &, const MACAddress &dest,std::vector<MACAddress> &pathNode);
+        virtual bool findRoute(const double &, const IPv4Address &dest,std::vector<IPv4Address> &pathNode);
+
         virtual void setRoot(const MACAddress & dest_node)
+        {
+            setRoot(getIdNode(dest_node));
+        }
+
+        virtual void setRoot(const IPv4Address & dest_node)
         {
             setRoot(getIdNode(dest_node));
         }
