@@ -122,6 +122,7 @@ void NS_CLASS initialize(int stage)
 
         if (hasPar("RreqDelayInReception"))
             storeRreq = par(("RreqDelayInReception")).boolValue();
+        checkRrep = false;
 
         useIndex = par("UseIndex");
         unidir_hack = (int) par("unidir_hack");
@@ -148,6 +149,9 @@ void NS_CLASS initialize(int stage)
             ttl_start = TTL_START_HELLO;
             delete_period = DELETE_PERIOD_HELLO;
         }
+
+        if (hasPar("avoidDupRREP") && llfeedback)
+            checkRrep = par("avoidDupRREP").boolValue();
 
         /* Initialize common manet routing protocol structures */
         registerRoutingModule();
@@ -507,24 +511,14 @@ void NS_CLASS handleMessage (cMessage *msg)
         bool sendPkt = true;
         if (rrep)
         {
-            PacketDestOrigin destOrigin(rrep->dest_addr,rrep->orig_addr);
-            std::map<PacketDestOrigin,RREPProcessed>::iterator it = rrepProc.find(destOrigin);
-            if (it !=  rrepProc.end())
+            if (isThisRrepPrevSent(msg))
             {
-                if (it->second.dest_seqno > rrep->dest_seqno)
-                {
-                    delete msg;
-                    msg = NULL;
-                }
-                else if (it->second.dest_seqno == rrep->dest_seqno && it->second.hcnt <= rrep->hcnt)
-                {
-                    delete msg;
-                    msg = NULL;
-                }
+                delete msg;
+                msg = NULL;
             }
         }
         if (msg)
-            aodv_socket_send((AODV_msg *) msg, delayInfo->dst , delayInfo->len, delayInfo->ttl, delayInfo->dev);
+            aodv_socket_send((AODV_msg *) msg, delayInfo->dst , delayInfo->len, delayInfo->ttl, delayInfo->dev,0);
         delete delayInfo;
         return;
     }
@@ -1330,7 +1324,7 @@ void NS_CLASS processPromiscuous(const cObject *details)
             if (meshFrame->getSubType() == ROUTING)
             {
                 cPacket * pktAux2 = meshFrame->getEncapsulatedPacket(); // protocol
-                if (pktAux2 && dynamic_cast<RREP *> (pktAux2))
+                if (pktAux2 && dynamic_cast<RREP *> (pktAux2) && checkRrep)
                 {
                     RREP* rrep = dynamic_cast<RREP *> (pktAux2);
                     PacketDestOrigin destOrigin(rrep->dest_addr,rrep->orig_addr);
@@ -1796,4 +1790,25 @@ bool  NS_CLASS setRoute(const Uint128 &dest,const Uint128 &add, const char  *ifa
 }
 #endif
 
-
+bool NS_CLASS isThisRrepPrevSent(cMessage *msg)
+{
+    if (!checkRrep)
+        return false;
+    RREP *rrep = dynamic_cast<RREP *>(msg);
+    if (rrep == NULL)
+         return false;
+    PacketDestOrigin destOrigin(rrep->dest_addr,rrep->orig_addr);
+    std::map<PacketDestOrigin,RREPProcessed>::iterator it = rrepProc.find(destOrigin);
+    if (it != rrepProc.end())
+    {
+        if (it->second.dest_seqno > rrep->dest_seqno)
+        {
+            return true;
+        }
+        else if (it->second.dest_seqno == rrep->dest_seqno && it->second.hcnt <= rrep->hcnt)
+        {
+            return true;
+        }
+    }
+    return false;
+}

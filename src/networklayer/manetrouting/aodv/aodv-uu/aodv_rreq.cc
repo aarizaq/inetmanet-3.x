@@ -493,7 +493,8 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
                   "Responding for INTERNET dest: %s rrep_size=%d",
                   ip_to_str(rreq_dest), rrep_size);
 
-            rrep_send(rrep, rev_rt, NULL, rrep_size);
+            if (checkRrep)
+                 rrep_send(rrep, rev_rt, NULL, rrep_size, par ("unicastDelay").doubleValue());
 
             return;
 

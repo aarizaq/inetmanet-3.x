@@ -220,6 +220,8 @@ class AODVUU : public ManetRoutingBase
         struct dev_info *dev;
     };
     bool storeRreq;
+    bool checkRrep;
+    virtual bool isThisRrepPrevSent(cMessage *);
     virtual bool getDestAddressRreq(cPacket *msg,PacketDestOrigin &orgDest,RREQInfo &rreqInfo);
   public:
     static int  log_file_fd;

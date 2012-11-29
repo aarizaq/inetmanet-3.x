@@ -69,6 +69,7 @@ simple AODVUU extends BaseRouting like IManetRouting
         bool PublicRoutingTables = default(false);
         bool RreqDelayInReception = default(false); // if true the delay introduced to the RREq is in reception
         volatile double rreqWait @unit("s") = default(0.01s);
+        bool avoidDupRREP  = default(false);// only if promiscous is active, check if rrep has been sent by other node
     gates:
         input from_ip;
         output to_ip;
