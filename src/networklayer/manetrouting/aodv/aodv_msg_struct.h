@@ -115,6 +115,7 @@ struct RREP : public AODV_msg
     u_int32_t lifetime;
     uint32_t cost;
     uint8_t  hopfix;
+    uint8_t  totalHops;
     explicit RREP (const char *name="RREPAodvMsg") : AODV_msg (name)
     {
         setBitLength(20*8);
@@ -130,6 +131,7 @@ struct RREP : public AODV_msg
         lifetime = 0;
         cost = 0;
         hopfix = 0;
+        totalHops = 0;
     }
     RREP (const RREP &m);
     RREP &  operator= (const RREP &m);

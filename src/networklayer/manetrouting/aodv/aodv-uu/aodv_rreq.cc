@@ -448,6 +448,7 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
             rrep = rrep_create(0, 0, 0, DEV_IFINDEX(rev_rt->ifindex).ipaddr,
                                this_host.seqno, rev_rt->dest_addr,
                                ACTIVE_ROUTE_TIMEOUT);
+            rrep->totalHops =  rev_rt->hcnt;
 
             ext = rrep_add_ext(rrep, RREP_INET_DEST_EXT, rrep_size,
                                sizeof(struct in_addr), (char *) &rreq_dest);
@@ -523,6 +524,7 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
         rrep = rrep_create(0, 0, 0, DEV_IFINDEX(rev_rt->ifindex).ipaddr,
                            this_host.seqno, rev_rt->dest_addr,
                            MY_ROUTE_TIMEOUT);
+        rrep->totalHops =  rev_rt->hcnt;
 #ifdef OMNETPP
         EV << " create a rrep" << convertAddressToString(DEV_IFINDEX(rev_rt->ifindex).ipaddr.s_addr) << "seq n" << this_host.seqno << " to " << convertAddressToString(rev_rt->dest_addr.s_addr) << "\n";
 #endif
@@ -542,6 +544,7 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
            one in the RREQ. */
         seqno_incr(this_host.seqno);
         rrep = rrep_create(0, 0, 0, DEV_IFINDEX(rev_rt->ifindex).ipaddr,this_host.seqno, rev_rt->dest_addr, MY_ROUTE_TIMEOUT);
+        rrep->totalHops =  rev_rt->hcnt;
         EV << "Create a rrep" << convertAddressToString(DEV_IFINDEX(rev_rt->ifindex).ipaddr.s_addr) << "seq n" << this_host.seqno << " to " << convertAddressToString(rev_rt->dest_addr.s_addr) << "\n";
         rrep_send(rrep, rev_rt, NULL, RREP_SIZE);
         if (ip_ttl > 0)
@@ -647,6 +650,7 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
                 rrep = rrep_create(0, 0, gw_rt->hcnt, gw_rt->dest_addr,
                                    gw_rt->dest_seqno, rev_rt->dest_addr,
                                    lifetime);
+                rrep->totalHops =  rev_rt->hcnt;
 
                 ext = rrep_add_ext(rrep, RREP_INET_DEST_EXT, rrep_size,
                                    sizeof(struct in_addr), (char *) &rreq_dest);
@@ -696,6 +700,7 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
                 rrep = rrep_create(0, 0, fwd_rt->hcnt, fwd_rt->dest_addr,
                                    fwd_rt->dest_seqno, rev_rt->dest_addr,
                                    lifetime);
+                rrep->totalHops =  rev_rt->hcnt + fwd_rt->hcnt;
 #ifdef OMNETPP
                 // collaborative protocol
                 if (getCollaborativeProtocol())
@@ -717,6 +722,7 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
                     rrep = rrep_create(0, 0, rev_rt->hcnt, rev_rt->dest_addr,
                                        rev_rt->dest_seqno, fwd_rt->dest_addr,
                                        lifetime);
+                    rrep->totalHops =  rev_rt->hcnt;
                     rrep_send(rrep, fwd_rt, rev_rt, RREP_SIZE);
                     DEBUG(LOG_INFO, 0, "Sending G-RREP to %s with rte to %s",
                           ip_to_str(rreq_dest), ip_to_str(rreq_orig));
