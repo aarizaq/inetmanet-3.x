@@ -186,6 +186,7 @@ class AODVUU : public ManetRoutingBase
     struct RREPProcessed
     {
         u_int8_t hcnt;
+        u_int8_t totalHops;
         u_int32_t dest_seqno;
         u_int32_t origin_seqno;
         uint32_t cost;

@@ -1337,6 +1337,7 @@ void NS_CLASS processPromiscuous(const cObject *details)
                         rproc.dest_seqno = rrep->dest_seqno;
                         rproc.hcnt = rrep->hcnt;
                         rproc.hopfix = rrep->hopfix;
+                        rproc.totalHops = rrep->totalHops;
                         rproc.next = meshFrame->getReceiverAddress().getInt();
                     }
                     else if (it->second.dest_seqno < rrep->dest_seqno)
@@ -1795,17 +1796,21 @@ bool NS_CLASS isThisRrepPrevSent(cMessage *msg)
     if (!checkRrep)
         return false;
     RREP *rrep = dynamic_cast<RREP *>(msg);
+    if (rrep->hcnt == 0)
+            return false; // this packet had this node like destination, in this case the node must send the packet
+
     if (rrep == NULL)
-         return false;
+         return false; // no information, send
+
     PacketDestOrigin destOrigin(rrep->dest_addr,rrep->orig_addr);
     std::map<PacketDestOrigin,RREPProcessed>::iterator it = rrepProc.find(destOrigin);
-    if (it != rrepProc.end())
+    if (it != rrepProc.end()) // only send if the seq num is bigger
     {
         if (it->second.dest_seqno > rrep->dest_seqno)
         {
             return true;
         }
-        else if (it->second.dest_seqno == rrep->dest_seqno && it->second.hcnt <= rrep->hcnt)
+        else if (it->second.dest_seqno == rrep->dest_seqno && it->second.totalHops < rrep->totalHops)
         {
             return true;
         }

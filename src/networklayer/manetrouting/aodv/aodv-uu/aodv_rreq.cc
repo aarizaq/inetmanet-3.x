@@ -662,12 +662,6 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
                       ip_to_str(rreq_dest), rrep_size);
 
                 // clean entry
-#ifdef OMNETPP
-                PacketDestOrigin destOrigin(rrep->dest_addr,rrep->orig_addr);
-                std::map<PacketDestOrigin,RREPProcessed>::iterator it = rrepProc.find(destOrigin);
-                if (it != rrepProc.end())
-                    rrepProc.erase(it);
-#endif
                 rrep_send(rrep, rev_rt, gw_rt, rrep_size);
                 return;
             }
@@ -701,20 +695,8 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
                                    fwd_rt->dest_seqno, rev_rt->dest_addr,
                                    lifetime);
                 rrep->totalHops =  rev_rt->hcnt + fwd_rt->hcnt;
-#ifdef OMNETPP
-                // collaborative protocol
-                if (getCollaborativeProtocol())
-                {
-                    PacketDestOrigin destOrigin(rrep->dest_addr,rrep->orig_addr);
-                    std::map<PacketDestOrigin,RREPProcessed>::iterator it = rrepProc.find(destOrigin);
-                    if (it !=  rrepProc.end())
-                        rrepProc.erase(it);
-                    //rrep_send(rrep, rev_rt, fwd_rt, rrep_size,uniform(0,0.005));
-                    rrep_send(rrep, rev_rt, fwd_rt, rrep_size);
-                }
-                else
-#endif
-                    rrep_send(rrep, rev_rt, fwd_rt, rrep_size);
+
+                rrep_send(rrep, rev_rt, fwd_rt, rrep_size);
                 /* If the GRATUITOUS flag is set, we must also unicast a
                    gratuitous RREP to the destination. */
                 if (rreq->g)
@@ -722,7 +704,7 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
                     rrep = rrep_create(0, 0, rev_rt->hcnt, rev_rt->dest_addr,
                                        rev_rt->dest_seqno, fwd_rt->dest_addr,
                                        lifetime);
-                    rrep->totalHops =  rev_rt->hcnt;
+                    rrep->totalHops =  rev_rt->hcnt + fwd_rt->hcnt;
                     rrep_send(rrep, fwd_rt, rev_rt, RREP_SIZE);
                     DEBUG(LOG_INFO, 0, "Sending G-RREP to %s with rte to %s",
                           ip_to_str(rreq_dest), ip_to_str(rreq_orig));
