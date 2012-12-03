@@ -82,11 +82,37 @@ void WirelessNumHops::fillRoutingTables(const double &tDistance)
 {
     // fill in routing tables with static routes
     LinkCache templinkCache;
+    // first find root node connections
+    Coord cRoot = vectorList[rootNode].mob->getCurrentPosition();
     for (int i=0; i< (int)vectorList.size(); i++)
     {
+        if (i == rootNode)
+            continue;
+        Coord ci = vectorList[i].mob->getCurrentPosition();
+        if (cRoot.distance(ci) <= tDistance)
+        {
+            templinkCache.insert(LinkPair(rootNode,i));
+        }
+    }
+    if (templinkCache.empty())
+    {
+        // root node doesn't have connections
+        linkCache.clear();
+        routeCache.clear();
+        routeMap.clear();
+        routeCacheIp.clear();
+        cleanLinkArray();
+        return;
+    }
+    for (int i=0; i< (int)vectorList.size(); i++)
+    {
+        if (i == rootNode)
+            continue;
         for (int j = i; j < (int)vectorList.size(); j++)
         {
             if (i == j)
+                continue;
+            if (i == rootNode || j == rootNode)
                 continue;
             Coord ci = vectorList[i].mob->getCurrentPosition();
             Coord cj = vectorList[j].mob->getCurrentPosition();
@@ -110,6 +136,8 @@ void WirelessNumHops::fillRoutingTables(const double &tDistance)
     cleanLinkArray();
     for (LinkCache::iterator it = linkCache.begin(); it != linkCache.end(); ++it)
     {
+        if ((*it).node1 == rootNode || (*it).node2 == rootNode)
+            printf("\n");
         addEdge ((*it).node1, (*it).node2,1);
         addEdge ((*it).node2, (*it).node1,1);
     }
@@ -175,7 +203,7 @@ int WirelessNumHops::getIdNode(const MACAddress &add)
     std::map<MACAddress,int>::iterator it = related.find(add);
     if (it != related.end())
         return it->second;
-    opp_error("node not found");
+    opp_error("Node not found with MAC Address %s",add.str().c_str());
     return -1;
 }
 
@@ -184,7 +212,7 @@ int WirelessNumHops::getIdNode(const IPv4Address &add)
     std::map<IPv4Address,int>::iterator it = relatedIp.find(add);
     if (it != relatedIp.end())
         return it->second;
-    opp_error("node not found");
+    opp_error("Node not found with IP Address %s", add.str().c_str());
     return -1;
 }
 
@@ -198,11 +226,13 @@ void WirelessNumHops::run()
 {
     std::multiset<WirelessNumHops::DijkstraShortest::SetElem> heap;
     routeMap.clear();
+    if (linkArray.empty())
+        return;
 
     LinkArray::iterator it;
     it = linkArray.find(rootNode);
     if (it==linkArray.end())
-        opp_error("Node not found");
+        opp_error("Node root not found %i",rootNode);
     WirelessNumHops::DijkstraShortest::State state(0);
     state.label = tent;
     routeMap[rootNode] = state;
@@ -222,7 +252,7 @@ void WirelessNumHops::run()
 
         it = routeMap.find(elem.iD);
         if (it==routeMap.end())
-            opp_error("node not found in routeMap");
+            opp_error("node not found in routeMap %i",elem.iD);
         if ((it->second).label == perm)
             continue;
 
@@ -275,10 +305,13 @@ void WirelessNumHops::runUntil (const int &target)
     std::multiset<WirelessNumHops::DijkstraShortest::SetElem> heap;
     routeMap.clear();
 
+    if (linkArray.empty())
+        return;
+
     LinkArray::iterator it;
     it = linkArray.find(rootNode);
     if (it==linkArray.end())
-        opp_error("Node not found");
+        opp_error("Root node not found %i",rootNode);
     WirelessNumHops::DijkstraShortest::State state(0);
     state.label = tent;
     routeMap[rootNode] = state;
@@ -298,7 +331,7 @@ void WirelessNumHops::runUntil (const int &target)
 
         it = routeMap.find(elem.iD);
         if (it==routeMap.end())
-            opp_error("node not found in routeMap");
+            opp_error("node not found in routeMap %i",elem.iD);
         if ((it->second).label == perm)
             continue;
         (it->second).label = perm;
@@ -359,7 +392,7 @@ bool WirelessNumHops::getRoute(const int &nodeId,std::vector<int> &pathNode)
         currentNode = it->second.idPrev;
         it = routeMap.find(currentNode);
         if (it==routeMap.end())
-            opp_error("error in data");
+            opp_error("error in data routeMap");
     }
     return true;
 }
