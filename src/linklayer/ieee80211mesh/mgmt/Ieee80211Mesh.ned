@@ -50,6 +50,7 @@ simple Ieee80211Mesh
  //       int Mid_ival = default(5); // sec
  //       int use_mac = default(0);
         bool locatorActive  = default(false);
+        double coverageArea @unit(m) = default(-1m);
         @signal[enqueuePk](type=cMessage);
         @signal[dequeuePk](type=cMessage);
         @signal[dropPkByQueue](type=cMessage);

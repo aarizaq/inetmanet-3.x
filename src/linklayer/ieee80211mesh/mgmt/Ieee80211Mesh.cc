@@ -260,8 +260,11 @@ void Ieee80211Mesh::initialize(int stage)
         if (par("IsGateWay"))
             startGateWay();
 
-        getOtpimunRoute = new WirelessNumHops();
-        getOtpimunRoute->setRoot(myAddress);
+        if (par("coverageArea").doubleValue() > 0)
+        {
+            getOtpimunRoute = new WirelessNumHops();
+            getOtpimunRoute->setRoot(myAddress);
+        }
         //end Gateway and group address code
     }
 }
@@ -1086,10 +1089,12 @@ void Ieee80211Mesh::handleDataFrame(Ieee80211DataFrame *frame)
                     int patSize = 0;
                     if (getOtpimunRoute)
                     {
-                        getOtpimunRoute->findRoute(120,origin,path);
-                        patSize = path.size();
+                        if (getOtpimunRoute->findRoute(120,origin,path))
+                        {
+                            patSize = path.size();
+                            emit(numHopsSignal,totalHops - patSize);
+                        }
                     }
-                    emit(numHopsSignal,totalHops - patSize);
                     emit(numFixHopsSignal,totalFixHops/totalHops);
                 }
                 sendUp(msg);
@@ -1982,11 +1987,15 @@ void Ieee80211Mesh::handleWateGayDataReceive(cPacket *pkt)
                 int patSize = 0;
                 if (getOtpimunRoute)
                 {
-                    getOtpimunRoute->findRoute(120,origin,path);
-                    patSize = path.size();
+                    if (getOtpimunRoute->findRoute(120,origin,path))
+                    {
+                        getOtpimunRoute->findRoute(120,origin,path);
+                        patSize = path.size();
+                        emit(numHopsSignal,totalHops - patSize);
+                    }
                 }
 
-                emit(numHopsSignal,totalHops - patSize);
+
                 emit(numFixHopsSignal,totalFixHops/totalHops);
             }
         }
