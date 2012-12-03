@@ -112,7 +112,7 @@ void WirelessNumHops::fillRoutingTables(const double &tDistance)
         {
             if (i == j)
                 continue;
-            if (i == rootNode || j == rootNode)
+            if (j == rootNode)
                 continue;
             Coord ci = vectorList[i].mob->getCurrentPosition();
             Coord cj = vectorList[j].mob->getCurrentPosition();
@@ -136,8 +136,6 @@ void WirelessNumHops::fillRoutingTables(const double &tDistance)
     cleanLinkArray();
     for (LinkCache::iterator it = linkCache.begin(); it != linkCache.end(); ++it)
     {
-        if ((*it).node1 == rootNode || (*it).node2 == rootNode)
-            printf("\n");
         addEdge ((*it).node1, (*it).node2,1);
         addEdge ((*it).node2, (*it).node1,1);
     }
