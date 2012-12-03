@@ -610,7 +610,7 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
                 life = PATH_DISCOVERY_TIME - 2 * (int)hops * NODE_TRAVERSAL_TIME;
                 if (fwd_rtAux)
                 {
-                    fwd_rtAux = rt_table_update(fwd_rtAux, next_hop, hops, sqnum, life, VALID, fwd_rt->flags,ifindex, hops, hops+1);
+                    fwd_rtAux = rt_table_update(fwd_rtAux, next_hop, hops, sqnum, life, VALID, fwd_rtAux->flags,ifindex, hops, hops+1);
                 }
                 else
                 {

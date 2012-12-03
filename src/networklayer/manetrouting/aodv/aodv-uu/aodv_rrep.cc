@@ -408,7 +408,59 @@ void NS_CLASS rrep_process(RREP * rrep, int rreplen, struct in_addr ip_src,
 
     fwd_rt = rt_table_find(rrep_dest);
     rev_rt = rt_table_find(rrep_orig);
+#ifdef OMNETPP
+    // collaborative protocol
+    if (getCollaborativeProtocol())
+    {
+        struct in_addr next_hop;
+        int iface;
+        double cost;
+        if (getCollaborativeProtocol()->getNextHop(rrep_orig.s_addr,next_hop.s_addr,iface,cost))
+        {
+            u_int8_t hops = cost;
+            std::map<Uint128,u_int32_t *>::iterator it = mapSeqNum.find(rrep_orig.s_addr);
+            if (it == mapSeqNum.end())
+                opp_error("node not found in mapSeqNum");
+            u_int32_t sqnum = *(it->second);
+            u_int32_t life = PATH_DISCOVERY_TIME - 2 * hops * NODE_TRAVERSAL_TIME;
+            int ifindex = -1;
+            for (int i = 0; i < getNumInterfaces(); i++)
+            {
+                if (getInterfaceEntry(i)->getInterfaceId() == iface)
+                {
+                    ifindex = i;
+                    break;
+                }
+            }
+            if (ifindex == -1)
+                opp_error("interface not found");
 
+            if (rev_rt)
+            {
+                rev_rt = rt_table_update(rev_rt, next_hop, hops, sqnum, life, VALID, rev_rt->flags,ifindex, cost, cost+1);
+            }
+            else
+            {
+                rev_rt = rt_table_insert(rrep_orig, next_hop, hops, sqnum, life, VALID, 0, ifindex, cost, cost+1);
+            }
+            hops = 1;
+            rt_table_t * rev_rtAux = rt_table_find(next_hop);
+            it = mapSeqNum.find(next_hop.s_addr);
+            if (it == mapSeqNum.end())
+                opp_error("node not found in mapSeqNum");
+            sqnum = *(it->second);
+            life = PATH_DISCOVERY_TIME - 2 * (int)hops * NODE_TRAVERSAL_TIME;
+            if (rev_rtAux)
+            {
+                rev_rtAux = rt_table_update(rev_rtAux, next_hop, hops, sqnum, life, VALID, rev_rtAux->flags,ifindex, hops, hops+1);
+            }
+            else
+            {
+                rev_rtAux = rt_table_insert(next_hop, next_hop, hops, sqnum, life, VALID, 0, ifindex, hops, hops+1);
+            }
+        }
+    }
+#endif
     if (!fwd_rt)
     {
         /* We didn't have an existing entry, so we insert a new one. */
