@@ -2924,7 +2924,7 @@ bool OLSR::getNextHop(const Uint128 &dest, Uint128 &add, int &iface, double &cos
 
             InterfaceEntry * ie = getInterfaceWlanByAddress(rt_entry->iface_addr());
             iface = ie->getInterfaceId();
-            cost = rt_entry->route.size();
+            cost = rt_entry->dist();
             return true;
         }
         return false;
