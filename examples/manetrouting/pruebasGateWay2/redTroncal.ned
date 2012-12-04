@@ -28,6 +28,14 @@ import inet.linklayer.ieee80211mesh.nodes.gateWayMesh;
 import inet.linklayer.ieee80211mesh.nodes.ApMeshRelay;
 import inet.nodes.ethernet.EtherSwitch;
 import inet.linklayer.ieee80211mesh.nodes.ApMeshRelay;
+import ned.DatarateChannel;
+
+channel cable extends DatarateChannel
+{
+    parameters:
+        delay = 0.1us;
+        datarate = 1000Mbps;
+}
 
 network redTroncal
 {
@@ -42,7 +50,7 @@ network redTroncal
         }
         fixhostA[8]: BasicMobileManetMesh {
             parameters:
-                mobilityType = "LinealNodeDistributionMobility";
+                mobilityType = "LinearNodeDistributionMobility";
                 mobility.initialY = 315m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.initialX = nodeSeparation/2.0;
                 mobility.separation = nodeSeparation*2;
@@ -50,7 +58,7 @@ network redTroncal
         }
         fixhostB[7]: ApMeshRelay {
             parameters:
-                mobilityType = "LinealNodeDistributionMobility";
+                mobilityType = "LinearNodeDistributionMobility";
                 mobility.initialY = 315m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.initialX = (nodeSeparation/2.0)+nodeSeparation;
                 mobility.separation = nodeSeparation*2;
@@ -60,7 +68,7 @@ network redTroncal
         }
         fixhost2[8]: ApMeshRelay {
             parameters:
-                mobilityType = "LinealNodeDistributionMobility";
+                mobilityType = "LinearNodeDistributionMobility";
                 mobility.initialY = 235m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.initialX = nodeSeparation/2.0;
                 mobility.separation = nodeSeparation*2;
@@ -69,7 +77,7 @@ network redTroncal
         }
         fixhost3[8]: ApMeshRelay {
             parameters:
-                mobilityType = "LinealNodeDistributionMobility";
+                mobilityType = "LinearNodeDistributionMobility";
                 mobility.initialY = 395m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.separation = nodeSeparation*2;
                 mobility.initialX = nodeSeparation/2.0;
@@ -79,7 +87,7 @@ network redTroncal
 
         fixhost4A[8]: BasicMobileManetMesh {
             parameters:
-                mobilityType = "LinealNodeDistributionMobility";
+                mobilityType = "LinearNodeDistributionMobility";
                 mobility.initialY = 155m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.separation = nodeSeparation*2;
                 mobility.initialX = nodeSeparation/2.0;
@@ -87,7 +95,7 @@ network redTroncal
         }
         fixhost4B[7]: ApMeshRelay {
             parameters:
-                mobilityType = "LinealNodeDistributionMobility";
+                mobilityType = "LinearNodeDistributionMobility";
                 mobility.initialY = 155m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.separation = nodeSeparation*2;
                 mobility.initialX = (nodeSeparation/2.0) + nodeSeparation;
@@ -96,7 +104,7 @@ network redTroncal
         }
         fixhost5A[8]: BasicMobileManetMesh {
             parameters:
-                mobilityType = "LinealNodeDistributionMobility";
+                mobilityType = "LinearNodeDistributionMobility";
                 mobility.initialY = 475m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.separation = nodeSeparation*2;
                 mobility.initialX = nodeSeparation/2.0;
@@ -104,7 +112,7 @@ network redTroncal
         }
         fixhost5B[7]: ApMeshRelay {
             parameters:
-                mobilityType = "LinealNodeDistributionMobility";
+                mobilityType = "LinearNodeDistributionMobility";
                 mobility.initialY = 475m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.separation = nodeSeparation*2;
                 mobility.initialX = (nodeSeparation/2.0) + nodeSeparation;
@@ -113,7 +121,7 @@ network redTroncal
         }
         fixhost6[8]: ApMeshRelay {
             parameters:
-                mobilityType = "LinealNodeDistributionMobility";
+                mobilityType = "LinearNodeDistributionMobility";
                 mobility.initialY = 75m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.separation = nodeSeparation*2;
                 mobility.initialX = nodeSeparation/2.0;
@@ -122,7 +130,7 @@ network redTroncal
         }
         fixhost7[8]: ApMeshRelay {
             parameters:
-                mobilityType = "LinealNodeDistributionMobility";
+                mobilityType = "LinearNodeDistributionMobility";
                 mobility.initialY = 555m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.separation = nodeSeparation*2;
                 mobility.initialX = nodeSeparation/2.0;
@@ -165,11 +173,11 @@ network redTroncal
         }
 
     connections allowunconnected:
-        gateWay.ethg++ <--> SW.ethg++;
-        gateWay1.ethg++ <--> SW.ethg++;
-        gateWay2.ethg++ <--> SW.ethg++;
-        gateWay3.ethg++ <--> SW.ethg++;
-        gateWay4.ethg++ <--> SW.ethg++;
+        gateWay.ethg++ <--> cable <--> SW.ethg++;
+        gateWay1.ethg++ <--> cable <--> SW.ethg++;
+        gateWay2.ethg++ <--> cable <--> SW.ethg++;
+        gateWay3.ethg++ <--> cable <--> SW.ethg++;
+        gateWay4.ethg++ <--> cable <--> SW.ethg++;
 }
 
 
