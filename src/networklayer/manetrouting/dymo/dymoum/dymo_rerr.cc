@@ -92,10 +92,10 @@ void NS_CLASS rerr_send(struct in_addr addr, int ttl, rtable_entry_t *entry)
             }
         }
 #else
-        for (DymoRoutingTable::iterator it = dymoRoutingTable->begin(); it != dymoRoutingTable->end(); it++)
+        for (DymoRoutingTable::iterator it = dymoRoutingTable->begin(); it != dymoRoutingTable->end(); ++it)
         {
             if (i >= MAX_RERR_BLOCKS)
-                continue;
+                break;
             rtable_entry_t *e = it->second;
             if (e != entry && (e->rt_nxthop_addr.s_addr
                                == entry->rt_nxthop_addr.s_addr) &&
@@ -269,6 +269,8 @@ void NS_CLASS rerr_send(struct in_addr addr, int ttl, rtable_entry_t *entry,stru
         dlist_head_t *pos;
         dlist_for_each(pos, &rtable.l)
         {
+            if (i >= MAX_RERR_BLOCKS)
+                continue;
             rtable_entry_t *e = (rtable_entry_t *) pos;
             if (e != entry && (e->rt_nxthop_addr.s_addr
                                == entry->rt_nxthop_addr.s_addr) &&
@@ -280,8 +282,10 @@ void NS_CLASS rerr_send(struct in_addr addr, int ttl, rtable_entry_t *entry,stru
             }
         }
 #else
-        for (DymoRoutingTable::iterator it = dymoRoutingTable->begin(); it != dymoRoutingTable->end(); it++)
+        for (DymoRoutingTable::iterator it = dymoRoutingTable->begin(); it != dymoRoutingTable->end(); ++it)
         {
+            if (i >= MAX_RERR_BLOCKS)
+                break;
             rtable_entry_t *e = it->second;
             if (e != entry && (e->rt_nxthop_addr.s_addr
                                == entry->rt_nxthop_addr.s_addr) &&
