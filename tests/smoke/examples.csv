@@ -97,6 +97,7 @@
 /examples/inet/nclients/,            -f fingerprints.ini -c General -r 0
 /examples/inet/nclients/,            -f fingerprints2.ini -c General -r 0
 /examples/inet/nclients/,            -f nclients2.ini -c General -r 0
+/examples/inet/nclients/,            -f nclients2.ini -c General -r 1
 /examples/inet/nclients/,            -f omnetpp-ping.ini -c General -r 0
 /examples/inet/nclients/,            -f omnetpp.ini -c inet__inet -r 0
 /examples/inet/nclients/,            -f omnetpp.ini -c lwip__lwip -r 0
@@ -252,6 +253,9 @@
 /examples/rtp/unicast2/,             -f omnetpp.ini -c General -r 0
 /examples/sctp/multihomed/,          -f omnetpp.ini -c General -r 0
 /examples/sctp/nclients/,            -f omnetpp.ini -c General -r 0
+/examples/voip/,                     -f omnetpp.ini -c GoodChannel -r 0
+/examples/voip/,                     -f omnetpp.ini -c BadChannel -r 0
+/examples/voip/,                     -f omnetpp.ini -c PeriodicChannel -r 0
 /examples/voipstream/VoIPStreamLargeNet/, -f omnetpp.ini -c General -r 0
 /examples/voipstream/VoIPStreamTest/,    -f omnetpp.ini -c g726 -r 0
 /examples/voipstream/VoIPStreamTest/,    -f omnetpp.ini -c g711_aLaw -r 0

@@ -62,6 +62,11 @@ void TCPConnection::segmentArrivalWhileClosed(TCPSegment *tcpseg, IPvXAddress sr
     // If the ACK bit is on,
     //
     //    <SEQ=SEG.ACK><CTL=RST>
+    //
+    // ...
+    //
+    //    SEG.LEN = the number of octets occupied by the data in the segment
+    //              (counting SYN and FIN)
     //"
     if (tcpseg->getRstBit())
     {
@@ -72,7 +77,7 @@ void TCPConnection::segmentArrivalWhileClosed(TCPSegment *tcpseg, IPvXAddress sr
     if (!tcpseg->getAckBit())
     {
         tcpEV << "ACK bit not set: sending RST+ACK\n";
-        uint32 ackNo = tcpseg->getSequenceNo() + (uint32)tcpseg->getPayloadLength();
+        uint32 ackNo = tcpseg->getSequenceNo() + tcpseg->getSegLen();
         sendRstAck(0, ackNo, destAddr, srcAddr, tcpseg->getDestPort(), tcpseg->getSrcPort());
     }
     else
@@ -237,8 +242,6 @@ TCPEventCode TCPConnection::processSegment1stThru8th(TCPSegment *tcpseg)
                 // enter the CLOSED state, delete the TCB, and return.
                 //"
                 tcpEV << "RST: closing connection\n";
-                if (fsm.getState() != TCP_S_TIME_WAIT)
-                    sendIndicationToApp(TCP_I_CLOSED); // in TIME_WAIT, we've already sent it
                 return TCP_E_RCV_RST; // this will trigger state transition
 
             default: ASSERT(0);
@@ -394,7 +397,6 @@ TCPEventCode TCPConnection::processSegment1stThru8th(TCPSegment *tcpseg)
 
             // we're entering TIME_WAIT, so we can signal CLOSED the user
             // (the only thing left to do is wait until the 2MSL timer expires)
-            sendIndicationToApp(TCP_I_CLOSED);
         }
     }
 
@@ -408,7 +410,6 @@ TCPEventCode TCPConnection::processSegment1stThru8th(TCPSegment *tcpseg)
         if (state->send_fin && tcpseg->getAckNo() == state->snd_fin_seq + 1)
         {
             tcpEV << "Last ACK arrived\n";
-            sendIndicationToApp(TCP_I_CLOSED);
             return TCP_E_RCV_ACK; // will trigger transition to CLOSED
         }
     }
@@ -595,9 +596,7 @@ TCPEventCode TCPConnection::processSegment1stThru8th(TCPSegment *tcpseg)
 
                                     // we're entering TIME_WAIT, so we can signal CLOSED the user
                                     // (the only thing left to do is wait until the 2MSL timer expires)
-                                    sendIndicationToApp(TCP_I_CLOSED);
                                 }
-
                                 break;
 
                             case TCP_S_FIN_WAIT_2:
@@ -607,7 +606,6 @@ TCPEventCode TCPConnection::processSegment1stThru8th(TCPSegment *tcpseg)
 
                                 // we're entering TIME_WAIT, so we can signal CLOSED the user
                                 // (the only thing left to do is wait until the 2MSL timer expires)
-                                sendIndicationToApp(TCP_I_CLOSED);
                                 break;
 
                             case TCP_S_TIME_WAIT:
@@ -615,9 +613,10 @@ TCPEventCode TCPConnection::processSegment1stThru8th(TCPSegment *tcpseg)
                                 cancelEvent(the2MSLTimer);
                                 scheduleTimeout(the2MSLTimer, TCP_TIMEOUT_2MSL);
                                 break;
-                        }
 
-                        sendIndicationToApp(TCP_I_PEER_CLOSED);
+                            default:
+                                break;
+                        }
                     }
                 }
             }
@@ -677,7 +676,6 @@ TCPEventCode TCPConnection::processSegment1stThru8th(TCPSegment *tcpseg)
 
                         // we're entering TIME_WAIT, so we can signal CLOSED the user
                         // (the only thing left to do is wait until the 2MSL timer expires)
-                        sendIndicationToApp(TCP_I_CLOSED);
                     }
                     break;
 
@@ -688,7 +686,6 @@ TCPEventCode TCPConnection::processSegment1stThru8th(TCPSegment *tcpseg)
 
                     // we're entering TIME_WAIT, so we can signal CLOSED the user
                     // (the only thing left to do is wait until the 2MSL timer expires)
-                    sendIndicationToApp(TCP_I_CLOSED);
                     break;
 
                 case TCP_S_TIME_WAIT:
@@ -696,9 +693,11 @@ TCPEventCode TCPConnection::processSegment1stThru8th(TCPSegment *tcpseg)
                     cancelEvent(the2MSLTimer);
                     scheduleTimeout(the2MSLTimer, TCP_TIMEOUT_2MSL);
                     break;
+
+                default:
+                    break;
             }
 
-            sendIndicationToApp(TCP_I_PEER_CLOSED);
         }
         else
         {
@@ -928,9 +927,13 @@ TCPEventCode TCPConnection::processSegmentInSynSent(TCPSegment *tcpseg, IPvXAddr
     {
         if (seqLE(tcpseg->getAckNo(), state->iss) || seqGreater(tcpseg->getAckNo(), state->snd_nxt))
         {
-            tcpEV << "ACK bit set but wrong AckNo, sending RST\n";
-            sendRst(tcpseg->getAckNo(), destAddr, srcAddr, tcpseg->getDestPort(), tcpseg->getSrcPort());
-
+            if (tcpseg->getRstBit())
+                tcpEV << "ACK+RST bit set but wrong AckNo, ignored\n";
+            else
+            {
+                tcpEV << "ACK bit set but wrong AckNo, sending RST\n";
+                sendRst(tcpseg->getAckNo(), destAddr, srcAddr, tcpseg->getDestPort(), tcpseg->getSrcPort());
+            }
             return TCP_E_IGNORE;
         }
 
@@ -1359,7 +1362,6 @@ void TCPConnection::process_TIMEOUT_FIN_WAIT_2()
         case TCP_S_FIN_WAIT_2:
             // Nothing to do here. The TIMEOUT_FIN_WAIT_2 event will automatically take
             // the connection to CLOSED.
-            sendIndicationToApp(TCP_I_CLOSED);
             break;
 
         default:

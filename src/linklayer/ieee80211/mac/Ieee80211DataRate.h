@@ -1,60 +1,32 @@
 #ifndef __IEEE80211_DATA_RATES_H__
 #define __IEEE80211_DATA_RATES_H__
 
-/** @brief Bit rates for 802.11b */
-const double BITRATES_80211b[] =
-{
-    1000000,
-    2000000,
-    5500000,
-    11000000
-};
-#define NUM_BITERATES_80211b 4
+#include "INETDefs.h"
 
-/** @brief Bit rates for 802.11g */
-const double BITRATES_80211g[] =
-{
-    1000000,
-    2000000,
-    5500000,
-    6000000,
-    9000000,
-    11000000,
-    12000000,
-    18000000,
-    24000000,
-    36000000,
-    48000000,
-    54000000
-};
-#define NUM_BITERATES_80211g 12
+#include "ModulationType.h"
 
-/** @brief Bit rates for 802.11a */
-const double BITRATES_80211a[] =
-{
-    6000000,
-    9000000,
-    12000000,
-    18000000,
-    24000000,
-    36000000,
-    48000000,
-    54000000
-};
-#define NUM_BITERATES_80211a 8
 
-/** @brief Bit rates for 802.11g */
-const double BITRATES_80211p[] =
+struct Ieee80211DescriptorData
 {
-    3000000,
-    4500000,
-    6000000,
-    9000000,
-    12000000,
-    18000000,
-    24000000,
-    27000000
+    char mode;
+    double bitrate;
+    ModulationType modulationType;
 };
-#define NUM_BITERATES_80211p 8
+
+class Ieee80211Descriptor
+{
+  private:
+    static const int descriptorSize;
+    static const Ieee80211DescriptorData data[];
+  public:
+    static int findIdx(char mode, double bitrate);
+    static int getIdx(char mode, double bitrate);
+    static int getMinIdx(char mode);
+    static int getMaxIdx(char mode);
+    static bool incIdx(int& idx);
+    static bool decIdx(int& idx);
+    static const Ieee80211DescriptorData& getDescriptor(int idx);
+    static int size() { return descriptorSize; }
+};
 
 #endif

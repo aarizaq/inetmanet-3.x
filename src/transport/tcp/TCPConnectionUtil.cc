@@ -125,11 +125,11 @@ const char *TCPConnection::optionName(int option)
 
 void TCPConnection::printConnBrief() const
 {
-    tcpEV << "Connection ";
-    tcpEV << localAddr << ":" << localPort << " to " << remoteAddr << ":" << remotePort;
-    tcpEV << "  on app[" << appGateIndex << "],connId=" << connId;
-    tcpEV << "  in " << stateName(fsm.getState());
-    tcpEV << "  (ptr=0x" << this << ")\n";
+    tcpEV << "Connection "
+          << localAddr << ":" << localPort << " to " << remoteAddr << ":" << remotePort
+          << "  on app[" << appGateIndex << "], connId=" << connId
+          << "  in " << stateName(fsm.getState())
+          << "\n";
 }
 
 void TCPConnection::printSegmentBrief(TCPSegment *tcpseg)
@@ -300,7 +300,7 @@ void TCPConnection::sendIndicationToApp(int code)
     TCPCommand *ind = new TCPCommand();
     ind->setConnId(connId);
     msg->setControlInfo(ind);
-    tcpMain->send(msg, "appOut", appGateIndex);
+    sendToApp(msg);
 }
 
 void TCPConnection::sendEstabIndicationToApp()
@@ -317,7 +317,7 @@ void TCPConnection::sendEstabIndicationToApp()
     ind->setRemotePort(remotePort);
 
     msg->setControlInfo(ind);
-    tcpMain->send(msg, "appOut", appGateIndex);
+    sendToApp(msg);
 }
 
 void TCPConnection::sendToApp(cMessage *msg)
@@ -703,8 +703,7 @@ bool TCPConnection::sendData(bool fullSegmentsOnly, uint32 congestionWindow)
         effectiveMaxBytesSend -= TCP_OPTION_TS_SIZE;
 
     // last segment could be less than state->snd_mss (or less than snd_mss - TCP_OPTION_TS_SIZE if using TS option)
-    if (fullSegmentsOnly && buffered > (ulong)effectiveWin &&
-            (bytesToSend < (effectiveMaxBytesSend)))
+    if (fullSegmentsOnly && (bytesToSend < (effectiveMaxBytesSend)))
     {
         tcpEV << "Cannot send, not enough data for a full segment (SMSS=" << state->snd_mss
             << ", effectiveWindow=" << effectiveWin << ", bytesToSend=" << bytesToSend << ", in buffer " << buffered << ")\n";

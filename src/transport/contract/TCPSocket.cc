@@ -169,7 +169,7 @@ void TCPSocket::connect(IPvXAddress remoteAddress, int remotePort)
 void TCPSocket::send(cMessage *msg)
 {
     if (sockstate != CONNECTED && sockstate != CONNECTING && sockstate != PEER_CLOSED)
-        throw cRuntimeError("TCPSocket::send(): not connected or connecting");
+        throw cRuntimeError("TCPSocket::send(): socket not connected or connecting, state is %s", stateName(sockstate));
 
     msg->setKind(TCP_C_SEND);
     TCPSendCommand *cmd = new TCPSendCommand();
@@ -283,7 +283,7 @@ void TCPSocket::processMessage(cMessage *msg)
              break;
 
         case TCP_I_PEER_CLOSED:
-             sockstate = sockstate==CONNECTED ? PEER_CLOSED : CLOSED;
+             sockstate = PEER_CLOSED;
              delete msg;
 
              if (cb)
