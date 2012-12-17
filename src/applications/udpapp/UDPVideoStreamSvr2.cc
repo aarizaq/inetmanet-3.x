@@ -22,6 +22,7 @@
 //
 
 
+#include <iostream>
 #include <fstream>
 #include "UDPVideoStreamSvr2.h"
 
@@ -46,27 +47,32 @@ inline std::ostream& operator<<(std::ostream& out, const UDPVideoStreamSvr2::Vid
 
 void UDPVideoStreamSvr2::fileParser(const char *fileName)
 {
-    std::fstream inFile;
-    inFile.open(fileName,std::ios::in);
-    if (inFile.bad())
+    std::string fi(fileName);
+    fi = "./"+fi;
+    std::ifstream inFile(fi.c_str());
+
+    if (!inFile)
     {
         error("Error while opening input file (File not found or incorrect type)\n");
     }
-    int seqNum;
-    double time;
-    double YPSNR, UPSNR, VPSNR;
-    int len;
-    char frameType;
+
     trace.clear();
     simtime_t timedata;
     while (!inFile.eof())
     {
-        inFile >> seqNum >> time >> frameType >> len >> YPSNR >> UPSNR >> VPSNR;
+        int seqNum = 0;
+        float time = 0;
+        float YPSNR = 0;
+        float UPSNR = 0;
+        float VPSNR = 0;
+        int len = 0;
+        char frameType = 0;
+        inFile >> seqNum >>  time >> frameType >> len >> YPSNR >> UPSNR >> VPSNR;
         VideoInfo info;
         info.seqNum = seqNum;
         info.type = frameType;
         info.size = len;
-        info.timeFrame = (time/1000.0);
+        info.timeFrame = time;
         // now insert in time order
         if (trace.empty() || trace.back().timeFrame < info.timeFrame)
             trace.push_back(info);
