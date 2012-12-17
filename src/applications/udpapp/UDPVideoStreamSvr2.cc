@@ -1,5 +1,6 @@
 //
 // Copyright (C) 2005 Andras Varga
+// Copyright (C) 2012 Alfonso Ariza
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -21,10 +22,13 @@
 //
 
 
+#include <fstream>
 #include "UDPVideoStreamSvr2.h"
 
 #include "UDPControlInfo_m.h"
 #include "UDPVideoData_m.h"
+#include "VideoPacket_m.h"
+
 
 
 Define_Module(UDPVideoStreamSvr2);
@@ -39,6 +43,51 @@ inline std::ostream& operator<<(std::ostream& out, const UDPVideoStreamSvr2::Vid
     return out;
 }
 
+
+void UDPVideoStreamSvr2::fileParser(const char *fileName)
+{
+    std::fstream inFile;
+    inFile.open(fileName,std::ios::in);
+    if (inFile.bad())
+    {
+        error("Error while opening input file (File not found or incorrect type)\n");
+    }
+    int seqNum;
+    double time;
+    double YPSNR, UPSNR, VPSNR;
+    int len;
+    char frameType;
+    trace.clear();
+    simtime_t timedata;
+    while (!inFile.eof())
+    {
+        inFile >> seqNum >> time >> frameType >> len >> YPSNR >> UPSNR >> VPSNR;
+        VideoInfo info;
+        info.seqNum = seqNum;
+        info.type = frameType;
+        info.size = len;
+        info.timeFrame = (time/1000.0);
+        // now insert in time order
+        if (trace.empty() || trace.back().timeFrame < info.timeFrame)
+            trace.push_back(info);
+        else
+        {
+            // search the place
+            for (unsigned int i = trace.size()-1 ; i >= 0; i--)
+            {
+                if (trace[i].timeFrame < info.timeFrame)
+                {
+                    trace.insert(trace.begin()+i+1,info);
+                    break;
+                }
+
+            }
+        }
+    }
+    inFile.close();
+}
+
+
 UDPVideoStreamSvr2::UDPVideoStreamSvr2()
 {
 }
@@ -47,6 +96,7 @@ UDPVideoStreamSvr2::~UDPVideoStreamSvr2()
 {
     for (unsigned int i=0; i < streamVector.size(); i++)
         delete streamVector[i];
+    trace.clear();
 }
 
 void UDPVideoStreamSvr2::initialize()
@@ -63,6 +113,9 @@ void UDPVideoStreamSvr2::initialize()
     reqStreamBytesSignal = registerSignal("reqStreamBytes");
     sentPkSignal = registerSignal("sentPk");
 
+    trace.clear();
+    if (!par("traceFileName").str().empty())
+        fileParser(par("traceFileName").stringValue());
 
     WATCH_PTRVECTOR(streamVector);
 
@@ -119,12 +172,19 @@ void UDPVideoStreamSvr2::processStreamRequest(cMessage *msg)
     d->clientPort = ctrl->getSrcPort();
     d->videoSize = (*videoSize);
     d->bytesLeft = d->videoSize;
+    d->traceIndex = 0;
+    d->fileTrace = false;
     double stop = (*stopTime);
     if (stop > 0)
         d->stopTime = simTime() + stop;
     else
         d->stopTime = 0;
     d->numPkSent = 0;
+
+    if (!trace.empty())
+    {
+        d->fileTrace = true;
+    }
 
     streamVector.push_back(d);
     delete msg;
@@ -141,11 +201,10 @@ void UDPVideoStreamSvr2::processStreamRequest(cMessage *msg)
 
 void UDPVideoStreamSvr2::sendStreamData(cMessage *timer)
 {
+    bool deleteTimer = false;
     VideoStreamData *d = (VideoStreamData *) timer->getContextPointer();
 
     // generate and send a packet
-    UDPVideoDataPacket *pkt = new UDPVideoDataPacket("VideoStrmPk");
-    long pktLen = packetLen->longValue();
 
     if (d->stopTime > 0 && d->stopTime < simTime())
     {
@@ -158,32 +217,64 @@ void UDPVideoStreamSvr2::sendStreamData(cMessage *timer)
                 break;
             }
         }
-        delete timer;
+        cancelAndDelete(timer);
         return;
     }
 
-    if (pktLen > d->bytesLeft)
-        pktLen = d->bytesLeft;
+    UDPVideoDataPacket *pkt = new UDPVideoDataPacket("VideoStrmPk");
+    if (!d->fileTrace)
+    {
+        long pktLen = packetLen->longValue();
 
-    pkt->setVideoSize(d->videoSize);
-    pkt->setBytesLeft(d->bytesLeft);
-    pkt->setNumPkSent(d->numPkSent);
+        if (pktLen > d->bytesLeft)
+            pktLen = d->bytesLeft;
 
-    pkt->setByteLength(pktLen);
+        pkt->setVideoSize(d->videoSize);
+        pkt->setBytesLeft(d->bytesLeft);
+        pkt->setNumPkSent(d->numPkSent);
+
+        pkt->setByteLength(pktLen);
+
+        d->bytesLeft -= pktLen;
+        d->numPkSent++;
+        numPkSent++;
+        // reschedule timer if there's bytes left to send
+        if (d->bytesLeft != 0)
+        {
+            simtime_t interval = (*sendInterval);
+            scheduleAt(simTime()+interval, timer);
+        }
+        else
+        {
+            deleteTimer = true;
+        }
+    }
+    else
+    {
+        VideoPacket *videopk = new VideoPacket();
+
+        videopk->setBitLength(trace[d->traceIndex].size);
+        videopk->setType(trace[d->traceIndex].type);
+        videopk->setSeqNum(trace[d->traceIndex].seqNum);
+
+        pkt->setVideoSize(trace[d->traceIndex].size/8);
+        pkt->encapsulate(videopk);
+        d->traceIndex++;
+
+        if (d->traceIndex >= trace.size())
+        {
+            deleteTimer = true;
+        }
+        else
+        {
+            scheduleAt(simTime()+trace[d->traceIndex].timeFrame, timer);
+        }
+
+    }
     emit(sentPkSignal, pkt);
     socket.sendTo(pkt, d->clientAddr, d->clientPort);
 
-    d->bytesLeft -= pktLen;
-    d->numPkSent++;
-    numPkSent++;
-
-    // reschedule timer if there's bytes left to send
-    if (d->bytesLeft != 0)
-    {
-        simtime_t interval = (*sendInterval);
-        scheduleAt(simTime()+interval, timer);
-    }
-    else
+    if (deleteTimer)
     {
         for (unsigned int i = 0 ; i < streamVector.size(); i++)
         {
@@ -194,8 +285,7 @@ void UDPVideoStreamSvr2::sendStreamData(cMessage *timer)
                 break;
             }
         }
-        delete timer;
-        // TBD find VideoStreamData in streamVector and delete it
+        cancelAndDelete(timer);
     }
 }
 
