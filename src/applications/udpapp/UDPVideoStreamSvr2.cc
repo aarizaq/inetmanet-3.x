@@ -120,8 +120,9 @@ void UDPVideoStreamSvr2::initialize()
     sentPkSignal = registerSignal("sentPk");
 
     trace.clear();
-    if (!par("traceFileName").str().empty())
-        fileParser(par("traceFileName").stringValue());
+    std::string fileName(par("traceFileName").stringValue());
+    if (!fileName.empty())
+        fileParser(fileName.c_str());
 
     WATCH_PTRVECTOR(streamVector);
 
