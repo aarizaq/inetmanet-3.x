@@ -665,12 +665,12 @@ void ManetRoutingBase::omnet_chg_rte(const ManetAddress &dst, const ManetAddress
         opp_error("Manet routing protocol is not register");
 
     /* Add route to kernel routing table ... */
-    IPv4Address desAddress(dst.getIPv4());
     setRouteInternalStorege(dst, gtwy, del_entry);
     GlobalWirelessLinkInspector::setRoute(this,getAddress(),dst,gtwy,del_entry);
 
     if (mac_layer_)
         return;
+    IPv4Address desAddress(dst.getIPv4());
 
     bool found = false;
     IPv4Route *oldentry = NULL;
@@ -807,11 +807,12 @@ void ManetRoutingBase::omnet_chg_rte(const ManetAddress &dst, const ManetAddress
         opp_error("Manet routing protocol is not register");
 
     /* Add route to kernel routing table ... */
-    IPv4Address desAddress(dst.getIPv4());
     setRouteInternalStorege(dst, gtwy, del_entry);
     GlobalWirelessLinkInspector::setRoute(this,getAddress(),dst,gtwy,del_entry);
     if (mac_layer_)
         return;
+
+    IPv4Address desAddress(dst.getIPv4());
     bool found = false;
     IPv4Route *oldentry = NULL;
     for (int i=inet_rt->getNumRoutes(); i>0; --i)
@@ -948,10 +949,12 @@ ManetAddress ManetRoutingBase::omnet_exist_rte(ManetAddress dst)
         opp_error("Manet routing protocol is not register");
 
     /* Add route to kernel routing table ... */
-    IPv4Address desAddress(dst.getIPv4());
-    const IPv4Route *e = NULL;
     if (mac_layer_)
         return ManetAddress::ZERO;
+
+    IPv4Address desAddress(dst.getIPv4());
+    const IPv4Route *e = NULL;
+
     for (int i=inet_rt->getNumRoutes(); i>0; --i)
     {
         e = inet_rt->getRoute(i-1);

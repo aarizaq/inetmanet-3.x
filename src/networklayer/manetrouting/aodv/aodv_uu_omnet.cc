@@ -205,6 +205,8 @@ void NS_CLASS initialize(int stage)
                 DEV_NR(i).ipaddr.s_addr = ManetAddress(getInterfaceEntry(i)->getMacAddress());
 
             }
+            if (getInterfaceEntry(i)->isLoopback())
+                continue;
             if (isInMacLayer())
             {
                 mapSeqNum[DEV_NR(i).ipaddr.s_addr] = &this_host.seqno;

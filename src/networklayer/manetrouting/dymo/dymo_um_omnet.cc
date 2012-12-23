@@ -125,12 +125,15 @@ void DYMOUM::initialize(int stage)
         for (int i = 0; i < getNumInterfaces(); i++)
         {
             DEV_NR(i).ifindex = i;
-            dev_indices[getWlanInterfaceIndex(i)] = i;
+            dev_indices[i] = i;
             strcpy(DEV_NR(i).ifname, getInterfaceEntry(i)->getName());
+
             if (isInMacLayer())
                 DEV_NR(i).ipaddr.s_addr = ManetAddress(getInterfaceEntry(i)->getMacAddress());
             else
                 DEV_NR(i).ipaddr.s_addr = ManetAddress(getInterfaceEntry(i)->ipv4Data()->getIPAddress());
+            if (getInterfaceEntry(i)->isLoopback())
+                continue;
             if (isInMacLayer())
             {
                 mapSeqNum[DEV_NR(i).ipaddr.s_addr] = &this_host.seqnum;
