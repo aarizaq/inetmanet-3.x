@@ -151,7 +151,7 @@ RERR::~RERR()
     clearUdest();
 }
 
-void RERR::addUdest(const Uint128 & src_addr, unsigned int udest_seqno)
+void RERR::addUdest(const ManetAddress & src_addr, unsigned int udest_seqno)
 {
 
     RERR_udest *temp_udest;
@@ -228,8 +228,8 @@ std::string RREP::detailedInfo() const
     int timeToLive = ttl;
     int hops = hcnt;
     out << " RREP "  << "\n"; // Khmm...
-    out <<" Source :"<< IPv4Address(orig_addr.getLo()) << "\n";
-    out <<" Destination :"<< IPv4Address(dest_addr.getLo())<< "\n";
+    out <<" Source :"<< orig_addr << "\n";
+    out <<" Destination :"<< dest_addr << "\n";
     out <<" Destination seq num:"<< dest_seqno << "\n";
     out <<" TTL :"<< timeToLive << "\n";
     out <<" hops :"<< hops << "\n";
@@ -292,9 +292,9 @@ std::string RREQ::detailedInfo() const
     int timeToLive = ttl;
     int hops = hcnt;
     out << " RREQ "  << "\n"; // Khmm...
-    out <<" Source :"<< IPv4Address(orig_addr.getLo()) << "\n";
+    out <<" Source :"<< orig_addr << "\n";
     out <<" Source seq num:"<< orig_seqno << "\n";
-    out <<" Destination :"<< IPv4Address(dest_addr.getLo())<< "\n";
+    out <<" Destination :"<< dest_addr << "\n";
     out <<" Destination seq num:"<< dest_seqno << "\n";
     out <<" TTL :"<< timeToLive << "\n";
     out <<" hops :"<< hops << "\n";

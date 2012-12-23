@@ -79,7 +79,7 @@ void UDPVideoStreamSvr2::fileParser(const char *fileName)
         else
         {
             // search the place
-            for (unsigned int i = trace.size()-1 ; i >= 0; i--)
+            for (int i = trace.size()-1 ; i >= 0; i--)
             {
                 if (trace[i].timeFrame < info.timeFrame)
                 {
@@ -188,9 +188,7 @@ void UDPVideoStreamSvr2::processStreamRequest(cMessage *msg)
     d->numPkSent = 0;
 
     if (!trace.empty())
-    {
         d->fileTrace = true;
-    }
 
     streamVector.push_back(d);
     delete msg;
@@ -268,13 +266,9 @@ void UDPVideoStreamSvr2::sendStreamData(cMessage *timer)
         d->traceIndex++;
 
         if (d->traceIndex >= trace.size())
-        {
             deleteTimer = true;
-        }
         else
-        {
             scheduleAt(simTime()+trace[d->traceIndex].timeFrame, timer);
-        }
 
     }
     emit(sentPkSignal, pkt);

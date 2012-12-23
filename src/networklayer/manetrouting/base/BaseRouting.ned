@@ -34,4 +34,5 @@ simple BaseRouting
         bool manetPurgeRoutingTables = default(true);
         bool autoassignAddress = default(false); // assign IP adresses automatically to the interfaces
         string autoassignAddressBase = default("10.0.0.0");
+        bool isStaticNode = default(false);
 }

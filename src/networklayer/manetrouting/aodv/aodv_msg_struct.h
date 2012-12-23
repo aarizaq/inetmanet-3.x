@@ -9,6 +9,7 @@
 //#include <sys/types.h>
 #include "compatibility.h"
 
+#include "aodv_msg_struct_m.h"
 
 // this structures are a redifinition of def.h struct for omnet
 
@@ -24,26 +25,32 @@ typedef struct
 struct AODV_msg : public cPacket
 {
     u_int8_t type;
+    uint8_t ttl;
+    bool prevFix;
+  private:
+    AODV_ext *extension;
+    int extensionsize;
+    /* NS_PORT: Additions for the AODVUU packet type in ns-2 */
+
+  public:
     //explicit AODV_msg(const char *name="AodvMgs") : cPacket(name) {extensionsize=0;extension=NULL;}
     explicit AODV_msg(const char *name=NULL) : cPacket(name) {extensionsize=0; extension=NULL;}
     ~AODV_msg ();
-    uint8_t ttl;
-    bool prevFix;
     AODV_msg (const AODV_msg  &m);
     AODV_msg &  operator= (const AODV_msg &m);
     virtual AODV_msg *dup() const {return new AODV_msg(*this);}
+    uint8_t getType() const {return type;}
+    uint8_t getTtl() const {return ttl;}
+    bool getPrevFix() const {return prevFix;}
     AODV_ext *  addExtension(int,int,char *);
     void clearExtension();
     AODV_ext * getExtension(int i) {return &extension[i];}
+    AODV_ext& getExtensionRef(int i) {return extension[i];}
     AODV_ext * getFirstExtension () {return extension;}
     AODV_ext * getNexExtension(AODV_ext*);
     int getNumExtension() {return extensionsize;}
   private:
     void copy(const AODV_msg& other);
-  private:
-    AODV_ext *extension;
-    int extensionsize;
-    /* NS_PORT: Additions for the AODVUU packet type in ns-2 */
 };
 typedef AODV_msg hdr_aodvuu;    // Name convention for headers
 
@@ -57,7 +64,7 @@ typedef AODV_msg hdr_aodvuu;    // Name convention for headers
 typedef struct
 {
     // u_int32_t dest_addr;
-    Uint128 dest_addr;
+    ManetAddress dest_addr;
     u_int32_t dest_seqno;
 } RERR_udest;
 //#define RERR_UDEST_SIZE sizeof(RERR_udest)
@@ -85,9 +92,14 @@ struct RERR : public AODV_msg
     }
     ~RERR ();
     RERR (const RERR &m);
-    void addUdest(const Uint128 &,unsigned int);
+    unsigned short getRes1() const {return res1;}
+    unsigned short getN() const {return n;}
+    unsigned short getRes2() const {return res2;}
+    int getUdestArraySize() {return dest_count;}
+    void addUdest(const ManetAddress &,unsigned int);
     void clearUdest();
-    RERR_udest * getUdest(int);
+    RERR_udest *getUdest(int);
+    RERR_udest& getUdestRef(int i) {return *getUdest(i);}
     RERR &  operator= (const RERR &m);
     virtual RERR *dup() const {return new RERR(*this);}
   private:
@@ -108,10 +120,10 @@ struct RREP : public AODV_msg
     u_int16_t res2;
     u_int8_t hcnt;
 //  u_int32_t dest_addr;
-    Uint128 dest_addr;
+    ManetAddress dest_addr;
     u_int32_t dest_seqno;
 //  u_int32_t orig_addr;
-    Uint128 orig_addr;
+    ManetAddress orig_addr;
     u_int32_t lifetime;
     uint32_t cost;
     uint8_t  hopfix;
@@ -125,9 +137,9 @@ struct RREP : public AODV_msg
         prefix = 0;
         res2 = 0;
         hcnt = 0;
-        dest_addr = 0;
+        dest_addr = ManetAddress::ZERO;
         dest_seqno = 0;
-        orig_addr = 0;
+        orig_addr = ManetAddress::ZERO;
         lifetime = 0;
         cost = 0;
         hopfix = 0;
@@ -137,6 +149,20 @@ struct RREP : public AODV_msg
     RREP &  operator= (const RREP &m);
     virtual RREP *dup() const {return new RREP(*this);}
     virtual std::string detailedInfo() const;
+    uint16_t getRes1() const {return res1;}
+    uint16_t getA() const {return a;}
+    uint16_t getR() const {return r;}
+    uint16_t getPrefix() const {return prefix;}
+    uint16_t getRes2() const {return res2;}
+    uint8_t getHcnt() const {return hcnt;}
+    //uint32_t getDest_addr() const {return dest_addr;}
+    const ManetAddress& getDest_addr() const {return dest_addr;}
+    uint32_t getDest_seqno() const {return dest_seqno;}
+    //u_int32_t getOrig_addr() const {return orig_addr;}
+    const ManetAddress& getOrig_addr() const {return orig_addr;}
+    uint32_t getLifetime() const {return lifetime;}
+    uint32_t getCost() const {return cost;}
+    uint8_t  getHopfix() const {return hopfix;}
   private:
     void copy(const RREP& other);
 } ;
@@ -145,10 +171,12 @@ struct RREP : public AODV_msg
 struct RREP_ack : public AODV_msg
 {
     u_int8_t reserved;
-    explicit RREP_ack (const char *name="RREPAckAodvMsg") : AODV_msg (name) {setBitLength(2*8); reserved = 0;}
+  public:
+    explicit RREP_ack (const char *name="RREPAckAodvMsg") : AODV_msg (name) {setBitLength(2*8);}
     RREP_ack (const RREP_ack  &m);
     RREP_ack &  operator= (const RREP_ack &m);
     virtual RREP_ack *dup() const {return new RREP_ack(*this);}
+    uint8_t getReserved() const {return reserved;}
   private:
     void copy(const RREP_ack& other) { reserved = other.reserved; }
 } ;
@@ -165,26 +193,26 @@ struct RREQ : public AODV_msg
     u_int8_t hcnt;
     u_int32_t rreq_id;
 //  u_int32_t dest_addr;
-    Uint128 dest_addr;
+    ManetAddress dest_addr;
     u_int32_t dest_seqno;
 //  u_int32_t orig_addr;
-    Uint128 orig_addr;
+    ManetAddress orig_addr;
     u_int32_t orig_seqno;
     uint32_t   cost;
     uint8_t  hopfix;
     explicit RREQ(const char *name="RREQAodvMsg") : AODV_msg (name)
     {
         j = 0;
-        r = 0;;     /* Repair flag */
-        g = 0;;     /* Gratuitous RREP flag */
-        d = 0;;     /* Destination only respond */
+        r = 0;     /* Repair flag */
+        g = 0;     /* Gratuitous RREP flag */
+        d = 0;     /* Destination only respond */
         res1 = 0;
         res2 = 0;
         hcnt  = 0;
         rreq_id = 0;
-        dest_addr = 0;
+        dest_addr = ManetAddress::ZERO;
         dest_seqno = 0;
-        orig_addr = 0;
+        orig_addr = ManetAddress::ZERO;
         orig_seqno = 0;
         cost = 0;
         hopfix = 0;
@@ -195,6 +223,22 @@ struct RREQ : public AODV_msg
     RREQ &  operator= (const RREQ &m);
     virtual RREQ *dup() const {return new RREQ(*this);}
     virtual std::string detailedInfo() const;
+    uint8_t getJ() const {return j;}
+    uint8_t getR() const {return r;}
+    uint8_t getG() const {return g;}
+    uint8_t getD() const {return d;}
+    uint8_t getRes1() const {return res1;}
+    uint8_t getRes2() const {return res2;}
+    uint8_t getHcnt() const {return hcnt;}
+    uint32_t getRreq_id() const {return rreq_id;}
+    //uint32_t getDest_addr() const {return dest_addr;}
+    const ManetAddress& getDest_addr() const {return dest_addr;}
+    uint32_t getDest_seqno() const {return dest_seqno;}
+    //u_int32_t getOrig_addr() const {return orig_addr;}
+    const ManetAddress& getOrig_addr() const {return orig_addr;}
+    uint32_t getOrig_seqno() const {return orig_seqno;}
+    uint32_t getCost() const {return cost;}
+    uint8_t getHopfix() const {return hopfix;}
   private:
     void copy(const RREQ& other);
 };

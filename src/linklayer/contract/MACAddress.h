@@ -68,7 +68,7 @@ class INET_API MACAddress
     /**
      * Initializes the address from a 48-bit integer
      */
-    MACAddress(uint64 bits)
+    explicit MACAddress(uint64 bits)
     {
         if (bits & !MAC_ADDRESS_MASK)
             macAddress64 = true;

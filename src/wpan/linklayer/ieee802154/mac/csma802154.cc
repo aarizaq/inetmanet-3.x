@@ -270,7 +270,7 @@ void csma802154::handleUpperMsg(cMessage *msg)
             dest = macModule->getMacAddr();
         }
         else
-            dest=cInfo->getNetwAddr();
+            dest = MACAddress(cInfo->getNetwAddr());
 
     }
     delete controlInfo;

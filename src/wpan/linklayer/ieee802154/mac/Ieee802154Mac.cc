@@ -15,7 +15,7 @@ MAC_PIB Ieee802154Mac::MPIB =
     def_macBattLifeExtPeriods,  def_macBeaconPayload,
     def_macBeaconPayloadLength, def_macBeaconOrder,
     def_macBeaconTxTime,        0/*def_macBSN*/,
-    def_macCoordExtendedAddress,    def_macCoordShortAddress,
+    MACAddress(def_macCoordExtendedAddress),    def_macCoordShortAddress,
     0/*def_macDSN*/,        def_macGTSPermit,
     def_macMaxCSMABackoffs,     def_macMinBE,
     def_macPANId,           def_macPromiscuousMode,
@@ -556,11 +556,11 @@ void Ieee802154Mac::handleUpperMsg(cMessage* msg)
                 return;
             }
             else
-                destAddr = mpib.macCoordShortAddress;
+                destAddr = MACAddress(mpib.macCoordShortAddress);
         }
         else        // other transfer mode
         {
-            destAddr = mpib.macCoordShortAddress;
+            destAddr = MACAddress(mpib.macCoordShortAddress);
         }
     }
     else        //  pkt destined for device
@@ -616,7 +616,7 @@ void Ieee802154Mac::handleUpperMsg(cMessage* msg)
 
     // here always use short address:defFrmCtrl_AddrMode16
     cPacket * pkt = PK(msg);
-    MCPS_DATA_request(defFrmCtrl_AddrMode16,    mpib.macPANId,  mpib.macShortAddress,
+    MCPS_DATA_request(defFrmCtrl_AddrMode16,    mpib.macPANId,  MACAddress(mpib.macShortAddress),
                       defFrmCtrl_AddrMode16,      mpib.macPANId,  destAddr,
                       pkt,(Ieee802154TxOption)dataTransMode);
     delete control_info;
@@ -659,7 +659,7 @@ void Ieee802154Mac::handleLowerMsg(cMessage* msg)
         }
         else
         {
-            if (index_gtsTimer != 99 || !isRecvGTS || frame->getSrcAddr() != mpib.macCoordShortAddress)
+            if (index_gtsTimer != 99 || !isRecvGTS || frame->getSrcAddr().getInt() != mpib.macCoordShortAddress)
                 error("[GTS]: timing error, the device is not supposed to receive this DATA pkt at this time!");
         }
     }
@@ -1409,7 +1409,7 @@ bool Ieee802154Mac::frameFilter(Ieee802154Frame* frame)
         // it's called hidden, because its dstAddrMode is still set to 0
         if (frmType == Ieee802154_ACK)
         {
-            if (frmCtrl.dstAddrMode == defFrmCtrl_AddrMode16 && frame->getDstAddr() != getShortAddress(aExtendedAddress))
+            if (frmCtrl.dstAddrMode == defFrmCtrl_AddrMode16 && frame->getDstAddr().getInt() != getShortAddress(aExtendedAddress))
             // if dsr addr does not match
                 return true;
             else
@@ -2793,7 +2793,7 @@ void Ieee802154Mac::handleBcnTxTimer()
             else
             {
                 frmCtrl.srcAddrMode = defFrmCtrl_AddrMode16;
-                tmpBcn->setSrcAddr(mpib.macShortAddress);
+                tmpBcn->setSrcAddr(MACAddress(mpib.macShortAddress));
             }
 
             tmpBcn->setFrmCtrl(frmCtrl);
@@ -3626,7 +3626,7 @@ double Ieee802154Mac::getRate(char bitOrSymbol)
 
 bool Ieee802154Mac::toParent(Ieee802154Frame* frame)
 {
-    if (((frame->getFrmCtrl().dstAddrMode == defFrmCtrl_AddrMode16)&&(frame->getDstAddr() == mpib.macCoordShortAddress))
+    if (((frame->getFrmCtrl().dstAddrMode == defFrmCtrl_AddrMode16)&&(frame->getDstAddr().getInt() == mpib.macCoordShortAddress))
             ||  ((frame->getFrmCtrl().dstAddrMode == defFrmCtrl_AddrMode64)&&(frame->getDstAddr() == mpib.macCoordExtendedAddress)))
         return true;
     else

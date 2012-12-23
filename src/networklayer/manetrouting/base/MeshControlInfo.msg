@@ -19,12 +19,11 @@
 
 cplusplus {{
 #include "Ieee802Ctrl_m.h"
-#include "uint128.h"
 }}
 
 
 class noncobject Ieee802Ctrl;
-class noncobject Uint128;
+class noncobject ManetAddress;
 
 //
 // Control structure for communication between LLC and higher layers

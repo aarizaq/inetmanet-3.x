@@ -67,7 +67,7 @@ int DYMOUM::totalRrepAckRec = 0;
 int DYMOUM::totalRerrSend = 0;
 int DYMOUM::totalRerrRec = 0;
 #endif
-std::map<Uint128,u_int32_t *> DYMOUM::mapSeqNum;
+std::map<ManetAddress,u_int32_t *> DYMOUM::mapSeqNum;
 
 void DYMOUM::initialize(int stage)
 {
@@ -128,9 +128,9 @@ void DYMOUM::initialize(int stage)
             dev_indices[getWlanInterfaceIndex(i)] = i;
             strcpy(DEV_NR(i).ifname, getInterfaceEntry(i)->getName());
             if (isInMacLayer())
-                DEV_NR(i).ipaddr.s_addr = getInterfaceEntry(i)->getMacAddress().getInt();
+                DEV_NR(i).ipaddr.s_addr = ManetAddress(getInterfaceEntry(i)->getMacAddress());
             else
-                DEV_NR(i).ipaddr.s_addr = getInterfaceEntry(i)->ipv4Data()->getIPAddress().getInt();
+                DEV_NR(i).ipaddr.s_addr = ManetAddress(getInterfaceEntry(i)->ipv4Data()->getIPAddress());
             if (isInMacLayer())
             {
                 mapSeqNum[DEV_NR(i).ipaddr.s_addr] = &this_host.seqnum;
@@ -141,7 +141,7 @@ void DYMOUM::initialize(int stage)
         {
             DEV_NR(getWlanInterfaceIndex(i)).enabled = 1;
             DEV_NR(getWlanInterfaceIndex(i)).sock = -1;
-            DEV_NR(getWlanInterfaceIndex(i)).bcast.s_addr = DYMO_BROADCAST;
+            DEV_NR(getWlanInterfaceIndex(i)).bcast.s_addr = ManetAddress(IPv4Address(DYMO_BROADCAST));
             numInterfacesActive++;
         }
 
@@ -366,7 +366,7 @@ void DYMOUM::handleMessage(cMessage *msg)
         {
             if (isInMacLayer())
             {
-                if (MACAddress(control->getDestAddress().getLo()).isBroadcast())
+                if (control->getDestAddress().getMAC().isBroadcast())
                 {
                     delete control;
                     return;
@@ -431,13 +431,13 @@ void DYMOUM::handleMessage(cMessage *msg)
             if (!isInMacLayer())
             {
                 IPv4ControlInfo *controlInfo = check_and_cast<IPv4ControlInfo*>(udpPacket->removeControlInfo());
-                src_addr.s_addr = controlInfo->getSrcAddr().getInt();
+                src_addr.s_addr = ManetAddress(controlInfo->getSrcAddr());
                 dymoMsg->setControlInfo(controlInfo);
             }
             else
             {
                 Ieee802Ctrl *controlInfo = check_and_cast<Ieee802Ctrl*>(dymoMsg->getControlInfo());
-                src_addr.s_addr = controlInfo->getSrc().getInt();
+                src_addr.s_addr = ManetAddress(controlInfo->getSrc());
                 EV << "rec packet from " << controlInfo->getSrc() <<endl;
             }
         }
@@ -647,8 +647,8 @@ void DYMOUM::recvDYMOUMPacket(cMessage * msg)
         IPv4ControlInfo *ctrl = check_and_cast<IPv4ControlInfo *>(msg->removeControlInfo());
         IPvXAddress srcAddr = ctrl->getSrcAddr();
         IPvXAddress destAddr = ctrl->getDestAddr();
-        src.s_addr = srcAddr.get4().getInt();
-        dst.s_addr = destAddr.get4().getInt();
+        src.s_addr = ManetAddress(srcAddr);
+        dst.s_addr = ManetAddress(destAddr);
         interfaceId = ctrl->getInterfaceId();
         getMacAddress(ctrl->removeOrigDatagram());
         delete ctrl;
@@ -660,14 +660,14 @@ void DYMOUM::recvDYMOUMPacket(cMessage * msg)
         if (dymoRe && dymoRe->a)
         {
             Ieee802Ctrl *ctrl = check_and_cast<Ieee802Ctrl *>(msg->getControlInfo());
-            src.s_addr = ctrl->getSrc().getInt();
-            dst.s_addr = ctrl->getDest().getInt();
+            src.s_addr = ManetAddress(ctrl->getSrc());
+            dst.s_addr = ManetAddress(ctrl->getDest());
         }
         else
         {
             Ieee802Ctrl *ctrl = check_and_cast<Ieee802Ctrl *>(msg->removeControlInfo());
-            src.s_addr = ctrl->getSrc().getInt();
-            dst.s_addr = ctrl->getDest().getInt();
+            src.s_addr = ManetAddress(ctrl->getSrc());
+            dst.s_addr = ManetAddress(ctrl->getDest());
             if (ctrl)
                 delete ctrl;
 
@@ -704,8 +704,8 @@ void DYMOUM::processPacket(IPv4Datagram * p, unsigned int ifindex )
     bool isLocal = false;
     IPAddressVector phops;
 
-    src_addr.s_addr = p->getSrcAddress().getInt();
-    dest_addr.s_addr = p->getDestAddress().getInt();
+    src_addr.s_addr = ManetAddress(p->getSrcAddress());
+    dest_addr.s_addr = ManetAddress(p->getDestAddress());
     isLocal = true;
     if (!p->getSrcAddress().isUnspecified())
     {
@@ -713,10 +713,10 @@ void DYMOUM::processPacket(IPv4Datagram * p, unsigned int ifindex )
 
     }
     InterfaceEntry *   ie = getInterfaceEntry(ifindex);
-    bool isMcast = ie->ipv4Data()->isMemberOfMulticastGroup(IPv4Address(dest_addr.s_addr.toUint()));
+    bool isMcast = ie->ipv4Data()->isMemberOfMulticastGroup(dest_addr.s_addr.getIPv4());
 
     /* If the packet is not interesting we just let it go through... */
-    if (dest_addr.s_addr == DYMO_BROADCAST || isMcast)
+    if (dest_addr.s_addr == ManetAddress(IPv4Address(DYMO_BROADCAST)) || isMcast)
     {
         if (p->getControlInfo())
             delete p->removeControlInfo();
@@ -765,7 +765,7 @@ void DYMOUM::processPacket(IPv4Datagram * p, unsigned int ifindex )
                         MacToIpAddress::iterator it = macToIpAdress->find(macAddressConv);
                         if (it!=macToIpAdress->end())
                         {
-                            addr.s_addr = (*it).second;
+                            addr.s_addr = ManetAddress(IPv4Address((*it).second));
                             rerr_send(dest_addr, 1, entry, addr);
                         }
                     }
@@ -797,7 +797,7 @@ void DYMOUM::processPacket(IPv4Datagram * p, unsigned int ifindex )
 }
 
 
-void DYMOUM::processMacPacket(cPacket * p, const Uint128 &dest, const Uint128 &src, int ifindex)
+void DYMOUM::processMacPacket(cPacket * p, const ManetAddress &dest, const ManetAddress &src, int ifindex)
 {
     struct in_addr dest_addr, src_addr;
     bool isLocal = false;
@@ -871,7 +871,7 @@ void DYMOUM::processMacPacket(cPacket * p, const Uint128 &dest, const Uint128 &s
         if (isInMacLayer())
         {
             Ieee802Ctrl *ctrl = new Ieee802Ctrl();
-            ctrl->setDest(MACAddress(entry->rt_nxthop_addr.s_addr.getLo()));
+            ctrl->setDest(entry->rt_nxthop_addr.s_addr.getMAC());
             //TODO ctrl->setEtherType(...);
             p->setControlInfo(ctrl);
         }
@@ -939,7 +939,7 @@ void DYMOUM::processPromiscuous(const cObject *details)
     IPv4Datagram * ip_msg = NULL;
     struct in_addr source;
 
-    source.s_addr = (Uint128)0;
+    source.s_addr = ManetAddress::ZERO;
 
     if (dynamic_cast<Ieee80211DataOrMgmtFrame *>(const_cast<cObject*> (details)))
     {
@@ -972,11 +972,11 @@ void DYMOUM::processPromiscuous(const cObject *details)
             MacToIpAddress::iterator it = macToIpAdress->find(macAddressConv);
 
             if (ip_msg)
-                source.s_addr = ip_msg->getSrcAddress().getInt();
+                source.s_addr = ManetAddress(ip_msg->getSrcAddress());
 
             if (it!=macToIpAdress->end())
             {
-                gatewayAddr.s_addr = (*it).second;
+                gatewayAddr.s_addr = ManetAddress(IPv4Address((*it).second));
             }
             else
             {
@@ -984,7 +984,7 @@ void DYMOUM::processPromiscuous(const cObject *details)
                 {
                     unsigned int ip_src = ip_msg->getSrcAddress().getInt();
                     macToIpAdress->insert(std::make_pair(macAddressConv, ip_src));
-                    gatewayAddr.s_addr = ip_msg->getSrcAddress().getInt();
+                    gatewayAddr.s_addr = ManetAddress(ip_msg->getSrcAddress());
                 }
                 else
                     return; // can procces the message, don't know the sender
@@ -992,7 +992,7 @@ void DYMOUM::processPromiscuous(const cObject *details)
         }
         else
         {
-            gatewayAddr.s_addr = frame->getTransmitterAddress().getInt();
+            gatewayAddr.s_addr = ManetAddress(frame->getTransmitterAddress());
         }
 
 
@@ -1022,7 +1022,7 @@ void DYMOUM::processPromiscuous(const cObject *details)
             //rtable_update_timeout(entry);
         }
 
-        if (gatewayAddr.s_addr!=source.s_addr && source.s_addr!=0)
+        if (gatewayAddr.s_addr!=source.s_addr && !source.s_addr.isUnspecified())
         {
             entry = rtable_find(source);
             if (entry && gatewayAddr.s_addr == entry->rt_nxthop_addr.s_addr)
@@ -1066,7 +1066,7 @@ void DYMOUM::processPromiscuous(const cObject *details)
                 if ((dymo_msg->type==DYMO_RE_TYPE) && (((RE *) dymo_msg)->a==0))
                 {
                     //  proccess RREP
-                    addr.s_addr = ip_msg->getSrcAddress().getInt();
+                    addr.s_addr = ManetAddress(ip_msg->getSrcAddress());
                     promiscuous_rrep((RE*)dymo_msg, addr);
                 } // end if promiscuous
                 //else if (dymo_msg->type==DYMO_RERR_TYPE)
@@ -1091,7 +1091,7 @@ void DYMOUM::processFullPromiscuous(const cObject *details)
             macAddressConv = twoAddressFrame->getTransmitterAddress();
             MacToIpAddress::iterator it = macToIpAdress->find(macAddressConv);
             if (it!=macToIpAdress->end())
-                addr.s_addr = (*it).second;
+                addr.s_addr = ManetAddress(IPv4Address((*it).second));
             else
             {
                 IPv4Datagram * ip_msg = dynamic_cast<IPv4Datagram *>(twoAddressFrame->getEncapsulatedPacket());
@@ -1107,7 +1107,7 @@ void DYMOUM::processFullPromiscuous(const cObject *details)
         }
         else
         {
-            addr.s_addr = twoAddressFrame->getTransmitterAddress().getInt();
+            addr.s_addr = ManetAddress(twoAddressFrame->getTransmitterAddress());
         }
 
         entry = rtable_find(addr);
@@ -1159,7 +1159,7 @@ void DYMOUM::processFullPromiscuous(const cObject *details)
                 if ((dymo_msg->type==DYMO_RE_TYPE) && (((RE *) dymo_msg)->a==0))
                 {
                     //  proccess RREP
-                    addr.s_addr = ip_msg->getSrcAddress().getInt();
+                    addr.s_addr = ManetAddress(ip_msg->getSrcAddress());
                     promiscuous_rrep((RE*)dymo_msg, addr);
                 } // end if promiscuous
                 //else if (dymo_msg->type==DYMO_RERR_TYPE)
@@ -1270,8 +1270,8 @@ void DYMOUM::packetFailed(IPv4Datagram *dgram)
     rtable_entry_t *rt;
     struct in_addr dest_addr, src_addr, next_hop;
 
-    src_addr.s_addr = dgram->getSrcAddress().getInt();
-    dest_addr.s_addr = dgram->getDestAddress().getInt();
+    src_addr.s_addr = ManetAddress(dgram->getSrcAddress());
+    dest_addr.s_addr = ManetAddress(dgram->getDestAddress());
 
     /* We don't care about link failures for broadcast or non-data packets */
     if (dgram->getDestAddress().getInt() == IP_BROADCAST ||
@@ -1322,7 +1322,7 @@ void DYMOUM::packetFailed(IPv4Datagram *dgram)
     else
     {
         struct in_addr nm;
-        nm.s_addr = IPv4Address::ALLONES_ADDRESS.getInt();
+        nm.s_addr = ManetAddress(IPv4Address::ALLONES_ADDRESS);
         omnet_chg_rte(dest_addr,dest_addr, nm,0,true);
     }
     scheduleNextEvent();
@@ -1338,14 +1338,14 @@ void DYMOUM::packetFailedMac(Ieee80211DataFrame *dgram)
         return;
     }
 
-    src_addr.s_addr = dgram->getAddress3().getInt();
-    dest_addr.s_addr = dgram->getAddress4().getInt();
-    next_hop.s_addr = dgram->getReceiverAddress().getInt();
+    src_addr.s_addr = ManetAddress(dgram->getAddress3());
+    dest_addr.s_addr = ManetAddress(dgram->getAddress4());
+    next_hop.s_addr = ManetAddress(dgram->getReceiverAddress());
     int count = 0;
 
     if (isStaticNode() && getCollaborativeProtocol())
     {
-        Uint128 next;
+        ManetAddress next;
         int iface;
         double cost;
         if (getCollaborativeProtocol()->getNextHop(next_hop.s_addr, next, iface, cost))
@@ -1430,16 +1430,16 @@ std::string DYMOUM::detailedInfo() const
 }
 
 
-uint32_t DYMOUM::getRoute(const Uint128 &dest, std::vector<Uint128> &add)
+uint32_t DYMOUM::getRoute(const ManetAddress &dest, std::vector<ManetAddress> &add)
 {
     return 0;
 }
 
 
-bool  DYMOUM::getNextHop(const Uint128 &dest, Uint128 &add, int &iface, double &cost)
+bool  DYMOUM::getNextHop(const ManetAddress &dest, ManetAddress &add, int &iface, double &cost)
 {
-    Uint128 destAddr = dest;
-    Uint128 apAddr;
+    ManetAddress destAddr = dest;
+    ManetAddress apAddr;
     if (getAp(dest,apAddr))
     {
         destAddr = apAddr;
@@ -1478,7 +1478,7 @@ bool DYMOUM::isProactive()
     return false;
 }
 
-void DYMOUM::setRefreshRoute(const Uint128 &destination, const Uint128 & nextHop,bool isReverse)
+void DYMOUM::setRefreshRoute(const ManetAddress &destination, const ManetAddress & nextHop,bool isReverse)
 {
     struct in_addr dest_addr, next_hop;
 
@@ -1487,11 +1487,11 @@ void DYMOUM::setRefreshRoute(const Uint128 &destination, const Uint128 & nextHop
 
     rtable_entry_t *route = NULL;
     rtable_entry_t *fwd_pre_rt = NULL;
-    Uint128 dest = destination;
-    Uint128 next = nextHop;
+    ManetAddress dest = destination;
+    ManetAddress next = nextHop;
 
     bool change = false;
-    Uint128 apAddr;
+    ManetAddress apAddr;
     if (getAp(destination,apAddr))
     {
         dest = apAddr;
@@ -1569,7 +1569,7 @@ void DYMOUM::setRefreshRoute(const Uint128 &destination, const Uint128 & nextHop
     }
     return;
     /*
-    if (isReverse && !route && nextHop!=(Uint128)0)
+    if (isReverse && !route && nextHop!=(ManetAddress)0)
     {
     // Gratuitous Return Path
 
@@ -1598,7 +1598,7 @@ bool DYMOUM::isOurType(cPacket * msg)
     return false;
 }
 
-bool DYMOUM::getDestAddress(cPacket *msg, Uint128 &dest)
+bool DYMOUM::getDestAddress(cPacket *msg, ManetAddress &dest)
 {
     RE *re = dynamic_cast <RE *>(msg);
     if (!re)
@@ -1613,17 +1613,17 @@ bool DYMOUM::getDestAddress(cPacket *msg, Uint128 &dest)
 }
 
 // Group methods, allow the anycast procedure
-int DYMOUM::getRouteGroup(const AddressGroup &gr, std::vector<Uint128> &addr)
+int DYMOUM::getRouteGroup(const AddressGroup &gr, std::vector<ManetAddress> &addr)
 {
     return 0;
 }
 
-int  DYMOUM::getRouteGroup(const Uint128& dest, std::vector<Uint128> &add, Uint128& gateway, bool &isGroup, int group)
+int  DYMOUM::getRouteGroup(const ManetAddress& dest, std::vector<ManetAddress> &add, ManetAddress& gateway, bool &isGroup, int group)
 {
     return 0;
 }
 
-bool DYMOUM::getNextHopGroup(const AddressGroup &gr, Uint128 &add, int &iface, Uint128& gw)
+bool DYMOUM::getNextHopGroup(const AddressGroup &gr, ManetAddress &add, int &iface, ManetAddress& gw)
 {
     int distance = 1000;
     for (AddressGroupConstIterator it = gr.begin(); it!=gr.end(); it++)
@@ -1648,7 +1648,7 @@ bool DYMOUM::getNextHopGroup(const AddressGroup &gr, Uint128 &add, int &iface, U
     return true;
 }
 
-bool DYMOUM::getNextHopGroup(const Uint128& dest, Uint128 &next, int &iface, Uint128& gw, bool &isGroup, int group)
+bool DYMOUM::getNextHopGroup(const ManetAddress& dest, ManetAddress &next, int &iface, ManetAddress& gw, bool &isGroup, int group)
 {
     AddressGroup gr;
     bool find = false;
@@ -1707,9 +1707,9 @@ void DYMOUM::rreq_proactive(void *arg)
     if (!isRoot)
          return;
     if (this->isInMacLayer())
-         dest.s_addr = MACAddress::BROADCAST_ADDRESS.getInt();
+         dest.s_addr = ManetAddress(MACAddress::BROADCAST_ADDRESS);
     else
-         dest.s_addr = IPv4Address::ALLONES_ADDRESS.getInt();
+         dest.s_addr = ManetAddress(IPv4Address::ALLONES_ADDRESS);
     re_send_rreq(dest, 0, NET_DIAMETER);
     timer_set_timeout(&proactive_rreq_timer, proactive_rreq_timeout);
     timer_add(&proactive_rreq_timer);
@@ -1773,15 +1773,15 @@ void DYMOUM::processLocatorAssoc(const cObject *details)
 {
 #ifdef WITH_80211MESH
     LocatorNotificationInfo *infoLoc = check_and_cast<LocatorNotificationInfo*>(details);
-    Uint128 destAddr = infoLoc->getMacAddr().getInt();
-    Uint128 apAddr;
+    ManetAddress destAddr;
+    ManetAddress apAddr;
     if (isInMacLayer())
-        destAddr = infoLoc->getMacAddr().getInt();
+        destAddr = ManetAddress(infoLoc->getMacAddr());
     else
     {
         if (infoLoc->getIpAddr().isUnspecified())
             return;
-        destAddr = infoLoc->getIpAddr().getInt();
+        destAddr = ManetAddress(infoLoc->getIpAddr());
     }
 
     if (getAp(destAddr, apAddr))
@@ -1817,14 +1817,14 @@ void DYMOUM::processLocatorDisAssoc(const cObject *details)
 {
 #ifdef WITH_80211MESH
     LocatorNotificationInfo *infoLoc = check_and_cast<LocatorNotificationInfo*>(details);
-    Uint128 destAddr = infoLoc->getMacAddr().getInt();
+    ManetAddress destAddr;
     if (isInMacLayer())
-        destAddr = infoLoc->getMacAddr().getInt();
+         destAddr = ManetAddress(infoLoc->getMacAddr());
     else
     {
         if (infoLoc->getIpAddr().isUnspecified())
             return;
-        destAddr = infoLoc->getIpAddr().getInt();
+        destAddr = ManetAddress(infoLoc->getIpAddr());
     }
     struct in_addr dest_addrAux;
     dest_addrAux.s_addr = destAddr;

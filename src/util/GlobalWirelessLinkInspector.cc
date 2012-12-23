@@ -104,7 +104,7 @@ void GlobalWirelessLinkInspector::handleMessage(cMessage *msg)
     opp_error ("GlobalWirelessWirelessLinkInspector has received a packet");
 }
 
-void GlobalWirelessLinkInspector::setLinkCost(const Uint128& org,const Uint128& dest,const Link &link)
+void GlobalWirelessLinkInspector::setLinkCost(const ManetAddress& org,const ManetAddress& dest,const Link &link)
 {
     if (!costMap)
         return;
@@ -131,7 +131,7 @@ void GlobalWirelessLinkInspector::setLinkCost(const Uint128& org,const Uint128& 
     }
 }
 
-bool GlobalWirelessLinkInspector::getLinkCost(const Uint128& org,const Uint128& dest,Link &link)
+bool GlobalWirelessLinkInspector::getLinkCost(const ManetAddress& org,const ManetAddress& dest,Link &link)
 {
 
     if (!costMap)
@@ -150,7 +150,7 @@ bool GlobalWirelessLinkInspector::getLinkCost(const Uint128& org,const Uint128& 
     return false;
 }
 
-bool GlobalWirelessLinkInspector::getLinkCost(const std::vector<Uint128>& path, Link &link)
+bool GlobalWirelessLinkInspector::getLinkCost(const std::vector<ManetAddress>& path, Link &link)
 {
 
     if (!costMap)
@@ -172,7 +172,7 @@ bool GlobalWirelessLinkInspector::getLinkCost(const std::vector<Uint128>& path, 
 }
 
 
-bool GlobalWirelessLinkInspector::setRoute(const cModule* mod,const Uint128 &orgA, const Uint128 &dest, const Uint128 &gw, const bool &erase)
+bool GlobalWirelessLinkInspector::setRoute(const cModule* mod,const ManetAddress &orgA, const ManetAddress &dest, const ManetAddress &gw, const bool &erase)
 {
     if (globalRouteMap == NULL)
         return false;
@@ -206,7 +206,7 @@ bool GlobalWirelessLinkInspector::setRoute(const cModule* mod,const Uint128 &org
     return true;
 }
 
-void GlobalWirelessLinkInspector::initRoutingTables (const cModule* mod,const Uint128 &orgA, bool isProact)
+void GlobalWirelessLinkInspector::initRoutingTables (const cModule* mod,const ManetAddress &orgA, bool isProact)
 {
     if (globalRouteMap == NULL)
         return;
@@ -219,7 +219,7 @@ void GlobalWirelessLinkInspector::initRoutingTables (const cModule* mod,const Ui
         data.routesVector = new RouteMap;
         data.mod = const_cast<cModule*> (mod);
         vect.push_back(data);
-        globalRouteMap->insert(std::make_pair<Uint128,ProtocolsRoutes>(orgA,vect));
+        globalRouteMap->insert(std::make_pair<ManetAddress,ProtocolsRoutes>(orgA,vect));
     }
     else
     {
@@ -231,11 +231,11 @@ void GlobalWirelessLinkInspector::initRoutingTables (const cModule* mod,const Ui
     }
 }
 
-bool GlobalWirelessLinkInspector::getRoute(const Uint128 &src, const Uint128 &dest, std::vector<Uint128> &route)
+bool GlobalWirelessLinkInspector::getRoute(const ManetAddress &src, const ManetAddress &dest, std::vector<ManetAddress> &route)
 {
     if (globalRouteMap == NULL)
         return false;
-    Uint128 next = src;
+    ManetAddress next = src;
     route.clear();
     route.push_back(src);
     if (src == dest)
@@ -303,14 +303,14 @@ bool GlobalWirelessLinkInspector::getRoute(const Uint128 &src, const Uint128 &de
 }
 
 
-bool GlobalWirelessLinkInspector::getRouteWithLocator(const Uint128 &src, const Uint128 &dest, std::vector<Uint128> &route)
+bool GlobalWirelessLinkInspector::getRouteWithLocator(const ManetAddress &src, const ManetAddress &dest, std::vector<ManetAddress> &route)
 {
     if (globalRouteMap == NULL)
         return false;
     // search in the locator tables
     //
-    Uint128 origin;
-    Uint128 destination;
+    ManetAddress origin;
+    ManetAddress destination;
     if (!getLocatorInfo(src, origin))
     {
         origin = src;
@@ -324,11 +324,11 @@ bool GlobalWirelessLinkInspector::getRouteWithLocator(const Uint128 &src, const 
 
 
 
-void GlobalWirelessLinkInspector::setLocatorInfo(Uint128 node, Uint128 ap)
+void GlobalWirelessLinkInspector::setLocatorInfo(ManetAddress node, ManetAddress ap)
 {
     if (globalLocatorMap == NULL)
         return;
-    if (ap.getLo() != 0)
+    if (!ap.isUnspecified())
         (*globalLocatorMap)[node] = ap;
     else
     {
@@ -338,7 +338,7 @@ void GlobalWirelessLinkInspector::setLocatorInfo(Uint128 node, Uint128 ap)
     }
 }
 
-bool GlobalWirelessLinkInspector::getLocatorInfo(Uint128 node, Uint128 &ap)
+bool GlobalWirelessLinkInspector::getLocatorInfo(ManetAddress node, ManetAddress &ap)
 {
     if (globalLocatorMap == NULL)
         return false;
@@ -350,7 +350,7 @@ bool GlobalWirelessLinkInspector::getLocatorInfo(Uint128 node, Uint128 &ap)
 }
 
 
-bool GlobalWirelessLinkInspector::getNumNodes(Uint128 node, int &cont)
+bool GlobalWirelessLinkInspector::getNumNodes(ManetAddress node, int &cont)
 {
     cont = 0;
     if (globalLocatorMap == NULL)
@@ -358,7 +358,7 @@ bool GlobalWirelessLinkInspector::getNumNodes(Uint128 node, int &cont)
     LocatorIteartor it =  globalLocatorMap->find(node);
     if (it == globalLocatorMap->end())
         return false;
-    Uint128 ap = it->second;
+    ManetAddress ap = it->second;
     for (it = globalLocatorMap->begin();it != globalLocatorMap->end();it++)
     {
         if (it->second == ap && it->first != node)
@@ -367,7 +367,7 @@ bool GlobalWirelessLinkInspector::getNumNodes(Uint128 node, int &cont)
     return true;
 }
 
-bool GlobalWirelessLinkInspector::areNeighbour(const Uint128 &node1, const Uint128 &node2,bool &areNei)
+bool GlobalWirelessLinkInspector::areNeighbour(const ManetAddress &node1, const ManetAddress &node2,bool &areNei)
 {
     if (globalLocatorMap == NULL)
         return false;
@@ -377,8 +377,8 @@ bool GlobalWirelessLinkInspector::areNeighbour(const Uint128 &node1, const Uint1
     LocatorIteartor it2 =  globalLocatorMap->find(node2);
     if (it2 == globalLocatorMap->end())
         return false;
-    Uint128 ap1 = it1->second;
-    Uint128 ap2 = it2->second;
+    ManetAddress ap1 = it1->second;
+    ManetAddress ap2 = it2->second;
     if (ap1 == ap2)
         areNei = true;
     else
@@ -387,7 +387,7 @@ bool GlobalWirelessLinkInspector::areNeighbour(const Uint128 &node1, const Uint1
 }
 
 
-bool GlobalWirelessLinkInspector::setQueueSize(const Uint128 &node, const uint64_t &val)
+bool GlobalWirelessLinkInspector::setQueueSize(const ManetAddress &node, const uint64_t &val)
 {
     if (queueSize == NULL)
         return false;
@@ -395,7 +395,7 @@ bool GlobalWirelessLinkInspector::setQueueSize(const Uint128 &node, const uint64
     return true;
 }
 
-bool GlobalWirelessLinkInspector::getQueueSize(const Uint128 &node, uint64_t & val)
+bool GlobalWirelessLinkInspector::getQueueSize(const ManetAddress &node, uint64_t & val)
 {
     if (queueSize == NULL)
         return false;

@@ -25,8 +25,6 @@
 
 #include "INETDefs.h"
 
-#include "uint128.h"
-
 class InterfaceToken;
 
 /**
@@ -108,11 +106,6 @@ class INET_API IPv6Address
         }
 
         /**
-         * Constructor. Sets the address from the given 128-bit integer.
-         */
-        IPv6Address(const Uint128 &addr) {set(addr);}
-
-        /**
          * Constructor. Sets the address from the given text representation.
          * See documentation of tryParse() for supported syntax.
          */
@@ -178,23 +171,6 @@ class INET_API IPv6Address
         }
 
         /**
-         * Sets the address from the given Uint128.
-         */
-        void set(const Uint128 &addr) {
-            uint64_t lo = addr.getLo();
-            uint64_t hi = addr.getHi();
-            d[0] = (hi>>32) & 0xffffffff;
-            d[1] = hi & 0xffffffff;
-            d[2] = (lo>>32) & 0xffffffff;
-            d[3] = lo & 0xffffffff;
-        }
-
-        /**
-         * Converts to Uint128.
-         */
-        operator Uint128()  {return (Uint128(d[0])<<96u) + (Uint128(d[1])<<64u) + (Uint128(d[2])<<32u) + Uint128(d[3]);}
-
-        /**
          * Returns a pointer to the internal binary representation of the address:
          * four 32-bit words, most significant word first.
          */
@@ -221,6 +197,7 @@ class INET_API IPv6Address
          * to an array of four 32-bit words, most significant word first.
          */
         static void constructMask(int prefixLength, uint32* mask);
+        static IPv6Address constructMask(int prefixLength);
 
         /**
          * Get the IPv6 first prefixLength bits of the address, with

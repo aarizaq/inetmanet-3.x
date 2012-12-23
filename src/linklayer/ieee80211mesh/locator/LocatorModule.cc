@@ -564,7 +564,7 @@ void LocatorModule::setTables(const MACAddress & APaddr, const MACAddress &staAd
             locatorMapIp[staIpAddr] = locEntry;
             globalLocatorMapIp[staIpAddr] = locEntry;
         }
-        GlobalWirelessLinkInspector::setLocatorInfo(staAddr.getInt(), APaddr.getInt());
+        GlobalWirelessLinkInspector::setLocatorInfo(ManetAddress(staAddr), ManetAddress(APaddr));
         if (!staIpAddr.isUnspecified())
         {
             if (rt)
@@ -621,7 +621,7 @@ void LocatorModule::setTables(const MACAddress & APaddr, const MACAddress &staAd
             }
 
         }
-        GlobalWirelessLinkInspector::setLocatorInfo(staAddr.getInt(), 0);
+        GlobalWirelessLinkInspector::setLocatorInfo(ManetAddress(staAddr), ManetAddress::ZERO);
         if (!staIpAddr.isUnspecified())
         {
             itIp = globalLocatorMapIp.find(staIpAddr);

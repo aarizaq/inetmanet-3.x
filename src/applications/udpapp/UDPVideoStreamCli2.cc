@@ -24,6 +24,7 @@
 
 #include "UDPControlInfo_m.h"
 #include "IPvXAddressResolver.h"
+#include "VideoPacket_m.h"
 
 
 Define_Module(UDPVideoStreamCli2);
@@ -35,6 +36,12 @@ UDPVideoStreamCli2::UDPVideoStreamCli2()
     reintentTimer = NULL;
     timeOutMsg = NULL;
     socketOpened = false;
+    numPframes = 0;
+    numIframes = 0;
+    numBframes = 0;
+    totalBytesI = 0;
+    totalBytesP = 0;
+    totalBytesB = 0;
 }
 
 UDPVideoStreamCli2::~UDPVideoStreamCli2()
@@ -63,6 +70,15 @@ void UDPVideoStreamCli2::initialize()
 void UDPVideoStreamCli2::finish()
 {
     recordScalar("Total received", numRecPackets);
+    if (numPframes != 0 || numIframes != 0 ||  numBframes != 0)
+    {
+        recordScalar("Total I frames received", numIframes);
+        recordScalar("Total P frames received", numPframes);
+        recordScalar("Total B frames received", numBframes);
+        recordScalar("Total I bytes received", totalBytesI);
+        recordScalar("Total P bytes received", totalBytesP);
+        recordScalar("Total B bytes received", totalBytesB);
+    }
 }
 
 void UDPVideoStreamCli2::handleMessage(cMessage* msg)
@@ -119,6 +135,7 @@ void UDPVideoStreamCli2::requestStream()
         socketOpened = true;
     }
 
+    lastSeqNum = -1;
     cPacket *pk = new cPacket("VideoStrmReq");
     socket.sendTo(pk, svrAddr, svrPort);
     double reint = par("reintent").longValue();
@@ -135,12 +152,44 @@ void UDPVideoStreamCli2::receiveStream(cPacket *pk)
     if (timeOut > 0)
         scheduleAt(simTime()+timeOut,timeOutMsg);
 
-    if (simTime() - pk->getCreationTime() < limitDelay)
+    if (simTime() - pk->getCreationTime() > limitDelay)
     {
-        numRecPackets++;
-        EV << "Video stream packet: " << UDPSocket::getReceivedPacketInfo(pk) << endl;
-        emit(rcvdPkSignal, pk);
+        delete pk;
+        return;
     }
+
+    VideoPacket *vpkt = dynamic_cast<VideoPacket*> (pk->getEncapsulatedPacket());
+    if (vpkt)
+    {
+        if (vpkt->getSeqNum() > lastSeqNum)
+            lastSeqNum = vpkt->getSeqNum();
+        else
+        {
+            delete pk;
+            return;
+        }
+
+        switch(vpkt->getType())
+        {
+            case 'P':
+                numPframes++;
+                totalBytesP += vpkt->getByteLength();
+                break;
+            case 'B':
+                numBframes++;
+                totalBytesB += vpkt->getByteLength();
+                break;
+            case 'I':
+                numIframes++;
+                totalBytesI += vpkt->getByteLength();
+                break;
+        }
+    }
+
+    numRecPackets++;
+    EV << "Video stream packet: " << UDPSocket::getReceivedPacketInfo(pk) << endl;
+    emit(rcvdPkSignal, pk);
+
     delete pk;
 }
 

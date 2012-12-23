@@ -671,8 +671,8 @@ void Ieee80211Etx::handleEtxMessage(MACETXPacket *msg)
     {
         // compute and actualize the costs
         GlobalWirelessLinkInspector::Link link;
-        Uint128 org = this->myAddress.getInt();
-        Uint128 dest = msg->getSource().getInt();
+        ManetAddress org = ManetAddress(this->myAddress);
+        ManetAddress dest = ManetAddress(msg->getSource());
 
         double etx;
         double ett;
@@ -759,8 +759,8 @@ void Ieee80211Etx::handleBwMessage(MACBwPacket *msg)
         {
             // compute and actualize the costs
             GlobalWirelessLinkInspector::Link link;
-            Uint128 org = this->myAddress.getInt();
-            Uint128 dest = msg->getSource().getInt();
+            ManetAddress org = ManetAddress(this->myAddress);
+            ManetAddress dest = ManetAddress(msg->getSource());
             double ett;
             getEtt(msg->getSource(),ett);
 

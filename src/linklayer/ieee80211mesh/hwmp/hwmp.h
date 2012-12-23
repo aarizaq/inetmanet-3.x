@@ -125,14 +125,14 @@ class HwmpProtocol : public ManetRoutingBase
         ;
         virtual bool supportGetRoute() {return false;}
         virtual bool isOurType(cPacket *);
-        virtual bool getDestAddress(cPacket *, Uint128 &);
-        virtual uint32_t getRoute(const Uint128 &, std::vector<Uint128> &);
-        virtual bool getNextHop(const Uint128 &dest, Uint128 &add, int &iface, double &cost);
-        virtual bool getNextHopProactive(const Uint128 &dest, Uint128 &add, int &iface, double &cost);
-        virtual bool getNextHopReactive(const Uint128 &dest, Uint128 &add, int &iface, double &cost);
-        virtual void setRefreshRoute(const Uint128 &destination, const Uint128 & nextHop, bool isReverse);
+        virtual bool getDestAddress(cPacket *, ManetAddress &);
+        virtual uint32_t getRoute(const ManetAddress &, std::vector<ManetAddress> &);
+        virtual bool getNextHop(const ManetAddress &dest, ManetAddress &add, int &iface, double &cost);
+        virtual bool getNextHopProactive(const ManetAddress &dest, ManetAddress &add, int &iface, double &cost);
+        virtual bool getNextHopReactive(const ManetAddress &dest, ManetAddress &add, int &iface, double &cost);
+        virtual void setRefreshRoute(const ManetAddress &destination, const ManetAddress & nextHop, bool isReverse);
 
-        virtual bool getBestGan(Uint128 &, Uint128 &);
+        virtual bool getBestGan(ManetAddress &, ManetAddress &);
     private:
         simtime_t timeLimitQueue;
         friend class PreqTimeout;

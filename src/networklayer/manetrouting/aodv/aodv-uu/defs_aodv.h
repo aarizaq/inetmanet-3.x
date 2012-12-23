@@ -82,7 +82,12 @@
 #define AODV_RT_LOG_PATH "/var/log/aodvd.rtlog"
 #endif              /* NS_PORT */
 
+#ifdef OMNETPP
+using std::max;
+#define maxMacro(A,B) ( (A) > (B) ? (A):(B))
+#else
 #define max(A,B) ( (A) > (B) ? (A):(B))
+#endif   /* OMNETPP */
 
 #define MINTTL 1        /* min TTL in the packets sent locally */
 

@@ -21,7 +21,7 @@
 #include <map>
 #include <omnetpp.h>
 #include "INETDefs.h"
-#include "uint128.h"
+#include "ManetAddress.h"
 
 
 
@@ -36,7 +36,7 @@ class GlobalWirelessLinkInspector : public cSimpleModule
                double snr;
         };
      protected:
-        typedef std::map<Uint128,Uint128> RouteMap;
+        typedef std::map<ManetAddress,ManetAddress> RouteMap;
         class ProtocolRoutingData
         {
             public:
@@ -45,20 +45,20 @@ class GlobalWirelessLinkInspector : public cSimpleModule
                 bool isProactive;
         };
         typedef std::vector<ProtocolRoutingData> ProtocolsRoutes;
-        typedef std::map<Uint128, ProtocolsRoutes>GlobalRouteMap;
+        typedef std::map<ManetAddress, ProtocolsRoutes>GlobalRouteMap;
         static GlobalRouteMap *globalRouteMap;
 
-        typedef std::map<Uint128,Link> NodeLinkCost;
-        typedef std::map<Uint128,NodeLinkCost*> CostMap;
+        typedef std::map<ManetAddress,Link> NodeLinkCost;
+        typedef std::map<ManetAddress,NodeLinkCost*> CostMap;
         static CostMap * costMap;
 
-        typedef std::map<Uint128,Uint128> LocatorMap;
+        typedef std::map<ManetAddress,ManetAddress> LocatorMap;
         typedef LocatorMap::iterator  LocatorIteartor;
 
 
         static LocatorMap *globalLocatorMap;
 
-        typedef std::map<Uint128,uint64_t> QueueSize;
+        typedef std::map<ManetAddress,uint64_t> QueueSize;
         static QueueSize *queueSize;
 
      public:
@@ -67,23 +67,23 @@ class GlobalWirelessLinkInspector : public cSimpleModule
 
         static bool isActive() {return (costMap!=NULL);}
         static bool isActiveLocator() {return (globalLocatorMap!=NULL && !globalLocatorMap->empty());}
-        static void setLinkCost(const Uint128& org,const Uint128& dest,const Link &);
-        static bool getLinkCost(const Uint128& org,const Uint128& dest,Link &);
-        static bool getLinkCost(const std::vector<Uint128>&, Link &);
+        static void setLinkCost(const ManetAddress& org,const ManetAddress& dest,const Link &);
+        static bool getLinkCost(const ManetAddress& org,const ManetAddress& dest,Link &);
+        static bool getLinkCost(const std::vector<ManetAddress>&, Link &);
         static bool initRoutingProtocol (cModule *,bool);
-        static bool getRoute(const Uint128 &src, const Uint128 &dest, std::vector<Uint128> &route);
-        static bool getRouteWithLocator(const Uint128 &src, const Uint128 &dest, std::vector<Uint128> &route);
-        static bool setRoute(const cModule *,const Uint128 &, const Uint128 &dest, const Uint128 &gw, const bool &erase);
-        static void initRoutingTables (const cModule *,const Uint128 &,bool);
+        static bool getRoute(const ManetAddress &src, const ManetAddress &dest, std::vector<ManetAddress> &route);
+        static bool getRouteWithLocator(const ManetAddress &src, const ManetAddress &dest, std::vector<ManetAddress> &route);
+        static bool setRoute(const cModule *,const ManetAddress &, const ManetAddress &dest, const ManetAddress &gw, const bool &erase);
+        static void initRoutingTables (const cModule *,const ManetAddress &,bool);
         virtual void initialize();
         virtual void handleMessage(cMessage *msg);
 
-        static void setLocatorInfo(Uint128 , Uint128 );
-        static bool getLocatorInfo(Uint128 , Uint128 &);
-        static bool getNumNodes(Uint128,int &);
-        static bool areNeighbour(const Uint128 &node1, const Uint128 &node2,bool &areN);
-        static bool setQueueSize(const Uint128 &node, const uint64_t &);
-        static bool getQueueSize(const Uint128 &node, uint64_t &);
+        static void setLocatorInfo(ManetAddress , ManetAddress );
+        static bool getLocatorInfo(ManetAddress , ManetAddress &);
+        static bool getNumNodes(ManetAddress,int &);
+        static bool areNeighbour(const ManetAddress &node1, const ManetAddress &node2,bool &areN);
+        static bool setQueueSize(const ManetAddress &node, const uint64_t &);
+        static bool getQueueSize(const ManetAddress &node, uint64_t &);
 
 };
 

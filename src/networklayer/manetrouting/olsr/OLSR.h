@@ -532,7 +532,7 @@ class OLSR : public ManetRoutingBase
     virtual void processLinkBreak(const cObject *details);
     virtual void scheduleNextEvent();
 
-    Uint128 getIfaceAddressFromIndex(int index);
+    ManetAddress getIfaceAddressFromIndex(int index);
 
     const char * getNodeId(const nsaddr_t &addr);
 
@@ -549,19 +549,19 @@ class OLSR : public ManetRoutingBase
 
     // Routing information access
     virtual bool supportGetRoute() {return true;}
-    virtual uint32_t getRoute(const Uint128 &, std::vector<Uint128> &);
-    virtual bool getNextHop(const Uint128 &, Uint128 &add, int &iface, double &);
+    virtual uint32_t getRoute(const ManetAddress &, std::vector<ManetAddress> &);
+    virtual bool getNextHop(const ManetAddress &, ManetAddress &add, int &iface, double &);
     virtual bool isProactive();
-    virtual void setRefreshRoute(const Uint128 &destination, const Uint128 & nextHop,bool isReverse) {}
+    virtual void setRefreshRoute(const ManetAddress &destination, const ManetAddress & nextHop,bool isReverse) {}
     virtual bool isOurType(cPacket *);
-    virtual bool getDestAddress(cPacket *, Uint128 &);
-    virtual int getRouteGroup(const AddressGroup &gr, std::vector<Uint128>&);
-    virtual bool getNextHopGroup(const AddressGroup &gr, Uint128 &add, int &iface, Uint128&);
-    virtual int  getRouteGroup(const Uint128&, std::vector<Uint128> &, Uint128&, bool &, int group = 0);
-    virtual bool getNextHopGroup(const Uint128&, Uint128 &add, int &iface, Uint128&, bool &, int group = 0);
+    virtual bool getDestAddress(cPacket *, ManetAddress &);
+    virtual int getRouteGroup(const AddressGroup &gr, std::vector<ManetAddress>&);
+    virtual bool getNextHopGroup(const AddressGroup &gr, ManetAddress &add, int &iface, ManetAddress&);
+    virtual int  getRouteGroup(const ManetAddress&, std::vector<ManetAddress> &, ManetAddress&, bool &, int group = 0);
+    virtual bool getNextHopGroup(const ManetAddress&, ManetAddress &add, int &iface, ManetAddress&, bool &, int group = 0);
 
     //
-    virtual void getDistributionPath(const Uint128&,std::vector<Uint128> &path);
+    virtual void getDistributionPath(const ManetAddress&, std::vector<ManetAddress> &path);
 };
 
 #endif

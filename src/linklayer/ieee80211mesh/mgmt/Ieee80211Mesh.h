@@ -31,7 +31,7 @@
 #include "IInterfaceTable.h"
 #include "lwmpls_data.h"
 #include "LWMPLSPacket_m.h"
-#include "uint128.h"
+#include "ManetAddress.h"
 #include "ManetRoutingBase.h"
 #include "Ieee80211Etx.h"
 #include <deque>
@@ -81,7 +81,7 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase
                 }
         };
         typedef std::deque<SeqNumberData> SeqNumberVector;
-        typedef std::map<uint64_t, SeqNumberVector> SeqNumberInfo;
+        typedef std::map<ManetAddress, SeqNumberVector> SeqNumberInfo;
         SeqNumberInfo seqNumberInfo;
 
         uint64_t numRoutingBytes;
@@ -146,7 +146,7 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase
         // Gateway structures
         /////////////////////////////////////////////////
         bool isGateWay;
-        typedef std::map<Uint128, simtime_t> AssociatedAddress;
+        typedef std::map<uint64_t, simtime_t> AssociatedAddress;
         AssociatedAddress associatedAddress;
         struct GateWayData
         {
@@ -156,7 +156,7 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase
                 ManetRoutingBase *reactive;
                 AssociatedAddress *associatedAddress;
         };
-        typedef std::map<Uint128, GateWayData> GateWayDataMap;
+        typedef std::map<ManetAddress, GateWayData> GateWayDataMap;
 #ifdef CHEAT_IEEE80211MESH
         // cheat, we suppose that the information between gateway is interchanged with the wired
         static GateWayDataMap *gateWayDataMap;
@@ -176,7 +176,7 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase
                 return gateWayDataMap;
             return NULL;
         }
-        virtual bool selectGateWay(const Uint128 &, MACAddress &);
+        virtual bool selectGateWay(const ManetAddress &, MACAddress &);
 
         bool hasLocator;
         bool hasRelayUnit;
@@ -189,12 +189,12 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase
         bool getCostNode(const MACAddress &, unsigned int &);
     protected:
         // methos for efficient distribution of packets
-        bool setSeqNum(const uint64_t &addr, const uint64_t &sqnum, const int &numTimes);
-        int findSeqNum(const uint64_t &addr, const uint64_t &sqnum);
-        int getNumVisit(const std::vector<Uint128> &path);
-        int getNumVisit(const uint64_t &addr, const std::vector<Uint128> &path);
-        bool getNextInPath(const uint64_t &addr, const std::vector<Uint128> &path, std::vector<uint64_t> &next);
-        bool getNextInPath(const std::vector<Uint128> &path, std::vector<uint64_t> &next);
+        bool setSeqNum(const ManetAddress &addr, const uint64_t &sqnum, const int &numTimes);
+        int findSeqNum(const ManetAddress &addr, const uint64_t &sqnum);
+        int getNumVisit(const std::vector<ManetAddress> &path);
+        int getNumVisit(const ManetAddress &addr, const std::vector<ManetAddress> &path);
+        bool getNextInPath(const ManetAddress &addr, const std::vector<ManetAddress> &path, std::vector<ManetAddress> &next);
+        bool getNextInPath(const std::vector<ManetAddress> &path, std::vector<ManetAddress> &next);
         void processDistributionPacket(Ieee80211MeshFrame *frame);
 
     protected:

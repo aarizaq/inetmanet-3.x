@@ -1206,7 +1206,7 @@ OLSR_ETX::rtable_default_computation()
 void
 OLSR_ETX::rtable_dijkstra_computation()
 {
-    nsaddr_t netmask (IPv4Address::ALLONES_ADDRESS.getInt());
+    nsaddr_t netmask (IPv4Address::ALLONES_ADDRESS);
     // Declare a class that will run the dijkstra algorithm
     Dijkstra *dijkstra = new Dijkstra();
 
@@ -1684,8 +1684,8 @@ OLSR_ETX::send_pkt()
     if (num_msgs == 0)
         return;
 
-    Uint128 destAdd;
-    destAdd = IPv4Address::ALLONES_ADDRESS.getInt();
+    ManetAddress destAdd;
+    destAdd = ManetAddress(IPv4Address::ALLONES_ADDRESS);
     // Calculates the number of needed packets
     int num_pkts = (num_msgs % OLSR_ETX_MAX_MSGS == 0) ? num_msgs / OLSR_ETX_MAX_MSGS :
                    (num_msgs / OLSR_ETX_MAX_MSGS + 1);
@@ -1746,9 +1746,9 @@ OLSR_ETX::send_pkt()
             if (i == 0)
                 op2->setSend_time(op1->send_time());
             // Sending packet pair
-            sendToIp(op1, RT_PORT, destAdd, RT_PORT, IP_DEF_TTL, (nsaddr_t)0);
+            sendToIp(op1, RT_PORT, destAdd, RT_PORT, IP_DEF_TTL, 0.0, ManetAddress::ZERO);
             if (i == 0)
-                sendToIp(op2, RT_PORT, destAdd, RT_PORT, IP_DEF_TTL, (nsaddr_t)0);
+                sendToIp(op2, RT_PORT, destAdd, RT_PORT, IP_DEF_TTL, 0.0, ManetAddress::ZERO);
         }
         else
         {
@@ -1768,7 +1768,7 @@ OLSR_ETX::send_pkt()
 
                 it = msgs_.erase(it);
             }
-            sendToIp(op, RT_PORT, destAdd, RT_PORT, IP_DEF_TTL, (nsaddr_t)0);
+            sendToIp(op, RT_PORT, destAdd, RT_PORT, IP_DEF_TTL, 0.0, ManetAddress::ZERO);
 
         }
     }
@@ -2729,12 +2729,12 @@ OLSR_ETX::link_quality()
     }
 }
 
-bool OLSR_ETX::getNextHop(const Uint128 &dest, Uint128 &add, int &iface, double &cost)
+bool OLSR_ETX::getNextHop(const ManetAddress &dest, ManetAddress &add, int &iface, double &cost)
 {
     OLSR_ETX_rt_entry* rt_entry = rtable_.lookup(dest);
     if (!rt_entry)
     {
-        Uint128 apAddr;
+        ManetAddress apAddr;
         if (getAp(dest, apAddr))
         {
 

@@ -186,37 +186,37 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
                         mpls_pk_ptr->getVectorAddressArraySize()==0 )
                     //mpls_pk_ptr->getDist()==0 )
                 {
-                    std::vector<Uint128> add;
+                    std::vector<ManetAddress> add;
                     add.resize(1);
                     int dist = 0;
                     bool toGateWay = false;
                     if (routingModuleReactive)
                     {
-                        if (routingModuleReactive->findInAddressGroup(mpls_pk_ptr->getDest().getInt()))
+                        if (routingModuleReactive->findInAddressGroup(ManetAddress(mpls_pk_ptr->getDest())))
                             toGateWay = true;
                     }
                     else if (routingModuleProactive)
                     {
-                        if (routingModuleProactive->findInAddressGroup(mpls_pk_ptr->getDest().getInt()))
+                        if (routingModuleProactive->findInAddressGroup(ManetAddress(mpls_pk_ptr->getDest())))
                              toGateWay = true;
                     }
                     else if (routingModuleHwmp)
                     {
-                        if (routingModuleHwmp->findInAddressGroup(mpls_pk_ptr->getDest().getInt()))
+                        if (routingModuleHwmp->findInAddressGroup(ManetAddress(mpls_pk_ptr->getDest())))
                              toGateWay = true;
                     }
 
-                    Uint128 gateWayAddress;
+                    ManetAddress gateWayAddress;
                     if (routingModuleProactive)
                     {
                         if (toGateWay)
                         {
                             bool isToGw;
-                            dist = routingModuleProactive->getRouteGroup(mpls_pk_ptr->getDest().getInt(), add, gateWayAddress, isToGw);
+                            dist = routingModuleProactive->getRouteGroup(ManetAddress(mpls_pk_ptr->getDest()), add, gateWayAddress, isToGw);
                         }
                         else
                         {
-                            dist = routingModuleProactive->getRoute(mpls_pk_ptr->getDest().getInt(), add);
+                            dist = routingModuleProactive->getRoute(ManetAddress(mpls_pk_ptr->getDest()), add);
                         }
                     }
                     if (dist==0 && routingModuleReactive)
@@ -227,11 +227,11 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
                         if (toGateWay)
                         {
                             bool isToGw;
-                            if (routingModuleReactive->getNextHopGroup(mpls_pk_ptr->getDest().getInt(), add[0], iface, gateWayAddress, isToGw))
+                            if (routingModuleReactive->getNextHopGroup(ManetAddress(mpls_pk_ptr->getDest()), add[0], iface, gateWayAddress, isToGw))
                                dist = 1;
                         }
                         else
-                            if (routingModuleReactive->getNextHop(mpls_pk_ptr->getDest().getInt(),add[0],iface,cost))
+                            if (routingModuleReactive->getNextHop(ManetAddress(mpls_pk_ptr->getDest()),add[0],iface,cost))
                                dist = 1;
                     }
 
@@ -243,11 +243,11 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
                         if (toGateWay)
                         {
                             bool isToGw;
-                            if (routingModuleHwmp->getNextHopGroup(mpls_pk_ptr->getDest().getInt(),add[0],iface,gateWayAddress,isToGw))
+                            if (routingModuleHwmp->getNextHopGroup(ManetAddress(mpls_pk_ptr->getDest()),add[0],iface,gateWayAddress,isToGw))
                                dist = 1;
                         }
                         else
-                            if (routingModuleHwmp->getNextHop(mpls_pk_ptr->getDest().getInt(),add[0],iface,cost))
+                            if (routingModuleHwmp->getNextHop(ManetAddress(mpls_pk_ptr->getDest()),add[0],iface,cost))
                                dist = 1;
                     }
 
@@ -258,23 +258,23 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
                         {
                             ControlManetRouting *ctrlmanet = new ControlManetRouting();
                             ctrlmanet->setOptionCode(MANET_ROUTE_NOROUTE);
-                            ctrlmanet->setDestAddress(mpls_pk_ptr->getDest().getInt());
-                            ctrlmanet->setSrcAddress(mpls_pk_ptr->getSource().getInt());
+                            ctrlmanet->setDestAddress(ManetAddress(mpls_pk_ptr->getDest()));
+                            ctrlmanet->setSrcAddress(ManetAddress(mpls_pk_ptr->getSource()));
                             send(ctrlmanet, "routingOutReactive");
                         }
                         if (routingModuleHwmp)
                         {
                             ControlManetRouting *ctrlmanet = new ControlManetRouting();
                             ctrlmanet->setOptionCode(MANET_ROUTE_NOROUTE);
-                            ctrlmanet->setDestAddress(mpls_pk_ptr->getDest().getInt());
-                            ctrlmanet->setSrcAddress(mpls_pk_ptr->getSource().getInt());
+                            ctrlmanet->setDestAddress(ManetAddress(mpls_pk_ptr->getDest()));
+                            ctrlmanet->setSrcAddress(ManetAddress(mpls_pk_ptr->getSource()));
                             send(ctrlmanet, "routingOutHwmp");
                         }
                         mplsData->deleteForwarding(forwarding_ptr);
                         delete mpls_pk_ptr;
                         return;
                     }
-                    forwarding_ptr->mac_address = add[0].getLo();
+                    forwarding_ptr->mac_address = add[0].getMAC().getInt();
                 }
                 else
                 {
@@ -294,23 +294,23 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
                     else
                     {
 // Local route
-                        std::vector<Uint128> add;
+                        std::vector<ManetAddress> add;
                         int dist = 0;
                         bool toGateWay = false;
-                        Uint128 gateWayAddress;
+                        ManetAddress gateWayAddress;
                         if (routingModuleReactive)
                         {
-                            if (routingModuleReactive->findInAddressGroup(mpls_pk_ptr->getDest().getInt()))
+                            if (routingModuleReactive->findInAddressGroup(ManetAddress(mpls_pk_ptr->getDest())))
                                 toGateWay = true;
                         }
                         else if (routingModuleProactive)
                         {
-                            if (routingModuleProactive->findInAddressGroup(mpls_pk_ptr->getDest().getInt()))
+                            if (routingModuleProactive->findInAddressGroup(ManetAddress(mpls_pk_ptr->getDest())))
                                  toGateWay = true;
                         }
                         else if (routingModuleHwmp)
                         {
-                            if (routingModuleHwmp->findInAddressGroup(mpls_pk_ptr->getDest().getInt()))
+                            if (routingModuleHwmp->findInAddressGroup(ManetAddress(mpls_pk_ptr->getDest())))
                                  toGateWay = true;
                         }
                         if (routingModuleProactive)
@@ -318,11 +318,11 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
                             if (toGateWay)
                             {
                                 bool isToGw;
-                                dist = routingModuleProactive->getRouteGroup(mpls_pk_ptr->getDest().getInt(), add, gateWayAddress, isToGw);
+                                dist = routingModuleProactive->getRouteGroup(ManetAddress(mpls_pk_ptr->getDest()), add, gateWayAddress, isToGw);
                             }
                             else
                             {
-                                dist = routingModuleProactive->getRoute(mpls_pk_ptr->getDest().getInt(), add);
+                                dist = routingModuleProactive->getRoute(ManetAddress(mpls_pk_ptr->getDest()), add);
                             }
                         }
                         if (dist==0 && routingModuleReactive)
@@ -334,11 +334,11 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
                             {
 
                                 bool isToGw;
-                                if (routingModuleReactive->getNextHopGroup(mpls_pk_ptr->getDest().getInt(), add[0], iface, gateWayAddress, isToGw))
+                                if (routingModuleReactive->getNextHopGroup(ManetAddress(mpls_pk_ptr->getDest()), add[0], iface, gateWayAddress, isToGw))
                                     dist = 1;
                             }
                             else
-                                if (routingModuleReactive->getNextHop(mpls_pk_ptr->getDest().getInt(), add[0], iface, cost))
+                                if (routingModuleReactive->getNextHop(ManetAddress(mpls_pk_ptr->getDest()), add[0], iface, cost))
                                      dist = 1;
                         }
 
@@ -350,11 +350,11 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
                             if (toGateWay)
                             {
                                 bool isToGw;
-                                if (routingModuleHwmp->getNextHopGroup(mpls_pk_ptr->getDest().getInt(), add[0], iface, gateWayAddress, isToGw))
+                                if (routingModuleHwmp->getNextHopGroup(ManetAddress(mpls_pk_ptr->getDest()), add[0], iface, gateWayAddress, isToGw))
                                    dist = 1;
                             }
                             else
-                                if (routingModuleHwmp->getNextHop(mpls_pk_ptr->getDest().getInt(), add[0], iface, cost))
+                                if (routingModuleHwmp->getNextHop(ManetAddress(mpls_pk_ptr->getDest()), add[0], iface, cost))
                                     dist = 1;
                         }
                         if (dist==0)
@@ -364,15 +364,15 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
                             {
                                 ControlManetRouting *ctrlmanet = new ControlManetRouting();
                                 ctrlmanet->setOptionCode(MANET_ROUTE_NOROUTE);
-                                ctrlmanet->setDestAddress(mpls_pk_ptr->getDest().getInt());
-                                ctrlmanet->setSrcAddress(mpls_pk_ptr->getSource().getInt());
+                                ctrlmanet->setDestAddress(ManetAddress(mpls_pk_ptr->getDest()));
+                                ctrlmanet->setSrcAddress(ManetAddress(mpls_pk_ptr->getSource()));
                                 send(ctrlmanet, "routingOutReactive");
                             }
                             mplsData->deleteForwarding(forwarding_ptr);
                             delete mpls_pk_ptr;
                             return;
                         }
-                        forwarding_ptr->mac_address = add[0].getLo();
+                        forwarding_ptr->mac_address = add[0].getMAC().getInt();
                         mpls_pk_ptr->setVectorAddressArraySize(0);
                         //mpls_pk_ptr->setDist(0);
                     }
@@ -447,18 +447,18 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
                 mpls_pk_ptr->getVectorAddressArraySize()==0 )
             //mpls_pk_ptr->getDist()==0 )
         {
-            std::vector<Uint128> add;
+            std::vector<ManetAddress> add;
             int dist = 0;
             if (routingModuleProactive)
             {
-                dist = routingModuleProactive->getRoute(mpls_pk_ptr->getDest().getInt(), add);
+                dist = routingModuleProactive->getRoute(ManetAddress(mpls_pk_ptr->getDest()), add);
             }
             if (dist==0 && routingModuleReactive)
             {
                 int iface;
                 add.resize(1);
                 double cost;
-                if (routingModuleReactive->getNextHop(mpls_pk_ptr->getDest().getInt(), add[0], iface, cost))
+                if (routingModuleReactive->getNextHop(ManetAddress(mpls_pk_ptr->getDest()), add[0], iface, cost))
                     dist = 1;
             }
 
@@ -467,7 +467,7 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
                 int iface;
                 add.resize(1);
                 double cost;
-                if (routingModuleHwmp->getNextHop(mpls_pk_ptr->getDest().getInt(), add[0], iface, cost))
+                if (routingModuleHwmp->getNextHop(ManetAddress(mpls_pk_ptr->getDest()), add[0], iface, cost))
                     dist = 1;
             }
             if (dist==0)
@@ -477,8 +477,8 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
                 {
                     ControlManetRouting *ctrlmanet = new ControlManetRouting();
                     ctrlmanet->setOptionCode(MANET_ROUTE_NOROUTE);
-                    ctrlmanet->setDestAddress(mpls_pk_ptr->getDest().getInt());
-                    ctrlmanet->setSrcAddress(mpls_pk_ptr->getSource().getInt());
+                    ctrlmanet->setDestAddress(ManetAddress(mpls_pk_ptr->getDest()));
+                    ctrlmanet->setSrcAddress(ManetAddress(mpls_pk_ptr->getSource()));
                     send(ctrlmanet, "routingOutReactive");
                 }
 
@@ -486,7 +486,7 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
                 delete mpls_pk_ptr;
                 return;
             }
-            forwarding_ptr->mac_address = add[0].getLo();
+            forwarding_ptr->mac_address = add[0].getMAC().getInt();
         }
         else
         {
@@ -511,11 +511,11 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
 // Local route o discard?
                 // delete mpls_pk_ptr
                 // return;
-                std::vector<Uint128> add;
+                std::vector<ManetAddress> add;
                 int dist = 0;
                 if (routingModuleProactive)
                 {
-                    dist = routingModuleProactive->getRoute(mpls_pk_ptr->getDest().getInt(), add);
+                    dist = routingModuleProactive->getRoute(ManetAddress(mpls_pk_ptr->getDest()), add);
                 }
                 if (dist==0 && routingModuleReactive)
                 {
@@ -523,7 +523,7 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
                     add.resize(1);
                     double cost;
 
-                    if (routingModuleReactive->getNextHop(mpls_pk_ptr->getDest().getInt(), add[0], iface, cost))
+                    if (routingModuleReactive->getNextHop(ManetAddress(mpls_pk_ptr->getDest()), add[0], iface, cost))
                         dist = 1;
                 }
                 if (dist==0 && routingModuleHwmp)
@@ -532,7 +532,7 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
                     add.resize(1);
                     double cost;
 
-                    if (routingModuleHwmp->getNextHop(mpls_pk_ptr->getDest().getInt(), add[0], iface, cost))
+                    if (routingModuleHwmp->getNextHop(ManetAddress(mpls_pk_ptr->getDest()), add[0], iface, cost))
                         dist = 1;
                 }
                 if (dist==0)
@@ -542,15 +542,15 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
                     {
                         ControlManetRouting *ctrlmanet = new ControlManetRouting();
                         ctrlmanet->setOptionCode(MANET_ROUTE_NOROUTE);
-                        ctrlmanet->setDestAddress(mpls_pk_ptr->getDest().getInt());
-                        ctrlmanet->setSrcAddress(mpls_pk_ptr->getSource().getInt());
+                        ctrlmanet->setDestAddress(ManetAddress(mpls_pk_ptr->getDest()));
+                        ctrlmanet->setSrcAddress(ManetAddress(mpls_pk_ptr->getSource()));
                         send(ctrlmanet, "routingOutReactive");
                     }
                     mplsData->deleteForwarding(forwarding_ptr);
                     delete mpls_pk_ptr;
                     return;
                 }
-                forwarding_ptr->mac_address = add[0].getLo();
+                forwarding_ptr->mac_address = add[0].getMAC().getInt();
                 mpls_pk_ptr->setVectorAddressArraySize(0);
                 //mpls_pk_ptr->setDist(0);
             }
@@ -561,7 +561,7 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
         frame->setTTL(mpls_pk_ptr->getTTL());
         frame->setTimestamp(mpls_pk_ptr->getCreationTime());
         frame->setReceiverAddress(MACAddress(forwarding_ptr->mac_address));
-        frame->setAddress4(mpls_pk_ptr->getDest().getInt());
+        frame->setAddress4(mpls_pk_ptr->getDest());
         frame->setAddress3(mpls_pk_ptr->getSource());
 
 // The reverse path label
@@ -594,12 +594,12 @@ void Ieee80211Mesh::mplsBasicSend(LWMPLSPacket *mpls_pk_ptr, MACAddress sta_addr
     }
     else
     {
-        std::vector<Uint128> add;
+        std::vector<ManetAddress> add;
         int dist = 0;
 
         if (routingModuleProactive)
         {
-            dist = routingModuleProactive->getRoute(mpls_pk_ptr->getDest().getInt(), add);
+            dist = routingModuleProactive->getRoute(ManetAddress(mpls_pk_ptr->getDest()), add);
         }
 
         if (dist==0 && routingModuleReactive)
@@ -607,7 +607,7 @@ void Ieee80211Mesh::mplsBasicSend(LWMPLSPacket *mpls_pk_ptr, MACAddress sta_addr
             int iface;
             add.resize(1);
             double cost;
-            if (routingModuleReactive->getNextHop(mpls_pk_ptr->getDest().getInt(), add[0], iface, cost))
+            if (routingModuleReactive->getNextHop(ManetAddress(mpls_pk_ptr->getDest()), add[0], iface, cost))
                 dist = 1;
         }
 
@@ -616,7 +616,7 @@ void Ieee80211Mesh::mplsBasicSend(LWMPLSPacket *mpls_pk_ptr, MACAddress sta_addr
             int iface;
             add.resize(1);
             double cost;
-            if (routingModuleHwmp->getNextHop(mpls_pk_ptr->getDest().getInt(), add[0], iface, cost))
+            if (routingModuleHwmp->getNextHop(ManetAddress(mpls_pk_ptr->getDest()), add[0], iface, cost))
                 dist = 1;
         }
         if (dist==0)
@@ -626,8 +626,8 @@ void Ieee80211Mesh::mplsBasicSend(LWMPLSPacket *mpls_pk_ptr, MACAddress sta_addr
             {
                 ControlManetRouting *ctrlmanet = new ControlManetRouting();
                 ctrlmanet->setOptionCode(MANET_ROUTE_NOROUTE);
-                ctrlmanet->setDestAddress(mpls_pk_ptr->getDest().getInt());
-                ctrlmanet->setSrcAddress(mpls_pk_ptr->getSource().getInt());
+                ctrlmanet->setDestAddress(ManetAddress(mpls_pk_ptr->getDest()));
+                ctrlmanet->setSrcAddress(ManetAddress(mpls_pk_ptr->getSource()));
                 send(ctrlmanet, "routingOutReactive");
             }
             delete mpls_pk_ptr;
@@ -648,7 +648,7 @@ void Ieee80211Mesh::mplsBasicSend(LWMPLSPacket *mpls_pk_ptr, MACAddress sta_addr
 
 
         if (dist>1)
-            frame->setReceiverAddress(MACAddress(add[0].getLo()));
+            frame->setReceiverAddress(add[0].getMAC());
         else
             frame->setReceiverAddress(mpls_pk_ptr->getDest());
 

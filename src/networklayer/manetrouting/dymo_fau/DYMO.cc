@@ -128,7 +128,7 @@ void DYMO::initialize(int aStage)
 
         registerRoutingModule();
         // setSendToICMP(true);
-        myAddr = getAddress().toUint();
+        myAddr = getAddress().getIPv4().getInt();   //FIXME
         linkLayerFeeback();
         timerMsg = new cMessage("DYMO_scheduler");
     }
@@ -225,12 +225,12 @@ void DYMO::handleMessage(cMessage* apMsg)
             }
             else if (control->getOptionCode() == MANET_ROUTE_UPDATE)
             {
-                IPv4Address src = IPv4Address(control->getSrcAddress().getLo());
-                IPv4Address dst = IPv4Address(control->getDestAddress().getLo());
+                IPv4Address src = control->getSrcAddress().getIPv4();
+                IPv4Address dst = control->getDestAddress().getIPv4();
                 if (!src.isLimitedBroadcastAddress() && !src.isMulticast() && src.isUnspecified())
-                    updateRouteLifetimes(src.getInt());
+                    updateRouteLifetimes(control->getSrcAddress());
                 if (!dst.isLimitedBroadcastAddress() && !dst.isMulticast() && !dst.isUnspecified())
-                    updateRouteLifetimes(dst.getInt());
+                    updateRouteLifetimes(control->getDestAddress());
             }
             delete apMsg;
             return;
@@ -246,7 +246,7 @@ void DYMO::handleMessage(cMessage* apMsg)
             msg_aux = udpPacket->decapsulate();
 
             IPv4ControlInfo *controlInfo = check_and_cast<IPv4ControlInfo*>(udpPacket->removeControlInfo());
-            if (isLocalAddress(controlInfo->getSrcAddr().getInt()) || controlInfo->getSrcAddr().isUnspecified())
+            if (isLocalAddress(ManetAddress(controlInfo->getSrcAddr())) || controlInfo->getSrcAddr().isUnspecified())
             {
                 // local address delete packet
                 delete msg_aux;
@@ -305,7 +305,7 @@ void DYMO::processPacket(const IPv4Datagram* datagram)
         TargetHopCount = entry->routeDist;
     }
 
-    if (!datagram->getSrcAddress().isUnspecified() && !isIpLocalAddress(datagram->getSrcAddress()))
+    if (!datagram->getSrcAddress().isUnspecified() && !isLocalAddress(ManetAddress(datagram->getSrcAddress())))
     {
         // It's not a packet of this node, send error to source
         sendRERR(destAddr.getInt(), TargetSeqNum);
@@ -765,11 +765,11 @@ void DYMO::sendDown(cPacket* apMsg, int destAddr)
     if (IPv4Address::LL_MANET_ROUTERS.getInt()==(unsigned int)destAddr)
     {
         destAddr = IPv4Address::ALLONES_ADDRESS.getInt();
-        sendToIp(apMsg, UDPPort, destAddr, UDPPort, 1, SIMTIME_DBL(jitter), 0);
+        sendToIp(apMsg, UDPPort, ManetAddress(IPv4Address(destAddr)), UDPPort, 1, SIMTIME_DBL(jitter));
     }
     else
     {
-        sendToIp(apMsg, UDPPort, destAddr, UDPPort, 1, 0);
+        sendToIp(apMsg, UDPPort, ManetAddress(IPv4Address(destAddr)), UDPPort, 1, 0.0);
     }
 }
 
@@ -973,9 +973,9 @@ simtime_t DYMO::computeBackoff(simtime_t backoff_var)
     return backoff_var * 2;
 }
 
-void DYMO::updateRouteLifetimes(const Uint128& targetAddr)
+void DYMO::updateRouteLifetimes(const ManetAddress& targetAddr)
 {
-    DYMO_RoutingEntry* entry = dymo_routingTable->getForAddress(IPv4Address(targetAddr.toUint()));
+    DYMO_RoutingEntry* entry = dymo_routingTable->getForAddress(targetAddr.getIPv4());
     if (!entry) return;
 
     // TODO: not specified in draft, but seems to make sense
