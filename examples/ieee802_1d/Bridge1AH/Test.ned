@@ -88,6 +88,7 @@ network BEBNetwork
         channel C extends DatarateChannel
         {
             delay = 0.1us;
+            datarate = 100Mbps;
         }
     submodules:
         Bridge1: BEB {

@@ -20,7 +20,6 @@ network EthernetHostTester
         {
             delay = 0.1us;
             datarate = 100Mbps;
-            
         }
     submodules:
         E0: EthernetHost {
@@ -46,6 +45,7 @@ network EthernetHostNetwork
         channel C extends DatarateChannel
         {
             delay = 0.1us;
+            datarate = 100Mbps;
         }
     submodules:
         E0: EthernetHost {

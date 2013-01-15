@@ -76,26 +76,13 @@ void EthernetLink::handleMessage(cMessage *msg)
 			ev<<"Unexpected message type. Drop.";
 		}
     }
+    else if(msg->isSelfMessage())
+    { //Time to send a MVRPDU
+        handleSelfMessage(msg);
+    }
     else
     {
-    	if(msg->isSelfMessage())
-    	{ //Time to send a MVRPDU
-    		handleSelfMessage(msg);
-    	}
-    	else
-    	{
-
-			if(msg->getKind()==IEEE802CTRL_DATA)
-			{
-				// data received from higher layer
-				processPacketFromHigherLayer(PK(msg));
-			}
-			else   //Pause frames have been removed.
-			{
-				error("received message `%s' with unknown message kind %d",
-					  msg->getName(), msg->getKind());
-			}
-    	}
+        processPacketFromHigherLayer(PK(msg));
     }
 
     if (ev.isGUI())
@@ -163,6 +150,7 @@ void EthernetLink::processPacketFromHigherLayer(cPacket *msg)
     EthIIF->setDisplayString(ETHER_II_DISPLAY_STRING);
     EthIIF->setSrc(address);
     EthIIF->setDest(etherctrl->getDest());
+    EthIIF->setEtherType(etherctrl->getEtherType());
     EthIIF->setByteLength(ETHER_MAC_FRAME_BYTES);
 	if(outputFrame>0) // 802.1Q
 	{
@@ -226,6 +214,7 @@ void EthernetLink::processFrameFromMAC(EthernetIIFrame *frame)
 	Ieee802Ctrl *etherctrl = new Ieee802Ctrl();
     etherctrl->setSrc(frame->getSrc());
     etherctrl->setDest(frame->getDest());
+    etherctrl->setEtherType(frame->getEtherType());
     higherlayermsg->setControlInfo(etherctrl);
 
     if(verbose==true)

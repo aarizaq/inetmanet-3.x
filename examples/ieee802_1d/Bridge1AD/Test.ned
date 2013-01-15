@@ -74,6 +74,7 @@ network Bridge1ADNetwork
         channel C extends DatarateChannel
         {
             delay = 0.1us;
+            datarate = 100Mbps;
         }
     submodules:
         Bridge1: Ether1ADBridge {
@@ -174,6 +175,7 @@ network Bridge1ADNetwork2
         channel C extends DatarateChannel
         {
             delay = 0.1us;
+            datarate = 100Mbps;
         }
     submodules:
         Bridge1: Ether1ADBridge {

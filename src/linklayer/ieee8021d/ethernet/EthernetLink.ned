@@ -1,5 +1,8 @@
 package inet.linklayer.ieee8021d.ethernet;
 
+import inet.linklayer.ethernet.IEtherEncap;
+
+
 //******************************************************
 // @brief EthernetIIFrame encapsulation.
 // Modified from EtherLLC model.
@@ -10,10 +13,11 @@ package inet.linklayer.ieee8021d.ethernet;
 // @version 1.0
 // @date Feb 2011
 //******************************************************/
-simple EthernetLink
+simple EthernetLink like IEtherEncap
 {
     parameters:
         @display("i=block/fork");
+        bool useSNAP = default(false);  // create EtherFrameWithSNAP frames instead of EthernetIIFrame -- unused parameter
         int outputFrame;  // 0=Ethernet 1=802.1q  2=802.1ad
         bool verbose=default(false); // verbosity
         int defaultVID=default(-1); //Default Vlan. Used when outputFrame is 802.1q or 802.1ad

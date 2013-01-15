@@ -70,6 +70,7 @@ network DiffusionTreeTest
         channel C extends DatarateChannel
         {
             delay = 0.1us;
+            datarate = 100Mbps;
         }
     submodules:
         BEB1: BEB {

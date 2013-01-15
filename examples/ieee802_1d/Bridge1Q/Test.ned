@@ -74,6 +74,7 @@ network Bridge1QNetwork
         channel C extends DatarateChannel
         {
             delay = 0.1us;
+            datarate = 100Mbps;
         }
     submodules:
         Bridge1: Ether1QBridge {
@@ -174,6 +175,7 @@ network Bridge1QNetwork2
         channel C extends DatarateChannel
         {
             delay = 0.1us;
+            datarate = 100Mbps;
         }
     submodules:
         Bridge1: Ether1QBridge {
