@@ -113,6 +113,9 @@ void UDPVideoStreamSvr2::initialize()
     stopTime = &par("stopTime");
     localPort = par("localPort");
 
+    macroPackets = par("macroPackets");
+    maxSizeMacro = par("maxSizeMacro").longValue();
+
     // statistics
     numStreams = 0;
     numPkSent = 0;
@@ -180,6 +183,7 @@ void UDPVideoStreamSvr2::processStreamRequest(cMessage *msg)
     d->videoSize = (*videoSize);
     d->bytesLeft = d->videoSize;
     d->traceIndex = 0;
+    d->timeInit = simTime();
     d->fileTrace = false;
     double stop = (*stopTime);
     if (stop > 0)
@@ -256,20 +260,51 @@ void UDPVideoStreamSvr2::sendStreamData(cMessage *timer)
     }
     else
     {
-        VideoPacket *videopk = new VideoPacket();
+        if (macroPackets)
+        {
+            simtime_t tm;
+            uint64_t size = 0;
+            VideoPacket *videopk = NULL;
+            std::vector<VideoPacket *> macroPkt;
+            do{
+                VideoPacket *videopk = new VideoPacket();
+                videopk->setBitLength(trace[d->traceIndex].size);
+                videopk->setType(trace[d->traceIndex].type);
+                videopk->setSeqNum(trace[d->traceIndex].seqNum);
+                size += videopk->getByteLength();
+                macroPkt.push_back(videopk);
+                d->traceIndex++;
+            } while(size + trace[d->traceIndex].size/8 < maxSizeMacro);
+            videopk = NULL;
 
-        videopk->setBitLength(trace[d->traceIndex].size);
-        videopk->setType(trace[d->traceIndex].type);
-        videopk->setSeqNum(trace[d->traceIndex].seqNum);
+            while(!macroPkt.empty())
+            {
+                VideoPacket *videopkaux = macroPkt.back();
+                macroPkt.pop_back();
+                if (videopk)
+                    videopkaux->encapsulate(videopk);
+                videopk = videopkaux;
+            }
 
-        pkt->setVideoSize(trace[d->traceIndex].size/8);
-        pkt->encapsulate(videopk);
-        d->traceIndex++;
+            pkt->setVideoSize(videopk->getByteLength());
+            pkt->encapsulate(videopk);
+        }
+        else
+        {
+            VideoPacket *videopk = new VideoPacket();
 
+            videopk->setBitLength(trace[d->traceIndex].size);
+            videopk->setType(trace[d->traceIndex].type);
+            videopk->setSeqNum(trace[d->traceIndex].seqNum);
+
+            pkt->setVideoSize(trace[d->traceIndex].size/8);
+            pkt->encapsulate(videopk);
+            d->traceIndex++;
+        }
         if (d->traceIndex >= trace.size())
             deleteTimer = true;
         else
-            scheduleAt(simTime()+trace[d->traceIndex].timeFrame, timer);
+            scheduleAt(d->timeInit + trace[d->traceIndex].timeFrame, timer);
 
     }
     emit(sentPkSignal, pkt);

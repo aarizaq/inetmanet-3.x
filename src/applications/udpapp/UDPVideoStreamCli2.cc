@@ -161,29 +161,33 @@ void UDPVideoStreamCli2::receiveStream(cPacket *pk)
     VideoPacket *vpkt = dynamic_cast<VideoPacket*> (pk->getEncapsulatedPacket());
     if (vpkt)
     {
-        if (vpkt->getSeqNum() > lastSeqNum)
-            lastSeqNum = vpkt->getSeqNum();
-        else
+        do
         {
-            delete pk;
-            return;
-        }
+            if (vpkt->getSeqNum() > lastSeqNum)
+                lastSeqNum = vpkt->getSeqNum();
+            else
+            {
+                delete pk;
+                return;
+            }
 
-        switch(vpkt->getType())
-        {
-            case 'P':
-                numPframes++;
-                totalBytesP += vpkt->getByteLength();
-                break;
-            case 'B':
-                numBframes++;
-                totalBytesB += vpkt->getByteLength();
-                break;
-            case 'I':
-                numIframes++;
-                totalBytesI += vpkt->getByteLength();
-                break;
-        }
+            switch(vpkt->getType())
+            {
+                case 'P':
+                    numPframes++;
+                    totalBytesP += vpkt->getByteLength();
+                    break;
+                case 'B':
+                    numBframes++;
+                    totalBytesB += vpkt->getByteLength();
+                    break;
+                case 'I':
+                    numIframes++;
+                    totalBytesI += vpkt->getByteLength();
+                    break;
+            }
+            vpkt = dynamic_cast<VideoPacket*> (vpkt->getEncapsulatedPacket());
+        } while(vpkt);
     }
 
     numRecPackets++;

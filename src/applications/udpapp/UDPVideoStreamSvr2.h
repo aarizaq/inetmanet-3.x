@@ -54,6 +54,7 @@ class INET_API UDPVideoStreamSvr2 : public cSimpleModule
         simtime_t stopTime;       ///< stop connection
         bool fileTrace;
         unsigned int traceIndex;
+        simtime_t timeInit;
     };
 
     struct VideoInfo
@@ -61,10 +62,13 @@ class INET_API UDPVideoStreamSvr2 : public cSimpleModule
             simtime_t timeFrame;
             uint32_t seqNum;
             char type;
-             uint32_t size;
+            uint32_t size;
     };
     std::deque<VideoInfo> trace;
 
+    bool macroPackets;
+    uint64_t maxSizeMacro;
+    simtime_t initTime;
   protected:
     typedef std::vector<VideoStreamData *> VideoStreamVector;
     VideoStreamVector streamVector;
