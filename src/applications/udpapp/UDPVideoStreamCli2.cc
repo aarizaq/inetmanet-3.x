@@ -159,6 +159,7 @@ void UDPVideoStreamCli2::receiveStream(cPacket *pk)
     }
 
     VideoPacket *vpkt = dynamic_cast<VideoPacket*> (pk->getEncapsulatedPacket());
+
     if (vpkt)
     {
         do
@@ -175,15 +176,15 @@ void UDPVideoStreamCli2::receiveStream(cPacket *pk)
             {
                 case 'P':
                     numPframes++;
-                    totalBytesP += vpkt->getByteLength();
+                    totalBytesP += vpkt->getFrameSize();
                     break;
                 case 'B':
                     numBframes++;
-                    totalBytesB += vpkt->getByteLength();
+                    totalBytesB += vpkt->getFrameSize();
                     break;
                 case 'I':
                     numIframes++;
-                    totalBytesI += vpkt->getByteLength();
+                    totalBytesI += vpkt->getFrameSize();
                     break;
             }
             vpkt = dynamic_cast<VideoPacket*> (vpkt->getEncapsulatedPacket());

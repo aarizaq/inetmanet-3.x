@@ -19,4 +19,5 @@
 packet VideoPacket {
     unsigned int seqNum;
     char type;
+    unsigned long frameSize;
 }

@@ -272,6 +272,7 @@ void UDPVideoStreamSvr2::sendStreamData(cMessage *timer)
                 videopk->setType(trace[d->traceIndex].type);
                 videopk->setSeqNum(trace[d->traceIndex].seqNum);
                 size += videopk->getByteLength();
+                videopk->setFrameSize(videopk->getByteLength());
                 macroPkt.push_back(videopk);
                 d->traceIndex++;
             } while(size + trace[d->traceIndex].size/8 < maxSizeMacro);
@@ -296,6 +297,7 @@ void UDPVideoStreamSvr2::sendStreamData(cMessage *timer)
             videopk->setBitLength(trace[d->traceIndex].size);
             videopk->setType(trace[d->traceIndex].type);
             videopk->setSeqNum(trace[d->traceIndex].seqNum);
+            videopk->setFrameSize(videopk->getByteLength());
 
             pkt->setVideoSize(trace[d->traceIndex].size/8);
             pkt->encapsulate(videopk);
