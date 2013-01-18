@@ -43,6 +43,7 @@ GlobalWirelessLinkInspector::~GlobalWirelessLinkInspector()
             costMap->erase(costMap->begin());
         }
         delete costMap;
+        costMap = NULL;
     }
     if (globalRouteMap != NULL)
     {
@@ -55,10 +56,14 @@ GlobalWirelessLinkInspector::~GlobalWirelessLinkInspector()
             }
             globalRouteMap->erase(globalRouteMap->begin());
         }
-        delete costMap;
+        delete globalRouteMap;
+        globalRouteMap = NULL;
     }
     if (globalLocatorMap != NULL)
-        delete costMap;
+    {
+        delete globalLocatorMap;
+        globalLocatorMap = NULL;
+    }
 }
 
 void GlobalWirelessLinkInspector::initialize()
