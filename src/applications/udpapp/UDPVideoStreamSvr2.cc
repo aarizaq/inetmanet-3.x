@@ -275,7 +275,7 @@ void UDPVideoStreamSvr2::sendStreamData(cMessage *timer)
                 videopk->setFrameSize(videopk->getByteLength());
                 macroPkt.push_back(videopk);
                 d->traceIndex++;
-            } while(size + trace[d->traceIndex].size/8 < maxSizeMacro);
+            } while((size + trace[d->traceIndex].size/8 < maxSizeMacro) && (d->traceIndex < trace.size()));
             videopk = NULL;
 
             while(!macroPkt.empty())
