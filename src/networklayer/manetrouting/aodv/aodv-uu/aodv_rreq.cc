@@ -223,7 +223,6 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
     u_int32_t rreq_id, rreq_new_hcnt, life;
     unsigned int extlen = 0;
     struct in_addr rreq_dest, rreq_orig;
-    unsigned int ifaddr;
     uint32_t cost;
     uint8_t  hopfix;
 
@@ -250,12 +249,10 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
     if (this->isStaticNode())
         hopfix++;
 
-
-
     /* Ignore RREQ's that originated from this node. Either we do this
        or we buffer our own sent RREQ's as we do with others we
        receive. */
-    ifaddr = DEV_IFINDEX(ifindex).ipaddr.s_addr.getIPv4().getInt();
+
 #ifndef OMNETPP
     if (rreq_orig.s_addr == DEV_IFINDEX(ifindex).ipaddr.s_addr)
         return;
