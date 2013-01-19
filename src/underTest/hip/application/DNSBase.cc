@@ -237,7 +237,7 @@ bool DNSBase::registerRvs(DNSRegRvsMsg* regMsg)
     bool hostFound = false;
     for (unsigned int i = 0; i < dnsVector.size(); i++)
     {
-        if (dnsVector[i]->HIT == regMsg->data())
+        if (dnsVector[i]->HIT == IPv6Address(regMsg->data()))
         {
             hostFound = true;
             dnsVector[i]->rvs = regMsg->addrData();
