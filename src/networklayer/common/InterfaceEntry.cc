@@ -146,6 +146,8 @@ void InterfaceEntry::changed(int category)
 void InterfaceEntry::setIPv4Data(IPv4InterfaceData *p)
 {
 #ifdef WITH_IPv4
+    if (ipv4data)
+        delete ipv4data;
     ipv4data = p;
     p->ownerp = this;
     configChanged();
@@ -157,6 +159,8 @@ void InterfaceEntry::setIPv4Data(IPv4InterfaceData *p)
 void InterfaceEntry::setIPv6Data(IPv6InterfaceData *p)
 {
 #ifdef WITH_IPv6
+    if (ipv6data)
+        delete ipv6data;
     ipv6data = p;
     p->ownerp = this;
     configChanged();
