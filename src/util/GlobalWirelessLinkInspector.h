@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2012 Alfonso Ariza Universidad de Málaga
+// Copyright (C) 2012 Alfonso Ariza Universidad de Mï¿½laga
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
@@ -69,7 +69,7 @@ class GlobalWirelessLinkInspector : public cSimpleModule
         static bool isActiveLocator() {return (globalLocatorMap!=NULL && !globalLocatorMap->empty());}
         static void setLinkCost(const ManetAddress& org,const ManetAddress& dest,const Link &);
         static bool getLinkCost(const ManetAddress& org,const ManetAddress& dest,Link &);
-        static bool getLinkCost(const std::vector<ManetAddress>&, Link &);
+        static bool getCostPath(const std::vector<ManetAddress>&, Link &);
         static bool initRoutingProtocol (cModule *,bool);
         static bool getRoute(const ManetAddress &src, const ManetAddress &dest, std::vector<ManetAddress> &route);
         static bool getRouteWithLocator(const ManetAddress &src, const ManetAddress &dest, std::vector<ManetAddress> &route);

@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2012 Alfonso Ariza Universidad de Málaga
+// Copyright (C) 2012 Alfonso Ariza Universidad de Mï¿½laga
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
@@ -155,7 +155,7 @@ bool GlobalWirelessLinkInspector::getLinkCost(const ManetAddress& org,const Mane
     return false;
 }
 
-bool GlobalWirelessLinkInspector::getLinkCost(const std::vector<ManetAddress>& path, Link &link)
+bool GlobalWirelessLinkInspector::getCostPath(const std::vector<ManetAddress>& path, Link &link)
 {
 
     if (!costMap)
@@ -173,7 +173,7 @@ bool GlobalWirelessLinkInspector::getLinkCost(const std::vector<ManetAddress>& p
         else
             return false;
     }
-    return false;
+    return true;
 }
 
 
