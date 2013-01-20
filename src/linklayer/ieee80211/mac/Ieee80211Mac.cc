@@ -820,7 +820,7 @@ void Ieee80211Mac::handleLowerMsg(cPacket *msg)
         double frameDuration = cinfo->getTestFrameDuration() + computeFrameDuration(LENGTH_ACK, basicBitrate)+rtsTime;
         cinfo->setTestFrameDuration(frameDuration);
     }
-    nb->fireChangeNotification(NF_LINK_FULL_PROMISCUOUS, msg);
+    sendNotification(NF_LINK_FULL_PROMISCUOUS, msg);
     validRecMode = false;
     if (msg->getControlInfo() && dynamic_cast<Radio80211aControlInfo *>(msg->getControlInfo()))
     {
@@ -892,7 +892,7 @@ void Ieee80211Mac::handleLowerMsg(cPacket *msg)
 #ifdef LWMPLS
     int msgKind = msg->getKind();
     if (msgKind != COLLISION && msgKind != BITERROR && twoAddressFrame!=NULL)
-        nb->fireChangeNotification(NF_LINK_REFRESH, twoAddressFrame);
+        sendNotification(NF_LINK_REFRESH, twoAddressFrame);
 #endif
 
     handleWithFSM(msg);
@@ -2106,7 +2106,7 @@ void Ieee80211Mac::finishCurrentTransmission()
 void Ieee80211Mac::giveUpCurrentTransmission()
 {
     Ieee80211DataOrMgmtFrame *temp = (Ieee80211DataOrMgmtFrame*) transmissionQueue()->front();
-    nb->fireChangeNotification(NF_LINK_BREAK, temp);
+    sendNotification(NF_LINK_BREAK, temp);
     popTransmissionQueue();
     resetStateVariables();
     numGivenUp()++;
@@ -2894,5 +2894,5 @@ bool Ieee80211Mac::isDuplicated(cMessage *msg)
 void Ieee80211Mac::promiscousFrame(cMessage *msg)
 {
     if (!isDuplicated(msg)) // duplicate detection filter
-        nb->fireChangeNotification(NF_LINK_PROMISCUOUS, msg);
+        sendNotification(NF_LINK_PROMISCUOUS, msg);
 }

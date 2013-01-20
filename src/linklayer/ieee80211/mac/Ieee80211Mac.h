@@ -678,6 +678,16 @@ class INET_API Ieee80211Mac : public WirelessMacBase, public INotifiable
     virtual void promiscousFrame(cMessage *msg);
 
     virtual bool isDuplicated(cMessage *msg);
+
+    virtual void sendNotification(int category, cMessage *pkt)
+    {
+        if (!nb)
+            return;
+        int tempKind = pkt->getKind();
+        pkt->setKind(this->getIndex());
+        nb->fireChangeNotification(category, pkt);
+        pkt->setKind(tempKind);
+    }
 };
 
 #endif
