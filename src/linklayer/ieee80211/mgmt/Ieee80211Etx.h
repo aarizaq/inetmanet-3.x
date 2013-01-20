@@ -82,6 +82,24 @@ class MacEtxNeighbor
         timeETT.clear();
         signalToNoiseAndSignal.clear();
     }
+
+    MacEtxNeighbor& operator=(const MacEtxNeighbor& other)
+    {
+        if (this==&other) return *this;
+        address = other.address;
+        time = other.time;
+        ettTime = other.ettTime;
+        ett1Time = other.ett1Time;
+        ett2Time = other.ett2Time;
+        airTimeMetric = other.airTimeMetric;
+        packets = other.packets;
+        numFailures = other.numFailures;
+        timeVector = other.timeVector;
+        timeETT =  other.timeETT;
+        signalToNoiseAndSignal = other.signalToNoiseAndSignal;
+        return *this;
+    }
+
     // this vector store a window of values
     void setAddress(const MACAddress &addr) {address = addr;}
     MACAddress getAddress() const {return address;}
@@ -105,7 +123,7 @@ class MacEtxNeighbor
     void  setAirtimeMetric(uint32_t p) {airTimeMetric = p;}
 };
 
-typedef std::map<MACAddress,MacEtxNeighbor*> NeighborsMap;
+typedef std::map<MACAddress,MacEtxNeighbor> NeighborsMap;
 
 class INET_API Ieee80211Etx : public cSimpleModule, public MacEstimateCostProcess, public INotifiable
 {
@@ -246,7 +264,7 @@ class INET_API Ieee80211Etx : public cSimpleModule, public MacEstimateCostProces
         int i = 0;
         for (NeighborsMap::iterator it = neighbors[iface].begin(); it != neighbors[iface].end(); it++)
         {
-            add[i] = it->second->getAddress();
+            add[i] = it->second.getAddress();
             i++;
         }
         return i;
