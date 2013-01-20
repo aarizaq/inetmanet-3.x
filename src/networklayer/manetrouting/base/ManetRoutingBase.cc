@@ -246,6 +246,7 @@ void ManetRoutingBase::registerRoutingModule()
                 interfaceVector->push_back(interface);
             }
         }
+        delete [] interfaceName;
     }
     const char *exclInterfaces = par("excludedInterfaces");
     cStringTokenizer tokenizerExcluded(exclInterfaces);
