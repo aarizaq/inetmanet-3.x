@@ -62,6 +62,7 @@ simple HwmpProtocol extends BaseRouting like IManetRouting
         volatile double unicastDelay @unit("s") = default (uniform(0s,0.001s));  // a delay added to unicast messaged (i.e. data packet forwarding) (used to model processing time)
         bool checkNextHop=default(false);
         bool PublicRoutingTables = default(false);
+        bool propagateProactive = default(true);
     gates:
         input from_ip;
         output to_ip;

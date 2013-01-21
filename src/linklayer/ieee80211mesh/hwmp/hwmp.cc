@@ -176,6 +176,8 @@ void HwmpProtocol::initialize(int stage)
         m_gannTimer = new GannTimer(this);
         m_rtable = new HwmpRtable();
         timeLimitQueue = par("timeLimitInQueue");
+
+        propagateProactive = par("propagateProactive").boolValue();
         if (isRoot())
             setRoot();
 
@@ -1108,6 +1110,8 @@ void HwmpProtocol::receivePreq(Ieee80211ActionPREQFrame *preqFrame, MACAddress f
     uint32_t originatorSeqNumber = preqFrame->getBody().getOriginatorSeqNumber();
     bool addMode = (preqFrame->getBody().getFlags() & 0x40) != 0;
 
+    bool propagate = true;
+
     //acceptance criteria:
     if (isLocalAddress(ManetAddress(originatorAddress)))
     {
@@ -1194,11 +1198,13 @@ void HwmpProtocol::receivePreq(Ieee80211ActionPREQFrame *preqFrame, MACAddress f
             bool proactivePrep = false;
             if ((preqFrame->getBody().getFlags() & 0x20) != 0 && preq.TO)
                 proactivePrep = true;
-            if (proactivePrep)
+            if (proactivePrep && propagateProactive)
             {
                 sendPrep(GetAddress(), originatorAddress, from, (uint32_t) 0, GetNextHwmpSeqno(), originatorSeqNumber,
                         preqFrame->getBody().getLifeTime(), interface, 0, true);
             }
+            if (!propagateProactive)
+                propagate = false;
             break;
         }
         if (isAddressInProxyList(ManetAddress(preq.targetAddress)) ||  preq.targetAddress == GetAddress())
@@ -1333,7 +1339,7 @@ void HwmpProtocol::receivePreq(Ieee80211ActionPREQFrame *preqFrame, MACAddress f
     ctrl->setInputPort(interface80211ptr->getInterfaceId());
     preqFrame->setControlInfo(ctrl);
 
-    if (preqFrame->getBody().getTTL() == 0)
+    if (preqFrame->getBody().getTTL() == 0 || !propagate)
         delete preqFrame;
     else
     {

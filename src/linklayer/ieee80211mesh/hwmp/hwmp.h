@@ -143,6 +143,8 @@ class HwmpProtocol : public ManetRoutingBase
 
         bool m_isGann;
         unsigned int gannSeqNumber;
+        bool propagateProactive;
+
         struct GannData
         {
                 unsigned int numHops;
@@ -150,6 +152,7 @@ class HwmpProtocol : public ManetRoutingBase
                 MACAddress gannAddr;
         };
         std::vector<GannData> ganVector;
+
 
         uint32_t dot11MeshHWMPnetDiameter;
         std::vector<PREQElem> myPendingReq;
