@@ -48,9 +48,9 @@ typedef std::map<nsaddr_t, OLSR_rt_entry*> rtable_t;
 ///
 class OLSR_rtable : public cObject
 {
-    rtable_t    rt_;    ///< Data structure for the routing table.
 
   public:
+    rtable_t    rt_;    ///< Data structure for the routing table.
 
     OLSR_rtable(OLSR_rtable*);
     OLSR_rtable();

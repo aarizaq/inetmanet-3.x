@@ -64,6 +64,16 @@
 Define_Module(OLSR);
 
 
+std::ostream& operator<<(std::ostream& os, const OLSR_rt_entry& e)
+{
+    os << "dest:"<< e.dest_addr_.str() << " ";
+    os << "gw:" << e.next_addr_.str() << " ";
+    os << "iface:" << e.iface_addr_.str() << " ";
+    os << "dist:" << e.dist_ << " ";
+    return os;
+};
+
+
 uint32 OlsrAddressSize::ADDR_SIZE = ADDR_SIZE_DEFAULT;
 OLSR::GlobalRtable OLSR::globalRtable;
 OLSR::DistributionPath OLSR::distributionPath;
@@ -527,6 +537,9 @@ OLSR::initialize(int stage)
 
         globalRtable[ra_addr()] = &rtable_;
         computed = false;
+
+        WATCH_PTRMAP(rtable_.rt_);
+
     }
 }
 
