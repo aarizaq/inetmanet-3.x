@@ -55,6 +55,8 @@ class INET_API UDPVideoStreamCli2 : public cSimpleModule
     uint64_t totalBytesB;
     int64_t lastSeqNum;
 
+    bool recieved;
+
 
   public:
     UDPVideoStreamCli2();

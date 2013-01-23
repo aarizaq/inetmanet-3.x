@@ -42,6 +42,7 @@ simple UDPVideoStreamCli2 like IUDPApp
         int serverPort;  // server port
         double startTime @unit(s) = default(1s);
         volatile double reintent @unit(s) = default(60s);
+        bool multipleRequest = default(false);
         double timeOut @unit(s) = default(10s);
         double limitDelay @unit(s) = default(0.5s);
         @display("i=block/app");

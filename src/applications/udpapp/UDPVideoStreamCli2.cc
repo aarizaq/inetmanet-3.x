@@ -42,6 +42,7 @@ UDPVideoStreamCli2::UDPVideoStreamCli2()
     totalBytesI = 0;
     totalBytesP = 0;
     totalBytesB = 0;
+    recieved = false;
 }
 
 UDPVideoStreamCli2::~UDPVideoStreamCli2()
@@ -115,6 +116,9 @@ void UDPVideoStreamCli2::handleMessage(cMessage* msg)
 
 void UDPVideoStreamCli2::requestStream()
 {
+
+    if (recieved && !par("multipleRequest").boolValue())
+        return;
     int svrPort = par("serverPort");
     int localPort = par("localPort");
     const char *address = par("serverAddress");
@@ -151,6 +155,8 @@ void UDPVideoStreamCli2::receiveStream(cPacket *pk)
         cancelEvent(timeOutMsg);
     if (timeOut > 0)
         scheduleAt(simTime()+timeOut,timeOutMsg);
+
+    recieved = true;
 
     if (simTime() - pk->getCreationTime() > limitDelay)
     {
