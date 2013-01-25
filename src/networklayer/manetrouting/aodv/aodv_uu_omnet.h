@@ -230,6 +230,8 @@ class AODVUU : public ManetRoutingBase
     AODVUU() {isRoot = false; is_init = false; log_file_fd_init = false; sendMessageEvent = new cMessage(); mapSeqNum.clear(); /*&messageEvent;*/storeRreq = false;}
     ~AODVUU();
 
+    void actualizeTablesWithCollaborative(const ManetAddress &);
+
     void packetFailed(IPv4Datagram *p);
     void packetFailedMac(Ieee80211DataFrame *);
 

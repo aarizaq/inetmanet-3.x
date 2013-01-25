@@ -1811,3 +1811,56 @@ bool NS_CLASS isThisRrepPrevSent(cMessage *msg)
     }
     return false;
 }
+
+void NS_CLASS actualizeTablesWithCollaborative(const ManetAddress &dest)
+{
+    if (!getCollaborativeProtocol())
+        return;
+
+    struct in_addr next_hop,destination;
+    int iface;
+    double cost;
+
+    if (getCollaborativeProtocol()->getNextHop(dest,next_hop.s_addr,iface,cost))
+    {
+        u_int8_t hops = cost;
+        destination.s_addr = dest;
+        std::map<ManetAddress,u_int32_t *>::iterator it =  mapSeqNum.find(dest);
+        if (it == mapSeqNum.end())
+            opp_error("node not found in mapSeqNum");
+        uint32_t sqnum = *(it->second);
+        uint32_t life = PATH_DISCOVERY_TIME - 2 * hops * NODE_TRAVERSAL_TIME;
+        int ifindex = -1;
+
+        rt_table_t * fwd_rt = rt_table_find(destination);
+
+        for (int i = 0; i < getNumInterfaces(); i++)
+        {
+            if (getInterfaceEntry(i)->getInterfaceId() == iface)
+            {
+                ifindex = i;
+                break;
+            }
+        }
+
+        if (ifindex == -1)
+            opp_error("interface not found");
+
+        if (fwd_rt)
+            fwd_rt = rt_table_update(fwd_rt, next_hop, hops, sqnum, life, VALID, fwd_rt->flags,ifindex, cost, cost+1);
+        else
+            fwd_rt = rt_table_insert(destination, next_hop, hops, sqnum, life, VALID, 0, ifindex, cost, cost+1);
+
+        hops = 1;
+        rt_table_t * fwd_rtAux = rt_table_find(next_hop);
+        it =  mapSeqNum.find(next_hop.s_addr);
+        if (it == mapSeqNum.end())
+            opp_error("node not found in mapSeqNum");
+        sqnum = *(it->second);
+        life = PATH_DISCOVERY_TIME - 2 * (int)hops * NODE_TRAVERSAL_TIME;
+        if (fwd_rtAux)
+            fwd_rtAux = rt_table_update(fwd_rtAux, next_hop, hops, sqnum, life, VALID, fwd_rtAux->flags,ifindex, hops, hops+1);
+        else
+            fwd_rtAux = rt_table_insert(next_hop, next_hop, hops, sqnum, life, VALID, 0, ifindex, hops, hops+1);
+    }
+}

@@ -559,64 +559,10 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
     {
         /* We are an INTERMEDIATE node. - check if we have an active
          * route entry */
-
-        fwd_rt = rt_table_find(rreq_dest);
-
 #ifdef OMNETPP
-        // collaborative protocol
-        if (getCollaborativeProtocol())
-        {
-            struct in_addr next_hop;
-            int iface;
-            double cost;
-            if (getCollaborativeProtocol()->getNextHop(rreq_dest.s_addr,next_hop.s_addr,iface,cost))
-            {
-
-                u_int8_t hops = cost;
-                std::map<ManetAddress,u_int32_t *>::iterator it =  mapSeqNum.find(rreq_dest.s_addr);
-                if (it == mapSeqNum.end())
-                    opp_error("node not found in mapSeqNum");
-                u_int32_t sqnum = *(it->second);
-                life = PATH_DISCOVERY_TIME - 2 * hops * NODE_TRAVERSAL_TIME;
-                int ifindex = -1;
-                for (int i = 0; i < getNumInterfaces(); i++)
-                {
-                    if (getInterfaceEntry(i)->getInterfaceId() == iface)
-                    {
-                        ifindex = i;
-                        break;
-                    }
-                }
-                if (ifindex == -1)
-                    opp_error("interface not found");
-
-                if (fwd_rt)
-                {
-                    fwd_rt = rt_table_update(fwd_rt, next_hop, hops, sqnum, life, VALID, fwd_rt->flags,ifindex, cost, cost+1);
-                }
-                else
-                {
-                    fwd_rt = rt_table_insert(rreq_dest, next_hop, hops, sqnum, life, VALID, 0, ifindex, cost, cost+1);
-                }
-                hops = 1;
-                rt_table_t * fwd_rtAux = rt_table_find(next_hop);
-                it =  mapSeqNum.find(next_hop.s_addr);
-                if (it == mapSeqNum.end())
-                    opp_error("node not found in mapSeqNum");
-                sqnum = *(it->second);
-                life = PATH_DISCOVERY_TIME - 2 * (int)hops * NODE_TRAVERSAL_TIME;
-                if (fwd_rtAux)
-                {
-                    fwd_rtAux = rt_table_update(fwd_rtAux, next_hop, hops, sqnum, life, VALID, fwd_rtAux->flags,ifindex, hops, hops+1);
-                }
-                else
-                {
-                    fwd_rtAux = rt_table_insert(next_hop, next_hop, hops, sqnum, life, VALID, 0, ifindex, hops, hops+1);
-                }
-            }
-        }
-
+        actualizeTablesWithCollaborative(rreq_dest.s_addr);
 #endif
+        fwd_rt = rt_table_find(rreq_dest);
 
         if (fwd_rt && (fwd_rt->state == VALID || fwd_rt->state == IMMORTAL) && !rreq->d)
         {
