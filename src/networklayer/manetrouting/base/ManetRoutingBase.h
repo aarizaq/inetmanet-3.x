@@ -96,7 +96,7 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
     Coord curSpeed;
     simtime_t posTimer;
     bool   regPosition;
-    bool   usetManetLabelRouting;
+    bool   useManetLabelRouting;
     bool   isRegistered;
     void *commonPtr;
     bool sendToICMP;

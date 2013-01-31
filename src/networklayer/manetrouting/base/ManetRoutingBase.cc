@@ -171,7 +171,7 @@ void ManetRoutingBase::registerRoutingModule()
 
     cProperties *props = getParentModule()->getProperties();
     mac_layer_ = props && props->getAsBool("macRouting");
-    usetManetLabelRouting = par("usetManetLabelRouting");
+    useManetLabelRouting = par("useManetLabelRouting");
 
     const char *interfaces = par("interfaces");
     cStringTokenizer tokenizerInterfaces(interfaces);
@@ -725,7 +725,7 @@ void ManetRoutingBase::omnet_chg_rte(const ManetAddress &dst, const ManetAddress
         netmask = IPv4Address::ALLONES_ADDRESS;
 
     InterfaceEntry *ie = getInterfaceWlanByAddress(iface);
-    IPv4Route::RouteSource routeSource = usetManetLabelRouting ? IPv4Route::MANET : IPv4Route::MANET2;
+    IPv4Route::RouteSource routeSource = useManetLabelRouting ? IPv4Route::MANET : IPv4Route::MANET2;
 
     if (found)
     {
@@ -864,7 +864,7 @@ void ManetRoutingBase::omnet_chg_rte(const ManetAddress &dst, const ManetAddress
         netmask = IPv4Address::ALLONES_ADDRESS;
 
     InterfaceEntry *ie = getInterfaceEntry(index);
-    IPv4Route::RouteSource routeSource = usetManetLabelRouting ? IPv4Route::MANET : IPv4Route::MANET2;
+    IPv4Route::RouteSource routeSource = useManetLabelRouting ? IPv4Route::MANET : IPv4Route::MANET2;
 
     if (found)
     {
@@ -895,7 +895,7 @@ void ManetRoutingBase::omnet_chg_rte(const ManetAddress &dst, const ManetAddress
     /// Source of route, MANUAL by reading a file,
     /// routing protocol name otherwise
 
-    if (usetManetLabelRouting)
+    if (useManetLabelRouting)
         entry->setSource(IPv4Route::MANET);
     else
         entry->setSource(IPv4Route::MANET2);
@@ -1430,7 +1430,7 @@ bool ManetRoutingBase::setRoute(const ManetAddress & destination, const ManetAdd
 
     /// Source of route, MANUAL by reading a file,
     /// routing protocol name otherwise
-    IPv4Route::RouteSource routeSource = usetManetLabelRouting ? IPv4Route::MANET : IPv4Route::MANET2;
+    IPv4Route::RouteSource routeSource = useManetLabelRouting ? IPv4Route::MANET : IPv4Route::MANET2;
     entry->setSource(routeSource);
 
     inet_rt->addRoute(entry);
