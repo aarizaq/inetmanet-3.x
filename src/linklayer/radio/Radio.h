@@ -156,6 +156,7 @@ class INET_API Radio : public ChannelAccess, public IPowerControl
     virtual void disablingInitialization();
     //
     double calcDistFreeSpace();
+    double calcDistDoubleRay();
 
   protected:
 	// Support of noise generators, the noise generators allow that the radio can change between  RECV <-->IDLE without to receive a frame

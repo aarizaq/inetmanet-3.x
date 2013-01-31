@@ -961,7 +961,8 @@ void Radio::updateDisplayString() {
         d.setTagArg("r1", 2, "gray");
         d.removeTag("r2");
         d.insertTag("r2");
-        d.setTagArg("r2", 0, (long) calcDistFreeSpace());
+        //d.setTagArg("r2", 0, (long) calcDistFreeSpace());
+        d.setTagArg("r2", 0, (long) calcDistDoubleRay());
         d.setTagArg("r2", 2, "blue");
     }
     if (updateString==NULL && updateStringInterval>0)
@@ -996,6 +997,19 @@ double Radio::calcDistFreeSpace()
 
     double interfDistance = pow(waveLength * waveLength * transmitterPower /
                          (16.0 * M_PI * M_PI * minReceivePower), 1.0 / alpha);
+    return interfDistance;
+}
+
+
+
+double Radio::calcDistDoubleRay()
+{
+    //the carrier frequency used
+    //minimum power level to be able to physically receive a signal
+    double minReceivePower = sensitivity;
+
+    double interfDistance = pow(transmitterPower/minReceivePower, 1.0 / 4);
+
     return interfDistance;
 }
 
