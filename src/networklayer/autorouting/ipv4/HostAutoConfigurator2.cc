@@ -333,17 +333,17 @@ void HostAutoConfigurator2::setupRoutingTable()
     // get our host module
 
 
-    for (unsigned int i=0;i<vectorInterfaceToken.size();i++)
+    for (unsigned int j = 0; j < vectorInterfaceToken.size(); j++)
     {
-    	ifname = vectorInterfaceToken[i].c_str();
+    	ifname = vectorInterfaceToken[j].c_str();
         InterfaceEntry* ie = ift->getInterfaceByName(ifname);
         if (!ie)
             continue;
         IPv4Address add(ie->ipv4Data()->getIPAddress().getInt() & ie->ipv4Data()->getNetmask().getInt());
         int i=0;
-        while (i<routingTable->getNumRoutes())
+        while ( i < routingTable->getNumRoutes())
         {
-            if (routingTable->getRoute(i)->getInterface()==ie)
+            if (routingTable->getRoute(i)->getInterface() == ie)
         	{
             	routingTable->deleteRoute(routingTable->getRoute(i));
                 i=0;
