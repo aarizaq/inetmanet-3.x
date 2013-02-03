@@ -340,7 +340,9 @@ void HostAutoConfigurator2::setupRoutingTable()
         if (!ie)
             continue;
         IPv4Address add(ie->ipv4Data()->getIPAddress().getInt() & ie->ipv4Data()->getNetmask().getInt());
-        int i=0;
+        //int i=0;
+        // Not sure which to comment and also the signed and unsigned integer comparison error is there in this code
+        i=0;
         while (i<routingTable->getNumRoutes())
         {
             if (routingTable->getRoute(i)->getInterface()==ie)
