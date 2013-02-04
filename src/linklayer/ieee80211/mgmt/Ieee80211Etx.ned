@@ -25,7 +25,7 @@ simple Ieee80211Etx
         double ETXInterval @unit(s) = default(1s); //
         double ETTInterval @unit(s) = default(60s); // if 0 disabled
         double ETXMeasureInterval @unit(s) = default(10s);
-        int EttWindow = default(5);  // number of EET values in vecto to compute the Bandwith
+        int EttWindow = default(5);  // number of EET values in vector to compute the Bandwith
         bool EttTimeLimit = default(false); // if true delete values in the ETT vector older than  (EttWindow+1)*ETTInterval
         int ETXSize @unit(byte) = default(150byte);
         int ETTSize1 @unit(byte) = default(100byte);
@@ -35,10 +35,10 @@ simple Ieee80211Etx
         double powerWindowTime @unit(s) = default(10s);// window time size for measure the S/N and Power received
 
         int Index = default(0);
-        volatile double jitter @unit(s) = uniform(-0.01s,0.01s);
+        volatile double ETXjitter @unit(s) = uniform(-0.01s,0.01s);
         double startEtx @unit(s) = uniform(0s,1s); // start time for the ETX process
         double startEtt @unit(s) = uniform(0s,10s);// start time for the ETT process
-        double Hysteresis @unit(s) = 0.1s;
+        double ETXHysteresis @unit(s) = 0.25s; // the ETX packets are valid a time equal to ETXMeasureInterval+ETXHysteresis, default ETXInterval/4
     gates:
         output toMac;
         input fromMac;

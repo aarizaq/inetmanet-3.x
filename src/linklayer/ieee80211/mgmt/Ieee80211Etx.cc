@@ -46,7 +46,7 @@ void Ieee80211Etx::initialize(int stage)
         maxLive = par("TimeToLive");
         powerWindow = par("powerWindow");
         powerWindowTime = par("powerWindowTime");
-        hysteresis = par("Hysteresis");
+        hysteresis = par("ETXHysteresis");
         NotificationBoard *nb = NotificationBoardAccess().get();
         nb->subscribe(this, NF_LINK_BREAK);
         nb->subscribe(this, NF_LINK_FULL_PROMISCUOUS);
@@ -137,7 +137,7 @@ void Ieee80211Etx::handleTimer(cMessage *msg)
             pkt->setKind(i);
             send(pkt, "toMac");
         }
-        scheduleAt(simTime()+par("jitter")+etxInterval, etxTimer);
+        scheduleAt(simTime()+par("ETXjitter")+etxInterval, etxTimer);
     }
     else if (msg == ettTimer)
     {
@@ -173,7 +173,7 @@ void Ieee80211Etx::handleTimer(cMessage *msg)
                 it++;
             }
         }
-        scheduleAt(simTime() + par("jitter") + ettInterval, ettTimer);
+        scheduleAt(simTime() + par("ETXjitter") + ettInterval, ettTimer);
     }
 }
 
