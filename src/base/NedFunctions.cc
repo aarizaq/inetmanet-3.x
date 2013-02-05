@@ -108,3 +108,48 @@ Define_NED_Function2(nedf_select,
         "Returns the <index>th item from the rest of the argument list; numbering starts from 0."
 );
 
+cNEDValue nedf_circlePositionX(cComponent *context, cNEDValue argv[], int argc)
+{
+
+    int rng = argc==4 ? (int)argv[3] : 0;
+
+    double corX = (double) argv[0];
+    double R = argv[2].doubleValueInUnit(argv[0].getUnit());
+
+    double theta = uniform(0,(2* M_PI),rng);
+    double module = uniform(0,1.0,rng)*R;
+
+    double x = module * cos(theta);
+    return cNEDValue(x+corX,argv[0].getUnit());
+}
+
+Define_NED_Function2(nedf_circlePositionX,
+        "quantity circlePositionX(quantity centerX, quantity centerY,quantity R, int rng?)",
+        "random/continuous",
+        "Returns a random number in a circle with center in centerX,centerY and radious R"
+);
+
+
+cNEDValue nedf_circlePositionY(cComponent *context, cNEDValue argv[], int argc)
+{
+
+    int rng = argc==4 ? (int)argv[3] : 0;
+
+    double corY = argv[1].doubleValueInUnit(argv[0].getUnit());
+    double R = argv[2].doubleValueInUnit(argv[0].getUnit());
+
+    double theta = uniform(0,(2* M_PI),rng);
+    double module = uniform(0,1.0,rng)*R;
+
+    double y = module * sin(theta);
+    return cNEDValue(y+corY, argv[0].getUnit());
+}
+
+
+
+Define_NED_Function2(nedf_circlePositionY,
+        "quantity circlePositionY(quantity centerX, quantity centerY,quantity R, int rng?)",
+        "random/continuous",
+        "Returns a random number in a circle with center in centerX,centerY and radious R"
+);
+
