@@ -1,4 +1,6 @@
 //
+// Copyright (C) 2013 Alfonso Ariza. Universidad de Malaga
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -59,7 +61,7 @@ class DinamicWirelessNodeManager : public cSimpleModule
         virtual void initialize();
        // virtual void finish();
         virtual void handleMessage(cMessage *msg);
-        void newNode(std::string name, std::string nodeId, bool setCoor, const Coord& position, simtime_t, int);
+        void newNode(const char *name, const char * nodeId, bool setCoor, const Coord& position, simtime_t, int);
         void deleteNode(const int &, const simtime_t &);
 };
 

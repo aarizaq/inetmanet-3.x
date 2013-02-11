@@ -1,4 +1,6 @@
 //
+// Copyright (C) 2013 Alfonso Ariza. Universidad de Malaga
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -12,6 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
+//
 
 #include "DinamicWirelessNodeManager.h"
 #include "MobilityBase.h"
@@ -53,7 +56,7 @@ void DinamicWirelessNodeManager::Timer::expire()
     {
         t =  simTime() + module->par("endLife").doubleValue();
         Coord position;
-        module->newNode(module->par("moduleName").str(), module->par("moduleType").str(), false, position, t, index);
+        module->newNode(module->par("nodeName").stringValue(), module->par("nodeType").stringValue(), false, position, t, index);
     }
     module->timerMultimMap.insert(std::pair<simtime_t, Timer *>(t, this));
 }
@@ -108,38 +111,44 @@ void DinamicWirelessNodeManager::initialize()
         NodeInf info;
         info.module = NULL;
         info.startLife = par("startLife");
+        nodeList.push_back(info);
+        DinamicWirelessNodeManager::Timer *timer = new DinamicWirelessNodeManager::Timer(i, this);
+        timer->resched(info.startLife);
     }
+    scheduleEvent();
 }
 
-void DinamicWirelessNodeManager::newNode(std::string name, std::string type,bool setCoor, const Coord& position, simtime_t endLife, int index)
+void DinamicWirelessNodeManager::newNode(const char * name, const char * type,bool setCoor, const Coord& position, simtime_t endLife, int index)
 {
     cModule* parentmod = getParentModule();
     int nodeVectorIndex = index;
     if (!parentmod) error("Parent Module not found");
 
-    cModuleType* nodeType = cModuleType::get(type.c_str());
-    if (!nodeType) error("Module Type \"%s\" not found", type.c_str());
+    cModuleType* nodeType = cModuleType::get(type);
+    if (!nodeType) error("Module Type \"%s\" not found", type);
 
     //TODO: this trashes the vectsize member of the cModule, although nobody seems to use it
-    cModule* mod = nodeType->create(name.c_str(), parentmod, nodeVectorIndex, nodeVectorIndex);
+    cModule* mod = nodeType->create(name, parentmod, nodeVectorIndex, nodeVectorIndex);
     mod->finalizeParameters();
     mod->buildInside();
     mod->scheduleStart(simTime());
 
-    MobilityBase* mm = NULL;
-    for (cModule::SubmoduleIterator iter(mod); !iter.end(); iter++) {
-        cModule* submod = iter();
-        mm = dynamic_cast<MobilityBase*>(submod);
-        if (!mm) continue;
-        if (!setCoor)
+    if (setCoor)
+    {
+        MobilityBase* mm = NULL;
+        for (cModule::SubmoduleIterator iter(mod); !iter.end(); iter++) {
+            cModule* submod = iter();
+            mm = dynamic_cast<MobilityBase*>(submod);
+            if (!mm)
+                continue;
+            mm->par("initialX").setDoubleValue(position.x);
+            mm->par("initialY").setDoubleValue(position.y);
+            mm->par("initialZ").setDoubleValue(position.z);
             break;
-        mm->par("initialX").setDoubleValue(position.x);
-        mm->par("initialY").setDoubleValue(position.y);
-        mm->par("initialZ").setDoubleValue(position.z);
-        break;
+        }
+        if (!mm)
+            error("Mobility modele not found");
     }
-    if (mm)
-        error("Mobility modele not found");
     NodeInf info;
     info.endLife = endLife;
     info.module = mod;
