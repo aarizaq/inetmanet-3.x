@@ -221,16 +221,8 @@ MACAddress MACAddress::generateAutoAddress()
 {
     ++autoAddressCtr;
 
-    unsigned char addrbytes[MAC_ADDRESS_SIZE];
-    addrbytes[0] = 0x0A;
-    addrbytes[1] = 0xAA;
-    addrbytes[2] = (autoAddressCtr>>24)&0xff;
-    addrbytes[3] = (autoAddressCtr>>16)&0xff;
-    addrbytes[4] = (autoAddressCtr>>8)&0xff;
-    addrbytes[5] = (autoAddressCtr>>0)&0xff;
-
-    MACAddress addr;
-    addr.setAddressBytes(addrbytes);
+    uint64 intAddr = 0x0AAA00000000ULL + (autoAddressCtr & 0xffffffffUL);
+    MACAddress addr(intAddr);
     return addr;
 }
 
