@@ -200,7 +200,7 @@ cMessage *WeightedFairQueue::enqueue(cMessage *msg)
         totalLength++;
         emit(queueLengthSignal, totalLength);
 
-        return false;
+        return NULL;
     }
 }
 
