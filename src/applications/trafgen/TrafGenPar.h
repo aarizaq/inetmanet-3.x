@@ -74,8 +74,9 @@ class TrafGenPar : public cSimpleModule
         // LIFECYCLE
         // this takes care of constructors and destructors
         //Module_Class_Members(TrafGen, cSimpleModule, 0);
+        TrafGenPar();
+        ~TrafGenPar();
         virtual void initialize(int);
-        virtual void finish();
 
         // OPERATIONS
         virtual void handleMessage(cMessage*);

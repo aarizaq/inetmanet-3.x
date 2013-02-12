@@ -104,17 +104,24 @@ void TrafGenPar::initialize(int aStage)
     }
 }
 
+TrafGenPar::TrafGenPar()
+{
+    mpSendMessage = NULL;
+    mpOnOffSwitch = NULL;
+}
+
 /**
  * Function called before module destruction
  * Used for recording statistics and deallocating memory
  */
-void TrafGenPar::finish()
+TrafGenPar::~TrafGenPar()
 {
-    cancelEvent(mpSendMessage);
-    delete mpSendMessage;
-    cancelEvent(mpOnOffSwitch);
-    delete mpOnOffSwitch;
+    if (mpSendMessage)
+        cancelAndDelete(mpSendMessage);
+    if (mpOnOffSwitch)
+        cancelAndDelete(mpOnOffSwitch);
 }
+
 
 //============================= OPERATIONS ===================================
 /**
