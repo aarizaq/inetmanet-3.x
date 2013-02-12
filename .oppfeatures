@@ -798,9 +798,6 @@
         labels = ""
         nedPackages = "
                        inet.underTest.hip
-                       inet.underTest.hip.application
-                       inet.underTest.hip.base
-                       inet.underTest.nodes.hip
                       "
         extraSourceFolders = ""
         compileFlags = ""
@@ -856,7 +853,7 @@
         initiallyEnabled = "false"
         requires = "WIMAX"
         labels = ""
-         nedPackages = "
+        nedPackages = "
                        inet.examples.wireless.WiMAXHandover
                        inet.examples.wireless.WiMAXQoS
                       "

@@ -51,9 +51,6 @@
 									<listOptionValue builtIn="false" value="WITH_80215"/>
 									<listOptionValue builtIn="false" value="WITH_BMAC"/>
 									<listOptionValue builtIn="false" value="WITH_80211MESH"/>
-									<listOptionValue builtIn="false" value="WITH_4GSIM"/>
-									<listOptionValue builtIn="false" value="WITH_WIMAX"/>
-									<listOptionValue builtIn="false" value="WITH_IEEE80211EXT"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.544419040" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -79,9 +76,6 @@
 									<listOptionValue builtIn="false" value="WITH_80215"/>
 									<listOptionValue builtIn="false" value="WITH_BMAC"/>
 									<listOptionValue builtIn="false" value="WITH_80211MESH"/>
-									<listOptionValue builtIn="false" value="WITH_4GSIM"/>
-									<listOptionValue builtIn="false" value="WITH_WIMAX"/>
-									<listOptionValue builtIn="false" value="WITH_IEEE80211EXT"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1681878324" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -123,9 +117,6 @@
 									<listOptionValue builtIn="false" value="WITH_80215"/>
 									<listOptionValue builtIn="false" value="WITH_BMAC"/>
 									<listOptionValue builtIn="false" value="WITH_80211MESH"/>
-									<listOptionValue builtIn="false" value="WITH_4GSIM"/>
-									<listOptionValue builtIn="false" value="WITH_WIMAX"/>
-									<listOptionValue builtIn="false" value="WITH_IEEE80211EXT"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1742976441" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -151,9 +142,6 @@
 									<listOptionValue builtIn="false" value="WITH_80215"/>
 									<listOptionValue builtIn="false" value="WITH_BMAC"/>
 									<listOptionValue builtIn="false" value="WITH_80211MESH"/>
-									<listOptionValue builtIn="false" value="WITH_4GSIM"/>
-									<listOptionValue builtIn="false" value="WITH_WIMAX"/>
-									<listOptionValue builtIn="false" value="WITH_IEEE80211EXT"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.339222991" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -165,7 +153,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="underTest/nodes/hip|applications/voipstream|transport/tcp_nsc|linklayer/ieee8021d|nodes/Ieee8021d|applications/voiptool|transport/tcp_lwip" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="underTest/hip|underTest/_4gsim|underTest/wimax|underTest/Ieee80211|underTest/nodes/hip|applications/voipstream|transport/tcp_nsc|linklayer/ieee8021d|nodes/Ieee8021d|applications/voiptool|transport/tcp_lwip" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -214,9 +202,6 @@
 									<listOptionValue builtIn="false" value="WITH_80215"/>
 									<listOptionValue builtIn="false" value="WITH_BMAC"/>
 									<listOptionValue builtIn="false" value="WITH_80211MESH"/>
-									<listOptionValue builtIn="false" value="WITH_4GSIM"/>
-									<listOptionValue builtIn="false" value="WITH_WIMAX"/>
-									<listOptionValue builtIn="false" value="WITH_IEEE80211EXT"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.769461144" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -242,9 +227,6 @@
 									<listOptionValue builtIn="false" value="WITH_80215"/>
 									<listOptionValue builtIn="false" value="WITH_BMAC"/>
 									<listOptionValue builtIn="false" value="WITH_80211MESH"/>
-									<listOptionValue builtIn="false" value="WITH_4GSIM"/>
-									<listOptionValue builtIn="false" value="WITH_WIMAX"/>
-									<listOptionValue builtIn="false" value="WITH_IEEE80211EXT"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.2064237392" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -286,9 +268,6 @@
 									<listOptionValue builtIn="false" value="WITH_80215"/>
 									<listOptionValue builtIn="false" value="WITH_BMAC"/>
 									<listOptionValue builtIn="false" value="WITH_80211MESH"/>
-									<listOptionValue builtIn="false" value="WITH_4GSIM"/>
-									<listOptionValue builtIn="false" value="WITH_WIMAX"/>
-									<listOptionValue builtIn="false" value="WITH_IEEE80211EXT"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1042057513" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -314,9 +293,6 @@
 									<listOptionValue builtIn="false" value="WITH_80215"/>
 									<listOptionValue builtIn="false" value="WITH_BMAC"/>
 									<listOptionValue builtIn="false" value="WITH_80211MESH"/>
-									<listOptionValue builtIn="false" value="WITH_4GSIM"/>
-									<listOptionValue builtIn="false" value="WITH_WIMAX"/>
-									<listOptionValue builtIn="false" value="WITH_IEEE80211EXT"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.337248908" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -328,7 +304,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="underTest/nodes/hip|applications/voipstream|transport/tcp_nsc|linklayer/ieee8021d|nodes/Ieee8021d|applications/voiptool|transport/tcp_lwip" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="src"/>
+						<entry excluding="underTest/hip|underTest/_4gsim|underTest/wimax|underTest/Ieee80211|underTest/nodes/hip|applications/voipstream|transport/tcp_nsc|linklayer/ieee8021d|nodes/Ieee8021d|applications/voiptool|transport/tcp_lwip" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
