@@ -18,7 +18,7 @@
 
 package inet.examples.wireless.WiMAXHandover;
 
-import inet.underTest.nodes.WiMAX.WiMAXAP;
+import inet.underTest.wimax.nodes.WiMAXAP;
 import inet.world.radio.ChannelControl;
 
 

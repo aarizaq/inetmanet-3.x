@@ -19,8 +19,8 @@
 package inet.examples.wireless.WiMAXQoS;
 
 import inet.examples.wireless.WiMAXQoS.Bild;
-import inet.underTest.nodes.WiMAX.WiMAXMS;
-import inet.underTest.nodes.WiMAX.WiMAXAP;
+import inet.underTest.wimax.nodes.WiMAXMS;
+import inet.underTest.wimax.nodes.WiMAXAP;
 import inet.world.radio.ChannelControl;
 
 module ScanningHONetwork

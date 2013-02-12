@@ -834,5 +834,52 @@
         compileFlags = "-DWITH_4GSIM"
         linkerFlags = ""
         />
+        
+     <feature
+        id="WIMAX"
+        name="wimax"
+        description = "under test WIMAX model"
+        initiallyEnabled = "false"
+        requires = "mobility radio TCP_INET MANET OSPFv2 MPLS UDP IPv4 IPv6 SCTP"
+        labels = ""
+        nedPackages = "
+                       inet.underTest.wimax
+                      "
+        extraSourceFolders = ""
+        compileFlags = "-DWITH_WIMAX"
+        linkerFlags = ""
+        />        
+     <feature
+        id="WIMAX_examples"
+        name="WIMAX Examples"
+        description = "WIMAX Examples"
+        initiallyEnabled = "false"
+        requires = "WIMAX"
+        labels = ""
+         nedPackages = "
+                       inet.examples.wireless.WiMAXHandover
+                       inet.examples.wireless.WiMAXQoS
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
+        
+      <feature
+        id="Ieee80211Extensions"
+        name="Ieee80211Extensions"
+        description = "under test Ieee80211Extensions model"
+        initiallyEnabled = "false"
+        requires = "mobility radio TCP_INET MANET OSPFv2 MPLS UDP IPv4 IPv6 SCTP"
+        labels = ""
+        nedPackages = "
+                       inet.underTest.Ieee80211
+                      "
+        extraSourceFolders = ""
+        compileFlags = "-DWITH_IEEE80211EXT"
+        linkerFlags = ""
+        />
+        
+       
 </features>
 

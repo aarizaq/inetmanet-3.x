@@ -18,7 +18,7 @@
 
 package inet.examples.wireless.WiMAXHandover;
 
-import inet.underTest.nodes.WiMAX.WiMAXMS;
+import inet.underTest.wimax.nodes.WiMAXMS;
 
 
 network HandoverNetworkClusterMS2 extends HandoverNetworkClusterBS
