@@ -16,41 +16,37 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
-package inet.examples.wireless.WiMAXHandover;
+package inet.examples.WIMAX.WiMAXHandover;
 
 import inet.underTest.wimax.nodes.WiMAXAP;
 import inet.underTest.wimax.nodes.WiMAXMS;
 import inet.world.radio.ChannelControl;
 
 
-network HandoverNetworkOneBSFiveMS
+module HandoverNetworkFourBS
 {
     parameters:
         @display("bgb=1085,582");
     submodules:
-        ms11: WiMAXMS {
+        ms2: WiMAXMS {
             parameters:
-                @display("p=100,300;i=device/cellphone_s;r=,,#707070");
-        }
-        ms12: WiMAXMS {
-            parameters:
-                @display("p=100,300;i=device/cellphone_s;r=,,#707070");
-        }
-        ms13: WiMAXMS {
-            parameters:
-                @display("p=100,300;i=device/cellphone_s;r=,,#707070");
-        }
-        ms14: WiMAXMS {
-            parameters:
-                @display("p=100,300;i=device/cellphone_s;r=,,#707070");
-        }
-        ms15: WiMAXMS {
-            parameters:
-                @display("p=100,300;i=device/cellphone_s;r=,,#707070");
+                @display("p=750,2000;i=device/cellphone_s;r=,,#707070");
         }
         bs1: WiMAXAP {
             parameters:
-                @display("p=300,300;i=device/antennatower_l;r=,,#707070");
+                @display("p=1000,2500;i=device/antennatower_l;r=,,#707070");
+        }
+        bs2: WiMAXAP {
+            parameters:
+                @display("p=2000,4000;i=device/antennatower_l;r=,,#707070");
+        }
+        bs3: WiMAXAP {
+            parameters:
+                @display("p=3000,2500;i=device/antennatower_l;r=,,#707070");
+        }
+        bs4: WiMAXAP {
+            parameters:
+                @display("p=2000,1000;i=device/antennatower_l;r=,,#707070");
         }
         channelControl: ChannelControl {
             parameters:
@@ -58,3 +54,9 @@ network HandoverNetworkOneBSFiveMS
         }
     connections allowunconnected:
 }
+
+//network HandoverNetworkFourBS extends HandoverNetworkFourBS
+//{
+//    parameters:
+//}
+

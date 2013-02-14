@@ -16,16 +16,32 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
-package inet.examples.wireless.WiMAXHandover;
+package inet.examples.WIMAX.WiMAXHandover;
 
+import inet.underTest.wimax.nodes.WiMAXAP;
 import inet.underTest.wimax.nodes.WiMAXMS;
+import inet.world.radio.ChannelControl;
 
 
-network HandoverNetworkClusterMS2 extends HandoverNetworkClusterBS
+network HandoverNetworkFirst
 {
+    parameters:
+        @display("bgb=1085,582");
     submodules:
-        ms2: WiMAXMS {
+        ms1: WiMAXMS {
             parameters:
-                @display("p=300,300;i=device/cellphone_s;r=,,#707070");
+                @display("p=100,1000;i=device/cellphone_s;r=,,#707070");
         }
+        bs1: WiMAXAP {
+            parameters:
+                @display("p=200,1000;i=device/antennatower_l;r=,,#707070");
+        }
+        bs2: WiMAXAP {
+            parameters:
+                @display("p=2200,1000;i=device/antennatower_l;r=,,#707070");
+        }
+        channelControl: ChannelControl {
+                @display("p=60,50;i=misc/sun");
+        }
+    connections allowunconnected:
 }

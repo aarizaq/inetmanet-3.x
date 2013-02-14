@@ -854,8 +854,8 @@
         requires = "WIMAX"
         labels = ""
         nedPackages = "
-                       inet.examples.wireless.WiMAXHandover
-                       inet.examples.wireless.WiMAXQoS
+                       inet.examples.WIMAX.WiMAXHandover
+                       inet.examples.WIMAX.WiMAXQoS
                       "
         extraSourceFolders = ""
         compileFlags = ""

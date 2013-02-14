@@ -16,9 +16,9 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
-package inet.examples.wireless.WiMAXHandover;
+package inet.examples.WIMAX.WiMAXHandover;
 
-import inet.examples.wireless.WiMAXHandover.Bild;
+import inet.examples.WIMAX.WiMAXHandover.Bild;
 import inet.underTest.wimax.nodes.WiMAXMS;
 import inet.underTest.wimax.nodes.WiMAXAP;
 import inet.world.radio.ChannelControl;
