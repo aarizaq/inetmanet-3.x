@@ -2074,7 +2074,7 @@ void HwmpProtocol::setRefreshRoute(const ManetAddress &destination, const ManetA
             route->whenExpire = simTime() + m_dot11MeshHWMPactivePathTimeout;
         }
         else
-            route = false;
+            route = NULL;
     }
     else
     {
