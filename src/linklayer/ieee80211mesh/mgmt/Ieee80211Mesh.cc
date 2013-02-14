@@ -110,6 +110,11 @@ Ieee80211Mesh::Ieee80211Mesh()
     numRoutingBytes = 0;
 
     getOtpimunRoute = NULL;
+
+    proactiveFeedback = false;
+    maxHopProactiveFeedback = -1;
+    maxHopProactive = -1;
+    maxHopReactive = -1;
 }
 
 void Ieee80211Mesh::initializeBase(int stage)
@@ -167,9 +172,6 @@ void Ieee80211Mesh::initialize(int stage)
     {
         limitDelay = par("maxDelay").doubleValue();
         useLwmpls = par("UseLwMpls");
-        maxHopProactiveFeedback = par("maxHopProactiveFeedback");
-        maxHopProactive = par("maxHopProactive");
-        maxHopReactive = par("maxHopReactive");
         maxTTL = par("maxTTL");
         if (gate("upperLayerOut")->getPathEndGate()->isConnected() &&
                 (strcmp(gate("upperLayerOut")->getPathEndGate()->getOwnerModule()->getName(),"relayUnit")==0 || par("forceRelayUnit").boolValue()))
@@ -186,21 +188,32 @@ void Ieee80211Mesh::initialize(int stage)
         bool useProactive = par("useProactive");
         bool ETXEstimate = par("ETXEstimate");
         bool useHwmp = par("useHwmp");
+
         if (useHwmp)
         {
             useReactive = false;
             useProactive = false;
             useLwmpls = false;
         }
-        //if (useReactive)
-        //    useProactive = false;
+
+        if (useReactive)
+            useProactive = false;
 
         if (useReactive && useProactive)
         {
-            proactiveFeedback  = par("ProactiveFeedback");
+            if (this->hasPar("ProactiveFeedback"))
+                proactiveFeedback  = par("ProactiveFeedback");
+            else
+                proactiveFeedback = true;
+
+            if (this->hasPar("maxHopProactiveFeedback"))
+                maxHopProactiveFeedback = par("maxHopProactiveFeedback");
+            if (this->hasPar("maxHopProactive"))
+                maxHopProactive = par("maxHopProactive");
+            if (this->hasPar("maxHopReactive"))
+                   maxHopReactive = par("maxHopReactive");
         }
-        else
-            proactiveFeedback = false;
+
         mplsData = new LWMPLSDataStructure;
         WATCH(hasRelayUnit);
         WATCH_PTRMAP(*(mplsData->forwardingTableOutput));
