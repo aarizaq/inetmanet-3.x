@@ -213,7 +213,6 @@ class INET_API Ieee80211Mac : public WirelessMacBase, public INotifiable
     };
   protected:
     cFSM fsm;
-    bool fixFSM;
 
     struct Edca {
         simtime_t TXOP;
@@ -428,7 +427,6 @@ class INET_API Ieee80211Mac : public WirelessMacBase, public INotifiable
     cOutVector radioStateVector;
     // cOutVector throughput[4];
     //@}
-    bool patchErrorReceptionWithErrors;
 
   public:
     /**
