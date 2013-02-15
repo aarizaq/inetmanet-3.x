@@ -428,6 +428,7 @@ class INET_API Ieee80211Mac : public WirelessMacBase, public INotifiable
     cOutVector radioStateVector;
     // cOutVector throughput[4];
     //@}
+    bool patchErrorReceptionWithErrors;
 
   public:
     /**
