@@ -40,6 +40,7 @@ simple Ieee80211Mesh
         double GateWayAnnounceInterval @unit("s") = default(100s);
         volatile double MacBroadcastDelay @unit("s") = default(uniform(0s,0.01s));
         bool forceRelayUnit  = default(false);
+        bool floodingConfirmation = default(false);
         // pending of remove variables
         //         bool ProactiveFeedback = default(true);
         //        int maxHopProactiveFeedback = default(-1); // Maximun number of hops for to use the proactive feedback, not used yet, TO-DO

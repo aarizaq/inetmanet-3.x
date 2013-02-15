@@ -1059,7 +1059,26 @@ void Ieee80211Mesh::mplsDataProcess(LWMPLSPacket * mpls_pk_ptr, MACAddress sta_a
     case WMPLS_REQUEST_GATEWAY:
         uint32_t cont;
         uint32_t newCounter = mpls_pk_ptr->getCounter();
-        if (mpls_pk_ptr->getSource()==myAddress)
+
+        if (floodingConfirmation && code == WMPLS_BROADCAST)
+        {
+            for (unsigned int i = 0; i < confirmationFrames.size(); i++)
+            {
+                LWMPLSPacket * mplsPkAux = dynamic_cast<LWMPLSPacket *>(confirmationFrames[i].frame->getEncapsulatedPacket());
+                if (mplsPkAux)
+                {
+                    if (mpls_pk_ptr->getSource() == mplsPkAux->getSource() && mpls_pk_ptr->getCounter() == mplsPkAux->getCounter())
+                    {
+                        // cancel and delete
+                        cancelAndDelete(confirmationFrames[i].frame);
+                        confirmationFrames.erase(confirmationFrames.begin()+i);
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (mpls_pk_ptr->getSource() == myAddress)
         {
             // los paquetes propios deben ser borrados
             delete mpls_pk_ptr;
@@ -1091,6 +1110,14 @@ void Ieee80211Mesh::mplsDataProcess(LWMPLSPacket * mpls_pk_ptr, MACAddress sta_a
 //        sendOrEnqueue(encapsulate(mpls_pk_ptr,MACAddress::BROADCAST_ADDRESS));
 //       small random delay. Avoid the collision
         Ieee80211DataFrame *meshFrame = encapsulate(mpls_pk_ptr, MACAddress::BROADCAST_ADDRESS);
+        if (floodingConfirmation)
+        {
+            ConfirmationInfo cinfo;
+            cinfo.frame = dynamic_cast<Ieee80211MeshFrame*>(meshFrame)->dup();
+            cinfo.reintent = 0;
+            confirmationFrames.push_back(cinfo);
+            scheduleAt(simTime()+1,cinfo.frame);
+        }
         scheduleAt(simTime()+par("MacBroadcastDelay"), meshFrame);
         break;
     }

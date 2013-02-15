@@ -85,6 +85,12 @@ Ieee80211Mesh::~Ieee80211Mesh()
     }
     if (getOtpimunRoute)
         delete getOtpimunRoute;
+
+    while (!confirmationFrames.empty())
+    {
+        cancelAndDelete(confirmationFrames.back().frame);
+        confirmationFrames.pop_back();
+    }
 }
 
 Ieee80211Mesh::Ieee80211Mesh()
@@ -115,6 +121,9 @@ Ieee80211Mesh::Ieee80211Mesh()
     maxHopProactiveFeedback = -1;
     maxHopProactive = -1;
     maxHopReactive = -1;
+
+    floodingConfirmation = false;
+    confirmationFrames.clear();
 }
 
 void Ieee80211Mesh::initializeBase(int stage)
@@ -494,7 +503,20 @@ void Ieee80211Mesh::handleTimer(cMessage *msg)
     else if (gateWayTimeOut==msg)
         publishGateWayIdentity();
     else if (dynamic_cast<Ieee80211DataFrame*>(msg))
+    {
+        if (floodingConfirmation && !confirmationFrames.empty())
+        {
+            for (unsigned int i = 0; i < confirmationFrames.size(); i++)
+            {
+                if (confirmationFrames[i].frame == msg)
+                {
+                    confirmationFrames.erase(confirmationFrames.begin()+i);
+                    break;
+                }
+            }
+        }
         sendOrEnqueue(PK(msg));
+    }
     else
         opp_error("message timer error");
 }

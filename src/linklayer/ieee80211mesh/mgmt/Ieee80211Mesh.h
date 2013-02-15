@@ -97,6 +97,15 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase
         int maxHopProactive; // Maximun number of hops in the fix part of the network with the proactive feedback
         int maxHopReactive; // Maximun number of hops by the reactive part for to use the proactive feedback
 
+        bool floodingConfirmation;
+
+        struct ConfirmationInfo
+        {
+                Ieee80211MeshFrame* frame;
+                int reintent;
+        };
+        std::vector<ConfirmationInfo> confirmationFrames;
+
         ManetRoutingBase *routingModuleProactive;
         ManetRoutingBase *routingModuleReactive;
         ManetRoutingBase *routingModuleHwmp;
