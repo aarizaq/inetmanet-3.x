@@ -33,6 +33,7 @@
 #include "MPLSPacket.h"
 #include "ARPPacket_m.h"
 #include "OSPFPacket_m.h"
+#include "OLSR.h"
 #include <string.h>
 
 
@@ -1057,7 +1058,6 @@ void Ieee80211Mesh::mplsDataProcess(LWMPLSPacket * mpls_pk_ptr, MACAddress sta_a
     case WMPLS_BROADCAST:
     case WMPLS_ANNOUNCE_GATEWAY:
     case WMPLS_REQUEST_GATEWAY:
-        uint32_t cont;
         uint32_t newCounter = mpls_pk_ptr->getCounter();
 
         if (floodingConfirmation && code == WMPLS_BROADCAST)
@@ -1084,27 +1084,23 @@ void Ieee80211Mesh::mplsDataProcess(LWMPLSPacket * mpls_pk_ptr, MACAddress sta_a
             delete mpls_pk_ptr;
             return;
         }
-
-        if (mplsData->getBroadCastCounter(mpls_pk_ptr->getSource().getInt(), cont))
+        if (mplsIsBroadcastProcessed(mpls_pk_ptr->getSource(), newCounter))
         {
-            if (newCounter==cont)
+            delete mpls_pk_ptr;
+            return;
+        }
+
+        // send up and Resend
+        if (code==WMPLS_BROADCAST)
+        {
+            // check if the node must propagate broadcast
+            sendUp(mpls_pk_ptr->getEncapsulatedPacket()->dup());
+            if (!mplsForwardBroadcast(mpls_pk_ptr->getSource())) // no propagate
             {
                 delete mpls_pk_ptr;
                 return;
             }
-            else if (newCounter < cont) //
-            {
-                if (!(cont > UINT32_MAX-100 && newCounter<100)) // Dado la vuelta
-                {
-                    delete mpls_pk_ptr;
-                    return;
-                }
-            }
         }
-        mplsData->setBroadCastCounter(mpls_pk_ptr->getSource().getInt(), newCounter);
-        // send up and Resend
-        if (code==WMPLS_BROADCAST)
-            sendUp(mpls_pk_ptr->getEncapsulatedPacket()->dup());
         else
             processControlPacket(dynamic_cast<LWMPLSControl*>(mpls_pk_ptr));
 //        sendOrEnqueue(encapsulate(mpls_pk_ptr,MACAddress::BROADCAST_ADDRESS));
@@ -1359,3 +1355,32 @@ void Ieee80211Mesh::mplsPurge(LWmpls_Forwarding_Structure *forwarding_ptr, bool 
     }
 }
 
+bool Ieee80211Mesh::mplsIsBroadcastProcessed(const MACAddress &src, const uint32 &newCounter)
+{
+    uint32_t cont;
+    if (mplsData->getBroadCastCounter(src.getInt(), cont))
+    {
+        if (newCounter == cont)
+            return true;
+        else if (newCounter < cont) //
+        {
+            if (!(cont > UINT32_MAX - 100 && newCounter < 100)) // Dado la vuelta
+                return true;
+        }
+    }
+    mplsData->setBroadCastCounter(src.getInt(), newCounter);
+    return false;
+}
+
+bool Ieee80211Mesh::mplsForwardBroadcast(const MACAddress &addr)
+{
+
+    if (!par("inteligentForward").boolValue() || routingModuleProactive == NULL)
+        return true;
+    OLSR *olsr = dynamic_cast<OLSR*>(routingModuleProactive);
+    if (olsr == NULL)
+        return true;
+    if (!olsr->isNodeCandidate(ManetAddress(addr)))
+        return false;
+    return true;
+}

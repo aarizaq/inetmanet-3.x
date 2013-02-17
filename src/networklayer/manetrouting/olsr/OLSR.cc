@@ -3176,3 +3176,29 @@ void OLSR::getDistributionPath(const ManetAddress &addr,std::vector<ManetAddress
         path = it->second;
     }
 }
+
+
+
+bool
+OLSR::isNodeCandidate(const nsaddr_t &src_addr)
+{
+    double now = CURRENT_TIME;
+
+    // If the sender interface address is not in the symmetric
+    // 1-hop neighborhood the message must not be forwarded
+
+
+    OLSR_link_tuple* link_tuple = state_.find_sym_link_tuple(src_addr, now);
+    if (link_tuple == NULL)
+        return false;
+
+    // If the sender interface address is an interface address
+    // of a MPR selector of this node and ttl is greater than 1,
+    // the message must be retransmitted
+    bool retransmitted = false;
+
+    OLSR_mprsel_tuple* mprsel_tuple = state_.find_mprsel_tuple(get_main_addr(src_addr));
+    if (mprsel_tuple != NULL)
+        return true;
+    return false;
+}
