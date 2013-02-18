@@ -925,6 +925,9 @@ void IPv6NeighbourDiscovery::makeTentativeAddressPermanent(const IPv6Address& te
         }
 
         dadGlobalList.erase(it->first);
+#ifdef WITH_HIP
+        NotificationBoardAccess().get()->fireChangeNotification(NF_IPv6_HANDOVER_OCCURRED, NULL);
+#endif
     }
 
     // an optimization to make sure that the access router on the link gets our L2 address
@@ -2611,6 +2614,10 @@ void IPv6NeighbourDiscovery::processRAPrefixInfoForAddrAutoConf(
                 // if the link local address is tentative, then we make the global unicast address tentative as well
                 ie->ipv6Data()->assignAddress(newAddr, isLinkLocalTentative,
                         simTime() + validLifetime, simTime() + preferredLifetime, hFlag);
+#ifdef WITH_HIP
+                if(!isLinkLocalTentative)
+                    NotificationBoardAccess().get()->fireChangeNotification(NF_IPv6_HANDOVER_OCCURRED, NULL);
+#endif
             }
             else
             {

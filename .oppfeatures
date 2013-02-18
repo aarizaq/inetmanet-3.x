@@ -800,7 +800,7 @@
                        inet.underTest.hip
                       "
         extraSourceFolders = ""
-        compileFlags = ""
+        compileFlags = "-DWITH_HIP"
         linkerFlags = ""
         />
     <feature
