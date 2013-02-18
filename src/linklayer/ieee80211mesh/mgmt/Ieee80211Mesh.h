@@ -145,6 +145,8 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase
         void mplsCheckRouteTime();
         virtual void mplsInitializeCheckMac();
         virtual void mplsPurge(LWmpls_Forwarding_Structure *forwarding_ptr, bool purge_break);
+        virtual bool mplsIsBroadcastProcessed(const MACAddress &, const uint32 &);
+        virtual bool mplsForwardBroadcast(const MACAddress &);
         virtual bool forwardMessage(Ieee80211DataFrame *);
         virtual bool macLabelBasedSend(Ieee80211DataFrame *);
         virtual void actualizeReactive(cPacket *pkt, bool out);

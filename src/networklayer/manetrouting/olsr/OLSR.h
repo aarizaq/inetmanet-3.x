@@ -562,6 +562,8 @@ class OLSR : public ManetRoutingBase
 
     //
     virtual void getDistributionPath(const ManetAddress&, std::vector<ManetAddress> &path);
+
+    virtual bool isNodeCandidate(const ManetAddress&);
 };
 
 #endif

@@ -64,13 +64,18 @@ class INET_API UDPVideoStreamSvr2 : public cSimpleModule
             char type;
             uint32_t size;
     };
-    std::deque<VideoInfo> trace;
 
+  protected:
+    typedef std::vector<VideoStreamData *> VideoStreamVector;
+    typedef std::deque<VideoInfo> VideoTrace;
+    VideoTrace trace;
+
+    VideoStreamData *videoBroadcastStream;
+    cMessage * restartVideoBroadcast;
     bool macroPackets;
     uint64_t maxSizeMacro;
     simtime_t initTime;
-  protected:
-    typedef std::vector<VideoStreamData *> VideoStreamVector;
+
     VideoStreamVector streamVector;
     UDPSocket socket;
 
@@ -94,7 +99,11 @@ class INET_API UDPVideoStreamSvr2 : public cSimpleModule
     // send a packet of the given video stream
     virtual void sendStreamData(cMessage *timer);
 
+    // parse utexas video traces
     virtual void fileParser(const char *fileName);
+
+    // begin a broadcast sequence
+    virtual void broadcastVideo();
 
   public:
     UDPVideoStreamSvr2();

@@ -48,6 +48,7 @@ simple Ieee80211Mesh
         //        int maxHopReactive = default(-1); // Maximun number of hops by the reactive part for to use the proactive feedback, not used yet, TO-DO
         bool locatorActive  = default(false);
         double coverageArea @unit(m) = default(-1m);
+        bool inteligentForward = default(false);
         @signal[enqueuePk](type=cMessage);
         @signal[dequeuePk](type=cMessage);
         @signal[dropPkByQueue](type=cMessage);
