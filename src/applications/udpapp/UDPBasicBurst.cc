@@ -123,11 +123,25 @@ void UDPBasicBurst::initialize(int stage)
         const char *token;
         while ((token = tokenizer.nextToken()) != NULL)
         {
-
-            InterfaceEntry *ie = ift->getInterfaceByName(token);
-            if (ie == NULL)
-                throw cRuntimeError(this, "Invalid output interface name : %s",token);
-            outputInterfaceMulticastBroadcast.push_back(ie->getInterfaceId());
+            if (strstr(token, "ALL") != NULL)
+            {
+                for (int i = 0; i < ift->getNumInterfaces(); i++)
+                {
+                    InterfaceEntry *ie = ift->getInterface(i);
+                    if (ie->isLoopback())
+                        continue;
+                    if (ie == NULL)
+                        throw cRuntimeError(this, "Invalid output interface name : %s", token);
+                    outputInterfaceMulticastBroadcast.push_back(ie->getInterfaceId());
+                }
+            }
+            else
+            {
+                InterfaceEntry *ie = ift->getInterfaceByName(token);
+                if (ie == NULL)
+                    throw cRuntimeError(this, "Invalid output interface name : %s", token);
+                outputInterfaceMulticastBroadcast.push_back(ie->getInterfaceId());
+            }
         }
     }
 
@@ -315,17 +329,7 @@ void UDPBasicBurst::generateBurst()
     emit(sentPkSignal, payload);
 
     // Check address type
-    if (!outputInterfaceMulticastBroadcast.empty() && (destAddr.isMulticast() || (!destAddr.isIPv6() && destAddr.get4() == IPv4Address::ALLONES_ADDRESS)))
-    {
-        for (unsigned int i = 0; i< outputInterfaceMulticastBroadcast.size(); i++)
-        {
-            if (outputInterfaceMulticastBroadcast.size()-i > 1)
-                socket.sendTo(payload->dup(), destAddr, destPort,outputInterfaceMulticastBroadcast[i]);
-            else
-                socket.sendTo(payload, destAddr, destPort,outputInterfaceMulticastBroadcast[i]);
-        }
-    }
-    else
+    if (!sendBroadcast(destAddr, payload))
         socket.sendTo(payload, destAddr, destPort,outputInterface);
 
     numSent++;
@@ -344,3 +348,18 @@ void UDPBasicBurst::finish()
     recordScalar("Total deleted", numDeleted);
 }
 
+bool UDPBasicBurst::sendBroadcast(const IPvXAddress &dest, cPacket *pkt)
+{
+    if (!outputInterfaceMulticastBroadcast.empty() && (dest.isMulticast() || (!dest.isIPv6() && dest.get4() == IPv4Address::ALLONES_ADDRESS)))
+    {
+        for (unsigned int i = 0; i < outputInterfaceMulticastBroadcast.size(); i++)
+        {
+            if (outputInterfaceMulticastBroadcast.size() - i > 1)
+                socket.sendTo(pkt->dup(), destAddr, destPort, outputInterfaceMulticastBroadcast[i]);
+            else
+                socket.sendTo(pkt, destAddr, destPort, outputInterfaceMulticastBroadcast[i]);
+        }
+        return true;
+    }
+    return false;
+}

@@ -107,11 +107,25 @@ void UDPBasicBurstNotification::initialize(int stage)
         const char *token;
         while ((token = tokenizer.nextToken()) != NULL)
         {
-
-            InterfaceEntry *ie = ift->getInterfaceByName(token);
-            if (ie == NULL)
-                throw cRuntimeError(this, "Invalid output interface name : %s",token);
-            outputInterfaceMulticastBroadcast.push_back(ie->getInterfaceId());
+            if (strstr(token, "ALL") != NULL)
+            {
+                for (int i = 0; i < ift->getNumInterfaces(); i++)
+                {
+                    InterfaceEntry *ie = ift->getInterface(i);
+                    if (ie->isLoopback())
+                        continue;
+                    if (ie == NULL)
+                        throw cRuntimeError(this, "Invalid output interface name : %s", token);
+                    outputInterfaceMulticastBroadcast.push_back(ie->getInterfaceId());
+                }
+            }
+            else
+            {
+                InterfaceEntry *ie = ift->getInterfaceByName(token);
+                if (ie == NULL)
+                    throw cRuntimeError(this, "Invalid output interface name : %s", token);
+                outputInterfaceMulticastBroadcast.push_back(ie->getInterfaceId());
+            }
         }
     }
 
@@ -202,17 +216,8 @@ void UDPBasicBurstNotification::generateBurst()
         payload->setTimestamp();
         emit(sentPkSignal, payload);
         // Check address type
-        if (!outputInterfaceMulticastBroadcast.empty()  && (destAddr.isMulticast() || (!destAddr.isIPv6() && destAddr.get4() == IPv4Address::ALLONES_ADDRESS)))
-        {
-            for (unsigned int i = 0; i< outputInterfaceMulticastBroadcast.size(); i++)
-            {
-                if (outputInterfaceMulticastBroadcast.size()-i > 1)
-                    socket.sendTo(payload->dup(), destAddr, destPort,outputInterfaceMulticastBroadcast[i]);
-                else
-                    socket.sendTo(payload, destAddr, destPort,outputInterfaceMulticastBroadcast[i]);
-            }
-        }
-        else
+        // Check address type
+        if (!sendBroadcast(destAddr, payload))
             socket.sendTo(payload, destAddr, destPort,outputInterface);
         numSent++;
     }

@@ -93,6 +93,7 @@ class INET_API UDPBasicBurst : public cSimpleModule
     virtual void initialize(int stage);
     virtual void handleMessage(cMessage *msg);
     virtual void finish();
+    virtual bool sendBroadcast(const IPvXAddress &dest, cPacket *pkt);
 
   public:
     UDPBasicBurst();
