@@ -355,9 +355,9 @@ bool UDPBasicBurst::sendBroadcast(const IPvXAddress &dest, cPacket *pkt)
         for (unsigned int i = 0; i < outputInterfaceMulticastBroadcast.size(); i++)
         {
             if (outputInterfaceMulticastBroadcast.size() - i > 1)
-                socket.sendTo(pkt->dup(), destAddr, destPort, outputInterfaceMulticastBroadcast[i]);
+                socket.sendTo(pkt->dup(), dest, destPort, outputInterfaceMulticastBroadcast[i]);
             else
-                socket.sendTo(pkt, destAddr, destPort, outputInterfaceMulticastBroadcast[i]);
+                socket.sendTo(pkt, dest, destPort, outputInterfaceMulticastBroadcast[i]);
         }
         return true;
     }
