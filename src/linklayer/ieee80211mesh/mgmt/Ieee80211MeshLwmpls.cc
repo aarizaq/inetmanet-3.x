@@ -34,6 +34,7 @@
 #include "ARPPacket_m.h"
 #include "OSPFPacket_m.h"
 #include "OLSR.h"
+#include "EtherFrame_m.h"
 #include <string.h>
 
 
@@ -1094,8 +1095,22 @@ void Ieee80211Mesh::mplsDataProcess(LWMPLSPacket * mpls_pk_ptr, MACAddress sta_a
         if (code==WMPLS_BROADCAST)
         {
             // check if the node must propagate broadcast
-            sendUp(mpls_pk_ptr->getEncapsulatedPacket()->dup());
-            if (!mplsForwardBroadcast(mpls_pk_ptr->getSource())) // no propagate
+            if (hasRelayUnit)
+            {
+                cPacket *msg = mpls_pk_ptr->getEncapsulatedPacket()->dup();
+
+                EthernetIIFrame *ethframe = new EthernetIIFrame(msg->getName()); //TODO option to use EtherFrameWithSNAP instead
+                ethframe->setDest(mpls_pk_ptr->getDest());
+                ethframe->setSrc(mpls_pk_ptr->getSource());
+                ethframe->setEtherType(0);
+                ethframe->encapsulate(msg);
+                if (ethframe->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+                    ethframe->setByteLength(MIN_ETHERNET_FRAME_BYTES);
+                sendUp(ethframe);
+            }
+            else
+                sendUp(mpls_pk_ptr->getEncapsulatedPacket()->dup());
+            if (!mplsForwardBroadcast(sta_addr)) // no propagate
             {
                 delete mpls_pk_ptr;
                 return;
@@ -1375,11 +1390,14 @@ bool Ieee80211Mesh::mplsIsBroadcastProcessed(const MACAddress &src, const uint32
 bool Ieee80211Mesh::mplsForwardBroadcast(const MACAddress &addr)
 {
 
-    if (!par("inteligentForward").boolValue() || routingModuleProactive == NULL)
+    if (!par("inteligentForward").boolValue())
         return true;
+    if (routingModuleProactive == NULL)
+        return false;
+
     OLSR *olsr = dynamic_cast<OLSR*>(routingModuleProactive);
     if (olsr == NULL)
-        return true;
+        opp_error("inteligentForward OLSR not found");
     if (!olsr->isNodeCandidate(ManetAddress(addr)))
         return false;
     return true;
