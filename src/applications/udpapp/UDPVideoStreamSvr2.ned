@@ -53,8 +53,9 @@ simple UDPVideoStreamSvr2 like IUDPApp
         string traceFileName = default("");
         bool macroPackets = default(false);
         int maxSizeMacro @unit(B) = default(512B);
-        bool broadcastVideo = default(false);
+        bool videoBroadcast = default(false);
         double startBroadcast @unit(s) = 40s;
+        string broadcastInterface = default("wlan0");
         volatile double restartBroascast @unit(s) = -1s;
         @display("i=block/app");
         @signal[sentPk](type=cPacket);

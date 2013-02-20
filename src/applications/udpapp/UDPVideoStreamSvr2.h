@@ -72,6 +72,7 @@ class INET_API UDPVideoStreamSvr2 : public cSimpleModule
 
     VideoStreamData *videoBroadcastStream;
     cMessage * restartVideoBroadcast;
+    int outputInterfaceBroadcast;
     bool macroPackets;
     uint64_t maxSizeMacro;
     simtime_t initTime;
@@ -104,6 +105,7 @@ class INET_API UDPVideoStreamSvr2 : public cSimpleModule
 
     // begin a broadcast sequence
     virtual void broadcastVideo();
+    virtual int broadcastInterface();
 
   public:
     UDPVideoStreamSvr2();

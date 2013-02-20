@@ -25,6 +25,8 @@
 #include <iostream>
 #include <fstream>
 #include "UDPVideoStreamSvr2.h"
+#include "InterfaceTable.h"
+#include "InterfaceTableAccess.h"
 
 #include "UDPControlInfo_m.h"
 #include "UDPVideoData_m.h"
@@ -97,6 +99,7 @@ UDPVideoStreamSvr2::UDPVideoStreamSvr2()
 {
     videoBroadcastStream = NULL;
     restartVideoBroadcast = NULL;
+    outputInterfaceBroadcast = -1;
 }
 
 UDPVideoStreamSvr2::~UDPVideoStreamSvr2()
@@ -125,12 +128,10 @@ void UDPVideoStreamSvr2::initialize()
 
     if (par("videoBroadcast").boolValue())
     {
-        if (par("videoBroadcast").doubleValue() >= 0)
-        {
-            restartVideoBroadcast = new cMessage();
-            scheduleAt(par("videoBroadcast").doubleValue(),restartVideoBroadcast);
-        }
+        restartVideoBroadcast = new cMessage();
+        scheduleAt(par("startBroadcast").doubleValue(), restartVideoBroadcast);
     }
+
 
 
     // statistics
@@ -347,7 +348,10 @@ void UDPVideoStreamSvr2::sendStreamData(cMessage *timer)
 
     }
     emit(sentPkSignal, pkt);
-    socket.sendTo(pkt, d->clientAddr, d->clientPort);
+    if (videoBroadcastStream != d)
+        socket.sendTo(pkt, d->clientAddr, d->clientPort);
+    else
+        socket.sendTo(pkt, d->clientAddr, d->clientPort, broadcastInterface());
 
     if (deleteTimer)
     {
@@ -395,4 +399,20 @@ void UDPVideoStreamSvr2::broadcastVideo()
 
     numStreams++;
     emit(reqStreamBytesSignal, videoBroadcastStream->videoSize);
+}
+
+int UDPVideoStreamSvr2::broadcastInterface()
+{
+    if (outputInterfaceBroadcast > 0)
+        return outputInterfaceBroadcast;
+    if (strcmp(par("broadcastInterface").stringValue(), "") != 0)
+    {
+        IInterfaceTable* ift = InterfaceTableAccess().get();
+        const char *ports = par("broadcastInterface");
+        InterfaceEntry *ie = ift->getInterfaceByName(ports);
+        if (ie == NULL)
+            throw cRuntimeError(this, "Invalid output interface name : %s", ports);
+        outputInterfaceBroadcast = ie->getInterfaceId();
+    }
+    return outputInterfaceBroadcast;
 }
