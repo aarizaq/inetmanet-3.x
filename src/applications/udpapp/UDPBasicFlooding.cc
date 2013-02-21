@@ -1,7 +1,8 @@
 //
 // Copyright (C) 2000 Institut fuer Telematik, Universitaet Karlsruhe
-// Copyright (C) 2007 Universidad de Málaga
+// Copyright (C) 2007 Universidad de Malaga
 // Copyright (C) 2011 Zoltan Bojthe
+// Copyright (C) 2013 Universidad de Malaga
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
