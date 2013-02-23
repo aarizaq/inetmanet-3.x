@@ -206,6 +206,12 @@ void UDPBasicFlooding::processPacket(cPacket *pk)
         // duplicate control
         int moduleId = (int)pk->par("sourceId");
         int msgId = (int)pk->par("msgId");
+        // check if this message has like origin this node
+        if (moduleId == getId())
+        {
+            delete pk;
+            return;
+        }
         SourceSequence::iterator it = sourceSequence.find(moduleId);
         if (it != sourceSequence.end())
         {
@@ -288,7 +294,6 @@ void UDPBasicFlooding::generateBurst()
 
     // Check address type
     sendBroadcast(destAddr, payload);
-
 
     numSent++;
 
