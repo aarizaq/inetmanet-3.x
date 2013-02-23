@@ -101,7 +101,7 @@ import inet.applications.IUDPApp;
 //  - rcvdPk: statistics of not dropped, not out-of-order packets.
 //  - endToEndDelay: end to end delay statistics of not dropped, not out-of-order packets.
 //
-simple UDPBasicFloodibg like IUDPApp
+simple UDPBasicFlooding like IUDPApp
 {
     parameters:        
         int localPort = default(-1);  // local UDP port number (-1: use ephemeral port)
