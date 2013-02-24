@@ -232,6 +232,7 @@ void EtherEncapMesh::processFrameFromWifiMesh(Ieee80211Frame *msg)
                    eth2Frame->setByteLength(ETHER_MAC_FRAME_BYTES);
                    frame = eth2Frame;
                }
+               msg->setByteLength(remain);
                frame->encapsulate(msg);
                if (frame->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
                    frame->setByteLength(MIN_ETHERNET_FRAME_BYTES);  // "padding"
@@ -307,6 +308,7 @@ void EtherEncapMesh::processFrameFromWifiMesh(Ieee80211Frame *msg)
                    eth2Frame->setByteLength(ETHER_MAC_FRAME_BYTES);
                    frame = eth2Frame;
                }
+               msg->setByteLength(remain);
                frame->encapsulate(msg);
                if (frame->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
                    frame->setByteLength(MIN_ETHERNET_FRAME_BYTES);  // "padding"
