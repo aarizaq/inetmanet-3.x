@@ -28,6 +28,7 @@
 
 #include "INETDefs.h"
 #include "UDPSocket.h"
+#include "AddressModule.h"
 
 
 /**
@@ -36,10 +37,12 @@
 class INET_API UDPBasicFlooding : public cSimpleModule
 {
   protected:
+    AddressModule * addressModule;
     UDPSocket socket;
     int localPort, destPort;
 
     int destAddrRNG;
+    int myId;
 
     typedef std::map<int,int> SourceSequence;
     SourceSequence sourceSequence;
@@ -70,6 +73,7 @@ class INET_API UDPBasicFlooding : public cSimpleModule
     //statistics:
     static simsignal_t sentPkSignal;
     static simsignal_t rcvdPkSignal;
+    static simsignal_t floodPkSignal;
     static simsignal_t outOfOrderPkSignal;
     static simsignal_t dropPkSignal;
 

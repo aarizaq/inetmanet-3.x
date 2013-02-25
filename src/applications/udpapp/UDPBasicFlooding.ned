@@ -113,14 +113,17 @@ simple UDPBasicFlooding like IUDPApp
         volatile double sleepDuration @unit(s); // time between bursts (zero allowed)
         volatile double sendInterval @unit(s); // time between messages during bursts; usually a random value, e.g. 0.1s+uniform(-0.001s,0.001s); zero not allowed
         double delayLimit @unit(s) = default(0); // maximum accepted delay for a packet; packets with a bigger delay are discarded (dropped), zero value means no limit 
-        string outputInterfaceMulticastBroadcast = default("ALL"); // select the interface in which the broadcast packets will be sent 
+        string outputInterfaceMulticastBroadcast = default("ALL"); // select the interface in which the broadcast packets will be sent
+        string destAddresses = default(""); 
         bool isSource = default(false);
         bool flooding = default(false);
         volatile double delay  @unit(s) = default(uniform(0s,0.1s)); 
         @signal[sentPk](type=cPacket);
         @signal[rcvdPk](type=cPacket);
         @signal[dropPk](type=cPacket);
+        @signal[floodPk](type=cPacket);
         @signal[outOfOrderPk](type=cPacket);
+        @statistic[floodPk](title="packets send by flood"; source=rcvdPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
         @statistic[sentPk](title="packets sent"; source=sentPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
         @statistic[rcvdPk](title="packets received"; source=rcvdPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
         @statistic[dropPk](title="packets dropped"; source=dropPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);

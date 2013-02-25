@@ -35,6 +35,7 @@ simsignal_t UDPBasicFlooding::sentPkSignal = SIMSIGNAL_NULL;
 simsignal_t UDPBasicFlooding::rcvdPkSignal = SIMSIGNAL_NULL;
 simsignal_t UDPBasicFlooding::outOfOrderPkSignal = SIMSIGNAL_NULL;
 simsignal_t UDPBasicFlooding::dropPkSignal = SIMSIGNAL_NULL;
+simsignal_t UDPBasicFlooding::floodPkSignal = SIMSIGNAL_NULL;
 
 UDPBasicFlooding::UDPBasicFlooding()
 {
@@ -43,6 +44,7 @@ UDPBasicFlooding::UDPBasicFlooding()
     sleepDurationPar = NULL;
     sendIntervalPar = NULL;
     timerNext = NULL;
+    addressModule = NULL;
     outputInterfaceMulticastBroadcast.clear();
 }
 
@@ -131,10 +133,27 @@ void UDPBasicFlooding::initialize(int stage)
         scheduleAt(startTime, timerNext);
     }
 
+    addressModule = new AddressModule();
+    //addressModule->initModule(par("chooseNewIfDeleted").boolValue());
+    addressModule->initModule(true);
+
+
+    if (strcmp(par("destAddresses").stringValue(),"") != 0)
+    {
+        addressModule = new AddressModule();
+        //addressModule->initModule(par("chooseNewIfDeleted").boolValue());
+        addressModule->initModule(true);
+
+    }
+
+    myId = this->getParentModule()->getId();
+
+
     sentPkSignal = registerSignal("sentPk");
     rcvdPkSignal = registerSignal("rcvdPk");
     outOfOrderPkSignal = registerSignal("outOfOrderPk");
     dropPkSignal = registerSignal("dropPk");
+    floodPkSignal = registerSignal("floodPk");
 }
 
 
@@ -147,6 +166,8 @@ cPacket *UDPBasicFlooding::createPacket()
     payload->setByteLength(msgByteLength);
     payload->addPar("sourceId") = getId();
     payload->addPar("msgId") = numSent;
+    if (addressModule)
+        payload->addPar("destAddr") = addressModule->choseNewModule();
 
     return payload;
 }
@@ -243,10 +264,26 @@ void UDPBasicFlooding::processPacket(cPacket *pk)
         }
     }
 
-    EV << "Received packet: " << UDPSocket::getReceivedPacketInfo(pk) << endl;
-    emit(rcvdPkSignal, pk);
-    numReceived++;
+    if (pk->hasPar("destAddr"))
+    {
+        int moduleId = (int)pk->par("destAddr");
+        if (moduleId == myId)
+        {
+            EV << "Received packet: " << UDPSocket::getReceivedPacketInfo(pk) << endl;
+            emit(rcvdPkSignal, pk);
+            numReceived++;
+            delete pk;
+            return;
+        }
+    }
+    else
+    {
+        EV << "Received packet: " << UDPSocket::getReceivedPacketInfo(pk) << endl;
+        emit(rcvdPkSignal, pk);
+        numReceived++;
+    }
 
+    emit(floodPkSignal, pk);
 
     UDPDataIndication *ctrl = check_and_cast<UDPDataIndication *>(pk->removeControlInfo());
     if (ctrl->getDestAddr().get4() == IPv4Address::ALLONES_ADDRESS && par("flooding").boolValue())

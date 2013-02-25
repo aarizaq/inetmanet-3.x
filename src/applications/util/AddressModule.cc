@@ -45,6 +45,7 @@ void AddressModule::initModule(bool mode)
     cSimpleModule * owner = check_and_cast<cSimpleModule*>(getOwner());
     emitSignal = mode;
     destAddresses.clear();
+    destModuleId.clear();
 
     if (owner->hasPar("destAddresses"))
     {
@@ -70,6 +71,12 @@ void AddressModule::initModule(bool mode)
             }
         }
     }
+
+    for (unsigned int i = 0; i < destAddresses.size(); i++)
+    {
+        destModuleId.push_back(IPvXAddressResolver().findModuleWithAddress(destAddresses[i])->getId());
+    }
+
     if (emitSignal)
     {
         changeAddressSignal = owner->registerSignal("changeAddressSignal");
@@ -79,6 +86,7 @@ void AddressModule::initModule(bool mode)
 
     }
     isInitialized = true;
+    index = -1;
 }
 
 IPvXAddress AddressModule::getAddress(int val)
@@ -96,16 +104,29 @@ IPvXAddress AddressModule::getAddress(int val)
 
 IPvXAddress AddressModule::choseNewAddress()
 {
+    index = -1;
     if (destAddresses.empty())
         chosedAddresses.set(IPv4Address::UNSPECIFIED_ADDRESS);
     else if (destAddresses.size() == 1)
+    {
         chosedAddresses =  destAddresses[0];
+        index = 0;
+    }
     else
     {
         int k = intrand((long)destAddresses.size());
         chosedAddresses = destAddresses[k];
+        index = k;
     }
     return chosedAddresses;
+}
+
+int AddressModule::choseNewModule()
+{
+    choseNewAddress();
+    if (index >= 0)
+        return destModuleId[index];
+    return index;
 }
 
 void AddressModule::receiveSignal(cComponent *src, simsignal_t id, cObject *obj)
@@ -190,4 +211,22 @@ void AddressModule::rebuildAddressList()
     chosedAddresses = choseNewAddress();
     if (emitSignal)
         owner->emit(changeAddressSignal, this);
+}
+
+
+int AddressModule::getModule(int val)
+{
+    if (val == -1)
+    {
+        if (index == -1)
+            chosedAddresses = choseNewAddress();
+        if (index != -1)
+            return destModuleId[index];
+        else
+            return -1;
+    }
+
+    if (val >= 0 && val < (int)destModuleId.size())
+        return destModuleId[val];
+    throw cRuntimeError(this, "Invalid index: %i", val);
 }
