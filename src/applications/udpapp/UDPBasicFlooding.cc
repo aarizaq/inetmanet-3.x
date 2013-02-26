@@ -133,11 +133,6 @@ void UDPBasicFlooding::initialize(int stage)
         scheduleAt(startTime, timerNext);
     }
 
-    addressModule = new AddressModule();
-    //addressModule->initModule(par("chooseNewIfDeleted").boolValue());
-    addressModule->initModule(true);
-
-
     if (strcmp(par("destAddresses").stringValue(),"") != 0)
     {
         addressModule = new AddressModule();
