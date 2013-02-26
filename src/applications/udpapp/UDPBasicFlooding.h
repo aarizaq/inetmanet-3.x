@@ -63,6 +63,7 @@ class INET_API UDPBasicFlooding : public cSimpleModule
     int numReceived;
     int numDeleted;
     int numDuplicated;
+    int numFlood;
 
     // volatile parameters:
     cPar *messageLengthPar;

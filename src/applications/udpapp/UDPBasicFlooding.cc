@@ -65,6 +65,7 @@ void UDPBasicFlooding::initialize(int stage)
     numReceived = 0;
     numDeleted = 0;
     numDuplicated = 0;
+    numFlood = 0;
 
     delayLimit = par("delayLimit");
     simtime_t startTime = par("startTime");
@@ -83,6 +84,8 @@ void UDPBasicFlooding::initialize(int stage)
     WATCH(numReceived);
     WATCH(numDeleted);
     WATCH(numDuplicated);
+    WATCH(numFlood);
+
 
     localPort = par("localPort");
     destPort = par("destPort");
@@ -278,11 +281,13 @@ void UDPBasicFlooding::processPacket(cPacket *pk)
         numReceived++;
     }
 
-    emit(floodPkSignal, pk);
-
     UDPDataIndication *ctrl = check_and_cast<UDPDataIndication *>(pk->removeControlInfo());
     if (ctrl->getDestAddr().get4() == IPv4Address::ALLONES_ADDRESS && par("flooding").boolValue())
+    {
+        numFlood++;
+        emit(floodPkSignal, pk);
         scheduleAt(simTime()+par("delay").doubleValue(),pk);
+    }
     else
         delete pk;
     delete ctrl;
