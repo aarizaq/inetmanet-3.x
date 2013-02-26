@@ -1127,6 +1127,7 @@ void HwmpProtocol::receivePreq(Ieee80211ActionPREQFrame *preqFrame, MACAddress f
     {
         if ((int32_t)(i->second.first - originatorSeqNumber) > 0)
         {
+            EV << "Old PREQ discard \n";
             delete preqFrame;
             return;
         }
@@ -1135,21 +1136,21 @@ void HwmpProtocol::receivePreq(Ieee80211ActionPREQFrame *preqFrame, MACAddress f
             freshInfo = false;
             if (i->second.second <= totalMetric)
             {
+                EV << " PREQ with higher cost discard \n";
                 delete preqFrame;
                 return;
             }
         }
     }
+    EV << " Fresh PREQ \n";
     m_hwmpSeqnoMetricDatabase[originatorAddress] = std::make_pair(originatorSeqNumber, totalMetric);
-    EV << "I am " << GetAddress() << "Accepted preq from address" << from << ", preq:" << originatorAddress << endl;
+    EV << "I am " << GetAddress() << " Accepted preq from address: " << from << ", preq originator address: " << originatorAddress << endl;
     //Add reactive path to originator:
 
     if ((freshInfo)
             || ((m_rtable->LookupReactive(originatorAddress).retransmitter.isUnspecified())
                     || (m_rtable->LookupReactive(originatorAddress).metric > totalMetric)))
     {
-
-        reactivePathResolved(originatorAddress);
 
         ManetAddress addAp;
         // it this address has an AP add the AP address only
@@ -1165,6 +1166,7 @@ void HwmpProtocol::receivePreq(Ieee80211ActionPREQFrame *preqFrame, MACAddress f
                     ((double) preqFrame->getBody().getLifeTime() * 1024.0) / 1000000.0, originatorSeqNumber,
                     preqFrame->getBody().getHopsCount(), true);
         }
+        reactivePathResolved(originatorAddress);
     }
     if ((m_rtable->LookupReactive(fromMp).retransmitter.isUnspecified())
             || (m_rtable->LookupReactive(fromMp).metric > metric))
