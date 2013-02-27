@@ -912,7 +912,7 @@ void Ieee80211Mac::receiveChangeNotification(int category, const cObject *detail
 
     if (category == NF_RADIOSTATE_CHANGED)
     {
-        RadioState * rstate = check_and_cast<RadioState *>(details);
+        const RadioState * rstate = check_and_cast<const RadioState *>(details);
         if (rstate->getRadioId()!=getRadioModuleId())
             return;
 

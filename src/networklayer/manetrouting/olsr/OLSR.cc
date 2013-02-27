@@ -2787,7 +2787,7 @@ void OLSR:: processLinkBreak(const cObject *details)
     {
         if (dynamic_cast<IPv4Datagram *>(const_cast<cObject*>(details)))
         {
-            IPv4Datagram * dgram = check_and_cast<IPv4Datagram *>(details);
+            IPv4Datagram * dgram = const_cast<IPv4Datagram *>(check_and_cast<const IPv4Datagram *>(details));
             mac_failed(dgram);
             return;
         }
@@ -3192,10 +3192,6 @@ OLSR::isNodeCandidate(const nsaddr_t &src_addr)
     if (link_tuple == NULL)
         return false;
 
-    // If the sender interface address is an interface address
-    // of a MPR selector of this node and ttl is greater than 1,
-    // the message must be retransmitted
-    bool retransmitted = false;
 
     OLSR_mprsel_tuple* mprsel_tuple = state_.find_mprsel_tuple(get_main_addr(src_addr));
     if (mprsel_tuple != NULL)
