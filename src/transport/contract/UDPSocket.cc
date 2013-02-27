@@ -44,6 +44,14 @@ void UDPSocket::sendToUDP(cMessage *msg)
     check_and_cast<cSimpleModule *>(gateToUdp->getOwnerModule())->send(msg, gateToUdp);
 }
 
+void UDPSocket::sendToUDPDelayed(cMessage *msg,simtime_t delay)
+{
+    if (!gateToUdp)
+        throw cRuntimeError("UDPSocket: setOutputGate() must be invoked before socket can be used");
+
+    check_and_cast<cSimpleModule *>(gateToUdp->getOwnerModule())->sendDelayed(msg, delay, gateToUdp);
+}
+
 void UDPSocket::bind(int localPort)
 {
     bind(IPvXAddress(), localPort);
@@ -109,6 +117,39 @@ void UDPSocket::send(cPacket *pk)
     pk->setControlInfo(ctrl);
     sendToUDP(pk);
 }
+
+
+void UDPSocket::sendToDelayed(cPacket *pk, IPvXAddress destAddr, int destPort, simtime_t delay)
+{
+    pk->setKind(UDP_C_DATA);
+    UDPSendCommand *ctrl = new UDPSendCommand();
+    ctrl->setSockId(sockId);
+    ctrl->setDestAddr(destAddr);
+    ctrl->setDestPort(destPort);
+    pk->setControlInfo(ctrl);
+    sendToUDPDelayed(pk, delay);
+}
+
+void UDPSocket::sendToDelayed(cPacket *pk, IPvXAddress destAddr, int destPort, int outInterface, simtime_t delay)
+{
+    pk->setKind(UDP_C_DATA);
+    UDPSendCommand *ctrl = new UDPSendCommand();
+    ctrl->setSockId(sockId);
+    ctrl->setDestAddr(destAddr);
+    ctrl->setDestPort(destPort);
+    ctrl->setInterfaceId(outInterface);
+    pk->setControlInfo(ctrl);
+    sendToUDPDelayed(pk, delay);
+}
+void UDPSocket::sendDelayed(cPacket *pk, simtime_t delay)
+{
+    pk->setKind(UDP_C_DATA);
+    UDPSendCommand *ctrl = new UDPSendCommand();
+    ctrl->setSockId(sockId);
+    pk->setControlInfo(ctrl);
+    sendToUDPDelayed(pk, delay);
+}
+
 
 void UDPSocket::close()
 {

@@ -65,6 +65,7 @@ class INET_API UDPSocket
 
   protected:
     void sendToUDP(cMessage *msg);
+    void sendToUDPDelayed(cMessage *msg,simtime_t delay);
 
   public:
     /**
@@ -182,6 +183,24 @@ class INET_API UDPSocket
      * interface.
      */
     void sendTo(cPacket *msg, IPvXAddress destAddr, int destPort, int outInterface);
+
+    // Delayed methods
+    /**
+     * Sends a data packet to the address and port specified previously
+     * in a connect() call.
+     */
+    void sendDelayed(cPacket *msg, simtime_t delay);
+
+    /**
+     * Sends a data packet to the given address and port.
+     */
+    void sendToDelayed(cPacket *msg, IPvXAddress destAddr, int destPort, simtime_t delay);
+
+    /**
+     * Sends a data packet to the given address and port using the provided
+     * interface.
+     */
+    void sendToDelayed(cPacket *msg, IPvXAddress destAddr, int destPort, int outInterface, simtime_t delay);
 
     /**
      * Sends a data packet to the address and port specified previously
