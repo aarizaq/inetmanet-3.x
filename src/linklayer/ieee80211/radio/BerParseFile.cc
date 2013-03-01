@@ -55,6 +55,7 @@ void BerParseFile::setPhyOpMode(char p)
 
 int BerParseFile::getTablePosition(double speed)
 {
+    speed /= 1000000;
     if (phyOpMode=='b')
     {
         if (speed<1)
