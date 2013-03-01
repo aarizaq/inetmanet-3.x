@@ -100,7 +100,7 @@ class INET_API InetSimpleBattery : public BasicBattery
      */
     virtual void draw(int drainID, DrawAmount& amount, int account);
     ~InetSimpleBattery();
-    InetSimpleBattery() {mustSubscribe = true;}
+    InetSimpleBattery() {mustSubscribe = true; publish = NULL; timeout = NULL;}
     double getVoltage();
     /** @brief current state of charge of the battery, relative to its
      * rated nominal capacity [0..1]

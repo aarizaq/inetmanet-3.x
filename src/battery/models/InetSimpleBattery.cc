@@ -305,6 +305,11 @@ InetSimpleBattery::~InetSimpleBattery()
     }
     if (mCurrEnergy)
         delete mCurrEnergy;
+
+    if (publish)
+        cancelAndDelete(publish);
+    if (timeout)
+        cancelAndDelete(timeout);
 }
 
 
