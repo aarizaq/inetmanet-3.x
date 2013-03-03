@@ -135,7 +135,8 @@ void UDPBasicBurstNotification::initialize(int stage)
     addressModule->initModule(true);
 
 
-    if (strcmp(par("destAddresses").stringValue(),"") != 0)
+    std::string destAddresses = par("destAddresses").stdstringValue();
+    if (strcmp(destAddresses.c_str(),"") != 0)
         isSource = true;
 
     if (isSource)
