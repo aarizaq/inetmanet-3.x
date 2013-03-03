@@ -50,7 +50,8 @@ void AddressModule::initModule(bool mode)
     if (owner->hasPar("destAddresses"))
     {
         const char *token;
-        cStringTokenizer tokenizer(owner->par("destAddresses"));
+        std::string aux = owner->par("destAddresses").stdstringValue();
+        cStringTokenizer tokenizer(aux.c_str());
         if (!IPvXAddressResolver().tryResolve(owner->getParentModule()->getFullPath().c_str(), myAddress))
             return;
 
