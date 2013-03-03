@@ -424,7 +424,7 @@ cModule * IPvXAddressResolver::findModuleWithAddress(const IPvXAddress & add)
         IInterfaceTable * itable = IPvXAddressResolver().findInterfaceTableOf(mod);
         if (itable != NULL)
         {
-            for (int i = 0; itable->getNumInterfaces(); i++)
+            for (int i = 0; i < itable->getNumInterfaces(); i++)
             {
                 InterfaceEntry *entry = itable->getInterface(i);
                 if (add.isIPv6())
