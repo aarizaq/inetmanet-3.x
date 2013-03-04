@@ -420,7 +420,7 @@ bool ManetRoutingBase::isLocalAddress(const ManetAddress& dest) const
 {
     if (!isRegistered)
         opp_error("Manet routing protocol is not register");
-    if (!mac_layer_)
+    if (dest.getType() == ManetAddress::IPv4_ADDRESS)
         return inet_rt->isLocalAddress(dest.getIPv4());
     InterfaceEntry *ie;
     for (int i = 0; i < inet_ift->getNumInterfaces(); i++)
@@ -436,7 +436,7 @@ bool ManetRoutingBase::isMulticastAddress(const ManetAddress& dest) const
 {
     if (!isRegistered)
         opp_error("Manet routing protocol is not register");
-    if (mac_layer_)
+    if (dest.getType() == ManetAddress::MAC_ADDRESS)
         return dest.getMAC() == MACAddress::BROADCAST_ADDRESS;
     else
         return dest.getIPv4() == IPv4Address::ALLONES_ADDRESS;
@@ -1134,7 +1134,7 @@ int ManetRoutingBase::getWlanInterfaceIndexByAddress(ManetAddress add)
 
     for (unsigned int i=0; i<interfaceVector->size(); i++)
     {
-        if (mac_layer_)
+        if (add.getType() == ManetAddress::MAC_ADDRESS)
         {
             if ((*interfaceVector)[i].interfacePtr->getMacAddress() == add.getMAC())
                 return (*interfaceVector)[i].index;
@@ -1161,7 +1161,7 @@ InterfaceEntry *ManetRoutingBase::getInterfaceWlanByAddress(ManetAddress add) co
 
     for (unsigned int i=0; i<interfaceVector->size(); i++)
     {
-        if (mac_layer_)
+        if (add.getType() == ManetAddress::MAC_ADDRESS)
         {
             if ((*interfaceVector)[i].interfacePtr->getMacAddress() == add.getMAC())
                 return (*interfaceVector)[i].interfacePtr;
@@ -1762,7 +1762,7 @@ void ManetRoutingBase::getApListIp(const IPv4Address &dest,std::vector<IPv4Addre
 
 void ManetRoutingBase::getListRelatedAp(const ManetAddress & add, std::vector<ManetAddress>& list)
 {
-    if (mac_layer_)
+    if (add.getType() == ManetAddress::MAC_ADDRESS)
     {
         std::vector<MACAddress> listAux;
         getApList(add.getMAC(), listAux);
@@ -1894,7 +1894,7 @@ bool ManetRoutingBase::getRouteFromGlobal(const ManetAddress &src, const ManetAd
 // Auxiliary function that return a string with the address
 std::string ManetRoutingBase::convertAddressToString(const ManetAddress& add)
 {
-    if (mac_layer_)
+    if (dest.getType() == ManetAddress::MAC_ADDRESS)
     {
         return MACAddress(add.getMAC()).str();
     }
