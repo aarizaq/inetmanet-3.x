@@ -1894,7 +1894,7 @@ bool ManetRoutingBase::getRouteFromGlobal(const ManetAddress &src, const ManetAd
 // Auxiliary function that return a string with the address
 std::string ManetRoutingBase::convertAddressToString(const ManetAddress& add)
 {
-    if (dest.getType() == ManetAddress::MAC_ADDRESS)
+    if (add.getType() == ManetAddress::MAC_ADDRESS)
     {
         return MACAddress(add.getMAC()).str();
     }
