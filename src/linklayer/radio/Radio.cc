@@ -133,6 +133,17 @@ void Radio::initialize(int stage)
             }
         }
 
+        receptionThreshold = FWMath::dBm2mW(par("receptionThreshold").doubleValue());
+        receptionThresholdPtr = &sensitivity;
+        if (par("setReceptionThreshold").boolValue())
+        {
+            receptionThresholdPtr = &receptionThreshold;
+            if (par("maxDistantReceptionThreshold").doubleValue() > 0)
+            {
+                receptionThreshold = receptionModel->calculateReceivedPower(transmitterPower, carrierFrequency, par("maxDistantReceptionThreshold").doubleValue());
+            }
+        }
+
         // radio model to handle frame length and reception success calculation (modulation, error correction etc.)
         std::string rModel = par("radioModel").stdstringValue();
         if (rModel=="")
@@ -620,7 +631,7 @@ void Radio::handleLowerMsgStart(AirFrame* airframe)
 
         // update the RadioState if the noiseLevel exceeded the threshold
         // and the radio is currently not in receive or in send mode
-        if (BASE_NOISE_LEVEL >= sensitivity && rs.getState() == RadioState::IDLE)
+        if (BASE_NOISE_LEVEL >= *receptionThresholdPtr && rs.getState() == RadioState::IDLE)
         {
             EV << "setting radio state to RECV\n";
             setRadioState(RadioState::RECV);
@@ -658,7 +669,7 @@ void Radio::handleLowerMsgEnd(AirFrame * airframe)
                 snirMin = iter->snr;
         snrInfo.ptr = NULL;
         snrInfo.sList.clear();
-        airframe->setSnr(10*log10(recvBuff[airframe]/ snirMin)); //ahmed
+        airframe->setSnr(10*log10(snirMin)); //ahmed
         airframe->setLossRate(lossRate);
         // delete the frame from the recvBuff
         recvBuff.erase(airframe);
@@ -712,7 +723,7 @@ void Radio::handleLowerMsgEnd(AirFrame * airframe)
     // change to idle if noiseLevel smaller than threshold and state was
     // not idle before
     // do not change state if currently sending or receiving a message!!!
-    if (BASE_NOISE_LEVEL < sensitivity && rs.getState() == RadioState::RECV && snrInfo.ptr == NULL)
+    if (BASE_NOISE_LEVEL < *receptionThresholdPtr && rs.getState() == RadioState::RECV && snrInfo.ptr == NULL)
     {
         // publish the new RadioState:
         EV << "new RadioState is IDLE\n";
@@ -1018,7 +1029,7 @@ void Radio::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj
     ChannelAccess::receiveSignal(source,signalID, obj);
     if (signalID == changeLevelNoise)
     {
-        if (BASE_NOISE_LEVEL<sensitivity)
+        if (BASE_NOISE_LEVEL < *receptionThresholdPtr)
         {
             if (rs.getState()==RadioState::RECV && snrInfo.ptr==NULL)
                 setRadioState(RadioState::IDLE);
