@@ -140,8 +140,8 @@ void AddressModule::receiveSignal(cComponent *src, simsignal_t id, cObject *obj)
 
     // rebuild address destination table
     cSimpleModule * owner = check_and_cast<cSimpleModule*> (getOwner());
-    const char *destAddrs = owner->par("destAddresses");
-    cStringTokenizer tokenizer(destAddrs);
+    std::string aux = owner->par("destAddresses").stdstringValue();
+    cStringTokenizer tokenizer(aux.c_str());
     const char *token;
     IPvXAddress myAddr = IPvXAddressResolver().resolve(owner->getParentModule()->getFullPath().c_str());
     while ((token = tokenizer.nextToken()) != NULL)
