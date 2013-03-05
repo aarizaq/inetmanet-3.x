@@ -36,6 +36,7 @@ AddressModule::~AddressModule()
     {
         cSimpleModule * owner = check_and_cast<cSimpleModule*> (getOwner());
         owner->emit(changeAddressSignal,this);
+        simulation.getSystemModule()->unsubscribe(changeAddressSignal, this);
     }
 }
 
