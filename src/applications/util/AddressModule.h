@@ -35,7 +35,8 @@ class AddressModule : public cNoncopyableOwnedObject,cListener
 
         IPvXAddress chosedAddresses;
         int index;
-        static simsignal_t changeAddressSignal;
+        static simsignal_t changeAddressSignalInit;
+        static simsignal_t changeAddressSignalDelete;
         IPvXAddress myAddress;
         virtual void receiveSignal(cComponent *src, simsignal_t id, cObject *obj);
     public:

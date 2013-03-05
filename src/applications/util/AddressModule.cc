@@ -20,7 +20,8 @@
 #include "NotificationBoard.h"
 #include <string.h>
 
-simsignal_t AddressModule::changeAddressSignal;
+simsignal_t AddressModule::changeAddressSignalInit;
+simsignal_t AddressModule::changeAddressSignalDelete;
 AddressModule::AddressModule()
 {
     // TODO Auto-generated constructor stub
@@ -35,8 +36,9 @@ AddressModule::~AddressModule()
     if (emitSignal)
     {
         cSimpleModule * owner = check_and_cast<cSimpleModule*> (getOwner());
-        owner->emit(changeAddressSignal,this);
-        simulation.getSystemModule()->unsubscribe(changeAddressSignal, this);
+        owner->emit(changeAddressSignalDelete,this);
+        simulation.getSystemModule()->unsubscribe(changeAddressSignalDelete, this);
+        simulation.getSystemModule()->unsubscribe(changeAddressSignalInit, this);
     }
 }
 
@@ -81,10 +83,12 @@ void AddressModule::initModule(bool mode)
 
     if (emitSignal)
     {
-        changeAddressSignal = owner->registerSignal("changeAddressSignal");
-        simulation.getSystemModule()->subscribe(changeAddressSignal, this);
+        changeAddressSignalInit = owner->registerSignal("changeAddressSignalInit");
+        changeAddressSignalDelete = owner->registerSignal("changeAddressSignalDelete");
+        simulation.getSystemModule()->subscribe(changeAddressSignalInit, this);
+        simulation.getSystemModule()->subscribe(changeAddressSignalDelete, this);
         if (simTime() > 0)
-            owner->emit(changeAddressSignal, this);
+            owner->emit(changeAddressSignalInit, this);
 
     }
     isInitialized = true;
@@ -133,7 +137,7 @@ int AddressModule::choseNewModule()
 
 void AddressModule::receiveSignal(cComponent *src, simsignal_t id, cObject *obj)
 {
-    if (id != changeAddressSignal)
+    if (id != changeAddressSignalInit &&  id != changeAddressSignalDelete)
         return;
 
     if (obj == this)
@@ -144,6 +148,7 @@ void AddressModule::receiveSignal(cComponent *src, simsignal_t id, cObject *obj)
     std::string aux = owner->par("destAddresses").stdstringValue();
     cStringTokenizer tokenizer(aux.c_str());
     const char *token;
+
     IPvXAddress myAddr = IPvXAddressResolver().resolve(owner->getParentModule()->getFullPath().c_str());
     while ((token = tokenizer.nextToken()) != NULL)
     {
@@ -151,6 +156,11 @@ void AddressModule::receiveSignal(cComponent *src, simsignal_t id, cObject *obj)
             destAddresses.push_back(IPv4Address::ALLONES_ADDRESS);
         else
         {
+            if (id == changeAddressSignalDelete)
+            {
+                if (strstr(obj->getFullPath().c_str(),token) != NULL)
+                    continue;
+            }
             IPvXAddress addr = IPvXAddressResolver().resolve(token);
             if (addr != myAddr)
                 destAddresses.push_back(addr);
@@ -212,7 +222,7 @@ void AddressModule::rebuildAddressList()
     // choose other address
     chosedAddresses = choseNewAddress();
     if (emitSignal)
-        owner->emit(changeAddressSignal, this);
+        owner->emit(changeAddressSignalInit, this);
 }
 
 
