@@ -39,7 +39,7 @@ module Ieee80211NicMeshMulti
         int numOutputHooks = default(0);
         int numInputHooks = default(0);
         bool _agentNeeded = false;   // internal par. do not use, shows if optional agent module is needed
-        int numChannels = default(1);
+        int meshChannels = default(1);
         bool hasLocator = default(false);
         @display("i=block/ifcard;bgb=259,357");
     gates:
@@ -47,7 +47,7 @@ module Ieee80211NicMeshMulti
         output upperLayerOut; // from upper layers
         input fromEthernet @labels(Ieee80211Frame);   // to Ethernet MAC
         output toEthernet @labels(Ieee80211Frame); // to Ethernet MAC
-        input radioIn[numChannels] @labels(AirFrame); // to receive AirFrames
+        input radioIn[meshChannels] @labels(AirFrame); // to receive AirFrames
     submodules:
         outputHook[numOutputHooks]: <default("Nop")> like IHook if numOutputHooks>0;
         inputHook[numInputHooks]: <default("Nop")> like IHook if numInputHooks>0;
@@ -64,20 +64,20 @@ module Ieee80211NicMeshMulti
                 locatorActive = hasLocator;
                 @display("p=96,136;q=wlanDataQueue;i=block/switch");
              gates:
-                macIn[numChannels];
-                macOut[numChannels];
+                macIn[meshChannels];
+                macOut[meshChannels];
         }
-        mac[numChannels]: Ieee80211Mac {
+        mac[meshChannels]: Ieee80211Mac {
             parameters:
                 queueModule = "mgmt";
                 @display("p=96,222");
         }
-        radio[numChannels]: Ieee80211Radio {
+        radio[meshChannels]: Ieee80211Radio {
             parameters:
                 @display("p=96,307");
         }
     connections allowunconnected:
-        for i=0..numChannels-1 {
+        for i=0..meshChannels-1 {
             radioIn[i] --> radio[i].radioIn;
             radio[i].upperLayerIn <-- mac[i].lowerLayerOut;
             radio[i].upperLayerOut --> mac[i].lowerLayerIn;

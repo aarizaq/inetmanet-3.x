@@ -101,7 +101,7 @@ module ApMeshNode
 
         wlanMesh: Ieee80211NicMeshMulti {
             parameters:
-                numChannels = meshChannels;
+                meshChannels = meshChannels;
                 @display("p=159,386;q=queue");
         }
 

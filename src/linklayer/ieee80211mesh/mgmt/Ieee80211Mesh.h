@@ -36,6 +36,7 @@
 #include "Ieee80211Etx.h"
 #include <deque>
 #include "WirelessNumHops.h"
+#include "Ieee80211Mac.h"
 
 /**
  * Used in 802.11 ligh wireless mpls  mode. See corresponding NED file for a detailed description.
@@ -80,6 +81,11 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase
                     return seqNum == b.seqNum;
                 }
         };
+
+        typedef std::map<MACAddress, simtime_t> LastTimeReception;
+        std::vector<LastTimeReception> timeReceptionInterface;
+
+        std::vector<Ieee80211Mac*> macInterfaces;
         typedef std::deque<SeqNumberData> SeqNumberVector;
         typedef std::map<ManetAddress, SeqNumberVector> SeqNumberInfo;
         SeqNumberInfo seqNumberInfo;

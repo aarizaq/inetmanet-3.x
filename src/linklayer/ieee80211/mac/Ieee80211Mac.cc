@@ -631,7 +631,7 @@ void Ieee80211Mac::handleSelfMsg(cMessage *msg)
 
 void Ieee80211Mac::handleUpperMsg(cPacket *msg)
 {
-    if ((queueModule && numCategories()>1 && (int)transmissionQueueSize() < maxQueueSize) || (queueMode  && (int)transmissionQueueSize() < maxQueueSize))
+    if (queueModule && ((numCategories()>1 && (int)transmissionQueueSize() < maxQueueSize) || (queueMode  && (int)transmissionQueueSize() < maxQueueSize)))
     {
         // the module are continuously asking for packets, except if the queue is full
         EV << "requesting another frame from queue module\n";

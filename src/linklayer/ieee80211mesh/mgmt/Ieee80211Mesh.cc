@@ -91,6 +91,8 @@ Ieee80211Mesh::~Ieee80211Mesh()
         cancelAndDelete(confirmationFrames.back().frame);
         confirmationFrames.pop_back();
     }
+    timeReceptionInterface.clear();
+    macInterfaces.clear();
 }
 
 Ieee80211Mesh::Ieee80211Mesh()
@@ -124,6 +126,8 @@ Ieee80211Mesh::Ieee80211Mesh()
 
     floodingConfirmation = false;
     confirmationFrames.clear();
+    timeReceptionInterface.clear();
+    macInterfaces.clear();
 }
 
 void Ieee80211Mesh::initializeBase(int stage)
@@ -164,9 +168,18 @@ void Ieee80211Mesh::initializeBase(int stage)
             while (mac);
             if (numMac == 0)
                 error("MAC module not found; it is expected to be next to this submodule and called 'mac'");
-            else
-                mac = getParentModule()->getSubmodule("mac",0);
+
+            if (numMac > 1)
+            {
+                for (unsigned int i = 0 ; i < numMac; i++)
+                {
+                    mac = getParentModule()->getSubmodule("mac",i);
+                    macInterfaces.push_back(dynamic_cast<Ieee80211Mac*>(mac));
+                    macInterfaces[i]->setQueueModeTrue();
+                }
+            }
         }
+        mac = getParentModule()->getSubmodule("mac",0);
         myAddress.setAddress(mac->par("address").stringValue());
     }
 }
@@ -205,8 +218,8 @@ void Ieee80211Mesh::initialize(int stage)
             useLwmpls = false;
         }
 
-        if (useReactive)
-            useProactive = false;
+//        if (useReactive)
+//            useProactive = false;
 
         if (useReactive && useProactive)
         {
@@ -288,6 +301,8 @@ void Ieee80211Mesh::initialize(int stage)
             getOtpimunRoute->setRoot(myAddress);
         }
         //end Gateway and group address code
+        if (numMac > 1 && !ETXProcess)
+             timeReceptionInterface.resize(numMac);
     }
 }
 
@@ -433,6 +448,12 @@ void Ieee80211Mesh::handleMessage(cMessage *msg)
             msg->setKind(msggate->getIndex());
         else
             msg->setKind(-1);
+
+        if (!timeReceptionInterface.empty())
+        {
+            Ieee80211TwoAddressFrame *frame = dynamic_cast<Ieee80211TwoAddressFrame *>(msg);
+            timeReceptionInterface[msggate->getIndex()][frame->getTransmitterAddress()] = simTime();
+        }
 
         if (dynamic_cast<Ieee80211ActionHWMPFrame *>(msg))
         {
@@ -1609,7 +1630,7 @@ int Ieee80211Mesh::getBestInterface(Ieee80211DataOrMgmtFrame *frame)
         }
         if (cost.empty())
             return 0;
-        if (cost.size()==1)
+        if (cost.size() == 1)
             return cost.begin()->second;
         double val = cost.begin()->first;
         int index = 0;
@@ -1642,14 +1663,49 @@ int Ieee80211Mesh::getBestInterface(Ieee80211DataOrMgmtFrame *frame)
             {
                 int i = intuniform(0,index);
                 it = cost.begin();
-                for (int j = 0; j < i; j++)
-                    it++;
+                while (i)
+                {
+                    ++it;
+                    i--;
+                }
             } while (it->second == frame->getKind());
             return it->second;
         }
     }
-    else
-        return 0;
+    else if (!timeReceptionInterface.empty())
+    {
+        std::vector<double> validInterface;
+        unsigned int queueSize = 1000;
+        double recent = 300;
+        int bestQueue = -1;
+        int bestTime = -1;
+        for (unsigned int i = 0; i < timeReceptionInterface.size(); i++)
+        {
+            validInterface.push_back(-1);
+            LastTimeReception::iterator it = timeReceptionInterface[i].find(frame->getReceiverAddress());
+            if (it == timeReceptionInterface[i].end())
+                continue;
+            double lastMessageReceived = SIMTIME_DBL(simTime() - it->second);
+            if (lastMessageReceived > par("lifeTimeForInterface").doubleValue())
+                timeReceptionInterface[i].erase(it);  // erase
+            else
+                validInterface[i] = lastMessageReceived;
+            if (macInterfaces[i]->getState() == Ieee80211Mac::IDLE)
+                return i;
+            if(queueSize >  macInterfaces[i]->getQueueSize())
+            {
+                queueSize = macInterfaces[i]->getQueueSize();
+                bestQueue = i;
+            }
+            if (recent > lastMessageReceived)
+            {
+                recent = lastMessageReceived;
+                bestTime = i;
+            }
+        }
+        return bestQueue;
+    }
+    return 0;
 }
 
 #if 0

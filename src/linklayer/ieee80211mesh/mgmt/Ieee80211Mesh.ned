@@ -49,6 +49,7 @@ simple Ieee80211Mesh
         bool locatorActive  = default(false);
         double coverageArea @unit(m) = default(-1m);
         bool inteligentForward = default(false);
+        double lifeTimeForInterface @unit(s) = default(5s);
         @signal[enqueuePk](type=cMessage);
         @signal[dequeuePk](type=cMessage);
         @signal[dropPkByQueue](type=cMessage);
