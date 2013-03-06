@@ -1679,9 +1679,10 @@ int Ieee80211Mesh::getBestInterface(Ieee80211DataOrMgmtFrame *frame)
         double recent = 300;
         int bestQueue = -1;
         int bestTime = -1;
-        for (unsigned int i = 0; i < timeReceptionInterface.size(); i++)
+        validInterface.resize(timeReceptionInterface.size());
+        for (unsigned int i = timeReceptionInterface.size() - 1; i >=0 ; i--)
         {
-            validInterface.push_back(-1);
+            validInterface[i] = -1;
             LastTimeReception::iterator it = timeReceptionInterface[i].find(frame->getReceiverAddress());
             if (it == timeReceptionInterface[i].end())
                 continue;
@@ -1703,7 +1704,14 @@ int Ieee80211Mesh::getBestInterface(Ieee80211DataOrMgmtFrame *frame)
                 bestTime = i;
             }
         }
-        return bestQueue;
+        if (bestQueue >= 0 && validInterface[bestQueue] >= 0)
+            return bestQueue;
+        else
+            return 0;
+        if (bestTime >= 0 && validInterface[bestTime] >= 0)
+            return bestTime;
+        else
+            return 0;
     }
     return 0;
 }
