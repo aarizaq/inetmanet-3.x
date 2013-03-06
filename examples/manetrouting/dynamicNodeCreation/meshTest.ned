@@ -115,9 +115,6 @@ network meshTest
                 mobility.initialX = nodeSeparation/2.0+nodeSeparation;
                 @display("i=block/wrxtx;r=,,#707070");
         }
-        sink: HostSta {
-            @display("p=477,203");
-        }
         channelControl: ChannelControl {
             parameters:
                 @display("p=60,23;i=misc/sun");
