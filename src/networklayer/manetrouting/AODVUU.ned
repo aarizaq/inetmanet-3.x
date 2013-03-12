@@ -70,6 +70,7 @@ simple AODVUU extends BaseRouting like IManetRouting
         bool RreqDelayInReception = default(false); // if true the delay introduced to the RREq is in reception
         volatile double rreqWait @unit("s") = default(0.01s);
         bool avoidDupRREP  = default(false);// only if promiscous is active, check if rrep has been sent by other node
+        bool RRERFoceDiscover = default(false); // if true if the node has num of precursos equal to 0 and the RRER has N falg to '1' and the message has arrive from next hop he node foce a new dicovering procces 
     gates:
         input from_ip;
         output to_ip;
