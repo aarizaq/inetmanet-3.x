@@ -720,7 +720,13 @@ void DSRUU::packetFailed(IPv4Datagram *ipDgram)
         {
             dsr_rerr_send(dp, nxt_hop);
             dp->nxt_hop = nxt_hop;
-            maint_buf_salvage(dp);
+            if (maint_buf_salvage(dp) < 0)
+            {
+                if (dp->payload)
+                    drop(dp->payload, -1);
+                dp->payload = NULL;
+                dsr_pkt_free(dp);
+            }
         }
         /* Salvage the other packets still in the interface queue with the same
          * next hop */
