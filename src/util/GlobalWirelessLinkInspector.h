@@ -70,6 +70,7 @@ class GlobalWirelessLinkInspector : public cSimpleModule
         static void setLinkCost(const ManetAddress& org,const ManetAddress& dest,const Link &);
         static bool getLinkCost(const ManetAddress& org,const ManetAddress& dest,Link &);
         static bool getCostPath(const std::vector<ManetAddress>&, Link &);
+        static bool getWorst(const std::vector<ManetAddress>&, Link &);
         static bool initRoutingProtocol (cModule *,bool);
         static bool getRoute(const ManetAddress &src, const ManetAddress &dest, std::vector<ManetAddress> &route);
         static bool getRouteWithLocator(const ManetAddress &src, const ManetAddress &dest, std::vector<ManetAddress> &route);

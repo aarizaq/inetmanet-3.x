@@ -176,6 +176,30 @@ bool GlobalWirelessLinkInspector::getCostPath(const std::vector<ManetAddress>& p
     return true;
 }
 
+bool GlobalWirelessLinkInspector::getWorst(const std::vector<ManetAddress>& path, Link &link)
+{
+
+    if (!costMap)
+        return false;
+    link.costEtt = 0;
+    link.costEtx = 0;
+    for (unsigned int i = 0; i < path.size()-1; i++)
+    {
+        Link linkAux;
+        if (getLinkCost(path[i],path[i+1],linkAux))
+        {
+            if (link.costEtx < linkAux.costEtx)
+            {
+                link.costEtt = linkAux.costEtt;
+                link.costEtx = linkAux.costEtx;
+            }
+        }
+        else
+            return false;
+    }
+    return true;
+}
+
 
 bool GlobalWirelessLinkInspector::setRoute(const cModule* mod,const ManetAddress &orgA, const ManetAddress &dest, const ManetAddress &gw, const bool &erase)
 {
@@ -305,6 +329,7 @@ bool GlobalWirelessLinkInspector::getRoute(const ManetAddress &src, const ManetA
             }
         }
     }
+    return false;
 }
 
 
