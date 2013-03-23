@@ -70,7 +70,7 @@ void WirelessMacBase::handleMessage(cMessage *msg)
         handleLowerMsg(PK(msg));
     }
     else
-        throw cRuntimeError("Message '%s' received from unaccepted gate '%s'", msg->getName(), msg->getArrivalGate()->getFullName());
+        throw cRuntimeError("Message '%s' received on unexpected gate '%s'", msg->getName(), msg->getArrivalGate()->getFullName());
 }
 
 bool WirelessMacBase::isUpperMsg(cMessage *msg)
