@@ -1694,7 +1694,7 @@ int Ieee80211Mesh::getBestInterface(Ieee80211DataOrMgmtFrame *frame)
         int bestQueue = -1;
         int bestTime = -1;
         validInterface.resize(timeReceptionInterface.size());
-        for (unsigned int i = timeReceptionInterface.size() - 1; i >=0 ; i--)
+        for (int i = (int)timeReceptionInterface.size() - 1; i >=0 ; i--)
         {
             validInterface[i] = -1;
             LastTimeReception::iterator it = timeReceptionInterface[i].find(frame->getReceiverAddress());
