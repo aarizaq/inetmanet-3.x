@@ -50,6 +50,7 @@ simple Ieee80211Mesh
         double coverageArea @unit(m) = default(-1m);
         bool inteligentForward = default(false);
         double lifeTimeForInterface @unit(s) = default(5s);
+        string selectionCriteria @enum("Etx","MinQueue","LastUsed","MinQueueLastUsed","LastUsedMinQueue") = default("MinQueue");// if ETX active the ETX proc
         @signal[enqueuePk](type=cMessage);
         @signal[dequeuePk](type=cMessage);
         @signal[dropPkByQueue](type=cMessage);

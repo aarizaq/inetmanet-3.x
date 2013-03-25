@@ -49,7 +49,13 @@
 
 class INET_API Ieee80211Mesh : public Ieee80211MgmtBase
 {
+    public:
+        enum SelectionCriteria
+        {
+            ETX = 1 , MINQUEUE, LASTUSED,MINQUEUELASTUSED, LASTUSEDMINQUEUE
+        };
     private:
+
         WirelessNumHops *getOtpimunRoute;
 
         static simsignal_t numHopsSignal;
@@ -91,7 +97,11 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase
         SeqNumberInfo seqNumberInfo;
 
         uint64_t numRoutingBytes;
+        //
+        // Multi mac interfaces
+        //
         unsigned int numMac;
+        SelectionCriteria selectionCriteria;
 
         cMessage *WMPLSCHECKMAC;
         cMessage *gateWayTimeOut;

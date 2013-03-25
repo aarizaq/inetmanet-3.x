@@ -33,6 +33,15 @@
 
 /* WMPLS */
 
+EXECUTE_ON_STARTUP(
+    cEnum *e = cEnum::find("SelectionCriteria");
+    if (!e) enums.getInstance()->add(e = new cEnum("SelectionCriteria"));
+    e->insert(Ieee80211Mesh::ETX, "Etx");
+    e->insert(Ieee80211Mesh::MINQUEUE, "MinQueue");
+    e->insert(Ieee80211Mesh::LASTUSED, "LastUsed");
+    e->insert(Ieee80211Mesh::MINQUEUELASTUSED, "MinQueueLastUsed");
+    e->insert(Ieee80211Mesh::LASTUSEDMINQUEUE, "LastUsedMinQueue");
+);
 
 #if !defined (UINT32_MAX)
 #   define UINT32_MAX  4294967295UL
@@ -203,6 +212,9 @@ void Ieee80211Mesh::initialize(int stage)
         if (gate("locatorOut")->getPathEndGate()->isConnected() &&
                        (strcmp(gate("locatorOut")->getPathEndGate()->getOwnerModule()->getName(),"locator")==0 || par("locatorActive").boolValue()))
             hasLocator = true;
+
+        const char *addrModeStr = par("selectionCriteria").stringValue();
+        selectionCriteria = (SelectionCriteria) cEnum::get("SelectionCriteria")->lookup(addrModeStr);
     }
     else if (stage==1)
     {
@@ -251,6 +263,8 @@ void Ieee80211Mesh::initialize(int stage)
         if (useProactive)
             startProactive();
         // Hwmp protocol
+        if (selectionCriteria == ETX)
+            useHwmp = true;
         if (useHwmp)
             startHwmp();
 
@@ -301,7 +315,7 @@ void Ieee80211Mesh::initialize(int stage)
             getOtpimunRoute->setRoot(myAddress);
         }
         //end Gateway and group address code
-        if (numMac > 1 && !ETXProcess)
+        if (numMac > 1 && selectionCriteria != ETX)
              timeReceptionInterface.resize(numMac);
     }
 }
@@ -1618,7 +1632,7 @@ int Ieee80211Mesh::getBestInterface(Ieee80211DataOrMgmtFrame *frame)
     if (numMac<=1)
         return 0;
 
-    if (ETXProcess)
+    if (selectionCriteria == ETX)
     {
         std::multimap<double,int> cost;
         for (unsigned int i = 0; i < numMac; i++)
@@ -1698,20 +1712,41 @@ int Ieee80211Mesh::getBestInterface(Ieee80211DataOrMgmtFrame *frame)
                 queueSize = macInterfaces[i]->getQueueSize();
                 bestQueue = i;
             }
+            else if (selectionCriteria == MINQUEUELASTUSED && queueSize &&  macInterfaces[i]->getQueueSize() && recent > lastMessageReceived)
+            {
+                queueSize = macInterfaces[i]->getQueueSize();
+                bestQueue = i;
+            }
+
             if (recent > lastMessageReceived)
             {
                 recent = lastMessageReceived;
                 bestTime = i;
             }
+            else if (selectionCriteria == LASTUSEDMINQUEUE && abs(recent-lastMessageReceived) < 0.01  && queueSize >  macInterfaces[i]->getQueueSize())
+            {
+                recent = lastMessageReceived;
+                bestTime = i;
+            }
         }
-        if (bestQueue >= 0 && validInterface[bestQueue] >= 0)
-            return bestQueue;
+
+        if (selectionCriteria == MINQUEUE || selectionCriteria == MINQUEUELASTUSED)
+        {
+            if (bestQueue >= 0 && validInterface[bestQueue] >= 0)
+                return bestQueue;
+            else
+                return 0;
+        }
+        else if (selectionCriteria == LASTUSED || selectionCriteria == LASTUSEDMINQUEUE)
+        {
+            if (bestTime >= 0 && validInterface[bestTime] >= 0)
+                return bestTime;
+            else
+                return 0;
+        }
         else
-            return 0;
-        if (bestTime >= 0 && validInterface[bestTime] >= 0)
-            return bestTime;
-        else
-            return 0;
+            throw cRuntimeError("Invalid selectionCriteria");
+
     }
     return 0;
 }
