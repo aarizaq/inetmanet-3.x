@@ -71,6 +71,7 @@ class INET_API Radio : public ChannelAccess, public IPowerControl
   public:
     Radio();
     virtual ~Radio();
+    virtual int getChannel() const {return getChannelNumber();}
 
   protected:
     virtual void initialize(int stage);

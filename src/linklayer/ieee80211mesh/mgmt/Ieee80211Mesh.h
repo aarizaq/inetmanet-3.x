@@ -23,9 +23,8 @@
 
 #ifndef IEEE80211_MESH_ADHOC_H
 #define IEEE80211_MESH_ADHOC_H
-
+#include <deque>
 #include "INETDefs.h"
-
 #include "Ieee80211MgmtBase.h"
 #include "NotificationBoard.h"
 #include "IInterfaceTable.h"
@@ -34,9 +33,9 @@
 #include "ManetAddress.h"
 #include "ManetRoutingBase.h"
 #include "Ieee80211Etx.h"
-#include <deque>
 #include "WirelessNumHops.h"
 #include "Ieee80211Mac.h"
+#include "Radio.h"
 
 /**
  * Used in 802.11 ligh wireless mpls  mode. See corresponding NED file for a detailed description.
@@ -92,6 +91,7 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase
         std::vector<LastTimeReception> timeReceptionInterface;
 
         std::vector<Ieee80211Mac*> macInterfaces;
+        std::vector<Radio*> radioInterfaces;
         typedef std::deque<SeqNumberData> SeqNumberVector;
         typedef std::map<ManetAddress, SeqNumberVector> SeqNumberInfo;
         SeqNumberInfo seqNumberInfo;

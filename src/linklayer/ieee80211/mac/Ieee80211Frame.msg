@@ -187,6 +187,7 @@ packet Ieee80211MeshFrame extends Ieee80211DataFrame
    // used for statistics
     unsigned int totalHops = 0;
     unsigned int totalStaticHops = 0;
+    int channels[]; // used to broadcast the used channels
     // this fiels are used by fragmentation over ethernet, not necesasry, it's possible to use the fields un the Ieee80211 frame 
     bool isFragment=false;
     unsigned long realLength=0;

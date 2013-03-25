@@ -19,6 +19,8 @@
 //
 
 #define CHEAT_IEEE80211MESH
+#include <string.h>
+#include <algorithm>
 #include "Ieee80211Mesh.h"
 #include "MeshControlInfo_m.h"
 #include "lwmpls_data.h"
@@ -26,10 +28,9 @@
 #include "ControlManetRouting_m.h"
 #include "InterfaceTableAccess.h"
 #include "locatorPkt_m.h"
-#include <string.h>
 #include "EtherFrame_m.h"
 #include "OLSR.h"
-#include <algorithm>
+
 
 /* WMPLS */
 
@@ -102,6 +103,7 @@ Ieee80211Mesh::~Ieee80211Mesh()
     }
     timeReceptionInterface.clear();
     macInterfaces.clear();
+    radioInterfaces.clear();
 }
 
 Ieee80211Mesh::Ieee80211Mesh()
@@ -137,6 +139,7 @@ Ieee80211Mesh::Ieee80211Mesh()
     confirmationFrames.clear();
     timeReceptionInterface.clear();
     macInterfaces.clear();
+    radioInterfaces.clear();
 }
 
 void Ieee80211Mesh::initializeBase(int stage)
@@ -168,6 +171,7 @@ void Ieee80211Mesh::initializeBase(int stage)
         if (!mac)
         {
             // search for vector of mac:
+            unsigned int numRadios = 0;
             do
             {
                 mac = getParentModule()->getSubmodule("mac",numMac);
@@ -175,15 +179,29 @@ void Ieee80211Mesh::initializeBase(int stage)
                     numMac++;
             }
             while (mac);
+
             if (numMac == 0)
                 error("MAC module not found; it is expected to be next to this submodule and called 'mac'");
+
+            cModule *radio;
+            do
+            {
+                radio = getParentModule()->getSubmodule("radio",numRadios);
+                if (radio)
+                    numRadios++;
+            }
+            while (radio);
+            if (numRadios != numMac)
+                error("numRadios != numMac");
 
             if (numMac > 1)
             {
                 for (unsigned int i = 0 ; i < numMac; i++)
                 {
                     mac = getParentModule()->getSubmodule("mac",i);
+                    radio = getParentModule()->getSubmodule("radio",i);
                     macInterfaces.push_back(dynamic_cast<Ieee80211Mac*>(mac));
+                    radioInterfaces.push_back(dynamic_cast<Radio*>(radio));
                     macInterfaces[i]->setQueueModeTrue();
                 }
             }
@@ -467,6 +485,22 @@ void Ieee80211Mesh::handleMessage(cMessage *msg)
         {
             Ieee80211TwoAddressFrame *frame = dynamic_cast<Ieee80211TwoAddressFrame *>(msg);
             timeReceptionInterface[msggate->getIndex()][frame->getTransmitterAddress()] = simTime();
+
+            Ieee80211MeshFrame *frameAux = dynamic_cast<Ieee80211MeshFrame *>(msg);
+            if (frameAux && frameAux->getSubType() == ROUTING && frameAux->getChannelsArraySize() > 0)
+            {
+                for (unsigned int i = 0; i < numMac; i++)
+                {
+                    for (unsigned int j = 0; j < frameAux->getChannelsArraySize(); j++)
+                    {
+                        if (radioInterfaces[i]->getChannel() == frameAux->getChannels(j))
+                        {
+                            timeReceptionInterface[i][frame->getTransmitterAddress()] = simTime();
+                            break;
+                        }
+                    }
+                }
+            }
         }
 
         if (dynamic_cast<Ieee80211ActionHWMPFrame *>(msg))
@@ -1529,12 +1563,24 @@ void Ieee80211Mesh::sendOrEnqueue(cPacket *frame)
         {
             if (numMac > 1)
             {
+#ifdef LIMITBROADCAST
+                if (frameAux && frameAux->getSubType() == ROUTING)
+                {
+                    frameAux->setChannelsArraySize(numMac);
+                    for (unsigned int i = 0; i < numMac; i++)
+                    {
+                        frameAux->setChannels(i,radioInterfaces[i]->getChannel());
+                    }
+                }
+                else
+#endif
                 for (unsigned int i = 1; i < numMac; i++)
                 {
                     cPacket *pkt = frame->dup();
                     pkt->setKind(i);
                     PassiveQueueBase::handleMessage(pkt);
                 }
+
             }
             frame->setKind(0);
             PassiveQueueBase::handleMessage(frame);
