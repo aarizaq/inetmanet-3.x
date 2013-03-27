@@ -31,6 +31,7 @@
 #include "EtherFrame_m.h"
 #include "OLSR.h"
 
+//#define LIMITBROADCAST
 
 /* WMPLS */
 
@@ -156,6 +157,7 @@ void Ieee80211Mesh::initializeBase(int stage)
         numDataFramesReceived = 0;
         numMgmtFramesReceived = 0;
         numMgmtFramesDropped = 0;
+        inteligentBroadcastRouting = par("inteligentBroadcastRouting").boolValue();
         WATCH(numDataFramesReceived);
         WATCH(numMgmtFramesReceived);
         WATCH(numMgmtFramesDropped);
@@ -281,8 +283,6 @@ void Ieee80211Mesh::initialize(int stage)
         if (useProactive)
             startProactive();
         // Hwmp protocol
-        if (selectionCriteria == ETX)
-            useHwmp = true;
         if (useHwmp)
             startHwmp();
 
@@ -295,6 +295,8 @@ void Ieee80211Mesh::initialize(int stage)
             WMPLSCHECKMAC = new cMessage();
 
         ETXProcess = NULL;
+        if (selectionCriteria == ETX && numMac > 1)
+            ETXEstimate = true;
 
         if (ETXEstimate)
             startEtx();
@@ -1561,28 +1563,30 @@ void Ieee80211Mesh::sendOrEnqueue(cPacket *frame)
             PassiveQueueBase::handleMessage(frame);
         else
         {
+            frame->setKind(0);
             if (numMac > 1)
             {
-#ifdef LIMITBROADCAST
-                if (frameAux && frameAux->getSubType() == ROUTING)
+                if (inteligentBroadcastRouting && (frameAux && frameAux->getSubType() == ROUTING))
                 {
                     frameAux->setChannelsArraySize(numMac);
                     for (unsigned int i = 0; i < numMac; i++)
                     {
                         frameAux->setChannels(i,radioInterfaces[i]->getChannel());
                     }
+                    ///// CUIDADO : FIXME
+                    if (dynamic_cast<OLSR_pkt*>(frame->getEncapsulatedPacket()) && routingModuleProactive && routingModuleReactive)
+                        frame->setKind(1);
                 }
                 else
-#endif
-                for (unsigned int i = 1; i < numMac; i++)
                 {
-                    cPacket *pkt = frame->dup();
-                    pkt->setKind(i);
-                    PassiveQueueBase::handleMessage(pkt);
+                    for (unsigned int i = 1; i < numMac; i++)
+                    {
+                        cPacket *pkt = frame->dup();
+                        pkt->setKind(i);
+                        PassiveQueueBase::handleMessage(pkt);
+                    }
                 }
-
             }
-            frame->setKind(0);
             PassiveQueueBase::handleMessage(frame);
         }
     }

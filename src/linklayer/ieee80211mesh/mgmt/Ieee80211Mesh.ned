@@ -51,6 +51,7 @@ simple Ieee80211Mesh
         bool inteligentForward = default(false);
         double lifeTimeForInterface @unit(s) = default(5s);
         string selectionCriteria @enum("Etx","MinQueue","LastUsed","MinQueueLastUsed","LastUsedMinQueue") = default("MinQueue");// if ETX active the ETX proc
+        bool inteligentBroadcastRouting = default(false);
         @signal[enqueuePk](type=cMessage);
         @signal[dequeuePk](type=cMessage);
         @signal[dropPkByQueue](type=cMessage);

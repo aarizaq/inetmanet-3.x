@@ -102,6 +102,7 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase
         //
         unsigned int numMac;
         SelectionCriteria selectionCriteria;
+        bool inteligentBroadcastRouting;
 
         cMessage *WMPLSCHECKMAC;
         cMessage *gateWayTimeOut;
