@@ -25,6 +25,7 @@
 #include "IInterfaceTable.h"
 #include "INotifiable.h"
 #include "UDPSocket.h"
+#include "ManetAddress.h"
 
 
 class LocatorModule : public cSimpleModule, public ILocator, protected INotifiable, protected cListener
@@ -54,6 +55,8 @@ class LocatorModule : public cSimpleModule, public ILocator, protected INotifiab
         int port;
         int interfaceId;
 
+        bool inMacLayer;
+
         LocatorMapIp locatorMapIp;
         static LocatorMapIp globalLocatorMapIp;
         LocatorMapMac locatorMapMac;
@@ -82,7 +85,7 @@ class LocatorModule : public cSimpleModule, public ILocator, protected INotifiab
         virtual void setTables(const MACAddress & APaddr, const MACAddress &STAaddr, const IPv4Address & apIpAddr, const IPv4Address & staIpAddr, const Action &action, InterfaceEntry *ie);
         bool useGlobal;
         unsigned int mySequence;
-        std::map<IPv4Address,unsigned int> sequenceMap;
+        std::map<ManetAddress,unsigned int> sequenceMap;
 
         virtual void  sendMessage(const MACAddress &,const MACAddress &,const IPv4Address &,const IPv4Address &,const Action &);
         virtual void sendRequest(const MACAddress &);

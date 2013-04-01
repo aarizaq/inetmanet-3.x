@@ -42,7 +42,7 @@ void LocatorModuleClient::handleMessage(cMessage *msg)
     LocatorPkt *pkt = dynamic_cast<LocatorPkt*>(msg);
     if (pkt)
     {
-        if (rt->isLocalAddress(pkt->getOrigin()))
+        if (rt->isLocalAddress(pkt->getOrigin().getIPv4()))
         {
             delete pkt;
             return;
@@ -56,7 +56,6 @@ void LocatorModuleClient::handleMessage(cMessage *msg)
         IPv4Address iv4Addr;
         UDPDataIndication *udpCtrl = check_and_cast<UDPDataIndication*>(pkt->removeControlInfo());
 
-        bool found = false;
         for (int i = 0; i < itable->getNumInterfaces(); i++)
         {
             if (itable->getInterface(i)->getMacAddress() == destAddr)

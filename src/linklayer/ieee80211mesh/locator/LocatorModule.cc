@@ -96,24 +96,23 @@ void LocatorModule::handleMessage(cMessage *msg)
 
     if (pkt)
     {
-        if (socket)
+        if ((pkt->getOrigin().getType() == ManetAddress::IPv4_ADDRESS && pkt->getOrigin().getIPv4() == myIpAddress)
+                || (pkt->getOrigin().getType() == ManetAddress::MAC_ADDRESS && pkt->getOrigin().getMAC() == myMacAddress))
         {
-            if (pkt->getOrigin() == myIpAddress)
+            delete pkt;
+            return;
+        }
+        std::map<ManetAddress,unsigned int>::iterator it = sequenceMap.find(pkt->getOrigin());
+        if (it!=sequenceMap.end())
+        {
+            if (it->second >= pkt->getSequence())
             {
                 delete pkt;
                 return;
             }
-            std::map<IPv4Address,unsigned int>::iterator it = sequenceMap.find(pkt->getOrigin());
-            if (it!=sequenceMap.end())
-            {
-                if (it->second >= pkt->getSequence())
-                {
-                    delete pkt;
-                    return;
-                }
-            }
-            sequenceMap[pkt->getOrigin()] = pkt->getSequence();
         }
+        sequenceMap[pkt->getOrigin()] = pkt->getSequence();
+
         IPv4Address staIpaddr = pkt->getStaIPAddress();
         IPv4Address apIpaddr = pkt->getApIPAddress();
         MACAddress staAddr = pkt->getStaMACAddress();
@@ -173,7 +172,9 @@ void LocatorModule::handleMessage(cMessage *msg)
         socket->sendTo(pkt,IPv4Address::ALLONES_ADDRESS,port, interfaceId);
     }
     else
+    {
         delete msg;
+    }
 }
 
 void LocatorModule::processReply(cPacket* msg)
@@ -255,11 +256,14 @@ void LocatorModule::processReply(cPacket* msg)
 void LocatorModule::processRequest(cPacket* msg)
 {
     LocatorPkt *pkt = dynamic_cast<LocatorPkt*> (msg);
-    if (rt->isLocalAddress(pkt->getOrigin()))
-     {
-         delete pkt;
-         return;
-     }
+
+    if ((pkt->getOrigin().getType() == ManetAddress::IPv4_ADDRESS && pkt->getOrigin().getIPv4() == myIpAddress)
+                  || (pkt->getOrigin().getType() == ManetAddress::MAC_ADDRESS && pkt->getOrigin().getMAC() == myMacAddress))
+    {
+        delete pkt;
+        return;
+    }
+
      MACAddress destAddr = pkt->getStaMACAddress();
      IPv4Address iv4Addr;
      UDPDataIndication *udpCtrl = check_and_cast<UDPDataIndication*>(pkt->removeControlInfo());
@@ -304,6 +308,7 @@ void LocatorModule::initialize(int stage)
         socket->setBroadcast(true);
         isInMacLayer = false;
         ie = itable->getInterfaceByName(this->par("iface"));
+        inMacLayer = false;
     }
     else
     {
@@ -315,6 +320,7 @@ void LocatorModule::initialize(int stage)
         *d = '\0';
         ie = itable->getInterfaceByName(interfaceName);
         delete [] interfaceName;
+        inMacLayer = true;
     }
 
     useGlobal = par("useGlobal").boolValue();
@@ -359,7 +365,10 @@ void  LocatorModule::sendMessage(const MACAddress &apMac,const MACAddress &staMa
     if (socket)
     {
         pkt->setByteLength(pkt->getByteLength()+8);
-        pkt->setOrigin(myIpAddress);
+        if (inMacLayer)
+            pkt->setOrigin(ManetAddress(myMacAddress));
+        else
+            pkt->setOrigin(ManetAddress(myIpAddress));
         pkt->setSequence(mySequence);
         mySequence++;
 
@@ -737,7 +746,10 @@ void LocatorModule::sendRequest(const MACAddress &destination)
         return;
     LocatorPkt *pkt = new LocatorPkt();
     pkt->setOpcode(RequestAddress);
-    pkt->setOrigin(myIpAddress);
+    if (inMacLayer)
+        pkt->setOrigin(ManetAddress(myMacAddress));
+    else
+        pkt->setOrigin(ManetAddress(myIpAddress));
     pkt->setStaMACAddress(destination);
     socket->sendTo(pkt,IPv4Address::ALLONES_ADDRESS,port, interfaceId);
 }

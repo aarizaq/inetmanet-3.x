@@ -1757,7 +1757,7 @@ int Ieee80211Mesh::getBestInterface(Ieee80211DataOrMgmtFrame *frame)
                 validInterface[i] = lastMessageReceived;
             if (macInterfaces[i]->getState() == Ieee80211Mac::IDLE)
                 return i;
-            if(queueSize >  macInterfaces[i]->getQueueSize())
+            if(queueSize >  macInterfaces[i]->getQueueSize() || (queueSize ==  macInterfaces[i]->getQueueSize() && bestQueue == frame->getKind() && i != bestQueue))
             {
                 queueSize = macInterfaces[i]->getQueueSize();
                 bestQueue = i;
@@ -1767,6 +1767,7 @@ int Ieee80211Mesh::getBestInterface(Ieee80211DataOrMgmtFrame *frame)
                 queueSize = macInterfaces[i]->getQueueSize();
                 bestQueue = i;
             }
+
 
             if (recent > lastMessageReceived)
             {

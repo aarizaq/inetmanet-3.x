@@ -567,7 +567,7 @@ void Ieee802154Mac::handleUpperMsg(cMessage* msg)
     {
         if (!simulation.getModuleByPath(control_info->getDestName()))
             error("[MAC]: address conversion fails, destination host does not exist!");
-        cModule* module = simulation.getModuleByPath(control_info->getDestName())->getModuleByRelativePath("nic.mac");
+        cModule* module = simulation.getModuleByPath(control_info->getDestName())->getModuleByPath(".nic.mac");
         Ieee802154Mac* macModule = check_and_cast<Ieee802154Mac *>(module);
         destAddr = macModule->getMacAddr();
 
@@ -951,7 +951,7 @@ void Ieee802154Mac::handleBeacon(Ieee802154Frame* frame)
         //mpib.macShortAddress = aExtendedAddress;  // set my short address the same as the extended address by myself, instead from an association response, TBD
 
         EV << "This is my first beacon, associate with it" << endl;
-        cModule* module = simulation.getModuleByPath(panCoorName)->getModuleByRelativePath("nic.mac");
+        cModule* module = simulation.getModuleByPath(panCoorName)->getModuleByPath(".nic.mac");
         Ieee802154Mac* macModule = check_and_cast<Ieee802154Mac *>(module);
         mpib.macShortAddress = macModule->associate_request_cmd(aExtendedAddress, capability);
 
