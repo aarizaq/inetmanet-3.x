@@ -231,6 +231,9 @@ void DijkstraKshortest::run ()
         }
         (it->second)[elem.idx].label=perm;
         LinkArray::iterator linkIt=linkArray.find(elem.iD);
+        if (linkIt == linkArray.end())
+            opp_error("Error link not found in linkArray");
+
         for (unsigned int i=0;i<linkIt->second.size();i++)
         {
             Edge* current_edge= (linkIt->second)[i];
@@ -238,6 +241,7 @@ void DijkstraKshortest::run ()
             CostVector maxCost = maximumCost;
             int nextIdx;
             RouteMap::iterator itNext = routeMap.find(current_edge->last_node());
+
             addCost(cost,current_edge->cost,(it->second)[elem.idx].cost);
             if (!limitsData.empty())
             {
@@ -261,25 +265,27 @@ void DijkstraKshortest::run ()
             }
             else
             {
+                bool permanent = true;
                 for (unsigned i=0;i<itNext->second.size();i++)
                 {
                     if ((maxCost<itNext->second[i].cost)&&(itNext->second[i].label==tent))
                     {
                         maxCost = itNext->second[i].cost;
                         nextIdx=i;
+                        permanent = false;
                     }
                 }
-            }
-            if (cost<maxCost)
-            {
-                itNext->second[nextIdx].cost=cost;
-                itNext->second[nextIdx].idPrev=elem.iD;
-                itNext->second[nextIdx].idPrevIdx=elem.idx;
-                SetElem newElem;
-                newElem.iD=current_edge->last_node();
-                newElem.idx=nextIdx;
-                newElem.cost=cost;
-                heap.insert(newElem);
+                if (cost<maxCost && !permanent)
+                {
+                    itNext->second[nextIdx].cost=cost;
+                    itNext->second[nextIdx].idPrev=elem.iD;
+                    itNext->second[nextIdx].idPrevIdx=elem.idx;
+                    SetElem newElem;
+                    newElem.iD=current_edge->last_node();
+                    newElem.idx=nextIdx;
+                    newElem.cost=cost;
+                    heap.insert(newElem);
+                }
             }
         }
     }
@@ -345,6 +351,8 @@ void DijkstraKshortest::runUntil (const NodeId &target)
         if ((int)it->second.size()==K_LIMITE && target==elem.iD)
             return;
         LinkArray::iterator linkIt=linkArray.find(elem.iD);
+        if (linkIt == linkArray.end())
+            opp_error("Error link not found in linkArray");
         for (unsigned int i=0;i<linkIt->second.size();i++)
         {
             Edge* current_edge= (linkIt->second)[i];
@@ -375,25 +383,27 @@ void DijkstraKshortest::runUntil (const NodeId &target)
             }
             else
             {
+                bool permanent = true;
                 for (unsigned i=0;i<itNext->second.size();i++)
                 {
                     if ((maxCost<itNext->second[i].cost)&&(itNext->second[i].label==tent))
                     {
                         maxCost = itNext->second[i].cost;
                         nextIdx=i;
+                        permanent = false;
                     }
                 }
-            }
-            if (cost<maxCost)
-            {
-                itNext->second[nextIdx].cost=cost;
-                itNext->second[nextIdx].idPrev=elem.iD;
-                itNext->second[nextIdx].idPrevIdx=elem.idx;
-                SetElem newElem;
-                newElem.iD=current_edge->last_node();
-                newElem.idx=nextIdx;
-                newElem.cost=cost;
-                heap.insert(newElem);
+                if (cost<maxCost && !permanent)
+                {
+                    itNext->second[nextIdx].cost=cost;
+                    itNext->second[nextIdx].idPrev=elem.iD;
+                    itNext->second[nextIdx].idPrevIdx=elem.idx;
+                    SetElem newElem;
+                    newElem.iD=current_edge->last_node();
+                    newElem.idx=nextIdx;
+                    newElem.cost=cost;
+                    heap.insert(newElem);
+                }
             }
         }
     }
