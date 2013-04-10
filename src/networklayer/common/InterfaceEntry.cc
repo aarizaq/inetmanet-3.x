@@ -69,6 +69,18 @@ InterfaceEntry::InterfaceEntry(cModule* ifmod)
     estimateCostProcessArray.clear();
 }
 
+InterfaceEntry::~InterfaceEntry()
+{
+    if (ipv4data && ipv4data->ownerp == this)
+        delete ipv4data;
+    if (ipv6data && ipv6data->ownerp == this)
+        delete ipv6data;
+    if (protocol3data && protocol3data->ownerp == this)
+        delete protocol3data;
+    if (protocol4data && protocol4data->ownerp == this)
+        delete protocol4data;
+}
+
 std::string InterfaceEntry::info() const
 {
     std::stringstream out;
