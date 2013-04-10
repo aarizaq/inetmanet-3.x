@@ -265,7 +265,11 @@ void csma802154::handleUpperMsg(cMessage *msg)
         {
             if (!simulation.getModuleByPath(cInfo->getDestName()))
                 error("[MAC]: address conversion fails, destination host does not exist!");
+#if OMNETPP_VERSION >= 0x403
             cModule* module = simulation.getModuleByPath(cInfo->getDestName())->getModuleByPath(".nic.mac");
+#else
+            cModule* module = simulation.getModuleByPath(cInfo->getDestName())->getModuleByRelativePath("nic.mac");
+#endif
             Ieee802154Mac* macModule = check_and_cast<Ieee802154Mac *>(module);
             dest = macModule->getMacAddr();
         }
