@@ -18,8 +18,11 @@
 
 package inet.nodes.ethernet;
 
-import inet.linklayer.IMACRelayUnit;
+import inet.base.NotificationBoard;
 import inet.linklayer.IEtherMAC;
+import inet.linklayer.IMACRelayUnit;
+import inet.networklayer.common.InterfaceTable;
+
 
 //
 // Model of an Ethernet switch.
@@ -44,6 +47,13 @@ module EtherSwitch
     gates:
         inout ethg[] @labels(EtherFrame-conn);
     submodules:
+        interfaceTable: InterfaceTable {
+            @display("p=59,121");
+        }
+        notificationBoard: NotificationBoard {
+            parameters:
+                @display("p=59,43");
+        }
         relayUnit: <relayUnitType> like IMACRelayUnit {
             parameters:
                 @display("p=200,50");
@@ -51,7 +61,7 @@ module EtherSwitch
                 lowerLayerIn[sizeof(ethg)];
                 lowerLayerOut[sizeof(ethg)];
         }
-        mac[sizeof(ethg)]: <macType> like IEtherMAC {
+        eth[sizeof(ethg)]: <macType> like IEtherMAC {
             parameters:
                 promiscuous = true;
                 queueModule = "";
@@ -59,8 +69,8 @@ module EtherSwitch
         }
     connections:
         for i=0..sizeof(ethg)-1 {
-            mac[i].upperLayerIn <-- relayUnit.lowerLayerOut[i];
-            mac[i].upperLayerOut --> relayUnit.lowerLayerIn[i];
-            mac[i].phys <--> ethg[i];
+            eth[i].upperLayerIn <-- relayUnit.lowerLayerOut[i];
+            eth[i].upperLayerOut --> relayUnit.lowerLayerIn[i];
+            eth[i].phys <--> ethg[i];
         }
 }
