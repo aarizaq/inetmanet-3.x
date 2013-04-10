@@ -16,22 +16,22 @@
 // 
 //
 
-#include "DinamicWirelessNodeManager.h"
+#include "LaptopModelManager.h"
 #include "MobilityBase.h"
 
-Define_Module(DinamicWirelessNodeManager);
+Define_Module(LaptopModelManager);
 
-void DinamicWirelessNodeManager::Timer::removeTimer()
+void LaptopModelManager::Timer::removeTimer()
 {
     removeQueueTimer();
 }
 
-DinamicWirelessNodeManager::Timer::~Timer()
+LaptopModelManager::Timer::~Timer()
 {
     removeTimer();
 }
 
-void DinamicWirelessNodeManager::Timer::removeQueueTimer()
+void LaptopModelManager::Timer::removeQueueTimer()
 {
     TimerMultiMap::iterator it;
     for (it = module->timerMultimMap.begin(); it != module->timerMultimMap.end(); it++ )
@@ -44,7 +44,7 @@ void DinamicWirelessNodeManager::Timer::removeQueueTimer()
     }
 }
 
-void DinamicWirelessNodeManager::Timer::expire()
+void LaptopModelManager::Timer::expire()
 {
     SimTime t;
     if (module->nodeList[index].module)
@@ -61,23 +61,23 @@ void DinamicWirelessNodeManager::Timer::expire()
     module->timerMultimMap.insert(std::pair<simtime_t, Timer *>(t, this));
 }
 
-void DinamicWirelessNodeManager::Timer::resched(double time)
+void LaptopModelManager::Timer::resched(double time)
 {
     removeQueueTimer();
     if (simTime()+time<=simTime())
-        opp_error("DinamicWirelessNodeManager::resched message timer in the past");
+        opp_error("LaptopModelManager::resched message timer in the past");
     module->timerMultimMap.insert(std::pair<simtime_t, Timer *>(simTime()+time, this));
 }
 
-void DinamicWirelessNodeManager::Timer::resched(simtime_t time)
+void LaptopModelManager::Timer::resched(simtime_t time)
 {
     removeQueueTimer();
     if (time<=simTime())
-        opp_error("DinamicWirelessNodeManager::resched message timer in the past");
+        opp_error("LaptopModelManager::resched message timer in the past");
     module->timerMultimMap.insert(std::pair<simtime_t, Timer *>(time, this));
 }
 
-bool DinamicWirelessNodeManager::Timer::isScheduled()
+bool LaptopModelManager::Timer::isScheduled()
 {
     TimerMultiMap::iterator it;
     for (it = module->timerMultimMap.begin() ; it != module->timerMultimMap.end(); it++ )
@@ -91,19 +91,19 @@ bool DinamicWirelessNodeManager::Timer::isScheduled()
 }
 
 
-DinamicWirelessNodeManager::DinamicWirelessNodeManager()
+LaptopModelManager::LaptopModelManager()
 {
     // TODO Auto-generated constructor stub
     timerMessagePtr = new cMessage();
 }
 
-DinamicWirelessNodeManager::~DinamicWirelessNodeManager()
+LaptopModelManager::~LaptopModelManager()
 {
     // TODO Auto-generated destructor stub
     cancelAndDelete(timerMessagePtr);
 }
 
-void DinamicWirelessNodeManager::initialize()
+void LaptopModelManager::initialize()
 {
     unsigned int numNodes = par("NumNodes");
     for (unsigned int i = 0; i < numNodes; i++)
@@ -112,13 +112,13 @@ void DinamicWirelessNodeManager::initialize()
         info.module = NULL;
         info.startLife = par("startLife");
         nodeList.push_back(info);
-        DinamicWirelessNodeManager::Timer *timer = new DinamicWirelessNodeManager::Timer(i, this);
+        LaptopModelManager::Timer *timer = new LaptopModelManager::Timer(i, this);
         timer->resched(info.startLife);
     }
     scheduleEvent();
 }
 
-void DinamicWirelessNodeManager::newNode(const char * name, const char * type,bool setCoor, const Coord& position, simtime_t endLife, int index)
+void LaptopModelManager::newNode(const char * name, const char * type,bool setCoor, const Coord& position, simtime_t endLife, int index)
 {
     cModule* parentmod = getParentModule();
     int nodeVectorIndex = index;
@@ -157,7 +157,7 @@ void DinamicWirelessNodeManager::newNode(const char * name, const char * type,bo
 }
 
 
-void DinamicWirelessNodeManager::deleteNode(const int &index, const simtime_t &startTime)
+void LaptopModelManager::deleteNode(const int &index, const simtime_t &startTime)
 {
     cModule* mod = nodeList[index].module;
 
@@ -171,7 +171,7 @@ void DinamicWirelessNodeManager::deleteNode(const int &index, const simtime_t &s
     nodeList[index].startLife = startTime;
 }
 
-void DinamicWirelessNodeManager::scheduleEvent()
+void LaptopModelManager::scheduleEvent()
 {
     if (!timerMessagePtr)
         return;
@@ -212,7 +212,7 @@ void DinamicWirelessNodeManager::scheduleEvent()
     }
 }
 
-bool DinamicWirelessNodeManager::checkTimer(cMessage *msg)
+bool LaptopModelManager::checkTimer(cMessage *msg)
 {
     if (msg != timerMessagePtr)
         return false;
@@ -233,7 +233,7 @@ bool DinamicWirelessNodeManager::checkTimer(cMessage *msg)
     return true;
 }
 
-void DinamicWirelessNodeManager::handleMessage(cMessage *msg)
+void LaptopModelManager::handleMessage(cMessage *msg)
 {
     if(!checkTimer(msg))
     {

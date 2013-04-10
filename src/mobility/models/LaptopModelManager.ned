@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 //
-package inet.util;
+package inet.mobility.models;
 
-simple DinamicWirelessNodeManager
+simple LaptopModelManager
 {
     int NumNodes = default(0);
     volatile double startLife @unit(s);

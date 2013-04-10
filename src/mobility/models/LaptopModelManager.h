@@ -15,8 +15,8 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-#ifndef DINAMICWIRELESSNODEMANAGER_H_
-#define DINAMICWIRELESSNODEMANAGER_H_
+#ifndef LaptopModelManager_H_
+#define LaptopModelManager_H_
 #include <vector>
 #include <map>
 #include <omnetpp.h>
@@ -24,14 +24,14 @@
 #include "Coord.h"
 
 
-class DinamicWirelessNodeManager : public cSimpleModule
+class LaptopModelManager : public cSimpleModule
 {
     private:
         class Timer {
           public:
             int index;
-            DinamicWirelessNodeManager *module;
-            Timer(int index, DinamicWirelessNodeManager *module): index(index),module(module){}
+            LaptopModelManager *module;
+            Timer(int index, LaptopModelManager *module): index(index),module(module){}
             ~Timer();
             virtual void expire();
             virtual void removeQueueTimer();
@@ -56,8 +56,8 @@ class DinamicWirelessNodeManager : public cSimpleModule
         void scheduleEvent();
         cMessage *timerMessagePtr;
     public:
-        DinamicWirelessNodeManager();
-        virtual ~DinamicWirelessNodeManager();
+        LaptopModelManager();
+        virtual ~LaptopModelManager();
         virtual void initialize();
        // virtual void finish();
         virtual void handleMessage(cMessage *msg);

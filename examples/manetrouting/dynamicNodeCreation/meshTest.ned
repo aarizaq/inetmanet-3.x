@@ -29,7 +29,7 @@ import inet.linklayer.ieee80211mesh.nodes.ApMeshNode;
 import inet.nodes.ethernet.EtherSwitch;
 import inet.linklayer.ieee80211mesh.nodes.ApMeshRelay;
 import ned.DatarateChannel;
-import inet.util.DinamicWirelessNodeManager;
+import inet.mobility.models.LaptopModelManager;
 
 network meshTest
 {
@@ -119,7 +119,7 @@ network meshTest
             parameters:
                 @display("p=60,23;i=misc/sun");
         }
-        dinamicWirelessNodeManager: DinamicWirelessNodeManager {
+        laptopModelManager: LaptopModelManager {
 
             @display("p=134,24;is=s");
         }
