@@ -119,6 +119,9 @@ void Radio::initialize(int stage)
         std::string propModel = getChannelControlPar("propagationModel").stdstringValue();
         if (propModel == "")
             propModel = "FreeSpaceModel";
+        doubleRayCoverage = false;
+        if (propModel == "TwoRayGroundModel")
+            doubleRayCoverage = true;
 
         receptionModel = (IReceptionModel *) createOne(propModel.c_str());
         receptionModel->initializeFrom(this);
@@ -961,8 +964,10 @@ void Radio::updateDisplayString() {
         d.setTagArg("r1", 2, "gray");
         d.removeTag("r2");
         d.insertTag("r2");
-        //d.setTagArg("r2", 0, (long) calcDistFreeSpace());
-        d.setTagArg("r2", 0, (long) calcDistDoubleRay());
+        if (doubleRayCoverage)
+            d.setTagArg("r2", 0, (long) calcDistDoubleRay());
+        else
+            d.setTagArg("r2", 0, (long) calcDistFreeSpace());
         d.setTagArg("r2", 2, "blue");
     }
     if (updateString==NULL && updateStringInterval>0)

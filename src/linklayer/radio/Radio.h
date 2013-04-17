@@ -267,6 +267,7 @@ class INET_API Radio : public ChannelAccess, public IPowerControl
 
     // if true draw coverage circles
     bool drawCoverage;
+    bool doubleRayCoverage;
 
     // statistics:
     static simsignal_t bitrateSignal;
