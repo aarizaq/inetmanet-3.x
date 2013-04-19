@@ -355,7 +355,7 @@ void Ieee80211Mac::initialize(int stage)
         numCollision = 0;
         numInternalCollision = 0;
         numReceived = 0;
-        numSentMulticast = -1; //sorin
+        numSentMulticast = 0; //sorin
         numReceivedMulticast = 0;
         numBites = 0;
         numSentTXOP = 0;
@@ -1012,8 +1012,11 @@ void Ieee80211Mac::handleWithFSM(cMessage *msg)
             FSMA_No_Event_Transition(Immediate-Data-Ready,
                                      !transmissionQueueEmpty(),
                                      DEFER,
+                                     /* Mohamad Sbeiti report that this is erroneous, remove these lines in the future
+                                      * maintain now only for to let constancy of the problem
                                      if (retryCounter() == 0) //  jesjones patch.  TODO: check this particular case, I haven't been sure about this particular case
                                         invalidateBackoffPeriod();
+                                        */
                                     );
             FSMA_Event_Transition(Receive,
                                   isLowerMsg(msg),
