@@ -1247,6 +1247,7 @@ void Ieee80211Mac::handleWithFSM(cMessage *msg)
                                   fr = getCurrentTransmission();
                                   numBites += fr->getBitLength();
                                   bites() += fr->getBitLength();
+                                  numFramesOverTxOp--;
 
 
                                   macDelay()->record(simTime() - fr->getMACArrive());
@@ -1884,6 +1885,7 @@ void Ieee80211Mac::sendDataFrame(Ieee80211DataOrMgmtFrame *frameToSend)
     {
         //we start packet burst within TXOP time period
         txop = true;
+        numFramesOverTxOp = 0;
 
         for (frame=dynamic_cast<Ieee80211DataOrMgmtFrame*>(transmissionQueue()->initIterator()); frame!=NULL; frame=dynamic_cast<Ieee80211DataOrMgmtFrame*>(transmissionQueue()->next()))
         {
@@ -1893,6 +1895,7 @@ void Ieee80211Mac::sendDataFrame(Ieee80211DataOrMgmtFrame *frameToSend)
             if (TXOP()>time+t)
             {
                 time += t;
+                numFramesOverTxOp++;
                 EV << "adding t \n";
             }
             else
@@ -1921,7 +1924,7 @@ void Ieee80211Mac::sendDataFrame(Ieee80211DataOrMgmtFrame *frameToSend)
     {
         //we start packet burst within TXOP time period
         txop = true;
-
+        numFramesOverTxOp = 0;
         for (frame=transmissionQueue()->begin(); frame != transmissionQueue()->end(); ++frame)
         {
             count++;
@@ -1930,6 +1933,7 @@ void Ieee80211Mac::sendDataFrame(Ieee80211DataOrMgmtFrame *frameToSend)
             if (TXOP()>time+t)
             {
                 time += t;
+                numFramesOverTxOp++;
                 EV << "adding t \n";
             }
             else
@@ -1994,7 +1998,7 @@ Ieee80211DataOrMgmtFrame *Ieee80211Mac::buildDataFrame(Ieee80211DataOrMgmtFrame 
         frame->setDuration(0);
     else if (!frameToSend->getMoreFragments())
     {
-        if (txop)
+        if (txop && numFramesOverTxOp > 1)
 
         {
 #ifdef  USEMULTIQUEUE

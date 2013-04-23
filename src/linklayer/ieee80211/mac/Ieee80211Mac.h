@@ -336,6 +336,7 @@ class INET_API Ieee80211Mac : public WirelessMacBase, public INotifiable
 
     /** True if we are in txop bursting packets. */
     bool txop;
+    int numFramesOverTxOp;
 
     /** Indicates which queue is acite. Depends on access category. */
     int currentAC;
