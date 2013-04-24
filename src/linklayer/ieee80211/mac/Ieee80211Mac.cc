@@ -1238,6 +1238,29 @@ void Ieee80211Mac::handleWithFSM(cMessage *msg)
                                   if (endTXOP->isScheduled()) cancelEvent(endTXOP);
                                  );
 #endif
+            FSMA_Event_Transition(Receive-ACK-TXOP-Empty,
+                                  isLowerMsg(msg) && isForUs(frame) && frameType == ST_ACK && txop && transmissionQueue(oldcurrentAC)->size() == 1,
+                                  DEFER,
+                                  currentAC = oldcurrentAC;
+                                  if (retryCounter() == 0) numSentWithoutRetry()++;
+                                  numSent()++;
+                                  fr = getCurrentTransmission();
+                                  numBites += fr->getBitLength();
+                                  bites() += fr->getBitLength();
+                                  numFramesOverTxOp--;
+                                  macDelay()->record(simTime() - fr->getMACArrive());
+                                  if (maxjitter() == 0 || maxjitter() < (simTime() - fr->getMACArrive()))
+                                      maxjitter() = simTime() - fr->getMACArrive();
+                                  if (minjitter() == 0 || minjitter() > (simTime() - fr->getMACArrive()))
+                                      minjitter() = simTime() - fr->getMACArrive();
+                                  EV << "record macDelay AC" << currentAC << " value " << simTime() - fr->getMACArrive() <<endl;
+                                  numSentTXOP++;
+                                  cancelTimeoutPeriod();
+                                  finishCurrentTransmission();
+                                  resetCurrentBackOff();
+                                  txop = false;
+                                  if (endTXOP->isScheduled()) cancelEvent(endTXOP);
+                                  );
             FSMA_Event_Transition(Receive-ACK-TXOP,
                                   isLowerMsg(msg) && isForUs(frame) && frameType == ST_ACK && txop,
                                   WAITSIFS,
@@ -1998,7 +2021,7 @@ Ieee80211DataOrMgmtFrame *Ieee80211Mac::buildDataFrame(Ieee80211DataOrMgmtFrame 
         frame->setDuration(0);
     else if (!frameToSend->getMoreFragments())
     {
-        if (txop && numFramesOverTxOp > 1)
+        if (txop && transmissionQueue()->size() > 1)
 
         {
 #ifdef  USEMULTIQUEUE
