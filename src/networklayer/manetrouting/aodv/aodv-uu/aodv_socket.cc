@@ -606,7 +606,7 @@ void NS_CLASS aodv_socket_send(AODV_msg * aodv_msg, struct in_addr dst,
         destAdd = dst.s_addr;
     }
 
-    // if delay is 0 compute the delay using the distributions in the configuration
+    // if delay is lower than 0 compute the delay using the distributions in the configuration
     if (delay < 0)
     {
         if (dst.s_addr == ManetAddress(IPv4Address(AODV_BROADCAST)))

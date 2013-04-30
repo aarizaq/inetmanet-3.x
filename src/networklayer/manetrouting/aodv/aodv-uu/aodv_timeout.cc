@@ -175,7 +175,7 @@ void NS_CLASS local_repair_timeout(void *arg)
     /* delete route to omnet inet routing table ... */
     /* if delete is true fiels next, hops and mask are nor used */
     struct in_addr nm;
-    nm.s_addr = ManetAddress(IPv4Address(IPv4Address::ALLONES_ADDRESS));
+    nm.s_addr = ManetAddress(IPv4Address::ALLONES_ADDRESS);
     omnet_chg_rte(rt->dest_addr, rt->dest_addr, nm, rt->hcnt,true);
 #endif
 #endif

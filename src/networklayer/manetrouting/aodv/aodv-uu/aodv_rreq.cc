@@ -493,9 +493,9 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
 
             if (checkRrep)
                  rrep_send(rrep, rev_rt, NULL, rrep_size, par ("unicastDelay").doubleValue());
-
+            else
+                rrep_send(rrep, rev_rt, NULL, rrep_size);
             return;
-
         }
     }
 #endif
