@@ -243,6 +243,9 @@ void Ieee80211Mesh::initialize(int stage)
         bool ETXEstimate = par("ETXEstimate");
         bool useHwmp = par("useHwmp");
 
+        if (!useReactive && !useProactive && !useHwmp)
+            useHwmp = true;
+
         if (useHwmp)
         {
             useReactive = false;
@@ -250,8 +253,9 @@ void Ieee80211Mesh::initialize(int stage)
             useLwmpls = false;
         }
 
-//        if (useReactive)
-//            useProactive = false;
+        if (useReactive)
+            useProactive = false;
+
 
         if (useReactive && useProactive)
         {
