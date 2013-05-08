@@ -22,6 +22,7 @@
 #include <cownedobject.h>
 #include <vector>
 #include <map>
+#include "Coord.h"
 #include "MACAddress.h"
 #include "IPv4Address.h"
 
@@ -140,6 +141,7 @@ class WirelessNumHops : public cOwnedObject
 
         WirelessNumHops();
         virtual ~WirelessNumHops();
+        virtual void reStart();
         virtual bool findRoute(const double &, const MACAddress &dest,std::vector<MACAddress> &pathNode);
         virtual bool findRoute(const double &, const IPv4Address &dest,std::vector<IPv4Address> &pathNode);
 
@@ -156,6 +158,18 @@ class WirelessNumHops : public cOwnedObject
         void runUntil (const MACAddress &target)
         {
             runUntil(getIdNode(target));
+        }
+
+        virtual Coord getPos(const int &node);
+
+        virtual Coord getPos(const IPv4Address &node)
+        {
+            return getPos(getIdNode(node));
+        }
+
+        virtual Coord getPos(const MACAddress &node)
+        {
+            return getPos(getIdNode(node));
         }
 };
 

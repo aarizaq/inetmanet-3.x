@@ -24,6 +24,11 @@
 
 WirelessNumHops::WirelessNumHops()
 {
+    reStart();
+}
+
+void WirelessNumHops::reStart()
+{
     // TODO Auto-generated constructor stub
     // fill in routing tables with static routes
     cTopology topo("topo");
@@ -485,4 +490,10 @@ bool WirelessNumHops::findRoute(const double &coverageArea, const IPv4Address &d
     }
     return false;
 }
+
+Coord WirelessNumHops::getPos(const int &node)
+{
+    return vectorList[node].mob->getCurrentPosition();
+}
+
 
