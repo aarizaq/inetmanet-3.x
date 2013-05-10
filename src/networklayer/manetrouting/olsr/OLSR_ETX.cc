@@ -1361,11 +1361,11 @@ OLSR_ETX::olsr_r2_mpr_computation()
                             if (!max_link_tuple)
                                 opp_error("\n Error conversion link tuple");
                         }
-                        if (nb_link_tuple || max_link_tuple)
-                            continue;
                         switch (parameter_.link_quality())
                         {
                         case OLSR_ETX_BEHAVIOR_ETX:
+                            if (nb_link_tuple == NULL || max_link_tuple == NULL)
+                                continue;
                             if (nb_link_tuple->etx() < max_link_tuple->etx())
                             {
                                 max = nb_tuple;
@@ -1386,6 +1386,8 @@ OLSR_ETX::olsr_r2_mpr_computation()
                             }
                             break;
                         case OLSR_ETX_BEHAVIOR_ML:
+                            if (nb_link_tuple == NULL || max_link_tuple == NULL)
+                                continue;
                             if (nb_link_tuple->etx() > max_link_tuple->etx())
                             {
                                 max = nb_tuple;
@@ -1690,6 +1692,8 @@ OLSR_ETX::qolsr_mpr_computation()
                             switch (parameter_.link_quality())
                             {
                             case OLSR_ETX_BEHAVIOR_ETX:
+                                if (nb_link_tuple == NULL || max_link_tuple == NULL)
+                                    continue;
                                 current_total_etx = nb_link_tuple->etx() + nb2hop_tuple->etx();
                                 max_total_etx = max_link_tuple->etx() + nb2hop_tuple->etx();
                                 if (current_total_etx < max_total_etx)
@@ -1713,6 +1717,8 @@ OLSR_ETX::qolsr_mpr_computation()
                                 break;
 
                             case OLSR_ETX_BEHAVIOR_ML:
+                                if (nb_link_tuple == NULL || max_link_tuple == NULL)
+                                    continue;
                                 current_total_etx = nb_link_tuple->etx() * nb2hop_tuple->etx();
                                 max_total_etx = max_link_tuple->etx() * nb2hop_tuple->etx();
                                 if (current_total_etx > max_total_etx)
