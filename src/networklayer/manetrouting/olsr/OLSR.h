@@ -474,6 +474,7 @@ class OLSR : public ManetRoutingBase
 
     virtual void        recv_olsr(cMessage*);
 
+    virtual void        CoverTwoHopNeighbors(const nsaddr_t &neighborMainAddr, nb2hopset_t & N2);
     virtual void        mpr_computation();
     virtual void        rtable_computation();
 

@@ -760,7 +760,7 @@ OLSR::recv_olsr(cMessage* msg)
 }
 
 
- void CoverTwoHopNeighbors(const nsaddr_t &neighborMainAddr, nb2hopset_t & N2)
+void OLSR::CoverTwoHopNeighbors(const nsaddr_t &neighborMainAddr, nb2hopset_t & N2)
 { // first gather all 2-hop neighbors to be removed
     std::set<nsaddr_t> toRemove;
     for (nb2hopset_t::iterator it = N2.begin(); it != N2.end(); it++)

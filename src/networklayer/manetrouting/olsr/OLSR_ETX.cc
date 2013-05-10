@@ -695,7 +695,7 @@ OLSR_ETX::olsr_r1_mpr_computation()
         }
     }
 }
-
+#if 0
 ///
 /// \brief Computates MPR set of a node.
 ///
@@ -1163,7 +1163,636 @@ OLSR_ETX::qolsr_mpr_computation()
         }
     }
 }
+#else
 
+///
+/// \brief Computates MPR set of a node.
+///
+void
+OLSR_ETX::olsr_r2_mpr_computation()
+{
+    // For further details please refer to paper
+    // Quality of Service Routing in Ad Hoc Networks Using OLSR
+
+    state_.clear_mprset();
+
+    nbset_t N; nb2hopset_t N2;
+
+    // N is the subset of neighbors of the node, which are
+    // neighbor "of the interface I"
+    for (nbset_t::iterator it = nbset().begin(); it != nbset().end(); it++)
+        if ((*it)->getStatus() == OLSR_ETX_STATUS_SYM &&
+                (*it)->willingness() != OLSR_ETX_WILL_NEVER) // I think that we need this check
+            N.push_back(*it);
+
+    // N2 is the set of 2-hop neighbors reachable from "the interface
+    // I", excluding:
+    // (i)   the nodes only reachable by members of N with willingness WILL_NEVER
+    // (ii)  the node performing the computation
+    // (iii) all the symmetric neighbors: the nodes for which there exists a symmetric
+    //       link to this node on some interface.
+
+    for (nb2hopset_t::iterator it = nb2hopset().begin(); it != nb2hopset().end(); it++)
+    {
+        OLSR_ETX_nb2hop_tuple* nb2hop_tuple = dynamic_cast<OLSR_ETX_nb2hop_tuple*>(*it);
+        if (!nb2hop_tuple)
+            opp_error("\n Error conversion nd2hop tuple");
+
+        // (ii)  the node performing the computation
+        if (isLocalAddress(nb2hop_tuple->nb2hop_addr()))
+        {
+            continue;
+        }
+        // excluding:
+        // (i) the nodes only reachable by members of N with willingness WILL_NEVER
+        bool ok = false;
+        for (nbset_t::const_iterator it2 = N.begin(); it2 != N.end(); it2++)
+        {
+            OLSR_nb_tuple* neigh = *it2;
+            if (neigh->nb_main_addr() == nb2hop_tuple->nb_main_addr())
+            {
+                if (neigh->willingness() == OLSR_WILL_NEVER)
+                {
+                    ok = false;
+                    break;
+                }
+                else
+                {
+                    ok = true;
+                    break;
+                }
+            }
+        }
+        if (!ok)
+        {
+            continue;
+        }
+
+        // excluding:
+        // (iii) all the symmetric neighbors: the nodes for which there exists a symmetric
+        //       link to this node on some interface.
+        for (nbset_t::iterator it2 = N.begin(); it2 != N.end(); it2++)
+        {
+            OLSR_nb_tuple* neigh = *it2;
+            if (neigh->nb_main_addr() == nb2hop_tuple->nb2hop_addr())
+            {
+                ok = false;
+                break;
+            }
+        }
+        if (ok)
+            N2.push_back(nb2hop_tuple);
+    }
+    // 1. Start with an MPR set made of all members of N with
+    // N_willingness equal to WILL_ALWAYS
+    for (nbset_t::iterator it = N.begin(); it != N.end(); it++)
+    {
+        OLSR_nb_tuple* nb_tuple = *it;
+        if (nb_tuple->willingness() == OLSR_WILL_ALWAYS)
+        {
+            state_.insert_mpr_addr(nb_tuple->nb_main_addr());
+            // (not in RFC but I think is needed: remove the 2-hop
+            // neighbors reachable by the MPR from N2)
+            CoverTwoHopNeighbors (nb_tuple->nb_main_addr(), N2);
+        }
+    }
+
+    // 2. Calculate D(y), where y is a member of N, for all nodes in N.
+    // We will do this later.
+
+    // 3. Add to the MPR set those nodes in N, which are the *only*
+    // nodes to provide reachability to a node in N2. Remove the
+    // nodes from N2 which are now covered by a node in the MPR set.
+
+    std::set<nsaddr_t> coveredTwoHopNeighbors;
+    for (nb2hopset_t::iterator it = N2.begin(); it != N2.end(); it++)
+    {
+        OLSR_nb2hop_tuple* twoHopNeigh = *it;
+        bool onlyOne = true;
+        // try to find another neighbor that can reach twoHopNeigh->twoHopNeighborAddr
+        for (nb2hopset_t::const_iterator it2 = N2.begin(); it2 != N2.end(); it2++)
+        {
+            OLSR_nb2hop_tuple* otherTwoHopNeigh = *it2;
+            if (otherTwoHopNeigh->nb2hop_addr() == twoHopNeigh->nb2hop_addr()
+                    && otherTwoHopNeigh->nb_main_addr() != twoHopNeigh->nb_main_addr())
+            {
+                onlyOne = false;
+                break;
+            }
+        }
+        if (onlyOne)
+        {
+            state_.insert_mpr_addr(twoHopNeigh->nb_main_addr());
+
+            // take note of all the 2-hop neighbors reachable by the newly elected MPR
+            for (nb2hopset_t::const_iterator it2 = N2.begin(); it2 != N2.end(); it2++)
+            {
+                OLSR_nb2hop_tuple* otherTwoHopNeigh = *it2;
+                if (otherTwoHopNeigh->nb_main_addr() == twoHopNeigh->nb_main_addr())
+                {
+                    coveredTwoHopNeighbors.insert(otherTwoHopNeigh->nb2hop_addr());
+                }
+            }
+        }
+    }
+
+    // While there exist nodes in N2 which are not covered by at
+    // least one node in the MPR set:
+    while (N2.begin() != N2.end())
+    {
+        // For each node in N, calculate the reachability, i.e., the
+        // number of nodes in N2 that it can reach
+        std::map<int, std::vector<OLSR_ETX_nb_tuple*> > reachability;
+        std::set<int> rs;
+        for (nbset_t::iterator it = N.begin(); it != N.end(); it++)
+        {
+            OLSR_ETX_nb_tuple* nb_tuple = *it;
+            int r = 0;
+            for (nb2hopset_t::iterator it2 = N2.begin(); it2 != N2.end(); it2++)
+            {
+                OLSR_ETX_nb2hop_tuple* nb2hop_tuple = dynamic_cast<OLSR_ETX_nb2hop_tuple*>(*it2);
+                if (!nb2hop_tuple)
+                    opp_error("\n Error conversion nd2hop tuple");
+
+
+                if (nb_tuple->nb_main_addr() == nb2hop_tuple->nb_main_addr())
+                    r++;
+            }
+            rs.insert(r);
+            reachability[r].push_back(nb_tuple);
+        }
+
+        // Add to Mi the node in N that has the best link to the current
+        // node. In case of tie, select tin N2. Remove the nodes from N2
+        // which are now covered by a node in the MPR set.
+        OLSR_ETX_nb_tuple* max = NULL;
+        int max_r = 0;
+        for (std::set<int>::iterator it = rs.begin(); it != rs.end(); it++)
+        {
+            int r = *it;
+            if (r > 0)
+            {
+                for (std::vector<OLSR_ETX_nb_tuple*>::iterator it2 = reachability[r].begin();
+                        it2 != reachability[r].end(); it2++)
+                {
+                    OLSR_ETX_nb_tuple* nb_tuple = *it2;
+                    if (max == NULL)
+                    {
+                        max = nb_tuple;
+                        max_r = r;
+                    }
+                    else
+                    {
+                        OLSR_ETX_link_tuple *nb_link_tuple = NULL, *max_link_tuple = NULL;
+                        OLSR_link_tuple *link_tuple_aux;
+                        double now = CURRENT_TIME;
+
+                        link_tuple_aux = state_.find_sym_link_tuple(nb_tuple->nb_main_addr(), now);
+                        if (link_tuple_aux)
+                        {
+                            nb_link_tuple = dynamic_cast<OLSR_ETX_link_tuple *>(link_tuple_aux);
+                            if (!nb_link_tuple)
+                                opp_error("\n Error conversion link tuple");
+                        }
+                        link_tuple_aux = state_.find_sym_link_tuple(max->nb_main_addr(), now);
+                        if (link_tuple_aux)
+                        {
+                            max_link_tuple = dynamic_cast<OLSR_ETX_link_tuple *>(link_tuple_aux);
+                            if (!max_link_tuple)
+                                opp_error("\n Error conversion link tuple");
+                        }
+                        if (nb_link_tuple || max_link_tuple)
+                            continue;
+                        switch (parameter_.link_quality())
+                        {
+                        case OLSR_ETX_BEHAVIOR_ETX:
+                            if (nb_link_tuple->etx() < max_link_tuple->etx())
+                            {
+                                max = nb_tuple;
+                                max_r = r;
+                            }
+                            else if (nb_link_tuple->etx() == max_link_tuple->etx())
+                            {
+                                if (r > max_r)
+                                {
+                                    max = nb_tuple;
+                                    max_r = r;
+                                }
+                                else if (r == max_r && degree(nb_tuple) > degree(max))
+                                {
+                                    max = nb_tuple;
+                                    max_r = r;
+                                }
+                            }
+                            break;
+                        case OLSR_ETX_BEHAVIOR_ML:
+                            if (nb_link_tuple->etx() > max_link_tuple->etx())
+                            {
+                                max = nb_tuple;
+                                max_r = r;
+                            }
+                            else if (nb_link_tuple->etx() == max_link_tuple->etx())
+                            {
+                                if (r > max_r)
+                                {
+                                    max = nb_tuple;
+                                    max_r = r;
+                                }
+                                else if (r == max_r && degree(nb_tuple) > degree(max))
+                                {
+                                    max = nb_tuple;
+                                    max_r = r;
+                                }
+                            }
+                            break;
+                        case OLSR_ETX_BEHAVIOR_NONE:
+                        default:
+                            if (r > max_r)
+                            {
+                                max = nb_tuple;
+                                max_r = r;
+                            }
+                            else if (r == max_r && degree(nb_tuple) > degree(max))
+                            {
+                                max = nb_tuple;
+                                max_r = r;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        if (max != NULL)
+        {
+            state_.insert_mpr_addr(max->nb_main_addr());
+            std::set<nsaddr_t> nb2hop_addrs;
+            for (nb2hopset_t::iterator it = N2.begin(); it != N2.end();)
+            {
+                OLSR_ETX_nb2hop_tuple* nb2hop_tuple = dynamic_cast<OLSR_ETX_nb2hop_tuple*>(*it);
+                if (!nb2hop_tuple)
+                    opp_error("\n Error conversion nd2hop tuple");
+
+                if (nb2hop_tuple->nb_main_addr() == max->nb_main_addr())
+                {
+                    nb2hop_addrs.insert(nb2hop_tuple->nb2hop_addr());
+                    it = N2.erase(it);
+                }
+                else
+                    it++;
+
+            }
+            for (nb2hopset_t::iterator it = N2.begin(); it != N2.end();)
+            {
+                OLSR_ETX_nb2hop_tuple* nb2hop_tuple = dynamic_cast<OLSR_ETX_nb2hop_tuple*>(*it);
+                if (!nb2hop_tuple)
+                    opp_error("\n Error conversion nd2hop tuple");
+
+                std::set<nsaddr_t>::iterator it2 =
+                    nb2hop_addrs.find(nb2hop_tuple->nb2hop_addr());
+                if (it2 != nb2hop_addrs.end())
+                {
+                    it = N2.erase(it);
+                }
+                else
+                    it++;
+
+            }
+        }
+    }
+}
+
+///
+/// \brief Computates MPR set of a node.
+///
+void
+OLSR_ETX::qolsr_mpr_computation()
+{
+    // For further details please refer to paper
+    // QoS Routing in OLSR with Several Classes of Services
+
+    state_.clear_mprset();
+
+    nbset_t N; nb2hopset_t N2;
+    // N is the subset of neighbors of the node, which are
+    // neighbor "of the interface I"
+    for (nbset_t::iterator it = nbset().begin(); it != nbset().end(); it++)
+        if ((*it)->getStatus() == OLSR_ETX_STATUS_SYM &&
+                (*it)->willingness() != OLSR_ETX_WILL_NEVER) // I think that we need this check
+            N.push_back(*it);
+
+    // N2 is the set of 2-hop neighbors reachable from "the interface
+    // I", excluding:
+    // (i)   the nodes only reachable by members of N with willingness WILL_NEVER
+    // (ii)  the node performing the computation
+    // (iii) all the symmetric neighbors: the nodes for which there exists a symmetric
+    //       link to this node on some interface.
+    for (nb2hopset_t::iterator it = nb2hopset().begin(); it != nb2hopset().end(); it++)
+    {
+        OLSR_ETX_nb2hop_tuple* nb2hop_tuple = dynamic_cast<OLSR_ETX_nb2hop_tuple*>(*it);
+        if (!nb2hop_tuple)
+            opp_error("\n Error conversion nd2hop tuple");
+
+        // (ii)  the node performing the computation
+        if (isLocalAddress(nb2hop_tuple->nb2hop_addr()))
+        {
+            continue;
+        }
+        // excluding:
+        // (i) the nodes only reachable by members of N with willingness WILL_NEVER
+        bool ok = false;
+        for (nbset_t::const_iterator it2 = N.begin(); it2 != N.end(); it2++)
+        {
+            OLSR_nb_tuple* neigh = *it2;
+            if (neigh->nb_main_addr() == nb2hop_tuple->nb_main_addr())
+            {
+                if (neigh->willingness() == OLSR_WILL_NEVER)
+                {
+                    ok = false;
+                    break;
+                }
+                else
+                {
+                    ok = true;
+                    break;
+                }
+            }
+        }
+        if (!ok)
+        {
+            continue;
+        }
+
+        // excluding:
+        // (iii) all the symmetric neighbors: the nodes for which there exists a symmetric
+        //       link to this node on some interface.
+        for (nbset_t::iterator it2 = N.begin(); it2 != N.end(); it2++)
+        {
+            OLSR_nb_tuple* neigh = *it2;
+            if (neigh->nb_main_addr() == nb2hop_tuple->nb2hop_addr())
+            {
+                ok = false;
+                break;
+            }
+        }
+        if (ok)
+            N2.push_back(nb2hop_tuple);
+    }
+
+
+    // 1. Start with an MPR set made of all members of N with
+    // N_willingness equal to WILL_ALWAYS
+    for (nbset_t::iterator it = N.begin(); it != N.end(); it++)
+    {
+        OLSR_nb_tuple* nb_tuple = *it;
+        if (nb_tuple->willingness() == OLSR_WILL_ALWAYS)
+        {
+            state_.insert_mpr_addr(nb_tuple->nb_main_addr());
+            // (not in RFC but I think is needed: remove the 2-hop
+            // neighbors reachable by the MPR from N2)
+            CoverTwoHopNeighbors (nb_tuple->nb_main_addr(), N2);
+        }
+    }
+
+    // 2. Calculate D(y), where y is a member of N, for all nodes in N.
+    // We will do this later.
+
+    // 3. Add to the MPR set those nodes in N, which are the *only*
+    // nodes to provide reachability to a node in N2. Remove the
+    // nodes from N2 which are now covered by a node in the MPR set.
+
+    std::set<nsaddr_t> coveredTwoHopNeighbors;
+    for (nb2hopset_t::iterator it = N2.begin(); it != N2.end(); it++)
+    {
+        OLSR_nb2hop_tuple* twoHopNeigh = *it;
+        bool onlyOne = true;
+        // try to find another neighbor that can reach twoHopNeigh->twoHopNeighborAddr
+        for (nb2hopset_t::const_iterator it2 = N2.begin(); it2 != N2.end(); it2++)
+        {
+            OLSR_nb2hop_tuple* otherTwoHopNeigh = *it2;
+            if (otherTwoHopNeigh->nb2hop_addr() == twoHopNeigh->nb2hop_addr()
+                    && otherTwoHopNeigh->nb_main_addr() != twoHopNeigh->nb_main_addr())
+            {
+                onlyOne = false;
+                break;
+            }
+        }
+        if (onlyOne)
+        {
+            state_.insert_mpr_addr(twoHopNeigh->nb_main_addr());
+
+            // take note of all the 2-hop neighbors reachable by the newly elected MPR
+            for (nb2hopset_t::const_iterator it2 = N2.begin(); it2 != N2.end(); it2++)
+            {
+                OLSR_nb2hop_tuple* otherTwoHopNeigh = *it2;
+                if (otherTwoHopNeigh->nb_main_addr() == twoHopNeigh->nb_main_addr())
+                {
+                    coveredTwoHopNeighbors.insert(otherTwoHopNeigh->nb2hop_addr());
+                }
+            }
+        }
+    }
+
+
+    // While there exist nodes in N2 which are not covered by at
+    // least one node in the MPR set:
+    while (N2.begin() != N2.end())
+    {
+        // For each node in N, calculate the reachability, i.e., the
+        // number of nodes in N2 that it can reach
+        std::map<int, std::vector<OLSR_ETX_nb_tuple*> > reachability;
+        std::set<int> rs;
+        for (nbset_t::iterator it = N.begin(); it != N.end(); it++)
+        {
+            OLSR_ETX_nb_tuple* nb_tuple = *it;
+            int r = 0;
+            for (nb2hopset_t::iterator it2 = N2.begin(); it2 != N2.end(); it2++)
+            {
+                OLSR_ETX_nb2hop_tuple* nb2hop_tuple = dynamic_cast<OLSR_ETX_nb2hop_tuple*>(*it2);
+                if (!nb2hop_tuple)
+                    opp_error("\n Error conversion nd2hop tuple");
+
+                if (nb_tuple->nb_main_addr() == nb2hop_tuple->nb_main_addr())
+                    r++;
+            }
+            rs.insert(r);
+            reachability[r].push_back(nb_tuple);
+        }
+        // Select a node z from N2
+        OLSR_nb2hop_tuple* t_aux = *(N2.begin());
+        OLSR_ETX_nb2hop_tuple* z = NULL;
+        if (t_aux)
+        {
+            z = dynamic_cast<OLSR_ETX_nb2hop_tuple*> (t_aux);
+            if (!z)
+                opp_error("\n Error conversion nd2hop tuple");
+        }
+
+        // Add to Mi, if not yet present, the node in N that provides the
+        // shortest-widest path to reach z. In case of tie, select the node
+        // that reaches the maximum number of nodes in N2. Remove the nodes from N2
+        // which are now covered by a node in the MPR set.
+        OLSR_ETX_nb_tuple* max = NULL;
+        int max_r = 0;
+
+        // Iterate through all links in nb2hop_set that has the same two hop
+        // neighbor as the second point of the link
+        for (nb2hopset_t::iterator it = N2.begin(); it != N2.end(); it++)
+        {
+            OLSR_ETX_nb2hop_tuple* nb2hop_tuple = dynamic_cast<OLSR_ETX_nb2hop_tuple*>(*it);
+            if (!nb2hop_tuple)
+                opp_error("\n Error conversion nd2hop tuple");
+
+
+            // If the two hop neighbor is not the one we have selected, skip
+            if (nb2hop_tuple->nb2hop_addr() != z->nb2hop_addr())
+                continue;
+            // Compare the one hop neighbor that reaches the two hop neighbor z with
+            for (std::set<int>::iterator it2 = rs.begin(); it2 != rs.end(); it2++)
+            {
+                int r = *it2;
+                if (r > 0)
+                {
+                    for (std::vector<OLSR_ETX_nb_tuple*>::iterator it3 = reachability[r].begin();
+                            it3 != reachability[r].end(); it3++)
+                    {
+                        OLSR_ETX_nb_tuple* nb_tuple = *it3;
+                        if (nb2hop_tuple->nb_main_addr() != nb_tuple->nb_main_addr())
+                            continue;
+                        if (max == NULL)
+                        {
+                            max = nb_tuple;
+                            max_r = r;
+                        }
+                        else
+                        {
+                            OLSR_ETX_link_tuple *nb_link_tuple = NULL, *max_link_tuple = NULL;
+                            double now = CURRENT_TIME;
+
+
+                            OLSR_link_tuple *link_tuple_aux = state_.find_sym_link_tuple(nb_tuple->nb_main_addr(), now); /* bug */
+                            if (link_tuple_aux)
+                            {
+                                nb_link_tuple = dynamic_cast<OLSR_ETX_link_tuple *>(link_tuple_aux);
+                                if (!nb_link_tuple)
+                                    opp_error("\n Error conversion link tuple");
+                            }
+                            link_tuple_aux = state_.find_sym_link_tuple(max->nb_main_addr(), now); /* bug */
+                            if (link_tuple_aux)
+                            {
+                                max_link_tuple = dynamic_cast<OLSR_ETX_link_tuple *>(link_tuple_aux);
+                                if (!max_link_tuple)
+                                    opp_error("\n Error conversion link tuple");
+                            }
+
+                            double current_total_etx, max_total_etx;
+
+                            switch (parameter_.link_quality())
+                            {
+                            case OLSR_ETX_BEHAVIOR_ETX:
+                                current_total_etx = nb_link_tuple->etx() + nb2hop_tuple->etx();
+                                max_total_etx = max_link_tuple->etx() + nb2hop_tuple->etx();
+                                if (current_total_etx < max_total_etx)
+                                {
+                                    max = nb_tuple;
+                                    max_r = r;
+                                }
+                                else if (current_total_etx == max_total_etx)
+                                {
+                                    if (r > max_r)
+                                    {
+                                        max = nb_tuple;
+                                        max_r = r;
+                                    }
+                                    else if (r == max_r && degree(nb_tuple) > degree(max))
+                                    {
+                                        max = nb_tuple;
+                                        max_r = r;
+                                    }
+                                }
+                                break;
+
+                            case OLSR_ETX_BEHAVIOR_ML:
+                                current_total_etx = nb_link_tuple->etx() * nb2hop_tuple->etx();
+                                max_total_etx = max_link_tuple->etx() * nb2hop_tuple->etx();
+                                if (current_total_etx > max_total_etx)
+                                {
+                                    max = nb_tuple;
+                                    max_r = r;
+                                }
+                                else if (current_total_etx == max_total_etx)
+                                {
+                                    if (r > max_r)
+                                    {
+                                        max = nb_tuple;
+                                        max_r = r;
+                                    }
+                                    else if (r == max_r && degree(nb_tuple) > degree(max))
+                                    {
+                                        max = nb_tuple;
+                                        max_r = r;
+                                    }
+                                }
+                                break;
+                            case OLSR_ETX_BEHAVIOR_NONE:
+                            default:
+                                if (r > max_r)
+                                {
+                                    max = nb_tuple;
+                                    max_r = r;
+                                }
+                                else if (r == max_r && degree(nb_tuple) > degree(max))
+                                {
+                                    max = nb_tuple;
+                                    max_r = r;
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (max != NULL)
+        {
+            state_.insert_mpr_addr(max->nb_main_addr());
+            std::set<nsaddr_t> nb2hop_addrs;
+            for (nb2hopset_t::iterator it = N2.begin(); it != N2.end();)
+            {
+                OLSR_ETX_nb2hop_tuple* nb2hop_tuple = dynamic_cast<OLSR_ETX_nb2hop_tuple*>(*it);
+                if (!nb2hop_tuple)
+                    opp_error("\n Error conversion nd2hop tuple");
+
+                if (nb2hop_tuple->nb_main_addr() == max->nb_main_addr())
+                {
+                    nb2hop_addrs.insert(nb2hop_tuple->nb2hop_addr());
+                    it = N2.erase(it);
+                }
+                else
+                    it++;
+
+            }
+            for (nb2hopset_t::iterator it = N2.begin(); it != N2.end();)
+            {
+                OLSR_ETX_nb2hop_tuple* nb2hop_tuple = dynamic_cast<OLSR_ETX_nb2hop_tuple*>(*it);
+                if (!nb2hop_tuple)
+                    opp_error("\n Error conversion nd2hop tuple");
+
+
+                std::set<nsaddr_t>::iterator it2 =
+                    nb2hop_addrs.find(nb2hop_tuple->nb2hop_addr());
+                if (it2 != nb2hop_addrs.end())
+                {
+                    it = N2.erase(it);
+                }
+                else
+                    it++;
+            }
+        }
+    }
+}
+#endif
 ///
 /// \brief Computates MPR set of a node.
 ///
