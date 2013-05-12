@@ -18,6 +18,8 @@
 #ifndef S1AP_H_
 #define S1AP_H_
 
+#define WITH_4GSIM
+
 #include <omnetpp.h>
 #include "SCTPSocket.h"
 #include "S1APUtils.h"
