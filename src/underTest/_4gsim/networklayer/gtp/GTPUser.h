@@ -16,6 +16,8 @@
 #ifndef GTPUSER_H_
 #define GTPUSER_H_
 
+#define WITH_4GSIM
+
 #include "GTP.h"
 
 class GTPUser : public GTP {

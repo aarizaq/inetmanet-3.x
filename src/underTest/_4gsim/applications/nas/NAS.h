@@ -18,6 +18,8 @@
 #ifndef NAS_H_
 #define NAS_H_
 
+#define WITH_4GSIM
+
 #include <omnetpp.h>
 #include "NASMessage_m.h"
 #include "SubscriberTableAccess.h"

@@ -1,8 +1,11 @@
 #ifndef RPSSOCKET_H_
 #define RPSSOCKET_H_
 
-#ifndef __unix__
+#if !defined(__unix__) && (defined(__unix) || (defined(__APPLE__) && defined(__MACH__)))
+#define __unix__
+#endif
 
+#ifndef __unix__
 
 #include <iostream>
 #include <sstream>

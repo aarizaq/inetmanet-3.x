@@ -18,6 +18,8 @@
 #ifndef DIAMETERS6A_H_
 #define DIAMETERS6A_H_
 
+#define WITH_4GSIM
+
 #include "DiameterBase.h"
 #include "SubscriberTableAccess.h"
 #include "NotificationBoard.h"

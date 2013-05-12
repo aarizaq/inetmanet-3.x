@@ -18,6 +18,8 @@
 #ifndef GTPCONTROL_H_
 #define GTPCONTROL_H_
 
+#define WITH_4GSIM
+
 #include "SubscriberTable.h"
 #include "GatewayTable.h"
 #include "GTP.h"

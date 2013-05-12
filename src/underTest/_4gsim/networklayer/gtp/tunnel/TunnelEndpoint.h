@@ -18,6 +18,8 @@
 #ifndef TUNNELENDPOINT_H_
 #define TUNNELENDPOINT_H_
 
+#define WITH_4GSIM
+
 #include "GTPPath.h"
 
 class PDNConnection;
