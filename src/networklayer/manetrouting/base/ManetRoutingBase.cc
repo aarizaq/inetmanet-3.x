@@ -37,6 +37,7 @@
 #include "IMobility.h"
 #include "Ieee80211MgmtAP.h"
 #include "GlobalWirelessLinkInspector.h"
+#include "MobilityAccess.h"
 #ifdef WITH_80215
 #include "Ieee802154Frame_m.h"
 #endif
@@ -479,6 +480,9 @@ void ManetRoutingBase::registerPosition()
         mod->subscribe(mobilityStateChangedSignal, this);
     else
         getParentModule()->subscribe(mobilityStateChangedSignal, this);
+
+    curPosition = MobilityAccess().get()->getCurrentPosition();
+    curSpeed = MobilityAccess().get()->getCurrentSpeed();
 }
 
 void ManetRoutingBase::processLinkBreak(const cObject *details) {return;}
