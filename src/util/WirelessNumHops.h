@@ -171,6 +171,9 @@ class WirelessNumHops : public cOwnedObject
         {
             return getPos(getIdNode(node));
         }
+
+        virtual void getNeighbours(const IPv4Address &node, std::vector<IPv4Address>&, const double &distance);
+        virtual void getNeighbours(const MACAddress &node, std::vector<MACAddress>&, const double &distance);
 };
 
 

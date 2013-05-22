@@ -496,4 +496,45 @@ Coord WirelessNumHops::getPos(const int &node)
     return vectorList[node].mob->getCurrentPosition();
 }
 
+void WirelessNumHops::getNeighbours(const IPv4Address &node, std::vector<IPv4Address>&list, const double &distance)
+{
+    list.clear();
+    int nodeId =  getIdNode(node);
+    Coord pos = vectorList[nodeId].mob->getCurrentPosition();
+    for (unsigned int i = 0; i < vectorList.size(); i++)
+    {
+        if (i == nodeId)
+            continue;
+        if (pos.distance(vectorList[i].mob->getCurrentPosition()) < distance)
+        {
+            for (std::map<IPv4Address,int>::iterator it2 = relatedIp.begin(); it2 != relatedIp.end(); ++it2)
+            {
+                if (it2->second ==  i)
+                    list.push_back(it2->first);
+            }
+        }
+    }
+}
+
+void WirelessNumHops::getNeighbours(const MACAddress &node, std::vector<MACAddress>& list, const double &distance)
+{
+    list.clear();
+
+    list.clear();
+    int nodeId =  getIdNode(node);
+    Coord pos = vectorList[nodeId].mob->getCurrentPosition();
+    for (unsigned int i = 0; i < vectorList.size(); i++)
+    {
+        if (i == nodeId)
+            continue;
+        if (pos.distance(vectorList[i].mob->getCurrentPosition()) < distance)
+        {
+            for (std::map<MACAddress,int>::iterator it2 = related.begin(); it2 != related.end(); ++it2)
+            {
+                if (it2->second ==  i)
+                    list.push_back(it2->first);
+            }
+        }
+    }
+}
 
