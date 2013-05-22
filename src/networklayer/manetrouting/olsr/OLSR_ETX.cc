@@ -616,10 +616,16 @@ OLSR_ETX::olsr_r1_mpr_computation()
                                 if (!max_link_tuple)
                                     opp_error("\n Error conversion link tuple");
                             }
-                            if (nb_link_tuple || max_link_tuple)
-                                continue;
                             if (parameter_.link_delay())
                             {
+                                if (nb_link_tuple == NULL)
+                                    continue;
+                                else if (nb_link_tuple != NULL && max_link_tuple == NULL)
+                                {
+                                    max = nb_tuple;
+                                    max_r = r;
+                                    continue;
+                                }
                                 if (nb_link_tuple->link_delay() < max_link_tuple->link_delay())
                                 {
                                     max = nb_tuple;
@@ -631,6 +637,14 @@ OLSR_ETX::olsr_r1_mpr_computation()
                                 switch (parameter_.link_quality())
                                 {
                                 case OLSR_ETX_BEHAVIOR_ETX:
+                                    if (nb_link_tuple == NULL)
+                                        continue;
+                                    else if (nb_link_tuple != NULL && max_link_tuple == NULL)
+                                    {
+                                        max = nb_tuple;
+                                        max_r = r;
+                                        continue;
+                                    }
                                     if (nb_link_tuple->etx() < max_link_tuple->etx())
                                     {
                                         max = nb_tuple;
@@ -638,6 +652,14 @@ OLSR_ETX::olsr_r1_mpr_computation()
                                     }
                                     break;
                                 case OLSR_ETX_BEHAVIOR_ML:
+                                    if (nb_link_tuple == NULL)
+                                        continue;
+                                    else if (nb_link_tuple != NULL && max_link_tuple == NULL)
+                                    {
+                                        max = nb_tuple;
+                                        max_r = r;
+                                        continue;
+                                    }
                                     if (nb_link_tuple->etx() > max_link_tuple->etx())
                                     {
                                         max = nb_tuple;
@@ -1364,8 +1386,14 @@ OLSR_ETX::olsr_r2_mpr_computation()
                         switch (parameter_.link_quality())
                         {
                         case OLSR_ETX_BEHAVIOR_ETX:
-                            if (nb_link_tuple == NULL || max_link_tuple == NULL)
+                            if (nb_link_tuple == NULL)
                                 continue;
+                            else if (nb_link_tuple != NULL && max_link_tuple == NULL)
+                            {
+                                max = nb_tuple;
+                                max_r = r;
+                                continue;
+                            }
                             if (nb_link_tuple->etx() < max_link_tuple->etx())
                             {
                                 max = nb_tuple;
@@ -1386,8 +1414,14 @@ OLSR_ETX::olsr_r2_mpr_computation()
                             }
                             break;
                         case OLSR_ETX_BEHAVIOR_ML:
-                            if (nb_link_tuple == NULL || max_link_tuple == NULL)
+                            if (nb_link_tuple == NULL)
                                 continue;
+                            else if (nb_link_tuple != NULL && max_link_tuple == NULL)
+                            {
+                                max = nb_tuple;
+                                max_r = r;
+                                continue;
+                            }
                             if (nb_link_tuple->etx() > max_link_tuple->etx())
                             {
                                 max = nb_tuple;
