@@ -97,6 +97,7 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase
         SeqNumberInfo seqNumberInfo;
 
         uint64_t numRoutingBytes;
+        uint64_t numDataBytes;
         //
         // Multi mac interfaces
         //

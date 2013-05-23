@@ -128,6 +128,7 @@ Ieee80211Mesh::Ieee80211Mesh()
     hasLocator = false;
     hasRelayUnit = false;
     numRoutingBytes = 0;
+    numDataBytes = 0;
 
     getOtpimunRoute = NULL;
 
@@ -1285,7 +1286,8 @@ void Ieee80211Mesh::sendOut(cMessage *msg)
         Ieee80211ActionHWMPFrame *hwmpFrame = dynamic_cast<Ieee80211ActionHWMPFrame *>(msg);
         numRoutingBytes += hwmpFrame->getByteLength();
     }
-
+    else if (frameMesh && frameMesh->getSubType() == UPPERMESSAGE)
+        numDataBytes += frameMesh->getByteLength();
     send(msg, "macOut",msg->getKind());
 }
 
@@ -2253,6 +2255,7 @@ bool Ieee80211Mesh::getCostNode(const MACAddress &add, unsigned int &cost)
 void Ieee80211Mesh::finish()
 {
     recordScalar("bytes routing ", numRoutingBytes);
+    recordScalar("bytesData Sent ",numDataBytes);
 }
 
 
