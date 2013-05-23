@@ -63,6 +63,7 @@ int AODVUU::totalRrepAckSend=0;
 int AODVUU::totalRrepAckRec=0;
 int AODVUU::totalRerrSend=0;
 int AODVUU::totalRerrRec=0;
+int AODVUU::totalLocalRep =0;
 #endif
 std::map<ManetAddress,u_int32_t *> AODVUU::mapSeqNum;
 
@@ -88,6 +89,7 @@ void NS_CLASS initialize(int stage)
         totalRrepAckRec=0;
         totalRerrSend=0;
         totalRerrRec=0;
+        totalLocalRep=0;
 #endif
         log_to_file = 0;
         hello_jittering = 0;
@@ -1381,6 +1383,7 @@ void NS_CLASS finish()
     recordScalar("rrep ack rec", totalRrepAckRec);
     recordScalar("rerr send", totalRerrSend);
     recordScalar("rerr rec", totalRerrRec);
+    recordScalar("total repair",totalLocalRep);
 }
 
 

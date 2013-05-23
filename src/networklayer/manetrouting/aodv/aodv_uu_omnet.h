@@ -398,6 +398,7 @@ class AODVUU : public ManetRoutingBase
     static int totalRrepAckRec;
     static int totalRerrSend;
     static int totalRerrRec;
+    static int totalLocalRep;
 #else
     bool iswrite;
     int totalSend;
@@ -409,6 +410,7 @@ class AODVUU : public ManetRoutingBase
     int totalRrepAckRec;
     int totalRerrSend;
     int totalRerrRec;
+    int totalLocalRep;
 #endif
     virtual void processPromiscuous(const cObject *details);
     // used for break link notification

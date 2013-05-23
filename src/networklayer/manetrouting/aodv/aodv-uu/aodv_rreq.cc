@@ -827,7 +827,7 @@ void NS_CLASS rreq_local_repair(rt_table_t * rt, struct in_addr src_addr,
     if (timeval_diff(&rt->rt_timer.timeout, &now) < (2 * NET_TRAVERSAL_TIME))
         rt_table_update_timeout(rt, 2 * NET_TRAVERSAL_TIME);
 #endif
-
+    totalLocalRep++;
     rreq_send(rt->dest_addr, rt->dest_seqno, ttl, flags);
 
     /* Remember that we are seeking this destination and setup the
