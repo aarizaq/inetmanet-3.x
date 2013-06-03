@@ -822,7 +822,6 @@ void Ieee80211Mac::handleLowerMsg(cPacket *msg)
         double frameDuration = cinfo->getTestFrameDuration() + computeFrameDuration(LENGTH_ACK, basicBitrate)+rtsTime;
         cinfo->setTestFrameDuration(frameDuration);
     }
-    sendNotification(NF_LINK_FULL_PROMISCUOUS, msg);
     validRecMode = false;
     if (msg->getControlInfo() && dynamic_cast<Radio80211aControlInfo *>(msg->getControlInfo()))
     {
@@ -896,6 +895,11 @@ void Ieee80211Mac::handleLowerMsg(cPacket *msg)
     if (msgKind != COLLISION && msgKind != BITERROR && twoAddressFrame!=NULL)
         sendNotification(NF_LINK_REFRESH, twoAddressFrame);
 #endif
+
+
+    if (msg->getKind() != COLLISION && msg->getKind() != BITERROR)
+        sendNotification(NF_LINK_FULL_PROMISCUOUS, msg);
+
 
     handleWithFSM(msg);
 
