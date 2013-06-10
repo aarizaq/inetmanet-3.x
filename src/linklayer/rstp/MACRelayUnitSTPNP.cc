@@ -74,6 +74,7 @@ void MACRelayUnitSTPNP::setAllPortsStatus(PortStatus status)
     }
 }
 
+
 void MACRelayUnitSTPNP::setPortStatus(int port_idx, PortStatus status)
 {
     //if (this->port_status.find(port_idx) != this->port_status.end())
@@ -835,6 +836,96 @@ void MACRelayUnitSTPNP::handleSTPBPDUTimeoutTimer(STPBPDUTimeoutTimer* t)
         this->port_status[port].alive = false;
         this->flushMACAddressesOnPort(port);
     }
+
+    // remove port from address table
+    for (AddressTable::iterator iter = addresstable.begin();iter != addresstable.end();)
+    {
+        if (iter->second.portno == port)
+        {
+            AddressTable::iterator iterAux = iter;
+            ++iter;
+            addresstable.erase(iterAux);
+        }
+        else
+            ++iter;
+    }
+}
+
+
+void MACRelayUnitSTPNP::handleSTPBPDUNoFrame(int &port)
+{
+    EV << "BPDU TTL timeout arrived" << endl;
+  // TODO: notify with a bubble to improve the observation
+
+    if (port == this->getRootPort())
+    {
+        // BPDU was lost in the root port. starting the root port recovery
+
+        // preRootPortLost Hook
+        this->preRootPortLost();
+
+        EV << "Root port Lost! Starting recovery" << endl;
+        // FastRecovery procedure when there is a backup root path
+        int root_candidate = -1;
+        for (int i=0; i<this->gateSize("lowerLayerOut"); i++)
+        {
+            if (this->port_status[i].role == BACKUP_PORT && this->port_status[i].observed_pr.bridge_id == this->priority_vector.bridge_id)
+            {
+                root_candidate = i;
+                break;
+            }
+        }
+
+        if (root_candidate>-1)
+        {
+            // there is a candidate to replace the lost root port
+            // setting the old root port in designated mode
+            int lost_root_port = this->getRootPort();
+            EV << "replace lost root " << lost_root_port << " port by port " << root_candidate << " port status: " <<  this->port_status[root_candidate]<< endl;
+            this->setPortStatus(root_candidate,PortStatus(LEARNING,ROOT_PORT));
+            this->setPortStatus(lost_root_port,PortStatus(LISTENING,DESIGNATED_PORT));
+            this->priority_vector = this->port_status[root_candidate].observed_pr;
+
+            EV << "New Root Election: " << this->priority_vector << endl;
+            // moving mac address from old root port to the new one
+            this->moveMACAddresses(lost_root_port,root_candidate);
+            // schedule the hello timer according the values received from the root bridge (RSTP)
+            this->scheduleHelloTimer();
+            // start updating our information to all the ports
+
+            // postRootPortLost Hook
+            this->postRootPortLost();
+
+            this->sendConfigurationBPDU();
+
+        }
+        else
+        {
+            // i'm the root switch.
+            this->handleTimer(new STPStartProtocol("Restart the RSTP Protocol"));
+            // postRootPortLost Hook
+            this->postRootPortLost();
+        }
+    }
+    else
+    {
+        EV << "Port " << port << " losses the BPDU keep alive. port is not alive" << endl;
+        this->port_status[port].alive = false;
+        this->flushMACAddressesOnPort(port);
+    }
+
+    // remove port from address table
+    for (AddressTable::iterator iter = addresstable.begin();iter != addresstable.end();)
+    {
+        if (iter->second.portno == port)
+        {
+            AddressTable::iterator iterAux = iter;
+            ++iter;
+            addresstable.erase(iterAux);
+        }
+        else
+            ++iter;
+    }
 }
 
 void MACRelayUnitSTPNP::handleSTPPortEdgeTimer(STPPortEdgeTimer* t)
@@ -867,6 +958,8 @@ void MACRelayUnitSTPNP::handleBPDU(BPDU* bpdu)
 {
     int arrival_port = bpdu->getArrivalGate()->getIndex();
     EV << bpdu->getName() << " arrived on port " << arrival_port << endl;
+
+    setPortlastSTPBPDU(arrival_port);
 
     if (this->isBPDUAged(bpdu))
     {
@@ -1446,4 +1539,16 @@ void MACRelayUnitSTPNP::showPriorityVectorInfo()
         }
     }
 
+}
+
+void MACRelayUnitSTPNP::checkPorts()
+{
+
+    for (int i = 0; i < (int) port_status.size(); i++)
+    {
+        if (simTime() - port_status[i].lastSTPBPDU > bpdu_timeout)
+        {
+            handleSTPBPDUNoFrame(i);
+        }
+    }
 }

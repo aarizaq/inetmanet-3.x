@@ -65,6 +65,8 @@ class INET_API MACRelayUnitSTPNP : public MACRelayUnitNP
 
         long cost;
 
+        simtime_t lastSTPBPDU;
+
         PortStatus(int port)
         {
             state = BLOCKING;
@@ -75,6 +77,7 @@ class INET_API MACRelayUnitSTPNP : public MACRelayUnitNP
             bpdu_timeout_timer = NULL;
             port_index = port;
             packet_forwarded = 0;
+            lastSTPBPDU = 0;
 
             sync = proposing = synced = proposed = agreed = agree = alive = false;
 
@@ -94,6 +97,7 @@ class INET_API MACRelayUnitSTPNP : public MACRelayUnitNP
             edge_timer = NULL;
             port_index = -1;
             sync = proposing = synced = proposed = agreed = agree = alive = false;
+            lastSTPBPDU = 0;
         }
 
         PortStatus(PortState s, PortRole m)
@@ -125,8 +129,11 @@ class INET_API MACRelayUnitSTPNP : public MACRelayUnitNP
             agreed = p.agreed;
             agree = p.agree;
             alive = p.alive;
+            lastSTPBPDU = p.lastSTPBPDU;
 
         }
+
+
 
         cMessage* getForwardTimer()
         {
@@ -350,6 +357,7 @@ class INET_API MACRelayUnitSTPNP : public MACRelayUnitNP
     virtual void handleSTPHoldTimer(STPHoldTimer* t);
     virtual void handleSTPBPDUTimeoutTimer(STPBPDUTimeoutTimer* t);
     virtual void handleSTPPortEdgeTimer(STPPortEdgeTimer* t);
+    virtual void handleSTPBPDUNoFrame(int &port);
 
     // Handling Ethernet frames
     virtual void handleIncomingFrame(EtherFrame *msg);
@@ -366,6 +374,14 @@ class INET_API MACRelayUnitSTPNP : public MACRelayUnitNP
     virtual void sendTopologyChangeAckBPDU(int port_idx);
 
     virtual void sendBPDU(BPDU* bpdu,int port);
+
+    void setPortlastSTPBPDU(int port_idx)
+    {
+        if (port_idx >=0 &&  port_idx < (int)this->port_status.size())
+            this->port_status[port_idx].lastSTPBPDU = simTime();
+    }
+
+    void checkPorts();
 
 };
 
