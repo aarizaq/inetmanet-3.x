@@ -52,10 +52,16 @@ void LinkFailureManager::handleMessage(cMessage *msg)
             cGate* gate = module->gate(event->getPort_id());
             if (gate!=NULL)
             {
-                ProgramedFailureChannel* ch = dynamic_cast<ProgramedFailureChannel*>(gate->getChannel());
+                cChannel * channel = gate->getChannel();
+                ProgramedFailureDataRateChannel* cfr = dynamic_cast<ProgramedFailureDataRateChannel*>(channel);
+                ProgramedFailureChannel* ch = dynamic_cast<ProgramedFailureChannel*>(channel);
                 if (ch!=NULL)
                 {
                     ch->setState(event->getState());
+                }
+                else if (cfr!=NULL)
+                {
+                    cfr->setState(event->getState());
                 }
             }
             else
