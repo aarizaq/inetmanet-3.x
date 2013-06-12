@@ -18,9 +18,6 @@
 #ifndef __INET_ARP_H
 #define __INET_ARP_H
 
-//#include <stdio.h>
-//#include <string.h>
-//#include <vector>
 #include <map>
 
 #include "INETDefs.h"
@@ -45,7 +42,6 @@ class INET_API ARP : public cSimpleModule, public INotifiable
     struct ARPCacheEntry;
     typedef std::map<IPv4Address, ARPCacheEntry*> ARPCache;
     typedef std::vector<cMessage*> MsgPtrVector;
-    std::vector<IPv4Address> localAddress;
 
     // IPv4Address -> MACAddress table
     // TBD should we key it on (IPv4Address, InterfaceEntry*)?
@@ -86,10 +82,11 @@ class INET_API ARP : public cSimpleModule, public INotifiable
 
     cQueue pendingQueue; // outbound packets waiting for ARP resolution
     int nicOutBaseGateId;  // id of the nicOut[0] gate
+    std::vector<IPv4Address> localAddressVector;
 
     IInterfaceTable *ift;
     IRoutingTable *rt;  // for Proxy ARP
-    NotificationBoard* nb;
+    NotificationBoard *nb;
     // Maps an IP multicast address to an Ethernet multicast address.
     MACAddress mapMulticastAddress(IPv4Address addr);
 

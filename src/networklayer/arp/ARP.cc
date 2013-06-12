@@ -65,6 +65,7 @@ ARP::ARP()
 
     ift = NULL;
     rt = NULL;
+    nb = NULL;
 }
 
 void ARP::initialize(int stage)
@@ -72,7 +73,7 @@ void ARP::initialize(int stage)
     if (stage==0)
     {
         // globalArpCache.clear();
-        localAddress.clear();
+        localAddressVector.clear();
         sentReqSignal = registerSignal("sentReq");
         sentReplySignal = registerSignal("sentReply");
         initiatedResolutionSignal = registerSignal("initiatedResolution");
@@ -128,13 +129,11 @@ void ARP::initialize(int stage)
 
             ARPCache::iterator where = globalArpCache.insert(globalArpCache.begin(), std::make_pair(nextHopAddr, entry));
             entry->myIter = where; // note: "inserting a new element into a map does not invalidate iterators that point to existing elements"
-            localAddress.push_back(nextHopAddr);
+            localAddressVector.push_back(nextHopAddr);
         }
         nb = NotificationBoardAccess().get();
         if (nb!=NULL)
-        {
         	nb->subscribe(this, NF_INTERFACE_IPv4CONFIG_CHANGED);
-        }
     }
 }
 
@@ -154,9 +153,9 @@ ARP::~ARP()
     if (!globalArpCache.empty())
     {
     // delete local address from the globalArpCache
-        while (!localAddress.empty())
+        while (!localAddressVector.empty())
         {
-            ARPCache::iterator it = globalArpCache.find(localAddress.back());
+            ARPCache::iterator it = globalArpCache.find(localAddressVector.back());
             if (it==globalArpCache.end())
                 throw cRuntimeError(this, "Address not found in global");
             else
@@ -164,7 +163,7 @@ ARP::~ARP()
                 delete (*it).second;
                 globalArpCache.erase(it);
             }
-            localAddress.pop_back();
+            localAddressVector.pop_back();
         }
     }
 }
@@ -662,8 +661,8 @@ void ARP::receiveChangeNotification(int category, const cPolymorphic *details)
     // host associated. Link is up. Change the state to init.
     if (category == NF_INTERFACE_IPv4CONFIG_CHANGED)
     {
-    	// rebuild the arp cache
-        localAddress.clear();
+        // rebuild the arp cache
+        localAddressVector.clear();
         for (int i=0; i<ift->getNumInterfaces(); i++)
         {
             InterfaceEntry *ie = ift->getInterface(i);
@@ -688,13 +687,13 @@ void ARP::receiveChangeNotification(int category, const cPolymorphic *details)
                 IPv4Address ipAddr = ie->ipv4Data()->getIPAddress();
                 ARPCache::iterator where = globalArpCache.insert(globalArpCache.begin(),std::make_pair(ipAddr, entry));
                 entry->myIter = where; // note: "inserting a new element into a map does not invalidate iterators that point to existing elements"
-                localAddress.push_back(ipAddr);
+                localAddressVector.push_back(ipAddr);
             }
             else
             {
                 // actualize
-            	ARPCacheEntry *entry = it->second;
-            	globalArpCache.erase(it);
+                ARPCacheEntry *entry = it->second;
+                globalArpCache.erase(it);
                 entry->ie = ie;
                 entry->pending = false;
                 entry->timer = NULL;
@@ -703,7 +702,7 @@ void ARP::receiveChangeNotification(int category, const cPolymorphic *details)
                 IPv4Address ipAddr = ie->ipv4Data()->getIPAddress();
                 ARPCache::iterator where = globalArpCache.insert(globalArpCache.begin(),std::make_pair(ipAddr, entry));
                 entry->myIter = where; // note: "inserting a new element into a map does not invalidate iterators that point to existing elements"
-                localAddress.push_back(ipAddr);
+                localAddressVector.push_back(ipAddr);
             }
         }
     }
