@@ -254,8 +254,8 @@ void Ieee80211Mesh::initialize(int stage)
             useLwmpls = false;
         }
 
-        if (useReactive)
-            useProactive = false;
+        //if (useReactive)
+        //    useProactive = false;
 
 
         if (useReactive && useProactive)
