@@ -137,7 +137,12 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
 #ifdef WITH_80211MESH
     ILocator *locator;
 #endif
-
+  protected:
+    IRoutingTable*  getInetRoutingTable() const {return inet_rt;}
+    IInterfaceTable* getInterfaceTable() const {return inet_ift;}
+    bool getIsRegistered() const {return isRegistered;}
+    bool getUseManetLabelRouting() const {return useManetLabelRouting;}
+    bool getIsMacLayer() const {return mac_layer_;}
   protected:
     ~ManetRoutingBase();
     ManetRoutingBase();
