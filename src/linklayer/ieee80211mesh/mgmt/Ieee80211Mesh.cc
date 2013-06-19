@@ -243,6 +243,7 @@ void Ieee80211Mesh::initialize(int stage)
         bool useProactive = par("useProactive");
         bool ETXEstimate = par("ETXEstimate");
         bool useHwmp = par("useHwmp");
+        bool useGreenie = par("useGreenie");
 
         if (!useReactive && !useProactive && !useHwmp)
             useHwmp = true;
@@ -258,7 +259,23 @@ void Ieee80211Mesh::initialize(int stage)
         //    useProactive = false;
 
 
-        if (useReactive && useProactive)
+        if (useGreenie)
+        {
+
+            if (this->hasPar("maxHopProactiveFeedback"))
+                maxHopProactiveFeedback = par("maxHopProactiveFeedback");
+            if (this->hasPar("maxHopProactive"))
+                maxHopProactive = par("maxHopProactive");
+            if (this->hasPar("maxHopReactive"))
+                   maxHopReactive = par("maxHopReactive");
+            if (par("greenieCompleteNode"))
+                useProactive = true;
+            useReactive = true;
+            if (useReactive && useProactive)
+                proactiveFeedback = true;
+
+        }
+        else if (useReactive && useProactive)
         {
             if (this->hasPar("ProactiveFeedback"))
                 proactiveFeedback  = par("ProactiveFeedback");

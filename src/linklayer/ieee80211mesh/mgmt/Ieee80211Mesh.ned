@@ -31,6 +31,10 @@ simple Ieee80211Mesh
         bool useHwmp = default(false); // If active automatically deactivate useProactive and useReactive and activate ETXEstimate
         bool useProactive = default(false);
         bool useReactive = default(true);
+
+        bool useGreenie = default(false);
+        bool greenieCompleteNode = default(true);
+
         bool FixNode = default(false); // used by routing protocol to indicate no mobility node
         bool UseLwMpls = default(false);
         double maxDelay = default(0.1);
