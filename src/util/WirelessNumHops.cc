@@ -501,7 +501,7 @@ void WirelessNumHops::getNeighbours(const IPv4Address &node, std::vector<IPv4Add
     list.clear();
     int nodeId =  getIdNode(node);
     Coord pos = vectorList[nodeId].mob->getCurrentPosition();
-    for (unsigned int i = 0; i < vectorList.size(); i++)
+    for (int i = 0; i < (int)vectorList.size(); i++)
     {
         if (i == nodeId)
             continue;
@@ -523,7 +523,7 @@ void WirelessNumHops::getNeighbours(const MACAddress &node, std::vector<MACAddre
     list.clear();
     int nodeId =  getIdNode(node);
     Coord pos = vectorList[nodeId].mob->getCurrentPosition();
-    for (unsigned int i = 0; i < vectorList.size(); i++)
+    for (int i = 0; i < (int)vectorList.size(); i++)
     {
         if (i == nodeId)
             continue;
