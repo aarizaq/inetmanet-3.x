@@ -116,9 +116,7 @@ bool ManetTimer::isScheduled()
 
 ManetRoutingBase::ManetRoutingBase()
 {
-#ifdef WITH_80211MESH
     locator = NULL;
-#endif
     isRegistered = false;
     regPosition = false;
     mac_layer_ = false;

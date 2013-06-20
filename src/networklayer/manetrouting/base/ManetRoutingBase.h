@@ -36,9 +36,7 @@
 #include "NotifierConsts.h"
 #include "ICMP.h"
 
-#ifdef WITH_80211MESH
 #include "ILocator.h"
-#endif
 
 #include "ARP.h"
 
@@ -134,9 +132,7 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
 
     std::vector<ManetProxyAddress> proxyAddress;
 
-#ifdef WITH_80211MESH
     ILocator *locator;
-#endif
   protected:
     IRoutingTable*  getInetRoutingTable() const {return inet_rt;}
     IInterfaceTable* getInterfaceTable() const {return inet_ift;}
