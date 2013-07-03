@@ -57,7 +57,7 @@ void HIP::initialize()
 	ev << "Initializing HIP...\n";
 	expectingDnsResp = false;
 	expectingRvsDnsResp = false;
-	fsmType = cModuleType::get("inet.hip.HipFsm");
+	fsmType = cModuleType::get("inet.underTest.hip.base.HipFsm");
 	hipMsgSent = 0;
 	hipVector.setName("HIP_DNS msgs");
 	currentIfId = -1;
