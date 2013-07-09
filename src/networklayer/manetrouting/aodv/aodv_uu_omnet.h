@@ -415,7 +415,7 @@ class AODVUU : public ManetRoutingBase
     virtual void processPromiscuous(const cObject *details);
     // used for break link notification
     virtual void processLinkBreak(const cObject *details);
-    //virtual void processFullPromiscuous(const cObject *details){}
+    virtual void processFullPromiscuous(const cObject *details);
     virtual bool isOurType(cPacket *);
     virtual bool getDestAddress(cPacket *,ManetAddress &);
 

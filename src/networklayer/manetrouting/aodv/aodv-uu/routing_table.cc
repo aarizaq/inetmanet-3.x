@@ -135,6 +135,7 @@ rt_table_t *NS_CLASS rt_table_insert(struct in_addr dest_addr,
     rt->state = state;
     rt->cost = cost;
     rt->hopfix = hopfix;
+    rt->pending = false;
 
     timer_init(&rt->rt_timer, &NS_CLASS route_expire_timeout, rt);
 

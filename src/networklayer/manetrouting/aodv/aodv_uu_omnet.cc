@@ -160,6 +160,14 @@ void NS_CLASS initialize(int stage)
         if (llfeedback)
             linkLayerFeeback();
 
+        if (hasPar("fullPromis"))
+        {
+            if (par("fullPromis").boolValue())
+            {
+                linkFullPromiscuous();
+            }
+        }
+
         /* From main.c */
         progname = strdup("AODV-UU");
         /* From debug.c */
@@ -1288,6 +1296,23 @@ void NS_CLASS processLinkBreak(const cPolymorphic *details)
             Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame *>(const_cast<cPolymorphic*>(details));
             packetFailedMac(frame);
         }
+    }
+}
+
+
+void NS_CLASS processFullPromiscuous(const cObject *details)
+{
+    if (dynamic_cast<Ieee80211TwoAddressFrame *>(const_cast<cPolymorphic*> (details)))
+    {
+        Ieee80211TwoAddressFrame *frame = dynamic_cast<Ieee80211TwoAddressFrame *>(const_cast<cObject*>(details));
+        ManetAddress sender(frame->getTransmitterAddress());
+        struct in_addr destination;
+        int iface;
+        double cost;
+        destination.s_addr = sender;
+        rt_table_t * fwd_rt = rt_table_find(destination);
+        if (fwd_rt)
+            fwd_rt->pending = false;
     }
 }
 

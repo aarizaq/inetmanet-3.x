@@ -61,6 +61,7 @@ struct rt_table
     hash_value hash;
     u_int8_t hello_cnt;
     int nprec;          /* Number of precursors */
+    bool pending;
     std::vector<precursor_t> precursors;      /* List of neighbors using the route */
 };
 #else
