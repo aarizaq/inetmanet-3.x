@@ -2955,3 +2955,30 @@ void Ieee80211Mac::promiscousFrame(cMessage *msg)
     if (!isDuplicated(msg)) // duplicate detection filter
         sendNotification(NF_LINK_PROMISCUOUS, msg);
 }
+
+
+int Ieee80211Mac::getQueueSizeAddress(const MACAddress &addr)
+{
+    unsigned int totalSize=0;
+    for (int i=0; i<numCategories(); i++)
+    {
+#ifdef  USEMULTIQUEUE
+        Ieee80211DataOrMgmtFrame* nextframeToSend;
+        for (nextframeToSend = dynamic_cast<Ieee80211DataOrMgmtFrame*> (transmissionQueue()->initIterator()); !transmissionQueue()->isEnd(); nextframeToSend = dynamic_cast<Ieee80211DataOrMgmtFrame*> (transmissionQueue()->next()))
+        {
+            if (nextframeToSend->getReceiverAddress() == addr)
+                totalSize++;
+        }
+#else
+        std::list<Ieee80211DataOrMgmtFrame*>::iterator nextframeToSend;
+        for (nextframeToSend = transmissionQueue()->begin(); nextframeToSend != transmissionQueue()->end(); ++nextframeToSend)
+        {
+            if ((*nextframeToSend)->getReceiverAddress() == addr)
+                totalSize++;
+        }
+
+#endif
+    }
+    return totalSize;
+}
+

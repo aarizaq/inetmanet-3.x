@@ -696,6 +696,7 @@ class INET_API Ieee80211Mac : public WirelessMacBase, public INotifiable
     virtual void setQueueModeFalse() {queueMode = false;}
     virtual State getState() {return static_cast<State>(fsm.getState());}
     virtual unsigned int getQueueSize() {return transmissionQueueSize();}
+    virtual int getQueueSizeAddress(const MACAddress &addr);
 };
 
 #endif
