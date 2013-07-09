@@ -18,6 +18,11 @@
 #include "XMLUtils.h"
 #include "Relay1QAccess.h"
 
+std::ostream& operator<<(std::ostream& os, const PortStatus& e)
+{
+    os << e.info();
+    return os;
+};
 
 
 Define_Module (RSTP);
@@ -129,6 +134,7 @@ void RSTP::initialize(int stage)
 			}
 
 		}
+		WATCH_VECTOR(Puertos);
 		double waitTime=0.000001;  //Now
 		//Programming next auto-messages.
 		scheduleAt(simTime()+waitTime, helloM); //Next hello message generation.

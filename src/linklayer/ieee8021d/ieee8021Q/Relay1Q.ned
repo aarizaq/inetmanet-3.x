@@ -17,5 +17,5 @@ simple Relay1Q
         output GatesOut[];  // 
         input GatesIn[];	// 
         inout RSTPGate;	// To the RSTP module
-        inout MVRPGate;	// To the MVRP module
+        inout MVRPGate @loose;	// To the MVRP module
 }

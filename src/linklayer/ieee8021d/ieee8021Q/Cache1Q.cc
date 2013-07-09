@@ -13,6 +13,12 @@
 
 Define_Module( Cache1Q );
 
+std::ostream& operator<<(std::ostream& os, const Cache1Q::RelayEntry& e)
+{
+    os << "Address : "<< e.MAC;
+    os << "   Gate : "<< e.Gate;
+    return os;
+};
 
 
 Cache1Q::Cache1Q(){
@@ -25,7 +31,7 @@ void Cache1Q::initialize()
 {
 	agingTime=(simtime_t) par("agingTime");
 	verbose=(bool) par ("verbose");
-
+	WATCH_VECTOR(RelayTable);
 }
 
 void Cache1Q::handleMessage(cMessage *)

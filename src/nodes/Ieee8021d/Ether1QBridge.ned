@@ -20,6 +20,7 @@ import inet.linklayer.ieee8021d.MVRP.MVRP;
 module Ether1QBridge
 {
     parameters:
+        bool withMvrp = default(true);
         @node();
         @display("i=device/switch;bgb=643,442");
     gates:
@@ -58,7 +59,9 @@ module Ether1QBridge
             gates:
                 RSTPPort;
         }
-        mvrp: MVRP {
+        
+        
+        mvrp: MVRP if withMvrp {
             @display("p=47,107");
             gates:
                 MVRPPort;
@@ -74,5 +77,6 @@ module Ether1QBridge
         }
 
         rstp.RSTPPort <--> relay.RSTPGate;
-        mvrp.MVRPPort <--> relay.MVRPGate;
+        mvrp.MVRPPort$o --> relay.MVRPGate$i if withMvrp;
+        mvrp.MVRPPort$i <-- relay.MVRPGate$o if withMvrp;
 }

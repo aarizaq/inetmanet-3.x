@@ -10,6 +10,7 @@
 #include "PortFilt.h"
 #include "MVRPDU.h"
 #include "BPDU.h"
+#include "MVRPAccess.h"
 
 
 
@@ -29,6 +30,7 @@ void PortFilt::initialize()
     priority=par("priority");
     interFrameTime=(simtime_t) par("interFrameTime");
     int dV=par("defaultVID");
+
     if(tagged)
     	{
 
@@ -40,9 +42,12 @@ void PortFilt::initialize()
     	if(dV==-1)
     		error("defaultVID was not set for an untagged port.");
     	defaultVID=(vid) par("defaultVID");
-    	cMessage *msg = new cMessage();
-		msg->setName("MVRPDUtime");   //Next hello message generation.
-		scheduleAt(simTime()+0.00001, msg);
+    	if (MVRPAccess().getIfExists())
+    	{
+    	    cMessage *msg = new cMessage();
+    	    msg->setName("MVRPDUtime");   //Next hello message generation.
+    	    scheduleAt(simTime()+0.00001, msg);
+    	}
     }
 
     if (ev.isGUI())

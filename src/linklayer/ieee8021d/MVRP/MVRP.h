@@ -71,6 +71,22 @@ class MVRP: public cSimpleModule
 	 * @brief Prints basic module information and MVRP registered info.
 	 */
 	virtual void printState();
+	virtual std::string detailedInfo()
+	{
+	    cleanAgedEntries();
+	    std::stringstream out;
+	    out<<"MVRP State"<<endl;
+	    out<<"Module mac: "<<address<<endl;
+	    out<<"Per port registered VLANS"<<endl;
+	    for(unsigned int i=0 ; i<Puertos.size() ; i++)
+	    {
+	        out<<"Port: ";
+	        out<<i<<endl;
+	        for(unsigned int j=0;j<Puertos[i]->registered.size();j++)
+	            out<<Puertos[i]->registered[j].VID<<"   "<<Puertos[i]->registered[j].inserted<<endl;
+	    }
+	    return out.str();
+	}
 
   protected:
 	virtual void initialize(int stage);

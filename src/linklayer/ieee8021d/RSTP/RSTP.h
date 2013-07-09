@@ -92,6 +92,35 @@ public:
 
 	PortFilt * portfilt;
 
+	std::string info() const
+	{
+	    std::stringstream out;
+	    out << " is edge : " << Edge << "\n";
+	    if (PortState == DISCARDING)
+	        out << " PortState : " << " DISCARDING  ";
+	    else if (PortState == LEARNING)
+	        out << " PortState : " << " LEARNING  ";
+	    else if (PortState == FORWARDING)
+	        out << " PortState : " << " FORWARDING  ";
+
+        if (PortRole == ALTERNATE_PORT)
+            out << " PortState : " << " ALTERNATE_PORT  ";
+        else if (PortRole == NOTASIGNED)
+            out << " PortRole : " << " NOTASIGNED  ";
+        else if (PortRole == DISABLED)
+            out << " PortState : " << " DISABLED  ";
+        else if (PortRole == DESIGNATED)
+            out << " PortState : " << " DESIGNATED  ";
+        else if (PortRole == BACKUP)
+            out << " PortState : " << " BACKUP  ";
+        else if (PortRole == ROOT)
+            out << " PortState : " << " ROOT  ";
+
+        out << " LostBPDU :" << LostBPDU;
+
+        return out.str();
+	}
+
 	PortStatus();
 	virtual ~PortStatus(){}
 	virtual void updatePortVector(BPDUieee8021D *frame,int arrival);
@@ -149,6 +178,8 @@ class RSTP: public cSimpleModule
 	* @return PortState
 	*/
 	virtual PortStateT getPortState(int index);
+
+	virtual int getNumPorts() {return Puertos.size();}
 	/**
 	* @brief Determines if a port is connected to a client network
 	* @param index Port index

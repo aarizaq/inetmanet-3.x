@@ -35,8 +35,8 @@ void Relay1Q::initialize(int stage)
 	{
 		//Obtaining cache, rstp and mvrp modules pointers
 		cache = Cache1QAccess().get();
-		rstpModule=RSTPAccess().get();
-		mvrpModule=MVRPAccess().get();
+		rstpModule = RSTPAccess().get();
+		mvrpModule = MVRPAccess().getIfExists();
 
 		//Gets bridge MAC address from rstpModule
 		address=rstpModule->getAddress();
@@ -158,10 +158,11 @@ void Relay1Q::handleEtherFrame(EthernetIIFrame *frame)
 	int arrival=frame->getArrivalGate()->getIndex();
 	Ethernet1QTag * Tag=check_and_cast<Ethernet1QTag *>(frame->getEncapsulatedPacket());
 	EthernetIIFrame * EthIITemp= frame;
-	if(verbose==true)
+	if(verbose == true)
 	{
 		cache->printState();  //Shows cache info.
-		mvrpModule->printState(); //MVRP info
+		if (mvrpModule)
+		    mvrpModule->printState(); //MVRP info
 	}
 
 	//Learning in case of FORWARDING or LEARNING state.
@@ -189,9 +190,25 @@ void Relay1Q::handleEtherFrame(EthernetIIFrame *frame)
 			outputPorts.clear();
 			if(verbose==true)
 				ev<< "Resolve VID " <<Tag->getVID() <<" arrived at "<<frame->getArrivalGate()<<" "<<endl;
-			if(!mvrpModule->resolveVLAN(Tag->getVID(),&outputPorts))
-			{ //Gets the associated gates to that VLAN including arrival.
-				ev<<"VID not registered";
+
+			if (mvrpModule)
+			{
+			    if(mvrpModule && !mvrpModule->resolveVLAN(Tag->getVID(),&outputPorts))
+			    { //Gets the associated gates to that VLAN including arrival.
+			        ev<<"VID not registered";
+			    }
+			}
+			else
+			{
+			    int arrival=frame->getArrivalGate()->getIndex();
+			    for (int i = 0; i < rstpModule->getNumPorts(); i++)
+			    {
+			        int outputState=rstpModule->getPortState(i);
+			        if((arrival != i)&&(outputState==FORWARDING))
+			        {
+			            outputPorts.push_back(i);
+			        }
+			    }
 			}
 		}
 		relayMsg(frame,outputPorts);
@@ -225,6 +242,11 @@ void Relay1Q::relayMsg(cMessage * msg, std::vector<int> outputPorts)
  */
 void Relay1Q::handleIncomingFrame(MVRPDU *frame)
 {
+    if (!mvrpModule)
+    {
+        delete frame;
+        return;
+    }
 //If this is an incoming MVRPDU. Not forwarding or learning are ignored.
 	if((rstpModule->getPortState(frame->getArrivalGate()->getIndex())==FORWARDING)|| (rstpModule->getPortState(frame->getArrivalGate()->getIndex())==LEARNING))
 		{

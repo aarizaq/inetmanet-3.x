@@ -17,15 +17,15 @@
 class Cache1Q: public cSimpleModule
 {
 	protected:
-    	typedef struct VidMACGate {
-    		vid Vid;
-    		MACAddress MAC;
-    		int Gate;
-    		simtime_t inserted;
-    	}RelayEntry;		/// RelayTable entry
     	simtime_t agingTime;
     	bool verbose;
     public:
+        typedef struct VidMACGate {
+            vid Vid;
+            MACAddress MAC;
+            int Gate;
+            simtime_t inserted;
+        }RelayEntry;        /// RelayTable entry
     	std::vector <RelayEntry> RelayTable;		/// Vid/MAC/Gate/insertedTime
 
     public:
