@@ -40,6 +40,7 @@ class INET_API Ieee80211AgentSTA : public cSimpleModule, public INotifiable
 {
   protected:
     InterfaceEntry *myIface;
+    InterfaceTable *ift;
     NotificationBoard *nb;
     MACAddress prevAP;
     bool activeScan;
