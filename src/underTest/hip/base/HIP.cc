@@ -175,7 +175,7 @@ void HIP::handleRvsRegistration(cMessage *msg)
 			ctrl->setSrcPort(0);
 			InterfaceTable* ift = (InterfaceTable*) InterfaceTableAccess().get();
 
-			ctrl->setSrcAddr(ift->getInterface(currentIfId)->ipv6Data()->getPreferredAddress());
+			ctrl->setSrcAddr(ift->getInterfaceById(currentIfId)->ipv6Data()->getPreferredAddress());
 			ctrl->setDestAddr(IPvXAddressResolver().resolve(par("dnsAddress")));
 			ctrl->setDestPort(23);
 			ctrl->setInterfaceId(currentIfId);
@@ -345,7 +345,7 @@ void HIP::handleMsgFromTransport(cMessage *msg)
 		ctrl->setSrcPort(0);
 		InterfaceTable* ift = (InterfaceTable*)InterfaceTableAccess().get();
 
-		ctrl->setSrcAddr(ift->getInterface(currentIfId)->ipv6Data()->getPreferredAddress());
+		ctrl->setSrcAddr(ift->getInterfaceById(currentIfId)->ipv6Data()->getPreferredAddress());
 		ctrl->setDestAddr(IPvXAddressResolver().resolve(par("dnsAddress")));
 		ctrl->setDestPort(23);
 		ctrl->setInterfaceId(currentIfId);
@@ -442,7 +442,7 @@ void HIP::handleAddressChange(){
 
 		if(!(ie->isLoopback()) && !(ie->isDown())) {
 			if(mapIfaceToConnected.find(ie) != mapIfaceToConnected.end() && mapIfaceToConnected[ie] == true) {
-				currentIfId = ie->getInterfaceId() - 100; //WTF?
+				currentIfId = ie->getInterfaceId(); //WTF?
 				break;
 			}
 		}
