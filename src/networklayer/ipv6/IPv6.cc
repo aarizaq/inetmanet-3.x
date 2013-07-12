@@ -170,7 +170,8 @@ void IPv6::handleMessageFromHL(cPacket *msg)
     // IPV6_MULTICAST_IF option, but allow interface selection for unicast packets as well
     InterfaceEntry *destIE = ift->getInterfaceById(controlInfo->getInterfaceId());
     IPv6Datagram *datagram = encapsulate(msg, controlInfo);
-    delete controlInfo;
+    if (datagram) // if datagram == NULL encapsulate delete controlInfo
+        delete controlInfo;
 
 #ifdef WITH_xMIPv6
     if (datagram == NULL)
