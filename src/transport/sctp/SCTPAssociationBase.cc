@@ -1,6 +1,6 @@
 //
 // Copyright (C) 2005-2010 Irene Ruengeler
-// Copyright (C) 2009-2010 Thomas Dreibholz
+// Copyright (C) 2009-2012 Thomas Dreibholz
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -33,8 +33,7 @@
 
 SCTPPathVariables::SCTPPathVariables(const IPvXAddress& addr, SCTPAssociation* assoc)
 {
-    InterfaceTableAccess interfaceTableAccess;
-
+    // ====== Path Variable Initialization ===================================
     association = assoc;
     remoteAddress = addr;
     activePath = true;
@@ -76,7 +75,7 @@ SCTPPathVariables::SCTPPathVariables(const IPvXAddress& addr, SCTPAssociation* a
     cwndTimeout = pathRto;
     cwnd = 0;
     ssthresh = 0;
-    updateTime = 0.0;
+    rttUpdateTime = 0.0;
     fastRecoveryExitPoint = 0;
     fastRecoveryActive = false;
 
@@ -86,7 +85,13 @@ SCTPPathVariables::SCTPPathVariables(const IPvXAddress& addr, SCTPAssociation* a
     numberOfHeartbeatsRcvd = 0;
     numberOfHeartbeatAcksSent = 0;
     numberOfHeartbeatAcksRcvd = 0;
+    numberOfDuplicates = 0;
 
+    // ====== Path Info ======================================================
+    SCTPPathInfo* pinfo = new SCTPPathInfo("pinfo");
+    pinfo->setRemoteAddress(addr);
+
+    // ====== Timers =========================================================
     char str[128];
     snprintf(str, sizeof(str), "HB_TIMER %d:%s", assoc->assocId, addr.str().c_str());
     HeartbeatTimer = new cMessage(str);
@@ -96,10 +101,18 @@ SCTPPathVariables::SCTPPathVariables(const IPvXAddress& addr, SCTPAssociation* a
     CwndTimer = new cMessage(str);
     snprintf(str, sizeof(str), "RTX_TIMER %d:%s", assoc->assocId, addr.str().c_str());
     T3_RtxTimer = new cMessage(str);
+    snprintf(str, sizeof(str), "ASCONF_TIMER %d:%s", assoc->assocId, addr.str().c_str());
+    AsconfTimer = new cMessage(str);
+    AsconfTimer->setContextPointer(association);
     HeartbeatTimer->setContextPointer(association);
     HeartbeatIntervalTimer->setContextPointer(association);
     CwndTimer->setContextPointer(association);
     T3_RtxTimer->setContextPointer(association);
+    T3_RtxTimer->setControlInfo(pinfo);
+    HeartbeatTimer->setControlInfo(pinfo->dup());
+    HeartbeatIntervalTimer->setControlInfo(pinfo->dup());
+    CwndTimer->setControlInfo(pinfo->dup());
+    AsconfTimer->setControlInfo(pinfo->dup());
 
     snprintf(str, sizeof(str), "RTO %d:%s", assoc->assocId, addr.str().c_str());
     statisticsPathRTO = new cOutVector(str);
@@ -112,28 +125,18 @@ SCTPPathVariables::SCTPPathVariables(const IPvXAddress& addr, SCTPAssociation* a
     statisticsPathCwnd = new cOutVector(str);
 
     snprintf(str, sizeof(str), "TSN Sent %d:%s", assoc->assocId, addr.str().c_str());
-    pathTSN = new cOutVector(str);
+    vectorPathSentTSN = new cOutVector(str);
     snprintf(str, sizeof(str), "TSN Received %d:%s", assoc->assocId, addr.str().c_str());
-    pathRcvdTSN = new cOutVector(str);
+    vectorPathReceivedTSN = new cOutVector(str);
 
     snprintf(str, sizeof(str), "HB Sent %d:%s", assoc->assocId, addr.str().c_str());
-    pathHb = new cOutVector(str);
+    vectorPathHb = new cOutVector(str);
     snprintf(str, sizeof(str), "HB ACK Sent %d:%s", assoc->assocId, addr.str().c_str());
-    pathHbAck = new cOutVector(str);
+    vectorPathHbAck = new cOutVector(str);
     snprintf(str, sizeof(str), "HB Received %d:%s", assoc->assocId, addr.str().c_str());
-    pathRcvdHb = new cOutVector(str);
+    vectorPathRcvdHb = new cOutVector(str);
     snprintf(str, sizeof(str), "HB ACK Received %d:%s", assoc->assocId, addr.str().c_str());
-    pathRcvdHbAck = new cOutVector(str);
-
-
-
-    SCTPPathInfo* pinfo = new SCTPPathInfo("pinfo");
-    pinfo->setRemoteAddress(addr);
-    T3_RtxTimer->setControlInfo(pinfo);
-    HeartbeatTimer->setControlInfo(pinfo->dup());
-    HeartbeatIntervalTimer->setControlInfo(pinfo->dup());
-    CwndTimer->setControlInfo(pinfo->dup());
-
+    vectorPathRcvdHbAck = new cOutVector(str);
 }
 
 SCTPPathVariables::~SCTPPathVariables()
@@ -147,12 +150,12 @@ SCTPPathVariables::~SCTPPathVariables()
     delete statisticsPathRTO;
     delete statisticsPathRTT;
 
-    delete pathTSN;
-    delete pathRcvdTSN;
-    delete pathHb;
-    delete pathRcvdHb;
-    delete pathHbAck;
-    delete pathRcvdHbAck;
+    delete vectorPathSentTSN;
+    delete vectorPathReceivedTSN;
+    delete vectorPathHb;
+    delete vectorPathRcvdHb;
+    delete vectorPathHbAck;
+    delete vectorPathRcvdHbAck;
 
 }
 
@@ -168,17 +171,24 @@ SCTPDataVariables::SCTPDataVariables()
     sid = 0;
     ssn = 0;
     ppid = 0;
+    fragments = 1;
     gapReports = 0;
     enqueuingTime = 0;
     sendTime = 0;
-    ackTime = 0;
     expiryTime = 0;
     enqueuedInTransmissionQ = false;
     hasBeenAcked = false;
+    hasBeenCountedAsNewlyAcked = false;
     hasBeenReneged = false;
     hasBeenAbandoned = false;
     hasBeenFastRetransmitted = false;
     countsAsOutstanding = false;
+    queuedOnPath = NULL;
+    ackedOnPath = NULL;
+    hasBeenMoved = false;
+    hasBeenTimerBasedRtxed = false;
+    firstSendTime = 0;
+    sendForwardIfAbandoned = false;
     lastDestination = NULL;
     nextDestination = NULL;
     initialDestination = NULL;
@@ -213,6 +223,7 @@ SCTPStateVariables::SCTPStateVariables()
     stopOldData = false;
     stopSending = false;
     inOut = false;
+    asconfOutstanding = false;
     queueUpdate = false;
     firstDataSent = false;
     peerWindowFull = false;
@@ -220,7 +231,8 @@ SCTPStateVariables::SCTPStateVariables()
     appSendAllowed = true;
     noMoreOutstanding = false;
     primaryPath = NULL;
-    lastDataSourceAddress = IPvXAddress("0.0.0.0");
+    lastDataSourcePath = NULL;
+    asconfChunk = NULL;
     shutdownChunk = NULL;
     initChunk = NULL;
     cookieChunk = NULL;
@@ -232,12 +244,13 @@ SCTPStateVariables::SCTPStateVariables()
     errorCount = 0;
     initRetransCounter = 0;
     nextTSN = 0;
-    cTsnAck = 0;
+    chunksAdded = 0;
+    dataChunksAdded = 0;
+    packetBytes = 0;
     lastTsnAck = 0;
-    highestTsnReceived = 0;
     highestTsnAcked = 0;
-    highestTsnStored = 0;
     nextRSid = 0;
+    advancedPeerAckPoint = 0;
     ackState = 0;
     lastStreamScheduled = 0;
     peerRwnd = 0;
@@ -246,11 +259,19 @@ SCTPStateVariables::SCTPStateVariables()
     outstandingBytes = 0;
     messagesToPush = 0;
     pushMessagesLeft = 0;
-    numGaps = 0;
     msgNum = 0;
     bytesRcvd = 0;
     sendBuffer = 0;
     queuedReceivedBytes = 0;
+    prMethod = 0;
+    assocThroughput = 0;
+    queuedSentBytes = 0;
+    queuedDroppableBytes = 0;
+    sizeKeyVector = 0;
+    sizePeerKeyVector = 0;
+    auth = false;
+    peerAuth = false;
+    hmacType = 0;
     lastSendQueueAbated = simTime();
     queuedMessages = 0;
     queueLimit = 0;
@@ -261,12 +282,6 @@ SCTPStateVariables::SCTPStateVariables()
     for (unsigned int i = 0; i < 65536; i++) {
         numMsgsReq[i] = 0;
     }
-
-    for (unsigned int i = 0; i < MAX_GAP_COUNT; i++) {
-        gapStartList[i] = 0;
-        gapStopList[i] = 0;
-    }
-
     for (unsigned int i = 0; i < 32; i++) {
         localTieTag[i] = 0;
         peerTieTag[i] = 0;
@@ -303,10 +318,6 @@ SCTPAssociation::SCTPAssociation(SCTP* _module, int32 _appGateIndex, int32 _asso
     sctpAlgorithm = NULL;
     state = NULL;
     sackPeriod = SACK_DELAY;
-/*
-    totalCwndAdjustmentTime         = simTime();
-    lastTotalSSthresh                   = ~0;
-    lastTotalCwnd                       = ~0;*/
 
     cumTsnAck = NULL;
     sendQueue = NULL;
@@ -366,6 +377,12 @@ SCTPAssociation::SCTPAssociation(SCTP* _module, int32 _appGateIndex, int32 _asso
     char vectorName[128];
     snprintf(vectorName, sizeof(vectorName), "Advertised Receiver Window %d", assocId);
     advRwnd = new cOutVector(vectorName);
+    assocThroughputVector = new cOutVector("Association Throughput");
+
+    // ====== Add IP =====================================================
+    StartAddIP = new cMessage("addIP");
+    StartAddIP->setContextPointer(this);
+    StartAddIP->setControlInfo(pinfo->dup());
 
     // ====== Stream scheduling ==============================================
     ssModule = sctpMain->par("ssModule");
@@ -389,11 +406,13 @@ SCTPAssociation::~SCTPAssociation()
     delete T5_ShutdownGuardTimer;
     delete SackTimer;
 
+    delete assocThroughputVector;
     delete advRwnd;
     delete cumTsnAck;
     delete numGapBlocks;
     delete sendQueue;
 
+    delete StartAddIP;
 
     delete fsm;
     delete state;
@@ -422,7 +441,7 @@ bool SCTPAssociation::processTimer(cMessage *msg)
     }
     else if (msg==SackTimer)
     {
-    sctpEV3<<simulation.getSimTime()<<" delayed Sack: cTsnAck="<<state->cTsnAck<<" highestTsnReceived="<<state->highestTsnReceived<<" lastTsnReceived="<<state->lastTsnReceived<<" ackState="<<state->ackState<<" numGaps="<<state->numGaps<<"\n";
+    sctpEV3<<simulation.getSimTime()<<" delayed Sack: cTsnAck="<<state->gapList.getCumAckTSN()<<" highestTsnReceived="<<state->gapList.getHighestTSNReceived()<<" lastTsnReceived="<<state->lastTsnReceived<<" ackState="<<state->ackState<<" numGaps="<<state->gapList.getNumGaps(SCTPGapList::GT_Any)<<"\n";
         sendSack();
     }
     else if (msg==T2_ShutdownTimer)
@@ -462,6 +481,14 @@ bool SCTPAssociation::processTimer(cMessage *msg)
             sctpEV3<<"set testing to true\n";
         }
     }
+    else if (path != NULL && msg == path->AsconfTimer) {
+        process_TIMEOUT_ASCONF(path);
+    }
+    else if (msg == StartAddIP) {
+        state->corrIdNum = state->asconfSn;
+        const char* type = (const char *)sctpMain->par("addIpType");
+        sendAsconf(type);
+    }
     else
     {
         sctpAlgorithm->processTimer(msg, event);
@@ -475,7 +502,7 @@ bool SCTPAssociation::processSCTPMessage(SCTPMessage* sctpmsg,
                                          const IPvXAddress& msgSrcAddr,
                                          const IPvXAddress& msgDestAddr)
 {
-    printConnBrief();
+    printAssocBrief();
 
     localAddr = msgDestAddr;
     localPort = sctpmsg->getDestPort();
@@ -501,6 +528,7 @@ SCTPEventCode SCTPAssociation::preanalyseAppCommandEvent(int32 commandCode)
     case SCTP_C_QUEUE_BYTES_LIMIT:   return SCTP_E_QUEUE_BYTES_LIMIT;
     case SCTP_C_SHUTDOWN:            return SCTP_E_SHUTDOWN;
     case SCTP_C_NO_OUTSTANDING:      return SCTP_E_SEND_SHUTDOWN_ACK;
+    case SCTP_C_SEND_ASCONF:         return SCTP_E_SEND_ASCONF;   // Needed for multihomed NAT
     default:
         sctpEV3<<"commandCode="<<commandCode<<"\n";
         throw cRuntimeError("Unknown message kind in app command");
@@ -509,7 +537,7 @@ SCTPEventCode SCTPAssociation::preanalyseAppCommandEvent(int32 commandCode)
 
 bool SCTPAssociation::processAppCommand(cPacket *msg)
 {
-    printConnBrief();
+    printAssocBrief();
 
     // first do actions
     SCTPCommand *sctpCommand = (SCTPCommand *)(msg->removeControlInfo());
@@ -533,6 +561,8 @@ bool SCTPAssociation::processAppCommand(cPacket *msg)
 
         case SCTP_E_PRIMARY: process_PRIMARY(event, sctpCommand); break;
 
+        case SCTP_E_SEND_ASCONF: sendAsconf(sctpMain->par("addIpType")); break;
+
         case SCTP_E_QUEUE_BYTES_LIMIT: process_QUEUE_BYTES_LIMIT(sctpCommand); break;
 
         case SCTP_E_QUEUE_MSGS_LIMIT: process_QUEUE_MSGS_LIMIT(sctpCommand); break;
@@ -544,17 +574,11 @@ bool SCTPAssociation::processAppCommand(cPacket *msg)
                 sctpEV3 << "send shutdown ack\n";
                 sendShutdownAck(remoteAddr);
             }
-            break;  //I.R.
+            break;
 
         case SCTP_E_STOP_SENDING: break;
 
-        case SCTP_E_SEND_SHUTDOWN_ACK:
-            /*if (fsm->getState()==SCTP_S_SHUTDOWN_RECEIVED && getOutstandingBytes()==0
-                && qCounter.roomSumSendStreams==0 && transmissionQ->getQueueSize()==0)
-            {
-                sendShutdownAck(state->primaryPathIndex);
-            }*/
-            break;
+        case SCTP_E_SEND_SHUTDOWN_ACK: break;
 
         default: throw cRuntimeError("Wrong event code");
     }
@@ -626,7 +650,7 @@ bool SCTPAssociation::performStateTransition(const SCTPEventCode& event)
                     FSM_Goto((*fsm), SCTP_S_SHUTDOWN_PENDING);
                     state->stopSending = true;
                     state->lastTSN = state->nextTSN - 1;
-                    break;    //I.R.
+                    break;
                 case SCTP_E_RCV_SHUTDOWN: FSM_Goto((*fsm), SCTP_S_SHUTDOWN_RECEIVED); break;
                 case SCTP_E_CLOSE: FSM_Goto((*fsm), SCTP_S_CLOSED); break;
                 default: break;
@@ -655,7 +679,6 @@ bool SCTPAssociation::performStateTransition(const SCTPEventCode& event)
                     break;
                 case SCTP_E_SHUTDOWN:
                     sendShutdownAck(remoteAddr);
-                    /*FSM_Goto((*fsm), SCTP_S_SHUTDOWN_ACK_SENT);*/
                     break;
                 default: break;
             }
@@ -732,10 +755,18 @@ void SCTPAssociation::stateEntered(int32 status)
             state->enableHeartbeats = (bool)sctpMain->par("enableHeartbeats");
             state->numGapReports = sctpMain->par("numGapReports");
             state->maxBurst = (uint32)sctpMain->par("maxBurst");
-                state->header = 0;
+            state->nrSack = (bool)sctpMain->par("nrSack");
+            state->disableReneging = (bool)sctpMain->par("disableReneging");
+            state->checkSackSeqNumber = (bool)sctpMain->par("checkSackSeqNumber");
+            state->outgoingSackSeqNum = 0;
+            state->incomingSackSeqNum = 0;
+            state->header = 0;
             state->swsLimit = (uint32)sctpMain->par("swsLimit");
             state->fastRecoverySupported = (bool)sctpMain->par("fastRecoverySupported");
             state->reactivatePrimaryPath = (bool)sctpMain->par("reactivatePrimaryPath");
+            state->packetsInTotalBurst = 0;
+            state->auth = sctpMain->auth;
+            state->throughputInterval = (double)sctpMain->par("throughputInterval");
             sackPeriod = (double)sctpMain->par("sackPeriod");
             sackFrequency = sctpMain->par("sackFrequency");
             SCTP::AssocStat stat;
@@ -751,8 +782,17 @@ void SCTPAssociation::stateEntered(int32 status)
             stat.numDups = 0;
             stat.numPathFailures = 0;
             stat.numForwardTsn = 0;
+            stat.sumRGapRanges = 0;
+            stat.sumNRGapRanges = 0;
+            stat.numOverfullSACKs = 0;
             stat.lifeTime = 0;
             stat.throughput = 0;
+            stat.numDropsBecauseNewTSNGreaterThanHighestTSN = 0;
+            stat.numDropsBecauseNoRoomInBuffer = 0;
+            stat.numChunksReneged = 0;
+            stat.numAuthChunksSent = 0;
+            stat.numAuthChunksAccepted = 0;
+            stat.numAuthChunksRejected = 0;
             sctpMain->assocStatMap[stat.assocId] = stat;
             ccModule = sctpMain->par("ccModule");
 
@@ -773,6 +813,14 @@ void SCTPAssociation::stateEntered(int32 status)
             pmStartPathManagement();
             state->sendQueueLimit = (uint32)sctpMain->par("sendQueueLimit");
             sendEstabIndicationToApp();
+            const bool addIP = (bool)sctpMain->par("addIP");
+            sctpEV3 << getFullPath() << ": addIP = " << addIP << " time = " << (double)sctpMain->par("addTime") << "\n";
+            if (addIP == true && (double)sctpMain->par("addTime")>0)
+            {
+                sctpEV3 << "startTimer addTime to expire at " << simulation.getSimTime()+(double)sctpMain->par("addTime") << "\n";
+
+                scheduleTimeout(StartAddIP, (double)sctpMain->par("addTime"));
+            }
             char str[128];
             snprintf(str, sizeof(str), "Cumulated TSN Ack of Association %d", assocId);
             cumTsnAck = new cOutVector(str);
@@ -831,12 +879,13 @@ void SCTPAssociation::removePath()
         stopTimer(path->HeartbeatTimer);
         delete path->HeartbeatTimer;
         stopTimer(path->HeartbeatIntervalTimer);
-        sctpEV3 << "delete timer " << path->HeartbeatIntervalTimer->getName() << endl;
         delete path->HeartbeatIntervalTimer;
         stopTimer(path->T3_RtxTimer);
         delete path->T3_RtxTimer;
         stopTimer(path->CwndTimer);
         delete path->CwndTimer;
+        stopTimer(path->AsconfTimer);
+        delete path->AsconfTimer;
         delete path;
         sctpPathMap.erase(pathIterator);
     }

@@ -28,10 +28,10 @@
 #define sctpEV3 EV
 #endif
 
-static inline int32_t getNewConnId()
+static inline int32_t getNewAssocId()
 {
 #ifdef WITH_SCTP
-    return SCTP::getNewConnId();
+    return SCTP::getNewAssocId();
 #else
     return -1;
 #endif
@@ -48,7 +48,7 @@ SCTPSocket::SCTPSocket(bool type)
     lastStream = -1;
     oneToOne = type;
     if (oneToOne)
-        assocId = getNewConnId();
+        assocId = getNewAssocId();
     else
         assocId = 0;
     sctpEV3<<"sockstate="<<sockstate<<"\n";
@@ -140,7 +140,7 @@ void SCTPSocket::listen(bool fork, uint32 requests, uint32 messagesToPush)
     if (oneToOne)
         openCmd->setAssocId(assocId);
     else
-        openCmd->setAssocId(getNewConnId());
+        openCmd->setAssocId(getNewAssocId());
     openCmd->setFork(fork);
     openCmd->setInboundStreams(inboundStreams);
     openCmd->setOutboundStreams(outboundStreams);
@@ -153,7 +153,7 @@ void SCTPSocket::listen(bool fork, uint32 requests, uint32 messagesToPush)
     sockstate = LISTENING;
 }
 
-void SCTPSocket::connect(IPvXAddress remoteAddress, int32 remotePort, uint32 numRequests)
+void SCTPSocket::connect(IPvXAddress remoteAddress, int32 remotePort, int32 prMethod, uint32 numRequests)
 {
     sctpEV3<<"Socket connect. Assoc="<<assocId<<", sockstate="<<sockstate<<"\n";
     if (oneToOne && sockstate!=NOT_BOUND && sockstate!=CLOSED)
@@ -169,7 +169,7 @@ void SCTPSocket::connect(IPvXAddress remoteAddress, int32 remotePort, uint32 num
     if (oneToOne)
         openCmd->setAssocId(assocId);
     else
-        openCmd->setAssocId(getNewConnId());
+        openCmd->setAssocId(getNewAssocId());
     sctpEV3<<"Socket connect. Assoc="<<openCmd->getAssocId()<<", sockstate="<<stateName(sockstate)<<"\n";
     //openCmd->setAssocId(assocId);
     openCmd->setLocalAddresses(localAddresses);
@@ -179,6 +179,7 @@ void SCTPSocket::connect(IPvXAddress remoteAddress, int32 remotePort, uint32 num
     openCmd->setOutboundStreams(outboundStreams);
     openCmd->setInboundStreams(inboundStreams);
     openCmd->setNumRequests(numRequests);
+    openCmd->setPrMethod(prMethod);
     msg->setControlInfo(openCmd);
     sendToSCTP(msg);
     if (oneToOne)
@@ -186,7 +187,7 @@ void SCTPSocket::connect(IPvXAddress remoteAddress, int32 remotePort, uint32 num
 }
 
 
-void SCTPSocket::connectx(AddressVector remoteAddressList, int32 remotePort, uint32 numRequests)
+void SCTPSocket::connectx(AddressVector remoteAddressList, int32 remotePort, int32 prMethod, uint32 numRequests)
 {
     sctpEV3<<"Socket connectx.  sockstate="<<sockstate<<"\n";
     /*if (sockstate!=NOT_BOUND && sockstate!=CLOSED)
@@ -211,6 +212,7 @@ void SCTPSocket::connectx(AddressVector remoteAddressList, int32 remotePort, uin
     openCmd->setRemotePort(remotePrt);
     openCmd->setOutboundStreams(outboundStreams);
     openCmd->setNumRequests(numRequests);
+    openCmd->setPrMethod(prMethod);
     msg->setControlInfo(openCmd);
     sendToSCTP(msg);
     if (oneToOne)
@@ -241,7 +243,12 @@ void SCTPSocket::send(cPacket *msg, bool last, bool primary)
     sendToSCTP(msg);
 }
 
-void SCTPSocket::send(cPacket *msg, bool last, bool primary, unsigned int ppid)
+void SCTPSocket::send(cPacket *msg, int32 prMethod, double prValue, bool last)
+{
+    send(msg, prMethod, prValue, last, -1);
+}
+
+void SCTPSocket::send(cPacket *msg, int32 prMethod, double prValue, bool last, int32 streamId)
 {
     if (oneToOne && sockstate!=CONNECTED && sockstate!=CONNECTING && sockstate!=PEER_CLOSED) {
         throw cRuntimeError("SCTPSocket::send(): not connected or connecting");
@@ -256,16 +263,22 @@ void SCTPSocket::send(cPacket *msg, bool last, bool primary, unsigned int ppid)
         cmd->setSendUnordered(COMPLETE_MESG_ORDERED);
     else
         cmd->setSendUnordered(COMPLETE_MESG_UNORDERED);
-    lastStream = (lastStream+1)%outboundStreams;
-    cmd->setSid(lastStream);
+    if (streamId >= 0)
+    {
+        cmd->setSid(streamId);
+    }
+    else
+    {
+        lastStream=(lastStream+1)%outboundStreams;
+        cmd->setSid(lastStream);
+    }
+    cmd->setPrValue(prValue);
+    cmd->setPrMethod(prMethod);
     cmd->setLast(last);
-    cmd->setPrimary(primary);
-    cmd->setPpid(ppid);
     msg->setKind(SCTP_C_SEND);
     msg->setControlInfo(cmd);
     sendToSCTP(msg);
 }
-
 
 void SCTPSocket::sendNotification(cPacket *msg)
 {
@@ -418,6 +431,10 @@ void SCTPSocket::processMessage(cPacket *msg)
                 cb->socketStatusArrived(assocId, yourPtr, status);
             delete status;
             break;
+        case SCTP_I_ABANDONED:
+            if (cb)
+                cb->msgAbandonedArrived(assocId);
+            break;
         case SCTP_I_SHUTDOWN_RECEIVED:
             sctpEV3<<"SCTP_I_SHUTDOWN_RECEIVED\n";
         if (cb)
@@ -434,6 +451,14 @@ void SCTPSocket::processMessage(cPacket *msg)
             {
                 cb->sendqueueAbatedArrived(assocId, cmd->getNumMsgs());
             }
+            delete cmd;
+            break;
+        }
+        case SCTP_I_ADDRESS_ADDED:
+        {
+            SCTPCommand* cmd=check_and_cast<SCTPCommand*>(msg->removeControlInfo());
+            if (cb)
+                cb->addressAddedArrived(assocId, cmd->getLocalAddr(),remoteAddr);
             delete cmd;
             break;
         }

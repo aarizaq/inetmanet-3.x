@@ -1,6 +1,6 @@
 //
 // Copyright (C) 2005-2010 by Irene Ruengeler
-// Copyright (C) 2009-2010 by Thomas Dreibholz
+// Copyright (C) 2009-2012 by Thomas Dreibholz
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -52,6 +52,7 @@ void SCTPAssociation::process_ASSOCIATE(SCTPEventCode& event, SCTPCommand *sctpC
             rAddr = openCmd->getRemoteAddr();
         localPort = openCmd->getLocalPort();
         remotePort = openCmd->getRemotePort();
+        state->prMethod = openCmd->getPrMethod();
         state->numRequests = openCmd->getNumRequests();
         if (rAddr.isUnspecified() || remotePort==0)
             throw cRuntimeError("Error processing command OPEN_ACTIVE: remote address and port must be specified");
@@ -135,91 +136,176 @@ void SCTPAssociation::process_SEND(SCTPEventCode& event, SCTPCommand* sctpComman
     SCTP::AssocStatMap::iterator iter = sctpMain->assocStatMap.find(assocId);
     iter->second.sentBytes += smsg->getBitLength() / 8;
 
-  // ------ Prepare SCTPDataMsg -----------------------------------------
-  const uint32 streamId = sendCommand->getSid();
-  const uint32 sendUnordered = sendCommand->getSendUnordered();
-  const uint32 ppid = sendCommand->getPpid();
-  SCTPSendStream* stream = NULL;
-  SCTPSendStreamMap::iterator associter = sendStreams.find(streamId);
-  if (associter != sendStreams.end()) {
-     stream = associter->second;
-  }
-  else {
-     throw cRuntimeError("Stream with id %d not found", streamId);
-  }
+    // ------ Prepare SCTPDataMsg -----------------------------------------
+    const uint32 streamId = sendCommand->getSid();
+    const uint32 sendUnordered = sendCommand->getSendUnordered();
+    const uint32 ppid = sendCommand->getPpid();
+    SCTPSendStream* stream = NULL;
+    SCTPSendStreamMap::iterator associter = sendStreams.find(streamId);
+    if (associter != sendStreams.end()) {
+       stream = associter->second;
+    }
+    else {
+        throw cRuntimeError("Stream with id %d not found", streamId);
+    }
 
-  char name[64];
-  snprintf(name, sizeof(name), "SDATA-%d-%d", streamId, state->msgNum);
-  smsg->setName(name);
+    char name[64];
+    snprintf(name, sizeof(name), "SDATA-%d-%d", streamId, state->msgNum);
+    smsg->setName(name);
 
-  SCTPDataMsg* datMsg = new SCTPDataMsg();
-  datMsg->encapsulate(smsg);
-  datMsg->setSid(streamId);
-  datMsg->setPpid(ppid);
-  datMsg->setEnqueuingTime(simulation.getSimTime());
+    SCTPDataMsg* datMsg = new SCTPDataMsg();
+    datMsg->encapsulate(smsg);
+    datMsg->setSid(streamId);
+    datMsg->setPpid(ppid);
+    datMsg->setEnqueuingTime(simulation.getSimTime());
 
-  // ------ Set initial destination address -----------------------------
-  if (sendCommand->getPrimary()) {
-     if (sendCommand->getRemoteAddr() == IPvXAddress("0.0.0.0")) {
+    // ------ PR-SCTP & Drop messages to free buffer space ----------------
+    datMsg->setPrMethod(sendCommand->getPrMethod());
+    switch (sendCommand->getPrMethod()) {
+        case PR_TTL:
+            if (sendCommand->getPrValue() > 0) {
+                datMsg->setExpiryTime(simulation.getSimTime() + sendCommand->getPrValue());
+            }
+            break;
+        case PR_RTX:
+            datMsg->setRtx((uint32)sendCommand->getPrValue());
+            break;
+        case PR_PRIO:
+            datMsg->setPriority((uint32)sendCommand->getPrValue());
+            state->queuedDroppableBytes += msg->getByteLength();
+            break;
+    }
+
+    if ((state->appSendAllowed) &&
+            (state->sendQueueLimit > 0) &&
+            (state->queuedDroppableBytes > 0) &&
+            ((uint64)state->sendBuffer >= state->sendQueueLimit) ) {
+        uint32 lowestPriority;
+        cQueue* strq;
+        int64 dropsize = state->sendBuffer - state->sendQueueLimit;
+        SCTPDataMsg* dropmsg;
+
+        if (sendUnordered)
+            strq = stream->getUnorderedStreamQ();
+        else
+            strq = stream->getStreamQ();
+
+        while (dropsize >= 0 && state->queuedDroppableBytes > 0) {
+            lowestPriority = 0;
+            dropmsg = NULL;
+
+            // Find lowest priority
+            for (cQueue::Iterator iter(*strq); !iter.end(); iter++) {
+                SCTPDataMsg* msg = (SCTPDataMsg*) iter();
+
+                if (msg->getPriority() > lowestPriority)
+                    lowestPriority = msg->getPriority();
+            }
+
+            // If just passed message has the lowest priority,
+            // drop it and we're done.
+            if (datMsg->getPriority() > lowestPriority) {
+                sctpEV3 << "msg will be abandoned, buffer is full and priority too low ("
+                        << datMsg->getPriority() << ")\n";
+                state->queuedDroppableBytes -= msg->getByteLength();
+                delete smsg;
+                delete msg;
+                sendIndicationToApp(SCTP_I_ABANDONED);
+                return;
+            }
+
+            // Find oldest message with lowest priority
+            for (cQueue::Iterator iter(*strq); !iter.end(); iter++) {
+                SCTPDataMsg* msg = (SCTPDataMsg*) iter();
+
+                if (msg->getPriority() == lowestPriority) {
+                    if (!dropmsg ||
+                            (dropmsg && dropmsg->getEnqueuingTime() < msg->getEnqueuingTime()))
+                        lowestPriority = msg->getPriority();
+                }
+            }
+
+            if (dropmsg) {
+                strq->remove(dropmsg);
+                dropsize -= dropmsg->getByteLength();
+                state->queuedDroppableBytes -= dropmsg->getByteLength();
+                SCTPSimpleMessage* smsg = check_and_cast<SCTPSimpleMessage*>((msg->decapsulate()));
+                delete smsg;
+                delete dropmsg;
+                sendIndicationToApp(SCTP_I_ABANDONED);
+            }
+        }
+    }
+
+    // ------ Set initial destination address -----------------------------
+    if (sendCommand->getPrimary()) {
+        if (sendCommand->getRemoteAddr() == IPvXAddress("0.0.0.0")) {
             datMsg->setInitialDestination(remoteAddr);
-     }
-     else {
-        datMsg->setInitialDestination(sendCommand->getRemoteAddr());
-     }
-  }
-  else {
-     datMsg->setInitialDestination(state->getPrimaryPathIndex());
-  }
+        }
+        else {
+            datMsg->setInitialDestination(sendCommand->getRemoteAddr());
+        }
+    }
+    else {
+        datMsg->setInitialDestination(state->getPrimaryPathIndex());
+    }
 
-  // ------ Optional padding and size calculations ----------------------
-     datMsg->setBooksize(smsg->getBitLength() / 8 + state->header);
-     qCounter.roomSumSendStreams += ADD_PADDING(smsg->getBitLength() / 8 + SCTP_DATA_CHUNK_LENGTH);
-     qCounter.bookedSumSendStreams += datMsg->getBooksize();
-     state->sendBuffer += smsg->getByteLength();
+    // ------ Optional padding and size calculations ----------------------
+    datMsg->setBooksize(smsg->getByteLength() + state->header);
+    qCounter.roomSumSendStreams += ADD_PADDING(smsg->getBitLength() / 8 + SCTP_DATA_CHUNK_LENGTH);
+    qCounter.bookedSumSendStreams += datMsg->getBooksize();
+    // Add chunk size to sender buffer size
+    state->sendBuffer += smsg->getByteLength();
 
-  datMsg->setMsgNum(++state->msgNum);
+    datMsg->setMsgNum(++state->msgNum);
 
-  // ------ Ordered/Unordered modes -------------------------------------
-  if (sendUnordered == 1) {
-     datMsg->setOrdered(false);
-     stream->getUnorderedStreamQ()->insert(datMsg);
-  }
-  else {
-     datMsg->setOrdered(true);
-     stream->getStreamQ()->insert(datMsg);
+    // ------ Ordered/Unordered modes -------------------------------------
+    if (sendUnordered == 1) {
+        datMsg->setOrdered(false);
+        stream->getUnorderedStreamQ()->insert(datMsg);
+    }
+    else {
+        datMsg->setOrdered(true);
+        stream->getStreamQ()->insert(datMsg);
 
-     if ((state->appSendAllowed) &&
-          (state->sendQueueLimit > 0) &&
-          ((uint64)state->sendBuffer >= state->sendQueueLimit) ) {
-        sendIndicationToApp(SCTP_I_SENDQUEUE_FULL);
-        state->appSendAllowed = false;
-     }
-     sendQueue->record(stream->getStreamQ()->getLength());
-  }
+        sendQueue->record(stream->getStreamQ()->getLength());
 
-  state->queuedMessages++;
-  if ((state->queueLimit > 0) && (state->queuedMessages > state->queueLimit)) {
-     state->queueUpdate = false;
-  }
-  sctpEV3 << "process_SEND:"
-             << " last="         << sendCommand->getLast()
-             <<"    queueLimit=" << state->queueLimit << endl;
+        // ------ Send buffer full? -------------------------------------------
+        if ((state->appSendAllowed) &&
+            (state->sendQueueLimit > 0) &&
+            ((uint64)state->sendBuffer >= state->sendQueueLimit) ) {
+        	// If there are not enough messages that could be dropped,
+        	// the buffer is really full and the app has to be notified.
+        	if (state->queuedDroppableBytes < state->sendBuffer - state->sendQueueLimit) {
+            	sendIndicationToApp(SCTP_I_SENDQUEUE_FULL);
+            	state->appSendAllowed = false;
+            }
+        }
+    }
 
-  // ------ Call sendCommandInvoked() to send message -------------------
-  // sendCommandInvoked() itself will call sendOnAllPaths() ...
-  if (sendCommand->getLast() == true) {
-     if (sendCommand->getPrimary()) {
-        sctpAlgorithm->sendCommandInvoked(NULL);
-     }
-     else {
-        sctpAlgorithm->sendCommandInvoked(getPath(datMsg->getInitialDestination()));
-     }
-  }
+    state->queuedMessages++;
+    if ((state->queueLimit > 0) && (state->queuedMessages > state->queueLimit)) {
+        state->queueUpdate = false;
+    }
+    sctpEV3 << "process_SEND:"
+            << " last="         << sendCommand->getLast()
+            <<"    queueLimit=" << state->queueLimit << endl;
+
+    // ------ Call sendCommandInvoked() to send message -------------------
+    // sendCommandInvoked() itself will call sendOnAllPaths() ...
+    if (sendCommand->getLast() == true) {
+        if (sendCommand->getPrimary()) {
+            sctpAlgorithm->sendCommandInvoked(NULL);
+        }
+        else {
+            sctpAlgorithm->sendCommandInvoked(getPath(datMsg->getInitialDestination()));
+        }
+    }
 }
 
 void SCTPAssociation::process_RECEIVE_REQUEST(SCTPEventCode& event, SCTPCommand *sctpCommand)
 {
-     SCTPSendCommand *sendCommand = check_and_cast<SCTPSendCommand *>(sctpCommand);
+    SCTPSendCommand *sendCommand = check_and_cast<SCTPSendCommand *>(sctpCommand);
     if ((uint32)sendCommand->getSid() > inboundStreams || sendCommand->getSid() < 0)
     {
         sctpEV3<<"Application tries to read from invalid stream id....\n";

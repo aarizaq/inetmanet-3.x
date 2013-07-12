@@ -1,6 +1,6 @@
 //
 // Copyright (C) 2008 Irene Ruengeler
-// Copyright (C) 2009 Thomas Dreibholz
+// Copyright (C) 2009-2012 Thomas Dreibholz
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -43,6 +43,8 @@ simple SCTPClient like ISCTPApp
         bool echo = default(false);  // echoes received packages when true
         bool ordered = default(true);
         int queueSize = default(0);
+        int prMethod = default(0);  //0=NONE, 1=PR_TTL, 2=PR_RTX, 3=PR_PRIO, 4=PR_STRRST
+        double prValue = default(0); //for PR-SCTP
         double stopTime @unit(s) = default(0s);
         double primaryTime @unit(s) = default(0s);
         string newPrimary = default("");
