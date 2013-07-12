@@ -804,6 +804,20 @@
         linkerFlags = ""
         />
     <feature
+        id="HIP_examples"
+        name="Host Identity Protocol examples"
+        description = "Host Identity Protocol"
+        initiallyEnabled = "false"
+        requires = "UDP IPv6 Ethernet Ieee80211 HIP"
+        labels = ""
+        nedPackages = "
+                       inet.examples.hip
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
+    <feature
         id="Ieee80211_mesh"
         name="802.11a/b/g/e (mesh networking mode)"
         description = "IEEE 802.11a/b/g/e NIC supporting mesh networking"

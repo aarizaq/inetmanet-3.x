@@ -170,15 +170,25 @@ void HIP::handleRvsRegistration(cMessage *msg)
 			char reqstring[50] = "hip-";
 			strcat(reqstring, par("RVSAddr"));
 			dnsReqMsg->setData(reqstring);
+			int tempIfId = currentIfId;
+			if (currentIfId == -1)
+			{
+			    tempIfId = getTempId();
+			    //opp_error("currentIfId == -1");
+			}
+#if 0
 			//UDP controlinfo
 			UDPDataIndication *ctrl = new UDPDataIndication();
-			ctrl->setSrcPort(0);
+			ctrl->setSrcPort(10500);
 			InterfaceTable* ift = (InterfaceTable*) InterfaceTableAccess().get();
 
-			ctrl->setSrcAddr(ift->getInterfaceById(currentIfId)->ipv6Data()->getPreferredAddress());
+
+			ctrl->setSrcAddr(ift->getInterfaceById(tempIfId)->ipv6Data()->getPreferredAddress());
 			ctrl->setDestAddr(IPvXAddressResolver().resolve(par("dnsAddress")));
 			ctrl->setDestPort(23);
-			ctrl->setInterfaceId(currentIfId);
+			ctrl->setInterfaceId(tempIfId);
+
+
 			dnsReqMsg->setControlInfo(ctrl);
 
 			UDPPacket *udpPacket = new UDPPacket(dnsReqMsg->getName());
@@ -194,8 +204,26 @@ void HIP::handleRvsRegistration(cMessage *msg)
 			ipControlInfo->setProtocol(IP_PROT_UDP);
 			ipControlInfo->setSrcAddr(ctrl->getSrcAddr().get6());
 			ipControlInfo->setDestAddr(ctrl->getDestAddr().get6());
-			ipControlInfo->setInterfaceId(currentIfId);
-			udpPacket->setControlInfo(ipControlInfo);
+			ipControlInfo->setInterfaceId(tempIfId);
+		    udpPacket->setControlInfo(ipControlInfo);
+#else
+            InterfaceTable* ift = (InterfaceTable*) InterfaceTableAccess().get();
+            UDPPacket *udpPacket = new UDPPacket(dnsReqMsg->getName());
+            //TODO UDP_HEADER_BYTES
+            udpPacket->setByteLength(8);
+            udpPacket->encapsulate(dnsReqMsg);
+
+            // set source and destination port
+            udpPacket->setSourcePort(10500);
+            udpPacket->setDestinationPort(23);
+
+            IPv6ControlInfo *ipControlInfo = new IPv6ControlInfo();
+            ipControlInfo->setProtocol(IP_PROT_UDP);
+            ipControlInfo->setSrcAddr(ift->getInterfaceById(tempIfId)->ipv6Data()->getPreferredAddress());
+            ipControlInfo->setDestAddr(IPvXAddressResolver().resolve(par("dnsAddress")).get6());
+            ipControlInfo->setInterfaceId(tempIfId);
+            udpPacket->setControlInfo(ipControlInfo);
+#endif
 
 			send(udpPacket,"udp6Out");
 
@@ -340,16 +368,24 @@ void HIP::handleMsgFromTransport(cMessage *msg)
 		DNSBaseMsg* dnsReqMsg = new DNSBaseMsg("DNS Request"); //the request
 		dnsReqMsg->setId(this->getId());
 		dnsReqMsg->setAddrData(originalHIT);
+        int tempId = currentIfId;
+        if (currentIfId == -1)
+        {
+            tempId = getTempId();
+            //opp_error("currentIfId == -1");
+        }
+#if 0
 		//UDP controlinfo
 		UDPDataIndication *ctrl = new UDPDataIndication();
-		ctrl->setSrcPort(0);
+		ctrl->setSrcPort(10500);
 		InterfaceTable* ift = (InterfaceTable*)InterfaceTableAccess().get();
 
-		ctrl->setSrcAddr(ift->getInterfaceById(currentIfId)->ipv6Data()->getPreferredAddress());
+
+		ctrl->setSrcAddr(ift->getInterfaceById(tempId)->ipv6Data()->getPreferredAddress());
 		ctrl->setDestAddr(IPvXAddressResolver().resolve(par("dnsAddress")));
 		ctrl->setDestPort(23);
-		ctrl->setInterfaceId(currentIfId);
-		dnsReqMsg->setControlInfo(ctrl);
+		ctrl->setInterfaceId(tempId);
+		//dnsReqMsg->setControlInfo(ctrl);
 
 		UDPPacket *udpPacket = new UDPPacket(dnsReqMsg->getName());
 		//TODO UDP_HEADER_BYTES
@@ -364,8 +400,27 @@ void HIP::handleMsgFromTransport(cMessage *msg)
 		ipControlInfo->setProtocol(IP_PROT_UDP);
 		ipControlInfo->setSrcAddr(ctrl->getSrcAddr().get6());
 		ipControlInfo->setDestAddr(ctrl->getDestAddr().get6());
-		ipControlInfo->setInterfaceId(currentIfId); //FIXME extend IPv6 with this!!!
+		ipControlInfo->setInterfaceId(tempId); //FIXME extend IPv6 with this!!!
 		udpPacket->setControlInfo(ipControlInfo);
+#else
+        //UDP controlinfo
+        InterfaceTable* ift = (InterfaceTable*)InterfaceTableAccess().get();
+        UDPPacket *udpPacket = new UDPPacket(dnsReqMsg->getName());
+        //TODO UDP_HEADER_BYTES
+        udpPacket->setByteLength(8);
+        udpPacket->encapsulate(dnsReqMsg);
+
+        // set source and destination port
+        udpPacket->setSourcePort(10500);
+        udpPacket->setDestinationPort(23);
+
+        IPv6ControlInfo *ipControlInfo = new IPv6ControlInfo();
+        ipControlInfo->setProtocol(IP_PROT_UDP);
+        ipControlInfo->setSrcAddr(ift->getInterfaceById(tempId)->ipv6Data()->getPreferredAddress());
+        ipControlInfo->setDestAddr(IPvXAddressResolver().resolve(par("dnsAddress")).get6());
+        ipControlInfo->setInterfaceId(tempId); //FIXME extend IPv6 with this!!!
+        udpPacket->setControlInfo(ipControlInfo);
+#endif
 
 		send(udpPacket,"udp6Out");
 		hipVector.record(1);
@@ -450,6 +505,37 @@ void HIP::handleAddressChange(){
 	for(hitToIpMapIt = hitToIpMap.begin(); hitToIpMapIt != hitToIpMap.end();hitToIpMapIt++)
 		sendDirect(new cPacket("ADDRESS_CHANGED"), findStateMachine(hitToIpMapIt->second->fsmId), "HIPinfo");
 }
+
+int HIP::getTempId(){
+
+    InterfaceTable* ift = (InterfaceTable*)InterfaceTableAccess().get();
+    int numIfaces = 0;
+    int ifaceId = -1;
+    for (int i=0; i<ift->getNumInterfaces(); i++)
+    {
+        InterfaceEntry *ie = ift->getInterface(i);
+
+        if(!(ie->isLoopback()) && !(ie->isDown())) {
+            numIfaces++;
+            ifaceId = ie->getInterfaceId();
+            if(mapIfaceToConnected.find(ie) != mapIfaceToConnected.end() && mapIfaceToConnected[ie] == true) {
+                currentIfId = ie->getInterfaceId(); //WTF?
+                break;
+            }
+        }
+    }
+    if (currentIfId == -1)
+    {
+        for (int i=0; i<ift->getNumInterfaces(); i++)
+        {
+            InterfaceEntry *ie = ift->getInterface(i);
+
+            if(!(ie->isLoopback()) && !(ie->isDown()))
+                return  ifaceId = ie->getInterfaceId();
+        }
+    }
+    return -1;
+ }
 
 // Creates a new FSM and returns its pointer
 cModule* HIP::createStateMachine(IPv6Address ipAddress, IPv6Address &HIT)

@@ -107,6 +107,8 @@ class INET_API HIP : public cSimpleModule, public INotifiable
 	void receiveChangeNotification(int category, const cObject * details);
 
   protected:
+	virtual int getTempId();
+
     virtual void initialize();
     virtual void specInitialize();
     virtual void handleMessage(cMessage *msg);

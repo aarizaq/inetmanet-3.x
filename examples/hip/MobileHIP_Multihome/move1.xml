@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<movement>
+	<wait t="20"/>
+	<moveto x="700" y="120" t="120"/>
+</movement>

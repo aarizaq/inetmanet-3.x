@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<data>
+<DNSEntry>
+      <Address>mobilehiphost</Address>
+      <HIT>2001:0db8:85a3:0000:0000:8a2e:0370:0254</HIT>
+      <Name>www.bme.hu</Name>
+	  <RVS>rvs</RVS>
+</DNSEntry>
+<DNSEntry>
+      <Address>hipsrv</Address>
+      <HIT>2001:0db8:85a3:0000:0000:8a2e:0370:0253</HIT>
+      <Name>www.google.com</Name>
+	  <RVS>rvs</RVS>
+</DNSEntry>
+<DNSEntry>
+      <Address>rvs</Address>
+      <HIT>2001:0db8:85a3:0000:0000:8a2e:0370:0250</HIT>
+      <Name>rvs.bme.hu</Name>
+</DNSEntry>
+</data>
