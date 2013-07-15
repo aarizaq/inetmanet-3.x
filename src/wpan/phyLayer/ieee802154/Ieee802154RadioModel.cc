@@ -19,7 +19,7 @@ double Ieee802154RadioModel::calculateDuration(AirFrame *airframe)
 }
 
 
-bool Ieee802154RadioModel::isReceivedCorrectly(AirFrame *airframe, const SnrList& receivedList)
+PhyIndication Ieee802154RadioModel::isReceivedCorrectly(AirFrame *airframe, const SnrList& receivedList)
 {
     // calculate snirMin
     double snirMin = receivedList.begin()->snr;
@@ -33,12 +33,12 @@ bool Ieee802154RadioModel::isReceivedCorrectly(AirFrame *airframe, const SnrList
     {
         // if snir is too low for the packet to be recognized
         EV << "COLLISION! Packet got lost\n";
-        return false;
+        return COLLISION;
     }
     if (!packetOk(snirMin, frame->getBitLength(), airframe->getBitrate()))
     {
     	EV << "Packet has BIT ERRORS! It is lost!\n";
-    	return false;
+    	return FRAMEOK;
     }
     /*else if (packetOk(snirMin, airframe->getEncapsulatedMsg()->length(), airframe->getBitrate()))
     {
@@ -51,7 +51,7 @@ bool Ieee802154RadioModel::isReceivedCorrectly(AirFrame *airframe, const SnrList
         return false;
     }*/
 
-    return true;
+    return BITERROR;
 }
 
 

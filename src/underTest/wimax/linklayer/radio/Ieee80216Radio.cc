@@ -132,10 +132,12 @@ void Ieee80216Radio::handleLowerMsgEnd(AirFrame *airframe)
         }
         else
         {
-            if (!radioModel->isReceivedCorrectly(airframe, list))
+
+            PhyIndication frameState = radioModel->isReceivedCorrectly(airframe, list);
+            if (frameState != FRAMEOK)
             {
-                airframe->getEncapsulatedPacket()->setKind(list.size() > 1 ? COLLISION : BITERROR);
-                airframe->setName(list.size() > 1 ? "COLLISION" : "BITERROR");
+                airframe->getEncapsulatedPacket()->setKind(frameState);
+                airframe->setName(frameState == COLLISION ? "COLLISION" : "BITERROR");
                 isCollision = true;
                 collisions++;
             }

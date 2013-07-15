@@ -57,7 +57,7 @@ double LTERadioModel::calculateDuration(AirFrame *airframe)
 }
 
 
-bool LTERadioModel::isReceivedCorrectly(AirFrame *airframe, const SnrList& receivedList)
+PhyIndication LTERadioModel::isReceivedCorrectly(AirFrame *airframe, const SnrList& receivedList)
 {
     // calculate snirMin
     double snirMin = receivedList.begin()->snr;
@@ -69,17 +69,17 @@ bool LTERadioModel::isReceivedCorrectly(AirFrame *airframe, const SnrList& recei
     {
         // if snir is too low for the packet to be recognized
         EV << "COLLISION! Packet got lost\n";
-        return false;
+        return COLLISION;
     }
     else if (isPacketOK(snirMin, airframe->getBitLength()+headerLengthBits, airframe->getBitrate()))
     {
         EV << "packet was received correctly, it is now handed to upper layer...\n";
-        return true;
+        return FRAMEOK;
     }
     else
     {
         EV << "Packet has BIT ERRORS! It is lost!\n";
-        return false;
+        return BITERROR;
     }
 }
 

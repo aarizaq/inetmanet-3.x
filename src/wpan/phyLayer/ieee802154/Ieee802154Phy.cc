@@ -607,11 +607,13 @@ void Ieee802154Phy::handleLowerMsgEnd(AirFrame * airframe)
                 if (iter->snr < snirMin)
                     snirMin = iter->snr;
             airframe->setSnr(10*log10(snirMin));
-            if (!radioModel->isReceivedCorrectly(airframe, list))
+            PhyIndication frameInfo = radioModel->isReceivedCorrectly(airframe, list);
+            if (frameInfo != FRAMEOK)
             {
                 isCollision = true;
                 // we cannot do this before decapsulation, because we only detect this packet collided, not all, refer to encapsulation msg
                 //airframe->getEncapsulatedMsg()->setKind(COLLISION);
+
             }
 
             // we decapsulate here to set some flag
@@ -624,7 +626,7 @@ void Ieee802154Phy::handleLowerMsgEnd(AirFrame * airframe)
             frame->setControlInfo(cinfo);
 
             if (isCollision)
-                frame->setKind(COLLISION);
+                frame->setKind(frameInfo);
             else if (CCA_timer->isScheduled())  // during CCA, tell MAC layer to discard this pkt
                 frame->setKind(RX_DURING_CCA);
 
