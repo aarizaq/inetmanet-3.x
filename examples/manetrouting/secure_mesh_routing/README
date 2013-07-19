@@ -1,0 +1,9 @@
+This example requires the openssl library. To run the example, follow the steps below:
+
+1. Install openssl (a.o., libssl, libssl-dev). Use project properties->omnet++->makemake->options to link it. If you have any questions regarding this issue don't hesitate to send a mail to mohamad.sbeiti@tu-dortmund.de
+2. Uncomment #define OPENSSL_IS_LINKED in /src/generic/Configuration.h
+3. Recompile inetmanet
+
+That is it, now you can run the example.
+
+More information about PASER can be found at www.paser.info
