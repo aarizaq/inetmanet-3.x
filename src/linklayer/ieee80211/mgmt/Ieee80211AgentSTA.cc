@@ -49,8 +49,12 @@ void Ieee80211AgentSTA::initialize(int stage)
         nb = NotificationBoardAccess().get();
         nb->subscribe(this, NF_L2_BEACON_LOST);
 
-        ift = (InterfaceTable*)InterfaceTableAccess().getIfExists();
+        InterfaceTable *ift = (InterfaceTable*)InterfaceTableAccess().getIfExists();
         myIface = NULL;
+        if (!ift)
+        {
+            myIface = ift->getInterfaceByName(getParentModule()->getFullName());
+        }
 
         // JcM add: get the default ssid, if there is one.
         default_ssid = par("default_ssid").stringValue();
@@ -124,12 +128,6 @@ void Ieee80211AgentSTA::receiveChangeNotification(int category, const cObject *d
         getParentModule()->getParentModule()->bubble("Beacon lost!");
         //sendDisassociateRequest();
         sendScanRequest();
-        if (ift != NULL && myIface == NULL)
-        {
-            myIface = ift->getInterfaceByInterfaceModule(this);
-            if (myIface == NULL)
-                opp_error("interface not found ");
-        }
 
         nb->fireChangeNotification(NF_L2_DISASSOCIATED, myIface);
     }
@@ -320,14 +318,6 @@ void Ieee80211AgentSTA::processAssociateConfirm(Ieee80211Prim_AssociateConfirm *
         emit(acceptConfirmSignal, PR_ASSOCIATE_CONFIRM);
         // we are happy!
         getParentModule()->getParentModule()->bubble("Associated with AP");
-
-        if (ift != NULL && myIface == NULL)
-        {
-            myIface = ift->getInterfaceByInterfaceModule(this);
-            if (myIface == NULL)
-                opp_error("interface not found ");
-        }
-
         if(prevAP.isUnspecified() || prevAP != resp->getAddress())
         {
             nb->fireChangeNotification(NF_L2_ASSOCIATED_NEWAP, myIface); //XXX detail: InterfaceEntry?

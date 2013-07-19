@@ -28,6 +28,7 @@
 #define MSGKIND_SEND     1
 #define MSGKIND_ABORT    2
 #define MSGKIND_PRIMARY  3
+#define MSGKIND_RESET    4
 #define MSGKIND_STOP     5
 
 
@@ -128,7 +129,37 @@ void SCTPClient::connect()
     ev << "issuing OPEN command\n";
     setStatusString("connecting");
     ev << "connect to address " << connectAddress << "\n";
-    socket.connect(IPvXAddressResolver().resolve(connectAddress, 1), connectPort, (int32)par("prMethod"), (uint32)par("numRequestsPerSession"));
+	bool streamReset = par("streamReset");
+	socket.connect(IPvXAddressResolver().resolve(connectAddress, 1), connectPort, streamReset, (int32)par("prMethod"), (uint32)par("numRequestsPerSession"));
+
+    if (!streamReset)
+        streamReset = false;
+    else if (streamReset == true)
+    {
+        cMessage* cmsg = new cMessage("StreamReset");
+        cmsg->setKind(MSGKIND_RESET);
+        sctpEV3 << "StreamReset Timer scheduled at " << simulation.getSimTime() << "\n";
+        scheduleAt(simulation.getSimTime()+(double)par("streamRequestTime"), cmsg);
+    }
+
+    for (uint16 i = 0; i < outStreams; i++)
+    {
+        streamRequestLengthMap[i] = par("requestLength");
+        streamRequestRatioMap[i] = 1;
+        streamRequestRatioSendMap[i] = 1;
+    }
+
+    uint32 streamNum = 0;
+    cStringTokenizer ratioTokenizer(par("streamRequestRatio").stringValue());
+    while (ratioTokenizer.hasMoreTokens())
+    {
+        const char *token = ratioTokenizer.nextToken();
+        streamRequestRatioMap[streamNum] = (uint32) atoi(token);
+        streamRequestRatioSendMap[streamNum] = (uint32) atoi(token);
+
+        streamNum++;
+    }
+
     numSessions++;
 }
 
@@ -313,6 +344,34 @@ void SCTPClient::sendRequest(bool last)
 
     sendBytes = par("requestLength");
 
+    // find next stream
+    uint16 nextStream = 0;
+    for (uint16 i = 0; i < outStreams; i++)
+    {
+        if (streamRequestRatioSendMap[i] > streamRequestRatioSendMap[nextStream])
+            nextStream = i;
+    }
+
+    // no stream left, reset map
+    if (nextStream == 0 && streamRequestRatioSendMap[nextStream] == 0)
+    {
+        for (uint16 i = 0; i < outStreams; i++)
+        {
+            streamRequestRatioSendMap[i] = streamRequestRatioMap[i];
+            if (streamRequestRatioSendMap[i] > streamRequestRatioSendMap[nextStream])
+                nextStream = i;
+        }
+    }
+
+    if (nextStream == 0 && streamRequestRatioSendMap[nextStream] == 0)
+    {
+        opp_error("Invalid setting of streamRequestRatio: only 0 weightings");
+    }
+
+    sendBytes = streamRequestLengthMap[nextStream];
+    streamRequestRatioSendMap[nextStream]--;
+
+
     if (sendBytes < 1)
         sendBytes = 1;
 
@@ -394,6 +453,12 @@ void SCTPClient::handleTimer(cMessage *msg)
 
         case MSGKIND_PRIMARY:
             setPrimaryPath((const char*)par("newPrimary"));
+            break;
+
+        case MSGKIND_RESET:
+            sctpEV3 << "StreamReset Timer expired at Client at " << simulation.getSimTime() << "...send notification\n";
+            sendStreamResetNotification();
+            delete msg;
             break;
 
         case MSGKIND_STOP:
@@ -528,6 +593,26 @@ void SCTPClient::setPrimaryPath(const char* str)
     cmsg->setControlInfo(pinfo);
     socket.sendNotification(cmsg);
 }
+
+void SCTPClient::sendStreamResetNotification()
+{
+    uint32 type;
+
+    type = (uint32)par("streamResetType");
+    if (type >= 6 && type <= 9)
+    {
+        cPacket* cmsg = new cPacket("CMSG-SR");
+        SCTPResetInfo *rinfo = new SCTPResetInfo();
+        rinfo->setAssocId(socket.getConnectionId());
+        rinfo->setRemoteAddr(socket.getRemoteAddr());
+        type = (uint32)par("streamResetType");
+        rinfo->setRequestType((uint16)type);
+        cmsg->setKind(SCTP_C_STREAM_RESET);
+        cmsg->setControlInfo(rinfo);
+        socket.sendNotification(cmsg);
+    }
+}
+
 
 void SCTPClient::msgAbandonedArrived(int32 assocId)
 {

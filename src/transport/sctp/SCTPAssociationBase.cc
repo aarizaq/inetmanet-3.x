@@ -101,6 +101,9 @@ SCTPPathVariables::SCTPPathVariables(const IPvXAddress& addr, SCTPAssociation* a
     CwndTimer = new cMessage(str);
     snprintf(str, sizeof(str), "RTX_TIMER %d:%s", assoc->assocId, addr.str().c_str());
     T3_RtxTimer = new cMessage(str);
+    snprintf(str, sizeof(str), "Reset_TIMER %d:%s", assoc->assocId, addr.str().c_str());
+    ResetTimer = new cPacket(str);
+    ResetTimer->setContextPointer(association);
     snprintf(str, sizeof(str), "ASCONF_TIMER %d:%s", assoc->assocId, addr.str().c_str());
     AsconfTimer = new cMessage(str);
     AsconfTimer->setContextPointer(association);
@@ -112,6 +115,7 @@ SCTPPathVariables::SCTPPathVariables(const IPvXAddress& addr, SCTPAssociation* a
     HeartbeatTimer->setControlInfo(pinfo->dup());
     HeartbeatIntervalTimer->setControlInfo(pinfo->dup());
     CwndTimer->setControlInfo(pinfo->dup());
+    ResetTimer->setControlInfo(pinfo->dup());
     AsconfTimer->setControlInfo(pinfo->dup());
 
     snprintf(str, sizeof(str), "RTO %d:%s", assoc->assocId, addr.str().c_str());
@@ -224,6 +228,8 @@ SCTPStateVariables::SCTPStateVariables()
     stopSending = false;
     inOut = false;
     asconfOutstanding = false;
+    streamReset = false;
+    peerStreamReset = false;
     queueUpdate = false;
     firstDataSent = false;
     peerWindowFull = false;
@@ -232,6 +238,7 @@ SCTPStateVariables::SCTPStateVariables()
     noMoreOutstanding = false;
     primaryPath = NULL;
     lastDataSourcePath = NULL;
+    resetChunk = NULL;
     asconfChunk = NULL;
     shutdownChunk = NULL;
     initChunk = NULL;
@@ -250,6 +257,7 @@ SCTPStateVariables::SCTPStateVariables()
     lastTsnAck = 0;
     highestTsnAcked = 0;
     nextRSid = 0;
+    lastTsnBeforeReset = 0;
     advancedPeerAckPoint = 0;
     ackState = 0;
     lastStreamScheduled = 0;
@@ -272,6 +280,9 @@ SCTPStateVariables::SCTPStateVariables()
     auth = false;
     peerAuth = false;
     hmacType = 0;
+    ssNextStream = false;
+    ssOneStreamLeft = false;
+    ssLastDataChunkSizeSet = false;
     lastSendQueueAbated = simTime();
     queuedMessages = 0;
     queueLimit = 0;
@@ -378,6 +389,8 @@ SCTPAssociation::SCTPAssociation(SCTP* _module, int32 _appGateIndex, int32 _asso
     snprintf(vectorName, sizeof(vectorName), "Advertised Receiver Window %d", assocId);
     advRwnd = new cOutVector(vectorName);
     assocThroughputVector = new cOutVector("Association Throughput");
+    snprintf(vectorName, sizeof(vectorName), "End to End Delay");
+    EndToEndDelay = new cOutVector(vectorName);
 
     // ====== Add IP =====================================================
     StartAddIP = new cMessage("addIP");
@@ -392,6 +405,51 @@ SCTPAssociation::SCTPAssociation(SCTP* _module, int32 _appGateIndex, int32 _asso
         case ROUND_ROBIN:
             ssFunctions.ssInitStreams = &SCTPAssociation::initStreams;
             ssFunctions.ssGetNextSid = &SCTPAssociation::streamScheduler;
+            ssFunctions.ssUsableStreams = &SCTPAssociation::numUsableStreams;
+            break;
+        case ROUND_ROBIN_PACKET:
+            ssFunctions.ssInitStreams = &SCTPAssociation::initStreams;
+            ssFunctions.ssGetNextSid = &SCTPAssociation::streamSchedulerRoundRobinPacket;
+            ssFunctions.ssUsableStreams = &SCTPAssociation::numUsableStreams;
+            break;
+        case RANDOM_SCHEDULE:
+            ssFunctions.ssInitStreams = &SCTPAssociation::initStreams;
+            ssFunctions.ssGetNextSid = &SCTPAssociation::streamSchedulerRandom;
+            ssFunctions.ssUsableStreams = &SCTPAssociation::numUsableStreams;
+            break;
+        case RANDOM_SCHEDULE_PACKET:
+            ssFunctions.ssInitStreams = &SCTPAssociation::initStreams;
+            ssFunctions.ssGetNextSid = &SCTPAssociation::streamSchedulerRandomPacket;
+            ssFunctions.ssUsableStreams = &SCTPAssociation::numUsableStreams;
+            break;
+        case FAIR_BANDWITH:
+            ssFunctions.ssInitStreams = &SCTPAssociation::initStreams;
+            ssFunctions.ssGetNextSid = &SCTPAssociation::streamSchedulerFairBandwidth;
+            ssFunctions.ssUsableStreams = &SCTPAssociation::numUsableStreams;
+            break;
+        case FAIR_BANDWITH_PACKET:
+            ssFunctions.ssInitStreams = &SCTPAssociation::initStreams;
+            ssFunctions.ssGetNextSid = &SCTPAssociation::streamSchedulerFairBandwidthPacket;
+            ssFunctions.ssUsableStreams = &SCTPAssociation::numUsableStreams;
+            break;
+        case PRIORITY:
+            ssFunctions.ssInitStreams = &SCTPAssociation::initStreams;
+            ssFunctions.ssGetNextSid = &SCTPAssociation::streamSchedulerPriority;
+            ssFunctions.ssUsableStreams = &SCTPAssociation::numUsableStreams;
+            break;
+        case FCFS:
+            ssFunctions.ssInitStreams = &SCTPAssociation::initStreams;
+            ssFunctions.ssGetNextSid = &SCTPAssociation::streamSchedulerFCFS;
+            ssFunctions.ssUsableStreams = &SCTPAssociation::numUsableStreams;
+            break;
+        case PATH_MANUAL:
+            ssFunctions.ssInitStreams = &SCTPAssociation::initStreams;
+            ssFunctions.ssGetNextSid = &SCTPAssociation::pathStreamSchedulerManual;
+            ssFunctions.ssUsableStreams = &SCTPAssociation::numUsableStreams;
+            break;
+        case PATH_MAP_TO_PATH:
+            ssFunctions.ssInitStreams = &SCTPAssociation::initStreams;
+            ssFunctions.ssGetNextSid = &SCTPAssociation::pathStreamSchedulerMapToPath;
             ssFunctions.ssUsableStreams = &SCTPAssociation::numUsableStreams;
             break;
     }
@@ -413,6 +471,12 @@ SCTPAssociation::~SCTPAssociation()
     delete sendQueue;
 
     delete StartAddIP;
+    delete EndToEndDelay;
+
+    int i = 0;
+    while (streamThroughputVectors[i] != NULL) {
+        delete streamThroughputVectors[i++];
+    }
 
     delete fsm;
     delete state;
@@ -481,6 +545,9 @@ bool SCTPAssociation::processTimer(cMessage *msg)
             sctpEV3<<"set testing to true\n";
         }
     }
+    else if (path != NULL && msg == path->ResetTimer) {
+        process_TIMEOUT_RESET(path);
+    }
     else if (path != NULL && msg == path->AsconfTimer) {
         process_TIMEOUT_ASCONF(path);
     }
@@ -509,6 +576,21 @@ bool SCTPAssociation::processSCTPMessage(SCTPMessage* sctpmsg,
     remoteAddr = msgSrcAddr;
     remotePort = sctpmsg->getSrcPort();
 
+    if (fsm->getState() == SCTP_S_ESTABLISHED) {
+        bool found = false;
+		for (AddressVector::iterator k=state->localAddresses.begin(); k!=state->localAddresses.end(); ++k)
+		{
+			if ((*k) == msgDestAddr) {
+				found = true;
+				break;
+			}
+		}
+		if (!found) {
+			sctpEV3 << "destAddr " << msgDestAddr << " is not bound to host\n";
+			return true;
+		}
+	}
+
     return process_RCV_Message(sctpmsg, msgSrcAddr, msgDestAddr);
 }
 
@@ -528,7 +610,9 @@ SCTPEventCode SCTPAssociation::preanalyseAppCommandEvent(int32 commandCode)
     case SCTP_C_QUEUE_BYTES_LIMIT:   return SCTP_E_QUEUE_BYTES_LIMIT;
     case SCTP_C_SHUTDOWN:            return SCTP_E_SHUTDOWN;
     case SCTP_C_NO_OUTSTANDING:      return SCTP_E_SEND_SHUTDOWN_ACK;
+    case SCTP_C_STREAM_RESET:        return SCTP_E_STREAM_RESET;
     case SCTP_C_SEND_ASCONF:         return SCTP_E_SEND_ASCONF;   // Needed for multihomed NAT
+    case SCTP_C_SET_STREAM_PRIO:     return SCTP_E_SET_STREAM_PRIO;
     default:
         sctpEV3<<"commandCode="<<commandCode<<"\n";
         throw cRuntimeError("Unknown message kind in app command");
@@ -561,7 +645,19 @@ bool SCTPAssociation::processAppCommand(cPacket *msg)
 
         case SCTP_E_PRIMARY: process_PRIMARY(event, sctpCommand); break;
 
+        case SCTP_E_STREAM_RESET:
+            if (state->peerStreamReset == true) {
+                process_STREAM_RESET(sctpCommand);
+            }
+            event = SCTP_E_IGNORE;
+            break;
+
         case SCTP_E_SEND_ASCONF: sendAsconf(sctpMain->par("addIpType")); break;
+
+        case SCTP_E_SET_STREAM_PRIO:
+            state->ssPriorityMap[((SCTPSendCommand*) sctpCommand)->getSid()] =
+                    ((SCTPSendCommand*) sctpCommand)->getPpid();
+            break;
 
         case SCTP_E_QUEUE_BYTES_LIMIT: process_QUEUE_BYTES_LIMIT(sctpCommand); break;
 
@@ -793,6 +889,12 @@ void SCTPAssociation::stateEntered(int32 status)
             stat.numAuthChunksSent = 0;
             stat.numAuthChunksAccepted = 0;
             stat.numAuthChunksRejected = 0;
+            stat.numResetRequestsSent = 0;
+            stat.numResetRequestsPerformed = 0;
+            stat.numEndToEndMessages = 0;
+            stat.cumEndToEndDelay = 0;
+            stat.startEndToEndDelay = (uint32)sctpMain->par("startEndToEndDelay");
+            stat.stopEndToEndDelay = (uint32)sctpMain->par("stopEndToEndDelay");
             sctpMain->assocStatMap[stat.assocId] = stat;
             ccModule = sctpMain->par("ccModule");
 
@@ -884,6 +986,8 @@ void SCTPAssociation::removePath()
         delete path->T3_RtxTimer;
         stopTimer(path->CwndTimer);
         delete path->CwndTimer;
+        stopTimer(path->ResetTimer);
+        delete path->ResetTimer;
         stopTimer(path->AsconfTimer);
         delete path->AsconfTimer;
         delete path;
