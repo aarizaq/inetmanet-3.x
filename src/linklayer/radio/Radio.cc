@@ -136,11 +136,11 @@ void Radio::initialize(int stage)
             }
         }
 
-        receptionThreshold = FWMath::dBm2mW(par("receptionThreshold").doubleValue());
-        receptionThresholdPtr = &sensitivity;
+
+        receptionThreshold = sensitivity;
         if (par("setReceptionThreshold").boolValue())
         {
-            receptionThresholdPtr = &receptionThreshold;
+            receptionThreshold = FWMath::dBm2mW(par("receptionThreshold").doubleValue());
             if (par("maxDistantReceptionThreshold").doubleValue() > 0)
             {
                 receptionThreshold = receptionModel->calculateReceivedPower(transmitterPower, carrierFrequency, par("maxDistantReceptionThreshold").doubleValue());
@@ -634,7 +634,7 @@ void Radio::handleLowerMsgStart(AirFrame* airframe)
 
         // update the RadioState if the noiseLevel exceeded the threshold
         // and the radio is currently not in receive or in send mode
-        if (BASE_NOISE_LEVEL >= *receptionThresholdPtr && rs.getState() == RadioState::IDLE)
+        if (BASE_NOISE_LEVEL >= receptionThreshold && rs.getState() == RadioState::IDLE)
         {
             EV << "setting radio state to RECV\n";
             setRadioState(RadioState::RECV);
@@ -727,7 +727,7 @@ void Radio::handleLowerMsgEnd(AirFrame * airframe)
     // change to idle if noiseLevel smaller than threshold and state was
     // not idle before
     // do not change state if currently sending or receiving a message!!!
-    if (BASE_NOISE_LEVEL < *receptionThresholdPtr && rs.getState() == RadioState::RECV && snrInfo.ptr == NULL)
+    if (BASE_NOISE_LEVEL < receptionThreshold && rs.getState() == RadioState::RECV && snrInfo.ptr == NULL)
     {
         // publish the new RadioState:
         EV << "new RadioState is IDLE\n";
@@ -923,6 +923,8 @@ void Radio::updateSensitivity(double rate)
         sensitivity = it->second;
     else
         sensitivity = sensitivityList[0.0];
+    if (!par("setReceptionThreshold").boolValue())
+        receptionThreshold = sensitivity;
     EV<<"bitrate = "<<rate<<endl;
     EV <<" sensitivity after updateSensitivity: "<<sensitivity<<endl;
 }
@@ -1024,7 +1026,7 @@ void Radio::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj
     ChannelAccess::receiveSignal(source,signalID, obj);
     if (signalID == changeLevelNoise)
     {
-        if (BASE_NOISE_LEVEL < *receptionThresholdPtr)
+        if (BASE_NOISE_LEVEL < receptionThreshold)
         {
             if (rs.getState()==RadioState::RECV && snrInfo.ptr==NULL)
                 setRadioState(RadioState::IDLE);
@@ -1148,11 +1150,11 @@ void Radio::getSensitivityList(cXMLElement* xmlConfig)
             it != parameters.end(); it++)
         {
             const char* bitRate = (*it)->getAttribute("BitRate");
-            const char* sensitivity = (*it)->getAttribute("Sensitivity");
+            const char* sensitivityStr = (*it)->getAttribute("Sensitivity");
             double rate = atof(bitRate);
             if (rate == 0)
                 error("invalid bit rate");
-            double sens = atof(sensitivity);
+            double sens = atof(sensitivityStr);
             sensitivityList[rate] = FWMath::dBm2mW(sens);
 
         }
@@ -1160,8 +1162,8 @@ void Radio::getSensitivityList(cXMLElement* xmlConfig)
         for(cXMLElementList::const_iterator it = parameters.begin();
             it != parameters.end(); it++)
         {
-            const char* sensitivity = (*it)->getAttribute("Sensitivity");
-            double sens = atof(sensitivity);
+            const char* sensitivityStr = (*it)->getAttribute("Sensitivity");
+            double sens = atof(sensitivityStr);
             sensitivityList[0.0] = FWMath::dBm2mW(sens);
         }
 

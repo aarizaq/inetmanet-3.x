@@ -258,7 +258,6 @@ class INET_API Radio : public ChannelAccess, public IPowerControl
      *  minimum signal necessary to change the channel state to RECV
      */
     double receptionThreshold;
-    double *receptionThresholdPtr;
     /*
      * this variable is used to disconnect the possibility of sent packets to the ChannelControl
      */
