@@ -70,6 +70,9 @@ class INET_API InetSimpleBattery : public BasicBattery
     DeviceEntryMap deviceEntryMap;
     DeviceEntryVector deviceEntryVector;
 
+    virtual void disableComponents();
+
+
   public:
     virtual void    initialize(int);
     virtual int numInitStages() const {return 2;}

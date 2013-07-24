@@ -25,6 +25,7 @@
 #include "RadioState.h"
 #include "InetSimpleBattery.h"
 #include "Energy.h"
+#include "IPowerControl.h"
 
 Define_Module(InetSimpleBattery);
 
@@ -373,7 +374,9 @@ void InetSimpleBattery::deductAndCheck()
 
         EV << "[BATTERY]: " << getParentModule()->getFullName() <<" 's battery exhausted, stop simulation" << "\n";
         display_string->setTagArg("i", 1, "#ff0000");
-        endSimulation();
+        disableComponents();
+        //endSimulation();
+
     }
 
     // battery is not depleted, continue
@@ -396,4 +399,31 @@ void InetSimpleBattery::deductAndCheck()
     residualVec.record(residualCapacity);
     if (mCurrEnergy)
         mCurrEnergy->record(capacity-residualCapacity);
+}
+
+
+static void disableRecursive(cModule *curmod)
+{
+    for (cModule::SubmoduleIterator i(curmod); !i.end(); i++)
+    {
+        cModule *submod = i();
+        IPowerControl *power = dynamic_cast<IPowerControl*>(submod);
+        if (power)
+            power->disableModule();
+        disableRecursive(submod);
+    }
+}
+
+void InetSimpleBattery::disableComponents()
+{
+    // search all IPowerControl components in the node and disable them
+    for (cModule *curmod = getParentModule(); curmod; curmod= curmod->getParentModule())
+    {
+        cProperties *props = curmod->getProperties();
+        if (props && props->getAsBool("node"))
+        {
+            disableRecursive(curmod);
+            break;
+        }
+    }
 }
