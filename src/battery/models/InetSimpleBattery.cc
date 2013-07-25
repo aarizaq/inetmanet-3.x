@@ -375,8 +375,9 @@ void InetSimpleBattery::deductAndCheck()
         EV << "[BATTERY]: " << getParentModule()->getFullName() <<" 's battery exhausted, stop simulation" << "\n";
         display_string->setTagArg("i", 1, "#ff0000");
         disableComponents();
-        //endSimulation();
-
+        if (par("endSimulationIfexhausted").boolValue())
+            endSimulation();
+        disableComponents();
     }
 
     // battery is not depleted, continue

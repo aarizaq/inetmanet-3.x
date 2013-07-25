@@ -30,4 +30,5 @@ simple InetSimpleBattery like IBattery
         double publishDelta = default(1); // between 0..1
         double publishTime @unit(s) = default(1s);
         bool ConsumedVector = default(false);
+        bool endSimulationIfexhausted = default(true); // end the simulation is the battery is exausted, if false, the battery module will disabled the IPowerControl modules but won't finish the simulation
 }
