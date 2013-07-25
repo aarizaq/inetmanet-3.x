@@ -378,6 +378,9 @@ void InetSimpleBattery::deductAndCheck()
         if (par("endSimulationIfexhausted").boolValue())
             endSimulation();
         disableComponents();
+        lastPublishCapacity = residualCapacity;
+        cancelEvent(timeout);
+        cancelEvent(publish);
     }
 
     // battery is not depleted, continue
