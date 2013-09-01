@@ -168,7 +168,7 @@ OLSR_ETX::initialize(int stage)
         midTimer = new OLSR_MidTimer(); ///< Timer for sending MID messages.
         linkQualityTimer = new OLSR_ETX_LinkQualityTimer();
 
-        state_ptr = state_etx_ptr = new OLSR_ETX_state();
+        state_ptr = state_etx_ptr = new OLSR_ETX_state(&this->parameter_);
 
         for (int i = 0; i< getNumWlanInterfaces(); i++)
         {

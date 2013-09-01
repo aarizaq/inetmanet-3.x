@@ -29,9 +29,9 @@
 #include <OLSR_ETX_state.h>
 #include <OLSR_ETX.h>
 
-OLSR_ETX_state::OLSR_ETX_state()
+OLSR_ETX_state::OLSR_ETX_state(OLSR_ETX_parameter *p)
 {
-    parameter = &(dynamic_cast<OLSR_ETX*>(getOwner())->parameter_);
+    parameter = p;
 }
 
 OLSR_ETX_link_tuple*  OLSR_ETX_state::find_best_sym_link_tuple(const nsaddr_t &main_addr, double now)

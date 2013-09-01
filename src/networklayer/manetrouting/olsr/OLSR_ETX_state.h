@@ -41,7 +41,7 @@ class OLSR_ETX_state : public OLSR_state
     OLSR_ETX_parameter *parameter;
   protected:
     OLSR_ETX_link_tuple*  find_best_sym_link_tuple(const nsaddr_t &main_addr, double now);
-    OLSR_ETX_state();
+    OLSR_ETX_state(OLSR_ETX_parameter *);
 };
 
 #endif
