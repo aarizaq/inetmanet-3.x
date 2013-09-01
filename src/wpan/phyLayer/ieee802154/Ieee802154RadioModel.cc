@@ -37,8 +37,8 @@ PhyIndication Ieee802154RadioModel::isReceivedCorrectly(AirFrame *airframe, cons
     }
     if (!packetOk(snirMin, frame->getBitLength(), airframe->getBitrate()))
     {
-    	EV << "Packet has BIT ERRORS! It is lost!\n";
-    	return FRAMEOK;
+        EV << "Packet has BIT ERRORS! It is lost!\n";
+        return BITERROR;
     }
     /*else if (packetOk(snirMin, airframe->getEncapsulatedMsg()->length(), airframe->getBitrate()))
     {
@@ -51,7 +51,7 @@ PhyIndication Ieee802154RadioModel::isReceivedCorrectly(AirFrame *airframe, cons
         return false;
     }*/
 
-    return BITERROR;
+    return FRAMEOK;
 }
 
 
