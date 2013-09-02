@@ -30,6 +30,7 @@
 #include "IPv4Address.h"
 
 std::deque<IPvXAddress> HostAutoConfigurator2::asignedAddress;
+bool HostAutoConfigurator2::firstTime = true;
 
 Define_Module(HostAutoConfigurator2);
 
@@ -38,7 +39,26 @@ static IPv4Address defaultAddr;
 HostAutoConfigurator2::HostAutoConfigurator2()
 {
     defaultAddr.set(0,0,0,0);
-    asignedAddress.clear();
+    if (firstTime)
+    {
+        asignedAddress.clear();
+        firstTime = false;
+    }
+}
+
+HostAutoConfigurator2::~HostAutoConfigurator2()
+{
+    for (unsigned int j=0;j<myAddressList.size();j++)
+    {
+        for (unsigned int i=0;i<asignedAddress.size();i++)
+        {
+            if (asignedAddress[i] == myAddressList[j])
+            {
+                asignedAddress.erase(asignedAddress.begin()+i);
+                break;
+            }
+        }
+    }
 }
 
 void HostAutoConfigurator2::initialize(int stage)
@@ -49,7 +69,7 @@ void HostAutoConfigurator2::initialize(int stage)
     {
         debug = par("debug").boolValue();
     }
-    else if (stage == 2)
+    else if (stage == 3)
     {
         setupNetworkLayer();
         if (par("isDefaultRoute"))
@@ -64,10 +84,9 @@ void HostAutoConfigurator2::initialize(int stage)
             defaultAddr=ie->ipv4Data()->getIPAddress();
         }
     }
-    else if (stage == 3)
+    else if (stage == 4)
     {
         setupRoutingTable();
-        asignedAddress.clear();
     }
 }
 
@@ -214,7 +233,7 @@ void HostAutoConfigurator2::setupNetworkLayer()
     	vectorMaskToken.push_back(val);
     }
 
-    if (vectorAddressToken.size()>1 && (vectorAddressToken.size()!=vectorInterfaceToken.size()))
+    if ((vectorInterfaceToken.size() > 1) && (vectorAddressToken.size()!=vectorInterfaceToken.size()))
     	opp_error("interfaces and addressBaseList has different sizes");
 
     if (vectorAddressToken.size()!=vectorMaskToken.size())
@@ -267,6 +286,7 @@ void HostAutoConfigurator2::setupNetworkLayer()
         ie->ipv4Data()->setNetmask(netmask);
         ie->setBroadcast(true);
         asignedAddress.push_back(myAddress);
+        myAddressList.push_back(myAddress);
         EV << "interface " << ifname << " gets " << myAddress.str() << "/" << netmask.str() << std::endl;
     }
     if (!interfaceFound)

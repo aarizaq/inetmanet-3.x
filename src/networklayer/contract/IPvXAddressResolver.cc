@@ -475,13 +475,19 @@ cModule * IPvXAddressResolver::findModuleWithAddress(const IPvXAddress & add)
             for (int i = 0; itable->getNumInterfaces(); i++)
             {
                 InterfaceEntry *entry = itable->getInterface(i);
+                if (entry->isLoopback())
+                    continue;
                 if (add.isIPv6())
                 {
+                    if (!entry->ipv6Data())
+                        continue;
                     if (entry->ipv6Data()->hasAddress(add.get6()))
                         return mod;
                 }
                 else
                 {
+                    if (!entry->ipv4Data())
+                        continue;
                     if (entry->ipv4Data()->getIPAddress() == add.get4())
                         return mod;
 

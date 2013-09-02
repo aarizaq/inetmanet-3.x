@@ -21,6 +21,7 @@ package inet.examples.manetrouting.dynamicNodeCreation;
 
 import inet.nodes.inet.WirelessHost;
 import inet.linklayer.ieee80211mesh.nodes.HostMesh;
+import inet.linklayer.ieee80211mesh.nodes.HostSta;
 import inet.linklayer.ieee80211mesh.nodes.BasicMobileManetMesh;
 import inet.world.radio.ChannelControl;
 import inet.linklayer.ieee80211mesh.nodes.gateWayMesh;
@@ -38,7 +39,7 @@ network meshTest
         int numMeshHost = default(0);
         double nodeSeparation @unit(m) = default(120m);
     submodules:
-        staHost[numSta]: WirelessHost {
+        staHost[numSta]: HostSta {
             @display("p=208,59");
         }
         meshHost[numMeshHost]: HostMesh {
@@ -125,11 +126,6 @@ network meshTest
         }
         channelControl: ChannelControl {
             @display("p=80,70;i=misc/sun");
-        }
-        configurator: IPv4NetworkConfigurator {
-            parameters:
-                config=xml("<config><interface hosts='*' address='145.236.x.x' netmask='255.255.0.0'/></config>");                
-            	@display("p=80,20");
         }
 }
 

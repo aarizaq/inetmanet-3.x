@@ -40,11 +40,16 @@ module HostMesh extends WirelessHost
         string LinkLayerType = default("Ieee80211NicMesh");
         wlan[*].typename = LinkLayerType;
         IPForward = default(true);
+        networkLayer.configurator.networkConfiguratorModule = default("");
         string routingProtocol @enum("AODVUU","DYMOUM","DYMO","DSRUU","OLSR","OLSR_ETX","DSDV_2","Batman") = default("");  // used mobile routing protocol. see: inet.networklayer.manetrouting
     submodules:
+        autoconfigurator: HostAutoConfigurator2 {
+            @display("p=101,225");
+        }
         manetrouting: <routingProtocol> like IManetRouting if routingProtocol != "" &&  LinkLayerType != "Ieee80211NicMesh" {
             @display("p=522,307");
         }
+        
     connections:
         networkLayer.manetOut --> manetrouting.from_ip if routingProtocol != "";
         networkLayer.manetIn <-- manetrouting.to_ip if routingProtocol != "";

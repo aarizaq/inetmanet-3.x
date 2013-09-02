@@ -72,6 +72,7 @@ module gateWayMesh
         bool IPForward = default(true);
         int meshChannels = default(1);
         wlan[*].mgmtType = default("Ieee80211MgmtAP");
+        networkLayer.configurator.networkConfiguratorModule = default("");
     gates:
         input radioIn[numRadios+meshChannels] @directIn;
         inout pppg[] @labels(PPPFrame-conn);
@@ -109,7 +110,10 @@ module gateWayMesh
             parameters:
                 @display("p=53,194");
         }
-
+        
+        autoconfigurator: HostAutoConfigurator2 {
+            @display("p=53,71");
+        }
         // optional mobility module. Required only if wireless cards are present
         mobility: <mobilityType> like IMobility if numRadios>0 {
             parameters:

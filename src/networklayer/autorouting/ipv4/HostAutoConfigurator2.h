@@ -36,11 +36,12 @@ class INET_API HostAutoConfigurator2 : public cSimpleModule
   public:
     virtual void initialize(int stage);
     virtual void finish();
-    virtual int numInitStages() const {return 4;}
+    virtual int numInitStages() const {return 5;}
 
     virtual void handleMessage(cMessage *msg);
     virtual void handleSelfMsg(cMessage *msg);
     HostAutoConfigurator2();
+    ~HostAutoConfigurator2();
 
   protected:
     void setupNetworkLayer();
@@ -50,6 +51,8 @@ class INET_API HostAutoConfigurator2 : public cSimpleModule
 
     bool debug; /**< whether to emit debug messages */
     static std::deque<IPvXAddress>asignedAddress;
+    std::deque<IPvXAddress>myAddressList;
+    static bool firstTime;
     bool checkIfExist(const IPvXAddress &);
 };
 

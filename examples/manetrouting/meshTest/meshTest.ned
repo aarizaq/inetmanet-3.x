@@ -21,6 +21,7 @@ package inet.examples.manetrouting.meshTest;
 
 import inet.nodes.inet.WirelessHost;
 import inet.linklayer.ieee80211mesh.nodes.HostMesh;
+import inet.linklayer.ieee80211mesh.nodes.HostSta;
 import inet.linklayer.ieee80211mesh.nodes.BasicMobileManetMesh;
 import inet.world.radio.ChannelControl;
 import inet.linklayer.ieee80211mesh.nodes.gateWayMesh;
@@ -44,7 +45,7 @@ network meshTest
         int numMeshHost = default(0);
         double nodeSeparation @unit(m) = default(120m);
     submodules:
-        staHost[numSta]: WirelessHost {
+        staHost[numSta]: HostSta {
             @display("p=208,59");
         }
         meshHost[numMeshHost]: HostMesh {
@@ -154,10 +155,6 @@ network meshTest
             parameters:
                 wlanMesh.hasLocator = true;
                 @display("i=device/router;r=,,#707070;p=1014,507");
-        }
-        configurator: IPv4NetworkConfigurator {
-            config=xml("<config><interface hosts='*' names = 'wlan*' address='192.168.1.x' netmask='255.255.255.0'/> <interface hosts='*' names = 'eth*' address='192.168.2.x' netmask='255.255.255.0'/></config>");
-            @display("p=140,50");
         }
     connections allowunconnected:
         MPP.ethg++  <--> cable <--> SW.ethg++;
