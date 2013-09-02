@@ -169,6 +169,8 @@ void Ieee80211Mesh::initializeBase(int stage)
     }
     else if (stage==1)
     {
+        NodeStatus *nodeStatus = dynamic_cast<NodeStatus *>(findContainingNode(this)->getSubmodule("status"));
+        isOperational = (!nodeStatus) || nodeStatus->getState() == NodeStatus::UP;
         // obtain our address from MAC
         cModule *mac = getParentModule()->getSubmodule("mac");
         if (!mac)
@@ -209,7 +211,10 @@ void Ieee80211Mesh::initializeBase(int stage)
                 }
             }
         }
+
         mac = getParentModule()->getSubmodule("mac",0);
+        if (!mac)
+          error("MAC module not found; it is expected to be next to this submodule and called 'mac'");
         myAddress.setAddress(mac->par("address").stringValue());
     }
 }
