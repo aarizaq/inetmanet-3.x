@@ -22,6 +22,7 @@
 #include "IPassiveQueue.h"
 #include "NotificationBoard.h"
 #include "NotifierConsts.h"
+#include "InterfaceEntry.h"
 
 // TODO: refactor using a statemachine that is present in a single function
 // TODO: this helps understanding what interactions are there and how they affect the state
@@ -32,13 +33,17 @@ EtherMACFullDuplex::EtherMACFullDuplex()
 {
 }
 
-void EtherMACFullDuplex::initialize()
+void EtherMACFullDuplex::initialize(int stage)
 {
-    EtherMACBase::initialize();
-    if (!par("duplexMode").boolValue())
-        throw cRuntimeError("Half duplex operation is not supported by EtherMACFullDuplex, use the EtherMAC module for that! (Please enable csmacdSupport on EthernetInterface)");
+    EtherMACBase::initialize(stage);
 
-    beginSendFrames();
+    if (stage == 0)
+    {
+        if (!par("duplexMode").boolValue())
+            throw cRuntimeError("Half duplex operation is not supported by EtherMACFullDuplex, use the EtherMAC module for that! (Please enable csmacdSupport on EthernetInterface)");
+
+        beginSendFrames();
+    }
 }
 
 void EtherMACFullDuplex::initializeStatistics()
@@ -59,6 +64,12 @@ void EtherMACFullDuplex::initializeFlags()
 
 void EtherMACFullDuplex::handleMessage(cMessage *msg)
 {
+    if (!isOperational)
+    {
+        handleMessageWhenDown(msg);
+        return;
+    }
+
     if (channelsDiffer)
         readChannelParameters(true);
 
@@ -358,17 +369,15 @@ void EtherMACFullDuplex::processPauseCommand(int pauseUnits)
 
 void EtherMACFullDuplex::scheduleEndIFGPeriod()
 {
-    EtherIFG gap;
     transmitState = WAIT_IFG_STATE;
-    scheduleAt(simTime() + transmissionChannel->calculateDuration(&gap), endIFGMsg);
+    simtime_t endIFGTime = simTime() + (INTERFRAME_GAP_BITS / curEtherDescr->txrate);
+    scheduleAt(endIFGTime, endIFGMsg);
 }
 
 void EtherMACFullDuplex::scheduleEndPausePeriod(int pauseUnits)
 {
     // length is interpreted as 512-bit-time units
-    cPacket pause;
-    pause.setBitLength(pauseUnits * PAUSE_UNIT_BITS);
-    simtime_t pausePeriod = transmissionChannel->calculateDuration(&pause);
+    simtime_t pausePeriod = ((pauseUnits * PAUSE_UNIT_BITS) / curEtherDescr->txrate);
     scheduleAt(simTime() + pausePeriod, endPauseMsg);
     transmitState = PAUSE_STATE;
 }

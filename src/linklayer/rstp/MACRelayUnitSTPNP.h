@@ -346,7 +346,7 @@ class INET_API MACRelayUnitSTPNP : public MACRelayUnitNP
   protected:
 
     // base methods
-    virtual void initialize();
+    virtual void initialize(int stage);
     virtual void handleMessage(cMessage* msg);
     virtual void handleTimer(cMessage* t);
 

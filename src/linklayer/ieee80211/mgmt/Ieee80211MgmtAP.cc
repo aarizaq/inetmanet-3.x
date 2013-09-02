@@ -37,6 +37,11 @@ static std::ostream& operator<<(std::ostream& os, const Ieee80211MgmtAP::STAInfo
     return os;
 }
 
+Ieee80211MgmtAP::~Ieee80211MgmtAP()
+{
+    cancelAndDelete(beaconTimer);
+}
+
 void Ieee80211MgmtAP::initialize(int stage)
 {
     Ieee80211MgmtAPBase::initialize(stage);
@@ -64,7 +69,11 @@ void Ieee80211MgmtAP::initialize(int stage)
 
         // start beacon timer (randomize startup time)
         beaconTimer = new cMessage("beaconTimer");
-        scheduleAt(simTime()+uniform(0, beaconInterval), beaconTimer);
+    }
+    else if (stage == 1)
+    {
+        if (isOperational)
+            scheduleAt(simTime()+uniform(0, beaconInterval), beaconTimer);
     }
 }
 
@@ -420,5 +429,18 @@ void Ieee80211MgmtAP::sendDisAssocNotification(const MACAddress &addr)
     notif.setApAddress(myAddress);
     notif.setStaAddress(addr);
     nb->fireChangeNotification(NF_L2_AP_DISASSOCIATED,&notif);
+}
+
+void Ieee80211MgmtAP::start()
+{
+    Ieee80211MgmtAPBase::start();
+    scheduleAt(simTime()+uniform(0, beaconInterval), beaconTimer);
+}
+
+void Ieee80211MgmtAP::stop()
+{
+    cancelEvent(beaconTimer);
+    staList.clear();
+    Ieee80211MgmtAPBase::stop();
 }
 

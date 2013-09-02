@@ -166,6 +166,9 @@ private:
     /** Utility function for handleUpperMessage() */
     virtual Ieee80211DataFrame *encapsulate(cPacket *msg);
 
+    /** Utility method to decapsulate a data frame */
+    virtual cPacket *decapsulate(Ieee80211DataFrame *frame);
+
     /** Utility function: sends authentication request */
     virtual void startAuthentication(APInfo *ap, simtime_t timeout);
 

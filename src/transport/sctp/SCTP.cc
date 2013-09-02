@@ -103,6 +103,9 @@ void SCTP::initialize()
         testTimeout = (simtime_t)netw->par("testTimeout");
     }
     this->auth = (bool)par("auth");
+    this->pktdrop = (bool)par("packetDrop");
+    this->sackNow = (bool)par("sackNow");
+    numPktDropReports = 0;
     numPacketsReceived = 0;
     numPacketsDropped = 0;
     sizeAssocMap = 0;
@@ -166,7 +169,7 @@ void SCTP::handleMessage(cMessage *msg)
 
         numPacketsReceived++;
 
-        if ((sctpmsg->hasBitError() || !(sctpmsg->getChecksumOk()))) {
+        if (!pktdrop && (sctpmsg->hasBitError() || !(sctpmsg->getChecksumOk()))) {
             sctpEV3<<"Packet has bit-error. delete it\n";
 
             bitError = true;
@@ -178,12 +181,12 @@ void SCTP::handleMessage(cMessage *msg)
         {
             if (par("udpEncapsEnabled"))
             {
-                std::cout<<"Size of SCTPMSG="<<sctpmsg->getByteLength()<<"\n";
+                sctpEV3<<"Size of SCTPMSG="<<sctpmsg->getByteLength()<<"\n";
                 UDPDataIndication *ctrl = check_and_cast<UDPDataIndication *>(msg->removeControlInfo());
                 srcAddr = ctrl->getSrcAddr();
                 destAddr = ctrl->getDestAddr();
-                std::cout<<"controlInfo srcAddr="<<srcAddr<<"  destAddr="<<destAddr<<"\n";
-                std::cout<<"VTag="<<sctpmsg->getTag()<<"\n";
+                sctpEV3<<"controlInfo srcAddr="<<srcAddr<<"  destAddr="<<destAddr<<"\n";
+                sctpEV3<<"VTag="<<sctpmsg->getTag()<<"\n";
             }
             else
             {
@@ -204,13 +207,17 @@ void SCTP::handleMessage(cMessage *msg)
 
 
         sctpEV3<<"srcAddr="<<srcAddr<<" destAddr="<<destAddr<<"\n";
-        if (sctpmsg->getBitLength()>(SCTP_COMMON_HEADER*8))
+        if (sctpmsg->getByteLength()>(SCTP_COMMON_HEADER))
         {
             if (((SCTPChunk*)(sctpmsg->getChunks(0)))->getChunkType()==INIT || ((SCTPChunk*)(sctpmsg->getChunks(0)))->getChunkType()==INIT_ACK )
                 findListen = true;
 
             SCTPAssociation *assoc = findAssocForMessage(srcAddr, destAddr, sctpmsg->getSrcPort(), sctpmsg->getDestPort(), findListen);
-
+            if (!assoc && sctpAssocMap.size()>0 && (((SCTPChunk*)(sctpmsg->getChunks(0)))->getChunkType()==ERRORTYPE 
+                || (sctpmsg->getChunksArraySize() > 1 && 
+                (((SCTPChunk*)(sctpmsg->getChunks(1)))->getChunkType()==ASCONF || ((SCTPChunk*)(sctpmsg->getChunks(1)))->getChunkType()==ASCONF_ACK)))) {
+                assoc = findAssocWithVTag(sctpmsg->getTag(), sctpmsg->getSrcPort(), sctpmsg->getDestPort());
+            }
             if (!assoc)
             {
                 sctpEV3<<"no assoc found msg="<<sctpmsg->getName()<<"\n";
@@ -230,6 +237,7 @@ void SCTP::handleMessage(cMessage *msg)
             }
             else
             {
+                sctpEV3 << "assoc " << assoc->assocId << "found\n";
                 bool ret = assoc->processSCTPMessage(sctpmsg, srcAddr, destAddr);
                 if (!ret)
                 {
@@ -283,7 +291,7 @@ void SCTP::handleMessage(cMessage *msg)
                         }
                     }
                 }
-                if (assoc==NULL)
+                if (assocList.size() == 0 || assoc==NULL)
                 {
                     assoc = new SCTPAssociation(this, appGateIndex, assocId);
 
@@ -343,7 +351,7 @@ void SCTP::sendAbortFromMain(SCTPMessage* sctpmsg, IPvXAddress srcAddr, IPvXAddr
     msg->addChunk(abortChunk);
     if ((bool)par("udpEncapsEnabled"))
     {
-        std::cout<<"VTag="<<msg->getTag()<<"\n";
+        sctpEV3<<"VTag="<<msg->getTag()<<"\n";
         udpSocket.sendTo(msg, destAddr, SCTP_UDP_PORT);
     }
     else
@@ -582,7 +590,7 @@ void SCTP::addLocalAddress(SCTPAssociation *assoc, IPvXAddress address)
         key.localAddr = address;
         sctpAssocMap[key] = assoc;
         sizeAssocMap = sctpAssocMap.size();
-        sctpEV3<<"number of connections="<<sizeAssocMap<<"\n";
+        sctpEV3<<"addLocalAddress " << address << " number of connections now="<<sizeAssocMap<<"\n";
 
         printInfoAssocMap();
 }
@@ -675,7 +683,7 @@ void SCTP::removeRemoteAddressFromAllAssociations(SCTPAssociation *assoc, IPvXAd
         }
 }
 
-void SCTP::addRemoteAddress(SCTPAssociation *assoc, IPvXAddress localAddress, IPvXAddress remoteAddress)
+bool SCTP::addRemoteAddress(SCTPAssociation *assoc, IPvXAddress localAddress, IPvXAddress remoteAddress)
 {
 
     sctpEV3<<"Add remote Address: "<<remoteAddress<<" to local Address "<<localAddress<<"\n";
@@ -690,6 +698,7 @@ void SCTP::addRemoteAddress(SCTPAssociation *assoc, IPvXAddress localAddress, IP
     if (i!=sctpAssocMap.end())
     {
         ASSERT(i->second==assoc);
+        return false;
     }
     else
     {
@@ -698,6 +707,7 @@ void SCTP::addRemoteAddress(SCTPAssociation *assoc, IPvXAddress localAddress, IP
     }
 
     printInfoAssocMap();
+    return true;
 }
 
 void SCTP::addForkedAssociation(SCTPAssociation *assoc, SCTPAssociation *newAssoc, IPvXAddress localAddr, IPvXAddress remoteAddr, int32 localPort, int32 remotePort)
@@ -725,7 +735,7 @@ void SCTP::addForkedAssociation(SCTPAssociation *assoc, SCTPAssociation *newAsso
     key.appGateIndex = newAssoc->appGateIndex;
     key.assocId = newAssoc->assocId;
     sctpAppAssocMap[key] = newAssoc;
-
+    sizeAssocMap = sctpAssocMap.size();
     printInfoAssocMap();
 }
 
@@ -790,7 +800,7 @@ void SCTP::removeAssociation(SCTPAssociation *assoc)
         }
     }
 
-    // T.D. 26.11.09: Write statistics
+    // Write statistics
     char str[128];
     for (SCTPAssociation::SCTPPathMap::iterator pathMapIterator = assoc->sctpPathMap.begin();
           pathMapIterator != assoc->sctpPathMap.end(); pathMapIterator++) {
@@ -816,6 +826,9 @@ void SCTP::removeAssociation(SCTPAssociation *assoc)
         snprintf((char*)&str, sizeof(str), "Number of Duplicates %d:%s",
                 assoc->assocId, path->remoteAddress.str().c_str());
         recordScalar(str, path->numberOfDuplicates);
+        snprintf((char*)&str, sizeof(str), "Number of Bytes received from %d:%s",
+                assoc->assocId, path->remoteAddress.str().c_str());
+        recordScalar(str, path->numberOfBytesReceived);
     }
     for (uint16 i = 0; i < assoc->inboundStreams; i++) {
         snprintf((char*)&str, sizeof(str), "Bytes received on stream %d of assoc %d",
@@ -902,11 +915,22 @@ void SCTP::finish()
         recordScalar("Number of AUTH chunks rejected", assoc.numAuthChunksRejected);
         recordScalar("Number of StreamReset requests sent", assoc.numResetRequestsSent);
         recordScalar("Number of StreamReset requests performed", assoc.numResetRequestsPerformed);
+        if ((double)par("fairStart") > 0) {
+            recordScalar("fair acked bytes", assoc.fairAckedBytes);
+            recordScalar("fair start time", assoc.fairStart);
+            recordScalar("fair stop time", assoc.fairStop);
+            recordScalar("fair lifetime", assoc.fairLifeTime);
+            recordScalar("fair throughput", assoc.fairThroughput);
+        }
+        recordScalar("Number of PacketDrop Reports", numPktDropReports);
+
         if (assoc.numEndToEndMessages > 0 && (assoc.cumEndToEndDelay / assoc.numEndToEndMessages) > 0) {
             uint32 msgnum = assoc.numEndToEndMessages - assoc.startEndToEndDelay;
             if (assoc.stopEndToEndDelay > 0)
                 msgnum -= (assoc.numEndToEndMessages - assoc.stopEndToEndDelay);
             recordScalar("Average End to End Delay", assoc.cumEndToEndDelay / msgnum);
         }
+
+        recordScalar("RTXMethod", (double)par("RTXMethod"));
     }
 }

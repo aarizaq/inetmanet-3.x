@@ -76,6 +76,7 @@ message SCTPInitChunk extends SCTPChunk
     bool forwardTsn;
     IPvXAddress addresses[];
     uint8 unrecognizedParameters[]; //Will be filled by the Parser, if unrecognized Parameters arrive.
+    uint32 msg_rwnd;
     uint16 chunkTypes[]; //Chunk list parameter, i.e. for SCTP AUTH
     uint16 sepChunks[]; //Supported extensions parameter, i.e. for StreamReset
     uint16 hmacTypes[]; //HMAC Identifier for HMAC algorithm parameter
@@ -99,6 +100,7 @@ message SCTPInitAckChunk extends SCTPChunk
     char cookie[];
     uint8 unrecognizedParameters[];
     cPacketPtr stateCookie;
+    uint32 msg_rwnd;
     uint8 random[]; //Random Number
     uint16 chunkTypes[];
     uint16 sepChunks[]; //Supported extensions parameter, i.e. for StreamReset
@@ -145,6 +147,7 @@ message SCTPDataMsg extends cPacket
     uint32 prMethod;
     uint32 priority;
     bool strReset;
+    bool sackNow;
 }
 
 message SCTPDataChunk extends SCTPChunk
@@ -153,6 +156,7 @@ message SCTPDataChunk extends SCTPChunk
     bool eBit = 0;
     bool bBit = 0;
     bool uBit = 0;
+    bool iBit = 0;
     // Transmission Sequence Number
     uint32 tsn;
     // Stream identifier
@@ -192,6 +196,7 @@ message SCTPSackChunk extends SCTPChunk
     uint32 sackSeqNum = 0;
     uint32 nrGapStart[];
     uint32 nrGapStop[];
+    uint32 msg_rwnd;
     bool   nrSubtractRGaps = false;
 }
 
@@ -240,6 +245,17 @@ message SCTPErrorChunk extends SCTPChunk
 message SCTPParameter extends cPacket
 {
     uint16 parameterType;
+}
+
+message SCTPPacketDropChunk extends SCTPChunk
+{
+    bool cFlag;
+    bool tFlag;
+    bool bFlag;
+    bool mFlag;
+    uint32 maxRwnd;
+    uint32 queuedData;
+    uint16 truncLength;
 }
 
 message SCTPStreamResetChunk extends SCTPChunk

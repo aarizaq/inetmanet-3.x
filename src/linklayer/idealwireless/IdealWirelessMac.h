@@ -51,14 +51,18 @@ class INET_API IdealWirelessMac : public WirelessMacBase, public cListener
     IPassiveQueue *queueModule;
     cModule *radioModule;
 
-    InterfaceEntry *interfaceEntry;  // points into IInterfaceTable
-
     RadioState::State radioState;
     int outStandingRequests;
     simtime_t lastTransmitStartTime;
 
   protected:
-    virtual InterfaceEntry *registerInterface(double datarate);
+    /** implements MacBase functions */
+    //@{
+    virtual void flushQueue();
+    virtual void clearQueue();
+    virtual InterfaceEntry *createInterfaceEntry();
+    //@}
+
     virtual void startTransmitting(cPacket *msg);
     virtual bool dropFrameNotForUs(IdealWirelessFrame *frame);
     virtual IdealWirelessFrame *encapsulate(cPacket *msg);
@@ -84,7 +88,7 @@ class INET_API IdealWirelessMac : public WirelessMacBase, public cListener
     virtual ~IdealWirelessMac();
 
   protected:
-    virtual int numInitStages() const {return 1;}
+    virtual int numInitStages() const { return 2; }
     virtual void initialize(int stage);
 };
 

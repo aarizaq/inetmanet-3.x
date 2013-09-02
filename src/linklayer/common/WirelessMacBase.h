@@ -24,10 +24,13 @@
 #ifndef WIRELESSMACBASE_H
 #define WIRELESSMACBASE_H
 
-#include "INETDefs.h"
+#include "MACBase.h"
 
 #include "NotifierConsts.h"
+#include "NodeStatus.h"
+#include "NodeOperations.h"
 
+class InterfaceEntry;
 class NotificationBoard;
 
 /**
@@ -35,7 +38,7 @@ class NotificationBoard;
  *
  * @author Daniel Willkomm, Andras Varga
  */
-class INET_API WirelessMacBase : public cSimpleModule
+class INET_API WirelessMacBase : public MACBase
 {
   protected:
     /** @brief gate id*/
@@ -50,9 +53,6 @@ class INET_API WirelessMacBase : public cSimpleModule
     static simsignal_t packetReceivedFromLowerSignal;
     static simsignal_t packetSentToUpperSignal;
     static simsignal_t packetReceivedFromUpperSignal;
-
-    /** @brief Cached pointer to the NotificationBoard module*/
-    NotificationBoard *nb;
 
   protected:
     /** @brief Initialization of the module and some variables*/

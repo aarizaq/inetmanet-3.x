@@ -2,6 +2,8 @@
 #include "BasicBattery.h"
 #include "PhyControlInfo_m.h"
 #include "Radio80211aControlInfo_m.h"
+#include "NodeStatus.h"
+#include "NodeOperations.h"
 
 #define MIN_DISTANCE 0.001 // minimum distance 1 millimeter
 // #undef EV
@@ -309,7 +311,7 @@ void Ieee802154Phy::handleMessage(cMessage *msg)
     }
     else if (processAirFrame (check_and_cast<AirFrame*>(msg)))
     {
-        if (this->isEnabled() && receiverConnect)
+        if (rs.getState() != RadioState::OFF && receiverConnect)
         {
             // must be an AirFrame
             AirFrame *airframe = (AirFrame *) msg;
@@ -1385,4 +1387,25 @@ void Ieee802154Phy::connectReceiver()
     }
     // notify other modules about the channel switch; and actually, radio state has changed too
     nb->fireChangeNotification(NF_RADIOSTATE_CHANGED, &rs);
+}
+
+
+bool Ieee802154Phy::handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback)
+{
+    Enter_Method_Silent();
+    if (dynamic_cast<NodeStartOperation *>(operation)) {
+        if (stage == NodeStartOperation::STAGE_PHYSICAL_LAYER)
+            setRadioState(RadioState::IDLE);  //FIXME only if the interface is up, too; also: connectReceiver(), etc.
+    }
+    else if (dynamic_cast<NodeShutdownOperation *>(operation)) {
+        if (stage == NodeStartOperation::STAGE_PHYSICAL_LAYER)
+            setRadioState(RadioState::OFF);
+    }
+    else if (dynamic_cast<NodeCrashOperation *>(operation)) {
+        if (stage == NodeStartOperation::STAGE_LOCAL)  // crash is immediate
+            setRadioState(RadioState::OFF);
+    }
+    else
+        throw cRuntimeError("Unsupported operation '%s'", operation->getClassName());
+    return true;
 }

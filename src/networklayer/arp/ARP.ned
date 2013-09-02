@@ -40,9 +40,8 @@ simple ARP
         double retryTimeout @unit("s") = default(1s); // number seconds ARP waits between retries to resolve an IPv4 address
         int retryCount = default(3);   // number of times ARP will attempt to resolve an IPv4 address
         double cacheTimeout @unit("s") = default(120s); // number seconds unused entries in the cache will time out
-        bool proxyARP = default(true);        // sets proxy \ARP mode (replying to \ARP requests for the addresses for which a routing table entry exists)
-        bool globalARP = default(false);      // ARP use a global (share) cache that store all nodes address 
-        bool silentDeletion = default(false); // Only used if global cache is true, if true delete packets sent to addresses that don't exist in global cache  
+        bool proxyARP = default(true);        // sets proxy ARP mode (replying to ARP requests for the addresses for which a routing table entry exists)
+        bool globalARP = default(false);
         @display("i=block/layer");
         @statistic[sentReq](title="ARP request sent";record=count,vector);
         @statistic[sentReplies](title="ARP replies sent";record=count,vector);

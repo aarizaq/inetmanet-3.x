@@ -15,6 +15,7 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 // @author: Zoltan Bojthe
+//
 
 package inet.linklayer.ethernet;
 
@@ -24,7 +25,6 @@ package inet.linklayer.ethernet;
 moduleinterface IEtherEncap
 {
     parameters:
-        bool useSNAP;  // create EtherFrameWithSNAP frames instead of EthernetIIFrame
         @display("i=block/square");
     gates:
         input upperLayerIn @labels(Ieee802Ctrl/down); // higher layer

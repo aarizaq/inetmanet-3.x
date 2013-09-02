@@ -24,6 +24,7 @@
 #include "NotificationBoard.h"
 
 #ifdef WITH_IPv4
+#include "IPv4NetworkConfigurator.h"
 #include "IRoutingTable.h"
 #include "IPv4InterfaceData.h"
 #endif
@@ -330,6 +331,14 @@ bool IPvXAddressResolver::getInterfaceIPv4Address(IPvXAddress &ret, InterfaceEnt
             return true;
         }
     }
+    else
+    {
+        // find address in the configurator's notebook
+        // TODO: how do we know where is the configurator? get the path from a NED parameter?
+        IPv4NetworkConfigurator *configurator = dynamic_cast<IPv4NetworkConfigurator *>(simulation.getModuleByPath("configurator"));
+        if (configurator)
+            return configurator->getInterfaceIPv4Address(ret, ie, netmask);
+    }
 #endif
     return false;
 }
@@ -407,6 +416,45 @@ NotificationBoard *IPvXAddressResolver::findNotificationBoardOf(cModule *host)
     return dynamic_cast<NotificationBoard *>(mod);
 }
 
+cModule *IPvXAddressResolver::findHostWithAddress(const IPvXAddress & add)
+{
+    if (add.isUnspecified() || add.isMulticast())
+        return NULL;
+
+    cTopology topo("topo");
+    topo.extractByProperty("node");
+
+    // fill in isIPNode, ift and rt members in nodeInfo[]
+
+    for (int i=0; i<topo.getNumNodes(); i++)
+    {
+        cModule *mod = topo.getNode(i)->getModule();
+        IInterfaceTable * itable = IPvXAddressResolver().findInterfaceTableOf(mod);
+        if (itable != NULL)
+        {
+            for (int i = 0; i < itable->getNumInterfaces(); i++)
+            {
+                InterfaceEntry *entry = itable->getInterface(i);
+                if (add.isIPv6())
+                {
+#ifdef WITH_IPv6
+                    if (entry->ipv6Data()->hasAddress(add.get6()))
+                        return mod;
+#endif
+                }
+                else
+                {
+#ifdef WITH_IPv4
+                    if (entry->ipv4Data()->getIPAddress() == add.get4())
+                        return mod;
+#endif
+                }
+            }
+        }
+    }
+    return NULL;
+}
+
 cModule * IPvXAddressResolver::findModuleWithAddress(const IPvXAddress & add)
 {
     if (add.isUnspecified() || add.isMulticast())
@@ -424,7 +472,7 @@ cModule * IPvXAddressResolver::findModuleWithAddress(const IPvXAddress & add)
         IInterfaceTable * itable = IPvXAddressResolver().findInterfaceTableOf(mod);
         if (itable != NULL)
         {
-            for (int i = 0; i < itable->getNumInterfaces(); i++)
+            for (int i = 0; itable->getNumInterfaces(); i++)
             {
                 InterfaceEntry *entry = itable->getInterface(i);
                 if (add.isIPv6())

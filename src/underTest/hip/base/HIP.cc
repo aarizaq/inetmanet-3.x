@@ -103,7 +103,7 @@ void HIP::receiveChangeNotification(int category, const cObject * details) {
     if (category==NF_L2_DISASSOCIATED || category==NF_L2_ASSOCIATED_OLDAP)
     {
         InterfaceEntry *ie = dynamic_cast<InterfaceEntry *>(const_cast<cObject*> (details));
-        if(!(ie->isLoopback()) && !(ie->isDown()))
+        if(!(ie->isLoopback()) && (ie->isUp()))
             return;
         if (category==NF_L2_DISASSOCIATED)
         {
@@ -112,7 +112,7 @@ void HIP::receiveChangeNotification(int category, const cObject * details) {
             for (it =mapIfaceToConnected.begin(); it !=mapIfaceToConnected.end();it++)
             {
                 InterfaceEntry *ie2 = it->first;
-                if(!(ie2->isLoopback()) && !(ie2->isDown()) && it->second == true) {
+                if(!(ie2->isLoopback()) && (ie2->isUp()) && it->second == true) {
                 	handleAddressChange();
               		return;
 				}
@@ -129,7 +129,7 @@ void HIP::receiveChangeNotification(int category, const cObject * details) {
 	else if (category==NF_L2_ASSOCIATED_NEWAP)
 	{
 		InterfaceEntry *ie = dynamic_cast<InterfaceEntry *>(const_cast<cObject*> (details));
-    	if(!(ie->isLoopback()) && !(ie->isDown()))
+    	if(!(ie->isLoopback()) && (ie->isUp()))
               mapIfaceToConnected[ie] = true;
 	}
 	else if (category==NF_IPv6_HANDOVER_OCCURRED)
@@ -139,7 +139,7 @@ void HIP::receiveChangeNotification(int category, const cObject * details) {
         for (it =mapIfaceToConnected.begin(); it !=mapIfaceToConnected.end();it++)
         {
             InterfaceEntry *ie = it->first;
-            if(!(ie->isLoopback()) && !(ie->isDown()) && it->second == true)
+            if(!(ie->isLoopback()) && (ie->isUp()) && it->second == true)
             {
                 if (mapIfaceToIP.find(ie) == mapIfaceToIP.end() || mapIfaceToIP[ie] != ie->ipv6Data()->getPreferredAddress())
                 {
@@ -495,7 +495,7 @@ void HIP::handleAddressChange(){
     {
         InterfaceEntry *ie = ift->getInterface(i);
 
-		if(!(ie->isLoopback()) && !(ie->isDown())) {
+		if(!(ie->isLoopback()) && (ie->isUp())) {
 			if(mapIfaceToConnected.find(ie) != mapIfaceToConnected.end() && mapIfaceToConnected[ie] == true) {
 				currentIfId = ie->getInterfaceId(); //WTF?
 				break;
@@ -515,7 +515,7 @@ int HIP::getTempId(){
     {
         InterfaceEntry *ie = ift->getInterface(i);
 
-        if(!(ie->isLoopback()) && !(ie->isDown())) {
+        if(!(ie->isLoopback()) && (ie->isUp())) {
             numIfaces++;
             ifaceId = ie->getInterfaceId();
             if(mapIfaceToConnected.find(ie) != mapIfaceToConnected.end() && mapIfaceToConnected[ie] == true) {
@@ -530,7 +530,7 @@ int HIP::getTempId(){
         {
             InterfaceEntry *ie = ift->getInterface(i);
 
-            if(!(ie->isLoopback()) && !(ie->isDown()))
+            if(!(ie->isLoopback()) && (ie->isUp()))
                 return  ifaceId = ie->getInterfaceId();
         }
     }

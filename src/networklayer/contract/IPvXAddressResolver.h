@@ -189,8 +189,12 @@ class INET_API IPvXAddressResolver
      */
     virtual NotificationBoard *findNotificationBoardOf(cModule *host);
 
-    virtual cModule * findModuleWithAddress(const IPvXAddress &);
+    /**
+     * Find the Host with the specified address.
+     */
+    virtual cModule *findHostWithAddress(const IPvXAddress &addr);
     //@}
+    virtual cModule * findModuleWithAddress(const IPvXAddress &);
 };
 
 

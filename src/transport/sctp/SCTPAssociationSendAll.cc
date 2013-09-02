@@ -29,10 +29,16 @@ void SCTPAssociation::increaseOutstandingBytes(SCTPDataVariables* chunk,
                                                               SCTPPathVariables* path)
 {
     path->outstandingBytes += chunk->booksize;
+    path->statisticsPathOutstandingBytes->record(path->outstandingBytes);
     state->outstandingBytes += chunk->booksize;
+    statisticsOutstandingBytes->record(state->outstandingBytes);
 
     CounterMap::iterator iterator = qCounter.roomRetransQ.find(path->remoteAddress);
-    iterator->second += ADD_PADDING(chunk->booksize + SCTP_DATA_CHUNK_LENGTH);
+    state->outstandingMessages++;
+    if (state->osbWithHeader)
+        iterator->second += ADD_PADDING(chunk->booksize);
+    else
+        iterator->second += ADD_PADDING(chunk->booksize + SCTP_DATA_CHUNK_LENGTH);
 }
 
 void SCTPAssociation::storePacket(SCTPPathVariables* pathVar,
@@ -58,7 +64,10 @@ void SCTPAssociation::storePacket(SCTPPathVariables* pathVar,
               << " state->packetBytes=" << state->packetBytes
               << " osb=" << pathVar->outstandingBytes << " -> "
               << pathVar->outstandingBytes - state->packetBytes << endl;
-    qCounter.roomSumSendStreams += state->packetBytes + (dataChunksAdded * SCTP_DATA_CHUNK_LENGTH);
+    if (state->osbWithHeader)
+        qCounter.roomSumSendStreams += state->packetBytes;
+    else
+        qCounter.roomSumSendStreams += state->packetBytes + (dataChunksAdded * SCTP_DATA_CHUNK_LENGTH);
     qCounter.bookedSumSendStreams += state->packetBytes;
 
 }
@@ -75,7 +84,12 @@ void SCTPAssociation::loadPacket(SCTPPathVariables* pathVar,
     *dataChunksAdded = state->dataChunksAdded;
     *authAdded = state->authAdded;
     sctpEV3 << "loadPacket: path=" << pathVar->remoteAddress << " osb=" << pathVar->outstandingBytes << " -> " << pathVar->outstandingBytes + state->packetBytes << endl;
-    qCounter.roomSumSendStreams -= state->packetBytes + ((*dataChunksAdded) * SCTP_DATA_CHUNK_LENGTH);
+    if (state->osbWithHeader) {
+        qCounter.roomSumSendStreams -= state->packetBytes;
+    }
+    else {
+        qCounter.roomSumSendStreams -= state->packetBytes + ((*dataChunksAdded) * SCTP_DATA_CHUNK_LENGTH);
+    }
     qCounter.bookedSumSendStreams -= state->packetBytes;
 
     for (uint16 i = 0; i < (*sctpMsg)->getChunksArraySize(); i++) {
@@ -101,6 +115,7 @@ SCTPDataVariables* SCTPAssociation::makeDataVarFromDataMsg(SCTPDataMsg*         
 
     datVar->bbit = datMsg->getBBit();
     datVar->ebit = datMsg->getEBit();
+    datVar->ibit = datMsg->getSackNow();
     datVar->enqueuingTime = datMsg->getEnqueuingTime();
     datVar->expiryTime = datMsg->getExpiryTime();
     datVar->ppid = datMsg->getPpid();
@@ -231,13 +246,11 @@ void SCTPAssociation::bytesAllowedToSend(SCTPPathVariables* path,
     }
 
     // ====== Transmission allowed by peer's receiver window? ================
-    else if (state->peerWindowFull) {
-        if (path->outstandingBytes == 0) {
+    else if ((state->peerWindowFull || (state->peerAllowsChunks && state->peerMsgRwnd <= 0)) && (path->outstandingBytes == 0)) {
             // Zero Window Probing
             sctpEV3 << "bytesAllowedToSend(" << path->remoteAddress << "): zeroWindowProbing" << endl;
             state->zeroWindowProbing = true;
             bytes.chunk = true;
-        }
     }
 
     // ====== Retransmissions ================================================
@@ -248,8 +261,11 @@ void SCTPAssociation::bytesAllowedToSend(SCTPPathVariables* path,
             const int32 allowance = path->cwnd - path->outstandingBytes;
             sctpEV3 << "bytesAllowedToSend(" << path->remoteAddress << "): cwnd-osb=" << allowance << endl;
             if (state->peerRwnd < path->pmtu) {
-                bytes.bytesToSend = state->peerRwnd;
-                sctpEV3 << "bytesAllowedToSend(" << path->remoteAddress << "): rwnd<pmtu" << endl;
+                bytes.bytesToSend = 0;
+                bytes.chunk = true;
+                sctpEV3 << "bytesAllowedToSend(" << path->remoteAddress << "): one chunk" << endl;
+                // RFC4960: When a Fast Retransmit is being performed, the sender SHOULD ignore the value
+                // of cwnd and SHOULD NOT delay retransmission for this single packet.
                 return;
             }
             else if (allowance > 0) {
@@ -279,8 +295,14 @@ void SCTPAssociation::bytesAllowedToSend(SCTPPathVariables* path,
             uint32 myCwnd = path->cwnd;
 
             // ====== Obtain byte allowance ====================================
-            if ((path->outstandingBytes < myCwnd) &&
-                    (!state->peerWindowFull)) {
+            if ((((state->peerAllowsChunks) &&
+                    (path->outstandingBytes < myCwnd) &&
+                    (!state->peerWindowFull) &&
+                    (state->peerMsgRwnd > 0))
+                    ||
+                    ((!state->peerAllowsChunks) &&
+                    (path->outstandingBytes < myCwnd) &&
+                    (!state->peerWindowFull)))) {
                 sctpEV3 << "bytesAllowedToSend(" << path->remoteAddress << "):"
                           << " bookedSumSendStreams=" << qCounter.bookedSumSendStreams
                           << " bytes.bytesToSend="      << bytes.bytesToSend << endl;
@@ -713,6 +735,14 @@ void SCTPAssociation::sendOnPath(SCTPPathVariables* pathId, bool firstPass)
                         state->nextTSN++;
                         path->vectorPathSentTSN->record(datVar->tsn);
                     }
+                    else {
+                        if (datVar->hasBeenFastRetransmitted)  {
+                            path->vectorPathTSNFastRTX->record(datVar->tsn);
+                        }
+                        else {
+                            path->vectorPathTSNTimerBased->record(datVar->tsn);
+                        }
+                    }
 
                     SCTP::AssocStatMap::iterator iterator = sctpMain->assocStatMap.find(assocId);
                     iterator->second.transmittedBytes += datVar->len / 8;
@@ -746,8 +776,10 @@ void SCTPAssociation::sendOnPath(SCTPPathVariables* pathId, bool firstPass)
                             increaseOutstandingBytes(datVar, path);
                             datVar->queuedOnPath = path;
                             datVar->queuedOnPath->queuedBytes += datVar->booksize;
+                            datVar->queuedOnPath->statisticsPathQueuedSentBytes->record(path->queuedBytes);
 
                             state->queuedSentBytes += datVar->booksize;
+                            statisticsQueuedSentBytes->record(state->queuedSentBytes);
                         }
                     }
 
@@ -781,7 +813,10 @@ void SCTPAssociation::sendOnPath(SCTPPathVariables* pathId, bool firstPass)
                         }
                     }
 
-                    state->peerRwnd -= datVar->booksize;
+                    state->peerRwnd -= (datVar->booksize + state->bytesToAddPerPeerChunk);
+                    if (state->peerAllowsChunks) {
+                        state->peerMsgRwnd--;
+                    }
                     if ((bytes.chunk == false) && (bytes.packet == false)) {
                         bytesToSend -= datVar->booksize;
                     }
@@ -862,6 +897,7 @@ void SCTPAssociation::sendOnPath(SCTPPathVariables* pathId, bool firstPass)
                             sendOneMorePacket = false;
                             bytesToSend = 0;
                             bytes.packet = false;
+                            chunkPtr->setIBit(sctpMain->sackNow);
                         }
 
                         if (dataChunksAdded > 0) {

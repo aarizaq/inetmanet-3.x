@@ -8,6 +8,8 @@ import inet.applications.IUDPApp;
 import inet.applications.dhcp.DHCPClient;
 import inet.applications.dhcp.DHCPServer;
 import inet.base.NotificationBoard;
+import inet.linklayer.loopback.LoopbackInterface;
+import inet.networklayer.autorouting.ipv4.IPv4NodeConfigurator;
 import inet.networklayer.common.InterfaceTable;
 import inet.networklayer.ipv4.RoutingTable;
 
@@ -34,7 +36,15 @@ module DHCPNode
         routingTable: RoutingTable {
             @display("p=68,216");
         }
-    connections:
+        configurator: IPv4NodeConfigurator {
+            parameters:
+                @display("p=39,158");
+                networkConfiguratorModule = "";
+        }
+        lo0: LoopbackInterface {
+            @display("p=78,406");
+        }
+    connections allowunconnected:
         dhcpApp.udpOut --> dhcpOut;
         dhcpIn --> dhcpApp.udpIn;
 }
@@ -128,14 +138,19 @@ scheduling process
 Host dhcpClient got ip: 192.168.1.100/255.255.255.0
 scheduling process
 Host dhcpClient got ip: 192.168.1.100/255.255.255.0
-** Event #92   T=10500.022   Elapsed: 0.004s (0m 00s)  100% completed
-     Speed:     ev/sec=0   simsec/sec=0   ev/simsec=0
-     Messages:  created: 136   present: 4   in FES: 3
+** Event #92   T=10500.022   Elapsed:
 
+
+%contains: stdout
 <!> Simulation time limit reached -- simulation stopped at event #92, t=10500.022.
 
 
 Calling finish() at end of Run #0...
 
 End.
+%#--------------------------------------------------------------------------------------------------------------
+%not-contains: stdout
+undisposed object:
+%not-contains: stdout
+-- check module destructor
 %#--------------------------------------------------------------------------------------------------------------

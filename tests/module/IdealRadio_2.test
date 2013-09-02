@@ -1,6 +1,7 @@
 %description:
 Testing IdealRadio, IdealChannelModel, IdealWirelessMac, IdealWirelessNic modules
 host1 and host2 send UDP packets to host0: both senders use full transmit capacity, host0 receives all packets
+Nic modules use internal queues
 %#--------------------------------------------------------------------------------------------------------------
 %#--------------------------------------------------------------------------------------------------------------
 %inifile: omnetpp.ini
@@ -73,4 +74,9 @@ scalar NetIdealRadios.host[0].udpApp[1] 	rcvdPk:count 	10000
 scalar NetIdealRadios.host[1].udpApp[0] 	sentPk:count 	10000
 %contains: results/General-0.sca
 scalar NetIdealRadios.host[2].udpApp[0] 	sentPk:count 	10000
+%#--------------------------------------------------------------------------------------------------------------
+%not-contains: stdout
+undisposed object:
+%not-contains: stdout
+-- check module destructor
 %#--------------------------------------------------------------------------------------------------------------

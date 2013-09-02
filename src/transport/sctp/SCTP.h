@@ -154,6 +154,11 @@ class INET_API SCTP : public cSimpleModule
             uint32 numAuthChunksRejected;
             uint32 numResetRequestsSent;
             uint32 numResetRequestsPerformed;
+            simtime_t fairStart;
+            simtime_t fairStop;
+            uint64 fairAckedBytes;
+            double fairThroughput;
+            simtime_t fairLifeTime;
             uint64 numEndToEndMessages;
             SimTime cumEndToEndDelay;
             uint64 startEndToEndDelay;
@@ -200,6 +205,9 @@ class INET_API SCTP : public cSimpleModule
         uint32 numPacketsDropped;
         bool auth;
         bool addIP;
+        bool pktdrop;
+        bool sackNow;
+        uint64 numPktDropReports;
 
     public:
         virtual ~SCTP();
@@ -221,7 +229,7 @@ class INET_API SCTP : public cSimpleModule
         void updateSockPair(SCTPAssociation *assoc, IPvXAddress localAddr, IPvXAddress remoteAddr, int32 localPort, int32 remotePort);
         void addLocalAddress(SCTPAssociation *assoc, IPvXAddress address);
         void addLocalAddressToAllRemoteAddresses(SCTPAssociation *assoc, IPvXAddress address, std::vector<IPvXAddress> remAddresses);
-        void addRemoteAddress(SCTPAssociation *assoc, IPvXAddress localAddress, IPvXAddress remoteAddress);
+        bool addRemoteAddress(SCTPAssociation *assoc, IPvXAddress localAddress, IPvXAddress remoteAddress);
         void removeLocalAddressFromAllRemoteAddresses(SCTPAssociation *assoc, IPvXAddress address, std::vector<IPvXAddress> remAddresses);
         void removeRemoteAddressFromAllAssociations(SCTPAssociation *assoc, IPvXAddress address, std::vector<IPvXAddress> locAddresses);
         /**

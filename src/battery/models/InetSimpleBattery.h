@@ -31,9 +31,6 @@
  * @ingroup power
  * @see SimpleBattery
  */
-
-
-
 class INET_API InetSimpleBattery : public BasicBattery
 {
   protected:
@@ -123,6 +120,7 @@ class INET_API InetSimpleBattery : public BasicBattery
     };
 
     cMessage *publish;
+    cMessage *timeout;
     simtime_t lastUpdateTime;
 
     virtual void deductAndCheck();

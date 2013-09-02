@@ -25,6 +25,7 @@
 #include "MACAddress.h"
 #include "ModuleAccess.h"
 #include "IPv4Address.h"
+#include "ILifecycle.h"
 #include "NotificationBoard.h"
 
 // Forward declarations:
@@ -36,7 +37,7 @@ class IRoutingTable;
 /**
  * ARP implementation.
  */
-class INET_API ARP : public cSimpleModule, public INotifiable
+class INET_API ARP : public cSimpleModule, public ILifecycle, public INotifiable
 {
   public:
     struct ARPCacheEntry;
@@ -47,6 +48,7 @@ class INET_API ARP : public cSimpleModule, public INotifiable
     // TBD should we key it on (IPv4Address, InterfaceEntry*)?
     struct ARPCacheEntry
     {
+        ARP *owner;     // owner ARP module of this cache entry
         InterfaceEntry *ie; // NIC to send the packet to
         bool pending; // true if resolution is pending
         MACAddress macAddress;  // MAC address
@@ -64,7 +66,6 @@ class INET_API ARP : public cSimpleModule, public INotifiable
     simtime_t cacheTimeout;
     bool doProxyARP;
     bool globalARP;
-    bool silentDeletion;
 
     long numResolutions;
     long numFailedResolutions;
@@ -76,13 +77,13 @@ class INET_API ARP : public cSimpleModule, public INotifiable
     static simsignal_t failedResolutionSignal;
     static simsignal_t initiatedResolutionSignal;
 
+    bool isUp;
     ARPCache arpCache;
     static ARPCache globalArpCache;
     static int globalArpCacheRefCnt;
 
     cQueue pendingQueue; // outbound packets waiting for ARP resolution
     int nicOutBaseGateId;  // id of the nicOut[0] gate
-    std::vector<IPv4Address> localAddressVector;
 
     IInterfaceTable *ift;
     IRoutingTable *rt;  // for Proxy ARP
@@ -97,12 +98,19 @@ class INET_API ARP : public cSimpleModule, public INotifiable
     const MACAddress getDirectAddressResolution(const IPv4Address &) const;
     const IPv4Address getInverseAddressResolution(const MACAddress &) const;
     void setChangeAddress(const IPv4Address &);
-    virtual void receiveChangeNotification(int category, const cPolymorphic *details);
+    virtual void receiveChangeNotification(int category, const cObject *details);
 
   protected:
     virtual void initialize(int stage);
     virtual void handleMessage(cMessage *msg);
+    virtual void handleMessageWhenDown(cMessage *msg);
+    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback);
     virtual void finish();
+
+    virtual bool isNodeUp();
+    virtual void stop();
+    virtual void start();
+    virtual void flush();
 
     virtual void processOutboundPacket(cMessage *msg);
     virtual void sendPacketToNIC(cMessage *msg, InterfaceEntry *ie, const MACAddress& macAddress, int etherType);

@@ -20,6 +20,7 @@
 #include "Ieee80216RadioModel.h"
 #include "Ieee80211Consts.h"
 #include "FWMath.h"
+#include "PhyControlInfo_m.h"
 
 Register_Class(Ieee80216RadioModel);
 
@@ -34,7 +35,7 @@ double Ieee80216RadioModel::calculateDuration(AirFrame* airframe)
     return airframe->getByteLength() / airframe->getBitrate(); // + PHY_HEADER_LENGTH/BITRATE_HEADER;
 }
 
-bool Ieee80216RadioModel::isReceivedCorrectly(AirFrame* airframe, const SnrList& receivedList)
+PhyIndication Ieee80216RadioModel::isReceivedCorrectly(AirFrame* airframe, const SnrList& receivedList)
 {
     // calculate snirMin
     double snirMin = receivedList.begin()->snr;
@@ -49,17 +50,17 @@ bool Ieee80216RadioModel::isReceivedCorrectly(AirFrame* airframe, const SnrList&
     {
         // if snir is too low for the packet to be recognized
         EV << "COLLISION! Packet got lost\n";
-        return false;
+        return COLLISION;
     }
     else if (isPacketOK(snirMin, frame->getByteLength(), airframe->getBitrate()))
     {
         EV << "packet was received correctly, it is now handed to upper layer...\n";
-        return true;
+        return FRAMEOK;
     }
     else
     {
         EV << "Packet has BIT ERRORS! It is lost!\n";
-        return false;
+        return BITERROR;
     }
 }
 

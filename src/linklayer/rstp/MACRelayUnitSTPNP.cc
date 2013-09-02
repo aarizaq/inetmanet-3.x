@@ -486,11 +486,13 @@ double MACRelayUnitSTPNP::readChannelBitRate(int index)
 
 }
 
-void MACRelayUnitSTPNP::initialize()
+void MACRelayUnitSTPNP::initialize(int stage)
 {
 
-    MACRelayUnitNP::initialize();
+    MACRelayUnitNP::initialize(stage);
 
+    if (stage != 0)
+        return;
     EV << "STP Initialization" << endl;
 
     this->bridge_id.priority = par("priority");

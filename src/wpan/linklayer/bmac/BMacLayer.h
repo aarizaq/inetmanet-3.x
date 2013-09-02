@@ -53,7 +53,7 @@
  * @author Anna Foerster
  *
  */
-class  BMacLayer : public WirelessMacBase, public INotifiable
+class  BMacLayer : public WirelessMacBase
 {
   public:
 
@@ -263,7 +263,6 @@ class  BMacLayer : public WirelessMacBase, public INotifiable
     bool addToQueue(cMessage * msg);
 
     virtual void receiveChangeNotification(int category, const cPolymorphic *details);
-    virtual void registerInterface();
 
     void PLME_SET_TRX_STATE_request(PHYenum state);
     // Use to distinguish the radio module that send the event
@@ -277,6 +276,13 @@ class  BMacLayer : public WirelessMacBase, public INotifiable
     /** @brief pointer to the passive queue module */
     IPassiveQueue* queueModule;
     InterfaceEntry *iface;
+    virtual InterfaceEntry *createInterfaceEntry();
+    virtual void flushQueue();
+
+    /**
+     * should clear queue silently
+     */
+    virtual void clearQueue();
 
 };
 

@@ -17,7 +17,7 @@ class INET_API Ieee80216RadioModel : public IRadioModel
   public:
     virtual void initializeFrom(cModule* radioModule);
     virtual double calculateDuration(AirFrame* airframe);
-    virtual bool isReceivedCorrectly(AirFrame* airframe, const SnrList& receivedList);
+    virtual PhyIndication isReceivedCorrectly(AirFrame* airframe, const SnrList& receivedList);
     // used by the Airtime Link Metric computation
     virtual bool haveTestFrame() {return false;}
     virtual double calculateDurationTestFrame(AirFrame *airframe) {return 0;}

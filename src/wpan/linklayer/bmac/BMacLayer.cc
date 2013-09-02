@@ -88,14 +88,8 @@ BMacLayer::~BMacLayer()
 
 }
 
-
-void BMacLayer::registerInterface()
+InterfaceEntry * BMacLayer::createInterfaceEntry()
 {
-    iface=NULL;
-
-    IInterfaceTable *ift = InterfaceTableAccess().getIfExists();
-    if (!ift)
-        return;
     InterfaceEntry *e = new InterfaceEntry(this);
 
     // interface name: NetworkInterface module's name without special characters ([])
@@ -123,7 +117,7 @@ void BMacLayer::registerInterface()
     iface = e;
 
     // add
-    ift->addInterface(e);
+    return e;
 }
 /**
  * Initialize method of BMacLayer. Init all parameters, schedule timers.
@@ -1083,3 +1077,34 @@ void BMacLayer::initializeQueueModule()
     }
 }
 
+void BMacLayer::flushQueue()
+{
+    if (queueModule) {
+        while (!queueModule->isEmpty())
+        {
+            cMessage *msg = queueModule->pop();
+            //TODO emit(dropPkIfaceDownSignal, msg); -- 'pkDropped' signals are missing in this module!
+            delete msg;
+        }
+        queueModule->clear(); // clear request count
+    }
+
+    while (!macQueue.empty())
+    {
+        delete macQueue.front();
+        macQueue.pop_front();
+    }
+}
+
+void BMacLayer::clearQueue()
+{
+    if (queueModule) {
+        queueModule->clear(); // clear request count
+    }
+
+    while (!macQueue.empty())
+    {
+        delete macQueue.front();
+        macQueue.pop_front();
+    }
+}

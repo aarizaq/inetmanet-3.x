@@ -1,6 +1,7 @@
 %description:
 Testing IdealRadio, IdealChannelModel, IdealWirelessMac, IdealWirelessNic modules
 3 hosts pings host0: inside, on border, outside of transmitRange, pong host1 and host2 only
+Nic modules use internal queues
 %#--------------------------------------------------------------------------------------------------------------
 %#--------------------------------------------------------------------------------------------------------------
 %inifile: omnetpp.ini
@@ -85,4 +86,9 @@ scalar NetIdealRadios.host[3].pingApp[0] 	"ping out-of-order rate (%)" 	0
 scalar NetIdealRadios.host[3].pingApp[0] 	pingRxSeq:count 	0
 %contains: results/General-0.sca
 scalar NetIdealRadios.host[3].pingApp[0] 	pingTxSeq:count 	100
+%#--------------------------------------------------------------------------------------------------------------
+%not-contains: stdout
+undisposed object:
+%not-contains: stdout
+-- check module destructor
 %#--------------------------------------------------------------------------------------------------------------

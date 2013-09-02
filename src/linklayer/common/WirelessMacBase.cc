@@ -23,6 +23,8 @@
 
 #include "WirelessMacBase.h"
 #include "NotificationBoard.h"
+#include "InterfaceEntry.h"
+#include "NodeOperations.h"
 
 
 simsignal_t WirelessMacBase::packetSentToLowerSignal = SIMSIGNAL_NULL;
@@ -32,15 +34,14 @@ simsignal_t WirelessMacBase::packetReceivedFromUpperSignal = SIMSIGNAL_NULL;
 
 void WirelessMacBase::initialize(int stage)
 {
+    MACBase::initialize(stage);
+
     if (stage==0)
     {
         upperLayerIn = findGate("upperLayerIn");
         upperLayerOut = findGate("upperLayerOut");
         lowerLayerIn = findGate("lowerLayerIn");
         lowerLayerOut = findGate("lowerLayerOut");
-
-        // get a pointer to the NotificationBoard module
-        nb = NotificationBoardAccess().get();
 
         packetSentToLowerSignal = registerSignal("packetSentToLower");
         packetReceivedFromLowerSignal = registerSignal("packetReceivedFromLower");
@@ -49,9 +50,14 @@ void WirelessMacBase::initialize(int stage)
     }
 }
 
-
 void WirelessMacBase::handleMessage(cMessage *msg)
 {
+    if (!isOperational)
+    {
+        handleMessageWhenDown(msg);
+        return;
+    }
+
     if (msg->isSelfMessage())
         handleSelfMsg(msg);
     else if (msg->getArrivalGateId()==upperLayerIn)

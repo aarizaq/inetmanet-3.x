@@ -25,6 +25,8 @@
 #include "PhyControlInfo_m.h"
 #include "Radio80211aControlInfo_m.h"
 #include "BasicBattery.h"
+#include "NodeStatus.h"
+#include "NodeOperations.h"
 
 
 #define MK_TRANSMISSION_OVER  1
@@ -45,8 +47,8 @@ Radio::Radio() : rs(this->getId())
     obstacles = NULL;
     radioModel = NULL;
     receptionModel = NULL;
-    transceiverConnect = true;
-    receiverConnect = true;
+    transceiverConnected = true;
+    receiverConnected = true;
     updateString = NULL;
     noiseGenerator = NULL;
 }
@@ -136,7 +138,6 @@ void Radio::initialize(int stage)
             }
         }
 
-
         receptionThreshold = sensitivity;
         if (par("setReceptionThreshold").boolValue())
         {
@@ -174,21 +175,40 @@ void Radio::initialize(int stage)
     else if (stage == 1)
     {
         registerBattery();
-        // tell initial values to MAC; must be done in stage 1, because they
-        // subscribe in stage 0
-        nb->fireChangeNotification(NF_RADIOSTATE_CHANGED, &rs);
-        nb->fireChangeNotification(NF_RADIO_CHANNEL_CHANGED, &rs);
+
+        NodeStatus *nodeStatus = dynamic_cast<NodeStatus *>(findContainingNode(this)->getSubmodule("status"));
+        bool isOperational = (!nodeStatus) || nodeStatus->getState() == NodeStatus::UP;
+        if (isOperational)
+        {
+            // tell initial values to MAC; must be done in stage 1, because they
+            // subscribe in stage 0
+            nb->fireChangeNotification(NF_RADIOSTATE_CHANGED, &rs);
+            nb->fireChangeNotification(NF_RADIO_CHANNEL_CHANGED, &rs);
+        }
     }
     else if (stage == 2)
     {
-        // tell initial channel number to ChannelControl; should be done in
-        // stage==2 or later, because base class initializes myRadioRef in that stage
-        cc->setRadioChannel(myRadioRef, rs.getChannelNumber());
+        NodeStatus *nodeStatus = dynamic_cast<NodeStatus *>(findContainingNode(this)->getSubmodule("status"));
+        bool isOperational = (!nodeStatus) || nodeStatus->getState() == NodeStatus::UP;
+        if (isOperational)
+        {
+            // tell initial channel number to ChannelControl; should be done in
+            // stage==2 or later, because base class initializes myRadioRef in that stage
+            cc->setRadioChannel(myRadioRef, rs.getChannelNumber());
 
-        // statistics
-        emit(bitrateSignal, rs.getBitrate());
-        emit(radioStateSignal, rs.getState());
-        emit(channelNumberSignal, rs.getChannelNumber());
+            // statistics
+            emit(bitrateSignal, rs.getBitrate());
+            emit(radioStateSignal, rs.getState());
+            emit(channelNumberSignal, rs.getChannelNumber());
+        }
+        else
+        {
+            setRadioState(RadioState::OFF);
+            // tell initial values to MAC; must be done in stage 1, because they
+            // subscribe in stage 0
+            nb->fireChangeNotification(NF_RADIOSTATE_CHANGED, &rs);
+            nb->fireChangeNotification(NF_RADIO_CHANNEL_CHANGED, &rs);
+        }
 
         // draw the interference distance
         this->updateDisplayString();
@@ -213,6 +233,25 @@ Radio::~Radio()
         delete it->first;
 }
 
+bool Radio::handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback)
+{
+    Enter_Method_Silent();
+    if (dynamic_cast<NodeStartOperation *>(operation)) {
+        if (stage == NodeStartOperation::STAGE_PHYSICAL_LAYER)
+            setRadioState(RadioState::IDLE);  //FIXME only if the interface is up, too; also: connectReceiver(), etc.
+    }
+    else if (dynamic_cast<NodeShutdownOperation *>(operation)) {
+        if (stage == NodeStartOperation::STAGE_PHYSICAL_LAYER)
+            setRadioState(RadioState::OFF);
+    }
+    else if (dynamic_cast<NodeCrashOperation *>(operation)) {
+        if (stage == NodeStartOperation::STAGE_LOCAL)  // crash is immediate
+            setRadioState(RadioState::OFF);
+    }
+    else
+        throw cRuntimeError("Unsupported operation '%s'", operation->getClassName());
+    return true;
+}
 
 bool Radio::processAirFrame(AirFrame *airframe)
 {
@@ -236,6 +275,16 @@ bool Radio::processAirFrame(AirFrame *airframe)
  */
 void Radio::handleMessage(cMessage *msg)
 {
+    if (rs.getState()==RadioState::SLEEP || rs.getState()==RadioState::OFF)
+    {
+        if (msg->getArrivalGateId() == upperLayerIn || msg->isSelfMessage())  //XXX can we ensure we don't receive pk from upper in OFF state?? (race condition)
+            throw cRuntimeError("Radio is turned off");
+        else {
+            EV << "Radio is turned off, dropping packet\n";
+            delete msg;
+            return;
+        }
+    }
     // handle commands
     if (updateString && updateString==msg)
     {
@@ -254,16 +303,8 @@ void Radio::handleMessage(cMessage *msg)
 
     if (msg->getArrivalGateId() == upperLayerIn)
     {
-        if (this->isEnabled())
-        {
-            AirFrame *airframe = encapsulatePacket(PK(msg));
-            handleUpperMsg(airframe);
-        }
-        else
-        {
-            EV << "Radio disabled. ignoring frame" << endl;
-            delete msg;
-        }
+        AirFrame *airframe = encapsulatePacket(PK(msg));
+        handleUpperMsg(airframe);
     }
     else if (msg->isSelfMessage())
     {
@@ -271,7 +312,7 @@ void Radio::handleMessage(cMessage *msg)
     }
     else if (processAirFrame(check_and_cast<AirFrame*>(msg)))
     {
-        if (this->isEnabled() && receiverConnect)
+        if (receiverConnected)
         {
         // must be an AirFrame
             AirFrame *airframe = (AirFrame *) msg;
@@ -358,7 +399,7 @@ void Radio::sendUp(AirFrame *airframe)
 
 void Radio::sendDown(AirFrame *airframe)
 {
-    if (transceiverConnect)
+    if (transceiverConnected)
         sendToChannel(airframe);
     else
         delete airframe;
@@ -682,11 +723,10 @@ void Radio::handleLowerMsgEnd(AirFrame * airframe)
         //    sendUp(airframe);
         //else
         //    delete airframe;
-        PhyIndication frameState = radioModel->isReceivedCorrectly(airframe, list);
-        if (frameState != FRAMEOK)
+        if (!radioModel->isReceivedCorrectly(airframe, list))
         {
-            airframe->getEncapsulatedPacket()->setKind(frameState);
-            airframe->setName(frameState == COLLISION ? "COLLISION" : "BITERROR");
+            airframe->getEncapsulatedPacket()->setKind(list.size()>1 ? COLLISION : BITERROR);
+            airframe->setName(list.size()>1 ? "COLLISION" : "BITERROR");
 
             numGivenUp++;
         }
@@ -857,16 +897,17 @@ void Radio::setRadioState(RadioState::State newState)
     if (rs.getState() != newState)
     {
         emit(radioStateSignal, newState);
-        if (newState == RadioState::SLEEP)
+        if (newState == RadioState::SLEEP || newState == RadioState::OFF)
         {
             disconnectTransceiver();
             disconnectReceiver();
         }
-        else if (rs.getState() == RadioState::SLEEP)
+        else if (rs.getState() == RadioState::SLEEP || rs.getState() == RadioState::OFF)
         {
             connectTransceiver();
             connectReceiver(); // the connection change the state
         }
+
         rs.setState(newState);
         nb->fireChangeNotification(NF_RADIOSTATE_CHANGED, &rs);
     }
@@ -977,18 +1018,6 @@ void Radio::updateDisplayString() {
         updateString = new cMessage("refresh timer");
     if (updateStringInterval>0)
         scheduleAt(simTime()+updateStringInterval, updateString);
-
-
-}
-
-void Radio::enablingInitialization() {
-    this->connectReceiver();
-    this->connectTransceiver();
-}
-
-void Radio::disablingInitialization() {
-    this->disconnectReceiver();
-    this->disconnectTransceiver();
 }
 
 double Radio::calcDistFreeSpace()
@@ -1041,7 +1070,7 @@ void Radio::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj
 
 void Radio::disconnectReceiver()
 {
-    receiverConnect = false;
+    receiverConnected = false;
     cc->disableReception(this->myRadioRef);
     if (rs.getState() == RadioState::TRANSMIT)
         error("changing channel while transmitting is not allowed");
@@ -1063,7 +1092,7 @@ void Radio::disconnectReceiver()
 
 void Radio::connectReceiver()
 {
-    receiverConnect = true;
+    receiverConnected = true;
     cc->enableReception(this->myRadioRef);
 
     if (rs.getState()!=RadioState::IDLE)

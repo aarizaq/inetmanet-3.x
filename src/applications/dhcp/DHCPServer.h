@@ -29,12 +29,11 @@
 #include "ARP.h"
 #include "UDPSocket.h"
 
-class INET_API DHCPServer : public cSimpleModule
+class NotificationBoard;
+
+class INET_API DHCPServer : public cSimpleModule, public INotifiable, public ILifecycle
 {
-
-    public:
     protected:
-
         // Transmission Timer
         enum TIMER_TYPE
         {
@@ -45,6 +44,8 @@ class INET_API DHCPServer : public cSimpleModule
         typedef std::map<IPv4Address, DHCPLease> DHCPLeased;
         DHCPLeased leased;
 
+        std::vector<cMessage *> messagesBeingProcessed;
+
         int numSent;
         int numReceived;
 
@@ -54,30 +55,33 @@ class INET_API DHCPServer : public cSimpleModule
         simtime_t proc_delay; // process delay
 
         InterfaceEntry* ie; // interface to listen
+        NotificationBoard* nb;
         UDPSocket socket;
 
     protected:
-        virtual int numInitStages() const
-        {
-            return 4;
-        }
+        virtual int numInitStages() const { return 4; }
         virtual void initialize(int stage);
         virtual void handleMessage(cMessage *msg);
         virtual void handleIncomingPacket(DHCPMessage *pkt);
-    protected:
+        virtual void openSocket();
+
+        virtual void cancelMessagesBeingProcessed();
         // search for a mac into the leased ip
-        DHCPLease* getLeaseByMac(MACAddress mac);
+        virtual DHCPLease* getLeaseByMac(MACAddress mac);
         // get the next available lease to be assigned
-        DHCPLease* getAvailableLease();
+        virtual DHCPLease* getAvailableLease();
+        virtual void handleTimer(cMessage *msg);
+        virtual void processPacket(DHCPMessage *packet);
+        virtual void sendOffer(DHCPLease* lease);
+        virtual void sendACK(DHCPLease* lease);
+        virtual void sendToUDP(cPacket *msg, int srcPort, const IPvXAddress& destAddr, int destPort);
+        virtual void receiveChangeNotification(int category, const cPolymorphic *details);
 
     public:
         DHCPServer();
-        ~DHCPServer();
-        void handleTimer(cMessage *msg);
-        void processPacket(DHCPMessage *packet);
-        void sendOffer(DHCPLease* lease);
-        void sendACK(DHCPLease* lease);
-        virtual void sendToUDP(cPacket *msg, int srcPort, const IPvXAddress& destAddr, int destPort);
+        virtual ~DHCPServer();
+
+        virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback);
 };
 
 #endif

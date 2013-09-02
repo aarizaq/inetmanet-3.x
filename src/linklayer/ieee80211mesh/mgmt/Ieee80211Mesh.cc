@@ -628,7 +628,7 @@ void Ieee80211Mesh::handleRoutingMessage(cPacket *msg)
     }
     if (dynamic_cast<Ieee80211ActionHWMPFrame *>(msg))
     {
-        msg->setKind(ctrl->getInputPort());
+        msg->setKind(ctrl->getInterfaceId());
         delete ctrl;
         sendOrEnqueue(msg);
     }
@@ -639,7 +639,7 @@ void Ieee80211Mesh::handleRoutingMessage(cPacket *msg)
         if (frameMesh->getSubType() == 0)
             frameMesh->setSubType(ROUTING);
 
-        frame->setKind(ctrl->getInputPort());
+        frame->setKind(ctrl->getInterfaceId());
 
         delete ctrl;
         sendOrEnqueue(frame);

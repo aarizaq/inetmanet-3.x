@@ -18,9 +18,9 @@
 #include "NotificationBoard.h"
 #include "NotifierConsts.h"
 #include "ObstacleControl.h"
+#include "ILifecycle.h"
 
-
-class INET_API Ieee802154Phy : public ChannelAccess, public IPowerControl
+class INET_API Ieee802154Phy : public ChannelAccess, public ILifecycle
 {
     public:
         static uint16_t aMaxPHYPacketSize; //max PSDU size (in bytes) the PHY shall be able to receive
@@ -150,6 +150,7 @@ class INET_API Ieee802154Phy : public ChannelAccess, public IPowerControl
         static simsignal_t radioStateSignal; //enum
         static simsignal_t channelNumberSignal;
         static simsignal_t lossRateSignal;
+        virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback);
 
 };
 

@@ -54,16 +54,16 @@ module simpleNetLayer
             parameters:
                 @display("p=232,283");
             gates:
-                lowerLayerIn[sizeof(ifIn)];
-                lowerLayerOut[sizeof(ifOut)];
+                ifIn[sizeof(ifIn)];
+                ifOut[sizeof(ifOut)];
         }
 
     connections allowunconnected:
         for i=0..sizeof(ifIn)-1 {
-            ifIn[i] --> relayUnit.lowerLayerIn[i];
+            ifIn[i] --> relayUnit.ifIn[i];
         }
         for i=0..sizeof(ifOut)-1 {
-            relayUnit.lowerLayerOut[i] --> ifOut[i];
+            relayUnit.ifOut[i] --> ifOut[i];
         }
 }
 

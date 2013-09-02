@@ -25,6 +25,7 @@
 #include "Ethernet.h"
 #include "Ieee802Ctrl_m.h"
 #include "IPassiveQueue.h"
+#include "InterfaceEntry.h"
 
 // TODO: there is some code that is pretty much the same as the one found in EtherMACFullDuplex.cc (e.g. EtherMAC::beginSendFrames)
 // TODO: refactor using a statemachine that is present in a single function
@@ -57,21 +58,24 @@ EtherMAC::~EtherMAC()
     cancelAndDelete(endJammingMsg);
 }
 
-void EtherMAC::initialize()
+void EtherMAC::initialize(int stage)
 {
-    EtherMACBase::initialize();
+    EtherMACBase::initialize(stage);
 
-    endRxMsg = new cMessage("EndReception", ENDRECEPTION);
-    endBackoffMsg = new cMessage("EndBackoff", ENDBACKOFF);
-    endJammingMsg = new cMessage("EndJamming", ENDJAMMING);
+    if (stage == 0)
+    {
+        endRxMsg = new cMessage("EndReception", ENDRECEPTION);
+        endBackoffMsg = new cMessage("EndBackoff", ENDBACKOFF);
+        endJammingMsg = new cMessage("EndJamming", ENDJAMMING);
 
-    // initialize state info
-    backoffs = 0;
-    numConcurrentTransmissions = 0;
-    currentSendPkTreeID = 0;
+        // initialize state info
+        backoffs = 0;
+        numConcurrentTransmissions = 0;
+        currentSendPkTreeID = 0;
 
-    WATCH(backoffs);
-    WATCH(numConcurrentTransmissions);
+        WATCH(backoffs);
+        WATCH(numConcurrentTransmissions);
+    }
 }
 
 void EtherMAC::initializeStatistics()
@@ -182,6 +186,12 @@ void EtherMAC::handleSelfMessage(cMessage *msg)
 
 void EtherMAC::handleMessage(cMessage *msg)
 {
+    if (!isOperational)
+    {
+        handleMessageWhenDown(msg);
+        return;
+    }
+
     if (channelsDiffer)
         readChannelParameters(true);
 
@@ -380,7 +390,11 @@ void EtherMAC::processMsgFromNetwork(EtherTraffic *msg)
     simtime_t endRxTime = simTime() + msg->getDuration();
     EtherJam *jamMsg = dynamic_cast<EtherJam*>(msg);
 
-    if (!duplexMode && receiveState == RX_RECONNECT_STATE)
+    if (duplexMode && jamMsg)
+    {
+        error("Stray jam signal arrived in full-duplex mode");
+    }
+    else if (!duplexMode && receiveState == RX_RECONNECT_STATE)
     {
         long treeId = jamMsg ? jamMsg->getAbortedPkTreeID() : msg->getTreeId();
         addReceptionInReconnectState(treeId, endRxTime);
@@ -876,9 +890,9 @@ void EtherMAC::processReceivedPauseFrame(EtherPauseFrame *frame)
 
 void EtherMAC::scheduleEndIFGPeriod()
 {
-    EtherIFG gap;
     transmitState = WAIT_IFG_STATE;
-    scheduleAt(simTime() + transmissionChannel->calculateDuration(&gap), endIFGMsg);
+    simtime_t endIFGTime = simTime() + (INTERFRAME_GAP_BITS / curEtherDescr->txrate);
+    scheduleAt(endIFGTime, endIFGMsg);
 }
 
 void EtherMAC::fillIFGIfInBurst()

@@ -119,6 +119,7 @@ enum SCTPChunkTypes
     AUTH                = 15,
     NR_SACK             = 16,
     ASCONF_ACK          = 128,
+    PKTDROP             = 129,
     STREAM_RESET        = 130,
     FORWARD_TSN         = 192,
     ASCONF              = 193
@@ -221,6 +222,7 @@ enum SCTPStreamSchedulers
 #define SCTP_ADD_IP_CHUNK_LENGTH        8
 #define SCTP_ADD_IP_PARAMETER_LENGTH    8
 #define SCTP_AUTH_CHUNK_LENGTH          8
+#define SCTP_PKTDROP_CHUNK_LENGTH       16  // without included dropped packet
 #define SHA_LENGTH                      20
 #define IP_HEADER_LENGTH                20
 #define SCTP_DEFAULT_ARWND              (1<<16)
@@ -335,8 +337,15 @@ class INET_API SCTPPathVariables : public cObject
         unsigned int        numberOfHeartbeatAcksSent;
         unsigned int        numberOfHeartbeatsRcvd;
         unsigned int        numberOfHeartbeatAcksRcvd;
+        uint64              numberOfBytesReceived;
 
         // ====== Output Vectors ==============================================
+        cOutVector*         vectorPathFastRecoveryState;
+        cOutVector*         vectorPathPbAcked;
+        cOutVector*         vectorPathTSNFastRTX;
+        cOutVector*         vectorPathTSNTimerBased;
+        cOutVector*         vectorPathAckedTSNCumAck;
+        cOutVector*         vectorPathAckedTSNGapAck;
         cOutVector*         vectorPathSentTSN;
         cOutVector*         vectorPathReceivedTSN;
         cOutVector*         vectorPathHb;
@@ -347,6 +356,14 @@ class INET_API SCTPPathVariables : public cObject
         cOutVector*         statisticsPathRTT;
         cOutVector*         statisticsPathSSthresh;
         cOutVector*         statisticsPathCwnd;
+        cOutVector*         statisticsPathOutstandingBytes;
+        cOutVector*         statisticsPathQueuedSentBytes;
+        cOutVector*         statisticsPathSenderBlockingFraction;
+        cOutVector*         statisticsPathReceiverBlockingFraction;
+        cOutVector*         statisticsPathGapAckedChunksInLastSACK;
+        cOutVector*         statisticsPathGapNRAckedChunksInLastSACK;
+        cOutVector*         statisticsPathGapUnackedChunksInLastSACK;
+        cOutVector*         statisticsPathBandwidth;
 };
 
 
@@ -415,6 +432,7 @@ class INET_API SCTPDataVariables : public cObject
         bool                bbit;
         bool                ebit;
         bool                ordered;
+        bool                ibit;
 
         // ====== Retransmission Management ===================================
         uint32              gapReports;
@@ -431,6 +449,8 @@ class INET_API SCTPDataVariables : public cObject
         bool                hasBeenTimerBasedRtxed;    // Has chunk been timer-based retransmitted?
         bool                hasBeenMoved;              // Chunk has been moved to solve buffer blocking
         simtime_t           firstSendTime;
+        bool                wasDropped;                // For receiving side of PKTDROP: chunk dropped
+        bool                wasPktDropped;             // Stays true even if the TSN has been transmitted
         bool                strReset;
         uint32              prMethod;
         uint32              priority;
@@ -553,6 +573,7 @@ class INET_API SCTPStateVariables : public cObject
         uint32                      swsLimit;
         bool                        lastMsgWasFragment;
         bool                        enableHeartbeats;
+        bool                        sendHeartbeatsOnActivePaths;
         SCTPMessage*                sctpMsg;
         uint16                      chunksAdded;
         uint16                      dataChunksAdded;
@@ -564,6 +585,8 @@ class INET_API SCTPStateVariables : public cObject
         uint32                      gapReportLimit;
         bool                        disableReneging;
 
+        // ====== Retransmission Method =======================================
+        uint32                      rtxMethod;
         // ====== Max Burst ===================================================
         uint32                      maxBurst;
         
@@ -603,8 +626,22 @@ class INET_API SCTPStateVariables : public cObject
         uint8                       sharedKey[512];
 
         // ====== Further features ============================================
+        bool                        osbWithHeader;
+        bool                        padding;
+        bool                        pktDropSent;
+        bool                        peerPktDrop;
         uint32                      advancedPeerAckPoint;
         uint32                      prMethod;
+        bool                        peerAllowsChunks;        // Flowcontrol: indicates whether the peer adjusts the window according to a number of messages
+        uint32                      initialPeerMsgRwnd;
+        uint32                      localMsgRwnd;
+        uint32                      peerMsgRwnd;             // Flowcontrol: corresponds to peerRwnd
+        uint32                      bufferedMessages;        // Messages buffered at the receiver side
+        uint32                      outstandingMessages;     // Outstanding messages on the sender side; used for flowControl; including retransmitted messages
+        uint32                      bytesToAddPerRcvdChunk;
+        uint32                      bytesToAddPerPeerChunk;
+        bool                        tellArwnd;
+        bool                        swsMsgInvoked;           // Flowcontrol: corresponds to swsAvoidanceInvoked
         simtime_t                   lastThroughputTime;
         std::map<uint16,uint32>     streamThroughput;
         simtime_t                   lastAssocThroughputTime;
@@ -675,9 +712,13 @@ class INET_API SCTPAssociation : public cObject
         cMessage*               SackTimer;
         cMessage*               StartTesting;
         cMessage*               StartAddIP;
+        cOutVector*             advMsgRwnd;
         cOutVector*             EndToEndDelay;
+        bool                    fairTimer;
         std::map<uint16,cOutVector*> streamThroughputVectors;
         cOutVector*             assocThroughputVector;
+        cMessage*               FairStartTimer;
+        cMessage*               FairStopTimer;
 
     protected:
         AddressVector           localAddressList;
@@ -711,6 +752,29 @@ class INET_API SCTPAssociation : public cObject
         SCTPSendStreamMap       sendStreams;
         SCTPReceiveStreamMap    receiveStreams;
         SCTPAlgorithm*          sctpAlgorithm;
+      
+        // ------ Transmission Statistics -------------------------------------
+        cOutVector*           statisticsOutstandingBytes;
+        cOutVector*           statisticsQueuedReceivedBytes;
+        cOutVector*           statisticsQueuedSentBytes;
+        cOutVector*           statisticsTotalSSthresh;
+        cOutVector*           statisticsTotalCwnd;
+        cOutVector*           statisticsTotalBandwidth;
+        // ------ Received SACK Statistics ------------------------------------
+        cOutVector*           statisticsRevokableGapBlocksInLastSACK;    // Revokable GapAck blocks in last received SACK
+        cOutVector*           statisticsNonRevokableGapBlocksInLastSACK; // Non-Revokable GapAck blocks in last received SACK
+        cOutVector*           statisticsArwndInLastSACK;
+        cOutVector*           statisticsPeerRwnd;
+        // ------ Sent SACK Statistics ----------------------------------------
+        cOutVector*           statisticsNumTotalGapBlocksStored;         // Number of GapAck blocks stored (NOTE: R + NR!)
+        cOutVector*           statisticsNumRevokableGapBlocksStored;     // Number of Revokable GapAck blocks stored
+        cOutVector*           statisticsNumNonRevokableGapBlocksStored;  // Number of Non-Revokable GapAck blocks stored
+        cOutVector*           statisticsNumDuplicatesStored;             // Number of duplicate TSNs stored
+        cOutVector*           statisticsNumRevokableGapBlocksSent;       // Number of Revokable GapAck blocks sent in last SACK
+        cOutVector*           statisticsNumNonRevokableGapBlocksSent;    // Number of Non-Revokable GapAck blocks sent in last SACK
+        cOutVector*           statisticsNumDuplicatesSent;               // Number of duplicate TSNs sent in last SACK
+        cOutVector*           statisticsSACKLengthSent;                  // Length of last sent SACK
+
 
     public:
         /**
@@ -749,7 +813,7 @@ class INET_API SCTPAssociation : public cObject
         /** Utility: returns name of SCTP_S_xxx constants */
         static const char* stateName(const int32 state);
 
-        static uint32 chunkToInt(const char* type);
+        static uint16 chunkToInt(const char* type);
 
         /* Process self-messages (timers).
         * Normally returns true. A return value of false means that the
@@ -830,6 +894,7 @@ class INET_API SCTPAssociation : public cObject
         SCTPEventCode processSackArrived(SCTPSackChunk* sackChunk);
         SCTPEventCode processHeartbeatAckArrived(SCTPHeartbeatAckChunk* heartbeatack, SCTPPathVariables* path);
         SCTPEventCode processForwardTsnArrived(SCTPForwardTsnChunk* forChunk);
+        bool processPacketDropArrived(SCTPPacketDropChunk* pktdrop);
         void processErrorArrived(SCTPErrorChunk* error);
         //@}
 
@@ -942,6 +1007,7 @@ class INET_API SCTPAssociation : public cObject
         void sendStreamResetResponse(SCTPSSNTSNResetRequestParameter* requestParam,
                                  bool                             options);
         void sendOutgoingResetRequest(SCTPIncomingSSNResetRequestParameter* requestParam);
+        void sendPacketDrop(const bool flag);
         void sendHMacError(const uint16 id);
 
         SCTPForwardTsnChunk* createForwardTsnChunk(const IPvXAddress& pid);
@@ -1035,6 +1101,7 @@ class INET_API SCTPAssociation : public cObject
         SCTPEventCode processAsconfAckArrived(SCTPAsconfAckChunk* asconfAckChunk);
         void retransmitAsconf();
         bool typeInChunkList(const uint16 type);
+        bool typeInOwnChunkList(const uint16 type);
         SCTPAsconfAckChunk*      createAsconfAckChunk(const uint32 serialNumber);
         SCTPAuthenticationChunk* createAuthChunk();
         SCTPSuccessIndication*   createSuccessIndication(uint32 correlationId);

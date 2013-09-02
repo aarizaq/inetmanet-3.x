@@ -276,7 +276,7 @@ void HwmpProtocol::processData(cMessage *msg)
             if (pkt->getControlInfo())
             {
                 Ieee802Ctrl *ctrl = check_and_cast<Ieee802Ctrl*>(pkt->removeControlInfo());
-                qpkt.inInterface = ctrl->getInputPort();
+                qpkt.inInterface = ctrl->getInterfaceId();
                 delete ctrl;
             }
             this->QueuePacket(qpkt);
@@ -368,7 +368,7 @@ void HwmpProtocol::sendPreq(PREQElem preq, bool isProactive)
 void HwmpProtocol::sendPreq(std::vector<PREQElem> preq, bool isProactive)
 {
     Ieee802Ctrl *ctrl = new Ieee802Ctrl();
-    ctrl->setInputPort(interface80211ptr->getInterfaceId());
+    ctrl->setInterfaceId(interface80211ptr->getInterfaceId());
     std::vector < MACAddress > receivers = getPreqReceivers(interface80211ptr->getInterfaceId());
     if (receivers.size() == 1 && receivers[0] == MACAddress::BROADCAST_ADDRESS)
     {
@@ -379,7 +379,7 @@ void HwmpProtocol::sendPreq(std::vector<PREQElem> preq, bool isProactive)
             Ieee802Ctrl *ctrlAux = ctrl->dup();
             Ieee80211ActionPREQFrame *msgAux = msg->dup();
             // Set the control info to the duplicate packet
-            ctrlAux->setInputPort(getWlanInterfaceEntry(i)->getInterfaceId());
+            ctrlAux->setInterfaceId(getWlanInterfaceEntry(i)->getInterfaceId());
             msgAux->setControlInfo(ctrlAux);
             if (msgAux->getBody().getTTL() == 0)
                 delete msgAux;
@@ -389,7 +389,7 @@ void HwmpProtocol::sendPreq(std::vector<PREQElem> preq, bool isProactive)
                 sendDelayed(msgAux, par("broadcastDelay"), "to_ip");
             }
         }
-        ctrl->setInputPort(getWlanInterfaceEntry(0)->getInterfaceId());
+        ctrl->setInterfaceId(getWlanInterfaceEntry(0)->getInterfaceId());
         msg->setControlInfo(ctrl);
         if (msg->getBody().getTTL() == 0)
             delete msg;
@@ -413,7 +413,7 @@ void HwmpProtocol::sendPreq(std::vector<PREQElem> preq, bool isProactive)
                 ie = getInterfaceEntryById(index);
             // Set the control info to the duplicate packet
             if (ie)
-                ctrlAux->setInputPort(ie->getInterfaceId());
+                ctrlAux->setInterfaceId(ie->getInterfaceId());
             msg->setControlInfo(ctrlAux);
             if (msg->getBody().getTTL() == 0)
                 delete msg;
@@ -467,7 +467,7 @@ void HwmpProtocol::sendPrep(MACAddress src,
     if (index >= 0)
         ie = getInterfaceEntryById(index);
     if (ie)
-        ctrl->setInputPort(ie->getInterfaceId());
+        ctrl->setInterfaceId(ie->getInterfaceId());
     ieee80211ActionPrepFrame->setControlInfo(ctrl);
     if (ieee80211ActionPrepFrame->getBody().getTTL() == 0)
         delete ieee80211ActionPrepFrame;
@@ -518,7 +518,7 @@ void HwmpProtocol::sendGann()
         Ieee802Ctrl *ctrl = new Ieee802Ctrl();
         Ieee80211ActionGANNFrame *msgAux = gannFrame->dup();
         // Set the control info to the duplicate packet
-        ctrl->setInputPort(getWlanInterfaceEntry(i)->getInterfaceId());
+        ctrl->setInterfaceId(getWlanInterfaceEntry(i)->getInterfaceId());
         msgAux->setControlInfo(ctrl);
         if (msgAux->getBody().getTTL() == 0)
             delete msgAux;
@@ -529,7 +529,7 @@ void HwmpProtocol::sendGann()
         }
     }
     Ieee802Ctrl *ctrl = new Ieee802Ctrl();
-    ctrl->setInputPort(getWlanInterfaceEntry(0)->getInterfaceId());
+    ctrl->setInterfaceId(getWlanInterfaceEntry(0)->getInterfaceId());
     gannFrame->setControlInfo(ctrl);
     if (gannFrame->getBody().getTTL() == 0)
         delete gannFrame;
@@ -771,7 +771,7 @@ void HwmpProtocol::sendPerr(std::vector<HwmpFailedDestination> failedDestination
         m_stats.txBytes += frameAux->getByteLength();
         // TODO: is necessary to obtain the interface id from the routing table in the future
         Ieee802Ctrl *ctrl = new Ieee802Ctrl();
-        ctrl->setInputPort(interface80211ptr->getInterfaceId());
+        ctrl->setInterfaceId(interface80211ptr->getInterfaceId());
         frameAux->setControlInfo(ctrl);
         if (frameAux->getBody().getTTL() == 0)
             delete frameAux;
@@ -787,7 +787,7 @@ void HwmpProtocol::sendPerr(std::vector<HwmpFailedDestination> failedDestination
     m_stats.txBytes += ieee80211ActionPerrFrame->getByteLength();
     Ieee802Ctrl *ctrl = new Ieee802Ctrl();
     // TODO: is necessary to obtain the interface id from the routing table in the future
-    ctrl->setInputPort(interface80211ptr->getInterfaceId());
+    ctrl->setInterfaceId(interface80211ptr->getInterfaceId());
     ieee80211ActionPerrFrame->setControlInfo(ctrl);
     if (ieee80211ActionPerrFrame->getBody().getTTL() == 0)
         delete ieee80211ActionPerrFrame;
@@ -936,7 +936,7 @@ void HwmpProtocol::processPreq(cMessage *msg)
     if (frame->getControlInfo())
     {
         Ieee802Ctrl *ctrl = check_and_cast<Ieee802Ctrl*>(frame->removeControlInfo());
-        interface = ctrl->getInputPort();
+        interface = ctrl->getInterfaceId();
         delete ctrl;
     }
     else
@@ -960,7 +960,7 @@ void HwmpProtocol::processPrep(cMessage *msg)
     if (frame->getControlInfo())
     {
         Ieee802Ctrl *ctrl = check_and_cast<Ieee802Ctrl*>(frame->removeControlInfo());
-        interface = ctrl->getInputPort();
+        interface = ctrl->getInterfaceId();
         delete ctrl;
     }
     else
@@ -984,7 +984,7 @@ void HwmpProtocol::processPerr(cMessage *msg)
     if (frame->getControlInfo())
     {
         Ieee802Ctrl *ctrl = check_and_cast<Ieee802Ctrl*>(frame->removeControlInfo());
-        interface = ctrl->getInputPort();
+        interface = ctrl->getInterfaceId();
         delete ctrl;
     }
     else
@@ -1055,7 +1055,7 @@ void HwmpProtocol::processGann(cMessage *msg)
         Ieee802Ctrl *ctrl = new Ieee802Ctrl();
         Ieee80211ActionGANNFrame *msgAux = gannFrame->dup();
         // Set the control info to the duplicate packet
-        ctrl->setInputPort(getWlanInterfaceEntry(i)->getInterfaceId());
+        ctrl->setInterfaceId(getWlanInterfaceEntry(i)->getInterfaceId());
         msgAux->setControlInfo(ctrl);
         if (msgAux->getBody().getTTL() == 0)
             delete msgAux;
@@ -1066,7 +1066,7 @@ void HwmpProtocol::processGann(cMessage *msg)
         }
     }
     Ieee802Ctrl *ctrl = new Ieee802Ctrl();
-    ctrl->setInputPort(getWlanInterfaceEntry(0)->getInterfaceId());
+    ctrl->setInterfaceId(getWlanInterfaceEntry(0)->getInterfaceId());
     gannFrame->setControlInfo(ctrl);
     if (gannFrame->getBody().getTTL() == 0)
         delete gannFrame;
@@ -1320,7 +1320,7 @@ void HwmpProtocol::receivePreq(Ieee80211ActionPREQFrame *preqFrame, MACAddress f
                     cPacket *pktAux = preqFrame->dup();
                     // TODO: is necessary to obtain the interface id from the routing table in the future
                     Ieee802Ctrl *ctrl = new Ieee802Ctrl();
-                    ctrl->setInputPort(interface80211ptr->getInterfaceId());
+                    ctrl->setInterfaceId(interface80211ptr->getInterfaceId());
                     pktAux->setControlInfo(ctrl);
                     EV << "Propagating preq frame to " << preqFrame->getReceiverAddress() << endl;
                     sendDelayed(pktAux, par("unicastDelay"), "to_ip");
@@ -1338,7 +1338,7 @@ void HwmpProtocol::receivePreq(Ieee80211ActionPREQFrame *preqFrame, MACAddress f
     else
         preqFrame->setReceiverAddress(MACAddress::BROADCAST_ADDRESS);
     Ieee802Ctrl *ctrl = new Ieee802Ctrl();
-    ctrl->setInputPort(interface80211ptr->getInterfaceId());
+    ctrl->setInterfaceId(interface80211ptr->getInterfaceId());
     preqFrame->setControlInfo(ctrl);
 
     if (preqFrame->getBody().getTTL() == 0 || !propagate)
@@ -1461,7 +1461,7 @@ void HwmpProtocol::receivePrep(Ieee80211ActionPREPFrame * prepFrame, MACAddress 
     prepFrame->setReceiverAddress(resultDest.retransmitter);
     // TODO: obtain the correct interface ID
     Ieee802Ctrl *ctrl = new Ieee802Ctrl();
-    ctrl->setInputPort(interface80211ptr->getInterfaceId());
+    ctrl->setInterfaceId(interface80211ptr->getInterfaceId());
     prepFrame->setControlInfo(ctrl);
 
     if (prepFrame->getBody().getTTL() == 0)
@@ -1800,7 +1800,7 @@ void HwmpProtocol::reactivePathResolved(MACAddress dst)
             m_stats.txUnicast++;
             m_stats.txBytes += packet.pkt->getByteLength();
             Ieee802Ctrl * ctrl = new Ieee802Ctrl();
-            ctrl->setInputPort(result.ifIndex);
+            ctrl->setInterfaceId(result.ifIndex);
             ctrl->setDest(result.retransmitter);
             packet.pkt->setControlInfo(ctrl);
             send(packet.pkt, "to_ip");
@@ -1822,7 +1822,7 @@ void HwmpProtocol::proactivePathResolved()
         m_stats.txBytes += packet.pkt->getByteLength();
         EV << "Send queue packets " << endl;
         Ieee802Ctrl * ctrl = new Ieee802Ctrl();
-        ctrl->setInputPort(result.ifIndex);
+        ctrl->setInterfaceId(result.ifIndex);
         ctrl->setDest(result.retransmitter);
         packet.pkt->setControlInfo(ctrl);
         sendDelayed(packet.pkt, par("unicastDelay"), "to_ip");

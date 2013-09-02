@@ -26,7 +26,7 @@
 #include "Radio80211aControlInfo_m.h"
 #include "Ieee80211eClassifier.h"
 #include "Ieee80211DataRate.h"
-
+#include "opp_utils.h"
 
 // #define DISABLEERRORACK
 
@@ -52,7 +52,8 @@ Register_Enum(RadioState,
               (RadioState::IDLE,
                RadioState::RECV,
                RadioState::TRANSMIT,
-               RadioState::SLEEP));
+               RadioState::SLEEP,
+               RadioState::OFF));
 
 /****************************************************************
  * Construction functions.
@@ -347,17 +348,17 @@ void Ieee80211Mac::initialize(int stage)
             numSentWithoutRetry(i) = 0;
             numGivenUp(i) = 0;
             numSent(i) = 0;
-            bites(i) = 0;
-            maxjitter(i) = 0;
-            minjitter(i) = 0;
+            bits(i) = 0;
+            maxJitter(i) = SIMTIME_ZERO;
+            minJitter(i) = SIMTIME_ZERO;
         }
 
         numCollision = 0;
         numInternalCollision = 0;
         numReceived = 0;
-        numSentMulticast = 0; //sorin
+        numSentMulticast = 0;
         numReceivedMulticast = 0;
-        numBites = 0;
+        numBits = 0;
         numSentTXOP = 0;
         numReceivedOther = 0;
         numAckSend = 0;
@@ -365,7 +366,7 @@ void Ieee80211Mac::initialize(int stage)
         failedCounter = 0;
         recovery = 0;
         timer = 0;
-        timeStampLastMessageReceived = 0;
+        timeStampLastMessageReceived = SIMTIME_ZERO;
 
         stateVector.setName("State");
         stateVector.setEnum("Ieee80211Mac");
@@ -430,7 +431,7 @@ void Ieee80211Mac::initWatches()
      WATCH(numCollision);
      for (int i=0; i<numCategories(); i++)
          WATCH(edcCAF[i].numSent);
-     WATCH(numBites);
+     WATCH(numBits);
      WATCH(numSentTXOP);
      WATCH(numReceived);
      WATCH(numSentMulticast);
@@ -484,7 +485,7 @@ void Ieee80211Mac::finish()
         std::string th = "number of retry for AC "+os.str();
         recordScalar(th.c_str(), numRetry(i));
     }
-    recordScalar("sent and receive bites", numBites);
+    recordScalar("sent and received bits", numBits);
     for (int i=0; i<numCategories(); i++)
     {
         std::stringstream os;
@@ -516,30 +517,18 @@ void Ieee80211Mac::finish()
     }
 }
 
-void Ieee80211Mac::registerInterface()
+InterfaceEntry *Ieee80211Mac::createInterfaceEntry()
 {
-    IInterfaceTable *ift = InterfaceTableAccess().getIfExists();
-    if (!ift)
-        return;
-
     InterfaceEntry *e = new InterfaceEntry(this);
 
     // interface name: NetworkInterface module's name without special characters ([])
-    char *interfaceName = new char[strlen(getParentModule()->getFullName()) + 1];
-    char *d = interfaceName;
-    for (const char *s = getParentModule()->getFullName(); *s; s++)
-        if (isalnum(*s))
-            *d++ = *s;
-    *d = '\0';
-
-    e->setName(interfaceName);
-    delete [] interfaceName;
+    std::string interfaceName = OPP_Global::stripnonalnum(getParentModule()->getFullName());
+    e->setName(interfaceName.c_str());
 
     // address
     e->setMACAddress(address);
     e->setInterfaceToken(address.formInterfaceIdentifier());
 
-    // FIXME: MTU on 802.11 = ?
     e->setMtu(par("mtu").longValue());
 
     // capabilities
@@ -547,8 +536,7 @@ void Ieee80211Mac::registerInterface()
     e->setMulticast(true);
     e->setPointToPoint(false);
 
-    // add
-    ift->addInterface(e);
+    return e;
 }
 
 void Ieee80211Mac::initializeQueueModule()
@@ -592,7 +580,7 @@ void Ieee80211Mac::handleSelfMsg(cMessage *msg)
         EV << "Changing currentAC to " << msg->getKind() << endl;
         currentAC = msg->getKind();
     }
-    //check internal colision
+    //check internal collision
     if ((strcmp(msg->getName(), "Backoff") == 0) || (strcmp(msg->getName(), "AIFS")==0))
     {
         int kind;
@@ -862,7 +850,7 @@ void Ieee80211Mac::handleLowerMsg(cPacket *msg)
     contI++;
 
     frame = dynamic_cast<Ieee80211Frame *>(msg);
-    if (timeStampLastMessageReceived == 0)
+    if (timeStampLastMessageReceived == SIMTIME_ZERO)
         timeStampLastMessageReceived = simTime();
     else
     {
@@ -912,6 +900,8 @@ void Ieee80211Mac::handleLowerMsg(cPacket *msg)
 void Ieee80211Mac::receiveChangeNotification(int category, const cObject *details)
 {
     Enter_Method_Silent();
+    MACBase::receiveChangeNotification(category, details);
+
     printNotificationBanner(category, details);
 
     if (category == NF_RADIOSTATE_CHANGED)
@@ -1010,17 +1000,12 @@ void Ieee80211Mac::handleWithFSM(cMessage *msg)
             FSMA_Event_Transition(Data-Ready,
                                   isUpperMsg(msg),
                                   DEFER,
-                                  ASSERT(isInvalidBackoffPeriod() || backoffPeriod() == 0);
+                                  ASSERT(isInvalidBackoffPeriod() || backoffPeriod() == SIMTIME_ZERO);
                                   invalidateBackoffPeriod();
                                  );
             FSMA_No_Event_Transition(Immediate-Data-Ready,
                                      !transmissionQueueEmpty(),
                                      DEFER,
-                                     /* Mohamad Sbeiti report that this is erroneous, remove these lines in the future
-                                      * maintain now only for to let constancy of the problem
-                                     if (retryCounter() == 0) //  jesjones patch.  TODO: check this particular case, I haven't been sure about this particular case
-                                        invalidateBackoffPeriod();
-                                        */
                                     );
             FSMA_Event_Transition(Receive,
                                   isLowerMsg(msg),
@@ -1206,7 +1191,7 @@ void Ieee80211Mac::handleWithFSM(cMessage *msg)
                                   cancelBackoffPeriod();
                                  );
             FSMA_Event_Transition(Backoff-Idle,
-                                  isBakoffMsg(msg) && transmissionQueueEmpty(),
+                                  isBackoffMsg(msg) && transmissionQueueEmpty(),
                                   IDLE,
                                   resetStateVariables();
                                   );
@@ -1249,14 +1234,13 @@ void Ieee80211Mac::handleWithFSM(cMessage *msg)
                                   if (retryCounter() == 0) numSentWithoutRetry()++;
                                   numSent()++;
                                   fr = getCurrentTransmission();
-                                  numBites += fr->getBitLength();
-                                  bites() += fr->getBitLength();
-                                  numFramesOverTxOp--;
+                                  numBits += fr->getBitLength();
+                                  bits() += fr->getBitLength();
                                   macDelay()->record(simTime() - fr->getMACArrive());
-                                  if (maxjitter() == 0 || maxjitter() < (simTime() - fr->getMACArrive()))
-                                      maxjitter() = simTime() - fr->getMACArrive();
-                                  if (minjitter() == 0 || minjitter() > (simTime() - fr->getMACArrive()))
-                                      minjitter() = simTime() - fr->getMACArrive();
+                                  if (maxJitter() == SIMTIME_ZERO || maxJitter() < (simTime() - fr->getMACArrive()))
+                                      maxJitter() = simTime() - fr->getMACArrive();
+                                  if (minJitter() == SIMTIME_ZERO || minJitter() > (simTime() - fr->getMACArrive()))
+                                      minJitter() = simTime() - fr->getMACArrive();
                                   EV << "record macDelay AC" << currentAC << " value " << simTime() - fr->getMACArrive() <<endl;
                                   numSentTXOP++;
                                   cancelTimeoutPeriod();
@@ -1272,16 +1256,15 @@ void Ieee80211Mac::handleWithFSM(cMessage *msg)
                                   if (retryCounter() == 0) numSentWithoutRetry()++;
                                   numSent()++;
                                   fr = getCurrentTransmission();
-                                  numBites += fr->getBitLength();
-                                  bites() += fr->getBitLength();
-                                  numFramesOverTxOp--;
+                                  numBits += fr->getBitLength();
+                                  bits() += fr->getBitLength();
 
 
                                   macDelay()->record(simTime() - fr->getMACArrive());
-                                  if (maxjitter() == 0 || maxjitter() < (simTime() - fr->getMACArrive()))
-                                      maxjitter() = simTime() - fr->getMACArrive();
-                                  if (minjitter() == 0 || minjitter() > (simTime() - fr->getMACArrive()))
-                                      minjitter() = simTime() - fr->getMACArrive();
+                                  if (maxJitter() == SIMTIME_ZERO || maxJitter() < (simTime() - fr->getMACArrive()))
+                                      maxJitter() = simTime() - fr->getMACArrive();
+                                  if (minJitter() == SIMTIME_ZERO || minJitter() > (simTime() - fr->getMACArrive()))
+                                      minJitter() = simTime() - fr->getMACArrive();
                                   EV << "record macDelay AC" << currentAC << " value " << simTime() - fr->getMACArrive() <<endl;
                                   numSentTXOP++;
                                   cancelTimeoutPeriod();
@@ -1296,7 +1279,7 @@ void Ieee80211Mac::handleWithFSM(cMessage *msg)
                                   numSent[currentAC]++;
                                   fr=getCurrentTransmission();
                                   numBites += fr->getBitLength();
-                                  bites[currentAC] += fr->getBitLength();
+                                  bits[currentAC] += fr->getBitLength();
 
                                   macDelay[currentAC].record(simTime() - fr->getMACArrive());
                                   if (maxjitter[currentAC] == 0 || maxjitter[currentAC] < (simTime() - fr->getMACArrive())) maxjitter[currentAC]=simTime() - fr->getMACArrive();
@@ -1317,14 +1300,14 @@ void Ieee80211Mac::handleWithFSM(cMessage *msg)
                                       numSentWithoutRetry()++;
                                   numSent()++;
                                   fr = getCurrentTransmission();
-                                  numBites += fr->getBitLength();
-                                  bites() += fr->getBitLength();
+                                  numBits += fr->getBitLength();
+                                  bits() += fr->getBitLength();
 
                                   macDelay()->record(simTime() - fr->getMACArrive());
-                                  if (maxjitter() == 0 || maxjitter() < (simTime() - fr->getMACArrive()))
-                                      maxjitter() = simTime() - fr->getMACArrive();
-                                  if (minjitter() == 0 || minjitter() > (simTime() - fr->getMACArrive()))
-                                      minjitter() = simTime() - fr->getMACArrive();
+                                  if (maxJitter() == SIMTIME_ZERO || maxJitter() < (simTime() - fr->getMACArrive()))
+                                      maxJitter() = simTime() - fr->getMACArrive();
+                                  if (minJitter() == SIMTIME_ZERO || minJitter() > (simTime() - fr->getMACArrive()))
+                                      minJitter() = simTime() - fr->getMACArrive();
                                   EV << "record macDelay AC" << currentAC << " value " << simTime() - fr->getMACArrive() <<endl;
                                   cancelTimeoutPeriod();
                                   finishCurrentTransmission();
@@ -1384,8 +1367,8 @@ void Ieee80211Mac::handleWithFSM(cMessage *msg)
                                   DEFER,
                                   currentAC = oldcurrentAC;
                                   fr = getCurrentTransmission();
-                                  numBites += fr->getBitLength();
-                                  bites() += fr->getBitLength();
+                                  numBits += fr->getBitLength();
+                                  bits() += fr->getBitLength();
                                   finishCurrentTransmission();
                                   numSentMulticast++;
                                   resetCurrentBackOff();
@@ -1511,13 +1494,13 @@ void Ieee80211Mac::handleWithFSM(cMessage *msg)
     {
         for (int i = 0; i<numCategories(); i++)
         {
-            throughput(i)->record(bites(i)/(simTime()-last));
-            bites(i) = 0;
-            if (maxjitter(i) > 0 && minjitter(i) > 0)
+            throughput(i)->record(bits(i)/(simTime()-last));
+            bits(i) = 0;
+            if (maxJitter(i) > SIMTIME_ZERO && minJitter(i) > SIMTIME_ZERO)
             {
-                jitter(i)->record(maxjitter(i)-minjitter(i));
-                maxjitter(i) = 0;
-                minjitter(i) = 0;
+                jitter(i)->record(maxJitter(i)-minJitter(i));
+                maxJitter(i) = SIMTIME_ZERO;
+                minJitter(i) = SIMTIME_ZERO;
             }
         }
         last = simTime();
@@ -1836,7 +1819,7 @@ bool Ieee80211Mac::isInvalidBackoffPeriod()
 void Ieee80211Mac::generateBackoffPeriod()
 {
     backoffPeriod() = computeBackoffPeriod(getCurrentTransmission(), retryCounter());
-    ASSERT(backoffPeriod() >= 0);
+    ASSERT(backoffPeriod() >= SIMTIME_ZERO);
     EV << "backoff period set to " << backoffPeriod()<< endl;
 }
 
@@ -1854,7 +1837,7 @@ void Ieee80211Mac::decreaseBackoffPeriod()
             simtime_t elapsedBackoffTime = simTime() - endBackoff(i)->getSendingTime();
             backoffPeriod(i) -= ((int)(elapsedBackoffTime / getSlotTime())) * getSlotTime();
             EV << "actual backoff[" << i << "] is " <<backoffPeriod(i) << ", elapsed is " << elapsedBackoffTime << endl;
-            ASSERT(backoffPeriod(i) >= 0);
+            ASSERT(backoffPeriod(i) >= SIMTIME_ZERO);
             EV << "backoff[" << i << "] period decreased to " << backoffPeriod(i) << endl;
         }
     }
@@ -1912,7 +1895,6 @@ void Ieee80211Mac::sendDataFrame(Ieee80211DataOrMgmtFrame *frameToSend)
     {
         //we start packet burst within TXOP time period
         txop = true;
-        numFramesOverTxOp = 0;
 
         for (frame=dynamic_cast<Ieee80211DataOrMgmtFrame*>(transmissionQueue()->initIterator()); frame!=NULL; frame=dynamic_cast<Ieee80211DataOrMgmtFrame*>(transmissionQueue()->next()))
         {
@@ -1922,7 +1904,6 @@ void Ieee80211Mac::sendDataFrame(Ieee80211DataOrMgmtFrame *frameToSend)
             if (TXOP()>time+t)
             {
                 time += t;
-                numFramesOverTxOp++;
                 EV << "adding t \n";
             }
             else
@@ -1951,7 +1932,7 @@ void Ieee80211Mac::sendDataFrame(Ieee80211DataOrMgmtFrame *frameToSend)
     {
         //we start packet burst within TXOP time period
         txop = true;
-        numFramesOverTxOp = 0;
+
         for (frame=transmissionQueue()->begin(); frame != transmissionQueue()->end(); ++frame)
         {
             count++;
@@ -1960,7 +1941,6 @@ void Ieee80211Mac::sendDataFrame(Ieee80211DataOrMgmtFrame *frameToSend)
             if (TXOP()>time+t)
             {
                 time += t;
-                numFramesOverTxOp++;
                 EV << "adding t \n";
             }
             else
@@ -2208,7 +2188,7 @@ void Ieee80211Mac::setMode(Mode mode)
 
 void Ieee80211Mac::resetStateVariables()
 {
-    backoffPeriod() = 0;
+    backoffPeriod() = SIMTIME_ZERO;
     if (rateControlMode == RATE_AARF || rateControlMode == RATE_ARF)
         reportDataOk();
     else
@@ -2351,48 +2331,30 @@ double Ieee80211Mac::computeFrameDuration(int bits, double bitrate)
 
 void Ieee80211Mac::logState()
 {
-    std::string a[10];
-    std::string b[10];
-    std::string medium = "busy";
-    for (int i=0; i<10; i++)
-    {
-        a[i] = "";
-        b[i] = "";
-    }
-
-    if (isMediumFree())
-        medium = "free";
-    for (int i=0; i<numCategories(); i++)
-    {
-        if (endBackoff(i)->isScheduled())
-            b[i] = "scheduled";
-        if (endAIFS(i)->isScheduled())
-            a[i] = "scheduled";
-    }
-
-    EV  << "# state information: mode = " << modeName(mode) << ", state = " << fsm.getStateName();
-    EV << ", backoff 0.."<<numCategories()<<" = ";
-    for (int i=0; i<numCategories(); i++)
-         EV << backoff(i) << " ";
-    EV <<  "\n# backoffPeriod 0.."<<numCategories()<<" = ";
-    for (int i=0; i<numCategories(); i++)
-         EV << backoffPeriod(i) << " ";
-    EV << "\n# retryCounter 0.."<<numCategories()<<" = ";
-    for (int i=0; i<numCategories(); i++)
-         EV << retryCounter(i) << " ";
-    EV << ", radioState = " << radioState << ", nav = " << nav <<  ",txop is "<< txop << "\n";
-    EV << "#queue size 0.."<<numCategories()<<" = ";
-    for (int i=0; i<numCategories(); i++)
-        EV << transmissionQueue(i)->size() << " ";
-    EV << ", medium is " << medium << ", scheduled AIFS are ";
-    for (int i=0; i<numCategories(); i++)
-        EV << i << "(" << a[i] << ")";
-    EV << ", scheduled backoff are ";
-    for (int i=0; i<numCategories(); i++)
-        EV << i << "(" << b[i] << ")";
+    int numCategs = numCategories();
+    EV << "# state information: mode = " << modeName(mode) << ", state = " << fsm.getStateName();
+    EV << ", backoff 0.." << numCategs << " =";
+    for (int i=0; i<numCategs; i++)
+        EV << " " << edcCAF[i].backoff;
+    EV <<  "\n# backoffPeriod 0.." << numCategs << " =";
+    for (int i=0; i<numCategs; i++)
+        EV << " " << edcCAF[i].backoffPeriod;
+    EV << "\n# retryCounter 0.." << numCategs << " =";
+    for (int i=0; i<numCategs; i++)
+        EV << " " << edcCAF[i].retryCounter;
+    EV << ", radioState = " << radioState << ", nav = " << nav <<  ", txop is "<< txop << "\n";
+    EV << "#queue size 0.." << numCategs << " =";
+    for (int i=0; i<numCategs; i++)
+        EV << " " << transmissionQueue(i)->size();
+    EV << ", medium is " << (isMediumFree() ? "free" : "busy") << ", scheduled AIFS are";
+    for (int i=0; i<numCategs; i++)
+        EV << " " << i << "(" << (edcCAF[i].endAIFS->isScheduled() ? "scheduled" : "") << ")";
+    EV << ", scheduled backoff are";
+    for (int i=0; i<numCategs; i++)
+        EV << " " << i << "(" << (edcCAF[i].endBackoff->isScheduled() ? "scheduled" : "") << ")";
     EV << "\n# currentAC: " << currentAC << ", oldcurrentAC: " << oldcurrentAC;
     if (getCurrentTransmission() != NULL)
-         EV << "\n# current transmission: " << getCurrentTransmission()->getId();
+        EV << "\n# current transmission: " << getCurrentTransmission()->getId();
     else
         EV << "\n# current transmission: none";
     EV << endl;
@@ -2424,6 +2386,47 @@ unsigned int Ieee80211Mac::transmissionQueueSize()
     for (int i=0; i<numCategories(); i++)
         totalSize+=transmissionQueue(i)->size();
     return totalSize;
+}
+
+void Ieee80211Mac::flushQueue()
+{
+    if (queueModule) {
+        while (!queueModule->isEmpty())
+        {
+            cMessage *msg = queueModule->pop();
+            //TODO emit(dropPkIfaceDownSignal, msg); -- 'pkDropped' signals are missing in this module!
+            delete msg;
+        }
+        queueModule->clear(); // clear request count
+    }
+
+    for (int i=0; i<numCategories(); i++)
+    {
+        while (!transmissionQueue(i)->empty())
+        {
+            cMessage *msg = transmissionQueue(i)->front();
+            transmissionQueue(i)->pop_front();
+            //TODO emit(dropPkIfaceDownSignal, msg); -- 'pkDropped' signals are missing in this module!
+            delete msg;
+        }
+    }
+}
+
+void Ieee80211Mac::clearQueue()
+{
+    if (queueModule) {
+        queueModule->clear(); // clear request count
+    }
+
+    for (int i=0; i<numCategories(); i++)
+    {
+        while (!transmissionQueue(i)->empty())
+        {
+            cMessage *msg = transmissionQueue(i)->front();
+            transmissionQueue(i)->pop_front();
+            delete msg;
+        }
+    }
 }
 
 void Ieee80211Mac::reportDataOk()
@@ -2651,7 +2654,7 @@ cMessage * Ieee80211Mac::endBackoff(int i)
      return edcCAF[i].endBackoff;
 }
 
-const bool Ieee80211Mac::isBakoffMsg(cMessage *msg)
+const bool Ieee80211Mac::isBackoffMsg(cMessage *msg)
 {
     for (unsigned int i=0; i<edcCAF.size(); i++)
     {
@@ -2707,16 +2710,16 @@ long & Ieee80211Mac::numDropped(int i)
      return edcCAF[i].numDropped;
 }
 
-long & Ieee80211Mac::bites(int i)
+long & Ieee80211Mac::bits(int i)
 {
     if (i==-1)
          i = currentAC;
     if (i>=(int)edcCAF.size())
          opp_error("AC doesn't exist");
-     return edcCAF[i].bites;
+     return edcCAF[i].bits;
 }
 
-simtime_t & Ieee80211Mac::minjitter(int i)
+simtime_t & Ieee80211Mac::minJitter(int i)
 {
     if (i==-1)
          i = currentAC;
@@ -2725,7 +2728,7 @@ simtime_t & Ieee80211Mac::minjitter(int i)
      return edcCAF[i].minjitter;
 }
 
-simtime_t & Ieee80211Mac::maxjitter(int i)
+simtime_t & Ieee80211Mac::maxJitter(int i)
 {
     if (i==-1)
          i = currentAC;
@@ -2811,7 +2814,7 @@ Ieee80211Mac::getControlAnswerMode(ModulationType reqMode)
    */
     bool found = false;
     ModulationType mode;
-    for (int32_t idx = Ieee80211Descriptor::getMinIdx(opMode); idx < Ieee80211Descriptor::size(); idx++)
+    for (int idx = Ieee80211Descriptor::getMinIdx(opMode); idx < Ieee80211Descriptor::size(); idx++)
     {
         if (Ieee80211Descriptor::getDescriptor(idx).mode != opMode)
             break;
@@ -2900,14 +2903,8 @@ const MACAddress & Ieee80211Mac::isInterfaceRegistered()
     IInterfaceTable *ift = InterfaceTableAccess().getIfExists();
     if (!ift)
         return MACAddress::UNSPECIFIED_ADDRESS;
-    char *interfaceName = new char[strlen(getParentModule()->getFullName()) + 1];
-    char *d = interfaceName;
-    for (const char *s = getParentModule()->getFullName(); *s; s++)
-        if (isalnum(*s))
-            *d++ = *s;
-    *d = '\0';
-    InterfaceEntry * e = ift->getInterfaceByName(interfaceName);
-    delete [] interfaceName;
+    std::string interfaceName = OPP_Global::stripnonalnum(getParentModule()->getFullName());
+    InterfaceEntry *e = ift->getInterfaceByName(interfaceName.c_str());
     if (e)
         return e->getMacAddress();
     return MACAddress::UNSPECIFIED_ADDRESS;
@@ -2954,6 +2951,16 @@ void Ieee80211Mac::promiscousFrame(cMessage *msg)
 {
     if (!isDuplicated(msg)) // duplicate detection filter
         sendNotification(NF_LINK_PROMISCUOUS, msg);
+}
+
+bool Ieee80211Mac::isBackoffPending()
+{
+    for (unsigned int i = 0; i<edcCAF.size(); i++)
+    {
+        if (edcCAF[i].backoff)
+            return true;
+    }
+    return false;
 }
 
 

@@ -516,7 +516,7 @@ void ManetRoutingBase::sendToIpOnIface(cPacket *msg, int srcPort, const ManetAdd
                 cPacket *msgAux = msg->dup();
 // Set the control info to the duplicate packet
                 if (ie)
-                    ctrlAux->setInputPort(ie->getInterfaceId());
+                    ctrlAux->setInterfaceId(ie->getInterfaceId());
                 msgAux->setControlInfo(ctrlAux);
                 sendDelayed(msgAux, delay, "to_ip");
 
@@ -525,7 +525,7 @@ void ManetRoutingBase::sendToIpOnIface(cPacket *msg, int srcPort, const ManetAdd
         }
 
         if (ie)
-            ctrl->setInputPort(ie->getInterfaceId());
+            ctrl->setInterfaceId(ie->getInterfaceId());
         msg->setControlInfo(ctrl);
         sendDelayed(msg, delay, "to_ip");
         return;

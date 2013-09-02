@@ -23,8 +23,16 @@
 
 #include "UDPControlInfo_m.h"
 #include "IPvXAddressResolver.h"
-#include "InterfaceTable.h"
 #include "InterfaceTableAccess.h"
+#ifdef WITH_IPv4
+#include "IRoutingTable.h"
+#include "RoutingTableAccess.h"
+#endif
+
+#ifdef WITH_IPv6
+#include "RoutingTable6.h"
+#include "RoutingTable6Access.h"
+#endif
 
 
 EXECUTE_ON_STARTUP(
@@ -62,46 +70,85 @@ UDPBasicBurst::~UDPBasicBurst()
 
 void UDPBasicBurst::initialize(int stage)
 {
-    // because of IPvXAddressResolver, we need to wait until interfaces are registered,
-    // address auto-assignment takes place etc.
-    if (stage != 3)
-        return;
+    AppBase::initialize(stage);
 
-    counter = 0;
-    numSent = 0;
-    numReceived = 0;
-    numDeleted = 0;
-    numDuplicated = 0;
+    if (stage == 0)
+    {
+        counter = 0;
+        numSent = 0;
+        numReceived = 0;
+        numDeleted = 0;
+        numDuplicated = 0;
 
-    delayLimit = par("delayLimit");
-    simtime_t startTime = par("startTime");
-    stopTime = par("stopTime");
+        delayLimit = par("delayLimit");
+        startTime = par("startTime");
+        stopTime = par("stopTime");
+        if (stopTime >= SIMTIME_ZERO && stopTime <= startTime)
+            error("Invalid startTime/stopTime parameters");
 
-    messageLengthPar = &par("messageLength");
-    burstDurationPar = &par("burstDuration");
-    sleepDurationPar = &par("sleepDuration");
-    sendIntervalPar = &par("sendInterval");
-    nextSleep = startTime;
-    nextBurst = startTime;
-    nextPkt = startTime;
+        messageLengthPar = &par("messageLength");
+        burstDurationPar = &par("burstDuration");
+        sleepDurationPar = &par("sleepDuration");
+        sendIntervalPar = &par("sendInterval");
+        nextSleep = startTime;
+        nextBurst = startTime;
+        nextPkt = startTime;
 
-    destAddrRNG = par("destAddrRNG");
-    const char *addrModeStr = par("chooseDestAddrMode").stringValue();
-    int addrMode = cEnum::get("ChooseDestAddrMode")->lookup(addrModeStr);
-    if (addrMode == -1)
-        throw cRuntimeError("Invalid chooseDestAddrMode: '%s'", addrModeStr);
-    chooseDestAddrMode = (ChooseDestAddrMode)addrMode;
+        destAddrRNG = par("destAddrRNG");
+        const char *addrModeStr = par("chooseDestAddrMode").stringValue();
+        int addrMode = cEnum::get("ChooseDestAddrMode")->lookup(addrModeStr);
+        if (addrMode == -1)
+            throw cRuntimeError("Invalid chooseDestAddrMode: '%s'", addrModeStr);
+        chooseDestAddrMode = (ChooseDestAddrMode)addrMode;
 
-    WATCH(numSent);
-    WATCH(numReceived);
-    WATCH(numDeleted);
-    WATCH(numDuplicated);
+        WATCH(numSent);
+        WATCH(numReceived);
+        WATCH(numDeleted);
+        WATCH(numDuplicated);
 
-    localPort = par("localPort");
-    destPort = par("destPort");
+        localPort = par("localPort");
+        destPort = par("destPort");
 
+        timerNext = new cMessage("UDPBasicBurstTimer");
+
+        sentPkSignal = registerSignal("sentPk");
+        rcvdPkSignal = registerSignal("rcvdPk");
+        outOfOrderPkSignal = registerSignal("outOfOrderPk");
+        dropPkSignal = registerSignal("dropPk");
+    }
+}
+
+IPvXAddress UDPBasicBurst::chooseDestAddr()
+{
+    if (destAddresses.size() == 1)
+        return destAddresses[0];
+
+    int k = genk_intrand(destAddrRNG, destAddresses.size());
+    return destAddresses[k];
+}
+
+cPacket *UDPBasicBurst::createPacket()
+{
+    char msgName[32];
+    sprintf(msgName, "UDPBasicAppData-%d", counter++);
+    long msgByteLength = messageLengthPar->longValue();
+    cPacket *payload = new cPacket(msgName);
+    payload->setByteLength(msgByteLength);
+    payload->addPar("sourceId") = getId();
+    payload->addPar("msgId") = numSent;
+
+    return payload;
+}
+
+void UDPBasicBurst::processStart()
+{
     socket.setOutputGate(gate("udpOut"));
     socket.bind(localPort);
+
+    const char *destAddrs = par("destAddresses");
+    cStringTokenizer tokenizer(destAddrs);
+    const char *token;
+    bool excludeLocalDestAddresses = par("excludeLocalDestAddresses").boolValue();
     if (par("setBroadcast").boolValue())
         socket.setBroadcast(true);
 
@@ -145,12 +192,13 @@ void UDPBasicBurst::initialize(int stage)
         }
     }
 
+#ifdef WITH_IPv4
+    IRoutingTable *rt = RoutingTableAccess().getIfExists();
+#endif
+#ifdef WITH_IPv6
+    RoutingTable6 *rt6 = RoutingTable6Access().getIfExists();
+#endif
 
-    const char *destAddrs = par("destAddresses");
-    cStringTokenizer tokenizer(destAddrs);
-    const char *token;
-
-    IPvXAddress myAddr = IPvXAddressResolver().resolve(this->getParentModule()->getFullPath().c_str());
     while ((token = tokenizer.nextToken()) != NULL)
     {
         if (strstr(token, "Broadcast") != NULL)
@@ -158,10 +206,22 @@ void UDPBasicBurst::initialize(int stage)
         else
         {
             IPvXAddress addr = IPvXAddressResolver().resolve(token);
-            if (addr != myAddr)
-                destAddresses.push_back(addr);
+#ifdef WITH_IPv4
+            if (excludeLocalDestAddresses && rt && rt->isLocalAddress(addr.get4()))
+                continue;
+#endif
+#ifdef WITH_IPv6
+            if (excludeLocalDestAddresses && rt6 && rt6->isLocalAddress(addr.get6()))
+                continue;
+#endif
+            destAddresses.push_back(addr);
         }
     }
+
+    nextSleep = simTime();
+    nextBurst = simTime();
+    nextPkt = simTime();
+    activeBurst = false;
 
     isSource = !destAddresses.empty();
 
@@ -171,48 +231,35 @@ void UDPBasicBurst::initialize(int stage)
             destAddr = chooseDestAddr();
 
         activeBurst = true;
-
-        timerNext = new cMessage("UDPBasicBurstTimer");
-        scheduleAt(startTime, timerNext);
     }
-
-    sentPkSignal = registerSignal("sentPk");
-    rcvdPkSignal = registerSignal("rcvdPk");
-    outOfOrderPkSignal = registerSignal("outOfOrderPk");
-    dropPkSignal = registerSignal("dropPk");
+    timerNext->setKind(SEND);
+    processSend();
 }
 
-IPvXAddress UDPBasicBurst::chooseDestAddr()
+void UDPBasicBurst::processSend()
 {
-    if (destAddresses.size() == 1)
-        return destAddresses[0];
-
-    int k = genk_intrand(destAddrRNG, destAddresses.size());
-    return destAddresses[k];
+    if (stopTime < SIMTIME_ZERO || simTime() < stopTime)
+    {
+        // send and reschedule next sending
+        if (isSource) // if the node is a sink, don't generate messages
+            generateBurst();
+    }
 }
 
-cPacket *UDPBasicBurst::createPacket()
+void UDPBasicBurst::processStop()
 {
-    char msgName[32];
-    sprintf(msgName, "UDPBasicAppData-%d", counter++);
-    long msgByteLength = messageLengthPar->longValue();
-    cPacket *payload = new cPacket(msgName);
-    payload->setByteLength(msgByteLength);
-    payload->addPar("sourceId") = getId();
-    payload->addPar("msgId") = numSent;
-
-    return payload;
+    socket.close();
 }
 
-void UDPBasicBurst::handleMessage(cMessage *msg)
+void UDPBasicBurst::handleMessageWhenUp(cMessage *msg)
 {
     if (msg->isSelfMessage())
     {
-        if (stopTime <= 0 || simTime() < stopTime)
-        {
-            // send and reschedule next sending
-            if (isSource) // if the node is a sink, don't generate messages
-                generateBurst();
+        switch (msg->getKind()) {
+            case START: processStart(); break;
+            case SEND:  processSend(); break;
+            case STOP:  processStop(); break;
+            default: throw cRuntimeError("Invalid kind %d in self message", (int)msg->getKind());
         }
     }
     else if (msg->getKind() == UDP_I_DATA)
@@ -338,6 +385,11 @@ void UDPBasicBurst::generateBurst()
     if (activeBurst && nextPkt >= nextSleep)
         nextPkt = nextBurst;
 
+    if (stopTime >= SIMTIME_ZERO && nextPkt >= stopTime)
+    {
+        timerNext->setKind(STOP);
+        nextPkt = stopTime;
+    }
     scheduleAt(nextPkt, timerNext);
 }
 
@@ -346,6 +398,37 @@ void UDPBasicBurst::finish()
     recordScalar("Total sent", numSent);
     recordScalar("Total received", numReceived);
     recordScalar("Total deleted", numDeleted);
+    AppBase::finish();
+}
+
+bool UDPBasicBurst::startApp(IDoneCallback *doneCallback)
+{
+    simtime_t start = std::max(startTime, simTime());
+
+    if ((stopTime < SIMTIME_ZERO) || (start < stopTime) || (start == stopTime && startTime == stopTime))
+    {
+        timerNext->setKind(START);
+        scheduleAt(start, timerNext);
+    }
+
+    return true;
+}
+
+bool UDPBasicBurst::stopApp(IDoneCallback *doneCallback)
+{
+    if (timerNext)
+        cancelEvent(timerNext);
+    activeBurst = false;
+    //TODO if(socket.isOpened()) socket.close();
+    return true;
+}
+
+bool UDPBasicBurst::crashApp(IDoneCallback *doneCallback)
+{
+    if (timerNext)
+        cancelEvent(timerNext);
+    activeBurst = false;
+    return true;
 }
 
 bool UDPBasicBurst::sendBroadcast(const IPvXAddress &dest, cPacket *pkt)

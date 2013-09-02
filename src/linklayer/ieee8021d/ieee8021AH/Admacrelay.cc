@@ -10,7 +10,6 @@
 ******************************************************/
 #include "Admacrelay.h"
 #include "Ethernet.h"
-#include "EtherMAC.h"
 #include "Delivery_m.h"
 #include "RSTPAccess.h"
 #include "MVRPAccess.h"

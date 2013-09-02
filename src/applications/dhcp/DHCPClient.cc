@@ -21,8 +21,10 @@
 #include "InterfaceTableAccess.h"
 #include "IPv4InterfaceData.h"
 #include "ModuleAccess.h"
+#include "NodeStatus.h"
 #include "NotifierConsts.h"
 #include "RoutingTableAccess.h"
+#include "NodeOperations.h"
 
 Define_Module(DHCPClient);
 
@@ -51,6 +53,14 @@ void DHCPClient::initialize(int stage)
         timer_t1 = NULL;
         timer_t2 = NULL;
         timer_to = NULL;
+    }
+    else if (stage == 1)
+    {
+        bool isOperational;
+        NodeStatus *nodeStatus = dynamic_cast<NodeStatus *>(findContainingNode(this)->getSubmodule("status"));
+        isOperational = (!nodeStatus) || nodeStatus->getState() == NodeStatus::UP;
+        if (!isOperational)
+            throw cRuntimeError("This module doesn't support starting in node DOWN state");
     }
     else if (stage == 3)
     {
@@ -177,15 +187,15 @@ void DHCPClient::changeFSMState(CLIENT_STATE new_state)
         scheduleTimer_T2();
 
         // Assign the IP to the interface
+        // TODO: client must remove the configured IP address when the lease expires
         ie->ipv4Data()->setIPAddress(lease->ip);
         ie->ipv4Data()->setNetmask(lease->netmask);
 
         std::string banner = "Got IP " + lease->ip.str();
         getContainingNode()->bubble(banner.c_str());
 
-        EV
-                << "Configuring interface : " << ie->getName() << " ip:" << lease->ip << "/"
-                        << lease->netmask << " leased time: " << lease->lease_time << " (segs)" << endl;
+        EV << "Configuring interface : " << ie->getName() << " ip:" << lease->ip << "/"
+           << lease->netmask << " leased time: " << lease->lease_time << " (secs)" << endl;
         std::cout << "Host " << host_name << " got ip: " << lease->ip << "/" << lease->netmask << endl;
 
         IPv4Route *iroute = NULL;
@@ -210,7 +220,7 @@ void DHCPClient::changeFSMState(CLIENT_STATE new_state)
             irt->addRoute(e);
         }
         // update the routing table
-        nb->fireChangeNotification(NF_INTERFACE_IPv4CONFIG_CHANGED, NULL);
+        nb->fireChangeNotification(NF_INTERFACE_IPv4CONFIG_CHANGED, ie);
         EV << "publishing the configuration change into the blackboard" << endl;
     }
 
@@ -560,7 +570,6 @@ void DHCPClient::cancelTimer_TO()
 {
     cancelTimer(timer_to);
     timer_to = NULL;
-
 }
 
 void DHCPClient::scheduleTimer_TO(TIMER_TYPE type)
@@ -605,4 +614,36 @@ void DHCPClient::sendToUDP(cPacket *msg, int srcPort, const IPvXAddress& destAdd
 
    // emit(sentPkSignal, msg);
     socket.sendTo(msg, destAddr, destPort, ie->getInterfaceId());
+}
+
+bool DHCPClient::handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback)
+{
+    Enter_Method_Silent();
+    if (dynamic_cast<NodeStartOperation *>(operation)) {
+        if (stage == NodeStartOperation::STAGE_APPLICATION_LAYER) {
+            IInterfaceTable* ift = InterfaceTableAccess().get();
+            ie = ift->getInterfaceByName(par("interface"));
+            socket.bind(bootpc_port);
+            changeFSMState(INIT);
+        }
+    }
+    else if (dynamic_cast<NodeShutdownOperation *>(operation)) {
+        if (stage == NodeShutdownOperation::STAGE_APPLICATION_LAYER) {
+            cancelTimer_T1();
+            cancelTimer_T2();
+            cancelTimer_TO();
+            // TODO: socket.close();
+            ie = NULL;
+        }
+    }
+    else if (dynamic_cast<NodeCrashOperation *>(operation)) {
+        if (stage == NodeCrashOperation::STAGE_CRASH) {
+            cancelTimer_T1();
+            cancelTimer_T2();
+            cancelTimer_TO();
+            ie = NULL;
+        }
+    }
+    else throw cRuntimeError("Unsupported lifecycle operation '%s'", operation->getClassName());
+    return true;
 }

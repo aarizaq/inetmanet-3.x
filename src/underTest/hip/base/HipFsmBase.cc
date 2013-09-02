@@ -74,7 +74,7 @@ void HipFsmBase::initialize()
 	for (int i=0; i<ift->getNumInterfaces(); i++)
     {
         InterfaceEntry *ie = ift->getInterface(i);
-		if(!(ie->isLoopback()) && !(ie->isDown())) {
+		if(!(ie->isLoopback()) && (ie->isUp())) {
 			if(hipmodule->mapIfaceToConnected.find(ie) != hipmodule->mapIfaceToConnected.end() && hipmodule->mapIfaceToConnected[ie] == true) {
 				if(srcAddressList.empty())
 					currentIfId = ie->getInterfaceId();
@@ -133,7 +133,7 @@ void HipFsmBase::handleAddressChange(){
     {
         InterfaceEntry *ie = ift->getInterface(i);
 
-		if(!(ie->isLoopback()) && !(ie->isDown())) {
+		if(!(ie->isLoopback()) && (ie->isUp())) {
 			if(hipmodule->mapIfaceToConnected.find(ie) != hipmodule->mapIfaceToConnected.end() && hipmodule->mapIfaceToConnected[ie] == true) {
 				if(srcAddressList.empty())
 					currentIfId = ie->getInterfaceId();

@@ -26,9 +26,8 @@
 #include "IReceptionModel.h"
 #include "SnrList.h"
 #include "ObstacleControl.h"
-#include "IPowerControl.h"
 #include "INoiseGenerator.h"
-
+#include "ILifecycle.h"
 
 /**
  * Abstract base class for radio modules. Radio modules deal with the
@@ -54,15 +53,8 @@
  * and IRadioModel classes.
  *
  * @author Andras Varga, Levente Meszaros
- *
- * Power Control Interface allows to turn on/off the radio interface
- * PowerControlManager helps to perform these tasks, however, user
- * can implemenent its own manager to turn on/off an interface
- *
- * @author Juan-Carlos Maureira
- *
  */
-class INET_API Radio : public ChannelAccess, public IPowerControl
+class INET_API Radio : public ChannelAccess, public ILifecycle
 {
   protected:
     typedef std::map<double,double> SensitivityList; // Sensitivity list
@@ -72,6 +64,7 @@ class INET_API Radio : public ChannelAccess, public IPowerControl
     Radio();
     virtual ~Radio();
     virtual int getChannel() const {return getChannelNumber();}
+    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback);
 
   protected:
     virtual void initialize(int stage);
@@ -139,23 +132,19 @@ class INET_API Radio : public ChannelAccess, public IPowerControl
      *  check if the packet must be processes
      */
     virtual bool processAirFrame(AirFrame *airframe);
+
     /*
      * Routines to connect or disconnect the transmission and reception  of packets
      */
-
-    virtual void disconnectTransceiver() {transceiverConnect = false;}
-    virtual void connectTransceiver() {transceiverConnect = true;}
-    virtual void disconnectReceiver();
+    virtual void connectTransceiver() { transceiverConnected = true; }
+    virtual void disconnectTransceiver() { transceiverConnected = false; }
     virtual void connectReceiver();
+    virtual void disconnectReceiver();
 
     virtual void registerBattery();
 
     virtual void updateDisplayString();
 
-    // Power Control methods
-    virtual void enablingInitialization();
-    virtual void disablingInitialization();
-    //
     double calcDistFreeSpace();
     double calcDistDoubleRay();
 
@@ -258,11 +247,12 @@ class INET_API Radio : public ChannelAccess, public IPowerControl
      *  minimum signal necessary to change the channel state to RECV
      */
     double receptionThreshold;
+
     /*
      * this variable is used to disconnect the possibility of sent packets to the ChannelControl
      */
-    bool transceiverConnect;
-    bool receiverConnect;
+    bool transceiverConnected;
+    bool receiverConnected;
 
     // if true draw coverage circles
     bool drawCoverage;

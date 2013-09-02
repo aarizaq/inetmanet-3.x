@@ -7,16 +7,17 @@
 * @version 1.0
 * @date Feb 2011
 ******************************************************/
-#include "RSTP.h"
-#include "Ethernet.h"
 #include "EtherFrame_m.h"
 #include "MACRelayUnitBase.h"
+#include "EtherMACBase.h"
+#include "Ethernet.h"
 #include "Admacrelay.h"
-#include "EtherMAC.h"
 #include "Cache1QAccess.h"
 #include "AdmacrelayAccess.h"
 #include "XMLUtils.h"
 #include "Relay1QAccess.h"
+#include "RSTP.h"
+
 
 std::ostream& operator<<(std::ostream& os, const PortStatus& e)
 {
@@ -73,12 +74,13 @@ void RSTP::initialize(int stage)
 		}
 		if(macUnit!=NULL)
 		{
-			address.setAddress(check_and_cast<EtherMAC *>(macUnit)->par("address"));
+		    EtherMACBase *macBase = check_and_cast<EtherMACBase *>(macUnit);
+		    address = macBase->getMACAddress();
 		}
 		else
 		{
-			ev<<"macB[0] not found. Is not this module connected to another BEB?"<<endl;
-			ev<<"Setting AAAAAA000001 as backbone mac address."<<endl;
+			EV << "macB[0] not found. Is not this module connected to another BEB?"<<endl;
+			EV << "Setting AAAAAA000001 as backbone mac address."<<endl;
 			address.setAddress("AAAAAA000001");
 		}
 		autoEdge=par("autoEdge");
