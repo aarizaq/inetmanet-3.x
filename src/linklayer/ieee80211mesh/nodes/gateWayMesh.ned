@@ -134,10 +134,6 @@ module gateWayMesh
             parameters:
                 @display("p=53,386");
         }
-        autoconfigurator: HostAutoConfigurator2 {
-            @display("p=53,71");
-        }
-
         pcapRecorder[numPcapRecorders]: PcapRecorder {
             @display("p=183,233");
         }
@@ -201,7 +197,7 @@ module gateWayMesh
 
         // connections to network outside
 
-        for i=0..meshChannels-1 {            
+        for i=0..meshChannels-1 {
             radioIn[i] --> wlanMesh.radioIn[i];
 
         }

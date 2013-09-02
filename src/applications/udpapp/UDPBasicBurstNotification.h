@@ -35,12 +35,10 @@ class INET_API UDPBasicBurstNotification : public UDPBasicBurst, protected INoti
   protected:
     AddressModule * addressModule;
   protected:
-    virtual int numInitStages() const {return 4;}
-    virtual void initialize(int stage);
-
     // chooses random destination address
     virtual IPvXAddress chooseDestAddr();
     virtual void generateBurst();
+    virtual void processStart();
     virtual void receiveChangeNotification(int category, const cObject *details);
   public:
     UDPBasicBurstNotification();

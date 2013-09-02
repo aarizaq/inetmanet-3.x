@@ -19,9 +19,8 @@
 package inet.examples.manetrouting.pruebasGateWay2;
 
 
-import inet.nodes.inet.AdhocHost;
+import inet.nodes.inet.WirelessHost;
 import inet.linklayer.ieee80211mesh.nodes.HostMesh;
-import inet.linklayer.ieee80211mesh.nodes.HostSta;
 import inet.linklayer.ieee80211mesh.nodes.BasicMobileManetMesh;
 import inet.world.radio.ChannelControl;
 import inet.linklayer.ieee80211mesh.nodes.gateWayMesh;
@@ -29,6 +28,8 @@ import inet.linklayer.ieee80211mesh.nodes.ApMeshNode;
 import inet.nodes.ethernet.EtherSwitch;
 import inet.nodes.inet.WirelessHost;
 import inet.linklayer.ieee80211mesh.nodes.ApMeshRelay;
+import inet.networklayer.autorouting.ipv4.IPv4NetworkConfigurator;
+
 network redSimple
 {
     parameters:
@@ -37,13 +38,13 @@ network redSimple
         int numBasic;
         double nodeSeparation @unit(m) = default(80m);
     submodules:
-        fixhost[1]: HostSta {
+        fixhost[1]: WirelessHost {
 
             @display("p=24,66");
         }
         fixhostA[1]: BasicMobileManetMesh {
             parameters:
-                mobilityType = "LinealNodeDistributionMobility";
+                mobilityType = "LinearNodeDistributionMobility";
                 mobility.initialY = 150m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.initialX = nodeSeparation/2.0+nodeSeparation;
                 mobility.separation = nodeSeparation*2;
@@ -51,7 +52,7 @@ network redSimple
         }
         fixhostB[1]: ApMeshRelay {
             parameters:
-                mobilityType = "LinealNodeDistributionMobility";
+                mobilityType = "LinearNodeDistributionMobility";
                 mobility.initialY = 150m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
                 mobility.initialX = (nodeSeparation/2.0);
                 mobility.separation = nodeSeparation*2;
@@ -68,6 +69,10 @@ network redSimple
                 wlanMesh.hasLocator = true;
                 @display("i=device/router;r=,,#707070;p=245,115");
         }
+        configurator: IPv4NetworkConfigurator {
+            config=xml("<config><interface hosts='*' address='192.168.x.x' netmask='255.255.0.0'/></config>");
+            @display("p=140,50");
+        }        
 }
 
 

@@ -41,51 +41,11 @@ UDPBasicBurstNotification::~UDPBasicBurstNotification()
         delete addressModule;
 }
 
-void UDPBasicBurstNotification::initialize(int stage)
+void UDPBasicBurstNotification::processStart()
 {
-    // because of IPvXAddressResolver, we need to wait until interfaces are registered,
-    // address auto-assignment takes place etc.
-    if (stage != 3)
-        return;
-
-    counter = 0;
-    numSent = 0;
-    numReceived = 0;
-    numDeleted = 0;
-    numDuplicated = 0;
-
-    delayLimit = par("delayLimit");
-    simtime_t startTime = par("startTime");
-    if (startTime < simTime())
-        startTime = simTime();
-    stopTime = par("stopTime");
-
-    messageLengthPar = &par("messageLength");
-    burstDurationPar = &par("burstDuration");
-    sleepDurationPar = &par("sleepDuration");
-    sendIntervalPar = &par("sendInterval");
-    nextSleep = startTime;
-    nextBurst = startTime;
-    nextPkt = startTime;
-
-
-    destAddrRNG = par("destAddrRNG");
-    const char *addrModeStr = par("chooseDestAddrMode").stringValue();
-    int addrMode = cEnum::get("ChooseDestAddrMode")->lookup(addrModeStr);
-    if (addrMode == -1)
-        throw cRuntimeError(this, "Invalid chooseDestAddrMode: '%s'", addrModeStr);
-    chooseDestAddrMode = (ChooseDestAddrMode)addrMode;
-
-    WATCH(numSent);
-    WATCH(numReceived);
-    WATCH(numDeleted);
-    WATCH(numDuplicated);
-
-    localPort = par("localPort");
-    destPort = par("destPort");
-
     socket.setOutputGate(gate("udpOut"));
     socket.bind(localPort);
+
     if (par("setBroadcast").boolValue())
         socket.setBroadcast(true);
 
@@ -129,12 +89,9 @@ void UDPBasicBurstNotification::initialize(int stage)
         }
     }
 
-
     addressModule = new AddressModule();
     //addressModule->initModule(par("chooseNewIfDeleted").boolValue());
     addressModule->initModule(true);
-
-
     std::string destAddresses = par("destAddresses").stdstringValue();
     if (strcmp(destAddresses.c_str(),"") != 0)
         isSource = true;
@@ -143,22 +100,18 @@ void UDPBasicBurstNotification::initialize(int stage)
     {
         if (chooseDestAddrMode == ONCE)
             destAddr = chooseDestAddr();
-
         activeBurst = true;
-
-        timerNext = new cMessage("UDPBasicBurstTimer");
-        scheduleAt(startTime, timerNext);
     }
 
-    sentPkSignal = registerSignal("sentPk");
-    rcvdPkSignal = registerSignal("rcvdPk");
-    outOfOrderPkSignal = registerSignal("outOfOrderPk");
-    dropPkSignal = registerSignal("dropPk");
+    nextSleep = simTime();
+    nextBurst = simTime();
+    nextPkt = simTime();
+    activeBurst = false;
 
-    NotificationBoard *nb = NotificationBoardAccess().get();
-    nb->subscribe(this,NF_INTERFACE_IPv4CONFIG_CHANGED);
-    nb->subscribe(this,NF_INTERFACE_IPv6CONFIG_CHANGED);
+    timerNext->setKind(SEND);
+    processSend();
 }
+
 
 IPvXAddress UDPBasicBurstNotification::chooseDestAddr()
 {

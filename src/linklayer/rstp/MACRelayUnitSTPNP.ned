@@ -69,7 +69,7 @@ simple MACRelayUnitSTPNP like IMACRelayUnit
         @display("i=block/network2");
         
     gates:
-        input lowerLayerIn[];    // see MACRelayUnit
-        output lowerLayerOut[];  // see MACRelayUnit
+        input ifIn[];    // see MACRelayUnit
+        output ifOut[];  // see MACRelayUnit
 }
 

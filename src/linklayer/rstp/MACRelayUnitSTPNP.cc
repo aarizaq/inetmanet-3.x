@@ -68,7 +68,7 @@ MACRelayUnitSTPNP::~MACRelayUnitSTPNP()
 
 void MACRelayUnitSTPNP::setAllPortsStatus(PortStatus status)
 {
-    for (int i=0; i<this->gateSize("lowerLayerOut"); i++)
+    for (int i=0; i<this->gateSize("ifOut"); i++)
     {
         this->setPortStatus(i,status);
     }
@@ -146,11 +146,11 @@ void MACRelayUnitSTPNP::setPortStatus(int port_idx, PortStatus status)
         {
 
             // color the internal port's link in red
-            this->gate("lowerLayerOut",port_idx)->getDisplayString().setTagArg("ls",0,"red");
+            this->gate("ifOut",port_idx)->getDisplayString().setTagArg("ls",0,"red");
             // color the external port's link in red
 
             // TODO: make this code safe for unconnected gates
-            cModule* mac = this->gate("lowerLayerOut",port_idx)->getPathEndGate()->getOwnerModule();
+            cModule* mac = this->gate("ifOut",port_idx)->getPathEndGate()->getOwnerModule();
             cGate* outport = mac->gate("phys$o")->getNextGate();
             outport->getDisplayString().setTagArg("ls",0,"red");
             cGate* inport = mac->gate("phys$i")->getPreviousGate()->getPreviousGate();
@@ -171,7 +171,7 @@ void MACRelayUnitSTPNP::setPortStatus(int port_idx, PortStatus status)
         }
         else if (status.state == LISTENING)
         {
-            this->gate("lowerLayerOut",port_idx)->getDisplayString().setTagArg("ls",0,"yellow");
+            this->gate("ifOut",port_idx)->getDisplayString().setTagArg("ls",0,"yellow");
             // schedule the port edge timer
             if (this->port_status[port_idx].getPortEdgeTimer()->isScheduled())
             {
@@ -191,7 +191,7 @@ void MACRelayUnitSTPNP::setPortStatus(int port_idx, PortStatus status)
         }
         else if (status.state == LEARNING)
         {
-            this->gate("lowerLayerOut",port_idx)->getDisplayString().setTagArg("ls",0,"blue");
+            this->gate("ifOut",port_idx)->getDisplayString().setTagArg("ls",0,"blue");
 
             // check the edge timer and if it is active, canceling it since
             if (this->port_status[port_idx].isPortEdgeTimerActive())
@@ -214,7 +214,7 @@ void MACRelayUnitSTPNP::setPortStatus(int port_idx, PortStatus status)
         }
         else if (status.state == FORWARDING)
         {
-            this->gate("lowerLayerOut",port_idx)->getDisplayString().setTagArg("ls",0,"green");
+            this->gate("ifOut",port_idx)->getDisplayString().setTagArg("ls",0,"green");
             if (this->port_status[port_idx].getForwardTimer()->isScheduled())
             {
                 EV << "  Canceling fwd timer" << endl;
@@ -233,27 +233,27 @@ void MACRelayUnitSTPNP::setPortStatus(int port_idx, PortStatus status)
 
         if (status.role == ROOT_PORT)
         {
-            this->gate("lowerLayerOut",port_idx)->getDisplayString().setTagArg("t",0,"R");
+            this->gate("ifOut",port_idx)->getDisplayString().setTagArg("t",0,"R");
         }
         else if (status.role == DESIGNATED_PORT)
         {
-            this->gate("lowerLayerOut",port_idx)->getDisplayString().setTagArg("t",0,"D");
+            this->gate("ifOut",port_idx)->getDisplayString().setTagArg("t",0,"D");
         }
         else if (status.role == ALTERNATE_PORT)
         {
-            this->gate("lowerLayerOut",port_idx)->getDisplayString().setTagArg("t",0,"A");
+            this->gate("ifOut",port_idx)->getDisplayString().setTagArg("t",0,"A");
         }
         else if (status.role == BACKUP_PORT)
         {
-            this->gate("lowerLayerOut",port_idx)->getDisplayString().setTagArg("t",0,"B");
+            this->gate("ifOut",port_idx)->getDisplayString().setTagArg("t",0,"B");
         }
         else if (status.role == NONDESIGNATED_PORT)
         {
-            this->gate("lowerLayerOut",port_idx)->getDisplayString().setTagArg("t",0,"ND");
+            this->gate("ifOut",port_idx)->getDisplayString().setTagArg("t",0,"ND");
         }
         else if (status.role == EDGE_PORT)
         {
-            this->gate("lowerLayerOut",port_idx)->getDisplayString().setTagArg("t",0,"E");
+            this->gate("ifOut",port_idx)->getDisplayString().setTagArg("t",0,"E");
         }
     }
     else
@@ -263,7 +263,7 @@ void MACRelayUnitSTPNP::setPortStatus(int port_idx, PortStatus status)
 
     // check for allSynced flag
     this->allSynced = true;
-    for (int i=0; i<this->gateSize("lowerLayerOut"); i++)
+    for (int i=0; i<this->gateSize("ifOut"); i++)
     {
         if (i!=this->getRootPort())
         {
@@ -307,7 +307,7 @@ void MACRelayUnitSTPNP::setRootPort(int port)
     EV << "New Root Election: " << this->priority_vector << endl;
 
     // Setting all the port in designated status
-    for (int i=0; i<this->gateSize("lowerLayerOut"); i++)
+    for (int i=0; i<this->gateSize("ifOut"); i++)
     {
         if (i!=port)
         {
@@ -349,7 +349,7 @@ void MACRelayUnitSTPNP::recordPriorityVector(BPDU* bpdu, int port_idx)
 
 int MACRelayUnitSTPNP::getRootPort()
 {
-    for (int i=0; i<this->gateSize("lowerLayerOut"); i++)
+    for (int i=0; i<this->gateSize("ifOut"); i++)
     {
         if (this->port_status[i].role == ROOT_PORT)
         {
@@ -453,7 +453,7 @@ void MACRelayUnitSTPNP::moveMACAddresses(int from_port,int to_port)
 
 double MACRelayUnitSTPNP::readChannelBitRate(int index)
 {
-    cModule* mac = this->gate("lowerLayerOut",index)->getPathEndGate()->getOwnerModule();
+    cModule* mac = this->gate("ifOut",index)->getPathEndGate()->getOwnerModule();
     cGate* physOutGate = mac->gate("phys$o");
     cGate* physInGate = mac->gate("phys$i");
 
@@ -536,7 +536,7 @@ void MACRelayUnitSTPNP::initialize(int stage)
 
     // switch port registration
     this->port_status.clear();
-    for (int i=0; i<this->gateSize("lowerLayerOut"); i++)
+    for (int i=0; i<this->gateSize("ifOut"); i++)
     {
         //this->port_status.insert(std::make_pair(i,PortStatus(i)));
         this->port_status.push_back(PortStatus(i));
@@ -792,7 +792,7 @@ void MACRelayUnitSTPNP::handleSTPBPDUTimeoutTimer(STPBPDUTimeoutTimer* t)
         EV << "Root port Lost! Starting recovery" << endl;
         // FastRecovery procedure when there is a backup root path
         int root_candidate = -1;
-        for (int i=0; i<this->gateSize("lowerLayerOut"); i++)
+        for (int i=0; i<this->gateSize("ifOut"); i++)
         {
             if (this->port_status[i].role == BACKUP_PORT && this->port_status[i].observed_pr.bridge_id == this->priority_vector.bridge_id)
             {
@@ -869,7 +869,7 @@ void MACRelayUnitSTPNP::handleSTPBPDUNoFrame(int &port)
         EV << "Root port Lost! Starting recovery" << endl;
         // FastRecovery procedure when there is a backup root path
         int root_candidate = -1;
-        for (int i=0; i<this->gateSize("lowerLayerOut"); i++)
+        for (int i=0; i<this->gateSize("ifOut"); i++)
         {
             if (this->port_status[i].role == BACKUP_PORT && this->port_status[i].observed_pr.bridge_id == this->priority_vector.bridge_id)
             {
@@ -1407,7 +1407,7 @@ void MACRelayUnitSTPNP::sendBPDU(BPDU* bpdu,int port)
         if (frame->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
                 frame->setByteLength(MIN_ETHERNET_FRAME_BYTES);  // "padding"
 
-        send(frame, "lowerLayerOut", port);
+        send(frame, "ifOut", port);
         this->scheduleHoldTimer(port);
 
         // record the proposed bpdu on this port
@@ -1519,7 +1519,7 @@ void MACRelayUnitSTPNP::broadcastFrame(EtherFrame *frame, int inputport)
 {
     for (int i=0; i<numPorts; ++i)
         if (i!=inputport && this->port_status[i].state==FORWARDING)
-            send((EtherFrame*)frame->dup(), "lowerLayerOut", i);
+            send((EtherFrame*)frame->dup(), "ifOut", i);
     delete frame;
 }
 

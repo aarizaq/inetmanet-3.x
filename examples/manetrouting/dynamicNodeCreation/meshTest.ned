@@ -19,9 +19,8 @@
 package inet.examples.manetrouting.dynamicNodeCreation;
 
 
-import inet.nodes.inet.AdhocHost;
+import inet.nodes.inet.WirelessHost;
 import inet.linklayer.ieee80211mesh.nodes.HostMesh;
-import inet.linklayer.ieee80211mesh.nodes.HostSta;
 import inet.linklayer.ieee80211mesh.nodes.BasicMobileManetMesh;
 import inet.world.radio.ChannelControl;
 import inet.linklayer.ieee80211mesh.nodes.gateWayMesh;
@@ -30,6 +29,7 @@ import inet.nodes.ethernet.EtherSwitch;
 import inet.linklayer.ieee80211mesh.nodes.ApMeshRelay;
 import ned.DatarateChannel;
 import inet.mobility.models.LaptopModelManager;
+import inet.networklayer.autorouting.ipv4.IPv4NetworkConfigurator;
 
 network meshTest
 {
@@ -38,7 +38,7 @@ network meshTest
         int numMeshHost = default(0);
         double nodeSeparation @unit(m) = default(120m);
     submodules:
-        staHost[numSta]: HostSta {
+        staHost[numSta]: WirelessHost {
             @display("p=208,59");
         }
         meshHost[numMeshHost]: HostMesh {
@@ -121,10 +121,16 @@ network meshTest
         }
         laptopModelManager: LaptopModelManager {
 
-            @display("p=134,24;is=s");
+            @display("p=31,23;is=s");
         }
-
-
+        channelControl: ChannelControl {
+            @display("p=80,70;i=misc/sun");
+        }
+        configurator: IPv4NetworkConfigurator {
+            parameters:
+                config=xml("<config><interface hosts='*' address='145.236.x.x' netmask='255.255.0.0'/></config>");                
+            	@display("p=80,20");
+        }
 }
 
 

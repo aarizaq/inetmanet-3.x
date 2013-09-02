@@ -91,10 +91,6 @@ module ApMeshNode
                 @display("p=53,386");
         }
 
-        autoconfigurator: HostAutoConfigurator2 {
-            @display("p=53,71");
-        }
-
         pcapRecorder[numPcapRecorders]: PcapRecorder {
             @display("p=204,138");
         }

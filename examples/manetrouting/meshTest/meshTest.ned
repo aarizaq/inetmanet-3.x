@@ -19,9 +19,8 @@
 package inet.examples.manetrouting.meshTest;
 
 
-import inet.nodes.inet.AdhocHost;
+import inet.nodes.inet.WirelessHost;
 import inet.linklayer.ieee80211mesh.nodes.HostMesh;
-import inet.linklayer.ieee80211mesh.nodes.HostSta;
 import inet.linklayer.ieee80211mesh.nodes.BasicMobileManetMesh;
 import inet.world.radio.ChannelControl;
 import inet.linklayer.ieee80211mesh.nodes.gateWayMesh;
@@ -29,6 +28,7 @@ import inet.linklayer.ieee80211mesh.nodes.ApMeshNode;
 import inet.nodes.ethernet.EtherSwitch;
 import inet.linklayer.ieee80211mesh.nodes.ApMeshRelay;
 import ned.DatarateChannel;
+import inet.networklayer.autorouting.ipv4.IPv4NetworkConfigurator;
 
 channel cable extends DatarateChannel
 {
@@ -44,7 +44,7 @@ network meshTest
         int numMeshHost = default(0);
         double nodeSeparation @unit(m) = default(120m);
     submodules:
-        staHost[numSta]: HostSta {
+        staHost[numSta]: WirelessHost {
             @display("p=208,59");
         }
         meshHost[numMeshHost]: HostMesh {
@@ -155,7 +155,10 @@ network meshTest
                 wlanMesh.hasLocator = true;
                 @display("i=device/router;r=,,#707070;p=1014,507");
         }
-
+        configurator: IPv4NetworkConfigurator {
+            config=xml("<config><interface hosts='*' names = 'wlan*' address='192.168.1.x' netmask='255.255.255.0'/> <interface hosts='*' names = 'eth*' address='192.168.2.x' netmask='255.255.255.0'/></config>");
+            @display("p=140,50");
+        }
     connections allowunconnected:
         MPP.ethg++  <--> cable <--> SW.ethg++;
         MPP1.ethg++ <--> cable <--> SW.ethg++;

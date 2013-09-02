@@ -19,9 +19,8 @@
 package inet.examples.manetrouting.pruebasGateWay2;
 
 
-import inet.nodes.inet.AdhocHost;
+import inet.nodes.inet.WirelessHost;
 import inet.linklayer.ieee80211mesh.nodes.HostMesh;
-import inet.linklayer.ieee80211mesh.nodes.HostSta;
 import inet.linklayer.ieee80211mesh.nodes.BasicMobileManetMesh;
 import inet.world.radio.ChannelControl;
 import inet.linklayer.ieee80211mesh.nodes.gateWayMesh;
@@ -29,6 +28,7 @@ import inet.linklayer.ieee80211mesh.nodes.ApMeshRelay;
 import inet.nodes.ethernet.EtherSwitch;
 import inet.linklayer.ieee80211mesh.nodes.ApMeshRelay;
 import ned.DatarateChannel;
+import inet.networklayer.autorouting.ipv4.IPv4NetworkConfigurator;
 
 channel cable extends DatarateChannel
 {
@@ -45,7 +45,7 @@ network redTroncal
         int numBasic;
         double nodeSeparation @unit(m) = default(80m);
     submodules:
-        staHost[numSta]: HostSta {
+        staHost[numSta]: WirelessHost {
             @display("p=247,89");
         }
         fixhostA[8]: BasicMobileManetMesh {
@@ -171,7 +171,10 @@ network redTroncal
                 wlanMesh.hasLocator = true;
                 @display("i=device/router;r=,,#707070;p=1062,507");
         }
-
+        configurator: IPv4NetworkConfigurator {
+            config=xml("<config><interface hosts='*' address='192.168.x.x' netmask='255.255.0.0'/></config>");
+            @display("p=140,50");
+        }
     connections allowunconnected:
         gateWay.ethg++ <--> cable <--> SW.ethg++;
         gateWay1.ethg++ <--> cable <--> SW.ethg++;
