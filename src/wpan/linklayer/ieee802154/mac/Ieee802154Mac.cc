@@ -92,11 +92,9 @@ Ieee802154Mac::~Ieee802154Mac()
     emptyHListLink(&hlistDLink1,&hlistDLink2);
 }
 
-void Ieee802154Mac::registerInterface()
+InterfaceEntry * Ieee802154Mac::createInterfaceEntry()
 {
-    iface=NULL;
-    macaddress.convert64();
-    aExtendedAddress = macaddress;
+
     /*
     int size = sizeof(IE3ADDR);
     for (int i=0; i<size; i++)
@@ -108,12 +106,7 @@ void Ieee802154Mac::registerInterface()
         }
     }
    */
-    IInterfaceTable *ift = InterfaceTableAccess().getIfExists();
-    if (!ift)
-        return;
-
     InterfaceEntry *e = new InterfaceEntry(this);
-
     // interface name: NetworkInterface module's name without special characters ([])
     char *interfaceName = new char[strlen(getParentModule()->getFullName()) + 1];
     char *d = interfaceName;
@@ -138,15 +131,14 @@ void Ieee802154Mac::registerInterface()
     e->setPointToPoint(false);
     iface = e;
     // add
-    ift->addInterface(e);
+    return e;
 }
 
 /** Initialization */
 void Ieee802154Mac::initialize(int stage)
 {
-    cSimpleModule::initialize(stage);
     EV << getParentModule()->getParentModule()->getFullName() << ": initializing Ieee802154Mac, stage=" << stage << endl;
-
+    WirelessMacBase::initialize(stage);
     if (0 == stage)
     {
         const char *addressString = par("address");
@@ -172,6 +164,10 @@ void Ieee802154Mac::initialize(int stage)
         }
         else
             macaddress.setAddress(addressString);
+
+        iface=NULL;
+        macaddress.convert64();
+        aExtendedAddress = macaddress;
 
         registerInterface();
 
@@ -388,6 +384,27 @@ void Ieee802154Mac::initializeQueueModule()
     }
 }
 
+
+void Ieee802154Mac::flushQueue()
+{
+    if (queueModule) {
+        while (!queueModule->isEmpty())
+        {
+            cMessage *msg = queueModule->pop();
+            //TODO emit(dropPkIfaceDownSignal, msg); -- 'pkDropped' signals are missing in this module!
+            delete msg;
+        }
+        queueModule->clear(); // clear request count
+    }
+}
+
+void Ieee802154Mac::clearQueue()
+{
+    if (queueModule) {
+        queueModule->clear(); // clear request count
+    }
+}
+
 void Ieee802154Mac::finish()
 {
     double t = SIMTIME_DBL(simTime());
@@ -471,8 +488,14 @@ void Ieee802154Mac::startDevice()
 //-------------------------------------------------------------------------------/
 /*************************** <General Msg Handler> ******************************/
 //-------------------------------------------------------------------------------/
+
 void Ieee802154Mac::handleMessage(cMessage* msg)
 {
+    if (!isOperational)
+    {
+        handleMessageWhenDown(msg);
+        return;
+    }
 
     if (msg->getArrivalGateId() == mLowerLayerIn && dynamic_cast<cPacket*>(msg)==NULL)
     {
@@ -484,7 +507,7 @@ void Ieee802154Mac::handleMessage(cMessage* msg)
 
     if (msg->getArrivalGateId() == mLowerLayerIn)
     {
-        handleLowerMsg(msg);
+        handleLowerMsg(PK(msg));
     }
     else if (msg->isSelfMessage())
     {
@@ -492,11 +515,11 @@ void Ieee802154Mac::handleMessage(cMessage* msg)
     }
     else
     {
-        handleUpperMsg(msg);
+        handleUpperMsg(PK(msg));
     }
 }
 
-void Ieee802154Mac::handleUpperMsg(cMessage* msg)
+void Ieee802154Mac::handleUpperMsg(cPacket* msg)
 {
     uint16_t index;
     IE3ADDR destAddr;
@@ -619,14 +642,13 @@ void Ieee802154Mac::handleUpperMsg(cMessage* msg)
     EV << "[MAC]: an " << msg->getName() <<" (#" << numUpperPkt << ", " << PK(msg)->getByteLength() << " Bytes, destined for " << control_info->getDestName() << " with MAC address " << destAddr << ", transfer mode " << dataTransMode << ") received from the upper layer" << endl;
 
     // here always use short address:defFrmCtrl_AddrMode16
-    cPacket * pkt = PK(msg);
     MCPS_DATA_request(defFrmCtrl_AddrMode16,    mpib.macPANId,  MACAddress(mpib.macShortAddress),
                       defFrmCtrl_AddrMode16,      mpib.macPANId,  destAddr,
-                      pkt,(Ieee802154TxOption)dataTransMode);
+                      msg,(Ieee802154TxOption)dataTransMode);
     delete control_info;
 }
 
-void Ieee802154Mac::handleLowerMsg(cMessage* msg)
+void Ieee802154Mac::handleLowerMsg(cPacket* msg)
 {
     bool noAck;
     int i;
@@ -779,7 +801,7 @@ void Ieee802154Mac::handleLowerMsg(cMessage* msg)
 
     case Ieee802154_CMD:
         EV << "[MAC]: continue to process received CMD pkt" << endl;
-        handleCommand(frame);
+        handleCommand80215(frame);
         break;
 
     default:
@@ -1177,7 +1199,7 @@ void Ieee802154Mac::handleAck(Ieee802154Frame* frame)
     delete frame;
 }
 
-void Ieee802154Mac::handleCommand(Ieee802154Frame* frame)
+void Ieee802154Mac::handleCommand80215(Ieee802154Frame* frame)
 {
     bool ackReq = false;        // flag indicating if cmd needs to be released at the end of this function
 

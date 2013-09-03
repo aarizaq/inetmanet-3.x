@@ -15,6 +15,7 @@
 #include "IPassiveQueue.h"
 #include "MACAddress.h"
 #include "InterfaceEntry.h"
+#include "WirelessMacBase.h"
 
 /**
  * IEEE 802.15.4 Media Access Control (MAC) Layer
@@ -262,7 +263,7 @@ struct taskPending
     //----------------
 };
 
-class INET_API Ieee802154Mac: public cSimpleModule, public INotifiable
+class INET_API Ieee802154Mac: public WirelessMacBase
 {
   public:
     /**
@@ -285,38 +286,52 @@ class INET_API Ieee802154Mac: public cSimpleModule, public INotifiable
     * @name Initializtion functions
     */
     //@{
-    virtual void    initialize    (int);
-    virtual void    initializeQueueModule    ();
-    virtual int    numInitStages    () const { return 3; }
-    virtual void registerInterface();
+    virtual void    initialize(int);
+    virtual void    initializeQueueModule();
+    virtual int    numInitStages() const { return 3; }
+
+    virtual InterfaceEntry *createInterfaceEntry();
+
+    /**
+     * should clear queue and emit signal "dropPkFromHLIfaceDown" with entire packets
+     */
+    virtual void flushQueue();
+
+    /**
+     * should clear queue silently
+     */
+    virtual void clearQueue();
+
     //@}
 
-    virtual void    finish    ();
-    virtual void    receiveChangeNotification    (int, const cPolymorphic*);
+    virtual void    finish();
+    virtual void    receiveChangeNotification(int, const cPolymorphic*);
 
     // Functions for starting a WPAN with star topology
-    virtual void    startPANCoor    ();
-    virtual void    startDevice    ();
+    virtual void    startPANCoor();
+    virtual void    startDevice();
 
     /**
     * @name Message handling functions
     */
     //@{
-    virtual void    handleMessage    (cMessage*);
-    virtual void    handleSelfMsg    (cMessage*);
-    virtual void    handleUpperMsg    (cMessage*);
-    virtual void    handleLowerMsg    (cMessage*);
-    virtual void    handleMacPhyPrimitive    (int, cMessage*);
-    virtual void    handleBeacon    (Ieee802154Frame*);
-    virtual void    handleCommand    (Ieee802154Frame*);
-    virtual void    handleData    (Ieee802154Frame*);
-    virtual void    handleAck    (Ieee802154Frame*);
+    virtual void    handleMessage(cMessage *msg);
+    virtual void    handleSelfMsg(cMessage*);
+    virtual void    handleUpperMsg(cPacket*);
+    virtual void    handleLowerMsg(cPacket*);
+    virtual void    handleMacPhyPrimitive  (int, cMessage*);
+    virtual void    handleBeacon(Ieee802154Frame*);
+    virtual void    handleCommand(cMessage *msg){};
+
+    virtual void    handleCommand80215(Ieee802154Frame*);
+    virtual void    handleData(Ieee802154Frame*);
+    virtual void    handleAck(Ieee802154Frame*);
     /** @brief MAC frame filter, return true if frame is filtered out */
-    virtual bool    frameFilter    (Ieee802154Frame*);
-    virtual void    sendDown    (Ieee802154Frame*);
-    virtual void    constructACK    (Ieee802154Frame*);
+    virtual bool    frameFilter(Ieee802154Frame*);
+    virtual void    sendDown(Ieee802154Frame*);
+    virtual void    constructACK(Ieee802154Frame*);
     /** @brief request a msg from IFQueue, if it exists */
-    virtual void    reqtMsgFromIFq    ();
+    virtual void    reqtMsgFromIFq();
     //@}
 
     /**
@@ -328,110 +343,110 @@ class INET_API Ieee802154Mac: public cSimpleModule, public INotifiable
     /** This function is a part of simplified association process in the model.
      *  After receiving a beacon from the coordinator for the first time and associating with it,
      *  each device should call this function of its coordinator to register its MAC address and capability info at the coordinator and get the short MAC address from the return value */
-    virtual UINT_16    associate_request_cmd    (IE3ADDR extAddr, const DevCapability& capaInfo);
+    virtual UINT_16    associate_request_cmd(IE3ADDR extAddr, const DevCapability& capaInfo);
 
     /** This function is a part of simplified GTS request process in the model.
      *  After association, each device should call this function of its PAN Coordinator
      *  to apply for GTS and get its GTS starting number from the return value */
-    virtual uint16_t    gts_request_cmd    (UINT_16 macShortAddr, uint16_t length, bool isReceive);
+    virtual uint16_t    gts_request_cmd(UINT_16 macShortAddr, uint16_t length, bool isReceive);
 
     /**
     * @name MAC-PHY primitives related functions
     */
     //@{
-    virtual void    PLME_SET_TRX_STATE_request    (PHYenum state);
-    virtual void    PLME_SET_request    (PHYPIBenum attribute);
-    virtual void    PLME_CCA_request    ();
+    virtual void    PLME_SET_TRX_STATE_request(PHYenum state);
+    virtual void    PLME_SET_request(PHYPIBenum attribute);
+    virtual void    PLME_CCA_request();
     virtual void    PLME_bitrate_request();
-    virtual void    handle_PD_DATA_confirm    (PHYenum status);
-    virtual void    handle_PLME_CCA_confirm    (PHYenum status);
-    virtual void    handle_PLME_SET_TRX_STATE_confirm    (PHYenum status);
+    virtual void    handle_PD_DATA_confirm(PHYenum status);
+    virtual void    handle_PLME_CCA_confirm(PHYenum status);
+    virtual void    handle_PLME_SET_TRX_STATE_confirm(PHYenum status);
     //@}
 
     /**
     * @name SSCS-MAC primitives related functions
     */
     //@{
-    virtual void    MCPS_DATA_request    (uint16_t SrcAddrMode, UINT_16 SrcPANId, IE3ADDR SrcAddr,
+    virtual void    MCPS_DATA_request(uint16_t SrcAddrMode, UINT_16 SrcPANId, IE3ADDR SrcAddr,
                                           uint16_t DstAddrMode, UINT_16 DstPANId, IE3ADDR DstAddr,
                                           cPacket* msdu,     Ieee802154TxOption TxOption);
-    virtual void    MCPS_DATA_confirm    (MACenum status);
-    virtual void    MCPS_DATA_indication    (Ieee802154Frame*);
+    virtual void    MCPS_DATA_confirm(MACenum status);
+    virtual void    MCPS_DATA_indication(Ieee802154Frame*);
     //@}
 
     /**
     * @name CSMA/CA related functions
     */
     //@{
-    virtual void    csmacaEntry    (char pktType);// 'c': txBcnCmd; 'u': txBcnCmdUpper; 'd': txData
-    virtual void    csmacaResume    ();
-    virtual void    csmacaStart    (bool firsttime, Ieee802154Frame* frame = 0, bool ackReq = 0);
-    virtual void    csmacaCancel    ();
-    virtual void    csmacaCallBack    (PHYenum status); // CSMA-CA success or failure
-    virtual void    csmacaReset    (bool bcnEnabled);
-    virtual bool    csmacaCanProceed    (simtime_t wtime, bool afterCCA = false);
-    virtual void    csmaca_handle_RX_ON_confirm    (PHYenum status);    // To be called by handle_PLME_SET_TRX_STATE_confirm
-    virtual void    csmacaTrxBeacon    (char trx);  // To be called each time that a beacon received or transmitted
-    virtual simtime_t    csmacaAdjustTime    (simtime_t wtime);
-    virtual simtime_t    csmacaLocateBoundary    (bool toParent, simtime_t wtime);
-    virtual simtime_t    getFinalCAP    (char trxType);
+    virtual void    csmacaEntry(char pktType);// 'c': txBcnCmd; 'u': txBcnCmdUpper; 'd': txData
+    virtual void    csmacaResume();
+    virtual void    csmacaStart(bool firsttime, Ieee802154Frame* frame = 0, bool ackReq = 0);
+    virtual void    csmacaCancel();
+    virtual void    csmacaCallBack(PHYenum status); // CSMA-CA success or failure
+    virtual void    csmacaReset(bool bcnEnabled);
+    virtual bool    csmacaCanProceed(simtime_t wtime, bool afterCCA = false);
+    virtual void    csmaca_handle_RX_ON_confirm(PHYenum status);    // To be called by handle_PLME_SET_TRX_STATE_confirm
+    virtual void    csmacaTrxBeacon(char trx);  // To be called each time that a beacon received or transmitted
+    virtual simtime_t    csmacaAdjustTime(simtime_t wtime);
+    virtual simtime_t    csmacaLocateBoundary(bool toParent, simtime_t wtime);
+    virtual simtime_t    getFinalCAP(char trxType);
     //@}
 
     /**
     * @name State control and task management functions
     */
     //@{
-    virtual void    dispatch    (PHYenum pStatus, const char *frFunc,
+    virtual void    dispatch(PHYenum pStatus, const char *frFunc,
                                  PHYenum req_state = phy_SUCCESS,
                                  MACenum mStatus = mac_SUCCESS);
-    virtual void    taskSuccess    (char type, bool csmacaRes = true);
-    virtual void    taskFailed    (char type, MACenum status, bool csmacaRes = true);
-    virtual void    checkTaskOverflow    (Ieee802154MacTaskType task);
-    virtual void    FSM_MCPS_DATA_request    (PHYenum pStatus = phy_SUCCESS, MACenum mStatus = mac_SUCCESS);
-    virtual void    resetTRX    ();
+    virtual void    taskSuccess(char type, bool csmacaRes = true);
+    virtual void    taskFailed(char type, MACenum status, bool csmacaRes = true);
+    virtual void    checkTaskOverflow(Ieee802154MacTaskType task);
+    virtual void    FSM_MCPS_DATA_request(PHYenum pStatus = phy_SUCCESS, MACenum mStatus = mac_SUCCESS);
+    virtual void    resetTRX();
     //@}
 
     /**
     * @name Timer handling functions
     */
     //@{
-    virtual void    handleBackoffTimer    ();
-    virtual void    handleDeferCCATimer    ();
-    virtual void    handleBcnRxTimer    ();
-    virtual void    handleBcnTxTimer    ();
-    virtual void    handleAckTimeoutTimer    ();
-    virtual void    handleTxAckBoundTimer    (); // ACK is sent here
-    virtual void    handleTxCmdDataBoundTimer    ();    // Cmd or data is sent here
-    virtual void    handleIfsTimer    ();
-    virtual void    handleSDTimer    ();    // shared by txSDTimer and rxSDTimer
-    virtual void    handleFinalCapTimer    ();
-    virtual void    handleGtsTimer    ();
+    virtual void    handleBackoffTimer();
+    virtual void    handleDeferCCATimer();
+    virtual void    handleBcnRxTimer();
+    virtual void    handleBcnTxTimer();
+    virtual void    handleAckTimeoutTimer();
+    virtual void    handleTxAckBoundTimer(); // ACK is sent here
+    virtual void    handleTxCmdDataBoundTimer();    // Cmd or data is sent here
+    virtual void    handleIfsTimer();
+    virtual void    handleSDTimer();    // shared by txSDTimer and rxSDTimer
+    virtual void    handleFinalCapTimer();
+    virtual void    handleGtsTimer();
     //@}
 
     /**
     * @name GTS related functions
     */
     //@{
-    virtual bool    gtsCanProceed    ();
-    virtual void    gtsScheduler    ();
+    virtual bool    gtsCanProceed();
+    virtual void    gtsScheduler();
     //@}
 
     /**
     * @name Timer starting functions
     */
     //@{
-    virtual void    startBackoffTimer    (simtime_t);
-    virtual void    startDeferCCATimer    (simtime_t);
-    virtual void    startBcnRxTimer    ();
-    virtual void    startBcnTxTimer    (bool txFirstBcn = false, simtime_t startTime = 0.0);
-    virtual void    startAckTimeoutTimer ();
-    virtual void    startTxAckBoundTimer    (simtime_t);
-    virtual void    startTxCmdDataBoundTimer    (simtime_t);
-    virtual void    startIfsTimer    (bool);
-    virtual void    startTxSDTimer    ();
-    virtual void    startRxSDTimer    ();
-    virtual void    startGtsTimer    (simtime_t);
-    virtual void    startFinalCapTimer    (simtime_t);
+    virtual void    startBackoffTimer(simtime_t);
+    virtual void    startDeferCCATimer(simtime_t);
+    virtual void    startBcnRxTimer();
+    virtual void    startBcnTxTimer(bool txFirstBcn = false, simtime_t startTime = 0.0);
+    virtual void    startAckTimeoutTimer();
+    virtual void    startTxAckBoundTimer(simtime_t);
+    virtual void    startTxCmdDataBoundTimer(simtime_t);
+    virtual void    startIfsTimer(bool);
+    virtual void    startTxSDTimer();
+    virtual void    startRxSDTimer();
+    virtual void    startGtsTimer(simtime_t);
+    virtual void    startFinalCapTimer(simtime_t);
     //@}
 
     /**
@@ -439,19 +454,19 @@ class INET_API Ieee802154Mac: public cSimpleModule, public INotifiable
     */
     //@{
     /** @brief check if the packet is sent to its parent or not */
-    virtual bool    toParent    (Ieee802154Frame*);
+    virtual bool    toParent(Ieee802154Frame*);
 
     /** @brief calculate byte length of frame of certain type */
-    virtual int    calFrmByteLength    (Ieee802154Frame*);
+    virtual int    calFrmByteLength(Ieee802154Frame*);
 
     /** @brief calculate byte length of frame header  */
-    virtual int    calMHRByteLength    (uint16_t);
+    virtual int    calMHRByteLength(uint16_t);
 
     /** @brief calculate duration of the frame transmitted over wireless channel  */
-    virtual simtime_t    calDuration    (Ieee802154Frame*);
+    virtual simtime_t    calDuration(Ieee802154Frame*);
 
     /** @brief return current bit or symbol rate  at PHY*/
-    virtual double    getRate    (char);
+    virtual double    getRate(char);
     //@}
 
     // Use to distinguish the radio module that send the event

@@ -47,7 +47,7 @@ void csma802154::sendUp(cMessage *msg)
 void csma802154::initialize(int stage)
 {
 
-    cSimpleModule::initialize(stage);
+    WirelessMacBase::initialize(stage);
     if (stage == 0)
     {
         //get my mac address
@@ -207,38 +207,11 @@ csma802154::~csma802154()
     }
 }
 
-
-void csma802154::handleMessage(cMessage* msg)
-{
-
-    if (msg->getArrivalGateId() == mLowerLayerIn && !msg->isPacket())
-    {
-        if (msg->getKind()==0)
-            error("[MAC]: message '%s' with length==0 is supposed to be a primitive, but msg kind is also zero", msg->getName());
-        handleLowerControl(msg);
-        return;
-    }
-
-    if (msg->getArrivalGateId() == mLowerLayerIn)
-    {
-        mpNb->fireChangeNotification(NF_LINK_FULL_PROMISCUOUS, msg);
-        handleLowerMsg(msg);
-    }
-    else if (msg->isSelfMessage())
-    {
-        handleSelfMsg(msg);
-    }
-    else
-    {
-        handleUpperMsg(msg);
-    }
-}
-
 /**
  * Encapsulates the message to be transmitted and pass it on
  * to the FSM main method for further processing.
  */
-void csma802154::handleUpperMsg(cMessage *msg)
+void csma802154::handleUpperMsg(cPacket *msg)
 {
     //MacPkt *macPkt = encapsMsg(msg);
     reqtMsgFromIFq();
@@ -302,8 +275,7 @@ void csma802154::handleUpperMsg(cMessage *msg)
 
     //RadioAccNoise3PhyControlInfo *pco = new RadioAccNoise3PhyControlInfo(bitrate);
     //macPkt->setControlInfo(pco);
-    assert(static_cast<cPacket*>(msg));
-    macPkt->encapsulate(PK(msg));
+    macPkt->encapsulate(msg);
     EV <<"pkt encapsulated, length: " << macPkt->getBitLength() << "\n";
     executeMac(EV_SEND_REQUEST, macPkt);
 }
@@ -904,6 +876,39 @@ double csma802154::scheduleBackoff()
 /*
  * Binds timers to events and executes FSM.
  */
+
+void csma802154::handleMessage(cMessage* msg)
+{
+
+    if (!isOperational)
+    {
+        handleMessageWhenDown(msg);
+        return;
+    }
+
+    if (msg->getArrivalGateId() == mLowerLayerIn && !msg->isPacket())
+    {
+        if (msg->getKind()==0)
+            error("[MAC]: message '%s' with length==0 is supposed to be a primitive, but msg kind is also zero", msg->getName());
+        handleLowerControl(msg);
+        return;
+    }
+
+    if (msg->getArrivalGateId() == mLowerLayerIn)
+    {
+        mpNb->fireChangeNotification(NF_LINK_FULL_PROMISCUOUS, msg);
+        handleLowerMsg(PK(msg));
+    }
+    else if (msg->isSelfMessage())
+    {
+        handleSelfMsg(msg);
+    }
+    else
+    {
+        handleUpperMsg(PK(msg));
+    }
+}
+
 void csma802154::handleSelfMsg(cMessage *msg)
 {
     EV<< "timer routine." << endl;
@@ -926,9 +931,9 @@ void csma802154::handleSelfMsg(cMessage *msg)
  * Compares the address of this Host with the destination address in
  * frame. Generates the corresponding event.
  */
-void csma802154::handleLowerMsg(cMessage *msg)
+void csma802154::handleLowerMsg(cPacket *msg)
 {
-    Ieee802154Frame *macPkt = static_cast<Ieee802154Frame *> (msg);
+    Ieee802154Frame *macPkt = dynamic_cast<Ieee802154Frame *> (msg);
     MACAddress src = macPkt->getSrcAddr();
     MACAddress dest = macPkt->getDstAddr();
     //long ExpectedNr = 0;
@@ -1159,5 +1164,37 @@ void csma802154::receiveChangeNotification(int category, const cPolymorphic *det
 
     default:
         break;
+    }
+}
+
+void csma802154::flushQueue()
+{
+    if (queueModule) {
+        while (!queueModule->isEmpty())
+        {
+            cMessage *msg = queueModule->pop();
+            //TODO emit(dropPkIfaceDownSignal, msg); -- 'pkDropped' signals are missing in this module!
+            delete msg;
+        }
+        queueModule->clear(); // clear request count
+    }
+
+    while (!macQueue.empty())
+    {
+        delete macQueue.front();
+        macQueue.pop_front();
+    }
+}
+
+void csma802154::clearQueue()
+{
+    if (queueModule) {
+        queueModule->clear(); // clear request count
+    }
+
+    while (!macQueue.empty())
+    {
+        delete macQueue.front();
+        macQueue.pop_front();
     }
 }

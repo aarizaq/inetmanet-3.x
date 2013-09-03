@@ -65,17 +65,21 @@ class  csma802154 : public Ieee802154Mac
     /** @brief Delete all dynamically allocated objects of the module*/
     virtual void finish();
 
+    virtual void handleMessage(cMessage* msg);
+
     /** @brief Handle messages from lower layer */
-    virtual void handleLowerMsg(cMessage*);
+    virtual void handleLowerMsg(cPacket*);
 
     /** @brief Handle messages from upper layer */
-    virtual void handleUpperMsg(cMessage*);
+    virtual void handleUpperMsg(cPacket*);
 
     /** @brief Handle self messages such as timers */
     virtual void handleSelfMsg(cMessage*);
 
     /** @brief Handle control messages from lower layer */
     virtual void handleLowerControl(cMessage *msg);
+
+    virtual void handleCommand(cMessage*){}
 
   protected:
     virtual void receiveChangeNotification(int category, const cPolymorphic *details);
@@ -291,12 +295,18 @@ class  csma802154 : public Ieee802154Mac
     void manageQueue();
     void updateMacState(t_mac_states newMacState);
 
+    virtual void flushQueue();
+
+    /**
+     * should clear queue silently
+     */
+    virtual void clearQueue();
+
     //void attachSignal(Ieee802154Frame* mac, simtime_t startTime);
     void manageMissingAck(t_mac_event event, cMessage *msg);
     void startTimer(t_mac_timer timer);
 
     virtual double scheduleBackoff();
-    virtual void handleMessage(cMessage* msg);
     virtual void sendUp(cMessage *msg);
 
     virtual cPacket *decapsMsg(Ieee802154Frame * macPkt);
