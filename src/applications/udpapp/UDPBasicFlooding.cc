@@ -57,36 +57,41 @@ void UDPBasicFlooding::initialize(int stage)
 {
     // because of IPvXAddressResolver, we need to wait until interfaces are registered,
     // address auto-assignment takes place etc.
-    if (stage != 3)
-        return;
+    AppBase::initialize(stage);
+    if (stage == 0)
+    {
+        counter = 0;
+        numSent = 0;
+        numReceived = 0;
+        numDeleted = 0;
+        numDuplicated = 0;
+        numFlood = 0;
 
-    counter = 0;
-    numSent = 0;
-    numReceived = 0;
-    numDeleted = 0;
-    numDuplicated = 0;
-    numFlood = 0;
+        delayLimit = par("delayLimit");
+        startTime = par("startTime");
+        stopTime = par("stopTime");
 
-    delayLimit = par("delayLimit");
-    simtime_t startTime = par("startTime");
-    stopTime = par("stopTime");
+        messageLengthPar = &par("messageLength");
+        burstDurationPar = &par("burstDuration");
+        sleepDurationPar = &par("sleepDuration");
+        sendIntervalPar = &par("sendInterval");
+        nextSleep = startTime;
+        nextBurst = startTime;
+        nextPkt = startTime;
+        isSource = par("isSource");
 
-    messageLengthPar = &par("messageLength");
-    burstDurationPar = &par("burstDuration");
-    sleepDurationPar = &par("sleepDuration");
-    sendIntervalPar = &par("sendInterval");
-    nextSleep = startTime;
-    nextBurst = startTime;
-    nextPkt = startTime;
+        WATCH(numSent);
+        WATCH(numReceived);
+        WATCH(numDeleted);
+        WATCH(numDuplicated);
+        WATCH(numFlood);
+    }
+    else if (stage ==3)
+        processStart();
+}
 
-
-    WATCH(numSent);
-    WATCH(numReceived);
-    WATCH(numDeleted);
-    WATCH(numDuplicated);
-    WATCH(numFlood);
-
-
+void UDPBasicFlooding::processStart()
+{
     localPort = par("localPort");
     destPort = par("destPort");
 
@@ -124,35 +129,15 @@ void UDPBasicFlooding::initialize(int stage)
             }
         }
     }
-
     IPvXAddress myAddr = IPvXAddressResolver().resolve(this->getParentModule()->getFullPath().c_str());
-
-    isSource = par("isSource");
-
-    if (isSource)
-    {
-        activeBurst = true;
-        timerNext = new cMessage("UDPBasicFloodingTimer");
-        scheduleAt(startTime, timerNext);
-    }
-
-    if (strcmp(par("destAddresses").stringValue(),"") != 0)
-    {
-        addressModule = new AddressModule();
-        //addressModule->initModule(par("chooseNewIfDeleted").boolValue());
-        addressModule->initModule(true);
-
-    }
-
     myId = this->getParentModule()->getId();
-
-
     sentPkSignal = registerSignal("sentPk");
     rcvdPkSignal = registerSignal("rcvdPk");
     outOfOrderPkSignal = registerSignal("outOfOrderPk");
     dropPkSignal = registerSignal("dropPk");
     floodPkSignal = registerSignal("floodPk");
 }
+
 
 
 cPacket *UDPBasicFlooding::createPacket()
@@ -170,7 +155,7 @@ cPacket *UDPBasicFlooding::createPacket()
     return payload;
 }
 
-void UDPBasicFlooding::handleMessage(cMessage *msg)
+void UDPBasicFlooding::handleMessageWhenUp(cMessage *msg)
 {
     if (msg->isSelfMessage())
     {
@@ -363,4 +348,48 @@ bool UDPBasicFlooding::sendBroadcast(const IPvXAddress &dest, cPacket *pkt)
         return true;
     }
     return false;
+}
+
+
+bool UDPBasicFlooding::startApp(IDoneCallback *doneCallback)
+{
+    simtime_t start = std::max(startTime, simTime());
+
+    if ((stopTime < SIMTIME_ZERO) || (start < stopTime) || (start == stopTime && startTime == stopTime))
+    {
+        if (isSource)
+        {
+            activeBurst = true;
+            timerNext = new cMessage("UDPBasicFloodingTimer");
+            scheduleAt(startTime, timerNext);
+        }
+
+        if (strcmp(par("destAddresses").stringValue(),"") != 0)
+        {
+            if (addressModule == NULL)
+            {
+                addressModule = new AddressModule();
+                addressModule->initModule(true);
+            }
+        }
+    }
+
+    return true;
+}
+
+bool UDPBasicFlooding::stopApp(IDoneCallback *doneCallback)
+{
+    if (timerNext)
+        cancelEvent(timerNext);
+    activeBurst = false;
+    //TODO if(socket.isOpened()) socket.close();
+    return true;
+}
+
+bool UDPBasicFlooding::crashApp(IDoneCallback *doneCallback)
+{
+    if (timerNext)
+        cancelEvent(timerNext);
+    activeBurst = false;
+    return true;
 }

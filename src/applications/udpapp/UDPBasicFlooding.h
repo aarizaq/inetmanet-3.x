@@ -29,12 +29,13 @@
 #include "INETDefs.h"
 #include "UDPSocket.h"
 #include "AddressModule.h"
+#include "AppBase.h"
 
 
 /**
  * UDP application. See NED for more info.
  */
-class INET_API UDPBasicFlooding : public cSimpleModule
+class INET_API UDPBasicFlooding : public AppBase
 {
   protected:
     AddressModule * addressModule;
@@ -49,6 +50,7 @@ class INET_API UDPBasicFlooding : public cSimpleModule
     simtime_t delayLimit;
     cMessage *timerNext;
     simtime_t stopTime;
+    simtime_t startTime;
     simtime_t nextPkt;
     simtime_t nextBurst;
     simtime_t nextSleep;
@@ -86,9 +88,15 @@ class INET_API UDPBasicFlooding : public cSimpleModule
   protected:
     virtual int numInitStages() const {return 4;}
     virtual void initialize(int stage);
-    virtual void handleMessage(cMessage *msg);
+    virtual void handleMessageWhenUp(cMessage *msg);
     virtual void finish();
     virtual bool sendBroadcast(const IPvXAddress &dest, cPacket *pkt);
+    virtual void processStart();
+
+    //AppBase:
+    virtual bool startApp(IDoneCallback *doneCallback);
+    virtual bool stopApp(IDoneCallback *doneCallback);
+    virtual bool crashApp(IDoneCallback *doneCallback);
 
   public:
     UDPBasicFlooding();

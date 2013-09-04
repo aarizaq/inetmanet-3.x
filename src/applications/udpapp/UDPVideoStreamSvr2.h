@@ -25,11 +25,9 @@
 
 
 #include <vector>
-
-#include "INETDefs.h"
-#include "UDPSocket.h"
 #include <deque>
-
+#include "AppBase.h"
+#include "UDPSocket.h"
 
 /**
  * Stream VBR video streams to clients.
@@ -38,7 +36,7 @@
  * and UDPVideoStreamSvr starts streaming to them. Capable of handling
  * streaming to multiple clients.
  */
-class INET_API UDPVideoStreamSvr2 : public cSimpleModule
+class INET_API UDPVideoStreamSvr2 : public AppBase
 {
   public:
     /**
@@ -46,6 +44,7 @@ class INET_API UDPVideoStreamSvr2 : public cSimpleModule
      */
     struct VideoStreamData
     {
+        cMessage *timer;          ///< self timer msg
         IPvXAddress clientAddr;   ///< client address
         int clientPort;           ///< client UDP port
         long videoSize;           ///< total size of video
@@ -55,6 +54,7 @@ class INET_API UDPVideoStreamSvr2 : public cSimpleModule
         bool fileTrace;
         unsigned int traceIndex;
         simtime_t timeInit;
+        VideoStreamData() { timer = NULL; clientPort = 0; videoSize = bytesLeft = 0; numPkSent = 0; }
     };
 
     struct VideoInfo
@@ -66,7 +66,7 @@ class INET_API UDPVideoStreamSvr2 : public cSimpleModule
     };
 
   protected:
-    typedef std::vector<VideoStreamData *> VideoStreamVector;
+    typedef std::map<long int, VideoStreamData> VideoStreamMap;
     typedef std::deque<VideoInfo> VideoTrace;
     VideoTrace trace;
 
@@ -77,7 +77,7 @@ class INET_API UDPVideoStreamSvr2 : public cSimpleModule
     uint64_t maxSizeMacro;
     simtime_t initTime;
 
-    VideoStreamVector streamVector;
+    VideoStreamMap streamVector;
     UDPSocket socket;
 
     // module parameters
@@ -114,10 +114,16 @@ class INET_API UDPVideoStreamSvr2 : public cSimpleModule
   protected:
     ///@name Overridden cSimpleModule functions
     //@{
-    virtual void initialize();
+    virtual void initialize(int stage);
     virtual void finish();
-    virtual void handleMessage(cMessage* msg);
+    virtual void handleMessageWhenUp(cMessage* msg);
+    void clearStreams();
     //@}
+
+    //AppBase:
+    virtual bool startApp(IDoneCallback *doneCallback);
+    virtual bool stopApp(IDoneCallback *doneCallback);
+    virtual bool crashApp(IDoneCallback *doneCallback);
 };
 
 #endif

@@ -104,10 +104,8 @@ UDPVideoStreamSvr2::UDPVideoStreamSvr2()
 
 UDPVideoStreamSvr2::~UDPVideoStreamSvr2()
 {
-    for (unsigned int i=0; i < streamVector.size(); i++)
-        delete streamVector[i];
+    clearStreams();
     trace.clear();
-
     if (restartVideoBroadcast)
         cancelAndDelete(restartVideoBroadcast);
     if (videoBroadcastStream)
@@ -115,47 +113,45 @@ UDPVideoStreamSvr2::~UDPVideoStreamSvr2()
 
 }
 
-void UDPVideoStreamSvr2::initialize()
+void UDPVideoStreamSvr2::initialize(int stage)
 {
-    sendInterval = &par("sendInterval");
-    packetLen = &par("packetLen");
-    videoSize = &par("videoSize");
-    stopTime = &par("stopTime");
-    localPort = par("localPort");
-
-    macroPackets = par("macroPackets");
-    maxSizeMacro = par("maxSizeMacro").longValue();
-
-    if (par("videoBroadcast").boolValue())
+    AppBase::initialize(stage);
+    if (stage == 0)
     {
-        restartVideoBroadcast = new cMessage();
-        scheduleAt(par("startBroadcast").doubleValue(), restartVideoBroadcast);
+        sendInterval = &par("sendInterval");
+        packetLen = &par("packetLen");
+        videoSize = &par("videoSize");
+        stopTime = &par("stopTime");
+        localPort = par("localPort");
+
+        macroPackets = par("macroPackets");
+        maxSizeMacro = par("maxSizeMacro").longValue();
+
+        if (par("videoBroadcast").boolValue())
+        {
+            restartVideoBroadcast = new cMessage();
+            scheduleAt(par("startBroadcast").doubleValue(), restartVideoBroadcast);
+        }
+
+        // statistics
+        numStreams = 0;
+        numPkSent = 0;
+        reqStreamBytesSignal = registerSignal("reqStreamBytes");
+        sentPkSignal = registerSignal("sentPk");
+
+        trace.clear();
+        std::string fileName(par("traceFileName").stringValue());
+        if (!fileName.empty())
+            fileParser(fileName.c_str());
+        WATCH_MAP(streamVector);
     }
-
-
-
-    // statistics
-    numStreams = 0;
-    numPkSent = 0;
-    reqStreamBytesSignal = registerSignal("reqStreamBytes");
-    sentPkSignal = registerSignal("sentPk");
-
-    trace.clear();
-    std::string fileName(par("traceFileName").stringValue());
-    if (!fileName.empty())
-        fileParser(fileName.c_str());
-
-    WATCH_PTRVECTOR(streamVector);
-
-    socket.setOutputGate(gate("udpOut"));
-    socket.bind(localPort);
 }
 
 void UDPVideoStreamSvr2::finish()
 {
 }
 
-void UDPVideoStreamSvr2::handleMessage(cMessage *msg)
+void UDPVideoStreamSvr2::handleMessageWhenUp(cMessage *msg)
 {
     if (msg->isSelfMessage())
     {
@@ -188,19 +184,31 @@ void UDPVideoStreamSvr2::processStreamRequest(cMessage *msg)
     // register video stream...
     UDPDataIndication *ctrl = check_and_cast<UDPDataIndication *>(msg->getControlInfo());
 
-    for (unsigned int i = 0 ; i < streamVector.size(); i++)
+    for(VideoStreamMap::iterator it = streamVector.begin(); it  != streamVector.end(); ++it)
     {
-        if (streamVector[i]->clientAddr == ctrl->getSrcAddr() && streamVector[i]->clientPort == ctrl->getSrcPort())
+        if (it->second.clientAddr == ctrl->getSrcAddr() && it->second.clientPort == ctrl->getSrcPort())
         {
-            if (streamVector[i]->bytesLeft > 0)
+            if (!it->second.fileTrace)
             {
-                delete msg;
-                return;
+                if (it->second.bytesLeft)
+                {
+                    delete msg;
+                    return;
+                }
+            }
+            else
+            {
+                if (it->second.traceIndex < trace.size())
+                {
+                    delete msg;
+                    return;
+                }
             }
         }
     }
-
-    VideoStreamData *d = new VideoStreamData;
+    cMessage *timer = new cMessage("VideoStreamTmr");
+    VideoStreamData *d = &streamVector[timer->getId()];
+    d->timer = timer;
     d->clientAddr = ctrl->getSrcAddr();
     d->clientPort = ctrl->getSrcPort();
     d->videoSize = (*videoSize);
@@ -217,13 +225,7 @@ void UDPVideoStreamSvr2::processStreamRequest(cMessage *msg)
 
     if (!trace.empty())
         d->fileTrace = true;
-
-    streamVector.push_back(d);
     delete msg;
-
-    cMessage *timer = new cMessage("VideoStreamTmr");
-    timer->setContextPointer(d);
-
     // ... then transmit first packet right away
     sendStreamData(timer);
 
@@ -234,15 +236,18 @@ void UDPVideoStreamSvr2::processStreamRequest(cMessage *msg)
 void UDPVideoStreamSvr2::sendStreamData(cMessage *timer)
 {
     bool deleteTimer = false;
-    VideoStreamData *d = (VideoStreamData *) timer->getContextPointer();
+
+    VideoStreamMap::iterator it = streamVector.find(timer->getId());
+    if (it == streamVector.end())
+        throw cRuntimeError("Model error: Stream not found for timer");
+
+    VideoStreamData *d = &(it->second);
 
     // generate and send a packet
     if (d->stopTime > 0 && d->stopTime < simTime())
     {
         if (videoBroadcastStream == d)
         {
-           delete  videoBroadcastStream;
-           videoBroadcastStream = NULL;
            double nextStream = par("restartBroascast").doubleValue();
            if (nextStream>=0)
                scheduleAt(simTime()+nextStream,restartVideoBroadcast);
@@ -252,18 +257,7 @@ void UDPVideoStreamSvr2::sendStreamData(cMessage *timer)
                restartVideoBroadcast = NULL;
            }
         }
-        else
-        {
-            for (unsigned int i = 0; i < streamVector.size(); i++)
-            {
-                if (d == streamVector[i])
-                {
-                    streamVector.erase(streamVector.begin() + i);
-                    delete d;
-                    break;
-                }
-            }
-        }
+        streamVector.erase(it);
         cancelAndDelete(timer);
         return;
     }
@@ -355,16 +349,8 @@ void UDPVideoStreamSvr2::sendStreamData(cMessage *timer)
 
     if (deleteTimer)
     {
-        for (unsigned int i = 0 ; i < streamVector.size(); i++)
-        {
-            if (d == streamVector[i])
-            {
-                streamVector.erase(streamVector.begin()+i);
-                delete d;
-                break;
-            }
-        }
-        cancelAndDelete(timer);
+        streamVector.erase(it);
+        delete timer;
     }
 }
 
@@ -415,4 +401,33 @@ int UDPVideoStreamSvr2::broadcastInterface()
         outputInterfaceBroadcast = ie->getInterfaceId();
     }
     return outputInterfaceBroadcast;
+}
+
+
+void UDPVideoStreamSvr2::clearStreams()
+{
+    for(VideoStreamMap::iterator it = streamVector.begin(); it  != streamVector.end(); ++it)
+        cancelAndDelete(it->second.timer);
+    streamVector.clear();
+}
+
+bool UDPVideoStreamSvr2::startApp(IDoneCallback *doneCallback)
+{
+    socket.setOutputGate(gate("udpOut"));
+    socket.bind(localPort);
+
+    return true;
+}
+
+bool UDPVideoStreamSvr2::stopApp(IDoneCallback *doneCallback)
+{
+    clearStreams();
+    //TODO if(socket.isOpened()) socket.close();
+    return true;
+}
+
+bool UDPVideoStreamSvr2::crashApp(IDoneCallback *doneCallback)
+{
+    clearStreams();
+    return true;
 }
