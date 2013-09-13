@@ -1583,29 +1583,13 @@ simtime_t Ieee80211Mac::getAIFS(int AccessCategory)
 
 simtime_t Ieee80211Mac::getEIFS()
 {
+    ModulationType modType;
+    modType = WifiModulationType::getModulationType(opMode, basicBitrate);
 // FIXME:   return getSIFS() + getDIFS() + (8 * ACKSize + aPreambleLength + aPLCPHeaderLength) / lowestDatarate;
     if (PHY_HEADER_LENGTH<0)
-    {
-        if ((opMode=='b') || (opMode=='g'))
-            return getSIFS() + getDIFS() + (8 * LENGTH_ACK) / 1E+6 + getHeaderTime(1E+6);
-        else if (opMode=='a')
-            return getSIFS() + getDIFS() + (8 * LENGTH_ACK) / 6E+6 + getHeaderTime(6E+6);
-        else if (opMode=='p')
-             return getSIFS() + getDIFS() + (8 * LENGTH_ACK) / 6E+6 + getHeaderTime(3E+6);
-    }
+        return getSIFS() + getDIFS() + WifiModulationType::calculateTxDuration(LENGTH_ACK, modType, wifiPreambleType);
     else
-    {
-        // FIXME: check how PHY_HEADER_LENGTH is handled. Is that given in bytes or secs ???
-        // what is the real unit? The use seems to be incosistent betwen b and g modes.
-        if (opMode=='b')
-            return getSIFS() + getDIFS() + (8 * LENGTH_ACK + PHY_HEADER_LENGTH) / 1E+6;
-        else if (opMode=='g')
-            return getSIFS() + getDIFS() + (8 * LENGTH_ACK) / 1E+6 + PHY_HEADER_LENGTH;
-        else if (opMode=='a')
-            return getSIFS() + getDIFS() + (8 * LENGTH_ACK) / 6E+6 + PHY_HEADER_LENGTH;
-        else if (opMode=='p')
-            return getSIFS() + getDIFS() + (8 * LENGTH_ACK) / 3E+6 + PHY_HEADER_LENGTH;
-    }
+        return getSIFS() + getDIFS() + WifiModulationType::getPayloadDuration(LENGTH_ACK, modType)+PHY_HEADER_LENGTH;
     // if arrive here there is an error
     opp_error("mode not supported");
     return 0;

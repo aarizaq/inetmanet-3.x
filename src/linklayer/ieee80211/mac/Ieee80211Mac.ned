@@ -85,7 +85,7 @@ simple Ieee80211Mac
         string opMode @enum("b","g","a","p") = default("g");
         string wifiPreambleMode @enum("LONG","SHORT") = default("LONG"); // preamble mode; see IEEE 2007, 19.3.2
 
-        double basicBitrate @unit("bps") = default(2e6bps);
+        double basicBitrate @unit("bps") = default(1e6bps); // for 11g is 1Mbit/s
         int mtu @unit("B") = default(2304B);
         double slotTime @unit("s") = default(9us);
         int rtsThresholdBytes @unit("B") = default(2346B); // longer messages will be sent using RTS/CTS
