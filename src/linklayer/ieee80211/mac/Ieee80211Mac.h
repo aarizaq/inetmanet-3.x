@@ -114,6 +114,9 @@ class INET_API Ieee80211Mac : public WirelessMacBase
 
     /** The basic bitrate (1 or 2 Mbps) is used to transmit control frames and multicast/broadcast frames */
     double basicBitrate;
+    double controlBitRate;
+    ModulationType controlFrameModulationType;
+
     // Variables used by the auto bit rate
     bool forceBitRate; //if true the
     unsigned int intrateIndex;
@@ -495,6 +498,7 @@ class INET_API Ieee80211Mac : public WirelessMacBase
     virtual simtime_t getPIFS();
     virtual simtime_t computeBackoffPeriod(Ieee80211Frame *msg, int r);
     virtual simtime_t getHeaderTime(double bitrate);
+    virtual double controlFrameTxTime(int bits);
     //@}
 
   protected:
@@ -564,6 +568,7 @@ class INET_API Ieee80211Mac : public WirelessMacBase
      * basicBitrate not bitrate (e.g. 2Mbps instead of 11Mbps). Used with ACK, CTS, RTS.
      */
     virtual Ieee80211Frame *setBasicBitrate(Ieee80211Frame *frame);
+    virtual Ieee80211Frame *setControlBitrate(Ieee80211Frame *frame);
     virtual Ieee80211Frame *setBitrateFrame(Ieee80211Frame *frame);
   protected:
     /**
