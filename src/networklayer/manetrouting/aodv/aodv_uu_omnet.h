@@ -115,7 +115,11 @@ class AODVUU;
 /* The AODV-UU routing agent class */
 class AODVUU : public ManetRoutingBase
 {
-
+  private:
+    int  RERR_UDEST_SIZE;
+    int RERR_SIZE;
+    int RREP_SIZE;
+    int  RREQ_SIZE;
   private:
     char nodeName[50];
     ICMPAccess icmpAccess;

@@ -78,6 +78,13 @@ void NS_CLASS initialize(int stage)
      */
     if (stage==4)
     {
+
+        RERR_UDEST_SIZE = 4+getAddressSize();
+        RERR_SIZE = 8+getAddressSize();
+        RREP_SIZE = (getAddressSize()*2)+12;
+        RREQ_SIZE = 16+(getAddressSize()*2);
+
+
 #ifndef AODV_GLOBAL_STATISTISTIC
         iswrite = false;
         totalSend=0;
@@ -278,7 +285,7 @@ void NS_CLASS initialize(int stage)
 }
 
 /* Destructor for the AODV-UU routing agent */
-NS_CLASS ~ AODVUU()
+NS_CLASS ~AODVUU()
 {
 #ifdef AODV_USE_STL_RT
     while (!aodvRtTableMap.empty())

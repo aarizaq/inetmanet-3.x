@@ -456,7 +456,9 @@ OLSR::initialize(int stage)
     {
 
        if (isInMacLayer())
-           OlsrAddressSize::ADDR_SIZE = 6;
+           this->setAddressSize(6);
+
+       OlsrAddressSize::ADDR_SIZE = this->getAddressSize();
 	///
 	/// \brief Period at which a node must cite every link and every neighbor.
 	///

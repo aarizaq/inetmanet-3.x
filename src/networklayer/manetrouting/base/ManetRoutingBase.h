@@ -133,6 +133,8 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
     std::vector<ManetProxyAddress> proxyAddress;
 
     ILocator *locator;
+
+    int addressSizeBytes;
   protected:
     IRoutingTable*  getInetRoutingTable() const {return inet_rt;}
     IInterfaceTable* getInterfaceTable() const {return inet_ift;}
@@ -433,6 +435,11 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
     virtual bool isAp() const;
     //
     static bool getRouteFromGlobal(const ManetAddress &src, const ManetAddress &dest, std::vector<ManetAddress> &route);
+
+
+    // used for dimension the address size
+    int getAddressSize() {return addressSizeBytes;}
+    void setAddressSize(int p) {addressSizeBytes = p;}
 };
 
 #define interface80211ptr getInterfaceWlanByAddress()

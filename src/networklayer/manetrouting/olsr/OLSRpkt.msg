@@ -59,6 +59,11 @@ typedef ManetAddress nsaddr_t;
 #define ADDR_SIZE_DEFAULT   4
 #endif
 
+class OlsrAddressSize
+{
+    public:
+    static uint32_t ADDR_SIZE;
+};
 
 /// Maximum number of messages per packet.
 #define OLSR_MAX_MSGS       4
@@ -75,7 +80,7 @@ typedef ManetAddress nsaddr_t;
 #define OLSR_ETX_PKT_HDR_SIZE OLSR_PKT_HDR_SIZE
 
 /// Size (in bytes) of message header.
-#define OLSR_MSG_HDR_SIZE   12
+#define OLSR_MSG_HDR_SIZE   8 + OlsrAddressSize::ADDR_SIZE
 #define OLSR_ETX_MSG_HDR_SIZE OLSR_MSG_HDR_SIZE
 
 /// Size (in bytes) of hello header.
@@ -90,12 +95,6 @@ typedef ManetAddress nsaddr_t;
 #define OLSR_TC_HDR_SIZE    4
 #define OLSR_ETX_TC_HDR_SIZE OLSR_TC_HDR_SIZE
 
-
-class OlsrAddressSize
-{
-    public:
-    static uint32_t ADDR_SIZE;
-};
 
 typedef struct OLSR_ETX_iface_address {
 

@@ -132,7 +132,7 @@ ManetRoutingBase::ManetRoutingBase()
     proxyAddress.clear();
     addressGroupVector.clear();
     inAddressGroup.clear();
-
+    addressSizeBytes = 4;
 }
 
 

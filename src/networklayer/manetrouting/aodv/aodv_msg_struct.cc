@@ -3,6 +3,8 @@
 #include  <string.h>
 
 #include "aodv_msg_struct.h"
+#include "ManetRoutingBase.h"
+/*
 #include "InterfaceTable.h"
 #include "UDPPacket.h"
 #include "IPv4ControlInfo.h"
@@ -14,7 +16,7 @@
 #include "IPv4ControlInfo.h"
 #include "IPv4Datagram.h"
 #include "ProtocolMap.h"
-
+*/
 
 
 Register_Class(AODV_msg);
@@ -117,6 +119,16 @@ AODV_ext * AODV_msg::getNexExtension(AODV_ext* aodv_ext)
 Register_Class(RERR);
 
 //=========================================================================
+RERR::RERR(const char *name) : AODV_msg (name)
+{
+    res1 = 0;
+    n = 0;
+    res2 = 0;
+    dest_count = 0;
+    _udest = NULL;
+    ManetRoutingBase * owner = check_and_cast<ManetRoutingBase*>(this->getOwner());
+    setBitLength((8+(owner->getAddressSize()*2))*8);
+}
 
 RERR::RERR(const RERR& m) : AODV_msg(m)
 {
@@ -166,7 +178,9 @@ void RERR::addUdest(const ManetAddress & src_addr, unsigned int udest_seqno)
     temp_udest[dest_count].dest_seqno = udest_seqno;
     _udest = temp_udest;
     dest_count++;
-    setBitLength(getBitLength()+(RERR_UDEST_SIZE));
+    ManetRoutingBase * owner = check_and_cast<ManetRoutingBase*>(this->getOwner());
+    int udestSize = (4+owner->getAddressSize())*8;
+    setBitLength(getBitLength()+(udestSize));
 }
 
 RERR_udest * RERR::getUdest(int i)
@@ -192,6 +206,25 @@ void RERR::clearUdest()
 
 
 Register_Class(RREP);
+RREP::RREP (const char *name) : AODV_msg (name)
+{
+    ManetRoutingBase * owner = check_and_cast<ManetRoutingBase*>(this->getOwner());
+    setBitLength((12+(owner->getAddressSize()*2))*8);
+    res1 = 0;
+    a = 0;
+    r = 0;
+    prefix = 0;
+    res2 = 0;
+    hcnt = 0;
+    dest_addr = ManetAddress::ZERO;
+    dest_seqno = 0;
+    orig_addr = ManetAddress::ZERO;
+    lifetime = 0;
+    cost = 0;
+    hopfix = 0;
+    totalHops = 0;
+}
+
 RREP::RREP(const RREP& m) : AODV_msg(m)
 {
     copy(m);
@@ -255,6 +288,27 @@ RREP_ack& RREP_ack::operator=(const RREP_ack& m)
 
 
 Register_Class(RREQ);
+
+RREQ::RREQ::RREQ(const char *name) : AODV_msg (name)
+{
+    j = 0;
+    r = 0;     /* Repair flag */
+    g = 0;     /* Gratuitous RREP flag */
+    d = 0;     /* Destination only respond */
+    res1 = 0;
+    res2 = 0;
+    hcnt  = 0;
+    rreq_id = 0;
+    dest_addr = ManetAddress::ZERO;
+    dest_seqno = 0;
+    orig_addr = ManetAddress::ZERO;
+    orig_seqno = 0;
+    cost = 0;
+    hopfix = 0;
+    ManetRoutingBase * owner = check_and_cast<ManetRoutingBase*>(this->getOwner());
+    setBitLength((16+(owner->getAddressSize()*2))*8);
+}
+
 RREQ::RREQ(const RREQ& m) : AODV_msg(m)
 {
     copy(m);

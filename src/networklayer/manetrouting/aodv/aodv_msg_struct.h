@@ -11,6 +11,8 @@
 
 #include "aodv_msg_struct_m.h"
 
+#define ManetAddressSizeUsed 4
+
 // this structures are a redifinition of def.h struct for omnet
 
 typedef struct
@@ -68,7 +70,8 @@ typedef struct
     u_int32_t dest_seqno;
 } RERR_udest;
 //#define RERR_UDEST_SIZE sizeof(RERR_udest)
-#define RERR_UDEST_SIZE 8
+// 8 for IPv4
+//#define RERR_UDEST_SIZE 4+ManetAddressSizeUsed
 
 #ifdef RERR
 #undef RERR
@@ -81,15 +84,7 @@ struct RERR : public AODV_msg
     unsigned short res2;
     u_int8_t dest_count;
     RERR_udest *   _udest;
-    explicit RERR(const char *name="RERRAodvMsg") : AODV_msg (name)
-    {
-        res1 = 0;
-        n = 0;
-        res2 = 0;
-        dest_count = 0;
-        _udest = NULL;
-        setBitLength(12*8);
-    }
+    explicit RERR(const char *name="RERRAodvMsg");
     ~RERR ();
     RERR (const RERR &m);
     unsigned short getRes1() const {return res1;}
@@ -108,7 +103,8 @@ struct RERR : public AODV_msg
 
 #define RERR_UDEST_FIRST(rerr) (rerr->getUdest(0))
 #define RERR_UDEST_NEXT(udest) ((RERR_udest *)((char *)udest + sizeof(RERR_udest)))
-#define RERR_SIZE 12
+// 12 for IPv4
+//#define RERR_SIZE 8+ManetAddressSizeUsed
 #define RERR_CALC_SIZE(rerr) (rerr->getByteLength())
 
 struct RREP : public AODV_msg
@@ -128,23 +124,7 @@ struct RREP : public AODV_msg
     uint32_t cost;
     uint8_t  hopfix;
     uint8_t  totalHops;
-    explicit RREP (const char *name="RREPAodvMsg") : AODV_msg (name)
-    {
-        setBitLength(20*8);
-        res1 = 0;
-        a = 0;
-        r = 0;
-        prefix = 0;
-        res2 = 0;
-        hcnt = 0;
-        dest_addr = ManetAddress::ZERO;
-        dest_seqno = 0;
-        orig_addr = ManetAddress::ZERO;
-        lifetime = 0;
-        cost = 0;
-        hopfix = 0;
-        totalHops = 0;
-    }
+    explicit RREP (const char *name="RREPAodvMsg");
     RREP (const RREP &m);
     RREP &  operator= (const RREP &m);
     virtual RREP *dup() const {return new RREP(*this);}
@@ -166,7 +146,8 @@ struct RREP : public AODV_msg
   private:
     void copy(const RREP& other);
 } ;
-#define RREP_SIZE 20
+// 20 for IPv4
+//#define RREP_SIZE (ManetAddressSizeUsed*2)+12
 
 struct RREP_ack : public AODV_msg
 {
@@ -200,24 +181,7 @@ struct RREQ : public AODV_msg
     u_int32_t orig_seqno;
     uint32_t   cost;
     uint8_t  hopfix;
-    explicit RREQ(const char *name="RREQAodvMsg") : AODV_msg (name)
-    {
-        j = 0;
-        r = 0;     /* Repair flag */
-        g = 0;     /* Gratuitous RREP flag */
-        d = 0;     /* Destination only respond */
-        res1 = 0;
-        res2 = 0;
-        hcnt  = 0;
-        rreq_id = 0;
-        dest_addr = ManetAddress::ZERO;
-        dest_seqno = 0;
-        orig_addr = ManetAddress::ZERO;
-        orig_seqno = 0;
-        cost = 0;
-        hopfix = 0;
-        setBitLength(24*8);
-    }
+    explicit RREQ(const char *name="RREQAodvMsg");
 
     RREQ (const RREQ &m);
     RREQ &  operator= (const RREQ &m);
@@ -242,7 +206,7 @@ struct RREQ : public AODV_msg
   private:
     void copy(const RREQ& other);
 };
-
-#define RREQ_SIZE 24
+// 24 for IPv4
+//#define RREQ_SIZE 16+(ManetAddressSizeUsed*2)
 #endif
 
