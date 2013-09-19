@@ -12,7 +12,7 @@
 #ifndef __A_MVRP_H
 #define __A_MVRP_H
 
-#include "MVRPDU.h"
+#include "MVRPDU_m.h"
 #include "MACAddress.h"
 #include "RSTP.h"
 

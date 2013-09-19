@@ -25,8 +25,8 @@ cplusplus {{
 //
 packet BPDUieee8021D extends EtherFrame
 {
+    byteLength = 35;
     string displayString = "b=,,,#a5a5ff";
-    @customize(true);			//Allows BPDU_m.cc customization. Generator will create BPDU_Base
     int rootPriority;			//Proposed root priority. rootPriority+rootMAC define the proposed root id
     MACAddress rootMAC;			//Proposed root MAC
     int cost;					//Cost from root

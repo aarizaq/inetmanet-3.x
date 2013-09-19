@@ -13,7 +13,7 @@
 
 #include "MACAddress.h"
 #include "EtherFrame_m.h"
-#include "BPDU.h"
+#include "BPDU_m.h"
 #include "RSTP.h"
 #include "MVRP.h"
 #include "Delivery_m.h"

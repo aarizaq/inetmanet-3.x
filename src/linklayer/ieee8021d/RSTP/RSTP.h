@@ -11,7 +11,7 @@
 #ifndef __A_RSTP_H
 #define __A_RSTP_H
 
-#include "BPDU.h"
+#include "BPDU_m.h"
 #include "MACAddress.h"
 #include "Delivery_m.h"
 #include "Cache1Q.h"

@@ -8,8 +8,8 @@
 ******************************************************/
 
 #include "PortFilt.h"
-#include "MVRPDU.h"
-#include "BPDU.h"
+#include "MVRPDU_m.h"
+#include "BPDU_m.h"
 #include "MVRPAccess.h"
 
 
