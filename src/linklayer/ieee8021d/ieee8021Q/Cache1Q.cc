@@ -164,3 +164,7 @@ void Cache1Q::cleanAgedEntries()
 
 }
 
+void Cache1Q::clearTable()
+{
+    RelayTable.clear();
+}

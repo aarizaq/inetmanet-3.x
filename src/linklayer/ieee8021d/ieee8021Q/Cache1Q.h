@@ -76,5 +76,8 @@ class Cache1Q: public cSimpleModule
          */
         virtual void cleanAgedEntries();
 
+
+        virtual void clearTable();
+
 };
 #endif

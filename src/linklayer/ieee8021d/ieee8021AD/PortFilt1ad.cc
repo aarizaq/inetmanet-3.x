@@ -9,8 +9,8 @@
 ******************************************************/
 #include "PortFilt1ad.h"
 #include "PortFilt.h"
-#include "MVRPDU.h"
-#include "BPDU.h"
+#include "MVRPDU_m.h"
+#include "BPDU_m.h"
 #include <XMLUtils.h>
 
 

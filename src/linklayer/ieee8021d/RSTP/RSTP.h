@@ -17,8 +17,8 @@
 #include "Cache1Q.h"
 #include "PortFilt.h"
 
-#define UP 1
-#define DOWN 0
+#define PORTUP 1
+#define PORTDOWN 0
 
 
 enum PortStateT

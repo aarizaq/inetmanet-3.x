@@ -16,7 +16,7 @@
 #include "Ieee802Ctrl_m.h"
 #include "8021Q.h"
 #include "EtherMACAccess.h"
-#include "MVRPDU.h"
+#include "MVRPDU_m.h"
 
 
 Define_Module(EthernetLink);

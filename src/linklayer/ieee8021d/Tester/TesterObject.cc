@@ -8,7 +8,7 @@
 ******************************************************/
 #include "MACAddress.h"
 #include "Delivery_m.h"
-#include "MVRPDU.h"
+#include "MVRPDU_m.h"
 #include "XMLUtils.h"
 #include "TesterObject.h"
 #include "8021Q.h"

@@ -1334,12 +1334,12 @@ void RSTP::scheduleUpTimeEvent(cXMLElement * event)
 void RSTP::handleUpTimeEvent(cMessage * msg)
 {//Handles scheduled "UPTimeEvents"
 
-	if(msg->getKind()==UP)
+	if(msg->getKind() == PORTUP)
 	{
 		initPorts();
 		up=true;
 	}
-	else if(msg->getKind()==DOWN)
+	else if(msg->getKind() == PORTDOWN)
 	{
 		for(unsigned int i=0;i<Puertos.size();i++)
 		{

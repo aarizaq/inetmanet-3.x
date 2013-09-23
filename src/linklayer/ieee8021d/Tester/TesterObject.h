@@ -9,7 +9,7 @@
 #ifndef __A_TESTEROBJECT_H
 #define __A_TESTEROBJECT_H
 
-#include "BPDU.h"
+#include "BPDU_m.h"
 #include "MACAddress.h"
 #include "EtherFrame_m.h"
 
