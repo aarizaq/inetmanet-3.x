@@ -408,7 +408,7 @@ u_int8_t * PASER_UU_RREP::getCompleteByteArray(int *l) {
             len += sizeof(temp_addr.S_addr);
         }
     }
-    ev << "AddL = " << (len - tempLen) << "\n";
+    EV << "AddL = " << (len - tempLen) << "\n";
     len += sizeof(metricBetweenQueryingAndForw);
     len += sizeof(metricBetweenDestAndForw);
     len += sizeof(certForw.len);
@@ -511,7 +511,7 @@ u_int8_t * PASER_UU_RREP::getCompleteByteArray(int *l) {
     buf += sizeof(certForw.len);
     memcpy(buf, certForw.buf, certForw.len);
     buf += certForw.len;
-    ev << "Certifikatlenge (forwarding) = " << certForw.len << "\n";
+    EV << "Certifikatlenge (forwarding) = " << certForw.len << "\n";
     // root
     memcpy(buf, root, 32);
     buf += 32;
@@ -534,7 +534,7 @@ u_int8_t * PASER_UU_RREP::getCompleteByteArray(int *l) {
 //        buf += sizeof(groupTransientKey.len);
 //        memcpy(buf, groupTransientKey.buf, groupTransientKey.len);
 //        buf += groupTransientKey.len;
-//        ev << "GTK = " << groupTransientKey.len << "\n";
+//        EV << "GTK = " << groupTransientKey.len << "\n";
         memcpy(buf, (u_int8_t *) &kdc_data.GTK.len, sizeof(kdc_data.GTK.len));
         buf += sizeof(kdc_data.GTK.len);
         memcpy(buf, kdc_data.GTK.buf, kdc_data.GTK.len);
@@ -577,7 +577,7 @@ u_int8_t * PASER_UU_RREP::getCompleteByteArray(int *l) {
     buf += sizeof(sign.len);
     memcpy(buf, sign.buf, sign.len);
     buf += sign.len;
-    ev << "signlenge = " << sign.len << "\n";
+    EV << "signlenge = " << sign.len << "\n";
 
 //    //test
 //    u_int32_t tempAdd = 0xFFFFFFFF;

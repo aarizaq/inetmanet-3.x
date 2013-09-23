@@ -92,7 +92,7 @@ void ConvergenceSublayerTrafficClassification::handleMessage(cMessage *msg)
                     EV << "Incoming packet: " << tempPtr->getName() << "(" <<
                         tempPtr->getByteLength() << " byte(s))\n";
                     handleUnclassifiedMessage(tempPtr);
-                }               // Da ist was vom TG reingekommen -> Debug-Output mit ev auf der Konsole.
+                }               // Da ist was vom TG reingekommen -> Debug-Output mit EV auf der Konsole.
             }
             else
             {

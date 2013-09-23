@@ -317,7 +317,7 @@ u_int8_t * PASER_UB_RREQ::toByteArray(int *l) {
     buf += sizeof(timestamp);*/
 
     *l = len;
-    ev << "len = " << len << "\n";
+    EV << "len = " << len << "\n";
     return data;
 }
 
@@ -353,7 +353,7 @@ u_int8_t * PASER_UB_RREQ::getCompleteByteArray(int *l) {
             len += sizeof(temp_addr.S_addr);
         }
     }
-    ev << "AddL = " << (len - tempLen) << "\n";
+    EV << "AddL = " << (len - tempLen) << "\n";
 //    for (std::list<struct in_addr>::iterator it=routeFromQueryingToForwarding.begin(); it!=routeFromQueryingToForwarding.end(); it++){
 //        struct in_addr temp = (struct in_addr)*it;
 //        len += sizeof(temp.S_addr);
@@ -448,14 +448,14 @@ u_int8_t * PASER_UB_RREQ::getCompleteByteArray(int *l) {
         buf += sizeof(cert.len);
         memcpy(buf, cert.buf, cert.len);
         buf += cert.len;
-        ev << "Certifikatlenge (querying) = " << cert.len << "\n";
+        EV << "Certifikatlenge (querying) = " << cert.len << "\n";
     }
     // Cert of forwarding node
     memcpy(buf, (u_int8_t *) &certForw.len, sizeof(certForw.len));
     buf += sizeof(certForw.len);
     memcpy(buf, certForw.buf, certForw.len);
     buf += certForw.len;
-    ev << "Certifikatlenge (forwarding) = " << certForw.len << "\n";
+    EV << "Certifikatlenge (forwarding) = " << certForw.len << "\n";
     // root
     memcpy(buf, root, 32);
     buf += 32;
@@ -481,10 +481,10 @@ u_int8_t * PASER_UB_RREQ::getCompleteByteArray(int *l) {
     buf += sizeof(sign.len);
     memcpy(buf, sign.buf, sign.len);
     buf += sign.len;
-    ev << "signlenge = " << sign.len << "\n";
+    EV << "signlenge = " << sign.len << "\n";
 
     *l = len;
-    ev << "Paketlenge = " << len << "\n";
+    EV << "Paketlenge = " << len << "\n";
     return data;
 }
 #endif

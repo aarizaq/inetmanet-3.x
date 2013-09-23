@@ -86,7 +86,7 @@ void PASER_Route_Discovery::route_discovery(struct in_addr dest_addr,
     tPack->timeout = timeval_add(now, PASER_UB_RREQ_WAIT_TIME);
     pend_rreq->tries = 0;
 
-    ev << "now: " << now.tv_sec << "\ntimeout: " << tPack->timeout.tv_sec
+    EV << "now: " << now.tv_sec << "\ntimeout: " << tPack->timeout.tv_sec
             << "\n";
     paser_global->getTimer_queue()->timer_add(tPack);
     pend_rreq->tPack = tPack;
@@ -144,7 +144,7 @@ void PASER_Route_Discovery::processMessage(IPv4Datagram* datagram) {
             //TODO: edit isGWflag!!!
             route_discovery(dest_addr, 0);
         } else {
-            ev << "Route discovery ERROR!\n";
+            EV << "Route discovery ERROR!\n";
             std::list<unreachableBlock> allAddrList;
             unreachableBlock temp;
             temp.addr.S_addr = dest_addr.S_addr;

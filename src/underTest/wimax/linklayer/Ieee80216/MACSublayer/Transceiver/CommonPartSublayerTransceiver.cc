@@ -201,7 +201,7 @@ void CommonPartSublayerTransceiver::handleMessage(cMessage *msg)
 ****************************************************************************/
 void CommonPartSublayerTransceiver::handleUpperSublayerMsg(cMessage *msg)
 {
-    ev << "(in CommonPartSublayerTransceiver::handleUpperSublayerMsg) Message " <<
+    EV << "(in CommonPartSublayerTransceiver::handleUpperSublayerMsg) Message " <<
         msg->getName() << " eingetroffen" << endl;
     Ieee80216GenericMacHeader *frame = check_and_cast<Ieee80216GenericMacHeader *>(msg);
 // if ( frame->controlInfo() != NULL )

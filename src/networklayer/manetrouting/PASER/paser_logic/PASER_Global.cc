@@ -46,7 +46,7 @@ PASER_Global::PASER_Global(PASER_Configurations *pConfig, PASER_Socket *pModul) 
     root = new PASER_Crypto_Root(this);
     root->root_init(PASER_Crypto_Root_param);
 
-    ev << "isGW = " << isGW << "\n";
+    EV << "isGW = " << isGW << "\n";
 //    isRegistered = isGW;
 //    wasRegistered = isRegistered;
     isRegistered = false;
@@ -71,14 +71,14 @@ PASER_Global::PASER_Global(PASER_Configurations *pConfig, PASER_Socket *pModul) 
 
     netDevice = paser_configuration->getNetDevice();
     netAddDevice = paser_configuration->getNetAddDevice();
-    ev << "AddL:\n";
+    EV << "AddL:\n";
     for (u_int32_t i = 0; i < paser_configuration->getNetAddDeviceNumber();
             i++) {
         address_range tempRange;
         tempRange.ipaddr = netAddDevice[i].ipaddr;
         tempRange.mask = netAddDevice[i].mask;
         AddL.push_back(tempRange);
-        ev << "addr: " << tempRange.ipaddr.S_addr.getIPv4().str()
+        EV << "addr: " << tempRange.ipaddr.S_addr.getIPv4().str()
                 << " mask: " << tempRange.mask.S_addr.getIPv4().str()
                 << "\n";
 
@@ -271,16 +271,16 @@ void PASER_Global::activateHelloMessageTimer() {
         hello_message_interval->destAddr.S_addr = PASER_BROADCAST;
         hello_message_interval->handler = HELLO_SEND_TIMEOUT;
         paser_modul->MYgettimeofday(&(hello_message_interval->timeout), NULL);
-        ev << "HelloTimeOut: " << hello_message_interval->timeout.tv_sec << "\n";
+        EV << "HelloTimeOut: " << hello_message_interval->timeout.tv_sec << "\n";
         hello_message_interval->timeout = timeval_add(
                 hello_message_interval->timeout, PASER_TB_Hello_Interval);
-        ev << "new HelloTimeOut: " << hello_message_interval->timeout.tv_sec
+        EV << "new HelloTimeOut: " << hello_message_interval->timeout.tv_sec
                 << "\n";
         timer_queue->timer_add(hello_message_interval);
         timer_queue->timer_sort();
-        ev << "hello timer wurde zu timerqueue zugefuegt\n";
+        EV << "hello timer wurde zu timerqueue zugefuegt\n";
     } else {
-        ev << "hello timer wurde zu timerqueue NICHT zugefuegt\n";
+        EV << "hello timer wurde zu timerqueue NICHT zugefuegt\n";
     }
 }
 
@@ -293,12 +293,12 @@ void PASER_Global::resetHelloTimer() {
         return;
     }
     paser_modul->MYgettimeofday(&(hello_message_interval->timeout), NULL);
-    ev << "HelloTimeOut: " << hello_message_interval->timeout.tv_sec << "\n";
+    EV << "HelloTimeOut: " << hello_message_interval->timeout.tv_sec << "\n";
     hello_message_interval->timeout = timeval_add(hello_message_interval->timeout, 
     PASER_TB_Hello_Interval);
-    ev << "new HelloTimeOut: " << hello_message_interval->timeout.tv_sec << "\n";
+    EV << "new HelloTimeOut: " << hello_message_interval->timeout.tv_sec << "\n";
     timer_queue->timer_sort();
-    ev << "hello timer wurde aktualisiert\n";
+    EV << "hello timer wurde aktualisiert\n";
 }
 
 bool PASER_Global::isHelloActive() {

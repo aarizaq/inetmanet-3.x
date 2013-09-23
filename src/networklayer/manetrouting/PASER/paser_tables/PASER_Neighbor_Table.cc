@@ -158,10 +158,10 @@ void PASER_Neighbor_Table::updateNeighborTableAndSetTableTimeout(
     }
 
     if (validPack != 0) {
-        ev << "Route valid timeout: " << validPack->timeout.tv_sec << "\n";
+        EV << "Route valid timeout: " << validPack->timeout.tv_sec << "\n";
         timer_queue->timer_add(validPack);
     }
-    ev << "now: " << now.tv_sec << "\nRoute delete timeout: "
+    EV << "now: " << now.tv_sec << "\nRoute delete timeout: "
             << deletePack->timeout.tv_sec << "\n";
     timer_queue->timer_add(deletePack);
 
@@ -204,9 +204,9 @@ void PASER_Neighbor_Table::updateNeighborTableTimeout(struct in_addr neigh,
     deletePack->timeout = timeval_add(now, PASER_NEIGHBOR_DELETE_TIME);
     validPack->timeout = timeval_add(now, PASER_NEIGHBOR_VALID_TIME);
 
-    ev << "now: " << now.tv_sec << "\nRoute delete timeout: "
+    EV << "now: " << now.tv_sec << "\nRoute delete timeout: "
             << deletePack->timeout.tv_sec << "\n";
-    ev << "Route valid timeout: " << validPack->timeout.tv_sec << "\n";
+    EV << "Route valid timeout: " << validPack->timeout.tv_sec << "\n";
     timer_queue->timer_add(deletePack);
     timer_queue->timer_add(validPack);
 }

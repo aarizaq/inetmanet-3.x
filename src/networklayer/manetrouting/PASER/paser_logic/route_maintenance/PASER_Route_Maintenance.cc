@@ -37,54 +37,54 @@ void PASER_Route_Maintenance::handleSelfMsg(cMessage *msg) {
             paser_global->getTimer_queue()->timer_get_next_timer();
     struct timeval now;
     paser_modul->MYgettimeofday(&now, NULL);
-    ev << "now: " << now.tv_sec << "." << now.tv_usec << "\n";
+    EV << "now: " << now.tv_sec << "." << now.tv_usec << "\n";
     if (now.tv_sec < nextTimout->timeout.tv_sec) {
-        ev << "1\n";
+        EV << "1\n";
         return;
     }
     if (now.tv_sec == nextTimout->timeout.tv_sec
             && now.tv_usec < nextTimout->timeout.tv_usec) {
-        ev << "2\n";
+        EV << "2\n";
         return;
     }
-    ev << "timeout: " << nextTimout->timeout.tv_sec << "\n";
+    EV << "timeout: " << nextTimout->timeout.tv_sec << "\n";
 
     if (nextTimout != NULL) {
         switch (nextTimout->handler) {
         case KDC_REQUEST:
-            ev << "KDC_REQUEST\n";
+            EV << "KDC_REQUEST\n";
             timeout_KDC_request(nextTimout);
             break;
         case ROUTE_DISCOVERY_UB:
-            ev << "ROUTE_DISCOVERY_UB\n";
+            EV << "ROUTE_DISCOVERY_UB\n";
             timeout_ROUTE_DISCOVERY_UB(nextTimout);
             break;
         case ROUTINGTABLE_DELETE_ENTRY:
-            ev << "ROUTINGTABLE_DELETE_ENTRY\n";
+            EV << "ROUTINGTABLE_DELETE_ENTRY\n";
             timeout_ROUTINGTABLE_DELETE_ENTRY(nextTimout);
             break;
         case ROUTINGTABLE_VALID_ENTRY:
-            ev << "ROUTINGTABLE_VALID_ENTRY\n";
+            EV << "ROUTINGTABLE_VALID_ENTRY\n";
             timeout_ROUTINGTABLE_NO_VALID_ENTRY(nextTimout);
             break;
         case NEIGHBORTABLE_DELETE_ENTRY:
-            ev << "NEIGHBORTABLE_DELETE_ENTRY\n";
+            EV << "NEIGHBORTABLE_DELETE_ENTRY\n";
             timeout_NEIGHBORTABLE_DELETE_ENTRY(nextTimout);
             break;
         case NEIGHBORTABLE_VALID_ENTRY:
-            ev << "NEIGHBORTABLE_VALID_ENTRY\n";
+            EV << "NEIGHBORTABLE_VALID_ENTRY\n";
             timeout_NEIGHBORTABLE_NO_VALID_ENTRY(nextTimout);
             break;
         case TU_RREP_ACK_TIMEOUT:
-            ev << "TU_RREP_ACK_TIMEOUT\n";
+            EV << "TU_RREP_ACK_TIMEOUT\n";
             timeout_TU_RREP_ACK_TIMEOUT(nextTimout);
             break;
         case HELLO_SEND_TIMEOUT:
-            ev << "HELLO_SEND_TIMEOUT\n";
+            EV << "HELLO_SEND_TIMEOUT\n";
             timeout_HELLO_SEND_TIMEOUT(nextTimout);
             break;
         case PASER_ROOT:
-            ev << "PASER_ROOT_TIMEOUT\n";
+            EV << "PASER_ROOT_TIMEOUT\n";
             timeout_ROOT_TIMEOUT(nextTimout);
             break;
         }
@@ -96,7 +96,7 @@ void PASER_Route_Maintenance::timeout_KDC_request(PASER_Timer_Message *t) {
     if (paser_global->getIsRegistered() == false) {
         lv_block cert;
         if (!paser_global->getCrypto_sign()->getCert(&cert)) {
-            ev << "cert ERROR\n";
+            EV << "cert ERROR\n";
             return;
         }
         paser_global->getPaket_processing()->sendKDCRequest(
@@ -115,14 +115,14 @@ void PASER_Route_Maintenance::timeout_ROUTE_DISCOVERY_UB(
     EV << "timeout_ROUTE_DISCOVERY_UB\n";
     PASER_UB_RREQ * message = (PASER_UB_RREQ *) t->data;
     if (!message) {
-        ev << "ERROR!\n";
+        EV << "ERROR!\n";
         return;
     }
 
     message_rreq_entry *pend_rreq = paser_global->getRreq_list()->pending_add(
             t->destAddr);
     if (pend_rreq->tries < PASER_UB_RREQ_TRIES) {
-        ev << "pend_rreq->tries = " << pend_rreq->tries << "\n";
+        EV << "pend_rreq->tries = " << pend_rreq->tries << "\n";
         pend_rreq->tries++;
         if (paser_modul->isMyLocalAddress(message->srcAddress_var))
             message->seq = paser_global->getSeqNr();
@@ -165,7 +165,7 @@ void PASER_Route_Maintenance::timeout_ROUTE_DISCOVERY_UB(
         return;
     }
     //Remove timer
-    ev << "pend_rreq->tries > PASER_UB_RREQ_TRIES\n";
+    EV << "pend_rreq->tries > PASER_UB_RREQ_TRIES\n";
     paser_global->getTimer_queue()->timer_remove(t);
     paser_global->getRreq_list()->pending_remove(pend_rreq);
     paser_global->getMessage_queue()->deleteMessages(t->destAddr);
@@ -208,7 +208,7 @@ void PASER_Route_Maintenance::timeout_ROUTINGTABLE_NO_VALID_ENTRY(
     PASER_Routing_Entry *routeToGW =
             paser_global->getRouting_table()->findBestGW();
     if (routeToGW == NULL && !paser_configuration->getIsGW()) {
-        ev << "tryTORegister\n";
+        EV << "tryTORegister\n";
         paser_global->setIsRegistered(false);
         paser_global->getRoute_findung()->tryToRegister();
     }
@@ -245,7 +245,7 @@ void PASER_Route_Maintenance::timeout_NEIGHBORTABLE_NO_VALID_ENTRY(
     PASER_Routing_Entry *routeToGW =
             paser_global->getRouting_table()->findBestGW();
     if (routeToGW == NULL && !paser_configuration->getIsGW()) {
-        ev << "tryTORegister\n";
+        EV << "tryTORegister\n";
         paser_global->setIsRegistered(false);
         paser_global->getRoute_findung()->tryToRegister();
     }
@@ -275,13 +275,13 @@ void PASER_Route_Maintenance::timeout_TU_RREP_ACK_TIMEOUT(
     message_rreq_entry *pend_rrep = paser_global->getRrep_list()->pending_find(
             t->destAddr);
     if (pend_rrep == NULL) {
-        ev << "ERROR!\n";
+        EV << "ERROR!\n";
         paser_global->getTimer_queue()->timer_remove(t);
         delete t;
         return;
     }
     if (pend_rrep->tries < PASER_UU_RREP_TRIES) {
-        ev << "pend_rrep->tries = " << pend_rrep->tries << "\n";
+        EV << "pend_rrep->tries = " << pend_rrep->tries << "\n";
         pend_rrep->tries++;
         if (paser_modul->isMyLocalAddress(message->destAddress_var)) {
             message->seq = paser_global->getSeqNr();
@@ -323,7 +323,7 @@ void PASER_Route_Maintenance::timeout_TU_RREP_ACK_TIMEOUT(
         return;
     }
     //remove timer
-    ev << "pend_rrep->tries > PASER_UU_RREP_TRIES\n";
+    EV << "pend_rrep->tries > PASER_UU_RREP_TRIES\n";
     paser_global->getTimer_queue()->timer_remove(t);
     paser_global->getRrep_list()->pending_remove(pend_rrep);
     delete pend_rrep;
@@ -342,9 +342,9 @@ void PASER_Route_Maintenance::timeout_HELLO_SEND_TIMEOUT(
     }
 
     for (u_int32_t i = 0; i < paser_configuration->getNetDeviceNumber(); i++) {
-        ev << "i = " << i << "\n";
+        EV << "i = " << i << "\n";
         network_device *tempDevice = paser_global->getNetDevice();
-        ev << "tempDevice[i].ipaddr = "
+        EV << "tempDevice[i].ipaddr = "
                 << tempDevice[i].ipaddr.S_addr.getIPv4().str() << "\n";
         PASER_TB_Hello *messageToSend = new PASER_TB_Hello(tempDevice[i].ipaddr,
                 paser_global->getSeqNr());
@@ -363,7 +363,7 @@ void PASER_Route_Maintenance::timeout_HELLO_SEND_TIMEOUT(
                 tempR.mask = ((address_range) *it2).mask;
                 tempRange.push_back(tempR);
             }
-            ev << "add ip to AddressRangeList: "
+            EV << "add ip to AddressRangeList: "
                     << tempEntry.ipaddr.S_addr.getIPv4().str() << "\n";
             messageToSend->AddressRangeList.push_back(tempEntry);
         }
@@ -385,7 +385,7 @@ void PASER_Route_Maintenance::timeout_HELLO_SEND_TIMEOUT(
         messageToSend->auth = paser_global->getRoot()->root_get_next_secret(
                 &next_iv, secret);
         messageToSend->secret = secret;
-        ev << "next iv: " << next_iv << "\n";
+        EV << "next iv: " << next_iv << "\n";
 
         paser_global->getCrypto_hash()->computeHmacHELLO(messageToSend,
                 paser_configuration->getGTK());
@@ -416,7 +416,7 @@ void PASER_Route_Maintenance::timeout_ROOT_TIMEOUT(PASER_Timer_Message *t) {
 
 void PASER_Route_Maintenance::messageFailed(struct in_addr src,
         struct in_addr dest, bool sendRERR) {
-    ev << "Link break for src: " << src.S_addr.getIPv4().str()
+    EV << "Link break for src: " << src.S_addr.getIPv4().str()
             << ", dest: " << dest.S_addr.getIPv4().str() << "\n";
     PASER_Routing_Entry *rEntry = paser_global->getRouting_table()->findDest(
             dest);
@@ -432,7 +432,7 @@ void PASER_Route_Maintenance::messageFailed(struct in_addr src,
     if (paser_global->getRouting_table()->findDest(nextHop) == NULL) {
         return;
     }
-    ev << "Link broken to neighbor " << nextHop.S_addr.getIPv4().str()
+    EV << "Link broken to neighbor " << nextHop.S_addr.getIPv4().str()
             << "\n";
 
     std::list<PASER_Routing_Entry*> EntryList =

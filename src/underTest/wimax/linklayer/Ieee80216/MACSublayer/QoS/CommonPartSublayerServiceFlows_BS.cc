@@ -62,7 +62,7 @@ void CommonPartSublayerServiceFlows_BS::handleMessage(cMessage *msg)
         break;
 
     default:
-        ev << "\n\nunidentified frame\n\n";
+        EV << "\n\nunidentified frame\n\n";
     }
 }
 
@@ -77,7 +77,7 @@ void CommonPartSublayerServiceFlows_BS::createAndSendNewDSA_REQ(int prim_managem
 
     if (checkQoSParams(requested_sf->provisioned_parameters, ldDOWNLINK))
     {
-        ev << "BS-DSA: Creating new connection...\n";
+        EV << "BS-DSA: Creating new connection...\n";
 
         Ieee80216_DSA_REQ *dsa_req = new Ieee80216_DSA_REQ("DSA_REQ");
         dsa_req->setCID(prim_management_cid);
@@ -107,10 +107,10 @@ void CommonPartSublayerServiceFlows_BS::createAndSendNewDSA_REQ(int prim_managem
  */
 void CommonPartSublayerServiceFlows_BS::handle_DSA_REQ(Ieee80216_DSA_REQ* dsa_req)
 {
-    ev << "Incoming DSA-REQ from CID: [" << dsa_req->getCID() << "]\n";
+    EV << "Incoming DSA-REQ from CID: [" << dsa_req->getCID() << "]\n";
     // answer with a DSA-RSP immediately!
     //ev << "CPin: "<< controlPlaneIn << ", CPout: "<< controlPlaneOut << "\n";
-    ev << "Immediately sending DSX-RVD to Gate: " << controlPlaneOut << "\n";
+    EV << "Immediately sending DSX-RVD to Gate: " << controlPlaneOut << "\n";
     Ieee80216_DSX_RVD *dsx_rvd = new Ieee80216_DSX_RVD("DSX-RVD");
     dsx_rvd->setCID(dsa_req->getCID());
 
@@ -159,7 +159,7 @@ void CommonPartSublayerServiceFlows_BS::handle_DSA_REQ(Ieee80216_DSA_REQ* dsa_re
  */
 void CommonPartSublayerServiceFlows_BS::handle_DSA_RSP(Ieee80216_DSA_RSP *dsa_rsp)
 {
-    ev << "Incoming DSA-RSP from CID: [" << dsa_rsp->getCID() << "]\n";
+    EV << "Incoming DSA-RSP from CID: [" << dsa_rsp->getCID() << "]\n";
 
     ServiceFlow new_sf = dsa_rsp->getNewServiceFlow();
     new_sf.link_type = ldDOWNLINK;
@@ -182,12 +182,12 @@ void CommonPartSublayerServiceFlows_BS::handle_DSA_RSP(Ieee80216_DSA_RSP *dsa_rs
         error("Station not found by MAC address");
 
     Ieee80216_DSA_ACK *dsa_ack;
-    ev << "DSA-RSP for traffic type: " << dsa_rsp->getTraffic_type() << "\n";
+    EV << "DSA-RSP for traffic type: " << dsa_rsp->getTraffic_type() << "\n";
     dsa_ack =
         build_DSA_ACK(dsa_rsp->getCID(), &new_sf, (ip_traffic_types) dsa_rsp->getTraffic_type());
     send(dsa_ack, controlPlaneOut);
 
-    ev << "BS-DSA: New connection established! (CID=" << new_sf.CID << " | SFID=" << new_sf.
+    EV << "BS-DSA: New connection established! (CID=" << new_sf.CID << " | SFID=" << new_sf.
         SFID << ")\n";
 
     delete dsa_rsp;
@@ -198,7 +198,7 @@ void CommonPartSublayerServiceFlows_BS::handle_DSA_RSP(Ieee80216_DSA_RSP *dsa_rs
  */
 void CommonPartSublayerServiceFlows_BS::handle_DSA_ACK(Ieee80216_DSA_ACK *dsa_ack)
 {
-    ev << "Incoming DSA-ACK from CID: [" << dsa_ack->getCID() << "]\n";
+    EV << "Incoming DSA-ACK from CID: [" << dsa_ack->getCID() << "]\n";
 
     ServiceFlow new_sf = dsa_ack->getNewServiceFlow();
     new_sf.link_type = ldUPLINK;
@@ -220,10 +220,10 @@ void CommonPartSublayerServiceFlows_BS::handle_DSA_ACK(Ieee80216_DSA_ACK *dsa_ac
     else
         error("Station not found by MAC address");
 
-    ev << "CIDS: " << str_ms->Basic_CID << " " << str_ms->Primary_Management_CID << " " <<
+    EV << "CIDS: " << str_ms->Basic_CID << " " << str_ms->Primary_Management_CID << " " <<
         str_ms->Secondary_Management_CID << "\n";
 
-    ev << "SS-DSA: New connection established! (CID=" << new_sf.CID << " | SFID=" << new_sf.
+    EV << "SS-DSA: New connection established! (CID=" << new_sf.CID << " | SFID=" << new_sf.
         SFID << ")\n";
 
     delete dsa_ack;
@@ -243,7 +243,7 @@ void CommonPartSublayerServiceFlows_BS::createManagementConnection(structMobiles
 
     Enter_Method("createManagementConnection() for SS");
 
-    ev << "Creating ManagementConnection for " << registered_ss->MobileMacAddress<< "  (" << type << ")\n";
+    EV << "Creating ManagementConnection for " << registered_ss->MobileMacAddress<< "  (" << type << ")\n";
 
     ServiceFlow *management_sf = new ServiceFlow();
     management_sf->SFID = getFreeSFID();

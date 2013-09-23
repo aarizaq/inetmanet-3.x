@@ -309,7 +309,7 @@ u_int8_t * PASER_TU_RREQ::toByteArray(int *l) {
     }*/
 
     *l = len;
-    ev << "len = " << len << "\n";
+    EV << "len = " << len << "\n";
     return data;
 }
 
@@ -340,7 +340,7 @@ u_int8_t * PASER_TU_RREQ::getCompleteByteArray(int *l) {
             len += sizeof(temp_addr.S_addr);
         }
     }
-    ev << "AddL = " << (len - tempLen) << "\n";
+    EV << "AddL = " << (len - tempLen) << "\n";
     len += sizeof(metricBetweenQueryingAndForw);
     if (GFlag) {
         len += sizeof(nonce);
@@ -362,7 +362,7 @@ u_int8_t * PASER_TU_RREQ::getCompleteByteArray(int *l) {
             it++) {
         len += SHA256_DIGEST_LENGTH;
     }
-    ev << "auth = " << (len - tempLen) << "\n";
+    EV << "auth = " << (len - tempLen) << "\n";
 
     len += SHA256_DIGEST_LENGTH;
 
@@ -438,7 +438,7 @@ u_int8_t * PASER_TU_RREQ::getCompleteByteArray(int *l) {
         buf += sizeof(cert.len);
         memcpy(buf, cert.buf, cert.len);
         buf += cert.len;
-        ev << "Certifikatlenge (querying) = " << cert.len << "\n";
+        EV << "Certifikatlenge (querying) = " << cert.len << "\n";
     }
 
     // GEO of querying node
@@ -471,7 +471,7 @@ u_int8_t * PASER_TU_RREQ::getCompleteByteArray(int *l) {
     buf += SHA256_DIGEST_LENGTH;
 
     *l = len;
-    ev << "len = " << len << "\n";
+    EV << "len = " << len << "\n";
     return data;
 }
 #endif

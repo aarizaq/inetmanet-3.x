@@ -26,6 +26,6 @@ void ConvergenceSublayerDown::handleMessage(cMessage *msg)
     }
     else
     {
-        ev << "nothing" << endl;
+        EV << "nothing" << endl;
     }
 }

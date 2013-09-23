@@ -38,7 +38,7 @@ void CommonPartSublayerUp::handleMessage(cMessage *msg)
     }
     else
     {
-        ev << "nothing" << endl;
+        EV << "nothing" << endl;
     }
 }
 
@@ -52,7 +52,7 @@ void CommonPartSublayerUp::handleCommand(int msgkind, cPolymorphic *ctrl)
 //
 void CommonPartSublayerUp::handleLowerMsg(cPacket *msg)
 {
-    ev << "received message from physical layer: " << msg << endl;
+    EV << "received message from physical layer: " << msg << endl;
 
     Ieee80216MacHeader* MacFrame = dynamic_cast<Ieee80216MacHeader *>(msg); // Empfangendes Paket ist eine IEEE802.16e Frame
 
@@ -68,7 +68,7 @@ void CommonPartSublayerUp::handleLowerMsg(cPacket *msg)
         return;
     }
 
-    ev << "CID: " << MacFrame->getCID() << endl;
+    EV << "CID: " << MacFrame->getCID() << endl;
 
     switch (MacFrame->getCID())
     {
@@ -87,7 +87,7 @@ void CommonPartSublayerUp::handleLowerMsg(cPacket *msg)
         }
         else
         {
-            ev << "Die CID: " << MacFrame->getCID() << " ist nicht vergeben" << endl;
+            EV << "Die CID: " << MacFrame->getCID() << " ist nicht vergeben" << endl;
         }
         break;
     }

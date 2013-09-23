@@ -84,7 +84,7 @@ void Decider80216::getSnrList(AirFrame* af, SnrList& receivedList)
 
     for (cModule::SubmoduleIterator iter(subParent); !iter.end(); iter++)
     {
-        ev << "Roland Parent Module: " << iter()->getFullName() << "\n";
+        EV << "Roland Parent Module: " << iter()->getFullName() << "\n";
     }
 
     cModule* parent = getParentModule(); //Uebergeordnetes Module

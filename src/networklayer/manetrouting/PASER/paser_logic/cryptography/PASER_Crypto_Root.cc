@@ -282,10 +282,10 @@ int PASER_Crypto_Root::root_check_root(u_int8_t* root, u_int8_t* secret,
     }
     memcpy(&new_iv, temp, 4);
     new_iv = new_iv >> (SHA256_DIGEST_LENGTH - param);
-    ev << "iv= " << iv << ",new IV_nr = " << new_iv << ", param: " << param
+    EV << "iv= " << iv << ",new IV_nr = " << new_iv << ", param: " << param
             << "\n";
     if (iv > 0 && iv > new_iv) {
-        ev << "old iv\n";
+        EV << "old iv\n";
         return 0;
     }
 

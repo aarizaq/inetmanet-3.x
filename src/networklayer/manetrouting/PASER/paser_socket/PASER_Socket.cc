@@ -103,11 +103,11 @@ void PASER_Socket::initialize(int stage) {
 
         if (getParentModule()->par("isGW")) {
             char temp[] = "1";
-            ev << "GATEWAY\n";
+            EV << "GATEWAY\n";
             paser_configuration = new PASER_Configurations(temp, this);
         } else {
             char temp[] = "0";
-            ev << "CLIENT\n";
+            EV << "CLIENT\n";
             paser_configuration = new PASER_Configurations(temp, this);
         }
         paser_global = new PASER_Global(paser_configuration, this);
@@ -130,7 +130,7 @@ void PASER_Socket::initialize(int stage) {
         registerPosition();
 
 //        isGW = paser_configuration->getIsGW();
-        ev << "isGW = " << paser_configuration->getIsGW() << "\n";
+        EV << "isGW = " << paser_configuration->getIsGW() << "\n";
 //        isRegistered = paser_global->getIsRegistered();
 //        wasRegistered = paser_global->getWasRegistered();
 
@@ -158,8 +158,8 @@ void PASER_Socket::initialize(int stage) {
                 paser_configuration, this);
         paser_global->setRoute_maintenance(route_maintenance);
 
-        ev << "NumWlanInterfaces = " << getNumWlanInterfaces() << "\n";
-        ev << "getWlanInterfaceIndexByAddress = "
+        EV << "NumWlanInterfaces = " << getNumWlanInterfaces() << "\n";
+        EV << "getWlanInterfaceIndexByAddress = "
                 << getWlanInterfaceIndexByAddress() << "\n";
 
         netDevice = paser_global->getNetDevice();
@@ -216,7 +216,7 @@ void PASER_Socket::GenNewRoot() {
 //
 //    //the carrier frequency used
 //    double carrierFrequency = cc->par("carrierFrequency");
-//    ev << "standart carrierFrequency:" << carrierFrequency << "\n";
+//    EV << "standart carrierFrequency:" << carrierFrequency << "\n";
 //    //signal attenuation threshold
 //    //path loss coefficient
 //    double alpha = cc->par("alpha");
@@ -351,7 +351,7 @@ void PASER_Socket::editNodeColor() {
  *
  */
 void PASER_Socket::handleMessage(cMessage *msg) {
-    ev << "handle Message\n";
+    EV << "handle Message\n";
     paketProcessingDelay = 0;
     data_message_send_total_delay = 0;
     IPv4Datagram * ipDgram = NULL;
@@ -370,9 +370,9 @@ void PASER_Socket::handleMessage(cMessage *msg) {
     // In case AuthTree exists, delete all messages
     if (!paser_configuration->isRootReady) {
         if (msg == startMessage || msg->isSelfMessage()) {
-            ev << "genRootTimer: " << GenRootTimer.str() << "\n";
+            EV << "genRootTimer: " << GenRootTimer.str() << "\n";
             simtime_t temp = GenRootTimer + 0.000001;
-            ev << "newRootTimer: " << temp.str() << "\n";
+            EV << "newRootTimer: " << temp.str() << "\n";
             scheduleAt(GenRootTimer + 0.000001, msg);
             return;
         }
@@ -385,7 +385,7 @@ void PASER_Socket::handleMessage(cMessage *msg) {
 //        paket_processing->sendGTKRequest();
         lv_block cert;
         if (!crypto_sign->getCert(&cert)) {
-            ev << "cert ERROR\n";
+            EV << "cert ERROR\n";
             return;
         }
         paser_global->generateGwSearchNonce();
@@ -413,13 +413,13 @@ void PASER_Socket::handleMessage(cMessage *msg) {
         /*
          * just 4 test*/
         //''''''''''''''''''''''''''''''''
-//        ev << getParentModule()->getDisplayString().getNumTags() << "\n";
+//        EV << getParentModule()->getDisplayString().getNumTags() << "\n";
 //        for(int i = 0; i< getParentModule()->getDisplayString().getNumTags(); i++){
-//            ev << "name: " << getParentModule()->getDisplayString().getTagName(i);
+//            EV << "name: " << getParentModule()->getDisplayString().getTagName(i);
 //            for(int j=0; j<getParentModule()->getDisplayString().getNumArgs(i); j++){
-//                ev << " = " << getParentModule()->getDisplayString().getTagArg(i,j) << " ";
+//                EV << " = " << getParentModule()->getDisplayString().getTagArg(i,j) << " ";
 //            }
-//            ev << "\n";
+//            EV << "\n";
 //        }
 //        getParentModule()->getDisplayString().setTagArg("p", 0, 700);
 //        getParentModule()->getDisplayString().setTagArg("p", 1, 200);
@@ -458,34 +458,34 @@ void PASER_Socket::handleMessage(cMessage *msg) {
         //aktualisiere den Timer fuer eine Route
         // Update Timer of a route
         else if (control->getOptionCode() == MANET_ROUTE_UPDATE) {
-            ev << "Update Message. src: "
+            EV << "Update Message. src: "
                     << control->getSrcAddress().getIPv4().str()
                     << ", dest: "
                     << control->getDestAddress().getIPv4().str() << "\n";
             struct in_addr tempAddr;
             if (paser_global->isHelloActive()) {
                 tempAddr.S_addr = control->getSrcAddress();
-                ev << "controlSrc: " << tempAddr.S_addr.getIPv4().str()
+                EV << "controlSrc: " << tempAddr.S_addr.getIPv4().str()
                         << "\n";
                 if (paser_configuration->isAddInMySubnetz(tempAddr)
                         || isLocalAddress(tempAddr.S_addr)) {
-                    ev << "I am a src.\n";
+                    EV << "I am a src.\n";
                 } else {
                     routing_table->updateRouteLifetimes(tempAddr);
                 }
             }
             tempAddr.S_addr = control->getDestAddress();
-            ev << "controlDest: " << tempAddr.S_addr.getIPv4().str()
+            EV << "controlDest: " << tempAddr.S_addr.getIPv4().str()
                     << "\n";
             if (tempAddr.S_addr != PASER_BROADCAST) {
                 if (paser_configuration->isAddInMySubnetz(tempAddr)
                         || isLocalAddress(tempAddr.S_addr)) {
-                    ev << "I am a dest.\n";
+                    EV << "I am a dest.\n";
                 } else {
                     routing_table->updateRouteLifetimes(tempAddr);
                 }
             } else {
-                ev << "is broadcast!\n";
+                EV << "is broadcast!\n";
             }
 
 //            updateRouteLifetimes(control->getSrcAddress());
@@ -554,14 +554,14 @@ u_int32_t PASER_Socket::getMessageInterface(cPacket * msg) {
 
     u_int32_t ifIndex = -1;
     bool found = false;
-    ev << "if = " << interfaceId << "\n";
+    EV << "if = " << interfaceId << "\n";
 
     InterfaceEntry * ie;
     for (int i = 0; i < getNumWlanInterfaces(); i++) {
         ie = getWlanInterfaceEntry(i);
         if (ie && interfaceId == ie->getInterfaceId()) {
             ifIndex = getWlanInterfaceIndex(i);
-            ev << "found WlanInterfaceIndex\n";
+            EV << "found WlanInterfaceIndex\n";
             break;
         }
     }
@@ -576,11 +576,11 @@ u_int32_t PASER_Socket::getMessageInterface(cPacket * msg) {
 //    return ifIndex;
 //}
     if (!found) {
-        ev << "wrong ifIndex\n";
+        EV << "wrong ifIndex\n";
         delete ctrl;
         return 0;
     }
-    ev << "Incomming msg on " << ifIndex << "\n";
+    EV << "Incomming msg on " << ifIndex << "\n";
     delete ctrl;
     return ifIndex;
 }
@@ -601,20 +601,20 @@ void PASER_Socket::scheduleNextEvent() {
         }
         return;
     }
-//    ev << "nextEventTime: " << next_timer_message->timeout.tv_sec << "." << next_timer_message->timeout.tv_usec << "\n";
+//    EV << "nextEventTime: " << next_timer_message->timeout.tv_sec << "." << next_timer_message->timeout.tv_usec << "\n";
     //Berechne in wieviel Sekunden der Event auftritt
     struct timeval nextTimeout = next_timer_message->timeout;
     MYgettimeofday(&now, NULL);
-//    ev << "now: " << now.tv_sec << "." << now.tv_usec << "\n";
+//    EV << "now: " << now.tv_sec << "." << now.tv_usec << "\n";
     remaining.tv_usec = nextTimeout.tv_usec - now.tv_usec;
     remaining.tv_sec = nextTimeout.tv_sec - now.tv_sec;
     if (remaining.tv_usec < 0) {
-//        ev << "remaining.tv_usec < 0\n";
+//        EV << "remaining.tv_usec < 0\n";
         remaining.tv_usec += 1000000;
         remaining.tv_sec -= 1;
     }
 
-//    ev << "remaining: " << remaining.tv_sec << "." << remaining.tv_usec << "\n";
+//    EV << "remaining: " << remaining.tv_sec << "." << remaining.tv_usec << "\n";
     simtime_t timer;
     double delay;
     delay = (double) (((double) remaining.tv_usec / (double) 1000000.0)
@@ -624,14 +624,14 @@ void PASER_Socket::scheduleNextEvent() {
     timer = simTime() + delay;
     if (sendMessageEvent->isScheduled()) {
         if (timer < sendMessageEvent->getArrivalTime()) {
-            ev << "reset Timeout\n";
+            EV << "reset Timeout\n";
             cancelEvent(sendMessageEvent);
             scheduleAt(timer, sendMessageEvent);
         }
     } else {
-        ev << "set new Timeout  " << timer << "... ";
+        EV << "set new Timeout  " << timer << "... ";
         scheduleAt(timer, sendMessageEvent);
-        ev << "OK\n";
+        EV << "OK\n";
     }
 }
 
@@ -676,7 +676,7 @@ void PASER_Socket::send_message(cPacket * msg, struct in_addr dest_addr,
     } else {
         //Send CRL request
         msg->setName("CRL_REQUEST");
-        ev << "paketProcessingDelay = " << paketProcessingDelay << "\n";
+        EV << "paketProcessingDelay = " << paketProcessingDelay << "\n";
         sendUDPToIp(msg, PASER_PORT_CRL, dest_addr.S_addr, PASER_PORT_CRL, 30,
                 paketProcessingDelay, ifIndex);
         return;
@@ -684,11 +684,11 @@ void PASER_Socket::send_message(cPacket * msg, struct in_addr dest_addr,
     if (dest_addr.s_addr == PASER_BROADCAST) {
         double tempDelay = par("broadCastDelay");
         tempDelay += paketProcessingDelay;
-        ev << "paketProcessingDelay = " << paketProcessingDelay << "\n";
+        EV << "paketProcessingDelay = " << paketProcessingDelay << "\n";
         sendToIp(msg, PASER_PORT, dest_addr.S_addr, PASER_PORT, 1, tempDelay,
                 ifIndex);
     } else {
-        ev << "paketProcessingDelay = " << paketProcessingDelay << "\n";
+        EV << "paketProcessingDelay = " << paketProcessingDelay << "\n";
         sendToIp(msg, PASER_PORT, dest_addr.S_addr, PASER_PORT, 1,
                 paketProcessingDelay, ifIndex);
     }
@@ -698,55 +698,55 @@ int PASER_Socket::addPaketLaengeZuStat(cPacket * msg) {
     PASER_MSG *paser_msg = check_and_cast<PASER_MSG *>(msg);
     int leng = 0;
     if (paser_msg->type == 0) {
-        ev << "stat PASER_UB_RREQ\n";
+        EV << "stat PASER_UB_RREQ\n";
         PASER_UB_RREQ *paket = check_and_cast<PASER_UB_RREQ *>(msg);
         u_int8_t* data = paket->getCompleteByteArray(&leng);
         free(data);
     }
     if (paser_msg->type == 1) {
-        ev << "stat PASER_UU_RREP\n";
+        EV << "stat PASER_UU_RREP\n";
         PASER_UU_RREP *paket = check_and_cast<PASER_UU_RREP *>(msg);
         u_int8_t* data = paket->getCompleteByteArray(&leng);
         free(data);
     }
     if (paser_msg->type == 2) {
-        ev << "stat PASER_TU_RREQ\n";
+        EV << "stat PASER_TU_RREQ\n";
         PASER_TU_RREQ *paket = check_and_cast<PASER_TU_RREQ *>(msg);
         u_int8_t* data = paket->getCompleteByteArray(&leng);
         free(data);
     }
     if (paser_msg->type == 3) {
-        ev << "stat PASER_TU_RREP\n";
+        EV << "stat PASER_TU_RREP\n";
         PASER_TU_RREP *paket = check_and_cast<PASER_TU_RREP *>(msg);
         u_int8_t* data = paket->getCompleteByteArray(&leng);
         free(data);
     }
     if (paser_msg->type == 4) {
-        ev << "stat PASER_TU_RREP_ACK\n";
+        EV << "stat PASER_TU_RREP_ACK\n";
         PASER_TU_RREP_ACK *paket = check_and_cast<PASER_TU_RREP_ACK *>(msg);
         u_int8_t* data = paket->getCompleteByteArray(&leng);
         free(data);
     }
     if (paser_msg->type == 5) {
-        ev << "stat PASER_TB_RERR\n";
+        EV << "stat PASER_TB_RERR\n";
         PASER_TB_RERR *paket = check_and_cast<PASER_TB_RERR *>(msg);
         u_int8_t* data = paket->getCompleteByteArray(&leng);
         free(data);
     }
     if (paser_msg->type == 6) {
-        ev << "stat PASER_TB_Hello\n";
+        EV << "stat PASER_TB_Hello\n";
         PASER_TB_Hello *paket = check_and_cast<PASER_TB_Hello *>(msg);
         u_int8_t* data = paket->getCompleteByteArray(&leng);
         free(data);
     }
     if (paser_msg->type == 7) {
-        ev << "stat PASER_TB_Hello\n";
+        EV << "stat PASER_TB_Hello\n";
         PASER_UB_Root_Refresh *paket = check_and_cast<PASER_UB_Root_Refresh *>(msg);
         u_int8_t* data = paket->getCompleteByteArray(&leng);
         free(data);
     }
     if (paser_msg->type == 8) {
-        ev << "stat PASER_UB_Key_Refresh\n";
+        EV << "stat PASER_UB_Key_Refresh\n";
         PASER_UB_Key_Refresh *paket = check_and_cast<PASER_UB_Key_Refresh *>(msg);
         u_int8_t* data = paket->getCompleteByteArray(&leng);
         free(data);
@@ -775,9 +775,9 @@ void PASER_Socket::processLinkBreak(const cPolymorphic *details) {
 
             PASER_Routing_Entry *rEntry = routing_table->findDest(dest_addr);
             if (rEntry) {
-                ev << "alte Route wurde gefunden\n";
+                EV << "alte Route wurde gefunden\n";
             } else {
-                ev << "keine Route wurde gefunden\n";
+                EV << "keine Route wurde gefunden\n";
             }
             if (rEntry && paser_configuration->isSetLocalRepair()
                     && paser_configuration->getMaxLocalRepairHopCount()
@@ -804,10 +804,10 @@ void PASER_Socket::processLinkBreak(const cPolymorphic *details) {
 }
 
 bool PASER_Socket::isMyLocalAddress(struct in_addr addr) {
-    ev << " Entering isMyLocalAddress \n";
-    ev << addr.S_addr.getIPv4().getInt()<<" \n";
+    EV << " Entering isMyLocalAddress \n";
+    EV << addr.S_addr.getIPv4().getInt()<<" \n";
     bool result = isLocalAddress(addr.S_addr);
-    ev <<"result"<< result<<" \n";
+    EV <<"result"<< result<<" \n";
     return result;
 }
 
@@ -819,14 +819,14 @@ int PASER_Socket::MYgettimeofday(struct timeval *tv, struct timezone *tz) {
     if (!tv)
         return -1;
     current_time = simTime().dbl();
-//    ev << "current_time: " << current_time << "\n";
+//    EV << "current_time: " << current_time << "\n";
     tv->tv_sec = (long) current_time; /* Remove decimal part */
-//    ev << "tv->tv_sec: " << tv->tv_sec << "\n";
+//    EV << "tv->tv_sec: " << tv->tv_sec << "\n";
     tmp = (current_time - tv->tv_sec) * 1000000;
-//    ev << "current_time - tv->tv_sec = " << current_time - tv->tv_sec << "\n";
-//    ev << "tmp: " << tmp << "\n";
+//    EV << "current_time - tv->tv_sec = " << current_time - tv->tv_sec << "\n";
+//    EV << "tmp: " << tmp << "\n";
     tv->tv_usec = (long) (tmp + 0.5);
-//    ev << "tv->tv_usec: " << tv->tv_usec << "\n";
+//    EV << "tv->tv_usec: " << tv->tv_usec << "\n";
     if (tv->tv_usec >= 1000000) {
         tv->tv_sec++;
         tv->tv_usec -= 1000000;
@@ -921,9 +921,9 @@ void PASER_Socket::MY_omnet_chg_rte(const ManetAddress &destination, const Manet
 
       //omnet_chg_rte(dst, gtwy, netm, hops, del_entry, index);
       if (!del_entry) {
-          ev << "update  Routing Table: " << destination.getIPv4().str() << "\n";
+          EV << "update  Routing Table: " << destination.getIPv4().str() << "\n";
       } else {
-          ev << "loesche Routing Table: " << destination.getIPv4().str() << "\n";
+          EV << "loesche Routing Table: " << destination.getIPv4().str() << "\n";
       }
       return;
 }
@@ -940,7 +940,7 @@ double PASER_Socket::MY_getXPos() {
     double xPos;
     //parseIntTo(getParentModule()->getDisplayString().getTagArg("p", 0), xPos);
     xPos = getPosition().x;
-    ev << "**********xPos****************" << xPos <<"\n";
+    EV << "**********xPos****************" << xPos <<"\n";
     return xPos;
 }
 

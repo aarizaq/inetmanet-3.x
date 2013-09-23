@@ -35,7 +35,7 @@ double WiMAXPathLossReceptionModel::calculateReceivedPower(double pSend, double 
     logNormalVector.record(L_d);
     double pEmpfang;
     pEmpfang = pSend * pow(10, -1 * (L_m + L_a) / 10);
-    ev << "RadioPath pEmpfang:" << pEmpfang << " pSend:" << pSend << " L_m:" << L_m << " L_a:" <<
+    EV << "RadioPath pEmpfang:" << pEmpfang << " pSend:" << pSend << " L_m:" << L_m << " L_a:" <<
         L_a << endl;
     //return (pSend * pow(10,(-1*(58.77+37.6*log10(distance/1000)+21*log10(carrierFrequency/1000000)))/10));
     return (pEmpfang);

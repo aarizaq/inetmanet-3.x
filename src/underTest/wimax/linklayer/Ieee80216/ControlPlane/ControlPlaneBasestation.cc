@@ -1576,7 +1576,7 @@ structMobilestationInfo *ControlPlaneBasestation::lookupLocaleMobilestationListC
  *****************************************************************************************/
 void ControlPlaneBasestation::setRadio()
 {
-    ev << "MK:  CHECK(setRadio)\n";
+    EV << "MK:  CHECK(setRadio)\n";
     setRadioDownlink();
     setRadioUplink();
 }
@@ -1702,8 +1702,8 @@ void ControlPlaneBasestation::setMobilestationScanmodus(cMessage *msg)
     scanMobilestation = lookupLocaleMobilestationListMAC(scanMS->getScanMobilestationAddress());
     scanMobilestation->scanModus = true;
 
-    ev << "Mobilestation MAC Adresse:" << scanMS->getScanMobilestationAddress() << "\n";
-    ev << "Mobilestation MAC Adresse:" << scanMobilestation->MobileMacAddress << "\n";
+    EV << "Mobilestation MAC Adresse:" << scanMS->getScanMobilestationAddress() << "\n";
+    EV << "Mobilestation MAC Adresse:" << scanMobilestation->MobileMacAddress << "\n";
 
     delete scanMS;
 

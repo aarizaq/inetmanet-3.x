@@ -29,10 +29,10 @@ PASER_Configurations::PASER_Configurations(char *configFile, PASER_Socket *pModu
     paser_modul = pModul;
     if (configFile[0] == '1') {
         isGW = true;
-        ev << "GATEWAY\n";
+        EV << "GATEWAY\n";
     } else {
         isGW = false;
-        ev << "CLIENT\n";
+        EV << "CLIENT\n";
     }
 
     setGWsearch = pModul->par("isGWsearch");
@@ -84,7 +84,7 @@ PASER_Configurations::PASER_Configurations(char *configFile, PASER_Socket *pModu
 //    }
     netDeviceNumber = 1;
 
-    ev << "getNumInterfaces() = " << pModul->MYgetNumInterfaces() << "\n";
+    EV << "getNumInterfaces() = " << pModul->MYgetNumInterfaces() << "\n";
 
     netDevice = NULL;
     if (netDeviceNumber > 0) {
@@ -103,7 +103,7 @@ PASER_Configurations::PASER_Configurations(char *configFile, PASER_Socket *pModu
     for (int i = 0; i < pModul->MYgetNumInterfaces(); i++) {
         InterfaceEntry * tempIf = pModul->PUBLIC_getInterfaceEntry(i);
         if (memcmp(tempIf->getName(), "eth0", 4) == 0) {
-            ev << "netEthDevice found!\n";
+            EV << "netEthDevice found!\n";
             netEthDevice = new network_device[1];
             netEthDevice[0].enabled = 1;
             netEthDevice[0].sock = -1;
@@ -120,9 +120,9 @@ PASER_Configurations::PASER_Configurations(char *configFile, PASER_Socket *pModu
 
 //    for(int i=0; i<pModul->MYgetNumInterfaces(); i++){
 //        InterfaceEntry * tempIf = pModul->PUBLIC_getInterfaceEntry(i);
-//        ev << "ClassName: " << tempIf->getClassName() << "\n";
-//        ev << "Name: " << tempIf->getName() << "\n";
-//        ev << "FullName: " << tempIf->getFullName() << "\n";
+//        EV << "ClassName: " << tempIf->getClassName() << "\n";
+//        EV << "Name: " << tempIf->getName() << "\n";
+//        EV << "FullName: " << tempIf->getFullName() << "\n";
 //    }
 
 //    netDevice[1].enabled = 1;
@@ -234,7 +234,7 @@ void PASER_Configurations::setKDC_cert(lv_block _KDC_cert) {
     if (_KDC_cert.len == 0) {
         KDC_cert.len = 0;
         KDC_cert.buf = NULL;
-        ev << "_KDC_cer = NULLt\n";
+        EV << "_KDC_cer = NULLt\n";
         return;
     }
     KDC_cert.buf = (u_int8_t *) malloc(_KDC_cert.len);
@@ -341,7 +341,7 @@ u_int32_t PASER_Configurations::getRootRepetitions() {
 void PASER_Configurations::intAddlList() {
     int wlanNumber = paser_modul->MYgetNumWlanInterfaces();
     netAddDeviceNumber = wlanNumber - netDeviceNumber;
-    ev << "netAddDeviceNumber = " << netAddDeviceNumber << "\n";
+    EV << "netAddDeviceNumber = " << netAddDeviceNumber << "\n";
     if (netAddDeviceNumber <= 0) {
         return;
     }
@@ -355,7 +355,7 @@ void PASER_Configurations::intAddlList() {
         netAddDevice[i].mask.S_addr.set(paser_modul->PUBLIC_getInterfaceEntry(i + netDeviceNumber + 1)->ipv4Data()->getNetmask());
         netAddDevice[i].ipaddr.S_addr.set(IPv4Address(paser_modul->PUBLIC_getInterfaceEntry(i + netDeviceNumber + 1)->ipv4Data()->getIPAddress().getInt()
                         & netAddDevice[i].mask.S_addr.getIPv4().getInt()));/*(in_addr_t) 0xFFFFFF00*/;
-        ev << "net Mask: "
+        EV << "net Mask: "
                 << paser_modul->PUBLIC_getInterfaceEntry(
                         i + netDeviceNumber + 1)->ipv4Data()->getNetmask().str()
                 << "\n";
@@ -368,7 +368,7 @@ void PASER_Configurations::intAddlList() {
 
 bool PASER_Configurations::isAddInMySubnetz(struct in_addr Addr) {
     for (u_int32_t i = 0; i < netAddDeviceNumber; i++) {
-        ev << "(netAddDevice[i].mask.S_addr & Addr.S_addr) = "
+        EV << "(netAddDevice[i].mask.S_addr & Addr.S_addr) = "
                 << (netAddDevice[i].mask.S_addr.getIPv4().getInt() & Addr.S_addr.getIPv4().getInt()) << "\n";
         if ((netAddDevice[i].mask.S_addr.getIPv4().getInt() & Addr.S_addr.getIPv4().getInt())
                 == (netAddDevice[i].mask.S_addr.getIPv4().getInt() & netAddDevice[i].ipaddr.S_addr.getIPv4().getInt())) {

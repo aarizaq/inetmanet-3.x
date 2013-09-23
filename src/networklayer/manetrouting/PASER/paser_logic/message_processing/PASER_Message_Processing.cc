@@ -87,61 +87,61 @@ void PASER_Message_Processing::handleLowerMsg(cPacket * msg, u_int32_t ifIndex) 
     PASER_MSG *paser_msg = check_and_cast<PASER_MSG *>(msg);
     switch (paser_msg->type) {
     case 0:
-        ev << "Incoming PASER_UB_RREQ\n";
+        EV << "Incoming PASER_UB_RREQ\n";
         paser_modul->paketProcessingDelay = paser_modul->paketProcessingDelay
                 + (double) paser_modul->par("verify_rsa_delay");
         handleUBRREQ(msg, ifIndex);
         break;
     case 1:
-        ev << "Incoming PASER_UU_RREP\n";
+        EV << "Incoming PASER_UU_RREP\n";
         paser_modul->paketProcessingDelay = paser_modul->paketProcessingDelay
                 + (double) paser_modul->par("verify_rsa_delay");
         handleUURREP(msg, ifIndex);
         break;
     case 2:
-        ev << "Incoming PASER_TU_RREQ\n";
+        EV << "Incoming PASER_TU_RREQ\n";
         paser_modul->paketProcessingDelay = paser_modul->paketProcessingDelay
                 + (double) paser_modul->par("auth_tree_verify_delay");
         handleTURREQ(msg, ifIndex);
         break;
     case 3:
-        ev << "Incoming PASER_TU_RREP\n";
+        EV << "Incoming PASER_TU_RREP\n";
         paser_modul->paketProcessingDelay = paser_modul->paketProcessingDelay
                 + (double) paser_modul->par("auth_tree_verify_delay");
         handleTURREP(msg, ifIndex);
         break;
     case 4:
-        ev << "Incoming PASER_TU_RREP_ACK\n";
+        EV << "Incoming PASER_TU_RREP_ACK\n";
         paser_modul->paketProcessingDelay = paser_modul->paketProcessingDelay
                 + (double) paser_modul->par("auth_tree_verify_delay");
         handleTURREPACK(msg, ifIndex);
         break;
     case 5:
-        ev << "Incoming PASER_TB_RERR\n";
+        EV << "Incoming PASER_TB_RERR\n";
         paser_modul->paketProcessingDelay = paser_modul->paketProcessingDelay
                 + (double) paser_modul->par("auth_tree_verify_delay");
         handleRERR(msg, ifIndex);
         break;
     case 6:
-        ev << "Incoming PASER_TB_Hello\n";
+        EV << "Incoming PASER_TB_Hello\n";
         paser_modul->paketProcessingDelay = paser_modul->paketProcessingDelay
                 + (double) paser_modul->par("auth_tree_verify_delay");
         handleHELLO(msg, ifIndex);
         break;
     case 7:
-        ev << "Incoming PASER_UB_Root_Refresh\n";
+        EV << "Incoming PASER_UB_Root_Refresh\n";
         paser_modul->paketProcessingDelay = paser_modul->paketProcessingDelay
                 + (double) paser_modul->par("verify_rsa_delay");
         handleB_ROOT(msg, ifIndex);
         break;
     case 8:
-        ev << "Incoming PASER_B_RESET\n";
+        EV << "Incoming PASER_B_RESET\n";
         paser_modul->paketProcessingDelay = paser_modul->paketProcessingDelay
                 + (double) paser_modul->par("verify_rsa_delay");
         handleB_RESET(msg, ifIndex);
         break;
     default:
-        ev << "false PASER Message type\n";
+        EV << "false PASER Message type\n";
         delete msg;
         return;
     }
@@ -169,7 +169,7 @@ int PASER_Message_Processing::check_seq_nr(PASER_MSG *paser_msg,
                     paser_msg);
             seqForw = turreq_msg->seqForw;
         }
-        ev << "seq: " << paser_msg->seq << " seqForw: " << seqForw << "\n";
+        EV << "seq: " << paser_msg->seq << " seqForw: " << seqForw << "\n";
         srcNode = routing_table->findDest(paser_msg->srcAddress_var);
         destAddr.S_addr = paser_msg->destAddress_var.S_addr;
 
@@ -228,7 +228,7 @@ int PASER_Message_Processing::check_seq_nr(PASER_MSG *paser_msg,
         return 1;
     } else if (paser_msg->type == UU_RREP || paser_msg->type == TU_RREP) {
         srcNode = routing_table->findDest(paser_msg->destAddress_var);
-        ev << "seq: " << paser_msg->seq << "\n";
+        EV << "seq: " << paser_msg->seq << "\n";
         destAddr.S_addr = paser_msg->srcAddress_var.S_addr;
 
         if (srcNode
@@ -243,7 +243,7 @@ int PASER_Message_Processing::check_seq_nr(PASER_MSG *paser_msg,
             }
         }
         if (srcNode) {
-            ev << "srcNode->seqnum: " << srcNode->seqnum << "\n";
+            EV << "srcNode->seqnum: " << srcNode->seqnum << "\n";
 //            if(paser_msg->seq > srcNode->seqnum){
             if (paser_global->isSeqNew(srcNode->seqnum, paser_msg->seq)) {
                 return 1;
@@ -254,7 +254,7 @@ int PASER_Message_Processing::check_seq_nr(PASER_MSG *paser_msg,
         return 1;
     } else if (paser_msg->type == TU_RREP_ACK) {
         srcNode = routing_table->findDest(paser_msg->srcAddress_var);
-        ev << "seq: " << paser_msg->seq << "\n";
+        EV << "seq: " << paser_msg->seq << "\n";
         destAddr.S_addr = paser_msg->srcAddress_var.S_addr;
 
         if (srcNode && isGW
@@ -268,7 +268,7 @@ int PASER_Message_Processing::check_seq_nr(PASER_MSG *paser_msg,
             }
         }
         if (srcNode) {
-            ev << "srcNode->seqnum: " << srcNode->seqnum << "\n";
+            EV << "srcNode->seqnum: " << srcNode->seqnum << "\n";
 //            if(paser_msg->seq > srcNode->seqnum){
             if (paser_global->isSeqNew(srcNode->seqnum, paser_msg->seq)) {
                 return 1;
@@ -280,10 +280,10 @@ int PASER_Message_Processing::check_seq_nr(PASER_MSG *paser_msg,
     } else if (paser_msg->type == B_RERR || paser_msg->type == B_HELLO
             || paser_msg->type == B_ROOT) {
         srcNode = routing_table->findDest(paser_msg->srcAddress_var);
-        ev << "seq: " << paser_msg->seq << "\n";
+        EV << "seq: " << paser_msg->seq << "\n";
         destAddr.S_addr = paser_msg->srcAddress_var.S_addr;
         if (srcNode) {
-            ev << "srcNode->seqnum: " << srcNode->seqnum << "\n";
+            EV << "srcNode->seqnum: " << srcNode->seqnum << "\n";
 //            if(paser_msg->seq > srcNode->seqnum){
             if (paser_global->isSeqNew(srcNode->seqnum, paser_msg->seq)) {
                 return 1;
@@ -313,9 +313,9 @@ int PASER_Message_Processing::check_geo(geo_pos position) {
 
     double temp = (position.lat - myGeo.lat) * (position.lat - myGeo.lat)
             + (position.lon - myGeo.lon) * (position.lon - myGeo.lon);
-    ev << "myPos x: " << myGeo.lat << " myPos y: " << myGeo.lon << "\n";
-    ev << "Node x: " << position.lat << " Node: " << position.lon << "\n";
-    ev << "dist: " << temp << " max Dist: " << PASER_radius * PASER_radius
+    EV << "myPos x: " << myGeo.lat << " myPos y: " << myGeo.lon << "\n";
+    EV << "Node x: " << position.lat << " Node: " << position.lon << "\n";
+    EV << "dist: " << temp << " max Dist: " << PASER_radius * PASER_radius
             << "\n";
     if (temp > (PASER_radius * PASER_radius)) {
         return 0;
@@ -329,14 +329,14 @@ int PASER_Message_Processing::check_geo(geo_pos position) {
  *         0 - OK
  */
 int PASER_Message_Processing::checkRouteList(std::list<address_list> rList) {
-    ev << " Entering checkRouteList \n";
+    EV << " Entering checkRouteList \n";
     for (std::list<address_list>::iterator it = rList.begin();
             it != rList.end(); it++) {
-        ev << " Entering for in checkRouteList \n";
+        EV << " Entering for in checkRouteList \n";
         if (paser_modul->isMyLocalAddress(((address_list) *it).ipaddr)) {
             return 1;
         }
-        ev << " Entering for in checkRouteList getting end of for \n";
+        EV << " Entering for in checkRouteList getting end of for \n";
     }
     return 0;
 }
@@ -346,12 +346,12 @@ int PASER_Message_Processing::checkRouteList(std::list<address_list> rList) {
  */
 void PASER_Message_Processing::handleUBRREQ(cPacket * msg, u_int32_t ifIndex) {
     PASER_UB_RREQ *ubrreq_msg = check_and_cast<PASER_UB_RREQ *>(msg);
-    ev << " Entering handleUBRREQ \n";
+    EV << " Entering handleUBRREQ \n";
     if (!paser_global->getWasRegistered()) {
         delete ubrreq_msg;
         return;
     }
-    ev << " checking AddressRangeList \n";
+    EV << " checking AddressRangeList \n";
     if (checkRouteList(ubrreq_msg->AddressRangeList)) {
         delete ubrreq_msg;
         return;
@@ -359,22 +359,22 @@ void PASER_Message_Processing::handleUBRREQ(cPacket * msg, u_int32_t ifIndex) {
     struct in_addr forwarding = ubrreq_msg->AddressRangeList.back().ipaddr;
     // Check message sequence number
     //Pruefe Sequenznummer des Pakets
-    ev << " checking sequence number \n";
+    EV << " checking sequence number \n";
     if (!check_seq_nr((check_and_cast<PASER_MSG *>(msg)), forwarding)) {
-        ev << "REPLAY SEQ\n";
+        EV << "REPLAY SEQ\n";
         delete ubrreq_msg;
         return;
     }
     // Check geo position of sending node
     //Pruefe GeoPosition des Absenders
-    ev << " checking sender range \n";
+    EV << " checking sender range \n";
     if (!check_geo(ubrreq_msg->geoForwarding)) {
-        ev << "WORMHOLE\n";
+        EV << "WORMHOLE\n";
         delete ubrreq_msg;
         return;
     }
 
-    ev << "iv = " << ubrreq_msg->initVector << "\n";
+    EV << "iv = " << ubrreq_msg->initVector << "\n";
 
     // Check Timestamp
     //pruefe Timestamp
@@ -382,7 +382,7 @@ void PASER_Message_Processing::handleUBRREQ(cPacket * msg, u_int32_t ifIndex) {
     paser_modul->MYgettimeofday(&now, NULL);
     if (now.tv_sec - ubrreq_msg->timestamp > PASER_time_diff
             || now.tv_sec - ubrreq_msg->timestamp < -PASER_time_diff) {
-        ev << "old paket\n";
+        EV << "old paket\n";
         delete ubrreq_msg;
         return;
     }
@@ -390,11 +390,11 @@ void PASER_Message_Processing::handleUBRREQ(cPacket * msg, u_int32_t ifIndex) {
     // Check message signature
     //Pruefe Signatur des Pakets
     if (!crypto_sign->checkSignUBRREQ(ubrreq_msg)) {
-        ev << "SIGN ERROR\n";
+        EV << "SIGN ERROR\n";
         delete ubrreq_msg;
         return;
     } else {
-        ev << "SIGN OK\n";
+        EV << "SIGN OK\n";
     }
     // Check keyNr
     //pruefe keyNr
@@ -404,7 +404,7 @@ void PASER_Message_Processing::handleUBRREQ(cPacket * msg, u_int32_t ifIndex) {
         delete ubrreq_msg;
         return;
     }
-    ev << "destAddr: "
+    EV << "destAddr: "
             << ubrreq_msg->destAddress_var.S_addr.getIPv4().str() << "\n";
     // Update neighbor table
     //aktualisiere NeighborTable
@@ -473,7 +473,7 @@ void PASER_Message_Processing::handleUBRREQ(cPacket * msg, u_int32_t ifIndex) {
                             == ubrreq_msg->destAddress_var.S_addr))
             || (paser_configuration->isAddInMySubnetz(
                     ubrreq_msg->destAddress_var))) {
-        ev << "send RREP" << "\n";
+        EV << "send RREP" << "\n";
         // uu-rrep
         if (isGW && ubrreq_msg->GFlag) {
             //sende anfrage an KDC
@@ -486,9 +486,9 @@ void PASER_Message_Processing::handleUBRREQ(cPacket * msg, u_int32_t ifIndex) {
         PASER_Neighbor_Entry *nEntry = neighbor_table->findNeigh(forwarding);
         ifId = paser_modul->getIfIdFromIfIndex(nEntry->ifIndex);
         WlanAddrStruct.S_addr = netDevice[ifId].ipaddr.S_addr;
-        ev << "nxtHopIf: " << netDevice[ifId].ifindex << "\n";
-        ev << "nxtHopIfName: " << netDevice[ifId].ifname << "\n";
-        ev << "my Addr: " << WlanAddrStruct.S_addr.getIPv4().str() << "\n";
+        EV << "nxtHopIf: " << netDevice[ifId].ifindex << "\n";
+        EV << "nxtHopIfName: " << netDevice[ifId].ifname << "\n";
+        EV << "my Addr: " << WlanAddrStruct.S_addr.getIPv4().str() << "\n";
         cert = (X509*) rEntry->Cert;
         kdc_block kdcData;
         PASER_UU_RREP *message = send_uu_rrep(ubrreq_msg->srcAddress_var,
@@ -509,7 +509,7 @@ void PASER_Message_Processing::handleUBRREQ(cPacket * msg, u_int32_t ifIndex) {
         tPack->handler = TU_RREP_ACK_TIMEOUT;
         tPack->timeout = timeval_add(now, PASER_UU_RREP_WAIT_TIME);
 
-        ev << "now: " << now.tv_sec << "\ntimeout: " << tPack->timeout.tv_sec
+        EV << "now: " << now.tv_sec << "\ntimeout: " << tPack->timeout.tv_sec
                 << "\n";
         timer_queue->timer_add(tPack);
         rrep->tPack = tPack;
@@ -519,12 +519,12 @@ void PASER_Message_Processing::handleUBRREQ(cPacket * msg, u_int32_t ifIndex) {
     else if (!paser_modul->isMyLocalAddress(ubrreq_msg->destAddress_var)) {
         PASER_Routing_Entry *routeToDest = NULL;
         if (ubrreq_msg->destAddress_var.S_addr.getIPv4().getInt() == 0xFFFFFFFF) {
-            ev << "destAddr = GW\n";
+            EV << "destAddr = GW\n";
             routeToDest = routing_table->getRouteToGw();
             if (!routeToDest) {
-                ev << "routeToDest = NULL\n";
+                EV << "routeToDest = NULL\n";
             } else if (!routeToDest->isValid) {
-                ev << "routeToDest is not Valid\n";
+                EV << "routeToDest is not Valid\n";
             }
         } else {
             routeToDest = routing_table->findDest(ubrreq_msg->destAddress_var);
@@ -538,14 +538,14 @@ void PASER_Message_Processing::handleUBRREQ(cPacket * msg, u_int32_t ifIndex) {
         }
         PASER_Neighbor_Entry *neighToDest = NULL;
         if (routeToDest != NULL && routeToDest->isValid) {
-            ev << "routeToDest != NULL\n";
+            EV << "routeToDest != NULL\n";
             neighToDest = neighbor_table->findNeigh(routeToDest->nxthop_addr);
         }
 
         //Falls nexhop bekannt und vertraulich ist sende TURREQ, sonst UBRREQ
         if (neighToDest != NULL && neighToDest->isValid
                 && neighToDest->neighFlag) {
-            ev << "forward_ub_rreq_to_tu_rreq\n";
+            EV << "forward_ub_rreq_to_tu_rreq\n";
             if (forwarding.S_addr != routeToDest->nxthop_addr.S_addr) {
                 PASER_TU_RREQ *newMessage = forward_ub_rreq_to_tu_rreq(ubrreq_msg,
                         routeToDest->nxthop_addr, routeToDest->dest_addr);
@@ -553,7 +553,7 @@ void PASER_Message_Processing::handleUBRREQ(cPacket * msg, u_int32_t ifIndex) {
             }
         } else {
             // UB-RREQ
-            ev << "forward_ub_rreq\n";
+            EV << "forward_ub_rreq\n";
             PASER_UB_RREQ *newMessage = forward_ub_rreq(ubrreq_msg);
             delete newMessage;
         }
@@ -567,7 +567,7 @@ void PASER_Message_Processing::handleUURREP(cPacket * msg, u_int32_t ifIndex) {
     if ((!paser_global->getIsRegistered()
             && !paser_modul->isMyLocalAddress(uurrep_msg->srcAddress_var)
             && !paser_global->getWasRegistered())) {
-        ev << "unRegistred && wrong Destination\n";
+        EV << "unRegistred && wrong Destination\n";
         delete uurrep_msg;
         return;
     }
@@ -579,24 +579,24 @@ void PASER_Message_Processing::handleUURREP(cPacket * msg, u_int32_t ifIndex) {
 
     struct in_addr forwarding = uurrep_msg->AddressRangeList.back().ipaddr;
     if (!check_seq_nr((check_and_cast<PASER_MSG *>(msg)), forwarding)) {
-        ev << "REPLAY SEQ\n";
+        EV << "REPLAY SEQ\n";
         delete uurrep_msg;
         return;
     }
     if (!check_geo(uurrep_msg->geoForwarding)) {
-        ev << "WORMHOLE\n";
+        EV << "WORMHOLE\n";
         delete uurrep_msg;
         return;
     }
 
-    ev << "iv = " << uurrep_msg->initVector << "\n";
+    EV << "iv = " << uurrep_msg->initVector << "\n";
 
     //Check Timestamp
     struct timeval now;
     paser_modul->MYgettimeofday(&now, NULL);
     if (now.tv_sec - uurrep_msg->timestamp > PASER_time_diff
             || now.tv_sec - uurrep_msg->timestamp < -PASER_time_diff) {
-        ev << "old paket\n";
+        EV << "old paket\n";
         delete uurrep_msg;
         return;
     }
@@ -606,15 +606,15 @@ void PASER_Message_Processing::handleUURREP(cPacket * msg, u_int32_t ifIndex) {
             && paser_modul->isMyLocalAddress(uurrep_msg->srcAddress_var)) {
         if (paser_global->getLastGwSearchNonce()
                 != uurrep_msg->kdc_data.nonce) {
-            ev << "wrong nonce!\n";
-            ev << "my nonce: " << paser_global->getLastGwSearchNonce()
+            EV << "wrong nonce!\n";
+            EV << "my nonce: " << paser_global->getLastGwSearchNonce()
                     << " incomming nonce: " << uurrep_msg->kdc_data.nonce
                     << "\n";
             delete uurrep_msg;
             return;
         }
         if (crypto_sign->checkSignKDC(uurrep_msg->kdc_data) != 1) {
-            ev << "checkSignKDC Error\n";
+            EV << "checkSignKDC Error\n";
             delete uurrep_msg;
             return;
         }
@@ -646,11 +646,11 @@ void PASER_Message_Processing::handleUURREP(cPacket * msg, u_int32_t ifIndex) {
     }
 
     if (!crypto_sign->checkSignUURREP(uurrep_msg)) {
-        ev << "UURREP SIGN ERROR\n";
+        EV << "UURREP SIGN ERROR\n";
         delete uurrep_msg;
        return;
     } else {
-        ev << "UURREP SIGN OK\n";
+        EV << "UURREP SIGN OK\n";
     }
     //Check keyNr
     if (uurrep_msg->keyNr != paser_configuration->getKeyNr()) {
@@ -730,7 +730,7 @@ void PASER_Message_Processing::handleUURREP(cPacket * msg, u_int32_t ifIndex) {
                     delete message;
                 } else {
                     //forwarding UU-RREP
-                    ev << "forwarding UU-RREP\n";
+                    EV << "forwarding UU-RREP\n";
                     PASER_UU_RREP *message = forward_uu_rrep(uurrep_msg,
                             rEntry->nxthop_addr);
                     if (message == NULL) {
@@ -755,7 +755,7 @@ void PASER_Message_Processing::handleUURREP(cPacket * msg, u_int32_t ifIndex) {
                     tPack->handler = TU_RREP_ACK_TIMEOUT;
                     tPack->timeout = timeval_add(now, PASER_UU_RREP_WAIT_TIME);
 
-                    ev << "now: " << now.tv_sec << "\ntimeout: "
+                    EV << "now: " << now.tv_sec << "\ntimeout: "
                             << tPack->timeout.tv_sec << "\n";
                     timer_queue->timer_add(tPack);
                     rrep->tPack = tPack;
@@ -806,37 +806,37 @@ void PASER_Message_Processing::handleTURREQ(cPacket * msg, u_int32_t ifIndex) {
     }
     struct in_addr forwarding = turreq_msg->AddressRangeList.back().ipaddr;
     if (!check_seq_nr((check_and_cast<PASER_MSG *>(msg)), forwarding)) {
-        ev << "REPLAY SEQ\n";
+        EV << "REPLAY SEQ\n";
         delete turreq_msg;
         return;
     }
     if (!check_geo(turreq_msg->geoForwarding)) {
-        ev << "WORMHOLE\n";
+        EV << "WORMHOLE\n";
         delete turreq_msg;
         return;
     }
 
     PASER_Neighbor_Entry *neigh = neighbor_table->findNeigh(forwarding);
     if (!neigh || !neigh->neighFlag) {
-        ev << "neighbor_table->findNeigh ERROR!\n";
+        EV << "neighbor_table->findNeigh ERROR!\n";
         delete turreq_msg;
         return;
     }
     if (!crypto_hash->checkHmacTURREQ(turreq_msg, GTK)) {
-        ev << "checkHmacTURREQ ERROR!\n";
+        EV << "checkHmacTURREQ ERROR!\n";
         delete turreq_msg;
         return;
     }
     u_int32_t newIV = 0;
     if (!root->root_check_root(neigh->root, turreq_msg->secret,
             turreq_msg->auth, neigh->IV, &newIV)) {
-        ev << "root_check_root ERROR\n";
+        EV << "root_check_root ERROR\n";
         delete turreq_msg;
         return;
     }
     neighbor_table->updateNeighborTableIVandSetValid(neigh->neighbor_addr,
             newIV);
-    ev << "root_check_root OK\n";
+    EV << "root_check_root OK\n";
 
     struct timeval now;
     paser_modul->MYgettimeofday(&now, NULL);
@@ -883,7 +883,7 @@ void PASER_Message_Processing::handleTURREQ(cPacket * msg, u_int32_t ifIndex) {
     }
 
     if (paser_modul->isMyLocalAddress(turreq_msg->destAddress_var)) {
-        ev << "send TURREP" << "\n";
+        EV << "send TURREP" << "\n";
         // UU-RREP
         if (turreq_msg->GFlag) {
             cert = crypto_sign->extractCert(turreq_msg->cert);
@@ -912,7 +912,7 @@ void PASER_Message_Processing::handleTURREQ(cPacket * msg, u_int32_t ifIndex) {
     }
     // Forwarding TURREQ
     else {
-        ev << "forwarding TURREP" << "\n";
+        EV << "forwarding TURREP" << "\n";
         PASER_Routing_Entry *rEntry = routing_table->findDest(
                 turreq_msg->destAddress_var);
         if (rEntry == NULL || !rEntry->isValid) {
@@ -968,25 +968,25 @@ void PASER_Message_Processing::handleTURREP(cPacket * msg, u_int32_t ifIndex) {
         return;
     }
     struct in_addr forwarding = turrep_msg->AddressRangeList.back().ipaddr;
-    ev << "forwarding: " << forwarding.S_addr.getIPv4().str() << "\n";
+    EV << "forwarding: " << forwarding.S_addr.getIPv4().str() << "\n";
     if (!check_seq_nr((check_and_cast<PASER_MSG *>(msg)), forwarding)) {
-        ev << "REPLAY SEQ\n";
+        EV << "REPLAY SEQ\n";
         delete turrep_msg;
         return;
     }
     if (!check_geo(turrep_msg->geoForwarding)) {
-        ev << "WORMHOLE\n";
+        EV << "WORMHOLE\n";
         delete turrep_msg;
         return;
     }
     PASER_Neighbor_Entry *neigh = neighbor_table->findNeigh(forwarding);
     if (!neigh || !neigh->neighFlag) {
-        ev << "neighbor_table->findNeigh ERROR!\n";
+        EV << "neighbor_table->findNeigh ERROR!\n";
         delete turrep_msg;
         return;
     }
     if (!crypto_hash->checkHmacTURREP(turrep_msg, GTK)) {
-        ev << "checkHmacTURREPACK ERROR!\n";
+        EV << "checkHmacTURREPACK ERROR!\n";
         delete turrep_msg;
         return;
     }
@@ -1021,29 +1021,29 @@ void PASER_Message_Processing::handleTURREP(cPacket * msg, u_int32_t ifIndex) {
     u_int32_t newIV = 0;
     if (!root->root_check_root(neigh->root, turrep_msg->secret,
             turrep_msg->auth, neigh->IV, &newIV)) {
-        ev << "root_check_root ERROR\n";
+        EV << "root_check_root ERROR\n";
         delete turrep_msg;
         return;
     }
     neighbor_table->updateNeighborTableIVandSetValid(neigh->neighbor_addr,
             newIV);
-    ev << "root_check_root OK\n";
+    EV << "root_check_root OK\n";
 
     struct timeval now;
     paser_modul->MYgettimeofday(&now, NULL);
 
-    ev << "update Neighbor Table\n";
+    EV << "update Neighbor Table\n";
     //update Neighbor Table
     neighbor_table->updateNeighborTableTimeout(forwarding, now);
-    ev << "update Routing Table with forwarding Node\n";
+    EV << "update Routing Table with forwarding Node\n";
     //update Routing Table with forwarding Node
-    ev << "update Routing Table with forwarding Node\n";
+    EV << "update Routing Table with forwarding Node\n";
     routing_table->updateRoutingTableTimeout(forwarding,
 //            /*turrep_msg->seqForw,*/0,
             now, ifIndex);
     //update Routing Table
 //    std::list<address_range> EmptyAddList;
-    ev << "update Routing Table\n";
+    EV << "update Routing Table\n";
     routing_table->updateRoutingTableAndSetTableTimeout(
             turrep_msg->AddressRangeList.front().range,
             turrep_msg->destAddress_var, turrep_msg->seq, NULL, forwarding,
@@ -1069,7 +1069,7 @@ void PASER_Message_Processing::handleTURREP(cPacket * msg, u_int32_t ifIndex) {
         deleteRouteRequestTimeout(bcast_addr);
     }
 
-    ev << "update AddressRangeList\n";
+    EV << "update AddressRangeList\n";
     PASER_Routing_Entry *rEntry = routing_table->findDest(
             turrep_msg->destAddress_var);
     PASER_Neighbor_Entry *nEntry = neighbor_table->findNeigh(
@@ -1078,7 +1078,7 @@ void PASER_Message_Processing::handleTURREP(cPacket * msg, u_int32_t ifIndex) {
         routing_table->updateRoutingTable(now, turrep_msg->AddressRangeList,
                 forwarding, ifIndex);
     }
-    ev << "send queued Messages\n";
+    EV << "send queued Messages\n";
     // Release queued Messages
     if (nEntry && nEntry->neighFlag) {
         deleteRouteRequestTimeout(turrep_msg->destAddress_var);
@@ -1110,7 +1110,7 @@ void PASER_Message_Processing::handleTURREP(cPacket * msg, u_int32_t ifIndex) {
             delete timeout;
             delete rreq;
         }
-        ev << "send queued messages\n";
+        EV << "send queued messages\n";
         message_queue->send_queued_messages(turrep_msg->destAddress_var);
     } else {
         // Forwarding
@@ -1122,13 +1122,13 @@ void PASER_Message_Processing::handleTURREP(cPacket * msg, u_int32_t ifIndex) {
         }
         if (rout == NULL || neigh == NULL) {
             //ERROR
-            ev << "ERROR!\n";
+            EV << "ERROR!\n";
             delete turrep_msg;
             return;
         }
         // Forwarding TURREP to UURREP
         if (neigh->neighFlag == 0) {
-            ev << "forwarding TURREP to UURREP\n";
+            EV << "forwarding TURREP to UURREP\n";
             PASER_UU_RREP *message = forward_tu_rrep_to_uu_rrep(turrep_msg,
                     neigh->neighbor_addr);
             // set TU-RREP-ACK Timeout
@@ -1148,14 +1148,14 @@ void PASER_Message_Processing::handleTURREP(cPacket * msg, u_int32_t ifIndex) {
             tPack->handler = TU_RREP_ACK_TIMEOUT;
             tPack->timeout = timeval_add(now, PASER_UU_RREP_WAIT_TIME);
 
-            ev << "now: " << now.tv_sec << "\ntimeout: "
+            EV << "now: " << now.tv_sec << "\ntimeout: "
                     << tPack->timeout.tv_sec << "\n";
             timer_queue->timer_add(tPack);
             rrep->tPack = tPack;
         }
         // Forwarding TURREP!!!
         else {
-            ev << "forwarding TU-RREP\n";
+            EV << "forwarding TU-RREP\n";
             PASER_Routing_Entry *rEntry = routing_table->findDest(
                     turrep_msg->srcAddress_var);
             if (rEntry == NULL) {
@@ -1185,37 +1185,37 @@ void PASER_Message_Processing::handleTURREPACK(cPacket * msg, u_int32_t ifIndex)
     struct in_addr neighbor = turrepack_msg->srcAddress_var;
     PASER_Neighbor_Entry *neigh = neighbor_table->findNeigh(neighbor);
     if (!neigh) {
-        ev << "neighbor_table->findNeigh ERROR!\n";
+        EV << "neighbor_table->findNeigh ERROR!\n";
         delete turrepack_msg;
         return;
     }
     if (!check_seq_nr((check_and_cast<PASER_MSG *>(msg)), neighbor)) {
-        ev << "REPLAY SEQ\n";
+        EV << "REPLAY SEQ\n";
         delete turrepack_msg;
         return;
     }
     if (!crypto_hash->checkHmacTURREPACK(turrepack_msg, GTK)) {
-        ev << "checkHmacTURREPACK ERROR!\n";
+        EV << "checkHmacTURREPACK ERROR!\n";
         delete turrepack_msg;
         return;
     }
     u_int32_t newIV = 0;
     if (!root->root_check_root(neigh->root, turrepack_msg->secret,
             turrepack_msg->auth, neigh->IV, &newIV)) {
-        ev << "root_check_root ERROR!\n";
+        EV << "root_check_root ERROR!\n";
         delete turrepack_msg;
         return;
     }
     neighbor_table->updateNeighborTableIVandSetValid(neigh->neighbor_addr,
             newIV);
-    ev << "root_check_root OK\n";
+    EV << "root_check_root OK\n";
 
     struct timeval now;
     paser_modul->MYgettimeofday(&now, NULL);
     //Update routing table with forwarding Node
     PASER_Routing_Entry *rEntry = routing_table->findDest(neighbor);
     if (!rEntry) {
-        ev << "rEntry not found\n";
+        EV << "rEntry not found\n";
         delete turrepack_msg;
         return;
     }
@@ -1261,7 +1261,7 @@ void PASER_Message_Processing::handleTURREPACK(cPacket * msg, u_int32_t ifIndex)
 
     message_rreq_entry * rrep = rrep_list->pending_find(
             turrepack_msg->srcAddress_var);
-    ev << "src: " << turrepack_msg->srcAddress_var.S_addr.getIPv4().str()
+    EV << "src: " << turrepack_msg->srcAddress_var.S_addr.getIPv4().str()
             << " dest: "
             << turrepack_msg->destAddress_var.S_addr.getIPv4().str()
             << "\n";
@@ -1270,12 +1270,12 @@ void PASER_Message_Processing::handleTURREPACK(cPacket * msg, u_int32_t ifIndex)
         rrep_list->pending_remove(rrep);
         int k = timer_queue->timer_remove(tPack);
         if (k == 0) {
-            ev << "timer not found\n";
+            EV << "timer not found\n";
         }
         delete tPack;
         delete rrep;
     } else {
-        ev << "timeout not found\n";
+        EV << "timeout not found\n";
     }
     delete turrepack_msg;
 }
@@ -1295,18 +1295,18 @@ void PASER_Message_Processing::handleRERR(cPacket * msg, u_int32_t ifIndex) {
     struct in_addr neighbor = rerr_msg->srcAddress_var;
     PASER_Neighbor_Entry *neigh = neighbor_table->findNeigh(neighbor);
     if (!neigh) {
-        ev << "neighbor_table->findNeigh ERROR!\n";
+        EV << "neighbor_table->findNeigh ERROR!\n";
         delete rerr_msg;
         return;
     }
     if (!check_seq_nr((check_and_cast<PASER_MSG *>(msg)), neighbor)) {
-        ev << "REPLAY SEQ\n";
+        EV << "REPLAY SEQ\n";
         delete rerr_msg;
         return;
     }
     //Check HASH
     if (!crypto_hash->checkHmacRERR(rerr_msg, GTK)) {
-        ev << "checkHmacTURREPACK ERROR!\n";
+        EV << "checkHmacTURREPACK ERROR!\n";
         delete rerr_msg;
         return;
     }
@@ -1314,12 +1314,12 @@ void PASER_Message_Processing::handleRERR(cPacket * msg, u_int32_t ifIndex) {
     u_int32_t newIV = 0;
     if (!root->root_check_root(neigh->root, rerr_msg->secret, rerr_msg->auth,
             neigh->IV, &newIV)) {
-        ev << "root_check_root ERROR!\n";
+        EV << "root_check_root ERROR!\n";
         delete rerr_msg;
         return;
     }
     neighbor_table->updateNeighborTableIV(neigh->neighbor_addr, newIV);
-    ev << "root_check_root OK\n";
+    EV << "root_check_root OK\n";
 
     std::list<unreachableBlock> forwardingList;
     //check each SeqNr
@@ -1339,12 +1339,12 @@ void PASER_Message_Processing::handleRERR(cPacket * msg, u_int32_t ifIndex) {
             continue;
         }
         //loesche Route
-        ev << "delete addr: "
+        EV << "delete addr: "
                 << tempEntry->dest_addr.S_addr.getIPv4().str() << "\n";
         for (std::list<address_range>::iterator it2 = tempEntry->AddL.begin();
                 it2 != tempEntry->AddL.end(); it2++) {
             address_range addList = (address_range) *it2;
-            ev << "    subnetz: " << addList.ipaddr.S_addr.getIPv4().str()
+            EV << "    subnetz: " << addList.ipaddr.S_addr.getIPv4().str()
                     << "\n";
             routing_table->updateKernelRoutingTable(addList.ipaddr,
                     tempEntry->nxthop_addr, addList.mask, tempEntry->hopcnt + 1,
@@ -1356,11 +1356,11 @@ void PASER_Message_Processing::handleRERR(cPacket * msg, u_int32_t ifIndex) {
                 tempEntry->nxthop_addr, tempMask, tempEntry->hopcnt, true, 1);
         PASER_Timer_Message *validTimer = tempEntry->validTimer;
         if (validTimer) {
-            ev << "loesche Timer\n";
+            EV << "loesche Timer\n";
             if (timer_queue->timer_remove(validTimer)) {
-                ev << "Timer geloescht\n";
+                EV << "Timer geloescht\n";
             } else {
-                ev << "Timer wurde nicht geloescht\n";
+                EV << "Timer wurde nicht geloescht\n";
             }
             delete validTimer;
             tempEntry->validTimer = NULL;
@@ -1392,18 +1392,18 @@ void PASER_Message_Processing::handleHELLO(cPacket * msg, u_int32_t ifIndex) {
     struct in_addr neighbor = hello_msg->srcAddress_var;
     PASER_Neighbor_Entry *neigh = neighbor_table->findNeigh(neighbor);
     if (!neigh) {
-        ev << "neighbor_table->findNeigh ERROR!\n";
+        EV << "neighbor_table->findNeigh ERROR!\n";
         delete hello_msg;
         return;
     }
     if (!check_seq_nr((check_and_cast<PASER_MSG *>(msg)), neighbor)) {
-        ev << "REPLAY SEQ\n";
+        EV << "REPLAY SEQ\n";
         delete hello_msg;
         return;
     }
     //Check HASH
     if (!crypto_hash->checkHmacHELLO(hello_msg, GTK)) {
-        ev << "checkHmacTURREPACK ERROR!\n";
+        EV << "checkHmacTURREPACK ERROR!\n";
         delete hello_msg;
         return;
     }
@@ -1411,14 +1411,14 @@ void PASER_Message_Processing::handleHELLO(cPacket * msg, u_int32_t ifIndex) {
     u_int32_t newIV = 0;
     if (!root->root_check_root(neigh->root, hello_msg->secret, hello_msg->auth,
             neigh->IV, &newIV)) {
-        ev << "root_check_root ERROR!\n";
+        EV << "root_check_root ERROR!\n";
         delete hello_msg;
         return;
     }
-    ev << "root_check_root OK\n";
+    EV << "root_check_root OK\n";
 
     if (!neigh->neighFlag) {
-        ev << neigh->neighbor_addr.S_addr.getIPv4().str()
+        EV << neigh->neighbor_addr.S_addr.getIPv4().str()
                 << " is untrusted neighbor!\n";
         route_findung->route_discovery(neigh->neighbor_addr,0);
         delete hello_msg;
@@ -1436,7 +1436,7 @@ void PASER_Message_Processing::handleHELLO(cPacket * msg, u_int32_t ifIndex) {
         }
     }
     if (!found) {
-        ev << "der Nachbar vertraut mir nicht :(\n";
+        EV << "der Nachbar vertraut mir nicht :(\n";
         route_findung->route_discovery(neigh->neighbor_addr,0);
         delete hello_msg;
         return;
@@ -1449,10 +1449,10 @@ void PASER_Message_Processing::handleHELLO(cPacket * msg, u_int32_t ifIndex) {
             hello_msg->AddressRangeList.begin();
             it != hello_msg->AddressRangeList.end(); it++) {
         address_list tempList = (address_list) *it;
-        ev << "update address: " << tempList.ipaddr.S_addr.getIPv4().str()
+        EV << "update address: " << tempList.ipaddr.S_addr.getIPv4().str()
                 << "\n";
         if (paser_modul->isMyLocalAddress(tempList.ipaddr)) {
-            ev << "it's me\n";
+            EV << "it's me\n";
             continue;
         }
         if (tempList.ipaddr.S_addr == neighbor.S_addr) {
@@ -1472,51 +1472,51 @@ void PASER_Message_Processing::handleB_ROOT(cPacket * msg, u_int32_t ifIndex) {
         return;
     }
     struct in_addr querying = b_root_msg->srcAddress_var;
-    ev << "ROOT from IP: " << querying.S_addr.getIPv4().str() << "\n";
+    EV << "ROOT from IP: " << querying.S_addr.getIPv4().str() << "\n";
     //Pruefe Sequenznummer des Pakets
     if (!check_seq_nr((check_and_cast<PASER_MSG *>(msg)), querying)) {
-        ev << "REPLAY SEQ\n";
+        EV << "REPLAY SEQ\n";
         delete b_root_msg;
         return;
     }
     // Check Geo positions of the sender
     //Pruefe GeoPosition des Absenders
     if (!check_geo(b_root_msg->geoQuerying)) {
-        ev << "WORMHOLE\n";
+        EV << "WORMHOLE\n";
         delete b_root_msg;
         return;
     }
-    ev << "iv = " << b_root_msg->initVector << "\n";
+    EV << "iv = " << b_root_msg->initVector << "\n";
 //Check Timestamf
     //pruefe Timestamp
     struct timeval now;
     paser_modul->MYgettimeofday(&now, NULL);
     if (now.tv_sec - b_root_msg->timestamp > PASER_time_diff
             || now.tv_sec - b_root_msg->timestamp < -PASER_time_diff) {
-        ev << "old paket\n";
+        EV << "old paket\n";
         delete b_root_msg;
         return;
     }
 // Verify the message signature
     //Pruefe Signatur des Pakets
     if (!crypto_sign->checkSignB_ROOT(b_root_msg)) {
-        ev << "SIGN ERROR\n";
+        EV << "SIGN ERROR\n";
         delete b_root_msg;
         return;
     }
-    ev << "SIGN OK\n";
+    EV << "SIGN OK\n";
 
     //Save new ROOT and IV
     //speichere neues ROOT und IV
     PASER_Routing_Entry *rEntry = routing_table->findDest(querying);
     if (rEntry == NULL || rEntry->hopcnt != 1) {
-        ev << "rEntry not found\n";
+        EV << "rEntry not found\n";
         delete b_root_msg;
         return;
     }
     PASER_Neighbor_Entry *nEntry = neighbor_table->findNeigh(querying);
     if (nEntry == NULL) {
-        ev << "nEntry not found\n";
+        EV << "nEntry not found\n";
         delete b_root_msg;
         return;
     }
@@ -1549,12 +1549,12 @@ void PASER_Message_Processing::handleB_RESET(cPacket * msg, u_int32_t ifIndex) {
         return;
     }
     struct in_addr querying = b_reset_msg->srcAddress_var;
-    ev << "RESET from IP: " << querying.S_addr.getIPv4().str() << "\n";
+    EV << "RESET from IP: " << querying.S_addr.getIPv4().str() << "\n";
     // Check if message key number is equal to the number of the key currently in use
     //pruefe Schluesselnummer
     u_int32_t myKeyNr = paser_configuration->getKeyNr();
     if (myKeyNr >= b_reset_msg->keyNr) {
-        ev << "old paket\n";
+        EV << "old paket\n";
         delete b_reset_msg;
         return;
     }
@@ -1562,7 +1562,7 @@ void PASER_Message_Processing::handleB_RESET(cPacket * msg, u_int32_t ifIndex) {
     //Pruefe ob Zertifikat ein KDC Zertifikat ist
     X509* certFromKDC = crypto_sign->extractCert(b_reset_msg->cert);
     if (!crypto_sign->isKdcCert(certFromKDC)) {
-        ev << "falsches Zertifikat\n";
+        EV << "falsches Zertifikat\n";
         X509_free(certFromKDC);
         delete b_reset_msg;
         return;
@@ -1571,11 +1571,11 @@ void PASER_Message_Processing::handleB_RESET(cPacket * msg, u_int32_t ifIndex) {
     // Check the signature of the key number
     //Pruefe Signatur des Schluesselsnummer
     if (!crypto_sign->checkSignRESET(b_reset_msg)) {
-        ev << "SIGN ERROR\n";
+        EV << "SIGN ERROR\n";
         delete b_reset_msg;
         return;
     }
-    ev << "SIGN OK\n";
+    EV << "SIGN OK\n";
     paser_configuration->setKeyNr(b_reset_msg->keyNr);
     paser_global->resetPASER();
     GTK.len = 0;
@@ -1597,7 +1597,7 @@ void PASER_Message_Processing::handleB_RESET(cPacket * msg, u_int32_t ifIndex) {
     if (paser_configuration->getIsGW()) {
         lv_block cert;
         if (!crypto_sign->getCert(&cert)) {
-            ev << "cert ERROR\n";
+            EV << "cert ERROR\n";
             delete b_reset_msg;
             opp_error("RESET FEHLER! KEIN ZERTIFIKAT!");
             return;
@@ -1649,7 +1649,7 @@ PASER_UB_RREQ * PASER_Message_Processing::send_ub_rreq(struct in_addr src_addr,
     if (isDestGW) {
         lv_block cert;
         if (!crypto_sign->getCert(&cert)) {
-            ev << "cert ERROR\n";
+            EV << "cert ERROR\n";
             return NULL;
         }
         message->cert.buf = cert.buf;
@@ -1657,7 +1657,7 @@ PASER_UB_RREQ * PASER_Message_Processing::send_ub_rreq(struct in_addr src_addr,
     }
     lv_block certForw;
     if (!crypto_sign->getCert(&certForw)) {
-        ev << "certForw ERROR\n";
+        EV << "certForw ERROR\n";
         return NULL;
     }
     message->certForw.buf = certForw.buf;
@@ -1694,11 +1694,11 @@ PASER_UB_RREQ * PASER_Message_Processing::send_ub_rreq(struct in_addr src_addr,
 PASER_UU_RREP * PASER_Message_Processing::send_uu_rrep(struct in_addr src_addr,
         struct in_addr forw_addr, struct in_addr dest_addr, int isDestGW,
         X509 *cert, kdc_block kdcData) {
-    ev << "src: " << src_addr.S_addr.getIPv4().str() << " dest: "
+    EV << "src: " << src_addr.S_addr.getIPv4().str() << " dest: "
             << dest_addr.S_addr.getIPv4().str() << "\n";
     PASER_Routing_Entry * routeEntry = routing_table->findDest(src_addr);
     if (routeEntry == NULL || !routeEntry->isValid) {
-        ev << "Route to " << src_addr.S_addr.getIPv4().str()
+        EV << "Route to " << src_addr.S_addr.getIPv4().str()
                 << " not Found. ERROR!\n";
         return NULL;
     }
@@ -1726,7 +1726,7 @@ PASER_UU_RREP * PASER_Message_Processing::send_uu_rrep(struct in_addr src_addr,
 
     lv_block certForw;
     if (!crypto_sign->getCert(&certForw)) {
-        ev << "certForw ERROR\n";
+        EV << "certForw ERROR\n";
         return NULL;
     }
     message->certForw.buf = certForw.buf;
@@ -1739,7 +1739,7 @@ PASER_UU_RREP * PASER_Message_Processing::send_uu_rrep(struct in_addr src_addr,
 //    myPos = cc->getHostPosition( myHostRef );
     geo_pos myGeo = paser_global->getGeoPosition();
 
-    ev << "posX: " << myGeo.lat << ", posY: " << myGeo.lon << "\n";
+    EV << "posX: " << myGeo.lat << ", posY: " << myGeo.lon << "\n";
     message->geoDestination.lat = myGeo.lat;
     message->geoDestination.lon = myGeo.lon;
     message->geoForwarding.lat = myGeo.lat;
@@ -1796,7 +1796,7 @@ PASER_UU_RREP * PASER_Message_Processing::send_uu_rrep(struct in_addr src_addr,
 
     crypto_sign->signUURREP(message);
     PASER_UU_RREP *messageToSend = new PASER_UU_RREP(*message);
-    ev << "send to: " << forw_addr.S_addr.getIPv4().str() << "\n";
+    EV << "send to: " << forw_addr.S_addr.getIPv4().str() << "\n";
     paser_modul->paketProcessingDelay = paser_modul->paketProcessingDelay
             + (double) paser_modul->par("sing_rsa_delay");
     paser_modul->send_message(messageToSend, forw_addr, nEntry->ifIndex);
@@ -1809,7 +1809,7 @@ PASER_TU_RREP * PASER_Message_Processing::send_tu_rrep(struct in_addr src_addr,
         X509 *cert, kdc_block kdcData) {
     PASER_Routing_Entry * routeEntry = routing_table->findDest(src_addr);
     if (routeEntry == NULL || !routeEntry->isValid) {
-        ev << "Route to " << src_addr.S_addr.getIPv4().str()
+        EV << "Route to " << src_addr.S_addr.getIPv4().str()
                 << " not Found. ERROR!\n";
         return NULL;
     }
@@ -1895,7 +1895,7 @@ PASER_TU_RREP * PASER_Message_Processing::send_tu_rrep(struct in_addr src_addr,
             (sizeof(u_int8_t) * PASER_SECRET_LEN));
     message->auth = root->root_get_next_secret(&next_iv, secret);
     message->secret = secret;
-    ev << "next iv: " << next_iv << "\n";
+    EV << "next iv: " << next_iv << "\n";
 
     crypto_hash->computeHmacTURREP(message, GTK);
 
@@ -1917,7 +1917,7 @@ PASER_TU_RREP_ACK * PASER_Message_Processing::send_tu_rrep_ack(
             (sizeof(u_int8_t) * PASER_SECRET_LEN));
     message->auth = root->root_get_next_secret(&next_iv, secret);
     message->secret = secret;
-    ev << "next iv: " << next_iv << "\n";
+    EV << "next iv: " << next_iv << "\n";
 
     crypto_hash->computeHmacTURREPACK(message, GTK);
 
@@ -1936,7 +1936,7 @@ void PASER_Message_Processing::send_rerr(
         struct timeval now;
         paser_modul->MYgettimeofday(&now, NULL);
 
-        ev << "unreachable.size = 1\n";
+        EV << "unreachable.size = 1\n";
         if (!paser_global->getBlacklist()->setRerrTime(
                 unreachableList.front().addr, now)) {
             return;
@@ -1950,14 +1950,14 @@ void PASER_Message_Processing::send_rerr(
         messageToSend->keyNr = paser_configuration->getKeyNr();
 
         std::list<unreachableBlock> tempList(unreachableList);
-        ev << "seqList: \n";
+        EV << "seqList: \n";
         for (std::list<unreachableBlock>::iterator it = tempList.begin();
                 it != tempList.end(); it++) {
             unreachableBlock temp;
             temp.addr.S_addr = ((unreachableBlock) *it).addr.S_addr;
             temp.seq = ((unreachableBlock) *it).seq;
             messageToSend->UnreachableAdressesList.push_back(temp);
-            ev << "IP: " << temp.addr.S_addr.getIPv4().str() << "\t: "
+            EV << "IP: " << temp.addr.S_addr.getIPv4().str() << "\t: "
                     << temp.seq << "\n";
         }
 
@@ -1971,7 +1971,7 @@ void PASER_Message_Processing::send_rerr(
         messageToSend->auth = paser_global->getRoot()->root_get_next_secret(
                 &next_iv, secret);
         messageToSend->secret = secret;
-        ev << "next iv: " << next_iv << "\n";
+        EV << "next iv: " << next_iv << "\n";
 
         paser_global->getCrypto_hash()->computeHmacRERR(messageToSend,
                 paser_configuration->getGTK());
@@ -2006,7 +2006,7 @@ void PASER_Message_Processing::send_root() {
 
         lv_block cert;
         if (!crypto_sign->getCert(&cert)) {
-            ev << "certForw ERROR\n";
+            EV << "certForw ERROR\n";
             return;
         }
         messageToSend->cert.buf = cert.buf;
@@ -2037,7 +2037,7 @@ void PASER_Message_Processing::send_root() {
 }
 
 void PASER_Message_Processing::send_reset() {
-    ev << "send RESET\n";
+    EV << "send RESET\n";
     for (u_int32_t i = 0; i < paser_configuration->getNetDeviceNumber(); i++) {
         PASER_UB_Key_Refresh *messageToSend = new PASER_UB_Key_Refresh(
                 paser_global->getNetDevice()[i].ipaddr);
@@ -2110,7 +2110,7 @@ PASER_UB_RREQ * PASER_Message_Processing::forward_ub_rreq(
         lv_block certForw;
         free(message->certForw.buf);
         if (!crypto_sign->getCert(&certForw)) {
-            ev << "certForw ERROR\n";
+            EV << "certForw ERROR\n";
             return NULL;
         }
         message->certForw.buf = certForw.buf;
@@ -2167,7 +2167,7 @@ PASER_TU_RREQ * PASER_Message_Processing::forward_ub_rreq_to_tu_rreq(
 
     if (message->GFlag) {
         //Falls auf GW sesucht wird, wird nonce und Zertifikat weitergeleitet
-        ev << "Gflag is set\n";
+        EV << "Gflag is set\n";
         //nonce
         message->nonce = oldMessage->nonce;
         //cert
@@ -2188,9 +2188,9 @@ PASER_TU_RREQ * PASER_Message_Processing::forward_ub_rreq_to_tu_rreq(
     message->geoQuerying.lon = oldMessage->geoQuerying.lon;
     message->geoForwarding.lat = myGeo.lat;
     message->geoForwarding.lon = myGeo.lon;
-    ev << "x: " << message->geoQuerying.lat << "\ny: " << message->geoQuerying.lon
+    EV << "x: " << message->geoQuerying.lat << "\ny: " << message->geoQuerying.lon
             << "\n";
-    ev << "x: " << message->geoForwarding.lat << "\ny: "
+    EV << "x: " << message->geoForwarding.lat << "\ny: "
             << message->geoForwarding.lon << "\n";
 
     u_int8_t *secret = (u_int8_t *) malloc(
@@ -2198,16 +2198,16 @@ PASER_TU_RREQ * PASER_Message_Processing::forward_ub_rreq_to_tu_rreq(
     int next_iv = 0;
     message->auth = root->root_get_next_secret(&next_iv, secret);
     message->secret = secret;
-    ev << "next iv: " << next_iv << "\n";
+    EV << "next iv: " << next_iv << "\n";
     crypto_hash->computeHmacTURREQ(message, GTK);
-    ev << "x: " << message->geoQuerying.lat << "\ny: " << message->geoQuerying.lon
+    EV << "x: " << message->geoQuerying.lat << "\ny: " << message->geoQuerying.lon
             << "\n";
-    ev << "x: " << message->geoForwarding.lat << "\ny: "
+    EV << "x: " << message->geoForwarding.lat << "\ny: "
             << message->geoForwarding.lon << "\n";
 
     PASER_TU_RREQ *messageToSend = new PASER_TU_RREQ(*message);
     if (messageToSend->GFlag) {
-        ev << "Gflag is set by MessageToSend\n";
+        EV << "Gflag is set by MessageToSend\n";
     }
     paser_modul->paketProcessingDelay = paser_modul->paketProcessingDelay
             + (double) paser_modul->par("one_hash_delay");
@@ -2254,7 +2254,7 @@ PASER_UU_RREP * PASER_Message_Processing::forward_uu_rrep(PASER_UU_RREP *oldMess
     }
     lv_block certForw;
     if (!crypto_sign->getCert(&certForw)) {
-        ev << "certForw ERROR\n";
+        EV << "certForw ERROR\n";
         delete message;
         return NULL;
     }
@@ -2360,7 +2360,7 @@ PASER_TU_RREP * PASER_Message_Processing::forward_uu_rrep_to_tu_rrep(
     int next_iv = 0;
     message->auth = root->root_get_next_secret(&next_iv, secret);
     message->secret = secret;
-    ev << "next iv: " << next_iv << "\n";
+    EV << "next iv: " << next_iv << "\n";
     crypto_hash->computeHmacTURREP(message, GTK);
 
     PASER_TU_RREP *messageToSend = new PASER_TU_RREP(*message);
@@ -2421,7 +2421,7 @@ PASER_TU_RREQ * PASER_Message_Processing::forward_tu_rreq(PASER_TU_RREQ *oldMess
     int next_iv = 0;
     message->auth = root->root_get_next_secret(&next_iv, secret);
     message->secret = secret;
-    ev << "next iv: " << next_iv << "\n";
+    EV << "next iv: " << next_iv << "\n";
     crypto_hash->computeHmacTURREQ(message, GTK);
 
     PASER_TU_RREQ *messageToSend = new PASER_TU_RREQ(*message);
@@ -2464,7 +2464,7 @@ PASER_UU_RREP * PASER_Message_Processing::forward_tu_rrep_to_uu_rrep(
 
     lv_block certForw;
     if (!crypto_sign->getCert(&certForw)) {
-        ev << "certForw ERROR\n";
+        EV << "certForw ERROR\n";
         return NULL;
     }
     message->certForw.buf = certForw.buf;
@@ -2581,7 +2581,7 @@ PASER_TU_RREP * PASER_Message_Processing::forward_tu_rrep(PASER_TU_RREP *oldMess
     int next_iv = 0;
     message->auth = root->root_get_next_secret(&next_iv, secret);
     message->secret = secret;
-    ev << "next iv: " << next_iv << "\n";
+    EV << "next iv: " << next_iv << "\n";
     crypto_hash->computeHmacTURREP(message, GTK);
 
     PASER_TU_RREP *messageToSend = new PASER_TU_RREP(*message);
@@ -2629,7 +2629,7 @@ void PASER_Message_Processing::deleteRouteRequestTimeoutForAddList(
 void PASER_Message_Processing::sendKDCRequest(struct in_addr nodeAddr,
         struct in_addr nextHop, lv_block cert, int nonce) {
     if (paser_configuration->getNetEthDeviceNumber() < 1) {
-        ev << "Cann't send KDC Request. NetEthDevice not Found!\n";
+        EV << "Cann't send KDC Request. NetEthDevice not Found!\n";
         return;
     }
 //    if(simTime().dbl() > 30){
@@ -2651,7 +2651,7 @@ void PASER_Message_Processing::sendKDCRequest(struct in_addr nodeAddr,
 
 void PASER_Message_Processing::checkKDCReply(cPacket * msg) {
     crl_message *crlMssage = check_and_cast<crl_message *>(msg);
-    ev << "checkKDCReply\n";
+    EV << "checkKDCReply\n";
     //convert MessageData to KdcData
     kdc_block kdcData;
     kdcData.GTK.len = crlMssage->getKdc_gtk_len();
@@ -2686,8 +2686,8 @@ void PASER_Message_Processing::checkKDCReply(cPacket * msg) {
         if (crypto_sign->checkSignKDC(kdcData) == 1
                 && kdcData.nonce == paser_global->getLastGwSearchNonce()) {
             //KDC OK !!!
-            ev << "checkSignKDC OK.";
-           // ev <<  kdcData.nonce << paser_global->getLastGwSearchNonce()<<"\n" ;
+            EV << "checkSignKDC OK.";
+           // EV <<  kdcData.nonce << paser_global->getLastGwSearchNonce()<<"\n" ;
             paser_global->getCrypto_sign()->checkAllCertInRoutingTable(
                     routing_table, neighbor_table, timer_queue);
             paser_global->setIsRegistered(true);
@@ -2720,10 +2720,10 @@ void PASER_Message_Processing::checkKDCReply(cPacket * msg) {
         } else {
             // Error, send again a request to KDC
             //Fehler, sende KDC request nochmal
-            ev << "SignError!\n";
+            EV << "SignError!\n";
 //            lv_block cert;
 //            if( !crypto_sign->getCert(&cert) ){
-            ev << "cert ERROR\n";
+            EV << "cert ERROR\n";
             free(kdcData.GTK.buf);
             free(kdcData.CRL.buf);
             free(kdcData.cert_kdc.buf);
@@ -2737,7 +2737,7 @@ void PASER_Message_Processing::checkKDCReply(cPacket * msg) {
         }
     } else {
         // Send reply
-        ev << "send RREP\n";
+        EV << "send RREP\n";
         struct in_addr nextHopAddr = crlMssage->getNextHopAddr();
         struct in_addr srcAddr = crlMssage->getSrc();
 //        PASER_Routing_Entry *rEntry = routing_table->findDest(srcAddr);
@@ -2794,7 +2794,7 @@ void PASER_Message_Processing::checkKDCReply(cPacket * msg) {
             tPack->handler = TU_RREP_ACK_TIMEOUT;
             tPack->timeout = timeval_add(now, PASER_UU_RREP_WAIT_TIME);
 
-            ev << "now: " << now.tv_sec << "\ntimeout: "
+            EV << "now: " << now.tv_sec << "\ntimeout: "
                     << tPack->timeout.tv_sec << "\n";
             timer_queue->timer_add(tPack);
             rrep->tPack = tPack;

@@ -148,7 +148,7 @@ int PASER_Crypto_Hash::computeHmacTURREPACK(PASER_TU_RREP_ACK * message,
     int len = 0;
     u_int8_t *data = message->toByteArray(&len);
     HMAC_Update(&ctx, data, len);
-    ev << "len: " << len << "\n";
+    EV << "len: " << len << "\n";
 //printf("DATA:0x");
 //for (int n = 0; n < len; n++)
 //    printf("%02x", data[n]);
@@ -179,7 +179,7 @@ int PASER_Crypto_Hash::checkHmacTURREPACK(PASER_TU_RREP_ACK * message,
     int len = 0;
     u_int8_t *data = message->toByteArray(&len);
     HMAC_Update(&ctx, data, len);
-    ev << "len: " << len << "\n";
+    EV << "len: " << len << "\n";
 //printf("DATA:0x");
 //for (int n = 0; n < len; n++)
 //    printf("%02x", data[n]);
@@ -226,7 +226,7 @@ int PASER_Crypto_Hash::computeHmacRERR(PASER_TB_RERR * message, lv_block GTK) {
     int len = 0;
     u_int8_t *data = message->toByteArray(&len);
     HMAC_Update(&ctx, data, len);
-    ev << "len: " << len << "\n";
+    EV << "len: " << len << "\n";
     free(data);
 
     u_int8_t *result = (u_int8_t *) malloc(
@@ -247,7 +247,7 @@ int PASER_Crypto_Hash::checkHmacRERR(PASER_TB_RERR * message, lv_block GTK) {
     int len = 0;
     u_int8_t *data = message->toByteArray(&len);
     HMAC_Update(&ctx, data, len);
-    ev << "len: " << len << "\n";
+    EV << "len: " << len << "\n";
     free(data);
 
     u_int8_t *result = (u_int8_t *) malloc(
@@ -272,7 +272,7 @@ int PASER_Crypto_Hash::computeHmacHELLO(PASER_TB_Hello * message, lv_block GTK) 
     int len = 0;
     u_int8_t *data = message->toByteArray(&len);
     HMAC_Update(&ctx, data, len);
-    ev << "len: " << len << "\n";
+    EV << "len: " << len << "\n";
     free(data);
 
     u_int8_t *result = (u_int8_t *) malloc(
@@ -293,7 +293,7 @@ int PASER_Crypto_Hash::checkHmacHELLO(PASER_TB_Hello * message, lv_block GTK) {
     int len = 0;
     u_int8_t *data = message->toByteArray(&len);
     HMAC_Update(&ctx, data, len);
-    ev << "len: " << len << "\n";
+    EV << "len: " << len << "\n";
     free(data);
 
     u_int8_t *result = (u_int8_t *) malloc(

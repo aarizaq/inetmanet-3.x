@@ -224,7 +224,7 @@ u_int8_t * PASER_TB_Hello::toByteArray(int *l) {
     }*/
 
     *l = len;
-    ev << "len = " << len << "\n";
+    EV << "len = " << len << "\n";
     return data;
 }
 
@@ -329,7 +329,7 @@ u_int8_t * PASER_TB_Hello::getCompleteByteArray(int *l) {
     buf += SHA256_DIGEST_LENGTH;
 
     *l = len;
-    ev << "len = " << len << "\n";
+    EV << "len = " << len << "\n";
     return data;
 }
 #endif

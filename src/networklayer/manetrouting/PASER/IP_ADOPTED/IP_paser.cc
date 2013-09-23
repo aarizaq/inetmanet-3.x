@@ -491,10 +491,10 @@ void IPv4_paser::routeUnicastPacket(IPv4Datagram *datagram, InterfaceEntry *dest
     //ADD by Eugen
     const IPv4Route *re = rt->findBestMatchingRoute(destAddr);
     if(destIE && rt->getDefaultRoute() && rt->getDefaultRoute()->getInterface() == destIE){
-        ev << "is Default Route!!!\n";
+        EV << "is Default Route!!!\n";
         // falls der Empfaenger in Subnetz von PASER sich befindet, aber nur die Default Route gefunden wurde => starte Route Discovery.
         if( (destAddr.getInt() & PASER_MASK) == (PASER_SUBNETZ & PASER_MASK) ){
-            ev << "Packet destination is PASER NETWORK: " << destAddr.str() << "\n";
+            EV << "Packet destination is PASER NETWORK: " << destAddr.str() << "\n";
             destIE = NULL;
         }
         // falls der Empfaenger sich ausserhalb der PASER Subnetz befindet, dann teste ob der Weg zum Gateway bekannt ist, oder nicht.
@@ -503,7 +503,7 @@ void IPv4_paser::routeUnicastPacket(IPv4Datagram *datagram, InterfaceEntry *dest
             if(re){
                 const IPv4Route *tempRe = rt->findBestMatchingRoute( re->getGateway() );
                 if( /*(tempRe->getGateway() & PASER_MASK) == (PASER_SUBNETZ & PASER_MASK)*/rt->getDefaultRoute() == tempRe && tempRe){
-                    ev << "re->getGateway(): " << re->getGateway().str() << "\n";
+                    EV << "re->getGateway(): " << re->getGateway().str() << "\n";
                     destIE = NULL;
                 }
             }
@@ -682,7 +682,7 @@ void IPv4_paser::reassembleAndDeliver(IPv4Datagram *datagram)
         // discard the packet
         int gateindex = mapping.getOutputGateForProtocol(protocol);
         //add by Eugen
-        ev << "protocol = " << protocol << "\n";
+        EV << "protocol = " << protocol << "\n";
         if(protocol==IP_PROT_UDP) {
             IPv4Datagram *tempDatagram = datagram->dup();
             cPacket *packet=NULL;
@@ -692,18 +692,18 @@ void IPv4_paser::reassembleAndDeliver(IPv4Datagram *datagram)
             }
             cPacket *temp = packet;
             if (dynamic_cast<UDPPacket*>(temp)) {
-                ev << "UDP OK!\n";
+                EV << "UDP OK!\n";
                 UDPPacket *udpPacket = check_and_cast<UDPPacket*>(temp);
                 if(udpPacket->getDestinationPort() == 653) {
-                    ev << "found PASER UDP Packet\n";
+                    EV << "found PASER UDP Packet\n";
                     gateindex = 7;
                 }
                 else{
-                    ev << "";
+                    EV << "";
                 }
             }
             else {
-                ev << "UDP NOT OK!\n";
+                EV << "UDP NOT OK!\n";
             }
             delete packet;
 //            delete tempDatagram;

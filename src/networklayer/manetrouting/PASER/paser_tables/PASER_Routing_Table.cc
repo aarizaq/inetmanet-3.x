@@ -102,9 +102,9 @@ PASER_Routing_Entry *PASER_Routing_Table::insert(struct in_addr dest_addr,
     entry->is_gw = is_gw;
     entry->isValid = 1;
     entry->nxthop_addr = nxthop_addr;
-    ev << "seq INSERT = " << seqnum << "\n";
+    EV << "seq INSERT = " << seqnum << "\n";
 //    if(seqnum != 0){
-//        ev << "Seq UPDATE\n";
+//        EV << "Seq UPDATE\n";
     entry->seqnum = seqnum;
 //    }
 
@@ -152,9 +152,9 @@ PASER_Routing_Entry *PASER_Routing_Table::update(PASER_Routing_Entry *entry,
     entry->is_gw = is_gw;
     entry->nxthop_addr = nxthop_addr;
     entry->isValid = 1;
-    ev << "seq UPDATE = " << seqnum << "\n";
+    EV << "seq UPDATE = " << seqnum << "\n";
     if (seqnum != 0) {
-        ev << "Seq UPDATE\n";
+        EV << "Seq UPDATE\n";
         entry->seqnum = seqnum;
     } else {
         entry->seqnum = oldSeq;
@@ -196,10 +196,10 @@ PASER_Routing_Entry *PASER_Routing_Table::findBestGW() {
 //    std::map<ManetAddress, PASER_Routing_Entry*>::iterator it = route_table.find(entry->dest_addr.s_addr);
     PASER_Routing_Entry* tempBestRouteToGW = NULL;
     u_int32_t bestMetric = 0;
-//    ev << "try to find best route to GW, routingTable.size = " << route_table.size() << "\n" ;
+//    EV << "try to find best route to GW, routingTable.size = " << route_table.size() << "\n" ;
     for (std::map<ManetAddress, PASER_Routing_Entry*>::iterator it =
             route_table.begin(); it != route_table.end(); it++) {
-//        ev << "IP: " << (*it).second->dest_addr.S_addr.getIPv4().str() << " isGW: " << (int)((*it).second->is_gw) << " isValid: " << (int)((*it).second->isValid) << " metric: " << (int)(*it).second->hopcnt << "\n";
+//        EV << "IP: " << (*it).second->dest_addr.S_addr.getIPv4().str() << " isGW: " << (int)((*it).second->is_gw) << " isValid: " << (int)((*it).second->isValid) << " metric: " << (int)(*it).second->hopcnt << "\n";
         if ((*it).second->is_gw && (*it).second->isValid
                 && (bestMetric == 0 || bestMetric > (*it).second->hopcnt)) {
             tempBestRouteToGW = (*it).second;
@@ -248,7 +248,7 @@ void PASER_Routing_Table::updateKernelRoutingTable(struct in_addr dest_addr,
     paser_modul->MY_omnet_chg_rte(dest_addr.S_addr, forw_addr.S_addr,
             netmask.S_addr, metric, del_entry, ifIndex);
     if (del_entry) {
-        ev << "Loesche Entry: " << dest_addr.S_addr.getIPv4().str()
+        EV << "Loesche Entry: " << dest_addr.S_addr.getIPv4().str()
                 << ", gw: " << forw_addr.S_addr.getIPv4().str() << "\n";
     }
     if (metric != 1 || del_entry) {
@@ -262,7 +262,7 @@ void PASER_Routing_Table::updateKernelRoutingTable(struct in_addr dest_addr,
 //        for(std::list<address_range>::iterator it2 = tempAddList.begin(); it2!=tempAddList.end(); it2++){
 //            address_range tempRange = (address_range)*it2;
 //            updateKernelRoutingTable(tempRange.ipaddr, tempEntry->nxthop_addr, tempRange.mask, tempEntry->hopcnt+1, false, ifIndex);
-//            ev << "updating AddList Range\n";
+//            EV << "updating AddList Range\n";
 //        }
 //    }
 }
@@ -298,16 +298,16 @@ void PASER_Routing_Table::updateRoutingTableAndSetTableTimeout(
     deletePack->timeout = timeval_add(now, PASER_ROUTE_DELETE_TIME);
     validPack->timeout = timeval_add(now, PASER_ROUTE_VALID_TIME);
 
-    ev << "now: " << now.tv_sec << "\nRoute delete timeout: "
+    EV << "now: " << now.tv_sec << "\nRoute delete timeout: "
             << deletePack->timeout.tv_sec << "\n";
-    ev << "Route valid timeout: " << validPack->timeout.tv_sec << "\n";
+    EV << "Route valid timeout: " << validPack->timeout.tv_sec << "\n";
     timer_queue->timer_add(deletePack);
     timer_queue->timer_add(validPack);
 
     if (entry != NULL) {
         PASER_Neighbor_Entry *nEntry = neighbor_table->findNeigh(
                 entry->nxthop_addr);
-        ev << "update Route in Routing Table for src: "
+        EV << "update Route in Routing Table for src: "
                 << src_addr.S_addr.getIPv4().str() << " over: "
                 << nextHop.S_addr.getIPv4().str() << "\n";
         if (nEntry && nEntry->neighFlag) {
@@ -414,7 +414,7 @@ void PASER_Routing_Table::updateRoutingTableAndSetTableTimeout(
              }
 //        }
     } else {
-        ev << "add new Route to Routing Table\n";
+        EV << "add new Route to Routing Table\n";
         insert(src_addr, nextHop, deletePack, validPack, seq, metric + 1, gFlag,
                 addList, (u_int8_t*) cert);
 //        if(trusted){
@@ -422,11 +422,11 @@ void PASER_Routing_Table::updateRoutingTableAndSetTableTimeout(
         netmask.S_addr.set(IPv4Address::ALLONES_ADDRESS);
         PASER_Neighbor_Entry *tempEntry = neighbor_table->findNeigh(nextHop);
         if (tempEntry) {
-            ev << "neighbor found!";
+            EV << "neighbor found!";
             updateKernelRoutingTable(src_addr, nextHop, netmask, metric + 1,
                     false, tempEntry->ifIndex);
         } else {
-            ev << "neighbor not found!";
+            EV << "neighbor not found!";
             updateKernelRoutingTable(src_addr, nextHop, netmask, metric + 1,
                     false, ifIndex);
         }
@@ -452,15 +452,15 @@ void PASER_Routing_Table::updateRoutingTableTimeout(struct in_addr src_addr,
             entry->validTimer = validPack;
         }
     } else {
-        ev << "not Found PASER_Routing_Entry\n";
+        EV << "not Found PASER_Routing_Entry\n";
         return;
     }
     entry->isValid = 1;
     deletePack->timeout = timeval_add(now, PASER_ROUTE_DELETE_TIME);
     validPack->timeout = timeval_add(now, PASER_ROUTE_VALID_TIME);
-    ev << "now: " << now.tv_sec << "\nRoute delete timeout: "
+    EV << "now: " << now.tv_sec << "\nRoute delete timeout: "
             << deletePack->timeout.tv_sec << "\n";
-    ev << "Route valid timeout: " << validPack->timeout.tv_sec << "\n";
+    EV << "Route valid timeout: " << validPack->timeout.tv_sec << "\n";
     timer_queue->timer_add(deletePack);
     timer_queue->timer_add(validPack);
     struct in_addr netmask;
@@ -486,15 +486,15 @@ void PASER_Routing_Table::updateRoutingTableTimeout(struct in_addr src_addr,
             entry->validTimer = validPack;
         }
     } else {
-        ev << "not Found PASER_Routing_Entry\n";
+        EV << "not Found PASER_Routing_Entry\n";
         return;
     }
     deletePack->timeout = timeval_add(now, PASER_ROUTE_DELETE_TIME);
     validPack->timeout = timeval_add(now, PASER_ROUTE_VALID_TIME);
-    ev << "new seq = " << seq << "\n";
-    ev << "now: " << now.tv_sec << "\nRoute delete timeout: "
+    EV << "new seq = " << seq << "\n";
+    EV << "now: " << now.tv_sec << "\nRoute delete timeout: "
             << deletePack->timeout.tv_sec << "\n";
-    ev << "Route valid timeout: " << validPack->timeout.tv_sec << "\n";
+    EV << "Route valid timeout: " << validPack->timeout.tv_sec << "\n";
     timer_queue->timer_add(deletePack);
     timer_queue->timer_add(validPack);
 
@@ -522,7 +522,7 @@ void PASER_Routing_Table::updateRoutingTable(struct timeval now,
                 address_range tempRange = (address_range) *it2;
                 updateKernelRoutingTable(tempRange.ipaddr, nextHop,
                         tempRange.mask, hopCount + 1, false, ifIndex);
-                ev << "updating AddList Range\n";
+                EV << "updating AddList Range\n";
             }
             continue;
         }
@@ -540,9 +540,9 @@ void PASER_Routing_Table::updateRoutingTable(struct timeval now,
             deletePack->timeout = timeval_add(now, PASER_ROUTE_DELETE_TIME);
             validPack->timeout = timeval_add(now, PASER_ROUTE_VALID_TIME);
 
-            ev << "now: " << now.tv_sec << "\nRoute delete timeout: "
+            EV << "now: " << now.tv_sec << "\nRoute delete timeout: "
                     << deletePack->timeout.tv_sec << "\n";
-            ev << "Route valid timeout: " << validPack->timeout.tv_sec << "\n";
+            EV << "Route valid timeout: " << validPack->timeout.tv_sec << "\n";
             timer_queue->timer_add(deletePack);
             timer_queue->timer_add(validPack);
             insert(tempList.ipaddr, nextHop, deletePack, validPack, 0, hopCount,
@@ -562,9 +562,9 @@ void PASER_Routing_Table::updateRoutingTable(struct timeval now,
             deletePack->timeout = timeval_add(now, PASER_ROUTE_DELETE_TIME);
             validPack->timeout = timeval_add(now, PASER_ROUTE_VALID_TIME);
 
-            ev << "now: " << now.tv_sec << "\nRoute delete timeout: "
+            EV << "now: " << now.tv_sec << "\nRoute delete timeout: "
                     << deletePack->timeout.tv_sec << "\n";
-            ev << "Route valid timeout: " << validPack->timeout.tv_sec << "\n";
+            EV << "Route valid timeout: " << validPack->timeout.tv_sec << "\n";
             timer_queue->timer_add(deletePack);
             timer_queue->timer_add(validPack);
             update(rEntry, tempList.ipaddr, nextHop, deletePack, validPack,
@@ -574,7 +574,7 @@ void PASER_Routing_Table::updateRoutingTable(struct timeval now,
 
         struct in_addr netmask;
         netmask.S_addr.set(IPv4Address::ALLONES_ADDRESS);
-        ev << "updating Kernel Routing Table from AddL, dest: "
+        EV << "updating Kernel Routing Table from AddL, dest: "
                 << tempList.ipaddr.S_addr.getIPv4().str() << ", metric: "
                 << hopCount << "\n";
         updateKernelRoutingTable(tempList.ipaddr, nextHop, netmask, hopCount,
@@ -585,26 +585,26 @@ void PASER_Routing_Table::updateRoutingTable(struct timeval now,
             address_range tempRange = (address_range) *it2;
             updateKernelRoutingTable(tempRange.ipaddr, nextHop, tempRange.mask,
                     hopCount + 1, false, ifIndex);
-            ev << "updating AddList Range\n";
+            EV << "updating AddList Range\n";
         }
     }
 }
 
 void PASER_Routing_Table::deleteFromKernelRoutingTableNodesWithNextHopAddr(
         struct in_addr nextHop) {
-    ev << "Loesche alle Knoten, die ueber "
+    EV << "Loesche alle Knoten, die ueber "
             << nextHop.S_addr.getIPv4().str() << " erreichbar sind\n";
     std::list<PASER_Routing_Entry*> EntryList = getListWithNextHop(nextHop);
-    ev << "Gefunden " << EntryList.size() << " Knoten, die geloescht werden\n";
+    EV << "Gefunden " << EntryList.size() << " Knoten, die geloescht werden\n";
     for (std::list<PASER_Routing_Entry*>::iterator it = EntryList.begin();
             it != EntryList.end(); it++) {
         PASER_Routing_Entry *tempEntry = (PASER_Routing_Entry *) *it;
-        ev << "delete addr: "
+        EV << "delete addr: "
                 << tempEntry->dest_addr.S_addr.getIPv4().str() << "\n";
         for (std::list<address_range>::iterator it2 = tempEntry->AddL.begin();
                 it2 != tempEntry->AddL.end(); it2++) {
             address_range addList = (address_range) *it2;
-            ev << "    subnetz: " << addList.ipaddr.S_addr.getIPv4().str()
+            EV << "    subnetz: " << addList.ipaddr.S_addr.getIPv4().str()
                     << "\n";
             updateKernelRoutingTable(addList.ipaddr, nextHop, addList.mask,
                     tempEntry->hopcnt + 1, true, 1);
@@ -615,11 +615,11 @@ void PASER_Routing_Table::deleteFromKernelRoutingTableNodesWithNextHopAddr(
                 tempMask, tempEntry->hopcnt, true, 1);
         PASER_Timer_Message *validTimer = tempEntry->validTimer;
         if (validTimer) {
-            ev << "loesche Timer\n";
+            EV << "loesche Timer\n";
             if (timer_queue->timer_remove(validTimer)) {
-                ev << "Timer geloescht\n";
+                EV << "Timer geloescht\n";
             } else {
-                ev << "Timer wurde nicht geloescht\n";
+                EV << "Timer wurde nicht geloescht\n";
             }
             delete validTimer;
             tempEntry->validTimer = NULL;
@@ -630,16 +630,16 @@ void PASER_Routing_Table::deleteFromKernelRoutingTableNodesWithNextHopAddr(
     PASER_Neighbor_Entry *nEntry = paser_global->getNeighbor_table()->findNeigh(
             nextHop);
     if (nEntry) {
-        ev << "Loesche den Nachbar " << nextHop.S_addr.getIPv4().str()
+        EV << "Loesche den Nachbar " << nextHop.S_addr.getIPv4().str()
                 << " aus neighborTable\n";
         nEntry->isValid = 0;
         PASER_Timer_Message *validTimer = nEntry->validTimer;
         if (validTimer) {
-            ev << "loesche Timer\n";
+            EV << "loesche Timer\n";
             if (timer_queue->timer_remove(validTimer)) {
-                ev << "Timer geloescht\n";
+                EV << "Timer geloescht\n";
             } else {
-                ev << "Timer wurde nicht geloescht\n";
+                EV << "Timer wurde nicht geloescht\n";
             }
             delete validTimer;
             nEntry->validTimer = NULL;
@@ -650,14 +650,14 @@ void PASER_Routing_Table::deleteFromKernelRoutingTableNodesWithNextHopAddr(
     if (!rEntry) {
         return;
     }
-    ev << "Loesche den Knoten " << nextHop.S_addr.getIPv4().str()
+    EV << "Loesche den Knoten " << nextHop.S_addr.getIPv4().str()
             << " selbst\n";
-    ev << "delete addr: " << rEntry->dest_addr.S_addr.getIPv4().str()
+    EV << "delete addr: " << rEntry->dest_addr.S_addr.getIPv4().str()
             << "\n";
     for (std::list<address_range>::iterator it2 = rEntry->AddL.begin();
             it2 != rEntry->AddL.end(); it2++) {
         address_range addList = (address_range) *it2;
-        ev << "    subnetz: " << addList.ipaddr.S_addr.getIPv4().str()
+        EV << "    subnetz: " << addList.ipaddr.S_addr.getIPv4().str()
                 << "\n";
         updateKernelRoutingTable(addList.ipaddr, nextHop, addList.mask,
                 rEntry->hopcnt + 1, true, 1);
@@ -668,11 +668,11 @@ void PASER_Routing_Table::deleteFromKernelRoutingTableNodesWithNextHopAddr(
             rEntry->hopcnt, true, 1);
     PASER_Timer_Message *validTimer = rEntry->validTimer;
     if (validTimer) {
-        ev << "loesche Timer\n";
+        EV << "loesche Timer\n";
         if (timer_queue->timer_remove(validTimer)) {
-            ev << "Timer geloescht\n";
+            EV << "Timer geloescht\n";
         } else {
-            ev << "Timer wurde nicht geloescht\n";
+            EV << "Timer wurde nicht geloescht\n";
         }
         delete validTimer;
         rEntry->validTimer = NULL;
@@ -685,7 +685,7 @@ void PASER_Routing_Table::updateRouteLifetimes(struct in_addr dest_addr) {
     PASER_Routing_Entry *rEntry = findDest(dest_addr);
     if (!rEntry) {
         rEntry = findAdd(dest_addr);
-        ev << "suche Addr\n";
+        EV << "suche Addr\n";
         if (!rEntry) {
             return;
         }
@@ -699,7 +699,7 @@ void PASER_Routing_Table::updateRouteLifetimes(struct in_addr dest_addr) {
     }
     rEntry->isValid = 1;
     if (validPack == NULL) {
-        ev << "validPack == NULL\n";
+        EV << "validPack == NULL\n";
         validPack = new PASER_Timer_Message();
         validPack->data = NULL;
         validPack->destAddr.S_addr = dest_addr.S_addr;
@@ -709,11 +709,11 @@ void PASER_Routing_Table::updateRouteLifetimes(struct in_addr dest_addr) {
     deletePack->timeout = timeval_add(now, PASER_ROUTE_DELETE_TIME);
     validPack->timeout = timeval_add(now, PASER_ROUTE_VALID_TIME);
 
-    ev << "ip Addr: " << validPack->destAddr.S_addr.getIPv4().str()
+    EV << "ip Addr: " << validPack->destAddr.S_addr.getIPv4().str()
             << "\n";
-    ev << "now: " << now.tv_sec << "\nRoute delete timeout: "
+    EV << "now: " << now.tv_sec << "\nRoute delete timeout: "
             << deletePack->timeout.tv_sec << "\n";
-    ev << "Route valid timeout: " << validPack->timeout.tv_sec << "\n";
+    EV << "Route valid timeout: " << validPack->timeout.tv_sec << "\n";
     timer_queue->timer_add(deletePack);
     timer_queue->timer_add(validPack);
 
@@ -731,7 +731,7 @@ void PASER_Routing_Table::updateRouteLifetimes(struct in_addr dest_addr) {
     PASER_Timer_Message *NdeletePack = nEntry->deleteTimer;
     PASER_Timer_Message *NvalidPack = nEntry->validTimer;
     if (NvalidPack == NULL) {
-        ev << "NvalidPack == NULL\n";
+        EV << "NvalidPack == NULL\n";
         PASER_Timer_Message* tempValidTime = new PASER_Timer_Message();
         tempValidTime->data = NULL;
         tempValidTime->destAddr.S_addr = nEntry->neighbor_addr.S_addr;
@@ -743,11 +743,11 @@ void PASER_Routing_Table::updateRouteLifetimes(struct in_addr dest_addr) {
     NdeletePack->timeout = timeval_add(now, PASER_NEIGHBOR_DELETE_TIME);
     NvalidPack->timeout = timeval_add(now, PASER_NEIGHBOR_VALID_TIME);
 
-    ev << "ip Addr: " << NvalidPack->destAddr.S_addr.getIPv4().str()
+    EV << "ip Addr: " << NvalidPack->destAddr.S_addr.getIPv4().str()
             << "\n";
-    ev << "now: " << now.tv_sec << "\nNeighbor delete timeout: "
+    EV << "now: " << now.tv_sec << "\nNeighbor delete timeout: "
             << NdeletePack->timeout.tv_sec << "\n";
-    ev << "Neighbor valid timeout: " << NvalidPack->timeout.tv_sec << "\n";
+    EV << "Neighbor valid timeout: " << NvalidPack->timeout.tv_sec << "\n";
     timer_queue->timer_add(NdeletePack);
     timer_queue->timer_add(NvalidPack);
 
@@ -769,11 +769,11 @@ void PASER_Routing_Table::updateRouteLifetimes(struct in_addr dest_addr) {
     deleteRoutingPack->timeout = timeval_add(now, PASER_ROUTE_DELETE_TIME);
     validRoutingPack->timeout = timeval_add(now, PASER_ROUTE_VALID_TIME);
 
-    ev << "ip Addr: " << validRoutingPack->destAddr.S_addr.getIPv4().str()
+    EV << "ip Addr: " << validRoutingPack->destAddr.S_addr.getIPv4().str()
             << "\n";
-    ev << "now: " << now.tv_sec << "\nRoute delete timeout: "
+    EV << "now: " << now.tv_sec << "\nRoute delete timeout: "
             << deleteRoutingPack->timeout.tv_sec << "\n";
-    ev << "Route valid timeout: " << validRoutingPack->timeout.tv_sec << "\n";
+    EV << "Route valid timeout: " << validRoutingPack->timeout.tv_sec << "\n";
     timer_queue->timer_add(deleteRoutingPack);
     timer_queue->timer_add(validRoutingPack);
 }
@@ -788,7 +788,7 @@ std::list<address_list> PASER_Routing_Table::getNeighborAddressList(int ifNr) {
         if (rEntry->hopcnt == 1 && nEntry != NULL && nEntry->neighFlag
                 && nEntry->isValid) {
             address_list temp;
-//            ev << "add IP to NeighborListe: " << nEntry->neighbor_addr.S_addr.getIPv4().str() << "\n";
+//            EV << "add IP to NeighborListe: " << nEntry->neighbor_addr.S_addr.getIPv4().str() << "\n";
             temp.ipaddr.S_addr = nEntry->neighbor_addr.S_addr;
             for (std::list<address_range>::iterator inIt = rEntry->AddL.begin();
                     inIt != rEntry->AddL.end(); inIt++) {
@@ -805,7 +805,7 @@ std::list<address_list> PASER_Routing_Table::getNeighborAddressList(int ifNr) {
     myAddrList.ipaddr = WlanAddrStruct;
     myAddrList.range = paser_global->getAddL();
     liste.push_back(myAddrList);
-    ev << "listSize = " << liste.size() << "\n";
+    EV << "listSize = " << liste.size() << "\n";
     return liste;
 }
 
@@ -839,9 +839,9 @@ void PASER_Routing_Table::updateNeighborFromHELLO(address_list liste,
     deletePack->timeout = timeval_add(now, PASER_ROUTE_DELETE_TIME);
     validPack->timeout = timeval_add(now, PASER_ROUTE_VALID_TIME);
 
-    ev << "now: " << now.tv_sec << "\nRoute delete timeout: "
+    EV << "now: " << now.tv_sec << "\nRoute delete timeout: "
             << deletePack->timeout.tv_sec << "\n";
-    ev << "Route valid timeout: " << validPack->timeout.tv_sec << "\n";
+    EV << "Route valid timeout: " << validPack->timeout.tv_sec << "\n";
     timer_queue->timer_add(deletePack);
     timer_queue->timer_add(validPack);
     rEntry = update(rEntry, liste.ipaddr, rEntry->nxthop_addr, deletePack,
@@ -849,7 +849,7 @@ void PASER_Routing_Table::updateNeighborFromHELLO(address_list liste,
 
     struct in_addr netmask;
     netmask.S_addr.set(IPv4Address::ALLONES_ADDRESS);
-    ev << "updating Kernel Routing Table from AddL, dest: "
+    EV << "updating Kernel Routing Table from AddL, dest: "
             << liste.ipaddr.S_addr.getIPv4().str() << ", metric: " << 1
             << "\n";
     updateKernelRoutingTable(liste.ipaddr, rEntry->nxthop_addr, netmask, 1,
@@ -871,8 +871,8 @@ void PASER_Routing_Table::updateNeighborFromHELLO(address_list liste,
 //    deletePackNei->timeout = timeval_add(now, PASER_NEIGHBOR_DELETE_TIME);
 //    validPackNei->timeout = timeval_add(now, PASER_NEIGHBOR_VALID_TIME);
 //
-//    ev << "now: " <<now.tv_sec << "\nNeighbor delete timeout: " << deletePackNei->timeout.tv_sec << "\n";
-//    ev << "Neighbor valid timeout: " << validPackNei->timeout.tv_sec << "\n";
+//    EV << "now: " <<now.tv_sec << "\nNeighbor delete timeout: " << deletePackNei->timeout.tv_sec << "\n";
+//    EV << "Neighbor valid timeout: " << validPackNei->timeout.tv_sec << "\n";
 //    timer_queue->timer_add( deletePackNei );
 //    timer_queue->timer_add( validPackNei );
 //    neighbor_table->update(nEntry, liste.ipaddr, deletePackNei, validPackNei, 1, 1, 0, liste.range, 0,NULL);
@@ -883,7 +883,7 @@ void PASER_Routing_Table::updateNeighborFromHELLO(address_list liste,
         address_range tempRange = (address_range) *it2;
         updateKernelRoutingTable(tempRange.ipaddr, rEntry->nxthop_addr,
                 tempRange.mask, 2, false, ifIndex);
-        ev << "updating AddList Range\n";
+        EV << "updating AddList Range\n";
     }
 
 }
@@ -921,9 +921,9 @@ void PASER_Routing_Table::updateRouteFromHELLO(address_list liste, int ifIndex,
         deletePack->timeout = timeval_add(now, PASER_ROUTE_DELETE_TIME);
         validPack->timeout = timeval_add(now, PASER_ROUTE_VALID_TIME);
 
-        ev << "now: " << now.tv_sec << "\nRoute delete timeout: "
+        EV << "now: " << now.tv_sec << "\nRoute delete timeout: "
                 << deletePack->timeout.tv_sec << "\n";
-        ev << "Route valid timeout: " << validPack->timeout.tv_sec << "\n";
+        EV << "Route valid timeout: " << validPack->timeout.tv_sec << "\n";
         timer_queue->timer_add(deletePack);
         timer_queue->timer_add(validPack);
         insert(liste.ipaddr, nextHop, deletePack, validPack, 0, 2, 0,
@@ -943,9 +943,9 @@ void PASER_Routing_Table::updateRouteFromHELLO(address_list liste, int ifIndex,
         deletePack->timeout = timeval_add(now, PASER_ROUTE_DELETE_TIME);
         validPack->timeout = timeval_add(now, PASER_ROUTE_VALID_TIME);
 
-        ev << "now: " << now.tv_sec << "\nRoute delete timeout: "
+        EV << "now: " << now.tv_sec << "\nRoute delete timeout: "
                 << deletePack->timeout.tv_sec << "\n";
-        ev << "Route valid timeout: " << validPack->timeout.tv_sec << "\n";
+        EV << "Route valid timeout: " << validPack->timeout.tv_sec << "\n";
         timer_queue->timer_add(deletePack);
         timer_queue->timer_add(validPack);
         update(rEntry, liste.ipaddr, nextHop, deletePack, validPack,
@@ -954,7 +954,7 @@ void PASER_Routing_Table::updateRouteFromHELLO(address_list liste, int ifIndex,
 
     struct in_addr netmask;
     netmask.S_addr.set(IPv4Address::ALLONES_ADDRESS);
-    ev << "updating Kernel Routing Table from AddL, dest: "
+    EV << "updating Kernel Routing Table from AddL, dest: "
             << liste.ipaddr.S_addr.getIPv4().str() << ", metric: " << 2
             << "\n";
     updateKernelRoutingTable(liste.ipaddr, nextHop, netmask, 2, false, ifIndex);
@@ -964,7 +964,7 @@ void PASER_Routing_Table::updateRouteFromHELLO(address_list liste, int ifIndex,
         address_range tempRange = (address_range) *it2;
         updateKernelRoutingTable(liste.ipaddr, nextHop, tempRange.mask, 3,
                 false, ifIndex);
-        ev << "updating AddList Range\n";
+        EV << "updating AddList Range\n";
     }
 }
 #endif

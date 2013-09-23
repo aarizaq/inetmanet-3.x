@@ -44,8 +44,8 @@ void Ieee80216Radio::handleLowerMsgStart(AirFrame *airframe)
     // arrived in time
     // NOTE: a message may have arrival time in the past here when we are
     // processing ongoing transmissions during a channel change
-    ev << "\n\nrcvdPower: " << rcvdPower << "    sensitivity: " << sensitivity << "\n";
-    ev << "radio state: " << rs.getState() << "   snrptr: " << snrInfo.ptr << "\n\n";
+    EV << "\n\nrcvdPower: " << rcvdPower << "    sensitivity: " << sensitivity << "\n";
+    EV << "radio state: " << rs.getState() << "   snrptr: " << snrInfo.ptr << "\n\n";
 
     if (airframe->getArrivalTime() == simTime() && rcvdPower >= sensitivity
         && rs.getState() != RadioState::TRANSMIT && snrInfo.ptr == NULL)
@@ -64,7 +64,7 @@ void Ieee80216Radio::handleLowerMsgStart(AirFrame *airframe)
         //char buf[90];
         //sprintf(buf, "rcvdPower: %f", snrInfo.rcvdPower);
         //displayString().setTagArg("t",0,buf);
-        ev << "Achtung RS Radio rcvdPower:" << rcvdPower << " SNR:" <<
+        EV << "Achtung RS Radio rcvdPower:" << rcvdPower << " SNR:" <<
             log10(snrInfo.rcvdPower / noiseLevel) << ".\n";
         if (rs.getState() != RadioState::RECV)
         {

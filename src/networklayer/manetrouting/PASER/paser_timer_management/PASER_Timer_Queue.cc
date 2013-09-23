@@ -55,7 +55,7 @@ int PASER_Timer_Queue::timer_add(PASER_Timer_Message *t) {
 
 int PASER_Timer_Queue::timer_remove(PASER_Timer_Message *t) {
     if (!t) {
-        ev << "timer == NULL\n";
+        EV << "timer == NULL\n";
         return 0;
     }
     if (t->handler == KDC_REQUEST) {
@@ -89,7 +89,7 @@ int PASER_Timer_Queue::timer_remove(PASER_Timer_Message *t) {
                 }
             }
         }
-        ev << "timer not found\n";
+        EV << "timer not found\n";
         return 0;
     }
     return 0;

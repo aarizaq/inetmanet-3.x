@@ -399,7 +399,7 @@ void PASERUdpTrafficReceiver::printLostPackets(mapEntry currentEntry)
 	        }
 	    }
 	    if(!found){
-	        ev << "lostPaketID: " << temp << "\n";
+	        EV << "lostPaketID: " << temp << "\n";
 	    }
 	}
 }

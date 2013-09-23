@@ -118,7 +118,7 @@ u_int8_t * PASER_UB_Key_Refresh::toByteArray(int *l) {
     buf += cert.len;*/
 
     *l = len;
-    ev << "len = " << len << "\n";
+    EV << "len = " << len << "\n";
     return data;
 }
 
@@ -164,7 +164,7 @@ u_int8_t * PASER_UB_Key_Refresh::getCompleteByteArray(int *l) {
     buf += sign.len;
 
     *l = len;
-    ev << "len = " << len << "\n";
+    EV << "len = " << len << "\n";
     return data;
 }
 #endif

@@ -194,7 +194,7 @@ void Relay1Q::handleEtherFrame(EthernetIIFrame *frame)
 			{
 			    if(mvrpModule && !mvrpModule->resolveVLAN(Tag->getVID(),&outputPorts))
 			    { //Gets the associated gates to that VLAN including arrival.
-			        ev<<"VID not registered";
+			        EV<<"VID not registered";
 			    }
 			}
 			else

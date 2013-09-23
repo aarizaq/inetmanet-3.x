@@ -69,13 +69,13 @@ void DNSBase::handleMessage(cMessage *msg)
         delete msg;
         loadXml();
 
-        ev << "dns data readed " << dnsVector.size() << endl;
+        EV << "dns data readed " << dnsVector.size() << endl;
         //DEBUG
         /* for (unsigned int i=0; i<dnsVector.size(); i++)
          {
-         ev << dnsVector[i]->addr;
-         ev << dnsVector[i]->HIT;
-         ev << dnsVector[i]->domainName;
+         EV << dnsVector[i]->addr;
+         EV << dnsVector[i]->HIT;
+         EV << dnsVector[i]->domainName;
          }*/
     }
     else if (dynamic_cast<DNSRegRvsMsg *>(msg) != NULL)
@@ -112,7 +112,7 @@ void DNSBase::handleMessage(cMessage *msg)
         //CREATING response
         DNSBaseMsg* respMsg = new DNSBaseMsg("DNS Response"); //the response
         respMsg->setId(dnsMsg->getId()); //setting the id
-        ev << "response type: " << respType << endl;
+        EV << "response type: " << respType << endl;
         switch (respType)
         {
             case 1: {
@@ -126,12 +126,12 @@ void DNSBase::handleMessage(cMessage *msg)
                         //if has RVS send RVS address, else send address
                         if (dnsVector[i]->rvs.isUnspecified())
                         {
-                            ev << "dns: addr responee" << endl;
+                            EV << "dns: addr responee" << endl;
                             respMsg->setAddrData(dnsVector[i]->addr);
                         }
                         else
                         {
-                            ev << "dns: rvs responee" << endl;
+                            EV << "dns: rvs responee" << endl;
                             respMsg->setAddrData(dnsVector[i]->rvs);
                         }
                         break;
@@ -152,12 +152,12 @@ void DNSBase::handleMessage(cMessage *msg)
                         //if has RVS send RVS address, else send address
                         if (dnsVector[i]->rvs.isUnspecified())
                         {
-                            ev << "dns: addr responee" << endl;
+                            EV << "dns: addr responee" << endl;
                             respMsg->setAddrData(dnsVector[i]->addr);
                         }
                         else
                         {
-                            ev << "dns: rvs responee" << endl;
+                            EV << "dns: rvs responee" << endl;
                             respMsg->setAddrData(dnsVector[i]->rvs);
                         }
                         break;
@@ -177,9 +177,9 @@ void DNSBase::handleMessage(cMessage *msg)
                 break;
             }
         }
-        ev << "sending dns response " << endl;
+        EV << "sending dns response " << endl;
         //DEBUG
-        ev << respMsg->data() << " " << respMsg->addrData() << endl;
+        EV << respMsg->data() << " " << respMsg->addrData() << endl;
 
         // swap src and dest
         /*

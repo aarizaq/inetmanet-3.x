@@ -37,7 +37,7 @@ PASER_Timer_Message::~PASER_Timer_Message() {
             data = NULL;
             break;
         case TU_RREP_ACK_TIMEOUT:
-            ev << "deleting PASER_UU_RREP\n";
+            EV << "deleting PASER_UU_RREP\n";
             pack1 = (PASER_UU_RREP *) data;
             delete pack1;
             data = NULL;

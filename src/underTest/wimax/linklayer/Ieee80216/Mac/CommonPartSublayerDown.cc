@@ -35,7 +35,7 @@ void CommonPartSublayerDown::handleMessage(cMessage *msg)
     }
     else
     {
-        ev << "nothing" << endl;
+        EV << "nothing" << endl;
     }
 }
 

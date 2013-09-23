@@ -37,7 +37,7 @@ void TrafGenPar::initialize(int aStage)
 
     if (0 == aStage)
     {
-        ev << "initializing TrafGen..." << endl;
+        EV << "initializing TrafGen..." << endl;
 
         mpSendMessage = new cMessage("SendMessage");
         mpOnOffSwitch = new cMessage("onOffSwitch");
@@ -210,7 +210,7 @@ void TrafGenPar::handleSelfMsg(cMessage * apMsg)
     {
         if (mOnOff == TRAFFIC_ON)
         {
-            ev << "switch traffic off" << endl;
+            EV << "switch traffic off" << endl;
             mOnOff = TRAFFIC_OFF;
             scheduleAt(simTime() + OffIntv(), mpOnOffSwitch);
             cancelEvent(mpSendMessage);
@@ -221,7 +221,7 @@ void TrafGenPar::handleSelfMsg(cMessage * apMsg)
         }
         else if (mOnOff == TRAFFIC_OFF)
         {
-            ev << "switch traffic on" << endl;
+            EV << "switch traffic on" << endl;
             mOnOff = TRAFFIC_ON;
             cancelEvent(mpSendMessage);
             scheduleAt(simTime() + OnIntv(), mpOnOffSwitch);
@@ -245,13 +245,13 @@ void TrafGenPar::handleSelfMsg(cMessage * apMsg)
 
         if (mOnOff == TRAFFIC_ON && mOnIdenticalDest)
         {
-            ev << "sending message to " << mCurrentOnDest.c_str() << endl;
+            EV << "sending message to " << mCurrentOnDest.c_str() << endl;
             SendTraf(p_traffic_msg, mCurrentOnDest.c_str());
         }
         else
         {
             std::string dest = calculateDestination();
-            ev << "sending message to " << dest.c_str() << endl;
+            EV << "sending message to " << dest.c_str() << endl;
             SendTraf(p_traffic_msg, dest.c_str());
         }
 

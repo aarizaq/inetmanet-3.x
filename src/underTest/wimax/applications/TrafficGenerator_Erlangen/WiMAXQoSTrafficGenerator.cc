@@ -47,7 +47,7 @@ void WiMAXQoSTrafficGenerator::initialize(int aStage)
 
         mNumTrafficMsgs = 0;
 
-        ev << this->getName();
+        EV << this->getName();
         if (strcmp(this->getName(), "trafGen_ftp") == 0)
         {
             ipTrafficType = BE;

@@ -24,38 +24,38 @@
 #include "PASER_RERR_List.h"
 
 bool PASER_RERR_List::setRerrTime(struct in_addr addr, struct timeval time) {
-    ev << "Suche ein Eintrag in blacklist fuer IP: "
+    EV << "Suche ein Eintrag in blacklist fuer IP: "
             << addr.S_addr.getIPv4().str() << "\n";
     std::map<ManetAddress, struct timeval>::iterator it = rerr_list.find(
             addr.S_addr);
     if (it != rerr_list.end()) {
         struct timeval last = it->second;
-        ev << "Eintrag fuer IP: " << addr.S_addr.getIPv4().str()
+        EV << "Eintrag fuer IP: " << addr.S_addr.getIPv4().str()
                 << " exestiert in blacklist\n";
-        ev << "Zeit in blackList sec: " << last.tv_sec << " usec: "
+        EV << "Zeit in blackList sec: " << last.tv_sec << " usec: "
                 << last.tv_usec << "\n";
-        ev << "Zeil jetzt sec: " << time.tv_sec << " usec: " << time.tv_usec
+        EV << "Zeil jetzt sec: " << time.tv_sec << " usec: " << time.tv_usec
                 << "\n";
         if (time.tv_sec - last.tv_sec > 1) {
             it->second.tv_sec = time.tv_sec;
             it->second.tv_usec = time.tv_usec;
-            ev << "1\n";
+            EV << "1\n";
             return true;
         } else if (time.tv_sec - last.tv_sec == 1
                 && time.tv_usec - last.tv_usec + 1000000
                         > PASER_rerr_limit * 1000) {
             it->second.tv_sec = time.tv_sec;
             it->second.tv_usec = time.tv_usec;
-            ev << "2\n";
+            EV << "2\n";
             return true;
         } else if (time.tv_sec - last.tv_sec == 0
                 && time.tv_usec - last.tv_usec > PASER_rerr_limit * 1000) {
             it->second.tv_sec = time.tv_sec;
             it->second.tv_usec = time.tv_usec;
-            ev << "3\n";
+            EV << "3\n";
             return true;
         }
-        ev << "diff < PASER_rerr_limit\n";
+        EV << "diff < PASER_rerr_limit\n";
         return false;
     }
     rerr_list.insert(std::make_pair(addr.S_addr, time));

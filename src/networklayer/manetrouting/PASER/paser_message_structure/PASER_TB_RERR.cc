@@ -267,7 +267,7 @@ u_int8_t * PASER_TB_RERR::toByteArray(int *l) {
 //    printf("%02x", data[n]);
 //putchar('\n');*/
     *l = len;
-    ev << "len = " << len << "\n";
+    EV << "len = " << len << "\n";
     return data;
 }
 
@@ -416,7 +416,7 @@ u_int8_t * PASER_TB_RERR::getCompleteByteArray(int *l) {
 //opp_error("rrrwrwrwr");
 
     *l = len;
-    ev << "len = " << len << "\n";
+    EV << "len = " << len << "\n";
     return data;
 }
 #endif

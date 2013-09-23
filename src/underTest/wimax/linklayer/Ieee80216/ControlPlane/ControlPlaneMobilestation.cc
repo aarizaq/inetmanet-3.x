@@ -338,7 +338,7 @@ void ControlPlaneMobilestation::finish()
 void ControlPlaneMobilestation::handleClassificationCommand(Ieee80216ClassificationCommand *
                                                             command)
 {
-    ev << "(in ControlPlaneMobilestation::handleClassificationCommand) " << command << endl;
+    EV << "(in ControlPlaneMobilestation::handleClassificationCommand) " << command << endl;
     ServiceFlow *requested_sf = new ServiceFlow();
     requested_sf->state = (sf_state) command->getRequested_sf_state();
     requested_sf->provisioned_parameters = &(command->getRequested_qos_params());
@@ -386,7 +386,7 @@ void ControlPlaneMobilestation::handleClassificationCommand(Ieee80216Classificat
  */
 void ControlPlaneMobilestation::handleServiceFlowMessage(cMessage *msg)
 {
-    ev << "(in ControlPlaneMobilestation::handleServiceFlowMessage) " << msg << endl;
+    EV << "(in ControlPlaneMobilestation::handleServiceFlowMessage) " << msg << endl;
     Ieee80216_DSA_ACK* dsa_ack = dynamic_cast<Ieee80216_DSA_ACK *>(msg);
     if (dsa_ack)
     {
@@ -619,7 +619,7 @@ void ControlPlaneMobilestation::handleSelfMsg(cMessage *msg)
 */
 void ControlPlaneMobilestation::handleWithFSM(cMessage *msg)
 {
-    ev << "(in ControlPlaneMobilestation::handleWithFSM) " << msg << endl;
+    EV << "(in ControlPlaneMobilestation::handleWithFSM) " << msg << endl;
     EV << "Module " << getName() << " der Mobilestation berarbeitet die Nachricht " << msg->
         getName() << " in der FSM. State: " << fsm.getStateName() << "\n";
     // WATCH(localMobilestationInfo.scanModus);
@@ -1087,7 +1087,7 @@ void ControlPlaneMobilestation::scanNextChannel()
 */
 void ControlPlaneMobilestation::changeDownlinkChannel(int channelNum) //Einstellen des Kanals
 {
-    ev << "(in ControlPlaneMobilestation::changeDownlinkChannel) channelNum: " << channelNum <<
+    EV << "(in ControlPlaneMobilestation::changeDownlinkChannel) channelNum: " << channelNum <<
         endl;
     PhyControlInfo *phyCtrl = new PhyControlInfo();
     phyCtrl->setChannelNumber(channelNum);
@@ -1206,7 +1206,7 @@ void ControlPlaneMobilestation::clearBSList()
 
 void ControlPlaneMobilestation::handleDL_MAPFrame(cMessage *msg)
 {
-    ev << "(in ControlPlaneMobilestation::handleDL_MAPFrame) " << msg << endl;
+    EV << "(in ControlPlaneMobilestation::handleDL_MAPFrame) " << msg << endl;
     Ieee80216DL_MAP* frame = check_and_cast<Ieee80216DL_MAP *>(msg);
     if (!frame)
         error("Error im Module", getName(), "Nachricht: ", msg->getName(), " keine DL-Map.");
@@ -1223,7 +1223,7 @@ void ControlPlaneMobilestation::handleDL_MAPFrame(cMessage *msg)
  */
 void ControlPlaneMobilestation::handleUL_MAPFrame(cMessage *msg)
 {
-    ev << "(in ControlPlaneMobilestation::handleUL_MAPFrame) " << msg << endl;
+    EV << "(in ControlPlaneMobilestation::handleUL_MAPFrame) " << msg << endl;
     stationHasUplinkGrants = false;
     //long tx_data_in_next_ul_subframe = 0;
 
@@ -1364,7 +1364,7 @@ void ControlPlaneMobilestation::handleUL_MAPFrame(cMessage *msg)
 
 void ControlPlaneMobilestation::getRangingUL_MAP_IE(Ieee80216UL_MAP *frame)
 {
-    ev << "(in ControlPlaneMobilestation::getRangingUL_MAP_IE) " << frame << endl;
+    EV << "(in ControlPlaneMobilestation::getRangingUL_MAP_IE) " << frame << endl;
     rangingStart();             //Funktion zur Bestimmung des Ranging Intervall Slots
 
     for (unsigned int i = 0; i < frame->getUlmap_ie_ListArraySize(); ++i)
@@ -1425,7 +1425,7 @@ void ControlPlaneMobilestation::getRangingUL_MAP_IE(Ieee80216UL_MAP *frame)
 
 void ControlPlaneMobilestation::handleDCDFrame(cMessage *msg)
 {
-    ev << "(in ControlPlaneMobilestation::handleDCDFrame) " << msg << endl;
+    EV << "(in ControlPlaneMobilestation::handleDCDFrame) " << msg << endl;
     Ieee80216_DCD *frame = check_and_cast<Ieee80216_DCD *>(msg);
     if (!frame)
         error("Error im Module", getName(), "Nachricht: ", msg->getName(), " keine DCD.");
@@ -1441,7 +1441,7 @@ void ControlPlaneMobilestation::handleDCDFrame(cMessage *msg)
 
 void ControlPlaneMobilestation::handleUCDFrame(cMessage *msg)
 {
-    ev << "(in ControlPlaneMobilestation::handleUCDFrame) " << msg << endl;
+    EV << "(in ControlPlaneMobilestation::handleUCDFrame) " << msg << endl;
     Ieee80216_UCD *frame = check_and_cast<Ieee80216_UCD *>(msg);
     if (!frame)
         error("Error im Module", getName(), "Nachricht: ", msg->getName(), " keine UCD.");
@@ -1470,7 +1470,7 @@ void ControlPlaneMobilestation::handleUCDFrame(cMessage *msg)
 
 void ControlPlaneMobilestation::handle_RNG_RSP_Frame(cMessage *msg)
 {
-    ev << "(in ControlPlaneMobilestation::handle_RNG_RSP_Frame) " << msg << endl;
+    EV << "(in ControlPlaneMobilestation::handle_RNG_RSP_Frame) " << msg << endl;
     Ieee80216_RNG_RSP *frame = check_and_cast<Ieee80216_RNG_RSP *>(msg);
     if (!frame)
         error("Error im Module", getName(), "Nachricht: ", msg->getName(), " kein RNG-RSP.");
@@ -1514,7 +1514,7 @@ void ControlPlaneMobilestation::handle_RNG_RSP_Frame(cMessage *msg)
 
 void ControlPlaneMobilestation::handle_SBC_RSP_Frame(cMessage *msg)
 {
-    ev << "(in ControlPlaneMobilestation::handle_SBC_RSP_Frame) " << msg << endl;
+    EV << "(in ControlPlaneMobilestation::handle_SBC_RSP_Frame) " << msg << endl;
     Ieee80216_SBC_RSP* frame = check_and_cast<Ieee80216_SBC_RSP *>(msg);
     if (!frame)
         error("Error im Module", getName(), "Nachricht: ", msg->getName(), " kein RNG-RSP.");
@@ -1525,7 +1525,7 @@ void ControlPlaneMobilestation::handle_SBC_RSP_Frame(cMessage *msg)
 
 void ControlPlaneMobilestation::handle_REG_RSP_Frame(cMessage *msg)
 {
-    ev << "(in ControlPlaneMobilestation::handle_REG_RSP_Frame) " << msg << endl;
+    EV << "(in ControlPlaneMobilestation::handle_REG_RSP_Frame) " << msg << endl;
     Ieee80216_REG_RSP* frame = check_and_cast<Ieee80216_REG_RSP *>(msg);
     if (!frame)
         error("Error im Module", getName(), "Nachricht: ", msg->getName(), " kein REG-RSP.");
@@ -1565,7 +1565,7 @@ void ControlPlaneMobilestation::handle_REG_RSP_Frame(cMessage *msg)
 
 void ControlPlaneMobilestation::handle_MOB_SCN_RSP_Frame(cMessage *msg)
 {
-    ev << "(in ControlPlaneMobilestation::handle_MOB_SCN_RSP_Frame) " << msg << endl;
+    EV << "(in ControlPlaneMobilestation::handle_MOB_SCN_RSP_Frame) " << msg << endl;
     Ieee80216_MOB_SCN_RSP *frame = check_and_cast<Ieee80216_MOB_SCN_RSP *>(msg);
     if (!frame)
         error("Error im Module", getName(), "Nachricht: ", msg->getName(), " kein REG-RSP.");
@@ -1619,7 +1619,7 @@ void ControlPlaneMobilestation::handle_MOB_SCN_RSP_Frame(cMessage *msg)
 
 void ControlPlaneMobilestation::handle_MOB_BSHO_RSP_Frame(cMessage *msg)
 {
-    ev << "(in ControlPlaneMobilestation::handle_MOB_BSHO_RSP_Frame) " << msg << endl;
+    EV << "(in ControlPlaneMobilestation::handle_MOB_BSHO_RSP_Frame) " << msg << endl;
     Ieee80216_BSHO_RSP* frame = check_and_cast<Ieee80216_BSHO_RSP *>(msg);
     if (!frame)
         error("Error im Module", getName(), "Nachricht: ", msg->getName(), " kein MOB_BSHO-RSP.");
@@ -1637,7 +1637,7 @@ void ControlPlaneMobilestation::handle_MOB_BSHO_RSP_Frame(cMessage *msg)
 *************************************************/
 void ControlPlaneMobilestation::buildRNG_REQ()
 {
-    ev << "(in ControlPlaneMobilestation::buildRNG_REQ) " << endl;
+    EV << "(in ControlPlaneMobilestation::buildRNG_REQ) " << endl;
     isRangingIntervall = false;
     SubType Type;               //SubType ist ein Struct und ist in Ieee80216Frame.msg defeniert. Er kenzeichnet ob Subheader vorhanden sind.
     Type.Subheader = 1;
@@ -1669,7 +1669,7 @@ void ControlPlaneMobilestation::buildRNG_REQ()
 *************************************************/
 void ControlPlaneMobilestation::buildSBC_REQ()
 {
-    ev << "(in ControlPlaneMobilestation::buildSBC_REQ) " << endl;
+    EV << "(in ControlPlaneMobilestation::buildSBC_REQ) " << endl;
     Ieee80216_SBC_REQ* frame = new Ieee80216_SBC_REQ("SBC_REQ");
     SubType Type;               //SubType ist ein Struct und ist in Ieee80216Frame.msg defeniert. Er kenzeichnet ob Subheader vorhanden sind.
     Type.Subheader = 1;
@@ -1699,7 +1699,7 @@ void ControlPlaneMobilestation::buildSBC_REQ()
 *************************************************/
 void ControlPlaneMobilestation::buildREG_REQ()
 {
-    ev << "(in ControlPlaneMobilestation::buildREG_REQ) " << endl;
+    EV << "(in ControlPlaneMobilestation::buildREG_REQ) " << endl;
     Ieee80216_REG_REQ *frame = new Ieee80216_REG_REQ("REG_REQ");
     SubType Type;               //SubType ist ein Struct und ist in Ieee80216Frame.msg defeniert. Er kenzeichnet ob Subheader vorhanden sind.
     Type.Subheader = 1;
@@ -1722,7 +1722,7 @@ void ControlPlaneMobilestation::buildREG_REQ()
 *************************************************/
 void ControlPlaneMobilestation::build_MOB_SCN_REQ()
 {
-    ev << "(in ControlPlaneMobilestation::build_MOB_SCN_REQ) " << endl;
+    EV << "(in ControlPlaneMobilestation::build_MOB_SCN_REQ) " << endl;
     Ieee80216_MOB_SCN_REQ* frame = new Ieee80216_MOB_SCN_REQ("MOB_SCN-REQ");
     SubType Type;               //SubType ist ein Struct und ist in Ieee80216Frame.msg defeniert. Er kenzeichnet ob Subheader vorhanden sind.
     Type.Subheader = 1;
@@ -1750,7 +1750,7 @@ void ControlPlaneMobilestation::build_MOB_SCN_REQ()
 
 void ControlPlaneMobilestation::build_MOB_MSHO_REQ()
 {
-    ev << "(in ControlPlaneMobilestation::build_MOB_MSHO_REQ) " << endl;
+    EV << "(in ControlPlaneMobilestation::build_MOB_MSHO_REQ) " << endl;
     //breakpoint("build MOB-MSHO-REQ");
     Ieee80216_MSHO_REQ* frame = new Ieee80216_MSHO_REQ("MOB_MSHO-REQ");
     SubType Type;               //SubType ist ein Struct und ist in Ieee80216Frame.msg defeniert. Er kenzeichnet ob Subheader vorhanden sind.
@@ -1768,7 +1768,7 @@ void ControlPlaneMobilestation::build_MOB_MSHO_REQ()
 void ControlPlaneMobilestation::build_MOB_HO_IND()
 {
     //breakpoint("HO-IND");
-    ev << "(in ControlPlaneMobilestation::build_MOB_HO_IND) " << endl;
+    EV << "(in ControlPlaneMobilestation::build_MOB_HO_IND) " << endl;
     Ieee80216_MOB_HO_IND* frame = new Ieee80216_MOB_HO_IND("MOB_HO-IND");
     SubType Type;               //SubType ist ein Struct und ist in Ieee80216Frame.msg defeniert. Er kenzeichnet ob Subheader vorhanden sind.
     Type.Subheader = 1;
@@ -1862,7 +1862,7 @@ bool ControlPlaneMobilestation::isStartRangingRequest(cMessage *msg)
 // copy/paste from 802.11Mac
 void ControlPlaneMobilestation::registerInterface()
 {
-    ev << "(in ControlPlaneMobilestation::registerInterface) " << endl;
+    EV << "(in ControlPlaneMobilestation::registerInterface) " << endl;
     IInterfaceTable *ift = InterfaceTableAccess().getIfExists();
     if (!ift)
         return;
@@ -1904,7 +1904,7 @@ void ControlPlaneMobilestation::registerInterface()
 
 void ControlPlaneMobilestation::rangingStart()
 {
-    ev << "(in ControlPlaneMobilestation::rangingStart) " << endl;
+    EV << "(in ControlPlaneMobilestation::rangingStart) " << endl;
     isRangingIntervall = true;
     ++rangingVersuche;
     ++ULMap_Counter;
@@ -2050,21 +2050,21 @@ bool ControlPlaneMobilestation::isCorrectDLMAP(cMessage *msg)
 
 void ControlPlaneMobilestation::sendData()
 {
-    ev << "(in ControlPlaneMobilestation::sendData) " << endl;
+    EV << "(in ControlPlaneMobilestation::sendData) " << endl;
     Ieee80216Prim_sendDataRequest *sendDataUnit = new Ieee80216Prim_sendDataRequest();
     sendRequest(sendDataUnit);
 }
 
 void ControlPlaneMobilestation::stopData()
 {
-    ev << "(in ControlPlaneMobilestation::stopData) " << endl;
+    EV << "(in ControlPlaneMobilestation::stopData) " << endl;
     Ieee80216Prim_stopDataRequest *stopDataUnit = new Ieee80216Prim_stopDataRequest();
     sendRequest(stopDataUnit);
 }
 
 void ControlPlaneMobilestation::sendControl(Ieee80216Prim_sendControlRequest *control_info)
 {
-    ev << "(in ControlPlaneMobilestation::sendControl) " << endl;
+    EV << "(in ControlPlaneMobilestation::sendControl) " << endl;
     //Ieee80216Prim_sendControlRequest *sendControlUnit = new Ieee80216Prim_sendControlRequest();
     //sendControlUnit->setPduCID();
 
@@ -2086,7 +2086,7 @@ void ControlPlaneMobilestation::sendControl(Ieee80216Prim_sendControlRequest *co
 
 void ControlPlaneMobilestation::stopControl(Ieee80216Prim_stopControlRequest *control_info)
 {
-    ev << "(in ControlPlaneMobilestation::stopControl) " << endl;
+    EV << "(in ControlPlaneMobilestation::stopControl) " << endl;
     //Ieee80216Prim_stopControlRequest *stopControlUnit = new Ieee80216Prim_stopControlRequest();
     if (control_info != NULL)
     {
@@ -2179,7 +2179,7 @@ void ControlPlaneMobilestation::resetStation()
 
 void ControlPlaneMobilestation::handleScanDL_MAPFrame(cMessage *msg)
 {
-    ev << "(in ControlPlaneMobilestation::handleScanDL_MAPFrame) " << msg << endl;
+    EV << "(in ControlPlaneMobilestation::handleScanDL_MAPFrame) " << msg << endl;
     Ieee80216DL_MAP* frame = check_and_cast<Ieee80216DL_MAP *>(msg);
     if (!frame)
         error("Error im Module", getName(), "Nachricht: ", msg->getName(), " keine DL-Map.");
@@ -2202,7 +2202,7 @@ void ControlPlaneMobilestation::handleScanDL_MAPFrame(cMessage *msg)
 
 void ControlPlaneMobilestation::handleCorrectDLMAP(cMessage *msg)
 {
-    ev << "(in ControlPlaneMobilestation::handleCorrectDLMAP) " << msg << endl;
+    EV << "(in ControlPlaneMobilestation::handleCorrectDLMAP) " << msg << endl;
     Ieee80216DL_MAP *frame = check_and_cast<Ieee80216DL_MAP *>(msg);
     //if(frame->getBS_ID() == localMobilestationInfo.activeBasestation)
     getCalculateSNR(msg);
@@ -2215,7 +2215,7 @@ void ControlPlaneMobilestation::handleCorrectDLMAP(cMessage *msg)
 
 void ControlPlaneMobilestation::getCalculateSNR(cMessage *msg)
 {
-    ev << "(in ControlPlaneMobilestation::getCalculateSNR) " << msg << endl;
+    EV << "(in ControlPlaneMobilestation::getCalculateSNR) " << msg << endl;
     Ieee80216GenericMacHeader *frame = check_and_cast<Ieee80216GenericMacHeader *>(msg);
     if (!frame)
         error("Error im Module", getName(), "Nachricht: ", msg->getName(), " kein Generic MAC.");
@@ -2298,7 +2298,7 @@ void ControlPlaneMobilestation::getCalculateSNR(cMessage *msg)
 void ControlPlaneMobilestation::startScanmodus()
 {
     //breakpoint("startScanmodus");
-    ev << "(in ControlPlaneMobilestation::startScanmodus) " << endl;
+    EV << "(in ControlPlaneMobilestation::startScanmodus) " << endl;
     if (ev.isGUI())
     {
         getParentModule()->getParentModule()->getParentModule()->bubble("Start Scan");
@@ -2337,7 +2337,7 @@ void ControlPlaneMobilestation::startScanmodus()
 
 void ControlPlaneMobilestation::stopScanmodus()
 {
-    ev << "(in ControlPlaneMobilestation::stopScanmodus) " << endl;
+    EV << "(in ControlPlaneMobilestation::stopScanmodus) " << endl;
     //breakpoint("stopScan");
     if (ev.isGUI())
     {
@@ -2469,7 +2469,7 @@ void ControlPlaneMobilestation::stopScanmodus()
 
 void ControlPlaneMobilestation::makeHandover()
 {
-    ev << "(in ControlPlaneMobilestation::makeHandover) " << endl;
+    EV << "(in ControlPlaneMobilestation::makeHandover) " << endl;
     //breakpoint("makeHandover");
     HO_makeHandover = simTime().dbl();
     recordScalar("HO make Handover Time", HO_makeHandover - HO_endScanningTime);

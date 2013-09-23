@@ -158,7 +158,7 @@ u_int8_t * PASER_UB_Root_Refresh::toByteArray(int *l) {
     buf += sizeof(timestamp);*/
 
     *l = len;
-    ev << "len = " << len << "\n";
+    EV << "len = " << len << "\n";
     return data;
 }
 
@@ -224,10 +224,10 @@ u_int8_t * PASER_UB_Root_Refresh::getCompleteByteArray(int *l) {
     buf += sizeof(sign.len);
     memcpy(buf, sign.buf, sign.len);
     buf += sign.len;
-    ev << "signlenge = " << sign.len << "\n";
+    EV << "signlenge = " << sign.len << "\n";
 
     *l = len;
-    ev << "len = " << len << "\n";
+    EV << "len = " << len << "\n";
     return data;
 }
 #endif

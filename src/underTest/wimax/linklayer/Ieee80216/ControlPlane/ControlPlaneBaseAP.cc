@@ -20,7 +20,7 @@ ControlPlaneBaseAP::~ControlPlaneBaseAP()
 
 void ControlPlaneBaseAP::startTransmitting(cMessage *msg)
 {
-    ev << "Starting transmission of " << msg << endl;
+    EV << "Starting transmission of " << msg << endl;
 }
 
 void ControlPlaneBaseAP::initialize()
@@ -63,7 +63,7 @@ void ControlPlaneBaseAP::initialize()
     scheduleAt(1, StartsetRadio); //Setzt die Radiokanäle
     scheduleAt(2, BroadcastTimer); //Starte das aussenden der DL-MAP,DCD und UCD (isSelfMessage)
 
-    ev << "Inizilisierung von ControlPlaneBS abgeschlossen.\n";
+    EV << "Inizilisierung von ControlPlaneBS abgeschlossen.\n";
 }
 
 /**
@@ -76,20 +76,20 @@ void ControlPlaneBaseAP::handleMessage(cMessage *msg)
     // Nachrichten die von diesem Module an sich selber gesendet wurden
     if (msg->isSelfMessage())
     {
-        ev << "Timer expired: " << msg << "\n";
+        EV << "Timer expired: " << msg << "\n";
         handleTimer(msg);
     }
     // Nachrichten die vom MAC Module gesendet wurden
     else if (msg->arrivedOn("cpsUpIn")) // arrived message on gate "MacIn"
     {
-        ev << "Frame arrived from MAC: " << msg << "\n";
+        EV << "Frame arrived from MAC: " << msg << "\n";
         Ieee80216GenericMacHeader *frame = check_and_cast<Ieee80216GenericMacHeader *>(msg);
-        ev << "Arrived Generic Frame\n";
+        EV << "Arrived Generic Frame\n";
         SubType Type;
         Type = frame->getTYPE();
         if (Type.Subheader == 1)
         {
-            ev << "Subheader\n";
+            EV << "Subheader\n";
             handleManagmentFrame(frame);
         }
         else
@@ -179,20 +179,20 @@ void ControlPlaneBaseAP::sendBroadcast()
 
 void ControlPlaneBaseAP::handle_RNG_REQ_Frame(Ieee80216_RNG_REQ *frame)
 {
-    ev << "RNG_REQ arrived.\n";
+    EV << "RNG_REQ arrived.\n";
     storeMSSInfo(frame->getMSS_MAC_Address());
     makeRNG_RSP(frame->getMSS_MAC_Address());
 }
 
 void ControlPlaneBaseAP::handle_SBC_REQ_Frame(Ieee80216_SBC_REQ *frame)
 {
-    ev << "SBC_REQ arrived.\n";
+    EV << "SBC_REQ arrived.\n";
     makeSBC_RSP();
 }
 
 void ControlPlaneBaseAP::handle_REG_REQ_Frame(Ieee80216_REG_REQ *frame)
 {
-    ev << "REG_REQ arrived.\n";
+    EV << "REG_REQ arrived.\n";
     makeREG_RSP();
 }
 
@@ -225,7 +225,7 @@ ControlPlaneBaseAP::MSSInfo* ControlPlaneBaseAP::lookupMSS(const MACAddress& Add
     {
         if (it->MSS_Address == Address)
         {
-            ev << Address;
+            EV << Address;
             return &(*it);
         }
     }

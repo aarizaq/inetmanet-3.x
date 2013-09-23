@@ -16,7 +16,7 @@ void AnalysisEnergy::initialize(int aStage)
 
     if (0 == aStage)
     {
-        ev << "initializing AnalysisEnergy\n";
+        EV << "initializing AnalysisEnergy\n";
 
         mCreateSnapshot = new cMessage("mCreateSnapshot");
         scheduleAt(1000, mCreateSnapshot);
@@ -90,7 +90,7 @@ void AnalysisEnergy::Snapshot()
         // alle hosts sind tot: simulation beenden!
         endSimulation();
     }
-    ev << "hosts depleted: " << mNumHostsDepleted << endl;
+    EV << "hosts depleted: " << mNumHostsDepleted << endl;
 }
 
 
@@ -101,7 +101,7 @@ void AnalysisEnergy::Snapshot()
 
 void AnalysisEnergy::SnapshotEnergies()
 {
-    ev << "Creating energy snapshot..." << endl;
+    EV << "Creating energy snapshot..." << endl;
 
     // energy values are written into a file
     // the filename is composited like this:
@@ -133,7 +133,7 @@ void AnalysisEnergy::SnapshotEnergies()
 
         // write the energy values into a file
         fout << pos.x << "\t" << pos.y << "\t" << ene << endl;
-        ev << pos.x << "/" << pos.y << ", " << ene << endl;
+        EV << pos.x << "/" << pos.y << ", " << ene << endl;
     }
 
     fout.close();
@@ -142,7 +142,7 @@ void AnalysisEnergy::SnapshotEnergies()
 
 void AnalysisEnergy::SnapshotLifetimes()
 {
-    ev << "Creating lifetime snapshot...";
+    EV << "Creating lifetime snapshot...";
 
     // lifetime values are written into a file
     // the filename is composited like this:
@@ -174,7 +174,7 @@ void AnalysisEnergy::SnapshotLifetimes()
 
         // write the lifetime values into a file
         fout << pos.x << "\t" << pos.y << "\t" << lt << endl;
-        ev << pos.x << "/" << pos.y << ", " << lt << endl;
+        EV << pos.x << "/" << pos.y << ", " << lt << endl;
     }
 
     fout.close();

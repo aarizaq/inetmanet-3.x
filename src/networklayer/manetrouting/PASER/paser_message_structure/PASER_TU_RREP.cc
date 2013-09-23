@@ -409,7 +409,7 @@ u_int8_t * PASER_TU_RREP::getCompleteByteArray(int *l) {
             len += sizeof(temp_addr.S_addr);
         }
     }
-    ev << "AddL = " << (len - tempLen) << "\n";
+    EV << "AddL = " << (len - tempLen) << "\n";
     len += sizeof(metricBetweenQueryingAndForw);
     len += sizeof(metricBetweenDestAndForw);
     if (GFlag) {
@@ -444,7 +444,7 @@ u_int8_t * PASER_TU_RREP::getCompleteByteArray(int *l) {
             it++) {
         len += SHA256_DIGEST_LENGTH;
     }
-    ev << "auth = " << (len - tempLen) << "\n";
+    EV << "auth = " << (len - tempLen) << "\n";
 
     len += SHA256_DIGEST_LENGTH;
 
@@ -519,7 +519,7 @@ u_int8_t * PASER_TU_RREP::getCompleteByteArray(int *l) {
 //        buf += sizeof(groupTransientKey.len);
 //        memcpy(buf, groupTransientKey.buf, groupTransientKey.len);
 //        buf += groupTransientKey.len;
-//        ev << "GTK = " << groupTransientKey.len << "\n";
+//        EV << "GTK = " << groupTransientKey.len << "\n";
         memcpy(buf, (u_int8_t *) &kdc_data.GTK.len, sizeof(kdc_data.GTK.len));
         buf += sizeof(kdc_data.GTK.len);
         memcpy(buf, kdc_data.GTK.buf, kdc_data.GTK.len);

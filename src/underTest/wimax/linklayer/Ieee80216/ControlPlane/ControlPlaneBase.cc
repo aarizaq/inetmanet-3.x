@@ -114,29 +114,29 @@ void ControlPlaneBase::sendRequest(Ieee80216PrimRequest * req)
 
 void ControlPlaneBase::storeBSInfo(double rcvdPower)
 {
-    ev << "Sendeleistung: " << rcvdPower << "\n";
+    EV << "Sendeleistung: " << rcvdPower << "\n";
 }
 
 void ControlPlaneBase::setSNR(double rcvdPower)
 {
-    ev << "Roland Control Plane MS Sendeleistung: " << rcvdPower << "\n";
+    EV << "Roland Control Plane MS Sendeleistung: " << rcvdPower << "\n";
     //recSnrVec.record(rcvdPower);
 }
 
 void ControlPlaneBase::setTime(double rcvdPower)
 {
-    ev << "Roland Control Plane MS Sendeleistung: " << rcvdPower << "\n";
+    EV << "Roland Control Plane MS Sendeleistung: " << rcvdPower << "\n";
 }
 
 void ControlPlaneBase::setDistance(double distance)
 {
-    ev << "Distanz zwischen MS und BS: " << distance << "\n";
+    EV << "Distanz zwischen MS und BS: " << distance << "\n";
     //recDistVec.record(distance);
 }
 
 void ControlPlaneBase::setBSID(double rcvdPower)
 {
-    ev << "Roland Control Plane MS Sendeleistung: " << rcvdPower << "\n";
+    EV << "Roland Control Plane MS Sendeleistung: " << rcvdPower << "\n";
 }
 
 double ControlPlaneBase::searchMinSnr()

@@ -16,11 +16,11 @@ void Display::initialize(int aStage)
 
     if (0 == aStage)
     {
-        ev << "initializing Display" << endl;
+        EV << "initializing Display" << endl;
 
         // calculate communication radius
         double interference_distance = calcInterfDist();
-        ev << "interference_distance: " << interference_distance << endl;
+        EV << "interference_distance: " << interference_distance << endl;
 
         // display communication radius
         cDisplayString *dispStr = &getParentModule()->getDisplayString();

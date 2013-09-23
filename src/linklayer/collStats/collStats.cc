@@ -23,17 +23,17 @@ collStats::~collStats(){
 }
 
 void collStats::incUdpDataColl(){
-    ev << "UDP collision found\n";
+    EV << "UDP collision found\n";
     udpDataColl++;
 }
 
 void collStats::incProtocolColl(){
-    ev << "Protocol collision found\n";
+    EV << "Protocol collision found\n";
     protocolColl++;
 }
 
 void collStats::incMacColl(){
-    ev << "MAC collision found\n";
+    EV << "MAC collision found\n";
     macColl++;
 }
 
@@ -54,10 +54,10 @@ void collStats::readPaket(Ieee80211DataFrame* paket){
     if(dynamic_cast<IPv4Datagram *>(tempPackIeee)){
         IPv4Datagram *tempIPData = dynamic_cast<IPv4Datagram *>(tempPackIeee);
         cPacket *tempPackIPData = tempIPData->getEncapsulatedPacket();
-        ev << "IPDatagram:OK\n";
+        EV << "IPDatagram:OK\n";
         if(dynamic_cast<UDPPacket *>(tempPackIPData)){
             UDPPacket *tempUDP = dynamic_cast<UDPPacket *>(tempPackIPData);
-            ev << "UDP:OK\n";
+            EV << "UDP:OK\n";
             if(tempUDP->getDestinationPort() == 1234){
                 //udpDataColl
                 incUdpDataColl();
@@ -101,10 +101,10 @@ void collStats::addCollPacketAirFrame(AirFrame* airframe){
 //        if(dynamic_cast<IPDatagram *>(tempPackIeee)){
 //            IPDatagram *tempIPData = dynamic_cast<IPDatagram *>(tempPackIeee);
 //            cPacket *tempPackIPData = tempIPData->getEncapsulatedPacket();
-//            ev << "IPDatagram:OK\n";
+//            EV << "IPDatagram:OK\n";
 //            if(dynamic_cast<UDPPacket *>(tempPackIPData)){
 //                UDPPacket *tempUDP = dynamic_cast<UDPPacket *>(tempPackIPData);
-//                ev << "UDP:OK\n";
+//                EV << "UDP:OK\n";
 //                if(tempUDP->getDestinationPort() == 1234){
 //                    //udpDataColl
 //                    collStats::getInstance()->incUdpDataColl();

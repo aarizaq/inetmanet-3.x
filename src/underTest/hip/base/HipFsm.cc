@@ -24,45 +24,48 @@
 // Part of: HIPSim++ Host Identity Protocol Simulation Framework developed by BME-HT
 //**********************************************************************************
 
-
 #include "HipFsm.h"
 
 Define_Module(HipFsm);
-HipFsm::HipFsm(){}
-HipFsm::~HipFsm(){}
 
+HipFsm::HipFsm()
+{
+}
+HipFsm::~HipFsm()
+{
+}
 
 void HipFsm::specInitialize()
 {
-	hip = check_and_cast<HIP*>(this->getParentModule());
-	hitToIpMap = &hip->hitToIpMap;
+    hip = check_and_cast<HIP*>(this->getParentModule());
+    hitToIpMap = &hip->hitToIpMap;
 }
 // Getting associated IP by HIT
 void HipFsm::findIPaddress(IPv6Address &HIT)
 {
-		hitToIpMapIt = hitToIpMap->find(HIT);
-		dstIPwork = &hitToIpMapIt->second->addr.front();
+    hitToIpMapIt = hitToIpMap->find(HIT);
+    dstIPwork = &hitToIpMapIt->second->addr.front();
 }
 
 // Put a HIT-IP association to the hitToIpMap list
 void HipFsm::setIPaddress(IPv6Address &HIT, IPv6Address& IP)
 {
-	hitToIpMapIt = hitToIpMap->find(HIT);
-	hitToIpMapIt->second->addr.pop_front();
-	hitToIpMapIt->second->addr.push_front(IP);
+    hitToIpMapIt = hitToIpMap->find(HIT);
+    hitToIpMapIt->second->addr.pop_front();
+    hitToIpMapIt->second->addr.push_front(IP);
 }
 
 // Add a new IP address to the specified HIT
 void HipFsm::addIPaddress(IPv6Address &HIT, IPv6Address& IP)
 {
-	hitToIpMapIt = hitToIpMap->find(HIT);
-	hitToIpMapIt->second->addr.push_back(IP);
+    hitToIpMapIt = hitToIpMap->find(HIT);
+    hitToIpMapIt->second->addr.push_back(IP);
 }
 
 // Removes all IP addresses for specified HIT
 void HipFsm::deleteAllIPaddress(IPv6Address &HIT)
 {
-	hitToIpMapIt = hitToIpMap->find(HIT);
-	while(hitToIpMapIt->second->addr.size() > 0)
-		hitToIpMapIt->second->addr.pop_back();
+    hitToIpMapIt = hitToIpMap->find(HIT);
+    while (hitToIpMapIt->second->addr.size() > 0)
+        hitToIpMapIt->second->addr.pop_back();
 }

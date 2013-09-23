@@ -96,7 +96,7 @@ void SimpleKDC::initialize(int stage) {
         printf("cann't decode CRL\n");
         exit(1);
     }
-    ev << "crl.len = " << crl_als_block.len << "\n";
+    EV << "crl.len = " << crl_als_block.len << "\n";
 
     key_nr = 1;
     char *gtkKey = (char *) malloc(6);
@@ -175,11 +175,11 @@ void SimpleKDC::handleMessage(cMessage *msg) {
         GTK.buf = (u_int8_t *) gtkKey;
         GTK.len = 6;
 
-        ev << "list.size = " << nextHopList.size() << "\n";
+        EV << "list.size = " << nextHopList.size() << "\n";
         for (std::list<struct in_addr>::iterator it = nextHopList.begin();
                 it != nextHopList.end(); it++) {
             struct in_addr tempAddr = (struct in_addr) *it;
-            ev << "nextHopAddr: " << tempAddr.S_addr.getIPv4().str()
+            EV << "nextHopAddr: " << tempAddr.S_addr.getIPv4().str()
                     << "\n";
 //            kdcReset *message = new kdcReset();
 //            message->setKdc_key_nr(key_nr);
@@ -246,10 +246,10 @@ void SimpleKDC::handleMessage(cMessage *msg) {
     if (dynamic_cast<crl_message *>(msg)) {
         struct in_addr dest_Addr;
         crl_message *message = check_and_cast<crl_message *>(msg);
-        ev << "message->getGwAddr(): "
+        EV << "message->getGwAddr(): "
                 << message->getGwAddr().S_addr.getIPv4().str() << "\n";
         struct in_addr src = message->getSrc();
-        ev << "src: " << src.S_addr.getIPv4().str() << "\n";
+        EV << "src: " << src.S_addr.getIPv4().str() << "\n";
         //Verify certificate of incoming message
         lv_block tempCert;
         tempCert.len = message->getCert_len();
@@ -258,37 +258,37 @@ void SimpleKDC::handleMessage(cMessage *msg) {
             tempCert.buf[i] = message->getCert_array(i);
         }
         X509* clientCert = extractCert(tempCert);
-        ev << "certLen: " << tempCert.len << "\n";
+        EV << "certLen: " << tempCert.len << "\n";
         free(tempCert.buf);
         if (clientCert == NULL) {
-            ev << "kein Cert\n";
+            EV << "kein Cert\n";
             return;
         }
         if (checkOneCert(clientCert) != 1) {
-            ev << "Falsches cert\n";
+            EV << "Falsches cert\n";
             X509_free(clientCert);
             delete message;
             return;
         }
         message_dellay += par("kdc_verify_mess_delay").doubleValue();
-        ev << "cert OK\n";
+        EV << "cert OK\n";
 
         kdc_block kdcData;
         // GTK
         rsa_encrypt(GTK, &kdcData.GTK, clientCert);
         message_dellay += par("kdc_rsa_enc_delay").doubleValue();
-        ev << "GTK OK\n";
+        EV << "GTK OK\n";
         X509_free(clientCert);
 
         // Nonce
         kdcData.nonce = message->getKdc_nonce();
-        ev << "nonce: " << kdcData.nonce << "\n";
+        EV << "nonce: " << kdcData.nonce << "\n";
 
         // CRL
         kdcData.CRL.len = crl_als_block.len;
         kdcData.CRL.buf = (u_int8_t *) malloc(crl_als_block.len);
         memcpy(kdcData.CRL.buf, crl_als_block.buf, crl_als_block.len);
-        ev << "CRL OK\n";
+        EV << "CRL OK\n";
 
         // Certificate of KDC
         kdcData.cert_kdc.len = cert_als_block.len;
@@ -457,23 +457,23 @@ void SimpleKDC::setSocketOptions() {
 }
 
 int SimpleKDC::checkOneCert(X509 *cert) {
-    ev << "try to verify Cert\n";
+    EV << "try to verify Cert\n";
     X509_STORE * ca_store = X509_STORE_new();
     if (X509_STORE_add_cert(ca_store, ca_cert) != 1) {
         ERR_print_errors_fp (stderr);
-        ev << "Error: X509_STORE_add_cert\n";
+        EV << "Error: X509_STORE_add_cert\n";
         return 0;
     }
     if (X509_STORE_set_default_paths(ca_store) != 1) {
         ERR_print_errors_fp (stderr);
-        ev << "Error: X509_STORE_set_default_paths\n";
+        EV << "Error: X509_STORE_set_default_paths\n";
         return 0;
     }
     if (crl) {
-        ev << "verify Cert with CRL\n";
+        EV << "verify Cert with CRL\n";
         if (X509_STORE_add_crl(ca_store, crl) != 1) {
             ERR_print_errors_fp (stderr);
-            ev << "Error: X509_STORE_add_crl\n";
+            EV << "Error: X509_STORE_add_crl\n";
             return 0;
         }
 #if (OPENSSL_VERSION_NUMBER > 0x00907000L)
@@ -487,14 +487,14 @@ int SimpleKDC::checkOneCert(X509 *cert) {
     // Create a verification context and initialize it
     if (!(verify_ctx = X509_STORE_CTX_new())) {
         ERR_print_errors_fp (stderr);
-        ev << "Error: X509_STORE_CTX_new\n";
+        EV << "Error: X509_STORE_CTX_new\n";
         return 0;
     }
     // X509_STORE_CTX_init did not return an error condition in prior versions
 #if (OPENSSL_VERSION_NUMBER > 0x00907000L)
     if (X509_STORE_CTX_init(verify_ctx, ca_store, cert, NULL) != 1) {
         ERR_print_errors_fp (stderr);
-        ev << "Error: X509_STORE_CTX_init\n";
+        EV << "Error: X509_STORE_CTX_init\n";
         return 0;
     }
 #else
@@ -504,8 +504,8 @@ int SimpleKDC::checkOneCert(X509 *cert) {
     // Verify the certificate
     if (X509_verify_cert(verify_ctx) != 1) {
         ERR_print_errors_fp (stderr);
-        ev << "cert: " << cert->name << "\n";
-        ev << "Error: X509_verify_cert: "
+        EV << "cert: " << cert->name << "\n";
+        EV << "Error: X509_verify_cert: "
                 << X509_STORE_CTX_get_error(verify_ctx) << "\n";
         X509_STORE_free(ca_store);
         X509_STORE_CTX_free(verify_ctx);
@@ -516,7 +516,7 @@ int SimpleKDC::checkOneCert(X509 *cert) {
         return 1;
     }
 
-    ev << "Error: \n";
+    EV << "Error: \n";
     return 0;
 }
 
