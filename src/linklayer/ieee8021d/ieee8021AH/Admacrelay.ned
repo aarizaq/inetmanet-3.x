@@ -11,8 +11,8 @@ simple Admacrelay
     parameters:
         bool verbose= default(false);   // sets the module verbosity     
     gates:
-        output GatesOut[];	// To the backbone and the IComponents
-        input GatesIn[];	// From the backbone and the IComponents
+        output ifOut[];	// To the backbone and the IComponents
+        input ifIn[];	// From the backbone and the IComponents
         inout RSTPGate;	// To the RSTP module
         inout MVRPGate;	// To the MVRP module
 }

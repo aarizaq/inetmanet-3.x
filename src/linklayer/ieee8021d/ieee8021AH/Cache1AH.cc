@@ -20,7 +20,7 @@ void Cache1AH::initialize()
 		admac=AdmacrelayAccess().getIfExists();
 		if(admac!=NULL)
 		{
-			for(int i=0;i<(admac->gateSize("GatesOut"));i++)
+			for(int i=0;i<(admac->gateSize("ifOut"));i++)
 			{
 				ISIDregisterTable.push_back(* new ISIDregister());
 			}

@@ -24,8 +24,8 @@ module BComponent
             parameters:
                 @display("p=148,50");
             gates:
-                GatesIn[sizeof(BportsIn)];
-                GatesOut[sizeof(BportsOut)];
+                ifIn[sizeof(BportsIn)];
+                ifOut[sizeof(BportsOut)];
                 RSTPGate;
                 MVRPGate;
         }										// Relay unit
@@ -38,17 +38,17 @@ module BComponent
             parameters:
                 @display("p=148,152,row");
             gates:
-                GatesIn[];
-                GatesOut[];
+                ifIn[];
+                ifOut[];
 
         }
 
     connections:
         for i=0..sizeof(BportsOut)-1 {
-            BportsOut[i] <-- PortFilt[i].GatesOut[0];
-            PortFilt[i].GatesIn[1] <-- admacrelay.GatesOut[i];
-            BportsIn[i] --> PortFilt[i].GatesIn[0];
-            PortFilt[i].GatesOut[1]--> admacrelay.GatesIn[i];
+            BportsOut[i] <-- PortFilt[i].ifOut[0];
+            PortFilt[i].ifIn[1] <-- admacrelay.ifOut[i];
+            BportsIn[i] --> PortFilt[i].ifIn[0];
+            PortFilt[i].ifOut[1]--> admacrelay.ifIn[i];
         }
         admacrelay.RSTPGate <--> RSTPPort;
         admacrelay.MVRPGate <--> MVRPPort;

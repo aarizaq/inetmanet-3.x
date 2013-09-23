@@ -47,10 +47,10 @@ module BEB
             parameters:
                 @display("p=183,303,row");
             gates:
-                CGatesOut[];
-                CGatesIn[];
-                IGatesIn;
-                IGatesOut;
+                CifOut[];
+                CifIn[];
+                IifIn;
+                IifOut;
         }												//802.1ad-802.1ah conversion.
 
         itagtable: ITagTable {
@@ -87,40 +87,40 @@ module BEB
         }
         // IComponent - BComponent
         for i=0..ICompnumber-1 {
-            icomponent[i].IGatesIn <-- bcomponent.BportsOut[i+sizeof(ethgB)]; 
-            icomponent[i].IGatesOut --> bcomponent.BportsIn[i+sizeof(ethgB)];
+            icomponent[i].IifIn <-- bcomponent.BportsOut[i+sizeof(ethgB)]; 
+            icomponent[i].IifOut --> bcomponent.BportsIn[i+sizeof(ethgB)];
         }
         //Connections through the IComponents, in case they exist.
         if ICompnumber>0 {
-            macC[i].upperLayerIn <-- icomponent[0].CGatesOut[i] for i=0..icomponent[0].numGates-1;
-            macC[i].upperLayerOut --> icomponent[0].CGatesIn[i] for i=0..icomponent[0].numGates-1;
+            macC[i].upperLayerIn <-- icomponent[0].CifOut[i] for i=0..icomponent[0].numGates-1;
+            macC[i].upperLayerOut --> icomponent[0].CifIn[i] for i=0..icomponent[0].numGates-1;
         }
         if ICompnumber>1 {
-            macC[i+icomponent[0].numGates].upperLayerIn <-- icomponent[1].CGatesOut[i] for i=0..icomponent[1].numGates-1;
-            macC[i+icomponent[0].numGates].upperLayerOut --> icomponent[1].CGatesIn[i] for i=0..icomponent[1].numGates-1;
+            macC[i+icomponent[0].numGates].upperLayerIn <-- icomponent[1].CifOut[i] for i=0..icomponent[1].numGates-1;
+            macC[i+icomponent[0].numGates].upperLayerOut --> icomponent[1].CifIn[i] for i=0..icomponent[1].numGates-1;
         }
         if ICompnumber>2 {
-            macC[i+icomponent[0].numGates+icomponent[1].numGates].upperLayerIn <-- icomponent[2].CGatesOut[i] for i=0..icomponent[2].numGates-1;
-            macC[i+icomponent[0].numGates+icomponent[1].numGates].upperLayerOut --> icomponent[2].CGatesIn[i] for i=0..icomponent[2].numGates-1;
+            macC[i+icomponent[0].numGates+icomponent[1].numGates].upperLayerIn <-- icomponent[2].CifOut[i] for i=0..icomponent[2].numGates-1;
+            macC[i+icomponent[0].numGates+icomponent[1].numGates].upperLayerOut --> icomponent[2].CifIn[i] for i=0..icomponent[2].numGates-1;
         }
         if ICompnumber>3 {
-            macC[i+icomponent[0].numGates+icomponent[1].numGates+icomponent[2].numGates].upperLayerIn <-- icomponent[3].CGatesOut[i] for i=0..icomponent[3].numgates-1;
-            macC[i+icomponent[0].numGates+icomponent[1].numGates+icomponent[2].numGates].upperLayerOut --> icomponent[3].CGatesIn[i] for i=0..icomponent[3].numgates-1;
+            macC[i+icomponent[0].numGates+icomponent[1].numGates+icomponent[2].numGates].upperLayerIn <-- icomponent[3].CifOut[i] for i=0..icomponent[3].numgates-1;
+            macC[i+icomponent[0].numGates+icomponent[1].numGates+icomponent[2].numGates].upperLayerOut --> icomponent[3].CifIn[i] for i=0..icomponent[3].numgates-1;
         }
         if ICompnumber>4 {
-            macC[i+icomponent[0].numGates+icomponent[1].numGates+icomponent[2].numGates+icomponent[3].numGates].upperLayerIn <-- icomponent[4].CGatesOut[i] for i=0..icomponent[4].numgates-1;
-            macC[i+icomponent[0].numGates+icomponent[1].numGates+icomponent[2].numGates+icomponent[3].numGates].upperLayerOut --> icomponent[4].CGatesIn[i] for i=0..icomponent[4].numgates-1;
+            macC[i+icomponent[0].numGates+icomponent[1].numGates+icomponent[2].numGates+icomponent[3].numGates].upperLayerIn <-- icomponent[4].CifOut[i] for i=0..icomponent[4].numgates-1;
+            macC[i+icomponent[0].numGates+icomponent[1].numGates+icomponent[2].numGates+icomponent[3].numGates].upperLayerOut --> icomponent[4].CifIn[i] for i=0..icomponent[4].numgates-1;
         }
         if ICompnumber>5 {
-            macC[i+icomponent[0].numGates+icomponent[1].numGates+icomponent[2].numGates+icomponent[3].numGates+icomponent[4].numGates].upperLayerIn <-- icomponent[5].CGatesOut[i] for i=0..icomponent[5].numgates-1;
-            macC[i+icomponent[0].numGates+icomponent[1].numGates+icomponent[2].numGates+icomponent[3].numGates+icomponent[4].numGates].upperLayerOut --> icomponent[5].CGatesIn[i] for i=0..icomponent[5].numgates-1;
+            macC[i+icomponent[0].numGates+icomponent[1].numGates+icomponent[2].numGates+icomponent[3].numGates+icomponent[4].numGates].upperLayerIn <-- icomponent[5].CifOut[i] for i=0..icomponent[5].numgates-1;
+            macC[i+icomponent[0].numGates+icomponent[1].numGates+icomponent[2].numGates+icomponent[3].numGates+icomponent[4].numGates].upperLayerOut --> icomponent[5].CifIn[i] for i=0..icomponent[5].numgates-1;
         }
 
         ///Add a wider range of IComponent copying the next if clause and modifying it to match this formula. Where n+1 is the max number of IComponents pressent in one BEB.
         //
         //   if ICompnumber>n {
-        //   macC[i+icomponent[0].numGates+ ... +icomponent[n-1].numGates].upperLayerIn <-- icomponent[n].CGatesOut[i] for i=0..icomponent[n].numgates-1;
-        //   macC[i+icomponent[0].numGates+ ... +icomponent[n-1].numGates].upperLayerOut --> icomponent[n].CGatesIn[i] for i=0..icomponent[5].numgates-1;
+        //   macC[i+icomponent[0].numGates+ ... +icomponent[n-1].numGates].upperLayerIn <-- icomponent[n].CifOut[i] for i=0..icomponent[n].numgates-1;
+        //   macC[i+icomponent[0].numGates+ ... +icomponent[n-1].numGates].upperLayerOut --> icomponent[n].CifIn[i] for i=0..icomponent[5].numgates-1;
         //   }
         //
         //

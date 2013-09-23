@@ -190,7 +190,7 @@ void PortFilt1ad::sendMVRPDUs()
 	frame->setDest(MACAddress("01-80-C2-00-00-0D"));
 	frame->setVIDSArraySize(1);
 	frame->setVIDS(0,defaultVID);
-	send(frame,"GatesOut",1);
+	send(frame,"ifOut",1);
 
 	frame=new MVRPDU();
 	frame->setDest(MACAddress("01-80-C2-00-00-0D"));
@@ -201,7 +201,7 @@ void PortFilt1ad::sendMVRPDUs()
 	}
     if (frame->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
         frame->setByteLength(MIN_ETHERNET_FRAME_BYTES);
-	send(frame,"GatesOut",0);
+	send(frame,"ifOut",0);
 }
 
 void PortFilt1ad::processUntaggedFrame (EthernetIIFrame *frame)

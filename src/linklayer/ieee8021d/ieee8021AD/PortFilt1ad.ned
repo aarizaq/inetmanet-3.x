@@ -19,6 +19,6 @@ simple PortFilt1ad
         int cost=default(1);
         int priority=default(5);
     gates:
-        output GatesOut[2]; // 1 (Inner side) allways tagged. 0 depends on tagged variable
-        input GatesIn[2];	// 1 (Inner side) allways tagged. 0 depends on tagged variable
+        output ifOut[2]; // 1 (Inner side) allways tagged. 0 depends on tagged variable
+        input ifIn[2];	// 1 (Inner side) allways tagged. 0 depends on tagged variable
 }

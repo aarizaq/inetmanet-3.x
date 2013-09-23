@@ -13,9 +13,9 @@ simple Relay1Q
         bool verbose = default(false);
         
  
-    gates:
-        output GatesOut[];  // 
-        input GatesIn[];	// 
+    gates: 
+        input ifIn[] @labels(EtherFrame);
+        output ifOut[] @labels(EtherFrame);
         inout RSTPGate;	// To the RSTP module
         inout MVRPGate @loose;	// To the MVRP module
 }

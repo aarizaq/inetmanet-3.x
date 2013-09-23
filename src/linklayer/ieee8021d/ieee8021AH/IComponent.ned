@@ -23,8 +23,8 @@ simple IComponent
         bool verbose; //Module verbosity
 
         gates:
-        output CGatesOut[numGates]; // To the client
-        input CGatesIn[numGates];	// From the client
-        input IGatesIn;	//From the backbone
-        output IGatesOut;	//To the backbone
+        output CifOut[numGates]; // To the client
+        input CifIn[numGates];	// From the client
+        input IifIn;	//From the backbone
+        output IifOut;	//To the backbone
 }

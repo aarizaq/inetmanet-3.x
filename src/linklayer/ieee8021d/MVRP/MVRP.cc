@@ -32,7 +32,7 @@ void MVRP::initialize(int stage)
 			relay=AdmacrelayAccess().get();
 		int GatesSize=0;
 
-		GatesSize=relay->gateSize("GatesOut");
+		GatesSize=relay->gateSize("ifOut");
 		rstpModule=RSTPAccess().get();
 		address=rstpModule->getAddress();
 

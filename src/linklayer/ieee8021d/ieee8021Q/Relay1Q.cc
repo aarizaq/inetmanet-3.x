@@ -126,14 +126,14 @@ void Relay1Q::handleIncomingFrame(cMessage * msg)
 void Relay1Q::handleIncomingFrame(Delivery *frame)
 {
     int sendBy = frame->getSendByPort();
-    if (sendBy > gateSize("GatesOut"))
+    if (sendBy > gateSize("ifOut"))
     {
         EV <<"Error. Wrong sending port.";
     }
     else
     {
         cMessage * msg=frame->decapsulate();
-        send(msg,"GatesOut",sendBy);
+        send(msg,"ifOut",sendBy);
     }
     delete frame;
 }
@@ -240,7 +240,7 @@ void Relay1Q::relayMsg(cMessage * msg, std::vector<int> outputPorts)
             if (verbose == true)
                 EV << "Sending frame to port " << outputPorts[i] << endl;
                 cMessage * msg2=msg->dup();
-                send(msg2,"GatesOut",outputPorts[i]);
+                send(msg2,"ifOut",outputPorts[i]);
             }
         }
     delete msg;

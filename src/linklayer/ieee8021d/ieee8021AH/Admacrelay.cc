@@ -95,7 +95,7 @@ void Admacrelay::handleEtherFrame(EthernetIIFrame *frame)
 		}
 		else if(frame->getDest()==address)
 		{
-			for(int i=0;i<gateSize("GatesOut");i++)
+			for(int i=0;i<gateSize("ifOut");i++)
 			{
 				if(rstpModule->isEdge(i))
 				{
@@ -147,7 +147,7 @@ void Admacrelay::relayMsg(cMessage * msg,std::vector <int> outputPorts)
 			if(verbose==true)
 				ev << "Sending frame to port " << outputPorts[i] << endl;
 			cMessage * msg2=msg->dup();
-			send(msg2,"GatesOut",outputPorts[i]);
+			send(msg2,"ifOut",outputPorts[i]);
 		}
 	}
 	delete msg;

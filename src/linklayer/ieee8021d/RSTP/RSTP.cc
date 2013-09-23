@@ -109,7 +109,7 @@ void RSTP::initialize(int stage)
 
 
 		//RSTP module initialization. Puertos will save per port RSTP info.
-		for(int i=0;i<(admac->gateSize("GatesOut"));i++)
+		for(int i=0;i<(admac->gateSize("ifOut"));i++)
 		{
 			Puertos.push_back(* new PortStatus());
 		}
@@ -1046,7 +1046,7 @@ void RSTP::initPorts()
 
 		if(dynamic_cast<Admacrelay *>(admac)!=NULL)
 		{
-			cGate * gate=admac->gate("GatesOut",j);
+			cGate * gate=admac->gate("ifOut",j);
 			if(gate!=NULL)
 			{
 				gate=gate->getNextGate();
@@ -1056,7 +1056,7 @@ void RSTP::initPorts()
 		}
 		else if(dynamic_cast<Relay1Q *>(admac)!=NULL)
 		{
-			cGate * gate=admac->gate("GatesOut",j);
+			cGate * gate=admac->gate("ifOut",j);
 			if(gate!=NULL)
 			{
 				gate=gate->getNextGate();

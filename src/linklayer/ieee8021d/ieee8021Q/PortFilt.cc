@@ -60,7 +60,7 @@ void PortFilt::sendMVRPDUs()
 	frame->setDest(MACAddress("01-80-C2-00-00-0D"));
 	frame->setVIDSArraySize(1);
 	frame->setVIDS(0,defaultVID);
-	send(frame,"GatesOut",1);
+	send(frame,"ifOut",1);
 }
 
 void PortFilt::handleMessage(cMessage *msg)
@@ -155,10 +155,10 @@ void PortFilt::processTaggedFrame (cMessage *msg)
    switch(arrival)
    {
 	   case 0:
-		   send(msg,"GatesOut",1);
+		   send(msg,"ifOut",1);
 		   break;
 	   case 1:
-		   send(msg,"GatesOut",0);
+		   send(msg,"ifOut",0);
 		   break;
 	   default:
 		   error("Unknown arrival gate");

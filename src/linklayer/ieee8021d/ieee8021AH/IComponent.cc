@@ -78,7 +78,7 @@ void IComponent::initialize(int stage)
 		frame->setVIDSArraySize(1);
 		frame->setDest(MACAddress("01-80-C2-00-00-0D"));
 		frame->setVIDS(0,VID);
-		send(frame,"IGatesOut");
+		send(frame,"IifOut");
 		//It could be easy to register more than one vid. Just another or a bigger message.
 		if(requestVID>=0)
 		{
@@ -91,7 +91,7 @@ void IComponent::initialize(int stage)
 
 void IComponent::sendMVRPDUs(cMessage *msg)
 {//Sends corresponding MVRPDUs through the client gates.
-	for(int i=0;i<gateSize("CGatesOut");i++)
+	for(int i=0;i<gateSize("CifOut");i++)
 	{
 		MVRPDU * frame=new MVRPDU();
 		frame->setDest(MACAddress("01-80-C2-00-00-0D"));
@@ -110,7 +110,7 @@ void IComponent::sendMVRPDUs(cMessage *msg)
 				frame->setVIDS(i,SVids[i]);
 			}
 		}
-		send(frame,"CGatesOut",i);
+		send(frame,"CifOut",i);
 	}
 	scheduleAt(simTime()+interFrameTime,msg);
 }
@@ -137,7 +137,7 @@ void IComponent::readconfigfromXML(const cXMLElement * isidtab)
 				const cXMLElement& ISidElement=**iter2;
 				vid ISid=(vid) getParameterIntValue(&ISidElement,"vid");
 				activeISid.push_back(ISid);
-				it->createISid(ISid,gateSize("CGatesOut"));
+				it->createISid(ISid,gateSize("CifOut"));
 				cXMLElementList Gates=ISidElement.getChildrenByTagName("Gate");
 				//Getting gate entries.
 				for(cXMLElementList::iterator iter3=Gates.begin();iter3!=Gates.end();iter3++)
@@ -153,7 +153,7 @@ void IComponent::readconfigfromXML(const cXMLElement * isidtab)
 void IComponent::handleMessage(cMessage *msg)
 {// Handling messages
 
-	if(msg->arrivedOn("CGatesIn"))
+	if(msg->arrivedOn("CifIn"))
 	{//Coming from client network
 		ev<<"From Client network"<<endl;
 		//Selecting handler
@@ -175,7 +175,7 @@ void IComponent::handleMessage(cMessage *msg)
 			delete msg;
 		}
 	}
-	else if(msg->arrivedOn("IGatesIn"))
+	else if(msg->arrivedOn("IifIn"))
 	{//Coming from backbone network. (from B-Component)
 		ev<<"From BackBone network"<<endl;
 		handle1AHFrame(check_and_cast <EthernetIIFrame *> (msg));
@@ -322,7 +322,7 @@ void IComponent::handle1adFrame(EthernetIIFrame *frame)
 		frameAH->encapsulate(BTag);
 		if (frameAH->getByteLength() < MIN_ETHERNET_FRAME_BYTES)   //This will never happen
 			frameAH->setByteLength(MIN_ETHERNET_FRAME_BYTES);
-		send(frameAH,"IGatesOut");
+		send(frameAH,"IifOut");
 		ev<<"Frame sent."<<endl;
 	}
 
@@ -459,13 +459,13 @@ void IComponent::handle1AHFrame(EthernetIIFrame *frame)
 						message->encapsulate(STag);
 					}
 
-					if(gateSize("CGatesIn")<=Gate[i])
+					if(gateSize("CifIn")<=Gate[i])
 					{ //Avoiding configuration errors.
 						error("Configuration error. Check configIS file. An I-Sid has been configured in more than one I-Component for the same BEB. Or an unexisting gate has been configured.");
 					}
-					if(gate("CGatesIn",Gate[i])!=OriginalMessage->getContextPointer())  // Filtering input gate.
+					if(gate("CifIn",Gate[i])!=OriginalMessage->getContextPointer())  // Filtering input gate.
 					{//It was marked in the 802.1ad context pointer
-						send(message,"CGatesOut",Gate[i]);
+						send(message,"CifOut",Gate[i]);
 					}
 					else
 						delete message;

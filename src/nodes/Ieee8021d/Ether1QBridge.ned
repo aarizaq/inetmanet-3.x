@@ -30,8 +30,8 @@ module Ether1QBridge
             parameters:
                 @display("p=171,77");
             gates:
-                GatesOut[sizeof(ethg)];
-                GatesIn[sizeof(ethg)];
+                ifOut[sizeof(ethg)];
+                ifIn[sizeof(ethg)];
                 RSTPGate;
                 MVRPGate;
         }
@@ -39,8 +39,8 @@ module Ether1QBridge
             parameters:
                 @display("p=171,248,row;q=queue");
             gates:
-                GatesOut[2];
-                GatesIn[2];
+                ifOut[2];
+                ifIn[2];
         }
 
         cache: Cache1Q {
@@ -70,10 +70,10 @@ module Ether1QBridge
     connections:
         for i=0..sizeof(ethg)-1 {
             ethg[i] <--> mac[i].phys;
-            PortFilt[i].GatesOut[0] --> mac[i].upperLayerIn;
-            PortFilt[i].GatesIn[0] <-- mac[i].upperLayerOut;
-            PortFilt[i].GatesOut[1] --> relay.GatesIn[i];
-            PortFilt[i].GatesIn[1] <-- relay.GatesOut[i];
+            PortFilt[i].ifOut[0] --> mac[i].upperLayerIn;
+            PortFilt[i].ifIn[0] <-- mac[i].upperLayerOut;
+            PortFilt[i].ifOut[1] --> relay.ifIn[i];
+            PortFilt[i].ifIn[1] <-- relay.ifOut[i];
         }
 
         rstp.RSTPPort <--> relay.RSTPGate;
