@@ -56,6 +56,7 @@ class INET_API IPv4 : public QueueBase, public ILifecycle
     ICMPAccess icmpAccess;
     cGate *queueOutGate; // the most frequently used output gate
     bool manetRouting;
+    bool isDsr;
 
     // config
     int defaultTimeToLive;

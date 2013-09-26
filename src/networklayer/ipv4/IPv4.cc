@@ -98,6 +98,8 @@ void IPv4::initialize(int stage)
         // assistance from the IPv4 component
         cProperties *props = destmod->getProperties();
         manetRouting = props && props->getAsBool("reactive");
+        isDsr = props && props->getAsBool("isDsr");
+
 #endif
     }
     else if (stage == 1)
@@ -1007,6 +1009,9 @@ void IPv4::fragmentAndSend(IPv4Datagram *datagram, InterfaceEntry *ie, IPv4Addre
         return;
     }
 
+    if (datagram->getEncapsulatedPacket())
+        datagram->setTotalPayloadLength(datagram->getEncapsulatedPacket()->getByteLength());
+
     // if "don't fragment" bit is set, throw datagram away and send ICMP error message
     if (datagram->getDontFragment())
     {
@@ -1021,8 +1026,12 @@ void IPv4::fragmentAndSend(IPv4Datagram *datagram, InterfaceEntry *ie, IPv4Addre
     int headerLength = datagram->getByteLength();
     int payloadLength = payload->getByteLength();
 
+    if (isDsr) // to avoid problems with the DSR header that could force future fragmentations
+        mtu -= 30;
 
     // FIXME some IP options should not be copied into each fragment, check their COPY bit
+
+
     int fragmentLength = ((mtu - headerLength) / 8) * 8; // payload only (without header)
     int offsetBase = datagram->getFragmentOffset();
     if (fragmentLength <= 0)
@@ -1031,39 +1040,36 @@ void IPv4::fragmentAndSend(IPv4Datagram *datagram, InterfaceEntry *ie, IPv4Addre
     int noOfFragments = (payloadLength + fragmentLength - 1)/ fragmentLength;
     EV << "Breaking datagram into " << noOfFragments << " fragments\n";
 
-    datagram->setTotalPayloadLength(payloadLength);
-
     // create and send fragments
     EV << "Breaking datagram into " << noOfFragments << " fragments\n";
     std::string fragMsgName = datagram->getName();
     fragMsgName += "-frag";
 
-    // FIXME revise this!
-    for (int i=0; i<noOfFragments; i++)
+    for (int offset=0; offset < payloadLength; offset+=fragmentLength)
     {
+        bool lastFragment = (offset+fragmentLength >= payloadLength);
+        // length equal to fragmentLength, except for last fragment;
+        int thisFragmentLength = lastFragment ? payloadLength - offset : fragmentLength;
+        cPacket *payloadFrag = payload->dup();
+        payloadFrag->setByteLength(thisFragmentLength);
+
         // FIXME is it ok that full encapsulated packet travels in every datagram fragment?
         // should better travel in the last fragment only. Cf. with reassembly code!
         IPv4Datagram *fragment = (IPv4Datagram *) datagram->dup();
-        cPacket *payloadFrag = payload->dup();
         fragment->setName(fragMsgName.c_str());
 
-        // total_length equal to mtu, except for last fragment;
         // "more fragments" bit is unchanged in the last fragment, otherwise true
-        if (i != noOfFragments-1)
-        {
+        if (!lastFragment)
             fragment->setMoreFragments(true);
-            payloadFrag->setByteLength(mtu-headerLength);
-            payloadLength = payloadLength -(mtu-headerLength);
-        }
-        else
-        {
-            payloadFrag->setByteLength(payloadLength);
-        }
+
+        fragment->setByteLength(headerLength);
         fragment->encapsulate(payloadFrag);
-        fragment->setFragmentOffset( i*(mtu - headerLength) );
+
+        fragment->setFragmentOffset(offsetBase + offset);
 
         sendDatagramToOutput(fragment, ie, nextHopAddr);
     }
+
     delete payload;
     delete datagram;
 }
@@ -1076,8 +1082,8 @@ void IPv4::reassembleAndDeliver(IPv4Datagram *datagram)
     if (datagram->getSrcAddress().isUnspecified())
         EV << "Received datagram '%s' without source address filled in" << datagram->getName() << "\n";
 
+
     // reassemble the packet (if fragmented)
-    int headerLength = datagram->getHeaderLength();
     if (datagram->getFragmentOffset()!=0 || datagram->getMoreFragments())
     {
         EV << "Datagram fragment: offset=" << datagram->getFragmentOffset()
@@ -1090,10 +1096,9 @@ void IPv4::reassembleAndDeliver(IPv4Datagram *datagram)
             fragbuf.purgeStaleFragments(simTime()-fragmentTimeoutTime);
         }
 
-        if (datagram->getTotalPayloadLength()>0)
+        if ((datagram->getTotalPayloadLength()>0) && (datagram->getTotalPayloadLength() != datagram->getEncapsulatedPacket()->getByteLength()))
         {
             int totalLength = datagram->getByteLength();
-            headerLength = datagram->getHeaderLength();
             cPacket * payload = datagram->decapsulate();
             datagram->setHeaderLength(datagram->getByteLength());
             payload->setByteLength(datagram->getTotalPayloadLength());
@@ -1107,7 +1112,6 @@ void IPv4::reassembleAndDeliver(IPv4Datagram *datagram)
             EV << "No complete datagram yet.\n";
             return;
         }
-        datagram->setHeaderLength(headerLength);
         EV << "This fragment completes the datagram.\n";
     }
 

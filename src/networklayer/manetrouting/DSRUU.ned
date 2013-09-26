@@ -35,6 +35,7 @@ simple DSRUU like IManetRouting
 {
     parameters:
         @display("i=block/routing");
+        @isDsr; // the protocol increase the IP size and the IP layer must have this in the MTU
         @reactive;                             // IP module will send control messages when no route is present to the destination
         bool PrintDebug = default(false);  // print protocol depcific debugging information // (non RFC parameter)
         bool FlushLinkCache = default(true); // ??
