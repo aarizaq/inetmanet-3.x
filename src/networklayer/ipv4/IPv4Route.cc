@@ -34,12 +34,18 @@ std::string IPv4Route::info() const
     out << "gw:"; if (gateway.isUnspecified()) out << "*  "; else out << gateway << "  ";
     out << "mask:"; if (netmask.isUnspecified()) out << "*  "; else out << netmask << "  ";
     out << "metric:" << metric << " ";
-    out << "if:"; if (!interfacePtr) out << "*  "; else out << interfacePtr->getName();
-    if (interfacePtr && interfacePtr->ipv4Data())
-        out << "(" << interfacePtr->ipv4Data()->getIPAddress() << ")";
-    out << " ";
+    if (interfacePtr)
+    {
+        out << "if:" << interfacePtr->getName();
+        if (interfacePtr->ipv4Data())
+            out << "(" << interfacePtr->ipv4Data()->getIPAddress() << ")";
+    }
+    else
+    {
+        out << "if:*";
+    }
+    out << "  ";
     out << (gateway.isUnspecified() ? "DIRECT" : "REMOTE");
-
 
     switch (source)
     {
