@@ -57,12 +57,29 @@ void csma802154::initialize(int stage)
         if (!strcmp(addressString, "auto"))
         {
             // assign automatic address
-            macaddress = MACAddress::generateAutoAddress();
+
+            ++addrCount;
+            macaddress.setFlagEui64(true);
+
+            unsigned char addrbytes[MAC_ADDRESS_SIZE64];
+            addrbytes[0] = 0x00;
+            addrbytes[1] = 0x00;
+            addrbytes[2] = 0x00;
+            addrbytes[3] = 0xff;
+            addrbytes[4] = 0xfe;
+            addrbytes[5] = 0x00;
+            addrbytes[6] = (addrCount>>8)&0xff;
+            addrbytes[7] = (addrCount>>0)&0xff;
+            macaddress.setAddressBytes(addrbytes);
             // change module parameter from "auto" to concrete address
             par("address").setStringValue(macaddress.str().c_str());
         }
         else
             macaddress.setAddress(addressString);
+
+        iface=NULL;
+        macaddress.convert64();
+        aExtendedAddress = macaddress;
 
         registerInterface();
 
