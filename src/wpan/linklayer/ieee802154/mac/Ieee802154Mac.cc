@@ -134,6 +134,23 @@ InterfaceEntry * Ieee802154Mac::createInterfaceEntry()
     return e;
 }
 
+MACAddress Ieee802154Mac::configurationMacAddress()
+{
+    MACAddress address;
+    const char *addressString = par("address");
+    if (!strcmp(addressString, "auto"))
+    {
+        // assign automatic address
+        address = MACAddress::generateAutoAddress();
+        address.convert64();
+        // change module parameter from "auto" to concrete address
+        par("address").setStringValue(address.str().c_str());
+    }
+    else
+        address.setAddress(addressString);
+    return address;
+}
+
 /** Initialization */
 void Ieee802154Mac::initialize(int stage)
 {
@@ -141,32 +158,14 @@ void Ieee802154Mac::initialize(int stage)
     WirelessMacBase::initialize(stage);
     if (0 == stage)
     {
-        const char *addressString = par("address");
-        if (!strcmp(addressString, "auto"))
+
+        macaddress = configurationMacAddress();
+        if (!macaddress.getFlagEui64())
         {
-            // assign automatic address
-
-            ++addrCount;
-            macaddress.setFlagEui64(true);
-
-            unsigned char addrbytes[MAC_ADDRESS_SIZE64];
-            addrbytes[0] = 0x00;
-            addrbytes[1] = 0x00;
-            addrbytes[2] = 0x00;
-            addrbytes[3] = 0xff;
-            addrbytes[4] = 0xfe;
-            addrbytes[5] = 0x00;
-            addrbytes[6] = (addrCount>>8)&0xff;
-            addrbytes[7] = (addrCount>>0)&0xff;
-            macaddress.setAddressBytes(addrbytes);
-            // change module parameter from "auto" to concrete address
-            par("address").setStringValue(macaddress.str().c_str());
+            opp_error("802154 address error, address is not EUI64");
         }
-        else
-            macaddress.setAddress(addressString);
 
         iface=NULL;
-        macaddress.convert64();
         aExtendedAddress = macaddress;
 
         registerInterface();

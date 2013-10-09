@@ -475,6 +475,8 @@ class INET_API Ieee802154Mac: public WirelessMacBase
 
     int getRadioModuleId() {return radioModule;}
 
+    MACAddress configurationMacAddress();
+
 
 // member variables
   public:

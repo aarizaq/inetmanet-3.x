@@ -53,16 +53,14 @@ void csma802154::initialize(int stage)
         //get my mac address
         useIeee802Ctrl=true;
 
-        const char *addressString = par("address");
-        if (!strcmp(addressString, "auto"))
+        macaddress = configurationMacAddress();
+        if (!macaddress.getFlagEui64())
         {
-            // assign automatic address
-            macaddress = MACAddress::generateAutoAddress();
-            // change module parameter from "auto" to concrete address
-            par("address").setStringValue(macaddress.str().c_str());
+            opp_error("802154 address error, address is not EUI64");
         }
-        else
-            macaddress.setAddress(addressString);
+
+
+        iface=NULL;
 
         registerInterface();
 
