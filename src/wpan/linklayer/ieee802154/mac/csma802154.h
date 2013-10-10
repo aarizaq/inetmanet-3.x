@@ -82,7 +82,6 @@ class  csma802154 : public Ieee802154Mac
     virtual void handleCommand(cMessage*){}
 
   protected:
-    virtual void receiveChangeNotification(int category, const cPolymorphic *details);
     typedef std::list<Ieee802154Frame*> MacQueue;
 
     /** @name Different tracked statistics.*/
@@ -200,7 +199,6 @@ class  csma802154 : public Ieee802154Mac
      */
     simtime_t sifs;
     int headerLength;
-    RadioState::State radioState;
 
     /** @brief The amount of time the MAC waits for the ACK of a packet.*/
     simtime_t macAckWaitDuration;

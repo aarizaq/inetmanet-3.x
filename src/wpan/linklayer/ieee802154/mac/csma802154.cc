@@ -53,33 +53,7 @@ void csma802154::initialize(int stage)
         //get my mac address
         useIeee802Ctrl=true;
 
-        macaddress = configurationMacAddress();
-        if (!macaddress.getFlagEui64())
-        {
-            opp_error("802154 address error, address is not EUI64");
-        }
-
-
-        iface=NULL;
-
-        registerInterface();
-
-        // get gate ID
-        mUpperLayerIn  = findGate("upperLayerIn");
-        mUpperLayerOut = findGate("upperLayerOut");
-        mLowerLayerIn  = findGate("lowerLayerIn");
-        mLowerLayerOut = findGate("lowerLayerOut");
-
-        // get a pointer to the NotificationBoard module
-        mpNb = NotificationBoardAccess().get();
-        // subscribe for the information of the carrier sense
-        mpNb->subscribe(this, NF_RADIOSTATE_CHANGED);
-        //mpNb->subscribe(this, NF_BITRATE_CHANGED);
-        mpNb->subscribe(this, NF_RADIO_CHANNEL_CHANGED);
-        radioState = RadioState::IDLE;
-
-        // obtain pointer to external queue
-        initializeQueueModule();
+        commonInitialize();
 
         useMACAcks = par("useMACAcks").boolValue();
         queueLength = par("queueLength");
@@ -1126,44 +1100,6 @@ cPacket *csma802154::decapsMsg(Ieee802154Frame * macPkt)
     return msg;
 }
 
-void csma802154::receiveChangeNotification(int category, const cPolymorphic *details)
-{
-    Enter_Method_Silent();
-    printNotificationBanner(category, details);
-
-    switch (category)
-    {
-
-        if (check_and_cast<RadioState *>(details)->getRadioId()!=getRadioModuleId())
-            return;
-
-    case NF_RADIO_CHANNEL_CHANGED:
-        ppib.phyCurrentChannel = check_and_cast<RadioState *>(details)->getChannelNumber();
-        bitrate = getRate('b');
-        phy_bitrate = bitrate;
-        phy_symbolrate = getRate('s');
-        bPeriod = aUnitBackoffPeriod / phy_symbolrate;
-        break;
-    case NF_RADIOSTATE_CHANGED:
-        radioState = check_and_cast<RadioState *>(details)->getState();
-        break;
-
-        /*case NF_CHANNELS_SUPPORTED_CHANGED:
-            ppib.phyChannelsSupported = check_and_cast<Ieee802154RadioState *>(details)->getPhyChannelsSupported();
-            break;
-
-        case NF_TRANSMIT_POWER_CHANGED:
-            ppib.phyTransmitPower = check_and_cast<Ieee802154RadioState *>(details)->getPhyTransmitPower();
-            break;
-
-        case NF_CCA_MODE_CHANGED:
-            ppib.phyCCAMode = check_and_cast<Ieee802154RadioState *>(details)->getPhyCCAMode();
-            break;*/
-
-    default:
-        break;
-    }
-}
 
 void csma802154::flushQueue()
 {

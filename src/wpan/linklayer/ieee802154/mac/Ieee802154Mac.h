@@ -290,6 +290,8 @@ class INET_API Ieee802154Mac: public WirelessMacBase
     virtual void    initializeQueueModule();
     virtual int    numInitStages() const { return 3; }
 
+    void commonInitialize();// common initializaton Ieee802154MAc csma802154
+
     virtual InterfaceEntry *createInterfaceEntry();
 
     /**
@@ -472,6 +474,7 @@ class INET_API Ieee802154Mac: public WirelessMacBase
     // Use to distinguish the radio module that send the event
     int radioModule;
     InterfaceEntry *iface;
+    RadioState::State radioState;
 
     int getRadioModuleId() {return radioModule;}
 

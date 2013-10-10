@@ -151,6 +151,35 @@ MACAddress Ieee802154Mac::configurationMacAddress()
     return address;
 }
 
+void Ieee802154Mac::commonInitialize()
+{
+    macaddress = configurationMacAddress();
+    if (!macaddress.getFlagEui64())
+    {
+        opp_error("802154 address error, address is not EUI64");
+    }
+    iface=NULL;
+    aExtendedAddress = macaddress;
+
+    registerInterface();
+     // get gate I
+     mUpperLayerIn  = findGate("upperLayerIn");
+     mUpperLayerOut = findGate("upperLayerOut");
+     mLowerLayerIn  = findGate("lowerLayerIn");
+     mLowerLayerOut = findGate("lowerLayerOut");
+
+           // get a pointer to the NotificationBoard modul
+     mpNb = NotificationBoardAccess().get();
+     // subscribe for the information of the carrier sens
+     mpNb->subscribe(this, NF_RADIOSTATE_CHANGED);
+     //mpNb->subscribe(this, NF_BITRATE_CHANGED)
+     mpNb->subscribe(this, NF_RADIO_CHANNEL_CHANGED);
+     radioState = RadioState::IDLE;
+      // obtain pointer to external que
+     initializeQueueModule();
+
+}
+
 /** Initialization */
 void Ieee802154Mac::initialize(int stage)
 {
@@ -159,33 +188,8 @@ void Ieee802154Mac::initialize(int stage)
     if (0 == stage)
     {
 
-        macaddress = configurationMacAddress();
-        if (!macaddress.getFlagEui64())
-        {
-            opp_error("802154 address error, address is not EUI64");
-        }
 
-        iface=NULL;
-        aExtendedAddress = macaddress;
-
-        registerInterface();
-
-        // get gate ID
-        mUpperLayerIn  = findGate("upperLayerIn");
-        mUpperLayerOut = findGate("upperLayerOut");
-        mLowerLayerIn  = findGate("lowerLayerIn");
-        mLowerLayerOut = findGate("lowerLayerOut");
-
-        // get a pointer to the NotificationBoard module
-        mpNb = NotificationBoardAccess().get();
-        // subscribe for the information of the carrier sense
-        mpNb->subscribe(this, NF_RADIOSTATE_CHANGED);
-        //mpNb->subscribe(this, NF_BITRATE_CHANGED);
-        mpNb->subscribe(this, NF_RADIO_CHANNEL_CHANGED);
-
-        // obtain pointer to external queue
-        initializeQueueModule();
-
+        commonInitialize();
         // initialize MAC PIB attributes
         mpib = MPIB;
         mpib.macBSN = intrand(256);     //Random::random() % 0x100;
@@ -436,12 +440,16 @@ void Ieee802154Mac::receiveChangeNotification(int category, const cPolymorphic *
         if (check_and_cast<RadioState *>(details)->getRadioId()!=getRadioModuleId())
             return;
 
-    case NF_RADIO_CHANNEL_CHANGED:
-        ppib.phyCurrentChannel = check_and_cast<RadioState *>(details)->getChannelNumber();
-        phy_bitrate = getRate('b');
-        phy_symbolrate = getRate('s');
-        bPeriod = aUnitBackoffPeriod / phy_symbolrate;
-        break;
+        case NF_RADIO_CHANNEL_CHANGED:
+            ppib.phyCurrentChannel = check_and_cast<RadioState *>(details)->getChannelNumber();
+            bitrate = getRate('b');
+            phy_bitrate = bitrate;
+            phy_symbolrate = getRate('s');
+            bPeriod = aUnitBackoffPeriod / phy_symbolrate;
+            break;
+        case NF_RADIOSTATE_CHANGED:
+            radioState = check_and_cast<RadioState *>(details)->getState();
+            break;
 
         /*case NF_CHANNELS_SUPPORTED_CHANGED:
             ppib.phyChannelsSupported = check_and_cast<Ieee802154RadioState *>(details)->getPhyChannelsSupported();
@@ -1632,7 +1640,10 @@ void Ieee802154Mac::handleMacPhyPrimitive(int msgkind, cMessage* msg)
     switch (msgkind)
     {
         if (primitive->getBitRate()>0)
+        {
             bitrate = primitive->getBitRate();
+            phy_bitrate = bitrate;
+        }
 
     case PD_DATA_CONFIRM:
         handle_PD_DATA_confirm(PHYenum(primitive->getStatus()));
