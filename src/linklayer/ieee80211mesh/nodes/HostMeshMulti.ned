@@ -105,6 +105,7 @@ module HostMeshMulti
         pingApp[numPingApps]: <default("PingApp")> like IPingApp {
             parameters:
                 @display("p=501,230");
+        }
 
         notificationBoard: NotificationBoard {
             parameters:
