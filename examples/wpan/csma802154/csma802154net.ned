@@ -18,7 +18,7 @@
 
 package inet.examples.wpan.csma802154;
 
-import inet.networklayer.autorouting.ipv4.FlatNetworkConfigurator;
+import inet.networklayer.autorouting.ipv4.IPv4NetworkConfigurator;
 import inet.world.radio.ChannelControl;
 import inet.examples.wpan.csma802154.nodecsma802154;
 
@@ -39,11 +39,9 @@ network csma802154net
             parameters:
                 @display("p=60,50;i=misc/sun");
         }
-        configurator: FlatNetworkConfigurator {
-            parameters:
-                networkAddress = "145.236.0.0";
-                netmask = "255.255.0.0";
-                @display("p=140,50;i=block/cogwheel_s");
+        configurator: IPv4NetworkConfigurator {
+            config=xml("<config><interface hosts='*' address='145.236.x.x' netmask='255.255.0.0'/></config>");
+            @display("p=140,50");
         }
     connections allowunconnected:
 }

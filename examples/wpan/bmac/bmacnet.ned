@@ -18,7 +18,7 @@
 
 package inet.examples.wpan.bmac;
 
-import inet.networklayer.autorouting.ipv4.FlatNetworkConfigurator;
+import inet.networklayer.autorouting.ipv4.IPv4NetworkConfigurator;
 import inet.examples.wpan.bmac.nodebmac;
 import inet.world.radio.ChannelControl;
 
@@ -50,11 +50,9 @@ network bmacnet
             parameters:
                 @display("p=60,50;i=misc/sun");
         }
-        configurator: FlatNetworkConfigurator {
-            parameters:
-                networkAddress = "145.236.0.0";
-                netmask = "255.255.0.0";
-                @display("p=140,50;i=block/cogwheel_s");
+        configurator: IPv4NetworkConfigurator {
+            config=xml("<config><interface hosts='*' address='145.236.x.x' netmask='255.255.0.0'/></config>");
+            @display("p=140,50");
         }
     connections allowunconnected:
 }
