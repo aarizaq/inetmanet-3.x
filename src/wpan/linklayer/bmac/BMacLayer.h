@@ -68,6 +68,8 @@ class  BMacLayer : public WirelessMacBase
     /** @brief Delete all dynamically allocated objects of the module*/
     virtual void finish();
 
+    void handleMessage(cMessage *msg);
+
     /** @brief Handle messages from lower layer */
     virtual void handleLowerMsg(cPacket*);
 

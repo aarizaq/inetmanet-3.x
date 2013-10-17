@@ -753,6 +753,42 @@ void BMacLayer::sendDataPacket()
     sendDown(pkt);
 }
 
+void BMacLayer::handleMessage(cMessage *msg)
+{
+    if (!isOperational)
+    {
+        handleMessageWhenDown(msg);
+        return;
+    }
+
+    if (msg->isSelfMessage())
+        handleSelfMsg(msg);
+    else if (msg->getArrivalGateId()==upperLayerIn)
+    {
+        if (!msg->isPacket())
+            handleCommand(msg);
+        else
+        {
+            emit(packetReceivedFromUpperSignal, msg);
+            handleUpperMsg(PK(msg));
+        }
+    }
+    else if (msg->getArrivalGateId()==lowerLayerIn)
+    {
+
+        if (msg->isPacket())
+        {
+            emit(packetReceivedFromLowerSignal, msg);
+            handleLowerMsg(PK(msg));
+        }
+        else
+            handleCommand(msg);
+    }
+    else
+        throw cRuntimeError("Message '%s' received on unexpected gate '%s'", msg->getName(), msg->getArrivalGate()->getFullName());
+}
+
+
 /**
  * Handle transmission over messages: either send another preambles or the data packet itself.
  */
