@@ -497,3 +497,11 @@ cModule * IPvXAddressResolver::findModuleWithAddress(const IPvXAddress & add)
     }
     return NULL;
 }
+
+bool IPvXAddressResolver::hasNetworkLayer(cModule *host)
+{
+    cModule *mod = host->getSubmodule("networkLayer");
+    if (mod)
+        return true;
+    return false;
+}
