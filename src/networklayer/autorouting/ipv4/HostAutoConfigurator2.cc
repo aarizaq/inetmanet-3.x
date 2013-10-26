@@ -69,7 +69,7 @@ void HostAutoConfigurator2::initialize(int stage)
     {
         debug = par("debug").boolValue();
     }
-    else if (stage == 3)
+    else if (stage == 2)
     {
         setupNetworkLayer();
         if (par("isDefaultRoute"))
@@ -178,6 +178,35 @@ void HostAutoConfigurator2::addDefaultRoutes()
     rt->addRoute(e);
 }
 
+
+void HostAutoConfigurator2::addDefaultRoute()
+{
+    if (!par("setDefaultRoute").boolValue())
+        return;
+
+
+    std::string addressMask = par("defaultRouteInterface").stringValue();
+
+    // add default route to nodes with exactly one (non-loopback) interface
+    // get our interface table
+    // get our host module
+    cModule* host = getParentModule();
+    if (!host) throw std::runtime_error("No parent module found");
+    IInterfaceTable *ift = IPvXAddressResolver().interfaceTableOf(host);
+    IRoutingTable* rt = IPvXAddressResolver().routingTableOf(host);
+
+    // count non-loopback interfaces
+    InterfaceEntry *ie = ift->getInterfaceByName(addressMask.c_str());
+    if (!ie)
+        return;
+
+    IPv4Route *e = new IPv4Route();
+    e->setDestination(IPv4Address());
+    e->setNetmask(IPv4Address());
+    e->setInterface(ie);
+    e->setSource(IPv4Route::MANUAL);
+    rt->addRoute(e);
+}
 
 void HostAutoConfigurator2::setupNetworkLayer()
 {

@@ -46,6 +46,7 @@ class INET_API HostAutoConfigurator2 : public cSimpleModule
   protected:
     void setupNetworkLayer();
     void addDefaultRoutes();
+    void addDefaultRoute();
     void setupRoutingTable();
     void fillRoutingTables();
 

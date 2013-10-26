@@ -32,7 +32,9 @@ simple HostAutoConfigurator2
         string defaultAddressInterface = default("eth0"); // only if a node has been defined like   isDefaultRoute=true, is the interface that will be used for search the ip address, only for the default
         bool isDefaultRoute = default(false); // we use this route like default route for all address
         string addressBaseList = default("192.168.0.0 192.161.1.0 192.161.2.0");         // list of base address to autoassign 
-        string addressMask = default("255.255.0.0 255.255.255.0 255.255.255.0");         // list of interfaces to autoassign addresses to, separated by a single space characters	
+        string addressMask = default("255.255.0.0 255.255.255.0 255.255.255.0");         // list of interfaces to autoassign addresses to, separated by a single space characters
+        bool setDefaultRoute = default(false);
+        string defaultRouteInterface = default("eth0");
 		@display("i=block/cogwheel_s");
 }
 
