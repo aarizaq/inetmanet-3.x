@@ -704,9 +704,9 @@ int Ieee80211Mac::mappingAccessCategory(Ieee80211DataOrMgmtFrame *frame)
 {
     bool isDataFrame = (dynamic_cast<Ieee80211DataFrame *>(frame) != NULL);
 
-    currentAC = classifier ? classifier->classifyPacket(frame) : 0;
+    int tempAC = classifier ? classifier->classifyPacket(frame) : 0;
         // check for queue overflow
-    if (isDataFrame && maxCategorieQueueSize && (int)transmissionQueue()->size() >= maxCategorieQueueSize)
+    if (isDataFrame && maxCategorieQueueSize && (int)transmissionQueue(tempAC)->size() >= maxCategorieQueueSize)
     {
         EV << "message " << frame << " received from higher layer but AC queue is full, dropping message\n";
         numDropped()++;
@@ -721,6 +721,8 @@ int Ieee80211Mac::mappingAccessCategory(Ieee80211DataOrMgmtFrame *frame)
         delete frame;
         return 200;
     }
+    // if the frame is not discarded actualize currectAC
+    currentAC = tempAC;
     if (isDataFrame)
     {
         if (!prioritizeMulticast  || !frame->getReceiverAddress().isMulticast() || transmissionQueue()->size() < 2)
