@@ -12,6 +12,9 @@ simple Ieee802154Phy
 
         // received signals with power below sensitivity are ignored (dBm)
         double sensitivity @unit("dBm")=default(-85dBm);
+        double receptionThreshold @unit("dBm") = default(-110dBm);
+        bool setReceptionThreshold = default(false);
+        string NoiseGenerator = default("");
 
         // base noise level (dBm)
         double thermalNoise @unit("dBm") = default(-110dBm);

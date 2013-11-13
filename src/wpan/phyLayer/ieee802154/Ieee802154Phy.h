@@ -19,6 +19,7 @@
 #include "NotifierConsts.h"
 #include "ObstacleControl.h"
 #include "ILifecycle.h"
+#include "INoiseGenerator.h"
 
 class INET_API Ieee802154Phy : public ChannelAccess, public ILifecycle
 {
@@ -35,6 +36,8 @@ class INET_API Ieee802154Phy : public ChannelAccess, public ILifecycle
         virtual ~Ieee802154Phy();
 
     protected:
+        static simsignal_t changeLevelNoise80215;
+        virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj);
         virtual void initialize(int);
         virtual int numInitStages() const { return 3; }
         virtual void finish();
@@ -83,6 +86,7 @@ class INET_API Ieee802154Phy : public ChannelAccess, public ILifecycle
 
 
   protected:
+        INoiseGenerator *noiseGenerator;
         bool transceiverConnect;
         bool receiverConnect;
         bool m_debug; // debug switch
@@ -97,6 +101,7 @@ class INET_API Ieee802154Phy : public ChannelAccess, public ILifecycle
         double noiseLevel;
         double carrierFrequency;
         double sensitivity; // in mW
+        double receptionThreshold;
         double thermalNoise;
 
         struct SnrStruct

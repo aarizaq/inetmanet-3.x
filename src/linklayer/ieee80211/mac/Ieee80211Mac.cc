@@ -1016,7 +1016,8 @@ void Ieee80211Mac::handleWithFSM(cMessage *msg)
             FSMA_Event_Transition(Data-Ready,
                                   isUpperMsg(msg),
                                   DEFER,
-                                  ASSERT(isInvalidBackoffPeriod() || backoffPeriod() == SIMTIME_ZERO);
+                                  if (isInvalidBackoffPeriod() || backoffPeriod() == SIMTIME_ZERO)
+                                      ASSERT(isInvalidBackoffPeriod() || backoffPeriod() == SIMTIME_ZERO);
                                   invalidateBackoffPeriod();
                                  );
             FSMA_No_Event_Transition(Immediate-Data-Ready,

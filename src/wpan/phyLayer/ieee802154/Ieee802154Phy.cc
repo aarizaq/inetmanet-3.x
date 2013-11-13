@@ -23,6 +23,9 @@ uint16_t Ieee802154Phy::aMaxBeaconOverhead             = 75;       //max # of oc
 uint16_t Ieee802154Phy::aMaxBeaconPayloadLength = aMaxPHYPacketSize - aMaxBeaconOverhead;       //max size, in octets, of a beacon payload
 uint16_t Ieee802154Phy::aMaxFrameOverhead              = 25;       //max # of octets added by the MAC sublayer to its payload w/o security.//max # of octets that can be transmitted in the MAC frame payload field
 uint16_t Ieee802154Phy::aMaxMACFrameSize  = aMaxPHYPacketSize - aMaxFrameOverhead;
+simsignal_t Ieee802154Phy::changeLevelNoise80215 = SIMSIGNAL_NULL;
+
+#define BASE_NOISE_LEVEL (noiseGenerator?noiseLevel+noiseGenerator->noiseLevel():noiseLevel)
 
 
 Ieee802154Phy::Ieee802154Phy() : rs(this->getId())
@@ -38,6 +41,7 @@ Ieee802154Phy::Ieee802154Phy() : rs(this->getId())
     receiverConnect = true;
     numReceivedCorrectly = 0;
     numGivenUp = 0;
+    noiseGenerator = NULL;
 
 }
 
@@ -139,6 +143,25 @@ void Ieee802154Phy::initialize(int stage)
         transmitterPower        = par("transmitterPower");  // in mW
         if (transmitterPower > (double) getChannelControlPar("pMax"))
             error("[PHY]: transmitterPower cannot be bigger than pMax in ChannelControl!");
+        receptionThreshold = sensitivity;
+        if (par("setReceptionThreshold").boolValue())
+        {
+            receptionThreshold = FWMath::dBm2mW(par("receptionThreshold").doubleValue());
+            if (par("maxDistantReceptionThreshold").doubleValue() > 0)
+            {
+                receptionThreshold = receptionModel->calculateReceivedPower(transmitterPower, carrierFrequency, par("maxDistantReceptionThreshold").doubleValue());
+            }
+        }
+
+        std::string noiseModel =  par("NoiseGenerator").stdstringValue();
+        if (noiseModel!="")
+        {
+            noiseGenerator = (INoiseGenerator *) createOne(noiseModel.c_str());
+            noiseGenerator->initializeFrom(this);
+            // register to get a notification when position changes
+            changeLevelNoise80215 = registerSignal("changeLevelNoise80215");
+            subscribe(changeLevelNoise80215, this); // the INoiseGenerator must send a signal to this module
+        }
 
         // initialize noiseLevel
         noiseLevel = thermalNoise;
@@ -155,6 +178,9 @@ void Ieee802154Phy::initialize(int stage)
         phyRadioState = phy_RX_ON;
         PLME_SET_TRX_STATE_confirm(phyRadioState);
         rs.setState(RadioState::IDLE);
+        if (BASE_NOISE_LEVEL >= sensitivity)
+            rs.setState(RadioState::RECV);
+
         //rs.setChannelNumber((int)def_phyCurrentChannel); // default: 11, 2.4G
         rs.setBitrate(getRate('b'));
         rs.setRadioId(this->getId());
@@ -569,7 +595,7 @@ void Ieee802154Phy::handleLowerMsgStart(AirFrame * airframe)
 
         // update the RadioState if the noiseLevel exceeded the threshold
         // and the radio is currently not in receive or in send mode
-        if (noiseLevel >= sensitivity &&  rs.getState() == RadioState::IDLE)
+        if (BASE_NOISE_LEVEL >= receptionThreshold &&  rs.getState() == RadioState::IDLE)
         {
             EV << "[PHY]: noise level is high, setting radio state to RECV\n";
             setRadioState(RadioState::RECV);
@@ -675,7 +701,7 @@ void Ieee802154Phy::handleLowerMsgEnd(AirFrame * airframe)
     // change to idle if noiseLevel smaller than threshold and state was
     // not idle before
     // do not change state if currently sending or receiving a message!!!
-    if (noiseLevel < sensitivity && phyRadioState == phy_RX_ON && rs.getState() == RadioState::RECV && snrInfo.ptr == NULL)
+    if (BASE_NOISE_LEVEL < receptionThreshold && phyRadioState == phy_RX_ON && rs.getState() == RadioState::RECV && snrInfo.ptr == NULL)
     {
         setRadioState(RadioState::IDLE);
         EV << "[PHY]: radio finishes receiving\n";
@@ -1252,7 +1278,7 @@ void Ieee802154Phy::addNewSnr()
 {
     SnrListEntry listEntry;     // create a new entry
     listEntry.time = simTime();
-    listEntry.snr = snrInfo.rcvdPower / noiseLevel;
+    listEntry.snr = snrInfo.rcvdPower / BASE_NOISE_LEVEL;
     snrInfo.sList.push_back(listEntry);
 }
 
@@ -1408,4 +1434,22 @@ bool Ieee802154Phy::handleOperationStage(LifecycleOperation *operation, int stag
     else
         throw cRuntimeError("Unsupported operation '%s'", operation->getClassName());
     return true;
+}
+
+void Ieee802154Phy::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj)
+{
+    ChannelAccess::receiveSignal(source,signalID, obj);
+    if (signalID == changeLevelNoise80215)
+    {
+        if (BASE_NOISE_LEVEL < receptionThreshold)
+        {
+            if (rs.getState()==RadioState::RECV && snrInfo.ptr==NULL)
+                setRadioState(RadioState::IDLE);
+        }
+        else
+        {
+            if (rs.getState()!=RadioState::IDLE)
+                setRadioState(RadioState::RECV);
+        }
+    }
 }
