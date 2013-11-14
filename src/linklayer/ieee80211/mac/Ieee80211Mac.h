@@ -240,6 +240,7 @@ class INET_API Ieee80211Mac : public WirelessMacBase
         long bits;
         simtime_t minjitter;
         simtime_t maxjitter;
+        unsigned int saveSize;
     };
 
     struct EdcaOutVector {
@@ -582,6 +583,8 @@ class INET_API Ieee80211Mac : public WirelessMacBase
     virtual unsigned int transmissionQueueSize();
     virtual void flushQueue();
     virtual void clearQueue();
+
+    bool transmissionQueueWithReserveFull(int categorie);
 
     /** @brief Mapping to access categories. */
     virtual int mappingAccessCategory(Ieee80211DataOrMgmtFrame *frame);

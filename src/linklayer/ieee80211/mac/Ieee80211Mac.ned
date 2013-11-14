@@ -61,6 +61,11 @@ simple Ieee80211Mac
                                           // a generated MAC address in init stage 0.
         string queueModule = default(""); // name of optional external queue module
         int maxQueueSize = default(50);   // max queue length in frames; only used if queueModule==""
+        
+        int saveSize0 = default(0);   // minum size save for categorie 0, only used if queueModule==""
+        int saveSize1 = default(0);   // minum size save for categorie 0, only used if queueModule==""
+        int saveSize2 = default(0);   // minum size save for categorie 0, only used if queueModule==""
+        int saveSize3 = default(0);   // minum size save for categorie 0, only used if queueModule==""
 
         bool EDCA = default(false); // enable Enhanced Distributed Channel Access (802.11e)
         // parameters for EDCA = true

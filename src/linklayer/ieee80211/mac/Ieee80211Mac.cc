@@ -214,6 +214,7 @@ void Ieee80211Mac::initialize(int stage)
             os<< i;
             std::string strAifs = "AIFSN"+os.str();
             std::string strTxop = "TXOP"+os.str();
+            std::string strSaveSize = "saveSize"+os.str();
             if (hasPar(strAifs.c_str()) && hasPar(strTxop.c_str()))
             {
                 AIFSN(i) = par(strAifs.c_str());
@@ -221,6 +222,8 @@ void Ieee80211Mac::initialize(int stage)
             }
             else
                 opp_error("parameters %s , %s don't exist", strAifs.c_str(), strTxop.c_str());
+
+            edcCAF[i].saveSize = par(strSaveSize.c_str());
         }
         if (numCategories()==1)
             AIFSN(0) = par("AIFSN");
@@ -686,7 +689,7 @@ int Ieee80211Mac::mappingAccessCategory(Ieee80211DataOrMgmtFrame *frame)
         return 200;
     }
 
-    if (isDataFrame && maxQueueSize && (int)transmissionQueueSize() >= maxQueueSize)
+    if (isDataFrame && maxQueueSize && transmissionQueueWithReserveFull(tempAC))
     {
         EV << "message " << frame << " received from higher layer but AC queue is full, dropping message\n";
         numDropped()++;
@@ -714,13 +717,15 @@ int Ieee80211Mac::mappingAccessCategory(Ieee80211DataOrMgmtFrame *frame)
         return 200;
     }
 
-    if (isDataFrame && maxQueueSize && (int)transmissionQueueSize() >= maxQueueSize)
+    if (isDataFrame && maxQueueSize && transmissionQueueWithReserveFull(tempAC))
     {
         EV << "message " << frame << " received from higher layer but AC queue is full, dropping message\n";
         numDropped()++;
         delete frame;
         return 200;
     }
+
+
     // if the frame is not discarded actualize currectAC
     currentAC = tempAC;
     if (isDataFrame)
@@ -2378,6 +2383,22 @@ unsigned int Ieee80211Mac::transmissionQueueSize()
         totalSize+=transmissionQueue(i)->size();
     return totalSize;
 }
+
+bool Ieee80211Mac::transmissionQueueWithReserveFull(int categorie)
+{
+    unsigned int totalSize = 0;
+    unsigned int residual = 0;
+    for (int i=0; i<numCategories(); i++)
+    {
+        totalSize+=transmissionQueue(i)->size();
+        if (transmissionQueue(i)->size() < edcCAF[i].saveSize && i != categorie)
+            residual += (edcCAF[i].saveSize - transmissionQueue(i)->size());
+    }
+    if (maxQueueSize - residual > totalSize)
+        return false;
+    return true;
+}
+
 
 void Ieee80211Mac::flushQueue()
 {
