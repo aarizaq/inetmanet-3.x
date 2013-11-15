@@ -47,14 +47,3 @@ void BasicBattery::finish()
  * Dispatches self-messages to handleSelfMsg()
  */
 
-
-
-void BasicBattery::receiveChangeNotification(
-    int aCategory,
-    const cObject* aDetails)
-{
-    EV << "this text should not appear. error in BasicBattery.cc" << endl;
-}
-
-
-

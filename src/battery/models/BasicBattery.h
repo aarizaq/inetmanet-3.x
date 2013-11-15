@@ -140,7 +140,7 @@ class INET_API BasicBattery : public cSimpleModule, public INotifiable
     // OPERATIONS
     // void         handleMessage(cMessage *msg);
 
-    virtual void receiveChangeNotification(int, const cObject*);
+    virtual void receiveChangeNotification(int, const cObject*) = 0;
 
 };
 
