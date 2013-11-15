@@ -77,7 +77,7 @@ void ICMP::sendErrorMessage(IPv4Datagram *origDatagram, ICMPType type, ICMPCode 
     }
 
     // assemble a message name
-    char msgname[32];
+    char msgname[100];
     static long ctr;
     sprintf(msgname, "ICMP-error-#%ld-type%d-code%d", ++ctr, type, code);
 
