@@ -46,7 +46,9 @@ void ThruputMeter::initialize()
 
 void ThruputMeter::handleMessage(cMessage *msg)
 {
-    updateStats(simTime(), PK(msg)->getBitLength());
+    cPacket *pk = dynamic_cast<cPacket*>(msg);
+    if (pk)
+        updateStats(simTime(), pk->getBitLength());
     send(msg, "out");
 }
 
