@@ -88,6 +88,26 @@ class INET_API Ieee80211Mac : public WirelessMacBase
 
     typedef std::map<MACAddress, Ieee80211ASFTuple> Ieee80211ASFTupleList;
 
+
+    struct Ieee80211PacketErrorInfo
+    {
+        uint64_t Size;
+        bool hasErrors;
+        simtime_t timeRec;
+        Ieee80211PacketErrorInfo& operator=(const Ieee80211PacketErrorInfo& other)
+        {
+            if (this==&other) return *this;
+            this->Size = other.Size;
+            this->hasErrors = other.hasErrors;
+            this->timeRec = other.timeRec;
+            return *this;
+        }
+    };
+
+    bool registerErrors;
+    typedef std::map<MACAddress, std::vector<Ieee80211PacketErrorInfo> > Ieee80211ErrorInfo;
+    Ieee80211ErrorInfo errorInfo;
+
     enum
     {
         RATE_ARF,   // Auto Rate Fallback

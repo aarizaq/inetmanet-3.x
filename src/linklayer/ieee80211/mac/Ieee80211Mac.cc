@@ -69,6 +69,7 @@ Ieee80211Mac::Ieee80211Mac()
     pendingRadioConfigMsg = NULL;
     classifier = NULL;
     queueMode = false;
+    registerErrors = false;
 }
 
 Ieee80211Mac::~Ieee80211Mac()
@@ -904,6 +905,36 @@ void Ieee80211Mac::handleLowerMsg(cPacket *msg)
     if (msgKind != COLLISION && msgKind != BITERROR && twoAddressFrame!=NULL)
         sendNotification(NF_LINK_REFRESH, twoAddressFrame);
 #endif
+
+
+    if (registerErrors && twoAddressFrame)
+    {
+        bool error = false;
+        if (msg->getKind() != COLLISION && msg->getKind() != BITERROR)
+            error = true;
+        Ieee80211ErrorInfo::iterator it = errorInfo.find(frame->getReceiverAddress());
+        if (it == errorInfo.end())
+        {
+            Ieee80211PacketErrorInfo info;
+            std::vector<Ieee80211PacketErrorInfo> infoVector;
+            info.Size = frame->getByteLength();
+            info.timeRec = simTime();
+            info.hasErrors = error;
+            infoVector.push_back(info);
+            errorInfo.insert(std::pair<MACAddress, std::vector<Ieee80211PacketErrorInfo> >(frame->getReceiverAddress(),infoVector));
+        }
+        else
+        {
+
+            while (simTime() - it->second.front().timeRec > 10)
+                it->second.erase(it->second.begin());
+            Ieee80211PacketErrorInfo info;
+            info.Size = frame->getByteLength();
+            info.timeRec = simTime();
+            info.hasErrors = error;
+            it->second.push_back(info);
+       }
+    }
 
 
     if (msg->getKind() != COLLISION && msg->getKind() != BITERROR)
