@@ -36,6 +36,7 @@
 #include "WirelessNumHops.h"
 #include "Ieee80211Mac.h"
 #include "Radio.h"
+#include "securityPkt_m.h"
 
 /**
  * Used in 802.11 ligh wireless mpls  mode. See corresponding NED file for a detailed description.
@@ -116,6 +117,8 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase
         int maxHopReactive; // Maximun number of hops by the reactive part for to use the proactive feedback
 
         bool floodingConfirmation;
+
+        bool hasSecurity;
 
         struct ConfirmationInfo
         {
@@ -276,6 +279,7 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase
         virtual void handleBeaconFrame(Ieee80211BeaconFrame *frame);
         virtual void handleProbeRequestFrame(Ieee80211ProbeRequestFrame *frame);
         virtual void handleProbeResponseFrame(Ieee80211ProbeResponseFrame *frame);
+        virtual void handleCCMPFrame(CCMPFrame *frame);
         //@}
         /** Redefined from Ieee80211MgmtBase: send message to MAC */
         virtual void sendOut(cMessage *msg);

@@ -1,0 +1,10 @@
+Ordner: ieee80211mesh: mgmt
+lwmpls_data.h
+
+LWmplsFwMap * forwardingTableOutput; // mhn from private to here
+------------------------------------------------------------------------------
+ieee80211mesh : private -> protected
+------------------------------------------------------------------------------
+In ieee802NewMac: 
+ nb->fireChangeNotification(NF_TX_ACKED,frame);//mhn
+------------------------------------------------------------------------------
