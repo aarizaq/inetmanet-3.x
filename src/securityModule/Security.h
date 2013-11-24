@@ -38,7 +38,7 @@
 #include <cstdarg>
 
 #include "Ieee80211Frame_m.h"
-#include "IPv4Datagram_m.h"
+#include "IPv4Datagram.h"
 #include "UDPPacket_m.h"
 #include "NewMsgWithMacAddr_m.h"
 
