@@ -399,7 +399,7 @@ bool GlobalWirelessLinkInspector::getNumNodes(ManetAddress node, int &cont)
 
 bool GlobalWirelessLinkInspector::areNeighbour(const ManetAddress &node1, const ManetAddress &node2,bool &areNei)
 {
-    areNei = true;
+    areNei = false;
     if (globalLocatorMap == NULL)
         return false;
     LocatorIteartor it1 =  globalLocatorMap->find(node1);
