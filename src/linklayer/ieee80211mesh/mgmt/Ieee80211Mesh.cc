@@ -142,6 +142,7 @@ Ieee80211Mesh::Ieee80211Mesh()
     timeReceptionInterface.clear();
     macInterfaces.clear();
     radioInterfaces.clear();
+    hasSecurity = false;
 }
 
 void Ieee80211Mesh::initializeBase(int stage)
