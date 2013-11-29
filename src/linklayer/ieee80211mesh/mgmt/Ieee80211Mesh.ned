@@ -86,4 +86,6 @@ simple Ieee80211Mesh
         output agentOut @loose; // optional gates used for the agent in stations
         input  locatorIn @loose;
         output  locatorOut @loose;
+        output securityOut @loose;
+        input securityIn @loose;
 }
