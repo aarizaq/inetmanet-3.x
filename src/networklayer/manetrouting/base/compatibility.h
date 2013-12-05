@@ -47,10 +47,6 @@ typedef unsigned short  sa_family_t;
 typedef uint32_t in_addr_t;
 #endif
 
-
-#undef In_addr
-#undef Sockaddr
-
 //#ifdef _WIN32
 struct In_addr
 {
