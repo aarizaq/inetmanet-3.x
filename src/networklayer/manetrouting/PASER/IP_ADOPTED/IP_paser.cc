@@ -32,6 +32,7 @@
 #include "Ieee802Ctrl_m.h"
 #include "UDPPacket_m.h"
 #include "TCPSegment.h"
+#include "IRoutingTable.h"
 
 #include "PASER_Definitions.h"
 #include "ControlManetRouting_m.h"
@@ -45,6 +46,7 @@ void IPv4_paser::initialize()
 
     ift = InterfaceTableAccess().get();
     rt = RoutingTableAccess().get();
+    nb = NotificationBoardAccess().getIfExists(); // needed only for multicast forwarding
 
     queueOutGate = gate("queueOut");
 
@@ -150,7 +152,7 @@ void IPv4_paser::handlePacketFromNetwork(IPv4Datagram *datagram, InterfaceEntry 
         if (dblrand() <= relativeHeaderLength)
         {
             EV << "bit error found, sending ICMP_PARAMETER_PROBLEM\n";
-            icmpAccess.get()->sendErrorMessage(datagram, ICMP_PARAMETER_PROBLEM, 0);
+            icmpAccess.get()->sendErrorMessage(datagram, fromIE->getInterfaceId(), ICMP_PARAMETER_PROBLEM, 0);
             return;
         }
     }
@@ -520,7 +522,7 @@ void IPv4_paser::routeUnicastPacket(IPv4Datagram *datagram, InterfaceEntry *dest
 #endif
                 EV << "unroutable, sending ICMP_DESTINATION_UNREACHABLE\n";
                 numUnroutable++;
-                icmpAccess.get()->sendErrorMessage(datagram, ICMP_DESTINATION_UNREACHABLE, 0);
+                icmpAccess.get()->sendErrorMessage(datagram, -1 /*TODO*/, ICMP_DESTINATION_UNREACHABLE, 0);
 #ifdef WITH_MANET
             }
 #endif
@@ -567,29 +569,45 @@ InterfaceEntry *IPv4_paser::getShortestPathInterfaceToSource(IPv4Datagram *datag
 void IPv4_paser::forwardMulticastPacket(IPv4Datagram *datagram, InterfaceEntry *fromIE)
 {
     ASSERT(fromIE);
-    const IPv4Address &origin = datagram->getSrcAddress();
+    const IPv4Address &srcAddr = datagram->getSrcAddress();
     const IPv4Address &destAddr = datagram->getDestAddress();
     ASSERT(destAddr.isMulticast());
+    ASSERT(!destAddr.isLinkLocalMulticast());
+
+    if (!nb)
+        throw cRuntimeError("If multicast forwarding is enabled, then the node must contain a NotificationBoard.");
 
     EV << "Forwarding multicast datagram `" << datagram->getName() << "' with dest=" << destAddr << "\n";
 
     numMulticast++;
 
-    const IPv4MulticastRoute *route = rt->findBestMatchingMulticastRoute(origin, destAddr);
+    const IPv4MulticastRoute *route = rt->findBestMatchingMulticastRoute(srcAddr, destAddr);
     if (!route)
     {
-        EV << "No route, packet dropped.\n";
-        numUnroutable++;
-        delete datagram;
+        EV << "Multicast route does not exist, try to add.\n";
+        nb->fireChangeNotification(NF_IPv4_NEW_MULTICAST, datagram);
+
+        // read new record
+        route = rt->findBestMatchingMulticastRoute(srcAddr, destAddr);
+
+        if (!route)
+        {
+            EV << "No route, packet dropped.\n";
+            numUnroutable++;
+            delete datagram;
+            return;
+        }
     }
-    else if (route->getParent() && fromIE != route->getParent())
+
+    if (route->getInInterface() && fromIE != route->getInInterface()->getInterface())
     {
-        EV << "Did not arrive on parent interface, packet dropped.\n";
+        EV << "Did not arrive on input interface, packet dropped.\n";
+        nb->fireChangeNotification(NF_IPv4_DATA_ON_NONRPF, datagram);
         numDropped++;
         delete datagram;
     }
     // backward compatible: no parent means shortest path interface to source (RPB routing)
-    else if (!route->getParent() && fromIE != getShortestPathInterfaceToSource(datagram))
+    else if (!route->getInInterface() && fromIE != getShortestPathInterfaceToSource(datagram))
     {
         EV << "Did not arrive on shortest path, packet dropped.\n";
         numDropped++;
@@ -597,18 +615,20 @@ void IPv4_paser::forwardMulticastPacket(IPv4Datagram *datagram, InterfaceEntry *
     }
     else
     {
+        nb->fireChangeNotification(NF_IPv4_DATA_ON_RPF, datagram); // forwarding hook
+
         numForwarded++;
         // copy original datagram for multiple destinations
-        const IPv4MulticastRoute::ChildInterfaceVector &children = route->getChildren();
-        for (unsigned int i=0; i<children.size(); i++)
+        for (unsigned int i=0; i<route->getNumOutInterfaces(); i++)
         {
-            InterfaceEntry *destIE = children[i]->getInterface();
-            if (destIE != fromIE)
+            IPv4MulticastRoute::OutInterface *outInterface = route->getOutInterface(i);
+            InterfaceEntry *destIE = outInterface->getInterface();
+            if (destIE != fromIE && outInterface->isEnabled())
             {
                 int ttlThreshold = destIE->ipv4Data()->getMulticastTtlThreshold();
                 if (datagram->getTimeToLive() <= ttlThreshold)
                     EV << "Not forwarding to " << destIE->getName() << " (ttl treshold reached)\n";
-                else if (children[i]->isLeaf() && !destIE->ipv4Data()->hasMulticastListener(destAddr))
+                else if (outInterface->isLeaf() && !destIE->ipv4Data()->hasMulticastListener(destAddr))
                     EV << "Not forwarding to " << destIE->getName() << " (no listeners)\n";
                 else
                 {
@@ -617,6 +637,9 @@ void IPv4_paser::forwardMulticastPacket(IPv4Datagram *datagram, InterfaceEntry *
                 }
             }
         }
+
+        nb->fireChangeNotification(NF_IPv4_MDATA_REGISTER, datagram); // postRouting hook
+
         // only copies sent, delete original datagram
         delete datagram;
     }
@@ -717,7 +740,7 @@ void IPv4_paser::reassembleAndDeliver(IPv4Datagram *datagram)
         else
         {
             EV << "L3 Protocol not connected. discarding packet" << endl;
-            icmpAccess.get()->sendErrorMessage(datagram, ICMP_DESTINATION_UNREACHABLE, ICMP_DU_PROTOCOL_UNREACHABLE);
+            icmpAccess.get()->sendErrorMessage(datagram,-1,  ICMP_DESTINATION_UNREACHABLE, ICMP_DU_PROTOCOL_UNREACHABLE);
         }
     }
 }
@@ -763,7 +786,7 @@ void IPv4_paser::fragmentAndSend(IPv4Datagram *datagram, InterfaceEntry *ie, IPv
     {
         // drop datagram, destruction responsibility in ICMP
         EV << "datagram TTL reached zero, sending ICMP_TIME_EXCEEDED\n";
-        icmpAccess.get()->sendErrorMessage(datagram, ICMP_TIME_EXCEEDED, 0);
+        icmpAccess.get()->sendErrorMessage(datagram, -1 /*TODO*/, ICMP_TIME_EXCEEDED, 0);
         numDropped++;
         return;
     }
@@ -781,9 +804,8 @@ void IPv4_paser::fragmentAndSend(IPv4Datagram *datagram, InterfaceEntry *ie, IPv
     if (datagram->getDontFragment())
     {
         EV << "datagram larger than MTU and don't fragment bit set, sending ICMP_DESTINATION_UNREACHABLE\n";
-        icmpAccess.get()->sendErrorMessage(datagram, ICMP_DESTINATION_UNREACHABLE,
-                                                     ICMP_FRAGMENTATION_ERROR_CODE);
-        numDropped++;
+        icmpAccess.get()->sendErrorMessage(datagram, -1 /*TODO*/, ICMP_DESTINATION_UNREACHABLE,
+                                                                    ICMP_FRAGMENTATION_ERROR_CODE);   numDropped++;
         return;
     }
 
