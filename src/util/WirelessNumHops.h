@@ -35,11 +35,14 @@ class WirelessNumHops : public cOwnedObject
         {
             IMobility* mob;
             IInterfaceTable* itable;
+            std::vector<MACAddress> macAddress;
+            std::vector<IPv4Address> ipAddress;
         };
         struct LinkPair
         {
             int node1;
             int node2;
+            double cost;
             LinkPair()
             {
                 node1 = node2 = -1;
@@ -48,12 +51,21 @@ class WirelessNumHops : public cOwnedObject
             {
                 node1 = i;
                 node2 = j;
+                cost = -1;
+            }
+
+            LinkPair(int i, int j,double c)
+            {
+                node1 = i;
+                node2 = j;
+                cost = c;
             }
 
             LinkPair& operator=(const LinkPair& val)
             {
                 this->node1 = val.node1;
                 this->node2 = val.node2;
+                this->cost = val.cost;
                 return *this;
             }
         };
@@ -134,6 +146,7 @@ class WirelessNumHops : public cOwnedObject
 
         virtual void cleanLinkArray();
         virtual void addEdge (const int & dest_node, const int & last_node,unsigned int cost);
+        virtual void addEdge (const int & originNode, const int & last_node,unsigned int cost, double costAdd, double costMax);
         virtual bool getRoute(const int &nodeId,std::vector<int> &pathNode);
         virtual void setRoot(const int & dest_node);
         virtual void run();
@@ -141,6 +154,7 @@ class WirelessNumHops : public cOwnedObject
         virtual int getIdNode(const MACAddress &add);
         virtual int getIdNode(const  IPv4Address &add);
         virtual void fillRoutingTables(const double &tDistance);
+        virtual void fillRoutingTablesWitCost(const double &tDistance);
         virtual bool findRoute(const double &, const int &dest,std::vector<int> &pathNode);
 
     public:

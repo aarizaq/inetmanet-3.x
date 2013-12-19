@@ -64,10 +64,17 @@ void WirelessNumHops::reStart()
                 continue;
             if (e->isLoopback())
                 continue;
-            related[e->getMacAddress()] = i;
+            if (!e->getMacAddress().isUnspecified())
+            {
+                related[e->getMacAddress()] = i;
+                vectorList[i].macAddress.push_back(e->getMacAddress());
+            }
             IPv4Address adr = e->ipv4Data()->getIPAddress();
             if (!adr.isUnspecified())
+            {
                 relatedIp [adr] = i;
+                vectorList[i].ipAddress.push_back(adr);
+            }
         }
 
     }
@@ -147,6 +154,100 @@ void WirelessNumHops::fillRoutingTables(const double &tDistance)
     }
 }
 
+void WirelessNumHops::fillRoutingTablesWitCost(const double &tDistance)
+{
+    // fill in routing tables with static routes
+    LinkCache templinkCache;
+    // first find root node connections
+
+    ManetAddress rootAddr(vectorList[rootNode].macAddress.front());
+    Coord cRoot = vectorList[rootNode].mob->getCurrentPosition();
+    for (int i=0; i< (int)vectorList.size(); i++)
+    {
+        if (i == rootNode)
+            continue;
+        Coord ci = vectorList[i].mob->getCurrentPosition();
+
+        if (cRoot.distance(ci) <= tDistance)
+        {
+
+            if (GlobalWirelessLinkInspector::isActive())
+            {
+                GlobalWirelessLinkInspector::Link linkCost;
+                ManetAddress nodeAddr(vectorList[i].macAddress.front());
+                if (GlobalWirelessLinkInspector::getLinkCost(rootAddr,nodeAddr,linkCost))
+                    if (linkCost.costEtx<1e30)
+                        templinkCache.insert(LinkPair(rootNode,i,linkCost.costEtx));
+            }
+            else
+                templinkCache.insert(LinkPair(rootNode,i));
+        }
+    }
+    if (templinkCache.empty())
+    {
+        // root node doesn't have connections
+        linkCache.clear();
+        routeCache.clear();
+        routeMap.clear();
+        routeCacheIp.clear();
+        cleanLinkArray();
+        return;
+    }
+    for (int i=0; i< (int)vectorList.size(); i++)
+    {
+        if (i == rootNode)
+            continue;
+        for (int j = i; j < (int)vectorList.size(); j++)
+        {
+            if (i == j)
+                continue;
+            if (j == rootNode)
+                continue;
+            Coord ci = vectorList[i].mob->getCurrentPosition();
+            Coord cj = vectorList[j].mob->getCurrentPosition();
+            if (ci.distance(cj) <= tDistance)
+            {
+                if (GlobalWirelessLinkInspector::isActive())
+                {
+                    GlobalWirelessLinkInspector::Link linkCost;
+                    ManetAddress iAdd(vectorList[i].macAddress.front());
+                    ManetAddress jAdd(vectorList[j].macAddress.front());
+                    if (GlobalWirelessLinkInspector::getLinkCost(iAdd,jAdd,linkCost))
+                        if (linkCost.costEtx<1e30)
+                            templinkCache.insert(LinkPair(i,j,linkCost.costEtx));
+                }
+                else
+                   templinkCache.insert(LinkPair(i,j));
+            }
+        }
+    }
+
+    if (linkCache == templinkCache)
+    {
+        return;
+    }
+
+    linkCache = templinkCache;
+    routeCache.clear();
+    routeMap.clear();
+    routeCacheIp.clear();
+    // clean edges
+    cleanLinkArray();
+    for (LinkCache::iterator it = linkCache.begin(); it != linkCache.end(); ++it)
+    {
+        if ((*it).cost == -1)
+        {
+            addEdge ((*it).node1, (*it).node2,1);
+            addEdge ((*it).node2, (*it).node1,1);
+        }
+        else
+        {
+            addEdge ((*it).node1, (*it).node2,1,(*it).cost,(*it).cost);
+            addEdge ((*it).node2, (*it).node1,1,(*it).cost,(*it).cost);
+        }
+    }
+}
+
 
 WirelessNumHops::DijkstraShortest::State::State()
 {
@@ -208,6 +309,31 @@ void WirelessNumHops::addEdge (const int & originNode, const int & last_node,uns
              if (last_node == it->second[i]->last_node_)
              {
                   it->second[i]->cost =cost;
+                  return;
+             }
+         }
+    }
+    WirelessNumHops::DijkstraShortest::Edge *link = new WirelessNumHops::DijkstraShortest::Edge;
+    // The last hop is the interface in which we have this neighbor...
+    link->last_node_ = last_node;
+    // Also record the link delay and quality..
+    link->cost = cost;
+    linkArray[originNode].push_back(link);
+}
+
+void WirelessNumHops::addEdge (const int & originNode, const int & last_node,unsigned int cost, double costAdd, double costMax)
+{
+    LinkArray::iterator it;
+    it = linkArray.find(originNode);
+    if (it!=linkArray.end())
+    {
+         for (unsigned int i=0;i<it->second.size();i++)
+         {
+             if (last_node == it->second[i]->last_node_)
+             {
+                  it->second[i]->cost =cost;
+                  it->second[i]->costAdd =costAdd;
+                  it->second[i]->costMax =costMax;
                   return;
              }
          }
