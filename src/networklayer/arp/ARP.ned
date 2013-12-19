@@ -42,6 +42,7 @@ simple ARP
         double cacheTimeout @unit("s") = default(120s); // number seconds unused entries in the cache will time out
         bool proxyARP = default(true);        // sets proxy ARP mode (replying to ARP requests for the addresses for which a routing table entry exists)
         bool globalARP = default(false);
+        bool deletePackets = default(false); // only with glabal ARP, if the address doesn't exist in the chache the packet is deleted 
         @display("i=block/layer");
         @statistic[sentReq](title="ARP request sent";record=count,vector);
         @statistic[sentReplies](title="ARP replies sent";record=count,vector);

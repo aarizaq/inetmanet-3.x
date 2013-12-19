@@ -27,6 +27,7 @@
 #include "IPv4FragBuf.h"
 #include "ProtocolMap.h"
 #include "QueueBase.h"
+#include "NotificationBoard.h"
 
 #define WITH_MANET
 
@@ -51,6 +52,7 @@ class IPv4_paser : public QueueBase
   protected:
     IRoutingTable *rt;
     IInterfaceTable *ift;
+    NotificationBoard *nb;
     ICMPAccess icmpAccess;
     cGate *queueOutGate; // the most frequently used output gate
     bool manetRouting;

@@ -88,10 +88,29 @@ void ObstacleControl::addFromXml(cXMLElement* xml) {
         ASSERT(e->getAttribute("shape"));
         std::string shape = e->getAttribute("shape");
 
+
         double attenuationPerWall = 50; /**< in dB */
         double attenuationPerMeter = 1; /**< in dB / m */
         if (type == "building") { attenuationPerWall = 50; attenuationPerMeter = 1; }
         else error("unknown obstacle type: %s", type.c_str());
+
+        if (e->getAttribute("attenuationPerWall"))
+        {
+            std::string attenuation = e->getAttribute("attenuationPerWall");
+            std::istringstream i(attenuation);
+            if (!(i >> attenuationPerWall))
+                error("attenuationPerWall error");
+        }
+
+        if (e->getAttribute("attenuationPerMeter"))
+        {
+            std::string attenuation = e->getAttribute("attenuationPerMeter");
+            std::istringstream i(attenuation);
+            if (!(i >> attenuationPerMeter))
+                error("attenuationPerMeter error");
+        }
+
+
         Obstacle obs(id, attenuationPerWall, attenuationPerMeter);
         std::vector<Coord> sh;
         cStringTokenizer st(shape.c_str());

@@ -56,7 +56,6 @@ class INET_API IPv4 : public QueueBase, public ILifecycle
     ICMPAccess icmpAccess;
     cGate *queueOutGate; // the most frequently used output gate
     bool manetRouting;
-    bool isDsr;
 
     // config
     int defaultTimeToLive;
@@ -70,6 +69,8 @@ class INET_API IPv4 : public QueueBase, public ILifecycle
     IPv4FragBuf fragbuf;  // fragmentation reassembly buffer
     simtime_t lastCheckTime; // when fragbuf was last checked for state fragments
     ProtocolMapping mapping; // where to send packets after decapsulation
+    bool isDsr;
+
 
     // statistics
     int numMulticast;

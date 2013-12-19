@@ -325,7 +325,14 @@ void ARP::processOutboundPacket(cMessage *msg)
     {
         ARPCache::iterator it = globalArpCache.find(nextHopAddr);
         if (it==globalArpCache.end())
+        {
             throw cRuntimeError("Address not found in global ARP cache: %s", nextHopAddr.str().c_str());
+            if (par("deletePackets").boolValue())
+            {
+                delete msg;
+                return;
+            }
+        }
         sendPacketToNIC(msg, ie, (*it).second->macAddress, ETHERTYPE_IPv4);
         return;
     }
