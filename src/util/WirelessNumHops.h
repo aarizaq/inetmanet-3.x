@@ -78,6 +78,8 @@ class WirelessNumHops : public cOwnedObject
             public:
                 int iD;
                 unsigned int cost;
+                double costAdd;
+                double costMax;
                 SetElem()
                 {
                     iD = -1;
@@ -86,6 +88,8 @@ class WirelessNumHops : public cOwnedObject
                 {
                     this->iD=val.iD;
                     this->cost = val.cost;
+                    this->costAdd = val.costAdd;
+                    this->costMax = val.costMax;
                     return *this;
                 }
 
@@ -94,20 +98,28 @@ class WirelessNumHops : public cOwnedObject
             {
             public:
                 unsigned int cost;
+                double costAdd;
+                double costMax;
                 int idPrev;
                 StateLabel label;
                 State();
                 State(const unsigned int &cost);
+                State(const unsigned int &cost, const double &cost1, const double &cost2);
                 void setCostVector(const unsigned int &cost);
+                void setCostVector(const unsigned int &cost, const double &cost1, const double &cost2);
             };
 
             struct Edge
             {
                 int last_node_; // last node to reach node X
                 unsigned int cost;
+                double costAdd;
+                double costMax;
                 Edge()
                 {
                     cost = 200000;
+                    costAdd = 1e30;
+                    costMax = 1e30;
                 }
             };
         };

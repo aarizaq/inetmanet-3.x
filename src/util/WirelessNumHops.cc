@@ -21,6 +21,7 @@
 #include "IPvXAddressResolver.h"
 #include "IInterfaceTable.h"
 #include "IPv4InterfaceData.h"
+#include "GlobalWirelessLinkInspector.h"
 
 WirelessNumHops::WirelessNumHops()
 {
@@ -158,14 +159,32 @@ WirelessNumHops::DijkstraShortest::State::State(const unsigned int  &costData)
     idPrev=-1;
     label=tent;
     cost = costData;
+    costAdd = 0;
+    costMax = 0;
 }
 
+WirelessNumHops::DijkstraShortest::State::State(const unsigned int  &costData,const double &cost1, const double &cost2)
+{
+    idPrev=-1;
+    label=tent;
+    cost = costData;
+    costAdd = cost1;
+    costMax = cost2;
+}
 
 void WirelessNumHops::DijkstraShortest::State::setCostVector(const unsigned int &costData)
 {
     cost=costData;
+    costAdd = 0;
+    costMax = 0;
 }
 
+void WirelessNumHops::DijkstraShortest::State::setCostVector(const unsigned int  &costData,const double &cost1, const double &cost2)
+{
+    cost = costData;
+    costAdd = cost1;
+    costMax = cost2;
+}
 
 void WirelessNumHops::cleanLinkArray()
 {
