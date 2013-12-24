@@ -14,8 +14,8 @@
 
 package inet.examples.mpls.testte_reroute;
 
+import inet.base.LifecycleController;
 import inet.base.UnimplementedModule;
-import inet.networklayer.extras.FailureManager;
 import inet.nodes.inet.StandardHost;
 import inet.nodes.mpls.RSVP_LSR;
 import inet.world.scenario.ScenarioManager;
@@ -28,6 +28,9 @@ import inet.world.scenario.ScenarioManager;
 //
 network RSVPTE4
 {
+    parameters:
+        **.networkLayer.configurator.networkConfiguratorModule = "";
+
     submodules:
         LSR1: RSVP_LSR {
             parameters:
@@ -102,11 +105,10 @@ network RSVPTE4
             parameters:
                 @display("p=150,50");
         }
-        failureManager: FailureManager {
+        lifecycleController: LifecycleController {
             parameters:
                 @display("p=500,50");
         }
-        configurator: UnimplementedModule;
     connections:
         LSR1.pppg[0] <--> {  delay = 15ms; datarate = 600kbps; } <--> LSR2.pppg[0];
         LSR1.pppg[1] <--> {  delay = 5ms; datarate = 600kbps; } <--> LSR3.pppg[0];
