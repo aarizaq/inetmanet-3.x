@@ -204,7 +204,7 @@ void DijkstraKshortest::run ()
 
         if (elem.iD != rootNode)
         {
-            if (it->second.size() == K_LIMITE)
+            if ((int)it->second.size() == K_LIMITE)
             {
                 bool continueLoop = true;
                 for (int i=0;i<K_LIMITE;i++)
@@ -322,7 +322,7 @@ void DijkstraKshortest::runUntil (const NodeId &target)
 
         if (elem.iD != rootNode)
         {
-            if (it->second.size() == K_LIMITE)
+            if ((int)it->second.size() == K_LIMITE)
             {
                 bool continueLoop = true;
                 for (int i=0;i<K_LIMITE;i++)
