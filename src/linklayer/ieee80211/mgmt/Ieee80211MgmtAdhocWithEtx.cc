@@ -23,6 +23,21 @@
 Define_Module(Ieee80211MgmtAdhocWithEtx);
 
 
+void Ieee80211MgmtAdhocWithEtx::startEtx()
+{
+    cModuleType *moduleType;
+    cModule *module;
+    moduleType = cModuleType::find("inet.linklayer.ieee80211.mgmt.Ieee80211Etx");
+    module = moduleType->create("ETXproc", this);
+    ETXProcess = dynamic_cast <Ieee80211Etx*> (module);
+    ETXProcess->gate("toMac")->connectTo(gate("ETXProcIn"));
+    gate("ETXProcOut")->connectTo(ETXProcess->gate("fromMac"));
+    ETXProcess->buildInside();
+    ETXProcess->scheduleStart(simTime());
+    ETXProcess->setAddress(myAddress);
+    ETXProcess->setNumInterfaces(1);
+}
+
 void Ieee80211MgmtAdhocWithEtx::initialize(int stage)
 {
     Ieee80211MgmtAdhoc::initialize(stage);
@@ -30,18 +45,7 @@ void Ieee80211MgmtAdhocWithEtx::initialize(int stage)
     {
         ETXProcess = NULL;
         if (par("ETXEstimate"))
-        {
-            cModuleType *moduleType;
-            cModule *module;
-            moduleType = cModuleType::find("inet.linklayer.ieee80211.mgmt.Ieee80211Etx");
-            module = moduleType->create("ETXproc", this);
-            ETXProcess = dynamic_cast <Ieee80211Etx*> (module);
-            ETXProcess->gate("toMac")->connectTo(gate("ETXProcIn"));
-            gate("ETXProcOut")->connectTo(ETXProcess->gate("fromMac"));
-            ETXProcess->buildInside();
-            ETXProcess->scheduleStart(simTime());
-            ETXProcess->setAddress(myAddress);
-        }
+            startEtx();
     }
 }
 

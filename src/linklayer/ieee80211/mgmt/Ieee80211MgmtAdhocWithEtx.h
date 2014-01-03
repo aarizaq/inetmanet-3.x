@@ -36,6 +36,7 @@ class INET_API Ieee80211MgmtAdhocWithEtx : public Ieee80211MgmtAdhoc
     virtual int numInitStages() const {return 2;}
     virtual void initialize(int);
     Ieee80211Etx * ETXProcess;
+    void startEtx();
 
     void handleMessage(cMessage *msg);
     void handleEtxMessage(cPacket *);

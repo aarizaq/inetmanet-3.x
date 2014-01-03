@@ -475,7 +475,6 @@ void WirelessNumHops::run()
                     newElem.costMax = costMax;
                     heap.insert(newElem);
                 }
-
             }
         }
     }
@@ -613,7 +612,45 @@ bool WirelessNumHops::getRoute(const int &nodeId,std::vector<int> &pathNode)
 }
 
 
+bool WirelessNumHops::getRouteCost(const int &nodeId,std::vector<int> &pathNode,double &costAdd, double &costMax)
+{
+    RouteMap::iterator it = routeMap.find(nodeId);
+    if (it==routeMap.end())
+        return false;
+
+    std::vector<int> path;
+    int currentNode = nodeId;
+    pathNode.clear();
+    costAdd = it->second.costAdd;
+    costMax = it->second.costMax;
+    while (currentNode!=rootNode)
+    {
+        pathNode.push_back(currentNode);
+        currentNode = it->second.idPrev;
+        it = routeMap.find(currentNode);
+        if (it==routeMap.end())
+            opp_error("error in data routeMap");
+    }
+
+    return true;
+}
+
+
 bool WirelessNumHops::findRoutePath(const int &nodeId,std::vector<int> &pathNode)
+{
+    std::vector<int> route;
+    if (getRoute(nodeId,pathNode))
+        return true;
+    else
+    {
+        run();
+        if (getRoute(nodeId,pathNode))
+             return true;
+    }
+    return false;
+}
+
+bool WirelessNumHops::findRoutePathCost(const int &nodeId,std::vector<int> &pathNode,double &costAdd, double &costMax)
 {
     std::vector<int> route;
     if (getRoute(nodeId,pathNode))
@@ -629,8 +666,7 @@ bool WirelessNumHops::findRoutePath(const int &nodeId,std::vector<int> &pathNode
 
 
 
-
-bool WirelessNumHops::findRoute(const double &coverageArea, const MACAddress &dest,std::vector<MACAddress> &pathNode, bool withCost)
+bool WirelessNumHops::findRouteWithCost(const double &coverageArea, const MACAddress &dest,std::vector<MACAddress> &pathNode, bool withCost,double &costAdd, double &costMa)
 {
     if (withCost)
         fillRoutingTablesWitCost(coverageArea);
@@ -670,7 +706,7 @@ bool WirelessNumHops::findRoute(const double &coverageArea, const MACAddress &de
 }
 
 
-bool WirelessNumHops::findRoute(const double &coverageArea, const IPv4Address &dest,std::vector<IPv4Address> &pathNode, bool withCost)
+bool WirelessNumHops::findRouteWithCost(const double &coverageArea, const IPv4Address &dest,std::vector<IPv4Address> &pathNode, bool withCost, double &costAdd, double &costMax)
 {
     if (withCost)
         fillRoutingTablesWitCost(coverageArea);

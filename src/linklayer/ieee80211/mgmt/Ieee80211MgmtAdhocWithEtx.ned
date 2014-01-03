@@ -36,6 +36,6 @@ simple Ieee80211MgmtAdhocWithEtx extends Ieee80211MgmtAdhoc
         @display("i=block/cogwheel");
         bool ETXEstimate = default(false);
     gates:
-        input ETXProcIn;
-        output ETXProcOut;
+        input ETXProcIn @loose;
+        output ETXProcOut @loose;
 }

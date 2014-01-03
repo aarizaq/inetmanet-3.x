@@ -171,6 +171,7 @@ class WirelessNumHops : public cOwnedObject
         virtual void addEdge (const int & dest_node, const int & last_node,unsigned int cost);
         virtual void addEdge (const int & originNode, const int & last_node,unsigned int cost, double costAdd, double costMax);
         virtual bool getRoute(const int &nodeId,std::vector<int> &pathNode);
+        virtual bool getRouteCost(const int &nodeId,std::vector<int> &pathNode,double &costAdd, double &costMax);
         virtual void setRoot(const int & dest_node);
         virtual void run();
         virtual void runUntil (const int &);
@@ -179,6 +180,7 @@ class WirelessNumHops : public cOwnedObject
         virtual void fillRoutingTables(const double &tDistance);
         virtual void fillRoutingTablesWitCost(const double &tDistance);
         virtual bool findRoutePath(const int &dest,std::vector<int> &pathNode);
+        virtual bool findRoutePathCost(const int &nodeId,std::vector<int> &pathNode,double &costAdd, double &costMax);
 
     public:
         friend bool operator < (const WirelessNumHops::LinkPair& x, const WirelessNumHops::LinkPair& y );
@@ -191,8 +193,21 @@ class WirelessNumHops : public cOwnedObject
         WirelessNumHops();
         virtual ~WirelessNumHops();
         virtual void reStart();
-        virtual bool findRoute(const double &, const MACAddress &dest,std::vector<MACAddress> &pathNode, bool withCost = false);
-        virtual bool findRoute(const double &, const IPv4Address &dest,std::vector<IPv4Address> &pathNode, bool withCost = false);
+        virtual bool findRouteWithCost(const double &, const MACAddress &dest,std::vector<MACAddress> &pathNode, bool withCost, double &costAdd, double &costMax);
+        virtual bool findRouteWithCost(const double &, const IPv4Address &dest,std::vector<IPv4Address> &pathNode, bool withCost, double &costAdd, double &costMax);
+
+        virtual bool findRoute(const double &dist, const MACAddress &dest,std::vector<MACAddress> &pathNode)
+        {
+            double cost1,cost2;
+            return findRouteWithCost(dist, dest,pathNode, false, cost1, cost2);
+        }
+        virtual bool findRoute(const double &dist, const IPv4Address &dest,std::vector<IPv4Address> &pathNode)
+        {
+            double cost1,cost2;
+            return findRouteWithCost(dist, dest,pathNode, false, cost1, cost2);
+        }
+
+
 
         virtual void setRoot(const MACAddress & dest_node)
         {
