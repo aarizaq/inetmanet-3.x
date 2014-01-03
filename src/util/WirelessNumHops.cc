@@ -661,12 +661,12 @@ bool WirelessNumHops::findRoutePath(const int &nodeId,std::vector<int> &pathNode
 bool WirelessNumHops::findRoutePathCost(const int &nodeId,std::vector<int> &pathNode,double &costAdd, double &costMax)
 {
     std::vector<int> route;
-    if (getRoute(nodeId,pathNode))
+    if (getRouteCost(nodeId,pathNode,costAdd,costMax))
         return true;
     else
     {
         run();
-        if (getRoute(nodeId,pathNode))
+        if (getRouteCost(nodeId,pathNode,costAdd,costMax))
              return true;
     }
     return false;
@@ -674,7 +674,7 @@ bool WirelessNumHops::findRoutePathCost(const int &nodeId,std::vector<int> &path
 
 
 
-bool WirelessNumHops::findRouteWithCost(const double &coverageArea, const MACAddress &dest,std::vector<MACAddress> &pathNode, bool withCost,double &costAdd, double &costMa)
+bool WirelessNumHops::findRouteWithCost(const double &coverageArea, const MACAddress &dest,std::vector<MACAddress> &pathNode, bool withCost,double &costAdd, double &costMax)
 {
     if (withCost)
         fillRoutingTablesWitCost(coverageArea);
@@ -690,7 +690,7 @@ bool WirelessNumHops::findRouteWithCost(const double &coverageArea, const MACAdd
 
     std::vector<int> route;
     int nodeId = getIdNode(dest);
-    if (findRoutePath(nodeId, route))
+    if (findRoutePathCost(nodeId, route,costAdd,costMax))
     {
         std::vector<MACAddress> path;
         for (unsigned int i = 0; i < route.size(); i++)
@@ -730,7 +730,7 @@ bool WirelessNumHops::findRouteWithCost(const double &coverageArea, const IPv4Ad
 
     std::vector<int> route;
     int nodeId = getIdNode(dest);
-    if (findRoutePath(nodeId, route))
+    if (findRoutePathCost(nodeId, route,costAdd,costMax))
     {
         std::vector<IPv4Address> path;
         for (unsigned int i = 0; i < route.size(); i++)
