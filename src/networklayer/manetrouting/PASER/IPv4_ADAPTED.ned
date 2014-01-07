@@ -86,7 +86,7 @@ simple IPv4_paser
     parameters:
         double procDelay @unit("s") = default(0s);
         int timeToLive = default(32);
-        int multicastTimeToLive;
+        int multicastTimeToLive = default(32);
         string protocolMapping;
         double fragmentTimeout @unit("s") = default(60s);
         bool forceBroadcast = default(false);

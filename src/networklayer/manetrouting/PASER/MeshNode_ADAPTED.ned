@@ -20,15 +20,19 @@ import inet.applications.ISCTPApp;
 import inet.applications.ITCPApp;
 import inet.applications.IUDPApp;
 import inet.base.NotificationBoard;
+import inet.battery.IBattery;
+import inet.linklayer.IExternalNic;
 import inet.linklayer.IWiredNic;
 import inet.linklayer.IWirelessNic;
 import inet.mobility.IMobility;
 import inet.networklayer.IManetRouting;
 import inet.networklayer.common.InterfaceTable;
 import inet.networklayer.ipv4.RoutingTable;
+import inet.status.NodeStatus;
 import inet.transport.ISCTP;
 import inet.transport.ITCP;
 import inet.transport.IUDP;
+import inet.util.PcapRecorder;
 
 
 //
@@ -37,178 +41,143 @@ import inet.transport.IUDP;
 // support (NullMobility). It is intended mainly for mobile ad-hoc
 // networks where the host is stationary.
 //
-module paser_FixManetRoutingHostShare
+module meshnode
 {
     parameters:
-        @node();
+        @display("bgb=,448");
         @node;
         @labels(node,ethernet-node,wireless-node);
-        int numRadios = default(1);
-        int numGRadios = default(1);
+        bool hasStatus = default(false);
+        int numExtInterfaces = default(0);
+        int numRadios = default(1);               // the number of radios in the router. by default no wireless
+        int numPcapRecorders = default(0); // no of PcapRecorders.
+        string mobilityType = default(numRadios > 0 ? "StationaryMobility" : "");
+        string routingFile = default("");
+        bool IPForward = default(true);
+        bool forwardMulticast = default(false);
+        string batteryType = default("");
         int numTcpApps = default(0);
         int numUdpApps = default(0);
         int numSctpApps = default(0);
         int numPingApps = default(0);
         string tcpAppType = default("");
         string udpAppType = default("");
-        string routingFile = default("");
         bool isGW = default(false);
         bool isBlackHole = default(false);
         //double startTime = exponential(1);
         @display("i=device/pocketpc_s");
-        string mobilityType = default("StationaryMobility");
         string routingProtocol @enum("PASER","AODVUU","DYMOUM","DYMO","DSRUU","OLSR","OLSR_ETX","DSDV_2","Batman") = default("");  // used mobile routing protocol. see: inet.networklayer.manetrouting
         string tcpType = default(firstAvailable("TCP", "TCP_lwIP", "TCP_NSC", "TCP_None"));  // tcp implementation (e.g. ~TCP, ~TCP_lwIP, ~TCP_NSC) or ~TCPSpoof
         string udpType = default(firstAvailable("UDP","UDP_None"));
         string sctpType = default(firstAvailable("SCTP","SCTP_None"));
-
-        bool IPForward = default(true);
-
-        wlanG[*].mgmtType = default("Ieee80211MgmtAdhoc");
+        bool hasTcp = default(numTcpApps>0);
+        bool hasUdp = default(numUdpApps>0);
+        bool hasSctp = default(numSctpApps>0);
+        networkLayer.proxyARP = default(false);
+        wlan[*].mgmtType = default("Ieee80211MgmtAdhoc");
     gates:
         //input radioIn @directIn;
-        input radioIn[numRadios+numGRadios] @directIn;
+        input radioIn[numRadios] @directIn;
         inout ethg[] @labels(EtherFrame-conn);
 
     submodules:
+        status: NodeStatus if hasStatus {
+            @display("p=50,50");
+        }
+
         notificationBoard: NotificationBoard {
             parameters:
-                @display("p=60,70;i=block/control");
+                @display("p=53,155;is=s");
         }
-        //        mmapBoard: MMapBoard {
-        //            parameters:
-        //                @display("p=60,307;i=block/blackboard");
-        //        }
-        //        mobility: NullMobility {
-        //            parameters:
-        //                //x = x_position;
-        //                //y = y_position;
-        //                @display("p=149,307;i=block/cogwheel");
-        //        }
-        //        mobility: <mobilityType> like BasicMobility {
-        //            parameters:
-        //                @display("p=149,307");
-        //        }
+
+        battery: <batteryType> like IBattery if batteryType != "" {
+            parameters:
+                @display("p=53,77;i=block/plug;is=s");
+        }
+
+
         manetrouting: <routingProtocol> like IManetRouting if routingProtocol != "" {
             @display("p=153,247;i=block/network2");
         }
 
         // optional mobility module. Required only if wireless cards are present
-        mobility: <mobilityType> like IMobility if mobilityType != "" && numGRadios > 0 {
+        mobility: <mobilityType> like IMobility if mobilityType != "" && numRadios > 0 {
             parameters:
                 @display("p=149,307");
         }
-        //        networkLayer: NetworkLayer_Paser {
-        //            parameters:
-        //                //                proxyARP = true;
-        //                //                globalARP = false;
-        //                @display("p=248,247;i=block/fork;q=queue");
-        //            gates:
-        //                //                ifIn[1];
-        //                //                ifOut[1];
-        //                ifIn[(sizeof(pppg)+sizeof(ethg))+numRadios+numGRadios];
-        //                ifOut[(sizeof(pppg)+sizeof(ethg))+numRadios+numGRadios];
-        //        }
-        networkLayer: NetworkLayer_Paser {
-            parameters:
-                @display("p=248,247;i=block/fork;q=queue");
-        }
-        routingTable: RoutingTable {
-            parameters:
-                //IPForward = IPForward,
-                IPForward = true;
-                routerId = "";
-                routingFile = routingFile;
-                @display("p=60,230;i=block/table");
-        }
-        interfaceTable: InterfaceTable {
-            parameters:
-                @display("p=60,150;i=block/table");
-        }
-        // the name of radio interface must have "wlan", valid examples wlan, wlan802, localwlan ....
-        //        wlan: Ieee80211gNicAdhoc { // Nic80211 also works, it uses MF's 802.11 implementation
-        //            parameters:
-        //                @display("p=248,349;q=queue;i=block/ifcard");
-        //        }
-        //        wlanG[numGRadios]: Ieee80211aNicAdhoc {
-        //            parameters:
-        //                @display("p=202,357,row,90;q=queue");
-        //        }
-        wlanG[numGRadios]: <default("Ieee80211NewNic")> like IWirelessNic {
-            parameters:
-                @display("p=202,357,row,90;q=queue");
-        }
-        //        wlan[numRadios]: Ieee80211NicAP {
-        //            parameters:
-        //                @display("p=99,357,row,90;q=queue");
-        //        }
-        wlan[numRadios]: <default("Ieee80211NewNic")> like IWirelessNic {
-            parameters:
-                @display("p=99,357,row,90;q=queue");
-        }
-        //        wlan: Nic80211;
-        //            display: "p=248,349;q=queue;i=block/ifcard";
-        //        eth[sizeof(ethg)]: EthernetInterface {
-        //            parameters:
-        //                @display("p=298,357,row,90;q=txQueue");
-        //        }
-        eth[sizeof(ethg)]: <default("EthernetInterface")> like IWiredNic {
-            parameters:
-                @display("p=298,357,row,90;q=txQueue");
-        }
-        //        tcpApp[numTcpApps]: <tcpAppType> like ITCPApp {
-        //            parameters:
-        //                @display("p=163,67;i=block/app");
-        //        }
-        //        tcp: TCP {
-        //            parameters:
-        //                @display("p=163,154;i=block/wheelbarrow");
-        //        }
+
         tcpApp[numTcpApps]: <> like ITCPApp {
             parameters:
                 @display("p=163,67;i=block/app");
         }
+
         tcp: <tcpType> like ITCP if numTcpApps>0 {
             parameters:
                 @display("p=163,154;i=block/wheelbarrow");
         }
-        //        udpApp[numUdpApps]: <udpAppType> like IUDPApp {
-        //            parameters:
-        //                @display("i=block/app;p=272,67");
-        //        }
-        //        udp: UDP {
-        //            parameters:
-        //                @display("p=272,154;i=block/transport");
-        //        }
+
         udpApp[numUdpApps]: <> like IUDPApp {
             parameters:
                 @display("i=block/app;p=272,67");
         }
+
         udp: <udpType> like IUDP if numUdpApps>0 {
             parameters:
                 @display("p=272,154;i=block/transport");
         }
-        //        pingApp: PingApp {
-        //            parameters:
-        //                @display("i=block/app;p=343,200");
-        //        }
+
         sctpApp[numSctpApps]: <> like ISCTPApp {
             parameters:
                 @display("p=381,67,row");
         }
+
         sctp: <sctpType> like ISCTP if numSctpApps>0 {
             @display("p=381,154");
         }
+
         pingApp[numPingApps]: <default("PingApp")> like IPingApp {
             parameters:
                 @display("i=block/app;p=381,247");
         }
 
-//        manetrouting: ManetRouting {
-//            parameters:
-//                @display("p=153,247;i=block/network2");
-//        }
+        networkLayer: NetworkLayer_Paser {
+            parameters:
+                @display("p=248,247;i=block/fork;q=queue");
+        }
 
+
+        routingTable: RoutingTable {
+            parameters:
+                @display("p=53,225;is=s");
+                IPForward = IPForward;
+                forwardMulticast = forwardMulticast;
+                routingFile = routingFile;
+        }
+
+        // linklayer
+        interfaceTable: InterfaceTable {
+            parameters:
+                @display("p=53,287;is=s");
+        }
+
+        pcapRecorder[numPcapRecorders]: PcapRecorder {
+            @display("p=53,338,r,10");
+        }
+
+        wlan[numRadios]: <default("Ieee80211Nic")> like IWirelessNic {
+            parameters:
+                @display("p=216,406,row,60;q=queue");
+        }
+
+        eth[sizeof(ethg)]: <default("EthernetInterface")> like IWiredNic {
+            parameters:
+                @display("p=368,406,row,60;q=txQueue");
+        }
+
+        ext[numExtInterfaces]: <default("ExtInterface")> like IExternalNic {
+            parameters:
+                @display("p=149,406,row,10;q=txQueue;i=block/ifcard");
+        }
 
 
     connections allowunconnected:
@@ -276,10 +245,11 @@ module paser_FixManetRoutingHostShare
         //            wlanG[i].upperLayerOut --> networkLayer.ifIn[sizeof(pppg)+sizeof(ethg)+i+numRadios];
         //            wlanG[i].upperLayerIn <-- networkLayer.ifOut[sizeof(pppg)+sizeof(ethg)+i+numRadios];
         //        }
-        for i=0..numGRadios-1 {
-            radioIn[i+numRadios] --> wlanG[i].radioIn;
-            wlanG[i].upperLayerOut --> networkLayer.ifIn++;
-            wlanG[i].upperLayerIn <-- networkLayer.ifOut++;
+
+        for i=0..numExtInterfaces-1 {
+            ext[i].upperLayerOut --> networkLayer.ifIn++;
+            ext[i].upperLayerIn <-- networkLayer.ifOut++;
         }
+
 }
 

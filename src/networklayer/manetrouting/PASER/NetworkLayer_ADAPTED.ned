@@ -166,10 +166,10 @@ package inet.networklayer.manetrouting.PASER;
 //
 
 import inet.networklayer.arp.ARP;
+import inet.networklayer.autorouting.ipv4.IPv4NodeConfigurator;
 import inet.networklayer.ipv4.ErrorHandling;
 import inet.networklayer.ipv4.ICMP;
 import inet.networklayer.ipv4.IIGMP;
-
 
 
 //
@@ -204,6 +204,9 @@ module NetworkLayer_Paser
         output igmpOut;
 
     submodules:
+        configurator: IPv4NodeConfigurator {
+            @display("p=39,158");
+        }
         ip: IPv4_paser {
             parameters:
                 multicastTimeToLive = 32;

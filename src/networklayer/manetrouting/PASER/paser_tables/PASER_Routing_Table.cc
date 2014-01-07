@@ -92,6 +92,8 @@ PASER_Routing_Entry *PASER_Routing_Table::insert(struct in_addr dest_addr,
         struct in_addr nxthop_addr, PASER_Timer_Message * deltimer,
         PASER_Timer_Message * validtimer, u_int32_t seqnum, u_int32_t hopcnt,
         u_int32_t is_gw, std::list<address_range> AddL, u_int8_t *Cert) {
+    EV<<"source_add"<<dest_addr.S_addr.getIPv4();
+    EV<<"nexthop"<<nxthop_addr.S_addr.getIPv4();
     PASER_Routing_Entry *entry = new PASER_Routing_Entry();
     entry->AddL.assign(AddL.begin(), AddL.end());
     entry->Cert = Cert;
@@ -227,6 +229,8 @@ void PASER_Routing_Table::updateKernelRoutingTable(struct in_addr dest_addr,
         struct in_addr forw_addr, struct in_addr netmask, u_int32_t metric,
         bool del_entry, int ifIndex) {
     if (!del_entry) {
+        EV << " dest_addr = " << dest_addr.S_addr.getIPv4() << "\n";
+        EV << " forw_addr = " << forw_addr.S_addr.getIPv4() << "\n";
         PASER_Routing_Entry *tempRout = getRouteToGw();
         if (tempRout && tempRout->dest_addr.S_addr == dest_addr.S_addr) {
             PASER_Neighbor_Entry *tempNeigh = neighbor_table->findNeigh(
@@ -234,14 +238,15 @@ void PASER_Routing_Table::updateKernelRoutingTable(struct in_addr dest_addr,
             if (tempNeigh
                     && tempNeigh->neighbor_addr.S_addr == forw_addr.S_addr) {
                 //add default Route to Kernel Routing Table
+                EV << " dest_addr = " << dest_addr.S_addr.getIPv4() << "\n";
+                EV << " forw_addr = " << forw_addr.S_addr.getIPv4() << "\n";
                 struct in_addr destAdd;
                 destAdd.S_addr.set(IPv4Address::UNSPECIFIED_ADDRESS);
                 struct in_addr destAddMask;
                 destAddMask.S_addr.set(IPv4Address::UNSPECIFIED_ADDRESS);
                 EV << "update KernelTable: destAddr: "<< destAdd.S_addr << ", destMask: "<< destAddMask.S_addr << "\n";
                 //paser_modul->MY_omnet_chg_rte(destAdd.S_addr, forw_addr.S_addr, destAddMask.S_addr, metric + 1, true, ifIndex);
-                paser_modul->MY_omnet_chg_rte(destAdd.S_addr, forw_addr.S_addr,
-                        destAddMask.S_addr, metric + 1, false, ifIndex);
+                paser_modul->MY_omnet_chg_rte(destAdd.S_addr, forw_addr.S_addr, destAddMask.S_addr, metric + 1, false, ifIndex);
             }
         }
     }
@@ -272,6 +277,9 @@ void PASER_Routing_Table::updateRoutingTableAndSetTableTimeout(
         X509 *cert, struct in_addr nextHop, u_int32_t metric, int ifIndex,
         struct timeval now, u_int32_t gFlag, bool trusted) {
     PASER_Routing_Entry *entry = findDest(src_addr);
+
+    EV<<"source_add"<<src_addr.S_addr.getIPv4();
+    EV<<"nexthop"<<nextHop.S_addr.getIPv4();
 
     PASER_Timer_Message *deletePack = NULL;
     PASER_Timer_Message *validPack = NULL;
@@ -415,6 +423,8 @@ void PASER_Routing_Table::updateRoutingTableAndSetTableTimeout(
 //        }
     } else {
         EV << "add new Route to Routing Table\n";
+        EV<<"source_add"<<src_addr.S_addr.getIPv4();
+        EV<<"nexthop"<<nextHop.S_addr.getIPv4();
         insert(src_addr, nextHop, deletePack, validPack, seq, metric + 1, gFlag,
                 addList, (u_int8_t*) cert);
 //        if(trusted){
@@ -423,6 +433,8 @@ void PASER_Routing_Table::updateRoutingTableAndSetTableTimeout(
         PASER_Neighbor_Entry *tempEntry = neighbor_table->findNeigh(nextHop);
         if (tempEntry) {
             EV << "neighbor found!";
+            EV<<"source_add"<<src_addr.S_addr.getIPv4();
+                  EV<<"nexthop"<<nextHop.S_addr.getIPv4();
             updateKernelRoutingTable(src_addr, nextHop, netmask, metric + 1,
                     false, tempEntry->ifIndex);
         } else {
@@ -509,7 +521,7 @@ void PASER_Routing_Table::updateRoutingTable(struct timeval now,
         return;
     }
 
-    int hopCount = addList.size() + 1;
+    u_int32_t hopCount = addList.size() + 1;
     for (std::list<address_list>::iterator it = addList.begin();
             it != addList.end(); it++) {
         hopCount--;
@@ -607,12 +619,12 @@ void PASER_Routing_Table::deleteFromKernelRoutingTableNodesWithNextHopAddr(
             EV << "    subnetz: " << addList.ipaddr.S_addr.getIPv4().str()
                     << "\n";
             updateKernelRoutingTable(addList.ipaddr, nextHop, addList.mask,
-                    tempEntry->hopcnt + 1, true, 1);
+                    tempEntry->hopcnt + 1, true, 0);
         }
         in_addr tempMask;
         tempMask.S_addr.set(IPv4Address::ALLONES_ADDRESS);
         updateKernelRoutingTable(tempEntry->dest_addr, tempEntry->nxthop_addr,
-                tempMask, tempEntry->hopcnt, true, 1);
+                tempMask, tempEntry->hopcnt, true, 0);
         PASER_Timer_Message *validTimer = tempEntry->validTimer;
         if (validTimer) {
             EV << "loesche Timer\n";
@@ -660,12 +672,12 @@ void PASER_Routing_Table::deleteFromKernelRoutingTableNodesWithNextHopAddr(
         EV << "    subnetz: " << addList.ipaddr.S_addr.getIPv4().str()
                 << "\n";
         updateKernelRoutingTable(addList.ipaddr, nextHop, addList.mask,
-                rEntry->hopcnt + 1, true, 1);
+                rEntry->hopcnt + 1, true, 0);
     }
     in_addr tempMask;
     tempMask.S_addr.set(IPv4Address::ALLONES_ADDRESS);
     updateKernelRoutingTable(rEntry->dest_addr, rEntry->nxthop_addr, tempMask,
-            rEntry->hopcnt, true, 1);
+            rEntry->hopcnt, true, 0);
     PASER_Timer_Message *validTimer = rEntry->validTimer;
     if (validTimer) {
         EV << "loesche Timer\n";

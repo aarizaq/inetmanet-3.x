@@ -1348,12 +1348,12 @@ void PASER_Message_Processing::handleRERR(cPacket * msg, u_int32_t ifIndex) {
                     << "\n";
             routing_table->updateKernelRoutingTable(addList.ipaddr,
                     tempEntry->nxthop_addr, addList.mask, tempEntry->hopcnt + 1,
-                    true, 1);
+                    true, 0);
         }
         in_addr tempMask;
         tempMask.S_addr.set(IPv4Address::ALLONES_ADDRESS);
         routing_table->updateKernelRoutingTable(tempEntry->dest_addr,
-                tempEntry->nxthop_addr, tempMask, tempEntry->hopcnt, true, 1);
+                tempEntry->nxthop_addr, tempMask, tempEntry->hopcnt, true, 0);
         PASER_Timer_Message *validTimer = tempEntry->validTimer;
         if (validTimer) {
             EV << "loesche Timer\n";
@@ -2645,7 +2645,7 @@ void PASER_Message_Processing::sendKDCRequest(struct in_addr nodeAddr,
         message->setCert_array(i, cert.buf[i]);
     }
     message->setKdc_nonce(nonce);
-    paser_modul->send_message(message, paser_configuration->getAddressOfKDC(), 2);
+    paser_modul->send_message(message, paser_configuration->getAddressOfKDC(), 1);
     return;
 }
 

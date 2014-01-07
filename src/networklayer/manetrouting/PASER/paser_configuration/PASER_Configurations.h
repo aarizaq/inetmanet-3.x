@@ -71,7 +71,7 @@ public:
     bool isSetLinkLayerFeeback();
 
     bool isSetLocalRepair();
-    int getMaxLocalRepairHopCount();
+    u_int32_t getMaxLocalRepairHopCount();
 
     /**
      *@brief Test if a given address <b>Addr</b> is in the own subnetworks

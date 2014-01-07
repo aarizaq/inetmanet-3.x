@@ -231,6 +231,8 @@ void PASER_Socket::GenNewRoot() {
 //}
 
 InterfaceEntry * PASER_Socket::PUBLIC_getInterfaceEntry(int index) {
+    EV << "gPUBLIC_getInterfaceEntry "
+             << index << "\n";
     return getInterfaceEntry(index);
 }
 
@@ -379,9 +381,11 @@ void PASER_Socket::handleMessage(cMessage *msg) {
         delete msg;
         return;
     }
+    EV<<"getMessageInterface1"<<endl;
     //Falls startMessage, dann registriere sich am GW oder hole GTK
     //In case startMessage is true, start a registration at a gateway and get GTK
     if (msg == startMessage && paser_configuration->getIsGW()) {
+        EV<<"getMessageInterface2"<<endl;
 //        paket_processing->sendGTKRequest();
         lv_block cert;
         if (!crypto_sign->getCert(&cert)) {
@@ -408,6 +412,7 @@ void PASER_Socket::handleMessage(cMessage *msg) {
         timer_queue->timer_add(timeMessage);
         scheduleNextEvent();
         return;
+
     }
     if (msg == startMessage) {
         /*
@@ -427,6 +432,7 @@ void PASER_Socket::handleMessage(cMessage *msg) {
 //        getParentModule()->getSubmodule("mobility")->par("y")=200;
 //        return;
         //''''''''''''''''''''''''''''''''
+        EV<<"getMessageInterface3"<<endl;
         route_findung->tryToRegister();
         editNodeColor();
         return;
@@ -537,6 +543,7 @@ void PASER_Socket::handleMessage(cMessage *msg) {
 
     //bearbeite ein PASER Paket
     // Process a PASER message
+    EV<<"getMessageInterface"<<endl;
     paket_processing->handleLowerMsg(apPkt, getMessageInterface(apPkt));
     scheduleNextEvent();
 
@@ -548,6 +555,7 @@ void PASER_Socket::handleMessage(cMessage *msg) {
 u_int32_t PASER_Socket::getMessageInterface(cPacket * msg) {
     int32_t interfaceId;
 
+    EV<<"getMessageInterface"<<endl;
     IPv4ControlInfo *ctrl = check_and_cast<IPv4ControlInfo *>(
             msg->removeControlInfo());
     interfaceId = ctrl->getInterfaceId();
@@ -582,6 +590,7 @@ u_int32_t PASER_Socket::getMessageInterface(cPacket * msg) {
     }
     EV << "Incomming msg on " << ifIndex << "\n";
     delete ctrl;
+    EV<<"getMessageInterface"<<ifIndex<<endl;
     return ifIndex;
 }
 
@@ -637,6 +646,7 @@ void PASER_Socket::scheduleNextEvent() {
 
 void PASER_Socket::send_message(cPacket * msg, struct in_addr dest_addr,
         u_int32_t ifIndex) {
+    EV << "ifindex " << ifIndex<< "... ";
     if (dynamic_cast<PASER_MSG *>(msg)) {
         PASER_MSG *paser_msg = check_and_cast<PASER_MSG *>(msg);
         switch (paser_msg->type) {
@@ -677,6 +687,7 @@ void PASER_Socket::send_message(cPacket * msg, struct in_addr dest_addr,
         //Send CRL request
         msg->setName("CRL_REQUEST");
         EV << "paketProcessingDelay = " << paketProcessingDelay << "\n";
+        EV << "ifIndex = " << paketProcessingDelay << "\n";
         sendUDPToIp(msg, PASER_PORT_CRL, dest_addr.S_addr, PASER_PORT_CRL, 30,
                 paketProcessingDelay, ifIndex);
         return;
@@ -756,6 +767,7 @@ int PASER_Socket::addPaketLaengeZuStat(cPacket * msg) {
 }
 
 int PASER_Socket::getIfIdFromIfIndex(int ifIndex) {
+    EV<<"getIfIdFromIfIndex"<<ifIndex<<"\n";
     for (u_int32_t i = 0; i < paser_configuration->getNetDeviceNumber(); i++) {
         if (netDevice[i].enabled == 1 && (int) netDevice[i].ifindex == ifIndex) {
             return i;
@@ -835,6 +847,7 @@ int PASER_Socket::MYgettimeofday(struct timeval *tv, struct timezone *tz) {
 }
 
 int PASER_Socket::MYgetWlanInterfaceIndexByAddress(ManetAddress add) {
+    EV<<"MYgetWlanInterfaceIndexByAddress"<<endl;
     return getWlanInterfaceIndexByAddress(add);
 }
 
@@ -849,6 +862,10 @@ void PASER_Socket::MY_omnet_chg_rte(const ManetAddress &destination, const Manet
         opp_error("PASER can not work in the MAC layer");
      /* Add route to kernel routing table ... */
      IPv4Address desAddress(destination.getIPv4());
+     EV<<"destination is"<<destination.getIPv4()<<endl;
+     EV<<"MASK"<<mask.getIPv4()<<endl;
+     EV<<"getNumInterfaces()"<<getNumInterfaces()<<endl;
+     EV<<"ifaceIndex"<<ifaceIndex<<endl;
 
      if (ifaceIndex>=getNumInterfaces())
          return;
@@ -882,9 +899,10 @@ void PASER_Socket::MY_omnet_chg_rte(const ManetAddress &destination, const Manet
 
       IPv4Address netmask(mask.getIPv4());
       IPv4Address gateway(nextHop.getIPv4());
-      if (mask.isUnspecified())
-          netmask = IPv4Address::ALLONES_ADDRESS;
+      //if (mask.isUnspecified())
+        //  netmask = IPv4Address::ALLONES_ADDRESS;
       InterfaceEntry *ie = getInterfaceEntry(ifaceIndex);
+     EV<< ifaceIndex<<endl;
 
       if (found)
       {
@@ -902,20 +920,31 @@ void PASER_Socket::MY_omnet_chg_rte(const ManetAddress &destination, const Manet
 
       /// Destination
       entry->setDestination(desAddress);
+      EV<<"destination is"<<desAddress<<endl;
+      EV<<"destination is"<< entry->getDestination()<<endl;
       /// Route mask
       entry->setNetmask(netmask);
+      EV<<"netmask is"<<netmask<<endl;
+      EV<<"netmask is"<< entry->getNetmask()<<endl;
       /// Next hop
       entry->setGateway(gateway);
+      EV<<"gateway is"<<gateway<<endl;
+      EV<<"gateway is"<< entry->getGateway()<<endl;
       /// Metric ("cost" to reach the destination)
       entry->setMetric(hops);
       /// Interface name and pointer
-
+      EV<<"hops"<<hops<<endl;
+      EV<<"hops is"<< entry->getMetric()<<endl;
       entry->setInterface(ie);
+      EV<<"ie is"<<ie<<endl;
+      EV<<"ie is"<< entry->getInterface()<<endl;
 
       /// Source of route, MANUAL by reading a file,
       /// routing protocol name otherwise
       IPv4Route::RouteSource routeSource = getUseManetLabelRouting() ? IPv4Route::MANET : IPv4Route::MANET2;
       entry->setSource(routeSource);
+      EV<<"routeSource is"<<routeSource<<endl;
+      EV<<"routeSource is"<<entry->getSource()<<endl;
 
       getInetRoutingTable()->addRoute(entry);
 
@@ -933,6 +962,7 @@ int PASER_Socket::MYgetNumWlanInterfaces() {
 }
 
 int PASER_Socket::MYgetNumInterfaces() {
+    EV<<"getNumInterfaces()"<<getNumInterfaces()<<endl;
     return getNumInterfaces();
 }
 
@@ -986,6 +1016,7 @@ void PASER_Socket::sendUDPToIp(cPacket *msg, int srcPort, const ManetAddress& de
 
     if (index != -1) {
         ie = getInterfaceEntry(index); // The user want to use a pre-defined interface
+        EV<<"getInterfaceEntry"<<index<<endl;
     }
 
     //if (!destAddr.isIPv6())

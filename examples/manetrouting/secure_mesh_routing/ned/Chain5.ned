@@ -15,7 +15,8 @@
 
 package inet.examples.manetrouting.secure_mesh_routing.ned;
 
-import inet.networklayer.manetrouting.PASER.paser_FixManetRoutingHostShare;
+import inet.networklayer.autorouting.ipv4.IPv4NetworkConfigurator;
+import inet.networklayer.manetrouting.PASER.meshnode;
 import inet.nodes.inet.StandardHost;
 import inet.world.radio.ChannelControl;
 import ned.DatarateChannel;
@@ -34,13 +35,13 @@ network Chain5
         channelControl: ChannelControl {
             @display("p=60,50");
         }
-        host_send: paser_FixManetRoutingHostShare {
+        host_send: meshnode {
             parameters:
                 @display("p=150,150;r=230,orange;i=device/smallrouter");
                 isGW = false;
                 routingFile = "routing_tables/host_send_ohne_subnetz.rt";
         }
-        gw0: paser_FixManetRoutingHostShare {
+        gw0: meshnode {
             parameters:
                 // @display("p=750,150;r=230,blue;i=device/server2");
                 @display("p=850,150;r=230,blue;i=device/server2");
@@ -53,48 +54,33 @@ network Chain5
             udpType = "UDP";
             numUdpApps = 1;
         }
-        host_no_send1: paser_FixManetRoutingHostShare {
+        host_no_send1: meshnode {
             parameters:
                 @display("p=325,150;r=230,green;i=device/smallrouter");
                 isGW = false;
                 routingFile = "routing_tables/host_no_send/host_no_send_ohne_subnetz1.rt";
         }
-        host_no_send2: paser_FixManetRoutingHostShare {
+        host_no_send2: meshnode {
             parameters:
                 @display("p=500,150;r=230,green;i=device/smallrouter");
                 isGW = false;
                 routingFile = "routing_tables/host_no_send/host_no_send_ohne_subnetz2.rt";
         }
-        host_no_send3: paser_FixManetRoutingHostShare {
+        host_no_send3: meshnode {
             parameters:
                 @display("p=675,150;r=230,green;i=device/smallrouter");
                 isGW = false;
                 routingFile = "routing_tables/host_no_send/host_no_send_ohne_subnetz3.rt";
         }
-//        host_no_send4: paser_FixManetRoutingHostShare {
-//            parameters:
-//                @display("p=850,150;r=230,green;i=device/smallrouter");
-//                isGW = false;
-//                routingFile = "routing_tables/host_no_send/host_no_send_ohne_subnetz4.rt";
-//        }
-//                host_no_send5: paser_FixManetRoutingHostShare {
-//            parameters:
-//                @display("p=1025,150;r=230,green;i=device/smallrouter");
-//                isGW = false;
-//                routingFile = "routing_tables/host_no_send/host_no_send_ohne_subnetz5.rt";
-//        }
-//                host_no_send6: paser_FixManetRoutingHostShare {
-//            parameters:
-//                @display("p=1200,150;r=230,green;i=device/smallrouter");
-//                isGW = false;
-//                routingFile = "routing_tables/host_no_send/host_no_send_ohne_subnetz6.rt";
-//        }
-//        //host_no_send2: paser_FixManetRoutingHostShare {
-//        //    parameters:
-        //        @display("p=657,119;r=230,red;i=device/smallrouter");
-        //        isGW = false;
-        //        routingFile = "routing_tables/host_no_send/host_no_send_ohne_subnetz2.rt";
-        //}
+        configurator: IPv4NetworkConfigurator {
+            parameters:
+                assignAddresses = false;
+                assignDisjunctSubnetAddresses = false; // avoid using the same address prefix and netmask on different links when assigning IP addresses to interfaces
+       			addStaticRoutes = false; 
+                @display("p=140,50;i=block/cogwheel_s");
+        }
+
+
     connections allowunconnected:
         gw0.ethg++ <--> ethline <--> Key_Distribution_Center.ethg++;
 }

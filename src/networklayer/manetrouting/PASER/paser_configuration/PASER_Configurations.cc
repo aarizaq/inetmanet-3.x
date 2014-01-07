@@ -93,10 +93,10 @@ PASER_Configurations::PASER_Configurations(char *configFile, PASER_Socket *pModu
         netDevice[0].sock = -1;
         netDevice[0].icmp_sock = -1;
         netDevice[0].bcast.S_addr = PASER_BROADCAST;
-        netDevice[0].ipaddr.S_addr.set(pModul->PUBLIC_getInterfaceEntry(1)->ipv4Data()->getIPAddress());
-        netDevice[0].ifindex = 1;
+        netDevice[0].ipaddr.S_addr.set(pModul->PUBLIC_getInterfaceEntry(0)->ipv4Data()->getIPAddress());
+        netDevice[0].ifindex = 0;
         strcpy(netDevice[0].ifname,
-                pModul->PUBLIC_getInterfaceEntry(1)->getName());
+                pModul->PUBLIC_getInterfaceEntry(0)->getName());
     }
 
     netEthDevice = NULL;
@@ -323,7 +323,7 @@ bool PASER_Configurations::isSetLocalRepair() {
     return isLocalRepair;
 }
 
-int PASER_Configurations::getMaxLocalRepairHopCount() {
+u_int32_t PASER_Configurations::getMaxLocalRepairHopCount() {
     return maxHopCountForLocalRepair;
 }
 
@@ -352,17 +352,17 @@ void PASER_Configurations::intAddlList() {
         netAddDevice[i].sock = -1;
         netAddDevice[i].icmp_sock = -1;
 //        netAddDevice[i].bcast.S_addr = (in_addr_t) 0xFFFFFF00;
-        netAddDevice[i].mask.S_addr.set(paser_modul->PUBLIC_getInterfaceEntry(i + netDeviceNumber + 1)->ipv4Data()->getNetmask());
-        netAddDevice[i].ipaddr.S_addr.set(IPv4Address(paser_modul->PUBLIC_getInterfaceEntry(i + netDeviceNumber + 1)->ipv4Data()->getIPAddress().getInt()
+        netAddDevice[i].mask.S_addr.set(paser_modul->PUBLIC_getInterfaceEntry(i + netDeviceNumber )->ipv4Data()->getNetmask());
+        netAddDevice[i].ipaddr.S_addr.set(IPv4Address(paser_modul->PUBLIC_getInterfaceEntry(i + netDeviceNumber)->ipv4Data()->getIPAddress().getInt()
                         & netAddDevice[i].mask.S_addr.getIPv4().getInt()));/*(in_addr_t) 0xFFFFFF00*/;
         EV << "net Mask: "
                 << paser_modul->PUBLIC_getInterfaceEntry(
-                        i + netDeviceNumber + 1)->ipv4Data()->getNetmask().str()
+                        i + netDeviceNumber)->ipv4Data()->getNetmask().str()
                 << "\n";
         netAddDevice[i].ifindex = i + netDeviceNumber + 1;
         strcpy(
                 netAddDevice[i].ifname,
-                paser_modul->PUBLIC_getInterfaceEntry(i + netDeviceNumber + 1)->getName());
+                paser_modul->PUBLIC_getInterfaceEntry(i + netDeviceNumber)->getName());
     }
 }
 
