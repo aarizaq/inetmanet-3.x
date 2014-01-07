@@ -332,9 +332,9 @@ void WirelessNumHops::addEdge (const int & originNode, const int & last_node,uns
          {
              if (last_node == it->second[i]->last_node_)
              {
-                  it->second[i]->cost =cost;
-                  it->second[i]->costAdd =costAdd;
-                  it->second[i]->costMax =costMax;
+                  it->second[i]->cost = cost;
+                  it->second[i]->costAdd = costAdd;
+                  it->second[i]->costMax = costMax;
                   return;
              }
          }
@@ -344,6 +344,8 @@ void WirelessNumHops::addEdge (const int & originNode, const int & last_node,uns
     link->last_node_ = last_node;
     // Also record the link delay and quality..
     link->cost = cost;
+    link->costAdd = costAdd;
+    link->costMax = costMax;
     linkArray[originNode].push_back(link);
 }
 
@@ -390,6 +392,8 @@ void WirelessNumHops::run()
     WirelessNumHops::DijkstraShortest::SetElem elem;
     elem.iD = rootNode;
     elem.cost= 0;
+    elem.costAdd = 0;
+    elem.costMax = 0;
     heap.insert(elem);
 
     while (!heap.empty())
@@ -397,27 +401,23 @@ void WirelessNumHops::run()
 
         std::multiset<WirelessNumHops::DijkstraShortest::SetElem>::iterator itHeap = heap.begin();
         // search if exist several with the same cost and extract randomly one
-        int numeq = 0;
+        std::vector<std::multiset<WirelessNumHops::DijkstraShortest::SetElem>::iterator> equal;
         while(1)
         {
-            std::multiset<WirelessNumHops::DijkstraShortest::SetElem>::iterator itHeap3 = ++itHeap;
-            if (itHeap3 != heap.end())
+            equal.push_back(itHeap);
+            std::multiset<WirelessNumHops::DijkstraShortest::SetElem>::iterator itHeap3 = itHeap;
+            ++itHeap3;
+            if (itHeap3 == heap.end())
                 break;
 
             if (itHeap3->cost > itHeap->cost)
                 break;
             itHeap = itHeap3;
-            numeq++;
         }
-        if (numeq == 0)
-            itHeap = heap.begin();
-        else
-        {
-            int val = +intuniform(0,numeq);
-            itHeap = heap.begin();
-            for (int i = 0; i<val;i++)
-                itHeap++;
-        }
+        int numeq = equal.size()-1;
+        int val = numeq > 0?intuniform(0,numeq):0;
+        itHeap = equal[val];
+        equal.clear();
 
         //
         WirelessNumHops::DijkstraShortest::SetElem elem = *itHeap;
@@ -452,7 +452,10 @@ void WirelessNumHops::run()
                 WirelessNumHops::DijkstraShortest::State state;
                 state.idPrev = elem.iD;
                 state.cost = cost;
+                state.costAdd = costAdd;
+                state.costMax = costMax;
                 state.label = tent;
+
                 routeMap[current_edge->last_node_] = state;
                 WirelessNumHops::DijkstraShortest::SetElem newElem;
                 newElem.iD = current_edge->last_node_;
@@ -466,6 +469,8 @@ void WirelessNumHops::run()
                 if (cost < itNext->second.cost)
                 {
                     itNext->second.cost = cost;
+                    itNext->second.costAdd = costAdd;
+                    itNext->second.costMax = costMax;
                     itNext->second.idPrev = elem.iD;
                     // actualize heap
                     WirelessNumHops::DijkstraShortest::SetElem newElem;
@@ -501,33 +506,32 @@ void WirelessNumHops::runUntil (const int &target)
     WirelessNumHops::DijkstraShortest::SetElem elem;
     elem.iD = rootNode;
     elem.cost= 0;
+    elem.costAdd = 0;
+    elem.costMax = 0;
     heap.insert(elem);
 
     while (!heap.empty())
     {
         std::multiset<WirelessNumHops::DijkstraShortest::SetElem>::iterator itHeap = heap.begin();
         // search if exist several with the same cost and extract randomly one
-        int numeq = 0;
+        std::vector<std::multiset<WirelessNumHops::DijkstraShortest::SetElem>::iterator> equal;
         while(1)
         {
-            std::multiset<WirelessNumHops::DijkstraShortest::SetElem>::iterator itHeap3 = ++itHeap;
-            if (itHeap3 != heap.end())
+            equal.push_back(itHeap);
+            std::multiset<WirelessNumHops::DijkstraShortest::SetElem>::iterator itHeap3 = itHeap;
+            ++itHeap3;
+            if (itHeap3 == heap.end())
                 break;
 
             if (itHeap3->cost > itHeap->cost)
                 break;
             itHeap = itHeap3;
-            numeq++;
         }
-        if (numeq == 0)
-            itHeap = heap.begin();
-        else
-        {
-            int val = +intuniform(0,numeq);
-            itHeap = heap.begin();
-            for (int i = 0; i<val;i++)
-                itHeap++;
-        }
+        int numeq = equal.size()-1;
+        int val = numeq > 0?intuniform(0,numeq):0;
+        itHeap = equal[val];
+        equal.clear();
+
 
         //
         WirelessNumHops::DijkstraShortest::SetElem elem = *itHeap;
@@ -559,7 +563,9 @@ void WirelessNumHops::runUntil (const int &target)
             {
                 WirelessNumHops::DijkstraShortest::State state;
                 state.idPrev=elem.iD;
-                state.cost=cost;
+                state.cost = cost;
+                state.costAdd = costAdd;
+                state.costMax = costMax;
                 state.label = tent;
                 routeMap[current_edge->last_node_] = state;
                 WirelessNumHops::DijkstraShortest::SetElem newElem;
@@ -576,6 +582,8 @@ void WirelessNumHops::runUntil (const int &target)
                 if ( cost < itNext->second.cost)
                 {
                     itNext->second.cost = cost;
+                    itNext->second.costAdd = costAdd;
+                    itNext->second.costMax = costMax;
                     itNext->second.idPrev = elem.iD;
                     // actualize heap
                     WirelessNumHops::DijkstraShortest::SetElem newElem;
@@ -653,12 +661,12 @@ bool WirelessNumHops::findRoutePath(const int &nodeId,std::vector<int> &pathNode
 bool WirelessNumHops::findRoutePathCost(const int &nodeId,std::vector<int> &pathNode,double &costAdd, double &costMax)
 {
     std::vector<int> route;
-    if (getRoute(nodeId,pathNode))
+    if (getRouteCost(nodeId,pathNode,costAdd,costMax))
         return true;
     else
     {
         run();
-        if (getRoute(nodeId,pathNode))
+        if (getRouteCost(nodeId,pathNode,costAdd,costMax))
              return true;
     }
     return false;
@@ -666,7 +674,7 @@ bool WirelessNumHops::findRoutePathCost(const int &nodeId,std::vector<int> &path
 
 
 
-bool WirelessNumHops::findRouteWithCost(const double &coverageArea, const MACAddress &dest,std::vector<MACAddress> &pathNode, bool withCost,double &costAdd, double &costMa)
+bool WirelessNumHops::findRouteWithCost(const double &coverageArea, const MACAddress &dest,std::vector<MACAddress> &pathNode, bool withCost,double &costAdd, double &costMax)
 {
     if (withCost)
         fillRoutingTablesWitCost(coverageArea);
@@ -682,7 +690,7 @@ bool WirelessNumHops::findRouteWithCost(const double &coverageArea, const MACAdd
 
     std::vector<int> route;
     int nodeId = getIdNode(dest);
-    if (findRoutePath(nodeId, route))
+    if (findRoutePathCost(nodeId, route,costAdd,costMax))
     {
         std::vector<MACAddress> path;
         for (unsigned int i = 0; i < route.size(); i++)
@@ -722,7 +730,7 @@ bool WirelessNumHops::findRouteWithCost(const double &coverageArea, const IPv4Ad
 
     std::vector<int> route;
     int nodeId = getIdNode(dest);
-    if (findRoutePath(nodeId, route))
+    if (findRoutePathCost(nodeId, route,costAdd,costMax))
     {
         std::vector<IPv4Address> path;
         for (unsigned int i = 0; i < route.size(); i++)
