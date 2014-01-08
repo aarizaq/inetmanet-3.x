@@ -30,6 +30,8 @@ bool  MobilityBase::areaInitalized=false;
 
 simsignal_t MobilityBase::mobilityStateChangedSignal = SIMSIGNAL_NULL;
 
+Register_Abstract_Class(MobilityBase);
+
 static bool parseIntTo(const char *s, double& destValue)
 {
     if (!s || !*s)

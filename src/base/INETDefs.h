@@ -24,8 +24,8 @@
 
 #include <omnetpp.h>
 
-#if OMNETPP_VERSION < 0x0402
-#  error At least OMNeT++/OMNEST version 4.2 required
+#if OMNETPP_VERSION < 0x0403
+#  error At least OMNeT++/OMNEST version 4.3 required
 #endif
 
 #if defined(INET_EXPORT)
@@ -44,12 +44,17 @@
 #  define EV_DETAIL EV << "DETAIL: "
 #  define EV_DEBUG  EV << "DEBUG: "
 #  define EV_TRACE  EV << "TRACE: "
+#  define EV_DETAIL EV << "DETAIL: "
 #endif
 
 #if OMNETPP_VERSION < 0x500
 #  define EVSTREAM  ev.getOStream()
 #else
 #  define EVSTREAM  EV
+#endif
+
+#if OMNETPP_VERSION < 0x404
+#  define Register_Abstract_Class(x)    /* nothing */
 #endif
 
 typedef unsigned short ushort;
