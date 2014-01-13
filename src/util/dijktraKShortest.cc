@@ -101,6 +101,45 @@ void DijkstraKshortest::initMinAndMax()
    maximumCost.push_back(costData);
 }
 
+void DijkstraKshortest::initMinAndMaxWs()
+{
+   CostVector defaulCost;
+   Cost costData;
+   costData.metric=aditiveMin;
+   costData.value=0;
+   minimumCost.push_back(costData);
+   costData.metric=concaveMax;
+   costData.value=100e100;
+   minimumCost.push_back(costData);
+
+   costData.metric=aditiveMin;
+   costData.value=10e100;
+   maximumCost.push_back(costData);
+   costData.metric=concaveMax;
+   costData.value=0;
+   maximumCost.push_back(costData);
+
+}
+
+void DijkstraKshortest::initMinAndMaxSw()
+{
+
+    CostVector defaulCost;
+    Cost costData;
+    costData.metric=aditiveMin;
+    costData.value=10e100;
+    maximumCost.push_back(costData);
+    costData.metric=concaveMax;
+    costData.value=0;
+    maximumCost.push_back(costData);
+
+    costData.metric=aditiveMin;
+    costData.value=0;
+    minimumCost.push_back(costData);
+    costData.metric=concaveMax;
+    costData.value=100e100;
+    minimumCost.push_back(costData);
+}
 DijkstraKshortest::DijkstraKshortest()
 {
     initMinAndMax();
@@ -138,6 +177,56 @@ void DijkstraKshortest::setLimits(const std::vector<double> & vectorData)
 
 
 
+void DijkstraKshortest::addEdgeWs (const NodeId & originNode, const NodeId & last_node,double cost,double bw)
+{
+    LinkArray::iterator it;
+    it = linkArray.find(originNode);
+    if (it!=linkArray.end())
+    {
+         for (unsigned int i=0;i<it->second.size();i++)
+         {
+             if (last_node == it->second[i]->last_node_)
+             {
+                  it->second[i]->Cost()=cost;
+                  it->second[i]->Bandwith()=bw;
+                  return;
+             }
+         }
+    }
+    EdgeWs *link = new EdgeWs;
+    // The last hop is the interface in which we have this neighbor...
+    link->last_node() = last_node;
+    // Also record the link delay and quality..
+    link->Cost()=cost;
+    link->Bandwith()=bw;
+    linkArray[originNode].push_back(link);
+}
+
+void DijkstraKshortest::addEdgeSW (const NodeId & originNode, const NodeId & last_node,double cost,double bw)
+{
+    LinkArray::iterator it;
+    it = linkArray.find(originNode);
+    if (it!=linkArray.end())
+    {
+         for (unsigned int i=0;i<it->second.size();i++)
+         {
+             if (last_node == it->second[i]->last_node_)
+             {
+                  it->second[i]->Cost()=cost;
+                  it->second[i]->Bandwith()=bw;
+                  return;
+             }
+         }
+    }
+    EdgeSw *link = new EdgeSw;
+    // The last hop is the interface in which we have this neighbor...
+    link->last_node() = last_node;
+    // Also record the link delay and quality..
+    link->Cost()=cost;
+    link->Bandwith()=bw;
+    linkArray[originNode].push_back(link);
+}
+
 void DijkstraKshortest::addEdge (const NodeId & originNode, const NodeId & last_node,double cost,double delay,double bw,double quality)
 {
     LinkArray::iterator it;
@@ -156,7 +245,7 @@ void DijkstraKshortest::addEdge (const NodeId & originNode, const NodeId & last_
              }
          }
     }
-    Edge *link = new Edge;
+    EdgeMulty *link = new EdgeMulty;
     // The last hop is the interface in which we have this neighbor...
     link->last_node() = last_node;
     // Also record the link delay and quality..
@@ -236,7 +325,7 @@ void DijkstraKshortest::run ()
 
         for (unsigned int i=0;i<linkIt->second.size();i++)
         {
-            Edge* current_edge= (linkIt->second)[i];
+            EdgeBase* current_edge= (linkIt->second)[i];
             CostVector cost;
             CostVector maxCost = maximumCost;
             int nextIdx;
@@ -355,7 +444,7 @@ void DijkstraKshortest::runUntil (const NodeId &target)
             opp_error("Error link not found in linkArray");
         for (unsigned int i=0;i<linkIt->second.size();i++)
         {
-            Edge* current_edge= (linkIt->second)[i];
+            EdgeBase* current_edge= (linkIt->second)[i];
             CostVector cost;
             CostVector maxCost = maximumCost;
             int nextIdx;

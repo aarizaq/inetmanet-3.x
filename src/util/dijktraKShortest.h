@@ -51,6 +51,7 @@ protected:
     void addCost(CostVector &,const CostVector & a, const CostVector & b);
     static CostVector minimumCost;
     static CostVector maximumCost;
+
     friend bool operator < ( const DijkstraKshortest::CostVector& x, const DijkstraKshortest::CostVector& y );
 
     class SetElem
@@ -87,24 +88,44 @@ protected:
         ~State();
         void setCostVector(const CostVector &cost);
     };
-    struct Edge
+    struct EdgeBase
     {
         NodeId last_node_; // last node to reach node X
         CostVector cost;
-        Edge()
+        EdgeBase()
         {
             cost=maximumCost;
         }
         inline NodeId& last_node() {return last_node_;}
+        virtual  double&   Cost() = 0;
+        virtual double&   Delay() {};
+        virtual double&   Bandwith() = 0;
+        virtual double&   Quality() {};
+    };
+
+    struct EdgeMulty : public EdgeBase
+    {
         inline double&   Cost()     {return cost[0].value;}
         inline double&   Delay()     {return cost[1].value;}
         inline double&   Bandwith()     {return cost[2].value;}
         inline double&   Quality()     { return cost[3].value;}
     };
 
+    struct EdgeWs : public EdgeBase
+    {
+        inline double&   Cost()     {return cost[0].value;}
+        inline double&   Bandwith()     {return cost[1].value;}
+    };
+
+    struct EdgeSw : public EdgeBase
+    {
+        inline double&   Cost()     {return cost[1].value;}
+        inline double&   Bandwith()     {return cost[0].value;}
+    };
+
     typedef std::vector<DijkstraKshortest::State> StateVector;
     typedef std::map<NodeId,DijkstraKshortest::StateVector> RouteMap;
-    typedef std::map<NodeId, std::vector<DijkstraKshortest::Edge*> > LinkArray;
+    typedef std::map<NodeId, std::vector<DijkstraKshortest::EdgeBase*> > LinkArray;
     LinkArray linkArray;
     RouteMap routeMap;
     NodeId rootNode;
@@ -118,8 +139,12 @@ public:
     virtual void resetLimits(){limitsData.clear();}
     virtual void setKLimit(int val){if (val>0) K_LIMITE=val;}
     virtual void initMinAndMax();
+    virtual void initMinAndMaxWs();
+    virtual void initMinAndMaxSw();
     virtual void cleanLinkArray();
     virtual void addEdge (const NodeId & dest_node, const NodeId & last_node,double cost,double delay,double bw,double quality);
+    virtual void addEdgeWs (const NodeId & dest_node, const NodeId & last_node, double costAdd, double concave);
+    virtual void addEdgeSW (const NodeId & dest_node, const NodeId & last_node, double costAdd, double concave);
     virtual void setRoot(const NodeId & dest_node);
     virtual void run();
     virtual void runUntil (const NodeId &);
