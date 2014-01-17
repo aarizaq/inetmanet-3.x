@@ -91,27 +91,48 @@ void ObstacleControl::addFromXml(cXMLElement* xml) {
 
         double attenuationPerWall = 50; /**< in dB */
         double attenuationPerMeter = 1; /**< in dB / m */
-        if (type == "building") { attenuationPerWall = 50; attenuationPerMeter = 1; }
+        bool probability = false;
+        if (type == "building") {
+            attenuationPerWall = 50; attenuationPerMeter = 1;
+            if (e->getAttribute("attenuationPerWall"))
+            {
+                std::string attenuation = e->getAttribute("attenuationPerWall");
+                std::istringstream i(attenuation);
+                if (!(i >> attenuationPerWall))
+                    error("attenuationPerWall error");
+            }
+
+            if (e->getAttribute("attenuationPerMeter"))
+            {
+                std::string attenuation = e->getAttribute("attenuationPerMeter");
+                std::istringstream i(attenuation);
+                if (!(i >> attenuationPerMeter))
+                    error("attenuationPerMeter error");
+            }
+
+
+        }
+        else if (type == "probability")
+        {
+            attenuationPerWall = 1;
+            attenuationPerMeter = 0;
+            probability = true;
+            if (e->getAttribute("lossProbability"))
+            {
+                std::string attenuation = e->getAttribute("lossProbability");
+                std::istringstream i(attenuation);
+                if (!(i >> attenuationPerMeter))
+                    error("attenuationPerMeter error");
+            }
+
+        }
         else error("unknown obstacle type: %s", type.c_str());
-
-        if (e->getAttribute("attenuationPerWall"))
-        {
-            std::string attenuation = e->getAttribute("attenuationPerWall");
-            std::istringstream i(attenuation);
-            if (!(i >> attenuationPerWall))
-                error("attenuationPerWall error");
-        }
-
-        if (e->getAttribute("attenuationPerMeter"))
-        {
-            std::string attenuation = e->getAttribute("attenuationPerMeter");
-            std::istringstream i(attenuation);
-            if (!(i >> attenuationPerMeter))
-                error("attenuationPerMeter error");
-        }
 
 
         Obstacle obs(id, attenuationPerWall, attenuationPerMeter);
+        if (probability)
+            obs.setType(Obstacle::probability);
+
         std::vector<Coord> sh;
         cStringTokenizer st(shape.c_str());
         while (st.hasMoreTokens()) {

@@ -27,7 +27,8 @@ Obstacle::Obstacle(std::string id, double attenuationPerWall, double attenuation
     visualRepresentation(0),
     id(id),
     attenuationPerWall(attenuationPerWall),
-    attenuationPerMeter(attenuationPerMeter) {
+    attenuationPerMeter(attenuationPerMeter){
+    type = building;
 }
 
 void Obstacle::setShape(Coords shape) {
@@ -235,6 +236,16 @@ double Obstacle::calculateReceivedPower(double pSend, double carrierFrequency, c
 
     // calculate attenuation
     double numWalls = intersectAt.size();
+    if (numWalls > 0 && type == probability)
+    {
+        if (attenuationPerWall >= 2)
+            return pSend;
+        double prob = uniform(0,1);
+        if (prob>attenuationPerWall)
+        {
+            return 0;
+        }
+    }
     double totalDistance = senderPos.distance(receiverPos);
     double attenuation = (attenuationPerWall * numWalls) + (attenuationPerMeter * fractionInObstacle * totalDistance);
     return pSend * pow(10.0, -attenuation/10.0);
