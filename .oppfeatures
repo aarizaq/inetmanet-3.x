@@ -769,7 +769,6 @@
         labels = ""
         nedPackages = "
                        inet.underTest.ieee8021d
-                       inet.underTest.nodes.Ieee8021d
                       "
         extraSourceFolders = ""
         compileFlags = ""
