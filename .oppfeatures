@@ -762,7 +762,7 @@
 
     <feature
         id="Ieee8021dOriginal"
-        name="IEEE 802.1d"
+        name="IEEE 802.1d original"
         description = "STP and RSTP (Spanning Tree Protocol, Rapid Spanning Tree Protocol)"
         initiallyEnabled = "true"
         requires = "Ethernet"
@@ -770,7 +770,6 @@
         nedPackages = "
                        inet.underTest.ieee8021d
                        inet.underTest.nodes.Ieee8021d
-                       inet.linklayer.configurator
                       "
         extraSourceFolders = ""
         compileFlags = ""
