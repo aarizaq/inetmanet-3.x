@@ -238,7 +238,7 @@ double Obstacle::calculateReceivedPower(double pSend, double carrierFrequency, c
     double numWalls = intersectAt.size();
     if (numWalls > 0 && type == probability)
     {
-        if (attenuationPerWall >= 2)
+        if (attenuationPerWall >= 1)
             return pSend;
         double prob = uniform(0,1);
         if (prob>attenuationPerWall)
