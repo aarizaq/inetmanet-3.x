@@ -599,18 +599,18 @@ void WirelessNumHops::runUntil (const int &target)
 }
 
 
-bool WirelessNumHops::getRoute(const int &nodeId,std::vector<int> &pathNode)
+bool WirelessNumHops::getRoute(const int &nodeId,std::deque<int> &pathNode)
 {
     RouteMap::iterator it = routeMap.find(nodeId);
     if (it==routeMap.end())
         return false;
 
-    std::vector<int> path;
+    std::deque<int> path;
     int currentNode = nodeId;
     pathNode.clear();
     while (currentNode!=rootNode)
     {
-        pathNode.push_back(currentNode);
+        pathNode.push_front(currentNode);
         currentNode = it->second.idPrev;
         it = routeMap.find(currentNode);
         if (it==routeMap.end())
@@ -620,33 +620,30 @@ bool WirelessNumHops::getRoute(const int &nodeId,std::vector<int> &pathNode)
 }
 
 
-bool WirelessNumHops::getRouteCost(const int &nodeId,std::vector<int> &pathNode,double &costAdd, double &costMax)
+bool WirelessNumHops::getRouteCost(const int &nodeId,std::deque<int> &pathNode,double &costAdd, double &costMax)
 {
     RouteMap::iterator it = routeMap.find(nodeId);
     if (it==routeMap.end())
         return false;
 
-    std::vector<int> path;
     int currentNode = nodeId;
     pathNode.clear();
     costAdd = it->second.costAdd;
     costMax = it->second.costMax;
     while (currentNode!=rootNode)
     {
-        pathNode.push_back(currentNode);
+        pathNode.push_front(currentNode);
         currentNode = it->second.idPrev;
         it = routeMap.find(currentNode);
         if (it==routeMap.end())
             opp_error("error in data routeMap");
     }
-
     return true;
 }
 
 
-bool WirelessNumHops::findRoutePath(const int &nodeId,std::vector<int> &pathNode)
+bool WirelessNumHops::findRoutePath(const int &nodeId,std::deque<int> &pathNode)
 {
-    std::vector<int> route;
     if (getRoute(nodeId,pathNode))
         return true;
     else
@@ -658,9 +655,8 @@ bool WirelessNumHops::findRoutePath(const int &nodeId,std::vector<int> &pathNode
     return false;
 }
 
-bool WirelessNumHops::findRoutePathCost(const int &nodeId,std::vector<int> &pathNode,double &costAdd, double &costMax)
+bool WirelessNumHops::findRoutePathCost(const int &nodeId,std::deque<int> &pathNode,double &costAdd, double &costMax)
 {
-    std::vector<int> route;
     if (getRouteCost(nodeId,pathNode,costAdd,costMax))
         return true;
     else
@@ -674,7 +670,7 @@ bool WirelessNumHops::findRoutePathCost(const int &nodeId,std::vector<int> &path
 
 
 
-bool WirelessNumHops::findRouteWithCost(const double &coverageArea, const MACAddress &dest,std::vector<MACAddress> &pathNode, bool withCost,double &costAdd, double &costMax)
+bool WirelessNumHops::findRouteWithCost(const double &coverageArea, const MACAddress &dest,std::deque<MACAddress> &pathNode, bool withCost,double &costAdd, double &costMax)
 {
     if (withCost)
         fillRoutingTablesWitCost(coverageArea);
@@ -688,11 +684,11 @@ bool WirelessNumHops::findRouteWithCost(const double &coverageArea, const MACAdd
         return true;
     }
 
-    std::vector<int> route;
+    std::deque<int> route;
     int nodeId = getIdNode(dest);
     if (findRoutePathCost(nodeId, route,costAdd,costMax))
     {
-        std::vector<MACAddress> path;
+        std::deque<MACAddress> path;
         for (unsigned int i = 0; i < route.size(); i++)
         {
             for (std::map<MACAddress,int>::iterator it2 = related.begin(); it2 != related.end(); ++it2)
@@ -714,7 +710,7 @@ bool WirelessNumHops::findRouteWithCost(const double &coverageArea, const MACAdd
 }
 
 
-bool WirelessNumHops::findRouteWithCost(const double &coverageArea, const IPv4Address &dest,std::vector<IPv4Address> &pathNode, bool withCost, double &costAdd, double &costMax)
+bool WirelessNumHops::findRouteWithCost(const double &coverageArea, const IPv4Address &dest,std::deque<IPv4Address> &pathNode, bool withCost, double &costAdd, double &costMax)
 {
     if (withCost)
         fillRoutingTablesWitCost(coverageArea);
@@ -728,11 +724,11 @@ bool WirelessNumHops::findRouteWithCost(const double &coverageArea, const IPv4Ad
         return true;
     }
 
-    std::vector<int> route;
+    std::deque<int> route;
     int nodeId = getIdNode(dest);
     if (findRoutePathCost(nodeId, route,costAdd,costMax))
     {
-        std::vector<IPv4Address> path;
+        std::deque<IPv4Address> path;
         for (unsigned int i = 0; i < route.size(); i++)
         {
             for (std::map<IPv4Address,int>::iterator it2 = relatedIp.begin(); it2 != relatedIp.end(); ++it2)
