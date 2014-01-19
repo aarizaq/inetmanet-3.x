@@ -1252,7 +1252,7 @@ void Ieee80211Mesh::handleDataFrame(Ieee80211DataFrame *frame)
             {
                 if (totalHops >= 0)
                 {
-                    std::vector<MACAddress> path;
+                    std::deque<MACAddress> path;
                     int patSize = 0;
                     if (getOtpimunRoute)
                     {
@@ -2274,7 +2274,7 @@ void Ieee80211Mesh::handleWateGayDataReceive(cPacket *pkt)
             if (encapPkt && isUpper)
             {
                 sendUp(encapPkt);
-                std::vector<MACAddress> path;
+                std::deque<MACAddress> path;
                 int patSize = 0;
                 if (getOtpimunRoute)
                 {
