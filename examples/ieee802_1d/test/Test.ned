@@ -3,15 +3,15 @@ package inet.examples.ieee802_1d.test;
 
 
 import ned.DatarateChannel;
-import inet.nodes.Ieee8021d.Tester;
-import inet.nodes.Ieee8021d.BEB;
+import inet.underTest.ieee8021d.nodes.Tester;
+import inet.underTest.ieee8021d.nodes.BEB;
 
 import inet.nodes.inet.StandardHost;
 import inet.nodes.ethernet.EtherSwitch;
 import inet.linklayer.ethernet.EtherHub;
-import inet.nodes.Ieee8021d.Tester;
-import inet.nodes.Ieee8021d.Ether1QBridge;
-import inet.nodes.Ieee8021d.EthernetHost;
+import inet.underTest.ieee8021d.nodes.Tester;
+import inet.underTest.ieee8021d.nodes.Ether1QBridge;
+import inet.underTest.ieee8021d.nodes.EthernetHost;
 import inet.util.ThruputMeteringChannel;
 import inet.linklayer.channels.ProgramedFailureDataRateChannel;
 

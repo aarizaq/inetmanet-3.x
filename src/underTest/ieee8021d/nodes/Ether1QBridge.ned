@@ -10,7 +10,7 @@ import inet.underTest.ieee8021d.ieee8021Q.PortFilt;
 import inet.underTest.ieee8021d.ieee8021Q.Relay1Q;
 import inet.underTest.ieee8021d.ieee8021Q.Cache1Q;
 import inet.linklayer.ethernet.EtherMAC;
-import inet.underTest.ieee8021d.RSTP.RSTP;
+import inet.underTest.ieee8021d.RSTP.RSTP1Q;
 import inet.underTest.ieee8021d.MVRP.MVRP;
 
 //
@@ -54,7 +54,7 @@ module Ether1QBridge
                 @display("p=171,343,row;q=queue");
         }
 
-        rstp: RSTP {
+        rstp: RSTP1Q {
             @display("p=47,38");
             gates:
                 RSTPPort;

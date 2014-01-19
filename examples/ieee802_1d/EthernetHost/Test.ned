@@ -3,8 +3,8 @@ package inet.examples.ieee802_1d.EthernetHost;
 
 
 import ned.DatarateChannel;
-import inet.nodes.Ieee8021d.EthernetHost;
-import inet.nodes.Ieee8021d.Tester;
+import inet.underTest.ieee8021d.nodes.EthernetHost;
+import inet.underTest.ieee8021d.nodes.Tester;
 
 
 

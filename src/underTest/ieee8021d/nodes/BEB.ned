@@ -12,7 +12,7 @@ import inet.underTest.ieee8021d.ieee8021AH.ITagTable;
 import inet.underTest.ieee8021d.ieee8021AH.BComponent;
 import inet.underTest.ieee8021d.ieee8021AH.PortFilt1ah;
 import inet.linklayer.ethernet.EtherMAC;
-import inet.underTest.ieee8021d.RSTP.RSTP;
+import inet.underTest.ieee8021d.RSTP.RSTP1Q;
 import inet.underTest.ieee8021d.MVRP.MVRP;
 
 //
@@ -70,7 +70,7 @@ module BEB
                 @display("p=183,399,row");
         }
 
-        rstp: RSTP {
+        rstp: RSTP1Q {
             @display("p=47,109");
             gates:
                 RSTPPort;

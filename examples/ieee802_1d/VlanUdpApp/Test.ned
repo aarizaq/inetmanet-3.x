@@ -2,7 +2,7 @@ package inet.examples.ieee802_1d.VlanUdpApp;
 
 
 import inet.networklayer.autorouting.ipv4.IPv4NetworkConfigurator;
-import inet.nodes.Ieee8021d.Ether1QBridge;
+import inet.underTest.ieee8021d.nodes.Ether1QBridge;
 import inet.nodes.inet.StandardHost;
 import ned.DatarateChannel;
 

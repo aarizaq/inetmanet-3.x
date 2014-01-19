@@ -8,7 +8,7 @@ package inet.underTest.ieee8021d.RSTP;
 // @version 1.0
 // @date Feb 2011
 //******************************************************/
-simple RSTP
+simple RSTP1Q
 {
     parameters:
         int BridgePriority = default(128);  				//priority + MAC determines the RSTP id

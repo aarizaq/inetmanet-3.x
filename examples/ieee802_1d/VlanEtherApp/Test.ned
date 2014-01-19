@@ -1,8 +1,8 @@
 package inet.examples.ieee802_1d.VlanEtherApp;
 
 
-import inet.nodes.Ieee8021d.Ether1QBridge;
-import inet.nodes.Ieee8021d.EthernetHost;
+import inet.underTest.ieee8021d.nodes.Ether1QBridge;
+import inet.underTest.ieee8021d.nodes.EthernetHost;
 import ned.DatarateChannel;
 
 
