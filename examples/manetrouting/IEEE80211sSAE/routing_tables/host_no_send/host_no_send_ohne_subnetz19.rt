@@ -1,0 +1,10 @@
+ifconfig:
+name: wlanG0        inet_addr: 10.0.1.49 Mask: 255.255.255.0    MTU: 1500   Metric: 1 BROADCAST MULTICAST
+#name: wlan0        inet_addr: 10.0.49.1 Mask: 255.255.255.0    MTU: 1500   Metric: 1 BROADCAST MULTICAST
+ifconfigend.
+
+route:
+#default:   *   0.0.0.0 G   0   lo0
+routeend.
+
+

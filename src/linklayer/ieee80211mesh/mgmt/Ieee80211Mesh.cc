@@ -559,6 +559,16 @@ void Ieee80211Mesh::handleMessage(cMessage *msg)
             else
                 delete msg;
         }
+        // if encrypted
+          else if(hasSecurity && (strstr(msg->getName() ,"AMPE msg 1/4")!=NULL || strstr(msg->getName() ,"AMPE msg 2/4")!=NULL
+                  || strstr(msg->getName() ,"AMPE msg 3/4")!=NULL  || strstr(msg->getName() ,"AMPE msg 4/4")!=NULL
+                  || strstr(msg->getName() ,"Group msg 1/2")!=NULL  || strstr(msg->getName() ,"Group msg 2/2")!=NULL
+                  ))
+          {
+              EV << " Frame arrived from MAC, send it to SecurityModule" << msg << "\n";
+              send(msg, "securityOut");
+          }
+
         else
         {
             Ieee80211DataOrMgmtFrame *frame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg);
@@ -613,6 +623,43 @@ void Ieee80211Mesh::handleMessage(cMessage *msg)
     {
         sendOrEnqueue(PK(msg));
     }
+    else if (strstr(gateName,"securityIn")!=NULL && hasSecurity)
+    {
+        if(strstr(msg->getName() ,"CCMPFrame")!=NULL)
+        {
+            EV << "CCMPFrame Frame arrived from Security, send it to Mac_" <<endl;
+            sendOrEnqueue(PK(msg));
+
+        }
+        else if(strstr(msg->getName() ,"DecCCMP")!=NULL)
+        {
+            EV << "Frame arrived from Security, send it to upper layers: " << msg << "\n";
+
+            Ieee80211DataOrMgmtFrame *frame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg);
+            Ieee80211MeshFrame *frame2  = dynamic_cast<Ieee80211MeshFrame *>(msg);
+            if (frame2)
+                frame2->setTTL(frame2->getTTL()-1);
+            actualizeReactive(frame,false);
+
+            if (dynamic_cast<Ieee80211ActionHWMPFrame *>(msg))
+            {
+                if ((routingModuleHwmp != NULL) && (routingModuleHwmp->isOurType(PK(msg))))
+                    send(msg,"routingOutHwmp");
+                else
+                    delete msg;
+            }
+            else
+               // delete msg;
+                processFrame(frame);
+      }
+
+
+        else{
+
+            sendOrEnqueue(PK(msg));
+        }
+    }
+
     else
     {
         cPacket *pk = PK(msg);
@@ -687,6 +734,7 @@ void Ieee80211Mesh::handleRoutingMessage(cPacket *msg)
 
 void Ieee80211Mesh::handleUpperMessage(cPacket *msg)
 {
+    EV<<"HandleUpperMessage"<<endl;
     Ieee80211DataFrame *frame = encapsulate(msg);
     if (frame)
     {
@@ -719,6 +767,7 @@ void Ieee80211Mesh::handleCommand(int msgkind, cPolymorphic *ctrl)
 
 Ieee80211DataFrame *Ieee80211Mesh::encapsulate(cPacket *msg)
 {
+    EV<<"Encapsulate"<<endl;
     Ieee80211MeshFrame *frame = new Ieee80211MeshFrame(msg->getName());
     frame->setSubType(UPPERMESSAGE);
     frame->setTTL(maxTTL);
@@ -1158,6 +1207,9 @@ void Ieee80211Mesh::handleDataFrame(Ieee80211DataFrame *frame)
         finalAddress = frame2->getFinalAddress();
         totalHops = frame2->getTotalHops();
         totalFixHops = frame2->getTotalStaticHops();
+        EV<<"totalHops"<<totalHops<<endl;
+        EV<<"totalFixHops"<< totalFixHops<<endl;
+
     }
 
     cPacket *msg = decapsulate(frame);
@@ -1262,7 +1314,8 @@ void Ieee80211Mesh::handleDataFrame(Ieee80211DataFrame *frame)
                             emit(numHopsSignal,totalHops - patSize);
                         }
                     }
-                    emit(numFixHopsSignal,totalFixHops/totalHops);
+                    if(totalHops)
+                        emit(numFixHopsSignal,totalFixHops/totalHops);
                 }
                 sendUp(msg);
             }
@@ -1387,7 +1440,9 @@ void Ieee80211Mesh::sendOut(cMessage *msg)
         }
     }
     else
+    {   packetRequested++;
         send(msg, "macOut",msg->getKind());
+    }
 }
 
 
