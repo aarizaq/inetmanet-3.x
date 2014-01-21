@@ -800,7 +800,7 @@ void WirelessNumHops::getNeighbours(const MACAddress &node, std::vector<MACAddre
 std::deque<int> WirelessNumHops::getRoute(int index)
 {
     std::deque<int> route;
-    if (i>=routeMap.size())
+    if (index>=routeMap.size())
         return route;
     RouteMap::iterator it = routeMap.begin();
     for (int i = 0; i<index; i++)
@@ -819,7 +819,7 @@ std::deque<int> WirelessNumHops::getRoute(int index)
     return route;
 }
 
-void WirelessNumHops::getRoute(i, std::deque<IPv4Address> &pathNode)
+void WirelessNumHops::getRoute(int i, std::deque<IPv4Address> &pathNode)
 {
     std::deque<int> route = getRoute(i);
     pathNode.clear();
@@ -838,7 +838,7 @@ void WirelessNumHops::getRoute(i, std::deque<IPv4Address> &pathNode)
     }
 }
 
-void WirelessNumHops::getRoute(i,std::deque<MACAddress> &pathNode)
+void WirelessNumHops::getRoute(int i,std::deque<MACAddress> &pathNode)
 {
     std::deque<int> route = getRoute(i);
     pathNode.clear();
