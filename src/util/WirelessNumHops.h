@@ -174,10 +174,10 @@ class WirelessNumHops : public cOwnedObject
         virtual bool getRoute(const int &nodeId,std::deque<int> &);
         virtual bool getRouteCost(const int &nodeId,std::deque<int> &,double &costAdd, double &costMax);
         virtual void setRoot(const int & dest_node);
-        virtual void run();
         virtual void runUntil (const int &);
         virtual int getIdNode(const MACAddress &add);
         virtual int getIdNode(const  IPv4Address &add);
+        virtual std::deque<int> getRoute(int i);
         virtual void fillRoutingTables(const double &tDistance);
         virtual void fillRoutingTablesWitCost(const double &tDistance);
         virtual bool findRoutePath(const int &dest,std::deque<int> &pathNode);
@@ -208,8 +208,6 @@ class WirelessNumHops : public cOwnedObject
             return findRouteWithCost(dist, dest,pathNode, false, cost1, cost2);
         }
 
-
-
         virtual void setRoot(const MACAddress & dest_node)
         {
             setRoot(getIdNode(dest_node));
@@ -224,6 +222,14 @@ class WirelessNumHops : public cOwnedObject
         {
             runUntil(getIdNode(target));
         }
+
+        virtual void run();
+
+        virtual unsigned int getNumRoutes() {return routeMap.size();}
+
+        virtual void getRoute(int ,std::deque<IPv4Address> &pathNode);
+
+        virtual void getRoute(int ,std::deque<MACAddress> &pathNode);
 
         virtual Coord getPos(const int &node);
 

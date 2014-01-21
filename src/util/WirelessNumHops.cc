@@ -796,3 +796,62 @@ void WirelessNumHops::getNeighbours(const MACAddress &node, std::vector<MACAddre
     }
 }
 
+
+std::deque<int> WirelessNumHops::getRoute(int index)
+{
+    std::deque<int> route;
+    if (i>=routeMap.size())
+        return route;
+    RouteMap::iterator it = routeMap.begin();
+    for (int i = 0; i<index; i++)
+        ++it;
+
+    int currentNode = it->first;
+
+    while (currentNode!=rootNode)
+    {
+        route.push_front(currentNode);
+        currentNode = it->second.idPrev;
+        it = routeMap.find(currentNode);
+        if (it==routeMap.end())
+            opp_error("error in data routeMap");
+    }
+    return route;
+}
+
+void WirelessNumHops::getRoute(i, std::deque<IPv4Address> &pathNode)
+{
+    std::deque<int> route = getRoute(i);
+    pathNode.clear();
+
+    for (unsigned int i = 0; i < route.size(); i++)
+    {
+        for (std::map<IPv4Address, int>::iterator it2 = relatedIp.begin(); it2 != relatedIp.end(); ++it2)
+        {
+            if (it2->second == route[i])
+                pathNode.push_back(it2->first);
+        }
+    }
+    if (pathNode.size() != route.size())
+    {
+        opp_error("node id not found");
+    }
+}
+
+void WirelessNumHops::getRoute(i,std::deque<MACAddress> &pathNode)
+{
+    std::deque<int> route = getRoute(i);
+    pathNode.clear();
+    for (unsigned int i = 0; i < route.size(); i++)
+    {
+        for (std::map<MACAddress, int>::iterator it2 = related.begin(); it2 != related.end(); ++it2)
+        {
+            if (it2->second == route[i])
+                pathNode.push_back(it2->first);
+        }
+    }
+    if (pathNode.size() != route.size())
+    {
+        opp_error("node id not found");
+    }
+}
