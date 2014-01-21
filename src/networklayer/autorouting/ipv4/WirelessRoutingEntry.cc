@@ -32,11 +32,11 @@ WirelessRoutingEntry::~WirelessRoutingEntry()
 void WirelessRoutingEntry::fillTables(double distance)
 {
     IRoutingTable *rt = RoutingTableAccess().get();
-    IInterfaceTable *ift = RoutingTableAccess().get();
-    InterfaceEntry iface = NULL;
+    IInterfaceTable *ift = InterfaceTableAccess().get();
+    InterfaceEntry *iface = NULL;
     for (int i = 0; i < ift->getNumInterfaces(); i++)
     {
-        InterfaceEntry ie = ift->getInterfaceByNodeInputGateId(i);
+        InterfaceEntry *ie = ift->getInterfaceByNodeInputGateId(i);
         const char *name = ie->getName();
         if (strcmp(name, "wlan") == 0)
         {
