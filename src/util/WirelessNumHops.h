@@ -178,8 +178,7 @@ class WirelessNumHops : public cOwnedObject
         virtual int getIdNode(const MACAddress &add);
         virtual int getIdNode(const  IPv4Address &add);
         virtual std::deque<int> getRoute(int i);
-        virtual void fillRoutingTables(const double &tDistance);
-        virtual void fillRoutingTablesWitCost(const double &tDistance);
+
         virtual bool findRoutePath(const int &dest,std::deque<int> &pathNode);
         virtual bool findRoutePathCost(const int &nodeId,std::deque<int> &pathNode,double &costAdd, double &costMax);
 
@@ -190,6 +189,9 @@ class WirelessNumHops : public cOwnedObject
         friend bool operator < ( const WirelessNumHops::DijkstraShortest::SetElem& x, const WirelessNumHops::DijkstraShortest::SetElem& y );
         friend bool operator > ( const WirelessNumHops::DijkstraShortest::SetElem& x, const WirelessNumHops::DijkstraShortest::SetElem& y );
         friend bool operator == ( const WirelessNumHops::DijkstraShortest::SetElem& x, const WirelessNumHops::DijkstraShortest::SetElem& y );
+
+        virtual void fillRoutingTables(const double &tDistance);
+        virtual void fillRoutingTablesWitCost(const double &tDistance);
 
         WirelessNumHops();
         virtual ~WirelessNumHops();

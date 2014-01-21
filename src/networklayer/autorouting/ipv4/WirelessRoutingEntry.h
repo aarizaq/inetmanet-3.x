@@ -22,7 +22,7 @@ class WirelessRoutingEntry : public cOwnedObject
     public:
         WirelessRoutingEntry();
         virtual ~WirelessRoutingEntry();
-        virtual void fillTables();
+        virtual void fillTables(double);
 };
 
 #endif /* WIRELESSROUTINGENTRY_H_ */

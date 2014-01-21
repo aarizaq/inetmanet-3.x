@@ -16,6 +16,7 @@
 #include <WirelessRoutingEntry.h>
 #include "WirelessNumHops.h"
 #include "RoutingTableAccess.h"
+#include "InterfaceTableAccess.h"
 
 WirelessRoutingEntry::WirelessRoutingEntry()
 {
@@ -28,10 +29,24 @@ WirelessRoutingEntry::~WirelessRoutingEntry()
     // TODO Auto-generated destructor stub
 }
 
-void WirelessRoutingEntry::fillTables()
+void WirelessRoutingEntry::fillTables(double distance)
 {
     IRoutingTable *rt = RoutingTableAccess().get();
+    IInterfaceTable *ift = RoutingTableAccess().get();
+    InterfaceEntry iface = NULL;
+    for (int i = 0; i < ift->getNumInterfaces(); i++)
+    {
+        InterfaceEntry ie = ift->getInterfaceByNodeInputGateId(i);
+        const char *name = ie->getName();
+        if (strcmp(name, "wlan") == 0)
+        {
+            iface = ie;
+            break;
+        }
+    }
+
     WirelessNumHops wn;
+    wn.fillRoutingTables(distance);
     wn.setRoot(rt->getRouterId());
     wn.run();
     for(unsigned int i = 0;i<wn.getNumRoutes(); i++)
@@ -45,7 +60,7 @@ void WirelessRoutingEntry::fillTables()
             entry->setGateway(route[0]);
             entry->setNetmask(IPv4Address::ALLONES_ADDRESS);
             entry->setMetric(route.size());
-            entry->setInterface(NULL);
+            entry->setInterface(iface);
             rt->addRoute(entry);
         }
     }
