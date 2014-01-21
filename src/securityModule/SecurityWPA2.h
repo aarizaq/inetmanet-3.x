@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "INETDefs.h"
-#include "securityMsg_m.h"
+#include "NewMsgWithMacAddr_m.h"
 #include "Ieee80211Primitives_m.h"
 #include "NotificationBoard.h"
 #include "InterfaceTable.h"
@@ -38,10 +38,11 @@
 #include <cstdarg>
 
 #include "Ieee80211Frame_m.h"
-#include "IPv4Datagram_m.h"
+#include "IPv4Datagram.h"
 #include "UDPPacket_m.h"
+#include "SecurityKeys.h"
 
-class SecurityWPA2 : public cSimpleModule, public INotifiable
+class SecurityWPA2 : public cSimpleModule, public INotifiable, public SecurityKeys
 {
         const char *msg;
 
@@ -52,13 +53,6 @@ public:
         static simsignal_t AuthTimeoutsNrSignal;
         static simsignal_t BeaconsTimeoutNrSignal;
         static simsignal_t deletedFramesSignal;
-        typedef struct { std::vector<uint64_t> buf; int len;} key256;
-        typedef struct { std::vector<uint64_t> buf; int len;} nonce;
-        typedef struct { std::vector<uint64_t> buf; int len;} mic;
-        typedef struct { std::vector<uint64_t> buf; int len;} key128;
-        typedef struct { std::vector<uint64_t> buf; int len;} key384;
-        typedef struct { std::vector<uint64_t> buf; int len;} key64;
-        typedef uint64_t  unit64_t_;
         enum MeshStatus{ NOT_AUTHENTICATED, AUTHENTICATED, WaitingForAck};
         struct MeshInfo
         {
@@ -185,7 +179,7 @@ protected:
         NotificationBoard *nb;
 
 public:
-        friend std::ostream & operator <<(std::ostream & os, const Security::LocEntry & e);
+        friend std::ostream & operator <<(std::ostream & os, const SecurityWPA2::LocEntry & e);
         SecurityWPA2();
         virtual ~SecurityWPA2();
         virtual void initialize(int stage);
@@ -245,9 +239,9 @@ public:
         static uint64_t stringToUint64_t(std::string s);
         virtual key256 computePMK(std::string s, std::string s1);
         virtual nonce generateNonce();
-        virtual key384 computePTK(Security::key256 PMK, Security::nonce NonceA, Security::nonce NonceB, const MACAddress & addressA, const MACAddress & addressB);
-        virtual key128 encrypt128(Security::key128 a, Security::key128 b);
-        virtual key128 decrypt128(Security::key128 a, Security::key128 b);
+        virtual key384 computePTK(SecurityWPA2::key256 PMK, SecurityWPA2::nonce NonceA, SecurityWPA2::nonce NonceB, const MACAddress & addressA, const MACAddress & addressB);
+        virtual key128 encrypt128(SecurityWPA2::key128 a, SecurityWPA2::key128 b);
+        virtual key128 decrypt128(SecurityWPA2::key128 a, SecurityWPA2::key128 b);
         virtual key128 computeMic128(key128 KCK, cMessage *msg);
         virtual void clearKey128(key128 key);
         virtual void clearKey256(key256 key);

@@ -41,11 +41,12 @@
 #include "IPv4Datagram.h"
 #include "UDPPacket_m.h"
 #include "NewMsgWithMacAddr_m.h"
+#include "SecurityKeys.h"
 
 class SecurityPkt;
 class SAEMsg;
 class AMPEMsg;
-class Security : public cSimpleModule, public INotifiable
+class Security : public cSimpleModule, public INotifiable, public SecurityKeys
 {
         const char *msg;
 
@@ -56,12 +57,6 @@ public:
         static simsignal_t AuthTimeoutsNrSignal;
         static simsignal_t BeaconsTimeoutNrSignal;
         static simsignal_t deletedFramesSignal;
-        typedef struct { std::vector<uint64_t> buf; int len;} key256;
-        typedef struct { std::vector<uint64_t> buf; int len;} nonce;
-        typedef struct { std::vector<uint64_t> buf; int len;} mic;
-        typedef struct { std::vector<uint64_t> buf; int len;} key128;
-        typedef struct { std::vector<uint64_t> buf; int len;} key384;
-        typedef struct { std::vector<uint64_t> buf; int len;} key64;
         typedef uint64_t  unit64_t_;
         enum MeshStatus{ NOT_AUTHENTICATED, AUTHENTICATED, COMMITTED, CONFIRMED, ACCEPTED };
         struct MeshInfo

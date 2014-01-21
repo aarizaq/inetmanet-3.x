@@ -9,6 +9,7 @@ cplusplus {{
 #include "MACAddress.h"
 #include "Ieee80211MgmtFrames_m.h"
 #include "Security.h"
+#include "SecurityKeys.h"
 #include <iostream>
 #include <vector>
 
@@ -17,12 +18,12 @@ cplusplus {{
 class noncobject Security;
 
 cplusplus {{
-typedef Security::nonce nonce;
-typedef Security::key128 key128;
-typedef Security::key256 key256;
-typedef Security::key384 key384;
-typedef Security::mic mic;
-typedef Security::unit64_t_ unit64_t_;
+typedef SecurityKeys::nonce nonce;
+typedef SecurityKeys::key128 key128;
+typedef SecurityKeys::key256 key256;
+typedef SecurityKeys::key384 key384;
+typedef SecurityKeys::mic mic;
+typedef SecurityKeys::unit64_t_ unit64_t_;
 }}
 class noncobject nonce;
 class noncobject key128;

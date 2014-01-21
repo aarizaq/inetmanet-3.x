@@ -1480,8 +1480,8 @@ IPv4Datagram*  SecurityWPA2::handleIPv4Datagram(IPv4Datagram* IP, MeshInfo *mesh
         {
 
             IP->setHeaderLength(IP->getHeaderLength()^mesh->KEK.buf.at(0));
-            IP->setSrcAddress((IP->getSrcAddress().getInt())^mesh->KEK.buf.at(0));
-            IP->setDestAddress((IP->getDestAddress().getInt())^mesh->KEK.buf.at(0));
+            IP->setSrcAddress(IPv4Address((IP->getSrcAddress().getInt())^mesh->KEK.buf.at(0)));
+            IP->setDestAddress(IPv4Address((IP->getDestAddress().getInt())^mesh->KEK.buf.at(0)));
             IP->setTransportProtocol(IP->getTransportProtocol()^mesh->KEK.buf.at(0));
             IP->setTimeToLive(IP->getTimeToLive()^mesh->KEK.buf.at(0));
             IP->setIdentification(IP->getIdentification()^mesh->KEK.buf.at(0));
@@ -1562,9 +1562,9 @@ Ieee80211ActionHWMPFrame *  SecurityWPA2::encryptActionHWMPFrame(Ieee80211Action
             body.setBodyLength(body.getBodyLength()^4);
             body.setId(body.getId()^4);
             body.setPathDiscoveryId(body.getPathDiscoveryId()^4);
-            body.setOriginator(body.getOriginator().getInt()^4);
+            body.setOriginator(MACAddress(body.getOriginator().getInt()^4));
             body.setOriginatorSeqNumber(body.getOriginatorSeqNumber()^4);
-            body.setOriginatorExternalAddr(body.getOriginatorExternalAddr().getInt()^4);
+            body.setOriginatorExternalAddr(MACAddress(body.getOriginatorExternalAddr().getInt()^4));
             body.setLifeTime(body.getLifeTime()^4);
             body.setMetric(body.getMetric()^4);
 
@@ -1600,12 +1600,12 @@ Ieee80211ActionHWMPFrame *  SecurityWPA2::encryptActionHWMPFrame(Ieee80211Action
 
             body.setBodyLength(body.getBodyLength()^4);
             body.setId(body.getId()^4);
-            body.setTarget(body.getTarget().getInt()^4);
+            body.setTarget(MACAddress(body.getTarget().getInt()^4));
             body.setTargetSeqNumber(body.getTargetSeqNumber()^4);
-            body.setTagetExternalAddr(body.getTagetExternalAddr().getInt()^4);
+            body.setTagetExternalAddr(MACAddress(body.getTagetExternalAddr().getInt()^4));
             body.setLifeTime(body.getLifeTime()^4);
             body.setMetric(body.getMetric()^4);
-            body.setOriginator(body.getOriginator().getInt()^4);
+            body.setOriginator(MACAddress(body.getOriginator().getInt()^4));
             body.setOriginatorSeqNumber(body.getOriginatorSeqNumber()^4);
 
             EV << "nachher: "<<endl;
