@@ -31,8 +31,8 @@ class noncobject key384;
 class noncobject mic;
 class noncobject std;
 class noncobject unit64_t_;
-//packet Ieee80211ManagementFrame;
-//packet Ieee80211MeshFrame;
+packet Ieee80211ManagementFrame;
+packet Ieee80211MeshFrame;
 
 
 packet SecurityPkt //extends Ieee80211ManagementFrame
