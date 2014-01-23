@@ -25,7 +25,7 @@
 #include "NotificationBoard.h"
 #include "Ieee80211Frame_m.h"
 #include "Ieee80211MgmtFrames_m.h"
-#include "securityPKT_m.h"
+#include "securityPkt_m.h"
 #include "Ieee80211MgmtBase.h"
 #include "SecurityWPA2.h"
 /**

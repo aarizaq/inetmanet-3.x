@@ -22,7 +22,7 @@
 
 #include "SecurityIeee80211MgmtBase.h"
 #include "NotificationBoard.h"
-#include "securityPKT_m.h"
+#include "securityPkt_m.h"
 #include "SecurityWPA2.h"
 
 /**

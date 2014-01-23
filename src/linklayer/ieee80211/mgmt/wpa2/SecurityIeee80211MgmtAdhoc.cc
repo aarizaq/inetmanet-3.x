@@ -20,7 +20,7 @@
 #include "Ieee802Ctrl_m.h"
 #include "OLSR.h"
 #include "stdlib.h"
-#include "securityPKT_m.h"
+#include "securityPkt_m.h"
 #include "Security.h"
 
 Define_Module(SecurityIeee80211MgmtAdhoc);
