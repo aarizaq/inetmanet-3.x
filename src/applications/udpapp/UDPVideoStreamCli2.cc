@@ -33,9 +33,9 @@ simsignal_t UDPVideoStreamCli2::rcvdPkSignal = SIMSIGNAL_NULL;
 
 UDPVideoStreamCli2::UDPVideoStreamCli2()
 {
-    reintentTimer = NULL;
-    timeOutMsg = NULL;
-    selfMsg = NULL;
+    reintentTimer = new cMessage();
+    timeOutMsg =  new cMessage();
+    selfMsg = new cMessage("UDPVideoStreamStart");
     socketOpened = false;
     numPframes = 0;
     numIframes = 0;
@@ -61,11 +61,8 @@ void UDPVideoStreamCli2::initialize(int stage)
     {
         // statistics
         rcvdPkSignal = registerSignal("rcvdPk");
-        reintentTimer = new cMessage();
-        timeOutMsg = new cMessage();
         timeOut  = par("timeOut");
         limitDelay = par("limitDelay");
-        selfMsg = new cMessage("UDPVideoStreamStart");
     }
 }
 
@@ -90,14 +87,9 @@ void UDPVideoStreamCli2::handleMessageWhenUp(cMessage* msg)
         if (reintentTimer == msg)
             requestStream();
         else if (timeOutMsg == msg)
-        {
             timeOutData();
-        }
         else
-        {
-            delete msg;
             requestStream();
-        }
     }
     else if (msg->getKind() == UDP_I_DATA)
     {
