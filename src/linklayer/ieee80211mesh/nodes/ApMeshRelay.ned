@@ -32,6 +32,7 @@ import inet.nodes.inet.NetworkLayer;
 import inet.linklayer.ieee80211mesh.Ieee80211NicMesh;
 import inet.linklayer.ieee80211mesh.Ieee80211NicMeshMulti;
 import inet.networklayer.autorouting.ipv4.HostAutoConfigurator2;
+import inet.linklayer.ethernet.switch.IMACAddressTable;
 
 //
 // BaseHost contains the common lower layers (linklayer and networklayer)
@@ -46,10 +47,15 @@ module simpleNetLayer
 {
     parameters:
         string relayType;
+        string macTableType; // type of the ~IMACAddressTable
     gates:
         input ifIn[];
         output ifOut[];
     submodules:
+         macTable: <macTableType> like IMACAddressTable {
+            @display("p=73,19;is=s");
+        }
+        
         relayUnit: <relayType> like IMACRelayUnit {
             parameters:
                 @display("p=232,283");
@@ -76,7 +82,8 @@ module ApMeshRelay
         int numExtInterfaces = default(0);
         int numRadios = default(1);               // the number of radios in the router. by default no wireless     
         string mobilityType = default("StationaryMobility");
-        string relayUnitType = default("MACRelayUnitNP");
+        string relayUnitType = default("MACRelayUnit");
+        string ralayMacTableType = default("MACAddressTable"); // type of the ~IMACAddressTable
         wlan[*].mgmtType = default("Ieee80211MgmtAP");
     gates:
         input radioIn[numRadios+1] @directIn;
@@ -96,10 +103,11 @@ module ApMeshRelay
             parameters:
                 @display("p=61,192");
         }
-
+        
         relayUnit: simpleNetLayer {
             parameters:
                 relayType = relayUnitType;
+                macTableType = ralayMacTableType;
                 @display("p=223,298");
             gates:
                 ifIn[numRadios+1];
