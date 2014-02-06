@@ -65,6 +65,7 @@ Ieee80211Mac::Ieee80211Mac()
     endDIFS = NULL;
     endTimeout = NULL;
     endReserve = NULL;
+    endTXOP = NULL;
     mediumStateChange = NULL;
     pendingRadioConfigMsg = NULL;
     classifier = NULL;
@@ -252,7 +253,6 @@ void Ieee80211Mac::initialize(int stage)
         ST = par("slotTime"); //added by sorin
         if (ST==-1)
             ST = 20e-6; //20us
-        EV<<" slotTime="<<ST*1e6<<"us DIFS="<< getDIFS()*1e6<<"us";
 
         basicBitrate = par("basicBitrate");
         bitrate = par("bitrate");
@@ -291,8 +291,10 @@ void Ieee80211Mac::initialize(int stage)
             controlFrameModulationType = Ieee80211Descriptor::getDescriptor(basicBitrateIdx).modulationType;
         }
 
-        EV<<" basicBitrate="<<basicBitrate/1e6<<"M";
-        EV<<" bitrate="<<bitrate/1e6<<"M IDLE="<<IDLE<<" RECEIVE="<<RECEIVE<<endl;
+        EV<<" slotTime = "<<getSlotTime()*1e6<<"us DIFS = "<< getDIFS()*1e6<<"us";
+
+        EV<<" basicBitrate="<<basicBitrate/1e6<<"Mb ";
+        EV<<" bitrate="<<bitrate/1e6<<"Mb IDLE="<<IDLE<<" RECEIVE="<<RECEIVE<<endl;
 
         // configure AutoBit Rate
         configureAutoBitRate();
@@ -1004,6 +1006,14 @@ void Ieee80211Mac::handleWithFSM(cMessage *msg)
             cancelEvent(endBackoff(numCategories()-1));
         }
         EV << "deferring upper message transmission in " << fsm.getStateName() << " state\n";
+        return;
+    }
+
+// Special case, is  endTimeout ACK and the radio state  is RECV, the system must wait until end reception (9.3.2.8 ACK procedure)
+    if (msg == endTimeout && radioState == RadioState::RECV && useModulationParameters && fsm.getState() == WAITACK)
+    {
+        EV << "Re-schedule WAITACK timeout \n";
+        scheduleAt(simTime() + controlFrameTxTime(LENGTH_ACK), endTimeout);
         return;
     }
 
@@ -1767,14 +1777,14 @@ void Ieee80211Mac::scheduleDataTimeoutPeriod(Ieee80211DataOrMgmtFrame *frameToSe
         {
             ModulationType modType;
             modType = WifiModulationType::getModulationType(opMode, bitRate);
-            WifiModulationType::getSlotDuration(modType,wifiPreambleType);
-            tim = computeFrameDuration(frameToSend) +SIMTIME_DBL(
-                 WifiModulationType::getSlotDuration(modType,wifiPreambleType) +
-                 WifiModulationType::getSifsTime(modType,wifiPreambleType) +
-                 WifiModulationType::get_aPHY_RX_START_Delay (modType,wifiPreambleType));
+            double duration = computeFrameDuration(frameToSend);
+            double slot = SIMTIME_DBL(WifiModulationType::getSlotDuration(modType,wifiPreambleType));
+            double sifs =  SIMTIME_DBL(WifiModulationType::getSifsTime(modType,wifiPreambleType));
+            double PHY_RX_START = SIMTIME_DBL(WifiModulationType::get_aPHY_RX_START_Delay (modType,wifiPreambleType));
+            tim = duration + slot + sifs + PHY_RX_START;
         }
         else
-            tim = computeFrameDuration(frameToSend) +SIMTIME_DBL( getSIFS()) + controlFrameTxTime(LENGTH_ACK) + MAX_PROPAGATION_DELAY * 2;
+            tim = computeFrameDuration(frameToSend) + SIMTIME_DBL( getSlotTime()) +SIMTIME_DBL( getSIFS()) + controlFrameTxTime(LENGTH_ACK) + MAX_PROPAGATION_DELAY * 2;
         EV<<" time out="<<tim*1e6<<"us"<<endl;
         scheduleAt(simTime() + tim, endTimeout);
     }
