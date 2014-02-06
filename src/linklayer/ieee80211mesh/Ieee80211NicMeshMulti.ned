@@ -64,8 +64,8 @@ module Ieee80211NicMeshMulti
                 locatorActive = hasLocator;
                 @display("p=96,136;q=wlanDataQueue;i=block/switch");
              gates:
-                macIn[meshChannels];
-                macOut[meshChannels];
+                macInMulti[meshChannels];
+                macOutMulti[meshChannels];
         }
         mac[meshChannels]: Ieee80211Mac {
             parameters:
@@ -82,8 +82,8 @@ module Ieee80211NicMeshMulti
             radio[i].upperLayerIn <-- mac[i].lowerLayerOut;
             radio[i].upperLayerOut --> mac[i].lowerLayerIn;
 
-            mac[i].upperLayerOut --> mgmt.macIn[i];
-            mac[i].upperLayerIn <-- mgmt.macOut[i];
+            mac[i].upperLayerOut --> mgmt.macInMulti[i];
+            mac[i].upperLayerIn <-- mgmt.macOutMulti[i];
 
         }
         mgmt.agentOut --> agent.mgmtIn if _agentNeeded;

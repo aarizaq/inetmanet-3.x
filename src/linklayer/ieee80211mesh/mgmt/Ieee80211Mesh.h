@@ -211,6 +211,7 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase
         virtual bool selectGateWay(const ManetAddress &, MACAddress &);
 
         bool hasLocator;
+        bool isMultiMac;
         bool hasRelayUnit;
     protected:
         virtual void initializeBase(int stage);

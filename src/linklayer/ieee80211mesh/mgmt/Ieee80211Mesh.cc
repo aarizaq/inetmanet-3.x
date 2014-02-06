@@ -239,6 +239,15 @@ void Ieee80211Mesh::initialize(int stage)
         if (gate("locatorOut")->getPathEndGate()->isConnected() &&
                        (strcmp(gate("locatorOut")->getPathEndGate()->getOwnerModule()->getName(),"locator")==0 || par("locatorActive").boolValue()))
             hasLocator = true;
+
+        if (gate("macOut")->getPathEndGate()->isConnected())
+            isMultiMac = false;
+        else if (gate("macOutMulti",0)->getPathEndGate()->isConnected())
+            isMultiMac = true;
+        else
+            opp_error("mac not connected");
+
+
         if (gate("securityOut")->getPathEndGate()->isConnected() &&
                         (strcmp(gate("securityOut")->getPathEndGate()->getOwnerModule()->getName(),"security")==0 || par("securityActive").boolValue()))
             hasSecurity = true;
@@ -1425,13 +1434,19 @@ void Ieee80211Mesh::sendOut(cMessage *msg)
     {
         if (msg->arrivedOn("securityIn"))
         {
-            send(msg, "macOut",msg->getKind());
+            if (isMultiMac)
+                 send(msg, "macOutMulti",msg->getKind());
+            else
+                 send(msg, "macOut");
         }
         else  if (dynamic_cast<CCMPFrame *>(msg))
         {
             EV << "CCMPFrame Frame arrived from Security, send it to Mac" <<endl;
             error("mhn");
-            send(msg, "macOut",msg->getKind());
+            if (isMultiMac)
+                 send(msg, "macOutMulti",msg->getKind());
+            else
+                 send(msg, "macOut");
         }
         else
         {
@@ -1440,8 +1455,13 @@ void Ieee80211Mesh::sendOut(cMessage *msg)
         }
     }
     else
-    {   packetRequested++;
-        send(msg, "macOut",msg->getKind());
+    {
+        packetRequested++;
+        if (isMultiMac)
+            send(msg, "macOutMulti",msg->getKind());
+        else
+            send(msg, "macOut");
+
     }
 }
 

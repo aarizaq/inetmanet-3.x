@@ -22,7 +22,7 @@ package inet.linklayer.ieee80211mesh.mgmt;
 import inet.linklayer.ieee80211.mgmt.IIeee80211Mgmt;
 
 //simple Ieee80211Mesh like IIeee80211Mgmt
-simple Ieee80211Mesh
+simple Ieee80211Mesh like IIeee80211Mgmt
 {
     parameters:
         @macRouting;  // Mac layer with routing protocol working in the level 2
@@ -80,8 +80,10 @@ simple Ieee80211Mesh
         output upperLayerOut @labels(Ieee802Ctrl/up);
         input  fromEthernet @labels(Ieee80211Frame);
         output toEthernet @labels(Ieee80211Frame);
-        input  macIn[];
-        output macOut[];
+        input  macIn @loose;
+        output macOut @loose;
+        input  macInMulti[] @loose;
+        output macOutMulti[] @loose;
         input  agentIn @loose;   // optional gates used for the agent in stations
         output agentOut @loose; // optional gates used for the agent in stations
         input  locatorIn @loose;
