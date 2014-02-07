@@ -147,7 +147,7 @@ double NistErrorRateModel::GetFec64QamBer(double snr, uint32_t nbits, uint32_t b
 
 double NistErrorRateModel::GetChunkSuccessRate(ModulationType mode, double snr, uint32_t nbits) const
 {
-    if (mode.getModulationClass() == MOD_CLASS_ERP_OFDM || mode.getModulationClass() == MOD_CLASS_OFDM)
+    if (mode.getModulationClass() == MOD_CLASS_ERP_OFDM || mode.getModulationClass() == MOD_CLASS_OFDM || mode.getModulationClass() == MOD_CLASS_HT)
     {
         if (mode.getConstellationSize() == 2)
         {
@@ -216,6 +216,8 @@ double NistErrorRateModel::GetChunkSuccessRate(ModulationType mode, double snr, 
                 return DsssErrorRateModel::GetDsssDqpskCck11SuccessRate(snr, nbits);
         }
     }
+
+
     return 0;
 }
 

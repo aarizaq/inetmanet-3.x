@@ -17,8 +17,9 @@
  *
  * Author: Mathieu Lacage <mathieu.lacage@sophia.inria.fr>
  */
-#include "WifiMode.h"
+#include "ModulationType.h"
 #include "Ieee80211DataRate.h"
+#include "WifiMode.h"
 
 
 ModulationType
@@ -199,6 +200,7 @@ WifiModulationType::GetOfdmRate6Mbps()
    mode.setCodeRate(CODE_RATE_1_2);
    mode.setConstellationSize(2);
    mode.setIsMandatory(true);
+   mode.setFrequency(5000);
    return mode;
 }
 
@@ -212,6 +214,7 @@ WifiModulationType::GetOfdmRate9Mbps()
    mode.setCodeRate(CODE_RATE_UNDEFINED);
    mode.setConstellationSize(2);
    mode.setIsMandatory(false);
+   mode.setFrequency(5000);
    return mode;
 }
 
@@ -225,6 +228,7 @@ WifiModulationType::GetOfdmRate12Mbps()
    mode.setCodeRate(CODE_RATE_UNDEFINED);
    mode.setConstellationSize(4);
    mode.setIsMandatory(true);
+   mode.setFrequency(5000);
    return mode;
 }
 
@@ -238,6 +242,7 @@ WifiModulationType::GetOfdmRate18Mbps()
    mode.setCodeRate(CODE_RATE_UNDEFINED);
    mode.setConstellationSize(4);
    mode.setIsMandatory(false);
+   mode.setFrequency(5000);
    return mode;
 }
 
@@ -251,6 +256,7 @@ WifiModulationType::GetOfdmRate24Mbps()
    mode.setCodeRate(CODE_RATE_1_2);
    mode.setConstellationSize(16);
    mode.setIsMandatory(true);
+   mode.setFrequency(5000);
    return mode;
 }
 
@@ -264,6 +270,7 @@ WifiModulationType::GetOfdmRate36Mbps()
    mode.setCodeRate(CODE_RATE_3_4);
    mode.setConstellationSize(16);
    mode.setIsMandatory(false);
+   mode.setFrequency(5000);
    return mode;
 }
 
@@ -277,6 +284,7 @@ WifiModulationType::GetOfdmRate48Mbps()
    mode.setCodeRate(CODE_RATE_2_3);
    mode.setConstellationSize(64);
    mode.setIsMandatory(false);
+   mode.setFrequency(5000);
    return mode;
 }
 
@@ -290,6 +298,7 @@ WifiModulationType::GetOfdmRate54Mbps()
    mode.setCodeRate(CODE_RATE_3_4);
    mode.setConstellationSize(64);
    mode.setIsMandatory(false);
+   mode.setFrequency(5000);
    return mode;
 }
 
@@ -304,6 +313,7 @@ WifiModulationType::GetOfdmRate3MbpsBW10MHz()
    mode.setCodeRate(CODE_RATE_1_2);
    mode.setConstellationSize(2);
    mode.setIsMandatory(true);
+   mode.setFrequency(5000);
    return mode;
 }
 
@@ -317,6 +327,7 @@ WifiModulationType::GetOfdmRate4_5MbpsBW10MHz()
    mode.setCodeRate(CODE_RATE_3_4);
    mode.setConstellationSize(2);
    mode.setIsMandatory(false);
+   mode.setFrequency(5000);
    return mode;
 }
 
@@ -330,6 +341,7 @@ WifiModulationType::GetOfdmRate6MbpsBW10MHz()
    mode.setCodeRate(CODE_RATE_1_2);
    mode.setConstellationSize(4);
    mode.setIsMandatory(true);
+   mode.setFrequency(5000);
    return mode;
 }
 
@@ -343,6 +355,7 @@ WifiModulationType::GetOfdmRate9MbpsBW10MHz()
    mode.setCodeRate(CODE_RATE_3_4);
    mode.setConstellationSize(4);
    mode.setIsMandatory(false);
+   mode.setFrequency(5000);
    return mode;
 }
 
@@ -356,6 +369,7 @@ WifiModulationType::GetOfdmRate12MbpsBW10MHz()
    mode.setCodeRate(CODE_RATE_1_2);
    mode.setConstellationSize(16);
    mode.setIsMandatory(true);
+   mode.setFrequency(5000);
    return mode;
 }
 
@@ -369,6 +383,7 @@ WifiModulationType::GetOfdmRate18MbpsBW10MHz()
    mode.setCodeRate(CODE_RATE_3_4);
    mode.setConstellationSize(16);
    mode.setIsMandatory(false);
+   mode.setFrequency(5000);
    return mode;
 }
 
@@ -382,6 +397,7 @@ WifiModulationType::GetOfdmRate24MbpsBW10MHz()
    mode.setCodeRate(CODE_RATE_2_3);
    mode.setConstellationSize(64);
    mode.setIsMandatory(false);
+   mode.setFrequency(5000);
    return mode;
 }
 
@@ -395,6 +411,7 @@ WifiModulationType::GetOfdmRate27MbpsBW10MHz()
    mode.setCodeRate(CODE_RATE_3_4);
    mode.setConstellationSize(64);
    mode.setIsMandatory(false);
+   mode.setFrequency(5000);
    return mode;
 }
 
@@ -409,6 +426,7 @@ WifiModulationType::GetOfdmRate1_5MbpsBW5MHz()
    mode.setCodeRate(CODE_RATE_1_2);
    mode.setConstellationSize(2);
    mode.setIsMandatory(true);
+   mode.setFrequency(5000);
    return mode;
 }
 
@@ -422,6 +440,7 @@ WifiModulationType::GetOfdmRate2_25MbpsBW5MHz()
    mode.setCodeRate(CODE_RATE_3_4);
    mode.setConstellationSize(2);
    mode.setIsMandatory(false);
+   mode.setFrequency(5000);
    return mode;
 }
 
@@ -435,6 +454,7 @@ WifiModulationType::GetOfdmRate3MbpsBW5MHz()
    mode.setCodeRate(CODE_RATE_1_2);
    mode.setConstellationSize(4);
    mode.setIsMandatory(true);
+   mode.setFrequency(5000);
    return mode;
 }
 
@@ -448,6 +468,7 @@ WifiModulationType::GetOfdmRate4_5MbpsBW5MHz()
    mode.setCodeRate(CODE_RATE_3_4);
    mode.setConstellationSize(4);
    mode.setIsMandatory(false);
+   mode.setFrequency(5000);
    return mode;
 }
 
@@ -461,6 +482,7 @@ WifiModulationType::GetOfdmRate6MbpsBW5MHz()
    mode.setCodeRate(CODE_RATE_1_2);
    mode.setConstellationSize(16);
    mode.setIsMandatory(true);
+   mode.setFrequency(5000);
    return mode;
 }
 
@@ -474,6 +496,7 @@ WifiModulationType::GetOfdmRate9MbpsBW5MHz()
    mode.setCodeRate(CODE_RATE_3_4);
    mode.setConstellationSize(16);
    mode.setIsMandatory(false);
+   mode.setFrequency(5000);
    return mode;
 }
 
@@ -487,6 +510,7 @@ WifiModulationType::GetOfdmRate12MbpsBW5MHz()
    mode.setCodeRate(CODE_RATE_2_3);
    mode.setConstellationSize(64);
    mode.setIsMandatory(false);
+   mode.setFrequency(5000);
    return mode;
 }
 
@@ -500,8 +524,482 @@ WifiModulationType::GetOfdmRate13_5MbpsBW5MHz()
    mode.setCodeRate(CODE_RATE_3_4);
    mode.setConstellationSize(64);
    mode.setIsMandatory(false);
+   mode.setFrequency(5000);
    return mode;
 }
+
+/*Clause 20*/
+
+ModulationType
+WifiModulationType::GetOfdmRate6_5MbpsBW20MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(20000000);
+    mode.setDataRate(6500000);
+    mode.setCodeRate(CODE_RATE_1_2);
+    mode.setConstellationSize(2);
+    mode.setIsMandatory(true);
+    return mode;
+ }
+
+ModulationType
+WifiModulationType::GetOfdmRate7_2MbpsBW20MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(20000000);
+    mode.setDataRate(7200000);
+    mode.setCodeRate(CODE_RATE_1_2);
+    mode.setConstellationSize(2);
+    mode.setIsMandatory(false);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate13MbpsBW20MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(20000000);
+    mode.setDataRate(13000000);
+    mode.setCodeRate(CODE_RATE_1_2);
+    mode.setConstellationSize(4);
+    mode.setIsMandatory(true);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate14_4MbpsBW20MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(20000000);
+    mode.setDataRate(14400000);
+    mode.setCodeRate(CODE_RATE_1_2);
+    mode.setConstellationSize(4);
+    mode.setIsMandatory(false);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate19_5MbpsBW20MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(20000000);
+    mode.setDataRate(19500000);
+    mode.setCodeRate(CODE_RATE_3_4);
+    mode.setConstellationSize(4);
+    mode.setIsMandatory(true);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate21_7MbpsBW20MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(20000000);
+    mode.setDataRate(21700000);
+    mode.setCodeRate(CODE_RATE_3_4);
+    mode.setConstellationSize(4);
+    mode.setIsMandatory(false);
+    return mode;
+}
+
+
+ModulationType
+WifiModulationType::GetOfdmRate26MbpsBW20MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(20000000);
+    mode.setDataRate(26000000);
+    mode.setCodeRate(CODE_RATE_1_2);
+    mode.setConstellationSize(16);
+    mode.setIsMandatory(true);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate28_9MbpsBW20MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(20000000);
+    mode.setDataRate(28900000);
+    mode.setCodeRate(CODE_RATE_1_2);
+    mode.setConstellationSize(16);
+    mode.setIsMandatory(false);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate39MbpsBW20MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(20000000);
+    mode.setDataRate(39000000);
+    mode.setCodeRate(CODE_RATE_3_4);
+    mode.setConstellationSize(16);
+    mode.setIsMandatory(true);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate43_3MbpsBW20MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(20000000);
+    mode.setDataRate(43300000);
+    mode.setCodeRate(CODE_RATE_3_4);
+    mode.setConstellationSize(16);
+    mode.setIsMandatory(false);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate52MbpsBW20MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(20000000);
+    mode.setDataRate(52000000);
+    mode.setCodeRate(CODE_RATE_2_3);
+    mode.setConstellationSize(64);
+    mode.setIsMandatory(true);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate57_8MbpsBW20MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(20000000);
+    mode.setDataRate(57800000);
+    mode.setCodeRate(CODE_RATE_2_3);
+    mode.setConstellationSize(64);
+    mode.setIsMandatory(false);
+    return mode;
+}
+
+
+ModulationType
+WifiModulationType::GetOfdmRate58_5MbpsBW20MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(20000000);
+    mode.setDataRate(58500000);
+    mode.setCodeRate(CODE_RATE_3_4);
+    mode.setConstellationSize(64);
+    mode.setIsMandatory(true);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate65MbpsBW20MHzShGi ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(20000000);
+    mode.setDataRate(65000000);
+    mode.setCodeRate(CODE_RATE_3_4);
+    mode.setConstellationSize(64);
+    mode.setIsMandatory(false);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate65MbpsBW20MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(20000000);
+    mode.setDataRate(65000000);
+    mode.setCodeRate(CODE_RATE_5_6);
+    mode.setConstellationSize(64);
+    mode.setIsMandatory(true);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate72_2MbpsBW20MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(20000000);
+    mode.setDataRate(72200000);
+    mode.setCodeRate(CODE_RATE_5_6);
+    mode.setConstellationSize(64);
+    mode.setIsMandatory(false);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate13_5MbpsBW40MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(40000000);
+    mode.setDataRate(13500000);
+    mode.setCodeRate(CODE_RATE_1_2);
+    mode.setConstellationSize(2);
+    mode.setIsMandatory(false);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate15MbpsBW40MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(40000000);
+    mode.setDataRate(15000000);
+    mode.setCodeRate(CODE_RATE_1_2);
+    mode.setConstellationSize(2);
+    mode.setIsMandatory(false);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate27MbpsBW40MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(40000000);
+    mode.setDataRate(27000000);
+    mode.setCodeRate(CODE_RATE_1_2);
+    mode.setConstellationSize(4);
+    mode.setIsMandatory(false);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate30MbpsBW40MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(40000000);
+    mode.setDataRate(30000000);
+    mode.setCodeRate(CODE_RATE_1_2);
+    mode.setConstellationSize(4);
+    mode.setIsMandatory(false);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate40_5MbpsBW40MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(40000000);
+    mode.setDataRate(40500000);
+    mode.setCodeRate(CODE_RATE_3_4);
+    mode.setConstellationSize(4);
+    mode.setIsMandatory(false);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate45MbpsBW40MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(40000000);
+    mode.setDataRate(45000000);
+    mode.setCodeRate(CODE_RATE_3_4);
+    mode.setConstellationSize(4);
+    mode.setIsMandatory(false);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate54MbpsBW40MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(40000000);
+    mode.setDataRate(54000000);
+    mode.setCodeRate(CODE_RATE_1_2);
+    mode.setConstellationSize(16);
+    mode.setIsMandatory(false);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate60MbpsBW40MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(40000000);
+    mode.setDataRate(60000000);
+    mode.setCodeRate(CODE_RATE_1_2);
+    mode.setConstellationSize(16);
+    mode.setIsMandatory(false);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate81MbpsBW40MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(40000000);
+    mode.setDataRate(81000000);
+    mode.setCodeRate(CODE_RATE_3_4);
+    mode.setConstellationSize(16);
+    mode.setIsMandatory(false);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate90MbpsBW40MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(40000000);
+    mode.setDataRate(90000000);
+    mode.setCodeRate(CODE_RATE_3_4);
+    mode.setConstellationSize(16);
+    mode.setIsMandatory(false);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate108MbpsBW40MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(40000000);
+    mode.setDataRate(108000000);
+    mode.setCodeRate(CODE_RATE_2_3);
+    mode.setConstellationSize(64);
+    mode.setIsMandatory(false);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate120MbpsBW40MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(40000000);
+    mode.setDataRate(120000000);
+    mode.setCodeRate(CODE_RATE_2_3);
+    mode.setConstellationSize(64);
+    mode.setIsMandatory(false);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate121_5MbpsBW40MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(40000000);
+    mode.setDataRate(121500000);
+    mode.setCodeRate(CODE_RATE_3_4);
+    mode.setConstellationSize(64);
+    mode.setIsMandatory(false);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate135MbpsBW40MHzShGi ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(40000000);
+    mode.setDataRate(135000000);
+    mode.setCodeRate(CODE_RATE_3_4);
+    mode.setConstellationSize(64);
+    mode.setIsMandatory(false);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate135MbpsBW40MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(40000000);
+    mode.setDataRate(135000000);
+    mode.setCodeRate(CODE_RATE_5_6);
+    mode.setConstellationSize(64);
+    mode.setIsMandatory(false);
+    return mode;
+}
+
+ModulationType
+WifiModulationType::GetOfdmRate150MbpsBW40MHz ()
+{
+    ModulationType mode;
+    mode.setModulationClass(MOD_CLASS_HT);
+    mode.setBandwidth(40000000);
+    mode.setDataRate(150000000);
+    mode.setCodeRate(CODE_RATE_5_6);
+    mode.setConstellationSize(64);
+    mode.setIsMandatory(false);
+    return mode;
+}
+
+
+
+//Added by Ghada to support 11n
+//return the L-SIG
+
+ModulationType WifiModulationType::getMFPlcpHeaderMode(ModulationType payloadMode, WifiPreamble preamble)
+{
+    switch (payloadMode.getBandwidth())
+    {
+        case 20000000:
+            return WifiModulationType::GetOfdmRate6_5MbpsBW20MHz();
+        case 40000000:
+            return WifiModulationType::GetOfdmRate13_5MbpsBW40MHz();
+        default:
+            return WifiModulationType::GetOfdmRate6_5MbpsBW20MHz();
+    }
+
+}
+
+simtime_t WifiModulationType::getPlcpHtTrainingSymbolDuration(ModulationType payloadMode, WifiPreamble preamble, const uint32_t & nss,const uint32_t & ness)
+{
+    switch (preamble)
+    {
+        case WIFI_PREAMBLE_HT_MF:
+            return (4 + (4 * nss))/1000000.0;
+        case WIFI_PREAMBLE_HT_GF:
+            return (4 * nss) + (4 * ness);
+        default:
+            // no training for non HT
+            return 0;
+    }
+}
+
+//return L-SIG
+simtime_t WifiModulationType::getPlcpHtSigHeaderDuration(ModulationType payloadMode, WifiPreamble preamble)
+{
+    switch (preamble)
+    {
+        case WIFI_PREAMBLE_HT_MF:
+            // HT-SIG
+            return 8/1000000.0;
+        case WIFI_PREAMBLE_HT_GF:
+            //HT-SIG
+            return 8/1000000.0;
+        default:
+            // no HT-SIG for non HT
+            return 0;
+    }
+}
+
+//end added by Ghada
+
 
 
 ModulationType WifiModulationType::getModulationType(char mode, double bitrate)
@@ -536,6 +1034,21 @@ WifiModulationType::getPlcpHeaderDuration(ModulationType payloadMode, WifiPreamb
                   return 16.0/1000000.0;
           }
           break;
+      }
+      //Added by Ghada to support 11n
+      case MOD_CLASS_HT: { //IEEE 802.11n Figure 20.1
+          switch (preamble)
+          {
+              case WIFI_PREAMBLE_HT_MF:
+                  // L-SIG
+                  return 4/1000000.0;
+              case WIFI_PREAMBLE_HT_GF:
+                  //L-SIG
+                  return 0;
+              default:
+                  // L-SIG
+                  return 4/1000000.0;
+            }
       }
       case MOD_CLASS_ERP_OFDM:
           return 16.0/1000000.0;
@@ -581,6 +1094,10 @@ WifiModulationType::getPlcpPreambleDuration(ModulationType payloadMode, WifiPrea
             }
             break;
         }
+        case MOD_CLASS_HT:
+        { //IEEE 802.11n Figure 20.1 the training symbols before L_SIG or HT_SIG
+               return 16/1000000.0;
+        }
         case MOD_CLASS_ERP_OFDM:
             return 4.0/1000000.0;
         case MOD_CLASS_DSSS:
@@ -603,7 +1120,7 @@ WifiModulationType::getPlcpPreambleDuration(ModulationType payloadMode, WifiPrea
 // Compute the Payload duration in function of the modulation type
 //
 simtime_t
-WifiModulationType::getPayloadDuration(uint64_t size, ModulationType payloadMode)
+WifiModulationType::getPayloadDuration(uint64_t size, ModulationType payloadMode, const uint32_t & nss, bool isStbc)
 {
     simtime_t val;
     switch (payloadMode.getModulationClass())
@@ -649,6 +1166,51 @@ WifiModulationType::getPayloadDuration(uint64_t size, ModulationType payloadMode
             val = (aux/1000000.0);
             return val;
             break;
+        case MOD_CLASS_HT:
+        {
+            double symbolDurationUs;
+            double m_Stbc;
+            //if short GI data rate is used then symbol duration is 3.6us else symbol duration is 4us
+            //In the future has to create a stationmanager that only uses these data rates if sender and reciever support GI
+            if (payloadMode == WifiModulationType::GetOfdmRate135MbpsBW40MHzShGi() || payloadMode == WifiModulationType::GetOfdmRate65MbpsBW20MHzShGi() )
+            {
+                symbolDurationUs=3.6;
+            }
+            else
+            {
+                switch (payloadMode.getDataRate ()/nss)
+                { //shortGi
+                    case 7200000:
+                    case 14400000:
+                    case 21700000:
+                    case 28900000:
+                    case 43300000:
+                    case 57800000:
+                    case 72200000:
+                    case 15000000:
+                    case 30000000:
+                    case 45000000:
+                    case 60000000:
+                    case 90000000:
+                    case 120000000:
+                    case 150000000:
+                       symbolDurationUs=3.6;
+                       break;
+                     default:
+                       symbolDurationUs=4;
+                }
+            }
+            if  (isStbc)
+                m_Stbc=2;
+            else
+                m_Stbc=1;
+            double numDataBitsPerSymbol = payloadMode.getDataRate () * nss * symbolDurationUs / 1e6;
+            //check tables 20-35 and 20-36 in the standard to get cases when nes =2
+            double Nes=1;
+            // IEEE Std 802.11n, section 20.3.11, equation (20-32)
+            uint32_t numSymbols = lrint (m_Stbc*ceil ((16 + size * 8.0 + 6.0*Nes) / (m_Stbc* numDataBitsPerSymbol)));
+            return (numSymbols * symbolDurationUs)/1e6;
+        }
         default:
             opp_error("unsupported modulation class");
             return 0;
@@ -665,11 +1227,13 @@ WifiModulationType::getPreambleAndHeader(ModulationType payloadMode, WifiPreambl
 }
 
 simtime_t
-WifiModulationType::calculateTxDuration(uint64_t size, ModulationType payloadMode, WifiPreamble preamble)
+WifiModulationType::calculateTxDuration(uint64_t size, ModulationType payloadMode, WifiPreamble preamble,const uint32_t & nss, const uint32_t & ness, bool isStbc)
 {
     simtime_t duration = getPlcpPreambleDuration(payloadMode, preamble)
                        + getPlcpHeaderDuration(payloadMode, preamble)
-                       + getPayloadDuration(size, payloadMode);
+                       + getPayloadDuration(size, payloadMode,nss,isStbc)
+                       + getPlcpHtSigHeaderDuration(payloadMode, preamble)
+                       + getPlcpHtTrainingSymbolDuration(payloadMode, preamble,nss,ness);
     return duration;
 }
 
@@ -697,6 +1261,36 @@ WifiModulationType::getPlcpHeaderMode(ModulationType payloadMode, WifiPreamble p
         }
         case MOD_CLASS_ERP_OFDM:
             return WifiModulationType::GetErpOfdmRate6Mbps();
+            //Added by Ghada to support 11n
+        case MOD_CLASS_HT:
+        {  //return the HT-SIG
+            // IEEE Std 802.11n, 20.3.23
+            switch (preamble)
+            {
+                case WIFI_PREAMBLE_HT_MF:
+                    switch (payloadMode.getBandwidth())
+                    {
+                        case 20000000:
+                            return WifiModulationType::GetOfdmRate13MbpsBW20MHz ();
+                        case 40000000:
+                            return WifiModulationType::GetOfdmRate27MbpsBW40MHz ();
+                        default:
+                            return WifiModulationType::GetOfdmRate13MbpsBW20MHz();
+                    }
+                case WIFI_PREAMBLE_HT_GF:
+                    switch (payloadMode.getBandwidth())
+                    {
+                        case 20000000:
+                            return WifiModulationType::GetOfdmRate13MbpsBW20MHz();
+                        case 40000000:
+                            return WifiModulationType::GetOfdmRate27MbpsBW40MHz();
+                        default:
+                            return WifiModulationType::GetOfdmRate13MbpsBW20MHz();
+                    }
+                default:
+                    return WifiModulationType::GetOfdmRate6Mbps();
+            }
+        }
         case MOD_CLASS_DSSS:
             if (preamble == WIFI_PREAMBLE_LONG)
             {
@@ -748,6 +1342,22 @@ WifiModulationType::getSlotDuration(ModulationType modType, WifiPreamble preambl
                 // IEEE Std 802.11-2007, section 18.2.2.2
                 return (9.0/1000000.0);
             }
+        case MOD_CLASS_HT:
+        {  //return the HT-SIG
+            // IEEE Std 802.11.2012, 20.4.4
+            switch (modType.getFrequency())
+            {
+                case 2400:
+                    if (preamble == WIFI_PREAMBLE_LONG)
+                        return (20.0/1000000.0);
+                    else //  WIFI_PREAMBLE_SHORT
+                        return (9.0/1000000.0);
+                case 5000:
+                    return (9.0/1000000.0);
+                default:
+                    return (9.0/1000000.0);
+            }
+        }
         case MOD_CLASS_DSSS:
             return (20.0/1000000.0);
         default:
@@ -777,6 +1387,19 @@ WifiModulationType::getSifsTime(ModulationType modType, WifiPreamble preamble)
                     return (16.0/1000000);
             }
             break;
+        }
+        case MOD_CLASS_HT:
+        {  //return the HT-SIG
+            // IEEE Std 802.11.2012, 20.4.4
+            switch (modType.getFrequency())
+            {
+                case 2400:
+                    return (10.0/1000000.0);
+                case 5000:
+                    return (16.0/1000000.0);
+                default:
+                    return (10.0/1000000.0);
+            }
         }
         case MOD_CLASS_ERP_OFDM:
             // IEEE Std 802.11-2007, sections 15.2.3 and 18.2.2.1
@@ -810,6 +1433,8 @@ WifiModulationType::get_aPHY_RX_START_Delay(ModulationType modType, WifiPreamble
                     return (25.0/1000000.0);
             }
         }
+        case MOD_CLASS_HT:
+            return 33.0/1000000.0;
         case MOD_CLASS_ERP_OFDM:
             // IEEE Std 802.11-2007, section 18.2.2.2
             return (24.0/1000000.0);

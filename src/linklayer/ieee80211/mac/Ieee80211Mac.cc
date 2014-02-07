@@ -279,16 +279,23 @@ void Ieee80211Mac::initialize(int stage)
 
         controlBitRate = par("controlBitrate").doubleValue();
 
+        radioModule = gate("lowerLayerOut")->getNextGate()->getOwnerModule()->getId();
+        carrierFrequency = gate("lowerLayerOut")->getNextGate()->getOwnerModule()->par("carrierFrequency");
+
         if (controlBitRate == -1)
         {
             int basicBitrateIdx = Ieee80211Descriptor::getMaxIdx(opMode);
             controlBitRate = Ieee80211Descriptor::getDescriptor(basicBitrateIdx).bitrate;
             controlFrameModulationType = Ieee80211Descriptor::getDescriptor(basicBitrateIdx).modulationType;
+            if (opMode == 'n' && carrierFrequency == 5e6)
+                WifiModulationType::setHTFrequency11n5Gh(controlFrameModulationType);
         }
         else
         {
             int basicBitrateIdx = Ieee80211Descriptor::getIdx(opMode, controlBitRate);
             controlFrameModulationType = Ieee80211Descriptor::getDescriptor(basicBitrateIdx).modulationType;
+            if (opMode == 'n' && carrierFrequency == 5e6)
+                WifiModulationType::setHTFrequency11n5Gh(controlFrameModulationType);
         }
 
         EV<<" slotTime = "<<getSlotTime()*1e6<<"us DIFS = "<< getDIFS()*1e6<<"us";
@@ -418,7 +425,6 @@ void Ieee80211Mac::initialize(int stage)
         // initialize watches
         validRecMode = false;
         initWatches();
-        radioModule = gate("lowerLayerOut")->getNextGate()->getOwnerModule()->getId();
     }
 }
 
@@ -1596,6 +1602,8 @@ simtime_t Ieee80211Mac::getSIFS()
     {
         ModulationType modType;
         modType = WifiModulationType::getModulationType(opMode, bitrate);
+        if (opMode == 'n' && carrierFrequency == 5e6)
+            WifiModulationType::setHTFrequency11n5Gh(modType);
         return WifiModulationType::getSifsTime(modType,wifiPreambleType);
     }
 
@@ -1609,6 +1617,8 @@ simtime_t Ieee80211Mac::getSlotTime()
     {
         ModulationType modType;
         modType = WifiModulationType::getModulationType(opMode, bitrate);
+        if (opMode == 'n' && carrierFrequency == 5e6)
+            WifiModulationType::setHTFrequency11n5Gh(modType);
         return WifiModulationType::getSlotDuration(modType,wifiPreambleType);
     }
     return ST;
@@ -1639,6 +1649,8 @@ simtime_t Ieee80211Mac::getHeaderTime(double bitrate)
 {
     ModulationType modType;
     modType = WifiModulationType::getModulationType(opMode, bitrate);
+    if (opMode == 'n' && carrierFrequency == 5e6)
+        WifiModulationType::setHTFrequency11n5Gh(modType);
     return WifiModulationType::getPreambleAndHeader(modType, wifiPreambleType);
 }
 
@@ -1777,6 +1789,8 @@ void Ieee80211Mac::scheduleDataTimeoutPeriod(Ieee80211DataOrMgmtFrame *frameToSe
         {
             ModulationType modType;
             modType = WifiModulationType::getModulationType(opMode, bitRate);
+            if (opMode == 'n' && carrierFrequency == 5e6)
+                WifiModulationType::setHTFrequency11n5Gh(modType);
             double duration = computeFrameDuration(frameToSend);
             double slot = SIMTIME_DBL(WifiModulationType::getSlotDuration(modType,wifiPreambleType));
             double sifs =  SIMTIME_DBL(WifiModulationType::getSifsTime(modType,wifiPreambleType));
@@ -2360,6 +2374,8 @@ double Ieee80211Mac::computeFrameDuration(int bits, double bitrate)
     double duration;
     ModulationType modType;
     modType = WifiModulationType::getModulationType(opMode, bitrate);
+    if (opMode == 'n' && carrierFrequency == 5e6)
+        WifiModulationType::setHTFrequency11n5Gh(modType);
     if (PHY_HEADER_LENGTH<0)
         duration = SIMTIME_DBL(WifiModulationType::calculateTxDuration(bits, modType, wifiPreambleType));
     else
@@ -2876,6 +2892,9 @@ Ieee80211Mac::getControlAnswerMode(ModulationType reqMode)
             break;
         ModulationType thismode;
         thismode = WifiModulationType::getModulationType(opMode, Ieee80211Descriptor::getDescriptor(idx).bitrate);
+
+        if (opMode == 'n' && carrierFrequency == 5e6)
+            WifiModulationType::setHTFrequency11n5Gh(thismode);
 
       /* If the rate:
        *

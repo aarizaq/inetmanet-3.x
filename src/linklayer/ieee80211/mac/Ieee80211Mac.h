@@ -120,6 +120,8 @@ class INET_API Ieee80211Mac : public WirelessMacBase
     bool validRecMode;
     bool useModulationParameters;
     bool prioritizeMulticast;
+    // used by 11n
+    double carrierFrequency;
   protected:
     /**
      * @name Configuration parameters
@@ -364,7 +366,7 @@ class INET_API Ieee80211Mac : public WirelessMacBase
     /** Indicates which queue is acite. Depends on access category. */
     int currentAC;
 
-    /** Remember currentAC. We need this to figure out internal colision. */
+    /** Remember currentAC. We need this to figure out internal collision. */
     int oldcurrentAC;
 
     /** XXX Remember for which AC we wait for ACK. */
