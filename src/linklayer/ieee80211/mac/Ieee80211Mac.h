@@ -122,6 +122,10 @@ class INET_API Ieee80211Mac : public WirelessMacBase
     bool prioritizeMulticast;
     // used by 11n
     double carrierFrequency;
+    ModulationType controlFrameModulationType;
+    ModulationType transmisionMode;
+    ModulationType basicTransmisionMode;
+
   protected:
     /**
      * @name Configuration parameters
@@ -137,7 +141,6 @@ class INET_API Ieee80211Mac : public WirelessMacBase
     /** The basic bitrate (1 or 2 Mbps) is used to transmit control frames and multicast/broadcast frames */
     double basicBitrate;
     double controlBitRate;
-    ModulationType controlFrameModulationType;
 
     // Variables used by the auto bit rate
     bool forceBitRate; //if true the
@@ -520,7 +523,6 @@ class INET_API Ieee80211Mac : public WirelessMacBase
     virtual simtime_t getEIFS();
     virtual simtime_t getPIFS();
     virtual simtime_t computeBackoffPeriod(Ieee80211Frame *msg, int r);
-    virtual simtime_t getHeaderTime(double bitrate);
     virtual double controlFrameTxTime(int bits);
     //@}
 

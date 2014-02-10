@@ -277,6 +277,10 @@ void Ieee80211Mac::initialize(int stage)
         else
             Ieee80211Descriptor::getIdx(opMode, basicBitrate);
 
+        basicTransmisionMode = WifiModulationType::getModulationType(opMode, basicBitrate);;
+        if (opMode == 'n' && carrierFrequency == 5e6)
+            WifiModulationType::setHTFrequency11n5Gh(basicTransmisionMode);
+
         controlBitRate = par("controlBitrate").doubleValue();
 
         radioModule = gate("lowerLayerOut")->getNextGate()->getOwnerModule()->getId();
@@ -297,6 +301,11 @@ void Ieee80211Mac::initialize(int stage)
             if (opMode == 'n' && carrierFrequency == 5e6)
                 WifiModulationType::setHTFrequency11n5Gh(controlFrameModulationType);
         }
+
+        // init transmission mode
+        transmisionMode = WifiModulationType::getModulationType(opMode, bitrate);
+        if (opMode == 'n' && carrierFrequency == 5e6)
+            WifiModulationType::setHTFrequency11n5Gh(transmisionMode);
 
         EV<<" slotTime = "<<getSlotTime()*1e6<<"us DIFS = "<< getDIFS()*1e6<<"us";
 
@@ -1600,11 +1609,13 @@ simtime_t Ieee80211Mac::getSIFS()
 // TODO:   return aRxRFDelay() + aRxPLCPDelay() + aMACProcessingDelay() + aRxTxTurnaroundTime();
     if (useModulationParameters)
     {
-        ModulationType modType;
-        modType = WifiModulationType::getModulationType(opMode, bitrate);
-        if (opMode == 'n' && carrierFrequency == 5e6)
-            WifiModulationType::setHTFrequency11n5Gh(modType);
-        return WifiModulationType::getSifsTime(modType,wifiPreambleType);
+        if (transmisionMode.getDataRate() != (uint32_t) bitrate)
+        {
+            transmisionMode = WifiModulationType::getModulationType(opMode, bitrate);
+            if (opMode == 'n' && carrierFrequency == 5e6)
+                WifiModulationType::setHTFrequency11n5Gh(transmisionMode);
+        }
+        return WifiModulationType::getSifsTime(transmisionMode,wifiPreambleType);
     }
 
     return SIFS;
@@ -1615,11 +1626,13 @@ simtime_t Ieee80211Mac::getSlotTime()
 // TODO:   return aCCATime() + aRxTxTurnaroundTime + aAirPropagationTime() + aMACProcessingDelay();
     if (useModulationParameters)
     {
-        ModulationType modType;
-        modType = WifiModulationType::getModulationType(opMode, bitrate);
-        if (opMode == 'n' && carrierFrequency == 5e6)
-            WifiModulationType::setHTFrequency11n5Gh(modType);
-        return WifiModulationType::getSlotDuration(modType,wifiPreambleType);
+        if (transmisionMode.getDataRate() != (uint32_t) bitrate)
+        {
+            transmisionMode = WifiModulationType::getModulationType(opMode, bitrate);
+            if (opMode == 'n' && carrierFrequency == 5e6)
+                WifiModulationType::setHTFrequency11n5Gh(transmisionMode);
+        }
+        return WifiModulationType::getSlotDuration(transmisionMode,wifiPreambleType);
     }
     return ST;
 }
@@ -1643,15 +1656,6 @@ simtime_t Ieee80211Mac::getDIFS(int category)
         return getSIFS() + ((double)AIFSN(category)) * getSlotTime();
     }
 
-}
-
-simtime_t Ieee80211Mac::getHeaderTime(double bitrate)
-{
-    ModulationType modType;
-    modType = WifiModulationType::getModulationType(opMode, bitrate);
-    if (opMode == 'n' && carrierFrequency == 5e6)
-        WifiModulationType::setHTFrequency11n5Gh(modType);
-    return WifiModulationType::getPreambleAndHeader(modType, wifiPreambleType);
 }
 
 simtime_t Ieee80211Mac::getAIFS(int AccessCategory)
@@ -1788,9 +1792,17 @@ void Ieee80211Mac::scheduleDataTimeoutPeriod(Ieee80211DataOrMgmtFrame *frameToSe
         if (useModulationParameters)
         {
             ModulationType modType;
-            modType = WifiModulationType::getModulationType(opMode, bitRate);
-            if (opMode == 'n' && carrierFrequency == 5e6)
-                WifiModulationType::setHTFrequency11n5Gh(modType);
+            if (basicTransmisionMode.getDataRate() == (uint32_t) bitRate)
+                modType = basicTransmisionMode;
+            else if (transmisionMode.getDataRate() != (uint32_t) bitRate)
+            {
+                transmisionMode = WifiModulationType::getModulationType(opMode, bitRate);
+                if (opMode == 'n' && carrierFrequency == 5e6)
+                    WifiModulationType::setHTFrequency11n5Gh(transmisionMode);
+                modType = transmisionMode;
+            }
+            else
+                modType = transmisionMode;
             double duration = computeFrameDuration(frameToSend);
             double slot = SIMTIME_DBL(WifiModulationType::getSlotDuration(modType,wifiPreambleType));
             double sifs =  SIMTIME_DBL(WifiModulationType::getSifsTime(modType,wifiPreambleType));
@@ -2373,9 +2385,18 @@ double Ieee80211Mac::computeFrameDuration(int bits, double bitrate)
 {
     double duration;
     ModulationType modType;
-    modType = WifiModulationType::getModulationType(opMode, bitrate);
-    if (opMode == 'n' && carrierFrequency == 5e6)
-        WifiModulationType::setHTFrequency11n5Gh(modType);
+    if (basicTransmisionMode.getDataRate() == (uint32_t) bitrate)
+        modType = basicTransmisionMode;
+    else if (transmisionMode.getDataRate() != (uint32_t) bitrate)
+    {
+        transmisionMode = WifiModulationType::getModulationType(opMode, bitrate);
+        if (opMode == 'n' && carrierFrequency == 5e6)
+            WifiModulationType::setHTFrequency11n5Gh(transmisionMode);
+        modType = transmisionMode;
+    }
+    else
+        modType = transmisionMode;
+
     if (PHY_HEADER_LENGTH<0)
         duration = SIMTIME_DBL(WifiModulationType::calculateTxDuration(bits, modType, wifiPreambleType));
     else
