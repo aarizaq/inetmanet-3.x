@@ -159,29 +159,42 @@ double
 YansErrorRateModel::GetChunkSuccessRate(ModulationType mode, double snr, uint32_t nbits) const
 {
   if (mode.getModulationClass() == MOD_CLASS_ERP_OFDM ||
-      mode.getModulationClass() == MOD_CLASS_OFDM)
+      mode.getModulationClass() == MOD_CLASS_OFDM ||
+      mode.getModulationClass () == MOD_CLASS_HT)
     {
       if (mode.getConstellationSize() == 2)
         {
           if (mode.getCodeRate() == CODE_RATE_1_2)
-            {
+          {
               return GetFecBpskBer(snr,
-                                    nbits,
-                                    mode.getBandwidth(), // signal spread
-                                    mode.getPhyRate(), // phy rate
-                                    10, // dFree
-                                    11 // adFree
-                                    );
-            }
+                                   nbits,
+                                   mode.getBandwidth(), // signal spread
+                                   mode.getPhyRate(), // phy rate
+                                   10, // dFree
+                                   11 // adFree
+                                   );
+          }
+          if (mode.getCodeRate () == CODE_RATE_5_6) //802.11n support by S. Deronne
+          {
+              return GetFecQamBer (snr,
+                                   nbits,
+                                   mode.getBandwidth (), // signal spread
+                                   mode.getPhyRate (), // phy rate
+                                   64, // m
+                                   4,  // dFree
+                                   14,  // adFree
+                                   69  // adFreePlusOne
+                                   );
+          }
           else
-            {
+          {
               return GetFecBpskBer(snr,
-                                    nbits,
-                                    mode.getBandwidth(), // signal spread
-                                    mode.getPhyRate(), // phy rate
-                                    5, // dFree
-                                    8 // adFree
-                                    );
+                                   nbits,
+                                   mode.getBandwidth(), // signal spread
+                                   mode.getPhyRate(), // phy rate
+                                   5, // dFree
+                                   8 // adFree
+                                   );
             }
         }
       else if (mode.getConstellationSize() == 4)
