@@ -11,6 +11,7 @@ struct Ieee80211DescriptorData
     char mode;
     double bitrate;
     ModulationType modulationType;
+    bool guardInterval;
 };
 
 class Ieee80211Descriptor
@@ -19,8 +20,8 @@ class Ieee80211Descriptor
     static const int descriptorSize;
     static const Ieee80211DescriptorData data[];
   public:
-    static int findIdx(char mode, double bitrate);
-    static int getIdx(char mode, double bitrate);
+    static int findIdx(char mode, double bitrate, bool guard = false);
+    static int getIdx(char mode, double bitrate, bool guard = false);
     static int getMinIdx(char mode);
     static int getMaxIdx(char mode);
     static bool incIdx(int& idx);
