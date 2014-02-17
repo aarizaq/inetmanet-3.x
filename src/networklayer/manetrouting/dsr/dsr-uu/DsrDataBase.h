@@ -83,6 +83,9 @@ class DsrDataBase : public cOwnedObject
         DsrDataBase();
         virtual ~DsrDataBase();
 
+        void purgePathCache();
+        bool isPathCacheEmpty() {return pathsCache.empty();}
+
 
         //////////////////////////////////////////
         // link cache data base

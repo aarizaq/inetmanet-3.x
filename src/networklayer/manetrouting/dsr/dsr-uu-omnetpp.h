@@ -193,6 +193,7 @@ class DSRUU:public cSimpleModule, public INotifiable
 #endif
     private:
         DsrDataBase pathCacheMap;
+        simtime_t nextPurge;
         void ph_srt_add_map(struct dsr_srt *srt, usecs_t timeout, unsigned short flags,bool = false);
         void ph_srt_add_node_map(struct in_addr node, usecs_t timeout, unsigned short flags,unsigned int cost);
         void ph_srt_delete_node_map(struct in_addr src);

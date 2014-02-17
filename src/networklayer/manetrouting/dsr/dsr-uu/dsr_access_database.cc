@@ -53,6 +53,13 @@ struct dsr_srt *DSRUU::ph_srt_find_map(struct in_addr src, struct in_addr dst, u
             return NULL;
     }
 
+    // should refresh routes to intermediate nodes?
+    if (par("refreshIntermediate").boolValue())
+    {
+        for (unsigned int i = 0; i < route.size()-1;i++)
+            pathCacheMap.setPathsTimer(route[i],PathCacheRoute(route.begin(),route.begin()+1),timeout);
+    }
+
     dsr_srt *srt = new dsr_srt;
 
     if (!srt)
@@ -69,6 +76,12 @@ struct dsr_srt *DSRUU::ph_srt_find_map(struct in_addr src, struct in_addr dst, u
         struct in_addr auxAddr;
         auxAddr.s_addr = route[i].getIPv4().getInt();
         srt->addrs.push_back(auxAddr);
+    }
+
+    if (!pathCacheMap.isPathCacheEmpty() && nextPurge <= simTime())
+    {
+        pathCacheMap.purgePathCache();
+        nextPurge = simTime()+ (double) timeout/1000000.0;
     }
 
 
@@ -113,6 +126,11 @@ void DSRUU::ph_srt_add_map(struct dsr_srt *srt, usecs_t timeout, unsigned short 
 
     struct in_addr myaddr;
     myaddr = my_addr();
+
+    if (pathCacheMap.isPathCacheEmpty())
+    {
+        nextPurge = simTime()+ (double) timeout/1000000.0;
+    }
 
     ManetAddress myAddress(IPv4Address(myaddr.s_addr));
     ManetAddress sourceAddress(IPv4Address(srt->src.s_addr));

@@ -688,3 +688,29 @@ bool DsrDataBase::getRouteCost(const ManetAddress &nodeId, PathCacheRoute &pathN
     return true;
 }
 
+
+void DsrDataBase::purgePathCache()
+{
+    std::vector<PathsDataBase::iterator> erased;
+    for (PathsDataBase::iterator itmap = pathsCache.begin();itmap != pathsCache.end();++itmap)
+    {
+        simtime_t now = simTime();
+        for (PathsToDestination::iterator itPaths = itmap->second.begin();  itPaths != itmap->second.end();)
+        {
+            // check timers
+            if (now >= itPaths->getExpires())
+                itPaths = itmap->second.erase(itPaths);
+            else
+                ++itPaths;
+        }
+        if (itmap->second.empty())
+        {
+            erased.push_back(itmap);
+        }
+    }
+    while(!erased.empty())
+    {
+        pathsCache.erase(erased.back());
+        erased.pop_back();
+    }
+}

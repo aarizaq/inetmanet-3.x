@@ -71,6 +71,7 @@ simple DSRUU like IManetRouting
         volatile double broadcastDelay @unit("s") = default(uniform(0s,0.005s));  // the delay added to broadcast operations if EqualDelay is set (used to model processing time)
         volatile double unicastDelay @unit("s") = default(0s);  // a delay added to unicast messaged (i.e. data packet forwarding) (used to model processing time)
         bool manetPurgeRoutingTables = default(true);
+        bool refreshIntermediate = default(false);// if true also refresh expire timeout in the routes to intemediate nodes
     gates:
         input from_ip;
         output to_ip;
