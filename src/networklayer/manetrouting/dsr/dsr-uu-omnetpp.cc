@@ -50,7 +50,8 @@ std::ostream& operator<<(std::ostream& os, const DsrDataBase::PathsToDestination
 
     for (unsigned int i = 0; i<e.size(); i++)
     {
-        os << "path : " << i << " " << "expire" << e[i].expires << " ";
+        os << "path : " << i << " " << "expire :" << e[i].expires << " ";
+        os << " route :  ";
         for (unsigned int  j = 0;  j < e[i].route.size() ;j++)
         {
             os << e[i].route[j] << " - ";
