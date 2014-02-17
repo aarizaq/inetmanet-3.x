@@ -193,7 +193,7 @@ std::string DSRPkt::detailedInfo() const
 
     for (unsigned int i = 0; i < options.size(); i++)
     {
-        for (unsigned int j = 0; j < options[i].option.size(); i++)
+        for (unsigned int j = 0; j < options[i].option.size(); j++)
         {
             dopt = options[i].option[j];
             //DEBUG("dsr_len=%d l=%d\n", dsr_len, l);
