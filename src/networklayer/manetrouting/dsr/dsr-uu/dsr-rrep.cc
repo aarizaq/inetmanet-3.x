@@ -384,8 +384,6 @@ int NSCLASS dsr_rrep_opt_recv(struct dsr_pkt *dp, struct dsr_rrep_opt *rrep_opt)
     if (!rrep_opt_srt)
         return DSR_PKT_ERROR;
 
-   ;
-
     dsr_rtc_add(rrep_opt_srt, ConfValToUsecs(RouteCacheTimeout), 0);
 
     /* Remove pending RREQs */
