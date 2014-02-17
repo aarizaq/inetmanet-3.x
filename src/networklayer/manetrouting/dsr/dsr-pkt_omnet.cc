@@ -208,18 +208,24 @@ std::string DSRPkt::detailedInfo() const
                     dsr_rreq_opt *rreq_opt = check_and_cast<dsr_rreq_opt*>(dopt);
                     IPv4Address add(rreq_opt->target);
                     out << " Target :" << add << "\n"; // Khmm
-                    int j = 0;
                     for (unsigned int m = 0; m < rreq_opt->addrs.size(); m++)
                     {
-                        IPv4Address add(rreq_opt->addrs[j]);
+                        IPv4Address add(rreq_opt->addrs[m]);
                         out << add << "\n"; // Khmm
-                        j++;
                     }
                 }
                     break;
                 case DSR_OPT_RREP:
+                {
                     out << " DSR_OPT_RREP " << "\n"; // Khmm...Q
+                    dsr_rrep_opt *rrep_opt = check_and_cast<dsr_rrep_opt*>(dopt);
+                    for (unsigned int m = 0; m < rrep_opt->addrs.size(); m++)
+                    {
+                        IPv4Address add(rrep_opt->addrs[m]);
+                        out << add << "\n"; // Khmm
+                    }
 
+                }
                     break;
                 case DSR_OPT_RERR:
                     out << " DSR_OPT_RERR " << "\n"; // Khmm...
@@ -231,7 +237,8 @@ std::string DSRPkt::detailedInfo() const
                 case DSR_OPT_ACK:
                     out << " DSR_OPT_ACK " << "\n"; // Khmm...
                     break;
-                case DSR_OPT_SRT: {
+                case DSR_OPT_SRT:
+                {
                     out << " DSR_OPT_SRT " << "\n"; // Khmm...
                     dsr_srt_opt *srt_opt = check_and_cast<dsr_srt_opt*>(dopt);
                     out << "next hop : " << next << "  previous : " << previous << "\n Route \n";

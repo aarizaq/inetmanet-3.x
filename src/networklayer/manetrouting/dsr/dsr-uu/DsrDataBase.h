@@ -64,7 +64,8 @@ class DsrDataBase : public cOwnedObject
         typedef std::map<ManetAddress,PathsToDestination> PathsDataBase;
         PathsDataBase pathsCache;
 
-
+        friend class DSRUU;
+        friend std::ostream& operator<<(std::ostream& os, const PathsToDestination& e);
 
     public:
         bool getPaths(const ManetAddress &, std::vector<PathCacheRoute> &, std::vector<PathCacheCost>&);

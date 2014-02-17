@@ -45,6 +45,22 @@ int DSRUU::lifo_token;
 Define_Module(DSRUU);
 
 
+std::ostream& operator<<(std::ostream& os, const DsrDataBase::PathsToDestination& e)
+{
+
+    for (unsigned int i = 0; i<e.size(); i++)
+    {
+        os << "path : " << i << " " << "expire" << e[i].expires << " ";
+        for (unsigned int  j = 0;  j < e[i].route.size() ;j++)
+        {
+            os << e[i].route[j] << " - ";
+        }
+        os << endl;
+    }
+    return os;
+};
+
+
 struct iphdr *DSRUU::dsr_build_ip(struct dsr_pkt *dp, struct in_addr src,
                                   struct in_addr dst, int ip_len, int tot_len,
                                   int protocol, int ttl)
@@ -405,6 +421,7 @@ void DSRUU::initialize(int stage)
         interface80211ptr->ipv4Data()->joinMulticastGroup(IPv4Address::LL_MANET_ROUTERS);
         is_init = true;
         EV << "Dsr active" << "\n";
+        WATCH_MAP(pathCacheMap.pathsCache);
     }
 
     return;
