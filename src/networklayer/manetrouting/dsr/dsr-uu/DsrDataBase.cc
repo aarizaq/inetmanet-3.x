@@ -41,7 +41,7 @@ bool DsrDataBase::getPaths(const ManetAddress &addr, std::vector<PathCacheRoute>
     for (PathsToDestination::iterator itPaths = it->second.begin();  itPaths != it->second.end();)
     {
         // check timers
-        if (now <= itPaths->getExpires())
+        if (now >= itPaths->getExpires())
             itPaths = it->second.erase(itPaths);
         else
         {
@@ -83,7 +83,7 @@ bool DsrDataBase::getPath(const ManetAddress &dest, PathCacheRoute &route, doubl
     for (PathsToDestination::iterator itPaths = it->second.begin();  itPaths != it->second.end();)
     {
         // check timers
-        if (now <= itPaths->getExpires())
+        if (now >= itPaths->getExpires())
             itPaths = it->second.erase(itPaths);
         else
         {
@@ -151,7 +151,7 @@ bool DsrDataBase::getPathCosVect(const ManetAddress &dest, PathCacheRoute &route
     for (PathsToDestination::iterator itPaths = it->second.begin();  itPaths != it->second.end();)
     {
         // check timers
-        if (now <= itPaths->getExpires())
+        if (now >= itPaths->getExpires())
             itPaths = it->second.erase(itPaths);
         else
         {
@@ -214,7 +214,7 @@ void DsrDataBase::setPath(const ManetAddress &dest,const PathCacheRoute &route,c
             // actualize and return
             return;
         }
-        else if (now <= itPaths->getExpires())
+        else if (now >= itPaths->getExpires())
         {
             itPaths = it->second.erase(itPaths);
         }
@@ -247,7 +247,7 @@ void DsrDataBase::setPathStatus(const ManetAddress &dest,const PathCacheRoute &r
             // actualize and return
             return;
         }
-        else if (now <= itPaths->getExpires())
+        else if (now >= itPaths->getExpires())
         {
             itPaths = it->second.erase(itPaths);
         }
@@ -272,7 +272,7 @@ void DsrDataBase::setPathsTimer(const ManetAddress &dest,const PathCacheRoute &r
             // actualize and return
             return;
         }
-        else if (now <= itPaths->getExpires())
+        else if (now >= itPaths->getExpires())
         {
             itPaths = it->second.erase(itPaths);
         }
@@ -298,7 +298,7 @@ void DsrDataBase::erasePathWithNode(const ManetAddress &dest)
     {
         for(PathsToDestination::iterator itPaths = itMap->second.begin(); itPaths != itMap->second.end();)
         {
-            if (now <= itPaths->getExpires())
+            if (now >= itPaths->getExpires())
             {
                 itPaths = itMap->second.erase(itPaths);
                 continue;
@@ -324,7 +324,7 @@ void DsrDataBase::erasePathWithLink(const ManetAddress &addr1,const ManetAddress
     {
         for(PathsToDestination::iterator itPaths = itMap->second.begin(); itPaths != itMap->second.end();)
         {
-            if (now <= itPaths->getExpires())
+            if (now >= itPaths->getExpires())
             {
                 itPaths = itMap->second.erase(itPaths);
                 continue;
@@ -572,7 +572,7 @@ void DsrDataBase::run(const ManetAddress &target)
         for (LinkCon::iterator itCon = linkIt->second.begin() ; itCon != linkIt->second.end();)
         {
             // first check if link is valid
-            if ((*itCon)->expires<=simTime())
+            if ((*itCon)->expires <= simTime())
             {
                 itCon = linkIt->second.erase(itCon);
                 continue;
@@ -630,17 +630,18 @@ bool DsrDataBase::getRoute(const ManetAddress &nodeId,PathCacheRoute &pathNode, 
     PathCacheRoute path;
     ManetAddress currentNode = nodeId;
     pathNode.clear();
+    simtime_t now = simTime();
     while (currentNode!=rootNode)
     {
         path.push_back(currentNode);
         currentNode = it->second.idPrev;
-        if (it->second.edge->expires <= simTime())
+        if (it->second.edge->expires <= now)
         {
             routeMap.clear();
             return  getRoute(nodeId,pathNode,exp);// the new will be rebuilt with old links deleted
         }
         if (exp > 0)
-            it->second.edge->expires = simTime() + ((double)exp/1000000.0);
+            it->second.edge->expires = now + ((double)exp/1000000.0);
         it = routeMap.find(currentNode);
         if (it==routeMap.end())
             opp_error("error in data routeMap");
@@ -666,17 +667,18 @@ bool DsrDataBase::getRouteCost(const ManetAddress &nodeId, PathCacheRoute &pathN
     pathNode.clear();
 
     pathCost = it->second.costAdd;
+    simtime_t now = simTime();
     while (currentNode!=rootNode)
     {
         path.push_back(currentNode);
         currentNode = it->second.idPrev;
-        if (it->second.edge->expires <= simTime())
+        if (it->second.edge->expires <= now)
         {
             routeMap.clear();
             return  getRouteCost(nodeId,pathNode,pathCost,exp);// the new will be rebuilt with old links deleted
         }
         if (exp > 0)
-            it->second.edge->expires = simTime() + ((double)exp/1000000.0);
+            it->second.edge->expires = now + ((double)exp/1000000.0);
         it = routeMap.find(currentNode);
         if (it==routeMap.end())
             opp_error("error in data routeMap");
