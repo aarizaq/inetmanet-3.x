@@ -29,6 +29,8 @@
 #include "ns-agent.h"
 #endif
 #else
+#include <algorithm>    // std::equal
+#include <vector>
 #include "dsr-uu-omnetpp.h"
 #endif
 /* #include "debug.h" */
@@ -66,13 +68,21 @@ struct node_cache
 struct path
 {
     dsr_list_t l;
-    struct in_addr *route;
-    unsigned int *vector_cost;
-    unsigned int size_cost;
     unsigned int num_hop;
     int status;
     double cost;
     struct timeval expires;
+    std::vector<struct in_addr> route;
+    std::vector<unsigned int> vector_cost;
+    path()
+    {
+        l.prev = l.next = NULL;
+        num_hop = 0;
+        status = 0;
+        cost = 0;
+        expires.tv_sec = 0;
+        expires.tv_usec = 0;
+    }
 };
 
 static inline void __ph_delete_route(struct path *rt)
@@ -114,11 +124,10 @@ static inline struct path *path_create()
 {
     struct path *n;
 
-    n = (struct path *)MALLOC(sizeof(struct path), GFP_ATOMIC);
+    n = new path;
 
     if (!n)
         return NULL;
-    memset(n, 0, sizeof(struct path));
     return n;
 };
 
@@ -141,10 +150,13 @@ static inline struct node_cache *__node_cache_find(struct path_table *t, struct 
     return (struct node_cache *)__tbl_find(n, &dest, crit_cache_query);
 }
 
+bool mycompare (const struct in_addr &i, const struct in_addr &j) {
+  return (i.s_addr == j.s_addr);
+}
 
 static int __ph_route_tbl_add(struct path_table *rt_t,
-                              struct in_addr dst,int num_hops,struct in_addr *rt_nodes, usecs_t timeout,
-                              int status, double cost,unsigned int * cost_vector, unsigned int vector_size)
+                              struct in_addr dst,int num_hops,const std::vector<struct in_addr> &rt_nodes, usecs_t timeout,
+                              int status, double cost,const std::vector<unsigned int> &cost_vector)
 {
     struct node_cache *n;
     struct path * rt;
@@ -157,6 +169,9 @@ static int __ph_route_tbl_add(struct path_table *rt_t,
     int size;
     rt_aux2=NULL;
     dsr_list_t *pos;
+
+    if (num_hops-1 != rt_nodes.size())
+        opp_error("Size error");
 
     size = sizeof(struct in_addr)*(num_hops-1);
     n = __node_cache_find(rt_t,dst);
@@ -181,7 +196,7 @@ static int __ph_route_tbl_add(struct path_table *rt_t,
                     exist=-1;
                     break;
                 }
-                else if (memcmp(rt->route,rt_nodes,size)==0)
+                else if (std::equal(rt->route.begin(),rt->route.end(),rt_nodes.begin(),mycompare))
                 {
                     exist=-1;
                     break;
@@ -195,10 +210,7 @@ static int __ph_route_tbl_add(struct path_table *rt_t,
         if (!rt)
             return -1;
         if (size>0)
-        {
-            rt->route = (struct in_addr*) MALLOC(size,GFP_ATOMIC);
-            memcpy (rt->route,rt_nodes, size);
-        }
+            rt->route = rt_nodes;
 
         if (TBL_FULL(&n->paths)) // Table is full delete oldest
         {
@@ -215,11 +227,7 @@ static int __ph_route_tbl_add(struct path_table *rt_t,
             if (rt_aux2)
             {
                 __tbl_detach(&n->paths,&rt_aux2->l);
-                if (rt_aux2->route)
-                    FREE(rt_aux2->route);
-                if (rt_aux2->size_cost>0)
-                    FREE(rt_aux2->vector_cost);
-                FREE (rt_aux2);
+                delete (rt_aux2);
             }
 
         }
@@ -235,18 +243,7 @@ static int __ph_route_tbl_add(struct path_table *rt_t,
 
     rt->num_hop = num_hops;
 
-
-    if (vector_size>0)
-    {
-        if (rt->size_cost !=vector_size)
-        {
-            if (rt->size_cost>0)
-                FREE (rt->vector_cost);
-            rt->vector_cost = (unsigned int*)MALLOC(vector_size*sizeof(unsigned int),GFP_ATOMIC);
-            rt->size_cost=vector_size;
-        }
-        memcpy (rt->vector_cost,cost_vector, vector_size*sizeof(unsigned int));
-    }
+    rt->vector_cost = cost_vector;
 
     gettime(&rt->expires);
     timeval_add_usecs(&rt->expires, timeout);
@@ -262,13 +259,10 @@ struct dsr_srt *NSCLASS ph_srt_find(struct in_addr src,struct in_addr dst,int cr
     struct timeval now;
     struct timeval *expires;
 
-
-    struct in_addr *route;
-    unsigned int *vector_cost;
-    unsigned int vector_size;
+    std::vector<struct in_addr> *route;
+    std::vector<unsigned int> *vector_cost;
 
     unsigned int num_hop;
-    int status;
     int i;
     double cost;
     bool find;
@@ -292,11 +286,7 @@ struct dsr_srt *NSCLASS ph_srt_find(struct in_addr src,struct in_addr dst,int cr
         if (timeval_diff(&rt->expires, &now) <= 0)
         {
             __tbl_detach(&dst_node->paths,&rt->l);
-            if (rt->route)
-                FREE(rt->route);
-            if (rt->size_cost>0)
-                FREE(rt->vector_cost);
-            FREE (rt);
+            delete  rt;
             continue;
         }
 
@@ -317,31 +307,25 @@ struct dsr_srt *NSCLASS ph_srt_find(struct in_addr src,struct in_addr dst,int cr
         if (route==NULL && rt->status==VALID)
         {
             num_hop= rt->num_hop;
-            status= rt->status;
             cost= rt->cost;
-            route = rt->route;
-            vector_cost =rt->vector_cost;
-            vector_size=rt->size_cost;
+            route = &rt->route;
+            vector_cost = &rt->vector_cost;
             expires = &rt->expires;
         }
         else if (rt->cost<cost)
         {
             num_hop= rt->num_hop;
-            status= rt->status;
             cost= rt->cost;
-            route = rt->route;
-            vector_cost =rt->vector_cost;
-            vector_size=rt->size_cost;
+            route = &rt->route;
+            vector_cost = &rt->vector_cost;
             expires = &rt->expires;
         }
         else if (rt->cost==cost && (timeval_diff(&rt->expires, &now) <0) )
         {
             num_hop= rt->num_hop;
-            status= rt->status;
             cost= rt->cost;
-            route = rt->route;
-            vector_cost =rt->vector_cost;
-            vector_size=rt->size_cost;
+            route = &rt->route;
+            vector_cost = &rt->vector_cost;
             expires = &rt->expires;
         }
     }
@@ -364,56 +348,61 @@ struct dsr_srt *NSCLASS ph_srt_find(struct in_addr src,struct in_addr dst,int cr
                                    (k * sizeof(struct in_addr)),
                                    GFP_ATOMIC);
 
+    if (!srt)
+    {
+        DEBUG("Could not allocate source route!!!\n");
+        return NULL;
+    }
 #else
-    int size_cost = 0;
-    if (vector_size>0)
-        size_cost = vector_size*sizeof(unsigned int);
-    srt = (struct dsr_srt *)MALLOC(sizeof(struct dsr_srt) +
-                                   (k * sizeof(struct in_addr))+size_cost,
-                                   GFP_ATOMIC);
-    char *aux = (char *) srt;
-    aux += sizeof(struct dsr_srt);
-    srt->cost=(unsigned int*)aux;
-    aux +=size_cost;
-    srt->addrs=(struct in_addr*)(aux);
+//    srt = (struct dsr_srt *)MALLOC(sizeof(struct dsr_srt) +
+//                                   (k * sizeof(struct in_addr))+size_cost,GFP_ATOMIC);
+    srt = new dsr_srt;
 
-    if (vector_cost<=0)
-    {
-        srt->cost=NULL;
-        srt->cost_size=0;
-    }
-    else
-    {
-        srt->cost_size=vector_size;
-        memcpy(srt->cost,vector_cost,sizeof(unsigned int)*vector_size);
-        IPv4Address dstAddr((uint32_t)dst.s_addr);
-        IPv4Address srtAddr((uint32_t)srt->addrs[0].s_addr);
 
-        if (myAddr.s_addr==src.s_addr)
-        {
-            if (num_hop==1)
-                srt->cost[0] = (int) getCost(dstAddr);
-            else
-                srt->cost[0] = (int) getCost(srtAddr);
-        }
-
-    }
-
-    if (etxActive)
-        if (k!=0 && srt->cost_size==0)
-            DEBUG("Could not allocate source route!!!\n");
-#endif
     if (!srt)
     {
         DEBUG("Could not allocate source route!!!\n");
         return NULL;
     }
 
-
     srt->dst = dst;
     srt->src = src;
-    srt->laddrs = k * sizeof(struct in_addr);
-    memcpy(srt->addrs,route,srt->laddrs);
+    srt->laddrs = k * DSR_ADDRESS_SIZE;
+
+    srt->addrs = *route;
+
+
+    if (vector_cost<=0)
+    {
+        srt->cost.clear();
+    }
+    else
+    {
+        srt->cost  = *vector_cost;
+        if (myAddr.s_addr==src.s_addr && etxActive)
+        {
+            if (!srt->cost.empty())
+            {
+                if (num_hop==1)
+                {
+                    IPv4Address dstAddr((uint32_t)dst.s_addr);
+                    srt->cost[0] = (int) getCost(dstAddr);
+                }
+                else
+                {
+                    IPv4Address srtAddr((uint32_t)srt->addrs[0].s_addr);
+                    srt->cost[0] = (int) getCost(srtAddr);
+                }
+            }
+        }
+    }
+
+    if (etxActive)
+        if (k!=0 && srt->cost.empty() == 0)
+            DEBUG("Could not allocate source route!!!\n");
+#endif
+
+
     /// ???????? must be ?????????????????
     if (timeout>0)
     {
@@ -437,13 +426,11 @@ ph_srt_add(struct dsr_srt *srt, usecs_t timeout, unsigned short flags)
     unsigned int init_cost;
     bool is_first,is_last;
     int size_cost=0;
-    unsigned int *cost_vector=NULL;
-
 
     if (!srt)
         return;
 
-    n = srt->laddrs / sizeof(struct in_addr);
+    n = srt->addrs.size();
 
     addr1 = srt->src;
     myaddr = my_addr();
@@ -464,7 +451,7 @@ ph_srt_add(struct dsr_srt *srt, usecs_t timeout, unsigned short flags)
     if (!is_last)
     {
 #ifdef OMNETPP
-        if (etxActive && srt->cost)
+        if (etxActive && !srt->cost.empty())
         {
             if (j<n)
             {
@@ -489,7 +476,6 @@ ph_srt_add(struct dsr_srt *srt, usecs_t timeout, unsigned short flags)
         }
 #endif
         size_cost = 0;
-        cost_vector=NULL;
 
         for (i = j; i < n; i++)
         {
@@ -498,7 +484,7 @@ ph_srt_add(struct dsr_srt *srt, usecs_t timeout, unsigned short flags)
 #ifdef OMNETPP
             if (etxActive)
             {
-                if (srt->cost_size>0)
+                if (srt->cost.size()>0)
                 {
                     cost = init_cost;
                     if (cost<0)
@@ -506,13 +492,28 @@ ph_srt_add(struct dsr_srt *srt, usecs_t timeout, unsigned short flags)
                     for (l=j; l<i; l++)
                         cost += srt->cost[l];
                     size_cost = i-j+1;
-                    cost_vector=&(srt->cost[j]);
                 }
                 if (i+1-j!=0 && size_cost==0)
                     DEBUG("Error !!!\n");
             }
 #endif
-            __ph_route_tbl_add(&PCH,addr2,i+1-j,&(srt->addrs[j]), timeout, 0,cost, cost_vector,size_cost);
+
+
+
+            std::vector<unsigned int>auxCostVec;
+            std::vector<struct in_addr>auxVect;
+
+            if (etxActive)
+            {
+                for(int pos = j; pos <= i ; pos++)
+                {
+                    auxCostVec.push_back(srt->cost[pos]);
+                }
+            }
+            for(int pos = j; pos < i; pos++)
+                auxVect.push_back(srt->addrs[pos]);
+
+            __ph_route_tbl_add(&PCH,addr2,i+1-j,auxVect, timeout, 0,cost, auxCostVec);
         }
 
         if ((j<n && n!=0) || (n==0))
@@ -520,23 +521,35 @@ ph_srt_add(struct dsr_srt *srt, usecs_t timeout, unsigned short flags)
             addr2 = srt->dst;
             cost = n+1-j;
             size_cost = 0;
-            cost_vector=NULL;
 #ifdef OMNETPP
             if (etxActive)
             {
-                if (srt->cost_size>0)
+                if (srt->cost.size()>0)
                 {
                     cost = init_cost;
                     for (l=j; l<n; l++)
                         cost += srt->cost[l];
-                    cost_vector = &(srt->cost[j]);
                     size_cost = n-j+1;
                 }
                 if (n+1-j!=0 && size_cost==0)
                     DEBUG("Error !!!\n");
             }
 #endif
-            __ph_route_tbl_add(&PCH,addr2,n+1-j,&(srt->addrs[j]), timeout, 0, cost,cost_vector,size_cost);
+            std::vector<unsigned int>auxCostVec;
+            std::vector<struct in_addr>auxVect;
+
+            if (etxActive)
+            {
+                for(unsigned int pos = j; pos < srt->cost.size(); pos++)
+                {
+                    auxCostVec.push_back(srt->cost[pos]);
+                }
+            }
+            for(unsigned int pos = j; pos < srt->addrs.size(); pos++)
+                auxVect.push_back(srt->addrs[pos]);
+
+
+            __ph_route_tbl_add(&PCH,addr2,n+1-j,auxVect, timeout, 0, cost,auxCostVec);
         }
     }
 
@@ -546,7 +559,6 @@ ph_srt_add(struct dsr_srt *srt, usecs_t timeout, unsigned short flags)
     if (srt->flags & SRT_BIDIR&flags)
     {
         j=0;
-        cost_vector = NULL;
         size_cost=0;
         if (!is_first)
         {
@@ -579,7 +591,7 @@ ph_srt_add(struct dsr_srt *srt, usecs_t timeout, unsigned short flags)
                 addr2 = dsr_aux->addrs[i];
                 cost = i+1-j;
 #ifdef OMNETPP
-                if (dsr_aux->cost_size>0 && etxActive)
+                if (dsr_aux->cost.size()>0 && etxActive)
                 {
                     cost = init_cost;
                     if (cost<0)
@@ -587,26 +599,52 @@ ph_srt_add(struct dsr_srt *srt, usecs_t timeout, unsigned short flags)
                     for (l=j; l<i; l++)
                         cost += dsr_aux->cost[l];
                     size_cost = i-j;
-                    cost_vector= &(dsr_aux->cost[j]);
                 }
 #endif
-                __ph_route_tbl_add(&PCH,addr2,i+1-j,&(dsr_aux->addrs[j]), timeout, 0, cost,cost_vector,size_cost);
+                std::vector<unsigned int>auxCostVec;
+                std::vector<struct in_addr>auxVect;
+
+                if (etxActive)
+                 {
+                     for(int pos = j; pos <=i; pos++)
+                     {
+                         auxCostVec.push_back(dsr_aux->cost[pos]);
+                     }
+                 }
+                 for(int pos = j; pos < i ; pos++)
+                     auxVect.push_back(dsr_aux->addrs[pos]);
+
+                if (!etxActive)
+                    auxVect.clear();
+                __ph_route_tbl_add(&PCH,addr2,i+1-j,auxVect, timeout, 0, cost,auxCostVec);
             }
             cost = n+1-j;
 #ifdef OMNETPP
             if (etxActive)
-                if (dsr_aux->cost_size>0)
+                if (dsr_aux->cost.size()>0)
                 {
                     cost = init_cost;
                     for (l=j; l<n; l++)
                         cost += dsr_aux->cost[l];
-                    size_cost = dsr_aux->cost_size-j+1;
-                    cost_vector= &(dsr_aux->cost[j]);
                 }
 #endif
             addr2 = dsr_aux->dst;
-            __ph_route_tbl_add(&PCH,addr2,n+1-j,dsr_aux->addrs, timeout, 0, cost,cost_vector,size_cost);
-            FREE (dsr_aux);
+
+            std::vector<unsigned int>auxCostVec;
+            std::vector<struct in_addr>auxVect;
+
+            if (etxActive)
+            {
+                for(unsigned int pos = j; pos < dsr_aux->cost.size(); pos++)
+                {
+                    auxCostVec.push_back(dsr_aux->cost[pos]);
+                }
+            }
+            for(unsigned int pos = j; pos < dsr_aux->addrs.size(); pos++)
+                auxVect.push_back(dsr_aux->addrs[pos]);
+
+            __ph_route_tbl_add(&PCH,addr2,n+1-j,dsr_aux->addrs, timeout, 0, cost,auxCostVec);
+            delete dsr_aux;
         }
     }
 }
@@ -621,31 +659,14 @@ ph_srt_add_node(struct in_addr node, usecs_t timeout, unsigned short flags,unsig
     if (node.s_addr==myAddr.s_addr)
         return;
 #ifndef OMNETPP
-    srt = (struct dsr_srt *)MALLOC(sizeof(struct dsr_srt),
-                                   GFP_ATOMIC);
+    srt = new dsr_srt;
 #else
-    unsigned int size_cost=0;
+    //srt = (struct dsr_srt *) MALLOC((sizeof(struct dsr_srt) + size_cost), GFP_ATOMIC);
+    srt = new dsr_srt;
+
     if (cost!=0)
     {
-        size_cost=sizeof(unsigned int);
-    }
-    srt = (struct dsr_srt *) MALLOC((sizeof(struct dsr_srt) + size_cost), GFP_ATOMIC);
-
-    char *aux = (char *) srt;
-    aux += sizeof(struct dsr_srt);
-
-    srt->cost=(unsigned int*)aux;
-    aux +=size_cost;
-    srt->addrs=(struct in_addr*) aux;
-    if (cost!=0)
-    {
-        srt->cost[0]=cost;
-        srt->cost_size=1;
-    }
-    else
-    {
-        srt->cost=NULL;
-        srt->cost_size=0;
+        srt->cost.push_back(cost);
     }
 #endif
 
@@ -656,7 +677,7 @@ ph_srt_add_node(struct in_addr node, usecs_t timeout, unsigned short flags,unsig
     srt->src=my_addr();
 
     ph_srt_add(srt,timeout,flags);
-    FREE (srt);
+    delete srt;
 
 }
 
@@ -688,11 +709,7 @@ void NSCLASS ph_srt_delete_node(struct in_addr src)
                 {
                     rt = (struct path*) pos2;
                     __tbl_detach(&n_cache->paths,&rt->l);
-                    if (rt->route)
-                        FREE(rt->route);
-                    if (rt->size_cost>0)
-                        FREE(rt->vector_cost);
-                    FREE (rt);
+                    delete (rt);
                 }
                 continue;
             }
@@ -702,11 +719,7 @@ void NSCLASS ph_srt_delete_node(struct in_addr src)
                 if (timeval_diff(&rt->expires, &now) <= 0)
                 {
                     __tbl_detach(&n_cache->paths,&rt->l);
-                    if (rt->route)
-                        FREE(rt->route);
-                    if (rt->size_cost>0)
-                        FREE(rt->vector_cost);
-                    FREE (rt);
+                    delete (rt);
                     continue;
                 }
                 int long_route=rt->num_hop-1;
@@ -715,11 +728,7 @@ void NSCLASS ph_srt_delete_node(struct in_addr src)
                     if (rt->route[j].s_addr==src.s_addr)
                     {
                         __tbl_detach(&n_cache->paths,&rt->l);
-                        if (rt->route)
-                            FREE(rt->route);
-                        if (rt->size_cost>0)
-                            FREE(rt->vector_cost);
-                        FREE (rt);
+                        delete (rt);
                         break;
                     }
                 }
@@ -756,34 +765,22 @@ void NSCLASS ph_srt_delete_link(struct in_addr src,struct in_addr dst)
                 if (timeval_diff(&rt->expires, &now) <= 0)
                 {
                     __tbl_detach(&n_cache->paths,&rt->l);
-                    if (rt->route)
-                        FREE(rt->route);
-                    if (rt->size_cost>0)
-                        FREE(rt->vector_cost);
-                    FREE (rt);
+                    delete (rt);
                     continue;
                 }
                 if (rt->num_hop==1 )
                 {
                     if (n_cache->addr.s_addr==dst.s_addr)
                     {
-                        if (rt->route)
-                            FREE(rt->route);
-                        if (rt->size_cost>0)
-                            FREE(rt->vector_cost);
                         __tbl_detach(&n_cache->paths,&rt->l);
-                        FREE (rt);
+                        delete (rt);
                     }
                     continue;
                 }
                 if (src.s_addr==my_addr().s_addr && rt->route[0].s_addr== dst.s_addr)
                 {
-                    if (rt->route)
-                        FREE(rt->route);
-                    if (rt->size_cost>0)
-                        FREE(rt->vector_cost);
                     __tbl_detach(&n_cache->paths,&rt->l);
-                    FREE (rt);
+                    delete (rt);
                     continue;
                 }
                 int long_route=rt->num_hop-2;
@@ -793,11 +790,7 @@ void NSCLASS ph_srt_delete_link(struct in_addr src,struct in_addr dst)
                     if (rt->route[j].s_addr==src.s_addr && rt->route[j+1].s_addr==dst.s_addr)
                     {
                         __tbl_detach(&n_cache->paths,&rt->l);
-                        if (rt->route)
-                            FREE(rt->route);
-                        if (rt->size_cost>0)
-                            FREE(rt->vector_cost);
-                        FREE (rt);
+                        delete (rt);
                         nextIt=0;
                         break;
                     }
@@ -806,11 +799,7 @@ void NSCLASS ph_srt_delete_link(struct in_addr src,struct in_addr dst)
                 if (nextIt && (rt->route[long_route].s_addr==src.s_addr && n_cache->addr.s_addr==dst.s_addr))
                 {
                     __tbl_detach(&n_cache->paths,&rt->l);
-                    if (rt->route)
-                        FREE(rt->route);
-                    if (rt->size_cost>0)
-                        FREE(rt->vector_cost);
-                    FREE (rt);
+                    delete (rt);
                 }
             }
         }
@@ -856,11 +845,7 @@ void NSCLASS path_cache_cleanup(void)
             {
                 rt = (struct path *) pos2;
                 __tbl_detach(&n_cache->paths,&rt->l);
-                if (rt->route)
-                    FREE(rt->route);
-                if (rt->size_cost>0)
-                    FREE(rt->vector_cost);
-                FREE (rt);
+                delete (rt);
             }
             __tbl_detach(&PCH.hash[i],&n_cache->l);
             FREE(n_cache);

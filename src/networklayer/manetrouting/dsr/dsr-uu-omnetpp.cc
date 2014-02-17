@@ -161,11 +161,12 @@ void DSRUU::omnet_xmit(struct dsr_pkt *dp)
 void DSRUU::omnet_deliver(struct dsr_pkt *dp)
 {
     int dsr_opts_len = 0;
-    if (dp->dh.raw)
+    if (!dp->dh.opth.empty())
     {
-        dsr_opts_len = dp->dh.opth->p_len + DSR_OPT_HDR_LEN;
+        dsr_opts_len = dp->dh.opth.begin()->p_len + DSR_OPT_HDR_LEN;
         dsr_opt_remove(dp);
     }
+
     IPv4Datagram *dgram;
     dgram = new IPv4Datagram;
 
@@ -685,7 +686,7 @@ void DSRUU::packetFailed(IPv4Datagram *ipDgram)
 {
     struct dsr_pkt *dp;
     struct in_addr dst, nxt_hop;
-    struct in_addr prev_hop;
+    //struct in_addr prev_hop;
     /* Cast the packet so that we can touch it */
     /* Do nothing for my own packets... */
     if (ipDgram->getTransportProtocol()!=IP_PROT_DSR)
@@ -700,13 +701,14 @@ void DSRUU::packetFailed(IPv4Datagram *ipDgram)
     if (dynamic_cast<DSRPkt *>(ipDgram))
     {
         p = check_and_cast <DSRPkt *> (ipDgram->dup());
-        prev_hop.s_addr = p->prevAddress().getInt();
+        //prev_hop.s_addr = p->prevAddress().getInt();
         dst.s_addr = p->getDestAddress().getInt();
         nxt_hop.s_addr = p->nextAddress().getInt();
         DEBUG("Xmit failure for %s nxt_hop=%s\n", print_ip(dst), print_ip(nxt_hop));
 
         if (ConfVal(PathCache))
-            ph_srt_delete_link(my_addr(), nxt_hop);
+            //ph_srt_delete_link(my_addr(), nxt_hop);
+            ph_srt_delete_link_map(my_addr(), nxt_hop);
         else
             lc_link_del(my_addr(), nxt_hop);
 
@@ -759,7 +761,8 @@ void DSRUU::linkFailed(IPv4Address ipAdd)
     /* Cast the packet so that we can touch it */
     nxt_hop.s_addr = ipAdd.getInt();
     if (ConfVal(PathCache))
-        ph_srt_delete_link(my_addr(), nxt_hop);
+        //ph_srt_delete_link(my_addr(), nxt_hop);
+        ph_srt_delete_link_map(my_addr(), nxt_hop);
     else
         lc_link_del(my_addr(), nxt_hop);
 
@@ -809,7 +812,8 @@ void DSRUU::tap(DSRPkt *p, cObject *ctrl)
 struct dsr_srt *DSRUU:: RouteFind(struct in_addr src, struct in_addr dst)
 {
     if (ConfVal(PathCache))
-        return ph_srt_find(src, dst, 0, ConfValToUsecs(RouteCacheTimeout));
+        return ph_srt_find_map(src, dst, ConfValToUsecs(RouteCacheTimeout));
+        //return ph_srt_find(src, dst, 0, ConfValToUsecs(RouteCacheTimeout));
     else
         return lc_srt_find(src, dst);
 
@@ -821,7 +825,8 @@ int DSRUU::RouteAdd(struct dsr_srt *srt, unsigned long timeout, unsigned short f
 
     if (ConfVal(PathCache))
     {
-        ph_srt_add(srt, timeout, flags);
+        //ph_srt_add(srt, timeout, flags);
+        ph_srt_add_map(srt, timeout, flags);
         return 0;
     }
     else
@@ -973,46 +978,26 @@ double DSRUU::getCost(IPv4Address add)
 
 void DSRUU::ExpandCost(struct dsr_pkt *dp)
 {
-    EtxCost  * costVector;
     struct in_addr myAddr;
-
     if (!etxActive)
     {
-        if (dp->costVectorSize>0)
-            delete [] dp->costVector;
-
-        dp->costVector = NULL;
-        dp->costVectorSize = 0;
+        if (!dp->costVector.empty())
+            dp->costVector.clear();
         return;
     }
     myAddr = my_addr();
     IPv4Address myAddress((uint32_t)myAddr.s_addr);
-    if (dp->costVectorSize==0 && dp->src.s_addr!=myAddr.s_addr)
+    if ((dp->costVector.empty() && dp->src.s_addr != myAddr.s_addr) ||  !dp->costVector.empty())
     {
-        dp->costVectorSize++;
-        dp->costVector = new EtxCost[1];
-        dp->costVector[0].address = myAddress;
+        EtxCost val;
+        val.address = myAddress;
         double cost = getCost(IPv4Address((uint32_t)dp->src.s_addr));
 
         if (cost<0)
-            dp->costVector[0].cost = 1e100;
+            val.cost = 1e100;
         else
-            dp->costVector[0].cost = cost;
-    }
-    else if (dp->costVectorSize>0)
-    {
-        costVector = new EtxCost[dp->costVectorSize+1];
-        memcpy(costVector, dp->costVector, dp->costVectorSize*sizeof(EtxCost));
-        costVector[dp->costVectorSize].address = myAddress;
-        double cost = getCost(dp->costVector[dp->costVectorSize-1].address);
-        if (cost<0)
-            costVector[dp->costVectorSize].cost = 1e100;
-        else
-            costVector[dp->costVectorSize].cost = cost;
-
-        delete [] dp->costVector;
-        dp->costVectorSize++;
-        dp->costVector = costVector;
+            val.cost = cost;
+        dp->costVector.push_back(val);
     }
     /*
     for (int i=0;i<dp->costVectorSize;i++)
@@ -1025,18 +1010,18 @@ double DSRUU::PathCost(struct dsr_pkt *dp)
     double totalCost;
     if (!etxActive)
     {
-        totalCost = (double)(DSR_RREQ_ADDRS_LEN(dp->rreq_opt)/sizeof(struct in_addr));
+        totalCost = (double)(DSR_RREQ_ADDRS_LEN(dp->rreq_opt)/DSR_ADDRESS_SIZE);
         totalCost += 1;
         return totalCost;
     }
     totalCost = 0;
-    for (int i=0; i<dp->costVectorSize; i++)
+    for (unsigned int i=0; i<dp->costVector.size(); i++)
     {
         totalCost += dp->costVector[i].cost;
     }
     double cost;
-    if (dp->costVectorSize>0)
-        cost = getCost(dp->costVector[dp->costVectorSize-1].address);
+    if (!dp->costVector.empty())
+        cost = getCost(dp->costVector[dp->costVector.size()-1].address);
     else
     {
         cost = getCost(IPv4Address(dp->src.s_addr));
@@ -1053,26 +1038,90 @@ void DSRUU::AddCost(struct dsr_pkt *dp, struct dsr_srt *srt)
 {
     struct in_addr add;
 
-    if (dp->costVectorSize>0)
-        delete [] dp->costVector;
-    dp->costVector = NULL;
-    dp->costVectorSize = 0;
+    if (!dp->costVector.empty())
+        dp->costVector.clear();
     if (!etxActive)
         return;
 
-    int sizeAddress = srt->laddrs/ sizeof(struct in_addr);
-    dp->costVector = new EtxCost[srt->cost_size];
-    dp->costVectorSize = srt->cost_size;
-    for (int i=0; i<sizeAddress; i++)
+    // int sizeAddress = srt->laddrs/ DSR_ADDRESS_SIZE;
+
+    EtxCost val;
+    for (int i=0; i<(int)srt->addrs.size(); i++)
     {
+
         add = srt->addrs[i];
-        dp->costVector[i].address = IPv4Address((uint32_t)add.s_addr);
-        dp->costVector[i].cost = srt->cost[i];
+        val.address = IPv4Address((uint32_t)add.s_addr);
+        val.cost = srt->cost[i];
+        dp->costVector.push_back(val);
     }
-    dp->costVector[srt->cost_size-1].address = IPv4Address((uint32_t)srt->dst.s_addr);
-    dp->costVector[srt->cost_size-1].cost = srt->cost[srt->cost_size-1];
+    val.address = IPv4Address((uint32_t)srt->dst.s_addr);
+    val.cost = srt->cost[srt->cost.size()-1];
+    dp->costVector.push_back(val);
 }
 
+void DSRUU::ActualizeMyCostRrep(dsr_rrep_opt *rrepOpt)
+{
+    if (!etxActive && !rrepOpt->cost.empty())
+    {
+        rrepOpt->cost.clear();
+        return;
+    }
+    // search my address
+    if (rrepOpt->addrs.size()  != rrepOpt->cost.size())
+    {
+        // do nothing
+        rrepOpt->cost.clear();
+        return;
+    }
+    for (int i = (int)rrepOpt->addrs.size()-2; i>=0; i--)
+    {
+        if (rrepOpt->addrs[i] != my_addr().s_addr)
+            continue;
+        rrepOpt->cost[i+1] = getCost(IPv4Address(rrepOpt->addrs[i+1]));
+        return;
+    }
+    rrepOpt->cost[0] = getCost(IPv4Address(rrepOpt->addrs[0]));
+}
+
+void DSRUU::AddCostRrep(struct dsr_pkt *dp, struct dsr_srt *srt)
+{
+    struct in_addr add;
+
+    if (!dp->costVector.empty())
+        dp->costVector.clear();
+    if (!etxActive)
+        return;
+
+    // int sizeAddress = srt->laddrs/ DSR_ADDRESS_SIZE;
+    // search my address
+
+    EtxCost val;
+
+
+    for (int i=0; i<(int)srt->addrs.size(); i++)
+    {
+
+        add = srt->addrs[i];
+        if (add.s_addr == my_addr().s_addr)
+            break;
+        add = srt->addrs[i];
+        val.address = IPv4Address((uint32_t)add.s_addr);
+        val.cost = srt->cost[i];
+        dp->costVector.push_back(val);
+    }
+
+    double cost;
+    if (!dp->costVector.empty())
+        cost = getCost(dp->costVector[dp->costVector.size()-1].address);
+    else
+    {
+        cost = getCost(IPv4Address(dp->src.s_addr));
+    }
+
+    val.address = IPv4Address(my_addr().s_addr);
+    val.cost = cost;
+    dp->costVector.push_back(val);
+}
 
 bool DSRUU::proccesICMP(cMessage *msg)
 {

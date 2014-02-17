@@ -37,7 +37,7 @@
 #include "LinkBreak.h"
 #endif
 
-#include <map>
+#include "DsrDataBase.h"
 
 // generate ev prints
 #ifdef _WIN32
@@ -64,6 +64,10 @@
 #define ICMP_TIME_EXCEEDED 2
 #include "SimpleArp.h"
 #include "MacControlInfo.h"
+#endif
+
+#ifndef DSR_ADDRESS_SIZE
+#define DSR_ADDRESS_SIZE 4
 #endif
 
 /*
@@ -153,6 +157,7 @@ static inline char *print_pkt(char *p, int len)
 #undef NO_DECLS
 
 
+
 #define init_timer(timer)
 #define timer_pending(timer) ((timer)->pending())
 
@@ -186,6 +191,13 @@ class DSRUU:public cSimpleModule, public ImNotifiable
 class DSRUU:public cSimpleModule, public INotifiable
 {
 #endif
+    private:
+        DsrDataBase pathCacheMap;
+        void ph_srt_add_map(struct dsr_srt *srt, usecs_t timeout, unsigned short flags,bool = false);
+        void ph_srt_add_node_map(struct in_addr node, usecs_t timeout, unsigned short flags,unsigned int cost);
+        void ph_srt_delete_node_map(struct in_addr src);
+        struct dsr_srt * ph_srt_find_map(struct in_addr src, struct in_addr dst, unsigned int timeout);
+        void ph_srt_delete_link_map(struct in_addr src1, struct in_addr src2);
   public:
     friend class DSRUUTimer;
     //static simtime_t current_time;
@@ -242,6 +254,8 @@ class DSRUU:public cSimpleModule, public INotifiable
     void EtxMsgProc(cMessage *msg);
     double getCost(IPv4Address add);
     void AddCost(struct dsr_pkt *,struct dsr_srt *);
+    void AddCostRrep(struct dsr_pkt *dp, struct dsr_srt *srt);
+    void ActualizeMyCostRrep(dsr_rrep_opt *);
     void ExpandCost(struct dsr_pkt *);
     double PathCost(struct dsr_pkt *dp);
 

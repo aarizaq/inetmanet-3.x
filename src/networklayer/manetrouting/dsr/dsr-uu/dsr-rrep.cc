@@ -84,7 +84,7 @@ void NSCLASS grat_rrep_tbl_timeout(unsigned long data)
     struct grat_rrep_entry *e =
         (struct grat_rrep_entry *)tbl_detach_first(&grat_rrep_tbl);
 
-    FREE(e);
+    delete e;
 
     if (tbl_empty(&grat_rrep_tbl))
         return;
@@ -108,8 +108,7 @@ int NSCLASS grat_rrep_tbl_add(struct in_addr src, struct in_addr prev_hop)
     if (in_tbl(&grat_rrep_tbl, &q, crit_query))
         return 0;
 
-    e = (struct grat_rrep_entry *)MALLOC(sizeof(struct grat_rrep_entry),
-                                         GFP_ATOMIC);
+    e = new grat_rrep_entry;
 
     if (!e)
         return -1;
@@ -196,36 +195,39 @@ grat_rrep_tbl_proc_info(char *buffer, char **start, off_t offset, int length)
 static inline int
 dsr_rrep_add_srt(struct dsr_rrep_opt *rrep_opt, struct dsr_srt *srt)
 {
-    int n;
-
     if (!rrep_opt | !srt)
         return -1;
 
-    n = srt->laddrs / sizeof(struct in_addr);
-
-    memcpy(rrep_opt->addrs, srt->addrs, srt->laddrs);
-    rrep_opt->addrs[n] = srt->dst.s_addr;
+    //n = srt->laddrs / sizeof(struct in_addr);
+    rrep_opt->addrs.clear();
+    for (unsigned int i = 0; i< srt->addrs.size(); i++)
+        rrep_opt->addrs.push_back(srt->addrs[i].s_addr);
+    // memcpy(&rrep_opt->addrs[0], &srt->addrs[], srt->laddrs);
+    rrep_opt->addrs.push_back(srt->dst.s_addr);
+    rrep_opt->cost = srt->cost;
 
     return 0;
 }
 
-static struct dsr_rrep_opt *dsr_rrep_opt_add(char *buf, int len,
+static struct dsr_rrep_opt *dsr_rrep_opt_add(struct dsr_opt_hdr *opt_hdr, int len,
         struct dsr_srt *srt)
 {
-    struct dsr_rrep_opt *rrep_opt;
 
-    if (!buf || !srt || (unsigned int)len < DSR_RREP_OPT_LEN(srt))
+
+    if (!opt_hdr || !srt || (unsigned int)len < DSR_RREP_OPT_LEN(srt))
         return NULL;
 
-    rrep_opt = (struct dsr_rrep_opt *)buf;
+    struct dsr_rrep_opt *rrep_opt = new dsr_rrep_opt;
 
     rrep_opt->type = DSR_OPT_RREP;
-    rrep_opt->length = srt->laddrs + sizeof(struct in_addr) + 1;
+    rrep_opt->length = srt->laddrs + DSR_ADDRESS_SIZE + 1;
     rrep_opt->l = 0;
     rrep_opt->res = 0;
 
     /* Add source route to RREP */
     dsr_rrep_add_srt(rrep_opt, srt);
+    opt_hdr->option.push_back(rrep_opt);
+
 
     return rrep_opt;
 }
@@ -233,7 +235,7 @@ static struct dsr_rrep_opt *dsr_rrep_opt_add(char *buf, int len,
 int NSCLASS dsr_rrep_send(struct dsr_srt *srt, struct dsr_srt *srt_to_me)
 {
     struct dsr_pkt *dp = NULL;
-    char *buf;
+    struct dsr_opt_hdr *buf;
     int len, ttl, n;
 
     if (!srt || !srt_to_me)
@@ -258,7 +260,7 @@ int NSCLASS dsr_rrep_send(struct dsr_srt *srt, struct dsr_srt *srt_to_me)
     len = DSR_OPT_HDR_LEN + DSR_SRT_OPT_LEN(srt) +
           DSR_RREP_OPT_LEN(srt_to_me)/*  + DSR_OPT_PAD1_LEN */;
 
-    n = srt->laddrs / sizeof(struct in_addr);
+    n = srt->laddrs / DSR_ADDRESS_SIZE;
 
     DEBUG("srt: %s\n", print_srt(srt));
     DEBUG("srt_to_me: %s\n", print_srt(srt_to_me));
@@ -272,7 +274,7 @@ int NSCLASS dsr_rrep_send(struct dsr_srt *srt, struct dsr_srt *srt_to_me)
 
     DEBUG("TTL=%d, n=%d\n", ttl, n);
 
-    buf = dsr_pkt_alloc_opts(dp, len);
+    buf = dsr_pkt_alloc_opts(dp);
 
     if (!buf)
         goto out_err;
@@ -286,16 +288,16 @@ int NSCLASS dsr_rrep_send(struct dsr_srt *srt, struct dsr_srt *srt_to_me)
         goto out_err;
     }
 
-    dp->dh.opth = dsr_opt_hdr_add(buf, len, DSR_NO_NEXT_HDR_TYPE);
+    dsr_opt_hdr_add(buf, len, DSR_NO_NEXT_HDR_TYPE);
 
-    if (!dp->dh.opth)
+    if (dp->dh.opth.empty())
     {
         DEBUG("Could not create DSR options header\n");
         goto out_err;
     }
 
-    buf += DSR_OPT_HDR_LEN;
     len -= DSR_OPT_HDR_LEN;
+    dp->dh.opth.begin()->p_len = len;
 
     /* Add the source route option to the packet */
     dp->srt_opt = dsr_srt_opt_add(buf, len, 0, dp->salvage, srt);
@@ -306,7 +308,6 @@ int NSCLASS dsr_rrep_send(struct dsr_srt *srt, struct dsr_srt *srt_to_me)
         goto out_err;
     }
 
-    buf += DSR_SRT_OPT_LEN(srt);
     len -= DSR_SRT_OPT_LEN(srt);
 
     dp->rrep_opt[dp->num_rrep_opts++] =
@@ -317,6 +318,7 @@ int NSCLASS dsr_rrep_send(struct dsr_srt *srt, struct dsr_srt *srt_to_me)
         DEBUG("Could not create RREP option header\n");
         goto out_err;
     }
+
 
     /* TODO: Should we PAD? The rrep struct is padded and aligned
      * automatically by the compiler... How to fix this? */
@@ -333,7 +335,8 @@ int NSCLASS dsr_rrep_send(struct dsr_srt *srt, struct dsr_srt *srt_to_me)
     dp->flags |= PKT_XMIT_JITTER;
 
 #ifdef OMNETPP
-    AddCost(dp,srt_to_me);
+    AddCostRrep(dp, srt_to_me);
+    //AddCost(dp,srt_to_me);
 #endif
 
     XMIT(dp);
@@ -361,7 +364,10 @@ int NSCLASS dsr_rrep_opt_recv(struct dsr_pkt *dp, struct dsr_rrep_opt *rrep_opt)
 
     myaddr = my_addr();
 
-    srt_dst.s_addr = rrep_opt->addrs[DSR_RREP_ADDRS_LEN(rrep_opt) / sizeof(struct in_addr)];
+    srt_dst.s_addr = rrep_opt->addrs.back();
+    if (srt_dst.s_addr != myaddr.s_addr)
+        ActualizeMyCostRrep(rrep_opt);
+
 #ifndef OMNETPP
     rrep_opt_srt = dsr_srt_new(dp->dst, srt_dst,
                                DSR_RREP_ADDRS_LEN(rrep_opt),
@@ -369,17 +375,23 @@ int NSCLASS dsr_rrep_opt_recv(struct dsr_pkt *dp, struct dsr_rrep_opt *rrep_opt)
 #else
     rrep_opt_srt = dsr_srt_new(dp->dst, srt_dst,
                                DSR_RREP_ADDRS_LEN(rrep_opt),
-                               (char *)rrep_opt->addrs,dp->costVector,dp->costVectorSize);
+                               VectorAddress(rrep_opt->addrs.begin(),rrep_opt->addrs.end()-1));
+    if (etxActive && rrep_opt->cost.size() == rrep_opt->addrs.size())
+    {
+        rrep_opt_srt->cost = rrep_opt->cost;
+    }
 #endif
     if (!rrep_opt_srt)
         return DSR_PKT_ERROR;
+
+   ;
 
     dsr_rtc_add(rrep_opt_srt, ConfValToUsecs(RouteCacheTimeout), 0);
 
     /* Remove pending RREQs */
     rreq_tbl_route_discovery_cancel(rrep_opt_srt->dst);
 
-    FREE(rrep_opt_srt);
+    delete rrep_opt_srt;
 
     if (dp->dst.s_addr == myaddr.s_addr)
     {

@@ -222,15 +222,8 @@ static struct maint_entry *maint_entry_create(struct dsr_pkt *dp,
         if (dp->nh.iph->protocol == IP_PROT_DSR)
         {
             dgram->setTransportProtocol(IP_PROT_DSR);
-            struct dsr_opt_hdr *opth;
-            struct dsr_opt_hdr * options;
-            opth = dp->dh.opth;
-
-            int dsr_opts_len = opth->p_len + DSR_OPT_HDR_LEN;
-            options = (dsr_opt_hdr *)MALLOC (dsr_opts_len, GFP_ATOMIC);
-            memcpy((char*)options,(char*)opth,dsr_pkt_opts_len(dp));
-            dsrPkt->setOptions(options);
-            dsrPkt->setBitLength (dsrPkt->getBitLength()+((DSR_OPT_HDR_LEN+options->p_len)*8));
+            dsrPkt->setOptions(dp->dh.opth);
+            dsrPkt->setBitLength (dsrPkt->getBitLength()+((DSR_OPT_HDR_LEN+dp->dh.opth.begin()->p_len)*8));
             dsrPkt->setEncapProtocol((IPProtocolId)dp->encapsulate_protocol);
         }
         else
@@ -240,12 +233,11 @@ static struct maint_entry *maint_entry_create(struct dsr_pkt *dp,
         m->dp = dsr_pkt_alloc(dgram);
         if (dp->srt)
         {
-            int size = sizeof(struct dsr_srt) + dp->srt->laddrs+dp->srt->cost_size;
-            m->dp->srt = (struct dsr_srt *)MALLOC(size,GFP_ATOMIC);
-            memcpy(m->dp->srt,dp->srt,size);
+            m->dp->srt = new dsr_srt;
+            *m->dp->srt = *dp->srt;
         }
 
-        if (dgram && (m->dp->ip_pkt!=dgram))
+        if (dgram && (m->dp->ip_pkt != dgram))
             delete dgram;
         if (m->dp->ip_pkt)
         {
@@ -276,7 +268,7 @@ int NSCLASS maint_buf_salvage(struct dsr_pkt *dp)
     if (dp->srt)
     {
         DEBUG("old internal source route exists\n");
-        FREE(dp->srt);
+        delete dp->srt;
         dp->srt=NULL;
     }
 
@@ -291,19 +283,15 @@ int NSCLASS maint_buf_salvage(struct dsr_pkt *dp)
     if (!dp->srt_opt)
     {
         DEBUG("No old source route\n");
-        FREE(alt_srt);
+        delete alt_srt;
         return -1;
     }
-#ifdef OMNETPP
-    old_srt = dsr_srt_new(dp->src, dp->dst, dp->srt_opt->length - 2,
-                          (char *)dp->srt_opt->addrs,dp->costVector,dp->costVectorSize);
-#else
-    old_srt = dsr_srt_new(dp->src, dp->dst, dp->srt_opt->length - 2,
-                          (char *)dp->srt_opt->addrs);
-#endif
+
+    old_srt = dsr_srt_new(dp->src, dp->dst, dp->srt_opt->length - 2, dp->srt_opt->addrs,dp->costVector);
+
     if (!old_srt)
     {
-        FREE(alt_srt);
+        delete alt_srt;
         return -1;
     }
 
@@ -332,8 +320,8 @@ int NSCLASS maint_buf_salvage(struct dsr_pkt *dp)
 
         if (!srt_to_me)
         {
-            FREE(alt_srt);
-            FREE(old_srt);
+            delete alt_srt;
+            delete old_srt;
             return -1;
         }
         srt = dsr_srt_concatenate(srt_to_me, alt_srt);
@@ -343,11 +331,11 @@ int NSCLASS maint_buf_salvage(struct dsr_pkt *dp)
         DEBUG("old_srt: %s\n", print_srt(old_srt));
         DEBUG("alt_srt: %s\n", print_srt(alt_srt));
 
-        FREE(alt_srt);
-        FREE(srt_to_me);
+        delete alt_srt;
+        delete srt_to_me;
     }
 
-    FREE(old_srt);
+    delete old_srt;
 
     if (!srt)
         return -1;
@@ -357,7 +345,7 @@ int NSCLASS maint_buf_salvage(struct dsr_pkt *dp)
     if (dsr_srt_check_duplicate(srt))
     {
         DEBUG("Duplicate address in new source route, aborting salvage\n");
-        FREE(srt);
+        delete srt;
         return -1;
     }
 
@@ -370,62 +358,22 @@ int NSCLASS maint_buf_salvage(struct dsr_pkt *dp)
     new_srt_opt_len = DSR_SRT_OPT_LEN(srt);
     salv = dp->srt_opt->salv;
 
+    int old_opt_len = dp->dh.opth.begin()->p_len + DSR_OPT_HDR_LEN;
+    int new_opt_len = old_opt_len - old_srt_opt_len + new_srt_opt_len;
+
     DEBUG("Salvage - source route length new=%d old=%d\n",
           new_srt_opt_len, old_srt_opt_len);
 
-    if (old_srt_opt_len == new_srt_opt_len)
-    {
-        DEBUG("new and old srt of same length\n");
+    // actualize the information
 
-        dp->srt_opt = dsr_srt_opt_add((char *)dp->srt_opt,
+    dp->srt_opt = dsr_srt_opt_add_char((char*)dp->srt_opt,
                                       new_srt_opt_len, 0,
                                       salv + 1, srt);
-    }
-    else
+
+    if (old_srt_opt_len != new_srt_opt_len)
     {
-        int old_opt_len, new_opt_len;
-        char *old_opt = dp->dh.raw;
-        char *old_srt_opt = (char *)dp->srt_opt;
-        char *buf;
-
-        DEBUG("Creating new options header\n");
-
-        old_opt_len = dsr_pkt_opts_len(dp);
-        new_opt_len = old_opt_len - old_srt_opt_len + new_srt_opt_len;
-
-        DEBUG("opt_len old=%d new=%d srt: %s\n",
-              old_opt_len, new_opt_len, print_srt(srt));
-
-        /* Allocate new options space */
-        buf = dsr_pkt_alloc_opts(dp, new_opt_len);
-
-        if (!buf)
-        {
-            FREE(srt);
-            return -1;
-        }
-
-        /* Copy everything up to old source route option */
-        memcpy(buf, old_opt, old_srt_opt - old_opt);
-
-        buf += (old_srt_opt - old_opt);
-
-        /* Add new source route option */
-        dp->srt_opt = dsr_srt_opt_add(buf, new_srt_opt_len, 0,
-                                      salv + 1, srt);
-
-        buf += new_srt_opt_len;
-
-        /* Copy everything from after old source route option and to the
-         * end */
-        memcpy(buf, old_srt_opt + old_srt_opt_len,
-               old_opt + old_opt_len -
-               (old_srt_opt + old_srt_opt_len));
-
-        FREE(old_opt);
-
         /* Set new length in DSR header */
-        dp->dh.opth->p_len = htons(new_opt_len - DSR_OPT_HDR_LEN);
+        dp->dh.opth.begin()->p_len = htons(new_opt_len - DSR_OPT_HDR_LEN);
     }
 
     /* We got this packet directly from the previous hop */
@@ -433,9 +381,10 @@ int NSCLASS maint_buf_salvage(struct dsr_pkt *dp)
 
     dp->nxt_hop = dsr_srt_next_hop(srt, dp->srt_opt->sleft);
 
-    DEBUG("Next hop=%s p_len=%d\n", print_ip(dp->nxt_hop), ntohs(dp->dh.opth->p_len));
+    DEBUG("Next hop=%s p_len=%d\n", print_ip(dp->nxt_hop), ntohs(dp->dh.opth.begin()->p_len));
 
     dp->srt = srt;
+    dp->costVector.clear(); // the route has changed. is not valid
 
     XMIT(dp);
 
@@ -473,7 +422,8 @@ void NSCLASS maint_buf_timeout(unsigned long data)
             int n = 0;
 #ifdef OMNETPP
             if (ConfVal(PathCache))
-                ph_srt_delete_link(my_addr(), m->nxt_hop);
+               // ph_srt_delete_link(my_addr(), m->nxt_hop);
+                ph_srt_delete_link_map(my_addr(), m->nxt_hop);
             else
                 lc_link_del(my_addr(), m->nxt_hop);
 #endif

@@ -110,8 +110,7 @@ int NSCLASS dsr_recv(struct dsr_pkt *dp)
 
                 for (i = 0; i < dp->num_rrep_opts; i++)
                 {
-                    rrep_srt_dst.s_addr = dp->rrep_opt[i]->addrs[DSR_RREP_ADDRS_LEN(dp->rrep_opt[i]) / sizeof(struct in_addr)];
-
+                    rrep_srt_dst.s_addr = dp->rrep_opt[i]->addrs[0];
                     send_buf_set_verdict(SEND_BUF_SEND, rrep_srt_dst);
                 }
             }

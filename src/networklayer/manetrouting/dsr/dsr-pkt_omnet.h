@@ -57,12 +57,11 @@ class DSRPkt : public IPv4Datagram
 {
 
   protected:
-    struct dsr_opt_hdr *options;
+    std::vector<struct dsr_opt_hdr>options;
     IPProtocolId encap_protocol;
     IPv4Address previous;
     IPv4Address next;
-    EtxCost  *costVector;
-    unsigned int costVectorSize;
+    std::vector <EtxCost>  costVector;
     int dsr_ttl;
 
   private:
@@ -70,7 +69,7 @@ class DSRPkt : public IPv4Datagram
     void clean();
 
   public:
-    explicit DSRPkt(const char *name=NULL) : IPv4Datagram(name) {costVector=NULL; options=NULL; costVectorSize=0; dsr_ttl=0;}
+    explicit DSRPkt(const char *name=NULL) : IPv4Datagram(name) {costVector.clear(); options.clear(); dsr_ttl=0;}
     ~DSRPkt ();
     DSRPkt (const DSRPkt  &m);
     DSRPkt (struct dsr_pkt *dp,int interface_id);
@@ -96,20 +95,19 @@ class DSRPkt : public IPv4Datagram
     const IPv4Address nextAddress() const {return next;}
     void setNextAddress(const IPv4Address address_var) {next = address_var;}
 #endif
-    struct dsr_opt_hdr * getOptions() const {return options;}
-    void  setOptions(dsr_opt_hdr * op) {if (options !=NULL) free(options);  options=op;}
+    std::vector<struct dsr_opt_hdr> &getOptions() {return options;}
+    void  setOptions(const std::vector<struct dsr_opt_hdr> &op) {options.clear(); options=op;}
+    void clearOptions(){options.clear();}
     virtual std::string detailedInfo() const;
 
     void resetCostVector();
-    virtual void getCostVector(EtxCost &cost,int &size); // Copy
-    virtual EtxCost* getCostVector() {return ((costVectorSize>0)?costVector:NULL);}
+    virtual void getCostVector(std::vector<EtxCost> &cost); // Copy
+    virtual std::vector<EtxCost> getCostVector() {return costVector;}
 
-    virtual void setCostVector(EtxCost &cost, int size);
-    virtual void setCostVector(EtxCost *cost,int size);
+    virtual void setCostVector(std::vector<EtxCost> &cost);
 
-    virtual unsigned getCostVectorSize() const {return costVectorSize;}
+    virtual unsigned getCostVectorSize() const {return costVector.size();}
 
-    virtual void setCostVectorSize(unsigned n);
     virtual void setCostVectorSize(EtxCost);
     virtual void setCostVectorSize(u_int32_t addr, double cost);
 };

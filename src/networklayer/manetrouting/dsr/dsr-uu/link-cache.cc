@@ -241,7 +241,7 @@ static inline struct lc_node *lc_node_create(struct in_addr addr)
 {
     struct lc_node *n;
 
-    n = (struct lc_node *)MALLOC(sizeof(struct lc_node), GFP_ATOMIC);
+    n = new lc_node;
 
     if (!n)
         return NULL;
@@ -276,8 +276,7 @@ static int __lc_link_tbl_add(struct tbl *t, struct lc_node *src,
 
     if (!link)
     {
-        link = (struct lc_link *)MALLOC(sizeof(struct lc_link),
-                                        GFP_ATOMIC);
+        link = new lc_link;
 
         if (!link)
             return -1;
@@ -504,30 +503,11 @@ struct dsr_srt *NSCLASS lc_srt_find(struct in_addr src, struct in_addr dst)
         /*      struct lc_link *l; */
         int k = (dst_node->hops - 1);
         int i = 0;
-#ifndef OMNETPP
-        srt = (struct dsr_srt *)MALLOC(sizeof(struct dsr_srt) +
-                                       (k * sizeof(struct in_addr)),
-                                       GFP_ATOMIC);
-#else
         int size_cost = 0;
 
+        srt = new dsr_srt;
         if (etxActive)
-            size_cost = dst_node->hops*sizeof(unsigned int);
-        srt = (struct dsr_srt *)MALLOC(sizeof(struct dsr_srt) + (k * sizeof(struct in_addr))+size_cost,GFP_ATOMIC);
-        char *aux = (char *) srt;
-        aux += sizeof(struct dsr_srt);
-        srt->cost=(unsigned int*)aux;
-        aux +=size_cost;
-        srt->addrs=(struct in_addr*)(aux);
-        if (srt->cost==NULL)
-        {
-            srt->cost=NULL;
-            srt->cost_size=0;
-        }
-        else
-            srt->cost_size=dst_node->hops;
-#endif
-
+            srt->cost.resize(dst_node->hops);
 
 
         if (!srt)
@@ -538,7 +518,8 @@ struct dsr_srt *NSCLASS lc_srt_find(struct in_addr src, struct in_addr dst)
 
         srt->dst = dst;
         srt->src = src;
-        srt->laddrs = k * sizeof(struct in_addr);
+        srt->laddrs = k * DSR_ADDRESS_SIZE;
+        srt->addrs.resize(k);
 
         /*      l = __lc_link_find(&LC.links, dst_node->pred->addr, dst_node->addr); */
 
@@ -574,10 +555,10 @@ struct dsr_srt *NSCLASS lc_srt_find(struct in_addr src, struct in_addr dst)
         }
 #ifdef OMNETPP
         i=0;
-        if (srt->cost_size>0)
+        if (srt->cost.size()>0)
             for (n = dst_node; (n != n->pred); n = n->pred)
             {
-                srt->cost[srt->cost_size-i-1]=n->cost - n->pred->cost;
+                srt->cost[srt->cost.size()-i-1]=n->cost - n->pred->cost;
                 i++;
             }
 #endif
@@ -586,7 +567,7 @@ struct dsr_srt *NSCLASS lc_srt_find(struct in_addr src, struct in_addr dst)
         {
             DEBUG("hop count ERROR i+1=%d hops=%d!!!\n", i + 1,
                   dst_node->hops);
-            FREE(srt);
+            delete srt;
             srt = NULL;
         }
     }
@@ -662,7 +643,7 @@ lc_srt_add(struct dsr_srt *srt, usecs_t timeout, unsigned short flags)
         else if (addr2.s_addr==myaddr.s_addr)
             lc_link_add(addr1, addr2, timeout, 0,(unsigned int)getCost(ipAddr1));
         else
-            lc_link_add(addr1, addr2, timeout, 0, srt->cost[srt->cost_size-1]);
+            lc_link_add(addr1, addr2, timeout, 0, srt->cost[srt->cost.size()-1]);
     }
     else
 #else
@@ -682,7 +663,7 @@ lc_srt_add(struct dsr_srt *srt, usecs_t timeout, unsigned short flags)
             else if (addr2.s_addr==myaddr.s_addr)
                 lc_link_add(addr2, addr1, timeout, 0,(unsigned int)getCost(ipAddr1));
             else
-                lc_link_add(addr2, addr1, timeout, 0, srt->cost[srt->cost_size-1]);
+                lc_link_add(addr2, addr1, timeout, 0, srt->cost[srt->cost.size()-1]);
         }
         else
 #endif

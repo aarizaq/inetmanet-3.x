@@ -25,68 +25,18 @@
 #include "dsr-opt.h"
 #include "dsr.h"
 
-char *dsr_pkt_alloc_opts(struct dsr_pkt *dp, int len)
+struct dsr_opt_hdr * dsr_pkt_alloc_opts(struct dsr_pkt *dp)
 {
     if (!dp)
         return NULL;
-    dp->dh.raw = (char *)MALLOC(len + DEFAULT_TAILROOM, GFP_ATOMIC);
-    if (!dp->dh.raw)
-        return NULL;
 
-    dp->dh.tail = dp->dh.raw + len;
-    dp->dh.end = dp->dh.tail + DEFAULT_TAILROOM;
-
-    return dp->dh.raw;
+    dp->dh.opth.resize(dp->dh.opth.size()+1);
+    return &(dp->dh.opth.back());
 }
 
-char *dsr_pkt_alloc_opts_expand(struct dsr_pkt *dp, int len)
+void dsr_pkt_free_opts(struct dsr_pkt *dp)
 {
-    char *tmp;
-    int old_len;
-
-    if (!dp || !dp->dh.raw)
-        return NULL;
-
-    if (dsr_pkt_tailroom(dp) > len)
-    {
-        tmp = dp->dh.tail;
-        dp->dh.tail += len;
-        return tmp;
-    }
-
-    tmp = dp->dh.raw;
-    old_len = dsr_pkt_opts_len(dp);
-
-    if (!dsr_pkt_alloc_opts(dp, old_len + len))
-        return NULL;
-
-    memcpy(dp->dh.raw, tmp, old_len);
-
-    FREE(tmp);
-
-    return (dp->dh.raw + old_len);
-}
-
-int dsr_pkt_free_opts(struct dsr_pkt *dp)
-{
-    int len;
-
-    if (!dp->dh.raw)
-        return -1;
-
-    len = dsr_pkt_opts_len(dp);
-
-    FREE(dp->dh.raw);
-
-    dp->dh.raw = dp->dh.end = dp->dh.tail = NULL;
-    dp->srt_opt = NULL;
-    dp->rreq_opt = NULL;
-    memset(dp->rrep_opt, 0, sizeof(struct dsr_rrep_opt *) * MAX_RREP_OPTS);
-    memset(dp->rerr_opt, 0, sizeof(struct dsr_rerr_opt *) * MAX_RERR_OPTS);
-    memset(dp->ack_opt, 0, sizeof(struct dsr_ack_opt *) * MAX_ACK_OPTS);
-    dp->num_rrep_opts = dp->num_rerr_opts = dp->num_ack_opts = 0;
-
-    return len;
+    dp->dh.opth.clear();
 }
 
 #ifndef OMNETPP
@@ -235,7 +185,7 @@ void dsr_pkt_free(struct dsr_pkt *dp)
 dsr_pkt * dsr_pkt_alloc(cPacket  * p)
 {
     struct dsr_pkt *dp;
-    int dsr_opts_len = 0;
+   // int dsr_opts_len = 0;
 
 
     // dp = (struct dsr_pkt *)MALLOC(sizeof(struct dsr_pkt), GFP_ATOMIC);
@@ -250,7 +200,7 @@ dsr_pkt * dsr_pkt_alloc(cPacket  * p)
 
     if (!dp)
         return NULL;
-    memset(dp, 0, sizeof(dsr_pkt));
+    dp->clear();
     if (p)
     {
         IPv4Datagram *dgram = dynamic_cast <IPv4Datagram *> (p);
@@ -301,28 +251,23 @@ dsr_pkt * dsr_pkt_alloc(cPacket  * p)
 
         if (dp->nh.iph->protocol == IP_PROT_DSR)
         {
-            struct dsr_opt_hdr *opth;
             int n;
             if (dynamic_cast<DSRPkt*> (p))
             {
                 DSRPkt * dsrpkt = dynamic_cast<DSRPkt*> (p);
 
-                opth =  dsrpkt->getOptions();
-                dsr_opts_len = opth->p_len + DSR_OPT_HDR_LEN;
-                if (!dsr_pkt_alloc_opts(dp, dsr_opts_len))
-                {
-                    FREE(dp);
-                    return NULL;
-                }
+                dp->dh.opth = dsrpkt->getOptions();
+                dsrpkt->clearOptions();
+                // dsr_opts_len = dp->dh.opth.begin()->p_len + DSR_OPT_HDR_LEN;
+
                 if (dp->payload)
                     dp->encapsulate_protocol=dsrpkt->getEncapProtocol();
 
-                memcpy(dp->dh.raw, (char *)opth, dsr_opts_len);
                 n = dsr_opt_parse(dp);
                 DEBUG("Packet has %d DSR option(s)\n", n);
                 dp->ip_pkt = dsrpkt;
                 dp->costVector = dsrpkt->getCostVector();
-                dp->costVectorSize = dsrpkt->getCostVectorSize();
+
                 dsrpkt->resetCostVector();
                 p=NULL;
             }
@@ -351,7 +296,7 @@ dsr_pkt * dsr_pkt_alloc(cPacket  * p)
 dsr_pkt * dsr_pkt_alloc2(cPacket  * p, cObject *ctrl)
 {
     struct dsr_pkt *dp;
-    int dsr_opts_len = 0;
+   // int dsr_opts_len = 0;
 
 
     // dp = (struct dsr_pkt *)MALLOC(sizeof(struct dsr_pkt), GFP_ATOMIC);
@@ -366,7 +311,8 @@ dsr_pkt * dsr_pkt_alloc2(cPacket  * p, cObject *ctrl)
 
     if (!dp)
         return NULL;
-    memset(dp, 0, sizeof(dsr_pkt));
+    dp->clear();
+
     if (p)
     {
         IPv4Datagram *dgram = dynamic_cast <IPv4Datagram *> (p);
@@ -409,27 +355,21 @@ dsr_pkt * dsr_pkt_alloc2(cPacket  * p, cObject *ctrl)
 
         if (dp->nh.iph->protocol == IP_PROT_DSR)
         {
-            struct dsr_opt_hdr *opth;
+            //struct dsr_opt_hdr *opth;
             int n;
             if (dynamic_cast<DSRPkt*> (p))
             {
                 DSRPkt * dsrpkt = dynamic_cast<DSRPkt*> (p);
+                dp->dh.opth = dsrpkt->getOptions();
+                dsrpkt->clearOptions();
+                // dsr_opts_len = dp->dh.opth.begin()->p_len + DSR_OPT_HDR_LEN;
+                dp->dh.opth = dsrpkt->getOptions();
 
-                opth =  dsrpkt->getOptions();
-                dsr_opts_len = opth->p_len + DSR_OPT_HDR_LEN;
-                if (!dsr_pkt_alloc_opts(dp, dsr_opts_len))
-                {
-                    FREE(dp);
-                    return NULL;
-                }
                 if (dp->payload)
                     dp->encapsulate_protocol=dsrpkt->getEncapProtocol();
-
-                memcpy(dp->dh.raw, (char *)opth, dsr_opts_len);
                 n = dsr_opt_parse(dp);
                 DEBUG("Packet has %d DSR option(s)\n", n);
                 dp->costVector = dsrpkt->getCostVector();
-                dp->costVectorSize = dsrpkt->getCostVectorSize();
                 dsrpkt->resetCostVector();
             }
         }
@@ -445,7 +385,7 @@ void dsr_pkt_free(dsr_pkt *dp)
     dsr_pkt_free_opts(dp);
 
     if (dp->srt)
-        FREE(dp->srt);
+        delete dp->srt;
 
     if (dp->payload)
         delete dp->payload;
@@ -453,8 +393,11 @@ void dsr_pkt_free(dsr_pkt *dp)
     if (dp->ip_pkt)
         delete dp->ip_pkt;
 
-    if (dp->costVectorSize>0)
-        delete [] dp->costVector;
+    if (!dp->costVector.empty())
+           dp->costVector.clear();
+
+    if (!dp->dh.opth.empty())
+        dp->dh.opth.clear();
 
     if (DSRUU::lifo_token>0)
     {
@@ -464,8 +407,6 @@ void dsr_pkt_free(dsr_pkt *dp)
     }
     else
         delete dp;
-
-
     dp=NULL;
     return;
 
