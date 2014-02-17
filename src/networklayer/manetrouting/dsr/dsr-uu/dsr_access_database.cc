@@ -169,12 +169,14 @@ void DSRUU::ph_srt_add_map(struct dsr_srt *srt, usecs_t timeout, unsigned short 
         for (int i = 0; i < pos; i++)
             route.push_back(ManetAddress(IPv4Address(srt->addrs[i].s_addr)));
 
+        if (!srt->cost.empty())
         for (int i = 0; i <= pos; i++)
             costVect.push_back(srt->cost[i]);
 
         for (int i = pos-1 ; i >= 0; i--)
             route2.push_back(ManetAddress(IPv4Address(srt->addrs[i].s_addr)));
 
+        if (!srt->cost.empty())
         for (int i = pos ; i >= 0; i--)
             costVect2.push_back(srt->cost[i]);
     }
