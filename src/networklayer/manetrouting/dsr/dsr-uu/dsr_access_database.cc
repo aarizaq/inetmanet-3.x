@@ -43,6 +43,8 @@ struct dsr_srt *DSRUU::ph_srt_find_map(struct in_addr src, struct in_addr dst, u
                 route = result[i];
             }
         }
+        // reset winner timeout
+        pathCacheMap.setPathsTimer(ManetAddress(IPv4Address(dst.s_addr)), route,timeout);
     }
     else
     {
