@@ -209,6 +209,12 @@ void DYMO::handleMessage(cMessage* apMsg)
     cMessage * msg_aux = NULL;
     UDPPacket* udpPacket = NULL;
 
+    if (!isNodeOperational())
+    {
+        delete apMsg;
+        return;
+    }
+
     if (apMsg->isSelfMessage())
     {
         handleSelfMsg(apMsg);
@@ -1226,4 +1232,29 @@ void DYMO::processLinkBreak(const cObject *details)
     if (dgram)
         packetFailed(dgram);
 }
+
+
+bool DYMO::startApp(IDoneCallback *doneCallback)
+{
+
+    rateLimiterRREQ = new DYMO_TokenBucket(RREQ_RATE_LIMIT, RREQ_BURST_LIMIT, simTime());
+    dymo_routingTable = new DYMO_RoutingTable(this, IPv4Address(myAddr));
+    queuedDataPackets = new DYMO_DataQueue(this, BUFFER_SIZE_PACKETS, BUFFER_SIZE_BYTES);
+}
+
+bool DYMO::stopApp(IDoneCallback *doneCallback)
+{
+    delete dymo_routingTable;
+    outstandingRREQList.delAll();
+    delete rateLimiterRREQ;
+    delete queuedDataPackets;
+    cancelEvent(timerMsg);
+    return true;
+}
+
+bool DYMO::crashApp(IDoneCallback *doneCallback)
+{
+    return stopApp(doneCallback);
+}
+
 

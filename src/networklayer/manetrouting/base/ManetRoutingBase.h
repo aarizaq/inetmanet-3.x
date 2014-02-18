@@ -35,6 +35,7 @@
 #include "ManetAddress.h"
 #include "NotifierConsts.h"
 #include "ICMP.h"
+#include "ILifecycle.h"
 
 #include "ILocator.h"
 
@@ -65,7 +66,7 @@ typedef std::multimap <simtime_t, ManetTimer *> TimerMultiMap;
 typedef std::set<ManetAddress> AddressGroup;
 typedef std::set<ManetAddress>::iterator AddressGroupIterator;
 typedef std::set<ManetAddress>::const_iterator AddressGroupConstIterator;
-class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, protected cListener
+class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, protected cListener, public ILifecycle
 {
   private:
     static simsignal_t mobilityStateChangedSignal;
@@ -135,7 +136,10 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
     ILocator *locator;
 
     int addressSizeBytes;
+
+    bool isOperational;
   protected:
+    bool isNodeOperational(){return isOperational;}
     IRoutingTable*  getInetRoutingTable() const {return inet_rt;}
     IInterfaceTable* getInterfaceTable() const {return inet_ift;}
     bool getIsRegistered() const {return isRegistered;}
@@ -311,6 +315,8 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
     virtual void getListRelatedAp(const ManetAddress &, std::vector<ManetAddress>&);
     virtual void setRouteInternalStorege(const ManetAddress &, const ManetAddress &, const bool &);
 
+
+
   public:
     std::string convertAddressToString(const ManetAddress&);
     virtual void setCollaborativeProtocol(cObject *p) {collaborativeProtocol = dynamic_cast<ManetRoutingBase*>(p);}
@@ -440,6 +446,12 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
     // used for dimension the address size
     int getAddressSize() {return addressSizeBytes;}
     void setAddressSize(int p) {addressSizeBytes = p;}
+
+    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback);
+    virtual bool startApp(IDoneCallback *doneCallback) = 0;
+    virtual bool stopApp(IDoneCallback *doneCallback) = 0;
+    virtual bool crashApp(IDoneCallback *doneCallback) = 0;
+
 };
 
 #define interface80211ptr getInterfaceWlanByAddress()

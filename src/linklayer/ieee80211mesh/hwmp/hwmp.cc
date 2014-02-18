@@ -206,6 +206,11 @@ void HwmpProtocol::initialize(int stage)
 
 void HwmpProtocol::handleMessage(cMessage *msg)
 {
+    if (!isNodeOperational())
+    {
+        delete msg;
+        return;
+    }
     if (!checkTimer(msg))
         processData(msg);
     scheduleEvent();
@@ -2221,4 +2226,48 @@ bool HwmpProtocol::getBestGan(ManetAddress &gannAddr, ManetAddress &nextHop)
         gannAddr = ManetAddress(bestGanPathAddr);
     }
     return true;
+}
+
+bool HwmpProtocol::startApp(IDoneCallback *doneCallback)
+{
+    m_isGann = par("isGan");
+    if (m_isGann)
+    {
+        double randomStart = par("randomStart");
+        m_gannTimer->resched(randomStart);
+    }
+    scheduleEvent();
+}
+
+bool HwmpProtocol::stopApp(IDoneCallback *doneCallback)
+{
+    while (!getTimerMultimMap()->empty())
+    {
+        ManetTimer * timer = getTimerMultimMap()->begin()->second;
+        getTimerMultimMap()->erase(getTimerMultimMap()->begin());
+        if (timer == m_proactivePreqTimer)
+            continue;
+        else if (timer ==  m_preqTimer)
+            continue;
+        else if (timer ==  m_perrTimer)
+            continue;
+        else if (timer ==  m_gannTimer)
+            continue;
+        delete timer;
+    }
+    m_rtable->clearTable();
+    neighborMap.clear();
+    ganVector.clear();
+    while (!m_rqueue.empty())
+    {
+        delete m_rqueue.back().pkt;
+        m_rqueue.pop_back();
+    }
+    return true;
+}
+
+bool HwmpProtocol::crashApp(IDoneCallback *doneCallback)
+{
+    return stopApp(doneCallback);
+
 }
