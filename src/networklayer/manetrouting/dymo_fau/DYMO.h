@@ -270,6 +270,10 @@ class DYMO : public ManetRoutingBase
     virtual void processLinkBreak(const cObject *details);
     void packetFailed(const IPv4Datagram *dgram);
     void rescheduleTimer();
+
+    virtual bool startApp(IDoneCallback *doneCallback);
+    virtual bool stopApp(IDoneCallback *doneCallback);
+    virtual bool crashApp(IDoneCallback *doneCallback);
 };
 
 #endif

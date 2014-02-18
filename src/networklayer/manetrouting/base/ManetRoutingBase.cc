@@ -38,6 +38,7 @@
 #include "Ieee80211MgmtAP.h"
 #include "GlobalWirelessLinkInspector.h"
 #include "MobilityAccess.h"
+#include "NodeOperations.h"
 #ifdef WITH_80215
 #include "Ieee802154Frame_m.h"
 #endif
@@ -361,6 +362,7 @@ void ManetRoutingBase::registerRoutingModule()
     }
 
     GlobalWirelessLinkInspector::initRoutingTables(this,getAddress(),isProactive());
+    isOperational = true;
 
  //   WATCH_MAP(*routesVector);
 }
@@ -495,6 +497,12 @@ void ManetRoutingBase::sendToIpOnIface(cPacket *msg, int srcPort, const ManetAdd
 {
     if (!isRegistered)
         opp_error("Manet routing protocol is not register");
+
+    if (!isOperational)
+    {
+        delete msg;
+        return;
+    }
 
     if (destAddr.getType() == ManetAddress::MAC_ADDRESS)
     {
@@ -1904,4 +1912,45 @@ std::string ManetRoutingBase::convertAddressToString(const ManetAddress& add)
     {
         return IPv4Address(add.getIPv4()).str();
     }
+}
+
+
+
+bool ManetRoutingBase::handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback)
+{
+    Enter_Method_Silent();
+    bool ret = true;
+
+    if (simTime()==SIMTIME_ZERO)
+        return ret;
+
+    if (dynamic_cast<NodeStartOperation *>(operation))
+    {
+        if (stage == NodeStartOperation::STAGE_APPLICATION_LAYER) {
+            isOperational = true;
+            ret = startApp(doneCallback);
+        }
+    }
+    else if (dynamic_cast<NodeShutdownOperation *>(operation))
+    {
+        if (stage == NodeShutdownOperation::STAGE_APPLICATION_LAYER) {
+            ret = stopApp(doneCallback);
+            isOperational = false;
+        }
+    }
+    else if (dynamic_cast<NodeCrashOperation *>(operation))
+    {
+        if (stage == NodeCrashOperation::STAGE_CRASH) {
+            ret = crashApp(doneCallback);
+            isOperational = false;
+        }
+    }
+    else
+    {
+        throw cRuntimeError("Unsupported operation '%s'", operation->getClassName());
+    }
+
+    if (!ret)
+        throw cRuntimeError("doneCallback/invoke not supported by AppBase");
+    return ret;
 }

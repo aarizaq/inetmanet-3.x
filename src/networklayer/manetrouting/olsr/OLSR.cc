@@ -559,6 +559,11 @@ OLSR::initialize(int stage)
 
 void OLSR::handleMessage(cMessage *msg)
 {
+    if (!isNodeOperational())
+    {
+        delete msg;
+        return;
+    }
     if (msg->isSelfMessage())
     {
         //OLSR_Timer *timer=dynamic_cast<OLSR_Timer*>(msg);
@@ -3199,4 +3204,41 @@ OLSR::isNodeCandidate(const nsaddr_t &src_addr)
     if (mprsel_tuple != NULL)
         return true;
     return false;
+}
+
+bool OLSR::startApp(IDoneCallback *doneCallback)
+{
+    hello_timer_.resched(SIMTIME_DBL(hello_ival_));
+    tc_timer_.resched(SIMTIME_DBL(hello_ival_));
+    mid_timer_.resched(SIMTIME_DBL(hello_ival_));
+    scheduleNextEvent();
+}
+
+bool OLSR::stopApp(IDoneCallback *doneCallback)
+{
+
+    rtable_.clear();
+    msgs_.clear();
+    if (timerMessage)
+         cancelEvent(timerMessage);
+
+    while (timerQueuePtr && timerQueuePtr->size()>0)
+    {
+        OLSR_Timer * timer = timerQueuePtr->begin()->second;
+        timerQueuePtr->erase(timerQueuePtr->begin());
+        if (helloTimer==timer)
+            continue;
+        else if (tcTimer==timer)
+            continue;
+        else if (midTimer==timer)
+            continue;
+        delete timer;
+    }
+
+    return true;
+}
+
+bool OLSR::crashApp(IDoneCallback *doneCallback)
+{
+    return stopApp(doneCallback);
 }

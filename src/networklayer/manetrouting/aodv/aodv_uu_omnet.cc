@@ -520,6 +520,12 @@ void NS_CLASS handleMessage (cMessage *msg)
     struct in_addr src_addr;
     struct in_addr dest_addr;
 
+    if (!isNodeOperational())
+    {
+        delete msg;
+        return;
+    }
+
     if (is_init==false)
         opp_error ("Aodv has not been initialized ");
 
@@ -1899,3 +1905,57 @@ void NS_CLASS actualizeTablesWithCollaborative(const ManetAddress &dest)
             fwd_rtAux = rt_table_insert(next_hop, next_hop, hops, sqnum, life, VALID, 0, ifindex, hops, hops+1);
     }
 }
+
+
+bool NS_CLASS startApp(IDoneCallback *doneCallback)
+{
+    if (isRoot)
+    {
+        timer_init(&proactive_rreq_timer,&NS_CLASS rreq_proactive, NULL);
+        timer_set_timeout(&proactive_rreq_timer, par("startRreqProactive").longValue());
+    }
+
+    propagateProactive = par("propagateProactive");
+    strcpy(nodeName,getParentModule()->getParentModule()->getFullName());
+    aodv_socket_init();
+    rt_table_init();
+    packet_queue_init();
+    startAODVUUAgent();
+
+}
+
+bool NS_CLASS stopApp(IDoneCallback *doneCallback)
+{
+
+    while (!aodvRtTableMap.empty())
+    {
+        free (aodvRtTableMap.begin()->second);
+        aodvRtTableMap.erase(aodvRtTableMap.begin());
+    }
+    while (!rreq_records.empty())
+    {
+        free (rreq_records.back());
+        rreq_records.pop_back();
+    }
+    while (!rreq_blacklist.empty())
+    {
+        free (rreq_blacklist.begin()->second);
+        rreq_blacklist.erase(rreq_blacklist.begin());
+    }
+
+    while (!seekhead.empty())
+    {
+        delete (seekhead.begin()->second);
+        seekhead.erase(seekhead.begin());
+    }
+    packet_queue_destroy();
+    cancelEvent(sendMessageEvent);
+    log_cleanup();
+    return true;
+}
+
+bool NS_CLASS crashApp(IDoneCallback *doneCallback)
+{
+    return stopApp(doneCallback);
+}
+

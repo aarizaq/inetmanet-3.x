@@ -167,6 +167,12 @@ class Batman : public ManetRoutingBase
     };
 
     virtual bool getDestAddress(cPacket *, ManetAddress &) {return false;};
+
+
+    virtual bool startApp(IDoneCallback *doneCallback);
+    virtual bool stopApp(IDoneCallback *doneCallback);
+    virtual bool crashApp(IDoneCallback *doneCallback);
+
 };
 
 

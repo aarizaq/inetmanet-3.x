@@ -261,6 +261,12 @@ void Batman::handleMessage(cMessage *msg)
     ManetAddress neigh;
     simtime_t vis_timeout, select_timeout, curr_time;
 
+    if (!isNodeOperational())
+    {
+        delete msg;
+        return;
+    }
+
     curr_time = getTime();
     check_active_inactive_interfaces();
     if (timer == msg)
@@ -476,3 +482,57 @@ BatmanPacket *Batman::buildDefaultBatmanPkt(const BatmanIf *batman_if)
 }
 
 
+bool Batman::startApp(IDoneCallback *doneCallback)
+{
+    for (unsigned int i = 0; i < if_list.size(); i++)
+    {
+        BatmanIf *batman_if = if_list[i];
+        schedule_own_packet(batman_if);
+    }
+
+    simtime_t curr_time = simTime();
+    simtime_t select_timeout = forw_list[0]->send_time > curr_time ? forw_list[0]->send_time : curr_time+10;
+    scheduleAt(select_timeout, timer);
+    scheduleNextEvent();
+}
+
+bool Batman::stopApp(IDoneCallback *doneCallback)
+{
+
+    while (!origMap.empty())
+    {
+        delete origMap.begin()->second;
+        origMap.erase(origMap.begin());
+    }
+    while (!if_list.empty())
+    {
+        delete if_list.back();
+        if_list.pop_back();
+    }
+    while (!gw_list.empty())
+    {
+        delete gw_list.back();
+        gw_list.pop_back();
+    }
+    while (!forw_list.empty())
+    {
+        delete forw_list.back()->pack_buff;
+        delete forw_list.back();
+        forw_list.pop_back();
+    }
+    cancelEvent(timer);
+    while (!hnaMap.empty())
+    {
+        delete hnaMap.begin()->second;
+        hnaMap.erase(hnaMap.begin());
+    }
+    hna_list.clear();
+    hna_buff_local.clear();
+    hna_chg_list.clear();
+    return true;
+}
+
+bool Batman::crashApp(IDoneCallback *doneCallback)
+{
+    return stopApp(doneCallback);
+}

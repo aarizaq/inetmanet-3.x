@@ -351,6 +351,12 @@ void DYMOUM::handleMessage(cMessage *msg)
     struct in_addr src_addr;
     struct in_addr dest_addr;
 
+    if (!isNodeOperational())
+    {
+        delete msg;
+        return;
+    }
+
     if (is_init==false)
         opp_error("Dymo-UM has not been initialized ");
     if (msg==sendMessageEvent)
@@ -1838,5 +1844,54 @@ void DYMOUM::processLocatorDisAssoc(const cObject *details)
         return;
     }
 #endif
+}
+
+
+bool DYMOUM::startApp(IDoneCallback *doneCallback)
+{
+    if (isRoot)
+    {
+        timer_init(&proactive_rreq_timer,&NS_CLASS rreq_proactive, NULL);
+        timer_set_timeout(&proactive_rreq_timer, par("startRreqProactive").longValue());
+    }
+    startDYMOUMAgent();
+    scheduleNextEvent();
+}
+
+bool DYMOUM::stopApp(IDoneCallback *doneCallback)
+{
+
+    // Clean all internal tables
+        packet_queue_destroy();
+        if (macToIpAdress)
+            delete macToIpAdress;
+    // Routing table
+        rtable_destroy();
+        while (!dymoPendingRreq->empty())
+        {
+            timer_remove(&dymoPendingRreq->begin()->second->timer);
+            delete dymoPendingRreq->begin()->second;
+            dymoPendingRreq->erase(dymoPendingRreq->begin());
+        }
+        while (!dymoBlackList->empty())
+        {
+            timer_remove(&dymoBlackList->begin()->second->timer);
+            delete dymoBlackList->begin()->second;
+            dymoBlackList->erase(dymoBlackList->begin());
+        }
+        while (!dymoNbList->empty())
+        {
+            timer_remove(&dymoNbList->back()->timer);
+            delete dymoNbList->back();
+            dymoNbList->pop_back();
+        }
+        cancelEvent(sendMessageEvent);
+        dymoTimerList->clear();
+        return true;
+}
+
+bool DYMOUM::crashApp(IDoneCallback *doneCallback)
+{
+    return stopApp(doneCallback);
 }
 
