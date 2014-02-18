@@ -79,12 +79,18 @@ class DsrDataBase : public cOwnedObject
         void erasePathWithNode(const ManetAddress &dest);
         // if the last parameter is true also delete the routes with first node = addr2
         void erasePathWithLink(const ManetAddress &addr1,const ManetAddress &addr2,bool = false,bool = true);
-        void cleanAll() {pathsCache.clear();}
+        void cleanAllPaths() {pathsCache.clear();}
         DsrDataBase();
         virtual ~DsrDataBase();
 
         void purgePathCache();
         bool isPathCacheEmpty() {return pathsCache.empty();}
+
+        void cleanAllDataBase() {
+            routeCache.clear();
+            pathsCache.clear();
+            cleanLinkArray();
+        }
 
 
         //////////////////////////////////////////

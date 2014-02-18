@@ -402,6 +402,7 @@ DsrDataBase::~DsrDataBase()
     // TODO Auto-generated destructor stub
     routeCache.clear();
     pathsCache.clear();
+    cleanLinkArray();
 }
 
 

@@ -38,6 +38,7 @@
 #endif
 
 #include "DsrDataBase.h"
+#include "ILifecycle.h"
 
 // generate ev prints
 #ifdef _WIN32
@@ -188,7 +189,7 @@ static inline char *print_pkt(char *p, int len)
 class DSRUU:public cSimpleModule, public ImNotifiable
 {
 #else
-class DSRUU:public cSimpleModule, public INotifiable
+class DSRUU:public cSimpleModule, public INotifiable, ILifecycle
 {
 #endif
     private:
@@ -204,6 +205,10 @@ class DSRUU:public cSimpleModule, public INotifiable
     //static simtime_t current_time;
     static struct dsr_pkt *lifoDsrPkt;
     static int lifo_token;
+
+    bool nodeActive;
+    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback);
+
 
   private:
     bool is_init;

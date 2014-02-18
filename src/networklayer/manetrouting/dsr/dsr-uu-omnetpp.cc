@@ -35,6 +35,8 @@
 #include "bmacpkt_m.h"
 #endif
 
+
+#include "NodeOperations.h"
 #include "ICMPMessage_m.h"
 
 unsigned int DSRUU::confvals[CONFVAL_MAX];
@@ -237,6 +239,7 @@ void DSRUU::initialize(int stage)
 //          sprintf(name, "%s_", confvals_def[i].name);
 //          bind(name,  &confvals[i]);
         }
+        nodeActive = true;
 
         confvals[FlushLinkCache] = 0;
         confvals[PromiscOperation] = 0;
@@ -550,6 +553,12 @@ void DSRUU::defaultProcess(cMessage *ipDgram)
 // Rutina HandleMessage ()
 void DSRUU::handleMessage(cMessage* msg)
 {
+    if (!nodeActive)
+    {
+        delete msg;
+        return;
+    }
+
     if (is_init==false)
         opp_error("Dsr has not been initialized ");
 
@@ -1178,4 +1187,78 @@ bool DSRUU::proccesICMP(cMessage *msg)
     delete msg;
     return true;
  }
+
+bool DSRUU::handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback)
+{
+    Enter_Method_Silent();
+    bool ret = true;
+
+    if (dynamic_cast<NodeStartOperation *>(operation))
+    {
+        if (stage == NodeStartOperation::STAGE_APPLICATION_LAYER) {
+            nodeActive = true;
+        }
+    }
+    else if (dynamic_cast<NodeShutdownOperation *>(operation))
+    {
+        if (stage == NodeShutdownOperation::STAGE_APPLICATION_LAYER) {
+            nodeActive = false;
+            pathCacheMap.cleanAllDataBase();
+            lc_cleanup();
+            neigh_tbl_cleanup();
+            rreq_tbl_cleanup();
+            grat_rrep_tbl_cleanup();
+            send_buf_cleanup();
+            maint_buf_cleanup();
+            path_cache_cleanup();
+            while (!etxNeighborTable.empty())
+            {
+                ETXNeighborTable::iterator i = etxNeighborTable.begin();
+                delete (*i).second;
+                etxNeighborTable.erase(i);
+            }
+            grat_rrep_tbl_timer_ptr->cancel();
+            send_buf_timer_ptr->cancel();
+            neigh_tbl_timer_ptr->cancel();
+            lc_timer_ptr->cancel();
+            ack_timer_ptr->cancel();
+            etx_timer_ptr->cancel();
+        }
+    }
+    else if (dynamic_cast<NodeCrashOperation *>(operation))
+    {
+        if (stage == NodeCrashOperation::STAGE_CRASH) {
+            nodeActive = false;
+            pathCacheMap.cleanAllDataBase();
+            lc_cleanup();
+            neigh_tbl_cleanup();
+            rreq_tbl_cleanup();
+            grat_rrep_tbl_cleanup();
+            send_buf_cleanup();
+            maint_buf_cleanup();
+            path_cache_cleanup();
+            while (!etxNeighborTable.empty())
+            {
+                ETXNeighborTable::iterator i = etxNeighborTable.begin();
+                delete (*i).second;
+                etxNeighborTable.erase(i);
+            }
+            grat_rrep_tbl_timer_ptr->cancel();
+            send_buf_timer_ptr->cancel();
+            neigh_tbl_timer_ptr->cancel();
+            lc_timer_ptr->cancel();
+            ack_timer_ptr->cancel();
+            etx_timer_ptr->cancel();
+        }
+    }
+    else
+    {
+        throw cRuntimeError("Unsupported operation '%s'", operation->getClassName());
+    }
+
+    if (!ret)
+        throw cRuntimeError("doneCallback/invoke not supported by AppBase");
+    return ret;
+}
+
 
