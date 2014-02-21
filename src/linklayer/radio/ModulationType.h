@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 #include <ostream>
+#include <stdint.h>
 
 
 enum ModulationClass {
