@@ -3212,6 +3212,7 @@ bool OLSR::startApp(IDoneCallback *doneCallback)
     tc_timer_.resched(SIMTIME_DBL(hello_ival_));
     mid_timer_.resched(SIMTIME_DBL(hello_ival_));
     scheduleNextEvent();
+    return true;
 }
 
 bool OLSR::stopApp(IDoneCallback *doneCallback)

@@ -1921,7 +1921,7 @@ bool NS_CLASS startApp(IDoneCallback *doneCallback)
     rt_table_init();
     packet_queue_init();
     startAODVUUAgent();
-
+    return true;
 }
 
 bool NS_CLASS stopApp(IDoneCallback *doneCallback)

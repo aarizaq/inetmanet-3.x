@@ -494,6 +494,7 @@ bool Batman::startApp(IDoneCallback *doneCallback)
     simtime_t select_timeout = forw_list[0]->send_time > curr_time ? forw_list[0]->send_time : curr_time+10;
     scheduleAt(select_timeout, timer);
     scheduleNextEvent();
+    return true;
 }
 
 bool Batman::stopApp(IDoneCallback *doneCallback)
