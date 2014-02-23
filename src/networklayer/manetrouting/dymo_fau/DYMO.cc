@@ -1240,6 +1240,7 @@ bool DYMO::startApp(IDoneCallback *doneCallback)
     rateLimiterRREQ = new DYMO_TokenBucket(RREQ_RATE_LIMIT, RREQ_BURST_LIMIT, simTime());
     dymo_routingTable = new DYMO_RoutingTable(this, IPv4Address(myAddr));
     queuedDataPackets = new DYMO_DataQueue(this, BUFFER_SIZE_PACKETS, BUFFER_SIZE_BYTES);
+    return true;
 }
 
 bool DYMO::stopApp(IDoneCallback *doneCallback)

@@ -2237,6 +2237,7 @@ bool HwmpProtocol::startApp(IDoneCallback *doneCallback)
         m_gannTimer->resched(randomStart);
     }
     scheduleEvent();
+    return true;
 }
 
 bool HwmpProtocol::stopApp(IDoneCallback *doneCallback)

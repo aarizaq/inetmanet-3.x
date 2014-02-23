@@ -1856,6 +1856,7 @@ bool DYMOUM::startApp(IDoneCallback *doneCallback)
     }
     startDYMOUMAgent();
     scheduleNextEvent();
+    return true;
 }
 
 bool DYMOUM::stopApp(IDoneCallback *doneCallback)
