@@ -778,7 +778,7 @@
         id="Ieee8021dOriginal_examples"
         name="Ieee802.1d Ieee802.1Q Ieee802.1AH protocols Examples"
         description = "Ieee802.1d Ieee802.1Q Ieee802.1AH protocols Examples"
-        initiallyEnabled = "false"
+        initiallyEnabled = "true"
         requires = "Ethernet Ieee8021dOriginal"
         labels = ""
          nedPackages = "
