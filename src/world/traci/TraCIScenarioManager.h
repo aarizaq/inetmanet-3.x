@@ -32,7 +32,7 @@
 #include "INETDefs.h"
 #include "Coord.h"
 #include "ModuleAccess.h"
-#include "TraciColor.h"
+#include "TraCIColor.h"
 
 /**
  * @brief
