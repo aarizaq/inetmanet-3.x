@@ -421,11 +421,7 @@ void NSCLASS maint_buf_timeout(unsigned long data)
         {
             int n = 0;
 #ifdef OMNETPP
-            if (ConfVal(PathCache))
-               // ph_srt_delete_link(my_addr(), m->nxt_hop);
-                ph_srt_delete_link_map(my_addr(), m->nxt_hop);
-            else
-                lc_link_del(my_addr(), m->nxt_hop);
+            ph_srt_delete_link_map(my_addr(), m->nxt_hop);
 #endif
 
 #ifdef NS2

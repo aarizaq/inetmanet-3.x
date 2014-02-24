@@ -733,11 +733,7 @@ void DSRUU::packetFailed(IPv4Datagram *ipDgram)
         nxt_hop.s_addr = p->nextAddress().getInt();
         DEBUG("Xmit failure for %s nxt_hop=%s\n", print_ip(dst), print_ip(nxt_hop));
 
-        if (ConfVal(PathCache))
-            //ph_srt_delete_link(my_addr(), nxt_hop);
-            ph_srt_delete_link_map(my_addr(), nxt_hop);
-        else
-            lc_link_del(my_addr(), nxt_hop);
+        ph_srt_delete_link_map(my_addr(), nxt_hop);
 
         dp = dsr_pkt_alloc(p);
         if (!dp)
@@ -787,12 +783,7 @@ void DSRUU::linkFailed(IPv4Address ipAdd)
 
     /* Cast the packet so that we can touch it */
     nxt_hop.s_addr = ipAdd.getInt();
-    if (ConfVal(PathCache))
-        //ph_srt_delete_link(my_addr(), nxt_hop);
-        ph_srt_delete_link_map(my_addr(), nxt_hop);
-    else
-        lc_link_del(my_addr(), nxt_hop);
-
+    ph_srt_delete_link_map(my_addr(), nxt_hop);
     return;
 
 }
@@ -842,7 +833,10 @@ struct dsr_srt *DSRUU:: RouteFind(struct in_addr src, struct in_addr dst)
         return ph_srt_find_map(src, dst, ConfValToUsecs(RouteCacheTimeout));
         //return ph_srt_find(src, dst, 0, ConfValToUsecs(RouteCacheTimeout));
     else
-        return lc_srt_find(src, dst);
+    {
+        return  ph_srt_find_link_route_map(src,dst, ConfValToUsecs(RouteCacheTimeout));
+     //   return lc_srt_find(src, dst);
+    }
 
 }
 
@@ -857,7 +851,11 @@ int DSRUU::RouteAdd(struct dsr_srt *srt, unsigned long timeout, unsigned short f
         return 0;
     }
     else
-        return lc_srt_add(srt, timeout, flags);
+    {
+        ph_srt_add_link_map(srt,timeout);
+        return 0;
+        //return lc_srt_add(srt, timeout, flags);
+    }
 }
 
 void DSRUU::EtxMsgSend(unsigned long data)

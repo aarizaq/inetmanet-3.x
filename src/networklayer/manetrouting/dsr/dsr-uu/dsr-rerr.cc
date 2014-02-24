@@ -245,11 +245,7 @@ int NSCLASS dsr_rerr_opt_recv(struct dsr_pkt *dp, struct dsr_rerr_opt *rerr_opt)
         /* Remove broken link from cache */
 
 #ifdef OMNETPP
-        if (ConfVal(PathCache))
-            // ph_srt_delete_link(err_src, unr_addr);
-            ph_srt_delete_link_map(err_src,unr_addr);
-        else
-            lc_link_del(err_src, unr_addr);
+        ph_srt_delete_link_map(err_src,unr_addr);
 #else
         lc_link_del(err_src, unr_addr);
 #endif

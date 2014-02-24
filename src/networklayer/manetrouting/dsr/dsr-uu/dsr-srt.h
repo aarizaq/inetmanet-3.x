@@ -78,14 +78,14 @@ static inline char *print_srt(struct dsr_srt *srt)
 {
 #define BUFLEN 256
     static char buf[BUFLEN];
-    unsigned int i, len;
+    unsigned int len;
 
     if (!srt)
         return NULL;
 
     len = sprintf(buf, "%s<->", print_ip(srt->src));
 
-    for (i = 0; i < (srt->laddrs / sizeof(u_int32_t)) &&
+    for (unsigned int i = 0; i < (srt->addrs.size()) &&
             (len + 16) < BUFLEN; i++)
         len += sprintf(buf + len, "%s<->", print_ip(srt->addrs[i]));
 

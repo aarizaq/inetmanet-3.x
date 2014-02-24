@@ -102,19 +102,9 @@ class DSRUU;
 static inline char *print_ip(struct in_addr addr)
 {
     static char buf[16 * 4];
-    static int index = 0;
-    char *str;
-
-    sprintf(&buf[index], "%d.%d.%d.%d",
-            0x0ff & (uint32_t)addr.s_addr,
-            0x0ff & ((uint32_t)addr.s_addr >> 8),
-            0x0ff & ((uint32_t)addr.s_addr >> 16), 0x0ff & ((uint32_t)addr.s_addr >> 24));
-
-    str = &buf[index];
-    index += 16;
-    index %= 64;
-
-    return str;
+    IPv4Address add(addr.s_addr);
+    strcpy(buf,add.str().c_str());
+    return buf;
 }
 
 static inline char *print_eth(char *addr)
@@ -200,6 +190,8 @@ class DSRUU:public cSimpleModule, public INotifiable, ILifecycle
         void ph_srt_delete_node_map(struct in_addr src);
         struct dsr_srt * ph_srt_find_map(struct in_addr src, struct in_addr dst, unsigned int timeout);
         void ph_srt_delete_link_map(struct in_addr src1, struct in_addr src2);
+        void ph_srt_add_link_map(struct dsr_srt *srt, usecs_t timeout);
+        struct dsr_srt *ph_srt_find_link_route_map(struct in_addr src, struct in_addr dst, unsigned int timeout);
   public:
     friend class DSRUUTimer;
     //static simtime_t current_time;

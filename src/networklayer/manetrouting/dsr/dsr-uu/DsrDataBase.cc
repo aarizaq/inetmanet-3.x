@@ -291,6 +291,8 @@ void DsrDataBase::deleteAddress(const ManetAddress &dest)
 
 void DsrDataBase::erasePathWithNode(const ManetAddress &dest)
 {
+    if (pathsCache.empty())
+        return;
     deleteAddress(dest);
     simtime_t now = simTime();
 
@@ -317,6 +319,8 @@ void DsrDataBase::erasePathWithNode(const ManetAddress &dest)
 
 void DsrDataBase::erasePathWithLink(const ManetAddress &addr1,const ManetAddress &addr2, bool eraseFirst,bool bidirectional)
 {
+    if (pathsCache.empty())
+        return;
     simtime_t now = simTime();
     ManetAddress sequence[] = {addr1,addr2};
     ManetAddress sequenceRev[] = {addr2,addr1};
@@ -466,6 +470,9 @@ void DsrDataBase::addEdge (const ManetAddress & originNode, const ManetAddress &
 
 void DsrDataBase::deleteEdge (const ManetAddress & originNode, const ManetAddress & last_node,bool bidirectional)
 {
+    if (linkArray.empty())
+        return;
+
     // invalidate data base
     routeMap.clear();
 
@@ -501,7 +508,12 @@ void DsrDataBase::deleteEdge (const ManetAddress & originNode, const ManetAddres
 
 void DsrDataBase::setRoot(const ManetAddress & dest_node)
 {
-    rootNode = dest_node;
+    if (rootNode != dest_node)
+    {
+        rootNode = dest_node;
+        // invalidate routes
+        routeMap.clear();
+    }
 }
 
 void DsrDataBase::run(const ManetAddress &target)
@@ -581,7 +593,10 @@ void DsrDataBase::run(const ManetAddress &target)
             DsrDataBase::DijkstraShortest::Edge* current_edge = *itCon;
             RouteMap::iterator itNext = routeMap.find(current_edge->last_node_);
             if (itNext != routeMap.end() && itNext->second.label == perm)
+            {
+                ++itCon;
                 continue;
+            }
             double costAdd = current_edge->costAdd + (it->second).costAdd;
             if (itNext == routeMap.end())
             {
@@ -647,7 +662,7 @@ bool DsrDataBase::getRoute(const ManetAddress &nodeId,PathCacheRoute &pathNode, 
         if (it==routeMap.end())
             opp_error("error in data routeMap");
     }
-    for (unsigned int i = 0 ; i < path.size(); i++)
+    for (unsigned int i = path.size()-1 ; i > 0 ; i--)
         pathNode.push_back(path[i]);
     return true;
 }

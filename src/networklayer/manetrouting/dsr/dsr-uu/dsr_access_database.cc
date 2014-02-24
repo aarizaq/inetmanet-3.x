@@ -331,4 +331,65 @@ void DSRUU::ph_srt_delete_link_map(struct in_addr src1,struct in_addr src2)
         pathCacheMap.erasePathWithLink(addr1,addr2,true);
     else
         pathCacheMap.erasePathWithLink(addr1,addr2);
+    pathCacheMap.deleteEdge(addr1,addr2,true);
+}
+
+
+void DSRUU::ph_srt_add_link_map(struct dsr_srt *srt, usecs_t timeout)
+{
+    if (!srt)
+        return;
+    ManetAddress sourceAddress(IPv4Address(srt->src.s_addr));
+    ManetAddress destinationAddress(IPv4Address(srt->dst.s_addr));
+
+    if (srt->addrs.empty())
+    {
+        pathCacheMap.addEdge(sourceAddress,destinationAddress,1,timeout);
+        pathCacheMap.addEdge(destinationAddress,sourceAddress,1,timeout);
+        return;
+    }
+
+    pathCacheMap.addEdge(sourceAddress,ManetAddress(IPv4Address(srt->addrs.front().s_addr)),1,timeout);
+    pathCacheMap.addEdge(ManetAddress(IPv4Address(srt->addrs.front().s_addr)),sourceAddress,1,timeout);
+    pathCacheMap.addEdge(destinationAddress,ManetAddress(IPv4Address(srt->addrs.back().s_addr)),1,timeout);
+    pathCacheMap.addEdge(ManetAddress(IPv4Address(srt->addrs.back().s_addr)),destinationAddress,1,timeout);
+
+    for (unsigned int i = 0; i < srt->addrs.size()-1; i++)
+    {
+        ManetAddress addr1(IPv4Address(srt->addrs[i].s_addr));
+        ManetAddress addr2(IPv4Address(srt->addrs[i+1].s_addr));
+        pathCacheMap.addEdge(addr1,addr2,1,timeout);
+        pathCacheMap.addEdge(addr2,addr1,1,timeout);
+    }
+}
+
+struct dsr_srt *DSRUU::ph_srt_find_link_route_map(struct in_addr src, struct in_addr dst, unsigned int timeout)
+{
+    PathCacheRoute route;
+    PathCacheCost vector_cost;
+
+    struct in_addr myAddr = my_addr();
+    pathCacheMap.setRoot(ManetAddress(IPv4Address(myAddr.s_addr)));
+
+    if(!pathCacheMap.getRoute(ManetAddress(IPv4Address(dst.s_addr)),route,timeout))
+        return NULL;
+
+    dsr_srt *srt = new dsr_srt;
+
+    if (!srt)
+    {
+        DEBUG("Could not allocate source route!!!\n");
+        return NULL;
+    }
+
+    srt->dst = dst;
+    srt->src = src;
+    srt->laddrs = route.size() * DSR_ADDRESS_SIZE;
+    for (unsigned int i = 0; i < route.size();i++)
+    {
+        struct in_addr auxAddr;
+        auxAddr.s_addr = route[i].getIPv4().getInt();
+        srt->addrs.push_back(auxAddr);
+    }
+    return srt;
 }
