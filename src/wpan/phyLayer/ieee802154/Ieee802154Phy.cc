@@ -1340,7 +1340,8 @@ void Ieee802154Phy::disconnectReceiver()
          AirFrame *airframe = it->first;
          cMessage *endRxTimer = (cMessage *)airframe->getContextPointer();
          delete airframe;
-         delete cancelEvent(endRxTimer);
+         if (endRxTimer) // strange case that the change is at the same time that the endRxTimer is received, it is possible with batteries
+             delete cancelEvent(endRxTimer);
      }
      recvBuff.clear();
 
