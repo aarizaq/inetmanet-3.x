@@ -1067,6 +1067,8 @@ void DSRUU::AddCost(struct dsr_pkt *dp, struct dsr_srt *srt)
         dp->costVector.clear();
     if (!etxActive)
         return;
+    if (srt->cost.empty())
+        return;
 
     // int sizeAddress = srt->laddrs/ DSR_ADDRESS_SIZE;
 
