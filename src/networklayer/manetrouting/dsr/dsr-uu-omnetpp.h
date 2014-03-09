@@ -130,11 +130,13 @@ static inline char *print_pkt(char *p, int len)
     return buf;
 }
 
+#define SEND_BUF_DROP 1
+#define SEND_BUF_SEND 2
+
 
 #define NO_DECLS
 #include "dsr-uu/dsr.h"
 #include "dsr-uu/dsr-opt.h"
-#include "dsr-uu/send-buf.h"
 #include "dsr-uu/dsr-rreq.h"
 #include "dsr-uu/dsr-pkt.h"
 #include "dsr-uu/dsr-rrep.h"
@@ -192,6 +194,26 @@ class DSRUU:public cSimpleModule, public INotifiable, ILifecycle
         void ph_srt_delete_link_map(struct in_addr src1, struct in_addr src2);
         void ph_srt_add_link_map(struct dsr_srt *srt, usecs_t timeout);
         struct dsr_srt *ph_srt_find_link_route_map(struct in_addr src, struct in_addr dst, unsigned int timeout);
+
+// Buffer storate
+
+        struct PacketStoreage{
+                simtime_t time;
+                struct dsr_pkt *packet;
+        };
+
+        unsigned int buffMaxlen;
+        typedef std::multimap<ManetAddress, PacketStoreage> PacketBuffer;
+        PacketBuffer packetBuffer;
+
+        void send_buf_set_max_len(unsigned int max_len);
+        int send_buf_find(struct in_addr dst);
+        int send_buf_enqueue_packet(struct dsr_pkt *dp);
+        int send_buf_set_verdict(int verdict, struct in_addr dst);
+        int send_buf_init(void);
+        void send_buf_cleanup(void);
+        void send_buf_timeout(unsigned long data);
+
   public:
     friend class DSRUUTimer;
     //static simtime_t current_time;
@@ -216,7 +238,6 @@ class DSRUU:public cSimpleModule, public INotifiable, ILifecycle
 
     struct tbl rreq_tbl;
     struct tbl grat_rrep_tbl;
-    struct tbl send_buf;
     struct tbl neigh_tbl;
     struct tbl maint_buf;
 
@@ -384,10 +405,6 @@ class DSRUU:public cSimpleModule, public INotifiable, ILifecycle
 #undef _DSR_ACK_H
 #include "dsr-uu/dsr-ack.h"
 
-
-#undef _SEND_BUF_H
-#include "dsr-uu/send-buf.h"
-
 #undef _NEIGH_H
 #include "dsr-uu/neigh.h"
 
@@ -477,6 +494,26 @@ static inline void gettime(struct timeval *tv)
     if (!tv)
         return;
     now = SIMTIME_DBL(simTime());
+    tv->tv_sec = (long)now; /* Removes decimal part */
+    usecs = (now - tv->tv_sec) * 1000000;
+    tv->tv_usec = (long)(usecs+0.5);
+    if (tv->tv_usec>1000000)
+    {
+        tv->tv_usec -=1000000;
+        tv->tv_sec++;
+    }
+}
+
+
+static inline void timevalFromSimTime(struct timeval *tv,simtime_t time)
+{
+    double now, usecs;
+
+    /* Timeval is required, timezone is ignored */
+    if (!tv)
+        return;
+
+    now = SIMTIME_DBL(time);
     tv->tv_sec = (long)now; /* Removes decimal part */
     usecs = (now - tv->tv_sec) * 1000000;
     tv->tv_usec = (long)(usecs+0.5);

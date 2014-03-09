@@ -174,7 +174,7 @@ void NSCLASS dsr_start_xmit(struct dsr_pkt *dp)
 #endif
 #else
         /* OMNET code*/
-        res = send_buf_enqueue_packet(dp, &DSRUU::omnet_xmit);
+        res = send_buf_enqueue_packet(dp);
 #endif /* OMNET endif*/
         if (res < 0)
         {
