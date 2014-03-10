@@ -33,8 +33,6 @@
 #include "dsr-rreq.h"
 #include "dsr-opt.h"
 #include "dsr-srt.h"
-#include "link-cache.h"
-#include "send-buf.h"
 #include "timer.h"
 
 #define GRAT_RREP_TBL_MAX_LEN 64

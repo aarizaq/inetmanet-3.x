@@ -30,8 +30,6 @@
 #include "dsr-rrep.h"
 #include "dsr-rreq.h"
 #include "dsr-opt.h"
-#include "link-cache.h"
-#include "send-buf.h"
 #include "neigh.h"
 
 #ifndef OMNETPP
@@ -852,14 +850,7 @@ int NSCLASS dsr_rreq_opt_recv(struct dsr_pkt *dp, struct dsr_rreq_opt *rreq_opt)
     srt_rc = NULL;
     if (ConfVal(RREPDestinationOnly)==0)
     {
-#ifdef OMNETPP
-        if (ConfVal(PathCache))
-            srt_rc = ph_srt_find(myaddr, trg,0,0);
-        else
-            srt_rc = lc_srt_find(myaddr, trg);
-#else
-        srt_rc = lc_srt_find(myaddr, trg);
-#endif
+        srt_rc = dsr_rtc_find(myaddr, trg);
     }
 
     if (srt_rc)

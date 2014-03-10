@@ -24,9 +24,7 @@
 #include "debug_dsr.h"
 #include "dsr-opt.h"
 #include "dsr-ack.h"
-#include "link-cache.h"
 #include "neigh.h"
-#include "maint-buf.h"
 
 struct dsr_ack_opt *dsr_ack_opt_add(struct dsr_opt_hdr *buf, int len, struct in_addr src,
                                     struct in_addr dst, unsigned short id)

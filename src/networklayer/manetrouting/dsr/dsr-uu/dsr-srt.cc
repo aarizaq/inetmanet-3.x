@@ -11,7 +11,6 @@
 #include "dsr-srt.h"
 #include "dsr-opt.h"
 #include "dsr-ack.h"
-#include "link-cache.h"
 #include "neigh.h"
 #include "dsr-rrep.h"
 #include "debug_dsr.h"
@@ -813,10 +812,10 @@ int NSCLASS dsr_srt_opt_recv(struct dsr_pkt *dp, struct dsr_srt_opt *srt_opt)
     {
         if (etxActive)
         {
-            ph_srt_add_node (dp->prv_hop,ConfValToUsecs(RouteCacheTimeout), 0,(unsigned int)getCost(IPv4Address((uint32_t)dp->prv_hop.s_addr)));
+            ph_srt_add_node_map(dp->prv_hop,ConfValToUsecs(RouteCacheTimeout), 0,(unsigned int)getCost(IPv4Address((uint32_t)dp->prv_hop.s_addr)));
         }
         else
-            ph_srt_add_node (dp->prv_hop,ConfValToUsecs(RouteCacheTimeout), 0,0);
+            ph_srt_add_node_map(dp->prv_hop,ConfValToUsecs(RouteCacheTimeout), 0,0);
 
         struct dsr_srt * from_me_to_dest=NULL;
         struct dsr_srt * from_me_to_src=NULL;
@@ -847,11 +846,11 @@ int NSCLASS dsr_srt_opt_recv(struct dsr_pkt *dp, struct dsr_srt_opt *srt_opt)
     {
         if (etxActive)
         {
-            lc_link_add(my_addr(), dp->prv_hop,
+            ph_add_link_map(my_addr(), dp->prv_hop,
                         ConfValToUsecs(RouteCacheTimeout), 0, (unsigned int)getCost(IPv4Address((uint32_t)dp->prv_hop.s_addr)));
         }
         else
-            lc_link_add(my_addr(), dp->prv_hop,
+            ph_add_link_map(my_addr(), dp->prv_hop,
                         ConfValToUsecs(RouteCacheTimeout), 0, 1);
 
         dsr_rtc_add(dp->srt, ConfValToUsecs(RouteCacheTimeout), 0);

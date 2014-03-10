@@ -136,6 +136,7 @@ struct dsr_pkt
        encapsulate_protocol = 0;
        next = NULL;
     }
+    struct dsr_pkt *dup();
 };
 
 

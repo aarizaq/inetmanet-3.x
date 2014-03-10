@@ -5,162 +5,18 @@
  *
  * Author: Erik Nordström, <erikn@it.uu.se>
  */
-#define OMNETPP
-#ifdef __KERNEL__
-#include <linux/proc_fs.h>
-#include <linux/module.h>
-#endif
-
-
-#ifndef OMNETPP
-#ifdef NS2
-#include "ns-agent.h"
-#else
-#include "dsr.h"
-#include "debug_dsr.h"
-#include "tbl.h"
-#include "neigh.h"
-#include "dsr-ack.h"
-#include "link-cache.h"
-#include "dsr-rerr.h"
-#include "dsr-dev.h"
-#include "dsr-srt.h"
-#include "dsr-opt.h"
-#include "timer.h"
-#include "maint-buf.h"
-
-
-#define MAINT_BUF_PROC_FS_NAME "maint_buf"
-
-TBL(maint_buf, MAINT_BUF_MAX_LEN);
-
-static DSRUUTimer ack_timer;
-
-#endif              /* NS2 */
-#else
 #include "dsr-uu-omnetpp.h"
-#endif /* omnetpp */
-
-struct maint_entry
-{
-    dsr_list_t l;
-    struct in_addr nxt_hop;
-    unsigned int rexmt;
-    unsigned short id;
-    struct timeval tx_time, expires;
-    usecs_t rto;
-    int ack_req_sent;
-    struct dsr_pkt *dp;
-};
-
-struct maint_buf_query
-{
-    struct in_addr *nxt_hop;
-    unsigned short *id;
-    usecs_t rtt;
-};
-
-#ifdef __KERNEL__
-static int maint_buf_print(struct tbl *t, char *buffer);
-#endif
 
 /* Criteria function for deleting packets from buffer based on next hop and
  * id */
-static inline int crit_addr_id_del(void *pos, void *data)
-{
-    struct maint_entry *m = (struct maint_entry *)pos;
-    struct maint_buf_query *q = (struct maint_buf_query *)data;
-
-    if (m->nxt_hop.s_addr == q->nxt_hop->s_addr && m->id <= *(q->id))
-    {
-        struct timeval now;
-
-        gettime(&now);
-
-        /* Only update RTO if this was not a retransmission */
-        if (m->id == *(q->id) && m->rexmt == 0)
-            q->rtt = timeval_diff(&now, &m->tx_time);
-
-        if (m->dp)
-        {
-#ifdef NS2
-            if (m->dp->p)
-                Packet::free(m->dp->p);
-#endif
-            dsr_pkt_free(m->dp);
-            return 1;
-        }
-    }
-    return 0;
-}
-
-/* Criteria function for deleting packets from buffer based on next hop */
-static inline int crit_addr_del(void *pos, void *data)
-{
-    struct maint_entry *m = (struct maint_entry *)pos;
-    struct maint_buf_query *q = (struct maint_buf_query *)data;
-
-    if (m->nxt_hop.s_addr == q->nxt_hop->s_addr)
-    {
-        struct timeval now;
-
-        gettime(&now);
-
-        if (m->rexmt == 0)
-            q->rtt = timeval_diff(&now, &m->tx_time);
-
-        if (m->dp)
-        {
-#ifdef NS2
-            if (m->dp->p)
-                Packet::free(m->dp->p);
-#endif
-            dsr_pkt_free(m->dp);
-            return 1;
-        }
-    }
-    return 0;
-}
-
-
-/* Criteria function for buffered packets based on next hop */
-static inline int crit_addr(void *pos, void *data)
-{
-    struct maint_entry *m = (struct maint_entry *)pos;
-    struct in_addr *nxt_hop = (struct in_addr *)data;
-
-    if (m->nxt_hop.s_addr == nxt_hop->s_addr)
-        return 1;
-
-    return 0;
-}
-
-/* Criteria function for buffered packets based on expire time */
-static inline int crit_expires(void *pos, void *data)
-{
-    struct maint_entry *m = (struct maint_entry *)pos;
-    struct maint_entry *m_new = (struct maint_entry *)data;
-
-    if (timeval_diff(&m->expires, &m_new->expires) > 0)
-        return 1;
-    return 0;
-
-}
-
-/* Criteria function for buffered packets based on sent ACK REQ */
-static inline int crit_ack_req_sent(void *pos, void *data)
-{
-    struct maint_entry *m = (struct maint_entry *)pos;
-
-    if (m->ack_req_sent)
-        return 1;
-    return 0;
-}
 
 void NSCLASS maint_buf_set_max_len(unsigned int max_len)
 {
-    maint_buf.max_len = max_len;
+    MaxMaintBuff = max_len;
 }
+
+#if 0
+
 
 static struct maint_entry *maint_entry_create(struct dsr_pkt *dp,
         unsigned short id,
@@ -192,6 +48,7 @@ static struct maint_entry *maint_entry_create(struct dsr_pkt *dp,
 #else
     m->dp = NULL;
 
+#if 0
     if (dp->payload || (!dp->moreFragments || dp->fragmentOffset!=0))
     {
         IPv4Datagram *dgram;
@@ -245,16 +102,65 @@ static struct maint_entry *maint_entry_create(struct dsr_pkt *dp,
         }
         m->dp->ip_pkt = NULL;
     }
+#else
+    if (dp->payload || (!dp->moreFragments || dp->fragmentOffset!=0))
+    {
+        m->dp = dp->dup();
+        if (m->dp->ip_pkt)
+            delete m->dp->ip_pkt;
+        m->dp->ip_pkt = NULL;
+    }
+#endif
 #endif
     if (!m->dp)
     {
-        FREE(m);
+        delete m;
         return NULL;
     }
     m->dp->nxt_hop = dp->nxt_hop;
     return m;
 }
 
+
+
+
+#else
+
+NSCLASS maint_entry * NSCLASS maint_entry_create(struct dsr_pkt *dp, unsigned short id, unsigned long rto)
+{
+    struct maint_entry *m;
+
+    m = new struct maint_entry;
+
+    if (!m)
+        return NULL;
+
+    m->nxt_hop = dp->nxt_hop;
+    m->tx_time = simTime();
+    m->expires = m->tx_time + ((double)rto/1000000.0);
+    m->rexmt = 0;
+    m->id = id;
+    m->rto = rto;
+    m->ack_req_sent = 0;
+    m->dp = NULL;
+
+    if (dp->payload || (!dp->moreFragments || dp->fragmentOffset!=0))
+    {
+        m->dp = dp->dup();
+        if (m->dp->ip_pkt)
+            delete m->dp->ip_pkt;
+        m->dp->ip_pkt = NULL;
+    }
+    if (!m->dp)
+    {
+        delete m;
+        return NULL;
+    }
+    m->dp->nxt_hop = dp->nxt_hop;
+    return m;
+}
+
+#endif
 
 int NSCLASS maint_buf_salvage(struct dsr_pkt *dp)
 {
@@ -271,8 +177,6 @@ int NSCLASS maint_buf_salvage(struct dsr_pkt *dp)
         delete dp->srt;
         dp->srt=NULL;
     }
-
-
 
     if (!alt_srt)
     {
@@ -310,7 +214,8 @@ int NSCLASS maint_buf_salvage(struct dsr_pkt *dp)
     if (old_srt->addrs[0].s_addr == dp->nxt_hop.s_addr)
     {
         srt = alt_srt;
-        sleft = (srt->laddrs) / 4;
+        //sleft = (srt->laddrs) / 4;
+        sleft = srt->addrs.size();
     }
     else
     {
@@ -326,7 +231,8 @@ int NSCLASS maint_buf_salvage(struct dsr_pkt *dp)
         }
         srt = dsr_srt_concatenate(srt_to_me, alt_srt);
 
-        sleft = (srt->laddrs) / 4 - (srt_to_me->laddrs / 4) - 1;
+        //sleft = (srt->laddrs) / 4 - (srt_to_me->laddrs / 4) - 1;
+        sleft = srt->addrs.size() - srt_to_me->addrs.size() -1;
 
         DEBUG("old_srt: %s\n", print_srt(old_srt));
         DEBUG("alt_srt: %s\n", print_srt(alt_srt));
@@ -387,7 +293,6 @@ int NSCLASS maint_buf_salvage(struct dsr_pkt *dp)
     dp->costVector.clear(); // the route has changed. is not valid
 
     XMIT(dp);
-
     return 0;
 }
 
@@ -399,9 +304,21 @@ void NSCLASS maint_buf_timeout(unsigned long data)
     if (timer_pending(&ack_timer))
         return;
 
-    /* Get the first packet */
-    m = (struct maint_entry *)tbl_detach_first(&maint_buf);
+    if (maint_buf.empty())
+    {
+        DEBUG("Nothing in maint buf\n");
+        return;
+    }
 
+    // check time
+    if (maint_buf.begin()->first > simTime())
+    {
+        maint_buf_set_timeout();
+        return;
+    }
+    /* Get the first packet */
+    m = maint_buf.begin()->second;
+    maint_buf.erase(maint_buf.begin());
     if (!m)
     {
         DEBUG("Nothing in maint buf\n");
@@ -410,8 +327,7 @@ void NSCLASS maint_buf_timeout(unsigned long data)
 
     m->rexmt++;
 
-    DEBUG("nxt_hop=%s id=%u rexmt=%d\n",
-          print_ip(m->nxt_hop), m->id, m->rexmt);
+    DEBUG("nxt_hop=%s id=%u rexmt=%d\n", print_ip(m->nxt_hop), m->id, m->rexmt);
 
     /* Increase the number of retransmits */
     if (m->rexmt >= ConfVal(MaxMaintRexmt))
@@ -420,89 +336,61 @@ void NSCLASS maint_buf_timeout(unsigned long data)
         if (m->ack_req_sent)
         {
             int n = 0;
-#ifdef OMNETPP
             ph_srt_delete_link_map(my_addr(), m->nxt_hop);
-#endif
-
-#ifdef NS2
-            /* Remove packets from interface queue */
-            Packet *qp;
-
-            while ((qp = ifq_->prq_get_nexthop((nsaddr_t)m->nxt_hop.s_addr)))
-            {
-                Packet::free(qp);
-            }
-#endif
             dsr_rerr_send(m->dp, m->nxt_hop);
             /* Salvage timed out packet */
             if (maint_buf_salvage(m->dp) < 0)
             {
-#ifndef OMNETPP
-#ifdef NS2
-                if (m->dp->p)
-                    drop(m->dp->p, DROP_RTR_SALVAGE);
-#endif
-#else
                 if (m->dp->payload)
                     drop(m->dp->payload, -1);
                 m->dp->payload = NULL;
-
-#endif
                 dsr_pkt_free(m->dp);
             }
             else
                 n++;
             /* Salvage other packets in maintenance buffer with the
              * same next hop */
-            while ((m2 = (struct maint_entry *)tbl_find_detach(&maint_buf, &m->nxt_hop, crit_addr)))
+            for (MaintBuf::iterator it = maint_buf.begin(); it != maint_buf.end();)
             {
-                if (maint_buf_salvage(m2->dp) < 0)
+                m2 = it->second;
+                if (m2->nxt_hop.s_addr == m->nxt_hop.s_addr)
                 {
-#ifndef OMNETPP
-#ifdef NS2
-                    if (m2->dp->p)
-                        drop(m2->dp->p, DROP_RTR_SALVAGE);
-#endif
-#else
-                    if (m2->dp->payload)
-                        drop(m2->dp->payload, -1);
-                    m2->dp->payload = NULL;
-#endif
-                    dsr_pkt_free(m2->dp);
+                    maint_buf.erase(it++);
+                    if (maint_buf_salvage(m2->dp) < 0)
+                    {
+                        if (m2->dp->payload)
+                            drop(m2->dp->payload, -1);
+                        m2->dp->payload = NULL;
+                        dsr_pkt_free(m2->dp);
+                    }
+                    delete m2;
+                    n++;
                 }
-                FREE(m2);
-                n++;
+                else
+                    ++it;
             }
             DEBUG("Salvaged %d packets from maint_buf\n", n);
         }
         else
         {
             DEBUG("No ACK REQ sent for this packet\n");
-
             if (m->dp)
             {
-#ifndef OMNETPP
-#ifdef NS2
-                if (m->dp->p)
-                    drop(m->dp->p, DROP_RTR_SALVAGE);
-#endif
-#else
                 if (m->dp->payload)
                     drop(m->dp->payload, -1);
                 m->dp->payload = NULL;
-#endif
-
                 dsr_pkt_free(m->dp);
             }
         }
-        FREE(m);
-        goto out;
+        delete m;
+        maint_buf_set_timeout();
+        return;
     }
 
     /* Set new Transmit time */
-    gettime(&m->tx_time);
-    m->expires = m->tx_time;
-    timeval_add_usecs(&m->expires, m->rto);
+    m->tx_time = simTime();
+    m->expires = m->tx_time + ((double)m->rto/1000000.0);
+    // timeval_add_usecs(&m->expires, m->rto);
 
     /* Send new ACK REQ */
     if (m->ack_req_sent)
@@ -512,54 +400,45 @@ void NSCLASS maint_buf_timeout(unsigned long data)
         else
             dsr_ack_req_send(m->nxt_hop, m->id);
     }
-
     /* Add to maintenence buffer again */
-    tbl_add(&maint_buf, &m->l, crit_expires);
-out:
+    maint_buf.insert(std::make_pair(m->expires,m));
     maint_buf_set_timeout();
     return;
 }
 
 void NSCLASS maint_buf_set_timeout(void)
 {
-    struct maint_entry *m;
-    usecs_t rto;
-    struct timeval tx_time, now, expires;
 
-    if (tbl_empty(&maint_buf))
+    if (maint_buf.empty())
         return;
 
-    gettime(&now);
+    struct maint_entry *m;
+    struct timeval expires,now;
 
-    DSR_WRITE_LOCK(&maint_buf.lock);
-    /* Get first packet in maintenance buffer */
-    m = (struct maint_entry *)__tbl_find(&maint_buf, NULL,
-                                         crit_ack_req_sent);
+    MaintBuf::iterator it;
+    for (it = maint_buf.begin(); it != maint_buf.end();++it)
+    {
+        m = it->second;
+        if (m->ack_req_sent)
+            break;
+    }
 
-    if (!m)
+    if (it == maint_buf.end())
     {
         DEBUG("No packet to set timeout for\n");
-        DSR_WRITE_UNLOCK(&maint_buf.lock);
         return;
     }
 
-    tx_time = m->tx_time;
-    rto = m->rto;
-    m->expires = tx_time;
-    timeval_add_usecs(&m->expires, m->rto);
-
-    expires = m->expires;
-
-    DSR_WRITE_UNLOCK(&maint_buf.lock);
-
-    /* Check if this packet has already expired */
-    if (timeval_diff(&now, &tx_time) > (int)rto)
+    if (it->first <= simTime())
         maint_buf_timeout(0);
     else
     {
+        gettime(&now);
+
         DEBUG("ACK Timer: exp=%ld.%06ld now=%ld.%06ld\n",
               expires.tv_sec, expires.tv_usec, now.tv_sec, now.tv_usec);
         /*      ack_timer.data = (unsigned long)m; */
+        timevalFromSimTime(&expires,it->first);
         set_timer(&ack_timer, &expires);
     }
 }
@@ -591,7 +470,7 @@ int NSCLASS maint_buf_add(struct dsr_pkt *dp)
 
     if (!m)
         return -1;
-
+    maint_buf.insert(std::make_pair(m->expires,m));
     /* Check if we should add an ACK REQ */
     if (dp->flags & PKT_REQUEST_ACK)
     {
@@ -602,22 +481,9 @@ int NSCLASS maint_buf_add(struct dsr_pkt *dp)
 
             /* Set last_ack_req time */
             neigh_tbl_set_ack_req_time(m->nxt_hop);
-
             neigh_tbl_id_inc(m->nxt_hop);
-
             dsr_ack_req_opt_add(dp, m->id);
         }
-
-        if (tbl_add_tail(&maint_buf, &m->l) < 0)
-        {
-            DEBUG("Buffer full - not buffering!\n");
-            dsr_pkt_free(m->dp);
-            FREE(m);
-            return -1;
-        }
-
-        maint_buf_set_timeout();
-
     }
     else
     {
@@ -626,191 +492,120 @@ int NSCLASS maint_buf_add(struct dsr_pkt *dp)
               timeval_diff(&now, &neigh_info.last_ack_req),
               ConfValToUsecs(MaintHoldoffTime));
     }
-
+    maint_buf_set_timeout();
     return 1;
 }
 
 /* Remove all packets for a next hop */
 int NSCLASS maint_buf_del_all(struct in_addr nxt_hop)
 {
-    struct maint_buf_query q;
-    int n;
-
-    q.id = NULL;
-    q.nxt_hop = &nxt_hop;
-    q.rtt = 0;
-
+    int n = 0;
     if (timer_pending(&ack_timer))
         del_timer_sync(&ack_timer);
 
-    n = tbl_for_each_del(&maint_buf, &q, crit_addr_del);
-
+    for (MaintBuf::iterator it = maint_buf.begin(); it != maint_buf.end();)
+    {
+        if (it->second->nxt_hop.s_addr == nxt_hop.s_addr)
+        {
+            dsr_pkt_free(it->second->dp);
+            delete it->second;
+            maint_buf.erase(it++);
+            n++;
+        }
+        else
+            ++it;
+    }
     maint_buf_set_timeout();
-
     return n;
 }
 
 /* Remove packets for a next hop with a specific ID */
 int NSCLASS maint_buf_del_all_id(struct in_addr nxt_hop, unsigned short id)
 {
-    struct maint_buf_query q;
     int n;
-
-    q.id = &id;
-    q.nxt_hop = &nxt_hop;
-    q.rtt = 0;
+    usecs_t rtt = 0;
 
     if (timer_pending(&ack_timer))
         del_timer_sync(&ack_timer);
-
-    /* Find the buffered packet to mark as acked */
-    n = tbl_for_each_del(&maint_buf, &q, crit_addr_id_del);
-
-    if (q.rtt > 0)
+    for (MaintBuf::iterator it = maint_buf.begin(); it != maint_buf.end();)
     {
-        struct neighbor_info neigh_info;
-
-        neigh_info.id = id;
-        neigh_info.rtt = q.rtt;
-        neigh_tbl_set_rto(nxt_hop, &neigh_info);
+        if (it->second->nxt_hop.s_addr == nxt_hop.s_addr && it->second->id <= id)
+        {
+            /* Only update RTO if this was not a retransmission */
+            if ((it->second->id == id) && (it->second->rexmt == 0))
+                rtt = SIMTIME_DBL(simTime() - it->second->tx_time)*1000000.0;
+            dsr_pkt_free(it->second->dp);
+            delete it->second;
+            maint_buf.erase(it++);
+            n++;
+        }
+        else
+            ++it;
     }
 
+    if (rtt > 0)
+    {
+        struct neighbor_info neigh_info;
+        neigh_info.id = id;
+        neigh_info.rtt = rtt;
+        neigh_tbl_set_rto(nxt_hop, &neigh_info);
+    }
     maint_buf_set_timeout();
-
     return n;
 }
+
 int NSCLASS maint_buf_del_addr(struct in_addr nxt_hop)
 {
-    struct maint_buf_query q;
     int n;
-
-    q.id = NULL;
-    q.nxt_hop = &nxt_hop;
-    q.rtt = 0;
-
+    usecs_t rtt = 0;
     if (timer_pending(&ack_timer))
         del_timer_sync(&ack_timer);
 
-    /* Find the buffered packet to mark as acked */
-    n = tbl_for_each_del(&maint_buf, &q, crit_addr_del);
-
-    if (q.rtt > 0)
+    for (MaintBuf::iterator it = maint_buf.begin(); it != maint_buf.end();)
+    {
+        if (it->second->nxt_hop.s_addr == nxt_hop.s_addr)
+        {
+            /* Only update RTO if this was not a retransmission */
+            if (it->second->rexmt == 0)
+                rtt = SIMTIME_DBL(simTime() - it->second->tx_time)*1000000.0;
+            dsr_pkt_free(it->second->dp);
+            delete it->second;
+            maint_buf.erase(it++);
+            n++;
+        }
+        else
+            ++it;
+    }
+    if (rtt > 0)
     {
         struct neighbor_info neigh_info;
-
         neigh_info.id = 0;
-        neigh_info.rtt = q.rtt;
+        neigh_info.rtt = rtt;
         neigh_tbl_set_rto(nxt_hop, &neigh_info);
     }
 
     maint_buf_set_timeout();
-
     return n;
 }
 
-#ifdef __KERNEL__
-static int maint_buf_print(struct tbl *t, char *buffer)
-{
-    dsr_list_t *p;
-    int len;
-    struct timeval now;
-
-    gettime(&now);
-
-    len = sprintf(buffer, "# %-15s %-5s %-6s %-2s %-8s %-15s %-15s\n",
-                  "NeighAddr", "Rexmt", "Id", "AR", "RTO", "TxTime", "Expires");
-
-    DSR_READ_LOCK(&t->lock);
-
-    list_for_each(p, &t->head)
-    {
-        struct maint_entry *e = (struct maint_entry *)p;
-
-        if (e && e->dp)
-            len +=
-                sprintf(buffer + len,
-                        "  %-15s %-5d %-6u %-2d %-8u %-15s %-15s\n",
-                        print_ip(e->nxt_hop), e->rexmt, e->id,
-                        e->ack_req_sent, (unsigned int)e->rto,
-                        print_timeval(&e->tx_time),
-                        print_timeval(&e->expires));
-    }
-
-    len += sprintf(buffer + len,
-                   "\nQueue length      : %u\n"
-                   "Queue max. length : %u\n", t->len, t->max_len);
-
-    DSR_READ_UNLOCK(&t->lock);
-
-    return len;
-}
-
-static int
-maint_buf_get_info(char *buffer, char **start, off_t offset, int length)
-{
-    int len;
-
-    len = maint_buf_print(&maint_buf, buffer);
-
-    *start = buffer + offset;
-    len -= offset;
-
-    if (len > length)
-        len = length;
-    else if (len < 0)
-        len = 0;
-    return len;
-}
-
-#endif              /* __KERNEL__ */
 
 int NSCLASS maint_buf_init(void)
 {
-#ifdef __KERNEL__
-    struct proc_dir_entry *proc;
 
-    proc = proc_net_create(MAINT_BUF_PROC_FS_NAME, 0, maint_buf_get_info);
-    if (proc)
-        proc->owner = THIS_MODULE;
-    else
-    {
-        printk(KERN_ERR "maint_buf: failed to create proc entry\n");
-        return -1;
-    }
-#endif
-    INIT_TBL(&maint_buf, MAINT_BUF_MAX_LEN);
-
+    MaxMaintBuff = MAINT_BUF_MAX_LEN;
     init_timer(&ack_timer);
-
     ack_timer.function = &NSCLASS maint_buf_timeout;
     ack_timer.expires = 0;
-
     return 1;
 }
 
 void NSCLASS maint_buf_cleanup(void)
 {
-    struct maint_entry *m;
-
     del_timer_sync(&ack_timer);
-
-    while ((m = (struct maint_entry *)tbl_detach_first(&maint_buf)))
+    while (!maint_buf.empty())
     {
-#ifndef OMNETPP
-#ifdef NS2
-        if (m->dp->p)
-            Packet::free(m->dp->p);
-#endif
-#else
-        if (m->dp->payload)
-            drop(m->dp->payload, -1);
-        m->dp->payload = NULL;
-#endif
-        dsr_pkt_free(m->dp);
-
-        FREE(m);
+        dsr_pkt_free(maint_buf.begin()->second->dp);
+        delete maint_buf.begin()->second;
+        maint_buf.erase(maint_buf.begin());
     }
-#ifdef __KERNEL__
-    proc_net_remove(MAINT_BUF_PROC_FS_NAME);
-#endif
 }

@@ -379,13 +379,11 @@ void DSRUU::initialize(int stage)
 
 
         /* Initilize tables */
-        lc_init();
         neigh_tbl_init();
         rreq_tbl_init();
         grat_rrep_tbl_init();
         maint_buf_init();
         send_buf_init();
-        path_cache_init();
         etxNumRetry = -1;
         etxActive = par("ETX_Active");
         if (etxActive)
@@ -402,8 +400,14 @@ void DSRUU::initialize(int stage)
         }
         myaddr_.s_addr = interface80211ptr->ipv4Data()->getIPAddress().getInt();
         macaddr_ = interface80211ptr->getMacAddress();
+
         nb = NotificationBoardAccess().get();
-        nb->subscribe(this, NF_LINK_BREAK);
+        if (!par("UseNetworkLayerAck").boolValue())
+        {
+            nb->subscribe(this, NF_LINK_BREAK);
+            nb->subscribe(this, NF_TX_ACKED);
+        }
+
         if (get_confval(PromiscOperation))
             nb->subscribe(this, NF_LINK_PROMISCUOUS);
         // clear routing entries related to wlan interfaces and autoassign ip adresses
@@ -433,13 +437,12 @@ void DSRUU::initialize(int stage)
 
 void DSRUU::finish()
 {
-    lc_cleanup();
-    path_cache_cleanup();
     neigh_tbl_cleanup();
     rreq_tbl_cleanup();
     grat_rrep_tbl_cleanup();
     send_buf_cleanup();
     maint_buf_cleanup();
+    pathCacheMap.cleanAllDataBase();
 
 }
 
@@ -458,13 +461,12 @@ DSRUU::DSRUU():cSimpleModule(), INotifiable()
 
 DSRUU::~DSRUU()
 {
-    lc_cleanup();
     neigh_tbl_cleanup();
     rreq_tbl_cleanup();
     grat_rrep_tbl_cleanup();
     send_buf_cleanup();
     maint_buf_cleanup();
-    path_cache_cleanup();
+    pathCacheMap.cleanAllDataBase();
     struct dsr_pkt * pkt;
     pkt = lifoDsrPkt;
 // delete ETX
@@ -628,9 +630,10 @@ void DSRUU::receiveChangeNotification(int category, const cObject *details)
     if (details==NULL)
         return;
 
-    if (category == NF_LINK_BREAK)
+    if (category == NF_TX_ACKED)
     {
-        Enter_Method("Dsr Link Break");
+        Enter_Method("Dsr FRAME ack");
+
         Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame *>(const_cast<cObject *>(details));
         if (frame)
         {
@@ -638,11 +641,6 @@ void DSRUU::receiveChangeNotification(int category, const cObject *details)
                 dgram = check_and_cast<IPv4Datagram *>(frame->getEncapsulatedPacket());
             else
                 return;
-
-            if (!get_confval(UseNetworkLayerAck))
-            {
-                packetFailed(dgram);
-            }
         }
         else
         {
@@ -654,14 +652,8 @@ void DSRUU::receiveChangeNotification(int category, const cObject *details)
                     dgram = check_and_cast<IPv4Datagram *>(frame15->getEncapsulatedPacket());
                 else
                     return;
-
-                if (!get_confval(UseNetworkLayerAck))
-                {
-                    packetFailed(dgram);
-                }
             }
 #endif
-
 #ifdef WITH_BMAC
             BmacPkt *frameB = dynamic_cast<BmacPkt *>(const_cast<cObject *>(details));
             if (frameB)
@@ -670,13 +662,52 @@ void DSRUU::receiveChangeNotification(int category, const cObject *details)
                     dgram = check_and_cast<IPv4Datagram *>(frameB->getEncapsulatedPacket());
                 else
                     return;
-
-                if (!get_confval(UseNetworkLayerAck))
-                {
-                    packetFailed(dgram);
-                }
+            }
+        }
+#endif
+        if (!get_confval(UseNetworkLayerAck) && dgram)
+        {
+            packetLinkAck(dgram);
+        }
+    }
+    else if (category == NF_LINK_BREAK)
+    {
+        Enter_Method("Dsr Link Break");
+        Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame *>(const_cast<cObject *>(details));
+        if (frame)
+        {
+            if (dynamic_cast<IPv4Datagram *>(frame->getEncapsulatedPacket()))
+                dgram = check_and_cast<IPv4Datagram *>(frame->getEncapsulatedPacket());
+            else
+                return;
+        }
+        else
+        {
+#ifdef WITH_80215
+            Ieee802154Frame *frame15 = dynamic_cast<Ieee802154Frame *>(const_cast<cObject *>(details));
+            if (frame15)
+            {
+                if (dynamic_cast<IPv4Datagram *>(frame15->getEncapsulatedPacket()))
+                    dgram = check_and_cast<IPv4Datagram *>(frame15->getEncapsulatedPacket());
+                else
+                    return;
             }
 #endif
+#ifdef WITH_BMAC
+            BmacPkt *frameB = dynamic_cast<BmacPkt *>(const_cast<cObject *>(details));
+            if (frameB)
+            {
+                if (dynamic_cast<IPv4Datagram *>(frameB->getEncapsulatedPacket()))
+                    dgram = check_and_cast<IPv4Datagram *>(frameB->getEncapsulatedPacket());
+                else
+                    return;
+            }
+#endif
+            if (!get_confval(UseNetworkLayerAck) && dgram)
+            {
+                packetFailed(dgram);
+            }
+
         }
     }
     else if (category == NF_LINK_PROMISCUOUS)
@@ -709,6 +740,35 @@ void DSRUU::receiveChangeNotification(int category, const cObject *details)
     }
 }
 
+void DSRUU::packetLinkAck(IPv4Datagram *ipDgram)
+{
+    struct in_addr nxt_hop;
+    if (ipDgram->getTransportProtocol()!=IP_PROT_DSR)
+    {
+        // This shouldn't really happen ?
+        EV << "Data packet from "<< ipDgram->getSrcAddress() <<"without DSR header!n";
+        // one hop?
+        struct dsr_srt *srt;
+        nxt_hop.s_addr = ipDgram->getDestAddress().getInt();
+        if (ConfVal(PathCache))
+            srt = ph_srt_find_map(my_addr(), nxt_hop, 0);
+        else
+            srt = ph_srt_find_link_route_map(my_addr(),nxt_hop, 0);
+        if (srt && srt->addrs.empty())
+            maint_buf_del_all(nxt_hop);
+        return;
+    }
+    DSRPkt *p = NULL;
+    if (dynamic_cast<DSRPkt *>(ipDgram))
+    {
+        p = check_and_cast <DSRPkt *> (ipDgram);
+        //prev_hop.s_addr = p->prevAddress().getInt();
+        nxt_hop.s_addr = p->nextAddress().getInt();
+        maint_buf_del_all(nxt_hop);
+        return;
+    }
+}
+
 void DSRUU::packetFailed(IPv4Datagram *ipDgram)
 {
     struct dsr_pkt *dp;
@@ -716,10 +776,23 @@ void DSRUU::packetFailed(IPv4Datagram *ipDgram)
     //struct in_addr prev_hop;
     /* Cast the packet so that we can touch it */
     /* Do nothing for my own packets... */
+
     if (ipDgram->getTransportProtocol()!=IP_PROT_DSR)
     {
         // This shouldn't really happen ?
         EV << "Data packet from "<< ipDgram->getSrcAddress() <<"without DSR header!n";
+        // one hop?
+        struct dsr_srt *srt;
+        nxt_hop.s_addr = ipDgram->getDestAddress().getInt();
+        if (ConfVal(PathCache))
+            srt = ph_srt_find_map(my_addr(), nxt_hop, 0);
+        else
+            srt = ph_srt_find_link_route_map(my_addr(),nxt_hop, 0);
+        if (srt && srt->addrs.empty())
+        {
+            // one hop
+            ph_srt_delete_link_map(my_addr(), nxt_hop);
+        }
         return;
     }
 
@@ -1204,13 +1277,11 @@ bool DSRUU::handleOperationStage(LifecycleOperation *operation, int stage, IDone
         if (stage == NodeShutdownOperation::STAGE_APPLICATION_LAYER) {
             nodeActive = false;
             pathCacheMap.cleanAllDataBase();
-            lc_cleanup();
             neigh_tbl_cleanup();
             rreq_tbl_cleanup();
             grat_rrep_tbl_cleanup();
             send_buf_cleanup();
             maint_buf_cleanup();
-            path_cache_cleanup();
             while (!etxNeighborTable.empty())
             {
                 ETXNeighborTable::iterator i = etxNeighborTable.begin();
@@ -1230,13 +1301,11 @@ bool DSRUU::handleOperationStage(LifecycleOperation *operation, int stage, IDone
         if (stage == NodeCrashOperation::STAGE_CRASH) {
             nodeActive = false;
             pathCacheMap.cleanAllDataBase();
-            lc_cleanup();
             neigh_tbl_cleanup();
             rreq_tbl_cleanup();
             grat_rrep_tbl_cleanup();
             send_buf_cleanup();
             maint_buf_cleanup();
-            path_cache_cleanup();
             while (!etxNeighborTable.empty())
             {
                 ETXNeighborTable::iterator i = etxNeighborTable.begin();

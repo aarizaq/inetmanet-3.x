@@ -182,11 +182,60 @@ void dsr_pkt_free(struct dsr_pkt *dp)
 }
 
 #else
+
+struct dsr_pkt * dsr_pkt::dup()
+{
+    struct dsr_pkt *dp;
+    // int dsr_opts_len = 0;
+
+    // dp = (struct dsr_pkt *)MALLOC(sizeof(struct dsr_pkt), GFP_ATOMIC);
+    if (DSRUU::lifoDsrPkt!=NULL)
+    {
+        dp=DSRUU::lifoDsrPkt;
+        DSRUU::lifoDsrPkt = dp->next;
+        DSRUU::lifo_token++;
+    }
+    else
+        dp = new dsr_pkt;
+
+    if (!dp)
+        return NULL;
+    dp->clear();
+    dp->mac.raw = dp->mac_data;
+    dp->nh.iph = (struct iphdr *) dp->ip_data;
+    memcpy(dp->mac_data,this->mac_data,sizeof(this->mac_data));
+    memcpy(dp->ip_data,this->ip_data,sizeof(this->ip_data));
+
+    dp->src.s_addr = this->src.s_addr;
+    dp->dst.s_addr = this->dst.s_addr;
+
+    dp->moreFragments = this->moreFragments;
+    dp->fragmentOffset = this->moreFragments;
+
+    dp->totalPayloadLength = this->totalPayloadLength;
+
+    dp->payload_len = this->payload_len;
+    if (this->payload)
+        dp->payload = this->payload->dup();
+
+    if (this->srt)
+    {
+        dp->srt = new dsr_srt;
+        *dp->srt = *this->srt;
+    }
+
+    dp->encapsulate_protocol = this->encapsulate_protocol;
+    dp->dh.opth = this->dh.opth;
+    dp->costVector = this->costVector;
+    dsr_opt_parse(dp);
+    dp->flags = this->flags;
+    return dp;
+}
+
 dsr_pkt * dsr_pkt_alloc(cPacket  * p)
 {
     struct dsr_pkt *dp;
    // int dsr_opts_len = 0;
-
 
     // dp = (struct dsr_pkt *)MALLOC(sizeof(struct dsr_pkt), GFP_ATOMIC);
     if (DSRUU::lifoDsrPkt!=NULL)

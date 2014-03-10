@@ -144,9 +144,7 @@ static inline char *print_pkt(char *p, int len)
 #include "dsr-uu/dsr-ack.h"
 #include "dsr-uu/dsr-srt.h"
 #include "dsr-uu/neigh.h"
-#include "dsr-uu/link-cache.h"
 #include "dsr-pkt_omnet.h"
-#include "dsr-uu/path-cache.h"
 #undef NO_DECLS
 
 
@@ -176,6 +174,8 @@ static inline char *print_pkt(char *p, int len)
 #define  ack_timer  (*ack_timer_ptr)
 #define  etx_timer  (*etx_timer_ptr)
 
+#define dsr_rtc_find(s,d) RouteFind(s,d)
+#define dsr_rtc_add(srt,t,f) RouteAdd(srt,t,f)
 
 #ifdef MobilityFramework
 class DSRUU:public cSimpleModule, public ImNotifiable
@@ -193,6 +193,7 @@ class DSRUU:public cSimpleModule, public INotifiable, ILifecycle
         struct dsr_srt * ph_srt_find_map(struct in_addr src, struct in_addr dst, unsigned int timeout);
         void ph_srt_delete_link_map(struct in_addr src1, struct in_addr src2);
         void ph_srt_add_link_map(struct dsr_srt *srt, usecs_t timeout);
+        void ph_add_link_map(struct in_addr src, struct in_addr dst, usecs_t timeout, int status, int cost);
         struct dsr_srt *ph_srt_find_link_route_map(struct in_addr src, struct in_addr dst, unsigned int timeout);
 
 // Buffer storate
@@ -213,6 +214,40 @@ class DSRUU:public cSimpleModule, public INotifiable, ILifecycle
         int send_buf_init(void);
         void send_buf_cleanup(void);
         void send_buf_timeout(unsigned long data);
+/////////////////
+        // maintenance routines
+////////////////
+
+        unsigned int MaxMaintBuff;
+        struct maint_entry
+        {
+            struct in_addr nxt_hop;
+            unsigned int rexmt;
+            unsigned short id;
+            simtime_t tx_time;
+            simtime_t expires;
+            usecs_t rto;
+            int ack_req_sent;
+            struct dsr_pkt *dp;
+        };
+
+        typedef std::multimap<simtime_t,maint_entry *> MaintBuf;
+        MaintBuf maint_buf;
+
+
+        maint_entry *maint_entry_create(struct dsr_pkt *dp, unsigned short id, unsigned long rto);
+
+        int maint_buf_init(void);
+        void maint_buf_cleanup(void);
+
+        void maint_buf_set_max_len(unsigned int max_len);
+        int maint_buf_add(struct dsr_pkt *dp);
+        int maint_buf_del_all(struct in_addr nxt_hop);
+        int maint_buf_del_all_id(struct in_addr nxt_hop, unsigned short id);
+        int maint_buf_del_addr(struct in_addr nxt_hop);
+        void maint_buf_set_timeout(void);
+        void maint_buf_timeout(unsigned long data);
+        int maint_buf_salvage(struct dsr_pkt *dp);
 
   public:
     friend class DSRUUTimer;
@@ -239,7 +274,6 @@ class DSRUU:public cSimpleModule, public INotifiable, ILifecycle
     struct tbl rreq_tbl;
     struct tbl grat_rrep_tbl;
     struct tbl neigh_tbl;
-    struct tbl maint_buf;
 
     unsigned int rreq_seqno;
 
@@ -288,10 +322,6 @@ class DSRUU:public cSimpleModule, public INotifiable, ILifecycle
     SimpleArp* arp;
 #endif
 
-    /* The link cache */
-    struct lc_graph LC;
-    struct path_table PCH;
-
     struct in_addr my_addr()
     {
         return myaddr_;
@@ -311,6 +341,7 @@ class DSRUU:public cSimpleModule, public INotifiable, ILifecycle
     void omnet_xmit(struct dsr_pkt *dp);
     void omnet_deliver(struct dsr_pkt *dp);
     void packetFailed(IPv4Datagram *ipDgram);
+    void packetLinkAck(IPv4Datagram *ipDgram);
     void handleTimer(cMessage*);
     void defaultProcess(cMessage*);
 
@@ -407,15 +438,6 @@ class DSRUU:public cSimpleModule, public INotifiable, ILifecycle
 
 #undef _NEIGH_H
 #include "dsr-uu/neigh.h"
-
-#undef _MAINT_BUF_H
-#include "dsr-uu/maint-buf.h"
-
-#undef _LINK_CACHE_H
-#include "dsr-uu/link-cache.h"
-
-#undef _DSR_PATH_CACHE_H
-#include "dsr-uu/path-cache.h"
 
 #undef NO_GLOBALS
 

@@ -25,8 +25,6 @@
 #include "debug_dsr.h"
 #include "dsr-srt.h"
 #include "dsr-ack.h"
-#include "link-cache.h"
-#include "maint-buf.h"
 
 static struct dsr_rerr_opt *dsr_rerr_opt_add(struct dsr_opt_hdr *buf, int len,
         int err_type,

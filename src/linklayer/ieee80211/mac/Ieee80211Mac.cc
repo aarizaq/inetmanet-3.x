@@ -1308,11 +1308,11 @@ void Ieee80211Mac::handleWithFSM(cMessage *msg)
             FSMA_Event_Transition(Receive-ACK-TXOP-Empty,
                                   isLowerMsg(msg) && isForUs(frame) && frameType == ST_ACK && txop && transmissionQueue(oldcurrentAC)->size() == 1,
                                   DEFER,
-                                  nb->fireChangeNotification(NF_TX_ACKED,0);// added by aaq
                                   currentAC = oldcurrentAC;
                                   if (retryCounter() == 0) numSentWithoutRetry()++;
                                   numSent()++;
                                   fr = getCurrentTransmission();
+                                  sendNotification(NF_TX_ACKED, fr);// added by aaq
                                   numBits += fr->getBitLength();
                                   bits() += fr->getBitLength();
                                   macDelay()->record(simTime() - fr->getMACArrive());
@@ -1331,11 +1331,11 @@ void Ieee80211Mac::handleWithFSM(cMessage *msg)
             FSMA_Event_Transition(Receive-ACK-TXOP,
                                   isLowerMsg(msg) && isForUs(frame) && frameType == ST_ACK && txop,
                                   WAITSIFS,
-                                  nb->fireChangeNotification(NF_TX_ACKED,0);// added by aaq
                                   currentAC = oldcurrentAC;
                                   if (retryCounter() == 0) numSentWithoutRetry()++;
                                   numSent()++;
                                   fr = getCurrentTransmission();
+                                  sendNotification(NF_TX_ACKED, fr);// added by aaq
                                   numBits += fr->getBitLength();
                                   bits() += fr->getBitLength();
 
@@ -1375,12 +1375,12 @@ void Ieee80211Mac::handleWithFSM(cMessage *msg)
              FSMA_Event_Transition(Receive-ACK,
                                   isLowerMsg(msg) && isForUs(frame) && frameType == ST_ACK,
                                   DEFER,
-                                  nb->fireChangeNotification(NF_TX_ACKED,0);// added by mhn **************************************
                                   currentAC = oldcurrentAC;
                                   if (retryCounter() == 0)
                                       numSentWithoutRetry()++;
                                   numSent()++;
                                   fr = getCurrentTransmission();
+                                  sendNotification(NF_TX_ACKED, fr);// added by mhn **************************************
                                   numBits += fr->getBitLength();
                                   bits() += fr->getBitLength();
 

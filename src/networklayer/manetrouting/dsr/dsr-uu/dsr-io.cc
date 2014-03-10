@@ -26,12 +26,9 @@
 #include "dsr-ack.h"
 #include "dsr-rtc.h"
 #include "dsr-ack.h"
-#include "maint-buf.h"
 #include "neigh.h"
 #include "dsr-opt.h"
-#include "link-cache.h"
 #include "debug_dsr.h"
-#include "send-buf.h"
 
 int NSCLASS dsr_recv(struct dsr_pkt *dp)
 {

@@ -44,7 +44,8 @@ struct dsr_srt *DSRUU::ph_srt_find_map(struct in_addr src, struct in_addr dst, u
             }
         }
         // reset winner timeout
-        pathCacheMap.setPathsTimer(ManetAddress(IPv4Address(dst.s_addr)), route,timeout);
+        if (timeout > 0)
+            pathCacheMap.setPathsTimer(ManetAddress(IPv4Address(dst.s_addr)), route,timeout);
     }
     else
     {
@@ -332,6 +333,15 @@ void DSRUU::ph_srt_delete_link_map(struct in_addr src1,struct in_addr src2)
     else
         pathCacheMap.erasePathWithLink(addr1,addr2);
     pathCacheMap.deleteEdge(addr1,addr2,true);
+}
+
+void DSRUU::ph_add_link_map(struct in_addr src, struct in_addr dst, usecs_t timeout, int status, int cost)
+{
+    ManetAddress sourceAddress(IPv4Address(src.s_addr));
+    ManetAddress destinationAddress(IPv4Address(dst.s_addr));
+    pathCacheMap.addEdge(sourceAddress,destinationAddress,1,timeout);
+    pathCacheMap.addEdge(destinationAddress,sourceAddress,1,timeout);
+    return;
 }
 
 

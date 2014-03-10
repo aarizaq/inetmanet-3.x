@@ -260,8 +260,12 @@ void DsrDataBase::setPathsTimer(const ManetAddress &dest,const PathCacheRoute &r
 {
     PathsDataBase::iterator it = pathsCache.find(dest);
     simtime_t now = simTime();
+
+    if (timeout == 0)
+        return;
     if (it == pathsCache.end())
         return;
+
     // check if route exist
     for (PathsToDestination::iterator itPaths = it->second.begin();  itPaths != it->second.end();)
     {
