@@ -401,6 +401,14 @@ void NSCLASS maint_buf_timeout(unsigned long data)
             dsr_ack_req_send(m->nxt_hop, m->id);
     }
     /* Add to maintenence buffer again */
+    if (maint_buf.size () >= MaxMaintBuff) // Drop the most aged packet
+    {
+        if (maint_buf.begin()->second->dp->payload)
+            drop(maint_buf.begin()->second->dp->payload, -1);
+        maint_buf.begin()->second->dp->payload = NULL;
+        dsr_pkt_free(maint_buf.begin()->second->dp);
+        maint_buf.erase(maint_buf.begin());
+    }
     maint_buf.insert(std::make_pair(m->expires,m));
     maint_buf_set_timeout();
     return;
@@ -413,8 +421,9 @@ void NSCLASS maint_buf_set_timeout(void)
         return;
 
     struct maint_entry *m;
-    struct timeval expires,now;
 
+// I am not sure if the time out must be
+ /*
     MaintBuf::iterator it;
     for (it = maint_buf.begin(); it != maint_buf.end();++it)
     {
@@ -428,11 +437,14 @@ void NSCLASS maint_buf_set_timeout(void)
         DEBUG("No packet to set timeout for\n");
         return;
     }
+*/
+    MaintBuf::iterator it =  maint_buf.begin();
 
     if (it->first <= simTime())
         maint_buf_timeout(0);
     else
     {
+        struct timeval expires,now;
         gettime(&now);
 
         DEBUG("ACK Timer: exp=%ld.%06ld now=%ld.%06ld\n",

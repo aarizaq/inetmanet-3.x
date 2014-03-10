@@ -630,112 +630,81 @@ void DSRUU::receiveChangeNotification(int category, const cObject *details)
     if (details==NULL)
         return;
 
-    if (category == NF_TX_ACKED)
-    {
-        Enter_Method("Dsr FRAME ack");
+    if (category == NF_TX_ACKED && !get_confval(UseNetworkLayerAck))
+        EV << "DSR TX ACK \n";
+    else if (category == NF_LINK_BREAK && !get_confval(UseNetworkLayerAck))
+        EV << "DSR link breack \n";
+    else if (category == NF_LINK_PROMISCUOUS && get_confval(PromiscOperation))
+        EV << "Dsr promisc \n";
+    else
+        return;
 
-        Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame *>(const_cast<cObject *>(details));
-        if (frame)
+    Enter_Method("Dsr receiveChangeNotification");
+    MACAddress sender;
+    MACAddress receiver;
+
+    Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame *>(const_cast<cObject *>(details));
+    if (frame)
+    {
+        if (dynamic_cast<IPv4Datagram *>(frame->getEncapsulatedPacket()))
+            dgram = check_and_cast<IPv4Datagram *>(frame->getEncapsulatedPacket());
+        else
+            return;
+        sender = frame->getTransmitterAddress();
+        receiver = frame->getReceiverAddress();
+    }
+    else
+    {
+#ifdef WITH_80215
+        Ieee802154Frame *frame15 = dynamic_cast<Ieee802154Frame *>(const_cast<cObject *>(details));
+        if (frame15)
         {
-            if (dynamic_cast<IPv4Datagram *>(frame->getEncapsulatedPacket()))
-                dgram = check_and_cast<IPv4Datagram *>(frame->getEncapsulatedPacket());
+            if (dynamic_cast<IPv4Datagram *>(frame15->getEncapsulatedPacket()))
+                dgram = check_and_cast<IPv4Datagram *>(frame15->getEncapsulatedPacket());
             else
                 return;
+            sender = frame15->getSrcAddr();
+            receiver = frame15->getDstAddr();
         }
-        else
-        {
-#ifdef WITH_80215
-            Ieee802154Frame *frame15 = dynamic_cast<Ieee802154Frame *>(const_cast<cObject *>(details));
-            if (frame15)
-            {
-                if (dynamic_cast<IPv4Datagram *>(frame15->getEncapsulatedPacket()))
-                    dgram = check_and_cast<IPv4Datagram *>(frame15->getEncapsulatedPacket());
-                else
-                    return;
-            }
 #endif
 #ifdef WITH_BMAC
-            BmacPkt *frameB = dynamic_cast<BmacPkt *>(const_cast<cObject *>(details));
-            if (frameB)
-            {
-                if (dynamic_cast<IPv4Datagram *>(frameB->getEncapsulatedPacket()))
-                    dgram = check_and_cast<IPv4Datagram *>(frameB->getEncapsulatedPacket());
-                else
-                    return;
-            }
-        }
-#endif
-        if (!get_confval(UseNetworkLayerAck) && dgram)
+        BmacPkt *frameB = dynamic_cast<BmacPkt *>(const_cast<cObject *>(details));
+        if (frameB)
         {
-            packetLinkAck(dgram);
+            if (dynamic_cast<IPv4Datagram *>(frameB->getEncapsulatedPacket()))
+                dgram = check_and_cast<IPv4Datagram *>(frameB->getEncapsulatedPacket());
+            else
+                return;
+            sender = MACAddress(frameB->getSrcAddr());
+            receiver = MACAddress(frameB->getDestAddr());
         }
+    }
+#endif
+    if (category == NF_TX_ACKED)
+    {
+        if (dgram)
+            packetLinkAck(dgram);
     }
     else if (category == NF_LINK_BREAK)
     {
-        Enter_Method("Dsr Link Break");
-        Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame *>(const_cast<cObject *>(details));
-        if (frame)
-        {
-            if (dynamic_cast<IPv4Datagram *>(frame->getEncapsulatedPacket()))
-                dgram = check_and_cast<IPv4Datagram *>(frame->getEncapsulatedPacket());
-            else
-                return;
-        }
-        else
-        {
-#ifdef WITH_80215
-            Ieee802154Frame *frame15 = dynamic_cast<Ieee802154Frame *>(const_cast<cObject *>(details));
-            if (frame15)
-            {
-                if (dynamic_cast<IPv4Datagram *>(frame15->getEncapsulatedPacket()))
-                    dgram = check_and_cast<IPv4Datagram *>(frame15->getEncapsulatedPacket());
-                else
-                    return;
-            }
-#endif
-#ifdef WITH_BMAC
-            BmacPkt *frameB = dynamic_cast<BmacPkt *>(const_cast<cObject *>(details));
-            if (frameB)
-            {
-                if (dynamic_cast<IPv4Datagram *>(frameB->getEncapsulatedPacket()))
-                    dgram = check_and_cast<IPv4Datagram *>(frameB->getEncapsulatedPacket());
-                else
-                    return;
-            }
-#endif
-            if (!get_confval(UseNetworkLayerAck) && dgram)
-            {
-                packetFailed(dgram);
-            }
-
-        }
+        if (dgram)
+            packetFailed(dgram);
     }
     else if (category == NF_LINK_PROMISCUOUS)
     {
-        if (get_confval(PromiscOperation))
+        if (dynamic_cast<DSRPkt *>(dgram))
         {
-            Enter_Method("Dsr promisc");
-
-            if (dynamic_cast<Ieee80211DataFrame *>(const_cast<cObject*>(details)))
-            {
-                const Ieee80211DataFrame *frame = check_and_cast<const Ieee80211DataFrame *>(details);
-                if (dynamic_cast<DSRPkt *>(frame->getEncapsulatedPacket()))
-                {
-
-                    DSRPkt *paux = check_and_cast <DSRPkt *> (frame->getEncapsulatedPacket());
-
-                   // DSRPkt *p = check_and_cast <DSRPkt *> (paux->dup());
-                   // take(p);
-                    EV << "####################################################\n";
-                    EV << "Dsr protocol received promiscuous packet from " << paux->getSrcAddress() << "\n";
-                    EV << "#####################################################\n";
-                    Ieee802Ctrl *ctrl = new Ieee802Ctrl();
-                    ctrl->setSrc(frame->getTransmitterAddress());
-                    ctrl->setDest(frame->getReceiverAddress());
-                  //  p->setControlInfo(ctrl);
-                    tap(paux,ctrl);
-                }
-            }
+            DSRPkt *paux = check_and_cast <DSRPkt *> (frame->getEncapsulatedPacket());
+            // DSRPkt *p = check_and_cast <DSRPkt *> (paux->dup());
+            // take(p);
+            EV << "####################################################\n";
+            EV << "Dsr protocol received promiscuous packet from " << paux->getSrcAddress() << "\n";
+            EV << "#####################################################\n";
+            Ieee802Ctrl *ctrl = new Ieee802Ctrl();
+            ctrl->setSrc(sender);
+            ctrl->setDest(receiver);
+            //  p->setControlInfo(ctrl);
+            tap(paux,ctrl);
         }
     }
 }
