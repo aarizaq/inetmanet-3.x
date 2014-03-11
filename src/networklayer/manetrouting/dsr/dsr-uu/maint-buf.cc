@@ -332,56 +332,43 @@ void NSCLASS maint_buf_timeout(unsigned long data)
     /* Increase the number of retransmits */
     if (m->rexmt >= ConfVal(MaxMaintRexmt))
     {
+        // execute this also with link layer feedback, if after the TX_ACK and LINK_BREAK the packet continue in the maintenance , send a route error
         DEBUG("MaxMaintRexmt reached!\n");
-        if (m->ack_req_sent)
+        int n = 0;
+        ph_srt_delete_link_map(my_addr(), m->nxt_hop);
+        dsr_rerr_send(m->dp, m->nxt_hop);
+        /* Salvage timed out packet */
+        if (maint_buf_salvage(m->dp) < 0)
         {
-            int n = 0;
-            ph_srt_delete_link_map(my_addr(), m->nxt_hop);
-            dsr_rerr_send(m->dp, m->nxt_hop);
-            /* Salvage timed out packet */
-            if (maint_buf_salvage(m->dp) < 0)
-            {
-                if (m->dp->payload)
-                    drop(m->dp->payload, -1);
-                m->dp->payload = NULL;
-                dsr_pkt_free(m->dp);
-            }
-            else
-                n++;
-            /* Salvage other packets in maintenance buffer with the
-             * same next hop */
-            for (MaintBuf::iterator it = maint_buf.begin(); it != maint_buf.end();)
-            {
-                m2 = it->second;
-                if (m2->nxt_hop.s_addr == m->nxt_hop.s_addr)
-                {
-                    maint_buf.erase(it++);
-                    if (maint_buf_salvage(m2->dp) < 0)
-                    {
-                        if (m2->dp->payload)
-                            drop(m2->dp->payload, -1);
-                        m2->dp->payload = NULL;
-                        dsr_pkt_free(m2->dp);
-                    }
-                    delete m2;
-                    n++;
-                }
-                else
-                    ++it;
-            }
-            DEBUG("Salvaged %d packets from maint_buf\n", n);
+            if (m->dp->payload)
+                drop(m->dp->payload, -1);
+            m->dp->payload = NULL;
+            dsr_pkt_free(m->dp);
         }
         else
+            n++;
+        /* Salvage other packets in maintenance buffer with the
+         *              * same next hop */
+        for (MaintBuf::iterator it = maint_buf.begin(); it != maint_buf.end();)
         {
-            DEBUG("No ACK REQ sent for this packet\n");
-            if (m->dp)
+            m2 = it->second;
+            if (m2->nxt_hop.s_addr == m->nxt_hop.s_addr)
             {
-                if (m->dp->payload)
-                    drop(m->dp->payload, -1);
-                m->dp->payload = NULL;
-                dsr_pkt_free(m->dp);
+                maint_buf.erase(it++);
+                if (maint_buf_salvage(m2->dp) < 0)
+                {
+                    if (m2->dp->payload)
+                        drop(m2->dp->payload, -1);
+                    m2->dp->payload = NULL;
+                    dsr_pkt_free(m2->dp);
+                }
+                delete m2;
+                n++;
             }
+            else
+                ++it;
         }
+        DEBUG("Salvaged %d packets from maint_buf\n", n);
         delete m;
         maint_buf_set_timeout();
         return;
