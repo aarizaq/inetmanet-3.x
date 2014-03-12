@@ -126,6 +126,19 @@ static struct maint_entry *maint_entry_create(struct dsr_pkt *dp,
 
 #else
 
+void NSCLASS maint_insert(struct maint_entry *m)
+{
+    if (maint_buf.size () >= MaxMaintBuff) // Drop the most aged packet
+    {
+        if (maint_buf.begin()->second->dp->payload)
+            drop(maint_buf.begin()->second->dp->payload, -1);
+        maint_buf.begin()->second->dp->payload = NULL;
+        dsr_pkt_free(maint_buf.begin()->second->dp);
+        maint_buf.erase(maint_buf.begin());
+    }
+    maint_buf.insert(std::make_pair(m->expires,m));
+}
+
 NSCLASS maint_entry * NSCLASS maint_entry_create(struct dsr_pkt *dp, unsigned short id, unsigned long rto)
 {
     struct maint_entry *m;
@@ -388,15 +401,7 @@ void NSCLASS maint_buf_timeout(unsigned long data)
             dsr_ack_req_send(m->nxt_hop, m->id);
     }
     /* Add to maintenence buffer again */
-    if (maint_buf.size () >= MaxMaintBuff) // Drop the most aged packet
-    {
-        if (maint_buf.begin()->second->dp->payload)
-            drop(maint_buf.begin()->second->dp->payload, -1);
-        maint_buf.begin()->second->dp->payload = NULL;
-        dsr_pkt_free(maint_buf.begin()->second->dp);
-        maint_buf.erase(maint_buf.begin());
-    }
-    maint_buf.insert(std::make_pair(m->expires,m));
+    maint_insert(m);
     maint_buf_set_timeout();
     return;
 }
@@ -473,16 +478,7 @@ int NSCLASS maint_buf_add(struct dsr_pkt *dp)
     if (!m)
         return -1;
 
-    if (maint_buf.size () >= MaxMaintBuff) // Drop the most aged packet
-    {
-        if (maint_buf.begin()->second->dp->payload)
-            drop(maint_buf.begin()->second->dp->payload, -1);
-        maint_buf.begin()->second->dp->payload = NULL;
-        dsr_pkt_free(maint_buf.begin()->second->dp);
-        maint_buf.erase(maint_buf.begin());
-    }
-
-    maint_buf.insert(std::make_pair(m->expires,m));
+    maint_insert(m);
 
     /* Check if we should add an ACK REQ */
     if ((usecs_t) timeval_diff(&now, &neigh_info.last_ack_req) >  ConfValToUsecs(MaintHoldoffTime))

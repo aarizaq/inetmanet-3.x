@@ -248,6 +248,7 @@ class DSRUU:public cSimpleModule, public INotifiable, ILifecycle
         void maint_buf_set_timeout(void);
         void maint_buf_timeout(unsigned long data);
         int maint_buf_salvage(struct dsr_pkt *dp);
+        void maint_insert(struct maint_entry *m);
 
   public:
     friend class DSRUUTimer;
