@@ -34,7 +34,7 @@ module Car
 {
     parameters:
         @node();
-
+        networkLayer.configurator.networkConfiguratorModule = "";
     gates:
         input radioIn @directIn;
 
