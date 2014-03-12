@@ -409,7 +409,7 @@ void NSCLASS maint_buf_set_timeout(void)
 
     struct maint_entry *m;
 
-// I am not sure if the time out must be
+// I am not sure if the time out must be, in theory only m->ack_req_sent active must be in the queue, in other case the packets aren't included
  /*
     MaintBuf::iterator it;
     for (it = maint_buf.begin(); it != maint_buf.end();++it)
@@ -455,6 +455,9 @@ int NSCLASS maint_buf_add(struct dsr_pkt *dp)
         return -1;
     }
 
+    if (!(dp->flags & PKT_REQUEST_ACK)) // do nothing
+        return 1;
+
     gettime(&now);
 
     res = neigh_tbl_query(dp->nxt_hop, &neigh_info);
@@ -469,20 +472,26 @@ int NSCLASS maint_buf_add(struct dsr_pkt *dp)
 
     if (!m)
         return -1;
-    maint_buf.insert(std::make_pair(m->expires,m));
-    /* Check if we should add an ACK REQ */
-    if (dp->flags & PKT_REQUEST_ACK)
-    {
-        if ((usecs_t) timeval_diff(&now, &neigh_info.last_ack_req) >
-                ConfValToUsecs(MaintHoldoffTime))
-        {
-            m->ack_req_sent = 1;
 
-            /* Set last_ack_req time */
-            neigh_tbl_set_ack_req_time(m->nxt_hop);
-            neigh_tbl_id_inc(m->nxt_hop);
-            dsr_ack_req_opt_add(dp, m->id);
-        }
+    if (maint_buf.size () >= MaxMaintBuff) // Drop the most aged packet
+    {
+        if (maint_buf.begin()->second->dp->payload)
+            drop(maint_buf.begin()->second->dp->payload, -1);
+        maint_buf.begin()->second->dp->payload = NULL;
+        dsr_pkt_free(maint_buf.begin()->second->dp);
+        maint_buf.erase(maint_buf.begin());
+    }
+
+    maint_buf.insert(std::make_pair(m->expires,m));
+
+    /* Check if we should add an ACK REQ */
+    if ((usecs_t) timeval_diff(&now, &neigh_info.last_ack_req) >  ConfValToUsecs(MaintHoldoffTime))
+    {
+        m->ack_req_sent = 1;
+        /* Set last_ack_req time */
+        neigh_tbl_set_ack_req_time(m->nxt_hop);
+        neigh_tbl_id_inc(m->nxt_hop);
+        dsr_ack_req_opt_add(dp, m->id);
     }
     else
     {
