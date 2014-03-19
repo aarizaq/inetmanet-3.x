@@ -38,6 +38,7 @@
 #include "NotificationBoard.h"
 #include "UDPPacket.h"
 #include "TCPSegment.h"
+#include "PASER_Definitions.h"
 
 Define_Module(IPv4_paser);
 
