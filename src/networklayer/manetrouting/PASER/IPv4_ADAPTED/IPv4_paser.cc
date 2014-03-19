@@ -38,7 +38,10 @@
 #include "NotificationBoard.h"
 #include "UDPPacket.h"
 #include "TCPSegment.h"
-#include "PASER_Definitions.h"
+
+
+#define PASER_SUBNETZ  0x0A000100
+#define PASER_MASK  0xFFFF0000
 
 Define_Module(IPv4_paser);
 

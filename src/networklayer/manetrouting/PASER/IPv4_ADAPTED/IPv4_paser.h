@@ -231,7 +231,7 @@ class INET_API IPv4_paser : public QueueBase, public INetfilter, public ILifecyc
     virtual void sendPacketToNIC(cPacket *packet, const InterfaceEntry *ie);
 
   public:
-    IPv4() { rt = NULL; ift = NULL; arp = NULL; arpOutGate = NULL; }
+    IPv4_paser() { rt = NULL; ift = NULL; arp = NULL; arpOutGate = NULL; }
 
   protected:
     virtual int numInitStages() const { return 2; }
