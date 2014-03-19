@@ -109,8 +109,9 @@ module HSS
                 hlOut[sizeof(pppg)+sizeof(ethg)+numExtInterfaces];
         }        
     connections allowunconnected:
-        sctp.to_ip --> networkLayer.sctpIn;
-        networkLayer.sctpOut --> sctp.from_ip;
+       
+        sctp.to_ip --> networkLayer.transportIn++;
+        networkLayer.transportOut++ --> sctp.from_ip;
 
         networkLayer.pingOut++ --> pingApp.pingIn;
         networkLayer.pingIn++ <-- pingApp.pingOut;

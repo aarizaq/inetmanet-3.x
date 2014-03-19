@@ -25,7 +25,7 @@ import inet.underTest._4gsim.util.subscriber.SubscriberTable;
 import inet.base.NotificationBoard;
 import inet.underTest._4gsim.applications.nas.NAS;
 import inet.underTest._4gsim.linklayer.lte.LTERadio;
-import inet.mobility.IMobility;
+import inet.mobility.contract.IMobility;
 
 module UE
 {

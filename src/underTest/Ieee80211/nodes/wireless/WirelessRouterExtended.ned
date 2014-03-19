@@ -31,9 +31,10 @@ import inet.applications.IUDPApp;
 import inet.linklayer.ieee80211.Ieee80211Nic;
 import inet.transport.udp.UDP;
 import inet.transport.tcp.TCP;
-import inet.mobility.models.StationaryMobility;
+import inet.mobility.static.StationaryMobility;
 import inet.linklayer.ieee80211.Ieee80211Nic;
 import inet.underTest.Ieee80211.linklayer.ieee80211.mgmt.Ieee80211NicExtended;
+import inet.linklayer.loopback.LoopbackInterface;
 //
 // \Wireless IP router.
 //
@@ -107,12 +108,19 @@ module WirelessRouterExtended
         nullMobility: StationaryMobility {
             @display("p=393,60");
         }
+        
+        lo0: LoopbackInterface {
+            @display("p=78,406");
+        }
+        
         wlan: Ieee80211NicExtended {
             parameters:
                 @display("p=111,309;i=block/wrxtx");
                 mgmtType = mgmtType;
         }
     connections allowunconnected:
+        networkLayer.ifOut++ --> lo0.upperLayerIn;
+        lo0.upperLayerOut --> networkLayer.ifIn++;
         // connections to network outside
         for i=0..sizeof(pppg)-1 {
             pppg[i] <--> ppp[i].phys;
@@ -135,10 +143,12 @@ module WirelessRouterExtended
             udpApp[i].udpIn <-- udp.appOut++;
         }
 
-        udp.ipOut --> networkLayer.udpIn;
-        networkLayer.udpOut --> udp.ipIn;
-        tcp.ipOut --> networkLayer.tcpIn;
-        networkLayer.tcpOut --> tcp.ipIn;
+        tcp.ipOut --> networkLayer.transportIn++;
+        tcp.ipIn <-- networkLayer.transportOut++;
+        
+        udp.ipOut --> networkLayer.transportIn++;
+        udp.ipIn <-- networkLayer.transportOut++;
+        
         for i=0..numPingApps-1 {
             networkLayer.pingOut++ --> pingApp[i].pingIn;
             networkLayer.pingIn++ <-- pingApp[i].pingOut;

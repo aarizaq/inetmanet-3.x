@@ -57,6 +57,10 @@ module WirelessHipHost6B extends NodeBase6
         string tcpType = default(firstAvailable("TCP", "TCP_lwIP", "TCP_NSC", "TCP_None"));  // tcp implementation (e.g. ~TCP, ~TCP_lwIP, ~TCP_NSC) or ~TCPSpoof
         string udpType = default(firstAvailable("UDP","UDP_None"));
         string sctpType = default(firstAvailable("SCTP","SCTP_None"));
+        bool hasTcp = default(numTcpApps>0);
+        bool hasUdp = default(numUdpApps>0);
+        bool hasSctp = default(numSctpApps>0);
+        
         IPForward = default(false);  // disable routing by default;
     submodules:
         tcpApp[numTcpApps]: <> like ITCPApp {
@@ -96,27 +100,28 @@ module WirelessHipHost6B extends NodeBase6
             tcpApp[i].tcpIn <-- tcp.appOut++;
         }
         
-        tcp.ipv6Out --> hip.tcpIn if numTcpApps>0;
-        hip.tcp6Out --> networkLayer.tcpIn if numTcpApps>0;
-        tcp.ipv6In <-- hip.tcpOut if numTcpApps>0;
-        hip.tcp6In <-- networkLayer.tcpOut if numTcpApps>0;
+        tcp.ipv6Out --> hip.tcpIn  if hasTcp;
+        hip.tcp6Out --> networkLayer.transportIn++ if hasTcp;
+        tcp.ipv6In <-- hip.tcpOut if hasTcp;
+        hip.tcp6In <-- networkLayer.transportOut++ if hasTcp;
+        
+        udp.ipv6Out --> hip.udpIn if hasUdp;
+        hip.udp6Out --> networkLayer.transportIn++ if hasUdp;
+        udp.ipv6In <-- hip.udpOut if hasUdp;
+        hip.udp6In <-- networkLayer.transportOut++ if hasUdp;
 
 		for i=0..numUdpApps-1 {
             udpApp[i].udpOut --> udp.appIn++;
             udpApp[i].udpIn <-- udp.appOut++;
         }
-
-        udp.ipv6Out --> hip.udpIn if numUdpApps>0;
-        hip.udp6Out --> networkLayer.udpIn if numUdpApps>0;
-        udp.ipv6In <-- hip.udpOut if numUdpApps>0;
-        hip.udp6In <-- networkLayer.udpOut if numUdpApps>0;
         
         for i=0..numSctpApps-1 {
             sctpApp[i].sctpOut --> sctp.from_appl++;
             sctp.to_appl++ --> sctpApp[i].sctpIn;
         }
-        sctp.to_ipv6 --> networkLayer.sctpIn if numSctpApps>0;
-        networkLayer.sctpOut --> sctp.from_ipv6 if numSctpApps>0;
+        
+        sctp.to_ipv6 --> networkLayer.transportIn++ if hasSctp;
+        networkLayer.transportOut++ --> sctp.from_ipv6 if hasSctp;
 
         for i=0..numPingApps-1 {
             networkLayer.pingOut++ --> pingApp[i].pingv6In;

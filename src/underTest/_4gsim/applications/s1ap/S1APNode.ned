@@ -98,16 +98,16 @@ module S1APNode extends NodeBase
             tcpApp[i].tcpIn <-- tcp.appOut++;
         }
 
-        tcp.ipOut --> networkLayer.tcpIn if numTcpApps>0;
-        tcp.ipIn <-- networkLayer.tcpOut if numTcpApps>0;
+        tcp.ipOut --> networkLayer.transportIn++ if hasTcp;
+        tcp.ipIn <-- networkLayer.transportOut++ if hasTcp;
 
         for i=0..numUdpApps-1 {
             udpApp[i].udpOut --> udp.appIn++;
             udpApp[i].udpIn <-- udp.appOut++;
         }
 
-        udp.ipOut --> networkLayer.udpIn if numUdpApps>0;
-        udp.ipIn <-- networkLayer.udpOut if numUdpApps>0;
+        udp.ipOut --> networkLayer.transportIn++ if hasUdp;
+        udp.ipIn <-- networkLayer.transportOut++ if hasUdp;
 
         for i=0..numSctpApps-1 {
             sctpApp[i].sctpOut --> sctp.from_appl++;
@@ -117,8 +117,8 @@ module S1APNode extends NodeBase
         sctp.to_appl++ --> s1ap.sctpIn;
         s1ap.sctpOut --> sctp.from_appl++;
 
-        sctp.to_ip --> networkLayer.sctpIn if numSctpApps>0;
-        networkLayer.sctpOut --> sctp.from_ip if numSctpApps>0;
+        sctp.to_ip --> networkLayer.transportIn++ if hasSctp;
+        networkLayer.transportOut++ --> sctp.from_ip if hasSctp;
 
         for i=0..numPingApps-1 {
             networkLayer.pingOut++ --> pingApp[i].pingIn;

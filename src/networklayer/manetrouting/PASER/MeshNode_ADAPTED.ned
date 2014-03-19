@@ -24,7 +24,7 @@ import inet.battery.IBattery;
 import inet.linklayer.IExternalNic;
 import inet.linklayer.IWiredNic;
 import inet.linklayer.IWirelessNic;
-import inet.mobility.IMobility;
+import inet.mobility.contract.IMobility;
 import inet.networklayer.IManetRouting;
 import inet.networklayer.common.InterfaceTable;
 import inet.networklayer.ipv4.RoutingTable;

@@ -1038,8 +1038,8 @@ void PASER_Socket::sendUDPToIp(cPacket *msg, int srcPort, const ManetAddress& de
                 << " from " << srcadd.str() << " to " << add.str() << "\n";
         IPv4ControlInfo *ipControlInfo = new IPv4ControlInfo();
         ipControlInfo->setDestAddr(add);
-        ipControlInfo->setProtocol(IP_PROT_UDP);
-//        ipControlInfo->setProtocol(IP_PROT_MANET);
+//        ipControlInfo->setProtocol(IP_PROT_UDP);
+        ipControlInfo->setProtocol(IP_PROT_MANET);
 
         ipControlInfo->setTimeToLive(ttl);
         udpPacket->setControlInfo(ipControlInfo);

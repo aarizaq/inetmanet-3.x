@@ -6,7 +6,7 @@ import inet.wpan.networklayer.Ieee802154StarRouting.Ieee802154StarRouting;
 //import inet.underTest.wpan.battery.Ieee802154Battery;
 import inet.battery.models.InetSimpleBattery;
 import inet.wpan.applications.Ieee802154TestApp.Ieee802154TestApp;
-import inet.mobility.IMobility;
+import inet.mobility.contract.IMobility;
 import inet.base.NotificationBoard;
 import inet.wpan.Isabel.Base.Display;
 

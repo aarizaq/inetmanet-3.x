@@ -22,7 +22,7 @@ import inet.applications.IPingApp;
 import inet.applications.ITCPApp;
 import inet.applications.IUDPApp;
 import inet.base.NotificationBoard;
-import inet.mobility.models.StationaryMobility;
+import inet.mobility.static.StationaryMobility;
 import inet.wpan.linklayer.ieee802154.Ieee802154csmaNic;
 import inet.networklayer.common.InterfaceTable;
 import inet.networklayer.ipv4.RoutingTable;
@@ -139,23 +139,23 @@ module nodecsma802154
             tcpApp[i].tcpIn <-- tcp.appOut++;
         }
 
-        tcp.ipOut --> networkLayer.tcpIn;
-        tcp.ipIn <-- networkLayer.tcpOut;
+        tcp.ipOut --> networkLayer.transportIn++;
+        tcp.ipIn <-- networkLayer.transportOut++;
 
         for i=0..numUdpApps-1 {
             udpApp[i].udpOut --> udp.appIn++;
             udpApp[i].udpIn <-- udp.appOut++;
         }
 
-        udp.ipOut --> networkLayer.udpIn;
-        udp.ipIn <-- networkLayer.udpOut;
+        udp.ipOut --> networkLayer.transportIn++;
+        udp.ipIn <-- networkLayer.transportOut++;
 
         for i=0..numPingApps-1 {
             networkLayer.pingOut++ --> pingApp[i].pingIn;
             networkLayer.pingIn++ <-- pingApp[i].pingOut;
         }
-        networkLayer.manetOut --> manetrouting.from_ip if routingProtocol != "";
-        networkLayer.manetIn <-- manetrouting.to_ip if routingProtocol != "";
+        networkLayer.transportOut++ --> manetrouting.from_ip if routingProtocol != "";
+        networkLayer.transportIn++ <-- manetrouting.to_ip if routingProtocol != "";
         // connections to network outside
         radioIn --> wlan.radioIn;
         wlan.upperLayerOut --> networkLayer.ifIn[0];

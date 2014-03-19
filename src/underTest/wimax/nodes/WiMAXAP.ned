@@ -25,7 +25,7 @@ import inet.underTest.wimax.linklayer.Ieee80216.Ieee80216NicBS;
 //    "RoutingTable",
 //    "NetworkLayer",
 import inet.underTest.wimax.applications.TrafficGenerator_Erlangen.WiMAXQoSTrafficGenerator;
-import inet.mobility.models.StationaryMobility;
+import inet.mobility.static.StationaryMobility;
 //
 // Models a 802.11 Access Point. It can be used in conjunction with
 // WirelessHost, or any other host model containing WirelessNicSTA.

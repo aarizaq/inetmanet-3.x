@@ -345,7 +345,11 @@ void UDPVideoStreamSvr2::sendStreamData(cMessage *timer)
     if (videoBroadcastStream != d)
         socket.sendTo(pkt, d->clientAddr, d->clientPort);
     else
-        socket.sendTo(pkt, d->clientAddr, d->clientPort, broadcastInterface());
+    {
+        UDPSocket::SendOptions options;
+        options.outInterfaceId = broadcastInterface();
+        socket.sendTo(pkt, d->clientAddr, d->clientPort, &options);
+    }
 
     if (deleteTimer)
     {

@@ -33,8 +33,10 @@
 #include "IInterfaceTable.h"
 #include "IPvXAddress.h"
 #include "ManetAddress.h"
+#include "ManetNetfilterHook.h"
 #include "NotifierConsts.h"
 #include "ICMP.h"
+#include "IPv4.h"
 #include "ILifecycle.h"
 
 #include "ILocator.h"
@@ -66,7 +68,11 @@ typedef std::multimap <simtime_t, ManetTimer *> TimerMultiMap;
 typedef std::set<ManetAddress> AddressGroup;
 typedef std::set<ManetAddress>::iterator AddressGroupIterator;
 typedef std::set<ManetAddress>::const_iterator AddressGroupConstIterator;
-class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, protected cListener, public ILifecycle
+
+/**
+ * Base class for Manet Routing
+ */
+class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, protected cListener, public ILifecycle, public ManetNetfilterHook
 {
   private:
     static simsignal_t mobilityStateChangedSignal;

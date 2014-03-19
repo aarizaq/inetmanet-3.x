@@ -66,6 +66,7 @@ void ChannelControl::initialize()
     transmissions.resize(numChannels);
 
     lastOngoingTransmissionsUpdate = 0;
+
     if (par("maxInterferenceDistance").doubleValue() > 0)
         maxInterferenceDistance = par("maxInterferenceDistance").doubleValue();
     else

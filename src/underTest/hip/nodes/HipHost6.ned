@@ -49,15 +49,15 @@ module HipHost6 extends StandardHost6
         }
     connections allowunconnected:
         tcp.ipv6Out --> hip.tcpIn;
-        hip.tcp6Out --> networkLayer.tcpIn;
+        hip.tcp6Out --> networkLayer.transportIn++;
         tcp.ipv6In <-- hip.tcpOut;
-        hip.tcp6In <-- networkLayer.tcpOut;
+        hip.tcp6In <-- networkLayer.transportOut++;
 
 
         udp.ipv6Out --> hip.udpIn;
-        hip.udp6Out --> networkLayer.udpIn;
+        hip.udp6Out --> networkLayer.transportIn++;
         udp.ipv6In <-- hip.udpOut;
-        hip.udp6In <-- networkLayer.udpOut;
+        hip.udp6In <-- networkLayer.transportOut++;
         //hip.fromNetworkAddrChange <-- networkLayer.ipchangeOut;
 }
 

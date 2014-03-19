@@ -24,7 +24,7 @@ import inet.transport.udp.UDP;
 import inet.underTest._4gsim.util.subscriber.SubscriberTable;
 import inet.base.NotificationBoard;
 import inet.underTest._4gsim.applications.nas.NAS;
-import inet.mobility.IMobility;
+import inet.mobility.contract.IMobility;
 import inet.underTest._4gsim.linklayer.lte.LTERadio;
 import inet.base.NotificationBoard;
 import inet.linklayer.ethernet.EthernetInterface;
@@ -151,8 +151,8 @@ module ENB
         sctp.to_appl++ --> s1ap.sctpIn;
         s1ap.sctpOut --> sctp.from_appl++;
 
-        sctp.to_ip --> networkLayer.sctpIn;
-        networkLayer.sctpOut --> sctp.from_ip;
+        sctp.to_ip --> networkLayer.transportIn++;
+        networkLayer.transportOut++ --> sctp.from_ip;
 
         networkLayer.pingOut++ --> pingApp.pingIn;
         networkLayer.pingIn++ <-- pingApp.pingOut;
@@ -182,8 +182,8 @@ module ENB
         }
         nas.s1apOut --> s1ap.nasIn;
         s1ap.nasOut --> nas.s1apIn;
-        udp.ipOut --> networkLayer.udpIn;
-        networkLayer.udpOut --> udp.ipIn;
+        udp.ipOut --> networkLayer.transportIn++;
+        udp.ipIn <-- networkLayer.transportOut++;
         gtpu.udpOut --> udp.appIn++;
         udp.appOut++ --> gtpu.udpIn;
 }

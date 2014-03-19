@@ -23,7 +23,7 @@ import inet.nodes.inet.WirelessHost;
 import inet.util.PcapRecorder;
 import inet.networklayer.ipv4.RoutingTable;
 import inet.networklayer.common.InterfaceTable;
-import inet.mobility.IMobility;
+import inet.mobility.contract.IMobility;
 import inet.linklayer.ieee80211mesh.ethernet.EthernetInterfaceMesh;
 import inet.linklayer.IWirelessNic;
 import inet.linklayer.IWiredNic;
@@ -33,6 +33,7 @@ import inet.nodes.inet.NetworkLayer;
 import inet.linklayer.ieee80211mesh.Ieee80211NicMesh;
 import inet.linklayer.ieee80211mesh.Ieee80211NicMeshMulti;
 import inet.networklayer.autorouting.ipv4.HostAutoConfigurator2;
+import inet.linklayer.loopback.LoopbackInterface;
 
 import inet.transport.IUDP;
 import inet.transport.ITCP;
@@ -63,6 +64,10 @@ module HostMeshMulti
         string tcpType = default(firstAvailable("TCP", "TCP_lwIP", "TCP_NSC", "TCP_None"));  // tcp implementation (e.g. ~TCP, ~TCP_lwIP, ~TCP_NSC) or ~TCPSpoof
         string udpType = default(firstAvailable("UDP","UDP_None"));
         string sctpType = default(firstAvailable("SCTP","SCTP_None"));
+        
+        bool hasTcp = default(numTcpApps>0);
+        bool hasUdp = default(numUdpApps>0);
+        bool hasSctp = default(numSctpApps>0);
 
         int numExtInterfaces = default(0);
         int numRadios = default(0);               // the number of radios in the router. by default no wireless
@@ -142,7 +147,11 @@ module HostMeshMulti
         pcapRecorder[numPcapRecorders]: PcapRecorder {
             @display("p=183,233");
         }
-
+        
+        lo0: LoopbackInterface {
+            @display("p=78,406");
+        }
+        
         wlanMesh: Ieee80211NicMeshMulti {
             parameters:
                 meshChannels = meshChannels;
@@ -167,29 +176,32 @@ module HostMeshMulti
         }
 
     connections allowunconnected:
-
+        // connections to network outside
+        networkLayer.ifOut++ --> lo0.upperLayerIn;
+        lo0.upperLayerOut --> networkLayer.ifIn++;
+        
         for i=0..numTcpApps-1 {
             tcpApp[i].tcpOut --> tcp.appIn++;
             tcpApp[i].tcpIn <-- tcp.appOut++;
         }
 
-        tcp.ipOut --> networkLayer.tcpIn if numTcpApps>0;
-        tcp.ipIn <-- networkLayer.tcpOut if numTcpApps>0;
+        tcp.ipOut --> networkLayer.transportIn++ if hasTcp;
+        tcp.ipIn <-- networkLayer.transportOut++ if hasTcp;
 
         for i=0..numUdpApps-1 {
             udpApp[i].udpOut --> udp.appIn++;
             udpApp[i].udpIn <-- udp.appOut++;
         }
 
-        udp.ipOut --> networkLayer.udpIn if numUdpApps>0;
-        udp.ipIn <-- networkLayer.udpOut if numUdpApps>0;
+        udp.ipOut --> networkLayer.transportIn++ if hasUdp;
+        udp.ipIn <-- networkLayer.transportOut++ if hasUdp;
 
         for i=0..numSctpApps-1 {
             sctpApp[i].sctpOut --> sctp.from_appl++;
             sctp.to_appl++ --> sctpApp[i].sctpIn;
         }
-        sctp.to_ip --> networkLayer.sctpIn if numSctpApps>0;
-        networkLayer.sctpOut --> sctp.from_ip if numSctpApps>0;
+        sctp.to_ip --> networkLayer.transportIn++ if hasSctp;
+        networkLayer.transportOut++ --> sctp.from_ip if hasSctp;
 
         for i=0..numPingApps-1 {
             networkLayer.pingOut++ --> pingApp[i].pingIn;

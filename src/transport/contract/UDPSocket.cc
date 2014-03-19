@@ -87,25 +87,18 @@ void UDPSocket::connect(IPvXAddress addr, int port)
     sendToUDP(msg);
 }
 
-void UDPSocket::sendTo(cPacket *pk, IPvXAddress destAddr, int destPort)
+void UDPSocket::sendTo(cPacket *pk, IPvXAddress destAddr, int destPort, const SendOptions *options)
 {
     pk->setKind(UDP_C_DATA);
     UDPSendCommand *ctrl = new UDPSendCommand();
     ctrl->setSockId(sockId);
     ctrl->setDestAddr(destAddr);
     ctrl->setDestPort(destPort);
-    pk->setControlInfo(ctrl);
-    sendToUDP(pk);
-}
-
-void UDPSocket::sendTo(cPacket *pk, IPvXAddress destAddr, int destPort, int outInterface)
-{
-    pk->setKind(UDP_C_DATA);
-    UDPSendCommand *ctrl = new UDPSendCommand();
-    ctrl->setSockId(sockId);
-    ctrl->setDestAddr(destAddr);
-    ctrl->setDestPort(destPort);
-    ctrl->setInterfaceId(outInterface);
+    if (options)
+    {
+        ctrl->setSrcAddr(options->srcAddr);
+        ctrl->setInterfaceId(options->outInterfaceId);
+    }
     pk->setControlInfo(ctrl);
     sendToUDP(pk);
 }
@@ -119,7 +112,7 @@ void UDPSocket::send(cPacket *pk)
 }
 
 
-void UDPSocket::sendToDelayed(cPacket *pk, IPvXAddress destAddr, int destPort, simtime_t delay)
+void UDPSocket::sendToDelayed(cPacket *pk, IPvXAddress destAddr, int destPort, simtime_t delay, const SendOptions *options)
 {
     pk->setKind(UDP_C_DATA);
     UDPSendCommand *ctrl = new UDPSendCommand();
@@ -130,7 +123,7 @@ void UDPSocket::sendToDelayed(cPacket *pk, IPvXAddress destAddr, int destPort, s
     sendToUDPDelayed(pk, delay);
 }
 
-void UDPSocket::sendToDelayed(cPacket *pk, IPvXAddress destAddr, int destPort, int outInterface, simtime_t delay)
+void UDPSocket::sendToDelayed(cPacket *pk, IPvXAddress destAddr, int destPort, int outInterface, simtime_t delay, const SendOptions *options)
 {
     pk->setKind(UDP_C_DATA);
     UDPSendCommand *ctrl = new UDPSendCommand();
@@ -138,6 +131,11 @@ void UDPSocket::sendToDelayed(cPacket *pk, IPvXAddress destAddr, int destPort, i
     ctrl->setDestAddr(destAddr);
     ctrl->setDestPort(destPort);
     ctrl->setInterfaceId(outInterface);
+    if (options)
+    {
+        ctrl->setSrcAddr(options->srcAddr);
+        ctrl->setInterfaceId(options->outInterfaceId);
+    }
     pk->setControlInfo(ctrl);
     sendToUDPDelayed(pk, delay);
 }

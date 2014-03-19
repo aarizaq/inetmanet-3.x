@@ -145,13 +145,13 @@ void LocatorModule::handleMessage(cMessage *msg)
         if (arp)
         {
             if (staIpaddr.isUnspecified())
-                staIpaddr = arp->getInverseAddressResolution(staAddr);
+                staIpaddr = arp->getIPv4AddressFor(staAddr);
             if (staAddr.isUnspecified())
-                staAddr = arp->getDirectAddressResolution(staIpaddr);
+                staAddr = arp->getMACAddressFor(staIpaddr);
             if (apIpaddr.isUnspecified())
-                apIpaddr = arp->getInverseAddressResolution(apAddr);
+                apIpaddr = arp->getIPv4AddressFor(apAddr);
             if (apAddr.isUnspecified())
-                apAddr = arp->getDirectAddressResolution(apIpaddr);
+                apAddr = arp->getMACAddressFor(apIpaddr);
 
             if (staIpaddr.isUnspecified())
                 sendRequest(staAddr);
@@ -169,7 +169,9 @@ void LocatorModule::handleMessage(cMessage *msg)
     {
         if (pkt && pkt->getControlInfo())
             delete pkt->removeControlInfo();
-        socket->sendTo(pkt,IPv4Address::ALLONES_ADDRESS,port, interfaceId);
+        UDPSocket::SendOptions options;
+        options.outInterfaceId = interfaceId;
+        socket->sendTo(pkt,IPv4Address::ALLONES_ADDRESS,port, &options);
     }
     else
     {
@@ -285,7 +287,9 @@ void LocatorModule::processRequest(cPacket* msg)
      }
      pkt->setOpcode(ReplyAddress);
      pkt->setStaIPAddress(iv4Addr);
-     socket->sendTo(pkt, udpCtrl->getSrcAddr(), port, interfaceId);
+     UDPSocket::SendOptions options;
+     options.outInterfaceId = interfaceId;
+     socket->sendTo(pkt, udpCtrl->getSrcAddr(), port, &options);
 }
 
 
@@ -371,8 +375,9 @@ void  LocatorModule::sendMessage(const MACAddress &apMac,const MACAddress &staMa
             pkt->setOrigin(ManetAddress(myIpAddress));
         pkt->setSequence(mySequence);
         mySequence++;
-
-        socket->sendTo(pkt,IPv4Address::ALLONES_ADDRESS,port, interfaceId);
+        UDPSocket::SendOptions options;
+        options.outInterfaceId = interfaceId;
+        socket->sendTo(pkt,IPv4Address::ALLONES_ADDRESS,port, &options);
     }
     else
     {
@@ -394,7 +399,7 @@ void LocatorModule::receiveChangeNotification(int category, const cObject *detai
             IPv4Address staIpAdd;
             if (arp)
             {
-                const IPv4Address add = arp->getInverseAddressResolution(infoSta->getStaAddress());
+                const IPv4Address add = arp->getIPv4AddressFor(infoSta->getStaAddress());
                 staIpAdd = add;
                 if (add.isUnspecified())
                     sendRequest(infoSta->getStaAddress());
@@ -524,8 +529,8 @@ const MACAddress  LocatorModule::getLocatorIpToMac(const IPv4Address &add)
 
 void LocatorModule::modifyInformationMac(const MACAddress &APaddr, const MACAddress &STAaddr, const Action &action)
 {
-    const IPv4Address staIpadd = arp->getInverseAddressResolution(STAaddr);
-    const IPv4Address apIpAddr = arp->getInverseAddressResolution(APaddr);
+    const IPv4Address staIpadd = arp->getIPv4AddressFor(STAaddr);
+    const IPv4Address apIpAddr = arp->getIPv4AddressFor(APaddr);
     InterfaceEntry * ie = NULL;
     for (int i =0 ; i < itable->getNumInterfaces();i++)
     {
@@ -540,8 +545,8 @@ void LocatorModule::modifyInformationMac(const MACAddress &APaddr, const MACAddr
 
 void LocatorModule::modifyInformationIp(const IPv4Address &apIpAddr, const IPv4Address &staIpAddr, const Action &action)
 {
-    const MACAddress STAaddr = arp->getDirectAddressResolution(staIpAddr);
-    const MACAddress APaddr = arp->getDirectAddressResolution(apIpAddr);
+    const MACAddress STAaddr = arp->getMACAddressFor(staIpAddr);
+    const MACAddress APaddr = arp->getMACAddressFor(apIpAddr);
     InterfaceEntry * ie = NULL;
     for (int i =0 ; i < itable->getNumInterfaces();i++)
     {
@@ -751,7 +756,9 @@ void LocatorModule::sendRequest(const MACAddress &destination)
     else
         pkt->setOrigin(ManetAddress(myIpAddress));
     pkt->setStaMACAddress(destination);
-    socket->sendTo(pkt,IPv4Address::ALLONES_ADDRESS,port, interfaceId);
+    UDPSocket::SendOptions options;
+    options.outInterfaceId = interfaceId;
+    socket->sendTo(pkt,IPv4Address::ALLONES_ADDRESS,port, &options);
 }
 
 

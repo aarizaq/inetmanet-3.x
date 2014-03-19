@@ -127,8 +127,8 @@
 /examples/inet/shutdownrestart/,     -f omnetpp.ini -c UDP_VideoStream -r 0
 # /examples/inet/shutdownrestart/,     -f omnetpp.ini -c TCP_common -r 0
 /examples/inet/shutdownrestart/,     -f omnetpp.ini -c TCP -r 0
-/examples/inet/shutdownrestart/,     -f omnetpp.ini -c TCP_NSC -r 0
-/examples/inet/shutdownrestart/,     -f omnetpp.ini -c TCP_lwIP -r 0
+# /examples/inet/shutdownrestart/,     -f omnetpp.ini -c TCP_NSC -r 0
+# /examples/inet/shutdownrestart/,     -f omnetpp.ini -c TCP_lwIP -r 0
 /examples/inet/tcp_eth_reconnect/,   -f omnetpp.ini -c with_EtherMACFullDuplex_externalQueue -r 0
 /examples/inet/tcp_eth_reconnect/,   -f omnetpp.ini -c with_EtherMACFullDuplex_internalQueue -r 0
 /examples/inet/tcp_eth_reconnect/,   -f omnetpp.ini -c with_EtherMAC_externalQueue_fullduplex -r 0
@@ -208,7 +208,7 @@
 /examples/manetrouting/hna/,         -f omnetpp.ini -c single_radio -r 0
 /examples/manetrouting/hna/,         -f omnetpp.ini -c multi_radio -r 0
 /examples/manetrouting/manetMultiradio/, -f 3_nodes.ini -c MultiRadio -r 0
-/examples/manetrouting/manetMultiradio/, -f 4_nodes.ini -c MultiRadio -r 0
+# /examples/manetrouting/manetMultiradio/, -f 4_nodes.ini -c MultiRadio -r 0
 /examples/manetrouting/manetMultiradio/, -f 4_nodes.ini -c SingleRadio -r 0
 /examples/manetrouting/manetMultiradio/, -f omnetpp.ini -c MultiRadio -r 0
 /examples/manetrouting/manetMultiradio/, -f omnetpp.ini -c SingleRadio -r 0
@@ -288,6 +288,10 @@
 /examples/ospfv2/simpletest/,        -f omnetpp.ini -c AlwaysUp -r 0
 /examples/ospfv2/simpletest/,        -f omnetpp.ini -c ShutdownAndRestart -r 0
 /examples/ospfv2/simpletest/,        -f omnetpp.ini -c CrashAndReboot -r 0
+/examples/rip/dynamictest/,          -f omnetpp.ini -c stable -r 0
+/examples/rip/dynamictest/,          -f omnetpp.ini -c dynamic1 -r 0
+/examples/rip/dynamictest/,          -f omnetpp.ini -c dynamic2 -r 0
+/examples/rip/simpletest/,           -f omnetpp.ini -c IPv4 -r 0
 /examples/rtp/multicast1/,           -f omnetpp.ini -c General -r 0
 /examples/rtp/unicast/,              -f omnetpp.ini -c General -r 0
 /examples/rtp/unicast1/,             -f omnetpp.ini -c General -r 0

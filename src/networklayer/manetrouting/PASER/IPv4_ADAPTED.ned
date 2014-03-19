@@ -96,4 +96,6 @@ simple IPv4_paser
         output transportOut[] @labels(IPControlInfo/up,TCPSegment,UDPPacket);
         input queueIn[] @labels(IPDatagram);
         output queueOut @labels(IPDatagram);
+        input arpIn @labels(ARPPacket+Ieee802Ctrl);
+        output arpOut @labels(ARPPacket+Ieee802Ctrl,IPv4Datagram+Ieee802Ctrl);
 }

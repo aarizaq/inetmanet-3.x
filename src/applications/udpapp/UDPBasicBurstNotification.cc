@@ -172,7 +172,11 @@ void UDPBasicBurstNotification::generateBurst()
         // Check address type
         // Check address type
         if (!sendBroadcast(destAddr, payload))
-            socket.sendTo(payload, destAddr, destPort,outputInterface);
+        {
+            UDPSocket::SendOptions options;
+            options.outInterfaceId = outputInterface;
+            socket.sendTo(payload, destAddr, destPort, &options);
+        }
         numSent++;
     }
     // Next timer

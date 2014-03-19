@@ -71,7 +71,9 @@ std::map<ManetAddress,u_int32_t *> DYMOUM::mapSeqNum;
 
 void DYMOUM::initialize(int stage)
 {
-    if (stage==4)
+    ManetRoutingBase::initialize(stage);
+
+    if (stage == 4)
     {
 
 #ifndef DYMO_UM_GLOBAL_STATISTISTIC
@@ -98,8 +100,6 @@ void DYMOUM::initialize(int stage)
 
         /* From debug.c */
         /* Note: log_nmsgs was never used anywhere */
-
-        debug = 0;
 
         gateWayAddress = new IPv4Address("0.0.0.0");
         /* Set host parameters */
