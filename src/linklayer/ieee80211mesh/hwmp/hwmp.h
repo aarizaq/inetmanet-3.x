@@ -133,9 +133,9 @@ class HwmpProtocol : public ManetRoutingBase
         virtual void setRefreshRoute(const ManetAddress &destination, const ManetAddress & nextHop, bool isReverse);
 
         virtual bool getBestGan(ManetAddress &, ManetAddress &);
-        virtual bool startApp(IDoneCallback *doneCallback);
-        virtual bool stopApp(IDoneCallback *doneCallback);
-        virtual bool crashApp(IDoneCallback *doneCallback);
+        virtual bool handleNodeStart(IDoneCallback *doneCallback);
+        virtual bool handleNodeShutdown(IDoneCallback *doneCallback);
+        virtual void handleNodeCrash();
 
     private:
         simtime_t timeLimitQueue;

@@ -142,7 +142,7 @@ class Batman : public ManetRoutingBase
 
   protected:
     virtual void handleMessage(cMessage *msg);
-    virtual int numInitStages() const  {return 5;}
+    virtual int numInitStages() const { return 5; }
     virtual void initialize(int stage);
     virtual void processLinkBreak(const cObject *details){};
     virtual void packetFailed(IPv4Datagram *dgram) {}
@@ -169,9 +169,9 @@ class Batman : public ManetRoutingBase
     virtual bool getDestAddress(cPacket *, ManetAddress &) {return false;};
 
 
-    virtual bool startApp(IDoneCallback *doneCallback);
-    virtual bool stopApp(IDoneCallback *doneCallback);
-    virtual bool crashApp(IDoneCallback *doneCallback);
+    virtual bool handleNodeStart(IDoneCallback *doneCallback);
+    virtual bool handleNodeShutdown(IDoneCallback *doneCallback);
+    virtual void handleNodeCrash();
 
 };
 

@@ -29,13 +29,13 @@
 #include "INETDefs.h"
 #include "UDPSocket.h"
 #include "AddressModule.h"
-#include "AppBase.h"
+#include "ApplicationBase.h"
 
 
 /**
  * UDP application. See NED for more info.
  */
-class INET_API UDPBasicFlooding : public AppBase
+class INET_API UDPBasicFlooding : public ApplicationBase
 {
   protected:
     AddressModule * addressModule;
@@ -94,9 +94,9 @@ class INET_API UDPBasicFlooding : public AppBase
     virtual void processStart();
 
     //AppBase:
-    virtual bool startApp(IDoneCallback *doneCallback);
-    virtual bool stopApp(IDoneCallback *doneCallback);
-    virtual bool crashApp(IDoneCallback *doneCallback);
+    virtual bool handleNodeStart(IDoneCallback *doneCallback);
+    virtual bool handleNodeShutdown(IDoneCallback *doneCallback);
+    virtual void handleNodeCrash();
 
   public:
     UDPBasicFlooding();

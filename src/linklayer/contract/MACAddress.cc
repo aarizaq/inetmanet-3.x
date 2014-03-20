@@ -19,9 +19,10 @@
 #include <ctype.h>
 #include "MACAddress.h"
 #include "InterfaceToken.h"
-
+#include "IPv4Address.h"
 
 unsigned int MACAddress::autoAddressCtr;
+bool MACAddress::simulationLifetimeListenerAdded;
 
 const MACAddress MACAddress::UNSPECIFIED_ADDRESS;
 const MACAddress MACAddress::BROADCAST_ADDRESS("ff:ff:ff:ff:ff:ff");
@@ -221,11 +222,33 @@ InterfaceToken MACAddress::formInterfaceIdentifier() const
 
 MACAddress MACAddress::generateAutoAddress()
 {
+#if OMNETPP_VERSION >= 0x500
+    if (!simulationLifetimeListenerAdded) {
+        // NOTE: EXECUTE_ON_STARTUP is too early and would add the listener to StaticEnv
+        ev.addListener(new MACAddress::SimulationLifetimeListener());
+        simulationLifetimeListenerAdded = true;
+    }
+#endif
     ++autoAddressCtr;
 
     uint64 intAddr = 0x0AAA00000000ULL + (autoAddressCtr & 0xffffffffUL);
     MACAddress addr(intAddr);
     return addr;
+}
+
+// see  RFC 1112, section 6.4
+MACAddress MACAddress::makeMulticastAddress(IPv4Address addr)
+{
+    ASSERT(addr.isMulticast());
+
+    MACAddress macAddr;
+    macAddr.setAddressByte(0, 0x01);
+    macAddr.setAddressByte(1, 0x00);
+    macAddr.setAddressByte(2, 0x5e);
+    macAddr.setAddressByte(3, addr.getDByte(1) & 0x7f);
+    macAddr.setAddressByte(4, addr.getDByte(2));
+    macAddr.setAddressByte(5, addr.getDByte(3));
+    return macAddr;
 }
 
 

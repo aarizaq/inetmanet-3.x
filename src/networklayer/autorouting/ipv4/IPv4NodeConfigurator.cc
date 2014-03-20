@@ -38,10 +38,15 @@ IPv4NodeConfigurator::IPv4NodeConfigurator()
 
 void IPv4NodeConfigurator::initialize(int stage)
 {
+    cSimpleModule::initialize(stage);
+
     if (stage == 0)
     {
+        cModule *node = getContainingNode(this);
+        if (!node)
+            throw cRuntimeError("The container @node module not found");
         const char *networkConfiguratorPath = par("networkConfiguratorModule");
-        nodeStatus = dynamic_cast<NodeStatus *>(findContainingNode(this)->getSubmodule("status"));
+        nodeStatus = dynamic_cast<NodeStatus *>(node->getSubmodule("status"));
         interfaceTable = InterfaceTableAccess().get();
         routingTable = RoutingTableAccess().get();
 
@@ -76,9 +81,9 @@ bool IPv4NodeConfigurator::handleOperationStage(LifecycleOperation *operation, i
             configureNode();
     }
     else if (dynamic_cast<NodeShutdownOperation *>(operation))
-        /*nothing to do*/;
+    { /*nothing to do*/; }
     else if (dynamic_cast<NodeCrashOperation *>(operation))
-        /*nothing to do*/;
+    { /*nothing to do*/; }
     else
         throw cRuntimeError("Unsupported lifecycle operation '%s'", operation->getClassName());
     return true;
@@ -120,5 +125,6 @@ void IPv4NodeConfigurator::configureNode()
     ASSERT(networkConfigurator);
     for (int i = 0; i < interfaceTable->getNumInterfaces(); i++)
         networkConfigurator->configureInterface(interfaceTable->getInterface(i));
-    networkConfigurator->configureRoutingTable(routingTable);
+    if (par("configureRoutingTable").boolValue())
+        networkConfigurator->configureRoutingTable(routingTable);
 }

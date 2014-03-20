@@ -33,8 +33,10 @@
 #include "IInterfaceTable.h"
 #include "IPvXAddress.h"
 #include "ManetAddress.h"
+#include "ManetNetfilterHook.h"
 #include "NotifierConsts.h"
 #include "ICMP.h"
+#include "IPv4.h"
 #include "ILifecycle.h"
 
 #include "ILocator.h"
@@ -66,7 +68,11 @@ typedef std::multimap <simtime_t, ManetTimer *> TimerMultiMap;
 typedef std::set<ManetAddress> AddressGroup;
 typedef std::set<ManetAddress>::iterator AddressGroupIterator;
 typedef std::set<ManetAddress>::const_iterator AddressGroupConstIterator;
-class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, protected cListener, public ILifecycle
+
+/**
+ * Base class for Manet Routing
+ */
+class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, protected cListener, public ILifecycle, public ManetNetfilterHook
 {
   private:
     static simsignal_t mobilityStateChangedSignal;
@@ -448,9 +454,9 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
     void setAddressSize(int p) {addressSizeBytes = p;}
 
     virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback);
-    virtual bool startApp(IDoneCallback *doneCallback) = 0;
-    virtual bool stopApp(IDoneCallback *doneCallback) = 0;
-    virtual bool crashApp(IDoneCallback *doneCallback) = 0;
+    virtual bool handleNodeStart(IDoneCallback *doneCallback) = 0;
+    virtual bool handleNodeShutdown(IDoneCallback *doneCallback) = 0;
+    virtual void handleNodeCrash() = 0;
 
 };
 

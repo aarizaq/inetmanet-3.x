@@ -2228,7 +2228,7 @@ bool HwmpProtocol::getBestGan(ManetAddress &gannAddr, ManetAddress &nextHop)
     return true;
 }
 
-bool HwmpProtocol::startApp(IDoneCallback *doneCallback)
+bool HwmpProtocol::handleNodeStart(IDoneCallback *doneCallback)
 {
     m_isGann = par("isGan");
     if (m_isGann)
@@ -2240,7 +2240,7 @@ bool HwmpProtocol::startApp(IDoneCallback *doneCallback)
     return true;
 }
 
-bool HwmpProtocol::stopApp(IDoneCallback *doneCallback)
+bool HwmpProtocol::handleNodeShutdown(IDoneCallback *doneCallback)
 {
     while (!getTimerMultimMap()->empty())
     {
@@ -2267,8 +2267,28 @@ bool HwmpProtocol::stopApp(IDoneCallback *doneCallback)
     return true;
 }
 
-bool HwmpProtocol::crashApp(IDoneCallback *doneCallback)
+void HwmpProtocol::handleNodeCrash()
 {
-    return stopApp(doneCallback);
-
+    while (!getTimerMultimMap()->empty())
+    {
+        ManetTimer * timer = getTimerMultimMap()->begin()->second;
+        getTimerMultimMap()->erase(getTimerMultimMap()->begin());
+        if (timer == m_proactivePreqTimer)
+            continue;
+        else if (timer ==  m_preqTimer)
+            continue;
+        else if (timer ==  m_perrTimer)
+            continue;
+        else if (timer ==  m_gannTimer)
+            continue;
+        delete timer;
+    }
+    m_rtable->clearTable();
+    neighborMap.clear();
+    ganVector.clear();
+    while (!m_rqueue.empty())
+    {
+        delete m_rqueue.back().pkt;
+        m_rqueue.pop_back();
+    }
 }

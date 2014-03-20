@@ -132,8 +132,8 @@ module PGW
         gtpu.udpOut --> udp.appIn++;
         gtpu.udpIn <-- udp.appOut++;
 
-        udp.ipOut --> networkLayer.udpIn;
-        udp.ipIn <-- networkLayer.udpOut;
+        udp.ipOut --> networkLayer.transportIn++;
+        udp.ipIn <-- networkLayer.transportOut++;
 
         networkLayer.pingOut++ --> pingApp.pingIn;
         networkLayer.pingIn++ <-- pingApp.pingOut;

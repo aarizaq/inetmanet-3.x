@@ -81,9 +81,9 @@ class QueueElement : public cPacket
 class DYMO : public ManetRoutingBase
 {
   public:
-    int numInitStages() const  {return 5;}
-    void initialize(int);
-    void finish();
+    virtual int numInitStages() const { return 5; }
+    virtual void initialize(int);
+    virtual void finish();
 
     DYMO();
     ~DYMO();
@@ -271,9 +271,9 @@ class DYMO : public ManetRoutingBase
     void packetFailed(const IPv4Datagram *dgram);
     void rescheduleTimer();
 
-    virtual bool startApp(IDoneCallback *doneCallback);
-    virtual bool stopApp(IDoneCallback *doneCallback);
-    virtual bool crashApp(IDoneCallback *doneCallback);
+    virtual bool handleNodeStart(IDoneCallback *doneCallback);
+    virtual bool handleNodeShutdown(IDoneCallback *doneCallback);
+    virtual void handleNodeCrash();
 };
 
 #endif

@@ -72,7 +72,9 @@ void LocatorModuleClient::handleMessage(cMessage *msg)
         }
         pkt->setOpcode(ReplyAddress);
         pkt->setStaIPAddress(iv4Addr);
-        socket->sendTo(pkt, udpCtrl->getSrcAddr(), port, interfaceId);
+        UDPSocket::SendOptions options;
+        options.outInterfaceId = interfaceId;
+        socket->sendTo(pkt, udpCtrl->getSrcAddr(), port, &options);
     }
     else
         delete msg;

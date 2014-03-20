@@ -23,7 +23,7 @@ import inet.nodes.inet.WirelessHost;
 import inet.util.PcapRecorder;
 import inet.networklayer.ipv4.RoutingTable;
 import inet.networklayer.common.InterfaceTable;
-import inet.mobility.IMobility;
+import inet.mobility.contract.IMobility;
 import inet.linklayer.ieee80211mesh.ethernet.EthernetInterfaceMesh;
 import inet.linklayer.IWirelessNic;
 import inet.linklayer.IWiredNic;
@@ -33,6 +33,7 @@ import inet.nodes.inet.NetworkLayer;
 import inet.linklayer.ieee80211mesh.Ieee80211NicMesh;
 import inet.linklayer.ieee80211mesh.Ieee80211NicMeshMulti;
 import inet.networklayer.autorouting.ipv4.HostAutoConfigurator2;
+import inet.linklayer.loopback.LoopbackInterface;
 
 //
 // BaseHost contains the common lower layers (linklayer and networklayer)
@@ -95,6 +96,10 @@ module ApMeshNode
             @display("p=204,138");
         }
 
+        lo0: LoopbackInterface {
+            @display("p=78,406");
+        }
+        
         wlanMesh: Ieee80211NicMeshMulti {
             parameters:
                 meshChannels = meshChannels;

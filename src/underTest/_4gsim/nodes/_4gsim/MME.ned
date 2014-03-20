@@ -142,9 +142,9 @@ module MME
     connections allowunconnected:
         sctp.to_appl++ --> s1ap.sctpIn;
         s1ap.sctpOut --> sctp.from_appl++;
-
-        sctp.to_ip --> networkLayer.sctpIn;
-        networkLayer.sctpOut --> sctp.from_ip;
+       
+        sctp.to_ip --> networkLayer.transportIn++;
+        networkLayer.transportOut++ --> sctp.from_ip;
 
         networkLayer.pingOut++ --> pingApp.pingIn;
         networkLayer.pingIn++ <-- pingApp.pingOut;
@@ -176,8 +176,8 @@ module MME
         s1ap.nasOut --> nas.s1apIn;
         diameterBase.sctpOut --> sctp.from_appl++;
         sctp.to_appl++ --> diameterBase.sctpIn;
-        udp.ipOut --> networkLayer.udpIn;
-        networkLayer.udpOut --> udp.ipIn;
+        udp.ipOut --> networkLayer.transportIn++;
+        udp.ipIn <-- networkLayer.transportOut++;
         udp.appOut++ --> gtpc.udpIn;
         gtpc.udpOut --> udp.appIn++;
 }

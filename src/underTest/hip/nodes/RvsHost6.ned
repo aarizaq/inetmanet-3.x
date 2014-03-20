@@ -47,10 +47,9 @@ module RvsHost6 extends StandardHost6
                 @display("i=block/star;p=190,208");
         }
      connections allowunconnected:
-        
-        hip.udp6Out --> networkLayer.udpIn;
-        hip.udp6In <-- networkLayer.udpOut;
-        hip.tcp6Out --> networkLayer.tcpIn;
-        hip.tcp6In <-- networkLayer.tcpOut;
+        hip.tcp6Out --> networkLayer.transportIn++;
+        hip.tcp6In <-- networkLayer.transportOut++;        
+        hip.udp6Out --> networkLayer.transportIn++;
+        hip.udp6In <-- networkLayer.transportOut++;
         //hip.fromNetworkAddrChange <-- networkLayer.ipchangeOut;
 }

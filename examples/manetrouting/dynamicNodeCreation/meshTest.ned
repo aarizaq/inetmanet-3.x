@@ -29,7 +29,7 @@ import inet.linklayer.ieee80211mesh.nodes.ApMeshNode;
 import inet.nodes.ethernet.EtherSwitch;
 import inet.linklayer.ieee80211mesh.nodes.ApMeshRelay;
 import ned.DatarateChannel;
-import inet.mobility.models.LaptopModelManager;
+import inet.mobility.single.LaptopModelManager;
 import inet.networklayer.autorouting.ipv4.IPv4NetworkConfigurator;
 
 network meshTest
@@ -116,13 +116,9 @@ network meshTest
                 mobility.initialX = nodeSeparation/2.0+nodeSeparation;
                 @display("i=block/wrxtx;r=,,#707070");
         }
-        channelControl: ChannelControl {
-            parameters:
-                @display("p=60,23;i=misc/sun");
-        }
         laptopModelManager: LaptopModelManager {
 
-            @display("p=31,23;is=s");
+            @display("p=68,28;is=s");
         }
         channelControl: ChannelControl {
             @display("p=80,70;i=misc/sun");

@@ -21,7 +21,7 @@ package inet.underTest.wimax.nodes;
 import inet.base.NotificationBoard;
 import inet.underTest.wimax.linklayer.Ieee80216.Ieee80216NicMS;
 import inet.underTest.wimax.applications.TrafficGenerator_Erlangen.WiMAXQoSTrafficGenerator;
-import inet.mobility.IMobility;
+import inet.mobility.contract.IMobility;
 
 
                                 //

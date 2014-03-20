@@ -180,7 +180,7 @@ void TCPGenericCliAppBasePromis::receiveChangeNotification(int category, const c
              //frame->getReceiverAddress();
              MACAddress senderMac = frame->getTransmitterAddress();
              ARP *arp = ArpAccess().get();
-             IPv4Address sender = arp->getInverseAddressResolution(senderMac);
+             IPv4Address sender = arp->getIPv4AddressFor(senderMac);
              IPv4Datagram *dgram = dynamic_cast<IPv4Datagram*> (frame->getEncapsulatedPacket());
              if (dgram)
              {

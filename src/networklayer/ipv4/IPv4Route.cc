@@ -26,6 +26,14 @@
 #include "IRoutingTable.h"
 
 
+Register_Class(IPv4Route);
+Register_Class(IPv4MulticastRoute);
+
+
+IPv4Route::~IPv4Route()
+{
+}
+
 std::string IPv4Route::info() const
 {
     std::stringstream out;
@@ -34,20 +42,13 @@ std::string IPv4Route::info() const
     out << "gw:"; if (gateway.isUnspecified()) out << "*  "; else out << gateway << "  ";
     out << "mask:"; if (netmask.isUnspecified()) out << "*  "; else out << netmask << "  ";
     out << "metric:" << metric << " ";
-    if (interfacePtr)
-    {
-        out << "if:" << interfacePtr->getName();
-        if (interfacePtr->ipv4Data())
-            out << "(" << interfacePtr->ipv4Data()->getIPAddress() << ")";
-    }
-    else
-    {
-        out << "if:*";
-    }
+    out << "if:"; if (!interfacePtr) out << "*"; else out << interfacePtr->getName();
+    if (interfacePtr && interfacePtr->ipv4Data())
+        out << "(" << interfacePtr->ipv4Data()->getIPAddress() << ")";
     out << "  ";
     out << (gateway.isUnspecified() ? "DIRECT" : "REMOTE");
 
-    switch (source)
+    switch (sourceType)
     {
         case MANUAL:       out << " MANUAL"; break;
         case IFACENETMASK: out << " IFACENETMASK"; break;
@@ -70,7 +71,7 @@ std::string IPv4Route::detailedInfo() const
 bool IPv4Route::equals(const IPv4Route& route) const
 {
     return rt == route.rt && dest == route.dest && netmask == route.netmask && gateway == route.gateway &&
-           interfacePtr == route.interfacePtr && source == route.source && metric == route.metric;
+           interfacePtr == route.interfacePtr && sourceType == route.sourceType && metric == route.metric;
 }
 
 const char *IPv4Route::getInterfaceName() const
@@ -109,7 +110,7 @@ std::string IPv4MulticastRoute::info() const
         out << outInterfaces[i]->getInterface()->getName();
     }
 
-    switch (source)
+    switch (sourceType)
     {
         case MANUAL:       out << " MANUAL"; break;
         case DVMRP:        out << " DVRMP"; break;
@@ -169,7 +170,7 @@ void IPv4MulticastRoute::addOutInterface(OutInterface *outInterface)
     }
 }
 
-bool IPv4MulticastRoute::removeOutInterface(InterfaceEntry *ie)
+bool IPv4MulticastRoute::removeOutInterface(const InterfaceEntry *ie)
 {
     for (OutInterfaceVector::iterator it = outInterfaces.begin(); it != outInterfaces.end(); ++it)
     {

@@ -23,6 +23,7 @@
 
 #include "ManetRoutingBase.h"
 #include "UDPPacket.h"
+#include "IPSocket.h"
 #include "IPv4Datagram.h"
 #include "IPv4ControlInfo.h"
 #include "IPv4InterfaceData.h"
@@ -47,7 +48,8 @@
 #define IP_DEF_TTL 32
 #define UDP_HDR_LEN 8
 
-simsignal_t ManetRoutingBase::mobilityStateChangedSignal = SIMSIGNAL_NULL;
+simsignal_t ManetRoutingBase::mobilityStateChangedSignal = registerSignal("mobilityStateChanged");
+
 ManetRoutingBase::GlobalRouteMap *ManetRoutingBase::globalRouteMap = NULL;
 bool ManetRoutingBase::createInternalStore = false;
 
@@ -361,10 +363,17 @@ void ManetRoutingBase::registerRoutingModule()
         }
     }
 
+    if (!mac_layer_)
+        initHook(this);
     GlobalWirelessLinkInspector::initRoutingTables(this,getAddress(),isProactive());
     isOperational = true;
 
  //   WATCH_MAP(*routesVector);
+    if (!mac_layer_)
+    {
+        IPSocket socket(gate("to_ip"));
+        socket.registerProtocol(IP_PROT_MANET);
+    }
 }
 
 ManetRoutingBase::~ManetRoutingBase()
@@ -469,17 +478,10 @@ void ManetRoutingBase::registerPosition()
     if (!isRegistered)
         opp_error("Manet routing protocol is not register");
     regPosition = true;
-    mobilityStateChangedSignal = registerSignal("mobilityStateChanged");
-    cModule *mod;
-    for (mod = getParentModule(); mod != 0; mod = mod->getParentModule()) {
-            cProperties *properties = mod->getProperties();
-            if (properties && properties->getAsBool("node"))
-                break;
-    }
-    if (mod)
-        mod->subscribe(mobilityStateChangedSignal, this);
-    else
-        getParentModule()->subscribe(mobilityStateChangedSignal, this);
+    cModule *mod = findContainingNode(getParentModule());
+    if (!mod)
+        mod = getParentModule();
+    mod->subscribe(mobilityStateChangedSignal, this);
 
     curPosition = MobilityAccess().get()->getCurrentPosition();
     curSpeed = MobilityAccess().get()->getCurrentSpeed();
@@ -542,7 +544,7 @@ void ManetRoutingBase::sendToIpOnIface(cPacket *msg, int srcPort, const ManetAdd
     UDPPacket *udpPacket = new UDPPacket(msg->getName());
     udpPacket->setByteLength(UDP_HDR_LEN);
     udpPacket->encapsulate(msg);
-    //IPvXAddress srcAddr = interfaceWlanptr->ipv4Data()->getIPAddress();
+    //Address srcAddr = interfaceWlanptr->ipv4Data()->getIPAddress();
 
     if (ttl==0)
     {
@@ -735,7 +737,7 @@ void ManetRoutingBase::omnet_chg_rte(const ManetAddress &dst, const ManetAddress
         netmask = IPv4Address::ALLONES_ADDRESS;
 
     InterfaceEntry *ie = getInterfaceWlanByAddress(iface);
-    IPv4Route::RouteSource routeSource = useManetLabelRouting ? IPv4Route::MANET : IPv4Route::MANET2;
+    IPv4Route::SourceType sourceType = useManetLabelRouting ? IPv4Route::MANET : IPv4Route::MANET2;
 
     if (found)
     {
@@ -744,7 +746,7 @@ void ManetRoutingBase::omnet_chg_rte(const ManetAddress &dst, const ManetAddress
                 && oldentry->getGateway() == gateway
                 && oldentry->getMetric() == hops
                 && oldentry->getInterface() == ie
-                && oldentry->getSource() == routeSource)
+                && oldentry->getSourceType() == sourceType)
             return;
         inet_rt->deleteRoute(oldentry);
     }
@@ -765,7 +767,7 @@ void ManetRoutingBase::omnet_chg_rte(const ManetAddress &dst, const ManetAddress
 
     /// Source of route, MANUAL by reading a file,
     /// routing protocol name otherwise
-    entry->setSource(routeSource);
+    entry->setSourceType(sourceType);
     inet_rt->addRoute(entry);
 #ifdef WITH_80211MESH
     if (locator && locator->isApIp(desAddress))
@@ -797,7 +799,7 @@ void ManetRoutingBase::omnet_chg_rte(const ManetAddress &dst, const ManetAddress
 
             /// Source of route, MANUAL by reading a file,
             /// routing protocol name otherwise
-            entry->setSource(routeSource);
+            entry->setSourceType(sourceType);
             inet_rt->addRoute(entry);
         }
     }
@@ -874,7 +876,7 @@ void ManetRoutingBase::omnet_chg_rte(const ManetAddress &dst, const ManetAddress
         netmask = IPv4Address::ALLONES_ADDRESS;
 
     InterfaceEntry *ie = getInterfaceEntry(index);
-    IPv4Route::RouteSource routeSource = useManetLabelRouting ? IPv4Route::MANET : IPv4Route::MANET2;
+    IPv4Route::SourceType sourceType = useManetLabelRouting ? IPv4Route::MANET : IPv4Route::MANET2;
 
     if (found)
     {
@@ -883,7 +885,7 @@ void ManetRoutingBase::omnet_chg_rte(const ManetAddress &dst, const ManetAddress
                 && oldentry->getGateway() == gateway
                 && oldentry->getMetric() == hops
                 && oldentry->getInterface() == ie
-                && oldentry->getSource() == routeSource)
+                && oldentry->getSourceType() == sourceType)
             return;
         inet_rt->deleteRoute(oldentry);
     }
@@ -906,9 +908,9 @@ void ManetRoutingBase::omnet_chg_rte(const ManetAddress &dst, const ManetAddress
     /// routing protocol name otherwise
 
     if (useManetLabelRouting)
-        entry->setSource(IPv4Route::MANET);
+        entry->setSourceType(IPv4Route::MANET);
     else
-        entry->setSource(IPv4Route::MANET2);
+        entry->setSourceType(IPv4Route::MANET2);
 
         inet_rt->addRoute(entry);
 
@@ -942,7 +944,7 @@ void ManetRoutingBase::omnet_chg_rte(const ManetAddress &dst, const ManetAddress
 
             /// Source of route, MANUAL by reading a file,
             /// routing protocol name otherwise
-            e->setSource(entry->getSource());
+            e->setSourceType(entry->getSourceType());
             inet_rt->addRoute(e);
         }
     }
@@ -998,7 +1000,7 @@ void ManetRoutingBase::omnet_clean_rte()
 }
 
 //
-// generic receiveChangeNotification, the protocols must implemet processLinkBreak and processPromiscuous only
+// generic receiveChangeNotification, the protocols must implement processLinkBreak and processPromiscuous only
 //
 void ManetRoutingBase::receiveChangeNotification(int category, const cObject *details)
 {
@@ -1067,7 +1069,7 @@ void ManetRoutingBase::receiveChangeNotification(int category, const cObject *de
         {
             ManetAddress addr;
             if (!mac_layer_ && arp)
-                addr = ManetAddress(arp->getInverseAddressResolution(infoSta->getStaAddress()));
+                addr = ManetAddress(arp->getIPv4AddressFor(infoSta->getStaAddress()));
             else
                 addr = ManetAddress(infoSta->getStaAddress());
             // sanity check
@@ -1419,7 +1421,7 @@ bool ManetRoutingBase::setRoute(const ManetAddress & destination, const ManetAdd
                 && oldentry->getGateway() == gateway
                 && oldentry->getMetric() == hops
                 && oldentry->getInterface() == ie
-                && oldentry->getSource() == IPv4Route::MANUAL)
+                && oldentry->getSourceType() == IPv4Route::MANUAL)
             return true;
         inet_rt->deleteRoute(oldentry);
     }
@@ -1440,8 +1442,8 @@ bool ManetRoutingBase::setRoute(const ManetAddress & destination, const ManetAdd
 
     /// Source of route, MANUAL by reading a file,
     /// routing protocol name otherwise
-    IPv4Route::RouteSource routeSource = useManetLabelRouting ? IPv4Route::MANET : IPv4Route::MANET2;
-    entry->setSource(routeSource);
+    IPv4Route::SourceType sourceType = useManetLabelRouting ? IPv4Route::MANET : IPv4Route::MANET2;
+    entry->setSourceType(sourceType);
 
     inet_rt->addRoute(entry);
 
@@ -1475,7 +1477,7 @@ bool ManetRoutingBase::setRoute(const ManetAddress & destination, const ManetAdd
 
             /// Source of route, MANUAL by reading a file,
             /// routing protocol name otherwise
-            e->setSource(entry->getSource());
+            e->setSourceType(entry->getSourceType());
             inet_rt->addRoute(e);
         }
     }
@@ -1928,20 +1930,20 @@ bool ManetRoutingBase::handleOperationStage(LifecycleOperation *operation, int s
     {
         if (stage == NodeStartOperation::STAGE_APPLICATION_LAYER) {
             isOperational = true;
-            ret = startApp(doneCallback);
+            ret = handleNodeStart(doneCallback);
         }
     }
     else if (dynamic_cast<NodeShutdownOperation *>(operation))
     {
         if (stage == NodeShutdownOperation::STAGE_APPLICATION_LAYER) {
-            ret = stopApp(doneCallback);
+            ret = handleNodeShutdown(doneCallback);
             isOperational = false;
         }
     }
     else if (dynamic_cast<NodeCrashOperation *>(operation))
     {
         if (stage == NodeCrashOperation::STAGE_CRASH) {
-            ret = crashApp(doneCallback);
+            handleNodeCrash();
             isOperational = false;
         }
     }

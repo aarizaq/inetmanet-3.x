@@ -88,7 +88,7 @@ packet EtherFrame extends EtherTraffic
 //
 packet EthernetIIFrame extends EtherFrame
 {
-    int etherType enum (EtherType);
+    int etherType @enum(EtherType);
     string displayString = "b=,,,#00ff00";                // Mod1. Enables display string modification.
 }
 
@@ -147,7 +147,7 @@ packet Ethernet1QTag
                     // The reserved value 0x000 indicates that the frame does not belong to any VLAN; in this case,
                     // the 802.1Q tag specifies only a priority and is referred to as a priority tag. On bridges,
                     // VLAN 1 (the default VLAN ID) is often reserved for a management VLAN; this is vendor-specific.
-     string displayString = "b=,,,#a5ffa5";
+    string displayString = "b=,,,#a5ffa5";
 }
 
 

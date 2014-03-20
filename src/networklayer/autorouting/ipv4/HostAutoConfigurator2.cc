@@ -116,7 +116,7 @@ void addToMcastGroup(InterfaceEntry* ie, IRoutingTable* routingTable, const IPv4
     re->setNetmask(IPv4Address::ALLONES_ADDRESS); // TODO: can't set this to none?
     re->setGateway(IPv4Address()); // none
     re->setInterface(ie);
-    re->setSource(IPv4Route::MANUAL);
+    re->setSourceType(IPv4Route::MANUAL);
     re->setMetric(1);
     routingTable->addRoute(re);
 }
@@ -130,7 +130,7 @@ void addRoute(InterfaceEntry* ie, IRoutingTable* routingTable, const IPv4Address
     re->setNetmask(maskaddress); // TODO: can't set this to none?
     re->setGateway(IPv4Address::UNSPECIFIED_ADDRESS); // none
     re->setInterface(ie);
-    re->setSource(IPv4Route::MANUAL);
+    re->setSourceType(IPv4Route::MANUAL);
     re->setMetric(1);
     routingTable->addRoute(re);
 }
@@ -173,7 +173,7 @@ void HostAutoConfigurator2::addDefaultRoutes()
     e->setDestination(IPv4Address());
     e->setNetmask(IPv4Address());
     e->setInterface(ie);
-    e->setSource(IPv4Route::MANUAL);
+    e->setSourceType(IPv4Route::MANUAL);
      //e->getMetric() = 1;
     rt->addRoute(e);
 }
@@ -204,7 +204,7 @@ void HostAutoConfigurator2::addDefaultRoute()
     e->setDestination(IPv4Address());
     e->setNetmask(IPv4Address());
     e->setInterface(ie);
-    e->setSource(IPv4Route::MANUAL);
+    e->setSourceType(IPv4Route::MANUAL);
     rt->addRoute(e);
 }
 
@@ -413,7 +413,7 @@ void HostAutoConfigurator2::setupRoutingTable()
         e->setNetmask(IPv4Address());
         e->setGateway(defaultAddr);
         e->setInterface(ie);
-        e->setSource(IPv4Route::MANUAL);
+        e->setSourceType(IPv4Route::MANUAL);
          //e->getMetric() = 1;
         routingTable->addRoute(e);
     }
@@ -483,7 +483,7 @@ void HostAutoConfigurator2::fillRoutingTables()
             e->setDestination(ieTarget->ipv4Data()->getIPAddress());
             e->setNetmask(IPv4Address(255,255,255,255)); // full match needed
             e->setInterface(ie);
-            e->setSource(IPv4Route::MANUAL);
+            e->setSourceType(IPv4Route::MANUAL);
             //e->getMetric() = 1;
             routingTable->addRoute(e);
         }

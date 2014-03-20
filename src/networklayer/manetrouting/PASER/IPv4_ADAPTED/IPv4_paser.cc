@@ -1,5 +1,6 @@
 //
 // Copyright (C) 2004 Andras Varga
+// Copyright (C) 2014 OpenSim Ltd.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -16,8 +17,6 @@
 //
 
 
-#include "Configuration.h"
-#ifdef OPENSSL_IS_LINKED
 
 #include <stdlib.h>
 #include <string.h>
@@ -25,26 +24,35 @@
 #include "IPv4_paser.h"
 
 #include "ARPPacket_m.h"
+#include "IARPCache.h"
 #include "ICMPMessage_m.h"
+#include "Ieee802Ctrl_m.h"
+#include "IRoutingTable.h"
 #include "InterfaceTableAccess.h"
+#include "IPSocket.h"
 #include "IPv4ControlInfo.h"
 #include "IPv4Datagram.h"
 #include "IPv4InterfaceData.h"
-#include "IRoutingTable.h"
-#include "Ieee802Ctrl_m.h"
 #include "NodeOperations.h"
 #include "NodeStatus.h"
 #include "NotificationBoard.h"
-#include "UDPPacket_m.h"
+#include "UDPPacket.h"
 #include "TCPSegment.h"
-#include "PASER_Definitions.h"
-#include "ControlManetRouting_m.h"
+
+
+#define PASER_SUBNETZ  0x0A000100
+#define PASER_MASK  0xFFFF0000
 
 Define_Module(IPv4_paser);
 
-simsignal_t IPv4_paser::iPv4PromiscousPacket = SIMSIGNAL_NULL;
+//TODO TRANSLATE
+// a multicast cimek eseten hianyoznak bizonyos NetFilter hook-ok
+// a local interface-k hasznalata eseten szinten hianyozhatnak bizonyos NetFilter hook-ok
 
 #define NEWFRAGMENT
+simsignal_t IPv4_paser::completedARPResolutionSignal = registerSignal("completedARPResolution");
+simsignal_t IPv4_paser::failedARPResolutionSignal = registerSignal("failedARPResolution");
+simsignal_t IPv4_paser::iPv4PromiscousPacket = registerSignal("iPv4PromiscousPacket");
 
 void IPv4_paser::initialize(int stage)
 {
@@ -53,16 +61,21 @@ void IPv4_paser::initialize(int stage)
         QueueBase::initialize();
 
         ift = InterfaceTableAccess().get();
-        rt = RoutingTableAccess().get();
+        rt = check_and_cast<IRoutingTable *>(getModuleByPath(par("routingTableModule")));
         nb = NotificationBoardAccess().getIfExists(); // needed only for multicast forwarding
 
-        queueOutGate = gate("queueOut");
+        arpInGate = gate("arpIn");
+        arpOutGate = gate("arpOut");
+        cModule *arpModule = arpOutGate->getPathEndGate()->getOwnerModule();
+        arp = check_and_cast<IARPCache *>(arpModule);
+        transportInGateBaseId = gateBaseId("transportIn");
+        queueOutGateBaseId = gateBaseId("queueOut");
 
         defaultTimeToLive = par("timeToLive");
         defaultMCTimeToLive = par("multicastTimeToLive");
         fragmentTimeoutTime = par("fragmentTimeout");
         forceBroadcast = par("forceBroadcast");
-        mapping.parseProtocolMapping(par("protocolMapping"));
+        useProxyARP = par("useProxyARP");
 
         curFragmentId = 0;
         lastCheckTime = 0;
@@ -70,41 +83,21 @@ void IPv4_paser::initialize(int stage)
 
         numMulticast = numLocalDeliver = numDropped = numUnroutable = numForwarded = 0;
 
+        // NetFilter:
+        hooks.clear();
+        queuedDatagramsForHooks.clear();
+
+        pendingPackets.clear();
+        arpModule->subscribe(completedARPResolutionSignal, this);
+        arpModule->subscribe(failedARPResolutionSignal, this);
+
         WATCH(numMulticast);
         WATCH(numLocalDeliver);
         WATCH(numDropped);
         WATCH(numUnroutable);
         WATCH(numForwarded);
-
-        // by default no MANET routing
-        manetRouting = false;
-
-        iPv4PromiscousPacket = registerSignal("iPv4PromiscousPacket");
-
-#ifdef WITH_MANET
-        // test for the presence of MANET routing
-        // check if there is a protocol -> gate mapping
-        int gateindex = mapping.getOutputGateForProtocol(IP_PROT_MANET);
-        if (gateSize("transportOut")-1<gateindex)
-            return;
-
-        // check if that gate is connected at all
-        cGate *manetgate = gate("transportOut", gateindex)->getPathEndGate();
-        if (manetgate==NULL)
-            return;
-
-        cModule *destmod = manetgate->getOwnerModule();
-        if (destmod==NULL)
-            return;
-
-        // manet routing will be turned on ONLY for routing protocols which has the @reactive property set
-        // this prevents performance loss with other protocols that use pro active routing and do not need
-        // assistance from the IPv4 component
-        cProperties *props = destmod->getProperties();
-        manetRouting = props && props->getAsBool("reactive");
-        isDsr = props && props->getAsBool("isDsr");
-
-#endif
+        WATCH_MAP(pendingPackets);
+        isDsr = false;
     }
     else if (stage == 1)
     {
@@ -123,43 +116,67 @@ void IPv4_paser::updateDisplayString()
     getDisplayString().setTagArg("t", 0, buf);
 }
 
-void IPv4_paser::endService(cPacket *msg)
+void IPv4_paser::handleMessage(cMessage *msg)
+{
+    if (msg->getKind() == IP_C_REGISTER_PROTOCOL) {
+        IPRegisterProtocolCommand * command = check_and_cast<IPRegisterProtocolCommand *>(msg->getControlInfo());
+        mapping.addProtocolMapping(command->getProtocol(), msg->getArrivalGate()->getIndex());
+
+        if (command->getProtocol() == IP_PROT_MANET)
+        {
+            int gateindex = mapping.getOutputGateForProtocol(IP_PROT_MANET);
+            cGate *manetgate = gate("transportOut", gateindex)->getPathEndGate();
+            cModule *destmod = manetgate->getOwnerModule();
+            cProperties *props = destmod->getProperties();
+            isDsr = props && props->getAsBool("isDsr");
+        }
+        delete msg;
+    }
+    else if (!msg->isSelfMessage() && msg->getArrivalGate()->isName("arpIn"))
+        endService(PK(msg));
+    else
+        QueueBase::handleMessage(msg);
+}
+
+void IPv4_paser::endService(cPacket *packet)
 {
     if (!isUp) {
         EV << "IPv4 is down -- discarding message\n";
-        delete msg;
+        delete packet;
         return;
     }
-
     if (mayHaveListeners(iPv4PromiscousPacket))
-        emit(iPv4PromiscousPacket, msg);
-    if (msg->getArrivalGate()->isName("transportIn"))
+        emit(iPv4PromiscousPacket, packet);
+    if (packet->getArrivalGate()->isName("transportIn")) //TODO packet->getArrivalGate()->getBaseId() == transportInGateBaseId
     {
-        handleMessageFromHL( msg );
+        handlePacketFromHL(packet);
     }
-    else if (dynamic_cast<ARPPacket *>(msg))
+    else if (packet->getArrivalGate() == arpInGate)
     {
-        // dispatch ARP packets to ARP
-        handleARP((ARPPacket *)msg);
+        handlePacketFromARP(packet);
     }
-    else
+    else // from network
     {
-        IPv4Datagram *dgram = check_and_cast<IPv4Datagram *>(msg);
-        InterfaceEntry *fromIE = getSourceInterfaceFrom(dgram);
-        handlePacketFromNetwork(dgram, fromIE);
+        const InterfaceEntry *fromIE = getSourceInterfaceFrom(packet);
+        if (dynamic_cast<ARPPacket *>(packet))
+            handleIncomingARPPacket((ARPPacket *)packet, fromIE);
+        else if (dynamic_cast<IPv4Datagram *>(packet))
+            handleIncomingDatagram((IPv4Datagram *)packet, fromIE);
+        else
+            throw cRuntimeError(packet, "Unexpected packet type");
     }
 
     if (ev.isGUI())
         updateDisplayString();
 }
 
-InterfaceEntry *IPv4_paser::getSourceInterfaceFrom(cPacket *msg)
+const InterfaceEntry *IPv4_paser::getSourceInterfaceFrom(cPacket *packet)
 {
-    cGate *g = msg->getArrivalGate();
+    cGate *g = packet->getArrivalGate();
     return g ? ift->getInterfaceByNetworkLayerGateIndex(g->getIndex()) : NULL;
 }
 
-void IPv4_paser::handlePacketFromNetwork(IPv4Datagram *datagram, InterfaceEntry *fromIE)
+void IPv4_paser::handleIncomingDatagram(IPv4Datagram *datagram, const InterfaceEntry *fromIE)
 {
     ASSERT(datagram);
     ASSERT(fromIE);
@@ -198,47 +215,29 @@ void IPv4_paser::handlePacketFromNetwork(IPv4Datagram *datagram, InterfaceEntry 
         // hop counter decrement; FIXME but not if it will be locally delivered
         datagram->setTimeToLive(datagram->getTimeToLive()-1);
         if (!datagram->getDestAddress().isMulticast())
-            routeUnicastPacket(datagram, destIE/*destIE*/, IPv4Address::UNSPECIFIED_ADDRESS);
+            preroutingFinish(datagram, fromIE, destIE, IPv4Address::UNSPECIFIED_ADDRESS);
         else
             forwardMulticastPacket(datagram, fromIE);
         return;
     }
 // end check
 
-    // JcM add: IP UDP Helper: allow to route UDP packets when the hwd dest address is broadcast
-    // and the interface is not configured
+    EV << "Received datagram `" << datagram->getName() << "' with dest=" << datagram->getDestAddress() << "\n";
 
-    //  Extract the control info
-    cPolymorphic* p_ctrl = datagram->getControlInfo();
-    Ieee802Ctrl* eth_ci = NULL;
-    if (p_ctrl!=NULL) {
-        eth_ci= check_and_cast<Ieee802Ctrl*>(p_ctrl);
-    }
+    const InterfaceEntry *destIE = NULL;
+    IPv4Address nextHop(IPv4Address::UNSPECIFIED_ADDRESS);
+    if (datagramPreRoutingHook(datagram, fromIE, destIE, nextHop) == INetfilter::IHook::ACCEPT)
+        preroutingFinish(datagram, fromIE, destIE, nextHop);
+}
 
-    if (eth_ci!=NULL && eth_ci->getDest().isBroadcast())
-    {
-        UDPPacket *udpPkt = dynamic_cast<UDPPacket*>(datagram->getEncapsulatedPacket());
-        if (udpPkt)
-        {
-            EV << "IP UDP Helper. Allowing local delivery" << endl;
-            EV << "Received datagram `" << datagram->getName() << "' with dest=" << datagram->getDestAddress() << "\n";
-            numLocalDeliver++;
-            reassembleAndDeliver(datagram);
-
-            return;
-        }
-    }
-
-    // remove control info, but keep the one on the last fragment of DSR and MANET datagrams
-    int protocol = datagram->getTransportProtocol();
-    bool isManetDatagram = protocol == IP_PROT_MANET || protocol == IP_PROT_DSR;
-    if (!isManetDatagram || datagram->getMoreFragments())
-        delete datagram->removeControlInfo();
-
-    // route packet
+void IPv4_paser::preroutingFinish(IPv4Datagram *datagram, const InterfaceEntry *fromIE, const InterfaceEntry *destIE, IPv4Address nextHopAddr)
+{
     IPv4Address &destAddr = datagram->getDestAddress();
 
-    EV << "Received datagram `" << datagram->getName() << "' with dest=" << destAddr << "\n";
+    // remove control info
+    delete datagram->removeControlInfo();
+
+    // route packet
 
     if (fromIE->isLoopback())
     {
@@ -270,11 +269,7 @@ void IPv4_paser::handlePacketFromNetwork(IPv4Datagram *datagram, InterfaceEntry 
     }
     else
     {
-#ifdef WITH_MANET
-        if (manetRouting)
-            sendRouteUpdateMessageToManet(datagram);
-#endif
-        InterfaceEntry *broadcastIE = NULL;
+        const InterfaceEntry *broadcastIE = NULL;
 
         // check for local delivery; we must accept also packets coming from the interfaces that
         // do not yet have an IP address assigned. This happens during DHCP requests.
@@ -286,7 +281,7 @@ void IPv4_paser::handlePacketFromNetwork(IPv4Datagram *datagram, InterfaceEntry 
         {
             // broadcast datagram on the target subnet if we are a router
             if (broadcastIE && fromIE != broadcastIE && rt->isIPForwardingEnabled())
-                fragmentAndSend(datagram->dup(), broadcastIE, IPv4Address::ALLONES_ADDRESS);
+                fragmentPostRouting(datagram->dup(), broadcastIE, IPv4Address::ALLONES_ADDRESS);
 
             EV << "Broadcast received\n";
             reassembleAndDeliver(datagram);
@@ -298,95 +293,94 @@ void IPv4_paser::handlePacketFromNetwork(IPv4Datagram *datagram, InterfaceEntry 
             delete datagram;
         }
         else
-            routeUnicastPacket(datagram, NULL/*destIE*/, IPv4Address::UNSPECIFIED_ADDRESS);
+            routeUnicastPacket(datagram, fromIE, destIE, nextHopAddr);
     }
 }
 
-void IPv4_paser::handleARP(ARPPacket *msg)
+void IPv4_paser::handleIncomingARPPacket(ARPPacket *packet, const InterfaceEntry *fromIE)
 {
-    // FIXME hasBitError() check  missing!
-
-    // delete old control info
-    delete msg->removeControlInfo();
-
-    // dispatch ARP packets to ARP and let it know the gate index it arrived on
-    InterfaceEntry *fromIE = getSourceInterfaceFrom(msg);
-    ASSERT(fromIE);
-
-    IPv4RoutingDecision *routingDecision = new IPv4RoutingDecision();
-    routingDecision->setInterfaceId(fromIE->getInterfaceId());
-    msg->setControlInfo(routingDecision);
-
-    send(msg, queueOutGate);
+    // give it to the ARP module
+    Ieee802Ctrl *ctrl = check_and_cast<Ieee802Ctrl*>(packet->getControlInfo());
+    ctrl->setInterfaceId(fromIE->getInterfaceId());
+    send(packet, arpOutGate);
 }
 
-void IPv4_paser::handleReceivedICMP(ICMPMessage *msg)
+void IPv4_paser::handleIncomingICMP(ICMPMessage *packet)
 {
-    switch (msg->getType())
+    switch (packet->getType())
     {
         case ICMP_REDIRECT: // TODO implement redirect handling
         case ICMP_DESTINATION_UNREACHABLE:
         case ICMP_TIME_EXCEEDED:
         case ICMP_PARAMETER_PROBLEM: {
             // ICMP errors are delivered to the appropriate higher layer protocol
-            IPv4Datagram *bogusPacket = check_and_cast<IPv4Datagram *>(msg->getEncapsulatedPacket());
+            IPv4Datagram *bogusPacket = check_and_cast<IPv4Datagram *>(packet->getEncapsulatedPacket());
             int protocol = bogusPacket->getTransportProtocol();
             int gateindex = mapping.getOutputGateForProtocol(protocol);
-            send(msg, "transportOut", gateindex);
+            send(packet, "transportOut", gateindex);
             break;
         }
         default: {
             // all others are delivered to ICMP: ICMP_ECHO_REQUEST, ICMP_ECHO_REPLY,
             // ICMP_TIMESTAMP_REQUEST, ICMP_TIMESTAMP_REPLY, etc.
             int gateindex = mapping.getOutputGateForProtocol(IP_PROT_ICMP);
-            send(msg, "transportOut", gateindex);
+            send(packet, "transportOut", gateindex);
             break;
         }
     }
 }
 
-void IPv4_paser::handleMessageFromHL(cPacket *msg)
+void IPv4_paser::handlePacketFromHL(cPacket *packet)
 {
     // if no interface exists, do not send datagram
     if (ift->getNumInterfaces() == 0)
     {
         EV << "No interfaces exist, dropping packet\n";
         numDropped++;
-        delete msg;
+        delete packet;
         return;
     }
 
     // encapsulate and send
-    IPv4Datagram *datagram = dynamic_cast<IPv4Datagram *>(msg);
+    IPv4Datagram *datagram = dynamic_cast<IPv4Datagram *>(packet);
     IPv4ControlInfo *controlInfo = NULL;
     //FIXME dubious code, remove? how can the HL tell IP whether it wants tunneling or forwarding?? --Andras
-    if (datagram) // if HL sends an IPv4Datagram, route the packet
-    {
-        // Dsr routing, Dsr is a HL protocol and send IPv4Datagram
-        if (datagram->getTransportProtocol()==IP_PROT_DSR)
-        {
-            controlInfo = check_and_cast<IPv4ControlInfo*>(datagram->removeControlInfo());
-        }
-    }
-    else
+    if (!datagram) // if HL sends an IPv4Datagram, route the packet
     {
         // encapsulate
-        controlInfo = check_and_cast<IPv4ControlInfo*>(msg->removeControlInfo());
-        datagram = encapsulate(msg, controlInfo);
+        controlInfo = check_and_cast<IPv4ControlInfo*>(packet->removeControlInfo());
+        datagram = encapsulate(packet, controlInfo);
     }
 
     // extract requested interface and next hop
-    InterfaceEntry *destIE = NULL;
-    IPv4Address nextHopAddress = IPv4Address::UNSPECIFIED_ADDRESS;
-    bool multicastLoop = true;
-    if (controlInfo!=NULL)
-    {
-        destIE = ift->getInterfaceById(controlInfo->getInterfaceId());
-        nextHopAddress = controlInfo->getNextHopAddr();
-        multicastLoop = controlInfo->getMulticastLoop();
-    }
+    const InterfaceEntry *destIE = controlInfo ? const_cast<const InterfaceEntry *>(ift->getInterfaceById(controlInfo->getInterfaceId())) : NULL;
 
-    delete controlInfo;
+    if (controlInfo)
+        datagram->setControlInfo(controlInfo);    //FIXME ne rakjuk bele a cntrInfot!!!!! de kell :( kulonben a hook queue-ban elveszik a multicastloop flag
+
+    // TODO:
+    IPv4Address nextHopAddr(IPv4Address::UNSPECIFIED_ADDRESS);
+    if (datagramLocalOutHook(datagram, destIE, nextHopAddr) == INetfilter::IHook::ACCEPT)
+        datagramLocalOut(datagram, destIE, nextHopAddr);
+}
+
+void IPv4_paser::handlePacketFromARP(cPacket *packet)
+{
+    // send out packet on the appropriate interface
+    Ieee802Ctrl *ctrl = check_and_cast<Ieee802Ctrl*>(packet->getControlInfo());
+    InterfaceEntry *destIE = ift->getInterfaceById(ctrl->getInterfaceId());
+    sendPacketToNIC(packet, destIE);
+}
+
+void IPv4_paser::datagramLocalOut(IPv4Datagram* datagram, const InterfaceEntry* destIE, IPv4Address requestedNextHopAddress)
+{
+    IPv4ControlInfo *controlInfo = dynamic_cast<IPv4ControlInfo*>(datagram->removeControlInfo());
+    bool multicastLoop = true;
+    if (controlInfo != NULL)
+    {
+        multicastLoop = controlInfo->getMulticastLoop();
+        delete controlInfo;
+    }
 
     // send
     IPv4Address &destAddr = datagram->getDestAddress();
@@ -400,15 +394,15 @@ void IPv4_paser::handleMessageFromHL(cPacket *msg)
         // loop back a copy
         if (multicastLoop && (!destIE || !destIE->isLoopback()))
         {
-            InterfaceEntry *loopbackIF = ift->getFirstLoopbackInterface();
+            const InterfaceEntry *loopbackIF = ift->getFirstLoopbackInterface();
             if (loopbackIF)
-                fragmentAndSend(datagram->dup(), loopbackIF, destAddr);
+                fragmentPostRouting(datagram->dup(), loopbackIF, destAddr);
         }
 
         if (destIE)
         {
             numMulticast++;
-            fragmentAndSend(datagram, destIE, destAddr);
+            fragmentPostRouting(datagram, destIE, destAddr);
         }
         else
         {
@@ -419,10 +413,6 @@ void IPv4_paser::handleMessageFromHL(cPacket *msg)
     }
     else // unicast and broadcast
     {
-#ifdef WITH_MANET
-        if (manetRouting)
-            sendRouteUpdateMessageToManet(datagram);
-#endif
         // check for local delivery
         if (rt->isLocalAddress(destAddr))
         {
@@ -435,12 +425,12 @@ void IPv4_paser::handleMessageFromHL(cPacket *msg)
             if (!destIE)
                 destIE = ift->getFirstLoopbackInterface();
             ASSERT(destIE);
-            routeUnicastPacket(datagram, destIE, destAddr);
+            routeUnicastPacket(datagram, NULL, destIE, destAddr);
         }
         else if (destAddr.isLimitedBroadcastAddress() || rt->isLocalBroadcastAddress(destAddr))
             routeLocalBroadcastPacket(datagram, destIE);
         else
-            routeUnicastPacket(datagram, destIE, nextHopAddress);
+            routeUnicastPacket(datagram, NULL, destIE, requestedNextHopAddress);
     }
 }
 
@@ -450,9 +440,9 @@ void IPv4_paser::handleMessageFromHL(cPacket *msg)
  *   3. if no route, choose the interface according to the source address
  *   4. or if the source address is unspecified, choose the first MULTICAST interface
  */
-InterfaceEntry *IPv4_paser::determineOutgoingInterfaceForMulticastDatagram(IPv4Datagram *datagram, InterfaceEntry *multicastIFOption)
+const InterfaceEntry *IPv4_paser::determineOutgoingInterfaceForMulticastDatagram(IPv4Datagram *datagram, const InterfaceEntry *multicastIFOption)
 {
-    InterfaceEntry *ie = NULL;
+    const InterfaceEntry *ie = NULL;
     if (multicastIFOption)
     {
         ie = multicastIFOption;
@@ -482,30 +472,29 @@ InterfaceEntry *IPv4_paser::determineOutgoingInterfaceForMulticastDatagram(IPv4D
 }
 
 
-void IPv4_paser::routeUnicastPacket(IPv4Datagram *datagram, InterfaceEntry *destIE, IPv4Address destNextHopAddr)
+void IPv4_paser::routeUnicastPacket(IPv4Datagram *datagram, const InterfaceEntry *fromIE, const InterfaceEntry *destIE, IPv4Address requestedNextHopAddress)
 {
     IPv4Address destAddr = datagram->getDestAddress();
 
-    EV << "Routing datagram `" << datagram->getName() << "' with dest=" << destAddr << ": \n";
+    EV << "Routing datagram `" << datagram->getName() << "' with dest=" << destAddr << ": ";
     const IPv4RouteRule *rule = checkOutputRule(datagram,destIE);
     if (rule && rule->getRule() == IPv4RouteRule::DROP)
     {
         EV << "\n Drop datagram with source "<< datagram->getSrcAddress() <<
-              " and  destination "<< datagram->getDestAddress() << " by rule "<<rule->info() << "\n";
+                " and destination "<< datagram->getDestAddress() << " by rule "<<rule->info() << "\n";
         numDropped++;
         delete datagram;
         return;
     }
-// end check drop
     IPv4Address nextHopAddr;
     // if output port was explicitly requested, use that, otherwise use IPv4 routing
     if (destIE)
     {
         EV << "using manually specified output interface " << destIE->getName() << "\n";
         // and nextHopAddr remains unspecified
-        if (manetRouting && !destNextHopAddr.isUnspecified())
-           nextHopAddr = destNextHopAddr;  // Manet DSR routing explicit route
-        // special case ICMP reply
+        if (!requestedNextHopAddress.isUnspecified())
+            nextHopAddr = requestedNextHopAddress;
+         // special case ICMP reply
         else if (destIE->isBroadcast())
         {
             // if the interface is broadcast we must search the next hop
@@ -524,6 +513,7 @@ void IPv4_paser::routeUnicastPacket(IPv4Datagram *datagram, InterfaceEntry *dest
             nextHopAddr = re->getGateway();
         }
     }
+
     //ADD by Eugen
      const IPv4Route *re = rt->findBestMatchingRoute(destAddr);
      if(rt->getDefaultRoute() && re == rt->getDefaultRoute()){
@@ -549,43 +539,45 @@ void IPv4_paser::routeUnicastPacket(IPv4Datagram *datagram, InterfaceEntry *dest
 
     if (!destIE) // no route found
     {
-#ifdef WITH_MANET
-            if (manetRouting)
-               sendNoRouteMessageToManet(datagram);
-            else
-            {
-#endif
-                EV << "unroutable, sending ICMP_DESTINATION_UNREACHABLE\n";
-                numUnroutable++;
-                icmpAccess.get()->sendErrorMessage(datagram, -1 /*TODO*/, ICMP_DESTINATION_UNREACHABLE, 0);
-#ifdef WITH_MANET
-            }
-#endif
+        EV << "unroutable, sending ICMP_DESTINATION_UNREACHABLE\n";
+        numUnroutable++;
+        icmpAccess.get()->sendErrorMessage(datagram, fromIE ? fromIE->getInterfaceId() : -1, ICMP_DESTINATION_UNREACHABLE, 0);
     }
     else // fragment and send
     {
-        EV << "output interface is " << destIE->getName() << ", next-hop address: " << nextHopAddr << "\n";
-        numForwarded++;
-        fragmentAndSend(datagram, destIE, nextHopAddr);
+        if (fromIE != NULL)
+        {
+            if (datagramForwardHook(datagram, fromIE, destIE, nextHopAddr) != INetfilter::IHook::ACCEPT)
+                return;
+        }
+
+        routeUnicastPacketFinish(datagram, fromIE, destIE, nextHopAddr);
     }
 }
 
-void IPv4_paser::routeLocalBroadcastPacket(IPv4Datagram *datagram, InterfaceEntry *destIE)
+void IPv4_paser::routeUnicastPacketFinish(IPv4Datagram *datagram, const InterfaceEntry *fromIE, const InterfaceEntry *destIE, IPv4Address nextHopAddr)
+{
+    EV << "output interface is " << destIE->getName() << ", next-hop address: " << nextHopAddr << "\n";
+    numForwarded++;
+    fragmentPostRouting(datagram, destIE, nextHopAddr);
+}
+
+void IPv4_paser::routeLocalBroadcastPacket(IPv4Datagram *datagram, const InterfaceEntry *destIE)
 {
     // The destination address is 255.255.255.255 or local subnet broadcast address.
     // We always use 255.255.255.255 as nextHopAddress, because it is recognized by ARP,
     // and mapped to the broadcast MAC address.
     if (destIE!=NULL)
     {
-        fragmentAndSend(datagram, destIE, IPv4Address::ALLONES_ADDRESS);
+        fragmentPostRouting(datagram, destIE, IPv4Address::ALLONES_ADDRESS);
     }
     else if (forceBroadcast)
     {
         // forward to each interface including loopback
         for (int i = 0; i<ift->getNumInterfaces(); i++)
         {
-            InterfaceEntry *ie = ift->getInterface(i);
-            fragmentAndSend(datagram->dup(), ie, IPv4Address::ALLONES_ADDRESS);
+            const InterfaceEntry *ie = ift->getInterface(i);
+            fragmentPostRouting(datagram->dup(), ie, IPv4Address::ALLONES_ADDRESS);
         }
         delete datagram;
     }
@@ -596,21 +588,18 @@ void IPv4_paser::routeLocalBroadcastPacket(IPv4Datagram *datagram, InterfaceEntr
     }
 }
 
-InterfaceEntry *IPv4_paser::getShortestPathInterfaceToSource(IPv4Datagram *datagram)
+const InterfaceEntry *IPv4_paser::getShortestPathInterfaceToSource(IPv4Datagram *datagram)
 {
     return rt->getInterfaceForDestAddr(datagram->getSrcAddress());
 }
 
-void IPv4_paser::forwardMulticastPacket(IPv4Datagram *datagram, InterfaceEntry *fromIE)
+void IPv4_paser::forwardMulticastPacket(IPv4Datagram *datagram, const InterfaceEntry *fromIE)
 {
     ASSERT(fromIE);
     const IPv4Address &srcAddr = datagram->getSrcAddress();
     const IPv4Address &destAddr = datagram->getDestAddress();
     ASSERT(destAddr.isMulticast());
     ASSERT(!destAddr.isLinkLocalMulticast());
-
-    if (!nb)
-        throw cRuntimeError("If multicast forwarding is enabled, then the node must contain a NotificationBoard.");
 
     EV << "Forwarding multicast datagram `" << datagram->getName() << "' with dest=" << destAddr << "\n";
 
@@ -657,7 +646,7 @@ void IPv4_paser::forwardMulticastPacket(IPv4Datagram *datagram, InterfaceEntry *
         for (unsigned int i=0; i<route->getNumOutInterfaces(); i++)
         {
             IPv4MulticastRoute::OutInterface *outInterface = route->getOutInterface(i);
-            InterfaceEntry *destIE = outInterface->getInterface();
+            const InterfaceEntry *destIE = outInterface->getInterface();
             if (destIE != fromIE && outInterface->isEnabled())
             {
                 int ttlThreshold = destIE->ipv4Data()->getMulticastTtlThreshold();
@@ -668,7 +657,7 @@ void IPv4_paser::forwardMulticastPacket(IPv4Datagram *datagram, InterfaceEntry *
                 else
                 {
                     EV << "Forwarding to " << destIE->getName() << "\n";
-                    fragmentAndSend(datagram->dup(), destIE, destAddr);
+                    fragmentPostRouting(datagram->dup(), destIE, destAddr);
                 }
             }
         }
@@ -686,7 +675,7 @@ void IPv4_paser::reassembleAndDeliver(IPv4Datagram *datagram)
     EV << "Local delivery\n";
 
     if (datagram->getSrcAddress().isUnspecified())
-        EV << "Received datagram '%s' without source address filled in" << datagram->getName() << "\n";
+        EV << "Received datagram '" << datagram->getName() << "' without source address filled in\n";
 
     // reassemble the packet (if fragmented)
     if (datagram->getFragmentOffset()!=0 || datagram->getMoreFragments())
@@ -710,13 +699,24 @@ void IPv4_paser::reassembleAndDeliver(IPv4Datagram *datagram)
         EV << "This fragment completes the datagram.\n";
     }
 
+    if (datagramLocalInHook(datagram, getSourceInterfaceFrom(datagram)) != INetfilter::IHook::ACCEPT)
+    {
+        return;
+    }
+
+    reassembleAndDeliverFinish(datagram);
+}
+#endif
+
+void IPv4_paser::reassembleAndDeliverFinish(IPv4Datagram *datagram)
+{
     // decapsulate and send on appropriate output gate
     int protocol = datagram->getTransportProtocol();
 
     if (protocol==IP_PROT_ICMP)
     {
         // incoming ICMP packets are handled specially
-        handleReceivedICMP(check_and_cast<ICMPMessage *>(decapsulate(datagram)));
+        handleIncomingICMP(check_and_cast<ICMPMessage *>(decapsulate(datagram)));
         numLocalDeliver++;
     }
     else if (protocol==IP_PROT_IP)
@@ -724,40 +724,77 @@ void IPv4_paser::reassembleAndDeliver(IPv4Datagram *datagram)
         // tunnelled IP packets are handled separately
         send(decapsulate(datagram), "preRoutingOut");  //FIXME There is no "preRoutingOut" gate in the IPv4 module.
     }
-    else if (protocol==IP_PROT_DSR)
-    {
-#ifdef WITH_MANET
-        // If the protocol is Dsr Send directely the datagram to manet routing
-        if (manetRouting)
-            sendToManet(datagram);
-#else
-        throw cRuntimeError("DSR protocol packet received, but MANET routing support is not available.");
-#endif
-    }
     else
     {
-        // JcM Fix: check if the transportOut port are connected, otherwise
-        // discard the packet
-        int gateindex = mapping.getOutputGateForProtocol(protocol);
+        if(protocol==IP_PROT_UDP)
+        {
+            IPv4Datagram *tempDatagram = datagram->dup();
+            cPacket *packet=NULL;
+            packet = decapsulate(tempDatagram);
+            cPacket *temp = packet;
+            if (dynamic_cast<UDPPacket*>(temp))
+            {
+                EV << "UDP OK!\n";
+                UDPPacket *udpPacket = check_and_cast<UDPPacket*>(temp);
+                if(udpPacket->getDestinationPort() == 653)
+                {
+                    EV << "found PASER UDP Packet\n";
+                    int gateindex = mapping.findOutputGateForProtocol(IP_PROT_MANET);
+                    if (gateindex >= 0)
+                    {
+                        cGate* outGate = gate("transportOut", gateindex);
+                        if (outGate->isPathOK())
+                        {
+                            send(decapsulate(datagram), outGate);
+                            numLocalDeliver++;
+                            delete packet;
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        delete packet;
+                        delete datagram;
+                        return;
+                    }
+                }
+                else
+                {
+                    EV << "";
+                }
+            }
+            else
+            {
+                EV << "UDP NOT OK!\n";
+            }
+            delete packet;
+//            delete tempDatagram;
+        }
+        //end add
+        int gateindex = mapping.findOutputGateForProtocol(protocol);
+        // check if the transportOut port are connected, otherwise discard the packet
+        if (gateindex >= 0)
+        {
+            cGate* outGate = gate("transportOut", gateindex);
+            if (outGate->isPathOK())
+            {
+                send(decapsulate(datagram), outGate);
+                numLocalDeliver++;
+                return;
+            }
+        }
 
-        if (gate("transportOut", gateindex)->isPathOK())
-        {
-            send(decapsulate(datagram), "transportOut", gateindex);
-            numLocalDeliver++;
-        }
-        else
-        {
-            EV << "L3 Protocol not connected. discarding packet" << endl;
-            icmpAccess.get()->sendErrorMessage(datagram, ICMP_DESTINATION_UNREACHABLE, ICMP_DU_PROTOCOL_UNREACHABLE);
-        }
+
+        EV << "Transport protocol ID=" << protocol << " not connected, discarding packet\n";
+        int inputInterfaceId = getSourceInterfaceFrom(datagram)->getInterfaceId();
+        icmpAccess.get()->sendErrorMessage(datagram, inputInterfaceId, ICMP_DESTINATION_UNREACHABLE, ICMP_DU_PROTOCOL_UNREACHABLE);
     }
 }
-#endif
 
 cPacket *IPv4_paser::decapsulate(IPv4Datagram *datagram)
 {
     // decapsulate transport packet
-    InterfaceEntry *fromIE = getSourceInterfaceFrom(datagram);
+    const InterfaceEntry *fromIE = getSourceInterfaceFrom(datagram);
     cPacket *packet = datagram->decapsulate();
 
     // create and fill in control info
@@ -778,8 +815,14 @@ cPacket *IPv4_paser::decapsulate(IPv4Datagram *datagram)
     return packet;
 }
 
+void IPv4_paser::fragmentPostRouting(IPv4Datagram *datagram, const InterfaceEntry *ie, IPv4Address nextHopAddr)
+{
+    if (datagramPostRoutingHook(datagram, getSourceInterfaceFrom(datagram), ie, nextHopAddr) == INetfilter::IHook::ACCEPT)
+        fragmentAndSend(datagram, ie, nextHopAddr);
+}
+
 #ifndef NEWFRAGMENT
-void IPv4_paser::fragmentAndSend(IPv4Datagram *datagram, InterfaceEntry *ie, IPv4Address nextHopAddr)
+void IPv4_paser::fragmentAndSend(IPv4Datagram *datagram, const InterfaceEntry *ie, IPv4Address nextHopAddr)
 {
     // fill in source address
     if (datagram->getSrcAddress().isUnspecified())
@@ -794,12 +837,15 @@ void IPv4_paser::fragmentAndSend(IPv4Datagram *datagram, InterfaceEntry *ie, IPv
     {
         // drop datagram, destruction responsibility in ICMP
         EV << "datagram TTL reached zero, sending ICMP_TIME_EXCEEDED\n";
-        icmpAccess.get()->sendErrorMessage(datagram, ICMP_TIME_EXCEEDED, 0);
+        icmpAccess.get()->sendErrorMessage(datagram, -1 /*TODO*/, ICMP_TIME_EXCEEDED, 0);
         numDropped++;
         return;
     }
 
     int mtu = ie->getMTU();
+
+    if (isDsr) // to avoid problems with the DSR header that could force future fragmentations
+        mtu -= 30;
 
     // send datagram straight out if it doesn't require fragmentation (note: mtu==0 means infinite mtu)
     if (mtu == 0 || datagram->getByteLength() <= mtu)
@@ -812,8 +858,8 @@ void IPv4_paser::fragmentAndSend(IPv4Datagram *datagram, InterfaceEntry *ie, IPv
     if (datagram->getDontFragment())
     {
         EV << "datagram larger than MTU and don't fragment bit set, sending ICMP_DESTINATION_UNREACHABLE\n";
-        icmpAccess.get()->sendErrorMessage(datagram, ICMP_DESTINATION_UNREACHABLE,
-                                                     ICMP_FRAGMENTATION_ERROR_CODE);
+        icmpAccess.get()->sendErrorMessage(datagram, -1 /*TODO*/, ICMP_DESTINATION_UNREACHABLE,
+                ICMP_DU_FRAGMENTATION_NEEDED);
         numDropped++;
         return;
     }
@@ -912,56 +958,221 @@ IPv4Datagram *IPv4_paser::createIPv4Datagram(const char *name)
     return new IPv4Datagram(name);
 }
 
-void IPv4_paser::sendDatagramToOutput(IPv4Datagram *datagram, InterfaceEntry *ie, IPv4Address nextHopAddr)
+void IPv4_paser::sendDatagramToOutput(IPv4Datagram *datagram, const InterfaceEntry *ie, IPv4Address nextHopAddr)
 {
     {
-        // send out datagram to ARP, with control info attached
-        delete datagram->removeControlInfo();
-        IPv4RoutingDecision *routingDecision = new IPv4RoutingDecision();
-        routingDecision->setInterfaceId(ie->getInterfaceId());
-        routingDecision->setNextHopAddr(nextHopAddr);
-        datagram->setControlInfo(routingDecision);
-        send(datagram, queueOutGate);
+        bool isIeee802Lan = ie->isBroadcast() && !ie->getMacAddress().isUnspecified(); // we only need/can do ARP on IEEE 802 LANs
+        if (!isIeee802Lan) {
+            sendPacketToNIC(datagram, ie);
+        }
+        else {
+            if (nextHopAddr.isUnspecified()) {
+                if (useProxyARP) {
+                    nextHopAddr = datagram->getDestAddress();
+                    EV << "no next-hop address, using destination address " << nextHopAddr << " (proxy ARP)\n";
+                }
+                else {
+                    throw cRuntimeError(datagram, "Cannot send datagram on broadcast interface: no next-hop address and Proxy ARP is disabled");
+                }
+            }
+
+            MACAddress nextHopMacAddr;  // unspecified
+                nextHopMacAddr = resolveNextHopMacAddress(datagram, nextHopAddr, ie);
+
+            if (nextHopMacAddr.isUnspecified())
+            {
+                pendingPackets[nextHopAddr].insert(datagram);
+                arp->startAddressResolution(nextHopAddr, ie);
+            }
+            else
+            {
+                ASSERT2(pendingPackets.find(nextHopAddr) == pendingPackets.end(), "IPv4-ARP error: nextHopAddr found in ARP table, but IPv4 queue for nextHopAddr not empty");
+                sendPacketToIeee802NIC(datagram, ie, nextHopMacAddr, ETHERTYPE_IPv4);
+            }
+        }
     }
 }
 
-#ifdef WITH_MANET
-void IPv4_paser::sendRouteUpdateMessageToManet(IPv4Datagram *datagram)
+void IPv4_paser::arpResolutionCompleted(IARPCache::Notification *entry)
 {
-    if (datagram->getTransportProtocol() != IP_PROT_DSR) // Dsr don't use update code, the Dsr datagram is the update.
+    PendingPackets::iterator it = pendingPackets.find(entry->ipv4Address);
+    if (it != pendingPackets.end())
     {
-        ControlManetRouting *control = new ControlManetRouting();
-        control->setOptionCode(MANET_ROUTE_UPDATE);
-        control->setSrcAddress(ManetAddress(datagram->getSrcAddress()));
-        control->setDestAddress(ManetAddress(datagram->getDestAddress()));
-        sendToManet(control);
+        cPacketQueue& packetQueue = it->second;
+        EV << "ARP resolution completed for " << entry->ipv4Address << ". Sending " << packetQueue.getLength()
+                << " waiting packets from the queue\n";
+
+        while (!packetQueue.empty())
+        {
+            cPacket *msg = packetQueue.pop();
+            EV << "Sending out queued packet " << msg << "\n";
+            sendPacketToIeee802NIC(msg, entry->ie, entry->macAddress, ETHERTYPE_IPv4);
+        }
+        pendingPackets.erase(it);
     }
 }
 
-void IPv4_paser::sendNoRouteMessageToManet(IPv4Datagram *datagram)
+void IPv4_paser::arpResolutionTimedOut(IARPCache::Notification *entry)
 {
-    if (datagram->getTransportProtocol()==IP_PROT_DSR)
+    PendingPackets::iterator it = pendingPackets.find(entry->ipv4Address);
+    if (it != pendingPackets.end())
     {
-        sendToManet(datagram);
-    }
-    else
-    {
-        ControlManetRouting *control = new ControlManetRouting();
-        control->setOptionCode(MANET_ROUTE_NOROUTE);
-        control->setSrcAddress(ManetAddress(datagram->getSrcAddress()));
-        control->setDestAddress(ManetAddress(datagram->getDestAddress()));
-        control->encapsulate(datagram);
-        sendToManet(control);
+        cPacketQueue& packetQueue = it->second;
+        EV << "ARP resolution failed for " << entry->ipv4Address << ",  dropping " << packetQueue.getLength() << " packets\n";
+        packetQueue.clear();
+        pendingPackets.erase(it);
     }
 }
 
-void IPv4_paser::sendToManet(cPacket *packet)
+MACAddress IPv4_paser::resolveNextHopMacAddress(cPacket *packet, IPv4Address nextHopAddr, const InterfaceEntry *destIE)
 {
-    ASSERT(manetRouting);
-    int gateindex = mapping.getOutputGateForProtocol(IP_PROT_MANET);
-    send(packet, "transportOut", gateindex);
+    if (nextHopAddr.isLimitedBroadcastAddress() || nextHopAddr == destIE->ipv4Data()->getNetworkBroadcastAddress())
+    {
+        EV << "destination address is broadcast, sending packet to broadcast MAC address\n";
+        return MACAddress::BROADCAST_ADDRESS;
+    }
+
+    if (nextHopAddr.isMulticast())
+    {
+        MACAddress macAddr = MACAddress::makeMulticastAddress(nextHopAddr);
+        EV << "destination address is multicast, sending packet to MAC address " << macAddr << "\n";
+        return macAddr;
+    }
+
+    return arp->getMACAddressFor(nextHopAddr);
 }
-#endif
+
+void IPv4_paser::sendPacketToIeee802NIC(cPacket *packet, const InterfaceEntry *ie, const MACAddress& macAddress, int etherType)
+{
+    // remove old control info
+    delete packet->removeControlInfo();
+
+    // add control info with MAC address
+    Ieee802Ctrl *controlInfo = new Ieee802Ctrl();
+    controlInfo->setDest(macAddress);
+    controlInfo->setEtherType(etherType);
+    packet->setControlInfo(controlInfo);
+
+    sendPacketToNIC(packet, ie);
+}
+
+void IPv4_paser::sendPacketToNIC(cPacket *packet, const InterfaceEntry *ie)
+{
+    EV << "Sending out packet to interface " << ie->getName() << endl;
+    send(packet, queueOutGateBaseId + ie->getNetworkLayerGateIndex());
+}
+
+// NetFilter:
+
+void IPv4_paser::registerHook(int priority, INetfilter::IHook* hook)
+{
+    Enter_Method("registerHook()");
+    hooks.insert(std::pair<int, INetfilter::IHook*>(priority, hook));
+}
+
+void IPv4_paser::unregisterHook(int priority, INetfilter::IHook* hook)
+{
+    Enter_Method("unregisterHook()");
+    for (HookList::iterator iter = hooks.begin(); iter != hooks.end(); iter++) {
+        if ((iter->first == priority) && (iter->second == hook)) {
+            hooks.erase(iter);
+            return;
+        }
+    }
+}
+
+void IPv4_paser::dropQueuedDatagram(const IPv4Datagram* datagram)
+{
+    Enter_Method("dropQueuedDatagram()");
+    for (DatagramQueueForHooks::iterator iter = queuedDatagramsForHooks.begin(); iter != queuedDatagramsForHooks.end(); iter++) {
+        if (iter->datagram == datagram) {
+            delete datagram;
+            queuedDatagramsForHooks.erase(iter);
+            return;
+        }
+    }
+}
+
+void IPv4_paser::reinjectQueuedDatagram(const IPv4Datagram* datagram)
+{
+    Enter_Method("reinjectDatagram()");
+    for (DatagramQueueForHooks::iterator iter = queuedDatagramsForHooks.begin(); iter != queuedDatagramsForHooks.end(); iter++) {
+        if (iter->datagram == datagram) {
+            IPv4Datagram* datagram = iter->datagram;
+            take(datagram);
+            switch (iter->hookType) {
+                case INetfilter::IHook::LOCALOUT:
+                    datagramLocalOut(datagram, iter->outIE, iter->nextHopAddr);
+                    break;
+                case INetfilter::IHook::PREROUTING:
+                    preroutingFinish(datagram, iter->inIE, iter->outIE, iter->nextHopAddr);
+                    break;
+                case INetfilter::IHook::POSTROUTING:
+                    fragmentAndSend(datagram, iter->outIE, iter->nextHopAddr);
+                    break;
+                case INetfilter::IHook::LOCALIN:
+                    reassembleAndDeliverFinish(datagram);
+                    break;
+                case INetfilter::IHook::FORWARD:
+                    routeUnicastPacketFinish(datagram, iter->inIE, iter->outIE, iter->nextHopAddr);
+                    break;
+                default:
+                    throw cRuntimeError("Unknown hook ID: %d", (int)(iter->hookType));
+                    break;
+            }
+            queuedDatagramsForHooks.erase(iter);
+            return;
+        }
+    }
+}
+
+INetfilter::IHook::Result IPv4_paser::datagramPreRoutingHook(IPv4Datagram* datagram, const InterfaceEntry* inIE, const InterfaceEntry*& outIE, IPv4Address& nextHopAddr)
+{
+    for (HookList::iterator iter = hooks.begin(); iter != hooks.end(); iter++) {
+        IHook::Result r = iter->second->datagramPreRoutingHook(datagram, inIE, outIE, nextHopAddr);
+        switch(r)
+        {
+            case INetfilter::IHook::ACCEPT: break;   // continue iteration
+            case INetfilter::IHook::DROP:   delete datagram; return r;
+            case INetfilter::IHook::QUEUE:  queuedDatagramsForHooks.push_back(QueuedDatagramForHook(datagram, inIE, outIE, nextHopAddr, INetfilter::IHook::PREROUTING)); return r;
+            case INetfilter::IHook::STOLEN: return r;
+            default: throw cRuntimeError("Unknown Hook::Result value: %d", (int)r);
+        }
+    }
+    return INetfilter::IHook::ACCEPT;
+}
+
+INetfilter::IHook::Result IPv4_paser::datagramForwardHook(IPv4Datagram* datagram, const InterfaceEntry* inIE, const InterfaceEntry*& outIE, IPv4Address& nextHopAddr)
+{
+    for (HookList::iterator iter = hooks.begin(); iter != hooks.end(); iter++) {
+        IHook::Result r = iter->second->datagramForwardHook(datagram, inIE, outIE, nextHopAddr);
+        switch(r)
+        {
+            case INetfilter::IHook::ACCEPT: break;   // continue iteration
+            case INetfilter::IHook::DROP:   delete datagram; return r;
+            case INetfilter::IHook::QUEUE:  queuedDatagramsForHooks.push_back(QueuedDatagramForHook(datagram, inIE, outIE, nextHopAddr, INetfilter::IHook::FORWARD)); return r;
+            case INetfilter::IHook::STOLEN: return r;
+            default: throw cRuntimeError("Unknown Hook::Result value: %d", (int)r);
+        }
+    }
+    return INetfilter::IHook::ACCEPT;
+}
+
+INetfilter::IHook::Result IPv4_paser::datagramPostRoutingHook(IPv4Datagram* datagram, const InterfaceEntry* inIE, const InterfaceEntry*& outIE, IPv4Address& nextHopAddr)
+{
+    for (HookList::iterator iter = hooks.begin(); iter != hooks.end(); iter++) {
+        IHook::Result r = iter->second->datagramPostRoutingHook(datagram, inIE, outIE, nextHopAddr);
+        switch(r)
+        {
+            case INetfilter::IHook::ACCEPT: break;   // continue iteration
+            case INetfilter::IHook::DROP:   delete datagram; return r;
+            case INetfilter::IHook::QUEUE:  queuedDatagramsForHooks.push_back(QueuedDatagramForHook(datagram, inIE, outIE, nextHopAddr, INetfilter::IHook::POSTROUTING)); return r;
+            case INetfilter::IHook::STOLEN: return r;
+            default: throw cRuntimeError("Unknown Hook::Result value: %d", (int)r);
+        }
+    }
+    return INetfilter::IHook::ACCEPT;
+}
 
 bool IPv4_paser::handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback)
 {
@@ -997,6 +1208,7 @@ void IPv4_paser::flush()
 {
     delete cancelService();
     queue.clear();
+    pendingPackets.clear();
 }
 
 bool IPv4_paser::isNodeUp()
@@ -1005,8 +1217,63 @@ bool IPv4_paser::isNodeUp()
     return !nodeStatus || nodeStatus->getState() == NodeStatus::UP;
 }
 
+INetfilter::IHook::Result IPv4_paser::datagramLocalInHook(IPv4Datagram* datagram, const InterfaceEntry* inIE)
+{
+    for (HookList::iterator iter = hooks.begin(); iter != hooks.end(); iter++) {
+        IHook::Result r = iter->second->datagramLocalInHook(datagram, inIE);
+        switch(r)
+        {
+            case INetfilter::IHook::ACCEPT: break;   // continue iteration
+            case INetfilter::IHook::DROP:   delete datagram; return r;
+            case INetfilter::IHook::QUEUE:  queuedDatagramsForHooks.push_back(QueuedDatagramForHook(dynamic_cast<IPv4Datagram *>(datagram), inIE, NULL, IPv4Address::UNSPECIFIED_ADDRESS, INetfilter::IHook::LOCALIN)); return r;
+            case INetfilter::IHook::STOLEN: return r;
+            default: throw cRuntimeError("Unknown Hook::Result value: %d", (int)r);
+        }
+    }
+    return INetfilter::IHook::ACCEPT;
+}
+
+INetfilter::IHook::Result IPv4_paser::datagramLocalOutHook(IPv4Datagram* datagram, const InterfaceEntry*& outIE, IPv4Address& nextHopAddr)
+{
+    for (HookList::iterator iter = hooks.begin(); iter != hooks.end(); iter++) {
+        IHook::Result r = iter->second->datagramLocalOutHook(datagram, outIE, nextHopAddr);
+        switch(r)
+        {
+            case INetfilter::IHook::ACCEPT: break;   // continue iteration
+            case INetfilter::IHook::DROP:   delete datagram; return r;
+            case INetfilter::IHook::QUEUE:  queuedDatagramsForHooks.push_back(QueuedDatagramForHook(datagram, NULL, outIE, nextHopAddr, INetfilter::IHook::LOCALOUT)); return r;
+            case INetfilter::IHook::STOLEN: return r;
+            default: throw cRuntimeError("Unknown Hook::Result value: %d", (int)r);
+        }
+    }
+    return INetfilter::IHook::ACCEPT;
+}
+
+void IPv4_paser::sendOnTransPortOutGateByProtocolId(cPacket *packet, int protocolId)
+{
+    int gateindex = mapping.getOutputGateForProtocol(protocolId);
+    cGate* outGate = gate("transportOut", gateindex);
+    send(packet, outGate);
+}
+
+void IPv4_paser::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj)
+{
+    Enter_Method_Silent();
+
+    if (signalID == completedARPResolutionSignal)
+    {
+        IARPCache::Notification *entry = check_and_cast<IARPCache::Notification *>(obj);
+        arpResolutionCompleted(entry);
+    }
+    if (signalID == failedARPResolutionSignal)
+    {
+        IARPCache::Notification *entry = check_and_cast<IARPCache::Notification *>(obj);
+        arpResolutionTimedOut(entry);
+    }
+}
+
 #ifdef NEWFRAGMENT
-void IPv4_paser::fragmentAndSend(IPv4Datagram *datagram, InterfaceEntry *ie, IPv4Address nextHopAddr)
+void IPv4_paser::fragmentAndSend(IPv4Datagram *datagram, const InterfaceEntry *ie, IPv4Address nextHopAddr)
 {
     // fill in source address
     if (datagram->getSrcAddress().isUnspecified())
@@ -1043,7 +1310,7 @@ void IPv4_paser::fragmentAndSend(IPv4Datagram *datagram, InterfaceEntry *ie, IPv
     {
         EV << "datagram larger than MTU and don't fragment bit set, sending ICMP_DESTINATION_UNREACHABLE\n";
         icmpAccess.get()->sendErrorMessage(datagram, -1 /*TODO*/, ICMP_DESTINATION_UNREACHABLE,
-                                                             ICMP_FRAGMENTATION_ERROR_CODE);
+                ICMP_DU_FRAGMENTATION_NEEDED);
         numDropped++;
         return;
     }
@@ -1141,74 +1408,12 @@ void IPv4_paser::reassembleAndDeliver(IPv4Datagram *datagram)
         EV << "This fragment completes the datagram.\n";
     }
 
-    int protocol = datagram->getTransportProtocol();
+    if (datagramLocalInHook(datagram, getSourceInterfaceFrom(datagram)) != INetfilter::IHook::ACCEPT)
+    {
+        return;
+    }
 
-    if (protocol==IP_PROT_ICMP)
-    {
-        // incoming ICMP packets are handled specially
-        handleReceivedICMP(check_and_cast<ICMPMessage *>(decapsulate(datagram)));
-        numLocalDeliver++;
-    }
-    else if (protocol==IP_PROT_IP)
-    {
-        // tunnelled IP packets are handled separately
-        send(decapsulate(datagram), "preRoutingOut");//FIXME There is no "preRoutingOut" gate in the IPv4 module.
-    }
-    else if (protocol==IP_PROT_DSR)
-    {
-#ifdef WITH_MANET
-        // If the protocol is Dsr Send directely the datagram to manet routing
-        if (manetRouting)
-        sendToManet(datagram);
-#else
-        throw cRuntimeError("DSR protocol packet received, but MANET routing support is not available.");
-#endif
-    }
-    else
-    {
-        // JcM Fix: check if the transportOut port are connected, otherwise
-        // discard the packet
-        int gateindex = mapping.getOutputGateForProtocol(protocol);
-        //add by Eugen
-         EV << "protocol = " << protocol << "\n";
-         if(protocol==IP_PROT_UDP) {
-             IPv4Datagram *tempDatagram = datagram->dup();
-             cPacket *packet=NULL;
-             if (protocol!=IP_PROT_DSR)
-             {
-                 packet = decapsulate(tempDatagram);
-             }
-             cPacket *temp = packet;
-             if (dynamic_cast<UDPPacket*>(temp)) {
-                 EV << "UDP OK!\n";
-                 UDPPacket *udpPacket = check_and_cast<UDPPacket*>(temp);
-                 if(udpPacket->getDestinationPort() == 653) {
-                     EV << "found PASER UDP Packet\n";
-                     gateindex = 7;
-                 }
-                 else{
-                     EV << "";
-                 }
-             }
-             else {
-                 EV << "UDP NOT OK!\n";
-             }
-             delete packet;
- //            delete tempDatagram;
-         }
-         //end add
-        if (gate("transportOut", gateindex)->isPathOK())
-        {
-            send(decapsulate(datagram), "transportOut", gateindex);
-            numLocalDeliver++;
-        }
-        else
-        {
-            EV_WARN << "Transport protocol not connected, discarding packet" << endl;
-            int inputInterfaceId = getSourceInterfaceFrom(datagram)->getInterfaceId();
-            icmpAccess.get()->sendErrorMessage(datagram, inputInterfaceId, ICMP_DESTINATION_UNREACHABLE, ICMP_DU_PROTOCOL_UNREACHABLE);
-        }
-    }
+    reassembleAndDeliverFinish(datagram);
 }
 #endif
 
@@ -1231,7 +1436,7 @@ const IPv4RouteRule * IPv4_paser::checkInputRule(const IPv4Datagram* datagram)
     		dport = aux->getDestPort();
     	}
     	IPv4Datagram *pkt = const_cast<IPv4Datagram*>(datagram);
-    	InterfaceEntry *iface=getSourceInterfaceFrom(pkt);
+    	const InterfaceEntry *iface=getSourceInterfaceFrom(pkt);
     	const IPv4RouteRule *rule = rt->findRule(false,protocol,sport,datagram->getSrcAddress(),dport,datagram->getDestAddress(),iface);
     	return rule;
     }
@@ -1297,4 +1502,4 @@ const IPv4RouteRule * IPv4_paser::checkOutputRuleMulticast(const IPv4Datagram* d
 }
 
 
-#endif
+

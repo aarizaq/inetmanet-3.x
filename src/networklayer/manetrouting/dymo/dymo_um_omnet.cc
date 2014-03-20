@@ -71,7 +71,9 @@ std::map<ManetAddress,u_int32_t *> DYMOUM::mapSeqNum;
 
 void DYMOUM::initialize(int stage)
 {
-    if (stage==4)
+    ManetRoutingBase::initialize(stage);
+
+    if (stage == 4)
     {
 
 #ifndef DYMO_UM_GLOBAL_STATISTISTIC
@@ -98,8 +100,6 @@ void DYMOUM::initialize(int stage)
 
         /* From debug.c */
         /* Note: log_nmsgs was never used anywhere */
-
-        debug = 0;
 
         gateWayAddress = new IPv4Address("0.0.0.0");
         /* Set host parameters */
@@ -1847,7 +1847,7 @@ void DYMOUM::processLocatorDisAssoc(const cObject *details)
 }
 
 
-bool DYMOUM::startApp(IDoneCallback *doneCallback)
+bool DYMOUM::handleNodeStart(IDoneCallback *doneCallback)
 {
     if (isRoot)
     {
@@ -1859,7 +1859,7 @@ bool DYMOUM::startApp(IDoneCallback *doneCallback)
     return true;
 }
 
-bool DYMOUM::stopApp(IDoneCallback *doneCallback)
+bool DYMOUM::handleNodeShutdown(IDoneCallback *doneCallback)
 {
 
     // Clean all internal tables
@@ -1891,8 +1891,33 @@ bool DYMOUM::stopApp(IDoneCallback *doneCallback)
         return true;
 }
 
-bool DYMOUM::crashApp(IDoneCallback *doneCallback)
+void DYMOUM::handleNodeCrash()
 {
-    return stopApp(doneCallback);
+    // Clean all internal tables
+        packet_queue_destroy();
+        if (macToIpAdress)
+            delete macToIpAdress;
+    // Routing table
+        rtable_destroy();
+        while (!dymoPendingRreq->empty())
+        {
+            timer_remove(&dymoPendingRreq->begin()->second->timer);
+            delete dymoPendingRreq->begin()->second;
+            dymoPendingRreq->erase(dymoPendingRreq->begin());
+        }
+        while (!dymoBlackList->empty())
+        {
+            timer_remove(&dymoBlackList->begin()->second->timer);
+            delete dymoBlackList->begin()->second;
+            dymoBlackList->erase(dymoBlackList->begin());
+        }
+        while (!dymoNbList->empty())
+        {
+            timer_remove(&dymoNbList->back()->timer);
+            delete dymoNbList->back();
+            dymoNbList->pop_back();
+        }
+        cancelEvent(sendMessageEvent);
+        dymoTimerList->clear();
 }
 

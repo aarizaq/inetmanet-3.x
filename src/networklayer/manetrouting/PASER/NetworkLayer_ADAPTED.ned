@@ -219,10 +219,8 @@ module NetworkLayer_Paser
         }
         arp: ARP {
             parameters:
-                proxyARP = proxyARP;
+                respondToProxyARP = proxyARP;
                 @display("p=202,142;q=pendingQueue");
-            gates:
-                nicOut[sizeof(ifOut)];
         }
         icmp: ICMP {
             parameters:
@@ -272,16 +270,14 @@ module NetworkLayer_Paser
 
         icmp.errorOut --> errorHandling.in;
 
-        ip.queueOut --> arp.ipIn;
+        ip.arpOut --> arp.netwIn;
+        ip.arpIn <-- arp.netwOut;
 
         igmp.routerOut --> igmpOut;
         igmp.routerIn <-- igmpIn;
 
         for i=0..sizeof(ifIn)-1 {
             ifIn[i] --> { @display("m=s"); } --> ip.queueIn[i];
-        }
-        for i=0..sizeof(ifOut)-1 {
-            arp.nicOut[i] --> { @display("m=s"); } --> ifOut[i];
         }
 }
 

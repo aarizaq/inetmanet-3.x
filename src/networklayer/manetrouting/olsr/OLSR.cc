@@ -449,10 +449,11 @@ OLSR_MsgTimer::expire()
 
 ///
 ///
-void
-OLSR::initialize(int stage)
+void OLSR::initialize(int stage)
 {
-    if (stage==4)
+    ManetRoutingBase::initialize(stage);
+
+    if (stage == 4)
     {
 
        if (isInMacLayer())
@@ -3206,7 +3207,7 @@ OLSR::isNodeCandidate(const nsaddr_t &src_addr)
     return false;
 }
 
-bool OLSR::startApp(IDoneCallback *doneCallback)
+bool OLSR::handleNodeStart(IDoneCallback *doneCallback)
 {
     hello_timer_.resched(SIMTIME_DBL(hello_ival_));
     tc_timer_.resched(SIMTIME_DBL(hello_ival_));
@@ -3215,7 +3216,7 @@ bool OLSR::startApp(IDoneCallback *doneCallback)
     return true;
 }
 
-bool OLSR::stopApp(IDoneCallback *doneCallback)
+bool OLSR::handleNodeShutdown(IDoneCallback *doneCallback)
 {
 
     rtable_.clear();
@@ -3239,7 +3240,23 @@ bool OLSR::stopApp(IDoneCallback *doneCallback)
     return true;
 }
 
-bool OLSR::crashApp(IDoneCallback *doneCallback)
+void OLSR::handleNodeCrash()
 {
-    return stopApp(doneCallback);
+    rtable_.clear();
+    msgs_.clear();
+    if (timerMessage)
+         cancelEvent(timerMessage);
+
+    while (timerQueuePtr && timerQueuePtr->size()>0)
+    {
+        OLSR_Timer * timer = timerQueuePtr->begin()->second;
+        timerQueuePtr->erase(timerQueuePtr->begin());
+        if (helloTimer==timer)
+            continue;
+        else if (tcTimer==timer)
+            continue;
+        else if (midTimer==timer)
+            continue;
+        delete timer;
+    }
 }

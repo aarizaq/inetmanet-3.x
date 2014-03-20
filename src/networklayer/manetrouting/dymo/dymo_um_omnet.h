@@ -254,9 +254,9 @@ class DYMOUM : public ManetRoutingBase
     virtual bool getNextHopGroup(const AddressGroup &gr, ManetAddress &add, int &iface, ManetAddress&);
     virtual int  getRouteGroup(const ManetAddress&, std::vector<ManetAddress> &, ManetAddress&, bool &, int group = 0);
     virtual bool getNextHopGroup(const ManetAddress&, ManetAddress &add, int &iface, ManetAddress&, bool &, int group = 0);
-    virtual bool startApp(IDoneCallback *doneCallback);
-    virtual bool stopApp(IDoneCallback *doneCallback);
-    virtual bool crashApp(IDoneCallback *doneCallback);
+    virtual bool handleNodeStart(IDoneCallback *doneCallback);
+    virtual bool handleNodeShutdown(IDoneCallback *doneCallback);
+    virtual void handleNodeCrash();
 
   protected:
     void drop(cPacket *p, int cause = 0)
@@ -271,8 +271,8 @@ class DYMOUM : public ManetRoutingBase
     IPv4Datagram *pkt_decapsulate(IPv4Datagram *);
     virtual void handleMessage(cMessage *msg);
     virtual void finish();
-    int numInitStages() const  {return 5;}
-    void initialize(int stage);
+    virtual int numInitStages() const { return 5; }
+    virtual void initialize(int stage);
     void recvDYMOUMPacket(cMessage * p);
     void processPacket(IPv4Datagram *, unsigned int);
     void processMacPacket(cPacket * p, const ManetAddress &, const ManetAddress &, int);

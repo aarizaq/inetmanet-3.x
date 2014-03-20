@@ -262,7 +262,7 @@ bool IPvXAddressResolver::getIPv4AddressFrom(IPvXAddress& retAddr, IInterfaceTab
     for (int i=0; i < ift->getNumInterfaces(); i++)
     {
         InterfaceEntry *ie = ift->getInterface(i);
-        if (!ie->ipv4Data() || ie->isLoopback())
+        if (ie->isLoopback())
             continue;
         if (getInterfaceIPv4Address(retAddr, ie, netmask))
             return true;
@@ -454,6 +454,7 @@ cModule *IPvXAddressResolver::findHostWithAddress(const IPvXAddress & add)
     }
     return NULL;
 }
+
 
 cModule * IPvXAddressResolver::findModuleWithAddress(const IPvXAddress & add)
 {

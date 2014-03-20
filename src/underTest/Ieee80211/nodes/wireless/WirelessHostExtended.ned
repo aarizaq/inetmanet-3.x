@@ -12,12 +12,13 @@ import inet.applications.IUDPApp;
 import inet.base.NotificationBoard;
 import inet.linklayer.ethernet.EthernetInterface;
 import inet.linklayer.ppp.PPPInterface;
-import inet.mobility.IMobility;
+import inet.mobility.contract.IMobility;
 import inet.networklayer.common.InterfaceTable;
 import inet.networklayer.ipv4.RoutingTable;
 import inet.nodes.inet.NetworkLayer;
 import inet.transport.tcp.TCP;
 import inet.transport.udp.UDP;
+import inet.linklayer.loopback.LoopbackInterface;
 
 import inet.linklayer.ieee80211.mgmt.Ieee80211AgentSTA;
 import inet.underTest.Ieee80211.linklayer.ieee80211.mgmt.Ieee80211NicExtended;
@@ -37,6 +38,9 @@ module WirelessHostExtended
         string mobilityType = default("NoMobility");
         string mgmtType = default("Ieee80211MgmtSTAExtended");
         string agentType = default("Ieee80211AgentSTAExtended");
+        bool hasTcp = default(numTcpApps>0);
+        bool hasUdp = default(numUdpApps>0);
+        bool hasSctp = default(numSctpApps>0);
         @display("i=device/wifilaptop;bgb=516,438");
     gates:
         inout pppg[];
@@ -87,6 +91,9 @@ module WirelessHostExtended
                 ifIn[(sizeof(pppg)+sizeof(ethg))+1];
                 ifOut[(sizeof(pppg)+sizeof(ethg))+1];
         }
+        lo0: LoopbackInterface {
+            @display("p=78,406");
+        }
         ppp[sizeof(pppg)]: PPPInterface {
             parameters:
                 @display("p=294,353,row,90;q=txQueue");
@@ -109,21 +116,25 @@ module WirelessHostExtended
             @display("p=167,250");
         }
     connections allowunconnected:
+        
+        networkLayer.ifOut++ --> lo0.upperLayerIn;
+        lo0.upperLayerOut --> networkLayer.ifIn++;
+        
         for i=0..numTcpApps-1 {
             tcpApp[i].tcpOut --> tcp.appIn++;
             tcpApp[i].tcpIn <-- tcp.appOut++;
         }
 
-        tcp.ipOut --> networkLayer.tcpIn;
-        tcp.ipIn <-- networkLayer.tcpOut;
+        tcp.ipOut --> networkLayer.transportIn++ if hasTcp;
+        tcp.ipIn <-- networkLayer.transportOut++ if hasTcp;
 
         for i=0..numUdpApps-1 {
             udpApp[i].udpOut --> udp.appIn++;
             udpApp[i].udpIn <-- udp.appOut++;
         }
 
-        udp.ipOut --> networkLayer.udpIn;
-        udp.ipIn <-- networkLayer.udpOut;
+        udp.ipOut --> networkLayer.transportIn++ if hasUdp;
+        udp.ipIn <-- networkLayer.transportOut++ if hasUdp;
 
         for i=0..numPingApps-1 {
             networkLayer.pingOut++ --> pingApp[i].pingIn;
