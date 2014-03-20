@@ -31,11 +31,12 @@ Define_Module(UDPBasicFlooding);
 
 int UDPBasicFlooding::counter;
 
-simsignal_t UDPBasicFlooding::sentPkSignal = SIMSIGNAL_NULL;
-simsignal_t UDPBasicFlooding::rcvdPkSignal = SIMSIGNAL_NULL;
-simsignal_t UDPBasicFlooding::outOfOrderPkSignal = SIMSIGNAL_NULL;
-simsignal_t UDPBasicFlooding::dropPkSignal = SIMSIGNAL_NULL;
-simsignal_t UDPBasicFlooding::floodPkSignal = SIMSIGNAL_NULL;
+simsignal_t UDPBasicFlooding::sentPkSignal = registerSignal("sentPk");
+simsignal_t UDPBasicFlooding::rcvdPkSignal = registerSignal("rcvdPk");
+simsignal_t UDPBasicFlooding::outOfOrderPkSignal = registerSignal("outOfOrderPk");
+simsignal_t UDPBasicFlooding::dropPkSignal = registerSignal("dropPk");
+simsignal_t UDPBasicFlooding::floodPkSignal = registerSignal("floodPk");
+
 
 UDPBasicFlooding::UDPBasicFlooding()
 {
@@ -57,7 +58,7 @@ void UDPBasicFlooding::initialize(int stage)
 {
     // because of IPvXAddressResolver, we need to wait until interfaces are registered,
     // address auto-assignment takes place etc.
-    AppBase::initialize(stage);
+    ApplicationBase::initialize(stage);
     if (stage == 0)
     {
         counter = 0;
@@ -131,11 +132,6 @@ void UDPBasicFlooding::processStart()
     }
     IPvXAddress myAddr = IPvXAddressResolver().resolve(this->getParentModule()->getFullPath().c_str());
     myId = this->getParentModule()->getId();
-    sentPkSignal = registerSignal("sentPk");
-    rcvdPkSignal = registerSignal("rcvdPk");
-    outOfOrderPkSignal = registerSignal("outOfOrderPk");
-    dropPkSignal = registerSignal("dropPk");
-    floodPkSignal = registerSignal("floodPk");
 }
 
 
@@ -353,7 +349,7 @@ bool UDPBasicFlooding::sendBroadcast(const IPvXAddress &dest, cPacket *pkt)
 }
 
 
-bool UDPBasicFlooding::startApp(IDoneCallback *doneCallback)
+bool UDPBasicFlooding::handleNodeStart(IDoneCallback *doneCallback)
 {
     simtime_t start = std::max(startTime, simTime());
 
@@ -379,7 +375,7 @@ bool UDPBasicFlooding::startApp(IDoneCallback *doneCallback)
     return true;
 }
 
-bool UDPBasicFlooding::stopApp(IDoneCallback *doneCallback)
+bool UDPBasicFlooding::handleNodeShutdown(IDoneCallback *doneCallback)
 {
     if (timerNext)
         cancelEvent(timerNext);
@@ -388,10 +384,9 @@ bool UDPBasicFlooding::stopApp(IDoneCallback *doneCallback)
     return true;
 }
 
-bool UDPBasicFlooding::crashApp(IDoneCallback *doneCallback)
+void UDPBasicFlooding::handleNodeCrash()
 {
     if (timerNext)
         cancelEvent(timerNext);
     activeBurst = false;
-    return true;
 }

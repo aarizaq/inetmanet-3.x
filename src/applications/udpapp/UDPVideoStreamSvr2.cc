@@ -36,8 +36,8 @@
 
 Define_Module(UDPVideoStreamSvr2);
 
-simsignal_t UDPVideoStreamSvr2::reqStreamBytesSignal = SIMSIGNAL_NULL;
-simsignal_t UDPVideoStreamSvr2::sentPkSignal = SIMSIGNAL_NULL;
+simsignal_t UDPVideoStreamSvr2::reqStreamBytesSignal = registerSignal("reqStreamBytes");
+simsignal_t UDPVideoStreamSvr2::sentPkSignal = registerSignal("sentPk");
 
 inline std::ostream& operator<<(std::ostream& out, const UDPVideoStreamSvr2::VideoStreamData& d)
 {
@@ -115,7 +115,7 @@ UDPVideoStreamSvr2::~UDPVideoStreamSvr2()
 
 void UDPVideoStreamSvr2::initialize(int stage)
 {
-    AppBase::initialize(stage);
+    ApplicationBase::initialize(stage);
     if (stage == 0)
     {
         sendInterval = &par("sendInterval");
@@ -136,8 +136,6 @@ void UDPVideoStreamSvr2::initialize(int stage)
         // statistics
         numStreams = 0;
         numPkSent = 0;
-        reqStreamBytesSignal = registerSignal("reqStreamBytes");
-        sentPkSignal = registerSignal("sentPk");
 
         trace.clear();
         std::string fileName(par("traceFileName").stringValue());
@@ -415,7 +413,7 @@ void UDPVideoStreamSvr2::clearStreams()
     streamVector.clear();
 }
 
-bool UDPVideoStreamSvr2::startApp(IDoneCallback *doneCallback)
+bool UDPVideoStreamSvr2::handleNodeStart(IDoneCallback *doneCallback)
 {
     socket.setOutputGate(gate("udpOut"));
     socket.bind(localPort);
@@ -423,15 +421,14 @@ bool UDPVideoStreamSvr2::startApp(IDoneCallback *doneCallback)
     return true;
 }
 
-bool UDPVideoStreamSvr2::stopApp(IDoneCallback *doneCallback)
+bool UDPVideoStreamSvr2::handleNodeShutdown(IDoneCallback *doneCallback)
 {
     clearStreams();
     //TODO if(socket.isOpened()) socket.close();
     return true;
 }
 
-bool UDPVideoStreamSvr2::crashApp(IDoneCallback *doneCallback)
+void UDPVideoStreamSvr2::handleNodeCrash()
 {
     clearStreams();
-    return true;
 }

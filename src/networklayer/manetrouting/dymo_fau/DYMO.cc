@@ -1235,7 +1235,7 @@ void DYMO::processLinkBreak(const cObject *details)
 }
 
 
-bool DYMO::startApp(IDoneCallback *doneCallback)
+bool DYMO::handleNodeStart(IDoneCallback *doneCallback)
 {
 
     rateLimiterRREQ = new DYMO_TokenBucket(RREQ_RATE_LIMIT, RREQ_BURST_LIMIT, simTime());
@@ -1244,7 +1244,7 @@ bool DYMO::startApp(IDoneCallback *doneCallback)
     return true;
 }
 
-bool DYMO::stopApp(IDoneCallback *doneCallback)
+bool DYMO::handleNodeShutdown(IDoneCallback *doneCallback)
 {
     delete dymo_routingTable;
     outstandingRREQList.delAll();
@@ -1254,9 +1254,13 @@ bool DYMO::stopApp(IDoneCallback *doneCallback)
     return true;
 }
 
-bool DYMO::crashApp(IDoneCallback *doneCallback)
+void DYMO::handleNodeCrash()
 {
-    return stopApp(doneCallback);
+    delete dymo_routingTable;
+    outstandingRREQList.delAll();
+    delete rateLimiterRREQ;
+    delete queuedDataPackets;
+    cancelEvent(timerMsg);
 }
 
 

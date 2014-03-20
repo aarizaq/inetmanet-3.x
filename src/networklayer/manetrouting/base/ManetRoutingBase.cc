@@ -1930,20 +1930,20 @@ bool ManetRoutingBase::handleOperationStage(LifecycleOperation *operation, int s
     {
         if (stage == NodeStartOperation::STAGE_APPLICATION_LAYER) {
             isOperational = true;
-            ret = startApp(doneCallback);
+            ret = handleNodeStart(doneCallback);
         }
     }
     else if (dynamic_cast<NodeShutdownOperation *>(operation))
     {
         if (stage == NodeShutdownOperation::STAGE_APPLICATION_LAYER) {
-            ret = stopApp(doneCallback);
+            ret = handleNodeShutdown(doneCallback);
             isOperational = false;
         }
     }
     else if (dynamic_cast<NodeCrashOperation *>(operation))
     {
         if (stage == NodeCrashOperation::STAGE_CRASH) {
-            ret = crashApp(doneCallback);
+            handleNodeCrash();
             isOperational = false;
         }
     }

@@ -1907,7 +1907,7 @@ void NS_CLASS actualizeTablesWithCollaborative(const ManetAddress &dest)
 }
 
 
-bool NS_CLASS startApp(IDoneCallback *doneCallback)
+bool NS_CLASS handleNodeStart(IDoneCallback *doneCallback)
 {
     if (isRoot)
     {
@@ -1924,7 +1924,7 @@ bool NS_CLASS startApp(IDoneCallback *doneCallback)
     return true;
 }
 
-bool NS_CLASS stopApp(IDoneCallback *doneCallback)
+bool NS_CLASS handleNodeShutdown(IDoneCallback *doneCallback)
 {
 
     while (!aodvRtTableMap.empty())
@@ -1954,8 +1954,31 @@ bool NS_CLASS stopApp(IDoneCallback *doneCallback)
     return true;
 }
 
-bool NS_CLASS crashApp(IDoneCallback *doneCallback)
+void NS_CLASS handleNodeCrash()
 {
-    return stopApp(doneCallback);
+    while (!aodvRtTableMap.empty())
+    {
+        free (aodvRtTableMap.begin()->second);
+        aodvRtTableMap.erase(aodvRtTableMap.begin());
+    }
+    while (!rreq_records.empty())
+    {
+        free (rreq_records.back());
+        rreq_records.pop_back();
+    }
+    while (!rreq_blacklist.empty())
+    {
+        free (rreq_blacklist.begin()->second);
+        rreq_blacklist.erase(rreq_blacklist.begin());
+    }
+
+    while (!seekhead.empty())
+    {
+        delete (seekhead.begin()->second);
+        seekhead.erase(seekhead.begin());
+    }
+    packet_queue_destroy();
+    cancelEvent(sendMessageEvent);
+    log_cleanup();
 }
 

@@ -487,7 +487,7 @@ BatmanPacket *Batman::buildDefaultBatmanPkt(const BatmanIf *batman_if)
 }
 
 
-bool Batman::startApp(IDoneCallback *doneCallback)
+bool Batman::handleNodeStart(IDoneCallback *doneCallback)
 {
     for (unsigned int i = 0; i < if_list.size(); i++)
     {
@@ -502,7 +502,7 @@ bool Batman::startApp(IDoneCallback *doneCallback)
     return true;
 }
 
-bool Batman::stopApp(IDoneCallback *doneCallback)
+bool Batman::handleNodeShutdown(IDoneCallback *doneCallback)
 {
 
     while (!origMap.empty())
@@ -538,7 +538,37 @@ bool Batman::stopApp(IDoneCallback *doneCallback)
     return true;
 }
 
-bool Batman::crashApp(IDoneCallback *doneCallback)
+void Batman::handleNodeCrash()
 {
-    return stopApp(doneCallback);
+
+    while (!origMap.empty())
+    {
+        delete origMap.begin()->second;
+        origMap.erase(origMap.begin());
+    }
+    while (!if_list.empty())
+    {
+        delete if_list.back();
+        if_list.pop_back();
+    }
+    while (!gw_list.empty())
+    {
+        delete gw_list.back();
+        gw_list.pop_back();
+    }
+    while (!forw_list.empty())
+    {
+        delete forw_list.back()->pack_buff;
+        delete forw_list.back();
+        forw_list.pop_back();
+    }
+    cancelEvent(timer);
+    while (!hnaMap.empty())
+    {
+        delete hnaMap.begin()->second;
+        hnaMap.erase(hnaMap.begin());
+    }
+    hna_list.clear();
+    hna_buff_local.clear();
+    hna_chg_list.clear();
 }

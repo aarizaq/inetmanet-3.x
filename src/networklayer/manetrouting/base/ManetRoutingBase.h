@@ -454,9 +454,9 @@ class INET_API ManetRoutingBase : public cSimpleModule, public INotifiable, prot
     void setAddressSize(int p) {addressSizeBytes = p;}
 
     virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback);
-    virtual bool startApp(IDoneCallback *doneCallback) = 0;
-    virtual bool stopApp(IDoneCallback *doneCallback) = 0;
-    virtual bool crashApp(IDoneCallback *doneCallback) = 0;
+    virtual bool handleNodeStart(IDoneCallback *doneCallback) = 0;
+    virtual bool handleNodeShutdown(IDoneCallback *doneCallback) = 0;
+    virtual void handleNodeCrash() = 0;
 
 };
 
