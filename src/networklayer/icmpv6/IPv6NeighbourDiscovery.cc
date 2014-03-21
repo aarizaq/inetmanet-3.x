@@ -110,11 +110,12 @@ void IPv6NeighbourDiscovery::initialize(int stage)
                 createRATimer(ie);
             }
         }
+
         //This simulates random node bootup time. Link local address assignment
         //takes place during this time.
         cMessage *msg = new cMessage("assignLinkLocalAddr", MK_ASSIGN_LINKLOCAL_ADDRESS);
-        //We want routers to boot up faster!
 
+        //We want routers to boot up faster!
         if (rt6->isRouter())
             scheduleAt(simTime() + uniform(0, 0.3), msg); //Random Router bootup time
         else
@@ -940,9 +941,6 @@ void IPv6NeighbourDiscovery::makeTentativeAddressPermanent(const IPv6Address& te
         }
 
         dadGlobalList.erase(it->first);
-#ifdef WITH_HIP
-        NotificationBoardAccess().get()->fireChangeNotification(NF_IPv6_HANDOVER_OCCURRED, NULL);
-#endif
     }
 
     // an optimization to make sure that the access router on the link gets our L2 address
@@ -2629,10 +2627,6 @@ void IPv6NeighbourDiscovery::processRAPrefixInfoForAddrAutoConf(
                 // if the link local address is tentative, then we make the global unicast address tentative as well
                 ie->ipv6Data()->assignAddress(newAddr, isLinkLocalTentative,
                         simTime() + validLifetime, simTime() + preferredLifetime, hFlag);
-#ifdef WITH_HIP
-                if(!isLinkLocalTentative)
-                    NotificationBoardAccess().get()->fireChangeNotification(NF_IPv6_HANDOVER_OCCURRED, NULL);
-#endif
             }
             else
             {
