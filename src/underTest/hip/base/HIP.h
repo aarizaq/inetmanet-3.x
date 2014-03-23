@@ -54,6 +54,8 @@ class INET_API HIP : public cSimpleModule, public INotifiable
 	int hipMsgSent;
 	cOutVector hipVector;
 	int currentIfId;
+	bool udpPresent;
+	bool tcpPresent;
 
    public:
     //constructor/destructor
