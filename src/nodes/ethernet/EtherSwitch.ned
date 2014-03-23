@@ -22,8 +22,8 @@ import inet.base.NotificationBoard;
 import inet.linklayer.IMACRelayUnit;
 import inet.linklayer.IWiredNic;
 import inet.linklayer.configurator.L2NodeConfigurator;
-import inet.linklayer.ethernet.switch.IMACAddressTable;
-import inet.linklayer.ieee8021d.ISpanningTree;
+import inet.linklayer.IMACAddressTable;
+import inet.linklayer.ISpanningTree;
 import inet.networklayer.common.InterfaceTable;
 import inet.status.NodeStatus;
 

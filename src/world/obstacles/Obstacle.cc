@@ -31,6 +31,14 @@ Obstacle::Obstacle(std::string id, double attenuationPerWall, double attenuation
     type = building;
 }
 
+Obstacle::Obstacle(std::string id, double mean, double deviation,Type t) :
+    visualRepresentation(0),
+    id(id),
+    mean(mean),
+    deviation(deviation),
+    type(t){
+}
+
 void Obstacle::setShape(Coords shape) {
     coords = shape;
     bboxP1 = Coord(1e7, 1e7);
@@ -236,16 +244,33 @@ double Obstacle::calculateReceivedPower(double pSend, double carrierFrequency, c
 
     // calculate attenuation
     double numWalls = intersectAt.size();
-    if (numWalls > 0 && type == probability)
+    if (numWalls == 0)
+        return pSend;
+
+    if (type == probability)
     {
-        if (attenuationPerMeter >= 1)
+        if (mean >= 1)
             return pSend;
         double prob = uniform(0,1);
-        if (prob>attenuationPerMeter)
+        if (prob>mean)
             return 0;
         return pSend;
     }
-    double totalDistance = senderPos.distance(receiverPos);
-    double attenuation = (attenuationPerWall * numWalls) + (attenuationPerMeter * fractionInObstacle * totalDistance);
+
+    double attenuation;
+    if (type == building)
+    {
+        double totalDistance = senderPos.distance(receiverPos);
+        attenuation = (attenuationPerWall * numWalls) + (attenuationPerMeter * fractionInObstacle * totalDistance);
+    }
+    else if (type == normalDist)
+        attenuation = normal(mean,deviation);
+    else if (type == lognormalDist)
+        attenuation = lognormal(mean,deviation);
+    else if (type == exponentialDist)
+        attenuation = exponential(mean);
+    else
+        opp_error("obstacle type not supported");
+
     return pSend * pow(10.0, -attenuation/10.0);
 }
