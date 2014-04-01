@@ -62,6 +62,7 @@ void Ieee80211AgentSTA::initialize(int stage)
         scheduleAt(simTime()+startingTime, new cMessage("startUp", MK_STARTUP));
 
         myIface = NULL;
+        isOperational = true;
     }
     else if (stage == 1)
     {
@@ -75,6 +76,9 @@ void Ieee80211AgentSTA::initialize(int stage)
 
 void Ieee80211AgentSTA::handleMessage(cMessage *msg)
 {
+    if (!isOperational)
+        delete msg;
+
     if (msg->isSelfMessage())
         handleTimer(msg);
     else
@@ -121,6 +125,9 @@ void Ieee80211AgentSTA::receiveChangeNotification(int category, const cObject *d
 {
     Enter_Method_Silent();
     printNotificationBanner(category, details);
+
+    if (!isOperational)
+        return;
 
     if (category == NF_L2_BEACON_LOST)
     {
@@ -347,3 +354,38 @@ void Ieee80211AgentSTA::processReassociateConfirm(Ieee80211Prim_ReassociateConfi
     }
 }
 
+bool Ieee80211AgentSTA::handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback)
+{
+    Enter_Method_Silent();
+    if (dynamic_cast<NodeStartOperation *>(operation)) {
+        if (stage == NodeStartOperation::STAGE_PHYSICAL_LAYER)
+            start();
+    }
+    else if (dynamic_cast<NodeShutdownOperation *>(operation)) {
+        if (stage == NodeStartOperation::STAGE_PHYSICAL_LAYER)
+            stop();
+    }
+    else if (dynamic_cast<NodeCrashOperation *>(operation)) {
+        if (stage == NodeStartOperation::STAGE_LOCAL)  // crash is immediate
+            stop();
+    }
+    else
+        throw cRuntimeError("Unsupported operation '%s'", operation->getClassName());
+    return true;
+}
+
+void Ieee80211AgentSTA::start()
+{
+    isOperational = true;
+    simtime_t startingTime = uniform(SIMTIME_ZERO, maxChannelTime);
+    scheduleAt(simTime()+startingTime, new cMessage("startUp", MK_STARTUP));
+}
+
+void Ieee80211AgentSTA::stop()
+{
+    clear();
+    dataQueue.clear();
+    emit(dataQueueLenSignal, dataQueue.length());
+    mgmtQueue.clear();
+    isOperational = false;
+}
