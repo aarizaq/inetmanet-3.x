@@ -78,7 +78,7 @@ void AddressModule::initModule(bool mode)
 
     for (unsigned int i = 0; i < destAddresses.size(); i++)
     {
-        destModuleId.push_back(IPvXAddressResolver().findModuleWithAddress(destAddresses[i])->getId());
+        destModuleId.push_back(IPvXAddressResolver().findHostWithAddress(destAddresses[i])->getId());
     }
 
     if (emitSignal)

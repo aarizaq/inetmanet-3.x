@@ -33,8 +33,8 @@
 
 #include <vector>
 #include <omnetpp.h>
-#include "DNSBaseMsg_m.h"
-#include "DNSRegRvsMsg_m.h"
+#include "DNSBaseMsg.h"
+#include "DNSRegRvsMsg.h"
 #include "IPvXAddress.h"
 #include <string.h>
 #include "UDPSocket.h"

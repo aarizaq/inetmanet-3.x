@@ -32,7 +32,7 @@ import inet.nodes.inet.NetworkLayer;
 import inet.linklayer.ieee80211mesh.Ieee80211NicMesh;
 import inet.linklayer.ieee80211mesh.Ieee80211NicMeshMulti;
 import inet.networklayer.autorouting.ipv4.HostAutoConfigurator2;
-import inet.linklayer.ethernet.switch.IMACAddressTable;
+import inet.linklayer.IMACAddressTable;
 
 //
 // BaseHost contains the common lower layers (linklayer and networklayer)

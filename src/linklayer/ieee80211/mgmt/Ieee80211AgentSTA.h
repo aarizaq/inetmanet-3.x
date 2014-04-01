@@ -25,6 +25,7 @@
 #include "Ieee80211Primitives_m.h"
 #include "NotificationBoard.h"
 #include "InterfaceTable.h"
+#include "ILifecycle.h"
 
 
 /**
@@ -36,9 +37,10 @@
  *
  * @author Andras Varga
  */
-class INET_API Ieee80211AgentSTA : public cSimpleModule, public INotifiable
+class INET_API Ieee80211AgentSTA : public cSimpleModule, public INotifiable,  public ILifecycle
 {
   protected:
+    bool isOperational;     // for lifecycle
     InterfaceEntry *myIface;
     NotificationBoard *nb;
     MACAddress prevAP;
@@ -102,6 +104,14 @@ class INET_API Ieee80211AgentSTA : public cSimpleModule, public INotifiable
 
     // utility method, for debugging
     virtual void dumpAPList(Ieee80211Prim_ScanConfirm *resp);
+    /** lifecycle support */
+    //@{
+  protected:
+    virtual void start();
+    virtual void stop();
+  public:
+    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback);
+    //@}
 };
 
 #endif

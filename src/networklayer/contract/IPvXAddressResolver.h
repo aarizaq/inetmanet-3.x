@@ -194,10 +194,6 @@ class INET_API IPvXAddressResolver
      */
     virtual cModule *findHostWithAddress(const IPvXAddress &addr);
     //@}
-    //@}
-     virtual cModule * findModuleWithAddress(const IPvXAddress &);
-
-     virtual bool hasNetworkLayer(cModule *host);
 };
 
 

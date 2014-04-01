@@ -27,7 +27,7 @@
 
 #include "DNSClient.h"
 #include "IPvXAddressResolver.h"
-#include "DNSBaseMsg_m.h"
+#include "DNSBaseMsg.h"
 
 
 Define_Module(DNSClient);

@@ -38,6 +38,7 @@
 #include "InterfaceEntry.h"
 #include "IPv6InterfaceData.h"
 #include "NotificationBoard.h"
+#include "IPSocket.h"
 
 Define_Module(HIP)
 ;
@@ -66,6 +67,8 @@ void HIP::initialize()
     hipMsgSent = 0;
     hipVector.setName("HIP_DNS msgs");
     currentIfId = -1;
+    udpPresent = false;
+    tcpPresent = false;
 
     WATCH_MAP(mapIfaceToIP);
     WATCH_MAP(mapIfaceToConnected);
@@ -182,6 +185,8 @@ void HIP::handleRvsRegistration(cMessage *msg)
             if (currentIfId == -1)
             {
                 tempIfId = getTempId();
+                if (tempIfId == -1)
+                    tempIfId = currentIfId;
                 //opp_error("currentIfId == -1");
             }
 #if 0
@@ -310,20 +315,39 @@ void HIP::handleMessage(cMessage *msg)
     {
         //msg from transport layer
         if(msg->arrivedOn("tcpIn") || msg->arrivedOn("udpIn"))
-        handleMsgFromTransport(msg);
+        {
+            handleMsgFromTransport(msg);
         //msg from hip daemon to transport
+        }
         else if (msg->arrivedOn("fromFsmIn"))
-        if ((check_and_cast<IPv6ControlInfo *>(msg->getControlInfo()))->getProtocol() != IP_PROT_UDP)
-        send(msg, "tcpOut");
-        else
-        send(msg, "udpOut");
+        {
+            IPv6ControlInfo *cinfo = check_and_cast<IPv6ControlInfo *>(msg->getControlInfo());
+            if (cinfo->getProtocol() != IP_PROT_UDP)
+            {
+                if (tcpPresent)
+                    send(msg, "tcpOut");
+                else
+                    delete msg;
+            }
+            else
+            {
+
+                if (udpPresent)
+                    send(msg, "udpOut");
+                else
+                    delete msg;
+            }
         //msg from hip daemon to network
+        }
         else if(msg->arrivedOn("fromFsmOut"))
-        if ((check_and_cast<IPv6ControlInfo *>(msg->getControlInfo()))->getProtocol() != IP_PROT_UDP)
-        send(msg, "tcp6Out");
-        else
-        send(msg, "udp6Out");
+        {
+            IPv6ControlInfo *cinfo = check_and_cast<IPv6ControlInfo *>(msg->getControlInfo());
+            if (cinfo->getProtocol() != IP_PROT_UDP)
+                send(msg, "tcp6Out");
+            else
+                send(msg, "udp6Out");
         //msg from network
+        }
         else if (msg->arrivedOn("tcp6In") || msg->arrivedOn("udp6In"))
         {
             ev << "handleMsgFromNetwork invoke\n";
@@ -339,6 +363,26 @@ void HIP::handleMessage(cMessage *msg)
 // Handles message from transport layer
 void HIP::handleMsgFromTransport(cMessage *msg)
 {
+    IPRegisterProtocolCommand * regProt = dynamic_cast<IPRegisterProtocolCommand*> (msg->getControlInfo());
+
+    if (regProt)
+    {
+        if (regProt->getProtocol() == IP_PROT_UDP)
+        {
+            IPSocket ipSocket(gate("udp6Out"));
+            ipSocket.registerProtocol(IP_PROT_UDP);
+            udpPresent = true;
+        }
+        else if (regProt->getProtocol() == IP_PROT_TCP)
+        {
+            IPSocket ipSocket(gate("tcp6Out"));
+            ipSocket.registerProtocol(IP_PROT_TCP);
+            tcpPresent = true;
+        }
+        delete msg;
+        return;
+    }
+
 
     IPv6ControlInfo *networkControlInfo = check_and_cast<IPv6ControlInfo*>(msg->removeControlInfo());
 
