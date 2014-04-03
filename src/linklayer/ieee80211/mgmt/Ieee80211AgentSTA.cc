@@ -20,6 +20,7 @@
 #include "Ieee80211Primitives_m.h"
 #include "NotifierConsts.h"
 #include "InterfaceTableAccess.h"
+#include "NodeOperations.h"
 #include "opp_utils.h"
 
 Define_Module(Ieee80211AgentSTA);
@@ -383,9 +384,5 @@ void Ieee80211AgentSTA::start()
 
 void Ieee80211AgentSTA::stop()
 {
-    clear();
-    dataQueue.clear();
-    emit(dataQueueLenSignal, dataQueue.length());
-    mgmtQueue.clear();
     isOperational = false;
 }
