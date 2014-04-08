@@ -32,7 +32,8 @@
  * Storage is efficient: an object occupies size of an IPv6 address
  * (128 bits=16 bytes) plus a short int (address type).
  */
-class INET_API ManetAddress
+// TODO: merge into Address
+class ManetAddress
 {
   public:
     enum AddrType
@@ -84,7 +85,7 @@ class INET_API ManetAddress
     /// Compare operators
     bool operator ==(const ManetAddress& other) const { return addrType==other.addrType && hi==other.hi && lo==other.lo; }
     bool operator !=(const ManetAddress& other) const { return !operator==(other); }
-    bool operator <(const ManetAddress& other) const { return (compare(other) < 0); }
+    bool operator <(const ManetAddress& other) const { return compare(other) < 0; }
     bool operator <=(const ManetAddress& other) const { return compare(other) <= 0; }
     bool operator >(const ManetAddress& other) const { return compare(other) > 0; }
     bool operator >=(const ManetAddress& other) const { return compare(other) >= 0; }
@@ -124,7 +125,8 @@ class INET_API ManetAddress
  * Storage is efficient: an object occupies size of an IPv6 address
  * (128 bits=16 bytes) plus two short int (address type and prefix length).
  */
-class INET_API ManetNetworkAddress
+// TODO: move into Address.h and rename to AddressPrefix
+class ManetNetworkAddress
 {
   public:
     ManetNetworkAddress() : prefixLength(0) {}
