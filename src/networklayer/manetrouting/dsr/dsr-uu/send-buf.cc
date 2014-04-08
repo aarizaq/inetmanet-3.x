@@ -65,7 +65,8 @@ int NSCLASS send_buf_enqueue_packet(struct dsr_pkt *dp)
     if (packetBuffer.empty())
     {
         struct timeval expires;
-        timevalFromSimTime(&expires,entry.time);
+        double timeout = ((double)ConfValToUsecs(SendBufferTimeout)/1000000.0);
+        timevalFromSimTime(&expires,entry.time+timeout);
         set_timer(&send_buf_timer, &expires);
     }
     else if (packetBuffer.size() >= buffMaxlen)
