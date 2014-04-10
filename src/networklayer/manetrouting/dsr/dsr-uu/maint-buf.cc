@@ -224,7 +224,7 @@ int NSCLASS maint_buf_salvage(struct dsr_pkt *dp)
 
     /* Rip out the source route to me */
 
-    if (old_srt->addrs[0].s_addr == dp->nxt_hop.s_addr)
+    if ((old_srt->addrs.empty() && old_srt->dst.s_addr == dp->nxt_hop.s_addr)  || (old_srt->addrs[0].s_addr == dp->nxt_hop.s_addr))
     {
         srt = alt_srt;
         //sleft = (srt->laddrs) / 4;
