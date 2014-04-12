@@ -148,6 +148,7 @@ class INET_API Ieee80211Etx : public cSimpleModule, public MacEstimateCostProces
     int ettSize1;
     int ettSize2;
     simtime_t maxLive;
+    bool pasiveMeasure;
 
     double hysteresis;
     long unsigned int ettIndex;
