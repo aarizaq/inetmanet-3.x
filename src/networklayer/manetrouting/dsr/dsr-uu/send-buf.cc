@@ -22,16 +22,16 @@ void NSCLASS send_buf_timeout(unsigned long data)
 
     PacketBuffer::iterator it;
     simtime_t now = simTime();
+    simtime_t minTimeout = SimTime::getMaxTime();
 
     double timeout = ((double)ConfValToUsecs(SendBufferTimeout)/1000000.0);
-    simtime_t minTimeout = packetBuffer.begin()->second.time;
     int pkts = 0;
 
 
     for (PacketBuffer::iterator it = packetBuffer.begin();it != packetBuffer.end();)
     {
-        double packetTimeout = SIMTIME_DBL(now - it->second.time);
-        if (packetTimeout > timeout)
+        double packetTimeout = SIMTIME_DBL(now - it->second.time)+0.01;// this value avoid problems of rounds, if the time to discard this packet is less than 0.01 seconds discard this packet also
+        if (packetTimeout >= timeout)
         {
             dsr_pkt_free(it->second.packet);
             packetBuffer.erase(it++);
@@ -45,10 +45,13 @@ void NSCLASS send_buf_timeout(unsigned long data)
         }
     }
 
+    if (packetBuffer.empty())
+        return;
+
     DEBUG("%d packets garbage collected\n", pkts);
     struct timeval expires;
-
-    minTimeout += timeout; // next timeout
+    double nextPacketTimeout = timeout - SIMTIME_DBL(now - minTimeout); // next timeout relative time
+    minTimeout = now + nextPacketTimeout; // next timeout absolute time
 
     timevalFromSimTime(&expires,minTimeout);
     set_timer(&send_buf_timer, &expires);
