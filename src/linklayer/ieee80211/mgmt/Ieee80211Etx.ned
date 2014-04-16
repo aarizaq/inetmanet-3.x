@@ -33,6 +33,7 @@ simple Ieee80211Etx
         double TimeToLive @unit(s) = default(5s);
         int powerWindow = default(1); // window size for measure the S/N and Power received
         double powerWindowTime @unit(s) = default(10s);// window time size for measure the S/N and Power received
+        bool pasiveMeasure = default(false); // only for AirtimeMetric, pasive measurement.
 
         int Index = default(0);
         volatile double ETXjitter @unit(s) = uniform(-0.01s,0.01s);
