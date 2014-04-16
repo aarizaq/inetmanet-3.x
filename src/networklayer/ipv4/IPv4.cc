@@ -904,12 +904,17 @@ void IPv4::sendDatagramToOutput(IPv4Datagram *datagram, const InterfaceEntry *ie
             }
 
             MACAddress nextHopMacAddr;  // unspecified
-                nextHopMacAddr = resolveNextHopMacAddress(datagram, nextHopAddr, ie);
+            nextHopMacAddr = resolveNextHopMacAddress(datagram, nextHopAddr, ie);
 
             if (nextHopMacAddr.isUnspecified())
             {
-                pendingPackets[nextHopAddr].insert(datagram);
-                arp->startAddressResolution(nextHopAddr, ie);
+                if (arp->deletePacket(nextHopAddr))
+                    delete datagram;
+                else
+                {
+                    pendingPackets[nextHopAddr].insert(datagram);
+                    arp->startAddressResolution(nextHopAddr, ie);
+                }
             }
             else
             {
