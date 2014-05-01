@@ -81,6 +81,7 @@ class WirelessNumHops : public cOwnedObject
         RouteCache routeCache;
         RouteCacheIp routeCacheIp;
         LinkCache linkCache;
+        bool staticScenario = false;
     protected:
         enum StateLabel {perm,tent};
         class DijkstraShortest
@@ -162,11 +163,13 @@ class WirelessNumHops : public cOwnedObject
 
         typedef std::map<int,WirelessNumHops::DijkstraShortest::State> RouteMap;
         typedef std::vector<WirelessNumHops::DijkstraShortest::Edge*> LinkCon;
+        typedef std::map<int,std::deque<int> > RouteCache;
 
         typedef std::map<int, LinkCon> LinkArray;
         LinkArray linkArray;
         RouteMap routeMap;
         int rootNode;
+        RouteCache routeCache;
 
         virtual void cleanLinkArray();
         virtual void addEdge (const int & dest_node, const int & last_node,unsigned int cost);
@@ -247,6 +250,8 @@ class WirelessNumHops : public cOwnedObject
 
         virtual void getNeighbours(const IPv4Address &node, std::vector<IPv4Address>&, const double &distance);
         virtual void getNeighbours(const MACAddress &node, std::vector<MACAddress>&, const double &distance);
+
+        void setStaticScenario(bool val) {staticScenario = val;}
 };
 
 

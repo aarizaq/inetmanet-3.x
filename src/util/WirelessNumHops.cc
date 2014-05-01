@@ -94,6 +94,10 @@ WirelessNumHops::~WirelessNumHops()
 
 void WirelessNumHops::fillRoutingTables(const double &tDistance)
 {
+
+    if (!linkCache.empty() && staticScenario)
+        return;
+
     // fill in routing tables with static routes
     LinkCache templinkCache;
     // first find root node connections
@@ -157,6 +161,9 @@ void WirelessNumHops::fillRoutingTables(const double &tDistance)
 
 void WirelessNumHops::fillRoutingTablesWitCost(const double &tDistance)
 {
+    if (!linkCache.empty() && staticScenario)
+        return;
+
     // fill in routing tables with static routes
     LinkCache templinkCache;
     // first find root node connections
