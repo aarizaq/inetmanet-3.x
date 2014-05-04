@@ -74,13 +74,13 @@ class WirelessNumHops : public cOwnedObject
         std::vector<nodeInfo> vectorList;
         std::map<MACAddress,int> related;
         std::map<IPv4Address,int> relatedIp;
-        typedef std::map<MACAddress,std::deque<MACAddress> > RouteCache;
+        typedef std::map<MACAddress,std::deque<MACAddress> > RouteCacheMac;
         typedef std::map<IPv4Address,std::deque<IPv4Address> > RouteCacheIp;
 
         typedef std::set<LinkPair> LinkCache;
-        RouteCache routeCache;
         RouteCacheIp routeCacheIp;
         LinkCache linkCache;
+        RouteCacheMac routeCacheMac;
         bool staticScenario = false;
     protected:
         enum StateLabel {perm,tent};
@@ -163,13 +163,11 @@ class WirelessNumHops : public cOwnedObject
 
         typedef std::map<int,WirelessNumHops::DijkstraShortest::State> RouteMap;
         typedef std::vector<WirelessNumHops::DijkstraShortest::Edge*> LinkCon;
-        typedef std::map<int,std::deque<int> > RouteCache;
 
         typedef std::map<int, LinkCon> LinkArray;
         LinkArray linkArray;
         RouteMap routeMap;
         int rootNode;
-        RouteCache routeCache;
 
         virtual void cleanLinkArray();
         virtual void addEdge (const int & dest_node, const int & last_node,unsigned int cost);
@@ -184,6 +182,7 @@ class WirelessNumHops : public cOwnedObject
 
         virtual bool findRoutePath(const int &dest,std::deque<int> &pathNode);
         virtual bool findRoutePathCost(const int &nodeId,std::deque<int> &pathNode,double &costAdd, double &costMax);
+        virtual void setIpRoutinTable(const IPv4Address &root, const IPv4Address &desAddress, const IPv4Address &gateway,  int hops);
 
     public:
         friend bool operator < (const WirelessNumHops::LinkPair& x, const WirelessNumHops::LinkPair& y );
