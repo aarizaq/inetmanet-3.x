@@ -81,7 +81,7 @@ class WirelessNumHops : public cOwnedObject
         RouteCacheIp routeCacheIp;
         LinkCache linkCache;
         RouteCacheMac routeCacheMac;
-        bool staticScenario = false;
+        bool staticScenario;
     protected:
         enum StateLabel {perm,tent};
         class DijkstraShortest

@@ -28,6 +28,7 @@
 
 WirelessNumHops::WirelessNumHops()
 {
+    staticScenario = false;
     reStart();
 }
 
