@@ -49,6 +49,7 @@ simple ARP
         double cacheTimeout @unit("s") = default(120s); // number seconds unused entries in the cache will time out
         bool respondToProxyARP = default(true);        // reply to proxy ARP requests (i.e. for IP addresses that this node can route)
         bool globalARP = default(false);
+        bool deletePackets = default(true); // if global ARP and enty is not in memory delete the datagram
         @display("i=block/layer");
         @signal[sentReq](type=long);
         @signal[sentReply](type=long);

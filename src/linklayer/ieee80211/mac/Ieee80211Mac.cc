@@ -858,13 +858,10 @@ void Ieee80211Mac::handleLowerMsg(cPacket *msg)
             validRecMode = true;
     }
 
-    if (rateControlMode == RATE_CR)
-    {
-        if (msg->getControlInfo())
-            delete msg->removeControlInfo();
-    }
-
     Ieee80211Frame *frame = dynamic_cast<Ieee80211Frame *>(msg);
+
+    if (msg->getKind() != COLLISION && msg->getKind() != BITERROR)
+        sendNotification(NF_LINK_FULL_PROMISCUOUS, msg);
 
     if (msg->getControlInfo() && dynamic_cast<Radio80211aControlInfo *>(msg->getControlInfo()))
     {
@@ -880,6 +877,13 @@ void Ieee80211Mac::handleLowerMsg(cPacket *msg)
         lossRate = cinfo->getLossRate();
         delete cinfo;
     }
+
+    if (rateControlMode == RATE_CR)
+    {
+        if (msg->getControlInfo())
+            delete msg->removeControlInfo();
+    }
+
 
     if (contI%samplingCoeff==0)
     {
@@ -952,11 +956,6 @@ void Ieee80211Mac::handleLowerMsg(cPacket *msg)
             it->second.push_back(info);
        }
     }
-
-
-    if (msg->getKind() != COLLISION && msg->getKind() != BITERROR)
-        sendNotification(NF_LINK_FULL_PROMISCUOUS, msg);
-
 
     handleWithFSM(msg);
 

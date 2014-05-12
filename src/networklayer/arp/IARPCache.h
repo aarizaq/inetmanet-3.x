@@ -70,6 +70,12 @@ class INET_API IARPCache
      * This should only be called if getMACAddressFor(addr) fails.
      */
     virtual void startAddressResolution(const IPv4Address&, const InterfaceEntry *ie) = 0;
+    /**
+     * Starts address resolution for the given address on the given interface.
+     * This should only be called if getMACAddressFor(addr) fails.
+     */
+    virtual bool deletePacket(const IPv4Address&) = 0;
+
 };
 
 class INET_API ARPCacheAccess : public ModuleAccess<IARPCache>

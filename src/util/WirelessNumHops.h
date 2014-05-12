@@ -74,13 +74,14 @@ class WirelessNumHops : public cOwnedObject
         std::vector<nodeInfo> vectorList;
         std::map<MACAddress,int> related;
         std::map<IPv4Address,int> relatedIp;
-        typedef std::map<MACAddress,std::deque<MACAddress> > RouteCache;
+        typedef std::map<MACAddress,std::deque<MACAddress> > RouteCacheMac;
         typedef std::map<IPv4Address,std::deque<IPv4Address> > RouteCacheIp;
 
         typedef std::set<LinkPair> LinkCache;
-        RouteCache routeCache;
         RouteCacheIp routeCacheIp;
         LinkCache linkCache;
+        RouteCacheMac routeCacheMac;
+        bool staticScenario;
     protected:
         enum StateLabel {perm,tent};
         class DijkstraShortest
@@ -181,6 +182,8 @@ class WirelessNumHops : public cOwnedObject
 
         virtual bool findRoutePath(const int &dest,std::deque<int> &pathNode);
         virtual bool findRoutePathCost(const int &nodeId,std::deque<int> &pathNode,double &costAdd, double &costMax);
+        virtual void setIpRoutingTable(const IPv4Address &root, const IPv4Address &desAddress, const IPv4Address &gateway,  int hops);
+        virtual void setIpRoutingTable(const IPv4Address &desAddress, const IPv4Address &gateway,  int hops);
 
     public:
         friend bool operator < (const WirelessNumHops::LinkPair& x, const WirelessNumHops::LinkPair& y );
@@ -247,6 +250,9 @@ class WirelessNumHops : public cOwnedObject
 
         virtual void getNeighbours(const IPv4Address &node, std::vector<IPv4Address>&, const double &distance);
         virtual void getNeighbours(const MACAddress &node, std::vector<MACAddress>&, const double &distance);
+
+        void setStaticScenario(bool val) {staticScenario = val;}
+        virtual void setIpRoutingTable();
 };
 
 
