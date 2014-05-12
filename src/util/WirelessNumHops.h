@@ -182,7 +182,8 @@ class WirelessNumHops : public cOwnedObject
 
         virtual bool findRoutePath(const int &dest,std::deque<int> &pathNode);
         virtual bool findRoutePathCost(const int &nodeId,std::deque<int> &pathNode,double &costAdd, double &costMax);
-        virtual void setIpRoutinTable(const IPv4Address &root, const IPv4Address &desAddress, const IPv4Address &gateway,  int hops);
+        virtual void setIpRoutingTable(const IPv4Address &root, const IPv4Address &desAddress, const IPv4Address &gateway,  int hops);
+        virtual void setIpRoutingTable(const IPv4Address &desAddress, const IPv4Address &gateway,  int hops);
 
     public:
         friend bool operator < (const WirelessNumHops::LinkPair& x, const WirelessNumHops::LinkPair& y );
@@ -251,6 +252,7 @@ class WirelessNumHops : public cOwnedObject
         virtual void getNeighbours(const MACAddress &node, std::vector<MACAddress>&, const double &distance);
 
         void setStaticScenario(bool val) {staticScenario = val;}
+        virtual void setIpRoutingTable();
 };
 
 

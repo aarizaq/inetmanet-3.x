@@ -25,6 +25,7 @@
 #include <algorithm>    // std::max
 #include "IRoutingTable.h"
 #include "RoutingTableAccess.h"
+#include "InterfaceTableAccess.h"
 
 WirelessNumHops::WirelessNumHops()
 {
@@ -837,11 +838,7 @@ void WirelessNumHops::getRoute(int i, std::deque<IPv4Address> &pathNode)
 
     for (unsigned int i = 0; i < route.size(); i++)
     {
-        for (std::map<IPv4Address, int>::iterator it2 = relatedIp.begin(); it2 != relatedIp.end(); ++it2)
-        {
-            if (it2->second == route[i])
-                pathNode.push_back(it2->first);
-        }
+        pathNode.push_back(vectorList[route[i]].ipAddress[0]);
     }
     if (pathNode.size() != route.size())
     {
@@ -855,11 +852,7 @@ void WirelessNumHops::getRoute(int i,std::deque<MACAddress> &pathNode)
     pathNode.clear();
     for (unsigned int i = 0; i < route.size(); i++)
     {
-        for (std::map<MACAddress, int>::iterator it2 = related.begin(); it2 != related.end(); ++it2)
-        {
-            if (it2->second == route[i])
-                pathNode.push_back(it2->first);
-        }
+        pathNode.push_back(vectorList[route[i]].macAddress[0]);
     }
     if (pathNode.size() != route.size())
     {
@@ -867,7 +860,96 @@ void WirelessNumHops::getRoute(int i,std::deque<MACAddress> &pathNode)
     }
 }
 
-void WirelessNumHops::setIpRoutinTable(const IPv4Address &root, const IPv4Address &desAddress, const IPv4Address &gateway,  int hops)
+
+
+void WirelessNumHops::setIpRoutingTable()
+{
+    for (unsigned int i = 0; i< getNumRoutes();i++)
+    {
+        std::deque<IPv4Address> pathNode;
+        getRoute(i, pathNode);
+        if (pathNode.empty())
+            continue;
+        setIpRoutingTable(pathNode.back(), pathNode[0] , pathNode.size());
+    }
+}
+
+
+void WirelessNumHops::setIpRoutingTable(const IPv4Address &desAddress, const IPv4Address &gateway,  int hops)
+{
+
+
+    IRoutingTable *inet_rt = RoutingTableAccess().getIfExists();
+    IInterfaceTable* itable = InterfaceTableAccess().getIfExists();
+
+    InterfaceEntry *iface = NULL;
+    bool found = false;
+    for (int j = 0; j < itable->getNumInterfaces(); j++)
+    {
+        InterfaceEntry *e = itable->getInterface(j);
+        if (e->getMacAddress().isUnspecified())
+            continue;
+        if (e->isLoopback())
+            continue;
+        if (strstr(e->getName(), "wlan") != NULL)
+        {
+            iface = e;
+            break;
+        }
+    }
+
+    if (!iface)
+        return;
+
+    IPv4Route *oldentry = NULL;
+    for (int i = inet_rt->getNumRoutes(); i > 0; --i)
+    {
+        IPv4Route *e = inet_rt->getRoute(i - 1);
+        if (desAddress == e->getDestination())
+        {
+            found = true;
+            oldentry = e;
+            break;
+        }
+    }
+
+    IPv4Address netmask = IPv4Address::ALLONES_ADDRESS;
+    IPv4Route::SourceType sourceType =  IPv4Route::MANET;
+
+    if (found)
+    {
+        if (oldentry->getDestination() == desAddress
+                && oldentry->getNetmask() == netmask
+                && oldentry->getGateway() == gateway
+                && oldentry->getMetric() == hops
+                && oldentry->getInterface() == iface
+                && oldentry->getSourceType() == sourceType)
+            return;
+        inet_rt->deleteRoute(oldentry);
+    }
+
+    IPv4Route *entry = new IPv4Route();
+
+    /// Destination
+    entry->setDestination(desAddress);
+    /// Route mask
+    entry->setNetmask(netmask);
+    /// Next hop
+    entry->setGateway(gateway);
+    /// Metric ("cost" to reach the destination)
+    entry->setMetric(hops);
+    /// Interface name and pointer
+
+    entry->setInterface(iface);
+
+    /// Source of route, MANUAL by reading a file,
+    /// routing protocol name otherwise
+    entry->setSourceType(sourceType);
+    inet_rt->addRoute(entry);
+}
+
+
+void WirelessNumHops::setIpRoutingTable(const IPv4Address &root, const IPv4Address &desAddress, const IPv4Address &gateway,  int hops)
 {
 
     int id = getIdNode(root);
