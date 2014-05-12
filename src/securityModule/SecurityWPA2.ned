@@ -60,7 +60,7 @@ simple SecurityWPA2
         @statistic[deletedFramesNr](title="Number of deleted Frames"; source=deletedFramesNr; record=count,vector; interpolationmode=none);
 
 
-        @class(Security);
+        @class(SecurityWPA2);
 
     gates:
         input mgmtIn;
