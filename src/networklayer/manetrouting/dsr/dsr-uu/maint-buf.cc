@@ -324,7 +324,7 @@ void NSCLASS maint_buf_timeout(unsigned long data)
     }
 
     // check time
-    if (maint_buf.begin()->first > simTime())
+    if (maint_buf.begin()->first > simTime()+0.0001)
     {
         maint_buf_set_timeout();
         return;
@@ -432,7 +432,7 @@ void NSCLASS maint_buf_set_timeout(void)
 */
     MaintBuf::iterator it =  maint_buf.begin();
 
-    if (it->first <= simTime())
+    if (it->first <= simTime()+0.0001)
         maint_buf_timeout(0);
     else
     {
