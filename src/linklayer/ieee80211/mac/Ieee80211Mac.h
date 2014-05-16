@@ -61,7 +61,7 @@
  *
  * @ingroup macLayer
  */
-class INET_API Ieee80211Mac : public WirelessMacBase
+class INET_API Ieee80211Mac : public WirelessMacBase, public cListener
 {
 #ifdef  USEMULTIQUEUE
     typedef MultiQueue Ieee80211DataOrMgmtFrameList;
@@ -717,6 +717,10 @@ class INET_API Ieee80211Mac : public WirelessMacBase
         nb->fireChangeNotification(category, pkt);
         pkt->setKind(tempKind);
     }
+    static simsignal_t endTransmissionSignal; //enum
+    cSimpleModule *radioModulePtr;
+    //cListener:
+    virtual void receiveSignal(cComponent *src, simsignal_t id, long x);
   public:
     virtual void setQueueModeTrue() {queueMode = true;}
     virtual void setQueueModeFalse() {queueMode = false;}

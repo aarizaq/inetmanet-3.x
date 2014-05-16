@@ -16,7 +16,8 @@
 #ifndef FRAMEBLOCK_H_
 #define FRAMEBLOCK_H_
 #include <omnetpp.h>
-class FrameBlock : public cPacket
+#include "Ieee80211Frame_m.h"
+class FrameBlock : public Ieee80211TwoAddressFrame
 {
 private:
     struct ShareStruct{
