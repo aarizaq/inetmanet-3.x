@@ -20,7 +20,6 @@
 #include "dsr-uu-omnetpp.h"
 #endif
 
-#include "tbl.h"
 #include "debug_dsr.h"
 #include "dsr-opt.h"
 #include "dsr-ack.h"

@@ -28,7 +28,6 @@
 
 #include "dsr.h"
 #include "debug_dsr.h"
-#include "tbl.h"
 #include "dsr-rrep.h"
 #include "dsr-rreq.h"
 #include "dsr-opt.h"

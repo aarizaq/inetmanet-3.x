@@ -251,6 +251,79 @@ class DSRUU:public cSimpleModule, public INotifiable, ILifecycle, ManetNetfilter
         int maint_buf_salvage(struct dsr_pkt *dp);
         void maint_insert(struct maint_entry *m);
 
+        struct Id_Entry_Route
+        {
+            double cost;
+            unsigned int length;
+            VectorAddress add;
+            Id_Entry_Route()
+            {
+                cost= 0;
+                length = 0;
+                add.clear();
+            }
+        };
+
+        struct Id_Entry
+        {
+            struct in_addr trg_addr;
+            unsigned short id;
+            std::deque<Id_Entry_Route*> rreq_id_tbl_routes;
+            Id_Entry()
+            {
+                trg_addr.s_addr = 0;
+                rreq_id_tbl_routes.clear();
+                id = 0;
+            }
+            ~Id_Entry()
+            {
+                while (!rreq_id_tbl_routes.empty())
+                {
+                    delete rreq_id_tbl_routes.back();
+                    rreq_id_tbl_routes.pop_back();
+                }
+            }
+        };
+
+        struct rreq_tbl_entry
+        {
+            int state;
+            struct in_addr node_addr;
+            int ttl;
+            DSRUUTimer *timer;
+            struct timeval tx_time;
+            struct timeval last_used;
+            usecs_t timeout;
+            unsigned int num_rexmts;
+            std::deque<Id_Entry*> rreq_id_tbl;
+            rreq_tbl_entry()
+            {
+                state = 0;
+                node_addr.s_addr = 0;
+                ttl = 0;
+                timer = NULL;
+                tx_time.tv_sec = tx_time.tv_usec = 0;
+                last_used = tx_time;
+                timeout = 0;
+                num_rexmts = 0;
+                rreq_id_tbl.clear();
+            }
+            ~rreq_tbl_entry()
+            {
+                while (!rreq_id_tbl.empty())
+                {
+                    delete rreq_id_tbl.back();
+                    rreq_id_tbl.pop_back();
+                }
+            }
+
+        };
+
+        typedef std::map<ManetAddress,rreq_tbl_entry*> DsrRreqTbl;
+        DsrRreqTbl dsrRreqTbl;
+        rreq_tbl_entry *__rreq_tbl_entry_create(struct in_addr node_addr);
+        rreq_tbl_entry *__rreq_tbl_add(struct in_addr node_addr);
+
   public:
     friend class DSRUUTimer;
     //static simtime_t current_time;
@@ -273,7 +346,7 @@ class DSRUU:public cSimpleModule, public INotifiable, ILifecycle, ManetNetfilter
     // CMUPriQueue *ifq_;
     // MobileNode *node_;
 
-    struct tbl rreq_tbl;
+   // struct tbl rreq_tbl;
     struct tbl grat_rrep_tbl;
     struct tbl neigh_tbl;
 
