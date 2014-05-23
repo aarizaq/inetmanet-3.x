@@ -1505,7 +1505,7 @@ void HwmpProtocol::processLinkBreak(const cPolymorphic *details)
     Ieee80211TwoAddressFrame *frame = dynamic_cast<Ieee80211TwoAddressFrame *>(const_cast<cPolymorphic*>(details));
     if (frame)
     {
-        std::map<MACAddress, Neighbor>::iterator it = neighborMap.find(frame->getTransmitterAddress());
+        std::map<MACAddress, Neighbor>::iterator it = neighborMap.find(frame->getReceiverAddress());
         if (it != neighborMap.end())
         {
             it->second.lost++;
@@ -1523,7 +1523,7 @@ void HwmpProtocol::processLinkBreakManagement(const cPolymorphic *details)
     Ieee80211ActionPREPFrame *frame = dynamic_cast<Ieee80211ActionPREPFrame *>(const_cast<cPolymorphic*>(details));
     if (frame)
     {
-        std::map<MACAddress, Neighbor>::iterator it = neighborMap.find(frame->getTransmitterAddress());
+        std::map<MACAddress, Neighbor>::iterator it = neighborMap.find(frame->getReceiverAddress());
         if (it != neighborMap.end())
         {
             it->second.lost++;

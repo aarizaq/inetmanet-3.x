@@ -315,15 +315,18 @@ void Security::handleResponse(cMessage *msg)
             msg->setName("EncBrodcast");
             // send(msg,"mgmtOut");
             delay= (double) enc + mic_add;
-            sendDelayed(msg, delay,"mgmtOut");
+            Ieee80211MeshFrame *frame = (check_and_cast<Ieee80211MeshFrame *>(msg));
+                       frame->setByteLength(frame->getByteLength()+16);
+                       sendDelayed(frame, delay,"mgmtOut");
         }
         else
         {
             //   send(msg,"mgmtOut");
           //  handleIeee80211DataFrameWithSNAP(msg);
+            handleIeee80211MeshFrame(msg);
         }
 
-        handleIeee80211MeshFrame(msg);
+
     }
     else if (dynamic_cast<Ieee80211DataFrameWithSNAP *>(msg))
     {
@@ -366,7 +369,9 @@ void Security::handleResponse(cMessage *msg)
             msg->setName("EncBrodcast");
             // send(msg,"mgmtOut");
             delay= (double) enc + mic_add;
-            sendDelayed(msg, delay,"mgmtOut");
+            Ieee80211DataFrameWithSNAP *frame = (check_and_cast<Ieee80211DataFrameWithSNAP *>(msg));
+                       frame->setByteLength(frame->getByteLength()+16);
+                       sendDelayed(frame, delay,"mgmtOut");
         }
         else
         {
@@ -1458,6 +1463,7 @@ IPv4Datagram*  Security::handleIPv4Datagram(IPv4Datagram* IP, MeshInfo *mesh)
 
 Ieee80211ActionHWMPFrame *  Security::encryptActionHWMPFrame(Ieee80211ActionHWMPFrame* frame, const MACAddress& address)
 {
+    EV << "Entering encryptActionHWMPFrame"<<endl;
   //  MeshInfo *mesh = lookupMesh(address);
   //  if(mesh)
 
@@ -1664,7 +1670,7 @@ void Security::handleIeee80211MeshFrame(cMessage *msg)
                             frame2->setName("CCMPFrame");
                             frame2->encapsulate(ccmpFrame2);
 
-                            delay = (double) enc + mic_add;
+                            delay = (double) enc + mic_add  + dec + mic_verify;
                             sendDelayedMeshFrame(frame2, mesh->address, delay);
                         }
                         else
@@ -1738,6 +1744,7 @@ void Security::handleIeee80211MeshFrame(cMessage *msg)
             frame->encapsulate(ccmpFrame);
 
             delay = (double) enc + mic_add;
+            frame->setByteLength(frame->getByteLength()+16);
             sendDelayedMeshFrame(frame, mesh->address, delay);
         }
         else
@@ -1760,11 +1767,14 @@ void Security::handleIeee80211ActionHWMPFrame(cMessage *msg)
         {
             if(mesh->status==AUTHENTICATED)
             {
-                // Ieee80211ActionHWMPFrame *hwmpFrame2 = encryptActionHWMPFrame(hwmpFrame,hwmpFrame->getTransmitterAddress() );
+                Ieee80211ActionHWMPFrame *hwmpFrame = dynamic_cast<Ieee80211ActionHWMPFrame *>(msg);
+                //Ieee80211ActionHWMPFrame *hwmpFrame2 = encryptActionHWMPFrame(hwmpFrame,hwmpFrame->getTransmitterAddress() );
                 // hwmpFrame2->setName("DecCCMP");
                 // send(hwmpFrame2,"mgmtOut");
+                hwmpFrame->setByteLength(hwmpFrame->getByteLength()-16);
                 msg->setName("DecCCMP");
-                send(msg,"mgmtOut");
+                double delay= (double) dec + mic_verify;
+                sendDelayed(msg, delay,"mgmtOut");
             }
             else
                 EV << "Mesh Node isn't authenticated. Drop pkt"<< endl;
@@ -1785,11 +1795,14 @@ void Security::handleIeee80211ActionHWMPFrame(cMessage *msg)
 
         EV << "Send out " <<endl;
 
+            hwmpFrame->setByteLength(hwmpFrame->getByteLength()+16);
+
        // Ieee80211ActionHWMPFrame *hwmpFrame2 = encryptActionHWMPFrame(hwmpFrame, hwmpFrame->getReceiverAddress() );
         // hwmpFrame2->setName("CCMPFrame");
-        //  send(hwmpFrame2,"mgmtOut");
+        //  send(hwmpFrame2,"mgmtOut")
         msg->setName("CCMPFrame");
-        send(msg,"mgmtOut");
+        double delay= (double) enc + mic_add;
+        sendDelayed(msg,delay,"mgmtOut");
     }
 
 }
@@ -1799,6 +1812,7 @@ void Security::handleIeee80211ActionHWMPFrame(cMessage *msg)
 
 void Security::handleIeee80211DataFrameWithSNAP(cMessage *msg)
 {
+    EV << "Entering handleIeee80211DataFrameWithSNAP " << endl;
     double delay=0;
     //Decryption
     if(strstr(msg->getName() ,"CCMPFrame")!=NULL)
@@ -2100,7 +2114,7 @@ Security::key256 Security::computePMK(std::string s, std::string s1) {
     key256 vec;
     vec.len=256;
     vec.buf.push_back(c);
-    //PMK ist zu kurz. Rest einfach mit gleichen Inhalt füllen
+    //PMK ist zu kurz. Rest einfach mit gleichen Inhalt fï¿½llen
     vec.buf.push_back(c+1);
     vec.buf.push_back(c+2);
     vec.buf.push_back(c+3);
@@ -2301,13 +2315,13 @@ void Security::deriveMeshKeys(const MACAddress& address)
             mesh->MTK.buf.clear();
         }
 
-        //AEK <- KDF-256(PMK, “AEK Derivation”, Selected AKM Suite || min(localMAC, peerMAC) || max(localMAC, peerMAC))
+        //AEK <- KDF-256(PMK, ï¿½AEK Derivationï¿½, Selected AKM Suite || min(localMAC, peerMAC) || max(localMAC, peerMAC))
         for(int i=0;i<3;i++){
             mesh->AEK.buf.push_back( mesh->PMK.buf.at(i)*meshAdress*myMeshAdres );
         }
         mesh->AEK.len=256;
 
-        //MTK <- KDF-X(PMK, “Temporal Key Derivation”, min(localNonce, peerNonce) ||    max(localNonce, peerNonce) || min(localLinkID, peerLinkID) ||
+        //MTK <- KDF-X(PMK, ï¿½Temporal Key Derivationï¿½, min(localNonce, peerNonce) ||    max(localNonce, peerNonce) || min(localLinkID, peerLinkID) ||
         // max(localLinkID, peerLinkID) || Selected AKM Suite ||    min(localMAC, peerMAC) || max(localMAC, peerMAC))
         for(int i=0;i<2;i++){
             mesh->MTK.buf.push_back( mesh->PMK.buf.at(i)*meshAdress*myMeshAdres);

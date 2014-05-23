@@ -27,6 +27,9 @@
 #include "Ieee80211eClassifier.h"
 #include "Ieee80211DataRate.h"
 #include "opp_utils.h"
+#ifdef  USEMULTIQUEUE
+#include "FrameBlock.h"
+#endif
 
 // #define DISABLEERRORACK
 
@@ -58,6 +61,8 @@ Register_Enum(RadioState,
 /****************************************************************
  * Construction functions.
  */
+
+simsignal_t Ieee80211Mac::endTransmissionSignal = registerSignal("endTransmission");
 
 Ieee80211Mac::Ieee80211Mac()
 {
@@ -434,6 +439,11 @@ void Ieee80211Mac::initialize(int stage)
         // initialize watches
         validRecMode = false;
         initWatches();
+
+        // used to support block ACK
+        radioModulePtr = dynamic_cast<cSimpleModule*>(gate("lowerLayerOut")->getPathEndGate()->getOwnerModule());
+        if (radioModulePtr)
+            radioModulePtr->subscribe(endTransmissionSignal, this);
     }
 }
 
@@ -2086,9 +2096,15 @@ Ieee80211DataOrMgmtFrame *Ieee80211Mac::buildDataFrame(Ieee80211DataOrMgmtFrame 
             }
             int size = nextframeToSend->getBitLength();
 
-            nextframeToSend = dynamic_cast<Ieee80211DataOrMgmtFrame*> (transmissionQueue()->next());
-            frame->setDuration(3 * getSIFS() + 2 * controlFrameTxTime(LENGTH_ACK)
-                               + computeFrameDuration(size,bitRate));
+            if (dynamic_cast<FrameBlock*> (transmissionQueue()->next())
+            {
+                TODO :
+            }
+            else
+            {
+                nextframeToSend = dynamic_cast<Ieee80211DataOrMgmtFrame*> (transmissionQueue()->next());
+                frame->setDuration(3 * getSIFS() + 2 * controlFrameTxTime(LENGTH_ACK) + computeFrameDuration(size,bitRate));
+            }
 #else
             // ++ operation is safe because txop is true
             std::list<Ieee80211DataOrMgmtFrame*>::iterator nextframeToSend;
@@ -3096,3 +3112,13 @@ double Ieee80211Mac::controlFrameTxTime(int bits)
      EV<<" duration="<<duration*1e6<<"us("<<bits<<"bits "<<controlFrameModulationType.getPhyRate()/1e6<<"Mbps)"<<endl;
      return duration;
 }
+
+void Ieee80211Mac::receiveSignal(cComponent *src, simsignal_t id, long x)
+{
+    if (id == endTransmissionSignal && src == radioModulePtr)
+    {
+        // send next frame in the block
+
+    }
+}
+

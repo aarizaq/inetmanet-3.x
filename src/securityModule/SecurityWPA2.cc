@@ -294,15 +294,18 @@ void SecurityWPA2::handleResponse(cMessage *msg)
             msg->setName("EncBrodcast");
             // send(msg,"mgmtOut");
             delay= (double) enc + mic_add;
-            sendDelayed(msg, delay,"mgmtOut");
+            Ieee80211MeshFrame *frame = (check_and_cast<Ieee80211MeshFrame *>(msg));
+                       frame->setByteLength(frame->getByteLength()+16);
+                               sendDelayed(frame, delay,"mgmtOut");
         }
         else
         {
             //   send(msg,"mgmtOut");
             handleIeee80211DataFrameWithSNAP(msg);
+            //handleIeee80211MeshFrame(msg);
+
         }
 
-        handleIeee80211MeshFrame(msg);
     }
     else if (dynamic_cast<Ieee80211DataFrameWithSNAP *>(msg))
     {
@@ -344,8 +347,11 @@ void SecurityWPA2::handleResponse(cMessage *msg)
         {
             msg->setName("EncBrodcast");
             // send(msg,"mgmtOut");
+            EV << "increasing size of broadcast message" << endl;
             delay= (double) enc + mic_add;
-            sendDelayed(msg, delay,"mgmtOut");
+            Ieee80211DataFrameWithSNAP *frame = (check_and_cast<Ieee80211DataFrameWithSNAP *>(msg));
+              frame->setByteLength(frame->getByteLength()+16);
+                      sendDelayed(frame, delay,"mgmtOut");
         }
         else
         {
@@ -2075,7 +2081,7 @@ SecurityWPA2::key256 SecurityWPA2::computePMK(std::string s, std::string s1) {
     key256 vec;
     vec.len=256;
     vec.buf.push_back(c);
-    //PMK ist zu kurz. Rest einfach mit gleichen Inhalt füllen
+    //PMK ist zu kurz. Rest einfach mit gleichen Inhalt fï¿½llen
     vec.buf.push_back(c+1);
     vec.buf.push_back(c+2);
     vec.buf.push_back(c+3);

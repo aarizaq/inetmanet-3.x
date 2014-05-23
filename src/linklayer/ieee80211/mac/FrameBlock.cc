@@ -38,12 +38,12 @@ FrameBlock::~FrameBlock() {
     _deleteEncapVector();
 }
 
-FrameBlock::FrameBlock(const char *name, int kind):cPacket(name,kind)
+FrameBlock::FrameBlock(const char *name, int kind):Ieee80211TwoAddressFrame(name,kind)
 {
     encapsulateVector.clear();
 }
 
-FrameBlock::FrameBlock(FrameBlock &other):cPacket()
+FrameBlock::FrameBlock(FrameBlock &other):Ieee80211TwoAddressFrame()
 {
     encapsulateVector.clear();
     setName(other.getName());
