@@ -267,7 +267,7 @@ rreq_tbl_add_id(struct in_addr initiator, struct in_addr target,
 
 int NSCLASS rreq_tbl_route_discovery_cancel(struct in_addr dst)
 {
-    struct rreq_tbl_entry *e;
+    struct rreq_tbl_entry *e = NULL;
 
     ManetAddress addr(IPv4Address(dst.s_addr));
     DsrRreqTbl::iterator it = dsrRreqTbl.find(addr);
@@ -298,7 +298,7 @@ int NSCLASS rreq_tbl_route_discovery_cancel(struct in_addr dst)
 
 int NSCLASS dsr_rreq_route_discovery(struct in_addr target)
 {
-    struct rreq_tbl_entry *e;
+    struct rreq_tbl_entry *e = NULL;
     int ttl, res = 0;
     struct timeval expires;
 
@@ -307,10 +307,8 @@ int NSCLASS dsr_rreq_route_discovery(struct in_addr target)
     ManetAddress addr(IPv4Address(target.s_addr));
     DsrRreqTbl::iterator it = dsrRreqTbl.find(addr);
     if (it != dsrRreqTbl.end())
-    {
         e = it->second;
-        dsrRreqTbl.erase(it);
-    }
+
 
     if (!e)
         e = __rreq_tbl_add(target);
