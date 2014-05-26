@@ -725,10 +725,11 @@ void __exit NSCLASS rreq_tbl_cleanup(void)
     while (!dsrRreqTbl.empty())
     {
         DsrRreqTbl::iterator it =  dsrRreqTbl.begin();
+        rreq_tbl_entry *e = it->second;
+        del_timer_sync(e->timer);
+        delete e->timer;
+        delete e;
         dsrRreqTbl.erase(it);
-        del_timer_sync(it->second->timer);
-        delete it->second->timer;
-        delete it->second;
     }
 }
 
