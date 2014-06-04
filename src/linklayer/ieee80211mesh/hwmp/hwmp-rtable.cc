@@ -24,10 +24,12 @@
 
 HwmpRtable::HwmpRtable()
 {
+    EV << "HwmpRtable " << endl;
     DeleteProactivePath();
 }
 HwmpRtable::~HwmpRtable()
 {
+    EV << "~HwmpRtable " << endl;
     DeleteProactivePath();
     m_routes.clear();
 }
@@ -35,6 +37,7 @@ HwmpRtable::~HwmpRtable()
 void HwmpRtable::AddReactivePath(MACAddress destination, MACAddress retransmitter, uint32_t interface, uint32_t metric,
         simtime_t lifetime, uint32_t seqnum, uint8_t hops, bool actualizeSeqnum)
 {
+    EV<< "addreactivepath"<<endl;
     //uint64_t dest= MacToUint64(destination);
     std::map<MACAddress, ReactiveRoute>::iterator i = m_routes.find(destination);
     if (i == m_routes.end())
@@ -97,6 +100,8 @@ void HwmpRtable::AddPrecursor(MACAddress destination, uint32_t precursorInterfac
 
 void HwmpRtable::DeleteProactivePath()
 {
+    EV << "DeleteProactivePath() " << endl;
+    //MS
     m_root.precursors.clear();
     m_root.interface = INTERFACE_ANY;
     m_root.metric = MAX_METRIC;
@@ -108,6 +113,7 @@ void HwmpRtable::DeleteProactivePath()
 
 void HwmpRtable::DeleteProactivePath(MACAddress root)
 {
+    EV << "DeleteProactivePath2 " << endl;
     if (m_root.root == root)
     {
         DeleteProactivePath();
@@ -116,6 +122,7 @@ void HwmpRtable::DeleteProactivePath(MACAddress root)
 
 void HwmpRtable::DeleteReactivePath(MACAddress destination)
 {
+    EV << "DeleteReactivePath " << endl;
     // uint64_t dest= MacToUint64(destination);
     std::map<MACAddress, ReactiveRoute>::iterator i = m_routes.find(destination);
     if (i != m_routes.end())
@@ -174,6 +181,7 @@ HwmpRtable::LookupResult HwmpRtable::LookupProactiveExpired()
 
 std::vector<HwmpFailedDestination> HwmpRtable::GetUnreachableDestinations(MACAddress peerAddress)
 {
+    EV << "GetUnreachableDestinations " << endl;
     HwmpFailedDestination dst;
     std::vector < HwmpFailedDestination > retval;
     for (std::map<MACAddress, ReactiveRoute>::iterator i = m_routes.begin(); i != m_routes.end(); i++)
@@ -212,6 +220,7 @@ std::vector<HwmpFailedDestination> HwmpRtable::GetUnreachableDestinations(MACAdd
 
 HwmpRtable::PrecursorList HwmpRtable::GetPrecursors(MACAddress destination)
 {
+    EV << "GetPrecursors " << endl;
     //We suppose that no duplicates here can be
     PrecursorList retval;
     // uint64_t dest= MacToUint64(destination);
@@ -260,7 +269,7 @@ HwmpRtable::getLookupProactivePtr()
 
 void HwmpRtable::deleteNeighborRoutes(MACAddress nextHop)
 {
-
+    EV << "DeleteNeighborRoutes " << endl;
     for (std::map<MACAddress, ReactiveRoute>::iterator it = m_routes.begin(); it != m_routes.end();)
     {
         if (it->second.retransmitter == nextHop)
