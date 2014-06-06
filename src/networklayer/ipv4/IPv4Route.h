@@ -47,6 +47,7 @@ class INET_API IPv4Route : public cObject
         MANET,        ///< managed by manet, search exact address
         MANET2,       ///< managed by manet, search approximate address
         DYMO,         ///< managed by xDymo
+        AODV,         ///< managed by
     };
 
     /** Cisco like administrative distances */
@@ -149,6 +150,8 @@ class INET_API IPv4Route : public cObject
 
     cObject *getProtocolData() const { return protocolData; }
     void setProtocolData(cObject *protocolData) { this->protocolData = protocolData; }
+
+    static const char *sourceTypeName(SourceType sourceType);
 };
 
 /**
