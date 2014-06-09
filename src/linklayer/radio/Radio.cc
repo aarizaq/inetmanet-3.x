@@ -1067,8 +1067,8 @@ void Radio::disconnectReceiver()
 {
     receiverConnected = false;
     cc->disableReception(this->myRadioRef);
-    if (rs.getState() == RadioState::TRANSMIT)
-        error("changing channel while transmitting is not allowed");
+    //if (rs.getState() == RadioState::TRANSMIT)
+    //    error("changing channel while transmitting is not allowed");
 
    // Clear the recvBuff
    for (RecvBuff::iterator it = recvBuff.begin(); it!=recvBuff.end(); ++it)

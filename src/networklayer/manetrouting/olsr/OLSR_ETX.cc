@@ -364,6 +364,7 @@ OLSR_ETX::olsr_r1_mpr_computation()
     // For further details please refer to paper
     // Quality of Service Routing in Ad Hoc Networks Using OLSR
 
+
     bool increment;
     state_.clear_mprset();
 
@@ -390,20 +391,48 @@ OLSR_ETX::olsr_r1_mpr_computation()
             opp_error("\n Error conversion nd2hop tuple");
 
 
-        bool ok = true;
-        OLSR_ETX_nb_tuple* nb_tuple = state_.find_sym_nb_tuple(nb2hop_tuple->nb_main_addr());
-        if (nb_tuple == NULL)
-            ok = false;
-        else
+
+        if (isLocalAddress(nb2hop_tuple->nb2hop_addr()))
         {
-            nb_tuple = state_.find_nb_tuple(nb2hop_tuple->nb_main_addr(), OLSR_ETX_WILL_NEVER);
-            if (nb_tuple != NULL)
-                ok = false;
-            else
+            continue;
+        }
+        // excluding:
+        // (i) the nodes only reachable by members of N with willingness WILL_NEVER
+        bool ok = false;
+        for (nbset_t::const_iterator it2 = N.begin(); it2 != N.end(); it2++)
+        {
+            OLSR_nb_tuple* neigh = *it2;
+            if (neigh->nb_main_addr() == nb2hop_tuple->nb_main_addr())
             {
-                nb_tuple = state_.find_sym_nb_tuple(nb2hop_tuple->nb2hop_addr());
-                if (nb_tuple != NULL)
+                if (neigh->willingness() == OLSR_WILL_NEVER)
+                {
                     ok = false;
+                    break;
+                }
+                else
+                {
+                    ok = true;
+                    break;
+                }
+            }
+        }
+        if (!ok)
+        {
+            continue;
+        }
+
+        // excluding:
+        // (iii) all the symmetric neighbors: the nodes for which there exists a symmetric
+        //       link to this node on some interface.
+        for (nbset_t::iterator it2 = N.begin(); it2 != N.end(); it2++)
+        {
+            OLSR_ETX_nb_tuple* neigh =dynamic_cast<OLSR_ETX_nb_tuple*>(*it2);
+            if (neigh == NULL)
+                opp_error("Error in tupe");
+            if (neigh->nb_main_addr() == nb2hop_tuple->nb2hop_addr())
+            {
+                ok = false;
+                break;
             }
         }
 
@@ -417,7 +446,12 @@ OLSR_ETX::olsr_r1_mpr_computation()
     {
         OLSR_ETX_nb_tuple* nb_tuple = *it;
         if (nb_tuple->willingness() == OLSR_ETX_WILL_ALWAYS)
+        {
             state_.insert_mpr_addr(nb_tuple->nb_main_addr());
+            // (not in RFC but I think is needed: remove the 2-hop
+            // neighbors reachable by the MPR from N2)
+            CoverTwoHopNeighbors (nb_tuple->nb_main_addr(), N2);
+        }
     }
 
     // Add to Mi the nodes in N which are the only nodes to provide reachability

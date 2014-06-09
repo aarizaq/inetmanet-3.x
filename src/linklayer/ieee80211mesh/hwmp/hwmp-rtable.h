@@ -82,6 +82,7 @@ class HwmpRtable : public cObject
 
         void clearTable()
         {
+            EV << "clearTable() " << endl;
             DeleteProactivePath();
             m_routes.clear();
         }

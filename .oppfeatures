@@ -206,7 +206,7 @@
         name="SCTP"
         description = "SCTP Protocol support"
         initiallyEnabled = "true"
-        requires = "IPv4"
+        requires = "IPv4 IPv6"
         labels = ""
         nedPackages = "
                        inet.applications.sctpapp
@@ -439,6 +439,21 @@
         linkerFlags = ""
         />
     <feature
+        id="AODV"
+        name="AODV"
+        description = "Ad hoc On-Demand Distance Vector (AODV) Routing"
+        initiallyEnabled = "true"
+        requires = "UDP IPv4 Ieee80211"
+        labels = "routing"
+        nedPackages = "
+                       inet.networklayer.routing.aodv
+                       inet.nodes.aodv
+                      "
+        extraSourceFolders = ""
+        compileFlags = "-DWITH_AODV"
+        linkerFlags = ""
+        />
+    <feature
         id="GPSR"
         name="GPSR"
         description = "Greedy Perimeter Stateless Routing for Wireless Networks"
@@ -465,7 +480,7 @@
                        inet.nodes.rip
                       "
         extraSourceFolders = ""
-        compileFlags = ""
+        compileFlags = "-DWITH_RIP"
         linkerFlags = ""
         />
     <feature
@@ -583,7 +598,7 @@
                        inet.world.radio
                       "
         extraSourceFolders = ""
-        compileFlags = ""
+        compileFlags = "-DWITH_RADIO"
         linkerFlags = ""
         />
     <feature
@@ -598,7 +613,7 @@
                        inet.nodes.wireless
                       "
         extraSourceFolders = ""
-        compileFlags = ""
+        compileFlags = "-DWITH_IEEE80211"
         linkerFlags = ""
         />
     <feature
@@ -637,7 +652,7 @@
     <feature
         id="VoIPStream"
         name="VoIPStream"
-        description = "Voice over IP tool. Required external libraries: libavcodec, libavformat libavutil"
+        description = "Voice over IP tool. Required external libraries: libavcodec libavformat libavresample libavutil"
         initiallyEnabled = "false"
         requires = "UDP"
         labels = ""

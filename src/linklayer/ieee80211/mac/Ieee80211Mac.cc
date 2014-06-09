@@ -282,7 +282,7 @@ void Ieee80211Mac::initialize(int stage)
         else
             Ieee80211Descriptor::getIdx(opMode, basicBitrate);
 
-        basicTransmisionMode = WifiModulationType::getModulationType(opMode, basicBitrate);;
+        basicTransmisionMode = WifiModulationType::getModulationType(opMode, basicBitrate);
         if (opMode == 'n' && carrierFrequency == 5e6)
             WifiModulationType::setHTFrequency11n5Gh(basicTransmisionMode);
 
