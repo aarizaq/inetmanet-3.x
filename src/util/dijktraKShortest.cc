@@ -123,6 +123,7 @@ void DijkstraKshortest::cleanLinkArray()
 DijkstraKshortest::~DijkstraKshortest()
 {
     cleanLinkArray();
+    mapRoutes.clear();
 }
 
 void DijkstraKshortest::setLimits(const std::vector<double> & vectorData)
@@ -288,6 +289,39 @@ void DijkstraKshortest::run ()
                 }
             }
         }
+    }
+    // incude routes in the map
+    mapRoutes.clear();
+    for (RouteMap::iterator it = routeMap.begin();it != routeMap.begin();++it)
+    {
+
+        Kroutes kroutes;
+        for (unsigned int k = 0; k < it->second.size(); k++)
+        {
+            Route path;
+            Route pathNode;
+            NodeId currentNode = it->first;
+            int idx=it->second[k].idPrevIdx;
+            while (currentNode!=rootNode)
+            {
+                path.push_back(currentNode);
+                currentNode = it->second[idx].idPrev;
+                idx=it->second[idx].idPrevIdx;
+                it = routeMap.find(currentNode);
+                if (it==routeMap.end())
+                    opp_error("error in data");
+                if (idx>=(int)it->second.size())
+                    opp_error("error in data");
+            }
+            pathNode.clear();
+            while (!path.empty())
+            {
+                pathNode.push_back(path.back());
+                path.pop_back();
+            }
+            kroutes.push_back(pathNode);
+        }
+        mapRoutes.insert(std::make_pair(it->first,kroutes));
     }
 }
 

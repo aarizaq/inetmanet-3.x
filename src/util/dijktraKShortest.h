@@ -53,6 +53,13 @@ protected:
     static CostVector maximumCost;
     friend bool operator < ( const DijkstraKshortest::CostVector& x, const DijkstraKshortest::CostVector& y );
 
+
+    typedef std::vector<NodeId> Route;
+    typedef std::vector<Route> Kroutes;
+    typedef std::map<NodeId,Kroutes> MapRoutes;
+    MapRoutes mapRoutes;
+
+
     class SetElem
     {
     public:

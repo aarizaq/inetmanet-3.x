@@ -26,6 +26,7 @@
 #include "Coord.h"
 #include "MACAddress.h"
 #include "IPv4Address.h"
+#include "dijktraKShortest.h"
 
 class IInterfaceTable;
 class IMobility;
@@ -82,6 +83,8 @@ class WirelessNumHops : public cOwnedObject
         LinkCache linkCache;
         RouteCacheMac routeCacheMac;
         bool staticScenario;
+        DijkstraKshortest *kshortest;
+
     protected:
         enum StateLabel {perm,tent};
         class DijkstraShortest
@@ -253,6 +256,16 @@ class WirelessNumHops : public cOwnedObject
 
         void setStaticScenario(bool val) {staticScenario = val;}
         virtual void setIpRoutingTable();
+        virtual void activateKshortest()
+        {
+            if (kshortest)
+                delete kshortest;
+            kshortest = new DijkstraKshortest();
+        }
+
+        virtual bool fetKshortest(const MACAddress &,std::deque<MACAddress> &, bool withCost, double &costAdd, double &costMax);
+        virtual bool fetKshortest(const IPv4Address &,std::deque<IPv4Address> &, bool withCost, double &costAdd, double &costMax);
+
 };
 
 
