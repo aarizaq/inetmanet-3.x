@@ -498,3 +498,47 @@ void DijkstraKshortest::setFromTopo(const cTopology *topo)
     }
 }
 
+void DijkstraKshortest::setRouteMapK()
+{
+    mapRoutes.clear();
+    std::vector<NodeId> pathNode;
+    for (RouteMap::iterator it = routeMap.begin();it != routeMap.begin();++it)
+    {
+        for (int i = 0; i < (int)it->second.size();i++)
+        {
+            std::vector<NodeId> path;
+            NodeId currentNode = it->first;
+            int idx=it->second[i].idPrevIdx;
+            while (currentNode!=rootNode)
+            {
+                path.push_back(currentNode);
+                currentNode = it->second[idx].idPrev;
+                idx=it->second[idx].idPrevIdx;
+                it = routeMap.find(currentNode);
+                if (it==routeMap.end())
+                    opp_error("error in data");
+                if (idx>=(int)it->second.size())
+                    opp_error("error in data");
+            }
+            pathNode.clear();
+            while (!path.empty())
+            {
+                pathNode.push_back(path.back());
+                path.pop_back();
+            }
+            mapRoutes[it->first].push_back(pathNode);
+        }
+    }
+}
+
+
+void DijkstraKshortest::getRouteMapK(const NodeId &nodeId, Kroutes &routes)
+{
+    routes.clear();
+    MapRoutes::iterator it = mapRoutes.find(nodeId);
+    if (it == mapRoutes.end())
+        return;
+    routes = it->second;
+}
+
+

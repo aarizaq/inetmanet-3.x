@@ -1046,12 +1046,49 @@ void WirelessNumHops::setIpRoutingTable(const IPv4Address &root, const IPv4Addre
 }
 
 
-bool WirelessNumHops::fetKshortest(const MACAddress &,std::deque<MACAddress> &, bool withCost, double &costAdd, double &costMax)
+bool WirelessNumHops::getKshortest(const MACAddress &dest,KroutesMac &routes)
 {
+    if (!kshortest)
+        return false;
 
+    int nodeId = getIdNode(dest);
+
+    DijkstraKshortest::Kroutes kroute;
+
+    kshortest->getRouteMapK(nodeId,kroute);
+    for (unsigned int i = 0; i < kroute.size();i++)
+    {
+        RouteMac routeAux;
+        for (unsigned int j = 0; j < kroute[i].size();j++)
+        {
+            Uint128 index = kroute[i][j];
+            routeAux.push_back(vectorList[index.getLo()].macAddress[0]);
+        }
+        routes.push_back(routeAux);
+    }
+    return true;
 }
 
-bool WirelessNumHops::fetKshortest(const IPv4Address &,std::deque<IPv4Address> &, bool withCost, double &costAdd, double &costMax)
-{
 
+bool WirelessNumHops::getKshortest(const IPv4Address &dest,KroutesIp &routes)
+{
+    if (!kshortest)
+        return false;
+
+    int nodeId = getIdNode(dest);
+
+    DijkstraKshortest::Kroutes kroute;
+
+    kshortest->getRouteMapK(nodeId,kroute);
+    for (unsigned int i = 0; i < kroute.size();i++)
+    {
+        RouteIp routeAux;
+        for (unsigned int j = 0; j < kroute[i].size();j++)
+        {
+            Uint128 index = kroute[i][j];
+            routeAux.push_back(vectorList[index.getLo()].ipAddress[0]);
+        }
+        routes.push_back(routeAux);
+    }
+    return true;
 }

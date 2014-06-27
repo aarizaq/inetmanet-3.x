@@ -53,9 +53,10 @@ protected:
     static CostVector maximumCost;
     friend bool operator < ( const DijkstraKshortest::CostVector& x, const DijkstraKshortest::CostVector& y );
 
-
+public:
     typedef std::vector<NodeId> Route;
     typedef std::vector<Route> Kroutes;
+protected:
     typedef std::map<NodeId,Kroutes> MapRoutes;
     MapRoutes mapRoutes;
 
@@ -132,6 +133,8 @@ public:
     virtual void runUntil (const NodeId &);
     virtual int getNumRoutes(const NodeId &nodeId);
     virtual bool getRoute(const NodeId &nodeId,std::vector<NodeId> &pathNode,int k=0);
+    virtual void setRouteMapK();
+    virtual void getRouteMapK(const NodeId &nodeId, Kroutes &routes);
 };
 
 

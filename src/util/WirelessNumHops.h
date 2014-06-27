@@ -31,6 +31,11 @@
 class IInterfaceTable;
 class IMobility;
 
+typedef std::vector<MACAddress> RouteMac;
+typedef std::vector<RouteMac> KroutesMac;
+typedef std::vector<IPv4Address> RouteIp;
+typedef std::vector<RouteIp> KroutesIp;
+
 class WirelessNumHops : public cOwnedObject
 {
         struct nodeInfo
@@ -263,8 +268,8 @@ class WirelessNumHops : public cOwnedObject
             kshortest = new DijkstraKshortest();
         }
 
-        virtual bool fetKshortest(const MACAddress &,std::deque<MACAddress> &, bool withCost, double &costAdd, double &costMax);
-        virtual bool fetKshortest(const IPv4Address &,std::deque<IPv4Address> &, bool withCost, double &costAdd, double &costMax);
+        virtual bool getKshortest(const MACAddress &,KroutesMac &);
+        virtual bool getKshortest(const IPv4Address &, KroutesIp&);
 
 };
 
