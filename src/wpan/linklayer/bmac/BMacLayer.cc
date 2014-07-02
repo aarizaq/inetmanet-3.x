@@ -723,6 +723,13 @@ void BMacLayer::handleLowerMsg(cPacket *msg)
     // simply pass the massage as self message, to be processed by the FSM.
     if (msg->isPacket())
     {
+       if (radioState == RadioState::TRANSMIT)
+       {
+           // should be an error?
+           EV << " Packet received in TX state ignore \n" ;
+           delete msg;
+           return;
+       }
        if (msg->getKind()!=PACKETOK)
        {
     	   EV << " Packet received with errors \n" ;
