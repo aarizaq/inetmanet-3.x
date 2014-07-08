@@ -232,13 +232,12 @@ void DijkstraKshortest::run()
                 it->second.push_back(state);
             }
         }
-        it->second[elem.idx].label=perm;
 
         /// Record the route in the map
         RouteMap::iterator itAux = it;
         Route pathActive;
         Route pathNode;
-        int prevIdx=itAux->second[elem.idx].idPrevIdx;
+        int prevIdx = elem.idx;
         NodeId currentNode =  elem.iD;
         while (currentNode!=rootNode)
         {
@@ -251,6 +250,8 @@ void DijkstraKshortest::run()
             if (prevIdx >= (int) itAux->second.size())
                 opp_error("error in data");
         }
+
+        bool routeExist = false;
         if (!pathActive.empty()) // valid path, record in the map
         {
             while (!pathActive.empty())
@@ -267,10 +268,25 @@ void DijkstraKshortest::run()
             }
             else
             {
-                if ((int)itKroutes->second.size() < K_LIMITE)
-                    itKroutes->second.push_back(pathNode);
+                for (unsigned int j = 0; j < itKroutes->second.size(); j++)
+                {
+                    if (pathNode == itKroutes->second[j])
+                    {
+                        routeExist = true;
+                        break;
+                    }
+                }
+                if (!routeExist)
+                {
+                    if ((int)itKroutes->second.size() < K_LIMITE)
+                        itKroutes->second.push_back(pathNode);
+                }
             }
         }
+
+        if (routeExist)
+            continue; // next
+        it->second[elem.idx].label=perm;
 
         // next hop
         LinkArray::iterator linkIt=linkArray.find(elem.iD);
