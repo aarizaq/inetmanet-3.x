@@ -438,14 +438,14 @@ cModule *IPvXAddressResolver::findHostWithAddress(const IPvXAddress & add)
                 if (add.isIPv6())
                 {
 #ifdef WITH_IPv6
-                    if (entry->ipv6Data()->hasAddress(add.get6()))
+                    if (entry->ipv6Data() && entry->ipv6Data()->hasAddress(add.get6()))
                         return mod;
 #endif
                 }
                 else
                 {
 #ifdef WITH_IPv4
-                    if (entry->ipv4Data()->getIPAddress() == add.get4())
+                    if (entry->ipv4Data() && entry->ipv4Data()->getIPAddress() == add.get4())
                         return mod;
 #endif
                 }
