@@ -54,7 +54,7 @@ void WirelessNumHops::reStart()
     if (kshortest)
     {
         delete kshortest;
-        kshortest = new DijkstraKshortest();
+        kshortest = new DijkstraKshortest(limitKshort);
     }
 
     for (int i = 0; i < topo.getNumNodes(); i++)

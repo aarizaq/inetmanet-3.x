@@ -38,6 +38,7 @@ typedef std::vector<RouteIp> KroutesIp;
 
 class WirelessNumHops : public cOwnedObject
 {
+        int limitKshort;
         struct nodeInfo
         {
             IMobility* mob;
@@ -261,11 +262,12 @@ class WirelessNumHops : public cOwnedObject
 
         void setStaticScenario(bool val) {staticScenario = val;}
         virtual void setIpRoutingTable();
-        virtual void activateKshortest()
+        virtual void activateKshortest(int limit = 5)
         {
             if (kshortest)
                 delete kshortest;
-            kshortest = new DijkstraKshortest();
+            limitKshort = limit;
+            kshortest = new DijkstraKshortest(limit);
         }
 
         virtual bool getKshortest(const MACAddress &,KroutesMac &);
