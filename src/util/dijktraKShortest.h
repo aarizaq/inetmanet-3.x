@@ -58,7 +58,7 @@ public:
     typedef std::vector<Route> Kroutes;
 protected:
     typedef std::map<NodeId,Kroutes> MapRoutes;
-    MapRoutes mapRoutes;
+    MapRoutes kRoutesMap;
 
 
     class SetElem
