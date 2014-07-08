@@ -101,10 +101,10 @@ void DijkstraKshortest::initMinAndMax()
    maximumCost.push_back(costData);
 }
 
-DijkstraKshortest::DijkstraKshortest()
+DijkstraKshortest::DijkstraKshortest(int limit)
 {
     initMinAndMax();
-    K_LIMITE = 5;
+    K_LIMITE = limit;
     resetLimits();
 }
 
@@ -171,7 +171,6 @@ void DijkstraKshortest::addEdge (const NodeId & originNode, const NodeId & last_
 void DijkstraKshortest::setRoot(const NodeId & dest_node)
 {
     rootNode = dest_node;
-
 }
 
 void DijkstraKshortest::run ()
@@ -217,7 +216,7 @@ void DijkstraKshortest::run ()
                     }
                 }
                 if (continueLoop)
-                    continue;
+                    continue; // nothing to do with this element
             }
         }
 
@@ -400,7 +399,7 @@ void DijkstraKshortest::runUntil (const NodeId &target)
                 if (limitsData<cost)
                     continue;
             }
-            if (itNext==routeMap.end() || (itNext!=routeMap.end() && (int)itNext->second.size()<K_LIMITE))
+            if ((itNext==routeMap.end()) ||  (itNext!=routeMap.end() && (int)itNext->second.size()<K_LIMITE))
             {
                 State state;
                 state.idPrev=elem.iD;
