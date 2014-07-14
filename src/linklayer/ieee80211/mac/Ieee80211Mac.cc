@@ -707,8 +707,9 @@ int Ieee80211Mac::mappingAccessCategory(Ieee80211DataOrMgmtFrame *frame)
 {
     bool isDataFrame = (dynamic_cast<Ieee80211DataFrame *>(frame) != NULL);
 
-    currentAC = classifier ? classifier->classifyPacket(frame) : 0;
-        // check for queue overflow
+    int tempAC = classifier ? classifier->classifyPacket(frame) : 0;
+
+    // check for queue overflow
     if (isDataFrame && maxCategorieQueueSize && (int)transmissionQueue()->size() >= maxCategorieQueueSize)
     {
         EV << "message " << frame << " received from higher layer but AC queue is full, dropping message\n";
@@ -724,7 +725,7 @@ int Ieee80211Mac::mappingAccessCategory(Ieee80211DataOrMgmtFrame *frame)
         delete frame;
         return 200;
     }
-    transmissionQueue()->push_back(frame);
+    transmissionQueue()->push_back(frame, tempAC);
     EV << "frame classified as access category "<< currentAC <<" (0 background, 1 best effort, 2 video, 3 voice)\n";
     return true;
 }
@@ -2096,9 +2097,9 @@ Ieee80211DataOrMgmtFrame *Ieee80211Mac::buildDataFrame(Ieee80211DataOrMgmtFrame 
             }
             int size = nextframeToSend->getBitLength();
 
-            if (dynamic_cast<FrameBlock*> (transmissionQueue()->next())
+            if (dynamic_cast<FrameBlock*> (transmissionQueue()->next()))
             {
-                TODO :
+                // TODO :
             }
             else
             {
