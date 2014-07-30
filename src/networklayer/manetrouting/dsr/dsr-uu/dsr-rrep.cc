@@ -43,18 +43,7 @@ static TBL(grat_rrep_tbl, GRAT_RREP_TBL_MAX_LEN);
 DSRUUTimer grat_rrep_tbl_timer;
 #endif
 
-struct grat_rrep_entry
-{
-    dsr_list_t l;
-    struct in_addr src, prev_hop;
-    struct timeval expires;
-};
-
-struct grat_rrep_query
-{
-    struct in_addr *src, *prev_hop;
-};
-
+/*
 static inline int crit_query(void *pos, void *query)
 {
     struct grat_rrep_entry *p = (struct grat_rrep_entry *)pos;
@@ -75,35 +64,31 @@ static inline int crit_time(void *pos, void *time)
 
     return 0;
 }
-
+*/
 void NSCLASS grat_rrep_tbl_timeout(unsigned long data)
 {
-    struct grat_rrep_entry *e =
-        (struct grat_rrep_entry *)tbl_detach_first(&grat_rrep_tbl);
+
+    grat_rrep_entry *e = gratRrep.front();
+    gratRrep.erase(gratRrep.begin());
 
     delete e;
 
-    if (tbl_empty(&grat_rrep_tbl))
+    if (gratRrep.empty())
         return;
-
-    DSR_READ_LOCK(&grat_rrep_tbl.lock);
-
-    e = (struct grat_rrep_entry *)TBL_FIRST(&grat_rrep_tbl);
-
+    e = gratRrep.front();
     grat_rrep_tbl_timer.function = &NSCLASS grat_rrep_tbl_timeout;
-
     set_timer(&grat_rrep_tbl_timer, &e->expires);
-
-    DSR_READ_UNLOCK(&grat_rrep_tbl.lock);
 }
 
 int NSCLASS grat_rrep_tbl_add(struct in_addr src, struct in_addr prev_hop)
 {
-    struct grat_rrep_query q = { &src, &prev_hop };
     struct grat_rrep_entry *e;
 
-    if (in_tbl(&grat_rrep_tbl, &q, crit_query))
-        return 0;
+    for (unsigned int i = 0; i < gratRrep.size(); i++)
+    {
+        if (gratRrep[i]->src.s_addr ==  src.s_addr && gratRrep[i]->prev_hop.s_addr ==  prev_hop.s_addr)
+            return 0;
+    }
 
     e = new grat_rrep_entry;
 
@@ -120,74 +105,42 @@ int NSCLASS grat_rrep_tbl_add(struct in_addr src, struct in_addr prev_hop)
     if (timer_pending(&grat_rrep_tbl_timer))
         del_timer_sync(&grat_rrep_tbl_timer);
 
-    if (tbl_add(&grat_rrep_tbl, &e->l, crit_time))
+    if (gratRrep.empty() || timeval_diff(&gratRrep.back()->expires,&e->expires) < 0 )
+        gratRrep.push_back(e);
+    else if (timeval_diff(&gratRrep.front()->expires,&e->expires) > 0 )
     {
-
-        DSR_READ_LOCK(&grat_rrep_tbl.lock);
-        e = (struct grat_rrep_entry *)TBL_FIRST(&grat_rrep_tbl);
-
-        grat_rrep_tbl_timer.function = &NSCLASS grat_rrep_tbl_timeout;
-        set_timer(&grat_rrep_tbl_timer, &e->expires);
-        DSR_READ_UNLOCK(&grat_rrep_tbl.lock);
+        gratRrep.push_front(e);
     }
+    else
+    {
+        std::deque<grat_rrep_entry*>::iterator it;
+        for (it = gratRrep.begin() ; it != gratRrep.end() ; ++it)
+        {
+            if (timeval_diff(&((*it)->expires), &(e->expires)) > 0)
+            {
+                gratRrep.insert(it,e);
+                break;
+            }
+        }
+    }
+
+    e = gratRrep.front();
+    grat_rrep_tbl_timer.function = &NSCLASS grat_rrep_tbl_timeout;
+    set_timer(&grat_rrep_tbl_timer, &e->expires);
+
     return 1;
 }
 
 int NSCLASS grat_rrep_tbl_find(struct in_addr src, struct in_addr prev_hop)
 {
-    struct grat_rrep_query q = { &src, &prev_hop };
-
-    if (in_tbl(&grat_rrep_tbl, &q, crit_query))
-        return 1;
+    for (unsigned int i = 0; i < gratRrep.size(); i++)
+    {
+        if (gratRrep[i]->src.s_addr ==  src.s_addr && gratRrep[i]->prev_hop.s_addr ==  prev_hop.s_addr)
+            return 1;
+    }
     return 0;
 }
 
-#ifdef __KERNEL__
-
-static int grat_rrep_tbl_print(struct tbl *t, char *buf)
-{
-    dsr_list_t *pos;
-    int len = 0;
-    struct timeval now;
-
-    gettime(&now);
-
-    DSR_READ_LOCK(&t->lock);
-
-    len += sprintf(buf, "# %-15s %-15s Time\n", "Source", "Prev hop");
-
-    list_for_each(pos, &t->head)
-    {
-        struct grat_rrep_entry *e = (struct grat_rrep_entry *)pos;
-
-        len += sprintf(buf + len, "  %-15s %-15s %lu\n",
-                       print_ip(e->src),
-                       print_ip(e->prev_hop),
-                       timeval_diff(&e->expires, &now) / 1000000);
-    }
-
-    DSR_READ_UNLOCK(&t->lock);
-
-    return len;
-}
-
-static int
-grat_rrep_tbl_proc_info(char *buffer, char **start, off_t offset, int length)
-{
-    int len;
-
-    len = grat_rrep_tbl_print(&grat_rrep_tbl, buffer);
-
-    *start = buffer + offset;
-    len -= offset;
-    if (len > length)
-        len = length;
-    else if (len < 0)
-        len = 0;
-    return len;
-}
-
-#endif              /* __KERNEL__ */
 
 static inline int
 dsr_rrep_add_srt(struct dsr_rrep_opt *rrep_opt, struct dsr_srt *srt)
@@ -405,23 +358,17 @@ int NSCLASS dsr_rrep_opt_recv(struct dsr_pkt *dp, struct dsr_rrep_opt *rrep_opt)
 
 int __init NSCLASS grat_rrep_tbl_init(void)
 {
-    INIT_TBL(&grat_rrep_tbl, GRAT_RREP_TBL_MAX_LEN);
-
+    grat_rrep_tbl_cleanup();
     init_timer(&grat_rrep_tbl_timer);
-
-#ifdef __KERNEL__
-    proc_net_create(GRAT_RREP_TBL_PROC_NAME, 0, grat_rrep_tbl_proc_info);
-#endif
     return 0;
 }
 
 void __exit NSCLASS grat_rrep_tbl_cleanup(void)
 {
-    tbl_flush(&grat_rrep_tbl, NULL);
-
+    while (!gratRrep.empty())
+    {
+        delete gratRrep.back();
+        gratRrep.pop_back();
+    }
     del_timer_sync(&grat_rrep_tbl_timer);
-
-#ifdef __KERNEL__
-    proc_net_remove(GRAT_RREP_TBL_PROC_NAME);
-#endif
 }

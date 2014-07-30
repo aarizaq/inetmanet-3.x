@@ -95,7 +95,6 @@ class DSRUU;
 #define ConfVal(name) DSRUU::get_confval(name)
 #define ConfValToUsecs(cv) confval_to_usecs(cv)
 
-#include "dsr-uu/tbl.h"
 #include "dsr-uu/timer.h"
 
 
@@ -324,6 +323,35 @@ class DSRUU:public cSimpleModule, public INotifiable, ILifecycle, ManetNetfilter
         rreq_tbl_entry *__rreq_tbl_entry_create(struct in_addr node_addr);
         rreq_tbl_entry *__rreq_tbl_add(struct in_addr node_addr);
 
+        // neighbor routinges
+        struct neighbor
+        {
+            struct in_addr addr;
+            struct sockaddr hw_addr;
+            unsigned short id;
+            struct timeval last_ack_req;
+            usecs_t t_srtt, rto, t_rxtcur, t_rttmin, t_rttvar, jitter;  /* RTT in usec */
+        };
+
+        struct neighbor_info
+        {
+            struct sockaddr hw_addr;
+            unsigned short id;
+            usecs_t rtt, rto;       /* RTT and Round Trip Timeout */
+            struct timeval last_ack_req;
+        };
+
+        typedef std::map<ManetAddress,neighbor*> NeighborMap;
+        NeighborMap neighborMap;
+        neighbor * neigh_tbl_create(struct in_addr addr,struct sockaddr *hw_addr, unsigned short id);
+
+        struct grat_rrep_entry
+        {
+            struct in_addr src, prev_hop;
+            struct timeval expires;
+        };
+        std::deque<grat_rrep_entry*> gratRrep;
+
   public:
     friend class DSRUUTimer;
     //static simtime_t current_time;
@@ -347,8 +375,6 @@ class DSRUU:public cSimpleModule, public INotifiable, ILifecycle, ManetNetfilter
     // MobileNode *node_;
 
    // struct tbl rreq_tbl;
-    struct tbl grat_rrep_tbl;
-    struct tbl neigh_tbl;
 
     unsigned int rreq_seqno;
 
