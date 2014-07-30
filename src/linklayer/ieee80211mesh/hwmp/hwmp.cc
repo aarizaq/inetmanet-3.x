@@ -1028,8 +1028,8 @@ void HwmpProtocol::processPerr(cMessage *msg)
         fdest.seqnum = perr.destSeqNumber;
 
     }
-    delete msg;
     EV << "Received perr from " << from << " with destination address " << frame->getReceiverAddress() << endl;
+    delete msg;
     receivePerr(destinations, from, interface, fromMp);
 }
 

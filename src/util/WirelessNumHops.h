@@ -26,12 +26,19 @@
 #include "Coord.h"
 #include "MACAddress.h"
 #include "IPv4Address.h"
+#include "dijktraKShortest.h"
 
 class IInterfaceTable;
 class IMobility;
 
+typedef std::vector<MACAddress> RouteMac;
+typedef std::vector<RouteMac> KroutesMac;
+typedef std::vector<IPv4Address> RouteIp;
+typedef std::vector<RouteIp> KroutesIp;
+
 class WirelessNumHops : public cOwnedObject
 {
+        int limitKshort;
         struct nodeInfo
         {
             IMobility* mob;
@@ -82,6 +89,8 @@ class WirelessNumHops : public cOwnedObject
         LinkCache linkCache;
         RouteCacheMac routeCacheMac;
         bool staticScenario;
+        DijkstraKshortest *kshortest;
+
     protected:
         enum StateLabel {perm,tent};
         class DijkstraShortest
@@ -253,6 +262,17 @@ class WirelessNumHops : public cOwnedObject
 
         void setStaticScenario(bool val) {staticScenario = val;}
         virtual void setIpRoutingTable();
+        virtual void activateKshortest(int limit = 5)
+        {
+            if (kshortest)
+                delete kshortest;
+            limitKshort = limit;
+            kshortest = new DijkstraKshortest(limit);
+        }
+
+        virtual bool getKshortest(const MACAddress &,KroutesMac &);
+        virtual bool getKshortest(const IPv4Address &, KroutesIp&);
+
 };
 
 

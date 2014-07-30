@@ -101,10 +101,10 @@ void DijkstraKshortest::initMinAndMax()
    maximumCost.push_back(costData);
 }
 
-DijkstraKshortest::DijkstraKshortest()
+DijkstraKshortest::DijkstraKshortest(int limit)
 {
     initMinAndMax();
-    K_LIMITE = 5;
+    K_LIMITE = limit;
     resetLimits();
 }
 
@@ -123,6 +123,7 @@ void DijkstraKshortest::cleanLinkArray()
 DijkstraKshortest::~DijkstraKshortest()
 {
     cleanLinkArray();
+    kRoutesMap.clear();
 }
 
 void DijkstraKshortest::setLimits(const std::vector<double> & vectorData)
@@ -170,13 +171,15 @@ void DijkstraKshortest::addEdge (const NodeId & originNode, const NodeId & last_
 void DijkstraKshortest::setRoot(const NodeId & dest_node)
 {
     rootNode = dest_node;
-
 }
 
-void DijkstraKshortest::run ()
+void DijkstraKshortest::run()
 {
     std::multiset<SetElem> heap;
     routeMap.clear();
+
+    // include routes in the map
+    kRoutesMap.clear();
 
     LinkArray::iterator it;
     it = linkArray.find(rootNode);
@@ -216,7 +219,7 @@ void DijkstraKshortest::run ()
                     }
                 }
                 if (continueLoop)
-                    continue;
+                    continue; // nothing to do with this element
             }
         }
 
@@ -229,7 +232,63 @@ void DijkstraKshortest::run ()
                 it->second.push_back(state);
             }
         }
-        (it->second)[elem.idx].label=perm;
+
+        /// Record the route in the map
+        RouteMap::iterator itAux = it;
+        Route pathActive;
+        Route pathNode;
+        int prevIdx = elem.idx;
+        NodeId currentNode =  elem.iD;
+        while (currentNode!=rootNode)
+        {
+            pathActive.push_back(currentNode);
+            currentNode = itAux->second[prevIdx].idPrev;
+            prevIdx = itAux->second[prevIdx].idPrevIdx;
+            itAux = routeMap.find(currentNode);
+            if (itAux == routeMap.end())
+                opp_error("error in data");
+            if (prevIdx >= (int) itAux->second.size())
+                opp_error("error in data");
+        }
+
+        bool routeExist = false;
+        if (!pathActive.empty()) // valid path, record in the map
+        {
+            while (!pathActive.empty())
+            {
+                pathNode.push_back(pathActive.back());
+                pathActive.pop_back();
+            }
+            MapRoutes::iterator itKroutes = kRoutesMap.find(elem.iD);
+            if (itKroutes == kRoutesMap.end())
+            {
+                Kroutes kroutes;
+                kroutes.push_back(pathNode);
+                kRoutesMap.insert(std::make_pair(elem.iD, kroutes));
+            }
+            else
+            {
+                for (unsigned int j = 0; j < itKroutes->second.size(); j++)
+                {
+                    if (pathNode == itKroutes->second[j])
+                    {
+                        routeExist = true;
+                        break;
+                    }
+                }
+                if (!routeExist)
+                {
+                    if ((int)itKroutes->second.size() < K_LIMITE)
+                        itKroutes->second.push_back(pathNode);
+                }
+            }
+        }
+
+        if (routeExist)
+            continue; // next
+        it->second[elem.idx].label=perm;
+
+        // next hop
         LinkArray::iterator linkIt=linkArray.find(elem.iD);
         if (linkIt == linkArray.end())
             opp_error("Error link not found in linkArray");
@@ -240,6 +299,11 @@ void DijkstraKshortest::run ()
             CostVector cost;
             CostVector maxCost = maximumCost;
             int nextIdx;
+
+            // check if the node is in the path
+            if (std::find(pathNode.begin(),pathNode.end(),current_edge->last_node())!=pathNode.end())
+                continue;
+
             RouteMap::iterator itNext = routeMap.find(current_edge->last_node());
 
             addCost(cost,current_edge->cost,(it->second)[elem.idx].cost);
@@ -248,6 +312,7 @@ void DijkstraKshortest::run ()
                 if (limitsData<cost)
                     continue;
             }
+
             if (itNext==routeMap.end() || (itNext!=routeMap.end() && (int)itNext->second.size()<K_LIMITE))
             {
                 State state;
@@ -366,7 +431,7 @@ void DijkstraKshortest::runUntil (const NodeId &target)
                 if (limitsData<cost)
                     continue;
             }
-            if (itNext==routeMap.end() || (itNext!=routeMap.end() && (int)itNext->second.size()<K_LIMITE))
+            if ((itNext==routeMap.end()) ||  (itNext!=routeMap.end() && (int)itNext->second.size()<K_LIMITE))
             {
                 State state;
                 state.idPrev=elem.iD;
@@ -463,4 +528,48 @@ void DijkstraKshortest::setFromTopo(const cTopology *topo)
     	}
     }
 }
+
+void DijkstraKshortest::setRouteMapK()
+{
+    kRoutesMap.clear();
+    std::vector<NodeId> pathNode;
+    for (RouteMap::iterator it = routeMap.begin();it != routeMap.begin();++it)
+    {
+        for (int i = 0; i < (int)it->second.size();i++)
+        {
+            std::vector<NodeId> path;
+            NodeId currentNode = it->first;
+            int idx=it->second[i].idPrevIdx;
+            while (currentNode!=rootNode)
+            {
+                path.push_back(currentNode);
+                currentNode = it->second[idx].idPrev;
+                idx=it->second[idx].idPrevIdx;
+                it = routeMap.find(currentNode);
+                if (it==routeMap.end())
+                    opp_error("error in data");
+                if (idx>=(int)it->second.size())
+                    opp_error("error in data");
+            }
+            pathNode.clear();
+            while (!path.empty())
+            {
+                pathNode.push_back(path.back());
+                path.pop_back();
+            }
+            kRoutesMap[it->first].push_back(pathNode);
+        }
+    }
+}
+
+
+void DijkstraKshortest::getRouteMapK(const NodeId &nodeId, Kroutes &routes)
+{
+    routes.clear();
+    MapRoutes::iterator it = kRoutesMap.find(nodeId);
+    if (it == kRoutesMap.end())
+        return;
+    routes = it->second;
+}
+
 

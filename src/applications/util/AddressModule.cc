@@ -76,9 +76,17 @@ void AddressModule::initModule(bool mode)
         }
     }
 
-    for (unsigned int i = 0; i < destAddresses.size(); i++)
+    for (unsigned int i = 0; i < destAddresses.size();)
     {
-        destModuleId.push_back(IPvXAddressResolver().findHostWithAddress(destAddresses[i])->getId());
+        if (IPvXAddressResolver().findHostWithAddress(destAddresses[i]))
+        {
+            destModuleId.push_back(IPvXAddressResolver().findHostWithAddress(destAddresses[i])->getId());
+            i++;
+        }
+        else
+        {
+            destAddresses.erase(destAddresses.begin()+i);
+        }
     }
 
     if (emitSignal)

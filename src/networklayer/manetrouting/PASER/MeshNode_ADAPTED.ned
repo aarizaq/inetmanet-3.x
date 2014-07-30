@@ -33,6 +33,7 @@ import inet.transport.ISCTP;
 import inet.transport.ITCP;
 import inet.transport.IUDP;
 import inet.util.PcapRecorder;
+import inet.nodes.inet.NetworkLayer;
 
 
 //
@@ -140,7 +141,7 @@ module meshnode
                 @display("i=block/app;p=381,247");
         }
 
-        networkLayer: NetworkLayer_Paser {
+        networkLayer: NetworkLayer {
             parameters:
                 @display("p=248,247;i=block/fork;q=queue");
         }
@@ -186,23 +187,23 @@ module meshnode
             tcpApp[i].tcpIn <-- tcp.appOut++;
         }
 
-        tcp.ipOut --> networkLayer.tcpIn if numTcpApps>0;
-        tcp.ipIn <-- networkLayer.tcpOut if numTcpApps>0;
+        tcp.ipOut --> networkLayer.transportIn++ if numTcpApps>0;
+        tcp.ipIn <-- networkLayer.transportOut++ if numTcpApps>0;
 
         for i=0..numUdpApps-1 {
             udpApp[i].udpOut --> udp.appIn++;
             udpApp[i].udpIn <-- udp.appOut++;
         }
 
-        udp.ipOut --> networkLayer.udpIn if numUdpApps>0;
-        udp.ipIn <-- networkLayer.udpOut if numUdpApps>0;
+        udp.ipOut --> networkLayer.transportIn++ if numUdpApps>0;
+        udp.ipIn <-- networkLayer.transportOut++ if numUdpApps>0;
 
         for i=0..numSctpApps-1 {
             sctpApp[i].sctpOut --> sctp.from_appl++;
             sctp.to_appl++ --> sctpApp[i].sctpIn;
         }
-        sctp.to_ip --> networkLayer.sctpIn if numSctpApps>0;
-        networkLayer.sctpOut --> sctp.from_ip if numSctpApps>0;
+        sctp.to_ip --> networkLayer.transportIn++ if numSctpApps>0;
+        networkLayer.transportOut++ --> sctp.from_ip if numSctpApps>0;
 
         //        networkLayer.pingOut --> pingApp.pingIn;
         //        networkLayer.pingIn <-- pingApp.pingOut;
@@ -213,8 +214,8 @@ module meshnode
 
         //        networkLayer.MANETOut --> manetrouting.from_ip;
         //        networkLayer.MANETIn <-- manetrouting.to_ip;
-        networkLayer.manetOut --> manetrouting.from_ip if routingProtocol != "";
-        networkLayer.manetIn <-- manetrouting.to_ip if routingProtocol != "";
+        networkLayer.transportOut++ --> manetrouting.from_ip if routingProtocol != "";
+        networkLayer.transportIn++ <-- manetrouting.to_ip if routingProtocol != "";
 
         //        for i=0..sizeof(ethg)-1 {
         //            ethg[i] <--> eth[i].phys;

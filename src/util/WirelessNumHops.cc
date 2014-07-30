@@ -29,6 +29,7 @@
 
 WirelessNumHops::WirelessNumHops()
 {
+    kshortest = NULL;
     staticScenario = false;
     reStart();
 }
@@ -50,7 +51,11 @@ void WirelessNumHops::reStart()
     routeCacheMac.clear();
     linkCache.clear();
     routeCacheIp.clear();
-
+    if (kshortest)
+    {
+        delete kshortest;
+        kshortest = new DijkstraKshortest(limitKshort);
+    }
 
     for (int i = 0; i < topo.getNumNodes(); i++)
     {
@@ -94,7 +99,8 @@ WirelessNumHops::~WirelessNumHops()
     routeCacheMac.clear();
     linkCache.clear();
     routeCacheIp.clear();
-
+    if (kshortest)
+        delete kshortest;
 }
 
 void WirelessNumHops::fillRoutingTables(const double &tDistance)
@@ -332,6 +338,11 @@ void WirelessNumHops::addEdge (const int & originNode, const int & last_node,uns
     // Also record the link delay and quality..
     link->cost = cost;
     linkArray[originNode].push_back(link);
+
+    if (kshortest)
+    {
+        kshortest->addEdge (originNode, last_node,cost,1,1e30,1);
+    }
 }
 
 void WirelessNumHops::addEdge (const int & originNode, const int & last_node,unsigned int cost, double costAdd, double costMax)
@@ -382,6 +393,10 @@ int WirelessNumHops::getIdNode(const IPv4Address &add)
 void WirelessNumHops::setRoot(const int & dest_node)
 {
     rootNode = dest_node;
+    if (kshortest)
+    {
+        kshortest->setRoot (rootNode);
+    }
 }
 
 
@@ -495,6 +510,10 @@ void WirelessNumHops::run()
             }
         }
     }
+    if (kshortest)
+    {
+        kshortest->run();
+    }
 }
 
 
@@ -607,6 +626,10 @@ void WirelessNumHops::runUntil (const int &target)
                 }
             }
         }
+    }
+    if (kshortest)
+    {
+        kshortest->runUntil(target);
     }
 }
 
@@ -812,7 +835,7 @@ void WirelessNumHops::getNeighbours(const MACAddress &node, std::vector<MACAddre
 std::deque<int> WirelessNumHops::getRoute(int index)
 {
     std::deque<int> route;
-    if (index>=routeMap.size())
+    if (index>=(int)routeMap.size())
         return route;
     RouteMap::iterator it = routeMap.begin();
     for (int i = 0; i<index; i++)
@@ -1022,3 +1045,50 @@ void WirelessNumHops::setIpRoutingTable(const IPv4Address &root, const IPv4Addre
     inet_rt->addRoute(entry);
 }
 
+
+bool WirelessNumHops::getKshortest(const MACAddress &dest,KroutesMac &routes)
+{
+    if (!kshortest)
+        return false;
+
+    int nodeId = getIdNode(dest);
+
+    DijkstraKshortest::Kroutes kroute;
+
+    kshortest->getRouteMapK(nodeId,kroute);
+    for (unsigned int i = 0; i < kroute.size();i++)
+    {
+        RouteMac routeAux;
+        for (unsigned int j = 0; j < kroute[i].size();j++)
+        {
+            Uint128 index = kroute[i][j];
+            routeAux.push_back(vectorList[index.getLo()].macAddress[0]);
+        }
+        routes.push_back(routeAux);
+    }
+    return true;
+}
+
+
+bool WirelessNumHops::getKshortest(const IPv4Address &dest,KroutesIp &routes)
+{
+    if (!kshortest)
+        return false;
+
+    int nodeId = getIdNode(dest);
+
+    DijkstraKshortest::Kroutes kroute;
+
+    kshortest->getRouteMapK(nodeId,kroute);
+    for (unsigned int i = 0; i < kroute.size();i++)
+    {
+        RouteIp routeAux;
+        for (unsigned int j = 0; j < kroute[i].size();j++)
+        {
+            Uint128 index = kroute[i][j];
+            routeAux.push_back(vectorList[index.getLo()].ipAddress[0]);
+        }
+        routes.push_back(routeAux);
+    }
+    return true;
+}
