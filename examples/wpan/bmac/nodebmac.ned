@@ -33,6 +33,7 @@ import inet.transport.udp.UDP;
 import inet.networklayer.IManetRouting;
 import inet.battery.IBattery;
 import inet.wpan.Isabel.Base.Display;
+import inet.linklayer.loopback.LoopbackInterface;
 
 
 //
@@ -109,6 +110,9 @@ module nodebmac
         manetrouting: <routingProtocol> like IManetRouting if routingProtocol != "" {
             @display("p=159,287");
         }
+        lo0: LoopbackInterface {
+            @display("p=209,368");
+        }        
         // the name of radio interface must have "wlan", valid examples wlan, wlan802, localwlan ....
         wlan: NicBMAC {
             parameters:
@@ -135,6 +139,9 @@ module nodebmac
 
         }
     connections allowunconnected:
+        networkLayer.ifOut++ --> lo0.upperLayerIn;
+        lo0.upperLayerOut --> networkLayer.ifIn++;
+        
         for i=0..numTcpApps-1 {
             tcpApp[i].tcpOut --> tcp.appIn++;
             tcpApp[i].tcpIn <-- tcp.appOut++;
@@ -159,8 +166,8 @@ module nodebmac
         networkLayer.transportIn++ <-- manetrouting.to_ip if routingProtocol != "";
         // connections to network outside
         radioIn --> wlan.radioIn;
-        wlan.upperLayerOut --> networkLayer.ifIn[0];
-        wlan.upperLayerIn <-- networkLayer.ifOut[0];
+        wlan.upperLayerOut --> networkLayer.ifIn++;
+        wlan.upperLayerIn <-- networkLayer.ifOut++;
 }
 
 
