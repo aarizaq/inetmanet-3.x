@@ -231,6 +231,7 @@ void Ieee80211AgentSTA::processScanConfirm(Ieee80211Prim_ScanConfirm *resp)
     {
         // search if the default_ssid is in the list, otherwise
         // keep searching.
+        bssIndex = -1;
         for (int i=0; i<(int)resp->getBssListArraySize(); i++)
         {
             std::string resp_ssid = resp->getBssList(i).getSSID();
