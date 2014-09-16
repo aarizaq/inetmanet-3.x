@@ -248,7 +248,7 @@ void GlobalWirelessLinkInspector::initRoutingTables (const cModule* mod,const Ma
         data.routesVector = new RouteMap;
         data.mod = const_cast<cModule*> (mod);
         vect.push_back(data);
-        globalRouteMap->insert(std::make_pair<ManetAddress,ProtocolsRoutes>(orgA,vect));
+        globalRouteMap->insert(std::make_pair(orgA,vect));
     }
     else
     {

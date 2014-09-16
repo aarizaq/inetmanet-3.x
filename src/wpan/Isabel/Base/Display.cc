@@ -1,4 +1,5 @@
 
+#include "FWMath.h"
 #include "Display.h"
 
 Define_Module( Display );
