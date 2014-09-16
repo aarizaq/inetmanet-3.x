@@ -860,6 +860,20 @@ void BMacLayer::handleCommand(cMessage *msg)
  */
 bool BMacLayer::addToQueue(cMessage *msg)
 {
+
+    if (macQueue.size() >= queueLength) {
+        // queue is full, message has to be deleted
+        EV << "New packet arrived, but queue is FULL, so new packet is deleted\n";
+        delete msg;
+        //msg->setName("MAC ERROR");
+        //msg->setKind(PACKET_DROPPED);
+        //sendControlUp(msg);
+        //droppedPacket.setReason(DroppedPacket::QUEUE);
+        //utility->publishBBItem(catDroppedPacket, &droppedPacket, nicId);
+        nbDroppedDataPackets++;
+        return false;
+    }
+
     BmacPkt *macPkt = new BmacPkt(msg->getName());
     macPkt->setBitLength(headerLength);
     uint64_t dest;
@@ -883,24 +897,9 @@ bool BMacLayer::addToQueue(cMessage *msg)
     ASSERT(static_cast<cPacket*>(msg));
     macPkt->encapsulate(static_cast<cPacket*>(msg));
 
-    if (macQueue.size() < queueLength) {
-        macQueue.push_back(macPkt);
-        EV << "Max queue length: " << queueLength << ", packet put in queue\n  queue size: " << macQueue.size() << " macState: " << macState << endl;
-        return true;
-    }
-    else {
-        // queue is full, message has to be deleted
-        EV << "New packet arrived, but queue is FULL, so new packet is deleted\n";
-        delete macPkt;
-        //msg->setName("MAC ERROR");
-        //msg->setKind(PACKET_DROPPED);
-        //sendControlUp(msg);
-        //droppedPacket.setReason(DroppedPacket::QUEUE);
-        //utility->publishBBItem(catDroppedPacket, &droppedPacket, nicId);
-        nbDroppedDataPackets++;
-    }
-    return false;
-
+    macQueue.push_back(macPkt);
+    EV << "Max queue length: " << queueLength << ", packet put in queue\n  queue size: " << macQueue.size() << " macState: " << macState << endl;
+    return true;
 }
 
 void BMacLayer::attachSignal(BmacPkt *macPkt)
