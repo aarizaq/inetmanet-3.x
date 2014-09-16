@@ -17,6 +17,7 @@
 
 
 #include "INETDefs.h"
+#include "FWMath.h"
 
 // compatibility for pre-4.2b3 omnetpp
 #ifndef Define_NED_Math_Function
