@@ -100,6 +100,8 @@ class INET_API UDPBasicBurst : public ApplicationBase
     virtual void finish();
     virtual bool sendBroadcast(const IPvXAddress &dest, cPacket *pkt);
 
+    virtual void initialConfiguration();
+
     virtual void processStart();
     virtual void processSend();
     virtual void processStop();

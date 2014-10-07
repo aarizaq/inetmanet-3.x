@@ -41,7 +41,7 @@ UDPBasicBurstNotification::~UDPBasicBurstNotification()
         delete addressModule;
 }
 
-void UDPBasicBurstNotification::processStart()
+void UDPBasicBurstNotification::initialConfiguration()
 {
     socket.setOutputGate(gate("udpOut"));
     socket.bind(localPort);
@@ -102,7 +102,13 @@ void UDPBasicBurstNotification::processStart()
             destAddr = chooseDestAddr();
         activeBurst = true;
     }
+}
 
+
+void UDPBasicBurstNotification::processStart()
+{
+    if (!par("configureInInit").boolValue())
+        initialConfiguration();
     nextSleep = simTime();
     nextBurst = simTime();
     nextPkt = simTime();
