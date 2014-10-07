@@ -60,6 +60,7 @@ UDPBasicBurst::UDPBasicBurst()
     sendIntervalPar = NULL;
     timerNext = NULL;
     outputInterface = -1;
+    isSource = false;
     outputInterfaceMulticastBroadcast.clear();
 }
 
