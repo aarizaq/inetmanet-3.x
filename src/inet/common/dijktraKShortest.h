@@ -55,6 +55,14 @@ protected:
     static CostVector maximumCost;
     friend bool operator < ( const DijkstraKshortest::CostVector& x, const DijkstraKshortest::CostVector& y );
 
+public:
+    typedef std::vector<NodeId> Route;
+    typedef std::vector<Route> Kroutes;
+protected:
+    typedef std::map<NodeId,Kroutes> MapRoutes;
+    MapRoutes kRoutesMap;
+
+
     class SetElem
     {
     public:
@@ -89,19 +97,34 @@ protected:
         ~State();
         void setCostVector(const CostVector &cost);
     };
+
     struct Edge
     {
         NodeId last_node_; // last node to reach node X
         CostVector cost;
-        Edge()
-        {
-            cost=maximumCost;
-        }
+        Edge() {cost = maximumCost;}
+        virtual ~Edge() {cost.clear();}
         inline NodeId& last_node() {return last_node_;}
-        inline double&   Cost()     {return cost[0].value;}
-        inline double&   Delay()     {return cost[1].value;}
-        inline double&   Bandwith()     {return cost[2].value;}
-        inline double&   Quality()     { return cost[3].value;}
+        virtual double&   Cost()     {return cost[0].value;}
+        virtual double&   Delay()     {return cost[1].value;}
+        virtual double&   Bandwith()     {return cost[2].value;}
+        virtual double&   Quality()     { return cost[3].value;}
+    };
+
+    struct EdgeWs : public Edge
+    {
+        virtual double&   Cost()     {return cost[0].value;}
+        virtual double&   Bandwith()     {return cost[1].value;}
+        virtual double&   Delay()     { return cost[3].value;}
+        virtual double&   Quality()     { return cost[3].value;}
+    };
+
+    struct EdgeSw : public Edge
+    {
+        virtual double&   Cost()     {return cost[1].value;}
+        virtual double&   Bandwith()     {return cost[0].value;}
+        virtual double&   Delay()     { return cost[3].value;}
+        virtual double&   Quality()     { return cost[3].value;}
     };
 
     typedef std::vector<DijkstraKshortest::State> StateVector;
@@ -113,20 +136,26 @@ protected:
     int K_LIMITE;
     CostVector limitsData;
 public:
-    DijkstraKshortest();
+    DijkstraKshortest(int);
     virtual ~DijkstraKshortest();
     virtual void setFromTopo(const cTopology *);
     virtual void setLimits(const std::vector<double> &);
     virtual void resetLimits(){limitsData.clear();}
     virtual void setKLimit(int val){if (val>0) K_LIMITE=val;}
     virtual void initMinAndMax();
+    virtual void initMinAndMaxWs();
+    virtual void initMinAndMaxSw();
     virtual void cleanLinkArray();
     virtual void addEdge (const NodeId & dest_node, const NodeId & last_node,double cost,double delay,double bw,double quality);
+    virtual void addEdgeWs (const NodeId & dest_node, const NodeId & last_node, double costAdd, double concave);
+    virtual void addEdgeSw (const NodeId & dest_node, const NodeId & last_node, double costAdd, double concave);
     virtual void setRoot(const NodeId & dest_node);
     virtual void run();
     virtual void runUntil (const NodeId &);
     virtual int getNumRoutes(const NodeId &nodeId);
     virtual bool getRoute(const NodeId &nodeId,std::vector<NodeId> &pathNode,int k=0);
+    virtual void setRouteMapK();
+    virtual void getRouteMapK(const NodeId &nodeId, Kroutes &routes);
 };
 
 
