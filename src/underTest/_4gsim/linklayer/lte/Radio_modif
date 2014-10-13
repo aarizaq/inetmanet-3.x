@@ -1,5 +1,0 @@
-ChannelControl.cc
-	- line 20:
-		- add: 				#include "LTEUtils.h"
-	- line 302:
-		- modif:         	if (h->channel == channel || h->channel == ENB_CHANNEL)

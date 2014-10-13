@@ -16,12 +16,9 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
-
-
 package inet.examples.wireless.throughput;
 
-import inet.base.NotificationBoard;
-import inet.base.Sink;
+import inet.common.queue.Sink;
 import inet.linklayer.ieee80211.Ieee80211Nic;
 import inet.mobility.static.StationaryMobility;
 
@@ -35,6 +32,7 @@ module WirelessAPWithSink
         @node();
         @labels(node);
         @display("i=device/accesspoint");
+        *.interfaceTableModule = default("");
     gates:
         input radioIn @directIn;
     submodules:
@@ -47,10 +45,6 @@ module WirelessAPWithSink
                 @display("p=89,225;q=queue");
                 mgmtType = default("Ieee80211MgmtAPSimplified");
                 mgmt.encapDecap = "false";
-        }
-        notificationBoard: NotificationBoard {
-            parameters:
-                @display("p=78,60");
         }
         mobility: StationaryMobility {
             parameters:

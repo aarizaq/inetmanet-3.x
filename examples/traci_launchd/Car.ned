@@ -20,29 +20,25 @@
 
 package inet.examples.traci_launchd;
 
-import inet.base.NotificationBoard;
-import inet.networklayer.autorouting.ipv4.HostAutoConfigurator;
-import inet.networklayer.common.InterfaceTable;
 import inet.applications.traci.TraCIDemo;
-import inet.mobility.single.TraCIMobility;
-import inet.networklayer.ipv4.RoutingTable;
-import inet.transport.udp.UDP;
-import inet.nodes.inet.NetworkLayer;
 import inet.linklayer.ieee80211.Ieee80211Nic;
+import inet.mobility.group.TraCIMobility;
+import inet.networklayer.common.InterfaceTable;
+import inet.networklayer.configurator.ipv4.HostAutoConfigurator;
+import inet.networklayer.ipv4.IPv4NetworkLayer;
+import inet.networklayer.ipv4.IPv4RoutingTable;
+import inet.transportlayer.udp.UDP;
+
 
 module Car
 {
     parameters:
         @node();
-        networkLayer.configurator.networkConfiguratorModule = "";
+
     gates:
         input radioIn @directIn;
 
     submodules:
-        notificationBoard: NotificationBoard {
-            parameters:
-                @display("p=140,462");
-        }
         ac_wlan: HostAutoConfigurator {
             @display("p=296,402");
         }
@@ -58,7 +54,7 @@ module Car
             parameters:
                 @display("p=60,459");
         }
-        routingTable: RoutingTable {
+        routingTable: IPv4RoutingTable {
             parameters:
                 IPForward = true;
                 routerId = "";
@@ -69,7 +65,7 @@ module Car
             parameters:
                 @display("p=384,146");
         }
-        networkLayer: NetworkLayer {
+        networkLayer: IPv4NetworkLayer {
             parameters:
                 proxyARP = false;
                 @display("p=304,327;q=queue");

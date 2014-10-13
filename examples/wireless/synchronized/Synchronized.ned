@@ -19,9 +19,9 @@
 
 package inet.examples.wireless.synchronized;
 
-import inet.networklayer.autorouting.ipv4.IPv4NetworkConfigurator;
-import inet.nodes.inet.AdhocHost;
-import inet.world.radio.ChannelControl;
+import inet.networklayer.configurator.ipv4.IPv4NetworkConfigurator;
+import inet.node.inet.AdhocHost;
+import inet.physicallayer.ieee80211.Ieee80211RadioMedium;
 
 
 network Synchronized
@@ -29,10 +29,10 @@ network Synchronized
     parameters:
         int nodeCount;
         **.bitrate = 11Mbps;
-        **.globalARP = true;
+        **.arpType = "GlobalARP";
         @display("bgl=3");
     submodules:
-        channelControl: ChannelControl;
+        radioMedium: Ieee80211RadioMedium;
         node[nodeCount]: AdhocHost {
             parameters:
                 numUdpApps = 1;

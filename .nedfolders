@@ -1,9 +1,9 @@
 examples
 src
--inet.examples.ieee802_1d
+-inet.transportlayer.tcp_lwip
 -inet.underTest.Ieee80211
--inet.underTest.ieee8021d
 -inet.applications.voiptool
+-inet.transportlayer.tcp_nsc
 -inet.examples.WIMAX.WiMAXHandover
 -inet.underTest._4gsim
 -inet.transport.tcp_lwip

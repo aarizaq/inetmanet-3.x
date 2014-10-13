@@ -20,13 +20,13 @@
 
 package inet.tests.traci;
 
-import inet.world.radio.ChannelControl;
-import inet.world.traci.TraCIScenarioManagerLaunchd;
+import inet.physicallayer.ieee80211.Ieee80211RadioMedium;
+import inet.mobility.group.TraCIScenarioManagerLaunchd;
 
 module Highway
 {
     submodules:
-        channelControl: ChannelControl {
+        radioMedium: ScalarRadioMedium {
             parameters:
                 @display("p=256,128");
         }

@@ -1,0 +1,54 @@
+2014-07-30  Andras Varga
+
+	Changes on the inet-3.x branch so far:
+
+	Code formatting (Zoltan Bojthe)
+	- using uncrustify, see _scripts/reformat/*
+	- common style for header guards
+
+	Namespace (Zoltan Bojthe, Zsolt Prontvai)
+	- code has been moved into the inet namespace
+
+	Init stages (Zoltan Bojthe, Andras Varga)
+	- init stages: reorganized by layers
+
+	Signals (Zoltan Bojthe)
+	- replace INotifiable and NotificationBoard by signals for
+	  publish/subscribe communication
+
+	Logging (Zoltan Bojthe, Benjamin Seregi)
+	- EV log statements revised and categorized: EV_ERROR, EV_WARN,
+	  EV_INFO, EV_DETAIL, EV_DEBUG, EV_TRACE
+
+2013-07-25  ====== inet-3.x development started (integration branch) ======
+
+2014-06-12  ------ inet-2.4.0 released ------
+
+2014-03-19  ------ inet-2.3.0 released ------
+
+2014-02-06  Zoltan Bojthe
+
+	Backport: mobility
+
+	fingerprints of MoBAN mobility are changed
+
+2013-08-22  ------ inet-2.2.0 released ------
+
+2013-01-30  ------ inet-2.1.0 released ------
+
+2012-08-07  ------ inet-2.0.0 released ------
+
+2012-06-25  ------ inet-1.99.5 released ------
+
+2012-06-19
+
+	Removed unnecessary dependency from the radio feature.
+
+2012-06-18  Rudolf Hornig
+
+	Synchronized with https://github.com/sommer/inet-sommer.git
+
+2012-06-08  Rudolf Hornig
+
+	Initial commit of TRACI scenario manager from the
+	INETMANET project.

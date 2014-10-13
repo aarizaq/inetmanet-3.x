@@ -1,0 +1,9 @@
+2013-02-06  Andras Varga
+
+	Added initial implementation:
+	GenericNetworkLayer, GenericNetworkProtocol, GenericDatagram,
+	GenericRoutingTable, GenericRoute, GenericNetworkProtocolInterfaceData
+
+2013-07-25  ====== inet-3.x development started (integration branch) ======
+
+

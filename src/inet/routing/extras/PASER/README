@@ -1,0 +1,34 @@
+********************************************************************************
+*Authors     Eugen.Paul | Mohamad.Sbeiti \@paser.info
+*
+*copyright   (C) 2012 Communication Networks Institute (CNI - Prof. Dr.-Ing. Christian Wietfeld)
+*                  at Technische Universitaet Dortmund, Germany
+*                  http://www.kn.e-technik.tu-dortmund.de/
+*
+*
+*              This program is free software; you can redistribute it
+*              and/or modify it under the terms of the GNU General Public
+*              License as published by the Free Software Foundation; either
+*              version 2 of the License, or (at your option) any later
+*              version.
+*              For further information see file COPYING
+*              in the top level directory
+********************************************************************************
+* This work is part of the secure wireless mesh networks framework, which is currently under development by CNI
+********************************************************************************/
+
+ 
+PASER stands for Position Aware Secure and Efficient Mesh Routing and describes a novel efficient secure routing protocol for wireless mesh networks. 
+The protocol aims to achieve an acceptable trade-off between security and performance of the routing process in wireless mesh networks. 
+The protocol has been designed at the communication networks institute headed by Prof. Dr.-Ing. Christian Wietfeld at the TU Dortmund University in Germany. 
+
+More information about PASER can be found at www.paser.info
+
+PASER requires the openssl library. Thus, if you are interested to evaluate it, follow the steps below:
+1. Install openssl (a.o., libssl, libssl-dev). Use project properties->omnet++->makemake->options to link it. If you have any questions regarding this issue don't hesitate to send a mail to mohamad.sbeiti@tu-dortmund.de
+2. Uncomment #define OPENSSL_IS_LINKED in /src/generic/Configuration.h
+3. Recompile inetmanet
+4. Run the exmaple: examples/manetrouting/secure_mesh_routing/securerouting.ini
+
+
+

@@ -1,0 +1,11 @@
+2014-05-08  Benjamin Seregi
+
+	AODV: Added implementation
+
+2013-07-25  ====== inet-3.x development started (integration branch) ======
+
+2014-06-12  ------ inet-2.4.0 released ------
+
+2014-05-23  Zoltan Bojthe
+
+	Backported the AODV implementation from the integration branch.

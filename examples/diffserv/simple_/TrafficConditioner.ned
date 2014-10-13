@@ -19,8 +19,8 @@
 
 package inet.examples.diffserv.simple_;
 
-import inet.base.Join;
-import inet.base.Sink;
+import inet.common.queue.Join;
+import inet.common.queue.Sink;
 import inet.linklayer.ITrafficConditioner;
 import inet.networklayer.diffserv.BehaviorAggregateClassifier;
 import inet.networklayer.diffserv.DSCPMarker;
@@ -34,8 +34,10 @@ import inet.networklayer.diffserv.TokenBucketMeter;
 //
 module TrafficConditioner like ITrafficConditioner
 {
-    @display("i=block/classifier");
-
+    parameters:
+        string interfaceTableModule;
+        *.interfaceTableModule = default(absPath(interfaceTableModule));
+        @display("i=block/classifier");
     gates:
         input in;
         output out;

@@ -20,7 +20,6 @@ package inet.examples.mobility;
 
 import inet.mobility.contract.IMobility;
 
-
 //
 // A host for demonstrating mobility models only -- it contains
 // no protocol layers at all.

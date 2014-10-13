@@ -12,11 +12,15 @@ src/Makefile.vc
 /examples/*/*/results/
 /examples/*/*/*/results/
 /tests/*/work/
+/tests/*/results*/
+*.log
+*.sim
 *.pyc
 *.pcap
 *.sca
 *.vec
 *.anf
+.buildlog*
 # ignore binary files
 out/
 *.so

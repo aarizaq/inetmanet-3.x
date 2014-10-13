@@ -1,0 +1,34 @@
+#SAE:
+	msg 1/4: init + commit
+	msg 2/4: init + commit + process_commit
+	msg 3/4: process_commit + confirm
+	msg 4/4: process_confirm + confirm
+-----------------------------------------	
+#AMPE:
+	msg 1/4: enc + mic_add + 2xrand_gen + (SAE) process_commit
+	msg 2/4: dec + mic_verify + rand
+	msg 3/4: enc + mic_add + 2xrand_gen
+	msg 4/4: dec + mic_verify + rand
+-----------------------------------------
+#HandleUPDAPP:
+	-> enc + mic_add
+	<- dec + mic_verify
+ ----------------------------------------
+# handleIeee80211MeshFrame
+	-> enc + mic_add
+	<- dec + mic_verify
+	
+
+**********************************************************
+enc 89.2873043e-6
+dec 72.1017e-6
+mic_add 1.622e-6
+mic_verify 1.7379e-6
+rand_gen 60.4234e-6
+
+init 2413.404e-6
+commit 237.459e-6
+process_commit 211.4525e-6
+confirm 142.96e-6
+process_confirm 72.6265e-6
+**********************************************************	

@@ -16,17 +16,15 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
-
 package inet.examples.wireless.hosttohost;
 
 import inet.applications.ethernet.EtherAppCli;
-import inet.base.NotificationBoard;
-import inet.base.Sink;
+import inet.common.queue.Sink;
 import inet.linklayer.ieee80211.Ieee80211Nic;
 import inet.mobility.single.CircleMobility;
 import inet.mobility.static.StationaryMobility;
-import inet.nodes.wireless.AccessPoint;
-import inet.world.radio.ChannelControl;
+import inet.node.wireless.AccessPoint;
+import inet.physicallayer.ieee80211.Ieee80211RadioMedium;
 
 
 module ThroughputClient
@@ -34,14 +32,11 @@ module ThroughputClient
     parameters:
         @display("i=device/wifilaptop");
         @node();
+        *.interfaceTableModule = "";
     gates:
         input radioIn @directIn;
 
     submodules:
-        notificationBoard: NotificationBoard {
-            parameters:
-                @display("p=52,70");
-        }
         cli: EtherAppCli {
             parameters:
                 registerSAP = false;
@@ -66,14 +61,11 @@ module ThroughputServer
     parameters:
         @display("i=device/wifilaptop");
         @node();
+        *.interfaceTableModule = "";
     gates:
         input radioIn @directIn;
 
     submodules:
-        notificationBoard: NotificationBoard {
-            parameters:
-                @display("p=60,70");
-        }
         sink: Sink {
             parameters:
                 @display("p=210,68,col");
@@ -111,7 +103,7 @@ network Throughput
                 @display("p=200,200;r=,,#707070");
                 wlan[*].mgmtType = "Ieee80211MgmtAPSimplified";
         }
-        channelControl: ChannelControl {
+        radioMedium: Ieee80211RadioMedium {
             parameters:
                 @display("p=61,46");
         }

@@ -1,13 +1,15 @@
 #include <algorithm>
 #include <fstream>
 
-#include "INETDefs.h"
-#include "IScriptable.h"
-#include "IPv4InterfaceData.h"
-#include "IPv4ControlInfo.h"
-#include "IInterfaceTable.h"
-#include "IRoutingTable.h"
-#include "IGMPv2.h"
+#include "inet/common/INETDefs.h"
+#include "inet/common/scenario/IScriptable.h"
+#include "inet/networklayer/ipv4/IPv4InterfaceData.h"
+#include "inet/networklayer/contract/ipv4/IPv4ControlInfo.h"
+#include "inet/networklayer/common/IInterfaceTable.h"
+#include "inet/networklayer/ipv4/IIPv4RoutingTable.h"
+#include "inet/networklayer/ipv4/IGMPv2.h"
+
+namespace inet {
 
 enum StateKind
 {
@@ -29,7 +31,7 @@ class INET_API TestIGMP : public IGMPv2, public IScriptable
   protected:
     typedef IPv4InterfaceData::IPv4AddressVector IPv4AddressVector;
     virtual void initialize(int stage);
-    virtual void receiveChangeNotification(int category, const cObject *details);
+    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj);
     virtual void configureInterface(InterfaceEntry *ie);
     virtual void processIgmpMessage(IGMPMessage *msg);
     virtual void processHostGroupTimer(cMessage *msg);
@@ -64,26 +66,26 @@ void TestIGMP::initialize(int stage)
     IGMPv2::initialize(stage);
 }
 
-void TestIGMP::receiveChangeNotification(int category, const cObject *details)
+void TestIGMP::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj)
 {
     const IPv4MulticastGroupInfo *info;
-    switch (category)
+    if (signalID == NF_IPv4_MCAST_JOIN)
     {
-        case NF_IPv4_MCAST_JOIN:
-            info = check_and_cast<const IPv4MulticastGroupInfo*>(details);
-            startEvent("join group", HOST_GROUP_STATE, info->ie, &info->groupAddress);
-            IGMPv2::receiveChangeNotification(category, details);
-            endEvent(HOST_GROUP_STATE, info->ie, &info->groupAddress);
-            break;
-        case NF_IPv4_MCAST_LEAVE:
-            info = check_and_cast<const IPv4MulticastGroupInfo*>(details);
-            startEvent("leave group", HOST_GROUP_STATE, info->ie, &info->groupAddress);
-            IGMPv2::receiveChangeNotification(category, details);
-            endEvent(HOST_GROUP_STATE, info->ie, &info->groupAddress);
-            break;
-        default:
-            IGMPv2::receiveChangeNotification(category, details);
-            break;
+        info = check_and_cast<const IPv4MulticastGroupInfo*>(obj);
+        startEvent("join group", HOST_GROUP_STATE, info->ie, &info->groupAddress);
+        IGMPv2::receiveSignal(source, signalID, obj);
+        endEvent(HOST_GROUP_STATE, info->ie, &info->groupAddress);
+    }
+    else if (signalID == NF_IPv4_MCAST_LEAVE)
+    {
+        info = check_and_cast<const IPv4MulticastGroupInfo*>(obj);
+        startEvent("leave group", HOST_GROUP_STATE, info->ie, &info->groupAddress);
+        IGMPv2::receiveSignal(source, signalID, obj);
+        endEvent(HOST_GROUP_STATE, info->ie, &info->groupAddress);
+    }
+    else
+    {
+        IGMPv2::receiveSignal(source, signalID, obj);
     }
 }
 
@@ -208,12 +210,22 @@ void TestIGMP::processCommand(const cXMLElement &node)
     const char *what = node.getAttribute("what");
     if (!strcmp(what, "groups"))
     {
-        const IPv4AddressVector &joinedGroups = ie->ipv4Data()->getJoinedMulticastGroups();
+        if (!ie)
+            throw cRuntimeError("'ifname' attribute is missing at XML node ", node.detailedInfo().c_str());
+        IPv4AddressVector joinedGroups;
+        const int count = ie->ipv4Data()->getNumOfJoinedMulticastGroups();
+        for (int i = 0; i < count; ++i)
+            joinedGroups.push_back(ie->ipv4Data()->getJoinedMulticastGroup(i));
         dumpMulticastGroups(what, ifname, joinedGroups);
     }
     else if (!strcmp(what, "listeners"))
     {
-        const IPv4AddressVector &reportedGroups = ie->ipv4Data()->getReportedMulticastGroups();
+        if (!ie)
+            throw cRuntimeError("'ifname' attribute is missing at XML node ", node.detailedInfo().c_str());
+        IPv4AddressVector reportedGroups;
+        const int count = ie->ipv4Data()->getNumOfReportedMulticastGroups();
+        for (int i = 0; i < count; ++i)
+            reportedGroups.push_back(ie->ipv4Data()->getReportedMulticastGroup(i));
         dumpMulticastGroups("listeners", ifname, reportedGroups);
     }
   }
@@ -330,3 +342,4 @@ void TestIGMP::dumpMulticastGroups(const char* name, const char *ifname, IPv4Add
   out << ">\n";
 }
 
+} // namespace inet

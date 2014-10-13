@@ -7,13 +7,12 @@ Testing TCP communication speed
 %#--------------------------------------------------------------------------------------------------------------
 %file: test.ned
 
-import inet.world.radio.ChannelControl;
-import inet.nodes.wireless.AccessPoint;
+import inet.physicallayer.ieee80211.Ieee80211RadioMedium;
+import inet.node.wireless.AccessPoint;
 import inet.mobility.models.StationaryMobility;
 import inet.mobility.models.CircleMobility;
 import inet.linklayer.ieee80211.Ieee80211Nic;
 import inet.base.Sink;
-import inet.base.NotificationBoard;
 import inet.applications.ethernet.EtherAppCli;
 
 module Ieee80211NicSTASimplified extends Ieee80211Nic
@@ -40,10 +39,6 @@ module ThroughputClient
         input radioIn @directIn;
 
     submodules:
-        notificationBoard: NotificationBoard {
-            parameters:
-                @display("p=52,70");
-        }
         cli: EtherAppCli {
             parameters:
                 registerSAP = false;
@@ -75,10 +70,6 @@ module ThroughputServer
         input radioIn @directIn;
 
     submodules:
-        notificationBoard: NotificationBoard {
-            parameters:
-                @display("p=60,70");
-        }
         sink: Sink {
             parameters:
                 @display("p=210,68,col");
@@ -123,7 +114,7 @@ network Throughput
             parameters:
                 @display("p=200,200;r=,,#707070");
         }
-        channelControl: ChannelControl {
+        radioMedium: ScalarRadioMedium {
             parameters:
                 @display("p=61,46");
         }
@@ -150,7 +141,7 @@ sim-time-limit = 50s
 **.debug = true
 **.coreDebug = false
 **.channelNumber = 0
-**.channelControl.numChannels = 1
+**.mgmt.numChannels = 1
 
 # positions
 **.mobility.cx = 200m
@@ -160,10 +151,8 @@ sim-time-limit = 50s
 **.mobility.updateInterval = 100ms
 
 # channel physical parameters
-*.channelControl.carrierFrequency = 2.4GHz
-*.channelControl.pMax = 20mW
-*.channelControl.sat = -110dBm
-*.channelControl.alpha = 2
+*.radioMedium.carrierFrequency = 2.4GHz
+*.radioMedium.maxTransmissionPower = 20mW
 
 # access point
 **.ap.wlan*.mac.address = "10:00:00:00:00:00"

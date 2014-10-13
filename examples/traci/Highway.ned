@@ -20,14 +20,14 @@
 
 package inet.examples.traci;
 
-import inet.world.radio.ChannelControl;
-import inet.world.traci.TraCIScenarioManager;
+import inet.mobility.group.TraCIScenarioManager;
+import inet.physicallayer.ieee80211.Ieee80211RadioMedium;
 
 
 module Highway
 {
     submodules:
-        channelControl: ChannelControl {
+        radioMedium: Ieee80211RadioMedium {
             parameters:
                 @display("p=256,128");
         }

@@ -20,13 +20,12 @@
 
 package inet.tests.traci;
 
-import inet.base.NotificationBoard;
 import inet.networklayer.common.InterfaceTable;
 import inet.applications.traci.TraCITestApp;
-import inet.mobility.models.TraCIMobility;
-import inet.networklayer.ipv4.RoutingTable;
-import inet.transport.udp.UDP;
-import inet.nodes.inet.NetworkLayer;
+import inet.mobility.group.TraCIMobility;
+import inet.networklayer.ipv4.IPv4RoutingTable;
+import inet.transportlayer.udp.UDP;
+import inet.networklayer.ipv4.IPv4NetworkLayer;
 import inet.linklayer.ieee80211.Ieee80211Nic;
 
 module Car
@@ -38,10 +37,6 @@ module Car
         input radioIn @directIn;
 
     submodules:
-        notificationBoard: NotificationBoard {
-            parameters:
-                @display("p=140,462");
-        }
         interfaceTable: InterfaceTable {
             parameters:
                 @display("p=140,326");
@@ -54,7 +49,7 @@ module Car
             parameters:
                 @display("p=60,459");
         }
-        routingTable: RoutingTable {
+        routingTable: IPv4RoutingTable {
             parameters:
                 IPForward = true;
                 routerId = "";
@@ -65,7 +60,7 @@ module Car
             parameters:
                 @display("p=384,146");
         }
-        networkLayer: NetworkLayer {
+        networkLayer: IPv4NetworkLayer {
             parameters:
                 proxyARP = false;
                 @display("p=304,327;q=queue");
