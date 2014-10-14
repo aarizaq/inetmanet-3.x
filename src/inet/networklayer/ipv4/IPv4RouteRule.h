@@ -23,8 +23,8 @@
 
 #include "inet/common/INETDefs.h"
 
-#include "IPProtocolId_m.h"
-#include "IPv4Address.h"
+#include "inet/networklayer/common/IPProtocolId_m.h"
+#include "inet/networklayer/contract/ipv4/IPv4Address.h"
 
 namespace inet{
 

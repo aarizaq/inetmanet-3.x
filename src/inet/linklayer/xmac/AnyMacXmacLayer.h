@@ -94,9 +94,6 @@ class INET_API AnyMacXmacLayer : public MACProtocolBase, public IMACProtocol
     /** @brief Handle self messages such as timers */
     virtual void handleSelfMessage(cMessage*);
 
-    /** @brief Handle control messages from lower layer */
-    virtual void handleLowerControl(cMessage *msg);
-
   protected:
 
     bool xmac;

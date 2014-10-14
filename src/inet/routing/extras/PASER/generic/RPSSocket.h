@@ -51,13 +51,12 @@
 
 #include <omnetpp.h>
 
-long WinsockStartup();
-
 
 using namespace std;
 
 namespace inet {
 
+long WinsockStartup();
 class RPSSocket
 {
 public:

@@ -55,9 +55,6 @@ class INET_API CSMA802154 : public CSMA
     /** @brief Initialization of the module and some variables*/
     virtual void initialize(int);
 
-    /** @brief Delete all dynamically allocated objects of the module*/
-    virtual void finish();
-
   protected:
     Ieee802154UWBIRTransmitter *transmitter;
     /** @brief Generate new interface address*/

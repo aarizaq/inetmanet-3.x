@@ -21,7 +21,7 @@ namespace inet {
 RPSSocket::RPSSocket() {
 #ifndef __unix__
     long rc;
-    rc=WinsockStartup();
+    rc = WinsockStartup();
     socketState = offline;
 #else
 #endif

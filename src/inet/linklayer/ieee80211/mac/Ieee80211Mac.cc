@@ -219,6 +219,7 @@ void Ieee80211Mac::initialize(int stage)
             }
             else
                 throw cRuntimeError("parameters %s , %s don't exist", strAifs.c_str(), strTxop.c_str());
+            edcCAF[i].saveSize = par(strSaveSize.c_str());
         }
         if (numCategories()==1)
             AIFSN(0) = par("AIFSN");
