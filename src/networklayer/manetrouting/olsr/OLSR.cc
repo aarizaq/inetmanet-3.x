@@ -1392,21 +1392,35 @@ OLSR::rtable_computation()
         {
             OLSR_rt_entry* entry = rtable_.lookup(nb2hop_tuple->nb_main_addr());
             assert(entry != NULL);
-            rtable_.add_entry(nb2hop_tuple->nb2hop_addr(),
-                              entry->next_addr(),
-                              entry->iface_addr(),
-                              2, entry->local_iface_index());
-            if (!useIndex)
-                omnet_chg_rte(nb2hop_tuple->nb2hop_addr(),
-                               entry->next_addr(),
-                               netmask,
-                               2, false, entry->iface_addr());
 
-            else
-                omnet_chg_rte(nb2hop_tuple->nb2hop_addr(),
-                               entry->next_addr(),
-                               netmask,
-                               2, false, entry->local_iface_index());
+            // check if the entry is already in the routing table and the new is a better alternative
+            bool insert = true;
+            OLSR_rt_entry* entry2hop = rtable_.lookup(nb2hop_tuple->nb2hop_addr());
+            if (entry2hop)
+            {
+                // check if the node is a better alternative
+                OLSR_nb_tuple* nb_tupleOld = state_.find_sym_nb_tuple(entry2hop->next_addr());
+                if (nb_tupleOld != NULL && nb_tupleOld->willingness() > nb_tuple->willingness())
+                    insert = false;
+            }
+
+            if (insert)
+            {
+                rtable_.add_entry(nb2hop_tuple->nb2hop_addr(),
+                        entry->next_addr(),
+                        entry->iface_addr(),
+                        2, entry->local_iface_index());
+                if (!useIndex)
+                    omnet_chg_rte(nb2hop_tuple->nb2hop_addr(),
+                            entry->next_addr(),
+                            netmask,
+                            2, false, entry->iface_addr());
+                else
+                    omnet_chg_rte(nb2hop_tuple->nb2hop_addr(),
+                            entry->next_addr(),
+                            netmask,
+                            2, false, entry->local_iface_index());
+            }
 
         }
     }
