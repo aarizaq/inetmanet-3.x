@@ -136,7 +136,7 @@ OLSR_HelloTimer::expire()
 {
     agent_->send_hello();
     // agent_->scheduleAt(simTime()+agent_->hello_ival_- JITTER,this);
-    agent_->timerQueuePtr->insert(std::pair<simtime_t, OLSR_Timer *>(simTime()+agent_->hello_ival_- agent_->jitter(), this));
+    agent_->timerQueuePtr->insert(std::pair<simtime_t, OLSR_Timer *>(simTime() + agent_->hello_ival() - agent_->jitter(), this));
 }
 
 ///
@@ -149,7 +149,7 @@ OLSR_TcTimer::expire()
     if (agent_->mprselset().size() > 0)
         agent_->send_tc();
     // agent_->scheduleAt(simTime()+agent_->tc_ival_- JITTER,this);
-    agent_->timerQueuePtr->insert(std::pair<simtime_t, OLSR_Timer *>(simTime()+agent_->tc_ival_- agent_->jitter(), this));
+    agent_->timerQueuePtr->insert(std::pair<simtime_t, OLSR_Timer *>(simTime() + agent_->tc_ival() - agent_->jitter(), this));
 
 }
 
@@ -166,7 +166,7 @@ OLSR_MidTimer::expire()
         return; // not multi-interface support
     agent_->send_mid();
 //  agent_->scheduleAt(simTime()+agent_->mid_ival_- JITTER,this);
-    agent_->timerQueuePtr->insert(std::pair<simtime_t, OLSR_Timer *>(simTime()+agent_->mid_ival_- agent_->jitter(), this));
+    agent_->timerQueuePtr->insert(std::pair<simtime_t, OLSR_Timer *>(simTime() + agent_->mid_ival() - agent_->jitter(), this));
 #endif
 }
 
@@ -469,19 +469,11 @@ void OLSR::initialize(int stage)
 
         //
         // Do some initializations
-        willingness_ = par("Willingness");
-        hello_ival_ = par("Hello_ival");
-        tc_ival_ = par("Tc_ival");
-        mid_ival_ = par("Mid_ival");
+        willingness_ = &par("Willingness");
+        hello_ival_ = &par("Hello_ival");
+        tc_ival_ = &par("Tc_ival");
+        mid_ival_ = &par("Mid_ival");
         use_mac_ = par("use_mac");
-
-        OLSR_HELLO_INTERVAL = SIMTIME_DBL(tc_ival_);
-
-     /// TC messages emission interval.
-         OLSR_TC_INTERVAL = SIMTIME_DBL(tc_ival_);
-
-     /// MID messages emission interval.
-         OLSR_MID_INTERVAL = SIMTIME_DBL(mid_ival_);//   OLSR_TC_INTERVAL
 
 
         if (par("reduceFuncionality"))
@@ -529,9 +521,9 @@ void OLSR::initialize(int stage)
         }
 
 
-        hello_timer_.resched(SIMTIME_DBL(hello_ival_));
-        tc_timer_.resched(SIMTIME_DBL(hello_ival_));
-        mid_timer_.resched(SIMTIME_DBL(hello_ival_));
+        hello_timer_.resched(hello_ival());
+        tc_timer_.resched(hello_ival());
+        mid_timer_.resched(hello_ival());
         if (use_mac())
         {
             linkLayerFeeback();
@@ -1873,7 +1865,7 @@ OLSR::send_hello()
     msg.msg_seq_num() = msg_seq();
 
     msg.hello().reserved() = 0;
-    msg.hello().htime() = OLSR::seconds_to_emf(SIMTIME_DBL(hello_ival()));
+    msg.hello().htime() = OLSR::seconds_to_emf(hello_ival());
     msg.hello().willingness() = willingness();
     msg.hello().count = 0;
 
@@ -2305,7 +2297,7 @@ OLSR::mac_failed(IPv4Datagram* p)
 void
 OLSR::set_hello_timer()
 {
-    hello_timer_.resched((double)(SIMTIME_DBL(hello_ival()) - JITTER));
+    hello_timer_.resched(hello_ival() - JITTER);
 }
 
 ///
@@ -2314,7 +2306,7 @@ OLSR::set_hello_timer()
 void
 OLSR::set_tc_timer()
 {
-    tc_timer_.resched((double)(SIMTIME_DBL(tc_ival()) - JITTER));
+    tc_timer_.resched(tc_ival() - JITTER);
 }
 
 ///
@@ -2323,7 +2315,7 @@ OLSR::set_tc_timer()
 void
 OLSR::set_mid_timer()
 {
-    mid_timer_.resched((double)(SIMTIME_DBL(mid_ival()) - JITTER));
+    mid_timer_.resched(mid_ival() - JITTER);
 }
 
 ///
@@ -3225,9 +3217,9 @@ OLSR::isNodeCandidate(const nsaddr_t &src_addr)
 
 bool OLSR::handleNodeStart(IDoneCallback *doneCallback)
 {
-    hello_timer_.resched(SIMTIME_DBL(hello_ival_));
-    tc_timer_.resched(SIMTIME_DBL(hello_ival_));
-    mid_timer_.resched(SIMTIME_DBL(hello_ival_));
+    hello_timer_.resched(hello_ival());
+    tc_timer_.resched(hello_ival());
+    mid_timer_.resched(hello_ival());
     scheduleNextEvent();
     return true;
 }
