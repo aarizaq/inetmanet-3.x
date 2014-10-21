@@ -1399,8 +1399,9 @@ OLSR::rtable_computation()
             if (entry2hop)
             {
                 // check if the node is a better alternative
+                OLSR_nb_tuple* nb_tupleNew = state_.find_sym_nb_tuple(nb2hop_tuple->nb_main_addr());
                 OLSR_nb_tuple* nb_tupleOld = state_.find_sym_nb_tuple(entry2hop->next_addr());
-                if (nb_tupleOld != NULL && nb_tupleOld->willingness() > nb_tuple->willingness())
+                if (nb_tupleOld != NULL && nb_tupleOld->willingness() > nb_tupleNew->willingness())
                     insert = false;
             }
             if (insert)
