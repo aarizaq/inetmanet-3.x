@@ -1,3 +1,38 @@
+2014-07-30  Andras Varga
+
+	Changes on the inet-3.x branch so far:
+
+	ARP refactoring (Andras Varga)
+	- ARP is now next to the IPv4 module not below it, so outgoing packets
+	  no longer pass through the ARP module. The IPv4 module uses the IARP
+	  interface to query the ARP cache and to initiate address resolution.
+	- Motivation:
+	  (1) performance improvement (datagrams no longer go through ARP)
+	  (2) conceptually better (packets to PPP used to go through ARP, too!)
+	  (3) more consistent with how IPv6 and NeighbourDiscovery are organized
+
+	Code formatting (Zoltan Bojthe)
+	- using uncrustify, see _scripts/reformat/*
+	- common style for header guards
+
+	Namespace (Zoltan Bojthe, Zsolt Prontvai)
+	- code has been moved into the inet namespace
+
+	Init stages (Zoltan Bojthe, Andras Varga)
+	- init stages: reorganized by layers
+
+	Signals (Zoltan Bojthe)
+	- replace INotifiable and NotificationBoard by signals for
+	  publish/subscribe communication
+
+	Logging (Zoltan Bojthe, Benjamin Seregi)
+	- EV log statements revised and categorized: EV_ERROR, EV_WARN,
+	  EV_INFO, EV_DETAIL, EV_DEBUG, EV_TRACE
+
+2013-07-25  ====== inet-3.x development started (integration branch) ======
+
+2014-06-12  ------ inet-2.4.0 released ------
+
 2014-03-19  ------ inet-2.3.0 released ------
 
 2014-01-17  Zoltan Bojthe
