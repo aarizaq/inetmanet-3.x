@@ -100,13 +100,13 @@ namespace inetmanet {
 	/********** Holding times **********/
 
 	/// Neighbor holding time.
-#define OLSR_NEIGHB_HOLD_TIME   3*OLSR_REFRESH_INTERVAL
+#define OLSR_NEIGHB_HOLD_TIME   3 * OLSR_REFRESH_INTERVAL
 	/// Top holding time.
-#define OLSR_TOP_HOLD_TIME  3*OLSR_TC_INTERVAL
+#define OLSR_TOP_HOLD_TIME  3 * tc_ival()
 	/// Dup holding time.
 #define OLSR_DUP_HOLD_TIME  30
 	/// MID holding time.
-#define OLSR_MID_HOLD_TIME  3*OLSR_MID_INTERVAL
+#define OLSR_MID_HOLD_TIME  3 * mid_ival()
 
 /********** Link types **********/
 
@@ -146,7 +146,7 @@ namespace inetmanet {
 /********** Miscellaneous constants **********/
 
 /// Maximum allowed jitter.
-#define OLSR_MAXJITTER      OLSR_HELLO_INTERVAL/4
+#define OLSR_MAXJITTER      hello_ival()/4
 /// Maximum allowed sequence number.
 #define OLSR_MAX_SEQ_NUM    65535
 /// Used to set status of an OLSR_nb_tuple as "not symmetric".
@@ -345,15 +345,6 @@ class OLSR : public ManetRoutingBase
 {
   protected:
     /********** Intervals **********/
-    /// HELLO messages emission interval.
-    double OLSR_HELLO_INTERVAL;// 2
-
-    /// TC messages emission interval.
-    double OLSR_TC_INTERVAL;//    5
-
-    /// MID messages emission interval.
-    double OLSR_MID_INTERVAL;//   OLSR_TC_INTERVAL
-
     ///
     /// \brief Period at which a node must cite every link and every neighbor.
     ///
@@ -409,13 +400,13 @@ class OLSR : public ManetRoutingBase
     uint16_t    ansn_;
 
     /// HELLO messages' emission interval.
-    SimTime     hello_ival_;
+    cPar     *hello_ival_;
     /// TC messages' emission interval.
-    SimTime     tc_ival_;
+    cPar     *tc_ival_;
     /// MID messages' emission interval.
-    SimTime     mid_ival_;
+    cPar     *mid_ival_;
     /// Willingness for forwarding packets on behalf of other nodes.
-    int     willingness_;
+    cPar     *willingness_;
     /// Determines if layer 2 notifications are enabled or not.
     int     use_mac_;
     bool useIndex;
@@ -457,13 +448,13 @@ class OLSR : public ManetRoutingBase
         return msg_seq_;
     }
 
-    inline nsaddr_t&    ra_addr()   { return ra_addr_;}
+    inline nsaddr_t    ra_addr()   { return ra_addr_;}
 
-    inline SimTime&     hello_ival()    { return hello_ival_;}
-    inline SimTime&     tc_ival()   { return tc_ival_;}
-    inline SimTime&     mid_ival()  { return mid_ival_;}
-    inline int&     willingness()   { return willingness_;}
-    inline int&     use_mac()   { return use_mac_;}
+    inline double     hello_ival()    { return hello_ival_->doubleValue();}
+    inline double     tc_ival()   { return tc_ival_->doubleValue();}
+    inline double     mid_ival()  { return mid_ival_->doubleValue();}
+    inline int     willingness()   { return willingness_->longValue();}
+    inline int     use_mac()   { return use_mac_;}
 
     inline linkset_t&   linkset()   { return state_ptr->linkset(); }
     inline mprset_t&    mprset()    { return state_ptr->mprset(); }
