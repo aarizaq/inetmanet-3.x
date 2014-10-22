@@ -516,7 +516,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     //@{
     virtual simtime_t getSIFS();
     virtual simtime_t getSlotTime();
-    virtual simtime_t getDIFS(int category = -1);
+    virtual simtime_t getDIFS();
     virtual simtime_t getAIFS(int AccessCategory);
     virtual simtime_t getEIFS();
     virtual simtime_t getPIFS();
