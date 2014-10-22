@@ -1728,12 +1728,21 @@ void Ieee80211Mac::scheduleAIFSPeriod()
     if (classifier == NULL) //DCF
     {
         currentAC = 0;
-        if (!endDIFS->isScheduled())
+        if (!transmissionQueue(0)->empty() && !endAIFS(0)->isScheduled())
         {
-            if (lastReceiveFailed)
-                scheduleAt(simTime() + getEIFS(), endDIFS);
-            else
-                scheduleDIFSPeriod();
+            if (!endDIFS->isScheduled())
+            {
+                if (lastReceiveFailed)
+                    if (!transmissionQueue(0)->empty())
+                        scheduleAt(simTime() + getEIFS(), endAIFS(0));
+                    else
+                        scheduleAt(simTime() + getDIFS(), endAIFS(0));
+            }
+        }
+        if (!endAIFS(0)->isScheduled() && !endDIFS->isScheduled())
+        {
+            // schedule default DIFS
+            scheduleDIFSPeriod();
         }
         return;
     }
