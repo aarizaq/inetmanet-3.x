@@ -1652,20 +1652,9 @@ simtime_t Ieee80211Mac::getPIFS()
     return getSIFS() + getSlotTime();
 }
 
-simtime_t Ieee80211Mac::getDIFS(int category)
+simtime_t Ieee80211Mac::getDIFS()
 {
-    if (category<0 || category>(numCategories()-1))
-    {
-        int index = numCategories()-1;
-        if (index<0)
-            index = 0;
-        return getSIFS() + ((double)AIFSN(index) * getSlotTime());
-    }
-    else
-    {
-        return getSIFS() + ((double)AIFSN(category)) * getSlotTime();
-    }
-
+    return getSIFS() + (2 * getSlotTime());
 }
 
 simtime_t Ieee80211Mac::getAIFS(int AccessCategory)
@@ -1736,6 +1725,19 @@ void Ieee80211Mac::cancelDIFSPeriod()
 void Ieee80211Mac::scheduleAIFSPeriod()
 {
     bool schedule = false;
+    if (classifier == NULL) //DCF
+    {
+        currentAC = 0;
+        if (!endDIFS->isScheduled())
+        {
+            if (lastReceiveFailed)
+                scheduleAt(simTime() + getEIFS(), endDIFS);
+            else
+                scheduleDIFSPeriod();
+        }
+        return;
+    }
+
     for (int i = 0; i<numCategories(); i++)
     {
         if (!endAIFS(i)->isScheduled() && !transmissionQueue(i)->empty())
