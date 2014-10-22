@@ -1625,7 +1625,7 @@ simtime_t Ieee80211Mac::getPIFS()
     return getSIFS() + getSlotTime();
 }
 
-simtime_t Ieee80211Mac::getDIFS(int category)
+simtime_t Ieee80211Mac::getDIFS()
 {
     return getSIFS() + (2 * getSlotTime());
 }
