@@ -274,7 +274,9 @@ class INET_API Ieee80211Mac : public WirelessMacBase, public cListener
         cOutVector *throughput;
     };
 
-    int initialBackoffExponent;
+    int initialBackoffExponent; // initial exponential of backoff value
+    int difsSlot; // slots used to compute the difs value
+
     std::vector<Edca> edcCAF;
     std::vector<EdcaOutVector> edcCAFOutVector;
     //

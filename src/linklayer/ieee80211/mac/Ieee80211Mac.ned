@@ -81,7 +81,7 @@ simple Ieee80211Mac
         double TXOP2 @unit(s) = default(3.008ms);
         double TXOP3 @unit(s) = default(1.504ms);
         // parameters for EDCA = false
-        int AIFSN = default(2); // if there is only one AC (EDCA = false)
+        int AIFSN = default(2); // if there is only one AC (EDCA = false) it is used to compute Difs value always
 
         bool useModulationParameters = default(true); // if true, slot time, DIFS, and ACK timeout (aPHY-RX-START-Delay) are function of modulation time (2007 standard)
         bool prioritizeMulticast = default(false); // if true, prioritize multicast frames (9.3.2.1 Fundamental access)
@@ -101,7 +101,7 @@ simple Ieee80211Mac
         int cwMaxData = default(-1); // contention window for normal data frames, -1 means default
         int cwMinMulticast = default(-1); // contention window for broadcast messages, -1 means default
 
-        double phyHeaderLength @unit("s") = default(-1s); // when <0,, the MAC will compute it in function of the modulation type
+        double phyHeaderLength @unit("s") = default(-1s); // when <0, the MAC will compute it in function of the modulation type
         bool forceBitRate = default(false); // if true, the MAC will force the bitrate to the physical layer
         int autoBitrate @enum(0,1,2) = default(0); // 0 = constant bit rate (autobitrate algorithm disabled), 1 = ARF Rate, 2 = AARF Rate
         // parameters used by the autobitrate
