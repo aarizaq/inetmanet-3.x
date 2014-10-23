@@ -278,6 +278,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
         cOutVector *throughput;
     };
 
+    int initialBackoffExponent;
     std::vector<Edca> edcCAF;
     std::vector<EdcaOutVector> edcCAFOutVector;
     //

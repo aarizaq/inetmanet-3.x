@@ -244,6 +244,19 @@ void Ieee80211Mac::initialize(int stage)
             }
         }
 
+        initialBackoffExponent = 0;
+        if (classifier == NULL)
+        {
+            initialBackoffExponent = 0;
+            int val = 1;
+            while (val < cwMinData)
+            {
+                initialBackoffExponent++;
+                val = (1 << initialBackoffExponent);
+            }
+        }
+
+
         ST = par("slotTime"); //added by sorin
         if (ST==-1)
             ST = 20e-6; //20us        
@@ -1652,7 +1665,19 @@ simtime_t Ieee80211Mac::computeBackoffPeriod(Ieee80211Frame *msg, int r)
     {
         ASSERT(0 <= r && r < transmissionLimit);
 
-        cw = (cwMin() + 1) * (1 << r) - 1;
+        if (classifier == NULL)
+        {
+            // Compute Backoff: 9.3.3 Random backoff time
+            if (r == 0)
+                cw = cwMin();
+            else
+                cw = (initialBackoffExponent << r)-1;
+        }
+        else
+        {
+            // Compute Backoff:  9.19.2.5 EDCA backoff procedure
+            cw = (cwMin() + 1) * (1 << r) - 1;
+        }
 
         if (cw > cwMax())
             cw = cwMax();
@@ -1701,12 +1726,27 @@ void Ieee80211Mac::scheduleAIFSPeriod()
     if (classifier == NULL) //DCF
     {
         currentAC = 0;
-        if (!endDIFS->isScheduled())
+        if (!transmissionQueue(0)->empty() && !endAIFS(0)->isScheduled())
         {
-            if (lastReceiveFailed)
-                scheduleAt(simTime() + getEIFS(), endDIFS);
-            else
-                scheduleDIFSPeriod();
+            if (!endDIFS->isScheduled())
+            {
+                if (lastReceiveFailed)
+                {
+                    EV_DEBUG << "reception of last frame failed, scheduling EIFS period \n";
+                    scheduleAt(simTime() + getEIFS(), endAIFS(0));
+                }
+                else
+                {
+                    EV_DEBUG << "scheduling DIFS period (frame pending)\n";
+                    scheduleAt(simTime() + getDIFS(), endAIFS(0));
+                }
+            }
+        }
+        if (!endAIFS(0)->isScheduled() && !endDIFS->isScheduled())
+        {
+            // schedule default DIFS
+            EV_DEBUG << "scheduling DIFS period (no frame pending)\n";
+            scheduleDIFSPeriod();
         }
         return;
     }
