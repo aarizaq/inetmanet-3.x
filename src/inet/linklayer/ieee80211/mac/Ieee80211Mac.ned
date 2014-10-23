@@ -84,7 +84,7 @@ simple Ieee80211Mac extends MACProtocolBase like IMACProtocol
         double TXOP2 @unit(s) = default(3.008ms);
         double TXOP3 @unit(s) = default(1.504ms);
         // parameters for EDCA = false
-        int AIFSN = default(2); // if there is only one AC (EDCA = false)
+        int AIFSN = default(2); // if there is only one AC (EDCA = false) it is used to compute Difs value always
 
         bool useModulationParameters = default(true); // if true, slot time, DIFS, and ACK timeout (aPHY-RX-START-Delay) are function of modulation time (2007 standard)
         bool prioritizeMulticast = default(false); // if true, prioritize multicast frames (9.3.2.1 Fundamental access)

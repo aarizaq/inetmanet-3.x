@@ -224,6 +224,8 @@ void Ieee80211Mac::initialize(int stage)
         if (numCategories()==1)
             AIFSN(0) = par("AIFSN");
 
+        difsSlot = par("AIFSN");
+
         for (int i = 0; i < numCategories(); i++)
         {
             ASSERT(AIFSN(i) >= 0 && AIFSN(i) < 16);
@@ -1640,7 +1642,7 @@ simtime_t Ieee80211Mac::getPIFS()
 
 simtime_t Ieee80211Mac::getDIFS()
 {
-    return getSIFS() + (2 * getSlotTime());
+    return getSIFS() + (difsSlot * getSlotTime());
 }
 
 simtime_t Ieee80211Mac::getAIFS(int AccessCategory)
