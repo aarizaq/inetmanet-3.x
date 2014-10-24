@@ -24,7 +24,7 @@
  ***************************************************************************
  * part of:    Modifications to the MF-2 framework by CSEM
  **************************************************************************/
-#include "inet/linklayer/csma/CSMA802154.h"
+#include "inet/linklayer/ieee802154/CSMA802154.h"
 
 #include <cassert>
 
