@@ -262,7 +262,6 @@ void Ieee80211Mac::initialize(int stage)
         initialBackoffExponent = 0;
         if (classifier == NULL)
         {
-            initialBackoffExponent = 0;
             int val = 1;
             while (val < cwMinData)
             {
@@ -1702,7 +1701,7 @@ simtime_t Ieee80211Mac::computeBackoffPeriod(Ieee80211Frame *msg, int r)
             if (r == 0)
                 cw = cwMin();
             else
-                cw = (initialBackoffExponent << r)-1;
+                cw = (1 << (initialBackoffExponent  + r)) - 1;
         }
         else
         {
