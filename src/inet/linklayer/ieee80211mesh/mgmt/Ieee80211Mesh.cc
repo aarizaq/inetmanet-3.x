@@ -43,6 +43,7 @@ using namespace inetmanet;
 
 EXECUTE_ON_STARTUP(
     cEnum *e = cEnum::find("inet::SelectionCriteria");
+    if (!e) enums.getInstance()->add(e = new cEnum("inet::SelectionCriteria"));
     e->insert(Ieee80211Mesh::ETX, "Etx");
     e->insert(Ieee80211Mesh::MINQUEUE, "MinQueue");
     e->insert(Ieee80211Mesh::LASTUSED, "LastUsed");
