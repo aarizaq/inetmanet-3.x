@@ -33,7 +33,7 @@
 package inet.underTest.hip.nodes;
 
 import inet.underTest.hip.base.RvsHIP;
-import inet.nodes.ipv6.StandardHost6;
+import inet.node.ipv6.StandardHost6;
 
 //
 // \IPv6 host with TCP, UDP layers and applications.

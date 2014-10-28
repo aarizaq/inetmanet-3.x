@@ -25,9 +25,9 @@
 //**********************************************************************************
 
 #include "HIP.h"
-#include "IPv6ControlInfo.h"
-#include "IPv6ExtensionHeaders_m.h"
-#include "IPv6Datagram.h"
+#include "inet/networklayer/contract/ipv6/IPv6ControlInfo.h"
+#include "inet/networklayer/ipv6/IPv6ExtensionHeaders_m.h"
+#include "inet/networklayer/ipv6/IPv6Datagram.h"
 #include "DNSBaseMsg_m.h"
 #include "DNSRegRvsMsg_m.h"
 #include "inet/transportlayer/udp/UDPPacket.h"
@@ -35,7 +35,7 @@
 #include "inet/networklayer/common/L3AddressResolver.h"
 #include "inet/networklayer/common/InterfaceTable.h"
 #include "inet/networklayer/common/InterfaceEntry.h"
-#include "IPv6InterfaceData.h"
+#include "inet/networklayer/ipv6/IPv6InterfaceData.h"
 #include "inet/networklayer/common/IPSocket.h"
 
 Define_Module(HIP)

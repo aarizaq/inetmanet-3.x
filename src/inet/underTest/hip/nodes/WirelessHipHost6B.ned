@@ -33,7 +33,7 @@
 package inet.underTest.hip.nodes;
 
 import inet.underTest.hip.base.HIP;
-import inet.nodes.ipv6.NodeBase6;
+import inet.node.ipv6.NodeBase6;
 import inet.applications.IPingApp;
 import inet.applications.ISCTPApp;
 import inet.applications.ITCPApp;
