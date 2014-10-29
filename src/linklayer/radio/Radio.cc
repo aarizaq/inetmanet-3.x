@@ -37,7 +37,6 @@ simsignal_t Radio::radioStateSignal = registerSignal("radioState");
 simsignal_t Radio::channelNumberSignal = registerSignal("channelNo");
 simsignal_t Radio::lossRateSignal = registerSignal("lossRate");
 simsignal_t Radio::changeLevelNoise = registerSignal("changeLevelNoise");
-simsignal_t Radio::endTransmissionSignal = registerSignal("endTransmission");
 
 #define MIN_DISTANCE 0.001 // minimum distance 1 millimeter
 #define BASE_NOISE_LEVEL (noiseGenerator?noiseLevel+noiseGenerator->noiseLevel():noiseLevel)
