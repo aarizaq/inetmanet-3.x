@@ -219,6 +219,9 @@ class INET_API DimensionSet    /*:public std::set<Dimension>*/
     /** @brief Shortcut to a DimensionSet which only contains time. */
     static const DimensionSet timeDomain;
 
+    /** @brief Shortcut to a DimensionSet which only contains frequency. */
+    static const DimensionSet freqDomain;
+
     /** @brief Shortcut to a DimensionSet which contains time and frequency. */
     static const DimensionSet timeFreqDomain;
 
@@ -991,7 +994,7 @@ class INET_API ConstMapping
     ConstMapping(const DimensionSet& dimSet) :
         dimensions(dimSet)
     {
-        assert(dimSet.hasDimension(Dimension::time));
+//        assert(dimSet.hasDimension(Dimension::time));
     }
 
     virtual ~ConstMapping() {}
@@ -1160,10 +1163,10 @@ class INET_API ConstMapping
         if (!bIs2Dim && !bOnlyDimFound) {
             if (!bOnlyDimFound && pOnlyDim != NULL) {
                 out << "map contains no " << pOnlyDim->getName() << " dimension!" << endl;
+                return out;
             }
             else
                 out << "domain - min=" << min << " max=" << max << endl;
-            return out;
         }
         if (bOnlyDimFound && otherPositions.empty()) {
             out << "Defines no own key entries for " << pOnlyDim->getName() << " dimension! That does NOT mean it doesn't define any attenuation." << endl;

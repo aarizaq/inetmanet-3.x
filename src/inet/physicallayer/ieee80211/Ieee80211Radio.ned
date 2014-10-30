@@ -19,6 +19,7 @@ package inet.physicallayer.ieee80211;
 
 import inet.physicallayer.scalar.ScalarRadio;
 
+// TODO: rename to Ieee80211ScalarRadio
 module Ieee80211Radio extends ScalarRadio
 {
     parameters:

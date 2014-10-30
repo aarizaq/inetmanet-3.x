@@ -19,6 +19,7 @@
 #define __INET_DIMENSIONALATTENUATION_H
 
 #include "inet/physicallayer/base/AttenuationBase.h"
+#include "inet/physicallayer/mapping/MappingBase.h"
 
 namespace inet {
 
@@ -26,8 +27,15 @@ namespace physicallayer {
 
 class INET_API DimensionalAttenuation : public AttenuationBase
 {
+  protected:
+    bool attenuateWithCarrierFrequency;
+    Mapping::InterpolationMethod interpolationMode;
+
+  protected:
+    virtual void initialize(int stage);
+
   public:
-    virtual void printToStream(std::ostream& stream) const { stream << "dimensional attenuation"; }
+    virtual void printToStream(std::ostream& stream) const;
     virtual const IReception *computeReception(const IRadio *radio, const ITransmission *transmission) const;
 };
 

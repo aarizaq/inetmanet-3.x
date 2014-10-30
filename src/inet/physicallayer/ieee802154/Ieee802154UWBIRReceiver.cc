@@ -18,7 +18,6 @@
 #include "inet/physicallayer/ieee802154/Ieee802154UWBIRReceiver.h"
 #include "inet/physicallayer/dimensional/DimensionalReception.h"
 #include "inet/physicallayer/dimensional/DimensionalNoise.h"
-#include "inet/physicallayer/dimensional/DimensionalUtils.h"
 #include "inet/physicallayer/common/BandListening.h"
 #include "inet/physicallayer/common/ListeningDecision.h"
 #include "inet/physicallayer/common/ReceptionDecision.h"
@@ -31,7 +30,8 @@ Define_Module(Ieee802154UWBIRReceiver);
 
 Ieee802154UWBIRReceiver::Ieee802154UWBIRReceiver() :
     ReceiverBase()
-{}
+{
+}
 
 void Ieee802154UWBIRReceiver::initialize(int stage)
 {
@@ -43,7 +43,7 @@ void Ieee802154UWBIRReceiver::initialize(int stage)
 
 void Ieee802154UWBIRReceiver::printToStream(std::ostream& stream) const
 {
-    stream << "Ieee802154A receiver";
+    stream << "Ieee802154UWBIRReceiver";
 }
 
 const IListening *Ieee802154UWBIRReceiver::createListening(const IRadio *radio, const simtime_t startTime, const simtime_t endTime, const Coord startPosition, const Coord endPosition) const

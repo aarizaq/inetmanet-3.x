@@ -19,6 +19,7 @@ package inet.physicallayer.ieee80211;
 
 import inet.physicallayer.scalar.ScalarRadioMedium;
 
+// TODO: rename to Ieee80211ScalarRadioMedium
 module Ieee80211RadioMedium extends ScalarRadioMedium
 {
     parameters:

@@ -15,13 +15,13 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "inet/physicallayer/ieee80211/Ieee80211ScalarTransmitter.h"
-#include "inet/physicallayer/ieee80211/Ieee80211ScalarTransmission.h"
 #include "inet/mobility/contract/IMobility.h"
 #include "inet/physicallayer/contract/IRadio.h"
-#include "inet/linklayer/ieee80211/mac/WifiMode.h"
-#include "inet/physicallayer/common/ModulationType.h"
 #include "inet/physicallayer/contract/RadioControlInfo_m.h"
+#include "inet/physicallayer/common/ModulationType.h"
+#include "inet/physicallayer/ieee80211/Ieee80211ScalarTransmitter.h"
+#include "inet/physicallayer/ieee80211/Ieee80211ScalarTransmission.h"
+#include "inet/linklayer/ieee80211/mac/WifiMode.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Consts.h"
 
 namespace inet {
@@ -31,6 +31,13 @@ using namespace ieee80211;
 namespace physicallayer {
 
 Define_Module(Ieee80211ScalarTransmitter);
+
+Ieee80211ScalarTransmitter::Ieee80211ScalarTransmitter() :
+    ScalarTransmitter(),
+    opMode('\0'),
+    preambleMode((WifiPreamble) - 1)
+{
+}
 
 void Ieee80211ScalarTransmitter::initialize(int stage)
 {

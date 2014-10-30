@@ -87,25 +87,26 @@ Dimension::DimensionIdType Dimension::getDimensionID(const Dimension::DimensionN
 
 Dimension::Dimension(const Dimension::DimensionNameType& name)
     : id(getDimensionID(name))
-{}
+{
+}
 
 //--DimensionSet implementation ----------------------
 const DimensionSet DimensionSet::timeDomain(Dimension::time);
+const DimensionSet DimensionSet::freqDomain(Dimension::frequency);
 const DimensionSet DimensionSet::timeFreqDomain(Dimension::time, Dimension::frequency);
 
 //--Argument implementation---------------------------
 
 Argument::Argument(simtime_t_cref timeVal) :
     time(timeVal), values()
-{}
+{
+}
 
 Argument::Argument(const DimensionSet& dims, simtime_t_cref timeVal) :
     time(timeVal), values()
 {
     DimensionSet::const_iterator it = dims.begin();
     const DimensionSet::const_iterator itEnd = dims.end();
-
-    assert((*it) == Dimension::time);
 
     for (++it; it != itEnd; ++it) {
         values.insert(Argument::value_type(*it, Argument::MappedZero));

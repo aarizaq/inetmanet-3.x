@@ -21,15 +21,29 @@ namespace inet {
 
 namespace physicallayer {
 
+DimensionalReception::DimensionalReception(const IRadio *radio, const ITransmission *transmission, const simtime_t startTime, const simtime_t endTime, const Coord startPosition, const Coord endPosition, const EulerAngles startOrientation, const EulerAngles endOrientation, Hz carrierFrequency, Hz bandwidth, const ConstMapping *power) :
+    FlatReceptionBase(radio, transmission, startTime, endTime, startPosition, endPosition, startOrientation, endOrientation, carrierFrequency, bandwidth),
+    power(power)
+{
+}
+
 W DimensionalReception::computeMinPower(simtime_t startTime, simtime_t endTime) const
 {
-    Argument start(DimensionSet::timeFreqDomain);
-    Argument end(DimensionSet::timeFreqDomain);
-    start.setTime(startTime);
-    start.setArgValue(Dimension::frequency, carrierFrequency.get() - bandwidth.get() / 2);
-    end.setTime(endTime);
-    end.setArgValue(Dimension::frequency, carrierFrequency.get() + bandwidth.get() / 2);
-    return W(MappingUtils::findMin(*power, start, end));
+    const DimensionSet& dimensions = power->getDimensionSet();
+    Argument startArgument(dimensions);
+    Argument endArgument(dimensions);
+    if (dimensions.hasDimension(Dimension::time)) {
+        startArgument.setTime(startTime);
+        // NOTE: to exclude the moment where the reception power starts to be 0 again
+        endArgument.setTime(MappingUtils::pre(endTime));
+    }
+    if (dimensions.hasDimension(Dimension::frequency)) {
+        startArgument.setArgValue(Dimension::frequency, (carrierFrequency - bandwidth / 2).get());
+        endArgument.setArgValue(Dimension::frequency, nexttoward((carrierFrequency + bandwidth / 2).get(), 0));
+    }
+    W minPower = W(MappingUtils::findMin(*power, startArgument, endArgument));
+    EV_DEBUG << "Computing minimum reception power: start = " << startArgument << ", end = " << endArgument << " -> minimum reception power = " << minPower << endl;
+    return minPower;
 }
 
 } // namespace physicallayer

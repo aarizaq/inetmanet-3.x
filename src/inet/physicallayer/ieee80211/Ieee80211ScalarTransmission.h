@@ -19,28 +19,16 @@
 #define __INET_IEEE80211SCALARTRANSMISSION_H
 
 #include "inet/physicallayer/scalar/ScalarTransmission.h"
-#include "inet/physicallayer/ieee80211/WifiPreambleType.h"
+#include "inet/physicallayer/ieee80211/Ieee80211TransmissionBase.h"
 
 namespace inet {
 
 namespace physicallayer {
 
-class INET_API Ieee80211ScalarTransmission : public ScalarTransmission
+class INET_API Ieee80211ScalarTransmission : public ScalarTransmission, public Ieee80211TransmissionBase
 {
-  protected:
-    const char opMode;
-    const WifiPreamble preambleMode;
-
   public:
-    Ieee80211ScalarTransmission(const IRadio *transmitter, const cPacket *macFrame, const simtime_t startTime, const simtime_t endTime, const Coord startPosition, const Coord endPosition, const EulerAngles startOrientation, const EulerAngles endOrientation, const IModulation *modulation, int headerBitLength, int payloadBitLength, Hz carrierFrequency, Hz bandwidth, bps bitrate, W power, char opMode, WifiPreamble preambleMode) :
-        ScalarTransmission(transmitter, macFrame, startTime, endTime, startPosition, endPosition, startOrientation, endOrientation, modulation, headerBitLength, payloadBitLength, carrierFrequency, bandwidth, bitrate, power),
-        opMode(opMode),
-        preambleMode(preambleMode)
-    {}
-
-    virtual char getOpMode() const { return opMode; }
-
-    virtual WifiPreamble getPreambleMode() const { return preambleMode; }
+    Ieee80211ScalarTransmission(const IRadio *transmitter, const cPacket *macFrame, const simtime_t startTime, const simtime_t endTime, const Coord startPosition, const Coord endPosition, const EulerAngles startOrientation, const EulerAngles endOrientation, const IModulation *modulation, int headerBitLength, int payloadBitLength, Hz carrierFrequency, Hz bandwidth, bps bitrate, W power, char opMode, WifiPreamble preambleMode);
 };
 
 } // namespace physicallayer
