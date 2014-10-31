@@ -53,6 +53,7 @@ public:
         return 0;
     }
     cPacket *decapsulatePacket(unsigned int i);
+    virtual unsigned int getEncapSize() {return encapsulateVector.size();}
 
     virtual void pushFrom(cPacket *);
     virtual void pushBack(cPacket *);

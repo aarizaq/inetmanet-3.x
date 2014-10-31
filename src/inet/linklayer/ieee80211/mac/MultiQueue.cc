@@ -14,6 +14,7 @@
 // 
 
 #include "inet/linklayer/ieee80211/mac/MultiQueue.h"
+#include "inet/linklayer/ieee80211/mac/FrameBlock.h"
 
 namespace inet {
 
@@ -32,6 +33,8 @@ MultiQueue::MultiQueue()
     maxSize = 1000000;
     numStrictQueuePriorities = 0;
     exploreQueue = 1;
+    queueSize.resize(1);
+    queueSize[0] = 0;
 }
 
 MultiQueue::~MultiQueue()
@@ -55,13 +58,16 @@ void MultiQueue::setNumQueues(int num)
     exploreQueue = num;  // set iterator to null
     basePriority.resize(num);
     priority.resize(num);
+    queueSize.resize(num);
+
     if (num > (int) queues.size())
     {
 
         for (int i = (int) queues.size() - 1; i <= num; i++)
         {
-            basePriority[0] = 1;
-            priority[0] = 1;
+            basePriority[i] = 1;
+            priority[i] = 1;
+            queueSize[i] = 0;
         }
         queues.resize(num);
     }
@@ -89,13 +95,13 @@ unsigned int MultiQueue::size(int i)
     if (i != -1)
     {
         if (firstPk.first == i)
-            return queues[i].size() + 1;
-        return queues[i].size();
+            return queueSize[i] + 1;
+        return queueSize[i];
     }
 
     unsigned int total = 1; // the first packet
     for (unsigned int j = 0; j < queues.size(); j++)
-        total += queues[j].size();
+        total += queueSize[i];
     return total;
 }
 
@@ -154,6 +160,11 @@ void MultiQueue::push_front(cMessage* val, int i)
     if (i >= (int) queues.size())
         opp_error("MultiQueue::size Queue doesn't exist");
 
+    int cat = 0;
+    if (classifier) cat = i!=-1 ? i: classifier->classifyPacket(val);
+    else if (i > 0) cat = i;
+
+
     if (size() > getMaxSize())
     {
         // first make space
@@ -172,41 +183,20 @@ void MultiQueue::push_front(cMessage* val, int i)
         {
             delete queues[nQueue].front().second;
             queues[nQueue].pop_front();
+            queueSize[nQueue]--;
         }
     }
 
-    if (i != -1)
+
+    if (firstPk.second == NULL)
     {
-        if (firstPk.second == NULL)
-        {
-            firstPk.second = val;
-            firstPk.first = i;
-            return;
-        }
-        value = std::make_pair(simTime(), val);
-        queues[i].push_front(value);
+         firstPk.second = val;
+         firstPk.first = i;
+         return;
     }
-    else if (!classifier)
-    {
-        if (firstPk.second == NULL)
-        {
-            firstPk.second = val;
-            firstPk.first = classifier->classifyPacket(val);
-            return;
-        }
-        value = std::make_pair(simTime(), val);
-        queues[classifier->classifyPacket(val)].push_front(value);
-    }
-    else
-    {
-        if (firstPk.second == NULL)
-        {
-            firstPk.second = val;
-            firstPk.first = 0;
-            return;
-        }
-        queues[0].push_front(value);
-    }
+    value = std::make_pair(simTime(), val);
+    queues[cat].push_front(value);
+    queueSize[cat]++;
 }
 
 void MultiQueue::pop_front(int i)
@@ -218,6 +208,11 @@ void MultiQueue::pop_front(int i)
         return;
     if (i != -1 && i != firstPk.first)
     {
+        FrameBlock * block = dynamic_cast<FrameBlock *>(queues[i].front().second);
+        if (block)
+            queueSize[i] -= block->getNumEncap();
+        else
+            queueSize[i]--;
         queues[i].pop_front();
         priority[i] = basePriority[i];
         return;
@@ -232,6 +227,11 @@ void MultiQueue::pop_front(int i)
             if (!queues[j].empty())
             {
                 firstPk.second = queues[j].front().second;
+                FrameBlock * block = dynamic_cast<FrameBlock *>(queues[j].front().second);
+                if (block)
+                    queueSize[j] -= block->getNumEncap();
+                else
+                    queueSize[j]--;
                 queues[j].pop_front();
                 firstPk.first = j;
                 return;
@@ -265,6 +265,11 @@ void MultiQueue::pop_front(int i)
         if (nQueue >= 0)
         {
             firstPk.second = queues[nQueue].front().second;
+            FrameBlock * block = dynamic_cast<FrameBlock *>(queues[nQueue].front().second);
+            if (block)
+                queueSize[nQueue] -= block->getNumEncap();
+            else
+                queueSize[nQueue]--;
             queues[nQueue].pop_front();
             firstPk.first = nQueue;
         }
@@ -277,17 +282,19 @@ void MultiQueue::push_back(cMessage* val, int i)
     if (i >= (int) queues.size())
         opp_error("MultiQueue::size Queue doesn't exist");
 
+    int cat = 0;
+    if (classifier) cat = i!=-1 ? i: classifier->classifyPacket(val);
+    else if (i > 0) cat = i;
+
     if (firstPk.second == NULL)
     {
         firstPk.second = val;
-        if (i!=-1)
-            firstPk.first = i;
-        else
-            firstPk.first = classifier->classifyPacket(val);
+        firstPk.first = cat;
         lastPk = val;
         return;
     }
 
+// insert in position
     if (size() > getMaxSize())
     {
         // first make space
@@ -304,25 +311,55 @@ void MultiQueue::push_back(cMessage* val, int i)
         }
         if (nQueue >= 0)
         {
-            delete queues[nQueue].front().second;
-            queues[nQueue].pop_front();
+            queueSize[nQueue]--;
+            if (dynamic_cast<FrameBlock *>(queues[nQueue].front().second))
+            {
+                // delete one
+                FrameBlock * block = dynamic_cast<FrameBlock *>(queues[nQueue].front().second);
+                if (block->getEncapSize() == 1)
+                {
+                    delete queues[nQueue].front().second;
+                    queues[nQueue].pop_front();
+                }
+                else
+                {
+                    delete block->decapsulatePacket(0);
+                }
+            }
+            else
+            {
+                delete queues[nQueue].front().second;
+                queues[nQueue].pop_front();
+            }
         }
     }
 
+    bool isDataFrame = (dynamic_cast<Ieee80211DataFrame *>(frame) != NULL);
     value = std::make_pair(simTime(), val);
-    if (i != -1)
+    queueSize[cat]++;
+
+    if (queues[cat].empty())
     {
-        queues[i].push_back(value);
+        queues[cat].push_back(value);
+        return;
     }
-    else if (classifier)
+
+    value = std::make_pair(simTime(), val);
+
+    if (isDataFrame)
     {
-        queues[classifier->classifyPacket(val)].push_back(value);
+        queues[cat].push_back(value);
     }
     else
     {
-        queues[0].push_back(value);
+        Queue::iterator p = queues[cat].begin();
+        p++;
+        while (((dynamic_cast<Ieee80211DataFrame *> (p->second) == NULL) && (dynamic_cast<FrameBlock *> (p->second) == NULL)) && (p != queues[cat].end())) // search the first not management frame
+            p++;
+        queues[cat].insert(p, value);
     }
-    lastPk = val;
+    if (queues[cat].back().second == val)
+        lastPk = val;
 }
 
 void MultiQueue::pop_back(int i)
@@ -452,6 +489,118 @@ bool  MultiQueue::isEnd()
     }
     return false;
 }
+
+
+void MultiQueue::push_backWithBlock(cMessage* val)
+{
+    std::pair<simtime_t, cMessage*> value;
+    int cat = 0;
+    if (classifier) cat = i!=-1 ? i: classifier->classifyPacket(val);
+
+    if (i >= (int) queues.size())
+        opp_error("MultiQueue::size Queue doesn't exist");
+
+    if (firstPk.second == NULL)
+    {
+        firstPk.first = classifier->classifyPacket(val);
+        lastPk = val;
+        return;
+    }
+
+    Ieee80211DataFrame * frame = dynamic_cast<Ieee80211DataFrame *> (p->second);
+    bool enqueue = false;
+    if (frame == NULL || (frame && frame->getReceiverAddress().isMulticast()))
+        enqueue = true;
+
+    if (size() > getMaxSize())
+    {
+        // first make space
+        // delete the oldest, the fist can't be deleted because can be in process.
+        simtime_t max;
+        int nQueue = -1;
+        for (unsigned int j = 0; j < queues.size(); j++)
+        {
+            if (queues[j].front().first > max)
+            {
+                max = queues[j].front().first;
+                nQueue = j;
+            }
+        }
+        if (nQueue >= 0)
+        {
+            queueSize[nQueue]--;
+            if (dynamic_cast<FrameBlock *>(queues[nQueue].front().second))
+            {
+                // delete one
+                FrameBlock * block = dynamic_cast<FrameBlock *>(queues[nQueue].front().second);
+                if (block->getEncapSize() == 1)
+                {
+                    delete queues[nQueue].front().second;
+                    queues[nQueue].pop_front();
+
+                }
+                else
+                {
+                    delete block->decapsulatePacket(0);
+                }
+            }
+            else
+            {
+                delete queues[nQueue].front().second;
+                queues[nQueue].pop_front();
+            }
+        }
+    }
+
+    // search for
+
+    value = std::make_pair(simTime(), val);
+    queueSize[cat]++;
+    if (enqueue)
+    {
+        Queue::iterator p = queues[cat].begin();
+        p = transmissionQueue()->begin();
+        p++;
+        while (((dynamic_cast<Ieee80211DataFrame *> (p->second) == NULL) && (dynamic_cast<FrameBlock *> (p->second) == NULL)) && (p != queues[cat].end())) // search the first not management frame
+            p++;
+
+        queues[cat].insert(p, value);
+        while ((dynamic_cast<Ieee80211DataFrame *> (p->second) == NULL) && (p != queues[cat].end())) // search the first not management frame
+            p++;
+        queues[cat].insert(p, value);
+    }
+    else
+    {
+        // search for a frame with the same address
+        for (Queue::iterator p = queues[cat].begin(); p != p != queues[cat].end(); ++p)
+        {
+            MACAddress destAddr;
+            Ieee80211DataFrame * frameAux = dynamic_cast<Ieee80211DataFrame *> (p->second);
+            if (frameAux)
+                destAddr = frameAux->getReceiverAddress();
+
+            FrameBlock *block = dynamic_cast<Ieee80211DataFrame *> (p->second);
+            if (block)
+                destAddr = block->getReceiverAddress();
+            if (frame->getReceiverAddress() == destAddr)
+            {
+                // new frame to the block
+                if (frameAux)
+                {
+                    // remove and insert
+
+                }
+                else
+                {
+                    // block ack, insert in block
+                }
+            }
+        }
+    }
+
+    lastPk = val;
+}
+
 
 }
 

@@ -22,6 +22,7 @@
 #include <list>
 #include <utility>
 #include "inet/linklayer/ieee80211/mac/IQoSClassifier.h"
+#include "inet/linklayer/common/MACAddress.h"
 
 namespace inet {
 
@@ -40,6 +41,7 @@ class INET_API MultiQueue : public cObject
         std::vector<Queue> queues;
         std::vector<int> basePriority;
         std::vector<int> priority;
+        std::vector<unsigned int> queueSize;
         IQoSClassifier * classifier;
         unsigned int maxSize;
         unsigned int numStrictQueuePriorities;
@@ -93,6 +95,14 @@ class INET_API MultiQueue : public cObject
                 throw cRuntimeError(this, "Queue doens't exist");
             basePriority[i] = priority[i] = cost;
         }
+
+
+        void push_backWithBlock(cMessage* val);
+
+        cMessage * getWithAddress(const MACAddress *);
+        cMessage * getSameType(const cMessage *);
+        cMessage * replacePacket(const cMessage *, const cMessage *);
+
         cMessage * initIterator();
         cMessage * next();
         bool isEnd();

@@ -24,7 +24,7 @@
 
 // un-comment this if you do not want to log state machine transitions
 //#define FSM_DEBUG
-//#define USEMULTIQUEUE
+#define USEMULTIQUEUE
 
 #include "inet/linklayer/ieee80211/mac/WifiMode.h"
 #include "inet/linklayer/common/MACProtocolBase.h"
@@ -35,6 +35,10 @@
 #include "inet/linklayer/ieee80211/mac/IQoSClassifier.h"
 #include "inet/physicallayer/contract/IRadio.h"
 #include "inet/common/lifecycle/ILifecycle.h"
+
+#ifdef USEMULTIQUEUE
+#include "inet/linklayer/ieee80211/mac/FrameBlock.h"
+#endif
 
 namespace inet {
 
@@ -64,6 +68,8 @@ using namespace physicallayer;
  *
  * @ingroup macLayer
  */
+
+
 class INET_API Ieee80211Mac : public MACProtocolBase
 {
 #ifdef  USEMULTIQUEUE
