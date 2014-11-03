@@ -23,7 +23,7 @@
 #include "inet/linklayer/ieee80211mesh/hwmp/hwmp.h"
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211Etx.h"
 #include "inet/routing/extras/base/ControlManetRouting_m.h"
-#include "inet/physicallayer/ieee80211/Radio80211aControlInfo_m.h"
+#include "inet/physicallayer/ieee80211/Ieee80211aControlInfo_m.h"
 #include "inet/linklayer/common/Ieee802Ctrl.h"
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtFrames_m.h"
 

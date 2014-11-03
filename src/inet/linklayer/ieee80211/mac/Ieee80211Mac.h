@@ -26,17 +26,20 @@
 //#define FSM_DEBUG
 #define USEMULTIQUEUE
 
-#include "inet/linklayer/ieee80211/mac/WifiMode.h"
-#include "inet/linklayer/common/MACProtocolBase.h"
+#include "inet/common/FSMA.h"
 #include "inet/common/queue/IPassiveQueue.h"
+#include "inet/common/lifecycle/ILifecycle.h"
+#include "inet/physicallayer/contract/IRadio.h"
+#include "inet/physicallayer/ieee80211/Ieee80211Modulation.h"
+#include "inet/linklayer/common/MACProtocolBase.h"
+
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Consts.h"
-#include "inet/common/FSMA.h"
+
 #include "inet/linklayer/ieee80211/mac/IQoSClassifier.h"
-#include "inet/physicallayer/contract/IRadio.h"
-#include "inet/common/lifecycle/ILifecycle.h"
 
 #ifdef USEMULTIQUEUE
+#include "inet/linklayer/ieee80211/mac/MultiQueue.h"
 #include "inet/linklayer/ieee80211/mac/FrameBlock.h"
 #endif
 
@@ -124,7 +127,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
         RATE_CR,    // Constant Rate
     } rateControlMode;
 
-    WifiPreamble wifiPreambleType;
+    Ieee80211PreambleMode wifiPreambleType;
     ModulationType recFrameModulationType;
     bool validRecMode;
     bool useModulationParameters;
@@ -179,9 +182,8 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     // used to measure the throughput over a period
     uint64_t recBytesOverPeriod;
     simtime_t throughputTimePeriod;
-    cMessage * throughputTimer;
-    double  throughputLastPeriod;
-
+    cMessage *throughputTimer;
+    double throughputLastPeriod;
 
     /** Maximum number of frames in the queue; should be set in the omnetpp.ini */
     int maxQueueSize;
@@ -237,8 +239,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     //@{
     // don't forget to keep synchronized the C++ enum and the runtime enum definition
     /** the 80211 MAC state machine */
-    enum State
-    {
+    enum State {
         IDLE,
         DEFER,
         WAITAIFS,
@@ -252,12 +253,13 @@ class INET_API Ieee80211Mac : public MACProtocolBase
   protected:
     cFSM fsm;
 
-    struct Edca {
+    struct Edca
+    {
         simtime_t TXOP;
         bool backoff;
         simtime_t backoffPeriod;
         int retryCounter;
-        int AIFSN; // Arbitration interframe space number. The duration edcCAF[AC].AIFSis a duration derived from the value AIFSN[AC] by the relation
+        int AIFSN;    // Arbitration interframe space number. The duration edcCAF[AC].AIFSis a duration derived from the value AIFSN[AC] by the relation
         int cwMax;
         int cwMin;
         // queue
@@ -278,7 +280,8 @@ class INET_API Ieee80211Mac : public MACProtocolBase
         unsigned int saveSize;
     };
 
-    struct EdcaOutVector {
+    struct EdcaOutVector
+    {
         cOutVector *jitter;
         cOutVector *macDelay;
         cOutVector *throughput;
@@ -293,33 +296,33 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     // methods for access to the current AC data
     //
     // methods for access to specific AC data
-    virtual bool & backoff(int i = -1);
-    virtual simtime_t & TXOP(int i = -1);
-    virtual simtime_t & backoffPeriod(int i = -1);
-    virtual int & retryCounter(int i = -1);
-    virtual int & AIFSN(int i = -1);
-    virtual int & cwMax(int i = -1);
-    virtual int & cwMin(int i = -1);
-    virtual cMessage * endAIFS(int i = -1);
-    virtual cMessage * endBackoff(int i = -1);
-    virtual Ieee80211DataOrMgmtFrameList * transmissionQueue(int i = -1);
-    virtual void setEndAIFS(int i, cMessage *msg){edcCAF[i].endAIFS = msg;}
-    virtual void setEndBackoff(int i, cMessage *msg){edcCAF[i].endBackoff = msg;}
+    virtual bool& backoff(int i = -1);
+    virtual simtime_t& TXOP(int i = -1);
+    virtual simtime_t& backoffPeriod(int i = -1);
+    virtual int& retryCounter(int i = -1);
+    virtual int& AIFSN(int i = -1);
+    virtual int& cwMax(int i = -1);
+    virtual int& cwMin(int i = -1);
+    virtual cMessage *endAIFS(int i = -1);
+    virtual cMessage *endBackoff(int i = -1);
+    virtual Ieee80211DataOrMgmtFrameList *transmissionQueue(int i = -1);
+    virtual void setEndAIFS(int i, cMessage *msg) { edcCAF[i].endAIFS = msg; }
+    virtual void setEndBackoff(int i, cMessage *msg) { edcCAF[i].endBackoff = msg; }
 
     // Statistics
-    virtual long & numRetry(int i = -1);
-    virtual long & numSentWithoutRetry(int i = -1);
-    virtual long & numGivenUp(int i = -1);
-    virtual long & numSent(int i = -1);
-    virtual long & numDropped(int i = -1);
-    virtual long & bits(int i = -1);
-    virtual simtime_t & minJitter(int i = -1);
-    virtual simtime_t & maxJitter(int i = -1);
+    virtual long& numRetry(int i = -1);
+    virtual long& numSentWithoutRetry(int i = -1);
+    virtual long& numGivenUp(int i = -1);
+    virtual long& numSent(int i = -1);
+    virtual long& numDropped(int i = -1);
+    virtual long& bits(int i = -1);
+    virtual simtime_t& minJitter(int i = -1);
+    virtual simtime_t& maxJitter(int i = -1);
 // out vectors
-    virtual cOutVector * jitter(int i = -1);
-    virtual cOutVector * macDelay(int i = -1);
-    virtual cOutVector * throughput(int i = -1);
-    inline int numCategories() const {return edcCAF.size();}
+    virtual cOutVector *jitter(int i = -1);
+    virtual cOutVector *macDelay(int i = -1);
+    virtual cOutVector *throughput(int i = -1);
+    inline int numCategories() const { return edcCAF.size(); }
     virtual const bool isBackoffMsg(cMessage *msg);
 
     const char *modeName(int mode);
@@ -349,10 +352,9 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     IQoSClassifier *classifier;
   public:
     /** 80211 MAC operation modes */
-    enum Mode
-    {
-        DCF,  ///< Distributed Coordination Function
-        PCF,  ///< Point Coordination Function
+    enum Mode {
+        DCF,    ///< Distributed Coordination Function
+        PCF,    ///< Point Coordination Function
         EDCA,
     };
   protected:
@@ -393,9 +395,9 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     Ieee80211DataOrMgmtFrame *fr;
 
     /**
-    * A list of last sender, sequence and fragment number tuples to identify
-    * duplicates, see spec 9.2.9.
-    */
+     * A list of last sender, sequence and fragment number tuples to identify
+     * duplicates, see spec 9.2.9.
+     */
     bool duplicateDetect;
     bool purgeOldTuples;
     simtime_t duplicateTimeOut;
@@ -458,7 +460,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     long numReceivedOther;
     long numAckSend;
     cOutVector stateVector;
-    simtime_t  last;
+    simtime_t last;
     // long bits[4];
     // simtime_t minjitter[4];
     // simtime_t maxjitter[4];

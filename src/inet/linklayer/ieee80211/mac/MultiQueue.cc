@@ -334,7 +334,7 @@ void MultiQueue::push_back(cMessage* val, int i)
         }
     }
 
-    bool isDataFrame = (dynamic_cast<Ieee80211DataFrame *>(frame) != NULL);
+    bool isDataFrame = (dynamic_cast<Ieee80211DataFrame *>(val) != NULL);
     value = std::make_pair(simTime(), val);
     queueSize[cat]++;
 
@@ -353,7 +353,9 @@ void MultiQueue::push_back(cMessage* val, int i)
     else
     {
         Queue::iterator p = queues[cat].begin();
-        p++;
+        if (firstPk.first != cat) //
+            p++;
+
         while (((dynamic_cast<Ieee80211DataFrame *> (p->second) == NULL) && (dynamic_cast<FrameBlock *> (p->second) == NULL)) && (p != queues[cat].end())) // search the first not management frame
             p++;
         queues[cat].insert(p, value);
@@ -491,7 +493,7 @@ bool  MultiQueue::isEnd()
 }
 
 
-void MultiQueue::push_backWithBlock(cMessage* val)
+void MultiQueue::push_backWithBlock(cMessage* val, int i)
 {
     std::pair<simtime_t, cMessage*> value;
     int cat = 0;
@@ -507,7 +509,7 @@ void MultiQueue::push_backWithBlock(cMessage* val)
         return;
     }
 
-    Ieee80211DataFrame * frame = dynamic_cast<Ieee80211DataFrame *> (p->second);
+    Ieee80211DataFrame * frame = dynamic_cast<Ieee80211DataFrame *> (val);
     bool enqueue = false;
     if (frame == NULL || (frame && frame->getReceiverAddress().isMulticast()))
         enqueue = true;
@@ -559,8 +561,10 @@ void MultiQueue::push_backWithBlock(cMessage* val)
     if (enqueue)
     {
         Queue::iterator p = queues[cat].begin();
-        p = transmissionQueue()->begin();
-        p++;
+        p = queues[cat].begin();
+        if (firstPk.first != cat) //
+            p++;
+
         while (((dynamic_cast<Ieee80211DataFrame *> (p->second) == NULL) && (dynamic_cast<FrameBlock *> (p->second) == NULL)) && (p != queues[cat].end())) // search the first not management frame
             p++;
 
@@ -572,14 +576,14 @@ void MultiQueue::push_backWithBlock(cMessage* val)
     else
     {
         // search for a frame with the same address
-        for (Queue::iterator p = queues[cat].begin(); p != p != queues[cat].end(); ++p)
+        for (Queue::iterator p = queues[cat].begin(); p != queues[cat].end(); ++p)
         {
             MACAddress destAddr;
             Ieee80211DataFrame * frameAux = dynamic_cast<Ieee80211DataFrame *> (p->second);
             if (frameAux)
                 destAddr = frameAux->getReceiverAddress();
 
-            FrameBlock *block = dynamic_cast<Ieee80211DataFrame *> (p->second);
+            FrameBlock *block = dynamic_cast<FrameBlock *> (p->second);
             if (block)
                 destAddr = block->getReceiverAddress();
             if (frame->getReceiverAddress() == destAddr)

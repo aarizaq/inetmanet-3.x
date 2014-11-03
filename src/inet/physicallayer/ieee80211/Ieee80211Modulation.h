@@ -1,5 +1,3 @@
-#ifndef __INET_WIFIMODE_H
-#define __INET_WIFIMODE_H
 /* -*-  Mode: C++; c-file-style: "gnu"; indent-tabs-mode:nil; -*- */
 /*
  * Copyright (c) 2005,2006 INRIA
@@ -19,15 +17,27 @@
  *
  * Author: Mathieu Lacage <mathieu.lacage@sophia.inria.fr>
  */
-#include "inet/common/INETDefs.h"
-#include "inet/physicallayer/ieee80211/WifiPreambleType.h"
+
+#ifndef __INET_IEEE80211MODULATION_H
+#define __INET_IEEE80211MODULATION_H
+
 #include "inet/physicallayer/common/ModulationType.h"
 
 namespace inet {
 
-namespace ieee80211 {
+namespace physicallayer {
 
-class WifiModulationType
+/**
+ * See IEEE Std 802.11-2007 section 18.2.2.
+ */
+enum Ieee80211PreambleMode {
+    IEEE80211_PREAMBLE_LONG,
+    IEEE80211_PREAMBLE_SHORT,
+    IEEE80211_PREAMBLE_HT_MF,
+    IEEE80211_PREAMBLE_HT_GF
+};
+
+class Ieee80211Modulation
 {
     public:
         static ModulationType GetDsssRate1Mbps();
@@ -102,8 +112,6 @@ class WifiModulationType
         static ModulationType GetOfdmRate135MbpsBW40MHzShGi();
         static ModulationType GetOfdmRate150MbpsBW40MHz();
 
-        static ModulationType getModulationType(char mode, double bitrate);
-
         static void setHTFrequency11n5Gh(ModulationType &t)
         {
             if (t.getModulationClass() == MOD_CLASS_HT)
@@ -116,24 +124,26 @@ class WifiModulationType
                 t.setFrequency(2400);
         }
 
-        static simtime_t getPlcpHeaderDuration(ModulationType payloadMode, WifiPreamble preamble);
-        static simtime_t getPlcpPreambleDuration(ModulationType payloadMode, WifiPreamble preamble);
-        static simtime_t getPreambleAndHeader(ModulationType payloadMode, WifiPreamble preamble);
-        static simtime_t getPayloadDuration(uint64_t size, ModulationType payloadMode, const uint32_t & nss = 1, bool = false);
-        static simtime_t calculateTxDuration(uint64_t size, ModulationType payloadMode, WifiPreamble preamble,const uint32_t & nss = 1, const uint32_t & ness = 0, bool isStbc = false);
-        static simtime_t getSlotDuration(ModulationType payloadMode, WifiPreamble preamble);
-        static simtime_t getSifsTime(ModulationType payloadMode, WifiPreamble preamble);
-        static simtime_t get_aPHY_RX_START_Delay(ModulationType payloadMode, WifiPreamble preamble);
-        static ModulationType getPlcpHeaderMode(ModulationType payloadMode, WifiPreamble preamble);
-        static ModulationType getMFPlcpHeaderMode(ModulationType payloadMode, WifiPreamble preamble);
-        static simtime_t getPlcpHtTrainingSymbolDuration(ModulationType payloadMode, WifiPreamble preamble,
+        static simtime_t getPlcpHeaderDuration(ModulationType payloadMode, Ieee80211PreambleMode preamble);
+        static simtime_t getPlcpPreambleDuration(ModulationType payloadMode, Ieee80211PreambleMode preamble);
+        static simtime_t getPreambleAndHeader(ModulationType payloadMode, Ieee80211PreambleMode preamble);
+        static simtime_t getPayloadDuration(uint64_t size, ModulationType payloadMode, const uint32_t & nss = 1, bool =
+                false);
+        static simtime_t calculateTxDuration(uint64_t size, ModulationType payloadMode, Ieee80211PreambleMode preamble,
+                const uint32_t & nss = 1, const uint32_t & ness = 0, bool isStbc = false);
+        static simtime_t getSlotDuration(ModulationType payloadMode, Ieee80211PreambleMode preamble);
+        static simtime_t getSifsTime(ModulationType payloadMode, Ieee80211PreambleMode preamble);
+        static simtime_t get_aPHY_RX_START_Delay(ModulationType payloadMode, Ieee80211PreambleMode preamble);
+        static ModulationType getPlcpHeaderMode(ModulationType payloadMode, Ieee80211PreambleMode preamble);
+        static ModulationType getMFPlcpHeaderMode(ModulationType payloadMode, Ieee80211PreambleMode preamble);
+        static simtime_t getPlcpHtTrainingSymbolDuration(ModulationType payloadMode, Ieee80211PreambleMode preamble,
                 const uint32_t & nss = 1, const uint32_t & ness = 0);
-        static simtime_t getPlcpHtSigHeaderDuration(ModulationType payloadMode, WifiPreamble preamble);
+        static simtime_t getPlcpHtSigHeaderDuration(ModulationType payloadMode, Ieee80211PreambleMode preamble);
 };
 
-} // namespace ieee80211
+} // namespace physicallayer
 
 } // namespace inet
 
-#endif // ifndef __INET_WIFIMODE_H
+#endif // ifndef __INET_IEEE80211MODULATION_H
 

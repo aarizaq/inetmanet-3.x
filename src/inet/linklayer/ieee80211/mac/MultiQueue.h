@@ -97,7 +97,7 @@ class INET_API MultiQueue : public cObject
         }
 
 
-        void push_backWithBlock(cMessage* val);
+        void push_backWithBlock(cMessage* val, int i = -1);
 
         cMessage * getWithAddress(const MACAddress *);
         cMessage * getSameType(const cMessage *);

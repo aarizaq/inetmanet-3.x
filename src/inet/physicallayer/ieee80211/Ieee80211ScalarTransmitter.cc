@@ -21,8 +21,9 @@
 #include "inet/physicallayer/common/ModulationType.h"
 #include "inet/physicallayer/ieee80211/Ieee80211ScalarTransmitter.h"
 #include "inet/physicallayer/ieee80211/Ieee80211ScalarTransmission.h"
-#include "inet/linklayer/ieee80211/mac/WifiMode.h"
+#include "inet/physicallayer/ieee80211/Ieee80211Modulation.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Consts.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211DataRate.h"
 
 namespace inet {
 
@@ -35,7 +36,7 @@ Define_Module(Ieee80211ScalarTransmitter);
 Ieee80211ScalarTransmitter::Ieee80211ScalarTransmitter() :
     ScalarTransmitter(),
     opMode('\0'),
-    preambleMode((WifiPreamble) - 1)
+    preambleMode((Ieee80211PreambleMode) - 1)
 {
 }
 
@@ -56,9 +57,9 @@ void Ieee80211ScalarTransmitter::initialize(int stage)
             opMode = 'g';
         const char *preambleModeString = par("preambleMode");
         if (!strcmp("short", preambleModeString))
-            preambleMode = WIFI_PREAMBLE_SHORT;
+            preambleMode = IEEE80211_PREAMBLE_SHORT;
         else if (!strcmp("long", preambleModeString))
-            preambleMode = WIFI_PREAMBLE_LONG;
+            preambleMode = IEEE80211_PREAMBLE_LONG;
         else
             throw cRuntimeError("Unknown preamble mode");
         carrierFrequency = Hz(CENTER_FREQUENCIES[par("channelNumber")]);
@@ -70,8 +71,8 @@ const ITransmission *Ieee80211ScalarTransmitter::createTransmission(const IRadio
     RadioTransmissionRequest *controlInfo = dynamic_cast<RadioTransmissionRequest *>(macFrame->getControlInfo());
     W transmissionPower = controlInfo && !isNaN(controlInfo->getPower().get()) ? controlInfo->getPower() : power;
     bps transmissionBitrate = controlInfo && !isNaN(controlInfo->getBitrate().get()) ? controlInfo->getBitrate() : bitrate;
-    ModulationType modulationType = WifiModulationType::getModulationType(opMode, transmissionBitrate.get());
-    const simtime_t duration = SIMTIME_DBL(WifiModulationType::calculateTxDuration(macFrame->getBitLength(), modulationType, preambleMode));
+    ModulationType modulationType = Ieee80211Descriptor::getModulationType(opMode, transmissionBitrate.get());
+    const simtime_t duration = SIMTIME_DBL(Ieee80211Modulation::calculateTxDuration(macFrame->getBitLength(), modulationType, preambleMode));
     const simtime_t endTime = startTime + duration;
     IMobility *mobility = transmitter->getAntenna()->getMobility();
     const Coord startPosition = mobility->getCurrentPosition();

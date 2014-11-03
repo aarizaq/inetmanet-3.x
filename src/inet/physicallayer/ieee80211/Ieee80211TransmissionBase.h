@@ -19,7 +19,7 @@
 #define __INET_IEEE80211TRANSMISSIONBASE_H
 
 #include "inet/common/INETDefs.h"
-#include "inet/physicallayer/ieee80211/WifiPreambleType.h"
+#include "inet/physicallayer/ieee80211/Ieee80211Modulation.h"
 
 namespace inet {
 
@@ -29,12 +29,12 @@ class INET_API Ieee80211TransmissionBase
 {
   protected:
     const char opMode;
-    const WifiPreamble preambleMode;
+    const Ieee80211PreambleMode preambleMode;
 
   public:
-    Ieee80211TransmissionBase(char opMode, WifiPreamble preambleMode);
+    Ieee80211TransmissionBase(char opMode, Ieee80211PreambleMode preambleMode);
     virtual char getOpMode() const { return opMode; }
-    virtual WifiPreamble getPreambleMode() const { return preambleMode; }
+    virtual Ieee80211PreambleMode getPreambleMode() const { return preambleMode; }
 };
 
 } // namespace physicallayer

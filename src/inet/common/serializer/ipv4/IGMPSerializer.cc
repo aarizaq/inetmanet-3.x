@@ -16,7 +16,7 @@
 //
 
 #include <platdep/sockets.h>
-
+#include <omnetpp.h>
 #include "inet/common/serializer/ipv4/IGMPSerializer.h"
 
 #include "inet/common/serializer/headers/defs.h"

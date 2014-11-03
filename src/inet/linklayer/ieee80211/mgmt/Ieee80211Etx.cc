@@ -19,7 +19,7 @@
 
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211Etx.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
-#include "inet/physicallayer/ieee80211/Radio80211aControlInfo_m.h"
+#include "inet/physicallayer/ieee80211/Ieee80211aControlInfo_m.h"
 #include "inet/common/GlobalWirelessLinkInspector.h"
 #include "inet/common/ModuleAccess.h"
 

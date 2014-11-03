@@ -20,7 +20,6 @@
 #ifndef __INET_YANSERRORRATEMODEL_H
 #define __INET_YANSERRORRATEMODEL_H
 
-#include "inet/linklayer/ieee80211/mac/WifiMode.h"
 #include "inet/physicallayer/ieee80211/errormodel/Ieee80211ErrorModelBase.h"
 #include "inet/physicallayer/ieee80211/errormodel/dsss-error-rate-model.h"
 
@@ -57,7 +56,7 @@ class Ieee80211YansErrorModel : public Ieee80211ErrorModelBase
   public:
     Ieee80211YansErrorModel();
 
-    virtual void printToStream(std::ostream& stream) const { stream << "IEEE 802.11 YANS error model"; }
+    virtual void printToStream(std::ostream& stream) const { stream << "Ieee80211YansErrorModel"; }
     virtual double GetChunkSuccessRate(ModulationType mode, double snr, uint32_t nbits) const;
 
   private:

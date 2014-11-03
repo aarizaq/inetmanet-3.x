@@ -19,8 +19,8 @@
 #define __INET_IEEE80211SCALARRECEIVER_H
 
 #include "inet/physicallayer/scalar/ScalarReceiver.h"
-#include "inet/physicallayer/ieee80211/WifiPreambleType.h"
 #include "inet/physicallayer/ieee80211/BerParseFile.h"
+#include "inet/physicallayer/ieee80211/Ieee80211Modulation.h"
 
 namespace inet {
 
@@ -30,7 +30,7 @@ class INET_API Ieee80211ScalarReceiver : public ScalarReceiver
 {
   protected:
     char opMode;
-    WifiPreamble preambleMode;
+    Ieee80211PreambleMode preambleMode;
 
   protected:
     virtual void initialize(int stage);
