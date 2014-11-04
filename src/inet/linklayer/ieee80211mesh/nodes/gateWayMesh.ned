@@ -74,7 +74,8 @@ module gateWayMesh
         int numPcapRecorders = default(0); // no of PcapRecorders.
         string mobilityType = default("StationaryMobility");
         string routingFile = default("");
-        bool IPForward = default(true);
+        bool forwarding = default(true);
+        bool multicastForwarding = default(false);
         int meshChannels = default(1);
         wlan[*].mgmtType = default("Ieee80211MgmtAP");
         networkLayer.configurator.networkConfiguratorModule = default("");
@@ -82,8 +83,8 @@ module gateWayMesh
         string networkLayerType = default("IPv4NetworkLayer");
         string routingTableType = default("IPv4RoutingTable");
         string powerSourceType = default("");
-        routingTable.IPForward = IPForward;
-        routingTable.forwardMulticast = forwardMulticast; //      and use the parameters of the node in the C++ code?
+        routingTable.forwarding = forwarding;
+        routingTable.multicastForwarding = multicastForwarding;   // for IPv4, IPv6, Generic
         *.interfaceTableModule = default(absPath(".interfaceTable"));
         *.routingTableModule = default(routingTableType != "" ? absPath(".routingTable") : "");
         *.powerSourceModule = default(powerSourceType != "" ? absPath(".powerSource") : "");

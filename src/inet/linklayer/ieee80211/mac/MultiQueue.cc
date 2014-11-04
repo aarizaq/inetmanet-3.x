@@ -562,7 +562,7 @@ void MultiQueue::push_backWithBlock(cMessage* val, int i)
     {
         Queue::iterator p = queues[cat].begin();
         p = queues[cat].begin();
-        if (firstPk.first != cat) //
+        if (firstPk.first != cat) // avoid the first position because this can be under process.
             p++;
 
         while (((dynamic_cast<Ieee80211DataFrame *> (p->second) == NULL) && (dynamic_cast<FrameBlock *> (p->second) == NULL)) && (p != queues[cat].end())) // search the first not management frame

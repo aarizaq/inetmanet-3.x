@@ -39,7 +39,7 @@ module HostMesh extends WirelessHost
         @display("i=device/cellphone");
         string LinkLayerType = default("Ieee80211NicMesh");
         wlan[*].typename = LinkLayerType;
-        IPForward = default(true);
+        forwarding = default(true);
         networkLayer.configurator.networkConfiguratorModule = default("");
         string routingProtocol @enum("AODVUU","DYMOUM","DYMO","DSRUU","OLSR","OLSR_ETX","DSDV_2","Batman") = default("");  // used mobile routing protocol. see: inet.networklayer.manetrouting
     submodules:
