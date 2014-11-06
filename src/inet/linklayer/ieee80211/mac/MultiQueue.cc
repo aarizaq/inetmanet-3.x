@@ -21,6 +21,7 @@ namespace inet {
 namespace ieee80211 {
 
 #define MAXBLOCK 16
+#define MINBLOCK 3
 
 MultiQueue::MultiQueue()
 {
@@ -121,7 +122,7 @@ void MultiQueue::makeSpace()
     if (!block)
     {
         NumFramesDestination::iterator itDest2 = categories[nQueue].numFramesDestinationFree.find(dest);
-        if (itDest != categories[nQueue].numFramesDestinationFree.end())
+        if (itDest2 != categories[nQueue].numFramesDestinationFree.end())
         {
             itDest2->second--;
             if (itDest2->second <=0)
@@ -429,6 +430,8 @@ void MultiQueue::pop_back(int i)
 
 Ieee80211TwoAddressFrame* MultiQueue::initIterator(int i)
 {
+    if (i >= (int) categories.size())
+         throw cRuntimeError("MultiQueue::size Queue doesn't exist");
     if (firstPk.second == NULL)
         return NULL; // empty
 
@@ -511,23 +514,54 @@ bool  MultiQueue::isEnd()
 int MultiQueue::findAddress(const MACAddress &addr ,int cat)
 {
     if (addr.isMulticast() || addr.isBroadcast())
-        return false;
+        return 0;
+    if (cat == -1)
+        cat = categories.size()-1;
     NumFramesDestination::iterator it = categories[cat].numFramesDestination.find(addr);
     if (it != categories[cat].numFramesDestination.end())
         return it->second;
-    return -1;
+    return 0;
 }
 
-void MultiQueue::createBlocks(const MACAddress &addr, int i)
+int MultiQueue::findAddressFree(const MACAddress &addr ,int cat)
+{
+    if (addr.isMulticast() || addr.isBroadcast())
+        return 0;
+    if (cat == -1)
+        cat = categories.size()-1;
+    NumFramesDestination::iterator it = categories[cat].numFramesDestinationFree.find(addr);
+    if (it != categories[cat].numFramesDestinationFree.end())
+        return it->second;
+    return 0;
+}
+
+
+void MultiQueue::createBlocks(const MACAddress &addr, int cat)
 {
 
-    Queue::iterator it = categories[i].queue.begin();
-    if (it == categories[i].queue.end())
+    if (cat >= (int) categories.size())
+         throw cRuntimeError("MultiQueue::size Queue doesn't exist");
+
+    if (addr.isMulticast() || addr.isBroadcast())
+       return;
+
+    if (cat == -1)
+        cat = categories.size()-1;
+
+    Queue::iterator it = categories[cat].queue.begin();
+    if (it == categories[cat].queue.end())
         return;
-    if (firstPk.first != i)
+
+    if (firstPk.first != cat)
         ++it;
     FrameBlock *block = NULL;
-    while (it == categories[i].queue.end())
+
+    NumFramesDestination::iterator itDest2 = categories[cat].numFramesDestinationFree.find(addr);
+    if (itDest2 != categories[cat].numFramesDestinationFree.end())
+        return; // non free
+
+
+    while (it == categories[cat].queue.end())
     {
         if (it->second->getReceiverAddress().compareTo(addr))
         {
@@ -538,12 +572,31 @@ void MultiQueue::createBlocks(const MACAddress &addr, int i)
                 {
                     block = new FrameBlock(it->second);
                     it->second = block;
+                    itDest2->second--;
+                    if (itDest2->second <=0)
+                    {
+                        categories[cat].numFramesDestinationFree.erase(itDest2);
+                        return;
+                    }
                     ++it;
+
                 }
                 else
                 {
                     block->pushBack(it->second);
-                    it = categories[i].queue.erase(it);
+                    it = categories[cat].queue.erase(it);
+                    itDest2->second--;
+                    if (itDest2->second <=0)
+                    {
+                        categories[cat].numFramesDestinationFree.erase(itDest2);
+                        return;
+                    }
+                    if (block->getEncapSize() >= MAXBLOCK)
+                    {
+                        block = NULL;
+                        if (itDest2->second < MINBLOCK)
+                            return;
+                    }
                 }
             }
         }

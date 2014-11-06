@@ -84,10 +84,11 @@ class INET_API MultiQueue : public cObject
         virtual void push_back(Ieee80211TwoAddressFrame* val, int i = -1);
         virtual void pop_back(int i);
 
-        virtual int findAddress(const MACAddress  &,int cat = 0);
-        virtual void createBlocks(const MACAddress &, int i);
+        virtual int findAddress(const MACAddress  &,int = -1);
+        virtual int findAddressFree(const MACAddress &addr,int = -1);
+        virtual void createBlocks(const MACAddress &, int = -1);
 
-        virtual Ieee80211TwoAddressFrame * initIterator(int i = 0);
+        virtual Ieee80211TwoAddressFrame * initIterator(int i = -1);
         virtual Ieee80211TwoAddressFrame * next();
         virtual bool isEnd();
 };
