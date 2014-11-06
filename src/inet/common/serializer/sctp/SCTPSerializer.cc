@@ -16,14 +16,14 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-
 #include <platdep/sockets.h>
-#include <omnetpp.h>
+
 #include "inet/common/serializer/headers/defs.h"
+
 #include "inet/common/serializer/headers/bsdint.h"
 #include "inet/common/serializer/headers/in_systm.h"
-#include "inet/common/serializer/ipv4/headers/ip.h"
 #include "inet/common/serializer/headers/in.h"
+#include "inet/common/serializer/ipv4/headers/ip.h"
 #include "inet/common/serializer/sctp/headers/sctphdr.h"
 
 #include "inet/common/serializer/sctp/SCTPSerializer.h"

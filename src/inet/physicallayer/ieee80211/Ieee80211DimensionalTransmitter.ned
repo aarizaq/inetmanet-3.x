@@ -17,9 +17,9 @@
 
 package inet.physicallayer.ieee80211;
 
-import inet.physicallayer.dimensional.DimensionalTransmitter;
+import inet.physicallayer.apsk.APSKDimensionalTransmitter;
 
-module Ieee80211DimensionalTransmitter extends DimensionalTransmitter
+module Ieee80211DimensionalTransmitter extends APSKDimensionalTransmitter
 {
     parameters:
         int channelNumber;

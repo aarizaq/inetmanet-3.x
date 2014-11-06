@@ -40,6 +40,7 @@ private:
 public:
     FrameBlock(const char *name=NULL, int kind=0);
     FrameBlock(FrameBlock &);
+    FrameBlock(Ieee80211TwoAddressFrame *);
     virtual FrameBlock * dup(){return new FrameBlock(*this);}
     virtual ~FrameBlock();
     FrameBlock& operator=(const FrameBlock& msg);

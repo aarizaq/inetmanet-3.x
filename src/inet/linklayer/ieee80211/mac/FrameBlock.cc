@@ -41,6 +41,12 @@ FrameBlock::~FrameBlock() {
     _deleteEncapVector();
 }
 
+FrameBlock::FrameBlock(Ieee80211TwoAddressFrame *frame):Ieee80211TwoAddressFrame(*frame)
+{
+    encapsulateVector.clear();
+    pushBack(frame);
+}
+
 FrameBlock::FrameBlock(const char *name, int kind):Ieee80211TwoAddressFrame(name,kind)
 {
     encapsulateVector.clear();

@@ -161,22 +161,7 @@ void Ieee80211Mac::initialize(int stage)
         {
             if (prioritizeMulticast)
             {
-                transmissionQueue(i)->createClassifier("Ieee80211MacQueueClassifier");
-                if (numCategories()==1)
-                    transmissionQueue(i)->setMaxSize(maxQueueSize);
-                else
-                    transmissionQueue(i)->setMaxSize(maxCategorieQueueSize);
-                transmissionQueue(i)->setNumStrictPrioritiesQueue(3); // multicast and control
-            }
-            else
-            {
-                transmissionQueue(i)->createClassifier("Ieee80211MacQueueClassifier2");
-                if (numCategories()==1)
-                    transmissionQueue(i)->setMaxSize(maxQueueSize);
-                else
-                    transmissionQueue(i)->setMaxSize(maxCategorieQueueSize);
-                transmissionQueue(i)->setNumStrictPrioritiesQueue(2); // multicast and control
-
+                transmissionQueue(i)->setNumQueues(3); // multicast and control
             }
         }
 #endif
@@ -690,8 +675,8 @@ void Ieee80211Mac::handleUpperPacket(cPacket *msg)
 
     // fill in missing fields (receiver address, seq number), and insert into the queue
     frame->setTransmitterAddress(address);
-    frame->setSequenceNumber(sequenceNumber);
-    sequenceNumber = (sequenceNumber+1) % 4096;  //XXX seqNum must be checked upon reception of frames!
+    //frame->setSequenceNumber(sequenceNumber);
+    //sequenceNumber = (sequenceNumber+1) % 4096;  //XXX seqNum must be checked upon reception of frames!
 
     if (mappingAccessCategory(frame) == 200)
     {
@@ -2090,6 +2075,33 @@ void Ieee80211Mac::sendCTSFrame(Ieee80211RTSFrame *rtsFrame)
  */
 Ieee80211DataOrMgmtFrame *Ieee80211Mac::buildDataFrame(Ieee80211DataOrMgmtFrame *frameToSend)
 {
+    if (retryCounter() == 0)
+    {
+#ifdef  USEMULTIQUEUE
+        FrameBlock *blk = dynamic_cast<FrameBlock *> (frameToSend);
+        if (blk == NULL)
+        {
+            frameToSend->setSequenceNumber(sequenceNumber);
+            sequenceNumber = (sequenceNumber+1) % 4096;  //XXX seqNum must be checked upon reception of frames!
+        }
+        else
+        {
+            for (unsigned int i = 0; i < blk->getNumEncap() ;i++)
+            {
+                Ieee80211DataOrMgmtFrame * frameAux = dynamic_cast<Ieee80211DataOrMgmtFrame *> (blk->getPacket(i));
+                if (frameAux )
+                {
+                    frameAux->setSequenceNumber(sequenceNumber);
+                    sequenceNumber = (sequenceNumber+1) % 4096;  //XXX seqNum must be checked upon reception of frames!
+                }
+            }
+        }
+#else
+        frameToSend->setSequenceNumber(sequenceNumber);
+        sequenceNumber = (sequenceNumber+1) % 4096;  //XXX seqNum must be checked upon reception of frames!
+#endif
+    }
+
     Ieee80211DataOrMgmtFrame *frame = (Ieee80211DataOrMgmtFrame *)frameToSend->dup();
 
     if (frameToSend->getControlInfo()!=NULL)

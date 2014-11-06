@@ -17,9 +17,9 @@
 
 package inet.physicallayer.ieee80211;
 
-import inet.physicallayer.scalar.ScalarTransmitter;
+import inet.physicallayer.apsk.APSKScalarTransmitter;
 
-module Ieee80211ScalarTransmitter extends ScalarTransmitter
+module Ieee80211ScalarTransmitter extends APSKScalarTransmitter
 {
     parameters:
         int channelNumber;

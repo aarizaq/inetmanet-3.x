@@ -21,12 +21,13 @@
 #include <vector>
 #include <algorithm>
 #include <fstream>
+#include "inet/physicallayer/contract/ISNIR.h"
 #include "inet/physicallayer/contract/INeighborCache.h"
 #include "inet/physicallayer/contract/IRadioMedium.h"
 #include "inet/physicallayer/contract/IArrival.h"
 #include "inet/physicallayer/contract/IInterference.h"
 #include "inet/physicallayer/contract/IPropagation.h"
-#include "inet/physicallayer/contract/IAttenuation.h"
+#include "inet/physicallayer/contract/IAnalogModel.h"
 #include "inet/physicallayer/contract/IBackgroundNoise.h"
 #include "inet/linklayer/common/MACAddress.h"
 #include "inet/common/TrailFigure.h"
@@ -56,17 +57,12 @@ class INET_API RadioMedium : public cSimpleModule, public cListener, public IRad
         const IListening *listening;
         const IReception *reception;
         const IInterference *interference;
+        const INoise *noise;
+        const ISNIR *snir;
         const IReceptionDecision *decision;
 
       public:
-        ReceptionCacheEntry() :
-            frame(NULL),
-            arrival(NULL),
-            listening(NULL),
-            reception(NULL),
-            interference(NULL),
-            decision(NULL)
-        {}
+        ReceptionCacheEntry();
     };
 
     /**
@@ -94,11 +90,7 @@ class INET_API RadioMedium : public cSimpleModule, public cListener, public IRad
         std::vector<ReceptionCacheEntry> *receptionCacheEntries;
 
       public:
-        TransmissionCacheEntry() :
-            frame(NULL),
-            figure(NULL),
-            receptionCacheEntries(NULL)
-        {}
+        TransmissionCacheEntry();
     };
 
     enum RangeFilterKind {
@@ -111,21 +103,21 @@ class INET_API RadioMedium : public cSimpleModule, public cListener, public IRad
     /** @name Parameters that control the behavior of the radio medium. */
     //@{
     /**
-     * The propagation model of transmissions is never NULL.
+     * The propagation model of the medium is never NULL.
      */
     const IPropagation *propagation;
     /**
-     * The path loss model of transmissions is never NULL.
+     * The path loss model of the medium is never NULL.
      */
     const IPathLoss *pathLoss;
     /**
-     * The obstacle loss model of transmissions or NULL if unused.
+     * The obstacle loss model of the medium or NULL if unused.
      */
     const IObstacleLoss *obstacleLoss;
     /**
-     * The attenuation model of transmissions is never NULL.
+     * The analog model of the medium is never NULL.
      */
-    const IAttenuation *attenuation;
+    const IAnalogModel *analogModel;
     /**
      * The background noise model or NULL if unused.
      */
@@ -381,6 +373,14 @@ class INET_API RadioMedium : public cSimpleModule, public cListener, public IRad
     virtual void setCachedInterference(const IRadio *receiver, const ITransmission *transmission, const IInterference *interference) const;
     virtual void removeCachedInterference(const IRadio *receiver, const ITransmission *transmission) const;
 
+    virtual const INoise *getCachedNoise(const IRadio *receiver, const ITransmission *transmission) const;
+    virtual void setCachedNoise(const IRadio *receiver, const ITransmission *transmission, const INoise *noise) const;
+    virtual void removeCachedNoise(const IRadio *receiver, const ITransmission *transmission) const;
+
+    virtual const ISNIR *getCachedSNIR(const IRadio *receiver, const ITransmission *transmission) const;
+    virtual void setCachedSNIR(const IRadio *receiver, const ITransmission *transmission, const ISNIR *snir) const;
+    virtual void removeCachedSNIR(const IRadio *receiver, const ITransmission *transmission) const;
+
     virtual const IReceptionDecision *getCachedDecision(const IRadio *radio, const ITransmission *transmission) const;
     virtual void setCachedDecision(const IRadio *radio, const ITransmission *transmission, const IReceptionDecision *decision) const;
     virtual void removeCachedDecision(const IRadio *radio, const ITransmission *transmission) const;
@@ -454,15 +454,13 @@ class INET_API RadioMedium : public cSimpleModule, public cListener, public IRad
     virtual const IReceptionDecision *computeReceptionDecision(const IRadio *radio, const IListening *listening, const ITransmission *transmission, const std::vector<const ITransmission *> *transmissions) const;
     virtual const IListeningDecision *computeListeningDecision(const IRadio *radio, const IListening *listening, const std::vector<const ITransmission *> *transmissions) const;
 
-    virtual const IReception *getReception(const IRadio *radio, const ITransmission *transmission) const;
+    virtual const IArrival *getArrival(const IRadio *receiver, const ITransmission *transmission) const;
+    virtual const IReception *getReception(const IRadio *receiver, const ITransmission *transmission) const;
+    virtual const IInterference *getInterference(const IRadio *receiver, const ITransmission *transmission) const;
     virtual const IInterference *getInterference(const IRadio *receiver, const IListening *listening, const ITransmission *transmission) const;
+    virtual const INoise *getNoise(const IRadio *receiver, const ITransmission *transmission) const;
+    virtual const ISNIR *getSNIR(const IRadio *receiver, const ITransmission *transmission) const;
     virtual const IReceptionDecision *getReceptionDecision(const IRadio *radio, const IListening *listening, const ITransmission *transmission) const;
-
-    /**
-     * Returns a reception decision that describes the reception of the provided
-     * transmission by the receiver.
-     */
-    virtual const IReceptionDecision *receiveFromMedium(const IRadio *radio, const IListening *listening, const ITransmission *transmission) const;
     //@}
 
     /** @name Graphics */
@@ -490,7 +488,7 @@ class INET_API RadioMedium : public cSimpleModule, public cListener, public IRad
     virtual const IPropagation *getPropagation() const { return propagation; }
     virtual const IPathLoss *getPathLoss() const { return pathLoss; }
     virtual const IObstacleLoss *getObstacleLoss() const { return obstacleLoss; }
-    virtual const IAttenuation *getAttenuation() const { return attenuation; }
+    virtual const IAnalogModel *getAnalogModel() const { return analogModel; }
     virtual const IBackgroundNoise *getBackgroundNoise() const { return backgroundNoise; }
 
     virtual void addRadio(const IRadio *radio);
@@ -504,8 +502,6 @@ class INET_API RadioMedium : public cSimpleModule, public cListener, public IRad
     virtual const IListeningDecision *listenOnMedium(const IRadio *radio, const IListening *listening) const;
 
     virtual bool isReceptionAttempted(const IRadio *receiver, const ITransmission *transmission) const;
-
-    virtual const IArrival *getArrival(const IRadio *receiver, const ITransmission *transmission) const;
 
     virtual void receiveSignal(cComponent *source, simsignal_t signal, long value);
 };

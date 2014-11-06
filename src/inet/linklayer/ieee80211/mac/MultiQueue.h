@@ -20,9 +20,11 @@
 #define MULTIQUEUE_H_
 #include <vector>
 #include <list>
+#include <map>
 #include <utility>
 #include "inet/linklayer/ieee80211/mac/IQoSClassifier.h"
-#include "inet/linklayer/common/MACAddress.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
+
 
 namespace inet {
 
@@ -31,81 +33,63 @@ namespace ieee80211 {
 class INET_API MultiQueue : public cObject
 {
     protected:
-        typedef std::pair<simtime_t, cMessage *> Data;
+        typedef std::pair<simtime_t, Ieee80211TwoAddressFrame *> Data;
         typedef std::list<Data> Queue;
+        typedef std::map<MACAddress,int> NumFramesDestination;
+        std::pair<int, Ieee80211TwoAddressFrame *> firstPk;
+        class CategotyInfo
+        {
+            public:
+            Queue  queue;
+            unsigned int queueSize;
+            NumFramesDestination numFramesDestination;
+            NumFramesDestination numFramesDestinationFree;
+        };
         Queue::iterator position;
         unsigned int exploreQueue;
+        bool allQueues;
 
-        std::pair<int, cMessage *> firstPk;
-        cMessage * lastPk;
-        std::vector<Queue> queues;
-        std::vector<int> basePriority;
-        std::vector<int> priority;
-        std::vector<unsigned int> queueSize;
-        IQoSClassifier * classifier;
+
+        std::vector<CategotyInfo> categories;
+
         unsigned int maxSize;
         unsigned int numStrictQueuePriorities;
-        bool isFirst;
+        int getCategory(Ieee80211TwoAddressFrame* val);
+        void makeSpace();
+        void increaseSize(Ieee80211TwoAddressFrame* val, int cat);
+        void decreaseSize(Ieee80211TwoAddressFrame* val, int cat);
     public:
         MultiQueue();
         virtual ~MultiQueue();
-        void setNumQueues(int num);
-        void setNumStrictPrioritiesQueue(int num)
-        {
-            numStrictQueuePriorities = num;
-        }
-        unsigned int getNumStrictPrioritiesQueues()
-        {
-            return numStrictQueuePriorities;
-        }
+        virtual void setNumQueues(int num);
+
         unsigned int getNumQueques()
         {
-            return queues.size();
+            return categories.size();
         }
-        void setMaxSize(unsigned int i)
+        virtual void setMaxSize(unsigned int i)
         {
             maxSize = i;
         }
-        unsigned int getMaxSize()
+        virtual unsigned int getMaxSize()
         {
             return maxSize;
         }
-        unsigned int size(int i = -1);
-        bool empty(int i = -1);
-        cMessage* front(int i = -1);
-        cMessage* back(int i = -1);
-        void push_front(cMessage* val, int i = -1);
-        void pop_front(int i = -1);
-        void push_back(cMessage* val, int i = -1);
-        void pop_back(int i = -1);
-        void createClassifier(const char * classifierClass)
-        {
-            classifier = check_and_cast<IQoSClassifier*>(createOne(classifierClass));
-            setNumQueues(classifier->getNumQueues());
-        }
-        int getCost(int i)
-        {
-            if (i >= (int) queues.size())
-                throw cRuntimeError(this, "Queue doens't exist");
-            return basePriority[i];
-        }
-        void setCost(int i, int cost)
-        {
-            if (i >= (int) queues.size())
-                throw cRuntimeError(this, "Queue doens't exist");
-            basePriority[i] = priority[i] = cost;
-        }
+        virtual unsigned int size(int i = -1);
+        virtual bool empty(int i = -1);
+        virtual Ieee80211TwoAddressFrame* front(int i = -1);
+        virtual Ieee80211TwoAddressFrame* back(int i);
+        virtual void push_front(Ieee80211TwoAddressFrame* val, int i = -1);
+        virtual void pop_front(int i = -1);
+        virtual void push_back(Ieee80211TwoAddressFrame* val, int i = -1);
+        virtual void pop_back(int i);
 
+        virtual int findAddress(const MACAddress  &,int cat = 0);
+        virtual void createBlocks(const MACAddress &, int i);
 
-        void push_backWithBlock(cMessage* val, int i = -1);
-
-        cMessage * getWithAddress(const MACAddress *);
-        cMessage * getSameType(const cMessage *);
-        cMessage * replacePacket(const cMessage *, const cMessage *);
-
-        cMessage * initIterator();
-        cMessage * next();
-        bool isEnd();
+        virtual Ieee80211TwoAddressFrame * initIterator(int i = 0);
+        virtual Ieee80211TwoAddressFrame * next();
+        virtual bool isEnd();
 };
 
 }
