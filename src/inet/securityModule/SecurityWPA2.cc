@@ -244,9 +244,9 @@ void SecurityWPA2::handleResponse(cMessage *msg)
     }
 
     //HWMP
-     else if (dynamic_cast<Ieee80211ActionHWMPFrame *>(msg))
+     else if (dynamic_cast<Ieee80211ActionMeshFrame *>(msg))
     {
-       handleIeee80211ActionHWMPFrame(msg);
+       handleIeee80211ActionMeshFrame(msg);
     }
 
 
@@ -1514,7 +1514,7 @@ IPv4Datagram*  SecurityWPA2::handleIPv4Datagram(IPv4Datagram* IP, MeshInfo *mesh
     return IP;
 }
 
-Ieee80211ActionHWMPFrame *  SecurityWPA2::encryptActionHWMPFrame(Ieee80211ActionHWMPFrame* frame, MeshInfo *mesh)
+Ieee80211ActionMeshFrame *  SecurityWPA2::encryptActionHWMPFrame(Ieee80211ActionMeshFrame* frame, MeshInfo *mesh)
 {
     /* PREQ:
      *      bodyLength = 26;
@@ -1734,22 +1734,22 @@ void SecurityWPA2::handleIeee80211MeshFrame(cMessage *msg)
 }
 
 
-void SecurityWPA2::handleIeee80211ActionHWMPFrame(cMessage *msg)
+void SecurityWPA2::handleIeee80211ActionMeshFrame(cMessage *msg)
 {
     //Decryption
     if(strstr(msg->getName() ,"CCMPFrame")!=NULL)
     {
-        Ieee80211ActionHWMPFrame *hwmpFrame = dynamic_cast<Ieee80211ActionHWMPFrame *>(msg);
+        Ieee80211ActionMeshFrame *hwmpFrame = dynamic_cast<Ieee80211ActionMeshFrame *>(msg);
         MeshInfo *mesh = lookupMesh(hwmpFrame->getTransmitterAddress());
         EV <<hwmpFrame->getTransmitterAddress()<<endl;
-        EV << "Encrypted Ieee80211ActionHWMPFrame from Mac >>> decrypt frame ...."<< endl;
+        EV << "Encrypted Ieee80211ActionMeshFrame from Mac >>> decrypt frame ...."<< endl;
 
         //  if(mesh)checkAuthState(mesh->address);;
         // if(mesh)
         // {
         //   if(mesh->status==AUTHENTICATED && mesh->KEK.buf.size()>1)
         // {
-        Ieee80211ActionHWMPFrame *hwmpFrame2 = encryptActionHWMPFrame(hwmpFrame,mesh);
+        Ieee80211ActionMeshFrame *hwmpFrame2 = encryptActionHWMPFrame(hwmpFrame,mesh);
         hwmpFrame2->setName("DecCCMP");
         send(hwmpFrame2,"mgmtOut");
         // }
@@ -1760,10 +1760,10 @@ void SecurityWPA2::handleIeee80211ActionHWMPFrame(cMessage *msg)
     //Encryption
     else
     {
-        Ieee80211ActionHWMPFrame *hwmpFrame = dynamic_cast<Ieee80211ActionHWMPFrame *>(msg);
+        Ieee80211ActionMeshFrame *hwmpFrame = dynamic_cast<Ieee80211ActionMeshFrame *>(msg);
         MeshInfo *mesh = lookupMesh(hwmpFrame->getReceiverAddress());
         EV <<hwmpFrame->getReceiverAddress()<<endl;
-        EV << "Ieee80211ActionHWMPFrame from Mgmt >>> encrypt frame ...."<< endl;
+        EV << "Ieee80211ActionMeshFrame from Mgmt >>> encrypt frame ...."<< endl;
 
         //    if(mesh)checkAuthState(mesh->address);
         //if(mesh)
@@ -1772,7 +1772,7 @@ void SecurityWPA2::handleIeee80211ActionHWMPFrame(cMessage *msg)
         //   if(mesh->status==AUTHENTICATED && mesh->KEK.buf.size()>1)
         // {
 
-        Ieee80211ActionHWMPFrame *hwmpFrame2 = encryptActionHWMPFrame(hwmpFrame,mesh);
+        Ieee80211ActionMeshFrame *hwmpFrame2 = encryptActionHWMPFrame(hwmpFrame,mesh);
         hwmpFrame2->setName("CCMPFrame");
         send(hwmpFrame2,"mgmtOut");
         // }

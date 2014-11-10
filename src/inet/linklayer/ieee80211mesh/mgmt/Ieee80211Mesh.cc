@@ -567,7 +567,7 @@ void Ieee80211Mesh::handleMessage(cMessage *msg)
             else
             send(msg, "securityOut");
         }
-        else if (dynamic_cast<Ieee80211ActionHWMPFrame *>(msg))
+        else if (dynamic_cast<Ieee80211ActionMeshFrame *>(msg))
         {
             if ((routingModuleHwmp != NULL) && (routingModuleHwmp->isOurType(PK(msg))))
                 send(msg,"routingOutHwmp");
@@ -656,7 +656,7 @@ void Ieee80211Mesh::handleMessage(cMessage *msg)
                 frame2->setTTL(frame2->getTTL()-1);
             actualizeReactive(frame,false);
 
-            if (dynamic_cast<Ieee80211ActionHWMPFrame *>(msg))
+            if (dynamic_cast<Ieee80211ActionMeshFrame *>(msg))
             {
                 if ((routingModuleHwmp != NULL) && (routingModuleHwmp->isOurType(PK(msg))))
                     send(msg,"routingOutHwmp");
@@ -727,7 +727,7 @@ void Ieee80211Mesh::handleRoutingMessage(cPacket *msg)
         strcpy(name,msg->getName());
         error ("Message error, the routing message %s doesn't have Ieee802Ctrl control info",name);
     }
-    if (dynamic_cast<Ieee80211ActionHWMPFrame *>(msg))
+    if (dynamic_cast<Ieee80211ActionMeshFrame *>(msg))
     {
         msg->setKind(ctrl->getInterfaceId());
         delete ctrl;
@@ -1428,9 +1428,9 @@ void Ieee80211Mesh::sendOut(cMessage *msg)
     Ieee80211MeshFrame *frameMesh = dynamic_cast<Ieee80211MeshFrame*>(msg);
     if (frameMesh && frameMesh->getSubType() == ROUTING)
         numRoutingBytes += frameMesh->getByteLength();
-    else if (dynamic_cast<Ieee80211ActionHWMPFrame *>(msg))
+    else if (dynamic_cast<Ieee80211ActionMeshFrame *>(msg))
     {
-        Ieee80211ActionHWMPFrame *hwmpFrame = dynamic_cast<Ieee80211ActionHWMPFrame *>(msg);
+        Ieee80211ActionMeshFrame *hwmpFrame = dynamic_cast<Ieee80211ActionMeshFrame *>(msg);
         numRoutingBytes += hwmpFrame->getByteLength();
     }
     else if (frameMesh && frameMesh->getSubType() == UPPERMESSAGE)
@@ -2249,7 +2249,7 @@ void Ieee80211Mesh::handleWateGayDataReceive(cPacket *pkt)
 {
 
     pkt->setKind(-1);
-    if (dynamic_cast<Ieee80211ActionHWMPFrame *>(pkt))
+    if (dynamic_cast<Ieee80211ActionMeshFrame *>(pkt))
     {
         if ((routingModuleHwmp != NULL) && routingModuleHwmp->isOurType(pkt))
             send(pkt,"routingOutHwmp");

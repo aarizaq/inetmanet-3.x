@@ -274,10 +274,10 @@ public:
       //  virtual char* encapsulate(cPacket *msg, unsigned int* length);
         virtual uint32_t stringToUint32_t(std::string s);
         virtual IPv4Datagram * handleIPv4Datagram(IPv4Datagram* IP,MeshInfo *mesh);
-        virtual Ieee80211ActionHWMPFrame * encryptActionHWMPFrame(Ieee80211ActionHWMPFrame* frame, const MACAddress & address);
+        virtual Ieee80211ActionMeshFrame * encryptActionHWMPFrame(Ieee80211ActionMeshFrame* frame, const MACAddress & address);
 
         virtual void handleIeee80211MeshFrame(cMessage *msg);
-        virtual void handleIeee80211ActionHWMPFrame(cMessage *msg);
+        virtual void handleIeee80211ActionMeshFrame(cMessage *msg);
         virtual void handleIeee80211DataFrameWithSNAP(cMessage *msg);
         virtual void handleAMPE(Ieee80211ActionFrame *frame);
 

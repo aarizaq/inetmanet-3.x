@@ -396,7 +396,7 @@ void Ieee80211MgmtAdhocWithRouting::handleRoutingMessage(cPacket *msg)
         strcpy(name,msg->getName());
         error ("Message error, the routing message %s doesn't have Ieee802Ctrl control info",name);
     }
-    if (dynamic_cast<Ieee80211ActionHWMPFrame *>(msg))
+    if (dynamic_cast<Ieee80211ActionMeshFrame *>(msg))
     {
         msg->setKind(ctrl->getInterfaceId());
         delete ctrl;

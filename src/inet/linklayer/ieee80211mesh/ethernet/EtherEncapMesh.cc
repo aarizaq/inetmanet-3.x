@@ -96,7 +96,7 @@ void EtherEncapMesh::processFrameFromMAC(EtherFrame *frame)
        }
     }
 
-    Ieee80211ActionHWMPFrame *frameAction = dynamic_cast<Ieee80211ActionHWMPFrame *>(higherlayermsg);
+    Ieee80211ActionMeshFrame *frameAction = dynamic_cast<Ieee80211ActionMeshFrame *>(higherlayermsg);
     if (frameAction)
     {
        if (frameAction->getRealLength()>0) // fragmented frame
@@ -244,18 +244,18 @@ void EtherEncapMesh::processFrameFromWifiMesh(Ieee80211Frame *msg)
            else
                error("""Error in fragmentation");
         }
-        else if (dynamic_cast<Ieee80211ActionHWMPFrame *>(msg) )
+        else if (dynamic_cast<Ieee80211ActionMeshFrame *>(msg) )
         {
      // check if fragment
            EV << "Fragment wifi frame over ethernet" << endl;
-           Ieee80211ActionHWMPFrame *frameMesh=dynamic_cast<Ieee80211ActionHWMPFrame *>(msg);
+           Ieee80211ActionMeshFrame *frameMesh=dynamic_cast<Ieee80211ActionMeshFrame *>(msg);
            frameMesh->setRealLength(msg->getByteLength());
            int numFrames = ceil((double)msg->getByteLength()/(double)MAX_ETHERNET_DATA_BYTES);
            uint64_t remain = msg->getByteLength();
            Ieee802Ctrl *etherctrl = check_and_cast<Ieee802Ctrl*>(msg->removeControlInfo());
            for (int i = 0; i < numFrames - 1; i++)
            {
-               Ieee80211ActionHWMPFrame *frameAux = frameMesh->dup();
+               Ieee80211ActionMeshFrame *frameAux = frameMesh->dup();
                frameAux->setByteLength(MAX_ETHERNET_DATA_BYTES);
                frameAux->setIsFragment(true);
                remain -= MAX_ETHERNET_DATA_BYTES;

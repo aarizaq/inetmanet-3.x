@@ -98,6 +98,19 @@ enum Ieee80211ReasonCode
     RC_MESH_CHANNEL_SWITCH_UNSPECIFIED = 66;
 }
 
+enum Ieee80211ActionCode
+{
+    AC_BLOCKACK = 3;
+    AC_MESH = 13;
+}
+
+enum Ieee80211BlockAckCode
+{
+    ADDBArequest = 0;
+    ADDBAReponse = 1;
+    DELBA = 2;
+}
+
 //
 // 802.11 status code; values correspond to the standard.
 //
@@ -251,15 +264,17 @@ class Ieee80211ProbeResponseFrameBody extends Ieee80211BeaconFrameBody
 
 class Ieee80211ActionFrameBody extends Ieee80211FrameBody
 {
+    // unsigned char category @enum(Ieee80211ActionCode); in the Management Frame
+    bodyLength = 1;
 }
 
-class Ieee80211ActionHWMPFrameBody extends Ieee80211ActionFrameBody
+class Ieee80211ActionMeshFrameBody extends Ieee80211ActionFrameBody
 {
-     int id @enum(Ieee80211HWMPCode);
-     //unsigned char length;
-     unsigned char flags = 0;
-     unsigned char hopsCount = 0;
-     unsigned char TTL = 32;
+    int id @enum(Ieee80211HWMPCode);
+    //unsigned char length;
+    unsigned char flags = 0;
+    unsigned char hopsCount = 0;
+    unsigned char TTL = 32;
  }
 
 
@@ -282,9 +297,9 @@ struct PERRElem
 }
 
 
-class Ieee80211ActionRANNFrameBody extends Ieee80211ActionHWMPFrameBody
+class Ieee80211ActionRANNFrameBody extends Ieee80211ActionMeshFrameBody
 {
-     bodyLength = 23;
+     bodyLength = 23 + 1;//  specific size
      id = IE11S_RANN;
      MACAddress root;
      unsigned int seqNumber;
@@ -292,9 +307,9 @@ class Ieee80211ActionRANNFrameBody extends Ieee80211ActionHWMPFrameBody
      unsigned int metric = 0;
 }
 
-class  Ieee80211ActionPREQFrameBody extends Ieee80211ActionHWMPFrameBody
+class  Ieee80211ActionPREQFrameBody extends Ieee80211ActionMeshFrameBody
 {
-     bodyLength = 26;
+     bodyLength = 26 + 1;// specific size
      id = IE11S_PREQ;
      unsigned int pathDiscoveryId;
      MACAddress originator;
@@ -306,9 +321,9 @@ class  Ieee80211ActionPREQFrameBody extends Ieee80211ActionHWMPFrameBody
      PREQElem preqElem[];
 }
 
-class  Ieee80211ActionPREPFrameBody extends Ieee80211ActionHWMPFrameBody
+class  Ieee80211ActionPREPFrameBody extends Ieee80211ActionMeshFrameBody
 {
-     bodyLength = 37;
+     bodyLength = 37 + 1;//  specific size
      id = IE11S_PREP;
      MACAddress target;
      unsigned int targetSeqNumber;
@@ -319,17 +334,17 @@ class  Ieee80211ActionPREPFrameBody extends Ieee80211ActionHWMPFrameBody
      unsigned int originatorSeqNumber;
 }
 
-class  Ieee80211ActionPERRFrameBody extends Ieee80211ActionHWMPFrameBody
+class  Ieee80211ActionPERRFrameBody extends Ieee80211ActionMeshFrameBody
 {
-     bodyLength = 2;
+     bodyLength = 2 + 1; //  specific size
      id = IE11S_PERR;
      unsigned char numDestination;
      PERRElem perrElem[];
 }
 
-class  Ieee80211ActionGANNFrameBody extends Ieee80211ActionHWMPFrameBody
+class  Ieee80211ActionGANNFrameBody extends Ieee80211ActionMeshFrameBody
 {
-    bodyLength = 15;
+    bodyLength = 15 +1;// specific size
     id = IE11S_GANN;
     MACAddress meshGateAddress;
     unsigned int meshGateSeqNumber;
@@ -444,7 +459,8 @@ packet Ieee80211ProbeResponseFrame extends Ieee80211ManagementFrame
 packet Ieee80211ActionFrame extends Ieee80211ManagementFrame
 {
     type = ST_ACTION;
-    byteLength = 28+getBody().getBodyLength();
+    Category = AC_MESH;
+    byteLength = 28 + getBody().getBodyLength();
     Ieee80211ActionFrameBody body;
 }
 
@@ -452,53 +468,101 @@ packet Ieee80211ActionFrame extends Ieee80211ManagementFrame
 //
 // HWMP action frames
 //
-packet Ieee80211ActionHWMPFrame extends Ieee80211ActionFrame
+packet Ieee80211ActionMeshFrame extends Ieee80211ActionFrame
 {
     type = ST_ACTION;
+    Category = AC_MESH;    
     byteLength = 28+getBody().getBodyLength();
         // this fiels are used by fragmentation over ethernet, not necesasry, it's possible to use the fields un the Ieee80211 frame
     bool isFragment=false;
-    unsigned long realLength=0;
-    
-    Ieee80211ActionHWMPFrameBody body;
+    unsigned long realLength=0;    
+    Ieee80211ActionMeshFrameBody body;
 }
 
 
-packet Ieee80211ActionRANNFrame extends Ieee80211ActionHWMPFrame
+packet Ieee80211ActionRANNFrame extends Ieee80211ActionMeshFrame
 {
     type = ST_ACTION;
+    Category = AC_MESH;    
     byteLength = 28+getBody().getBodyLength();
     Ieee80211ActionRANNFrameBody body;
 }
 
-packet Ieee80211ActionPREQFrame extends Ieee80211ActionHWMPFrame
+packet Ieee80211ActionPREQFrame extends Ieee80211ActionMeshFrame
 {
     type = ST_ACTION;
+    Category = AC_MESH;    
     byteLength = 28+getBody().getBodyLength();
     Ieee80211ActionPREQFrameBody body;
 }
 
 
-packet Ieee80211ActionPREPFrame extends Ieee80211ActionHWMPFrame
+packet Ieee80211ActionPREPFrame extends Ieee80211ActionMeshFrame
 {
     type = ST_ACTION;
+    Category = AC_MESH;    
     byteLength = 28+getBody().getBodyLength();
     Ieee80211ActionPREPFrameBody body;
 }
 
-packet Ieee80211ActionPERRFrame extends Ieee80211ActionHWMPFrame
+packet Ieee80211ActionPERRFrame extends Ieee80211ActionMeshFrame
 {
     type = ST_ACTION;
+    Category = AC_MESH;    
     byteLength = 28+getBody().getBodyLength();
     Ieee80211ActionPERRFrameBody body;
 }
 
 
-packet Ieee80211ActionGANNFrame extends Ieee80211ActionHWMPFrame
+packet Ieee80211ActionGANNFrame extends Ieee80211ActionMeshFrame
 {
     type = ST_ACTION;
+    Category = AC_MESH;    
     byteLength = 28+getBody().getBodyLength();
     Ieee80211ActionGANNFrameBody body;
 }
 
+
+//
+// BLOCK action frames
+//
+class Ieee80211BlockFrameBody extends Ieee80211ActionFrameBody
+{
+    bodyLength = 2;
+    unsigned int action @enum(Ieee80211BlockAckCode);
+}
+
+class Ieee80211ADDBAFrameBody extends Ieee80211BlockFrameBody
+{
+    bodyLength = 8; // 1+1+1+2+2;
+    unsigned char token; // 1
+    unsigned char parameterSet;
+    int timeOut; // 2 bytes
+    int startingSeq;// 2
+}
+
+class Ieee80211DELBAFrameBody extends Ieee80211BlockFrameBody
+{
+    bodyLength = 8; // 1+1+1+1+2+2;
+    action = DELBA;
+    unsigned char parameterSet;
+    unsigned char reason @enum(Ieee80211ReasonCode); // 1
+}
+
+packet Ieee80211ActionBlockAckADDBA extends Ieee80211ManagementFrame
+{
+    type = ST_ACTION;
+    Category = AC_BLOCKACK;
+    byteLength = 28+getBody().getBodyLength();
+    Ieee80211ADDBAFrameBody body;
+}
+
+
+packet Ieee80211ActionBlockAckADDBAF extends Ieee80211ManagementFrame
+{
+    type = ST_ACTION;
+    Category = AC_BLOCKACK;
+    byteLength = 28+getBody().getBodyLength();
+    Ieee80211ADDBAFrameBody body;
+}
 

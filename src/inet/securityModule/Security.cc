@@ -264,14 +264,14 @@ void Security::handleResponse(cMessage *msg)
     }
 
     //HWMP
-     else if (dynamic_cast<Ieee80211ActionHWMPFrame *>(msg))
+     else if (dynamic_cast<Ieee80211ActionMeshFrame *>(msg))
     {
          if(!activeHandshake)
                  {
                      send(msg,"mgmtOut");
                      return;
                  }
-       handleIeee80211ActionHWMPFrame(msg);
+       handleIeee80211ActionMeshFrame(msg);
     }
 
 
@@ -1458,7 +1458,7 @@ IPv4Datagram*  Security::handleIPv4Datagram(IPv4Datagram* IP, MeshInfo *mesh)
     return IP;
 }
 
-Ieee80211ActionHWMPFrame *  Security::encryptActionHWMPFrame(Ieee80211ActionHWMPFrame* frame, const MACAddress& address)
+Ieee80211ActionMeshFrame *  Security::encryptActionHWMPFrame(Ieee80211ActionMeshFrame* frame, const MACAddress& address)
 {
     EV << "Entering encryptActionHWMPFrame"<<endl;
   //  MeshInfo *mesh = lookupMesh(address);
@@ -1750,22 +1750,22 @@ void Security::handleIeee80211MeshFrame(cMessage *msg)
 }
 
 
-void Security::handleIeee80211ActionHWMPFrame(cMessage *msg)
+void Security::handleIeee80211ActionMeshFrame(cMessage *msg)
 {
     //Decryption
     if(strstr(msg->getName() ,"CCMPFrame")!=NULL)
     {
-        Ieee80211ActionHWMPFrame *hwmpFrame = dynamic_cast<Ieee80211ActionHWMPFrame *>(msg);
+        Ieee80211ActionMeshFrame *hwmpFrame = dynamic_cast<Ieee80211ActionMeshFrame *>(msg);
         MeshInfo *mesh = lookupMesh(hwmpFrame->getTransmitterAddress());
         EV <<hwmpFrame->getTransmitterAddress()<<endl;
-        EV << "Encrypted Ieee80211ActionHWMPFrame from Mac >>> decrypt frame ...."<< endl;
+        EV << "Encrypted Ieee80211ActionMeshFrame from Mac >>> decrypt frame ...."<< endl;
 
         if(mesh)
         {
             if(mesh->status==AUTHENTICATED)
             {
-                Ieee80211ActionHWMPFrame *hwmpFrame = dynamic_cast<Ieee80211ActionHWMPFrame *>(msg);
-                //Ieee80211ActionHWMPFrame *hwmpFrame2 = encryptActionHWMPFrame(hwmpFrame,hwmpFrame->getTransmitterAddress() );
+                Ieee80211ActionMeshFrame *hwmpFrame = dynamic_cast<Ieee80211ActionMeshFrame *>(msg);
+                //Ieee80211ActionMeshFrame *hwmpFrame2 = encryptActionHWMPFrame(hwmpFrame,hwmpFrame->getTransmitterAddress() );
                 // hwmpFrame2->setName("DecCCMP");
                 // send(hwmpFrame2,"mgmtOut");
                 hwmpFrame->setByteLength(hwmpFrame->getByteLength()-16);
@@ -1784,17 +1784,17 @@ void Security::handleIeee80211ActionHWMPFrame(cMessage *msg)
     //Encryption
     else
     {
-        Ieee80211ActionHWMPFrame *hwmpFrame = dynamic_cast<Ieee80211ActionHWMPFrame *>(msg);
+        Ieee80211ActionMeshFrame *hwmpFrame = dynamic_cast<Ieee80211ActionMeshFrame *>(msg);
         // MeshInfo *mesh = lookupMesh(hwmpFrame->getTransmitterAddress());//self address
         EV <<hwmpFrame->getTransmitterAddress()<<endl;
-        EV << "Ieee80211ActionHWMPFrame from Mgmt >>> encrypt frame ...."<< endl;
+        EV << "Ieee80211ActionMeshFrame from Mgmt >>> encrypt frame ...."<< endl;
 
 
         EV << "Send out " <<endl;
 
             hwmpFrame->setByteLength(hwmpFrame->getByteLength()+16);
 
-       // Ieee80211ActionHWMPFrame *hwmpFrame2 = encryptActionHWMPFrame(hwmpFrame, hwmpFrame->getReceiverAddress() );
+       // Ieee80211ActionMeshFrame *hwmpFrame2 = encryptActionHWMPFrame(hwmpFrame, hwmpFrame->getReceiverAddress() );
         // hwmpFrame2->setName("CCMPFrame");
         //  send(hwmpFrame2,"mgmtOut")
         msg->setName("CCMPFrame");

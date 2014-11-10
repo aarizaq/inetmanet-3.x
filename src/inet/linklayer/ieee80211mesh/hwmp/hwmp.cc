@@ -229,7 +229,7 @@ void HwmpProtocol::handleMessage(cMessage *msg)
 void HwmpProtocol::processData(cMessage *msg)
 {
     EV << "processdata " << endl;
-    Ieee80211ActionHWMPFrame * pkt = dynamic_cast<Ieee80211ActionHWMPFrame*>(msg);
+    Ieee80211ActionMeshFrame * pkt = dynamic_cast<Ieee80211ActionMeshFrame*>(msg);
     if (pkt == NULL)
     {
         Ieee80211MeshFrame * pkt = dynamic_cast<Ieee80211MeshFrame*>(msg);
@@ -1945,7 +1945,7 @@ MACAddress HwmpProtocol::GetAddress()
 
 bool HwmpProtocol::isOurType(cPacket *p)
 {
-    if (dynamic_cast<Ieee80211ActionHWMPFrame*>(p))
+    if (dynamic_cast<Ieee80211ActionMeshFrame*>(p))
         return true;
     return false;
 }
