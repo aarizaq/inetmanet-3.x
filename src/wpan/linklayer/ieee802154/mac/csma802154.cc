@@ -854,7 +854,8 @@ void csma802154::handleMessage(cMessage* msg)
 
     if (!isOperational)
     {
-        handleMessageWhenDown(msg);
+        delete msg;
+        //handleMessageWhenDown(msg);
         return;
     }
 

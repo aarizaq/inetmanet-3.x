@@ -410,7 +410,7 @@ static void disableRecursive(cModule *curmod)
         if (power2)
         {
             NodeCrashOperation op;
-            power2->handleOperationStage(&op, NodeCrashOperation::STAGE_CRASH, NULL);
+            power2->handleOperationStage(&op, NodeStartOperation::STAGE_LOCAL, NULL);
         }
         disableRecursive(submod);
     }
