@@ -7,12 +7,14 @@ Testing TCP communication speed
 %#--------------------------------------------------------------------------------------------------------------
 %file: test.ned
 
-import inet.physicallayer.ieee80211.Ieee80211RadioMedium;
-import inet.mobility.models.StationaryMobility;
-import inet.mobility.models.CircleMobility;
-import inet.linklayer.ieee80211.Ieee80211Nic;
-import inet.base.Sink;
 import inet.applications.ethernet.EtherAppCli;
+import inet.common.queue.Sink;
+import inet.linklayer.ieee80211.Ieee80211Nic;
+import inet.mobility.single.CircleMobility;
+import inet.mobility.static.StationaryMobility;
+import inet.node.wireless.AccessPoint;
+import inet.physicallayer.ieee80211.Ieee80211RadioMedium;
+
 
 module Ieee80211NicAdhoc extends Ieee80211Nic
 {
@@ -28,6 +30,7 @@ module ThroughputClient
         int maxSrv;
         @node();
         @display("i=device/wifilaptop");
+        **.interfaceTableModule = "";
     gates:
         input radioIn @directIn;
 
@@ -59,6 +62,7 @@ module ThroughputServer
         int maxSrv;
         @node();
         @display("i=device/wifilaptop");
+        **.interfaceTableModule = "";
     gates:
         input radioIn @directIn;
 
@@ -103,7 +107,7 @@ network Throughput
                 wlan.mac.address = "20:00:00:00:00:0"+string(index);
                 @display("p=350,350;r=,,#707070");
         }
-        radioMedium: ScalarRadioMedium {
+        radioMedium: Ieee80211RadioMedium {
             parameters:
                 @display("p=61,46");
         }
@@ -172,7 +176,9 @@ Throughput.numSrv = 1
 **.cli.sendInterval = 1ms
 
 %#--------------------------------------------------------------------------------------------------------------
-%postprocess-script: check.r
+%postrun-command: Rscript check.r
+%#--------------------------------------------------------------------------------------------------------------
+%file: check.r
 #!/usr/bin/env Rscript
 
 options(echo=FALSE)
@@ -183,7 +189,7 @@ library("omnetpp", warn.conflicts=FALSE)
 scafile <- 'results/General-0.sca'
 linecount <- 1 # count of client-server pairs
 rcvdBytes <-  11000000/8 # bytes
-expectedRate <- 58.0 # %
+expectedRate <- 56.0 # %
 maxDeviation <- 2.0 # %   (checking expectedRate +/- maxDeviation)
 unbalancedRate <- 12.0 # %
 # begin TEST:
@@ -242,7 +248,7 @@ if(length(sinkRcvd$value) == linecount & min(sinkRcvd$isGood))
 cat("END\n")
 
 %#--------------------------------------------------------------------------------------------------------------
-%contains: check.r.out
+%contains: postrun-command(1).out
 
 OMNETPP TEST RESULT:
   IEEE80211 TEST RESULT:
