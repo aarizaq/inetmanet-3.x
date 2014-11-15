@@ -226,6 +226,7 @@ double ObstacleControl::calculateReceivedPower(double pSend, double carrierFrequ
     Enter_Method_Silent();
 
     // return cached result, if available
+    bool saveCache;
     CacheKey cacheKey(pSend, carrierFrequency, senderPos, senderAngle, receiverPos, receiverAngle);
     CacheEntries::const_iterator cacheEntryIter = cacheEntries.find(cacheKey);
     if (cacheEntryIter != cacheEntries.end()) return cacheEntryIter->second;
@@ -260,7 +261,7 @@ double ObstacleControl::calculateReceivedPower(double pSend, double carrierFrequ
 
                 double pSendOld = pSend;
 
-                pSend = o->calculateReceivedPower(pSend, carrierFrequency, senderPos, senderAngle, receiverPos, receiverAngle);
+                pSend = o->calculateReceivedPower(pSend, carrierFrequency, senderPos, senderAngle, receiverPos, receiverAngle, saveCache);
 
                 // draw a "hit!" bubble
                 if (annotations && (pSend < pSendOld)) annotations->drawBubble(o->getBboxP1(), "hit");
@@ -273,8 +274,11 @@ double ObstacleControl::calculateReceivedPower(double pSend, double carrierFrequ
     }
 
     // cache result
-    if (cacheEntries.size() >= 1000) cacheEntries.clear();
-    cacheEntries[cacheKey] = pSend;
+    if (saveCache)
+    {
+        if (cacheEntries.size() >= 1000) cacheEntries.clear();
+        cacheEntries[cacheKey] = pSend;
+    }
 
     return pSend;
 }
