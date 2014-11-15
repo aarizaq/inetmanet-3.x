@@ -254,7 +254,7 @@ double Obstacle::calculateReceivedPower(double pSend, double carrierFrequency, c
         if (mean >= 1)
             return 0;
         if (mean <= 0)
-            return psend;
+            return pSend;
         double prob = uniform(0,1);
         if (prob < mean)
             return 0;
