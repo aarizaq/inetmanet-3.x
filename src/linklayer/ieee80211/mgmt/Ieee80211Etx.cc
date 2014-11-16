@@ -675,19 +675,27 @@ void Ieee80211Etx::handleEtxMessage(MACETXPacket *msg)
 
         double etx;
         double ett;
+        double snr;
         getEtxEtt(msg->getSource(),etx,ett);
-
+        int iface = getSignalToNoise(msg->getSource(), snr);
         if (GlobalWirelessLinkInspector::getLinkCost(org,dest,link))
         {
             link.costEtx = etx;
             link.costEtt = ett;
+            if (iface >= 0)
+                link.snr = snr;
+            else
+                link.snr = 0;
             GlobalWirelessLinkInspector::setLinkCost(org,dest,link);
         }
         else
         {
             link.costEtt = ett;
             link.costEtx = etx;
-            link.snr = 0;
+            if (iface >= 0)
+                link.snr = snr;
+            else
+                link.snr = 0;
             GlobalWirelessLinkInspector::setLinkCost(org,dest,link);
         }
     }
