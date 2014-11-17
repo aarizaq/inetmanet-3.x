@@ -180,8 +180,10 @@ void Radio::completeRadioModeSwitch(RadioMode newRadioMode)
         endReceptionTimer = NULL;
     }
     else if (newRadioMode != IRadio::RADIO_MODE_TRANSMITTER && newRadioMode != IRadio::RADIO_MODE_TRANSCEIVER) {
-        if (endTransmissionTimer->isScheduled())
-            throw cRuntimeError("Aborting ongoing transmissions is not supported");
+        if (endTransmissionTimer->isScheduled()) {
+            EV_WARN << "Aborting ongoing transmissions is not supported" << endl;
+            cancelEvent(endTransmissionTimer);
+        }
     }
     radioMode = previousRadioMode = nextRadioMode = newRadioMode;
     emit(radioModeChangedSignal, newRadioMode);
@@ -206,7 +208,7 @@ const ITransmission *Radio::getReceptionInProgress() const
 
 void Radio::handleMessageWhenDown(cMessage *message)
 {
-    if (message->getArrivalGate() == radioIn)
+    if (message->getArrivalGate() == radioIn || isReceptionEndTimer(message))
         delete message;
     else
         OperationalBase::handleMessageWhenDown(message);
@@ -242,8 +244,10 @@ void Radio::handleSelfMessage(cMessage *message)
         endTransmission();
     else if (message == endSwitchTimer)
         completeRadioModeSwitch(nextRadioMode);
-    else
+    else if (isReceptionEndTimer(message))
         endReception(message);
+    else
+        throw cRuntimeError("Unknown self message");
 }
 
 void Radio::handleUpperCommand(cMessage *message)
@@ -256,23 +260,23 @@ void Radio::handleLowerCommand(cMessage *message)
     throw cRuntimeError("Unsupported command");
 }
 
-bool Radio::handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback)
+bool Radio::handleNodeStart(IDoneCallback *doneCallback)
 {
-    Enter_Method_Silent();
-    PhysicalLayerBase::handleOperationStage(operation, stage, doneCallback);
-    if (dynamic_cast<NodeStartOperation *>(operation)) {
-        if (stage == NodeStartOperation::STAGE_PHYSICAL_LAYER)
-            setRadioMode(RADIO_MODE_OFF);
-    }
-    else if (dynamic_cast<NodeShutdownOperation *>(operation)) {
-        if (stage == NodeStartOperation::STAGE_PHYSICAL_LAYER)
-            setRadioMode(RADIO_MODE_OFF);
-    }
-    else if (dynamic_cast<NodeCrashOperation *>(operation)) {
-        if (stage == NodeStartOperation::STAGE_LOCAL)
-            setRadioMode(RADIO_MODE_OFF);
-    }
-    return true;
+    // NOTE: we ignore switching time during start
+    completeRadioModeSwitch(RADIO_MODE_OFF);
+    return PhysicalLayerBase::handleNodeStart(doneCallback);
+}
+
+bool Radio::handleNodeShutdown(IDoneCallback *doneCallback)
+{
+    // NOTE: we ignore switching time during shutdown
+    completeRadioModeSwitch(RADIO_MODE_OFF);
+    return PhysicalLayerBase::handleNodeShutdown(doneCallback);
+}
+
+void Radio::handleNodeCrash()
+{
+    completeRadioModeSwitch(RADIO_MODE_OFF);
 }
 
 void Radio::startTransmission(cPacket *macFrame)
@@ -332,6 +336,11 @@ void Radio::endReception(cMessage *message)
     }
     delete message;
     updateTransceiverState();
+}
+
+bool Radio::isReceptionEndTimer(cMessage *message)
+{
+    return !strcmp(message->getName(), "endReception");
 }
 
 bool Radio::isListeningPossible()
