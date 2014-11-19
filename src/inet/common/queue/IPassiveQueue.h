@@ -72,6 +72,16 @@ class INET_API IPassiveQueue
      * It does nothing if the listener was not found on the listener list.
      */
     virtual void removeListener(IPassiveQueueListener *listener) = 0;
+
+    //
+    // multi queue methods
+    virtual int getNumQueues() = 0;
+    virtual void requestPacket(const int&) = 0;
+    virtual int getNumPendingRequests(const int&) = 0;
+    virtual bool isEmpty(const int&) = 0;
+    virtual void clear(const int&) = 0;
+    virtual cMessage *pop(const int&) = 0;
+
 };
 
 /**

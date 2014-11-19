@@ -30,67 +30,74 @@ namespace inet {
 
 namespace ieee80211 {
 
-class INET_API MultiQueue : public cObject
+class INET_API MpduAggregateHandler : public cObject
 {
+    public:
+           class ADDBAInfo
+           {
+               public:
+                   unsigned char token;
+                   unsigned char tid;
+                   unsigned char BlockAckPolicy;
+                   unsigned char BufferSize;
+                   unsigned short BlockAckTimeout;
+                   unsigned short ADDBAFailureTimeout;
+                   unsigned short BlockAckStartingSequenceControl;
+           };
+           enum State {
+               DEFAULT,
+               WAITCONFIRMATION,
+               WAITBLOCK,
+               SENDBLOCK,
+           };
     protected:
-        typedef std::pair<simtime_t, Ieee80211TwoAddressFrame *> Data;
-        typedef std::list<Data> Queue;
         typedef std::map<MACAddress,int> NumFramesDestination;
-        std::pair<int, Ieee80211TwoAddressFrame *> firstPk;
         class CategotyInfo
         {
             public:
-            Queue  queue;
-            unsigned int queueSize;
+            cQueue*  queue;
+            int queueSize;
             NumFramesDestination numFramesDestination;
             NumFramesDestination numFramesDestinationFree;
         };
-        Queue::iterator position;
-        unsigned int exploreQueue;
-        bool allQueues;
+        cQueue*  queueManagement;
 
+        State state;
+        simtime_t blockState;
+        std::map<MACAddress,ADDBAInfo> listAllowAddress;
+        MACAddress neighAddress;
+        bool checkState(const MACAddress&);
+        bool allAddress;
+        bool resetAfterSend;
 
         std::vector<CategotyInfo> categories;
-
-        unsigned int maxSize;
-        unsigned int numStrictQueuePriorities;
-        int getCategory(Ieee80211TwoAddressFrame* val);
-        void makeSpace();
         void increaseSize(Ieee80211TwoAddressFrame* val, int cat);
         void decreaseSize(Ieee80211TwoAddressFrame* val, int cat);
+        // structures to store allow block destination address
     public:
-        MultiQueue();
-        virtual ~MultiQueue();
-        virtual void setNumQueues(int num);
+        MpduAggregateHandler();
+        virtual ~MpduAggregateHandler();
+        virtual void setNumQueues(int num){categories.resize(num);}
 
         unsigned int getNumQueques()
         {
             return categories.size();
         }
-        virtual void setMaxSize(unsigned int i)
-        {
-            maxSize = i;
-        }
-        virtual unsigned int getMaxSize()
-        {
-            return maxSize;
-        }
-        virtual unsigned int size(int i = -1);
-        virtual bool empty(int i = -1);
-        virtual Ieee80211TwoAddressFrame* front(int i = -1);
-        virtual Ieee80211TwoAddressFrame* back(int i);
-        virtual void push_front(Ieee80211TwoAddressFrame* val, int i = -1);
-        virtual void pop_front(int i = -1);
-        virtual void push_back(Ieee80211TwoAddressFrame* val, int i = -1);
-        virtual void pop_back(int i);
-
+        virtual void prepareADDBA(const int &);
         virtual int findAddress(const MACAddress  &,int = -1);
         virtual int findAddressFree(const MACAddress &addr,int = -1);
         virtual void createBlocks(const MACAddress &, int = -1);
 
-        virtual Ieee80211TwoAddressFrame * initIterator(int i = -1);
-        virtual Ieee80211TwoAddressFrame * next();
-        virtual bool isEnd();
+
+        // ADDBAInfo management
+        virtual void setAllAddress(const bool &p) {allAddress = p;}
+        virtual void setResetAfterSend(const bool &p) {resetAfterSend = p;}
+        virtual void setAllowAddress(const MACAddress &addr, ADDBAInfo *){}
+
+        virtual bool getAllAddress() const {return allAddress;}
+        virtual bool getResetAfterSend() const {return resetAfterSend;}
+        virtual bool isAllowAddress(const MACAddress &add);
+        virtual bool isAllowAddress(const MACAddress &add, ADDBAInfo &iaddai);
 };
 
 }

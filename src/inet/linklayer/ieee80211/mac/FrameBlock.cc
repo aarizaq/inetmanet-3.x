@@ -44,26 +44,26 @@ void doUnpacking(cCommBuffer *, T& t)
 namespace inet {
 namespace ieee80211 {
 
-FrameBlock::~FrameBlock()
+Ieee80211MpduA::~Ieee80211MpduA()
 {
     // TODO Auto-generated destructor stub
     _deleteEncapVector();
 }
 
-FrameBlock::FrameBlock(Ieee80211TwoAddressFrame *frame) :
+Ieee80211MpduA::Ieee80211MpduA(Ieee80211TwoAddressFrame *frame) :
         Ieee80211TwoAddressFrame(*frame)
 {
     encapsulateVector.clear();
     pushBack(frame);
 }
 
-FrameBlock::FrameBlock(const char *name, int kind) :
+Ieee80211MpduA::Ieee80211MpduA(const char *name, int kind) :
         Ieee80211TwoAddressFrame(name, kind)
 {
     encapsulateVector.clear();
 }
 
-FrameBlock::FrameBlock(FrameBlock &other) :
+Ieee80211MpduA::Ieee80211MpduA(Ieee80211MpduA &other) :
         Ieee80211TwoAddressFrame()
 {
     encapsulateVector.clear();
@@ -71,9 +71,9 @@ FrameBlock::FrameBlock(FrameBlock &other) :
     operator=(other);
 }
 
-void FrameBlock::forEachChild(cVisitor *v)
+void Ieee80211MpduA::forEachChild(cVisitor *v)
 {
-    FrameBlock::forEachChild(v);
+    Ieee80211MpduA::forEachChild(v);
     if (!encapsulateVector.empty())
     {
         for (unsigned int i = 0; i < encapsulateVector.size(); i++)
@@ -84,19 +84,19 @@ void FrameBlock::forEachChild(cVisitor *v)
     }
 }
 
-void FrameBlock::parsimPack(cCommBuffer *buffer)
+void Ieee80211MpduA::parsimPack(cCommBuffer *buffer)
 {
     cPacket::parsimPack(buffer);
     doPacking(buffer, this->encapsulateVector);
 }
 
-void FrameBlock::parsimUnpack(cCommBuffer *buffer)
+void Ieee80211MpduA::parsimUnpack(cCommBuffer *buffer)
 {
     cPacket::parsimUnpack(buffer);
     doUnpacking(buffer, this->encapsulateVector);
 }
 
-void FrameBlock::_deleteEncapVector()
+void Ieee80211MpduA::_deleteEncapVector()
 {
     while (!encapsulateVector.empty())
     {
@@ -118,7 +118,7 @@ void FrameBlock::_deleteEncapVector()
     }
 }
 
-cPacket *FrameBlock::popBack()
+cPacket *Ieee80211MpduA::popBack()
 {
     if (encapsulateVector.empty())
         return NULL;
@@ -144,7 +144,7 @@ cPacket *FrameBlock::popBack()
     return msg;
 }
 
-cPacket *FrameBlock::popFrom()
+cPacket *Ieee80211MpduA::popFrom()
 {
     if (encapsulateVector.empty())
         return NULL;
@@ -171,7 +171,7 @@ cPacket *FrameBlock::popFrom()
     return msg;
 }
 
-void FrameBlock::pushBack(cPacket *pkt)
+void Ieee80211MpduA::pushBack(cPacket *pkt)
 {
     if (pkt == NULL)
         return;
@@ -211,7 +211,7 @@ void FrameBlock::pushBack(cPacket *pkt)
     encapsulateVector.push_back(shareStructPtr);
 }
 
-void FrameBlock::pushFrom(cPacket *pkt)
+void Ieee80211MpduA::pushFrom(cPacket *pkt)
 {
     if (pkt == NULL)
         return;
@@ -233,7 +233,7 @@ void FrameBlock::pushFrom(cPacket *pkt)
     encapsulateVector.insert(encapsulateVector.begin(), shareStructPtr);
 }
 
-void FrameBlock::_detachShareVector(unsigned int i)
+void Ieee80211MpduA::_detachShareVector(unsigned int i)
 {
     if (i < encapsulateVector.size())
     {
@@ -252,21 +252,21 @@ void FrameBlock::_detachShareVector(unsigned int i)
     }
 }
 
-cPacket *FrameBlock::getPacket(unsigned int i) const
+cPacket *Ieee80211MpduA::getPacket(unsigned int i) const
 {
 
     if (i >= encapsulateVector.size())
         return NULL;
-    const_cast<FrameBlock*>(this)->_detachShareVector(i);
+    const_cast<Ieee80211MpduA*>(this)->_detachShareVector(i);
     return encapsulateVector[i]->pkt;
 }
 
-cPacket *FrameBlock::decapsulatePacket(unsigned int i)
+cPacket *Ieee80211MpduA::decapsulatePacket(unsigned int i)
 {
 
     if (i >= encapsulateVector.size())
         return NULL;
-    const_cast<FrameBlock*>(this)->_detachShareVector(i);
+    const_cast<Ieee80211MpduA*>(this)->_detachShareVector(i);
     cPacket * pkt = encapsulateVector[i]->pkt;
     if (getBitLength() > 0)
         setBitLength(getBitLength() - encapsulateVector.front()->pkt->getBitLength());
@@ -288,7 +288,7 @@ cPacket *FrameBlock::decapsulatePacket(unsigned int i)
     return pkt;
 }
 
-void FrameBlock::setPacketKind(unsigned int i, int kind)
+void Ieee80211MpduA::setPacketKind(unsigned int i, int kind)
 {
     if (i >= encapsulateVector.size())
         return;
@@ -296,7 +296,7 @@ void FrameBlock::setPacketKind(unsigned int i, int kind)
     encapsulateVector[i]->pkt->setKind(kind);
 }
 
-FrameBlock& FrameBlock::operator=(const FrameBlock& msg)
+Ieee80211MpduA& Ieee80211MpduA::operator=(const Ieee80211MpduA& msg)
 {
     if (this == &msg)
         return *this;

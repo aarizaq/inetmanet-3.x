@@ -1309,67 +1309,70 @@ void Ieee80211Mesh::mplsPurge(LWmpls_Forwarding_Structure *forwarding_ptr, bool 
     if (forwarding_ptr==NULL)
         return;
 
-    for ( cQueue::Iterator iter(dataQueue, 1); !iter.end();)
+    for (int i = 0; i < getNumQueues(); i++)
     {
-        cMessage *msg = (cMessage *) iter();
-        purge = false;
-        Ieee80211DataFrame *frame =  dynamic_cast<Ieee80211DataFrame*> (msg);
-        if (frame==NULL)
+        for (cQueue::Iterator iter(dataQueue[i], 1); !iter.end();)
         {
-            iter++;
-            continue;
-        }
-        LWMPLSPacket* mplsmsg = dynamic_cast<LWMPLSPacket*>(frame->getEncapsulatedPacket());
-        if (mplsmsg!=NULL)
-        {
-            int label = mplsmsg->getLabel();
-            int code = mplsmsg->getType();
-            if (label == 0)
+            cMessage *msg = (cMessage *) iter();
+            purge = false;
+            Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame*>(msg);
+            if (frame == NULL)
             {
                 iter++;
                 continue;
             }
-            if (code==WMPLS_NORMAL)
+            LWMPLSPacket* mplsmsg = dynamic_cast<LWMPLSPacket*>(frame->getEncapsulatedPacket());
+            if (mplsmsg != NULL)
             {
-                if ((forwarding_ptr->output_label==label &&  frame->getReceiverAddress() ==
-                        MACAddress(forwarding_ptr->mac_address)) ||
-                        (forwarding_ptr->return_label_output==label && frame->getReceiverAddress() ==
-                         MACAddress(forwarding_ptr->input_mac_address)))
-                    purge = true;
-            }
-            else if ((code==WMPLS_BEGIN) && (purge_break==true))
-            {
-                if (forwarding_ptr->return_label_input==label &&  frame->getReceiverAddress() ==
-                        MACAddress(forwarding_ptr->mac_address))
-                    purge = true;
-            }
-            else if ((code==WMPLS_BEGIN) && (purge_break==false))
-            {
-                if (forwarding_ptr->output_label>0)
-                    if (forwarding_ptr->return_label_input==label &&  frame->getReceiverAddress() ==
-                            MACAddress(forwarding_ptr->mac_address))
-                        purge = true;
-            }
-            if (purge == true)
-            {
-                dataQueue.remove(msg);
-                mplsmsg = dynamic_cast<LWMPLSPacket*>(decapsulate(frame));
-                delete msg;
-                if (mplsmsg)
+                int label = mplsmsg->getLabel();
+                int code = mplsmsg->getType();
+                if (label == 0)
                 {
-                    MACAddress prev;
-                    mplsBasicSend(mplsmsg, prev);
+                    iter++;
+                    continue;
+                }
+                if (code == WMPLS_NORMAL)
+                {
+                    if ((forwarding_ptr->output_label == label
+                            && frame->getReceiverAddress() == MACAddress(forwarding_ptr->mac_address))
+                            || (forwarding_ptr->return_label_output == label
+                                    && frame->getReceiverAddress() == MACAddress(forwarding_ptr->input_mac_address)))
+                        purge = true;
+                }
+                else if ((code == WMPLS_BEGIN) && (purge_break == true))
+                {
+                    if (forwarding_ptr->return_label_input == label
+                            && frame->getReceiverAddress() == MACAddress(forwarding_ptr->mac_address))
+                        purge = true;
+                }
+                else if ((code == WMPLS_BEGIN) && (purge_break == false))
+                {
+                    if (forwarding_ptr->output_label > 0)
+                        if (forwarding_ptr->return_label_input == label
+                                && frame->getReceiverAddress() == MACAddress(forwarding_ptr->mac_address))
+                            purge = true;
+                }
+                if (purge == true)
+                {
+                    dataQueue[i].remove(msg);
+                    mplsmsg = dynamic_cast<LWMPLSPacket*>(decapsulate(frame));
+                    delete msg;
+                    if (mplsmsg)
+                    {
+                        MACAddress prev;
+                        mplsBasicSend(mplsmsg, prev);
+                    }
+                    else
+                        delete mplsmsg;
+                    iter.init(dataQueue[i], 1);
+                    continue;
                 }
                 else
-                    delete mplsmsg;
-                iter.init(dataQueue, 1);
-                continue;
+                    iter++;
             }
             else
                 iter++;
         }
-        else
-            iter++;
     }
 }
 

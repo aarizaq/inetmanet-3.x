@@ -24,7 +24,6 @@
 
 // un-comment this if you do not want to log state machine transitions
 //#define FSM_DEBUG
-#define USEMULTIQUEUE
 
 #include "inet/common/FSMA.h"
 #include "inet/common/queue/IPassiveQueue.h"
@@ -38,10 +37,7 @@
 
 #include "inet/linklayer/ieee80211/mac/IQoSClassifier.h"
 
-#ifdef USEMULTIQUEUE
-#include "inet/linklayer/ieee80211/mac/MultiQueue.h"
 #include "inet/linklayer/ieee80211/mac/FrameBlock.h"
-#endif
 
 namespace inet {
 
@@ -75,11 +71,8 @@ using namespace physicallayer;
 
 class INET_API Ieee80211Mac : public MACProtocolBase
 {
-#ifdef  USEMULTIQUEUE
-    typedef MultiQueue Ieee80211DataOrMgmtFrameList;
-#else
     typedef std::list<Ieee80211DataOrMgmtFrame*> Ieee80211DataOrMgmtFrameList;
-#endif
+
     /**
      * This is used to populate fragments and identify duplicated messages. See spec 9.2.9.
      */
@@ -485,6 +478,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     //@{
     /** @brief Initialization of the module and its variables */
     virtual int numInitStages() const { return NUM_INIT_STAGES; }
+    virtual void initializeCategories();
     virtual void initialize(int);
     virtual InterfaceEntry *createInterfaceEntry();
     virtual void initializeQueueModule();

@@ -31,43 +31,10 @@ namespace ieee80211 {
 
 void SecurityIeee80211MgmtBase::initialize(int stage)
 {
-    if (stage==0)
-    {
-        PassiveQueueBase::initialize();
+    Ieee80211MgmtBase::initialize(stage);
 
-        dataQueue.setName("wlanDataQueue");
-        mgmtQueue.setName("wlanMgmtQueue");
-        dataQueueLenSignal = registerSignal("dataQueueLen");
- //       dataArrivedSignal = registerSignal("dataArrived");
-        emit(dataQueueLenSignal, dataQueue.length());
-      //  dropPkByQueueSignal = registerSignal("dropPkByQueue");
-        //emit(dropPkByQueueSignal, NULL);
-
-        numDataFramesReceived = 0;
-        numMgmtFramesReceived = 0;
-        numMgmtFramesDropped = 0;
-    //    numDataFramesDropped = 0;
-        WATCH(numDataFramesReceived);
-        WATCH(numMgmtFramesReceived);
-        WATCH(numMgmtFramesDropped);
-      //  WATCH(numDataFramesDropped);
-        // configuration
-        frameCapacity = par("frameCapacity");
-        // add by sbeiti
-//        userQueueFilePath = "results\\queue\\";
-//        currentSim = cSimulation::getActiveSimulation();
-//        fileNameBegin = "test";
-//        plotTime = 0;
-//        plotTimer = 1;
-        //end add
-    }
-    else if (stage==1)
+    if (stage == 1)
     {
-        // obtain our address from MAC
-        cModule *mac = getParentModule()->getSubmodule("mac");
-        if (!mac)
-            error("MAC module not found; it is expected to be next to this submodule and called 'mac'");
-        myAddress.setAddress(mac->par("address").stringValue());
         // add by sbeiti
 //        if(plotTimer > 0){
 //                   plotTime = new cMessage("itsPlotTime");

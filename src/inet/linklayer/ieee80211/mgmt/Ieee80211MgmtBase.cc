@@ -22,6 +22,8 @@
 #include "inet/common/ModuleAccess.h"
 #include "inet/common/lifecycle/NodeOperations.h"
 #include "inet/common/lifecycle/NodeStatus.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211eClassifier.h"
+#include <string>
 
 namespace inet {
 
@@ -40,9 +42,36 @@ void Ieee80211MgmtBase::initialize(int stage)
     if (stage == INITSTAGE_LOCAL) {
         PassiveQueueBase::initialize();
 
-        dataQueue.setName("wlanDataQueue");
+        numQueues = 1;
+        if (par("EDCA"))
+        {
+            const char *classifierClass = par("classifier");
+            classifier = check_and_cast<IQoSClassifier*>(createOne(classifierClass));
+            numQueues = classifier->getNumQueues();
+        }
+        dataQueue.resize(numQueues);
+        packetRequestedCat.resize(numQueues-1);
         mgmtQueue.setName("wlanMgmtQueue");
-        emit(dataQueueLenSignal, dataQueue.length());
+        int length = 0;
+        if (numQueues == 1)
+        {
+            dataQueue[0].setName("wlanDataQueue");
+            length = dataQueue[0].length();
+        }
+        else
+        {
+
+            std::string str;
+            for (int i = 0; i < numQueues; i++)
+            {
+                str = "wlanDataQueue" + std::to_string(i);
+                dataQueue[i].setName(str.c_str());
+                length += dataQueue[i].length();
+            }
+            for (int i = 0; i < numQueues -1 ; i++)
+                packetRequestedCat[i] = 0;
+        }
+        emit(dataQueueLenSignal, length);
 
         numDataFramesReceived = 0;
         numMgmtFramesReceived = 0;
@@ -53,6 +82,8 @@ void Ieee80211MgmtBase::initialize(int stage)
 
         // configuration
         frameCapacity = par("frameCapacity");
+
+
     }
     else if (stage == INITSTAGE_LINK_LAYER) {
         NodeStatus *nodeStatus = dynamic_cast<NodeStatus *>(findContainingNode(this)->getSubmodule("status"));
@@ -104,13 +135,95 @@ void Ieee80211MgmtBase::handleMessage(cMessage *msg)
     }
 }
 
+void Ieee80211MgmtBase::sendOrEnqueue(cPacket *frame, const int &cat)
+{
+    if (frame->getBitLength() > 0)
+        frame->setKind(cat);
+
+    if (cat == 0)
+    {
+        PassiveQueueBase::handleMessage(frame);
+        return;
+    }
+
+    if (packetRequestedCat[cat-1] > 0)
+    {
+        packetRequestedCat[cat-1]--;
+        emit(enqueuePkSignal, frame);
+        emit(dequeuePkSignal, frame);
+        emit(queueingTimeSignal, SIMTIME_ZERO);
+        sendOut (frame);
+    }
+    else
+    {
+        frame->setArrivalTime(simTime());
+        cMessage *droppedMsg = enqueue(frame, cat);
+        if (frame != droppedMsg)
+            emit(enqueuePkSignal, frame);
+        if (droppedMsg)
+        {
+            numQueueDropped++;
+            emit(dropPkByQueueSignal, droppedMsg);
+            delete droppedMsg;
+        }
+        else
+            notifyListeners();
+    }
+
+    if (ev.isGUI())
+    {
+        char buf[40];
+        sprintf(buf, "q rcvd: %d\nq dropped: %d", numQueueReceived, numQueueDropped);
+        getDisplayString().setTagArg("t", 0, buf);
+    }
+}
+
 void Ieee80211MgmtBase::sendOrEnqueue(cPacket *frame)
 {
     ASSERT(isOperational);
-    PassiveQueueBase::handleMessage(frame);
+    if (numQueues == 1)
+        PassiveQueueBase::handleMessage(frame);
+    else
+    {
+        int cat = classifier->classifyPacket(frame);
+        sendOrEnqueue(frame, cat);
+    }
 }
 
+
+
 cMessage *Ieee80211MgmtBase::enqueue(cMessage *msg)
+{
+    ASSERT(dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg) != NULL);
+    bool isDataFrame = dynamic_cast<Ieee80211DataFrame *>(msg) != NULL;
+    int cat = 0;
+
+    if (numQueues > 1 && isDataFrame)
+    {
+        cat = classifier->classifyPacket(msg);
+    }
+
+    if (!isDataFrame) {
+        // management frames are inserted into mgmtQueue
+        mgmtQueue.insert(msg);
+        return NULL;
+    }
+    else if (frameCapacity && dataQueue[cat].length() >= frameCapacity) {
+        EV << "Queue full, dropping packet.\n";
+        return msg;
+    }
+    else {
+        dataQueue[cat].insert(msg);
+        int length = 0;
+        for (int i = 0; i < numQueues; i++)
+            length += dataQueue[i].length();
+        emit(dataQueueLenSignal, length);
+        return NULL;
+    }
+}
+
+
+cMessage *Ieee80211MgmtBase::enqueue(cMessage *msg, const int &cat)
 {
     ASSERT(dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg) != NULL);
     bool isDataFrame = dynamic_cast<Ieee80211DataFrame *>(msg) != NULL;
@@ -120,13 +233,16 @@ cMessage *Ieee80211MgmtBase::enqueue(cMessage *msg)
         mgmtQueue.insert(msg);
         return NULL;
     }
-    else if (frameCapacity && dataQueue.length() >= frameCapacity) {
+    else if (frameCapacity && dataQueue[cat].length() >= frameCapacity) {
         EV << "Queue full, dropping packet.\n";
         return msg;
     }
     else {
-        dataQueue.insert(msg);
-        emit(dataQueueLenSignal, dataQueue.length());
+        dataQueue[cat].insert(msg);
+        int length = 0;
+        for (int i = 0; i < numQueues; i++)
+            length += dataQueue[i].length();
+        emit(dataQueueLenSignal, length);
         return NULL;
     }
 }
@@ -135,7 +251,6 @@ bool Ieee80211MgmtBase::isEmpty()
 {
     if (!mgmtQueue.empty())
         return false;
-
     return dataQueue.empty();
 }
 
@@ -146,13 +261,54 @@ cMessage *Ieee80211MgmtBase::dequeue()
         return (cMessage *)mgmtQueue.pop();
 
     // return a data frame if we have one
-    if (dataQueue.empty())
+    if (dataQueue[0].empty())
         return NULL;
 
-    cMessage *pk = (cMessage *)dataQueue.pop();
+    cMessage *pk = (cMessage *)dataQueue[0].pop();
 
     // statistics
-    emit(dataQueueLenSignal, dataQueue.length());
+    int length = 0;
+    for (int i = 0; i < numQueues; i++)
+        length += dataQueue[i].length();
+    emit(dataQueueLenSignal, length);
+    return pk;
+}
+
+void Ieee80211MgmtBase::requestPacket(const int &cat)
+{
+    Enter_Method("requestPacket(int)");
+
+    cMessage *msg = dequeue(cat);
+    if (msg == NULL) {
+        if (cat == 0)
+            packetRequested++;
+        else
+            packetRequestedCat[cat - 1]++;
+    }
+    else {
+        emit(dequeuePkSignal, msg);
+        emit(queueingTimeSignal, simTime() - msg->getArrivalTime());
+        sendOut(msg);
+    }
+}
+
+cMessage *Ieee80211MgmtBase::dequeue(const int & cat)
+{
+    // management frames have priority
+    if (!mgmtQueue.empty())
+        return (cMessage *)mgmtQueue.pop();
+
+    // return a data frame if we have one
+    if (dataQueue[cat].empty())
+        return NULL;
+
+    cMessage *pk = (cMessage *)dataQueue[cat].pop();
+
+    // statistics
+    int length = 0;
+    for (int i = 0; i < numQueues; i++)
+        length += dataQueue[i].length();
+    emit(dataQueueLenSignal, length);
     return pk;
 }
 
@@ -267,7 +423,13 @@ void Ieee80211MgmtBase::stop()
 {
     clear();
     dataQueue.clear();
-    emit(dataQueueLenSignal, dataQueue.length());
+    int length = 0;
+    for (int i = 0; i < numQueues; i++)
+    {
+        dataQueue[i].clear();
+        length += dataQueue[i].length();
+    }
+    emit(dataQueueLenSignal, length);
     mgmtQueue.clear();
     isOperational = false;
 }

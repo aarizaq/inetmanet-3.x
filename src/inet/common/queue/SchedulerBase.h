@@ -68,6 +68,15 @@ class INET_API SchedulerBase : public cSimpleModule, public IPassiveQueue, publi
     virtual void packetEnqueued(IPassiveQueue *inputQueue);
     virtual void addListener(IPassiveQueueListener *listener);
     virtual void removeListener(IPassiveQueueListener *listener);
+
+    // Multi queue implementation
+    virtual int getNumQueues() {throw cRuntimeError("Method not implemented PassiveQueueBase::");}
+    virtual void requestPacket(const int&) {throw cRuntimeError("Method not implemented PassiveQueueBase::requestPacket(const int&)");}
+    virtual int getNumPendingRequests(const int&) {throw cRuntimeError("Method not implemented PassiveQueueBase::getNumPendingRequests(const int&");}
+    virtual bool isEmpty(const int&) {throw cRuntimeError("Method not implemented PassiveQueueBase::isEmpty(const int&)");}
+    virtual void clear(const int&) {throw cRuntimeError("Method not implemented PassiveQueueBase::clear(const int&)");}
+    virtual cMessage *pop(const int&) {throw cRuntimeError("Method not implemented PassiveQueueBase::pop(const int&)");}
+
 };
 
 } // namespace inet

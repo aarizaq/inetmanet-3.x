@@ -103,7 +103,6 @@ void Ieee80211MgmtAP::handleUpperMessage(cPacket *msg)
             return;
         }
     }
-
     sendOrEnqueue(frame);
 }
 

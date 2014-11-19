@@ -69,8 +69,7 @@ simple Ieee80211Mac extends MACProtocolBase like IMACProtocol
         int saveSize1 = default(0);   // minum size save for categorie 0, only used if queueModule==""
         int saveSize2 = default(0);   // minum size save for categorie 0, only used if queueModule==""
         int saveSize3 = default(0);   // minum size save for categorie 0, only used if queueModule==""
-
-        bool EDCA = default(false); // enable Enhanced Distributed Channel Access (802.11e)
+        
         // parameters for EDCA = true
         string classifier = default("Ieee80211eClassifier");
         int maxCategorieQueueSize = default(50); // Max queue length in frames per categorie; only used if queueModule==""
@@ -86,7 +85,7 @@ simple Ieee80211Mac extends MACProtocolBase like IMACProtocol
         // parameters for EDCA = false
         int AIFSN = default(2); // if there is only one AC (EDCA = false) it is used to compute Difs value always
 
-        bool useModulationParameters = default(true); // if true, slot time, DIFS, and ACK timeout (aPHY-RX-START-Delay) are function of modulation time (2007 standard)
+        bool useModulationParameters = default(false); // if true, slot time, DIFS, and ACK timeout (aPHY-RX-START-Delay) are function of modulation time (2007 standard)
         bool prioritizeMulticast = default(false); // if true, prioritize multicast frames (9.3.2.1 Fundamental access)
 
         double bitrate @unit("bps");

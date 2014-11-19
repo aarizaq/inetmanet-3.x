@@ -34,6 +34,9 @@ package inet.linklayer.ieee80211.mgmt;
 simple Ieee80211MgmtSTASimplified like IIeee80211Mgmt
 {
     parameters:
+        bool EDCA = default(false); // enable Enhanced Distributed Channel Access (802.11e)
+        // parameters for EDCA = true
+        string classifier = default("Ieee80211eClassifier");        
         string accessPointAddress; // MAC address of associate AP
         int frameCapacity = default(100);
         @display("i=block/cogwheel");

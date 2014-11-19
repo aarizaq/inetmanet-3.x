@@ -153,31 +153,19 @@ Ieee80211Mesh::Ieee80211Mesh()
 
 void Ieee80211Mesh::initializeBase(int stage)
 {
-    if (stage==INITSTAGE_LOCAL)
+
+    if (stage == INITSTAGE_LOCAL)
     {
-        PassiveQueueBase::initialize();
-
-        dataQueue.setName("wlanDataQueue");
-        mgmtQueue.setName("wlanMgmtQueue");
-        dataQueueLenSignal = registerSignal("dataQueueLen");
-        emit(dataQueueLenSignal, dataQueue.length());
-
-        numDataFramesReceived = 0;
-        numMgmtFramesReceived = 0;
-        numMgmtFramesDropped = 0;
+        Ieee80211MgmtBase::initialize(stage);
         inteligentBroadcastRouting = par("inteligentBroadcastRouting").boolValue();
-        WATCH(numDataFramesReceived);
-        WATCH(numMgmtFramesReceived);
-        WATCH(numMgmtFramesDropped);
-
-        // configuration
-        frameCapacity = par("frameCapacity");
         numMac = 0;
+    }
+    else if (stage == INITSTAGE_LINK_LAYER)
+    {
+        Ieee80211MgmtBase::initialize(stage);
     }
     else if (stage==INITSTAGE_PHYSICAL_ENVIRONMENT)
     {
-        NodeStatus *nodeStatus = dynamic_cast<NodeStatus *>(findContainingNode(this)->getSubmodule("status"));
-        isOperational = (!nodeStatus) || nodeStatus->getState() == NodeStatus::UP;
         // obtain our address from MAC
         cModule *mac = getParentModule()->getSubmodule("mac");
         if (!mac)
@@ -221,7 +209,7 @@ void Ieee80211Mesh::initializeBase(int stage)
 
         mac = getParentModule()->getSubmodule("mac",0);
         if (!mac)
-          error("MAC module not found; it is expected to be next to this submodule and called 'mac'");
+            throw cRuntimeError("MAC module not found; it is expected to be next to this submodule and called 'mac'");
         myAddress.setAddress(mac->par("address").stringValue());
     }
 }
@@ -1416,7 +1404,7 @@ void Ieee80211Mesh::handleProbeResponseFrame(Ieee80211ProbeResponseFrame *frame)
     dropManagementFrame(frame);
 }
 
-// Cada ver que se envia un mensaje sirve para generar mensajes de permanencia. usa los propios hellos para garantizar que se env�an mensajes
+// Cada vez que se envia un mensaje sirve para generar mensajes de permanencia. usa los propios hellos para garantizar que se env�an mensajes
 
 void Ieee80211Mesh::sendOut(cMessage *msg)
 {
@@ -1746,7 +1734,7 @@ void Ieee80211Mesh::sendOrEnqueue(cPacket *frame)
     if (frameDataorMgm->getReceiverAddress().isBroadcast())
     {
         if (dynamic_cast<ETXBasePacket*>(frame->getEncapsulatedPacket()) && numMac > 1)
-            PassiveQueueBase::handleMessage(frame);
+            Ieee80211MgmtBase::sendOrEnqueue(frame);
         else
         {
             frame->setKind(0);
@@ -1756,7 +1744,7 @@ void Ieee80211Mesh::sendOrEnqueue(cPacket *frame)
                 {
                     cPacket *pkt = frame->dup();
                     pkt->setKind(i);
-                    PassiveQueueBase::handleMessage(pkt);
+                    Ieee80211MgmtBase::sendOrEnqueue(pkt);
                 }
                 /*
                 if (inteligentBroadcastRouting && (frameAux && frameAux->getSubType() == ROUTING))
@@ -1786,7 +1774,7 @@ void Ieee80211Mesh::sendOrEnqueue(cPacket *frame)
     else
     {
         frame->setKind(getBestInterface(frameDataorMgm));
-        PassiveQueueBase::handleMessage(frame);
+        Ieee80211MgmtBase::sendOrEnqueue(frame);
     }
 }
 

@@ -25,6 +25,7 @@
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtFrames_m.h"
 #include "inet/common/lifecycle/ILifecycle.h"
+#include "inet/linklayer/ieee80211/mac/IQoSClassifier.h"
 
 namespace inet {
 
@@ -46,7 +47,8 @@ class INET_API Ieee80211MgmtBase : public PassiveQueueBase, public ILifecycle
     bool isOperational;    // for lifecycle
 
     // state
-    cQueue dataQueue;    // queue for data frames
+    std::vector <int> packetRequestedCat;
+    std::vector<cQueue> dataQueue;    // queue for data frames
     cQueue mgmtQueue;    // queue for management frames (higher priority than data frames)
 
     // statistics
@@ -56,6 +58,9 @@ class INET_API Ieee80211MgmtBase : public PassiveQueueBase, public ILifecycle
 
     // queue statistics
     static simsignal_t dataQueueLenSignal;
+
+    IQoSClassifier * classifier;
+    int numQueues;
 
   protected:
     virtual int numInitStages() const { return NUM_INIT_STAGES; }
@@ -75,6 +80,9 @@ class INET_API Ieee80211MgmtBase : public PassiveQueueBase, public ILifecycle
 
     /** Utility method for implementing handleUpperMessage(): gives the message to PassiveQueueBase */
     virtual void sendOrEnqueue(cPacket *frame);
+
+    /** utility method handle requested multi queue packets **/
+    virtual void sendOrEnqueue(cPacket *frame, const int &);
 
     /** Redefined from PassiveQueueBase. */
     virtual cMessage *enqueue(cMessage *msg);
@@ -96,6 +104,12 @@ class INET_API Ieee80211MgmtBase : public PassiveQueueBase, public ILifecycle
 
     /** Dispatch to frame processing methods according to frame type */
     virtual void processFrame(Ieee80211DataOrMgmtFrame *frame);
+
+    // * multi queue methods
+    virtual int getNumQueues() {return numQueues;}
+    virtual void requestPacket(const int&);
+    virtual cMessage *dequeue(const int&);
+    virtual cMessage *enqueue(cMessage *, const int &);
 
     /** @name Processing of different frame types */
     //@{

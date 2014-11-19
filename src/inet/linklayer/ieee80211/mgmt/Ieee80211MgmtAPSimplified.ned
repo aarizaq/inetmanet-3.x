@@ -48,6 +48,9 @@ package inet.linklayer.ieee80211.mgmt;
 simple Ieee80211MgmtAPSimplified like IIeee80211Mgmt
 {
     parameters:
+        bool EDCA = default(false); // enable Enhanced Distributed Channel Access (802.11e)
+        // parameters for EDCA = true
+        string classifier = default("Ieee80211eClassifier");        
         int frameCapacity = default(100);
         string encapDecap = default("eth") @enum("true", "false", "eth");   // if "eth", frames sent up are converted to EthernetIIFrame
         @display("i=block/cogwheel");

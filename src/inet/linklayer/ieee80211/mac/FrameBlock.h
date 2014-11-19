@@ -22,7 +22,7 @@ namespace inet {
 namespace ieee80211 {
 
 
-class FrameBlock : public Ieee80211TwoAddressFrame
+class Ieee80211MpduA : public Ieee80211TwoAddressFrame
 {
 private:
     struct ShareStruct{
@@ -38,12 +38,12 @@ private:
     bool _checkIfShare();
     void _detachShareVector(unsigned int i);
 public:
-    FrameBlock(const char *name=NULL, int kind=0);
-    FrameBlock(FrameBlock &);
-    FrameBlock(Ieee80211TwoAddressFrame *);
-    virtual FrameBlock * dup(){return new FrameBlock(*this);}
-    virtual ~FrameBlock();
-    FrameBlock& operator=(const FrameBlock& msg);
+    Ieee80211MpduA(const char *name=NULL, int kind=0);
+    Ieee80211MpduA(Ieee80211MpduA &);
+    Ieee80211MpduA(Ieee80211TwoAddressFrame *);
+    virtual Ieee80211MpduA * dup(){return new Ieee80211MpduA(*this);}
+    virtual ~Ieee80211MpduA();
+    Ieee80211MpduA& operator=(const Ieee80211MpduA& msg);
     virtual cPacket *getPacket(unsigned int i) const;
     virtual void setPacketKind(unsigned int i,int kind);
     virtual unsigned int getNumEncap() const {return encapsulateVector.size();}
@@ -108,8 +108,8 @@ public:
 
 
 
-inline void doPacking(cCommBuffer *b, FrameBlock& obj) {obj.parsimPack(b);}
-inline void doUnpacking(cCommBuffer *b, FrameBlock& obj) {obj.parsimUnpack(b);}
+inline void doPacking(cCommBuffer *b, Ieee80211MpduA& obj) {obj.parsimPack(b);}
+inline void doUnpacking(cCommBuffer *b, Ieee80211MpduA& obj) {obj.parsimUnpack(b);}
 
 }
 }

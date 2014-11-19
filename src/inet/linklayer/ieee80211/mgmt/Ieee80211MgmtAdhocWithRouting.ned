@@ -37,6 +37,9 @@ simple Ieee80211MgmtAdhocWithRouting like IIeee80211Mgmt
         string routingProtocol= default("inet.networklayer.manetrouting.OLSR");
         int frameCapacity = default(100);
         int maxTtl = default(32);
+        bool EDCA = default(false); // enable Enhanced Distributed Channel Access (802.11e)
+        // parameters for EDCA = true
+        string classifier = default("Ieee80211eClassifier");        
         @macRouting;  // Mac layer with routing protocol working in the level 2
         @display("i=block/cogwheel");
         @signal[enqueuePk](type=cMessage);
