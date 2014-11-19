@@ -37,6 +37,8 @@ Radio::Radio() :
     transmitter(NULL),
     receiver(NULL),
     medium(NULL),
+    displayCommunicationRange(false),
+    displayInterferenceRange(false),
     upperLayerOut(NULL),
     upperLayerIn(NULL),
     radioIn(NULL),
@@ -53,9 +55,6 @@ Radio::Radio() :
 
 Radio::~Radio()
 {
-    delete antenna;
-    delete transmitter;
-    delete receiver;
     cancelAndDelete(endTransmissionTimer);
     cancelAndDelete(endSwitchTimer);
 }
