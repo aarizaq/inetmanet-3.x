@@ -1,4 +1,4 @@
-package inet.examples.manetrouting.dsrTest;
+package inet.examples.manetrouting.probabilisticObstacleTest;
 
 import inet.networklayer.autorouting.ipv4.IPv4NetworkConfigurator;
 import inet.nodes.inet.AdhocHost;
