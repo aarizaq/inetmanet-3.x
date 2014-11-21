@@ -1901,13 +1901,13 @@ void Ieee80211Mac::sendDataFrame(Ieee80211DataOrMgmtFrame *frameToSend)
     std::list<Ieee80211DataOrMgmtFrame*>::iterator frame;
 
     frame = transmissionQueue()->begin();
-    ASSERT(*frame==frameToSend);
+    ASSERT(*frame == frameToSend);
     if (!txop && TXOP() > 0 && transmissionQueue()->size() >= 2 )
     {
         //we start packet burst within TXOP time period
         txop = true;
 
-        for (frame=transmissionQueue()->begin(); frame != transmissionQueue()->end(); ++frame)
+        for (frame = transmissionQueue()->begin(); frame != transmissionQueue()->end(); ++frame)
         {
             count++;
             t = computeFrameDuration(*frame) + 2 * getSIFS() + controlFrameTxTime(LENGTH_ACK);
