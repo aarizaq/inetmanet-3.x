@@ -341,8 +341,6 @@ class INET_API Ieee80211Mac : public MACProtocolBase
      * SLRC and SSRC, see 9.2.4 in the spec
      */
     //int retryCounter[4];
-
-    IQoSClassifier *classifier;
   public:
     /** 80211 MAC operation modes */
     enum Mode {

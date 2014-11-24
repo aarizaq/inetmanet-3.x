@@ -138,7 +138,11 @@ void Ieee80211Etx::handleTimer(cMessage *msg)
                 pkt->setRecPackets(j, it->second.timeVector.size());
                 j++;
             }
-            pkt->setKind(i);
+
+            if (!pkt->hasPar("indexGate"))
+                pkt->addPar("indexGate") = i;
+            else
+                pkt->par("indexGate") = i;
             send(pkt, "toMac");
         }
         if (!pasiveMeasure)
@@ -168,8 +172,17 @@ void Ieee80211Etx::handleTimer(cMessage *msg)
                 it->second.setEttTime(simTime());
                 pkt1->setType(0);
                 pkt2->setType(0);
-                pkt1->setKind(i);
-                pkt2->setKind(i);
+
+                if (!pkt1->hasPar("indexGate"))
+                    pkt1->addPar("indexGate") = i;
+                 else
+                     pkt1->par("indexGate") = i;
+
+                if (!pkt2->hasPar("indexGate"))
+                    pkt2->addPar("indexGate") = i;
+                else
+                    pkt2->par("indexGate") = i;
+
                 pkt1->setIndex(ettIndex);
                 pkt2->setIndex(ettIndex);
                 ettIndex ++;

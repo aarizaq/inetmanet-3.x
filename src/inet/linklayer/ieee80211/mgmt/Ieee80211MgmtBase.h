@@ -26,6 +26,7 @@
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtFrames_m.h"
 #include "inet/common/lifecycle/ILifecycle.h"
 #include "inet/linklayer/ieee80211/mac/IQoSClassifier.h"
+#include <deque>
 
 namespace inet {
 
@@ -47,9 +48,10 @@ class INET_API Ieee80211MgmtBase : public PassiveQueueBase, public ILifecycle
     bool isOperational;    // for lifecycle
 
     // state
+    typedef std::deque<Ieee80211DataOrMgmtFrame *> DataQueue;
     std::vector <int> packetRequestedCat;
-    std::vector<cQueue> dataQueue;    // queue for data frames
-    cQueue mgmtQueue;    // queue for management frames (higher priority than data frames)
+    std::vector<DataQueue> dataQueue;    // queue for data frames
+    DataQueue mgmtQueue;    // queue for management frames (higher priority than data frames)
 
     // statistics
     long numDataFramesReceived;
@@ -136,6 +138,11 @@ class INET_API Ieee80211MgmtBase : public PassiveQueueBase, public ILifecycle
   public:
     virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback);
     //@}
+  public:
+    // access queue information
+    virtual Ieee80211DataOrMgmtFrame *getQueueElement(const int &, const int &) const;
+    virtual unsigned int getDataSize(const int &cat) const;
+    virtual unsigned int getManagementSize() const;
 };
 
 } // namespace ieee80211

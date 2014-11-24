@@ -512,9 +512,10 @@ void Ieee80211Mesh::handleMessage(cMessage *msg)
         // process incoming frame
         EV << "Frame arrived from MAC: " << msg << "\n";
         if (msggate->isVector())
-            msg->setKind(msggate->getIndex());
-        else
-            msg->setKind(-1);
+        {
+            msg->addPar("indexGate") = msggate->getIndex() ;
+        }
+
 
         if (!timeReceptionInterface.empty())
         {
@@ -717,7 +718,10 @@ void Ieee80211Mesh::handleRoutingMessage(cPacket *msg)
     }
     if (dynamic_cast<Ieee80211ActionMeshFrame *>(msg))
     {
-        msg->setKind(ctrl->getInterfaceId());
+        if (!msg->hasPar("indexGate"))
+            msg->addPar("indexGate") = ctrl->getInterfaceId();
+        else
+            msg->par("indexGate") = ctrl->getInterfaceId();
         delete ctrl;
         sendOrEnqueue(msg);
     }
@@ -728,8 +732,10 @@ void Ieee80211Mesh::handleRoutingMessage(cPacket *msg)
         if (frameMesh->getSubType() == 0)
             frameMesh->setSubType(ROUTING);
 
-        frame->setKind(ctrl->getInterfaceId());
-
+        if (!msg->hasPar("indexGate"))
+            frame->addPar("indexGate") = ctrl->getInterfaceId();
+         else
+             frame->par("indexGate") = ctrl->getInterfaceId();
         delete ctrl;
         sendOrEnqueue(frame);
     }
@@ -1253,7 +1259,6 @@ void Ieee80211Mesh::handleDataFrame(Ieee80211DataFrame *frame)
         //cGate * msggate = msg->getArrivalGate();
         //int baseId = gateBaseId("macIn");
         //int index = baseId - msggate->getId();
-        msg->setKind(0);
         if ((routingModuleProactive != NULL) && (routingModuleProactive->isOurType(msg)))
         {
             //sendDirect(msg,0, routingModule, "from_ip");
@@ -1408,11 +1413,14 @@ void Ieee80211Mesh::handleProbeResponseFrame(Ieee80211ProbeResponseFrame *frame)
 
 void Ieee80211Mesh::sendOut(cMessage *msg)
 {
-    //InterfaceEntry *ie = ift->getInterfaceById(msg->getKind());
-    // msg->setKind(0);
-    if (numMac == 1)
-        msg->setKind(0);
     //send(msg, macBaseGateId + ie->getNetworkLayerGateIndex());
+    int macOut = 0;
+    if (msg->hasPar("indexGate"))
+    {
+        macOut = msg->par("indexGate");
+        delete msg->removeObject("indexGate");
+    }
+
     Ieee80211MeshFrame *frameMesh = dynamic_cast<Ieee80211MeshFrame*>(msg);
     if (frameMesh && frameMesh->getSubType() == ROUTING)
         numRoutingBytes += frameMesh->getByteLength();
@@ -1429,7 +1437,7 @@ void Ieee80211Mesh::sendOut(cMessage *msg)
         if (msg->arrivedOn("securityIn"))
         {
             if (isMultiMac)
-                 send(msg, "macOutMulti",msg->getKind());
+                 send(msg, "macOutMulti",macOut);
             else
                  send(msg, "macOut");
         }
@@ -1438,7 +1446,7 @@ void Ieee80211Mesh::sendOut(cMessage *msg)
             EV << "CCMPFrame Frame arrived from Security, send it to Mac" <<endl;
             error("mhn");
             if (isMultiMac)
-                 send(msg, "macOutMulti",msg->getKind());
+                 send(msg, "macOutMulti",macOut);
             else
                  send(msg, "macOut");
         }
@@ -1452,7 +1460,7 @@ void Ieee80211Mesh::sendOut(cMessage *msg)
     {
         packetRequested++;
         if (isMultiMac)
-            send(msg, "macOutMulti",msg->getKind());
+            send(msg, "macOutMulti",macOut);
         else
             send(msg, "macOut");
 
@@ -1720,7 +1728,7 @@ void Ieee80211Mesh::sendOrEnqueue(cPacket *frame)
 {
     Ieee80211MeshFrame * frameAux = dynamic_cast<Ieee80211MeshFrame*>(frame);
     Ieee80211DataOrMgmtFrame *frameDataorMgm = dynamic_cast <Ieee80211DataOrMgmtFrame*> (frame);
-    if (frameAux && frameAux->getTTL()<=0)
+    if (frameAux && frameAux->getTTL() <=0 )
     {
         delete frame;
         return;
@@ -1737,13 +1745,16 @@ void Ieee80211Mesh::sendOrEnqueue(cPacket *frame)
             Ieee80211MgmtBase::sendOrEnqueue(frame);
         else
         {
-            frame->setKind(0);
             if (numMac > 1)
             {
                 for (unsigned int i = 1; i < numMac; i++)
                 {
                     cPacket *pkt = frame->dup();
-                    pkt->setKind(i);
+                    if (!pkt->hasPar("indexGate"))
+                        pkt->addPar("indexGate") = i;
+                     else
+                         pkt->par("indexGate") = i;
+
                     Ieee80211MgmtBase::sendOrEnqueue(pkt);
                 }
                 /*
@@ -1773,7 +1784,10 @@ void Ieee80211Mesh::sendOrEnqueue(cPacket *frame)
     }
     else
     {
-        frame->setKind(getBestInterface(frameDataorMgm));
+        if (!frame->hasPar("indexGate"))
+            frame->addPar("indexGate") = getBestInterface(frameDataorMgm);
+        else
+            frame->par("indexGate") = getBestInterface(frameDataorMgm);
         Ieee80211MgmtBase::sendOrEnqueue(frame);
     }
 }
@@ -1888,9 +1902,10 @@ int Ieee80211Mesh::getBestInterface(Ieee80211DataOrMgmtFrame *frame)
             it = itaux;
             itaux++;
         }
-        if (index==0)
+        int iface = frame->par("indexGate");
+        if (index == 0)
         {
-            if (frame->getKind() != it->second)
+            if (iface != it->second)
                 return it->second;
             else
             {
@@ -1913,7 +1928,7 @@ int Ieee80211Mesh::getBestInterface(Ieee80211DataOrMgmtFrame *frame)
                     ++it;
                     i--;
                 }
-            } while (it->second == frame->getKind());
+            } while (it->second == iface);
             return it->second;
         }
     }
@@ -1938,7 +1953,11 @@ int Ieee80211Mesh::getBestInterface(Ieee80211DataOrMgmtFrame *frame)
                 validInterface[i] = lastMessageReceived;
             if (macInterfaces[i]->getState() == Ieee80211Mac::IDLE)
                 return i;
-            if(queueSize >  macInterfaces[i]->getQueueSize() || (queueSize ==  macInterfaces[i]->getQueueSize() && bestQueue == frame->getKind() && i != bestQueue))
+            int macOut = 0;
+            if (frame->hasPar("indexGate"))
+                macOut = frame->par("indexGate");
+
+            if(queueSize >  macInterfaces[i]->getQueueSize() || (queueSize ==  macInterfaces[i]->getQueueSize() && bestQueue == macOut && i != bestQueue))
             {
                 queueSize = macInterfaces[i]->getQueueSize();
                 bestQueue = i;
@@ -2060,7 +2079,10 @@ void Ieee80211Mesh::handleEtxMessage(cPacket *pk)
     if (etxMsg)
     {
         Ieee80211DataFrame * frame = encapsulate(etxMsg,etxMsg->getDest());
-        frame->setKind(etxMsg->getKind());
+        if (!frame->hasPar("indexGate"))
+            frame->addPar("indexGate") = etxMsg->par("indexGate");
+        else
+            frame->par("indexGate") = etxMsg->par("indexGate");
         if (frame)
             sendOrEnqueue(frame);
     }
@@ -2236,7 +2258,6 @@ bool Ieee80211Mesh::selectGateWay(const L3Address &dest,MACAddress &gateway)
 void Ieee80211Mesh::handleWateGayDataReceive(cPacket *pkt)
 {
 
-    pkt->setKind(-1);
     if (dynamic_cast<Ieee80211ActionMeshFrame *>(pkt))
     {
         if ((routingModuleHwmp != NULL) && routingModuleHwmp->isOurType(pkt))

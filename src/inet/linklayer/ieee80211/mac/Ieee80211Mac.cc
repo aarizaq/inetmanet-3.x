@@ -22,10 +22,10 @@
 #include "inet/networklayer/common/IInterfaceTable.h"
 #include "inet/physicallayer/contract/RadioControlInfo_m.h"
 #include "inet/physicallayer/ieee80211/Ieee80211aControlInfo_m.h"
-#include "inet/linklayer/ieee80211/mac/Ieee80211eClassifier.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211DataRate.h"
 #include "inet/common/INETUtils.h"
 #include "inet/common/ModuleAccess.h"
+#include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtBase.h"
 
 namespace inet {
 
@@ -57,12 +57,6 @@ void Ieee80211Mac::initializeCategories()
     int numQueues = 1;
     if (queueModule)
         numQueues = queueModule->getNumQueues();
-
-    if (numQueues > 1)
-    {
-        const char *classifierClass = par("classifier");
-        classifier = check_and_cast<IQoSClassifier*>(createOne(classifierClass));
-    }
 
     for (int i = 0; i < numQueues; i++)
     {
@@ -114,7 +108,7 @@ void Ieee80211Mac::initializeCategories()
     }
 
     initialBackoffExponent = 0;
-    if (classifier == NULL)
+    if (numCategories()  == 1)
     {
         int val = 1;
         while (val < cwMinData)
@@ -182,10 +176,6 @@ void Ieee80211Mac::initializeCategories()
         WATCH(edcCAF[i].numDropped);
     for (int i=0; i<numCategories(); i++)
         WATCH_LIST(edcCAF[i].transmissionQueue);
-
-    if (classifier && dynamic_cast<Ieee80211eClassifier*>(classifier))
-        dynamic_cast<Ieee80211eClassifier*>(classifier)->setDefaultClass(defaultAC);
-
 }
 
 Ieee80211Mac::Ieee80211Mac()
@@ -197,7 +187,6 @@ Ieee80211Mac::Ieee80211Mac()
     endTXOP = NULL;
     mediumStateChange = NULL;
     pendingRadioConfigMsg = NULL;
-    classifier = NULL;
     queueMode = false;
     registerErrors = false;
 }
@@ -690,7 +679,9 @@ int Ieee80211Mac::mappingAccessCategory(Ieee80211DataOrMgmtFrame *frame)
 {
     bool isDataFrame = (dynamic_cast<Ieee80211DataFrame *>(frame) != NULL);
 
-    int tempAC = classifier ? classifier->classifyPacket(frame) : 0;
+    int tempAC = 0;
+    if (numCategories() > 1)
+        tempAC = frame->getKind();
 
     // check for queue overflow
     if (isDataFrame && maxQueueSize && (int)transmissionQueueSize() >= maxQueueSize) {
@@ -1582,7 +1573,7 @@ simtime_t Ieee80211Mac::computeBackoffPeriod(Ieee80211Frame *msg, int r)
     {
         ASSERT(0 <= r && r < transmissionLimit);
 
-        if (classifier == NULL)
+        if (numCategories()  == 1)
         {
             // Compute Backoff: 9.3.3 Random backoff time
             if (r == 0)
@@ -1640,7 +1631,7 @@ void Ieee80211Mac::cancelDIFSPeriod()
 void Ieee80211Mac::scheduleAIFSPeriod()
 {
     bool schedule = false;
-    if (classifier == NULL) //DCF
+    if (numCategories()  == 1) //DCF
     {
         currentAC = 0;
         if (!transmissionQueue(0)->empty() && !endAIFS(0)->isScheduled())
@@ -1898,29 +1889,33 @@ void Ieee80211Mac::sendDataFrame(Ieee80211DataOrMgmtFrame *frameToSend)
 {
     simtime_t t = 0, time = 0;
     int count = 0;
-    std::list<Ieee80211DataOrMgmtFrame*>::iterator frame;
+    Ieee80211DataOrMgmtFrame* frame;
+    Ieee80211MgmtBase * mgmt = check_and_cast<Ieee80211MgmtBase*>(queueModule);
 
-    frame = transmissionQueue()->begin();
-    ASSERT(*frame == frameToSend);
-    if (!txop && TXOP() > 0 && transmissionQueue()->size() >= 2 )
+
+    frame = transmissionQueue()->front();
+    ASSERT(frame == frameToSend);
+
+    int queueSize = (int) mgmt->getDataSize(currentAC) + (int) mgmt->getManagementSize();
+
+    if (!txop && TXOP() > 0 &&  queueSize> 1 )
     {
         //we start packet burst within TXOP time period
         txop = true;
+        count++;
+        t = computeFrameDuration(frame) + 2 * getSIFS() + controlFrameTxTime(LENGTH_ACK);
+        EV_DEBUG << "t is " << t << endl;
 
-        for (frame = transmissionQueue()->begin(); frame != transmissionQueue()->end(); ++frame)
+        int pos = 0;
+        while (TXOP() > time+t && pos < queueSize)
         {
+            time += t;
+            EV_DEBUG << "adding t \n";
+            frame = mgmt->getQueueElement(currentAC,pos);
+            pos++;
             count++;
-            t = computeFrameDuration(*frame) + 2 * getSIFS() + controlFrameTxTime(LENGTH_ACK);
+            t = computeFrameDuration(frame) + 2 * getSIFS() + controlFrameTxTime(LENGTH_ACK);
             EV_DEBUG << "t is " << t << endl;
-            if (TXOP()>time+t)
-            {
-                time += t;
-                EV_DEBUG << "adding t \n";
-            }
-            else
-            {
-                break;
-            }
         }
         //to be sure we get endTXOP earlier then receive ACK and we have to minus SIFS time from first packet
         time -= getSIFS()/2 + getSIFS();

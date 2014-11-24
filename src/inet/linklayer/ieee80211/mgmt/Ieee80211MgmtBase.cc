@@ -51,12 +51,12 @@ void Ieee80211MgmtBase::initialize(int stage)
         }
         dataQueue.resize(numQueues);
         packetRequestedCat.resize(numQueues-1);
-        mgmtQueue.setName("wlanMgmtQueue");
+        // mgmtQueue.setName("wlanMgmtQueue");
         int length = 0;
         if (numQueues == 1)
         {
-            dataQueue[0].setName("wlanDataQueue");
-            length = dataQueue[0].length();
+            // dataQueue[0].setName("wlanDataQueue");
+            length = dataQueue[0].size();
         }
         else
         {
@@ -65,8 +65,8 @@ void Ieee80211MgmtBase::initialize(int stage)
             for (int i = 0; i < numQueues; i++)
             {
                 str = "wlanDataQueue" + std::to_string(i);
-                dataQueue[i].setName(str.c_str());
-                length += dataQueue[i].length();
+                // dataQueue[i].setName(str.c_str());
+                length += dataQueue[i].size();
             }
             for (int i = 0; i < numQueues -1 ; i++)
                 packetRequestedCat[i] = 0;
@@ -152,6 +152,7 @@ void Ieee80211MgmtBase::sendOrEnqueue(cPacket *frame, const int &cat)
         emit(enqueuePkSignal, frame);
         emit(dequeuePkSignal, frame);
         emit(queueingTimeSignal, SIMTIME_ZERO);
+        frame->setKind(cat);
         sendOut (frame);
     }
     else
@@ -194,7 +195,8 @@ void Ieee80211MgmtBase::sendOrEnqueue(cPacket *frame)
 
 cMessage *Ieee80211MgmtBase::enqueue(cMessage *msg)
 {
-    ASSERT(dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg) != NULL);
+    Ieee80211DataOrMgmtFrame *frame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg);
+    ASSERT(frame != NULL);
     bool isDataFrame = dynamic_cast<Ieee80211DataFrame *>(msg) != NULL;
     int cat = 0;
 
@@ -205,18 +207,18 @@ cMessage *Ieee80211MgmtBase::enqueue(cMessage *msg)
 
     if (!isDataFrame) {
         // management frames are inserted into mgmtQueue
-        mgmtQueue.insert(msg);
+        mgmtQueue.push_back(frame);
         return NULL;
     }
-    else if (frameCapacity && dataQueue[cat].length() >= frameCapacity) {
+    else if (frameCapacity && (int) dataQueue[cat].size() >= frameCapacity) {
         EV << "Queue full, dropping packet.\n";
         return msg;
     }
     else {
-        dataQueue[cat].insert(msg);
+        dataQueue[cat].push_back(frame);
         int length = 0;
         for (int i = 0; i < numQueues; i++)
-            length += dataQueue[i].length();
+            length += dataQueue[i].size();
         emit(dataQueueLenSignal, length);
         return NULL;
     }
@@ -225,23 +227,24 @@ cMessage *Ieee80211MgmtBase::enqueue(cMessage *msg)
 
 cMessage *Ieee80211MgmtBase::enqueue(cMessage *msg, const int &cat)
 {
-    ASSERT(dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg) != NULL);
+    Ieee80211DataOrMgmtFrame *frame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg);
+    ASSERT(frame != NULL);
     bool isDataFrame = dynamic_cast<Ieee80211DataFrame *>(msg) != NULL;
 
     if (!isDataFrame) {
         // management frames are inserted into mgmtQueue
-        mgmtQueue.insert(msg);
+        mgmtQueue.push_back(frame);
         return NULL;
     }
-    else if (frameCapacity && dataQueue[cat].length() >= frameCapacity) {
+    else if (frameCapacity && (int) dataQueue[cat].size() >= frameCapacity) {
         EV << "Queue full, dropping packet.\n";
         return msg;
     }
     else {
-        dataQueue[cat].insert(msg);
+        dataQueue[cat].push_back(frame);
         int length = 0;
         for (int i = 0; i < numQueues; i++)
-            length += dataQueue[i].length();
+            length += dataQueue[i].size();
         emit(dataQueueLenSignal, length);
         return NULL;
     }
@@ -256,20 +259,26 @@ bool Ieee80211MgmtBase::isEmpty()
 
 cMessage *Ieee80211MgmtBase::dequeue()
 {
+    cMessage *pk;
     // management frames have priority
     if (!mgmtQueue.empty())
-        return (cMessage *)mgmtQueue.pop();
+    {
+        pk = (cMessage *)mgmtQueue.front();
+        mgmtQueue.pop_front();
+        return pk;
+    }
 
     // return a data frame if we have one
     if (dataQueue[0].empty())
         return NULL;
 
-    cMessage *pk = (cMessage *)dataQueue[0].pop();
+     pk = (cMessage *) dataQueue[0].front();
+     dataQueue[0].pop_front();
 
     // statistics
     int length = 0;
     for (int i = 0; i < numQueues; i++)
-        length += dataQueue[i].length();
+        length += dataQueue[i].size();
     emit(dataQueueLenSignal, length);
     return pk;
 }
@@ -288,26 +297,34 @@ void Ieee80211MgmtBase::requestPacket(const int &cat)
     else {
         emit(dequeuePkSignal, msg);
         emit(queueingTimeSignal, simTime() - msg->getArrivalTime());
+        msg->setKind(cat);
         sendOut(msg);
     }
 }
 
 cMessage *Ieee80211MgmtBase::dequeue(const int & cat)
 {
+    cMessage *pk;
     // management frames have priority
     if (!mgmtQueue.empty())
-        return (cMessage *)mgmtQueue.pop();
+    {
+        pk = (cMessage *)mgmtQueue.front();
+        mgmtQueue.pop_front();
+        return pk;
+    }
 
     // return a data frame if we have one
     if (dataQueue[cat].empty())
         return NULL;
 
-    cMessage *pk = (cMessage *)dataQueue[cat].pop();
+    pk = (cMessage *) dataQueue[cat].front();
+    dataQueue[0].pop_front();
+
 
     // statistics
     int length = 0;
     for (int i = 0; i < numQueues; i++)
-        length += dataQueue[i].length();
+        length += dataQueue[i].size();
     emit(dataQueueLenSignal, length);
     return pk;
 }
@@ -427,11 +444,35 @@ void Ieee80211MgmtBase::stop()
     for (int i = 0; i < numQueues; i++)
     {
         dataQueue[i].clear();
-        length += dataQueue[i].length();
+        length += dataQueue[i].size();
     }
     emit(dataQueueLenSignal, length);
     mgmtQueue.clear();
     isOperational = false;
+}
+
+Ieee80211DataOrMgmtFrame * Ieee80211MgmtBase::getQueueElement(const int &cat, const int &pos) const
+{
+    if (cat > (int) dataQueue.size())
+        return NULL;
+    if (pos < (int) mgmtQueue.size())
+    {
+        return mgmtQueue.at(pos);
+    }
+    if (pos >= (int) mgmtQueue.size() + (int) dataQueue[cat].size())
+        throw cRuntimeError("queue position doesn't exist");
+    return dataQueue[cat].at(pos-mgmtQueue.size());
+
+}
+
+unsigned int Ieee80211MgmtBase::getDataSize(const int &cat) const
+{
+    return dataQueue[cat].size();
+}
+
+unsigned int Ieee80211MgmtBase::getManagementSize() const
+{
+    return mgmtQueue.size();
 }
 
 } // namespace ieee80211

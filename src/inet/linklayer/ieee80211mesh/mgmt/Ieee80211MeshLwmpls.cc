@@ -1311,9 +1311,11 @@ void Ieee80211Mesh::mplsPurge(LWmpls_Forwarding_Structure *forwarding_ptr, bool 
 
     for (int i = 0; i < getNumQueues(); i++)
     {
-        for (cQueue::Iterator iter(dataQueue[i], 1); !iter.end();)
+
+
+        for (DataQueue::iterator iter = dataQueue[i].begin(); iter != dataQueue[i].begin();)
         {
-            cMessage *msg = (cMessage *) iter();
+            cMessage *msg = (cMessage *) *iter;
             purge = false;
             Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame*>(msg);
             if (frame == NULL)
@@ -1354,7 +1356,7 @@ void Ieee80211Mesh::mplsPurge(LWmpls_Forwarding_Structure *forwarding_ptr, bool 
                 }
                 if (purge == true)
                 {
-                    dataQueue[i].remove(msg);
+                    iter = dataQueue[i].erase(iter);
                     mplsmsg = dynamic_cast<LWMPLSPacket*>(decapsulate(frame));
                     delete msg;
                     if (mplsmsg)
@@ -1364,7 +1366,6 @@ void Ieee80211Mesh::mplsPurge(LWmpls_Forwarding_Structure *forwarding_ptr, bool 
                     }
                     else
                         delete mplsmsg;
-                    iter.init(dataQueue[i], 1);
                     continue;
                 }
                 else
