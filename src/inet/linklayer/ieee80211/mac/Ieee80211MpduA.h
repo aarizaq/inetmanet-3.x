@@ -22,7 +22,7 @@ namespace inet {
 namespace ieee80211 {
 
 
-class Ieee80211MpduA : public Ieee80211TwoAddressFrame
+class Ieee80211MpduA : public Ieee80211DataOrMgmtFrame
 {
 private:
     struct ShareStruct{
@@ -40,7 +40,7 @@ private:
 public:
     Ieee80211MpduA(const char *name=NULL, int kind=0);
     Ieee80211MpduA(Ieee80211MpduA &);
-    Ieee80211MpduA(Ieee80211TwoAddressFrame *);
+    Ieee80211MpduA(Ieee80211DataOrMgmtFrame *);
     virtual Ieee80211MpduA * dup(){return new Ieee80211MpduA(*this);}
     virtual ~Ieee80211MpduA();
     Ieee80211MpduA& operator=(const Ieee80211MpduA& msg);

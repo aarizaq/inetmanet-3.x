@@ -19,7 +19,7 @@
 #ifndef MULTIQUEUE_H_
 #define MULTIQUEUE_H_
 #include <vector>
-#include <list>
+#include <deque>
 #include <map>
 #include <utility>
 #include "inet/linklayer/ieee80211/mac/IQoSClassifier.h"
@@ -52,15 +52,16 @@ class INET_API MpduAggregateHandler : public cObject
            };
     protected:
         typedef std::map<MACAddress,int> NumFramesDestination;
+        typedef std::deque<Ieee80211DataOrMgmtFrame *> DataQueue;
         class CategotyInfo
         {
             public:
-            cQueue*  queue;
-            int queueSize;
-            NumFramesDestination numFramesDestination;
-            NumFramesDestination numFramesDestinationFree;
+                DataQueue*  queue;
+                int queueSize;
+                NumFramesDestination numFramesDestination;
+                NumFramesDestination numFramesDestinationFree;
         };
-        cQueue*  queueManagement;
+        DataQueue*  queueManagement;
 
         State state;
         simtime_t blockState;

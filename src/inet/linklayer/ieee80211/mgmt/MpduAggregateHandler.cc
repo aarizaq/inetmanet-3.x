@@ -14,7 +14,7 @@
 // 
 
 #include "inet/linklayer/ieee80211/mgmt/MpduAggregateHandler.h"
-#include "inet/linklayer/ieee80211/mac/FrameBlock.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MpduA.h"
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtFrames_m.h"
 
 namespace inet {
@@ -182,10 +182,9 @@ void MpduAggregateHandler::createBlocks(const MACAddress &addr, int cat)
     if (cat == -1)
         cat = categories.size()-1;
 
-    cQueue::Iterator it(*(categories[cat].queue));
-
-    if (it.end())
+    if (categories[cat].queue->empty())
         return;
+
     Ieee80211MpduA *block = NULL;
 
     NumFramesDestination::iterator itDest2 = categories[cat].numFramesDestinationFree.find(addr);
@@ -193,22 +192,31 @@ void MpduAggregateHandler::createBlocks(const MACAddress &addr, int cat)
         return; // non free
 
 
-    while (!it.end())
+    DataQueue::iterator itAux = categories[cat].queue->end();
+    for (DataQueue::iterator it = categories[cat].queue->begin() ;it != categories[cat].queue->end();)
     {
-        Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame*>(it());
+        Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame*>(*it);
         if (frame == NULL || !frame->getReceiverAddress().compareTo(addr))
         {
-            it++;
+            ++it;
             continue;
         }
-        it++;
+
 
         if (!block)
         {
             block = new Ieee80211MpduA();
-            categories[cat].queue->insertBefore(frame,block);
+            if (itAux == categories[cat].queue->end())
+                *it = block;
+            else
+            {
+                ++itAux;
+                categories[cat].queue->insert(itAux,block);
+                it = categories[cat].queue->erase(it);
+            }
         }
-        frame = check_and_cast<Ieee80211DataFrame *>(categories[cat].queue->remove(frame));
+        else
+            it = categories[cat].queue->erase(it);
         block->pushBack(frame);
         itDest2->second--;
         if (itDest2->second <= 0)
@@ -216,10 +224,10 @@ void MpduAggregateHandler::createBlocks(const MACAddress &addr, int cat)
             categories[cat].numFramesDestinationFree.erase(itDest2);
             return;
         }
-        if (it.end())
-            return;
+
         if (block->getEncapSize() >= MAXBLOCK)
         {
+            itAux = it;
             block = NULL;
             if (itDest2->second < MINBLOCK)
                 return;
@@ -242,10 +250,10 @@ void MpduAggregateHandler::prepareADDBA(const int &cat)
     {
         // create ADDBA frame
         Ieee80211ActionBlockAckADDBA * addbaFrame = new Ieee80211ActionBlockAckADDBA();
-        Ieee80211TwoAddressFrame *frame = new Ieee80211TwoAddressFrame();
+        Ieee80211DataOrMgmtFrame *frame = new Ieee80211DataOrMgmtFrame();
         frame->encapsulate(addbaFrame);
         frame->setReceiverAddress(addr);
-        queueManagement->insert(frame);
+        queueManagement->push_back(frame);
         return;
     }
 }

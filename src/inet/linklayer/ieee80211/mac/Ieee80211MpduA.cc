@@ -13,7 +13,7 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-#include "inet/linklayer/ieee80211/mac/FrameBlock.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MpduA.h"
 
 //#define SHAREDBLOCK
 
@@ -50,21 +50,21 @@ Ieee80211MpduA::~Ieee80211MpduA()
     _deleteEncapVector();
 }
 
-Ieee80211MpduA::Ieee80211MpduA(Ieee80211TwoAddressFrame *frame) :
-        Ieee80211TwoAddressFrame(*frame)
+Ieee80211MpduA::Ieee80211MpduA(Ieee80211DataOrMgmtFrame *frame) :
+        Ieee80211DataOrMgmtFrame(*frame)
 {
     encapsulateVector.clear();
     pushBack(frame);
 }
 
 Ieee80211MpduA::Ieee80211MpduA(const char *name, int kind) :
-        Ieee80211TwoAddressFrame(name, kind)
+        Ieee80211DataOrMgmtFrame(name, kind)
 {
     encapsulateVector.clear();
 }
 
 Ieee80211MpduA::Ieee80211MpduA(Ieee80211MpduA &other) :
-        Ieee80211TwoAddressFrame()
+        Ieee80211DataOrMgmtFrame()
 {
     encapsulateVector.clear();
     setName(other.getName());
