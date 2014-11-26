@@ -38,19 +38,39 @@ MpduAggregateHandler::MpduAggregateHandler()
 
 bool MpduAggregateHandler::isAllowAddress(const MACAddress &add)
 {
-    std::map<MACAddress,ADDBAInfo>::iterator it = listAllowAddress.find(add);
+    std::map<MACAddress,ADDBAInfo *>::iterator it = listAllowAddress.find(add);
     if (it == listAllowAddress.end())
         return false;
     return true;
 }
 
-bool MpduAggregateHandler::isAllowAddress(const MACAddress &add, ADDBAInfo &iaddai)
+bool MpduAggregateHandler::isAllowAddress(const MACAddress &add, ADDBAInfo *&addai)
 {
-    std::map<MACAddress,ADDBAInfo>::iterator it = listAllowAddress.find(add);
+    std::map<MACAddress,ADDBAInfo *>::iterator it = listAllowAddress.find(add);
+    addai = nullptr;
     if (it == listAllowAddress.end())
         return false;
-    iaddai = it->second;
+    addai = it->second;
     return true;
+}
+
+void MpduAggregateHandler::setADDBAInfo(const MACAddress &addr, ADDBAInfo *p)
+{
+    std::map<MACAddress,ADDBAInfo *>::iterator it = listAllowAddress.find(addr);
+    if (it != listAllowAddress.end())
+    {
+        delete it->second;
+        it->second = p;
+    }
+    else
+    {
+        listAllowAddress[addr] = p;
+    }
+}
+
+bool MpduAggregateHandler::checkState(const Ieee80211DataOrMgmtFrame * pkt)
+{
+    return checkState(pkt->getReceiverAddress());
 }
 
 bool MpduAggregateHandler::checkState(const MACAddress &add)
@@ -61,7 +81,7 @@ bool MpduAggregateHandler::checkState(const MACAddress &add)
 
     double blockAckTimeout = DEFAULT_BL_ACK;
     double aDDBAFailureTimeout = DEFAULT_FALIURE;
-    std::map<MACAddress,ADDBAInfo>::iterator it = listAllowAddress.find(add);
+    std::map<MACAddress,ADDBAInfo *>::iterator it = listAllowAddress.find(add);
     unsigned short BlockAckTimeout;
     unsigned short ADDBAFailureTimeout;
     if (it == listAllowAddress.end())
@@ -80,7 +100,7 @@ bool MpduAggregateHandler::checkState(const MACAddress &add)
 }
 
 
-void MpduAggregateHandler::increaseSize(Ieee80211TwoAddressFrame* val, int cat)
+void MpduAggregateHandler::increaseSize(Ieee80211DataOrMgmtFrame* val, int cat)
 {
     Ieee80211MpduA * block = dynamic_cast<Ieee80211MpduA *>(val);
     NumFramesDestination::iterator it = categories[cat].numFramesDestination.find(val->getReceiverAddress());
@@ -91,7 +111,7 @@ void MpduAggregateHandler::increaseSize(Ieee80211TwoAddressFrame* val, int cat)
     }
 
     NumFramesDestination::iterator it2 = categories[cat].numFramesDestinationFree.find(val->getReceiverAddress());
-    if (it2 == categories[cat].numFramesDestinationFree.end() && block == NULL)
+    if (it2 == categories[cat].numFramesDestinationFree.end() && block == nullptr)
     {
         categories[cat].numFramesDestinationFree[val->getReceiverAddress()] = 0;
         it2 = categories[cat].numFramesDestinationFree.find(val->getReceiverAddress());
@@ -108,7 +128,7 @@ void MpduAggregateHandler::increaseSize(Ieee80211TwoAddressFrame* val, int cat)
     }
 }
 
-void MpduAggregateHandler::decreaseSize(Ieee80211TwoAddressFrame* val, int cat)
+void MpduAggregateHandler::decreaseSize(Ieee80211DataOrMgmtFrame* val, int cat)
 {
     Ieee80211MpduA * block = dynamic_cast<Ieee80211MpduA *>(val);
     NumFramesDestination::iterator it = categories[cat].numFramesDestination.find(val->getReceiverAddress());
@@ -116,7 +136,7 @@ void MpduAggregateHandler::decreaseSize(Ieee80211TwoAddressFrame* val, int cat)
         throw cRuntimeError("Multi queue error address not found");
 
     NumFramesDestination::iterator it2 = categories[cat].numFramesDestinationFree.find(val->getReceiverAddress());
-    if (it2 == categories[cat].numFramesDestinationFree.end() && block == NULL)
+    if (it2 == categories[cat].numFramesDestinationFree.end() && block == nullptr)
         throw cRuntimeError("Multi queue error address not found");
 
     if (block) {
@@ -185,7 +205,7 @@ void MpduAggregateHandler::createBlocks(const MACAddress &addr, int cat)
     if (categories[cat].queue->empty())
         return;
 
-    Ieee80211MpduA *block = NULL;
+    Ieee80211MpduA *block = nullptr;
 
     NumFramesDestination::iterator itDest2 = categories[cat].numFramesDestinationFree.find(addr);
     if (itDest2 != categories[cat].numFramesDestinationFree.end())
@@ -196,7 +216,7 @@ void MpduAggregateHandler::createBlocks(const MACAddress &addr, int cat)
     for (DataQueue::iterator it = categories[cat].queue->begin() ;it != categories[cat].queue->end();)
     {
         Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame*>(*it);
-        if (frame == NULL || !frame->getReceiverAddress().compareTo(addr))
+        if (frame == nullptr || !frame->getReceiverAddress().compareTo(addr))
         {
             ++it;
             continue;
@@ -228,12 +248,13 @@ void MpduAggregateHandler::createBlocks(const MACAddress &addr, int cat)
         if (block->getEncapSize() >= MAXBLOCK)
         {
             itAux = it;
-            block = NULL;
+            block = nullptr;
             if (itDest2->second < MINBLOCK)
                 return;
         }
     }
 }
+
 
 void MpduAggregateHandler::prepareADDBA(const int &cat)
 {
@@ -246,6 +267,7 @@ void MpduAggregateHandler::prepareADDBA(const int &cat)
     addr = frame->getReceiverAddress();
     if (!allAddress && !isAllowAddress(addr))
         return;
+
     if (findAddressFree(addr) >= MINBLOCK)
     {
         // create ADDBA frame
@@ -256,6 +278,63 @@ void MpduAggregateHandler::prepareADDBA(const int &cat)
         queueManagement->push_back(frame);
         return;
     }
+}
+
+void MpduAggregateHandler::prepareADDBA(const int &cat, const MACAddress &addr)
+{
+
+    if (!allAddress && !isAllowAddress(addr))
+        return;
+
+    if (findAddressFree(addr) >= MINBLOCK)
+    {
+        // create ADDBA frame
+        Ieee80211ActionBlockAckADDBA * addbaFrame = new Ieee80211ActionBlockAckADDBA();
+        Ieee80211ADDBAFrameBody body;
+        body.setAction(ADDBArequest);
+        body.setTimeOut(1000);
+        Ieee80211DataOrMgmtFrame *frame = new Ieee80211DataOrMgmtFrame();
+        frame->encapsulate(addbaFrame);
+        frame->setReceiverAddress(addr);
+        queueManagement->push_back(frame);
+        ADDBAInfo *info;
+        if (!isAllowAddress(addr, info))
+        {
+            info = new ADDBAInfo();
+            setADDBAInfo(addr,info);
+        }
+        info->state = WAITCONFIRMATION;
+        return;
+    }
+}
+
+bool MpduAggregateHandler::handleADDBA(Ieee80211DataOrMgmtFrame *pkt)
+{
+    Ieee80211ActionBlockAckADDBA * addbaFrame = dynamic_cast<Ieee80211ActionBlockAckADDBA *>(pkt->getEncapsulatedPacket());
+    if (addbaFrame == nullptr)
+        return false;
+    // extract data
+    MACAddress addr = pkt->getTransmitterAddress();
+    if (addbaFrame->getBody().getAction() == ADDBArequest)
+    {
+        pkt->setReceiverAddress(pkt->getTransmitterAddress());
+        addbaFrame->getBody().setAction(ADDBAReponse);
+        queueManagement->push_back(pkt);
+    }
+    else if (addbaFrame->getBody().getAction() == ADDBAReponse)
+    {
+        ADDBAInfo *info;
+        if (!isAllowAddress(addr, info))
+            throw cRuntimeError("ADDBAInfo not found");
+
+        info->state = SENDBLOCK;
+        info->bytesSend = 0;
+        info->startBlockAck = simTime();
+
+        createBlocks(addr);
+        delete pkt;
+    }
+    return true;
 }
 
 

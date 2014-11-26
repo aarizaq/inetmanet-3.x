@@ -37,7 +37,6 @@
 
 #include "inet/linklayer/ieee80211/mac/IQoSClassifier.h"
 
-#include "inet/linklayer/ieee80211/mac/FrameBlock.h"
 
 namespace inet {
 

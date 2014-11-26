@@ -16,13 +16,14 @@
 //
 
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtBase.h"
-
 #include "inet/linklayer/common/Ieee802Ctrl.h"
 #include "inet/common/lifecycle/LifecycleOperation.h"
 #include "inet/common/ModuleAccess.h"
 #include "inet/common/lifecycle/NodeOperations.h"
 #include "inet/common/lifecycle/NodeStatus.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211eClassifier.h"
+#include "inet/linklayer/ieee80211/mgmt/MpduAggregateHandler.h"
+
 #include <string>
 
 namespace inet {
@@ -259,27 +260,28 @@ bool Ieee80211MgmtBase::isEmpty()
 
 cMessage *Ieee80211MgmtBase::dequeue()
 {
-    cMessage *pk;
+    Ieee80211DataOrMgmtFrame *pk = nullptr;
     // management frames have priority
     if (!mgmtQueue.empty())
     {
-        pk = (cMessage *)mgmtQueue.front();
+        pk = mgmtQueue.front();
         mgmtQueue.pop_front();
-        return pk;
     }
+    else if (!dataQueue[0].empty())
+    {
+        // return a data frame if we have one
+        pk =  dataQueue[0].front();
+        dataQueue[0].pop_front();
+        // statistics
+        int length = 0;
+        for (int i = 0; i < numQueues; i++)
+            length += dataQueue[i].size();
+        emit(dataQueueLenSignal, length);
+    }
+    if (mpduAggregateHandler)
+        mpduAggregateHandler->checkState(pk);
 
-    // return a data frame if we have one
-    if (dataQueue[0].empty())
-        return NULL;
 
-     pk = (cMessage *) dataQueue[0].front();
-     dataQueue[0].pop_front();
-
-    // statistics
-    int length = 0;
-    for (int i = 0; i < numQueues; i++)
-        length += dataQueue[i].size();
-    emit(dataQueueLenSignal, length);
     return pk;
 }
 
@@ -304,28 +306,23 @@ void Ieee80211MgmtBase::requestPacket(const int &cat)
 
 cMessage *Ieee80211MgmtBase::dequeue(const int & cat)
 {
-    cMessage *pk;
+    cMessage *pk = nullptr;
     // management frames have priority
     if (!mgmtQueue.empty())
     {
         pk = (cMessage *)mgmtQueue.front();
         mgmtQueue.pop_front();
-        return pk;
     }
-
-    // return a data frame if we have one
-    if (dataQueue[cat].empty())
-        return NULL;
-
-    pk = (cMessage *) dataQueue[cat].front();
-    dataQueue[0].pop_front();
-
-
-    // statistics
-    int length = 0;
-    for (int i = 0; i < numQueues; i++)
-        length += dataQueue[i].size();
-    emit(dataQueueLenSignal, length);
+    else if (!dataQueue[cat].empty())
+    {
+        pk = (cMessage *) dataQueue[cat].front();
+        dataQueue[0].pop_front();
+        // statistics
+        int length = 0;
+        for (int i = 0; i < numQueues; i++)
+            length += dataQueue[i].size();
+        emit(dataQueueLenSignal, length);
+    }
     return pk;
 }
 

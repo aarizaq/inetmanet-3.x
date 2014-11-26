@@ -39,6 +39,8 @@ namespace ieee80211 {
  *
  * @author Andras Varga
  */
+class MpduAggregateHandler;
+
 class INET_API Ieee80211MgmtBase : public PassiveQueueBase, public ILifecycle
 {
   protected:
@@ -63,6 +65,7 @@ class INET_API Ieee80211MgmtBase : public PassiveQueueBase, public ILifecycle
 
     IQoSClassifier * classifier;
     int numQueues;
+    MpduAggregateHandler *mpduAggregateHandler = nullptr;
 
   protected:
     virtual int numInitStages() const { return NUM_INIT_STAGES; }
@@ -86,15 +89,6 @@ class INET_API Ieee80211MgmtBase : public PassiveQueueBase, public ILifecycle
     /** utility method handle requested multi queue packets **/
     virtual void sendOrEnqueue(cPacket *frame, const int &);
 
-    /** Redefined from PassiveQueueBase. */
-    virtual cMessage *enqueue(cMessage *msg);
-
-    /** Redefined from PassiveQueueBase. */
-    virtual cMessage *dequeue();
-
-    /** Redefined from IPassiveQueue. */
-    virtual bool isEmpty();
-
     /** Redefined from PassiveQueueBase: send message to MAC */
     virtual void sendOut(cMessage *msg);
 
@@ -106,12 +100,6 @@ class INET_API Ieee80211MgmtBase : public PassiveQueueBase, public ILifecycle
 
     /** Dispatch to frame processing methods according to frame type */
     virtual void processFrame(Ieee80211DataOrMgmtFrame *frame);
-
-    // * multi queue methods
-    virtual int getNumQueues() {return numQueues;}
-    virtual void requestPacket(const int&);
-    virtual cMessage *dequeue(const int&);
-    virtual cMessage *enqueue(cMessage *, const int &);
 
     /** @name Processing of different frame types */
     //@{
@@ -140,6 +128,21 @@ class INET_API Ieee80211MgmtBase : public PassiveQueueBase, public ILifecycle
     //@}
   public:
     // access queue information
+    /** Redefined from PassiveQueueBase. */
+    virtual cMessage *enqueue(cMessage *msg);
+
+    /** Redefined from PassiveQueueBase. */
+    virtual cMessage *dequeue();
+
+    /** Redefined from IPassiveQueue. */
+    virtual bool isEmpty();
+
+    // * multi queue methods
+    virtual int getNumQueues() {return numQueues;}
+    virtual void requestPacket(const int&);
+    virtual cMessage *dequeue(const int&);
+    virtual cMessage *enqueue(cMessage *, const int &);
+
     virtual Ieee80211DataOrMgmtFrame *getQueueElement(const int &, const int &) const;
     virtual unsigned int getDataSize(const int &cat) const;
     virtual unsigned int getManagementSize() const;
