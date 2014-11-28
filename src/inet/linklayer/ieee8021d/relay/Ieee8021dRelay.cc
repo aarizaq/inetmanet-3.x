@@ -42,7 +42,7 @@ void Ieee8021dRelay::initialize(int stage)
         // number of ports
         portCount = gate("ifOut", 0)->size();
         if (gate("ifIn", 0)->size() != (int)portCount)
-            error("the sizes of the ifIn[] and ifOut[] gate vectors must be the same");
+            throw cRuntimeError("the sizes of the ifIn[] and ifOut[] gate vectors must be the same");
     }
     else if (stage == INITSTAGE_LINK_LAYER_2) {
         NodeStatus *nodeStatus = dynamic_cast<NodeStatus *>(findContainingNode(this)->getSubmodule("status"));
@@ -184,7 +184,7 @@ void Ieee8021dRelay::learn(EtherFrame *frame)
 
 void Ieee8021dRelay::dispatchBPDU(BPDU *bpdu)
 {
-    Ieee802Ctrl *controlInfo = dynamic_cast<Ieee802Ctrl *>(bpdu->removeControlInfo());
+    Ieee802Ctrl *controlInfo = check_and_cast<Ieee802Ctrl *>(bpdu->removeControlInfo());
     unsigned int portNum = controlInfo->getSwitchPort();
     MACAddress address = controlInfo->getDest();
     delete controlInfo;
@@ -295,17 +295,17 @@ bool Ieee8021dRelay::handleOperationStage(LifecycleOperation *operation, int sta
     Enter_Method_Silent();
 
     if (dynamic_cast<NodeStartOperation *>(operation)) {
-        if (stage == NodeStartOperation::STAGE_LINK_LAYER) {
+        if ((NodeStartOperation::Stage)stage == NodeStartOperation::STAGE_LINK_LAYER) {
             start();
         }
     }
     else if (dynamic_cast<NodeShutdownOperation *>(operation)) {
-        if (stage == NodeShutdownOperation::STAGE_LINK_LAYER) {
+        if ((NodeShutdownOperation::Stage)stage == NodeShutdownOperation::STAGE_LINK_LAYER) {
             stop();
         }
     }
     else if (dynamic_cast<NodeCrashOperation *>(operation)) {
-        if (stage == NodeCrashOperation::STAGE_CRASH) {
+        if ((NodeCrashOperation::Stage)stage == NodeCrashOperation::STAGE_CRASH) {
             stop();
         }
     }

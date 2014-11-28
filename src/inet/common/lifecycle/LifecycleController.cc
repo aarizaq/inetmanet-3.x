@@ -109,6 +109,7 @@ bool LifecycleController::resumeOperation(LifecycleOperation *operation)
     // done: invoke callback (unless we are still under initiateOperation())
     if (operation->operationCompletionCallback && !operation->insideInitiateOperation)
         operation->operationCompletionCallback->invoke();
+    delete operation;
     return true;    // done
 }
 
@@ -138,9 +139,10 @@ void LifecycleController::moduleOperationStageCompleted(Callback *callback)
     Enter_Method_Silent();
 
     LifecycleOperation *operation = callback->operation;
+    std::string moduleFullPath = callback->module->getFullPath();
     vector_delete_element(operation->pendingList, (IDoneCallback *)callback);
 
-    EV << "Module " << callback->module->getFullPath() << " completed stage "
+    EV << "Module " << moduleFullPath << " completed stage "
        << operation->currentStage << " of operation " << operation->getClassName() << ", "
        << operation->pendingList.size() << " more module(s) pending"
        << (operation->pendingList.empty() ? ", stage completed" : "") << endl;

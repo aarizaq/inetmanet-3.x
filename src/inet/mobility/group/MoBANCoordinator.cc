@@ -51,6 +51,30 @@ namespace inet {
 
 Define_Module(MoBANCoordinator);
 
+MoBANCoordinator::MoBANCoordinator() :
+        speed(0),
+        maxSpeed(0),
+        logfile(NULL),
+        numPostures(0),
+        currentPosture(NULL),
+        useMobilityPattern(false),
+        mobilityPattern(NULL),
+        patternLength(0),
+        currentPattern(-1),
+        markovMatrix(NULL),
+        postureSelStrategy(MoBANCoordinator::posture_sel_type(-1)),
+        transitions(NULL)
+{
+}
+
+MoBANCoordinator::~MoBANCoordinator()
+{
+    delete transitions;
+    delete [] mobilityPattern;
+    for (unsigned int i = 0; i < postureList.size(); i++)
+        delete postureList[i];
+}
+
 void MoBANCoordinator::initialize(int stage)
 {
     LineSegmentsMobilityBase::initialize(stage);
@@ -348,7 +372,7 @@ bool MoBANCoordinator::readPostureSpecificationFile()
         str = (*posture)->getAttribute("postureID");
         postureID = strtol(str, 0, 0);
         if (postureID < 0 || postureID >= numPostures)
-            error("Posture ID in input posture specification file is out of the range");
+            throw cRuntimeError("Posture ID in input posture specification file is out of the range");
 
         postureList.push_back(new Posture(postureID, localModules.size()));
 
@@ -367,7 +391,7 @@ bool MoBANCoordinator::readPostureSpecificationFile()
 
         nodeParameters = (*posture)->getElementsByTagName("nodeParameters");
         if (nodeParameters.size() != localModules.size())
-            error("Some nodes may not have specified parameters in a posture in input posture specification file");
+            throw cRuntimeError("Some nodes may not have specified parameters in a posture in input posture specification file");
 
         cXMLElementList::const_iterator param;
         for (param = nodeParameters.begin(); param != nodeParameters.end(); param++) {
@@ -513,7 +537,7 @@ bool MoBANCoordinator::readConfigurationFile()
             sstr = (*matrixTag)->getAttribute("type");
             if (sstr == "Default" || sstr == "default") {
                 if (setDefault)
-                    error("There are more than one default matrix defined in the configuration file!");
+                    throw cRuntimeError("There are more than one default matrix defined in the configuration file!");
                 else {
                     setDefault = true;
                     thisDefault = true;
@@ -572,7 +596,7 @@ bool MoBANCoordinator::readConfigurationFile()
         cXMLElementList typeList = tempTag->getElementsByTagName("areaType");
 
         if (typeList.empty())
-            error("No areaType has been defined in areaTypes!");
+            throw cRuntimeError("No areaType has been defined in areaTypes!");
 
         for (cXMLElementList::const_iterator aType = typeList.begin(); aType != typeList.end(); aType++) {
             sstr = (*aType)->getAttribute("name");
@@ -583,7 +607,7 @@ bool MoBANCoordinator::readConfigurationFile()
 
             cXMLElementList boundList = (*aType)->getElementsByTagName("boundary");
             if (boundList.empty())
-                error("No boundary is given for a area type!");
+                throw cRuntimeError("No boundary is given for a area type!");
 
             Coord minBound, maxBound;
             for (cXMLElementList::const_iterator aBound = boundList.begin(); aBound != boundList.end(); aBound++) {
@@ -618,7 +642,7 @@ bool MoBANCoordinator::readConfigurationFile()
         cXMLElementList typeList = tempTag->getElementsByTagName("timeDomain");
 
         if (typeList.empty())
-            error("No timeDomain has been defined in timeDomains!");
+            throw cRuntimeError("No timeDomain has been defined in timeDomains!");
 
         for (cXMLElementList::const_iterator aType = typeList.begin(); aType != typeList.end(); aType++) {
             sstr = (*aType)->getAttribute("name");
@@ -629,7 +653,7 @@ bool MoBANCoordinator::readConfigurationFile()
 
             cXMLElementList boundList = (*aType)->getElementsByTagName("boundary");
             if (boundList.empty())
-                error("No boundary is given for a time domain!");
+                throw cRuntimeError("No boundary is given for a time domain!");
 
             simtime_t minTime, maxTime;
             for (cXMLElementList::const_iterator aBound = boundList.begin(); aBound != boundList.end(); aBound++) {
@@ -654,7 +678,7 @@ bool MoBANCoordinator::readConfigurationFile()
         cXMLElementList combList = tempTag->getElementsByTagName("combination");
 
         if (combList.empty())
-            error("No combination has been defined in combinations!");
+            throw cRuntimeError("No combination has been defined in combinations!");
 
         EV_DEBUG << "Combinations: " << endl;
 

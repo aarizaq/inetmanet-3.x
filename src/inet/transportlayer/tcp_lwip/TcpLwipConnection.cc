@@ -81,7 +81,7 @@ TcpLwipConnection::TcpLwipConnection(TCP_lwIP& tcpLwipP, int connIdP, int gateIn
     onCloseM(false),
     statsM(NULL)
 {
-    pcbM = tcpLwipM.getLwipTcpLayer()->tcp_new();
+    pcbM = tcpLwipM.getLwipTcpLayer()->tcp_new();       //FIXME memory leak
     ASSERT(pcbM);
 
     pcbM->callback_arg = this;
@@ -121,6 +121,7 @@ TcpLwipConnection::~TcpLwipConnection()
 {
     if (pcbM)
         pcbM->callback_arg = NULL;
+    //FIXME memory leak, who will free pcbM?
 
     delete receiveQueueM;
     delete sendQueueM;

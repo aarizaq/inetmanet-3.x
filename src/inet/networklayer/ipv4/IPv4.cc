@@ -50,6 +50,34 @@ Define_Module(IPv4);
 
 #define NEWFRAGMENT
 simsignal_t IPv4::iPv4PromiscousPacket = registerSignal("iPv4PromiscousPacket");
+IPv4::IPv4() :
+    rt(NULL),
+    ift(NULL),
+    arp(NULL),
+    icmp(NULL),
+    arpInGate(NULL),
+    arpOutGate(NULL),
+    transportInGateBaseId(-1),
+    queueOutGateBaseId(-1),
+    defaultTimeToLive(-1),
+    defaultMCTimeToLive(-1),
+    forceBroadcast(false),
+    useProxyARP(false),
+    isUp(true),
+    curFragmentId(-1),
+    numMulticast(0),
+    numLocalDeliver(0),
+    numDropped(0),
+    numUnroutable(0),
+    numForwarded(0),
+    isDsr(false)
+{
+}
+
+IPv4::~IPv4()
+{
+    flush();
+}
 
 void IPv4::initialize(int stage)
 {
@@ -93,7 +121,6 @@ void IPv4::initialize(int stage)
         WATCH(numUnroutable);
         WATCH(numForwarded);
         WATCH_MAP(pendingPackets);
-        isDsr = false;
     }
     else if (stage == INITSTAGE_NETWORK_LAYER) {
         isUp = isNodeUp();

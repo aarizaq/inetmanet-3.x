@@ -433,6 +433,26 @@ void Ieee80211MgmtBase::start()
     isOperational = true;
 }
 
+void Ieee80211MgmtBase::clear()
+{
+    cMessage *msg;
+    for (int i = 0 ; i < numQueues; i++)
+    {
+        while (NULL != (msg = dequeue(i)))
+            delete msg;
+        packetRequestedCat[i] = 0;
+    }
+}
+
+void Ieee80211MgmtBase::clear(const int & category)
+{
+    cMessage *msg;
+    while (NULL != (msg = dequeue(category)))
+          delete msg;
+    packetRequestedCat[category] = 0;
+}
+
+
 void Ieee80211MgmtBase::stop()
 {
     clear();
@@ -470,6 +490,12 @@ unsigned int Ieee80211MgmtBase::getDataSize(const int &cat) const
 unsigned int Ieee80211MgmtBase::getManagementSize() const
 {
     return mgmtQueue.size();
+}
+
+cMessage * Ieee80211MgmtBase::pop(const int& cat) {
+    cMessage *msg = dataQueue[cat].front();
+    dataQueue[cat].pop_front();
+    return msg;
 }
 
 } // namespace ieee80211

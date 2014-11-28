@@ -26,6 +26,7 @@
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtFrames_m.h"
 #include "inet/common/lifecycle/ILifecycle.h"
 #include "inet/linklayer/ieee80211/mac/IQoSClassifier.h"
+#include "inet/linklayer/ieee80211/mgmt/Ieee80211PassiveQueue.h"
 #include <deque>
 
 namespace inet {
@@ -41,7 +42,7 @@ namespace ieee80211 {
  */
 class MpduAggregateHandler;
 
-class INET_API Ieee80211MgmtBase : public PassiveQueueBase, public ILifecycle
+class INET_API Ieee80211MgmtBase : public Ieee80211PassiveQueue, public ILifecycle
 {
   protected:
     // configuration
@@ -123,6 +124,9 @@ class INET_API Ieee80211MgmtBase : public PassiveQueueBase, public ILifecycle
     virtual void start();
     virtual void stop();
 
+    virtual void clear();
+    virtual void clear(const int &);
+
   public:
     virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback);
     //@}
@@ -136,12 +140,16 @@ class INET_API Ieee80211MgmtBase : public PassiveQueueBase, public ILifecycle
 
     /** Redefined from IPassiveQueue. */
     virtual bool isEmpty();
+    virtual bool isEmpty(const int&) {return dataQueue.empty();}
+
 
     // * multi queue methods
     virtual int getNumQueues() {return numQueues;}
+    virtual int getNumPendingRequests(const int& cat) {return packetRequestedCat[cat];}
     virtual void requestPacket(const int&);
     virtual cMessage *dequeue(const int&);
     virtual cMessage *enqueue(cMessage *, const int &);
+    virtual cMessage *pop(const int&);
 
     virtual Ieee80211DataOrMgmtFrame *getQueueElement(const int &, const int &) const;
     virtual unsigned int getDataSize(const int &cat) const;

@@ -76,26 +76,37 @@ bool MpduAggregateHandler::checkState(const Ieee80211DataOrMgmtFrame * pkt)
 bool MpduAggregateHandler::checkState(const MACAddress &add)
 {
 
-    if (state != WAITBLOCK && state != SENDBLOCK)
+    ADDBAInfo *addai;
+    if (!isAllowAddress(add, addai))
+        return false;
+
+    if (addai->state != WAITBLOCK && addai->state != SENDBLOCK)
         return false;
 
     double blockAckTimeout = DEFAULT_BL_ACK;
     double aDDBAFailureTimeout = DEFAULT_FALIURE;
+
     std::map<MACAddress,ADDBAInfo *>::iterator it = listAllowAddress.find(add);
     unsigned short BlockAckTimeout;
     unsigned short ADDBAFailureTimeout;
     if (it == listAllowAddress.end())
         return false;
 
-    if (state == WAITBLOCK && simTime() - blockState > blockAckTimeout)
+    if (addai->state == WAITBLOCK && simTime() - addai->startBlockAck > blockAckTimeout)
     {
-
+        // reset state
 
     }
-    if (state == WAITBLOCK || state == SENDBLOCK)
+    else if (addai->state == SENDBLOCK && - addai->startBlockAck > blockAckTimeout )
     {
+        // reset state
 
     }
+    else if (addai->state == SENDBLOCK)
+    {
+        // check if more block are possible
+    }
+
     return false;
 }
 
@@ -259,25 +270,10 @@ void MpduAggregateHandler::createBlocks(const MACAddress &addr, int cat)
 void MpduAggregateHandler::prepareADDBA(const int &cat)
 {
 
-    if (!allAddress && listAllowAddress.empty())
-        return;
-
     MACAddress addr;
     Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame*>(categories[cat].queue->front());
     addr = frame->getReceiverAddress();
-    if (!allAddress && !isAllowAddress(addr))
-        return;
-
-    if (findAddressFree(addr) >= MINBLOCK)
-    {
-        // create ADDBA frame
-        Ieee80211ActionBlockAckADDBA * addbaFrame = new Ieee80211ActionBlockAckADDBA();
-        Ieee80211DataOrMgmtFrame *frame = new Ieee80211DataOrMgmtFrame();
-        frame->encapsulate(addbaFrame);
-        frame->setReceiverAddress(addr);
-        queueManagement->push_back(frame);
-        return;
-    }
+    prepareADDBA(cat, addr);
 }
 
 void MpduAggregateHandler::prepareADDBA(const int &cat, const MACAddress &addr)
@@ -285,6 +281,18 @@ void MpduAggregateHandler::prepareADDBA(const int &cat, const MACAddress &addr)
 
     if (!allAddress && !isAllowAddress(addr))
         return;
+
+    ADDBAInfo *info;
+    if (isAllowAddress(addr, info))
+    {
+        if (info->state != DEFAULT)
+            return; // nothing to do
+    }
+    else
+    {
+        info = new ADDBAInfo();
+        setADDBAInfo(addr,info);
+    }
 
     if (findAddressFree(addr) >= MINBLOCK)
     {
@@ -297,13 +305,13 @@ void MpduAggregateHandler::prepareADDBA(const int &cat, const MACAddress &addr)
         frame->encapsulate(addbaFrame);
         frame->setReceiverAddress(addr);
         queueManagement->push_back(frame);
-        ADDBAInfo *info;
+
         if (!isAllowAddress(addr, info))
         {
             info = new ADDBAInfo();
             setADDBAInfo(addr,info);
         }
-        info->state = WAITCONFIRMATION;
+
         return;
     }
 }

@@ -35,7 +35,7 @@ void MACRelayUnit::initialize(int stage)
         // number of ports
         numPorts = gate("ifOut", 0)->size();
         if (gate("ifIn", 0)->size() != numPorts)
-            error("the sizes of the ifIn[] and ifOut[] gate vectors must be the same");
+            throw cRuntimeError("the sizes of the ifIn[] and ifOut[] gate vectors must be the same");
 
         numProcessedFrames = numDiscardedFrames = 0;
 
@@ -127,17 +127,17 @@ bool MACRelayUnit::handleOperationStage(LifecycleOperation *operation, int stage
     Enter_Method_Silent();
 
     if (dynamic_cast<NodeStartOperation *>(operation)) {
-        if (stage == NodeStartOperation::STAGE_LINK_LAYER) {
+        if ((NodeStartOperation::Stage)stage == NodeStartOperation::STAGE_LINK_LAYER) {
             start();
         }
     }
     else if (dynamic_cast<NodeShutdownOperation *>(operation)) {
-        if (stage == NodeShutdownOperation::STAGE_LINK_LAYER) {
+        if ((NodeShutdownOperation::Stage)stage == NodeShutdownOperation::STAGE_LINK_LAYER) {
             stop();
         }
     }
     else if (dynamic_cast<NodeCrashOperation *>(operation)) {
-        if (stage == NodeCrashOperation::STAGE_CRASH) {
+        if ((NodeCrashOperation::Stage)stage == NodeCrashOperation::STAGE_CRASH) {
             stop();
         }
     }

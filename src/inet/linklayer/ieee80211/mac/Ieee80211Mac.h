@@ -26,7 +26,7 @@
 //#define FSM_DEBUG
 
 #include "inet/common/FSMA.h"
-#include "inet/common/queue/IPassiveQueue.h"
+#include "inet/linklayer/ieee80211/mgmt/Ieee80211PassiveQueue.h"
 #include "inet/common/lifecycle/ILifecycle.h"
 #include "inet/physicallayer/contract/IRadio.h"
 #include "inet/physicallayer/ieee80211/Ieee80211Modulation.h"
@@ -34,8 +34,6 @@
 
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Consts.h"
-
-#include "inet/linklayer/ieee80211/mac/IQoSClassifier.h"
 
 
 namespace inet {
@@ -70,7 +68,7 @@ using namespace physicallayer;
 
 class INET_API Ieee80211Mac : public MACProtocolBase
 {
-    typedef std::list<Ieee80211DataOrMgmtFrame*> Ieee80211DataOrMgmtFrameList;
+    typedef std::list<Ieee80211DataOrMgmtFrame *> Ieee80211DataOrMgmtFrameList;
 
     /**
      * This is used to populate fragments and identify duplicated messages. See spec 9.2.9.
@@ -395,7 +393,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     Ieee80211ASFTupleList asfTuplesList;
 
     /** Passive queue module to request messages from */
-    IPassiveQueue *queueModule;
+    Ieee80211PassiveQueue *queueModule;
 
     /**
      * The last change channel message received and not yet sent to the physical layer, or NULL.

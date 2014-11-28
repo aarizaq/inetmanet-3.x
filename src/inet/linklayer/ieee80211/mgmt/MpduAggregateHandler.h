@@ -33,23 +33,32 @@ namespace ieee80211 {
 class INET_API MpduAggregateHandler : public cObject
 {
     public:
-           class ADDBAInfo
-           {
-               public:
-                   unsigned char token;
-                   unsigned char tid;
-                   unsigned char BlockAckPolicy;
-                   unsigned char BufferSize;
-                   unsigned short BlockAckTimeout;
-                   unsigned short ADDBAFailureTimeout;
-                   unsigned short BlockAckStartingSequenceControl;
-           };
-           enum State {
-               DEFAULT,
-               WAITCONFIRMATION,
-               WAITBLOCK,
-               SENDBLOCK,
-           };
+        enum State {
+            DEFAULT,
+            WAITCONFIRMATION,
+            WAITBLOCK,
+            SENDBLOCK,
+        };
+        class ADDBAInfo
+        {
+            public:
+                State state = DEFAULT;
+                simtime_t startBlockAck;
+                uint64_t bytesSend;
+                unsigned char token;
+                unsigned char tid;
+                unsigned char BlockAckPolicy;
+                unsigned char BufferSize;
+                unsigned short BlockAckTimeout;
+                unsigned short ADDBAFailureTimeout;
+                unsigned short BlockAckStartingSequenceControl;
+        };
+        enum Ieee80211BlockAckCode
+        {
+            ADDBArequest = 0,
+            ADDBAReponse = 1,
+            DELBA = 2,
+        };
     protected:
         typedef std::map<MACAddress,int> NumFramesDestination;
         typedef std::deque<Ieee80211DataOrMgmtFrame *> DataQueue;
@@ -65,15 +74,15 @@ class INET_API MpduAggregateHandler : public cObject
 
         State state;
         simtime_t blockState;
-        std::map<MACAddress,ADDBAInfo> listAllowAddress;
+        std::map<MACAddress,ADDBAInfo *> listAllowAddress;
         MACAddress neighAddress;
-        bool checkState(const MACAddress&);
+
         bool allAddress;
         bool resetAfterSend;
 
         std::vector<CategotyInfo> categories;
-        void increaseSize(Ieee80211TwoAddressFrame* val, int cat);
-        void decreaseSize(Ieee80211TwoAddressFrame* val, int cat);
+        virtual void increaseSize(Ieee80211DataOrMgmtFrame* val, int cat);
+        virtual void decreaseSize(Ieee80211DataOrMgmtFrame* val, int cat);
         // structures to store allow block destination address
     public:
         MpduAggregateHandler();
@@ -85,20 +94,28 @@ class INET_API MpduAggregateHandler : public cObject
             return categories.size();
         }
         virtual void prepareADDBA(const int &);
+        virtual void prepareADDBA(const int &, const MACAddress &);
+        virtual bool handleADDBA(Ieee80211DataOrMgmtFrame *);
+
         virtual int findAddress(const MACAddress  &,int = -1);
         virtual int findAddressFree(const MACAddress &addr,int = -1);
         virtual void createBlocks(const MACAddress &, int = -1);
 
 
         // ADDBAInfo management
+        virtual bool checkState(const MACAddress&);
+        virtual bool checkState(const Ieee80211DataOrMgmtFrame *);
         virtual void setAllAddress(const bool &p) {allAddress = p;}
         virtual void setResetAfterSend(const bool &p) {resetAfterSend = p;}
-        virtual void setAllowAddress(const MACAddress &addr, ADDBAInfo *){}
+        virtual void setADDBAInfo(const MACAddress &addr, ADDBAInfo *);
+        virtual bool isAllowAddress(const MACAddress &add, ADDBAInfo *&iaddai);
 
         virtual bool getAllAddress() const {return allAddress;}
         virtual bool getResetAfterSend() const {return resetAfterSend;}
         virtual bool isAllowAddress(const MACAddress &add);
-        virtual bool isAllowAddress(const MACAddress &add, ADDBAInfo &iaddai);
+
+
+
 };
 
 }

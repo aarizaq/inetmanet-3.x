@@ -202,14 +202,14 @@ class INET_API IGMPv2 : public cSimpleModule, protected cListener
     virtual void processRexmtTimer(cMessage *msg);
 
     virtual void processIgmpMessage(IGMPMessage *msg);
-    virtual void processQuery(InterfaceEntry *ie, const IPv4Address& sender, IGMPMessage *msg);
+    virtual void processQuery(InterfaceEntry *ie, const IPv4Address& sender, IGMPQuery *msg);
     virtual void processGroupQuery(InterfaceEntry *ie, HostGroupData *group, int maxRespTime);
     //virtual void processV1Report(InterfaceEntry *ie, IGMPMessage *msg);
-    virtual void processV2Report(InterfaceEntry *ie, IGMPMessage *msg);
-    virtual void processLeave(InterfaceEntry *ie, IGMPMessage *msg);
+    virtual void processV2Report(InterfaceEntry *ie, IGMPv2Report *msg);
+    virtual void processLeave(InterfaceEntry *ie, IGMPv2Leave *msg);
 };
 
-} // namespace inet
+}    // namespace inet
 
-#endif // ifndef __INET_IGMPV2_H
+#endif    // ifndef __INET_IGMPV2_H
 

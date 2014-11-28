@@ -203,7 +203,7 @@ int EtherLLC::findPortForSAP(int dsap)
 void EtherLLC::handleRegisterSAP(cMessage *msg)
 {
     int port = msg->getArrivalGate()->getIndex();
-    Ieee802Ctrl *etherctrl = dynamic_cast<Ieee802Ctrl *>(msg->removeControlInfo());
+    Ieee802Ctrl *etherctrl = dynamic_cast<Ieee802Ctrl *>(msg->getControlInfo());
     if (!etherctrl)
         throw cRuntimeError("packet `%s' from higher layer received without Ieee802Ctrl", msg->getName());
     int dsap = etherctrl->getDsap();
@@ -221,7 +221,7 @@ void EtherLLC::handleRegisterSAP(cMessage *msg)
 
 void EtherLLC::handleDeregisterSAP(cMessage *msg)
 {
-    Ieee802Ctrl *etherctrl = dynamic_cast<Ieee802Ctrl *>(msg->removeControlInfo());
+    Ieee802Ctrl *etherctrl = dynamic_cast<Ieee802Ctrl *>(msg->getControlInfo());
     if (!etherctrl)
         throw cRuntimeError("packet `%s' from higher layer received without Ieee802Ctrl", msg->getName());
     int dsap = etherctrl->getDsap();
@@ -240,7 +240,7 @@ void EtherLLC::handleDeregisterSAP(cMessage *msg)
 
 void EtherLLC::handleSendPause(cMessage *msg)
 {
-    Ieee802Ctrl *etherctrl = dynamic_cast<Ieee802Ctrl *>(msg->removeControlInfo());
+    Ieee802Ctrl *etherctrl = dynamic_cast<Ieee802Ctrl *>(msg->getControlInfo());
     if (!etherctrl)
         throw cRuntimeError("PAUSE command `%s' from higher layer received without Ieee802Ctrl", msg->getName());
 
@@ -268,15 +268,15 @@ bool EtherLLC::handleOperationStage(LifecycleOperation *operation, int stage, ID
 {
     Enter_Method_Silent();
     if (dynamic_cast<NodeStartOperation *>(operation)) {
-        if (stage == NodeStartOperation::STAGE_NETWORK_LAYER)
+        if ((NodeStartOperation::Stage)stage == NodeStartOperation::STAGE_NETWORK_LAYER)
             start();
     }
     else if (dynamic_cast<NodeShutdownOperation *>(operation)) {
-        if (stage == NodeShutdownOperation::STAGE_NETWORK_LAYER)
+        if ((NodeShutdownOperation::Stage)stage == NodeShutdownOperation::STAGE_NETWORK_LAYER)
             stop();
     }
     else if (dynamic_cast<NodeCrashOperation *>(operation)) {
-        if (stage == NodeCrashOperation::STAGE_CRASH)
+        if ((NodeCrashOperation::Stage)stage == NodeCrashOperation::STAGE_CRASH)
             stop();
     }
     return true;

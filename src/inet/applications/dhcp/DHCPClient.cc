@@ -28,17 +28,18 @@ namespace inet {
 
 Define_Module(DHCPClient);
 
-DHCPClient::DHCPClient()
+DHCPClient::DHCPClient() :
+    host(NULL),
+    ie(NULL),
+    irt(NULL),
+    timerT1(NULL),
+    timerT2(NULL),
+    timerTo(NULL),
+    leaseTimer(NULL),
+    startTimer(NULL),
+    lease(NULL),
+    route(NULL)
 {
-    timerT1 = NULL;
-    timerT2 = NULL;
-    timerTo = NULL;
-    leaseTimer = NULL;
-    startTimer = NULL;
-    host = NULL;
-    ie = NULL;
-    irt = NULL;
-    lease = NULL;
 }
 
 DHCPClient::~DHCPClient()
@@ -48,6 +49,7 @@ DHCPClient::~DHCPClient()
     cancelAndDelete(timerT2);
     cancelAndDelete(leaseTimer);
     cancelAndDelete(startTimer);
+    delete lease;
 }
 
 void DHCPClient::initialize(int stage)
@@ -289,6 +291,7 @@ void DHCPClient::recordOffer(DHCPMessage *dhcpOffer)
 
         // minimal information to configure the interface
         // create the lease to request
+        delete lease;
         lease = new DHCPLease();
         lease->ip = ip;
         lease->mac = macAddress;
@@ -707,20 +710,20 @@ bool DHCPClient::handleOperationStage(LifecycleOperation *operation, int stage, 
 {
     Enter_Method_Silent();
     if (dynamic_cast<NodeStartOperation *>(operation)) {
-        if (stage == NodeStartOperation::STAGE_APPLICATION_LAYER) {
+        if ((NodeStartOperation::Stage)stage == NodeStartOperation::STAGE_APPLICATION_LAYER) {
             startApp();
             isOperational = true;
         }
     }
     else if (dynamic_cast<NodeShutdownOperation *>(operation)) {
-        if (stage == NodeShutdownOperation::STAGE_APPLICATION_LAYER) {
+        if ((NodeShutdownOperation::Stage)stage == NodeShutdownOperation::STAGE_APPLICATION_LAYER) {
             stopApp();
             isOperational = false;
             ie = NULL;
         }
     }
     else if (dynamic_cast<NodeCrashOperation *>(operation)) {
-        if (stage == NodeCrashOperation::STAGE_CRASH) {
+        if ((NodeCrashOperation::Stage)stage == NodeCrashOperation::STAGE_CRASH) {
             stopApp();
             isOperational = false;
             ie = NULL;

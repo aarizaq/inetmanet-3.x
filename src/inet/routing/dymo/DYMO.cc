@@ -17,6 +17,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
+#include "inet/common/INETMath.h"
 #include "inet/routing/dymo/DYMO.h"
 #include "inet/networklayer/common/IPSocket.h"
 #include "inet/networklayer/common/IPProtocolId_m.h"
@@ -46,13 +47,33 @@ Define_Module(DYMO);
 // construction
 //
 
-DYMO::DYMO()
+DYMO::DYMO() :
+    clientAddresses(NULL),
+    useMulticastRREP(false),
+    interfaces(NULL),
+    activeInterval(NaN),
+    maxIdleTime(NaN),
+    maxSequenceNumberLifetime(NaN),
+    routeRREQWaitTime(NaN),
+    rreqHolddownTime(NaN),
+    maxHopCount(-1),
+    discoveryAttemptsMax(-1),
+    appendInformation(false),
+    bufferSizePackets(-1),
+    bufferSizeBytes(-1),
+    maxJitter(NaN),
+    sendIntermediateRREP(false),
+    minHopLimit(-1),
+    maxHopLimit(-1),
+    host(NULL),
+    nodeStatus(NULL),
+    addressType(NULL),
+    interfaceTable(NULL),
+    routingTable(NULL),
+    networkProtocol(NULL),
+    expungeTimer(NULL),
+    sequenceNumber(0)
 {
-    addressType = NULL;
-    interfaceTable = NULL;
-    routingTable = NULL;
-    networkProtocol = NULL;
-    expungeTimer = NULL;
 }
 
 DYMO::~DYMO()
@@ -1314,18 +1335,18 @@ bool DYMO::isClientAddress(const L3Address& address)
 void DYMO::addSelfNode(RteMsg *rteMsg)
 {
     const L3Address& address = getSelfAddress();
-    AddressBlock *addressBlock = new AddressBlock();
-    addressBlock->setAddress(address);
-    addressBlock->setPrefixLength(addressType->getMaxPrefixLength());
-    addressBlock->setHasValidityTime(false);
-    addressBlock->setValidityTime(-1);
-    addressBlock->setHasMetric(true);
-    addressBlock->setMetric(0);
-    addressBlock->setHasMetricType(true);
-    addressBlock->setMetricType(HOP_COUNT);
-    addressBlock->setHasSequenceNumber(true);
-    addressBlock->setSequenceNumber(sequenceNumber);
-    addNode(rteMsg, *addressBlock);
+    AddressBlock addressBlock;
+    addressBlock.setAddress(address);
+    addressBlock.setPrefixLength(addressType->getMaxPrefixLength());
+    addressBlock.setHasValidityTime(false);
+    addressBlock.setValidityTime(-1);
+    addressBlock.setHasMetric(true);
+    addressBlock.setMetric(0);
+    addressBlock.setHasMetricType(true);
+    addressBlock.setMetricType(HOP_COUNT);
+    addressBlock.setHasSequenceNumber(true);
+    addressBlock.setSequenceNumber(sequenceNumber);
+    addNode(rteMsg, addressBlock);
 }
 
 void DYMO::addNode(RteMsg *rteMsg, AddressBlock& addressBlock)
@@ -1397,18 +1418,18 @@ bool DYMO::handleOperationStage(LifecycleOperation *operation, int stage, IDoneC
 {
     Enter_Method_Silent();
     if (dynamic_cast<NodeStartOperation *>(operation)) {
-        if (stage == NodeStartOperation::STAGE_APPLICATION_LAYER)
+        if ((NodeStartOperation::Stage)stage == NodeStartOperation::STAGE_APPLICATION_LAYER)
             configureInterfaces();
     }
     else if (dynamic_cast<NodeShutdownOperation *>(operation)) {
-        if (stage == NodeShutdownOperation::STAGE_APPLICATION_LAYER)
+        if ((NodeShutdownOperation::Stage)stage == NodeShutdownOperation::STAGE_APPLICATION_LAYER)
             // TODO: send a RERR to notify peers about broken routes
             for (std::map<L3Address, RREQTimer *>::iterator it = targetAddressToRREQTimer.begin(); it != targetAddressToRREQTimer.end(); it++)
                 cancelRouteDiscovery(it->first);
 
     }
     else if (dynamic_cast<NodeCrashOperation *>(operation)) {
-        if (stage == NodeCrashOperation::STAGE_CRASH) {
+        if ((NodeCrashOperation::Stage)stage == NodeCrashOperation::STAGE_CRASH) {
             targetAddressToSequenceNumber.clear();
             targetAddressToRREQTimer.clear();
             targetAddressToDelayedPackets.clear();

@@ -180,22 +180,29 @@ void Ieee80211Mac::initializeCategories()
         WATCH_LIST(edcCAF[i].transmissionQueue);
 }
 
-Ieee80211Mac::Ieee80211Mac()
+Ieee80211Mac::Ieee80211Mac() :
+    transmissionState(IRadio::TRANSMISSION_STATE_UNDEFINED),
+    throughputTimer(NULL),
+    radio(NULL),
+    fr(NULL),
+    queueModule(NULL),
+    pendingRadioConfigMsg(NULL),
+    endSIFS(NULL),
+    endDIFS(NULL),
+    endTXOP(NULL),
+    endTimeout(NULL),
+    endReserve(NULL),
+    mediumStateChange(NULL)
 {
-    endSIFS = NULL;
-    endDIFS = NULL;
-    endTimeout = NULL;
-    endReserve = NULL;
-    endTXOP = NULL;
-    mediumStateChange = NULL;
-    pendingRadioConfigMsg = NULL;
-    queueMode = false;
-    registerErrors = false;
 }
 
 Ieee80211Mac::~Ieee80211Mac()
 {
-    cancelAndDelete(endSIFS);
+    if (endSIFS) {
+        delete (Ieee80211Frame *)endSIFS->getContextPointer();
+        endSIFS->setContextPointer(NULL);
+        cancelAndDelete(endSIFS);
+    }
     cancelAndDelete(endDIFS);
     cancelAndDelete(endTimeout);
     cancelAndDelete(endReserve);
@@ -236,22 +243,22 @@ void Ieee80211Mac::initialize(int stage)
 
         // initialize parameters
         const char *opModeStr = par("opMode").stringValue();
-        if (strcmp("b", opModeStr)==0)
+        if (strcmp("b", opModeStr) == 0)
             opMode = 'b';
-        else if (strcmp("g", opModeStr)==0)
+        else if (strcmp("g", opModeStr) == 0)
             opMode = 'g';
-        else if (strcmp("a", opModeStr)==0)
+        else if (strcmp("a", opModeStr) == 0)
             opMode = 'a';
-        else if (strcmp("p", opModeStr)==0)
-             opMode = 'p';
+        else if (strcmp("p", opModeStr) == 0)
+            opMode = 'p';
         else
             throw cRuntimeError("Invalid opMode='%s'", opModeStr);
 
-        PHY_HEADER_LENGTH = par("phyHeaderLength"); //26us
+        PHY_HEADER_LENGTH = par("phyHeaderLength");    //26us
 
-        if (strcmp("SHORT", par("wifiPreambleMode").stringValue())==0)
+        if (strcmp("SHORT", par("wifiPreambleMode").stringValue()) == 0)
             wifiPreambleType = IEEE80211_PREAMBLE_SHORT;
-        else if (strcmp("LONG", par("wifiPreambleMode").stringValue())==0)
+        else if (strcmp("LONG", par("wifiPreambleMode").stringValue()) == 0)
             wifiPreambleType = IEEE80211_PREAMBLE_LONG;
         else
             throw cRuntimeError("Invalid wifiPreambleType. Must be SHORT or LONG");
@@ -260,31 +267,34 @@ void Ieee80211Mac::initialize(int stage)
 
         prioritizeMulticast = par("prioritizeMulticast");
 
-        EV_DEBUG << "Operating mode: 802.11"<<opMode;
+        EV_DEBUG << "Operating mode: 802.11" << opMode;
         maxQueueSize = par("maxQueueSize");
-        maxCategorieQueueSize = par("maxCategorieQueueSize");
         rtsThreshold = par("rtsThresholdBytes");
 
         // the variable is renamed due to a confusion in the standard
         // the name retry limit would be misleading, see the header file comment
         transmissionLimit = par("retryLimit");
-        if (transmissionLimit == -1) transmissionLimit = 7;
+        if (transmissionLimit == -1)
+            transmissionLimit = 7;
         ASSERT(transmissionLimit >= 0);
 
-        EV_DEBUG << " retryLimit="<<transmissionLimit;
+        EV_DEBUG << " retryLimit=" << transmissionLimit;
 
         cwMinData = par("cwMinData");
-        if (cwMinData == -1) cwMinData = CW_MIN;
+        if (cwMinData == -1)
+            cwMinData = CW_MIN;
         ASSERT(cwMinData >= 0 && cwMinData <= 32767);
 
         cwMaxData = par("cwMaxData");
-        if (cwMaxData == -1) cwMaxData = CW_MAX;
+        if (cwMaxData == -1)
+            cwMaxData = CW_MAX;
         ASSERT(cwMaxData >= 0 && cwMaxData <= 32767);
 
         cwMinMulticast = par("cwMinMulticast");
-        if (cwMinMulticast == -1) cwMinMulticast = 31;
+        if (cwMinMulticast == -1)
+            cwMinMulticast = 31;
         ASSERT(cwMinMulticast >= 0);
-        EV_DEBUG << " cwMinMulticast="<<cwMinMulticast;
+        EV_DEBUG << " cwMinMulticast=" << cwMinMulticast;
 
         defaultAC = par("defaultAC");
 
@@ -566,7 +576,7 @@ void Ieee80211Mac::initializeQueueModule()
     // use of external queue module is optional -- find it if there's one specified
     if (par("queueModule").stringValue()[0]) {
         cModule *module = getParentModule()->getSubmodule(par("queueModule").stringValue());
-        queueModule = check_and_cast<IPassiveQueue *>(module);
+        queueModule = check_and_cast<Ieee80211PassiveQueue *>(module);
 
         EV_DEBUG << "Requesting first two frames from queue module\n";
         if (queueModule->getNumQueues() == 1)
@@ -743,8 +753,8 @@ void Ieee80211Mac::handleUpperCommand(cMessage *msg)
         EV_DEBUG << "Passing on command " << msg->getName() << " to physical layer\n";
         if (pendingRadioConfigMsg != NULL) {
             // merge contents of the old command into the new one, then delete it
-            RadioConfigureCommand *oldConfigureCommand = check_and_cast<RadioConfigureCommand *>(pendingRadioConfigMsg->getControlInfo());
-            RadioConfigureCommand *newConfigureCommand = check_and_cast<RadioConfigureCommand *>(msg->getControlInfo());
+            ConfigureRadioCommand *oldConfigureCommand = check_and_cast<ConfigureRadioCommand *>(pendingRadioConfigMsg->getControlInfo());
+            ConfigureRadioCommand *newConfigureCommand = check_and_cast<ConfigureRadioCommand *>(msg->getControlInfo());
             if (newConfigureCommand->getChannelNumber() == -1 && oldConfigureCommand->getChannelNumber() != -1)
                 newConfigureCommand->setChannelNumber(oldConfigureCommand->getChannelNumber());
             if (isNaN(newConfigureCommand->getBitrate().get()) && !isNaN(oldConfigureCommand->getBitrate().get()))
@@ -1560,7 +1570,6 @@ simtime_t Ieee80211Mac::getAIFS(int AccessCategory)
 
 simtime_t Ieee80211Mac::getEIFS()
 {
-// FIXME:   return getSIFS() + getDIFS() + (8 * ACKSize + aPreambleLength + aPLCPHeaderLength) / lowestDatarate;
     return getSIFS() + getDIFS() + controlFrameTxTime(LENGTH_ACK);
 }
 
@@ -1715,17 +1724,14 @@ void Ieee80211Mac::scheduleDataTimeoutPeriod(Ieee80211DataOrMgmtFrame *frameToSe
 {
     double tim;
     double bitRate = bitrate;
-    if (dynamic_cast<RadioTransmissionRequest*> (frameToSend->getControlInfo()))
-    {
-        bitRate = dynamic_cast<RadioTransmissionRequest*> (frameToSend->getControlInfo())->getBitrate().get();
+    if (dynamic_cast<TransmissionRequest *>(frameToSend->getControlInfo())) {
+        bitRate = dynamic_cast<TransmissionRequest *>(frameToSend->getControlInfo())->getBitrate().get();
         if (bitRate == 0)
             bitRate = bitrate;
     }
-    if (!endTimeout->isScheduled())
-    {
+    if (!endTimeout->isScheduled()) {
         EV_DEBUG << "scheduling data timeout period\n";
-        if (useModulationParameters)
-        {
+        if (useModulationParameters) {
             ModulationType modType;
             if (basicTransmisionMode.getDataRate() == (uint32_t) bitRate)
                 modType = basicTransmisionMode;
@@ -1892,13 +1898,11 @@ void Ieee80211Mac::sendDataFrame(Ieee80211DataOrMgmtFrame *frameToSend)
     simtime_t t = 0, time = 0;
     int count = 0;
     Ieee80211DataOrMgmtFrame* frame;
-    Ieee80211MgmtBase * mgmt = check_and_cast<Ieee80211MgmtBase*>(queueModule);
-
 
     frame = transmissionQueue()->front();
     ASSERT(frame == frameToSend);
 
-    int queueSize = (int) mgmt->getDataSize(currentAC) + (int) mgmt->getManagementSize();
+    int queueSize = (int) queueModule->getDataSize(currentAC) + (int) queueModule->getManagementSize();
 
     if (!txop && TXOP() > 0 &&  queueSize> 1 )
     {
@@ -1913,7 +1917,7 @@ void Ieee80211Mac::sendDataFrame(Ieee80211DataOrMgmtFrame *frameToSend)
         {
             time += t;
             EV_DEBUG << "adding t \n";
-            frame = mgmt->getQueueElement(currentAC,pos);
+            frame = queueModule->getQueueElement(currentAC,pos);
             pos++;
             count++;
             t = computeFrameDuration(frame) + 2 * getSIFS() + controlFrameTxTime(LENGTH_ACK);
@@ -1998,7 +2002,7 @@ Ieee80211DataOrMgmtFrame *Ieee80211Mac::buildDataFrame(Ieee80211DataOrMgmtFrame 
     if (frameToSend->getControlInfo()!=NULL)
     {
         cObject * ctr = frameToSend->getControlInfo();
-        RadioTransmissionRequest *ctrl = dynamic_cast <RadioTransmissionRequest*> (ctr);
+        TransmissionRequest *ctrl = dynamic_cast <TransmissionRequest*> (ctr);
         if (ctrl == NULL)
             throw cRuntimeError("control info is not PhyControlInfo type %s");
         frame->setControlInfo(ctrl->dup());
@@ -2017,9 +2021,9 @@ Ieee80211DataOrMgmtFrame *Ieee80211Mac::buildDataFrame(Ieee80211DataOrMgmtFrame 
             ASSERT(transmissionQueue()->end() != nextframeToSend);
             double bitRate = bitrate;
             int size = (*nextframeToSend)->getBitLength();
-            if (transmissionQueue()->front()->getControlInfo() && dynamic_cast<RadioTransmissionRequest*>(transmissionQueue()->front()->getControlInfo()))
+            if (transmissionQueue()->front()->getControlInfo() && dynamic_cast<TransmissionRequest*>(transmissionQueue()->front()->getControlInfo()))
             {
-                bitRate = dynamic_cast<RadioTransmissionRequest*>(transmissionQueue()->front()->getControlInfo())->getBitrate().get();
+                bitRate = dynamic_cast<TransmissionRequest*>(transmissionQueue()->front()->getControlInfo())->getBitrate().get();
                 if (bitRate == 0)
                     bitRate = bitrate;
             }
@@ -2074,11 +2078,11 @@ Ieee80211DataOrMgmtFrame *Ieee80211Mac::buildMulticastFrame(Ieee80211DataOrMgmtF
 {
     Ieee80211DataOrMgmtFrame *frame = (Ieee80211DataOrMgmtFrame *)frameToSend->dup();
 
-    RadioTransmissionRequest *oldTransmissionRequest = dynamic_cast<RadioTransmissionRequest *>( frameToSend->getControlInfo() );
+    TransmissionRequest *oldTransmissionRequest = dynamic_cast<TransmissionRequest *>( frameToSend->getControlInfo() );
     if (oldTransmissionRequest)
     {
         EV_DEBUG << "Per frame1 params"<<endl;
-        RadioTransmissionRequest *newTransmissionRequest = new RadioTransmissionRequest();
+        TransmissionRequest *newTransmissionRequest = new TransmissionRequest();
         *newTransmissionRequest = *oldTransmissionRequest;
         //EV<<"PhyControlInfo bitrate "<<phyControlInfo->getBitrate()/1e6<<"Mbps txpower "<<phyControlInfo->txpower()<<"mW"<<endl;
         frame->setControlInfo(newTransmissionRequest);
@@ -2091,7 +2095,7 @@ Ieee80211DataOrMgmtFrame *Ieee80211Mac::buildMulticastFrame(Ieee80211DataOrMgmtF
 Ieee80211Frame *Ieee80211Mac::setBasicBitrate(Ieee80211Frame *frame)
 {
     ASSERT(frame->getControlInfo()==NULL);
-    RadioTransmissionRequest *ctrl = new RadioTransmissionRequest();
+    TransmissionRequest *ctrl = new TransmissionRequest();
     ctrl->setBitrate(bps(basicBitrate));
     frame->setControlInfo(ctrl);
     return frame;
@@ -2100,7 +2104,7 @@ Ieee80211Frame *Ieee80211Mac::setBasicBitrate(Ieee80211Frame *frame)
 Ieee80211Frame *Ieee80211Mac::setControlBitrate(Ieee80211Frame *frame)
 {
     ASSERT(frame->getControlInfo()==NULL);
-    RadioTransmissionRequest *ctrl = new RadioTransmissionRequest();
+    TransmissionRequest *ctrl = new TransmissionRequest();
     ctrl->setBitrate(bps(controlBitRate));
     frame->setControlInfo(ctrl);
     return frame;
@@ -2114,14 +2118,14 @@ Ieee80211Frame *Ieee80211Mac::setBitrateFrame(Ieee80211Frame *frame)
             delete  frame->removeControlInfo();
         return frame;
     }
-    RadioTransmissionRequest *ctrl = NULL;
+    TransmissionRequest *ctrl = NULL;
     if (frame->getControlInfo()==NULL)
     {
-        ctrl = new RadioTransmissionRequest();
+        ctrl = new TransmissionRequest();
         frame->setControlInfo(ctrl);
     }
     else
-        ctrl = dynamic_cast<RadioTransmissionRequest*>(frame->getControlInfo());
+        ctrl = dynamic_cast<TransmissionRequest*>(frame->getControlInfo());
     if (ctrl)
         ctrl->setBitrate(bps(getBitrate()));
     return frame;
@@ -2288,10 +2292,10 @@ void Ieee80211Mac::popTransmissionQueue()
 
 double Ieee80211Mac::computeFrameDuration(Ieee80211Frame *msg)
 {
-    RadioTransmissionRequest *ctrl;
+    TransmissionRequest *ctrl;
     double duration;
     EV_DEBUG << *msg;
-    ctrl = dynamic_cast<RadioTransmissionRequest*> ( msg->removeControlInfo() );
+    ctrl = dynamic_cast<TransmissionRequest*> ( msg->removeControlInfo() );
     if ( ctrl )
     {
         EV_DEBUG << "Per frame2 params bitrate "<<ctrl->getBitrate()/1e6<<endl;
@@ -2410,13 +2414,15 @@ bool Ieee80211Mac::transmissionQueueWithReserveFull(int categorie)
 void Ieee80211Mac::flushQueue()
 {
     if (queueModule) {
-        while (!queueModule->isEmpty())
+        /*
+        while (!(IPassiveQueue *)queueModule->isEmpty())
         {
             cMessage *msg = queueModule->pop();
             //TODO emit(dropPkIfaceDownSignal, msg); -- 'pkDropped' signals are missing in this module!
             delete msg;
         }
-        queueModule->clear(); // clear request count
+        */
+        ((IPassiveQueue*)queueModule)->clear(); // clear request count
     }
 
     for (int i=0; i<numCategories(); i++)
@@ -2434,7 +2440,7 @@ void Ieee80211Mac::flushQueue()
 void Ieee80211Mac::clearQueue()
 {
     if (queueModule) {
-        queueModule->clear(); // clear request count
+        ((IPassiveQueue*)queueModule)->clear(); // clear request count
     }
 
     for (int i=0; i<numCategories(); i++)
@@ -2469,7 +2475,7 @@ void Ieee80211Mac::reportDataOk()
 void Ieee80211Mac::reportDataFailed(void)
 {
     retryCounter()++;
-    if (rateControlMode==RATE_CR)
+    if (rateControlMode == RATE_CR)
        return;
     timer++;
     failedCounter++;
