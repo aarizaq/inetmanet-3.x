@@ -715,7 +715,7 @@ void PIMSM::processAssertSG(PimsmInterface *interface, const AssertMetric& recei
     Route *routeSG = interface->route();
     AssertMetric myMetric = interface->couldAssert() ? // XXX check routeG metric too
         routeSG->metric.setAddress(interface->ie->ipv4Data()->getIPAddress()) :
-        AssertMetric::INFINITE;
+        AssertMetric::Infinite;
 
     // A "preferred assert" is one with a better metric than the current winner.
     bool isPreferredAssert = receivedMetric < interface->winnerMetric;
@@ -823,7 +823,7 @@ void PIMSM::processAssertG(PimsmInterface *interface, const AssertMetric& receiv
     Route *routeG = interface->route();
     AssertMetric myMetric = interface->couldAssert() ?
         routeG->metric.setAddress(interface->ie->ipv4Data()->getIPAddress()) :
-        AssertMetric::INFINITE;
+        AssertMetric::Infinite;
 
     // A "preferred assert" is one with a better metric than the current winner.
     bool isPreferredAssert = receivedMetric < interface->winnerMetric;
