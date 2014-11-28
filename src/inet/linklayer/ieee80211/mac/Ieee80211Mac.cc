@@ -329,7 +329,6 @@ void Ieee80211Mac::initialize(int stage)
 
         controlBitRate = par("controlBitrate").doubleValue();
 
-        EV_DEBUG << " slotTime=" << getSlotTime() * 1e6 << "us DIFS=" << getDIFS() * 1e6 << "us";
 
         carrierFrequency = gate("lowerLayerOut")->getNextGate()->getOwnerModule()->par("carrierFrequency");
 
@@ -355,7 +354,11 @@ void Ieee80211Mac::initialize(int stage)
             Ieee80211Modulation::setHTFrequency11n5Gh(transmisionMode);
 
         difsSlot = par("AIFSN");
+
+        EV_DEBUG << " slotTime=" << getSlotTime() * 1e6 << "us DIFS=" << getDIFS() * 1e6 << "us";
+
         EV_DEBUG <<" slotTime = "<<getSlotTime()*1e6<<"us DIFS = "<< getDIFS()*1e6<<"us";
+
 
         EV_DEBUG <<" basicBitrate="<<basicBitrate/1e6<<"Mb ";
         EV_DEBUG <<" bitrate="<<bitrate/1e6<<"Mb IDLE="<<IDLE<<" RECEIVE="<<RECEIVE<<endl;
@@ -449,6 +452,9 @@ void Ieee80211Mac::initialize(int stage)
         radio = check_and_cast<IRadio *>(radioModule);
     }
     else if (stage == INITSTAGE_LINK_LAYER) {
+        // initialize category
+        initializeCategories();
+
         if (isOperational)
             radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
         // interface
