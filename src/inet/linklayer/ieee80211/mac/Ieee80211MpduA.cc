@@ -118,7 +118,7 @@ void Ieee80211MpduA::_deleteEncapVector()
     }
 }
 
-cPacket *Ieee80211MpduA::popBack()
+Ieee80211DataOrMgmtFrame *Ieee80211MpduA::popBack()
 {
     if (encapsulateVector.empty())
         return NULL;
@@ -137,14 +137,14 @@ cPacket *Ieee80211MpduA::popBack()
         return msg;
     }
 #endif
-    cPacket *msg = encapsulateVector.back()->pkt;
+    Ieee80211DataOrMgmtFrame *msg = encapsulateVector.back()->pkt;
     encapsulateVector.pop_back();
     if (msg)
         drop(msg);
     return msg;
 }
 
-cPacket *Ieee80211MpduA::popFrom()
+Ieee80211DataOrMgmtFrame *Ieee80211MpduA::popFrom()
 {
     if (encapsulateVector.empty())
         return NULL;
@@ -164,14 +164,14 @@ cPacket *Ieee80211MpduA::popFrom()
         return msg;
     }
 #endif
-    cPacket *msg = encapsulateVector.front()->pkt;
+    Ieee80211DataOrMgmtFrame *msg = encapsulateVector.front()->pkt;
     encapsulateVector.erase(encapsulateVector.begin());
     if (msg)
         drop(msg);
     return msg;
 }
 
-void Ieee80211MpduA::pushBack(cPacket *pkt)
+void Ieee80211MpduA::pushBack(Ieee80211DataOrMgmtFrame *pkt)
 {
     if (pkt == NULL)
         return;
@@ -211,7 +211,7 @@ void Ieee80211MpduA::pushBack(cPacket *pkt)
     encapsulateVector.push_back(shareStructPtr);
 }
 
-void Ieee80211MpduA::pushFrom(cPacket *pkt)
+void Ieee80211MpduA::pushFrom(Ieee80211DataOrMgmtFrame *pkt)
 {
     if (pkt == NULL)
         return;
@@ -252,7 +252,7 @@ void Ieee80211MpduA::_detachShareVector(unsigned int i)
     }
 }
 
-cPacket *Ieee80211MpduA::getPacket(unsigned int i) const
+Ieee80211DataOrMgmtFrame *Ieee80211MpduA::getPacket(unsigned int i) const
 {
 
     if (i >= encapsulateVector.size())

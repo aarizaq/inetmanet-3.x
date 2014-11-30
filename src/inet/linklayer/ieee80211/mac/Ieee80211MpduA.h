@@ -26,7 +26,7 @@ class Ieee80211MpduA : public Ieee80211DataOrMgmtFrame
 {
 private:
     struct ShareStruct{
-        cPacket * pkt;
+        Ieee80211DataOrMgmtFrame * pkt;
         unsigned int shareCount;
         ShareStruct(){
             pkt=NULL;
@@ -44,7 +44,7 @@ public:
     virtual Ieee80211MpduA * dup(){return new Ieee80211MpduA(*this);}
     virtual ~Ieee80211MpduA();
     Ieee80211MpduA& operator=(const Ieee80211MpduA& msg);
-    virtual cPacket *getPacket(unsigned int i) const;
+    virtual Ieee80211DataOrMgmtFrame *getPacket(unsigned int i) const;
     virtual void setPacketKind(unsigned int i,int kind);
     virtual unsigned int getNumEncap() const {return encapsulateVector.size();}
     uint64_t getPktLength(unsigned int i) const
@@ -56,10 +56,10 @@ public:
     cPacket *decapsulatePacket(unsigned int i);
     virtual unsigned int getEncapSize() {return encapsulateVector.size();}
 
-    virtual void pushFrom(cPacket *);
-    virtual void pushBack(cPacket *);
-    virtual cPacket *popFrom();
-    virtual cPacket *popBack();
+    virtual void pushFrom(Ieee80211DataOrMgmtFrame *);
+    virtual void pushBack(Ieee80211DataOrMgmtFrame *);
+    virtual Ieee80211DataOrMgmtFrame *popFrom();
+    virtual Ieee80211DataOrMgmtFrame *popBack();
     virtual bool haveBlock(){return !encapsulateVector.empty();}
     virtual void forEachChild(cVisitor *v);
 

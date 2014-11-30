@@ -21,6 +21,7 @@
 #include <vector>
 #include <deque>
 #include <map>
+
 #include <utility>
 #include "inet/linklayer/ieee80211/mac/IQoSClassifier.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
@@ -32,12 +33,45 @@ namespace ieee80211 {
 
 class INET_API MpduAggregateHandler : public cObject
 {
+    private:
+        // Timeout structures
+        enum TimerType
+        {
+            BLOCKTIMEOUT,
+            ADDBAFALIURE,
+        };
+        struct Timer
+        {
+                MACAddress nodeId;
+                TimerType type;
+
+        };
+        typedef std::multimap<simtime_t,Timer> TimerQueue;
+        TimerQueue timerQueue;
+
+        // timer methods
+        void addTimer(const MACAddress &, const TimerType &, const double &);
+        void checkTimer();
+        bool checkPending(const MACAddress &, const TimerType &);
+        void erasePending(const MACAddress &, const TimerType &);
+
+        // timer out action methods
+        void blockTimeOutAction(const MACAddress &);
+        void addbaFaliureAction(const MACAddress &);
+
     public:
+        // Enum Types
         enum State {
             DEFAULT,
             WAITCONFIRMATION,
             WAITBLOCK,
             SENDBLOCK,
+        };
+        enum Ieee80211BlockAckCode
+        {
+            ADDBArequest = 0,
+            ADDBAReponse = 1,
+            DELBA = 2,
         };
         class ADDBAInfo
         {
@@ -52,12 +86,6 @@ class INET_API MpduAggregateHandler : public cObject
                 unsigned short BlockAckTimeout;
                 unsigned short ADDBAFailureTimeout;
                 unsigned short BlockAckStartingSequenceControl;
-        };
-        enum Ieee80211BlockAckCode
-        {
-            ADDBArequest = 0,
-            ADDBAReponse = 1,
-            DELBA = 2,
         };
     protected:
         typedef std::map<MACAddress,int> NumFramesDestination;
@@ -83,7 +111,12 @@ class INET_API MpduAggregateHandler : public cObject
         std::vector<CategotyInfo> categories;
         virtual void increaseSize(Ieee80211DataOrMgmtFrame* val, int cat);
         virtual void decreaseSize(Ieee80211DataOrMgmtFrame* val, int cat);
-        // structures to store allow block destination address
+
+
+        virtual int findAddress(const MACAddress  &,int = -1);
+        virtual int findAddressFree(const MACAddress &addr,int = -1);
+        virtual void createBlocks(const MACAddress &, int = -1);
+        virtual void removeBlock(const MACAddress &, int = -1);
     public:
         MpduAggregateHandler();
         virtual ~MpduAggregateHandler();
@@ -96,11 +129,7 @@ class INET_API MpduAggregateHandler : public cObject
         virtual void prepareADDBA(const int &);
         virtual void prepareADDBA(const int &, const MACAddress &);
         virtual bool handleADDBA(Ieee80211DataOrMgmtFrame *);
-
-        virtual int findAddress(const MACAddress  &,int = -1);
-        virtual int findAddressFree(const MACAddress &addr,int = -1);
-        virtual void createBlocks(const MACAddress &, int = -1);
-
+        virtual void sendDELBA(const MACAddress &addr);
 
         // ADDBAInfo management
         virtual bool checkState(const MACAddress&);
