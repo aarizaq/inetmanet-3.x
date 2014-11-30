@@ -16,12 +16,13 @@
 #include "inet/linklayer/ieee80211/mgmt/MpduAggregateHandler.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211MpduA.h"
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtFrames_m.h"
+#include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtBase.h"
 
 namespace inet {
 
 namespace ieee80211 {
 
-#define MAXBLOCK 16
+#define MAXBLOCK 100
 #define MINBLOCK 3
 #define DEFAULT_BL_ACK 0.01
 #define DEFAULT_FALIURE 0.01
@@ -129,8 +130,16 @@ MpduAggregateHandler::MpduAggregateHandler():
         automaticMimimumAddress(-1)
 {
     categories.clear();
-    categories.resize(2);
     listAllowAddress.clear();
+
+    Ieee80211MgmtBase *mgmt = dynamic_cast<Ieee80211MgmtBase*>(this->getOwner());
+
+    categories.resize(mgmt->dataQueue.size());
+    queueManagement = &(mgmt->mgmtQueue);
+
+    for (unsigned int i = 0; i < mgmt->dataQueue.size(); i++)
+        categories[i].queue = &(mgmt->dataQueue[i]);
+
 }
 
 
@@ -358,6 +367,9 @@ void MpduAggregateHandler::createBlocks(const MACAddress &addr, int cat)
             else
             {
                 ++itAux;
+                if (block->getOwner() == this)
+                    drop(block);
+
                 categories[cat].queue->insert(itAux,block);
                 it = categories[cat].queue->erase(it);
             }
@@ -420,13 +432,21 @@ void MpduAggregateHandler::removeBlock(const MACAddress &addr, int cat)
             categories[cat].numFramesDestinationFree[addr] = 0;
             itDest2 = categories[cat].numFramesDestinationFree.find(addr);
         }
-        while (frame->getEncapSize()>1)
+        while (frame->getEncapSize() > 1)
         {
-            categories[cat].queue->insert(it,frame->popFrom());
+            Ieee80211DataOrMgmtFrame *pkt = frame->popFrom();
+            // check ownership
+            if (pkt->getOwner() == this)
+                drop(pkt);
+            categories[cat].queue->insert(it,pkt);
             itDest2->second++;
         }
         *it = frame->popFrom();
+        if ((*it)->getOwner() == this)
+            drop(*it);
         itDest2->second++;
+        //if (frame->getOwner() != this)
+        //    take(frame);
         delete frame;
     }
 }
@@ -459,6 +479,8 @@ void MpduAggregateHandler::prepareADDBA(const MACAddress &addr)
         Ieee80211DataOrMgmtFrame *frame = new Ieee80211DataOrMgmtFrame();
         frame->encapsulate(addbaFrame);
         frame->setReceiverAddress(addr);
+        if (frame->getOwner() == this)
+            drop(frame);
         queueManagement->push_back(frame);
 
         if (!isAllowAddress(addr, info))
@@ -477,16 +499,19 @@ void MpduAggregateHandler::prepareADDBA(const MACAddress &addr)
 bool MpduAggregateHandler::handleFrames(Ieee80211DataOrMgmtFrame *pkt)
 {
     checkState(pkt);
+    bool takePkt = false;
     if (handleADDBA(pkt))
-        return true;
+        takePkt = true;
     else if (dynamic_cast<Ieee80211ActionBlockAckDELBA *>(pkt->getEncapsulatedPacket()))
     {
         MACAddress addr = pkt->getTransmitterAddress();
         setMacDiscardMpdu(addr);
+        //if (pkt->getOwner() != this) // check ownership
+        //    this->take(pkt);
         delete pkt;
-        return true;
+        takePkt = true;
     }
-    return false;
+    return takePkt;
 }
 
 
@@ -501,6 +526,8 @@ bool MpduAggregateHandler::handleADDBA(Ieee80211DataOrMgmtFrame *pkt)
     {
         pkt->setReceiverAddress(pkt->getTransmitterAddress());
         addbaFrame->getBody().setAction(ADDBAReponse);
+        if (pkt->getOwner() == this)
+            drop(pkt);
         queueManagement->push_back(pkt);
         erasePending(addr, RESETBLOCK);
         addTimer(addr, RESETBLOCK, DEFAULT_RESET_BLOCK);
@@ -523,7 +550,8 @@ bool MpduAggregateHandler::handleADDBA(Ieee80211DataOrMgmtFrame *pkt)
         {
             createBlocks(addr, i);
         }
-
+        //if (pkt->getOwner() != this)
+        //    take(pkt);
         delete pkt;
     }
     return true;
@@ -536,6 +564,8 @@ void MpduAggregateHandler::sendDELBA(const MACAddress &addr)
     Ieee80211DataOrMgmtFrame *frame = new Ieee80211DataOrMgmtFrame();
     frame->encapsulate(addbaFrame);
     frame->setReceiverAddress(addr);
+    if (frame->getOwner() == this)
+        drop(frame);
     queueManagement->push_back(frame);
 }
 

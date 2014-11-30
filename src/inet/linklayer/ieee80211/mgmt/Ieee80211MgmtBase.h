@@ -45,6 +45,7 @@ class MpduAggregateHandler;
 class INET_API Ieee80211MgmtBase : public Ieee80211PassiveQueue, public ILifecycle
 {
   protected:
+    friend class MpduAggregateHandler;
     // configuration
     int frameCapacity;
     MACAddress myAddress;

@@ -31,7 +31,7 @@ namespace inet {
 
 namespace ieee80211 {
 
-class INET_API MpduAggregateHandler : public cObject
+class INET_API MpduAggregateHandler : public cOwnedObject
 {
     private:
         // Timeout structures
