@@ -558,11 +558,11 @@ packet Ieee80211ActionBlockAckADDBA extends Ieee80211ManagementFrame
 }
 
 
-packet Ieee80211ActionBlockAckADDBAF extends Ieee80211ManagementFrame
+packet Ieee80211ActionBlockAckDELBA extends Ieee80211ManagementFrame
 {
     type = ST_ACTION;
     Category = AC_BLOCKACK;
     byteLength = 28+getBody().getBodyLength();
-    Ieee80211ADDBAFrameBody body;
+    Ieee80211DELBAFrameBody body;
 }
 

@@ -39,6 +39,7 @@ class INET_API MpduAggregateHandler : public cObject
         {
             BLOCKTIMEOUT,
             ADDBAFALIURE,
+            RESETBLOCK
         };
         struct Timer
         {
@@ -58,6 +59,7 @@ class INET_API MpduAggregateHandler : public cObject
         // timer out action methods
         void blockTimeOutAction(const MACAddress &);
         void addbaFaliureAction(const MACAddress &);
+        void resetBlock(const MACAddress &);
 
     public:
         // Enum Types
@@ -107,6 +109,7 @@ class INET_API MpduAggregateHandler : public cObject
 
         bool allAddress;
         bool resetAfterSend;
+        int automaticMimimumAddress; // if the number of "free" address is bigger than this value the MpduAggregateHandler changes to automatically the handle Ack mode, 0 or lower disabled
 
         std::vector<CategotyInfo> categories;
         virtual void increaseSize(Ieee80211DataOrMgmtFrame* val, int cat);
@@ -117,33 +120,42 @@ class INET_API MpduAggregateHandler : public cObject
         virtual int findAddressFree(const MACAddress &addr,int = -1);
         virtual void createBlocks(const MACAddress &, int = -1);
         virtual void removeBlock(const MACAddress &, int = -1);
+
+        //
+        virtual void setMacAcceptMpdu(const MACAddress &);
+        virtual void setMacDiscardMpdu(const MACAddress &);
+
+        // management of frame control
+        virtual void prepareADDBA(const MACAddress &);
+        virtual bool handleADDBA(Ieee80211DataOrMgmtFrame *);
+        virtual void sendDELBA(const MACAddress &addr);
+
+        // handle states
+        virtual bool checkState(const MACAddress&);
+             //  ADDBAInfo management
+
     public:
         MpduAggregateHandler();
         virtual ~MpduAggregateHandler();
         virtual void setNumQueues(int num){categories.resize(num);}
 
-        unsigned int getNumQueques()
-        {
-            return categories.size();
-        }
-        virtual void prepareADDBA(const int &);
-        virtual void prepareADDBA(const int &, const MACAddress &);
-        virtual bool handleADDBA(Ieee80211DataOrMgmtFrame *);
-        virtual void sendDELBA(const MACAddress &addr);
+        virtual unsigned int getNumQueques() {return categories.size();}
 
-        // ADDBAInfo management
-        virtual bool checkState(const MACAddress&);
         virtual bool checkState(const Ieee80211DataOrMgmtFrame *);
+        virtual bool handleFrames(Ieee80211DataOrMgmtFrame *pkt);
+
         virtual void setAllAddress(const bool &p) {allAddress = p;}
         virtual void setResetAfterSend(const bool &p) {resetAfterSend = p;}
         virtual void setADDBAInfo(const MACAddress &addr, ADDBAInfo *);
         virtual bool isAllowAddress(const MACAddress &add, ADDBAInfo *&iaddai);
 
+        //
+        virtual void setAutomaticMimimumAddress(const int & p) {automaticMimimumAddress = p;} // if the number of "free" address is bigger than this value the MpduAggregateHandler changes to automatically the handle Ack mode, 0 or lower disabled
+        virtual int setAutomaticMimimumAddress() {return automaticMimimumAddress;}
+
         virtual bool getAllAddress() const {return allAddress;}
         virtual bool getResetAfterSend() const {return resetAfterSend;}
         virtual bool isAllowAddress(const MACAddress &add);
-
-
 
 };
 

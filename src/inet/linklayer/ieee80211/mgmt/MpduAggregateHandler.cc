@@ -23,8 +23,9 @@ namespace ieee80211 {
 
 #define MAXBLOCK 16
 #define MINBLOCK 3
-#define DEFAULT_BL_ACK 0.001
-#define DEFAULT_FALIURE 0.001
+#define DEFAULT_BL_ACK 0.01
+#define DEFAULT_FALIURE 0.01
+#define DEFAULT_RESET_BLOCK 0.02
 
 
 ///
@@ -53,6 +54,8 @@ void MpduAggregateHandler::checkTimer()
             case ADDBAFALIURE:
                 addbaFaliureAction(timerQueue.begin()->second.nodeId);
                 break;
+            case RESETBLOCK:
+                resetBlock(timerQueue.begin()->second.nodeId);
             default:
                 throw cRuntimeError("MpduAggregateHandler timer type unknown");
         }
@@ -114,10 +117,16 @@ void MpduAggregateHandler::addbaFaliureAction(const MACAddress & addr)
     }
 }
 
+void MpduAggregateHandler::resetBlock(const MACAddress & addr)
+{
+    setMacDiscardMpdu(addr);
+}
+
 /////////
 MpduAggregateHandler::MpduAggregateHandler():
         allAddress(false),
-        resetAfterSend(false)
+        resetAfterSend(false),
+        automaticMimimumAddress(-1)
 {
     categories.clear();
     categories.resize(2);
@@ -169,6 +178,21 @@ bool MpduAggregateHandler::checkState(const MACAddress &addr)
     if (!isAllowAddress(addr, addai))
         return false;
 
+    if (automaticMimimumAddress > 0 && addai->state == DEFAULT)
+    {
+        // check number of free address
+        for (unsigned int i = 0; i < categories.size(); i++)
+        {
+            NumFramesDestination::iterator it = categories[i].numFramesDestinationFree.find(addr);
+            if (it != categories[i].numFramesDestinationFree.end() && it->second >= automaticMimimumAddress)
+            {
+                prepareADDBA(addr);
+                break;
+            }
+        }
+        return false;
+    }
+
     if (addai->state != WAITBLOCK && addai->state != SENDBLOCK)
         return false;
 
@@ -196,10 +220,7 @@ bool MpduAggregateHandler::checkState(const MACAddress &addr)
         {
             // check for more bloscks
             for (unsigned int i = 0; i < categories.size(); i++)
-            {
                 createBlocks(addr, i);
-            }
-
         }
     }
     return true;
@@ -232,7 +253,6 @@ void MpduAggregateHandler::increaseSize(Ieee80211DataOrMgmtFrame* val, int cat)
         it->second++;
         it2->second++;
     }
-
 }
 
 void MpduAggregateHandler::decreaseSize(Ieee80211DataOrMgmtFrame* val, int cat)
@@ -411,16 +431,7 @@ void MpduAggregateHandler::removeBlock(const MACAddress &addr, int cat)
     }
 }
 
-void MpduAggregateHandler::prepareADDBA(const int &cat)
-{
-
-    MACAddress addr;
-    Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame*>(categories[cat].queue->front());
-    addr = frame->getReceiverAddress();
-    prepareADDBA(cat, addr);
-}
-
-void MpduAggregateHandler::prepareADDBA(const int &cat, const MACAddress &addr)
+void MpduAggregateHandler::prepareADDBA(const MACAddress &addr)
 {
 
     if (!allAddress && !isAllowAddress(addr))
@@ -461,9 +472,26 @@ void MpduAggregateHandler::prepareADDBA(const int &cat, const MACAddress &addr)
     }
 }
 
-bool MpduAggregateHandler::handleADDBA(Ieee80211DataOrMgmtFrame *pkt)
+
+
+bool MpduAggregateHandler::handleFrames(Ieee80211DataOrMgmtFrame *pkt)
 {
     checkState(pkt);
+    if (handleADDBA(pkt))
+        return true;
+    else if (dynamic_cast<Ieee80211ActionBlockAckDELBA *>(pkt->getEncapsulatedPacket()))
+    {
+        MACAddress addr = pkt->getTransmitterAddress();
+        setMacDiscardMpdu(addr);
+        delete pkt;
+        return true;
+    }
+    return false;
+}
+
+
+bool MpduAggregateHandler::handleADDBA(Ieee80211DataOrMgmtFrame *pkt)
+{
     Ieee80211ActionBlockAckADDBA * addbaFrame = dynamic_cast<Ieee80211ActionBlockAckADDBA *>(pkt->getEncapsulatedPacket());
     if (addbaFrame == nullptr)
         return false;
@@ -474,6 +502,9 @@ bool MpduAggregateHandler::handleADDBA(Ieee80211DataOrMgmtFrame *pkt)
         pkt->setReceiverAddress(pkt->getTransmitterAddress());
         addbaFrame->getBody().setAction(ADDBAReponse);
         queueManagement->push_back(pkt);
+        erasePending(addr, RESETBLOCK);
+        addTimer(addr, RESETBLOCK, DEFAULT_RESET_BLOCK);
+        setMacAcceptMpdu(addr);
     }
     else if (addbaFrame->getBody().getAction() == ADDBAReponse)
     {
@@ -500,8 +531,37 @@ bool MpduAggregateHandler::handleADDBA(Ieee80211DataOrMgmtFrame *pkt)
 
 void MpduAggregateHandler::sendDELBA(const MACAddress &addr)
 {
-
+    Ieee80211ActionBlockAckDELBA * addbaFrame = new Ieee80211ActionBlockAckDELBA();
+    Ieee80211DELBAFrameBody body;
+    Ieee80211DataOrMgmtFrame *frame = new Ieee80211DataOrMgmtFrame();
+    frame->encapsulate(addbaFrame);
+    frame->setReceiverAddress(addr);
+    queueManagement->push_back(frame);
 }
+
+// Configire mac mthods
+void MpduAggregateHandler::setMacAcceptMpdu(const MACAddress &addr)
+{
+    /*
+    EV << "Tuning to channel #" << channelNum << "\n";
+    cMessage *msg = new cMessage("changeChannel", RADIO_C_CONFIGURE);
+    msg->setControlInfo(configureCommand);
+
+    send(msg, "macOut");
+    */
+}
+
+void MpduAggregateHandler::setMacDiscardMpdu(const MACAddress &addr)
+{
+    /*
+    EV << "Tuning to channel #" << channelNum << "\n";
+    cMessage *msg = new cMessage("changeChannel", RADIO_C_CONFIGURE);
+    msg->setControlInfo(configureCommand);
+
+    send(msg, "macOut");
+    */
+}
+
 
 } // namespace ieee80211
 
