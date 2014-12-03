@@ -43,7 +43,7 @@ WirelessGetNeig::WirelessGetNeig()
         cModule *host = destNode->getModule();
         mod = check_and_cast<IMobility *>(host->getSubmodule("mobility"));
         if (mod == NULL)
-            opp_error("node or mobility module not found");
+            throw cRuntimeError("node or mobility module not found");
         nodeInfo info;
         info.mob = mod;
         info.itable = L3AddressResolver().findInterfaceTableOf(destNode->getModule());
@@ -65,7 +65,7 @@ void WirelessGetNeig::getNeighbours(const IPv4Address &node, std::vector<IPv4Add
 
     ListNodes::iterator it = listNodes.find(node.getInt());
     if (it == listNodes.end())
-        opp_error("node not found");
+        throw cRuntimeError("node not found");
 
     Coord pos = it->second.mob->getCurrentPosition();
     for (it = listNodes.begin(); it != listNodes.end(); ++it)

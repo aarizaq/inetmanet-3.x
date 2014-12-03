@@ -147,7 +147,7 @@ void UDPBasicP2P2C::initialize(int stage)
         modo = (modoP2P) p2pMode;
 
         if (!GlobalWirelessLinkInspector::isActive())
-            opp_error("GlobalWirelessLinkInspector not found");
+            throw cRuntimeError("GlobalWirelessLinkInspector not found");
 
         if (par("fuzzy"))
         {
@@ -177,9 +177,9 @@ void UDPBasicP2P2C::initialize(int stage)
             }
         }
         if (myAddr.toIPv4() == IPv4Address::UNSPECIFIED_ADDRESS)
-            opp_error("addr invalid");
+            throw cRuntimeError("addr invalid");
         if (myAddress == L3Address())
-            opp_error("MACAddress addr invalid");
+            throw cRuntimeError("MACAddress addr invalid");
         inverseAddress[myAddress.toMAC().getInt()] = myAddr.toIPv4();
         directAddress[myAddr.toIPv4()] = myAddress.toMAC().getInt();
 
@@ -190,7 +190,7 @@ void UDPBasicP2P2C::initialize(int stage)
             // cModule * myNode = L3AddressResolver().findHostWithAddress(myAddr);
             cModule * myNode = this->getParentModule();
             if (!myNode->isVector())
-                error("No es un vector");
+                throw cRuntimeError("No es un vector");
             if (initNodes.empty())
             {
                 int numNodes = myNode->getVectorSize();
@@ -531,7 +531,7 @@ std::vector<UDPBasicP2P2C::InfoData> UDPBasicP2P2C::selectBestList(const std::ve
         }
     }
     if (winners.empty())
-        error("winners empty");
+        throw cRuntimeError("winners empty");
     else
     {
         int val = intuniform(0,winners.size()-1);
@@ -585,7 +585,7 @@ uint64_t UDPBasicP2P2C::selectBest(const std::vector<uint64_t> &address)
                     route.push_back(L3Address(pathNode[i]));
             }
             else
-                opp_error("route not found");
+                throw cRuntimeError("route not found");
         }
         else if (GlobalWirelessLinkInspector::getRouteWithLocator(myAdd, aux, route))
         {
@@ -705,7 +705,7 @@ uint64_t UDPBasicP2P2C::selectBest(const std::vector<uint64_t> &address)
         }
     }
     if (winners.empty())
-        error("winners empty");
+        throw cRuntimeError("winners empty");
     else
     {
         int val = intuniform(0,winners.size()-1);
@@ -800,12 +800,12 @@ void UDPBasicP2P2C::handleMessage(cMessage *msg)
     }
     else
     {
-        error("Unrecognized message (%s)%s", msg->getClassName(), msg->getName());
+        throw cRuntimeError("Unrecognized message (%s)%s", msg->getClassName(), msg->getName());
     }
 
     if (!timeQueue.empty() && !queueTimer->isScheduled())
     {
-        opp_error("Queue not empty and timer not scheduled");
+        throw cRuntimeError("Queue not empty and timer not scheduled");
     }
 
 
@@ -1040,7 +1040,7 @@ bool UDPBasicP2P2C::processPacket(cPacket *pk)
                 {
                     uint64_t numSubSegments = ceil((double)pkt->getTotalSize()/(double)maxPacketSize);
                     if (pkt->getNodeId() == L3Address())
-                        opp_error("id invalid");
+                        throw cRuntimeError("id invalid");
                     ConnectInTransit info(pkt->getNodeId(),pkt->getSegmentId(),numSubSegments,this);
 
                     parallelConnection.push_back(info);
@@ -1113,7 +1113,7 @@ void UDPBasicP2P2C::generateRequestSub()
 
         uint32_t segmentId = itPar->segmentId;
         if (itPar->segmentInTransit.empty())
-            opp_error("");
+            throw cRuntimeError("");
 
         uint64_t node = itPar->nodeId.toMAC().getInt();
 
@@ -1136,7 +1136,7 @@ void UDPBasicP2P2C::generateRequestSub()
             it = clientList.find(itPar->nodeId.toMAC().getInt());
             if (it == clientList.end())
             {
-                opp_error("client list error");
+                throw cRuntimeError("client list error");
             }
 
         }
@@ -1305,12 +1305,12 @@ uint64_t UDPBasicP2P2C::searchBestSegment(const uint64_t & address)
 
     SegmentMap::iterator it = segmentMap.find(address);
     if (it == segmentMap.end())
-        opp_error("Node not found in segmentMap");
+        throw cRuntimeError("Node not found in segmentMap");
     SegmentList * nodeSegmentList = it->second;
     SegmentList result;
     std::set_difference(mySegmentList.begin(),mySegmentList.end(),nodeSegmentList->begin(),nodeSegmentList->end(),std::inserter(result, result.end()));
     if (result.empty())
-        opp_error("request error");
+        throw cRuntimeError("request error");
     uint16_t min = 64000;
     uint64_t seg = UINT64_MAX;
     for (SegmentList::iterator it2 = result.begin(); it2 != result.end(); ++it2)
@@ -1318,7 +1318,7 @@ uint64_t UDPBasicP2P2C::searchBestSegment(const uint64_t & address)
         SegmentList::iterator it3 =  mySegmentList.find(*it2);
         if (it3 == mySegmentList.end())
         {
-            opp_error("request error segment not found in my list");
+            throw cRuntimeError("request error segment not found in my list");
             continue;
         }
         if (request[*it2]<min)
@@ -1328,7 +1328,7 @@ uint64_t UDPBasicP2P2C::searchBestSegment(const uint64_t & address)
         }
     }
     if (seg == UINT64_MAX)
-        opp_error("request error segment not found");
+        throw cRuntimeError("request error segment not found");
 
     request[seg]++;
     return seg;
@@ -1550,7 +1550,7 @@ void UDPBasicP2P2C::WirelessNumNeig()
         cModule *host = getContainingNode(this);
         mod = check_and_cast<IMobility *>(host->getSubmodule("mobility"));
         if (mod == NULL)
-            opp_error("node or mobility module not found");
+            throw cRuntimeError("node or mobility module not found");
 
         vectorList[add] = mod;
     }
@@ -1560,7 +1560,7 @@ int UDPBasicP2P2C::getNumNeighNodes(uint64_t add,double dist)
 {
     VectorList::iterator it = vectorList.find(add);
     if (it == vectorList.end())
-        opp_error("Node not found");
+        throw cRuntimeError("Node not found");
     int cont = 0;
     Coord ci = it->second->getCurrentPosition();
     for (VectorList::iterator it2 = vectorList.begin();it2 != vectorList.end();++it2)
