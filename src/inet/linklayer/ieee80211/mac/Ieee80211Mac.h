@@ -185,6 +185,8 @@ class INET_API Ieee80211Mac : public MACProtocolBase
      */
     int rtsThreshold;
 
+    bool useRtsMpduA = false;
+
     /**
      * Maximum number of transmissions for a message.
      * This includes the initial transmission and all subsequent retransmissions.
@@ -239,6 +241,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
         WAITCTS,
         WAITSIFS,
         RECEIVE,
+        WAITBLOCKACK,
     };
   protected:
     cFSM fsm;
@@ -507,7 +510,8 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     /** @brief Handle all kinds of messages and notifications with the state machine */
     virtual void handleWithFSM(cMessage *msg);
     //@}
-
+    virtual bool  initFsm(cMessage *msg, bool &, Ieee80211Frame *&);
+    virtual void  endFsm(cMessage *msg);
   protected:
     /**
      * @name Timing functions
@@ -572,6 +576,10 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     virtual void sendDataFrameOnEndSIFS(Ieee80211DataOrMgmtFrame *frameToSend);
     virtual void sendDataFrame(Ieee80211DataOrMgmtFrame *frameToSend);
     virtual void sendMulticastFrame(Ieee80211DataOrMgmtFrame *frameToSend);
+
+    virtual void processMpduA(Ieee80211Frame *frame);
+    virtual bool isMpduA(Ieee80211Frame *frame);
+
     //@}
 
   protected:
