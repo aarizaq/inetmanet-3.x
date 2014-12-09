@@ -183,17 +183,17 @@ void Ieee80211Mac::initializeCategories()
 
 Ieee80211Mac::Ieee80211Mac() :
     transmissionState(IRadio::TRANSMISSION_STATE_UNDEFINED),
-    throughputTimer(NULL),
-    radio(NULL),
-    fr(NULL),
-    queueModule(NULL),
-    pendingRadioConfigMsg(NULL),
-    endSIFS(NULL),
-    endDIFS(NULL),
-    endTXOP(NULL),
-    endTimeout(NULL),
-    endReserve(NULL),
-    mediumStateChange(NULL)
+    throughputTimer(nullptr),
+    radio(nullptr),
+    fr(nullptr),
+    queueModule(nullptr),
+    pendingRadioConfigMsg(nullptr),
+    endSIFS(nullptr),
+    endDIFS(nullptr),
+    endTXOP(nullptr),
+    endTimeout(nullptr),
+    endReserve(nullptr),
+    mediumStateChange(nullptr)
 {
 }
 
@@ -201,7 +201,7 @@ Ieee80211Mac::~Ieee80211Mac()
 {
     if (endSIFS) {
         delete (Ieee80211Frame *)endSIFS->getContextPointer();
-        endSIFS->setContextPointer(NULL);
+        endSIFS->setContextPointer(nullptr);
         cancelAndDelete(endSIFS);
     }
     cancelAndDelete(endDIFS);
@@ -436,7 +436,7 @@ void Ieee80211Mac::initialize(int stage)
         throughputTimePeriod = par("throughputTimePeriod");
         recBytesOverPeriod = 0;
         throughputLastPeriod = 0;
-        throughputTimer = NULL;
+        throughputTimer = nullptr;
         if (throughputTimePeriod > 0)
             throughputTimer = new cMessage("throughput-timer");
         if (throughputTimer)
@@ -696,7 +696,7 @@ void Ieee80211Mac::handleUpperPacket(cPacket *msg)
 
 int Ieee80211Mac::mappingAccessCategory(Ieee80211DataOrMgmtFrame *frame)
 {
-    bool isDataFrame = (dynamic_cast<Ieee80211DataFrame *>(frame) != NULL);
+    bool isDataFrame = (dynamic_cast<Ieee80211DataFrame *>(frame) != nullptr);
 
     int tempAC = 0;
     if (numCategories() > 1)
@@ -719,13 +719,13 @@ int Ieee80211Mac::mappingAccessCategory(Ieee80211DataOrMgmtFrame *frame)
         else {
             // if the last frame is management insert here
             Ieee80211DataFrame *frameAux = dynamic_cast<Ieee80211DataFrame *>(transmissionQueue()->back());
-            if ((frameAux == NULL) || (frameAux && frameAux->getReceiverAddress().isMulticast()))
+            if ((frameAux == nullptr) || (frameAux && frameAux->getReceiverAddress().isMulticast()))
                 transmissionQueue()->push_back(frame);
             else {
                 // in other case search the possition
                 std::list<Ieee80211DataOrMgmtFrame *>::iterator p = transmissionQueue()->end();
                 while ((*p)->getReceiverAddress().isMulticast() && (p != transmissionQueue()->begin())) {    // search the first broadcast frame
-                    if (dynamic_cast<Ieee80211DataFrame *>(*p) == NULL)
+                    if (dynamic_cast<Ieee80211DataFrame *>(*p) == nullptr)
                         break;
                     p--;
                 }
@@ -744,7 +744,7 @@ int Ieee80211Mac::mappingAccessCategory(Ieee80211DataOrMgmtFrame *frame)
             //so for sure we placed it on second place
             p = transmissionQueue()->begin();
             p++;
-            while ((dynamic_cast<Ieee80211DataFrame *>(*p) == NULL) && (p != transmissionQueue()->end())) // search the first not management frame
+            while ((dynamic_cast<Ieee80211DataFrame *>(*p) == nullptr) && (p != transmissionQueue()->end())) // search the first not management frame
                 p++;
             transmissionQueue()->insert(p, frame);
         }
@@ -758,7 +758,7 @@ void Ieee80211Mac::handleUpperCommand(cMessage *msg)
 {
     if (msg->getKind() == RADIO_C_CONFIGURE) {
         EV_DEBUG << "Passing on command " << msg->getName() << " to physical layer\n";
-        if (pendingRadioConfigMsg != NULL) {
+        if (pendingRadioConfigMsg != nullptr) {
             // merge contents of the old command into the new one, then delete it
             ConfigureRadioCommand *oldConfigureCommand = check_and_cast<ConfigureRadioCommand *>(pendingRadioConfigMsg->getControlInfo());
             ConfigureRadioCommand *newConfigureCommand = check_and_cast<ConfigureRadioCommand *>(msg->getControlInfo());
@@ -767,7 +767,7 @@ void Ieee80211Mac::handleUpperCommand(cMessage *msg)
             if (isNaN(newConfigureCommand->getBitrate().get()) && !isNaN(oldConfigureCommand->getBitrate().get()))
                 newConfigureCommand->setBitrate(oldConfigureCommand->getBitrate());
             delete pendingRadioConfigMsg;
-            pendingRadioConfigMsg = NULL;
+            pendingRadioConfigMsg = nullptr;
         }
 
         if (fsm.getState() == IDLE || fsm.getState() == DEFER || fsm.getState() == BACKOFF) {
@@ -872,7 +872,7 @@ void Ieee80211Mac::handleLowerPacket(cPacket *msg)
 
 #ifdef LWMPLS
     int msgKind = msg->getKind();
-    if (msgKind != COLLISION && msgKind != BITERROR && twoAddressFrame!=NULL)
+    if (msgKind != COLLISION && msgKind != BITERROR && twoAddressFrame!=nullptr)
         sendNotification(NF_LINK_REFRESH, twoAddressFrame);
 #endif
 
@@ -926,7 +926,7 @@ void Ieee80211Mac::receiveSignal(cComponent *source, simsignal_t signalID, long 
 }
 
 /**
- * Msg can be upper, lower, self or NULL (when radio state changes)
+ * Msg can be upper, lower, self or nullptr (when radio state changes)
  */
 
 
@@ -1297,7 +1297,7 @@ void Ieee80211Mac::cancelBackoffPeriod()
 void Ieee80211Mac::sendACKFrameOnEndSIFS()
 {
     Ieee80211Frame *frameToACK = (Ieee80211Frame *)endSIFS->getContextPointer();
-    endSIFS->setContextPointer(NULL);
+    endSIFS->setContextPointer(nullptr);
     sendACKFrame(check_and_cast<Ieee80211DataOrMgmtFrame*>(frameToACK));
     delete frameToACK;
 }
@@ -1313,7 +1313,7 @@ void Ieee80211Mac::sendACKFrame(Ieee80211DataOrMgmtFrame *frameToACK)
 void Ieee80211Mac::sendDataFrameOnEndSIFS(Ieee80211DataOrMgmtFrame *frameToSend)
 {
     Ieee80211Frame *ctsFrame = (Ieee80211Frame *)endSIFS->getContextPointer();
-    endSIFS->setContextPointer(NULL);
+    endSIFS->setContextPointer(nullptr);
     sendDataFrame(frameToSend);
     delete ctsFrame;
 }
@@ -1379,7 +1379,7 @@ void Ieee80211Mac::sendMulticastFrame(Ieee80211DataOrMgmtFrame *frameToSend)
 void Ieee80211Mac::sendCTSFrameOnEndSIFS()
 {
     Ieee80211Frame *rtsFrame = (Ieee80211Frame *)endSIFS->getContextPointer();
-    endSIFS->setContextPointer(NULL);
+    endSIFS->setContextPointer(nullptr);
     sendCTSFrame(check_and_cast<Ieee80211RTSFrame*>(rtsFrame));
     delete rtsFrame;
 }
@@ -1413,7 +1413,7 @@ Ieee80211DataOrMgmtFrame *Ieee80211Mac::buildDataFrame(Ieee80211DataOrMgmtFrame 
     {
 #ifdef  USEMULTIQUEUE
         FrameBlock *blk = dynamic_cast<FrameBlock *> (frameToSend);
-        if (blk == NULL)
+        if (blk == nullptr)
         {
             frameToSend->setSequenceNumber(sequenceNumber);
             sequenceNumber = (sequenceNumber+1) % 4096;  //XXX seqNum must be checked upon reception of frames!
@@ -1438,11 +1438,11 @@ Ieee80211DataOrMgmtFrame *Ieee80211Mac::buildDataFrame(Ieee80211DataOrMgmtFrame 
 
     Ieee80211DataOrMgmtFrame *frame = (Ieee80211DataOrMgmtFrame *)frameToSend->dup();
 
-    if (frameToSend->getControlInfo()!=NULL)
+    if (frameToSend->getControlInfo()!=nullptr)
     {
         cObject * ctr = frameToSend->getControlInfo();
         TransmissionRequest *ctrl = dynamic_cast <TransmissionRequest*> (ctr);
-        if (ctrl == NULL)
+        if (ctrl == nullptr)
             throw cRuntimeError("control info is not PhyControlInfo type %s");
         frame->setControlInfo(ctrl->dup());
     }
@@ -1533,7 +1533,7 @@ Ieee80211DataOrMgmtFrame *Ieee80211Mac::buildMulticastFrame(Ieee80211DataOrMgmtF
 
 Ieee80211Frame *Ieee80211Mac::setBasicBitrate(Ieee80211Frame *frame)
 {
-    ASSERT(frame->getControlInfo()==NULL);
+    ASSERT(frame->getControlInfo()==nullptr);
     TransmissionRequest *ctrl = new TransmissionRequest();
     ctrl->setBitrate(bps(basicBitrate));
     frame->setControlInfo(ctrl);
@@ -1542,7 +1542,7 @@ Ieee80211Frame *Ieee80211Mac::setBasicBitrate(Ieee80211Frame *frame)
 
 Ieee80211Frame *Ieee80211Mac::setControlBitrate(Ieee80211Frame *frame)
 {
-    ASSERT(frame->getControlInfo()==NULL);
+    ASSERT(frame->getControlInfo()==nullptr);
     TransmissionRequest *ctrl = new TransmissionRequest();
     ctrl->setBitrate(bps(controlBitRate));
     frame->setControlInfo(ctrl);
@@ -1557,8 +1557,8 @@ Ieee80211Frame *Ieee80211Mac::setBitrateFrame(Ieee80211Frame *frame)
             delete  frame->removeControlInfo();
         return frame;
     }
-    TransmissionRequest *ctrl = NULL;
-    if (frame->getControlInfo()==NULL)
+    TransmissionRequest *ctrl = nullptr;
+    if (frame->getControlInfo()==nullptr)
     {
         ctrl = new TransmissionRequest();
         frame->setControlInfo(ctrl);
@@ -1604,15 +1604,15 @@ void Ieee80211Mac::retryCurrentTransmission()
 
 Ieee80211DataOrMgmtFrame *Ieee80211Mac::getCurrentTransmission()
 {
-    return transmissionQueue()->empty() ? NULL : (Ieee80211DataOrMgmtFrame *)transmissionQueue()->front();
+    return transmissionQueue()->empty() ? nullptr : (Ieee80211DataOrMgmtFrame *)transmissionQueue()->front();
 }
 
 void Ieee80211Mac::sendDownPendingRadioConfigMsg()
 {
-    if (pendingRadioConfigMsg != NULL)
+    if (pendingRadioConfigMsg != nullptr)
     {
         sendDown(pendingRadioConfigMsg);
-        pendingRadioConfigMsg = NULL;
+        pendingRadioConfigMsg = nullptr;
     }
 }
 
@@ -1799,7 +1799,7 @@ void Ieee80211Mac::logState()
     for (int i=0; i<numCategs; i++)
         EV_TRACE << " " << i << "(" << (edcCAF[i].endBackoff->isScheduled() ? "scheduled" : "") << ")";
     EV_TRACE << "\n# currentAC: " << currentAC << ", oldcurrentAC: " << oldcurrentAC;
-    if (getCurrentTransmission() != NULL)
+    if (getCurrentTransmission() != nullptr)
         EV_TRACE << "\n# current transmission: " << getCurrentTransmission()->getId();
     else
         EV_TRACE << "\n# current transmission: none";

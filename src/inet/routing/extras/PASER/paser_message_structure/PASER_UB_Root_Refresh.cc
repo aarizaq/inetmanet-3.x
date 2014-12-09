@@ -42,7 +42,7 @@ PASER_UB_Root_Refresh::PASER_UB_Root_Refresh(struct in_addr src, u_int32_t seqNr
     destAddress_var = src;
     seq = seqNr;
 
-    sign.buf = NULL;
+    sign.buf = nullptr;
     sign.len = 0;
 
     timestamp = 0;

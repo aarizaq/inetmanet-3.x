@@ -45,9 +45,9 @@ SCTPSocket::SCTPSocket(bool type)
 {
     sockstate = NOT_BOUND;
     localPrt = remotePrt = 0;
-    cb = NULL;
-    yourPtr = NULL;
-    gateToSctp = NULL;
+    cb = nullptr;
+    yourPtr = nullptr;
+    gateToSctp = nullptr;
     lastStream = -1;
     oneToOne = type;
     if (oneToOne)
@@ -119,7 +119,7 @@ void SCTPSocket::addAddress(L3Address addr)
 void SCTPSocket::bindx(AddressVector lAddresses, int lPort)
 {
     L3Address lAddr;
-    for (AddressVector::iterator i = lAddresses.begin(); i != lAddresses.end(); ++i) {
+    for (auto i = lAddresses.begin(); i != lAddresses.end(); ++i) {
         EV << "bindx: bind address " << (*i) << "\n";
         localAddresses.push_back((*i));
     }

@@ -36,7 +36,7 @@ struct dsr_opt_hdr *dsr_opt_hdr_add(struct dsr_opt_hdr *opt_hdr, unsigned int le
                                     unsigned int protocol)
 {
     if (len < DSR_OPT_HDR_LEN)
-        return NULL;
+        return nullptr;
     opt_hdr->nh = protocol;
     opt_hdr->f = 0;
     opt_hdr->res = 0;
@@ -91,7 +91,7 @@ struct dsr_opt *dsr_opt_find_opt(struct dsr_pkt *dp, int type)
                 return dopt;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 int NSCLASS dsr_opt_remove(struct dsr_pkt *dp)
@@ -127,8 +127,8 @@ int dsr_opt_parse(struct dsr_pkt *dp)
 
     dp->num_rrep_opts = dp->num_rerr_opts = dp->num_rreq_opts = dp->num_ack_opts = 0;
 
-    dp->srt_opt = NULL;
-    dp->ack_req_opt = NULL;
+    dp->srt_opt = nullptr;
+    dp->ack_req_opt = nullptr;
 
     for (unsigned int i = 0; i < dp->dh.opth.size(); i++)
     {

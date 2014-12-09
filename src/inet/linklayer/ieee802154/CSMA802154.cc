@@ -65,7 +65,7 @@ void CSMA802154::initialize(int stage)
         rxSetupTime = par("rxSetupTime").doubleValue();
         aTurnaroundTime = par("aTurnaroundTime").doubleValue();
         ackLength = par("ackLength");
-        ackMessage = NULL;
+        ackMessage = nullptr;
 
         //init parameters for backoff method
         std::string backoffMethodStr = par("backoffMethod").stdstringValue();

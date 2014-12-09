@@ -41,7 +41,7 @@ PASER_UB_Key_Refresh::PASER_UB_Key_Refresh(struct in_addr src) {
     destAddress_var = src;
     seq = 0;
 
-    sign.buf = NULL;
+    sign.buf = nullptr;
     sign.len = 0;
 
 }

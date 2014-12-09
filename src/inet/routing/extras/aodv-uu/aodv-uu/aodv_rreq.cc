@@ -114,10 +114,10 @@ RREQ *NS_CLASS rreq_create(u_int8_t flags,struct in_addr dest_addr,
 AODV_ext *rreq_add_ext(RREQ * rreq, int type, unsigned int offset,
                        int len, char *data)
 {
-    AODV_ext *ext = NULL;
+    AODV_ext *ext = nullptr;
 #ifndef OMNETPP
     if (offset < RREQ_SIZE)
-        return NULL;
+        return nullptr;
 
     ext = (AODV_ext *) ((char *) rreq + offset);
 
@@ -219,10 +219,10 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
                            unsigned int ifindex)
 {
 
-    AODV_ext *ext=NULL;
-    RREP *rrep = NULL;
+    AODV_ext *ext=nullptr;
+    RREP *rrep = nullptr;
     int rrep_size = RREP_SIZE;
-    rt_table_t *rev_rt=NULL, *fwd_rt = NULL;
+    rt_table_t *rev_rt=nullptr, *fwd_rt = nullptr;
     u_int32_t rreq_orig_seqno, rreq_dest_seqno;
     u_int32_t rreq_id, rreq_new_hcnt, life;
     unsigned int extlen = 0;
@@ -304,10 +304,10 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
            else
                life = PATH_DISCOVERY_TIME - 2 * rreq_new_hcnt * NODE_TRAVERSAL_TIME;
            rev_rt = rt_table_find(rreq_orig);
-           if (rev_rt == NULL)
+           if (rev_rt == nullptr)
            {
                rev_rt = rt_table_insert(rreq_orig, ip_src, rreq_new_hcnt, rreq_orig_seqno, life, VALID, 0, ifindex,cost,hopfix);
-               // throw cRuntimeError("reverse route NULL with RREQ in the processed table" );
+               // throw cRuntimeError("reverse route nullptr with RREQ in the processed table" );
            }
            if (rev_rt->dest_seqno != 0)
            {
@@ -326,10 +326,10 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
         {
             life = PATH_DISCOVERY_TIME - 2 * rreq_new_hcnt * NODE_TRAVERSAL_TIME;
             rev_rt = rt_table_find(rreq_orig);
-            if (rev_rt == NULL)
+            if (rev_rt == nullptr)
             {
                  rev_rt = rt_table_insert(rreq_orig, ip_src, rreq_new_hcnt,rreq_orig_seqno, life, VALID, 0, ifindex,cost,hopfix);
-                 // throw cRuntimeError("reverse route NULL with RREQ in the processed table" );
+                 // throw cRuntimeError("reverse route nullptr with RREQ in the processed table" );
             }
             if (useHover && (rev_rt->dest_seqno == 0 ||
                     (int32_t) rreq_orig_seqno > (int32_t) rev_rt->dest_seqno ||
@@ -386,7 +386,7 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
     /* Calculate the extended minimal life time. */
     life = PATH_DISCOVERY_TIME - 2 * rreq_new_hcnt * NODE_TRAVERSAL_TIME;
 
-    if (rev_rt == NULL)
+    if (rev_rt == nullptr)
     {
         DEBUG(LOG_DEBUG, 0, "Creating REVERSE route entry, RREQ orig: %s",
               ip_to_str(rreq_orig));
@@ -460,7 +460,7 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
                   "Responding for INTERNET dest: %s rrep_size=%d",
                   ip_to_str(rreq_dest), rrep_size);
 
-            rrep_send(rrep, rev_rt, NULL, rrep_size);
+            rrep_send(rrep, rev_rt, nullptr, rrep_size);
 
             return;
 
@@ -496,9 +496,9 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
                   ip_to_str(rreq_dest), rrep_size);
 
             if (checkRrep)
-                 rrep_send(rrep, rev_rt, NULL, rrep_size, par ("unicastDelay").doubleValue());
+                 rrep_send(rrep, rev_rt, nullptr, rrep_size, par ("unicastDelay").doubleValue());
             else
-                rrep_send(rrep, rev_rt, NULL, rrep_size);
+                rrep_send(rrep, rev_rt, nullptr, rrep_size);
             return;
         }
     }
@@ -530,7 +530,7 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
         EV_DETAIL << " create a rrep" << convertAddressToString(DEV_IFINDEX(rev_rt->ifindex).ipaddr.s_addr) << "seq n" << this_host.seqno << " to " << convertAddressToString(rev_rt->dest_addr.s_addr) << "\n";
 #endif
 
-        rrep_send(rrep, rev_rt, NULL, RREP_SIZE);
+        rrep_send(rrep, rev_rt, nullptr, RREP_SIZE);
 
     }
     else if (isBroadcast (rreq_dest.s_addr))
@@ -547,7 +547,7 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
         rrep = rrep_create(0, 0, 0, DEV_IFINDEX(rev_rt->ifindex).ipaddr,this_host.seqno, rev_rt->dest_addr, MY_ROUTE_TIMEOUT);
         rrep->totalHops =  rev_rt->hcnt;
         EV_DETAIL << "Create a rrep" << convertAddressToString(DEV_IFINDEX(rev_rt->ifindex).ipaddr.s_addr) << "seq n" << this_host.seqno << " to " << convertAddressToString(rev_rt->dest_addr.s_addr) << "\n";
-        rrep_send(rrep, rev_rt, NULL, RREP_SIZE);
+        rrep_send(rrep, rev_rt, nullptr, RREP_SIZE);
         if (ip_ttl > 0)
         {
             rreq_forward(rreq, rreqlen, ip_ttl); // the ttl is decremented for ip layer
@@ -577,7 +577,7 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
                enough (our destination sequence number for that route is
                larger than the one in the RREQ). */
 
-            gettimeofday(&now, NULL);
+            gettimeofday(&now, nullptr);
 #ifdef CONFIG_GATEWAY_DISABLED
             if (fwd_rt->flags & RT_INET_DEST)
             {
@@ -725,7 +725,7 @@ void NS_CLASS rreq_route_discovery(struct in_addr dest_addr, u_int8_t flags,
     int ttl;
 #define TTL_VALUE ttl
 
-    gettimeofday(&now, NULL);
+    gettimeofday(&now, nullptr);
 
     if (seek_list_find(dest_addr))
         return;
@@ -802,7 +802,7 @@ void NS_CLASS rreq_local_repair(rt_table_t * rt, struct in_addr src_addr,
     if (!(rt->flags & RT_REPAIR))
         return;
 
-    gettimeofday(&now, NULL);
+    gettimeofday(&now, nullptr);
 
     DEBUG(LOG_DEBUG, 0, "REPAIRING route to %s", ip_to_str(rt->dest_addr));
 
@@ -878,7 +878,7 @@ NS_STATIC struct rreq_record *NS_CLASS rreq_record_insert(struct in_addr orig_ad
         return rec;
 
     if ((rec =
-                (struct rreq_record *) malloc(sizeof(struct rreq_record))) == NULL)
+                (struct rreq_record *) malloc(sizeof(struct rreq_record))) == nullptr)
     {
         fprintf(stderr, "Malloc failed!!!\n");
         exit(-1);
@@ -909,7 +909,7 @@ NS_STATIC struct rreq_record *NS_CLASS rreq_record_find(struct in_addr orig_addr
                 (rec->rreq_id == rreq_id))
             return rec;
     }
-    return NULL;
+    return nullptr;
 }
 
 void NS_CLASS rreq_record_timeout(void *arg)
@@ -933,7 +933,7 @@ struct blacklist *NS_CLASS rreq_blacklist_insert(struct in_addr dest_addr)
     if (bl)
         return bl;
 
-    if ((bl = (struct blacklist *) malloc(sizeof(struct blacklist))) == NULL)
+    if ((bl = (struct blacklist *) malloc(sizeof(struct blacklist))) == nullptr)
     {
         fprintf(stderr, "Malloc failed!!!\n");
         exit(-1);
@@ -960,7 +960,7 @@ struct blacklist *NS_CLASS rreq_blacklist_find(struct in_addr dest_addr)
         if (bl->dest_addr.s_addr == dest_addr.s_addr)
             return bl;
     }
-    return NULL;
+    return nullptr;
 }
 
 void NS_CLASS rreq_blacklist_timeout(void *arg)
@@ -985,7 +985,7 @@ NS_STATIC struct rreq_record *NS_CLASS rreq_record_insert(struct in_addr orig_ad
         return rec;
 
     if ((rec =
-                (struct rreq_record *) malloc(sizeof(struct rreq_record))) == NULL)
+                (struct rreq_record *) malloc(sizeof(struct rreq_record))) == nullptr)
     {
         fprintf(stderr, "Malloc failed!!!\n");
         exit(-1);
@@ -1014,7 +1014,7 @@ NS_STATIC struct rreq_record *NS_CLASS rreq_record_find(struct in_addr orig_addr
                 (rec->rreq_id == rreq_id))
             return rec;
     }
-    return NULL;
+    return nullptr;
 }
 
 void NS_CLASS rreq_record_timeout(void *arg)
@@ -1045,7 +1045,7 @@ struct blacklist *NS_CLASS rreq_blacklist_insert(struct in_addr dest_addr)
     if (bl)
         return bl;
 
-    if ((bl = (struct blacklist *) malloc(sizeof(struct blacklist))) == NULL)
+    if ((bl = (struct blacklist *) malloc(sizeof(struct blacklist))) == nullptr)
     {
         fprintf(stderr, "Malloc failed!!!\n");
         exit(-1);
@@ -1065,7 +1065,7 @@ struct blacklist *NS_CLASS rreq_blacklist_find(struct in_addr dest_addr)
     RreqBlacklist::iterator it = rreq_blacklist.find(dest_addr.s_addr);
     if (it != rreq_blacklist.end())
         return it->second;
-    return NULL;
+    return nullptr;
 }
 
 void NS_CLASS rreq_blacklist_timeout(void *arg)

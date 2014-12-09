@@ -144,7 +144,7 @@ IGMPv2::HostGroupData::HostGroupData(IGMPv2 *owner, const IPv4Address& group)
 
     state = IGMP_HGS_NON_MEMBER;
     flag = false;
-    timer = NULL;
+    timer = nullptr;
 }
 
 IGMPv2::HostGroupData::~HostGroupData()
@@ -162,9 +162,9 @@ IGMPv2::RouterGroupData::RouterGroupData(IGMPv2 *owner, const IPv4Address& group
     ASSERT(groupAddr.isMulticast());
 
     state = IGMP_RGS_NO_MEMBERS_PRESENT;
-    timer = NULL;
-    rexmtTimer = NULL;
-    // v1HostTimer = NULL;
+    timer = nullptr;
+    rexmtTimer = nullptr;
+    // v1HostTimer = nullptr;
 }
 
 IGMPv2::RouterGroupData::~RouterGroupData()
@@ -192,7 +192,7 @@ IGMPv2::HostInterfaceData::HostInterfaceData(IGMPv2 *owner)
 
 IGMPv2::HostInterfaceData::~HostInterfaceData()
 {
-    for (GroupToHostDataMap::iterator it = groups.begin(); it != groups.end(); ++it)
+    for (auto it = groups.begin(); it != groups.end(); ++it)
         delete it->second;
 }
 
@@ -202,14 +202,14 @@ IGMPv2::RouterInterfaceData::RouterInterfaceData(IGMPv2 *owner)
     ASSERT(owner);
 
     igmpRouterState = IGMP_RS_INITIAL;
-    igmpQueryTimer = NULL;
+    igmpQueryTimer = nullptr;
 }
 
 IGMPv2::RouterInterfaceData::~RouterInterfaceData()
 {
     owner->cancelAndDelete(igmpQueryTimer);
 
-    for (GroupToRouterDataMap::iterator it = groups.begin(); it != groups.end(); ++it)
+    for (auto it = groups.begin(); it != groups.end(); ++it)
         delete it->second;
 }
 
@@ -244,7 +244,7 @@ IGMPv2::RouterGroupData *IGMPv2::createRouterGroupData(InterfaceEntry *ie, const
 IGMPv2::HostInterfaceData *IGMPv2::getHostInterfaceData(InterfaceEntry *ie)
 {
     int interfaceId = ie->getInterfaceId();
-    InterfaceToHostDataMap::iterator it = hostData.find(interfaceId);
+    auto it = hostData.find(interfaceId);
     if (it != hostData.end())
         return it->second;
 
@@ -257,7 +257,7 @@ IGMPv2::HostInterfaceData *IGMPv2::getHostInterfaceData(InterfaceEntry *ie)
 IGMPv2::RouterInterfaceData *IGMPv2::getRouterInterfaceData(InterfaceEntry *ie)
 {
     int interfaceId = ie->getInterfaceId();
-    InterfaceToRouterDataMap::iterator it = routerData.find(interfaceId);
+    auto it = routerData.find(interfaceId);
     if (it != routerData.end())
         return it->second;
 
@@ -270,20 +270,20 @@ IGMPv2::RouterInterfaceData *IGMPv2::getRouterInterfaceData(InterfaceEntry *ie)
 IGMPv2::HostGroupData *IGMPv2::getHostGroupData(InterfaceEntry *ie, const IPv4Address& group)
 {
     HostInterfaceData *interfaceData = getHostInterfaceData(ie);
-    GroupToHostDataMap::iterator it = interfaceData->groups.find(group);
-    return it != interfaceData->groups.end() ? it->second : NULL;
+    auto it = interfaceData->groups.find(group);
+    return it != interfaceData->groups.end() ? it->second : nullptr;
 }
 
 IGMPv2::RouterGroupData *IGMPv2::getRouterGroupData(InterfaceEntry *ie, const IPv4Address& group)
 {
     RouterInterfaceData *interfaceData = getRouterInterfaceData(ie);
-    GroupToRouterDataMap::iterator it = interfaceData->groups.find(group);
-    return it != interfaceData->groups.end() ? it->second : NULL;
+    auto it = interfaceData->groups.find(group);
+    return it != interfaceData->groups.end() ? it->second : nullptr;
 }
 
 void IGMPv2::deleteHostInterfaceData(int interfaceId)
 {
-    InterfaceToHostDataMap::iterator interfaceIt = hostData.find(interfaceId);
+    auto interfaceIt = hostData.find(interfaceId);
     if (interfaceIt != hostData.end()) {
         HostInterfaceData *interface = interfaceIt->second;
         hostData.erase(interfaceIt);
@@ -293,7 +293,7 @@ void IGMPv2::deleteHostInterfaceData(int interfaceId)
 
 void IGMPv2::deleteRouterInterfaceData(int interfaceId)
 {
-    InterfaceToRouterDataMap::iterator interfaceIt = routerData.find(interfaceId);
+    auto interfaceIt = routerData.find(interfaceId);
     if (interfaceIt != routerData.end()) {
         RouterInterfaceData *interface = interfaceIt->second;
         routerData.erase(interfaceIt);
@@ -304,7 +304,7 @@ void IGMPv2::deleteRouterInterfaceData(int interfaceId)
 void IGMPv2::deleteHostGroupData(InterfaceEntry *ie, const IPv4Address& group)
 {
     HostInterfaceData *interfaceData = getHostInterfaceData(ie);
-    GroupToHostDataMap::iterator it = interfaceData->groups.find(group);
+    auto it = interfaceData->groups.find(group);
     if (it != interfaceData->groups.end()) {
         HostGroupData *data = it->second;
         interfaceData->groups.erase(it);
@@ -315,7 +315,7 @@ void IGMPv2::deleteHostGroupData(InterfaceEntry *ie, const IPv4Address& group)
 void IGMPv2::deleteRouterGroupData(InterfaceEntry *ie, const IPv4Address& group)
 {
     RouterInterfaceData *interfaceData = getRouterInterfaceData(ie);
-    GroupToRouterDataMap::iterator it = interfaceData->groups.find(group);
+    auto it = interfaceData->groups.find(group);
     if (it != interfaceData->groups.end()) {
         RouterGroupData *data = it->second;
         interfaceData->groups.erase(it);
@@ -639,7 +639,7 @@ void IGMPv2::processIgmpMessage(IGMPMessage *msg)
             if (externalRouter)
                 send(msg, "routerOut");
             else {
-                delete msg;
+                //delete msg;
                 throw cRuntimeError("IGMPv2: Unhandled message type (%dq)", msg->getType());
             }
             break;
@@ -711,14 +711,14 @@ void IGMPv2::processQuery(InterfaceEntry *ie, const IPv4Address& sender, IGMPQue
         // general query
         EV_INFO << "IGMPv2: received General Membership Query on iface=" << ie->getName() << "\n";
         numGeneralQueriesRecv++;
-        for (GroupToHostDataMap::iterator it = interfaceData->groups.begin(); it != interfaceData->groups.end(); ++it)
+        for (auto it = interfaceData->groups.begin(); it != interfaceData->groups.end(); ++it)
             processGroupQuery(ie, it->second, maxRespTime);
     }
     else {
         // group-specific query
         EV_INFO << "IGMPv2: received Membership Query for group=" << groupAddr << " iface=" << ie->getName() << "\n";
         numGroupSpecificQueriesRecv++;
-        GroupToHostDataMap::iterator it = interfaceData->groups.find(groupAddr);
+        auto it = interfaceData->groups.find(groupAddr);
         if (it != interfaceData->groups.end())
             processGroupQuery(ie, it->second, maxRespTime);
     }

@@ -51,7 +51,7 @@ typedef unsigned long ulong;
 
 //
 // Macro to protect expressions like gate("out")->getToGate()->getToGate()
-// from crashing if something in between returns NULL.
+// from crashing if something in between returns nullptr.
 // The above expression should be changed to
 //    CHK(CHK(gate("out"))->getToGate())->getToGate()
 // which is uglier but doesn't crash, just stops with a nice
@@ -61,13 +61,20 @@ template<class T>
 T *__checknull(T *p, const char *expr, const char *file, int line)
 {
     if (!p)
-        throw cRuntimeError("Expression %s returned NULL at %s:%d", expr, file, line);
+        throw cRuntimeError("Expression %s returned nullptr at %s:%d", expr, file, line);
     return p;
 }
 
 #define CHK(x)     __checknull((x), #x, __FILE__, __LINE__)
 
 #define PK(msg)    check_and_cast<cPacket *>(msg)    /*XXX temp def*/
+
+inline void printElapsedTime(const char *name, long startTime)
+{
+    EV_DEBUG << "Time spent in " << name << ": " << ((double)(clock() - startTime) / CLOCKS_PER_SEC) << "s" << endl;
+}
+
+#define TIME(CODE)    { long startTime = clock(); CODE; printElapsedTime( #CODE, startTime); }
 
 } // namespace inet
 

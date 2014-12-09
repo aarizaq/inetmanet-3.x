@@ -47,7 +47,7 @@ void Ieee80211MgmtAdhocWithEtx::initialize(int stage)
     Ieee80211MgmtAdhoc::initialize(stage);
     if (stage==1)
     {
-        ETXProcess = NULL;
+        ETXProcess = nullptr;
         if (par("ETXEstimate"))
             startEtx();
     }
@@ -61,7 +61,7 @@ void Ieee80211MgmtAdhocWithEtx::handleMessage(cMessage *msg)
     char gateName [40];
     memset(gateName, 0, 40);
     strcpy(gateName, msggate->getBaseName());
-    if (strstr(gateName, "ETXProcIn")!=NULL)
+    if (strstr(gateName, "ETXProcIn")!=nullptr)
     {
         handleEtxMessage(PK(msg));
     }

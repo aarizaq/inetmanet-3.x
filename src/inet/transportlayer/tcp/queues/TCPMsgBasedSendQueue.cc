@@ -32,7 +32,7 @@ TCPMsgBasedSendQueue::TCPMsgBasedSendQueue() : TCPSendQueue()
 
 TCPMsgBasedSendQueue::~TCPMsgBasedSendQueue()
 {
-    for (PayloadQueue::iterator it = payloadQueue.begin(); it != payloadQueue.end(); ++it)
+    for (auto it = payloadQueue.begin(); it != payloadQueue.end(); ++it)
         delete it->msg;
 }
 
@@ -77,19 +77,19 @@ TCPSegment *TCPMsgBasedSendQueue::createSegmentWithBytes(uint32 fromSeq, ulong n
     //tcpEV << "sendQ: " << info() << " createSeg(seq=" << fromSeq << " len=" << numBytes << ")\n";
     ASSERT(seqLE(begin, fromSeq) && seqLE(fromSeq + numBytes, end));
 
-    TCPSegment *tcpseg = new TCPSegment(NULL);
+    TCPSegment *tcpseg = new TCPSegment(nullptr);
 
     tcpseg->setSequenceNo(fromSeq);
     tcpseg->setPayloadLength(numBytes);
 
     // add payload messages whose endSequenceNo is between fromSeq and fromSeq + numBytes
-    PayloadQueue::iterator i = payloadQueue.begin();
+    auto i = payloadQueue.begin();
 
     while (i != payloadQueue.end() && seqLE(i->endSequenceNo, fromSeq))
         ++i;
 
     uint32 toSeq = fromSeq + numBytes;
-    const char *payloadName = NULL;
+    const char *payloadName = nullptr;
 
     while (i != payloadQueue.end() && seqLE(i->endSequenceNo, toSeq)) {
         if (!payloadName)

@@ -105,10 +105,10 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
 // Alwais send a ACK
     int label_in;
 
-    LWmpls_Interface_Structure * interface = NULL;
+    LWmpls_Interface_Structure * interface = nullptr;
 
     LWmpls_Forwarding_Structure * forwarding_ptr = mplsData->lwmpls_forwarding_data(0, label_out, sta_addr.getInt());
-    if (forwarding_ptr!=NULL)
+    if (forwarding_ptr!=nullptr)
     {
         mplsData->lwmpls_check_label(forwarding_ptr->input_label, "begin");
         mplsData->lwmpls_check_label(forwarding_ptr->return_label_input, "begin");
@@ -572,7 +572,7 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
 // The reverse path label
         forwarding_ptr->return_label_input = mplsData->getLWMPLSLabel();
 // Initialize the next interface
-        interface = NULL;
+        interface = nullptr;
         mplsData->lwmpls_init_interface(&interface, forwarding_ptr->return_label_input, forwarding_ptr->mac_address, LWMPLS_INPUT_LABEL_RETURN);
 // Store the reverse path label
         mplsData->lwmpls_forwarding_input_data_add(forwarding_ptr->return_label_input, forwarding_ptr);
@@ -675,7 +675,7 @@ void Ieee80211Mesh::mplsBreakPath(int label, LWMPLSPacket *mpls_pk_ptr, MACAddre
     /*  forwarding_ptr= lwmpls_forwarding_data(lwmpls_data_ptr,0,label,sta_addr);*/
     MACAddress send_mac_addr;
     LWmpls_Forwarding_Structure * forwarding_ptr = mplsData->lwmpls_interface_delete_label(label);
-    if (forwarding_ptr == NULL)
+    if (forwarding_ptr == nullptr)
     {
         delete mpls_pk_ptr;
         return;
@@ -726,7 +726,7 @@ void Ieee80211Mesh::mplsNotFoundPath(int label, LWMPLSPacket *mpls_pk_ptr, MACAd
 {
     LWmpls_Forwarding_Structure * forwarding_ptr = mplsData->lwmpls_forwarding_data(0, label, sta_addr.getInt());
     MACAddress send_mac_addr;
-    if (forwarding_ptr == NULL)
+    if (forwarding_ptr == nullptr)
         delete mpls_pk_ptr;
     else
     {
@@ -774,7 +774,7 @@ void Ieee80211Mesh::mplsForwardData(int label, LWMPLSPacket *mpls_pk_ptr, MACAdd
 {
     /* Extraer la etiqueta y la direcci�n de enlace del siguiente salto */
     LWmpls_Forwarding_Structure * forwarding_ptr = forwarding_data;
-    if (forwarding_ptr==NULL)
+    if (forwarding_ptr==nullptr)
         forwarding_ptr = mplsData->lwmpls_forwarding_data(label, 0, 0);
     forwarding_ptr->last_use = simTime();
     bool is_source = false;
@@ -924,7 +924,7 @@ void Ieee80211Mesh::mplsAckPath(int label, LWMPLSPacket *mpls_pk_ptr, MACAddress
     forwarding_ptr->last_use = simTime();
     /* initialize the mac timer */
 // init the
-    LWmpls_Interface_Structure *interface = NULL;
+    LWmpls_Interface_Structure *interface = nullptr;
     mplsData->lwmpls_init_interface(&interface, *labelInPtr, sta_addr.getInt(), LWMPLS_INPUT_LABEL_RETURN);
     mplsInitializeCheckMac();
 
@@ -937,7 +937,7 @@ void Ieee80211Mesh::mplsAckPath(int label, LWMPLSPacket *mpls_pk_ptr, MACAddress
 void Ieee80211Mesh::mplsDataProcess(LWMPLSPacket * mpls_pk_ptr, MACAddress sta_addr)
 {
     int label;
-    LWmpls_Forwarding_Structure *forwarding_ptr = NULL;
+    LWmpls_Forwarding_Structure *forwarding_ptr = nullptr;
     bool         label_found;
     int code;
     simtime_t     time;
@@ -973,21 +973,21 @@ void Ieee80211Mesh::mplsDataProcess(LWMPLSPacket * mpls_pk_ptr, MACAddress sta_a
         }
         if (label>0)
         {
-            if ((forwarding_ptr = mplsData->lwmpls_forwarding_data(label, 0, 0))!=NULL)
+            if ((forwarding_ptr = mplsData->lwmpls_forwarding_data(label, 0, 0))!=nullptr)
             {
                 if  (code == WMPLS_NORMAL)
                 {
                     if (!is_source)
                     {
                         if (forwarding_ptr->input_label == label && forwarding_ptr->input_mac_address!=sta_addr.getInt())
-                            forwarding_ptr = NULL;
+                            forwarding_ptr = nullptr;
                         else if (forwarding_ptr->return_label_input == label && forwarding_ptr->mac_address!=sta_addr.getInt())
-                            forwarding_ptr = NULL;
+                            forwarding_ptr = nullptr;
                     }
                 }
             }
             //printf (" %p \n",forwarding_ptr);
-            if (forwarding_ptr == NULL)
+            if (forwarding_ptr == nullptr)
                 label_found = false;
         }
 
@@ -1165,7 +1165,7 @@ void Ieee80211Mesh::mplsBreakMacLink(MACAddress macAddress)
         return;
     }
 
-    LWmplsInterfaceMap::iterator it = mplsData->interfaceMap->find(mac_id);
+    auto it = mplsData->interfaceMap->find(mac_id);
     if (it != mplsData->interfaceMap->end())
         if (!it->second->numLabels())
         {
@@ -1176,7 +1176,7 @@ void Ieee80211Mesh::mplsBreakMacLink(MACAddress macAddress)
     for (unsigned int i = 1; i < mplsData->label_list.size(); i++)
     {
         forwarding_ptr = mplsData->lwmpls_forwarding_data(i, 0, 0);
-        if (forwarding_ptr!=NULL)
+        if (forwarding_ptr!=nullptr)
         {
             if ((forwarding_ptr->mac_address == mac_id) || (forwarding_ptr->input_mac_address == mac_id))
             {
@@ -1200,7 +1200,7 @@ void Ieee80211Mesh::mplsBreakMacLink(MACAddress macAddress)
                     sendOrEnqueue(encapsulate(lwmplspk, MACAddress(des_add)));
                 }
                 mplsData->deleteForwarding(forwarding_ptr);
-                forwarding_ptr = NULL;
+                forwarding_ptr = nullptr;
             }
         }
     }
@@ -1218,9 +1218,7 @@ void Ieee80211Mesh::mplsCheckRouteTime()
 
     actual_time = simTime();
 
-    LWmplsInterfaceMap::iterator it;
-
-    for ( it=mplsData->interfaceMap->begin(); it != mplsData->interfaceMap->end();)
+    for (auto it=mplsData->interfaceMap->begin(); it != mplsData->interfaceMap->end();)
     {
         if ((actual_time - it->second->lastUse()) < (multipler_active_break*timer_active_refresh))
         {
@@ -1282,7 +1280,7 @@ void Ieee80211Mesh::mplsInitializeCheckMac()
     int list_size;
     bool active = false;
 
-    if (WMPLSCHECKMAC==NULL)
+    if (WMPLSCHECKMAC==nullptr)
        return;
     if (activeMacBreak == false)
         return;
@@ -1306,25 +1304,25 @@ void Ieee80211Mesh::mplsPurge(LWmpls_Forwarding_Structure *forwarding_ptr, bool 
 // �Como? las colas estan en otra parte.
     bool purge;
 
-    if (forwarding_ptr==NULL)
+    if (forwarding_ptr==nullptr)
         return;
 
     for (int i = 0; i < getNumQueues(); i++)
     {
 
 
-        for (DataQueue::iterator iter = dataQueue[i].begin(); iter != dataQueue[i].begin();)
+        for (auto iter = dataQueue[i].begin(); iter != dataQueue[i].begin();)
         {
             cMessage *msg = (cMessage *) *iter;
             purge = false;
             Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame*>(msg);
-            if (frame == NULL)
+            if (frame == nullptr)
             {
                 iter++;
                 continue;
             }
             LWMPLSPacket* mplsmsg = dynamic_cast<LWMPLSPacket*>(frame->getEncapsulatedPacket());
-            if (mplsmsg != NULL)
+            if (mplsmsg != nullptr)
             {
                 int label = mplsmsg->getLabel();
                 int code = mplsmsg->getType();
@@ -1399,11 +1397,11 @@ bool Ieee80211Mesh::mplsForwardBroadcast(const MACAddress &addr)
 
     if (!par("inteligentForward").boolValue())
         return true;
-    if (routingModuleProactive == NULL)
+    if (routingModuleProactive == nullptr)
         return false;
 
     OLSR *olsr = dynamic_cast<OLSR*>(routingModuleProactive);
-    if (olsr == NULL)
+    if (olsr == nullptr)
         opp_error("inteligentForward OLSR not found");
     if (!olsr->isNodeCandidate(L3Address(addr)))
         return false;

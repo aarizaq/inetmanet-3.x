@@ -41,10 +41,10 @@ int Ieee80211MacQueueClassifier::classifyPacket(cMessage *msg)
 {
     Ieee80211DataOrMgmtFrame *frame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg);
 
-    ASSERT(frame!=NULL);
+    ASSERT(frame!=nullptr);
 
     Ieee80211DataFrame *dataFrame = dynamic_cast<Ieee80211DataFrame *>(msg);
-    if (dataFrame == NULL)
+    if (dataFrame == nullptr)
         return 0;
 
     if (dataFrame->getReceiverAddress() == MACAddress::BROADCAST_ADDRESS)
@@ -63,10 +63,10 @@ int Ieee80211MacQueueClassifier2::classifyPacket(cMessage *msg)
 {
     Ieee80211DataOrMgmtFrame *frame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg);
 
-    ASSERT(frame!=NULL);
+    ASSERT(frame!=nullptr);
 
     Ieee80211DataFrame *dataFrame = dynamic_cast<Ieee80211DataFrame *>(msg);
-    if (dataFrame == NULL)
+    if (dataFrame == nullptr)
         return 0;
      return 1;
 }

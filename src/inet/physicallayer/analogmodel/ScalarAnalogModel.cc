@@ -35,14 +35,13 @@ bool ScalarAnalogModel::areOverlappingBands(Hz carrierFrequency1, Hz bandwidth1,
            carrierFrequency1 - bandwidth1 / 2 <= carrierFrequency2 + bandwidth2 / 2;
 }
 
-const IReception *ScalarAnalogModel::computeReception(const IRadio *receiverRadio, const ITransmission *transmission) const
+const IReception *ScalarAnalogModel::computeReception(const IRadio *receiverRadio, const ITransmission *transmission, const IArrival *arrival) const
 {
     const IRadioMedium *channel = receiverRadio->getMedium();
     const IRadio *transmitterRadio = transmission->getTransmitter();
     const IAntenna *receiverAntenna = receiverRadio->getAntenna();
     const IAntenna *transmitterAntenna = transmitterRadio->getAntenna();
     const ScalarTransmission *scalarTransmission = check_and_cast<const ScalarTransmission *>(transmission);
-    const IArrival *arrival = channel->getArrival(receiverRadio, transmission);
     const simtime_t receptionStartTime = arrival->getStartTime();
     const simtime_t receptionEndTime = arrival->getEndTime();
     const Coord receptionStartPosition = arrival->getStartPosition();
@@ -81,12 +80,12 @@ const INoise *ScalarAnalogModel::computeNoise(const IListening *listening, const
                 noiseStartTime = startTime;
             if (endTime > noiseEndTime)
                 noiseEndTime = endTime;
-            std::map<simtime_t, W>::iterator itStartTime = powerChanges->find(startTime);
+            auto itStartTime = powerChanges->find(startTime);
             if (itStartTime != powerChanges->end())
                 itStartTime->second += power;
             else
                 powerChanges->insert(std::pair<simtime_t, W>(startTime, power));
-            std::map<simtime_t, W>::iterator itEndTime = powerChanges->find(endTime);
+            auto itEndTime = powerChanges->find(endTime);
             if (itEndTime != powerChanges->end())
                 itEndTime->second -= power;
             else
@@ -100,7 +99,7 @@ const INoise *ScalarAnalogModel::computeNoise(const IListening *listening, const
         if (carrierFrequency == scalarBackgroundNoise->getCarrierFrequency() && bandwidth == scalarBackgroundNoise->getBandwidth()) {
             const std::map<simtime_t, W> *backgroundNoisePowerChanges = scalarBackgroundNoise->getPowerChanges();
             for (std::map<simtime_t, W>::const_iterator it = backgroundNoisePowerChanges->begin(); it != backgroundNoisePowerChanges->end(); it++) {
-                std::map<simtime_t, W>::iterator jt = powerChanges->find(it->first);
+                auto jt = powerChanges->find(it->first);
                 if (jt != powerChanges->end())
                     jt->second += it->second;
                 else

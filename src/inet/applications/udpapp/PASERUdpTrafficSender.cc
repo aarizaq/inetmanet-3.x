@@ -192,7 +192,7 @@ InterfaceEntry* PASERUdpTrafficSender::getInterface()
 		ie = ift->getInterface(i);
 	    name = ie->getName();
 	    EV << "Interface Name: " << name << endl;
-	    if (strstr (name,"wlan")!=NULL)
+	    if (strstr (name,"wlan")!=nullptr)
 	    {
 	    	i_face = ie;
 	        num_80211++;
@@ -206,7 +206,7 @@ InterfaceEntry* PASERUdpTrafficSender::getInterface()
 		return i_face;
 	}
 	else
-		return NULL;
+		return nullptr;
 }
 
 PaserTrafficDataMsg* PASERUdpTrafficSender::createDataMessage(){

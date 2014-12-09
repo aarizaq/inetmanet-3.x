@@ -33,7 +33,7 @@ Define_Module(UDPBasicBurstNotification);
 
 UDPBasicBurstNotification::UDPBasicBurstNotification()
 {
-    addressModule = NULL;
+    addressModule = nullptr;
 }
 
 UDPBasicBurstNotification::~UDPBasicBurstNotification()
@@ -53,7 +53,7 @@ void UDPBasicBurstNotification::initialConfiguration()
     if (strcmp(par("outputInterface").stringValue(),"") != 0)
     {
         InterfaceEntry *ie = ift->getInterfaceByName(par("outputInterface").stringValue());
-        if (ie == NULL)
+        if (ie == nullptr)
             throw cRuntimeError(this, "Invalid output interface name : %s",par("outputInterface").stringValue());
         outputInterface = ie->getInterfaceId();
     }
@@ -64,16 +64,16 @@ void UDPBasicBurstNotification::initialConfiguration()
         const char *ports = par("outputInterfaceMulticastBroadcast");
         cStringTokenizer tokenizer(ports);
         const char *token;
-        while ((token = tokenizer.nextToken()) != NULL)
+        while ((token = tokenizer.nextToken()) != nullptr)
         {
-            if (strstr(token, "ALL") != NULL)
+            if (strstr(token, "ALL") != nullptr)
             {
                 for (int i = 0; i < ift->getNumInterfaces(); i++)
                 {
                     InterfaceEntry *ie = ift->getInterface(i);
                     if (ie->isLoopback())
                         continue;
-                    if (ie == NULL)
+                    if (ie == nullptr)
                         throw cRuntimeError(this, "Invalid output interface name : %s", token);
                     outputInterfaceMulticastBroadcast.push_back(ie->getInterfaceId());
                 }
@@ -81,7 +81,7 @@ void UDPBasicBurstNotification::initialConfiguration()
             else
             {
                 InterfaceEntry *ie = ift->getInterfaceByName(token);
-                if (ie == NULL)
+                if (ie == nullptr)
                     throw cRuntimeError(this, "Invalid output interface name : %s", token);
                 outputInterfaceMulticastBroadcast.push_back(ie->getInterfaceId());
             }

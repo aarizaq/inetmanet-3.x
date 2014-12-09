@@ -26,13 +26,6 @@ namespace inet {
 
 Define_Module(RTPApplication)
 
-RTPApplication::RTPApplication()
-{
-    fileName = NULL;
-    commonName = NULL;
-    profileName = NULL;
-}
-
 void RTPApplication::initialize(int stage)
 {
     cSimpleModule::initialize(stage);
@@ -54,7 +47,7 @@ void RTPApplication::initialize(int stage)
         port = (int)par("portNumber").longValue();
 
         // fileName of file to be transmitted
-        // NULL or "" means this system acts only as a receiver
+        // nullptr or "" means this system acts only as a receiver
         fileName = par("fileName");
 
         // payload type of file to transmit

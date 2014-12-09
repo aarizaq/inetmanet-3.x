@@ -57,7 +57,7 @@ int PASER_Timer_Queue::timer_add(PASER_Timer_Message *t) {
 
 int PASER_Timer_Queue::timer_remove(PASER_Timer_Message *t) {
     if (!t) {
-        EV << "timer == NULL\n";
+        EV << "timer == nullptr\n";
         return 0;
     }
     if (t->handler == KDC_REQUEST) {
@@ -99,7 +99,7 @@ int PASER_Timer_Queue::timer_remove(PASER_Timer_Message *t) {
 
 PASER_Timer_Message *PASER_Timer_Queue::timer_get_next_timer() {
     if (timer_queue.size() == 0) {
-        return NULL;
+        return nullptr;
     }
     return timer_queue.front();
 }

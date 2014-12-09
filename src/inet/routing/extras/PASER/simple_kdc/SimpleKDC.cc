@@ -81,14 +81,14 @@ void SimpleKDC::initialize(int stage) {
     FILE *fp;
 
     fp = fopen(crlfile, "r");
-    if (fp == NULL) {
+    if (fp == nullptr) {
         printf("cafile not found: %s", crlfile);
         exit(1);
     }
     delete[] crlfile;
-    crl = PEM_read_X509_CRL(fp, NULL, NULL, NULL);
+    crl = PEM_read_X509_CRL(fp, nullptr, nullptr, nullptr);
     fclose(fp);
-    if (crl == NULL) {
+    if (crl == nullptr) {
         ERR_print_errors_fp (stderr);
         exit(1);
     }
@@ -109,13 +109,13 @@ void SimpleKDC::initialize(int stage) {
     char *certfile = new char[strlen("cert/kdccert.pem") + 1];
     strcpy(certfile, "cert/kdccert.pem");
     fp = fopen(certfile, "r");
-    if (fp == NULL) {
+    if (fp == nullptr) {
         printf("certfile not found: %s", certfile);
         exit(1);
     }
-    x509 = PEM_read_X509(fp, NULL, NULL, NULL);
+    x509 = PEM_read_X509(fp, nullptr, nullptr, nullptr);
     fclose(fp);
-    if (x509 == NULL) {
+    if (x509 == nullptr) {
         ERR_print_errors_fp (stderr);
         exit(1);
     }
@@ -126,11 +126,11 @@ void SimpleKDC::initialize(int stage) {
     char *keyfile = new char[strlen("cert/kdckey.key") + 1];
     strcpy(keyfile, "cert/kdckey.key");
     fp = fopen(keyfile, "r");
-    if (fp == NULL) {
+    if (fp == nullptr) {
         printf("keyfile not found: %s", keyfile);
         exit(1);
     }
-    pkey = PEM_read_PrivateKey(fp, NULL, NULL, NULL);
+    pkey = PEM_read_PrivateKey(fp, nullptr, nullptr, nullptr);
     fclose(fp);
     delete[] keyfile;
 
@@ -138,13 +138,13 @@ void SimpleKDC::initialize(int stage) {
     char * cafile = new char[strlen(PASER_CA_cert_file) + 1];
     strcpy(cafile, PASER_CA_cert_file);
     fp = fopen(cafile, "r");
-    if (fp == NULL) {
+    if (fp == nullptr) {
         printf("CAcertPath not found: %s", cafile);
         exit(1);
     }
-    ca_cert = PEM_read_X509(fp, NULL, NULL, NULL);
+    ca_cert = PEM_read_X509(fp, nullptr, nullptr, nullptr);
     fclose(fp);
-    if (ca_cert == NULL) {
+    if (ca_cert == nullptr) {
         ERR_print_errors_fp (stderr);
         exit(1);
     }
@@ -261,7 +261,7 @@ void SimpleKDC::handleMessage(cMessage *msg) {
         X509* clientCert = extractCert(tempCert);
         EV << "certLen: " << tempCert.len << "\n";
         free(tempCert.buf);
-        if (clientCert == NULL) {
+        if (clientCert == nullptr) {
             EV << "kein Cert\n";
             return;
         }
@@ -493,13 +493,13 @@ int SimpleKDC::checkOneCert(X509 *cert) {
     }
     // X509_STORE_CTX_init did not return an error condition in prior versions
 #if (OPENSSL_VERSION_NUMBER > 0x00907000L)
-    if (X509_STORE_CTX_init(verify_ctx, ca_store, cert, NULL) != 1) {
+    if (X509_STORE_CTX_init(verify_ctx, ca_store, cert, nullptr) != 1) {
         ERR_print_errors_fp (stderr);
         EV << "Error: X509_STORE_CTX_init\n";
         return 0;
     }
 #else
-    X509_STORE_CTX_init(verify_ctx, ca_store, cert, NULL);
+    X509_STORE_CTX_init(verify_ctx, ca_store, cert, nullptr);
 #endif
 
     // Verify the certificate
@@ -522,8 +522,8 @@ int SimpleKDC::checkOneCert(X509 *cert) {
 }
 
 X509* SimpleKDC::extractCert(lv_block cert) {
-    if (cert.buf == NULL) {
-        return NULL;
+    if (cert.buf == nullptr) {
+        return nullptr;
     }
     X509 *x;
     const u_int8_t *buf, *p;
@@ -531,10 +531,10 @@ X509* SimpleKDC::extractCert(lv_block cert) {
     buf = cert.buf;
     len = cert.len;
     p = buf;
-    x = d2i_X509(NULL, &p, len);
-    if (x == NULL) {
+    x = d2i_X509(nullptr, &p, len);
+    if (x == nullptr) {
         ERR_print_errors_fp(stderr);
-        return NULL;
+        return nullptr;
     }
 
     return x;
@@ -543,7 +543,7 @@ X509* SimpleKDC::extractCert(lv_block cert) {
 int SimpleKDC::getCRL(lv_block *cert) {
     int len;
     unsigned char *buf;
-    buf = NULL;
+    buf = nullptr;
     len = i2d_X509_CRL(crl, &buf);
     if (len < 0) {
         return 0;
@@ -561,7 +561,7 @@ int SimpleKDC::getCRL(lv_block *cert) {
 int SimpleKDC::saveCertAlsBlock() {
     int len;
     unsigned char *buf;
-    buf = NULL;
+    buf = nullptr;
     len = i2d_X509(x509, &buf);
     if (len < 0) {
         return 0;
@@ -578,7 +578,7 @@ int SimpleKDC::saveCertAlsBlock() {
 
 int SimpleKDC::rsa_encrypt(lv_block in, lv_block *out, X509 *cert) {
     EVP_PKEY *pubKey;
-    if (cert != NULL) {
+    if (cert != nullptr) {
         pubKey = X509_get_pubkey(cert);
     } else {
         pubKey = X509_get_pubkey(x509);

@@ -47,19 +47,19 @@ void LinkFailureManager::handleMessage(cMessage *msg)
         EV << "Link Failure Msg Arrived" << endl;
         LinkFailureMessage* event = dynamic_cast<LinkFailureMessage*>(msg);
         cModule* module = simulation.getModule(event->getModule_id());
-        if (module!=NULL)
+        if (module!=nullptr)
         {
             cGate* gate = module->gate(event->getPort_id());
-            if (gate!=NULL)
+            if (gate!=nullptr)
             {
                 cChannel * channel = gate->getChannel();
                 ProgramedFailureDataRateChannel* cfr = dynamic_cast<ProgramedFailureDataRateChannel*>(channel);
                 ProgramedFailureChannel* ch = dynamic_cast<ProgramedFailureChannel*>(channel);
-                if (ch!=NULL)
+                if (ch!=nullptr)
                 {
                     ch->setState(event->getState());
                 }
-                else if (cfr!=NULL)
+                else if (cfr!=nullptr)
                 {
                     cfr->setState(event->getState());
                 }

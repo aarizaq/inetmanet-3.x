@@ -47,16 +47,17 @@ void HttpServerDirect::handleMessage(cMessage *msg)
     }
     else {
         HttpNodeBase *senderModule = dynamic_cast<HttpNodeBase *>(msg->getSenderModule());
-        if (senderModule == NULL) {
+        if (senderModule == nullptr) {
             EV_ERROR << "Unspecified sender module in received message " << msg->getName() << endl;
             delete msg;
+            return;
         }
 
         EV_DEBUG << "Sender is " << senderModule->getFullName()
                  << " in host " << senderModule->getParentModule()->getFullName() << endl;
         cPacket *reply = handleReceivedMessage(msg);
         // Echo back to the requester
-        if (reply != NULL)
+        if (reply != nullptr)
             sendDirectToModule(senderModule, reply, 0.0, rdReplyDelay);
         delete msg;
     }

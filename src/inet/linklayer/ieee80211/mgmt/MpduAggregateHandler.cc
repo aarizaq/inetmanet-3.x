@@ -145,7 +145,7 @@ MpduAggregateHandler::MpduAggregateHandler():
 
 bool MpduAggregateHandler::isAllowAddress(const MACAddress &add)
 {
-    std::map<MACAddress,ADDBAInfo *>::iterator it = listAllowAddress.find(add);
+    auto it = listAllowAddress.find(add);
     if (it == listAllowAddress.end())
         return false;
     return true;
@@ -153,7 +153,7 @@ bool MpduAggregateHandler::isAllowAddress(const MACAddress &add)
 
 bool MpduAggregateHandler::isAllowAddress(const MACAddress &add, ADDBAInfo *&addai)
 {
-    std::map<MACAddress,ADDBAInfo *>::iterator it = listAllowAddress.find(add);
+    auto it = listAllowAddress.find(add);
     addai = nullptr;
     if (it == listAllowAddress.end())
         return false;
@@ -163,7 +163,7 @@ bool MpduAggregateHandler::isAllowAddress(const MACAddress &add, ADDBAInfo *&add
 
 void MpduAggregateHandler::setADDBAInfo(const MACAddress &addr, ADDBAInfo *p)
 {
-    std::map<MACAddress,ADDBAInfo *>::iterator it = listAllowAddress.find(addr);
+    auto it = listAllowAddress.find(addr);
     if (it != listAllowAddress.end())
     {
         delete it->second;
@@ -192,7 +192,7 @@ bool MpduAggregateHandler::checkState(const MACAddress &addr)
         // check number of free address
         for (unsigned int i = 0; i < categories.size(); i++)
         {
-            NumFramesDestination::iterator it = categories[i].numFramesDestinationFree.find(addr);
+            auto it = categories[i].numFramesDestinationFree.find(addr);
             if (it != categories[i].numFramesDestinationFree.end() && it->second >= automaticMimimumAddress)
             {
                 prepareADDBA(addr);
@@ -208,7 +208,7 @@ bool MpduAggregateHandler::checkState(const MACAddress &addr)
     bool moreFrames = false;
     for (unsigned int i = 0; i < categories.size(); i++)
     {
-        NumFramesDestination::iterator it = categories[i].numFramesDestination.find(addr);
+        auto it = categories[i].numFramesDestination.find(addr);
         if (it != categories[i].numFramesDestination.end())
         {
             moreFrames = true;
@@ -239,14 +239,14 @@ bool MpduAggregateHandler::checkState(const MACAddress &addr)
 void MpduAggregateHandler::increaseSize(Ieee80211DataOrMgmtFrame* val, int cat)
 {
     Ieee80211MpduA * block = dynamic_cast<Ieee80211MpduA *>(val);
-    NumFramesDestination::iterator it = categories[cat].numFramesDestination.find(val->getReceiverAddress());
+    auto it = categories[cat].numFramesDestination.find(val->getReceiverAddress());
     if (it == categories[cat].numFramesDestination.end())
     {
         categories[cat].numFramesDestination[val->getReceiverAddress()] = 0;
         it = categories[cat].numFramesDestination.find(val->getReceiverAddress());
     }
 
-    NumFramesDestination::iterator it2 = categories[cat].numFramesDestinationFree.find(val->getReceiverAddress());
+    auto it2 = categories[cat].numFramesDestinationFree.find(val->getReceiverAddress());
     if (it2 == categories[cat].numFramesDestinationFree.end() && block == nullptr)
     {
         categories[cat].numFramesDestinationFree[val->getReceiverAddress()] = 0;
@@ -267,11 +267,11 @@ void MpduAggregateHandler::increaseSize(Ieee80211DataOrMgmtFrame* val, int cat)
 void MpduAggregateHandler::decreaseSize(Ieee80211DataOrMgmtFrame* val, int cat)
 {
     Ieee80211MpduA * block = dynamic_cast<Ieee80211MpduA *>(val);
-    NumFramesDestination::iterator it = categories[cat].numFramesDestination.find(val->getReceiverAddress());
+    auto it = categories[cat].numFramesDestination.find(val->getReceiverAddress());
     if (it == categories[cat].numFramesDestination.end())
         throw cRuntimeError("Multi queue error address not found");
 
-    NumFramesDestination::iterator it2 = categories[cat].numFramesDestinationFree.find(val->getReceiverAddress());
+    auto it2 = categories[cat].numFramesDestinationFree.find(val->getReceiverAddress());
     if (it2 == categories[cat].numFramesDestinationFree.end() && block == nullptr)
         throw cRuntimeError("Multi queue error address not found");
 
@@ -307,7 +307,7 @@ int MpduAggregateHandler::findAddress(const MACAddress &addr ,int cat)
         return 0;
     if (cat == -1)
         cat = categories.size()-1;
-    NumFramesDestination::iterator it = categories[cat].numFramesDestination.find(addr);
+    auto it = categories[cat].numFramesDestination.find(addr);
     if (it != categories[cat].numFramesDestination.end())
         return it->second;
     return 0;
@@ -319,7 +319,7 @@ int MpduAggregateHandler::findAddressFree(const MACAddress &addr ,int cat)
         return 0;
     if (cat == -1)
         cat = categories.size()-1;
-    NumFramesDestination::iterator it = categories[cat].numFramesDestinationFree.find(addr);
+    auto it = categories[cat].numFramesDestinationFree.find(addr);
     if (it != categories[cat].numFramesDestinationFree.end())
         return it->second;
     return 0;
@@ -343,13 +343,13 @@ void MpduAggregateHandler::createBlocks(const MACAddress &addr, int cat)
 
     Ieee80211MpduA *block = nullptr;
 
-    NumFramesDestination::iterator itDest2 = categories[cat].numFramesDestinationFree.find(addr);
+    auto itDest2 = categories[cat].numFramesDestinationFree.find(addr);
     if (itDest2 != categories[cat].numFramesDestinationFree.end())
         return; // non free
 
 
-    DataQueue::iterator itAux = categories[cat].queue->end();
-    for (DataQueue::iterator it = categories[cat].queue->begin() ;it != categories[cat].queue->end();)
+    auto itAux = categories[cat].queue->end();
+    for (auto it = categories[cat].queue->begin() ;it != categories[cat].queue->end();)
     {
         Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame*>(*it);
         if (frame == nullptr || !frame->getReceiverAddress().compareTo(addr))
@@ -409,7 +409,7 @@ void MpduAggregateHandler::removeBlock(const MACAddress &addr, int cat)
     if (categories[cat].queue->empty())
         return;
 
-    NumFramesDestination::iterator itDest = categories[cat].numFramesDestination.find(addr);
+    auto itDest = categories[cat].numFramesDestination.find(addr);
     if (itDest != categories[cat].numFramesDestination.end())
         return;
     if (itDest->second <= 0)
@@ -418,7 +418,7 @@ void MpduAggregateHandler::removeBlock(const MACAddress &addr, int cat)
         return; // no frames
     }
     // search in the queue
-    for (DataQueue::iterator it = categories[cat].queue->begin() ;it != categories[cat].queue->end();++it)
+    for (auto it = categories[cat].queue->begin() ;it != categories[cat].queue->end();++it)
     {
         Ieee80211MpduA *frame = dynamic_cast<Ieee80211MpduA*>(*it);
         if (frame == nullptr || !frame->getReceiverAddress().compareTo(addr))
@@ -426,7 +426,7 @@ void MpduAggregateHandler::removeBlock(const MACAddress &addr, int cat)
             ++it;
             continue;
         }
-        NumFramesDestination::iterator itDest2 = categories[cat].numFramesDestinationFree.find(addr);
+        auto itDest2 = categories[cat].numFramesDestinationFree.find(addr);
         if (itDest2 == categories[cat].numFramesDestinationFree.end())
         {
             categories[cat].numFramesDestinationFree[addr] = 0;

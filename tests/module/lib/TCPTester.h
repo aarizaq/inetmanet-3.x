@@ -42,7 +42,7 @@ class INET_API TCPTesterBase : public cSimpleModule
     PacketDump tcpdump;
 
   protected:
-    void dump(TCPSegment *seg, bool fromA, const char *comment=NULL);
+    void dump(TCPSegment *seg, bool fromA, const char *comment=nullptr);
 
   public:
     TCPTesterBase();

@@ -78,7 +78,7 @@ void PIMSplitter::handleMessage(cMessage *msg)
         }
     }
     else
-        throw cRuntimeError("PIMSplitter: received packet on the unknown gate: %s.", arrivalGate ? arrivalGate->getBaseName() : "NULL");
+        throw cRuntimeError("PIMSplitter: received packet on the unknown gate: %s.", arrivalGate ? arrivalGate->getBaseName() : "nullptr");
 }
 
 void PIMSplitter::processPIMPacket(PIMPacket *pkt)
@@ -93,6 +93,7 @@ void PIMSplitter::processPIMPacket(PIMPacket *pkt)
     if (!pimInt) {
         EV_WARN << "PIM is not enabled on interface '" << ie->getName() << "', dropping packet." << endl;
         delete pkt;
+        return;
     }
 
     switch (pimInt->getMode()) {

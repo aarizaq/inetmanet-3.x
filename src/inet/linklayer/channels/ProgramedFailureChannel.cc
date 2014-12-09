@@ -36,7 +36,7 @@ bool ProgramedFailureDataRateChannel::initializeChannel(int stage)
 
     this->lfm = (LinkFailureManager*)(simulation.getContextModule()->getSubmodule("linkFailureManager"));
 
-    if (this->lfm==NULL)
+    if (this->lfm==nullptr)
     {
         // simulation does not have a linkFailureManager, inserting one
 
@@ -110,7 +110,7 @@ bool ProgramedFailureChannel::initializeChannel(int stage)
 
     this->lfm = (LinkFailureManager*)(simulation.getContextModule()->getSubmodule("linkFailureManager"));
 
-    if (this->lfm==NULL)
+    if (this->lfm==nullptr)
     {
         // simulation does not have a linkFailureManager, inserting one
 

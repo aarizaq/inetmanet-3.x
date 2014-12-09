@@ -193,7 +193,7 @@ void rdHistogram::__parseBinString(std::string binstr)
     cStringTokenizer tokenizer = cStringTokenizer(binstr.c_str(), ";");
     std::string curtuple, countstr, sumstr;
     std::vector<std::string> res = tokenizer.asVector();
-    for (std::vector<std::string>::iterator i = res.begin(); i != res.end(); i++) {
+    for (auto i = res.begin(); i != res.end(); i++) {
         curtuple = (*i);
         curtuple = trimLeft(curtuple, "(");
         curtuple = trimRight(curtuple, ")");
@@ -335,7 +335,7 @@ rdObject *rdObjectFactory::create(cXMLAttributeMap attributes)
     else if (typeName == "zipf")
         dt = dt_zipf;
     else
-        return NULL;
+        return nullptr;
 
     switch (dt) {
         case dt_normal:
@@ -357,7 +357,7 @@ rdObject *rdObjectFactory::create(cXMLAttributeMap attributes)
             return new rdZipf(attributes);
 
         default:
-            return NULL;
+            return nullptr;
     }
 }
 

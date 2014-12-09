@@ -204,7 +204,7 @@ void DYMOUM::initialize(int stage)
         proactive_rreq_timeout= par("proactiveRreqTimeout").longValue();
         if (isRoot)
         {
-            timer_init(&proactive_rreq_timer, &DYMOUM::rreq_proactive,NULL);
+            timer_init(&proactive_rreq_timer, &DYMOUM::rreq_proactive,nullptr);
             timer_set_timeout(&proactive_rreq_timer, proactive_rreq_timeout);
             timer_add(&proactive_rreq_timer);
         }
@@ -231,12 +231,12 @@ DYMOUM::DYMOUM()
     attachPacket = false;
     is_init = false;
     log_file_fd_init = false;
-    ipNodeId = NULL;
-    gateWayAddress = NULL;
+    ipNodeId = nullptr;
+    gateWayAddress = nullptr;
     numInterfacesActive = 0;
     timer_elem = 0;
-    sendMessageEvent = NULL; /*&messageEvent;*/
-    macToIpAdress = NULL;
+    sendMessageEvent = nullptr; /*&messageEvent;*/
+    macToIpAdress = nullptr;
     mapSeqNum.clear();
     isRoot = false;
     this->setStaticNode(true);
@@ -268,8 +268,8 @@ DYMOUM::~ DYMOUM()
 // Routing table
 #ifndef MAPROUTINGTABLE
     dlist_head_t *pos, *tmp;
-    pos = tmp = NULL;
-    pos = tmp = NULL;
+    pos = tmp = nullptr;
+    pos = tmp = nullptr;
     dlist_for_each_safe(pos, tmp, &rtable.l)
     {
         rtable_entry_t *e = (rtable_entry_t *) pos;
@@ -278,21 +278,21 @@ DYMOUM::~ DYMOUM()
         dlist_del(&e->l);
         free(e);
     }
-    pos = tmp = NULL;
+    pos = tmp = nullptr;
     // RREQ table
     dlist_for_each_safe(pos, tmp, &PENDING_RREQ)
     {
         dlist_del(pos);
         free(pos);
     }
-    pos = tmp = NULL;
+    pos = tmp = nullptr;
     // black list table
     dlist_for_each_safe(pos, tmp, &BLACKLIST)
     {
         dlist_del(pos);
         free(pos);
     }
-    pos = tmp = NULL;
+    pos = tmp = nullptr;
     // neigbourd list table
     dlist_for_each_safe(pos, tmp, &NBLIST)
     {
@@ -348,9 +348,9 @@ DYMOUM::~ DYMOUM()
 /* Entry-level packet reception */
 void DYMOUM::handleMessage(cMessage *msg)
 {
-    DYMO_element *dymoMsg = NULL;
-    IPv4Datagram * ipDgram = NULL;
-    UDPPacket * udpPacket = NULL;
+    DYMO_element *dymoMsg = nullptr;
+    IPv4Datagram * ipDgram = nullptr;
+    UDPPacket * udpPacket = nullptr;
     cMessage *msg_aux;
     struct in_addr src_addr;
     struct in_addr dest_addr;
@@ -422,7 +422,7 @@ void DYMOUM::handleMessage(cMessage *msg)
     else if (dynamic_cast<UDPPacket *>(msg) || dynamic_cast<DYMO_element  *>(msg))
     {
 
-        udpPacket = NULL;
+        udpPacket = nullptr;
 
         if (!isInMacLayer())
         {
@@ -477,7 +477,7 @@ void DYMOUM::handleMessage(cMessage *msg)
     if (isLocalAddress(src_addr.s_addr))
     {
         delete dymoMsg;
-        dymoMsg = NULL;
+        dymoMsg = nullptr;
         scheduleNextEvent();
         return;
     }
@@ -576,7 +576,7 @@ IPv4Datagram *DYMOUM::pkt_decapsulate(IPv4Datagram *p)
         delete p;
         return datagram;
     }
-    return NULL;
+    return nullptr;
 }
 
 
@@ -629,7 +629,7 @@ void DYMOUM::storeMacAddressIpAddressPairOf(INetworkDatagram *dgram) const
     {
         Ieee802Ctrl *ctrl = check_and_cast_nullable<Ieee802Ctrl *>(check_and_cast<cPacket *>(dgram)->getControlInfo());
 
-        if (ctrl != NULL)
+        if (ctrl != nullptr)
         {
             MACAddress macAddressConv = ctrl->getSrc();
             MacToIpAddress::iterator it = macToIpAdress->find(macAddressConv);
@@ -761,7 +761,7 @@ void DYMOUM::processPacket(IPv4Datagram * p, unsigned int ifindex )
                 // mac_address macAddressConv;
                 cObject * ctrl;
                 ctrl = p->removeControlInfo();
-                if (ctrl!=NULL)
+                if (ctrl!=nullptr)
                 {
                     Ieee802Ctrl * ctrlmac = check_and_cast<Ieee802Ctrl *> (ctrl);
                     if (ctrlmac)
@@ -799,7 +799,7 @@ void DYMOUM::processPacket(IPv4Datagram * p, unsigned int ifindex )
             delete p->removeControlInfo();
         send(p, "to_ip");
         /* When forwarding data, make sure we are sending HELLO messages */
-        //gettimeofday(&this_host.fwd_time, NULL);
+        //gettimeofday(&this_host.fwd_time, nullptr);
         hello_init();
     }
 }
@@ -844,7 +844,7 @@ void DYMOUM::processMacPacket(cPacket * p, const L3Address &dest, const L3Addres
                 // mac_address macAddressConv;
                 cObject * ctrl;
                 ctrl = p->removeControlInfo();
-                if (ctrl!=NULL)
+                if (ctrl!=nullptr)
                 {
                     Ieee802Ctrl * ctrlmac = check_and_cast<Ieee802Ctrl *> (ctrl);
                     if (ctrlmac)
@@ -886,7 +886,7 @@ void DYMOUM::processMacPacket(cPacket * p, const L3Address &dest, const L3Addres
 
         send(p, "to_ip");
         /* When forwarding data, make sure we are sending HELLO messages */
-        //gettimeofday(&this_host.fwd_time, NULL);
+        //gettimeofday(&this_host.fwd_time, nullptr);
         hello_init();
     }
 }
@@ -918,7 +918,7 @@ int NS_CLASS ifindex2devindex(unsigned int ifindex)
 */
 void DYMOUM::processLinkBreak(const cObject *details)
 {
-    IPv4Datagram  *dgram = NULL;
+    IPv4Datagram  *dgram = nullptr;
     if (dynamic_cast<IPv4Datagram *>(const_cast<cObject*> (details)))
     {
         dgram = check_and_cast<IPv4Datagram *>(const_cast<cObject*>(details));
@@ -942,9 +942,9 @@ void DYMOUM::processLinkBreak(const cObject *details)
 
 void DYMOUM::processPromiscuous(const cObject *details)
 {
-    Ieee80211DataOrMgmtFrame *frame = NULL;
+    Ieee80211DataOrMgmtFrame *frame = nullptr;
 
-    IPv4Datagram * ip_msg = NULL;
+    IPv4Datagram * ip_msg = nullptr;
     struct in_addr source;
 
     source.s_addr = L3Address();
@@ -971,7 +971,7 @@ void DYMOUM::processPromiscuous(const cObject *details)
         ////
         ////////////////////////////////////
 
-        rtable_entry_t *entry = NULL;
+        rtable_entry_t *entry = nullptr;
         if (!isInMacLayer())
         {
             // memcpy (macAddressConv.address,frame->getTransmitterAddress().getAddressBytes(),6);
@@ -1058,7 +1058,7 @@ void DYMOUM::processPromiscuous(const cObject *details)
         // if rrep proccess the packet
         if (!no_path_acc)
         {
-            DYMO_element *dymo_msg = NULL;
+            DYMO_element *dymo_msg = nullptr;
             if (!isInMacLayer())
             {
                 if (ip_msg && ip_msg->getTransportProtocol()==IP_PROT_MANET)
@@ -1146,8 +1146,8 @@ void DYMOUM::processFullPromiscuous(const cObject *details)
 
         if (!no_path_acc)
         {
-            IPv4Datagram *ip_msg = NULL;
-            DYMO_element *dymo_msg = NULL;
+            IPv4Datagram *ip_msg = nullptr;
+            DYMO_element *dymo_msg = nullptr;
             if (!isInMacLayer())
             {
                 ip_msg = dynamic_cast<IPv4Datagram *>(twoAddressFrame->getEncapsulatedPacket());
@@ -1167,7 +1167,7 @@ void DYMOUM::processFullPromiscuous(const cObject *details)
                 if ((dymo_msg->type==DYMO_RE_TYPE) && (((RE *) dymo_msg)->a==0))
                 {
                     //  proccess RREP
-                    addr.s_addr = L3Address(ip_msg->getSrcAddress());    //FIXME ip_msg may be NULL!
+                    addr.s_addr = L3Address(ip_msg->getSrcAddress());    //FIXME ip_msg may be nullptr!
                     promiscuous_rrep((RE*)dymo_msg, addr);
                 } // end if promiscuous
                 //else if (dymo_msg->type==DYMO_RERR_TYPE)
@@ -1452,7 +1452,7 @@ bool  DYMOUM::getNextHop(const L3Address &dest, L3Address &add, int &iface, doub
     {
         destAddr = apAddr;
     }
-    rtable_entry_t * fwd_rt = NULL;
+    rtable_entry_t * fwd_rt = nullptr;
     DymoRoutingTable::iterator it = dymoRoutingTable->find(destAddr);
     if (it != dymoRoutingTable->end())
     {
@@ -1466,7 +1466,7 @@ bool  DYMOUM::getNextHop(const L3Address &dest, L3Address &add, int &iface, doub
               fwd_rt = it->second;
           }
           else
-              throw cRuntimeError("Dymo routing data base error, NULL entry");
+              throw cRuntimeError("Dymo routing data base error, nullptr entry");
     }
     if (fwd_rt)
     {
@@ -1493,8 +1493,8 @@ void DYMOUM::setRefreshRoute(const L3Address &destination, const L3Address & nex
     dest_addr.s_addr = destination;
     next_hop.s_addr = nextHop;
 
-    rtable_entry_t *route = NULL;
-    rtable_entry_t *fwd_pre_rt = NULL;
+    rtable_entry_t *route = nullptr;
+    rtable_entry_t *fwd_pre_rt = nullptr;
     L3Address dest = destination;
     L3Address next = nextHop;
 
@@ -1522,7 +1522,7 @@ void DYMOUM::setRefreshRoute(const L3Address &destination, const L3Address & nex
               route = it->second;
           }
           else
-              throw cRuntimeError("Dymo routing data base error, NULL entry");
+              throw cRuntimeError("Dymo routing data base error, nullptr entry");
     }
 
     it = dymoRoutingTable->find(dest);
@@ -1538,7 +1538,7 @@ void DYMOUM::setRefreshRoute(const L3Address &destination, const L3Address & nex
               fwd_pre_rt = it->second;
           }
           else
-              throw cRuntimeError("Dymo routing data base error, NULL entry");
+              throw cRuntimeError("Dymo routing data base error, nullptr entry");
     }
 
 
@@ -1691,7 +1691,7 @@ cPacket * DYMOUM::get_packet_queue(struct in_addr dest_addr)
             return qp->p;
         }
     }
-    return NULL;
+    return nullptr;
 }
 #else
 cPacket * DYMOUM::get_packet_queue(struct in_addr dest_addr)
@@ -1705,7 +1705,7 @@ cPacket * DYMOUM::get_packet_queue(struct in_addr dest_addr)
             return qp->p;
         }
     }
-    return NULL;
+    return nullptr;
 }
 #endif
 // proactive RREQ
@@ -1850,7 +1850,7 @@ bool DYMOUM::handleNodeStart(IDoneCallback *doneCallback)
 {
     if (isRoot)
     {
-        timer_init(&proactive_rreq_timer,&NS_CLASS rreq_proactive, NULL);
+        timer_init(&proactive_rreq_timer,&NS_CLASS rreq_proactive, nullptr);
         timer_set_timeout(&proactive_rreq_timer, par("startRreqProactive").longValue());
     }
     startDYMOUMAgent();

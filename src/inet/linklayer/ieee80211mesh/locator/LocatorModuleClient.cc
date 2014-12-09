@@ -29,10 +29,10 @@ namespace ieee80211 {
 LocatorModuleClient::LocatorModuleClient()
 {
 
-    rt = NULL;
-    itable = NULL;
-    socket = NULL;
-    iface = NULL;
+    rt = nullptr;
+    itable = nullptr;
+    socket = nullptr;
+    iface = nullptr;
 }
 
 LocatorModuleClient::~LocatorModuleClient()

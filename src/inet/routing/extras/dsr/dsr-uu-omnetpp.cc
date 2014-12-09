@@ -112,7 +112,7 @@ void DSRUU::omnet_xmit(struct dsr_pkt *dp)
     if (dp->ip_pkt)
     {
         p = dp->ip_pkt;
-        dp->ip_pkt = NULL;
+        dp->ip_pkt = nullptr;
         p->ModOptions(dp, interfaceId);
     }
     else
@@ -123,7 +123,7 @@ void DSRUU::omnet_xmit(struct dsr_pkt *dp)
         DEBUG("Could not create packet\n");
         if (dp->payload)
             drop(dp->payload, ICMP_DESTINATION_UNREACHABLE);
-        dp->payload = NULL;
+        dp->payload = nullptr;
         dsr_pkt_free(dp);
         return;
     }
@@ -134,7 +134,7 @@ void DSRUU::omnet_xmit(struct dsr_pkt *dp)
     {
         DEBUG("Dropping packet with TTL = 0.");
         drop(p, ICMP_TIME_EXCEEDED);
-        dp->payload = NULL;
+        dp->payload = nullptr;
         dsr_pkt_free(dp);
         return;
     }
@@ -174,7 +174,7 @@ void DSRUU::omnet_xmit(struct dsr_pkt *dp)
         sendDelayed(p, par("unicastDelay"), "to_ip");
     else
         sendDelayed(p, par("broadcastDelay"), "to_ip");
-    dp->payload = NULL;
+    dp->payload = nullptr;
     dsr_pkt_free(dp);
 }
 
@@ -209,7 +209,7 @@ void DSRUU::omnet_deliver(struct dsr_pkt *dp)
 
     if (dp->payload)
         dgram->encapsulate(dp->payload);
-    dp->payload = NULL;
+    dp->payload = nullptr;
     dsr_pkt_free(dp);
     send(dgram, "to_ip");
 }
@@ -375,7 +375,7 @@ void DSRUU::initialize(int stage)
         {
             ie = inet_ift->getInterface(i);
             name = ie->getName();
-            if (strstr(name, "wlan")!=NULL)
+            if (strstr(name, "wlan")!=nullptr)
             {
                 i_face = ie;
                 num_80211++;
@@ -431,7 +431,7 @@ void DSRUU::initialize(int stage)
             {
                 entry = inet_rt->getRoute(i);
                 const InterfaceEntry *ie = entry->getInterface();
-                if (strstr(ie->getName(), "wlan")!=NULL)
+                if (strstr(ie->getName(), "wlan")!=nullptr)
                 {
                     inet_rt->deleteRoute(entry);
                 }
@@ -458,7 +458,7 @@ void DSRUU::finish()
 
 DSRUU::DSRUU():cSimpleModule(), cListener()
 {
-    lifoDsrPkt = NULL;
+    lifoDsrPkt = nullptr;
     lifo_token = 0;
     grat_rrep_tbl_timer_ptr = new DSRUUTimer(this);
     send_buf_timer_ptr = new DSRUUTimer(this);
@@ -495,7 +495,7 @@ DSRUU::~DSRUU()
     delete ack_timer_ptr;
     delete etx_timer_ptr;
 // Clean the Lifo queue
-    while (pkt!=NULL)
+    while (pkt!=nullptr)
     {
         lifoDsrPkt = pkt->next;
         delete pkt;
@@ -604,7 +604,7 @@ void DSRUU::handleMessage(cMessage* msg)
         return;
     }
 
-    IPv4Datagram * ipDgram = NULL;
+    IPv4Datagram * ipDgram = nullptr;
     if (dynamic_cast<IPv4Datagram *>(msg))
     {
         ipDgram = dynamic_cast<IPv4Datagram *>(msg);
@@ -632,10 +632,10 @@ void DSRUU::handleMessage(cMessage* msg)
 
 void DSRUU::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj)
 {
-    IPv4Datagram  *dgram = NULL;
+    IPv4Datagram  *dgram = nullptr;
     //current_time = simTime();
 
-    if (obj==NULL)
+    if (obj==nullptr)
         return;
 
     if (signalID == NF_TX_ACKED && !get_confval(UseNetworkLayerAck))
@@ -731,7 +731,7 @@ void DSRUU::packetLinkAck(IPv4Datagram *ipDgram)
             maint_buf_del_all(nxt_hop);
         return;
     }
-    DSRPkt *p = NULL;
+    DSRPkt *p = nullptr;
     if (dynamic_cast<DSRPkt *>(ipDgram))
     {
         p = check_and_cast <DSRPkt *> (ipDgram);
@@ -769,7 +769,7 @@ void DSRUU::packetFailed(IPv4Datagram *ipDgram)
         return;
     }
 
-    DSRPkt *p = NULL;
+    DSRPkt *p = nullptr;
 
     if (dynamic_cast<DSRPkt *>(ipDgram))
     {
@@ -795,7 +795,7 @@ void DSRUU::packetFailed(IPv4Datagram *ipDgram)
             {
                 if (dp->payload)
                     drop(dp->payload, -1);
-                dp->payload = NULL;
+                dp->payload = nullptr;
                 dsr_pkt_free(dp);
             }
         }
@@ -1004,7 +1004,7 @@ void DSRUU::EtxMsgProc(cMessage *m)
         }
     }
     ETXNeighborTable::iterator it = etxNeighborTable.find(srcAddress);
-    ETXEntry *entry = NULL;
+    ETXEntry *entry = nullptr;
     if (it==etxNeighborTable.end())
     {
         // add
@@ -1199,14 +1199,14 @@ void DSRUU::AddCostRrep(struct dsr_pkt *dp, struct dsr_srt *srt)
 bool DSRUU::proccesICMP(cMessage *msg)
 {
     ICMPMessage * pk = dynamic_cast<ICMPMessage *>(msg);
-    if (pk==NULL)
+    if (pk==nullptr)
         return false;
     // check if
     // recapsulate and send
     if (pk->getControlInfo())
         delete pk->removeControlInfo();
     DSRPkt *bogusPacket = dynamic_cast<DSRPkt *>(pk->getEncapsulatedPacket());
-    if (bogusPacket==NULL)
+    if (bogusPacket==nullptr)
     {
         delete msg;
         return true;

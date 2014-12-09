@@ -29,13 +29,13 @@ Define_Module(BGPRouting);
 
 BGPRouting::~BGPRouting(void)
 {
-    for (std::map<SessionID, BGPSession *>::iterator sessionIterator = _BGPSessions.begin();
+    for (auto sessionIterator = _BGPSessions.begin();
          sessionIterator != _BGPSessions.end(); sessionIterator++)
     {
         delete (*sessionIterator).second;
     }
 
-    for (RoutingTableEntryVector::iterator it = _prefixListINOUT.begin(); it != _prefixListINOUT.end(); ++it) {
+    for (auto it = _prefixListINOUT.begin(); it != _prefixListINOUT.end(); ++it) {
         delete (*it);
     }
 }
@@ -117,7 +117,7 @@ void BGPRouting::finish()
     unsigned int statTab[NB_STATS] = {
         0, 0, 0, 0, 0, 0
     };
-    for (std::map<SessionID, BGPSession *>::iterator sessionIterator = _BGPSessions.begin(); sessionIterator != _BGPSessions.end(); sessionIterator++) {
+    for (auto sessionIterator = _BGPSessions.begin(); sessionIterator != _BGPSessions.end(); sessionIterator++) {
         (*sessionIterator).second->getStatistics(statTab);
     }
     recordScalar("OPENMsgSent", statTab[0]);
@@ -355,7 +355,7 @@ unsigned char BGPRouting::decisionProcess(const BGPUpdateMessage& msg, RoutingTa
             ospf::OSPFRouting *ospf = findModuleFromPar<ospf::OSPFRouting>(par("ospfRoutingModule"), this);
             InterfaceEntry *ie = entry->getInterface();
             if (!ie)
-                throw cRuntimeError("Model error: interface entry is NULL");
+                throw cRuntimeError("Model error: interface entry is nullptr");
             ospf->insertExternalRoute(ie->getInterfaceId(), OSPFnetAddr);
             simulation.setContext(this);
         }
@@ -389,7 +389,7 @@ void BGPRouting::updateSendProcess(const unsigned char type, SessionID sessionIn
     //if it is not the currentSession and if the session is already established
     //SESSION = IGP : send an update message to External BGP Peer (EGP) only
     //if it is not the currentSession and if the session is already established
-    for (std::map<SessionID, BGPSession *>::iterator sessionIt = _BGPSessions.begin();
+    for (auto sessionIt = _BGPSessions.begin();
          sessionIt != _BGPSessions.end(); sessionIt++)
     {
         if (isInTable(_prefixListOUT, entry) != (unsigned long)-1 || isInASList(_ASListOUT, entry) ||
@@ -458,7 +458,7 @@ bool BGPRouting::checkExternalRoute(const IPv4Route *route)
 
 void BGPRouting::loadTimerConfig(cXMLElementList& timerConfig, simtime_t *delayTab)
 {
-    for (cXMLElementList::iterator timerElemIt = timerConfig.begin(); timerElemIt != timerConfig.end(); timerElemIt++) {
+    for (auto timerElemIt = timerConfig.begin(); timerElemIt != timerConfig.end(); timerElemIt++) {
         std::string nodeName = (*timerElemIt)->getTagName();
         if (nodeName == "connectRetryTime") {
             delayTab[0] = (double)atoi((*timerElemIt)->getNodeValue());
@@ -479,10 +479,10 @@ ASID BGPRouting::findMyAS(cXMLElementList& asList, int& outRouterPosition)
 {
     // find my own IPv4 address in the configuration file and return the AS id under which it is configured
     // and also the 1 based position of the entry inside the AS config element
-    for (cXMLElementList::iterator asListIt = asList.begin(); asListIt != asList.end(); asListIt++) {
+    for (auto asListIt = asList.begin(); asListIt != asList.end(); asListIt++) {
         cXMLElementList routerList = (*asListIt)->getChildrenByTagName("Router");
         outRouterPosition = 1;
-        for (cXMLElementList::iterator routerListIt = routerList.begin(); routerListIt != routerList.end(); routerListIt++) {
+        for (auto routerListIt = routerList.begin(); routerListIt != routerList.end(); routerListIt++) {
             IPv4Address routerAddr = IPv4Address((*routerListIt)->getAttribute("interAddr"));
             for (int i = 0; i < _inft->getNumInterfaces(); i++) {
                 if (_inft->getInterface(i)->ipv4Data()->getIPAddress() == routerAddr)
@@ -498,7 +498,7 @@ ASID BGPRouting::findMyAS(cXMLElementList& asList, int& outRouterPosition)
 void BGPRouting::loadSessionConfig(cXMLElementList& sessionList, simtime_t *delayTab)
 {
     simtime_t saveStartDelay = delayTab[3];
-    for (cXMLElementList::iterator sessionListIt = sessionList.begin(); sessionListIt != sessionList.end(); sessionListIt++, delayTab[3] = saveStartDelay) {
+    for (auto sessionListIt = sessionList.begin(); sessionListIt != sessionList.end(); sessionListIt++, delayTab[3] = saveStartDelay) {
         const char *exterAddr = (*sessionListIt)->getFirstChild()->getAttribute("exterAddr");
         IPv4Address routerAddr1 = IPv4Address(exterAddr);
         exterAddr = (*sessionListIt)->getLastChild()->getAttribute("exterAddr");
@@ -531,7 +531,7 @@ std::vector<const char *> BGPRouting::loadASConfig(cXMLElementList& ASConfig)
     //create deny Lists
     std::vector<const char *> routerInSameASList;
 
-    for (cXMLElementList::iterator ASConfigIt = ASConfig.begin(); ASConfigIt != ASConfig.end(); ASConfigIt++) {
+    for (auto ASConfigIt = ASConfig.begin(); ASConfigIt != ASConfig.end(); ASConfigIt++) {
         std::string nodeName = (*ASConfigIt)->getTagName();
         if (nodeName == "Router") {
             if (isInInterfaceTable(_inft, IPv4Address((*ASConfigIt)->getAttribute("interAddr"))) == -1) {
@@ -585,7 +585,7 @@ void BGPRouting::loadConfigFromXML(cXMLElement *bgpConfig)
     // load bgp timer parameters informations
     simtime_t delayTab[NB_TIMERS];
     cXMLElement *paramNode = bgpConfig->getElementByPath("TimerParams");
-    if (paramNode == NULL)
+    if (paramNode == nullptr)
         throw cRuntimeError("BGP Error: No configuration for BGP timer parameters");
 
     cXMLElementList timerConfig = paramNode->getChildren();
@@ -610,7 +610,7 @@ void BGPRouting::loadConfigFromXML(cXMLElement *bgpConfig)
 
     cXMLElement *ASNode = bgpConfig->getElementByPath(ASXPath);
     std::vector<const char *> routerInSameASList;
-    if (ASNode == NULL)
+    if (ASNode == nullptr)
         throw cRuntimeError("BGP Error:  No configuration for AS ID: %d", _myAS);
 
     cXMLElementList ASConfig = ASNode->getChildren();
@@ -620,7 +620,7 @@ void BGPRouting::loadConfigFromXML(cXMLElement *bgpConfig)
     if (routerInSameASList.size()) {
         unsigned int routerPeerPosition = 1;
         delayTab[3] += sessionList.size() * 2;
-        for (std::vector<const char *>::iterator it = routerInSameASList.begin(); it != routerInSameASList.end(); it++, routerPeerPosition++) {
+        for (auto it = routerInSameASList.begin(); it != routerInSameASList.end(); it++, routerPeerPosition++) {
             SessionID newSessionID;
             TCPSocket *socketListenIGP = new TCPSocket();
             newSessionID = createSession(IGP, (*it));
@@ -685,7 +685,7 @@ SessionID BGPRouting::createSession(BGPSessionType typeSession, const char *peer
 
 SessionID BGPRouting::findIdFromPeerAddr(std::map<SessionID, BGPSession *> sessions, IPv4Address peerAddr)
 {
-    for (std::map<SessionID, BGPSession *>::iterator sessionIterator = sessions.begin();
+    for (auto sessionIterator = sessions.begin();
          sessionIterator != sessions.end(); sessionIterator++)
     {
         if ((*sessionIterator).second->getPeerAddr().equals(peerAddr)) {
@@ -702,7 +702,7 @@ SessionID BGPRouting::findIdFromPeerAddr(std::map<SessionID, BGPSession *> sessi
  */
 bool BGPRouting::deleteBGPRoutingEntry(RoutingTableEntry *entry)
 {
-    for (std::vector<RoutingTableEntry *>::iterator it = _BGPRoutingTable.begin();
+    for (auto it = _BGPRoutingTable.begin();
          it != _BGPRoutingTable.end(); it++)
     {
         if (((*it)->getDestination().getInt() & (*it)->getNetmask().getInt()) ==
@@ -740,7 +740,7 @@ int BGPRouting::isInInterfaceTable(IInterfaceTable *ifTable, IPv4Address addr)
 
 SessionID BGPRouting::findIdFromSocketConnId(std::map<SessionID, BGPSession *> sessions, int connId)
 {
-    for (std::map<SessionID, BGPSession *>::iterator sessionIterator = sessions.begin();
+    for (auto sessionIterator = sessions.begin();
          sessionIterator != sessions.end(); sessionIterator++)
     {
         TCPSocket *socket = (*sessionIterator).second->getSocket();
@@ -768,7 +768,7 @@ unsigned long BGPRouting::isInTable(std::vector<RoutingTableEntry *> rtTable, Ro
 /*return true if the AS is found, false else*/
 bool BGPRouting::isInASList(std::vector<ASID> ASList, RoutingTableEntry *entry)
 {
-    for (std::vector<ASID>::iterator it = ASList.begin(); it != ASList.end(); it++) {
+    for (auto it = ASList.begin(); it != ASList.end(); it++) {
         for (unsigned int i = 0; i < entry->getASCount(); i++) {
             if ((*it) == entry->getAS(i)) {
                 return true;
@@ -803,7 +803,7 @@ unsigned char BGPRouting::asLoopDetection(RoutingTableEntry *entry, ASID myAS)
 SessionID BGPRouting::findNextSession(BGPSessionType type, bool startSession)
 {
     SessionID sessionID = -1;
-    for (std::map<SessionID, BGPSession *>::iterator sessionIterator = _BGPSessions.begin();
+    for (auto sessionIterator = _BGPSessions.begin();
          sessionIterator != _BGPSessions.end(); sessionIterator++)
     {
         if ((*sessionIterator).second->getType() == type && !(*sessionIterator).second->isEstablished()) {

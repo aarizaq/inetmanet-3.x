@@ -42,7 +42,7 @@ const double EtherMACBase::SPEED_OF_LIGHT_IN_CABLE = 200000000.0;
 
 const EtherMACBase::EtherDescr EtherMACBase::nullEtherDescr = {
     0.0,
-    0,
+    0.0,
     0,
     0,
     0,
@@ -140,12 +140,6 @@ EtherMACBase::EtherMACBase()
 {
     lastTxFinishTime = -1.0;    // never equals to current simtime
     curEtherDescr = &nullEtherDescr;
-    transmissionChannel = NULL;
-    physInGate = NULL;
-    physOutGate = NULL;
-    upperLayerInGate = NULL;
-    curTxFrame = NULL;
-    endTxMsg = endIFGMsg = endPauseMsg = NULL;
 }
 
 EtherMACBase::~EtherMACBase()
@@ -167,8 +161,8 @@ void EtherMACBase::initialize(int stage)
         physInGate = gate("phys$i");
         physOutGate = gate("phys$o");
         upperLayerInGate = gate("upperLayerIn");
-        transmissionChannel = NULL;
-        curTxFrame = NULL;
+        transmissionChannel = nullptr;
+        curTxFrame = nullptr;
 
         initializeFlags();
 
@@ -374,7 +368,7 @@ void EtherMACBase::processConnectDisconnect()
 
         if (curTxFrame) {
             delete curTxFrame;
-            curTxFrame = NULL;
+            curTxFrame = nullptr;
             lastTxFinishTime = -1.0;    // so that it never equals to the current simtime, used for Burst mode detection.
         }
 
@@ -401,7 +395,7 @@ void EtherMACBase::processConnectDisconnect()
 
 void EtherMACBase::flushQueue()
 {
-    // code would look slightly nicer with a pop() function that returns NULL if empty
+    // code would look slightly nicer with a pop() function that returns nullptr if empty
     if (txQueue.innerQueue) {
         while (!txQueue.innerQueue->empty()) {
             cMessage *msg = (cMessage *)txQueue.innerQueue->pop();
@@ -460,7 +454,7 @@ bool EtherMACBase::dropFrameNotForUs(EtherFrame *frame)
     if (frame->getDest().isBroadcast())
         return false;
 
-    bool isPause = (dynamic_cast<EtherPauseFrame *>(frame) != NULL);
+    bool isPause = (dynamic_cast<EtherPauseFrame *>(frame) != nullptr);
 
     if (!isPause && (promiscuous || frame->getDest().isMulticast()))
         return false;
@@ -508,7 +502,7 @@ void EtherMACBase::readChannelParameters(bool errorWhenAsymmetric)
         curEtherDescr = &nullEtherDescr;
         dataratesDiffer = false;
         if (!outTrChannel)
-            transmissionChannel = NULL;
+            transmissionChannel = nullptr;
         if (interfaceEntry) {
             interfaceEntry->setCarrier(false);
             interfaceEntry->setDatarate(0);
@@ -711,8 +705,8 @@ void EtherMACBase::updateConnectionColor(int txState)
 
 int EtherMACBase::InnerQueue::packetCompare(cObject *a, cObject *b)
 {
-    int ap = (dynamic_cast<EtherPauseFrame *>(a) == NULL) ? 1 : 0;
-    int bp = (dynamic_cast<EtherPauseFrame *>(b) == NULL) ? 1 : 0;
+    int ap = (dynamic_cast<EtherPauseFrame *>(a) == nullptr) ? 1 : 0;
+    int bp = (dynamic_cast<EtherPauseFrame *>(b) == nullptr) ? 1 : 0;
     return ap - bp;
 }
 

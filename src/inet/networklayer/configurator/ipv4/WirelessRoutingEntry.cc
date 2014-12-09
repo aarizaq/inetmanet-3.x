@@ -39,7 +39,7 @@ void WirelessRoutingEntry::fillTables(double distance)
     cModule* host = findContainingNode(dynamic_cast<cModule *>(this->getOwner()));
     IIPv4RoutingTable *rt = L3AddressResolver().findIPv4RoutingTableOf(host);
     IInterfaceTable *ift = L3AddressResolver().findInterfaceTableOf(host);
-    InterfaceEntry *iface = NULL;
+    InterfaceEntry *iface = nullptr;
     for (int i = 0; i < ift->getNumInterfaces(); i++)
     {
         InterfaceEntry *ie = ift->getInterfaceByNodeInputGateId(i);

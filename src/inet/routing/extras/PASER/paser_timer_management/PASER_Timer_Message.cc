@@ -36,13 +36,13 @@ PASER_Timer_Message::~PASER_Timer_Message() {
         case ROUTE_DISCOVERY_UB:
             pack0 = (PASER_UB_RREQ *) data;
             delete pack0;
-            data = NULL;
+            data = nullptr;
             break;
         case TU_RREP_ACK_TIMEOUT:
             EV << "deleting PASER_UU_RREP\n";
             pack1 = (PASER_UU_RREP *) data;
             delete pack1;
-            data = NULL;
+            data = nullptr;
         default:
             break;
         }

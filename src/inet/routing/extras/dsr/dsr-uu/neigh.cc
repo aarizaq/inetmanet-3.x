@@ -47,7 +47,7 @@ namespace inetmanet {
 /* TODO: Implement neighbor table garbage collection */
 void NSCLASS neigh_tbl_garbage_timeout(unsigned long data)
 {
-    /* tbl_for_each_del(&neigh_tbl, NULL, crit_garbage); */
+    /* tbl_for_each_del(&neigh_tbl, nullptr, crit_garbage); */
 
     /*  if (!tbl_empty(&neigh_tbl)) { */
     /*      garbage_timer.expires = TimeNow +  */
@@ -65,7 +65,7 @@ NSCLASS neighbor * NSCLASS neigh_tbl_create(struct in_addr addr,
     neigh = new neighbor;
 
     if (!neigh)
-        return NULL;
+        return nullptr;
     memset(neigh, 0, sizeof(neighbor));
     neigh->id = id;
     neigh->addr = addr;

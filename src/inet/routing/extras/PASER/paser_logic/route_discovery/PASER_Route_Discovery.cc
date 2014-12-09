@@ -58,14 +58,14 @@ void PASER_Route_Discovery::route_discovery(struct in_addr dest_addr,
         return;
     }
 
-    PASER_UB_RREQ *message = NULL;
+    PASER_UB_RREQ *message = nullptr;
     if (isDestGW) {
         paser_global->generateGwSearchNonce();
     }
     for (u_int32_t i = 0; i < paser_configuration->getNetDeviceNumber(); i++) {
         in_addr WlanAddrStruct;
         WlanAddrStruct.S_addr = paser_global->getNetDevice()[i].ipaddr.S_addr;
-        if (message != NULL) {
+        if (message != nullptr) {
             delete message;
         }
         message = paser_global->getPaket_processing()->send_ub_rreq(
@@ -73,7 +73,7 @@ void PASER_Route_Discovery::route_discovery(struct in_addr dest_addr,
     }
     paser_global->setSeqNr(paser_global->getSeqNr() + 1);
 
-    if (message == NULL)
+    if (message == nullptr)
         return;
     // Record information for destination
     message_rreq_entry *pend_rreq = paser_global->getRreq_list()->pending_add(
@@ -84,7 +84,7 @@ void PASER_Route_Discovery::route_discovery(struct in_addr dest_addr,
     tPack->destAddr.S_addr = dest_addr.S_addr;
     tPack->handler = ROUTE_DISCOVERY_UB;
     struct timeval now;
-    paser_modul->MYgettimeofday(&now, NULL);
+    paser_modul->MYgettimeofday(&now, nullptr);
     tPack->timeout = timeval_add(now, PASER_UB_RREQ_WAIT_TIME);
     pend_rreq->tries = 0;
 
@@ -119,12 +119,12 @@ void PASER_Route_Discovery::processMessage(IPv4Datagram* datagram) {
             dest_addr);
     bool isRoute = false;
     // A valid route exists
-    if (rEntry == NULL) {
+    if (rEntry == nullptr) {
     } else if (rEntry->isValid) {
         PASER_Neighbor_Entry *nEntry =
                 paser_global->getNeighbor_table()->findNeigh(
                         rEntry->nxthop_addr);
-        if (nEntry == NULL || !nEntry->neighFlag || !nEntry->isValid) {
+        if (nEntry == nullptr || !nEntry->neighFlag || !nEntry->isValid) {
             EV << "no Route to Dest.\n";
             isRoute = false;
         } else {
@@ -155,7 +155,7 @@ void PASER_Route_Discovery::processMessage(IPv4Datagram* datagram) {
             paser_global->getPaket_processing()->send_rerr(allAddrList);
 
             struct timeval now;
-            paser_modul->MYgettimeofday(&now, NULL);
+            paser_modul->MYgettimeofday(&now, nullptr);
             paser_global->getBlacklist()->setRerrTime(dest_addr, now);
 
             delete datagram;

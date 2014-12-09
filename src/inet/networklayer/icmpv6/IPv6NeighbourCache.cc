@@ -42,7 +42,7 @@ void IPv6NeighbourCache::DefaultRouterList::remove(Neighbour& router)
 {
     ASSERT(router.isDefaultRouter());
     if (router.nextDefaultRouter == &router) {
-        head = NULL;
+        head = nullptr;
     }
     else {
         if (head == &router)
@@ -50,7 +50,7 @@ void IPv6NeighbourCache::DefaultRouterList::remove(Neighbour& router)
         router.nextDefaultRouter->prevDefaultRouter = router.prevDefaultRouter;
         router.prevDefaultRouter->nextDefaultRouter = router.nextDefaultRouter;
     }
-    router.nextDefaultRouter = router.prevDefaultRouter = NULL;
+    router.nextDefaultRouter = router.prevDefaultRouter = nullptr;
 }
 
 std::ostream& operator<<(std::ostream& os, const IPv6NeighbourCache::Key& e)
@@ -85,13 +85,13 @@ IPv6NeighbourCache::IPv6NeighbourCache(cSimpleModule& neighbourDiscovery)
 IPv6NeighbourCache::Neighbour *IPv6NeighbourCache::lookup(const IPv6Address& addr, int interfaceID)
 {
     Key key(addr, interfaceID);
-    NeighbourMap::iterator i = neighbourMap.find(key);
-    return i == neighbourMap.end() ? NULL : &(i->second);
+    auto i = neighbourMap.find(key);
+    return i == neighbourMap.end() ? nullptr : &(i->second);
 }
 
 const IPv6NeighbourCache::Key *IPv6NeighbourCache::lookupKeyAddr(Key& key)
 {
-    NeighbourMap::iterator i = neighbourMap.find(key);
+    auto i = neighbourMap.find(key);
     return &(i->first);
 }
 
@@ -149,10 +149,10 @@ IPv6NeighbourCache::Neighbour *IPv6NeighbourCache::addRouter(const IPv6Address& 
 void IPv6NeighbourCache::remove(const IPv6Address& addr, int interfaceID)
 {
     Key key(addr, interfaceID);
-    NeighbourMap::iterator it = neighbourMap.find(key);
+    auto it = neighbourMap.find(key);
     ASSERT(it != neighbourMap.end());    // entry must exist
     neighbourDiscovery.cancelAndDelete(it->second.nudTimeoutEvent);
-    it->second.nudTimeoutEvent = NULL;
+    it->second.nudTimeoutEvent = nullptr;
     if (it->second.isDefaultRouter())
         defaultRouterList.remove(it->second);
     neighbourMap.erase(it);
@@ -162,7 +162,7 @@ void IPv6NeighbourCache::remove(NeighbourMap::iterator it)
 {
     //delete it->second.nudTimeoutEvent;
     neighbourDiscovery.cancelAndDelete(it->second.nudTimeoutEvent);    // 20.9.07 - CB
-    it->second.nudTimeoutEvent = NULL;
+    it->second.nudTimeoutEvent = nullptr;
     if (it->second.isDefaultRouter())
         defaultRouterList.remove(it->second);
     neighbourMap.erase(it);
@@ -171,11 +171,11 @@ void IPv6NeighbourCache::remove(NeighbourMap::iterator it)
 // Added by CB
 void IPv6NeighbourCache::invalidateEntriesForInterfaceID(int interfaceID)
 {
-    for (NeighbourMap::iterator it = neighbourMap.begin(); it != neighbourMap.end(); it++) {
+    for (auto it = neighbourMap.begin(); it != neighbourMap.end(); it++) {
         if (it->first.interfaceID == interfaceID) {
             it->second.reachabilityState = PROBE;    // we make sure this neighbour is not used anymore in the future, unless reachability can be confirmed
             neighbourDiscovery.cancelAndDelete(it->second.nudTimeoutEvent);    // 20.9.07 - CB
-            it->second.nudTimeoutEvent = NULL;
+            it->second.nudTimeoutEvent = nullptr;
         }
     }
 }
@@ -184,7 +184,7 @@ void IPv6NeighbourCache::invalidateEntriesForInterfaceID(int interfaceID)
 void IPv6NeighbourCache::invalidateAllEntries()
 {
     while (!neighbourMap.empty()) {
-        NeighbourMap::iterator it = neighbourMap.begin();
+        auto it = neighbourMap.begin();
         remove(it);
     }
     defaultRouterList.clear();
@@ -192,7 +192,7 @@ void IPv6NeighbourCache::invalidateAllEntries()
     /*
        int size = neighbourMap.size();
        EV << "size: " << size << endl;
-       for (NeighbourMap::iterator it = neighbourMap.begin(); it != neighbourMap.end(); it++)
+       for (auto it = neighbourMap.begin(); it != neighbourMap.end(); it++)
        {
         it->second.reachabilityState = PROBE; // we make sure this neighbour is not used anymore in the future, unless reachability can be confirmed
        }

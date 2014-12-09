@@ -30,13 +30,6 @@
 
 namespace inet {
 
-MACBase::MACBase()
-{
-    hostModule = NULL;
-    interfaceEntry = NULL;
-    isOperational = false;
-}
-
 MACBase::~MACBase()
 {
 }
@@ -87,7 +80,7 @@ void MACBase::receiveSignal(cComponent *source, simsignal_t signalID, cObject *o
 {
     if (signalID == NF_INTERFACE_DELETED) {
         if (interfaceEntry == check_and_cast<const InterfaceEntry *>(obj))
-            interfaceEntry = NULL;
+            interfaceEntry = nullptr;
     }
 }
 
@@ -104,7 +97,7 @@ void MACBase::updateOperationalFlag(bool isNodeUp)
 
 void MACBase::registerInterface()    //XXX registerInterfaceIfInterfaceTableExists() ???
 {
-    ASSERT(interfaceEntry == NULL);
+    ASSERT(interfaceEntry == nullptr);
     IInterfaceTable *ift = findModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
     if (ift) {
         interfaceEntry = createInterfaceEntry();

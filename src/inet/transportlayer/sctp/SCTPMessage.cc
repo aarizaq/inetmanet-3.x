@@ -73,7 +73,7 @@ uint32 SCTPMessage::getChunksArraySize() const
 
 cPacketPtr& SCTPMessage::getChunks(uint32 k)
 {
-    std::list<cPacket *>::iterator i = chunkList.begin();
+    auto i = chunkList.begin();
     while (k > 0 && i != chunkList.end())
         (++i, --k);
     return *i;
@@ -100,7 +100,7 @@ void SCTPMessage::addChunk(cPacket *msg)
 cPacket *SCTPMessage::removeChunk()
 {
     if (chunkList.empty())
-        return NULL;
+        return nullptr;
 
     cPacket *msg = chunkList.front();
     chunkList.pop_front();
@@ -112,7 +112,7 @@ cPacket *SCTPMessage::removeChunk()
 cPacket *SCTPMessage::removeLastChunk()
 {
     if (chunkList.empty())
-        return NULL;
+        return nullptr;
 
     cPacket *msg = chunkList.back();
     chunkList.pop_back();
@@ -124,7 +124,7 @@ cPacket *SCTPMessage::removeLastChunk()
 cPacket *SCTPMessage::peekFirstChunk()
 {
     if (chunkList.empty())
-        return NULL;
+        return nullptr;
 
     cPacket *msg = chunkList.front();
     return msg;
@@ -133,7 +133,7 @@ cPacket *SCTPMessage::peekFirstChunk()
 cPacket *SCTPMessage::peekLastChunk()
 {
     if (chunkList.empty())
-        return NULL;
+        return nullptr;
 
     cPacket *msg = chunkList.back();
     return msg;
@@ -169,7 +169,7 @@ uint32 SCTPErrorChunk::getParametersArraySize() const
 
 cPacketPtr& SCTPErrorChunk::getParameters(uint32 k)
 {
-    std::list<cPacket *>::iterator i = parameterList.begin();
+    auto i = parameterList.begin();
     while (k > 0 && i != parameterList.end())
         (++i, --k);
     return *i;
@@ -191,7 +191,7 @@ void SCTPErrorChunk::addParameters(cPacket *msg)
 cPacket *SCTPErrorChunk::removeParameter()
 {
     if (parameterList.empty())
-        return NULL;
+        return nullptr;
 
     cPacket *msg = parameterList.front();
     parameterList.pop_front();
@@ -239,7 +239,7 @@ uint32 SCTPStreamResetChunk::getParametersArraySize() const
 
 cPacketPtr& SCTPStreamResetChunk::getParameters(uint32 k)
 {
-    std::list<cPacket *>::iterator i = parameterList.begin();
+    auto i = parameterList.begin();
     while (k > 0 && i != parameterList.end())
         (++i, --k);
     return *i;
@@ -264,7 +264,7 @@ void SCTPStreamResetChunk::addParameter(cPacket *msg)
 cPacket *SCTPStreamResetChunk::removeParameter()
 {
     if (parameterList.empty())
-        return NULL;
+        return nullptr;
 
     cPacket *msg = parameterList.front();
     parameterList.pop_front();
@@ -298,7 +298,7 @@ uint32 SCTPAsconfChunk::getAsconfParamsArraySize() const
 
 cPacketPtr& SCTPAsconfChunk::getAsconfParams(uint32 k)
 {
-    std::list<cPacket *>::iterator i = parameterList.begin();
+    auto i = parameterList.begin();
     while (k > 0 && i != parameterList.end())
         (++i, --k);
     return *i;
@@ -319,7 +319,7 @@ void SCTPAsconfChunk::addAsconfParam(cPacket *msg)
 cPacket *SCTPAsconfChunk::removeAsconfParam()
 {
     if (parameterList.empty())
-        return NULL;
+        return nullptr;
 
     cPacket *msg = parameterList.front();
     parameterList.pop_front();
@@ -353,7 +353,7 @@ uint32 SCTPAsconfAckChunk::getAsconfResponseArraySize() const
 
 cPacketPtr& SCTPAsconfAckChunk::getAsconfResponse(uint32 k)
 {
-    std::list<cPacket *>::iterator i = parameterList.begin();
+    auto i = parameterList.begin();
     while (k > 0 && i != parameterList.end())
         (++i, --k);
     return *i;
@@ -374,7 +374,7 @@ void SCTPAsconfAckChunk::addAsconfResponse(cPacket *msg)
 cPacket *SCTPAsconfAckChunk::removeAsconfResponse()
 {
     if (parameterList.empty())
-        return NULL;
+        return nullptr;
 
     cPacket *msg = parameterList.front();
     parameterList.pop_front();

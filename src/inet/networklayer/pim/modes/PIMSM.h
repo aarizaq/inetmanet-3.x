@@ -113,7 +113,7 @@ class INET_API PIMSM : public PIMBase, protected cListener
         cMessage *prunePendingTimer;
 
         DownstreamInterface(Route *owner, InterfaceEntry *ie, JoinPruneState joinPruneState, bool show = true)
-            : PimsmInterface(owner, ie), joinPruneState(joinPruneState), prunePendingTimer(NULL) {}
+            : PimsmInterface(owner, ie), joinPruneState(joinPruneState), prunePendingTimer(nullptr) {}
         virtual ~DownstreamInterface();
 
         int getInterfaceId() const { return ie->getInterfaceId(); }
@@ -174,7 +174,7 @@ class INET_API PIMSM : public PIMBase, protected cListener
         cMessage *registerStopTimer;
 
         // interface specific state
-        UpstreamInterface *upstreamInterface;    // may be NULL at RP and at DR
+        UpstreamInterface *upstreamInterface;    // may be nullptr at RP and at DR
         DownstreamInterfaceVector downstreamInterfaces;    ///< Out interfaces (downstream)
 
       public:
@@ -202,15 +202,15 @@ class INET_API PIMSM : public PIMBase, protected cListener
 
     // parameters
     IPv4Address rpAddr;
-    double joinPrunePeriod;
-    double defaultOverrideInterval;
-    double defaultPropagationDelay;
-    double keepAlivePeriod;
-    double rpKeepAlivePeriod;
-    double registerSuppressionTime;
-    double registerProbeTime;
-    double assertTime;
-    double assertOverrideInterval;
+    double joinPrunePeriod = 0;
+    double defaultOverrideInterval = 0;
+    double defaultPropagationDelay = 0;
+    double keepAlivePeriod = 0;
+    double rpKeepAlivePeriod = 0;
+    double registerSuppressionTime = 0;
+    double registerProbeTime = 0;
+    double assertTime = 0;
+    double assertOverrideInterval = 0;
 
     // signals
     static simsignal_t sentRegisterPkSignal;

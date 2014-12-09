@@ -37,7 +37,7 @@ HipFsmBase::HipFsmBase()
 HipFsmBase::~HipFsmBase()
 {
     delete cancelEvent(creditMsg);
-    creditMsg = NULL;
+    creditMsg = nullptr;
     if (triggerMsg)
         delete triggerMsg;
 }
@@ -63,7 +63,7 @@ void HipFsmBase::initialize()
 
     dstIPwork = new IPv6Address();
 
-    triggerMsg = NULL;
+    triggerMsg = nullptr;
     viarvs = false;
     addrIsValidated = true;
     isUpdating = false;
@@ -370,7 +370,7 @@ void HipFsmBase::handleMsgRemoteIn(cMessage *msg)
             {
                 currentState = ESTABLISHED;
                 delete msg;
-                if (triggerMsg != NULL)
+                if (triggerMsg != nullptr)
                 {
                     //if viarvs then restore original dest address - the HIT
                     if (viarvs)
@@ -383,7 +383,7 @@ void HipFsmBase::handleMsgRemoteIn(cMessage *msg)
 
                     EV << "Sending trigger msg" <<endl;
                     sendDirect(triggerMsg, this->getParentModule(), "fromFsmTrigger"); //process triggerMsg
-                    triggerMsg = NULL;
+                    triggerMsg = nullptr;
                 }
                 /*
                  if (isRegistration)
@@ -484,7 +484,7 @@ void HipFsmBase::handleMsgRemoteIn(cMessage *msg)
                             addrIsValidated = false;
 
                             findIPaddress(partnerHit);
-                            if (dstIPwork == NULL)
+                            if (dstIPwork == nullptr)
                             error("Address not stored?");
                             EV << "Sent to: " << *dstIPwork << endl;
                             createUpdHIPpacket(2, upd);
@@ -573,7 +573,7 @@ void HipFsmBase::createUpdHIPpacket(int updKind, HIPHeaderMessage * old)
     destLoc->locatorIPv6addr = *dstIPwork;
     hipHead->setLocator(1, *destLoc);
 
-    srand(time(NULL));
+    srand(time(nullptr));
     int randSeq = rand() % 1024 + 1;
 
     switch (updKind)

@@ -110,16 +110,16 @@ class INET_API IPv6NeighbourCache
 
         Neighbour()
         {
-            nceKey = NULL;
+            nceKey = nullptr;
             isRouter = isHomeAgent = false;
             reachabilityState = (ReachabilityState) - 1    /*=unset*/;
             reachabilityExpires = 0;
             numProbesSent = 0;
-            nudTimeoutEvent = NULL;
+            nudTimeoutEvent = nullptr;
             numOfARNSSent = 0;
-            arTimer = NULL;
+            arTimer = nullptr;
             routerExpiryTime = 0;
-            prevDefaultRouter = nextDefaultRouter = NULL;
+            prevDefaultRouter = nextDefaultRouter = nullptr;
         }
     };
 
@@ -132,7 +132,6 @@ class INET_API IPv6NeighbourCache
 
     /** The std::map underlying the Neighbour Cache data structure */
     typedef std::map<Key, Neighbour> NeighbourMap;
-    typedef NeighbourMap::iterator iterator;
 
     // cyclic double-linked list of default routers
     class DefaultRouterList
@@ -150,7 +149,7 @@ class INET_API IPv6NeighbourCache
           public:
             iterator(const iterator& other) : start(other.start), current(other.current) {}
             Neighbour& operator*() { return *current; }
-            iterator& operator++()    /*prefix*/ { current = current->nextDefaultRouter == start ? NULL : current->nextDefaultRouter; return *this; }
+            iterator& operator++()    /*prefix*/ { current = current->nextDefaultRouter == start ? nullptr : current->nextDefaultRouter; return *this; }
             iterator operator++(int)    /*postfix*/ { iterator tmp(*this); operator++(); return tmp; }
             bool operator==(const iterator& rhs) const { return current == rhs.current; }
             bool operator!=(const iterator& rhs) const { return !(*this == rhs); }
@@ -160,14 +159,14 @@ class INET_API IPv6NeighbourCache
         Neighbour *head;
 
       public:
-        DefaultRouterList() : head(NULL) {}
-        void clear() { head = NULL; }
+        DefaultRouterList() : head(nullptr) {}
+        void clear() { head = nullptr; }
         Neighbour *getHead() const { return head; }
         void setHead(Neighbour& router) { ASSERT(router.isDefaultRouter()); head = &router; }
         void add(Neighbour& router);
         void remove(Neighbour& router);
         iterator begin() { return iterator(head); }
-        iterator end() { return iterator(NULL); }
+        iterator end() { return iterator(nullptr); }
     };
 
   protected:
@@ -179,7 +178,7 @@ class INET_API IPv6NeighbourCache
     IPv6NeighbourCache(cSimpleModule& neighbourDiscovery);
     virtual ~IPv6NeighbourCache() {}
 
-    /** Returns a neighbour entry, or NULL. */
+    /** Returns a neighbour entry, or nullptr. */
     virtual Neighbour *lookup(const IPv6Address& addr, int interfaceID);
 
     /** Experimental code. */
@@ -188,10 +187,10 @@ class INET_API IPv6NeighbourCache
     DefaultRouterList& getDefaultRouterList() { return defaultRouterList; }
 
     /** For iteration on the internal std::map */
-    iterator begin() { return neighbourMap.begin(); }
+    NeighbourMap::iterator begin() { return neighbourMap.begin(); }
 
     /** For iteration on the internal std::map */
-    iterator end() { return neighbourMap.end(); }
+    NeighbourMap::iterator end() { return neighbourMap.end(); }
 
     /** Creates and initializes a neighbour entry with isRouter=false, state=INCOMPLETE. */
     //TODO merge into next one (using default arg)

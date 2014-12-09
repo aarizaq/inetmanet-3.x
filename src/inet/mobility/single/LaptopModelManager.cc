@@ -111,7 +111,7 @@ void LaptopModelManager::initialize()
     for (unsigned int i = 0; i < numNodes; i++)
     {
         NodeInf info;
-        info.module = NULL;
+        info.module = nullptr;
         info.startLife = par("startLife");
         nodeList.push_back(info);
         LaptopModelManager::Timer *timer = new LaptopModelManager::Timer(i, this);
@@ -137,7 +137,7 @@ void LaptopModelManager::newNode(const char * name, const char * type,bool setCo
 
     if (setCoor)
     {
-        MobilityBase* mm = NULL;
+        MobilityBase* mm = nullptr;
         for (cModule::SubmoduleIterator iter(mod); !iter.end(); iter++) {
             cModule* submod = iter();
             mm = dynamic_cast<MobilityBase*>(submod);
@@ -169,7 +169,7 @@ void LaptopModelManager::deleteNode(const int &index, const simtime_t &startTime
 
     mod->callFinish();
     mod->deleteModule();
-    nodeList[index].module = NULL;
+    nodeList[index].module = nullptr;
     nodeList[index].startLife = startTime;
 }
 
@@ -224,7 +224,7 @@ bool LaptopModelManager::checkTimer(cMessage *msg)
     while (it->first <= simTime())
     {
         Timer * timer = it->second;
-        if (timer == NULL)
+        if (timer == nullptr)
             opp_error ("timer owner is bad");
         timerMultimMap.erase(it);
         timer->expire();

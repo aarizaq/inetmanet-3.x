@@ -45,7 +45,7 @@ Neighbor::Neighbor(RouterID neighbor) :
     neighborsBackupDesignatedRouter(NULL_DESIGNATEDROUTERID),
     designatedRoutersSetUp(false),
     neighborsRouterDeadInterval(40),
-    lastTransmittedDDPacket(NULL)
+    lastTransmittedDDPacket(nullptr)
 {
     memset(&lastReceivedDDPacket, 0, sizeof(Neighbor::DDPacketID));
     // setting only I and M bits is invalid -> good initializer
@@ -72,7 +72,7 @@ Neighbor::Neighbor(RouterID neighbor) :
     requestRetransmissionTimer->setContextPointer(this);
     requestRetransmissionTimer->setName("Neighbor::NeighborRequestRetransmissionTimer");
     state = new NeighborStateDown;
-    previousState = NULL;
+    previousState = nullptr;
 }
 
 Neighbor::~Neighbor()
@@ -86,7 +86,7 @@ Neighbor::~Neighbor()
     delete ddRetransmissionTimer;
     delete updateRetransmissionTimer;
     delete requestRetransmissionTimer;
-    if (previousState != NULL) {
+    if (previousState != nullptr) {
         delete previousState;
     }
     delete state;
@@ -94,7 +94,7 @@ Neighbor::~Neighbor()
 
 void Neighbor::changeState(NeighborState *newState, NeighborState *currentState)
 {
-    if (previousState != NULL) {
+    if (previousState != nullptr) {
         delete previousState;
     }
     state = newState;
@@ -108,7 +108,7 @@ void Neighbor::processEvent(Neighbor::NeighborEventType event)
 
 void Neighbor::reset()
 {
-    for (std::list<OSPFLSA *>::iterator retIt = linkStateRetransmissionList.begin();
+    for (auto retIt = linkStateRetransmissionList.begin();
          retIt != linkStateRetransmissionList.end();
          retIt++)
     {
@@ -116,12 +116,11 @@ void Neighbor::reset()
     }
     linkStateRetransmissionList.clear();
 
-    std::list<OSPFLSAHeader *>::iterator it;
-    for (it = databaseSummaryList.begin(); it != databaseSummaryList.end(); it++) {
+    for (auto it = databaseSummaryList.begin(); it != databaseSummaryList.end(); it++) {
         delete (*it);
     }
     databaseSummaryList.clear();
-    for (it = linkStateRequestList.begin(); it != linkStateRequestList.end(); it++) {
+    for (auto it = linkStateRequestList.begin(); it != linkStateRequestList.end(); it++) {
         delete (*it);
     }
     linkStateRequestList.clear();
@@ -130,9 +129,9 @@ void Neighbor::reset()
     clearUpdateRetransmissionTimer();
     clearRequestRetransmissionTimer();
 
-    if (lastTransmittedDDPacket != NULL) {
+    if (lastTransmittedDDPacket != nullptr) {
         delete lastTransmittedDDPacket;
-        lastTransmittedDDPacket = NULL;
+        lastTransmittedDDPacket = nullptr;
     }
 }
 
@@ -255,7 +254,7 @@ void Neighbor::sendDatabaseDescriptionPacket(bool init)
     MessageHandler *messageHandler = parentInterface->getArea()->getRouter()->getMessageHandler();
     int ttl = (parentInterface->getType() == Interface::VIRTUAL) ? VIRTUAL_LINK_TTL : 1;
 
-    if (lastTransmittedDDPacket != NULL)
+    if (lastTransmittedDDPacket != nullptr)
         delete lastTransmittedDDPacket;
     lastTransmittedDDPacket = ddPacket->dup();
 
@@ -269,7 +268,7 @@ void Neighbor::sendDatabaseDescriptionPacket(bool init)
 
 bool Neighbor::retransmitDatabaseDescriptionPacket()
 {
-    if (lastTransmittedDDPacket != NULL) {
+    if (lastTransmittedDDPacket != nullptr) {
         OSPFDatabaseDescriptionPacket *ddPacket = new OSPFDatabaseDescriptionPacket(*lastTransmittedDDPacket);
         MessageHandler *messageHandler = parentInterface->getArea()->getRouter()->getMessageHandler();
         int ttl = (parentInterface->getType() == Interface::VIRTUAL) ? VIRTUAL_LINK_TTL : 1;
@@ -359,7 +358,7 @@ void Neighbor::sendLinkStateRequestPacket()
         requestPacket->setRequestsArraySize(0);
     }
     else {
-        std::list<OSPFLSAHeader *>::iterator it = linkStateRequestList.begin();
+        auto it = linkStateRequestList.begin();
 
         while ((it != linkStateRequestList.end()) && (packetSize <= (maxPacketSize - OSPF_REQUEST_LENGTH))) {
             unsigned long requestCount = requestPacket->getRequestsArraySize();
@@ -423,8 +422,8 @@ bool Neighbor::needAdjacency()
  */
 void Neighbor::addToRetransmissionList(OSPFLSA *lsa)
 {
-    std::list<OSPFLSA *>::iterator it;
-    for (it = linkStateRetransmissionList.begin(); it != linkStateRetransmissionList.end(); it++) {
+    auto it = linkStateRetransmissionList.begin();
+    for ( ; it != linkStateRetransmissionList.end(); it++) {
         if (((*it)->getHeader().getLinkStateID() == lsa->getHeader().getLinkStateID()) &&
             ((*it)->getHeader().getAdvertisingRouter().getInt() == lsa->getHeader().getAdvertisingRouter().getInt()))
         {
@@ -432,7 +431,7 @@ void Neighbor::addToRetransmissionList(OSPFLSA *lsa)
         }
     }
 
-    OSPFLSA *lsaCopy = NULL;
+    OSPFLSA *lsaCopy = nullptr;
     switch (lsa->getHeader().getLsType()) {
         case ROUTERLSA_TYPE:
             lsaCopy = new OSPFRouterLSA(*(check_and_cast<OSPFRouterLSA *>(lsa)));
@@ -467,7 +466,7 @@ void Neighbor::addToRetransmissionList(OSPFLSA *lsa)
 
 void Neighbor::removeFromRetransmissionList(LSAKeyType lsaKey)
 {
-    std::list<OSPFLSA *>::iterator it = linkStateRetransmissionList.begin();
+    auto it = linkStateRetransmissionList.begin();
     while (it != linkStateRetransmissionList.end()) {
         if (((*it)->getHeader().getLinkStateID() == lsaKey.linkStateID) &&
             ((*it)->getHeader().getAdvertisingRouter() == lsaKey.advertisingRouter))
@@ -483,7 +482,7 @@ void Neighbor::removeFromRetransmissionList(LSAKeyType lsaKey)
 
 bool Neighbor::isLinkStateRequestListEmpty(LSAKeyType lsaKey) const
 {
-    for (std::list<OSPFLSA *>::const_iterator it = linkStateRetransmissionList.begin(); it != linkStateRetransmissionList.end(); it++) {
+    for (auto it = linkStateRetransmissionList.begin(); it != linkStateRetransmissionList.end(); it++) {
         const OSPFLSA *lsa = *it;
         if ((lsa->getHeader().getLinkStateID() == lsaKey.linkStateID) &&
             (lsa->getHeader().getAdvertisingRouter() == lsaKey.advertisingRouter))
@@ -496,14 +495,14 @@ bool Neighbor::isLinkStateRequestListEmpty(LSAKeyType lsaKey) const
 
 OSPFLSA *Neighbor::findOnRetransmissionList(LSAKeyType lsaKey)
 {
-    for (std::list<OSPFLSA *>::iterator it = linkStateRetransmissionList.begin(); it != linkStateRetransmissionList.end(); it++) {
+    for (auto it = linkStateRetransmissionList.begin(); it != linkStateRetransmissionList.end(); it++) {
         if (((*it)->getHeader().getLinkStateID() == lsaKey.linkStateID) &&
             ((*it)->getHeader().getAdvertisingRouter() == lsaKey.advertisingRouter))
         {
             return *it;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 void Neighbor::startUpdateRetransmissionTimer()
@@ -527,7 +526,7 @@ void Neighbor::addToRequestList(OSPFLSAHeader *lsaHeader)
 
 void Neighbor::removeFromRequestList(LSAKeyType lsaKey)
 {
-    std::list<OSPFLSAHeader *>::iterator it = linkStateRequestList.begin();
+    auto it = linkStateRequestList.begin();
     while (it != linkStateRequestList.end()) {
         if (((*it)->getLinkStateID() == lsaKey.linkStateID) &&
             ((*it)->getAdvertisingRouter() == lsaKey.advertisingRouter))
@@ -561,14 +560,14 @@ bool Neighbor::isLSAOnRequestList(LSAKeyType lsaKey) const
 
 OSPFLSAHeader *Neighbor::findOnRequestList(LSAKeyType lsaKey)
 {
-    for (std::list<OSPFLSAHeader *>::iterator it = linkStateRequestList.begin(); it != linkStateRequestList.end(); it++) {
+    for (auto it = linkStateRequestList.begin(); it != linkStateRequestList.end(); it++) {
         if (((*it)->getLinkStateID() == lsaKey.linkStateID) &&
             ((*it)->getAdvertisingRouter() == lsaKey.advertisingRouter))
         {
             return *it;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 void Neighbor::startRequestRetransmissionTimer()
@@ -609,7 +608,7 @@ bool Neighbor::isOnTransmittedLSAList(LSAKeyType lsaKey) const
 
 void Neighbor::ageTransmittedLSAList()
 {
-    std::list<TransmittedLSA>::iterator it = transmittedLSAs.begin();
+    auto it = transmittedLSAs.begin();
     while ((it != transmittedLSAs.end()) && (it->age == MIN_LS_ARRIVAL)) {
         transmittedLSAs.pop_front();
         it = transmittedLSAs.begin();
@@ -635,40 +634,40 @@ void Neighbor::retransmitUpdatePacket()
     bool packetFull = false;
     unsigned short lsaCount = 0;
     unsigned long packetLength = IP_MAX_HEADER_BYTES + OSPF_LSA_HEADER_LENGTH;
-    std::list<OSPFLSA *>::iterator it = linkStateRetransmissionList.begin();
+    auto it = linkStateRetransmissionList.begin();
 
     while (!packetFull && (it != linkStateRetransmissionList.end())) {
         LSAType lsaType = static_cast<LSAType>((*it)->getHeader().getLsType());
-        OSPFRouterLSA *routerLSA = (lsaType == ROUTERLSA_TYPE) ? dynamic_cast<OSPFRouterLSA *>(*it) : NULL;
-        OSPFNetworkLSA *networkLSA = (lsaType == NETWORKLSA_TYPE) ? dynamic_cast<OSPFNetworkLSA *>(*it) : NULL;
+        OSPFRouterLSA *routerLSA = (lsaType == ROUTERLSA_TYPE) ? dynamic_cast<OSPFRouterLSA *>(*it) : nullptr;
+        OSPFNetworkLSA *networkLSA = (lsaType == NETWORKLSA_TYPE) ? dynamic_cast<OSPFNetworkLSA *>(*it) : nullptr;
         OSPFSummaryLSA *summaryLSA = ((lsaType == SUMMARYLSA_NETWORKS_TYPE) ||
-                                      (lsaType == SUMMARYLSA_ASBOUNDARYROUTERS_TYPE)) ? dynamic_cast<OSPFSummaryLSA *>(*it) : NULL;
-        OSPFASExternalLSA *asExternalLSA = (lsaType == AS_EXTERNAL_LSA_TYPE) ? dynamic_cast<OSPFASExternalLSA *>(*it) : NULL;
+                                      (lsaType == SUMMARYLSA_ASBOUNDARYROUTERS_TYPE)) ? dynamic_cast<OSPFSummaryLSA *>(*it) : nullptr;
+        OSPFASExternalLSA *asExternalLSA = (lsaType == AS_EXTERNAL_LSA_TYPE) ? dynamic_cast<OSPFASExternalLSA *>(*it) : nullptr;
         long lsaSize = 0;
         bool includeLSA = false;
 
         switch (lsaType) {
             case ROUTERLSA_TYPE:
-                if (routerLSA != NULL) {
+                if (routerLSA != nullptr) {
                     lsaSize = calculateLSASize(routerLSA);
                 }
                 break;
 
             case NETWORKLSA_TYPE:
-                if (networkLSA != NULL) {
+                if (networkLSA != nullptr) {
                     lsaSize = calculateLSASize(networkLSA);
                 }
                 break;
 
             case SUMMARYLSA_NETWORKS_TYPE:
             case SUMMARYLSA_ASBOUNDARYROUTERS_TYPE:
-                if (summaryLSA != NULL) {
+                if (summaryLSA != nullptr) {
                     lsaSize = calculateLSASize(summaryLSA);
                 }
                 break;
 
             case AS_EXTERNAL_LSA_TYPE:
-                if (asExternalLSA != NULL) {
+                if (asExternalLSA != nullptr) {
                     lsaSize = calculateLSASize(asExternalLSA);
                 }
                 break;
@@ -693,7 +692,7 @@ void Neighbor::retransmitUpdatePacket()
             packetLength += lsaSize;
             switch (lsaType) {
                 case ROUTERLSA_TYPE:
-                    if (routerLSA != NULL) {
+                    if (routerLSA != nullptr) {
                         unsigned int routerLSACount = updatePacket->getRouterLSAsArraySize();
 
                         updatePacket->setRouterLSAsArraySize(routerLSACount + 1);
@@ -710,7 +709,7 @@ void Neighbor::retransmitUpdatePacket()
                     break;
 
                 case NETWORKLSA_TYPE:
-                    if (networkLSA != NULL) {
+                    if (networkLSA != nullptr) {
                         unsigned int networkLSACount = updatePacket->getNetworkLSAsArraySize();
 
                         updatePacket->setNetworkLSAsArraySize(networkLSACount + 1);
@@ -728,7 +727,7 @@ void Neighbor::retransmitUpdatePacket()
 
                 case SUMMARYLSA_NETWORKS_TYPE:
                 case SUMMARYLSA_ASBOUNDARYROUTERS_TYPE:
-                    if (summaryLSA != NULL) {
+                    if (summaryLSA != nullptr) {
                         unsigned int summaryLSACount = updatePacket->getSummaryLSAsArraySize();
 
                         updatePacket->setSummaryLSAsArraySize(summaryLSACount + 1);
@@ -745,7 +744,7 @@ void Neighbor::retransmitUpdatePacket()
                     break;
 
                 case AS_EXTERNAL_LSA_TYPE:
-                    if (asExternalLSA != NULL) {
+                    if (asExternalLSA != nullptr) {
                         unsigned int asExternalLSACount = updatePacket->getAsExternalLSAsArraySize();
 
                         updatePacket->setAsExternalLSAsArraySize(asExternalLSACount + 1);
@@ -778,9 +777,9 @@ void Neighbor::retransmitUpdatePacket()
 
 void Neighbor::deleteLastSentDDPacket()
 {
-    if (lastTransmittedDDPacket != NULL) {
+    if (lastTransmittedDDPacket != nullptr) {
         delete lastTransmittedDDPacket;
-        lastTransmittedDDPacket = NULL;
+        lastTransmittedDDPacket = nullptr;
     }
 }
 

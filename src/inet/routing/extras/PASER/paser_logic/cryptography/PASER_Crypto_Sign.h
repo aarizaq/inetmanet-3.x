@@ -89,7 +89,7 @@ public:
      *
      *@param cert lv_block which contains both, the certificate and the char array
      *
-     *@return Pointer to certificate if successful or NULL on error
+     *@return Pointer to certificate if successful or nullptr on error
      */
     X509* extractCert(lv_block cert);
 

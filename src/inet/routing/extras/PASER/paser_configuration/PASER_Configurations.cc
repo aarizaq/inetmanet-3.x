@@ -75,11 +75,11 @@ PASER_Configurations::PASER_Configurations(char *configFile, PASER_Socket *pModu
     strcpy(cafile, PASER_CA_cert_file);
 
     GTK.len = 0;
-    GTK.buf = NULL;
+    GTK.buf = nullptr;
     KDC_cert.len = 0;
-    KDC_cert.buf = NULL;
+    KDC_cert.buf = nullptr;
     RESET_sign.len = 0;
-    RESET_sign.buf = NULL;
+    RESET_sign.buf = nullptr;
     key_nr = 0;
 //    if(isGW){
 //        char *gtkKey = (char *)malloc(6);
@@ -91,7 +91,7 @@ PASER_Configurations::PASER_Configurations(char *configFile, PASER_Socket *pModu
 
     EV << "getNumInterfaces() = " << pModul->MYgetNumInterfaces() << "\n";
 
-    netDevice = NULL;
+    netDevice = nullptr;
     if (netDeviceNumber > 0) {
         netDevice = new network_device[netDeviceNumber];
         netDevice[0].enabled = 1;
@@ -104,7 +104,7 @@ PASER_Configurations::PASER_Configurations(char *configFile, PASER_Socket *pModu
                 pModul->PUBLIC_getInterfaceEntry(0)->getName());
     }
 
-    netEthDevice = NULL;
+    netEthDevice = nullptr;
     for (int i = 0; i < pModul->MYgetNumInterfaces(); i++) {
         InterfaceEntry * tempIf = pModul->PUBLIC_getInterfaceEntry(i);
         if (memcmp(tempIf->getName(), "eth0", 4) == 0) {
@@ -138,7 +138,7 @@ PASER_Configurations::PASER_Configurations(char *configFile, PASER_Socket *pModu
 //    netDevice[1].ifindex = 3;
 //    strcpy(netDevice[1].ifname, pModul->PUBLIC_getInterfaceEntry(3)->getName());
 
-    netAddDevice = NULL;
+    netAddDevice = nullptr;
     intAddlList();
 
     isRootReady = false;
@@ -214,7 +214,7 @@ void PASER_Configurations::setGTK(lv_block _GTK) {
     }
     if (_GTK.len == 0) {
         GTK.len = 0;
-        GTK.buf = NULL;
+        GTK.buf = nullptr;
         return;
     }
     GTK.buf = (u_int8_t *) malloc(_GTK.len);
@@ -238,8 +238,8 @@ void PASER_Configurations::setKDC_cert(lv_block _KDC_cert) {
     }
     if (_KDC_cert.len == 0) {
         KDC_cert.len = 0;
-        KDC_cert.buf = NULL;
-        EV << "_KDC_cer = NULLt\n";
+        KDC_cert.buf = nullptr;
+        EV << "_KDC_cer = nullptrt\n";
         return;
     }
     KDC_cert.buf = (u_int8_t *) malloc(_KDC_cert.len);
@@ -275,7 +275,7 @@ void PASER_Configurations::setRESET_sign(lv_block _RESET_sign) {
     }
     if (_RESET_sign.len == 0) {
         RESET_sign.len = 0;
-        RESET_sign.buf = NULL;
+        RESET_sign.buf = nullptr;
         return;
     }
     RESET_sign.buf = (u_int8_t *) malloc(_RESET_sign.len);

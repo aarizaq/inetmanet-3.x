@@ -181,7 +181,7 @@ class INET_API IPv4_paser : public QueueBase, public INetfilter, public ILifecyc
 
     /**
      * Broadcasts the datagram on the specified interface.
-     * When destIE is NULL, the datagram is broadcasted on each interface.
+     * When destIE is nullptr, the datagram is broadcasted on each interface.
      */
     virtual void routeLocalBroadcastPacket(IPv4Datagram *datagram, const InterfaceEntry *destIE);
 
@@ -232,7 +232,7 @@ class INET_API IPv4_paser : public QueueBase, public INetfilter, public ILifecyc
     virtual void sendPacketToNIC(cPacket *packet, const InterfaceEntry *ie);
 
   public:
-    IPv4_paser() { rt = NULL; ift = NULL; arp = NULL; arpOutGate = NULL; }
+    IPv4_paser() { rt = nullptr; ift = nullptr; arp = nullptr; arpOutGate = nullptr; }
 
   protected:
     virtual int numInitStages() const { return 2; }

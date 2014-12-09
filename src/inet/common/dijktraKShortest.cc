@@ -154,7 +154,7 @@ DijkstraKshortest::DijkstraKshortest(int limit)
 
 void DijkstraKshortest::cleanLinkArray()
 {
-    for (LinkArray::iterator it=linkArray.begin();it!=linkArray.end();it++)
+    for (auto it=linkArray.begin();it!=linkArray.end();it++)
         while (!it->second.empty())
         {
             delete it->second.back();
@@ -185,8 +185,7 @@ void DijkstraKshortest::setLimits(const std::vector<double> & vectorData)
 
 void DijkstraKshortest::addEdgeWs (const NodeId & originNode, const NodeId & last_node,double cost,double bw)
 {
-    LinkArray::iterator it;
-    it = linkArray.find(originNode);
+    auto it = linkArray.find(originNode);
     if (it!=linkArray.end())
     {
          for (unsigned int i=0;i<it->second.size();i++)
@@ -210,8 +209,7 @@ void DijkstraKshortest::addEdgeWs (const NodeId & originNode, const NodeId & las
 
 void DijkstraKshortest::addEdgeSw (const NodeId & originNode, const NodeId & last_node,double cost,double bw)
 {
-    LinkArray::iterator it;
-    it = linkArray.find(originNode);
+    auto it = linkArray.find(originNode);
     if (it!=linkArray.end())
     {
          for (unsigned int i=0;i<it->second.size();i++)
@@ -235,8 +233,7 @@ void DijkstraKshortest::addEdgeSw (const NodeId & originNode, const NodeId & las
 
 void DijkstraKshortest::addEdge (const NodeId & originNode, const NodeId & last_node,double cost,double delay,double bw,double quality)
 {
-    LinkArray::iterator it;
-    it = linkArray.find(originNode);
+    auto it = linkArray.find(originNode);
     if (it!=linkArray.end())
     {
          for (unsigned int i=0;i<it->second.size();i++)
@@ -276,8 +273,7 @@ void DijkstraKshortest::run()
     // include routes in the map
     kRoutesMap.clear();
 
-    LinkArray::iterator it;
-    it = linkArray.find(rootNode);
+    auto it = linkArray.find(rootNode);
     if (it==linkArray.end())
         opp_error("Node not found");
     for (int i=0;i<K_LIMITE;i++)
@@ -295,8 +291,7 @@ void DijkstraKshortest::run()
     {
         SetElem elem=*heap.begin();
         heap.erase(heap.begin());
-        RouteMap::iterator it;
-        it = routeMap.find(elem.iD);
+        auto  it = routeMap.find(elem.iD);
         if (it==routeMap.end())
             opp_error("node not found in routeMap");
 
@@ -329,7 +324,7 @@ void DijkstraKshortest::run()
         }
 
         /// Record the route in the map
-        RouteMap::iterator itAux = it;
+        auto itAux = it;
         Route pathActive;
         Route pathNode;
         int prevIdx = elem.idx;
@@ -354,7 +349,7 @@ void DijkstraKshortest::run()
                 pathNode.push_back(pathActive.back());
                 pathActive.pop_back();
             }
-            MapRoutes::iterator itKroutes = kRoutesMap.find(elem.iD);
+            auto itKroutes = kRoutesMap.find(elem.iD);
             if (itKroutes == kRoutesMap.end())
             {
                 Kroutes kroutes;
@@ -384,7 +379,7 @@ void DijkstraKshortest::run()
         it->second[elem.idx].label=perm;
 
         // next hop
-        LinkArray::iterator linkIt=linkArray.find(elem.iD);
+        auto linkIt=linkArray.find(elem.iD);
         if (linkIt == linkArray.end())
             opp_error("Error link not found in linkArray");
 
@@ -399,7 +394,7 @@ void DijkstraKshortest::run()
             if (std::find(pathNode.begin(),pathNode.end(),current_edge->last_node())!=pathNode.end())
                 continue;
 
-            RouteMap::iterator itNext = routeMap.find(current_edge->last_node());
+            auto itNext = routeMap.find(current_edge->last_node());
 
             addCost(cost,current_edge->cost,(it->second)[elem.idx].cost);
             if (!limitsData.empty())
@@ -456,8 +451,7 @@ void DijkstraKshortest::runUntil (const NodeId &target)
     std::multiset<SetElem> heap;
     routeMap.clear();
 
-    LinkArray::iterator it;
-    it = linkArray.find(rootNode);
+    auto it = linkArray.find(rootNode);
     if (it==linkArray.end())
         opp_error("Node not found");
     for (int i=0;i<K_LIMITE;i++)
@@ -475,8 +469,7 @@ void DijkstraKshortest::runUntil (const NodeId &target)
     {
         SetElem elem=*heap.begin();
         heap.erase(heap.begin());
-        RouteMap::iterator it;
-        it = routeMap.find(elem.iD);
+        auto it = routeMap.find(elem.iD);
         if (it==routeMap.end())
             opp_error("node not found in routeMap");
 
@@ -510,7 +503,7 @@ void DijkstraKshortest::runUntil (const NodeId &target)
         (it->second)[elem.idx].label=perm;
         if ((int)it->second.size()==K_LIMITE && target==elem.iD)
             return;
-        LinkArray::iterator linkIt=linkArray.find(elem.iD);
+        auto linkIt=linkArray.find(elem.iD);
         if (linkIt == linkArray.end())
             opp_error("Error link not found in linkArray");
         for (unsigned int i=0;i<linkIt->second.size();i++)
@@ -519,7 +512,7 @@ void DijkstraKshortest::runUntil (const NodeId &target)
             CostVector cost;
             CostVector maxCost = maximumCost;
             int nextIdx;
-            RouteMap::iterator itNext = routeMap.find(current_edge->last_node());
+            auto itNext = routeMap.find(current_edge->last_node());
             addCost(cost,current_edge->cost,(it->second)[elem.idx].cost);
             if (!limitsData.empty())
             {
@@ -571,8 +564,7 @@ void DijkstraKshortest::runUntil (const NodeId &target)
 
 int DijkstraKshortest::getNumRoutes(const NodeId &nodeId)
 {
-    RouteMap::iterator it;
-    it = routeMap.find(nodeId);
+    auto it = routeMap.find(nodeId);
     if (it==routeMap.end())
         return -1;
     return (int)it->second.size();
@@ -580,8 +572,8 @@ int DijkstraKshortest::getNumRoutes(const NodeId &nodeId)
 
 bool DijkstraKshortest::getRoute(const NodeId &nodeId,std::vector<NodeId> &pathNode,int k)
 {
-    RouteMap::iterator it = routeMap.find(nodeId);
-    if (it==routeMap.end())
+    auto it = routeMap.find(nodeId);
+    if (it == routeMap.end())
         return false;
     if (k>=(int)it->second.size())
         return false;
@@ -628,7 +620,7 @@ void DijkstraKshortest::setRouteMapK()
 {
     kRoutesMap.clear();
     std::vector<NodeId> pathNode;
-    for (RouteMap::iterator it = routeMap.begin();it != routeMap.begin();++it)
+    for (auto it = routeMap.begin();it != routeMap.begin();++it)
     {
         for (int i = 0; i < (int)it->second.size();i++)
         {
@@ -661,7 +653,7 @@ void DijkstraKshortest::setRouteMapK()
 void DijkstraKshortest::getRouteMapK(const NodeId &nodeId, Kroutes &routes)
 {
     routes.clear();
-    MapRoutes::iterator it = kRoutesMap.find(nodeId);
+    auto it = kRoutesMap.find(nodeId);
     if (it == kRoutesMap.end())
         return;
     routes = it->second;

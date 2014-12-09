@@ -65,8 +65,8 @@ class GlobalWirelessLinkInspector : public cSimpleModule
         GlobalWirelessLinkInspector();
         virtual ~GlobalWirelessLinkInspector();
 
-        static bool isActive() {return (costMap!=NULL);}
-        static bool isActiveLocator() {return (globalLocatorMap!=NULL && !globalLocatorMap->empty());}
+        static bool isActive() {return (costMap!=nullptr);}
+        static bool isActiveLocator() {return (globalLocatorMap!=nullptr && !globalLocatorMap->empty());}
         static void setLinkCost(const L3Address& org,const L3Address& dest,const Link &);
         static bool getLinkCost(const L3Address& org,const L3Address& dest,Link &);
         static bool getCostPath(const std::vector<L3Address>&, Link &);

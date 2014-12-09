@@ -49,7 +49,7 @@ PASER_Neighbor_Entry *PASER_Neighbor_Table::findNeigh(
         if (it->second)
             return it->second;
     }
-    return NULL;
+    return nullptr;
 }
 
 PASER_Neighbor_Entry *PASER_Neighbor_Table::insert(struct in_addr neigh_addr,
@@ -125,17 +125,17 @@ void PASER_Neighbor_Table::delete_entry(PASER_Neighbor_Entry *entry) {
 void PASER_Neighbor_Table::updateNeighborTableAndSetTableTimeout(
         struct in_addr neigh, int nFlag, u_int8_t *root, int iv,
         geo_pos position, X509 *cert, struct timeval now, u_int32_t ifIndex) {
-    PASER_Timer_Message *deletePack = NULL;
-    PASER_Timer_Message *validPack = NULL;
+    PASER_Timer_Message *deletePack = nullptr;
+    PASER_Timer_Message *validPack = nullptr;
     PASER_Neighbor_Entry *nEntry = findNeigh(neigh);
     int32_t setTrusted = 0;
     if (nEntry) {
         setTrusted = nEntry->neighFlag;
         deletePack = nEntry->deleteTimer;
         validPack = nEntry->validTimer;
-        if (validPack == NULL) {
+        if (validPack == nullptr) {
             validPack = new PASER_Timer_Message();
-            validPack->data = NULL;
+            validPack->data = nullptr;
             validPack->destAddr.S_addr = neigh.S_addr;
             validPack->handler = NEIGHBORTABLE_VALID_ENTRY;
             nEntry->validTimer = validPack;
@@ -148,11 +148,11 @@ void PASER_Neighbor_Table::updateNeighborTableAndSetTableTimeout(
     } else {
         setTrusted = nFlag;
         deletePack = new PASER_Timer_Message();
-        deletePack->data = NULL;
+        deletePack->data = nullptr;
         deletePack->destAddr.S_addr = neigh.S_addr;
         deletePack->handler = NEIGHBORTABLE_DELETE_ENTRY;
         validPack = new PASER_Timer_Message();
-        validPack->data = NULL;
+        validPack->data = nullptr;
         validPack->destAddr.S_addr = neigh.S_addr;
         validPack->handler = NEIGHBORTABLE_VALID_ENTRY;
         deletePack->timeout = timeval_add(now, PASER_NEIGHBOR_DELETE_TIME);
@@ -170,7 +170,7 @@ void PASER_Neighbor_Table::updateNeighborTableAndSetTableTimeout(
     u_int8_t *rootN = (u_int8_t *) malloc(
             (sizeof(u_int8_t) * SHA256_DIGEST_LENGTH));
     memcpy(rootN, root, (sizeof(u_int8_t) * SHA256_DIGEST_LENGTH));
-    if (nEntry == NULL) {
+    if (nEntry == nullptr) {
         nEntry = insert(neigh, deletePack, validPack, nFlag, rootN, iv,
                 position, (u_int8_t*) cert, ifIndex);
     } else {
@@ -186,15 +186,15 @@ void PASER_Neighbor_Table::updateNeighborTableAndSetTableTimeout(
 
 void PASER_Neighbor_Table::updateNeighborTableTimeout(struct in_addr neigh,
         struct timeval now) {
-    PASER_Timer_Message *deletePack = NULL;
-    PASER_Timer_Message *validPack = NULL;
+    PASER_Timer_Message *deletePack = nullptr;
+    PASER_Timer_Message *validPack = nullptr;
     PASER_Neighbor_Entry *nEntry = findNeigh(neigh);
     if (nEntry) {
         deletePack = nEntry->deleteTimer;
         validPack = nEntry->validTimer;
-        if (validPack == NULL) {
+        if (validPack == nullptr) {
             validPack = new PASER_Timer_Message();
-            validPack->data = NULL;
+            validPack->data = nullptr;
             validPack->destAddr.S_addr = neigh.S_addr;
             validPack->handler = NEIGHBORTABLE_VALID_ENTRY;
             nEntry->validTimer = validPack;

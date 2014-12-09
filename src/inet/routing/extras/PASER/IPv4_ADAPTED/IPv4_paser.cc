@@ -175,7 +175,7 @@ void IPv4_paser::endService(cPacket *packet)
 const InterfaceEntry *IPv4_paser::getSourceInterfaceFrom(cPacket *packet)
 {
     cGate *g = packet->getArrivalGate();
-    return g ? ift->getInterfaceByNetworkLayerGateIndex(g->getIndex()) : NULL;
+    return g ? ift->getInterfaceByNetworkLayerGateIndex(g->getIndex()) : nullptr;
 }
 
 void IPv4_paser::handleIncomingDatagram(IPv4Datagram *datagram, const InterfaceEntry *fromIE)
@@ -224,7 +224,7 @@ void IPv4_paser::handleIncomingDatagram(IPv4Datagram *datagram, const InterfaceE
 
     EV_DETAIL << "Received datagram `" << datagram->getName() << "' with dest=" << datagram->getDestAddress() << "\n";
 
-    const InterfaceEntry *destIE = NULL;
+    const InterfaceEntry *destIE = nullptr;
     L3Address nextHop(IPv4Address::UNSPECIFIED_ADDRESS);
     if (datagramPreRoutingHook(datagram, fromIE, destIE, nextHop) == INetfilter::IHook::ACCEPT)
         preroutingFinish(datagram, fromIE, destIE, nextHop.toIPv4());
@@ -268,7 +268,7 @@ void IPv4_paser::preroutingFinish(IPv4Datagram *datagram, const InterfaceEntry *
             forwardMulticastPacket(datagram, fromIE);
     }
     else {
-        const InterfaceEntry *broadcastIE = NULL;
+        const InterfaceEntry *broadcastIE = nullptr;
 
         // check for local delivery; we must accept also packets coming from the interfaces that
         // do not yet have an IP address assigned. This happens during DHCP requests.
@@ -340,7 +340,7 @@ void IPv4_paser::handlePacketFromHL(cPacket *packet)
 
     // encapsulate and send
     IPv4Datagram *datagram = dynamic_cast<IPv4Datagram *>(packet);
-    IPv4ControlInfo *controlInfo = NULL;
+    IPv4ControlInfo *controlInfo = nullptr;
     //FIXME dubious code, remove? how can the HL tell IP whether it wants tunneling or forwarding?? --Andras
     if (!datagram) {    // if HL sends an IPv4Datagram, route the packet
         // encapsulate
@@ -349,7 +349,7 @@ void IPv4_paser::handlePacketFromHL(cPacket *packet)
     }
 
     // extract requested interface and next hop
-    const InterfaceEntry *destIE = controlInfo ? const_cast<const InterfaceEntry *>(ift->getInterfaceById(controlInfo->getInterfaceId())) : NULL;
+    const InterfaceEntry *destIE = controlInfo ? const_cast<const InterfaceEntry *>(ift->getInterfaceById(controlInfo->getInterfaceId())) : nullptr;
 
     if (controlInfo)
         datagram->setControlInfo(controlInfo); //FIXME ne rakjuk bele a cntrInfot!!!!! de kell :( kulonben a hook queue-ban elveszik a multicastloop flag
@@ -373,7 +373,7 @@ void IPv4_paser::datagramLocalOut(IPv4Datagram* datagram, const InterfaceEntry* 
 {
     IPv4ControlInfo *controlInfo = dynamic_cast<IPv4ControlInfo *>(datagram->removeControlInfo());
     bool multicastLoop = true;
-    if (controlInfo != NULL) {
+    if (controlInfo != nullptr) {
         multicastLoop = controlInfo->getMulticastLoop();
         delete controlInfo;
     }
@@ -409,17 +409,17 @@ void IPv4_paser::datagramLocalOut(IPv4Datagram* datagram, const InterfaceEntry* 
             EV_INFO << "Delivering " << datagram << " locally.\n";
             if (destIE && !destIE->isLoopback()) {
                 EV_DETAIL << "datagram destination address is local, ignoring destination interface specified in the control info\n";
-                destIE = NULL;
+                destIE = nullptr;
             }
             if (!destIE)
                 destIE = ift->getFirstLoopbackInterface();
             ASSERT(destIE);
-            routeUnicastPacket(datagram, NULL, destIE, destAddr);
+            routeUnicastPacket(datagram, nullptr, destIE, destAddr);
         }
         else if (destAddr.isLimitedBroadcastAddress() || rt->isLocalBroadcastAddress(destAddr))
             routeLocalBroadcastPacket(datagram, destIE);
         else
-            routeUnicastPacket(datagram, NULL, destIE, requestedNextHopAddress);
+            routeUnicastPacket(datagram, nullptr, destIE, requestedNextHopAddress);
     }
 }
 
@@ -431,7 +431,7 @@ void IPv4_paser::datagramLocalOut(IPv4Datagram* datagram, const InterfaceEntry* 
  */
 const InterfaceEntry *IPv4_paser::determineOutgoingInterfaceForMulticastDatagram(IPv4Datagram *datagram, const InterfaceEntry *multicastIFOption)
 {
-    const InterfaceEntry *ie = NULL;
+    const InterfaceEntry *ie = nullptr;
     if (multicastIFOption) {
         ie = multicastIFOption;
         EV_DETAIL << "multicast packet routed by socket option via output interface " << ie->getName() << "\n";
@@ -506,7 +506,7 @@ void IPv4_paser::routeUnicastPacket(IPv4Datagram *datagram, const InterfaceEntry
          // falls der Empfaenger in Subnetz von PASER sich befindet, aber nur die Default Route gefunden wurde => starte Route Discovery.
          if( (destAddr.getInt() & PASER_MASK) == (PASER_SUBNETZ & PASER_MASK) ){
              EV << "Packet destination is PASER NETWORK: " << destAddr.str() << "\n";
-             destIE = NULL;
+             destIE = nullptr;
          }
          // falls der Empfaenger sich ausserhalb der PASER Subnetz befindet, dann teste ob der Weg zum Gateway bekannt ist, oder nicht.
          // falls der Weg zum Gateway auch die Default Route ist, dann starte Route Discovery.
@@ -515,7 +515,7 @@ void IPv4_paser::routeUnicastPacket(IPv4Datagram *datagram, const InterfaceEntry
                  const IPv4Route *tempRe = rt->findBestMatchingRoute( re->getGateway() );
                  if( /*(tempRe->getGateway() & PASER_MASK) == (PASER_SUBNETZ & PASER_MASK)*/rt->getDefaultRoute() == tempRe && tempRe){
                      EV << "re->getGateway(): " << re->getGateway().str() << "\n";
-                     destIE = NULL;
+                     destIE = nullptr;
                  }
              }
          }
@@ -531,7 +531,7 @@ void IPv4_paser::routeUnicastPacket(IPv4Datagram *datagram, const InterfaceEntry
     else // fragment and send
     {
         L3Address nextHop(nextHopAddr);
-        if (fromIE != NULL)
+        if (fromIE != nullptr)
         {            
             if (datagramForwardHook(datagram, fromIE, destIE, nextHop) != INetfilter::IHook::ACCEPT)
                 return;
@@ -553,7 +553,7 @@ void IPv4_paser::routeLocalBroadcastPacket(IPv4Datagram *datagram, const Interfa
     // The destination address is 255.255.255.255 or local subnet broadcast address.
     // We always use 255.255.255.255 as nextHopAddress, because it is recognized by ARP,
     // and mapped to the broadcast MAC address.
-    if (destIE!=NULL)
+    if (destIE!=nullptr)
     {
         fragmentPostRouting(datagram, destIE, IPv4Address::ALLONES_ADDRESS);
     }
@@ -715,7 +715,7 @@ void IPv4_paser::reassembleAndDeliverFinish(IPv4Datagram *datagram)
         if(protocol==IP_PROT_UDP)
         {
             IPv4Datagram *tempDatagram = datagram->dup();
-            cPacket *packet=NULL;
+            cPacket *packet=nullptr;
             packet = decapsulate(tempDatagram);
             cPacket *temp = packet;
             if (dynamic_cast<UDPPacket*>(temp))
@@ -908,7 +908,7 @@ IPv4Datagram *IPv4_paser::encapsulate(cPacket *transportPacket, IPv4ControlInfo 
     if (!src.isUnspecified())
     {
         // if interface parameter does not match existing interface, do not send datagram
-        if (rt->getInterfaceByAddress(src)==NULL)
+        if (rt->getInterfaceByAddress(src)==nullptr)
             throw cRuntimeError("Wrong source address %s in (%s)%s: no interface with such address",
                       src.str().c_str(), transportPacket->getClassName(), transportPacket->getFullName());
 
@@ -1173,7 +1173,7 @@ INetfilter::IHook::Result IPv4_paser::datagramLocalInHook(INetworkDatagram* data
         {
             case INetfilter::IHook::ACCEPT: break;   // continue iteration
             case INetfilter::IHook::DROP:   delete datagram; return r;
-            case INetfilter::IHook::QUEUE:  queuedDatagramsForHooks.push_back(QueuedDatagramForHook(dynamic_cast<IPv4Datagram *>(datagram), inIE, NULL, IPv4Address::UNSPECIFIED_ADDRESS, INetfilter::IHook::LOCALIN)); return r;
+            case INetfilter::IHook::QUEUE:  queuedDatagramsForHooks.push_back(QueuedDatagramForHook(dynamic_cast<IPv4Datagram *>(datagram), inIE, nullptr, IPv4Address::UNSPECIFIED_ADDRESS, INetfilter::IHook::LOCALIN)); return r;
             case INetfilter::IHook::STOLEN: return r;
             default: throw cRuntimeError("Unknown Hook::Result value: %d", (int)r);
         }
@@ -1189,7 +1189,7 @@ INetfilter::IHook::Result IPv4_paser::datagramLocalOutHook(INetworkDatagram* dat
         {
             case INetfilter::IHook::ACCEPT: break;   // continue iteration
             case INetfilter::IHook::DROP:   delete datagram; return r;
-            case INetfilter::IHook::QUEUE:  queuedDatagramsForHooks.push_back(QueuedDatagramForHook(dynamic_cast<IPv4Datagram *>(datagram), NULL, outIE, nextHopAddr.toIPv4(), INetfilter::IHook::LOCALOUT)); return r;
+            case INetfilter::IHook::QUEUE:  queuedDatagramsForHooks.push_back(QueuedDatagramForHook(dynamic_cast<IPv4Datagram *>(datagram), nullptr, outIE, nextHopAddr.toIPv4(), INetfilter::IHook::LOCALOUT)); return r;
             case INetfilter::IHook::STOLEN: return r;
             default: throw cRuntimeError("Unknown Hook::Result value: %d", (int)r);
         }
@@ -1388,7 +1388,7 @@ const IPv4RouteRule * IPv4_paser::checkInputRule(const IPv4Datagram* datagram)
     	const IPv4RouteRule *rule = rt->findRule(false,protocol,sport,datagram->getSrcAddress(),dport,datagram->getDestAddress(),iface);
     	return rule;
     }
-    return NULL;
+    return nullptr;
 }
 
 const IPv4RouteRule * IPv4_paser::checkOutputRule(const IPv4Datagram* datagram,const InterfaceEntry *destIE)
@@ -1409,7 +1409,7 @@ const IPv4RouteRule * IPv4_paser::checkOutputRule(const IPv4Datagram* datagram,c
     		sport = aux->getSrcPort();
     		dport = aux->getDestPort();
     	}
-    	InterfaceEntry *iface =NULL;
+    	InterfaceEntry *iface =nullptr;
     	if (destIE)
             iface=const_cast<InterfaceEntry*>(destIE);
     	else
@@ -1421,7 +1421,7 @@ const IPv4RouteRule * IPv4_paser::checkOutputRule(const IPv4Datagram* datagram,c
     	const IPv4RouteRule *rule = rt->findRule(true,protocol,sport,datagram->getSrcAddress(),dport,datagram->getDestAddress(),iface);
     	return rule;
     }
-    return NULL;
+    return nullptr;
 }
 
 const IPv4RouteRule * IPv4_paser::checkOutputRuleMulticast(const IPv4Datagram* datagram)
@@ -1442,11 +1442,11 @@ const IPv4RouteRule * IPv4_paser::checkOutputRuleMulticast(const IPv4Datagram* d
     		sport = aux->getSrcPort();
     		dport = aux->getDestPort();
     	}
-    	InterfaceEntry *iface =NULL;
+    	InterfaceEntry *iface =nullptr;
     	const IPv4RouteRule *rule = rt->findRule(true,protocol,sport,datagram->getSrcAddress(),dport,datagram->getDestAddress(),iface);
     	return rule;
     }
-    return NULL;
+    return nullptr;
 }
 
 void IPv4_paser::dropQueuedDatagram(const INetworkDatagram* datagram)

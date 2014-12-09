@@ -61,7 +61,7 @@ simsignal_t UDP::droppedPkBadChecksumSignal = registerSignal("droppedPkBadChecks
 
 bool UDP::MulticastMembership::isSourceAllowed(L3Address sourceAddr)
 {
-    std::vector<L3Address>::iterator it = std::find(sourceList.begin(), sourceList.end(), sourceAddr);
+    auto it = std::find(sourceList.begin(), sourceList.end(), sourceAddr);
     return (filterMode == UDP_INCLUDE_MCAST_SOURCES && it != sourceList.end()) ||
            (filterMode == UDP_EXCLUDE_MCAST_SOURCES && it == sourceList.end());
 }
@@ -111,7 +111,7 @@ UDP::SockDesc::SockDesc(int sockId_, int appGateIndex_)
 
 UDP::SockDesc::~SockDesc()
 {
-    for(MulticastMembershipTable::iterator it = multicastMembershipTable.begin();
+    for(auto it = multicastMembershipTable.begin();
             it != multicastMembershipTable.end();
             ++it)
         delete (*it);
@@ -121,9 +121,9 @@ UDP::SockDesc::~SockDesc()
 UDP::UDP()
 {
     isOperational = false;
-    ift = NULL;
-    icmp = NULL;
-    icmpv6 = NULL;
+    ift = nullptr;
+    icmp = nullptr;
+    icmpv6 = nullptr;
 }
 
 UDP::~UDP()
@@ -141,8 +141,8 @@ void UDP::initialize(int stage)
 
         lastEphemeralPort = EPHEMERAL_PORTRANGE_START;
         ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
-        icmp = NULL;
-        icmpv6 = NULL;
+        icmp = nullptr;
+        icmpv6 = nullptr;
 
         numSent = 0;
         numPassedUp = 0;
@@ -171,7 +171,7 @@ void UDP::handleMessage(cMessage *msg)
 
     // received from IP layer
     if (msg->arrivedOn("ipIn")) {
-        if (dynamic_cast<UDPPacket *>(msg) != NULL)
+        if (dynamic_cast<UDPPacket *>(msg) != nullptr)
             processUDPPacket((UDPPacket *)msg);
         else
             processICMPError(PK(msg)); // assume it's an ICMP error
@@ -318,7 +318,7 @@ void UDP::processPacketFromApp(cPacket *appData)
     const L3Address& srcAddr = ctrl->getSrcAddr().isUnspecified() ? sd->localAddr : ctrl->getSrcAddr();
     int interfaceId = ctrl->getInterfaceId();
     if (interfaceId == -1 && destAddr.isMulticast()) {
-        MulticastMembershipTable::iterator membership = sd->findFirstMulticastMembership(destAddr);
+        auto membership = sd->findFirstMulticastMembership(destAddr);
         interfaceId = (membership != sd->multicastMembershipTable.end() && (*membership)->interfaceId != -1) ? (*membership)->interfaceId : sd->multicastOutputInterfaceId;
     }
     sendDown(appData, srcAddr, sd->localPort, destAddr, destPort, interfaceId, sd->multicastLoop, sd->ttl, sd->typeOfService);
@@ -352,7 +352,7 @@ void UDP::processUDPPacket(UDPPacket *udpPacket)
     unsigned char tos;
 
     cObject *ctrl = udpPacket->removeControlInfo();
-    if (dynamic_cast<IPv4ControlInfo *>(ctrl) != NULL) {
+    if (dynamic_cast<IPv4ControlInfo *>(ctrl) != nullptr) {
         IPv4ControlInfo *ctrl4 = (IPv4ControlInfo *)ctrl;
         srcAddr = ctrl4->getSrcAddr();
         destAddr = ctrl4->getDestAddr();
@@ -362,7 +362,7 @@ void UDP::processUDPPacket(UDPPacket *udpPacket)
         isMulticast = ctrl4->getDestAddr().isMulticast();
         isBroadcast = ctrl4->getDestAddr().isLimitedBroadcastAddress();    // note: we cannot recognize other broadcast addresses (where the host part is all-ones), because here we don't know the netmask
     }
-    else if (dynamic_cast<IPv6ControlInfo *>(ctrl) != NULL) {
+    else if (dynamic_cast<IPv6ControlInfo *>(ctrl) != nullptr) {
         IPv6ControlInfo *ctrl6 = (IPv6ControlInfo *)ctrl;
         srcAddr = ctrl6->getSrcAddr();
         destAddr = ctrl6->getDestAddr();
@@ -372,7 +372,7 @@ void UDP::processUDPPacket(UDPPacket *udpPacket)
         isMulticast = ctrl6->getDestAddr().isMulticast();
         isBroadcast = false;    // IPv6 has no broadcast, just various multicasts
     }
-    else if (dynamic_cast<GenericNetworkProtocolControlInfo *>(ctrl) != NULL) {
+    else if (dynamic_cast<GenericNetworkProtocolControlInfo *>(ctrl) != nullptr) {
         GenericNetworkProtocolControlInfo *ctrlGeneric = (GenericNetworkProtocolControlInfo *)ctrl;
         srcAddr = ctrlGeneric->getSourceAddress();
         destAddr = ctrlGeneric->getDestinationAddress();
@@ -382,7 +382,7 @@ void UDP::processUDPPacket(UDPPacket *udpPacket)
         isMulticast = ctrlGeneric->getDestinationAddress().isMulticast();
         isBroadcast = false;    // IPv6 has no broadcast, just various multicasts
     }
-    else if (ctrl == NULL) {
+    else if (ctrl == nullptr) {
         throw cRuntimeError("(%s)%s arrived from lower layer without control info",
                 udpPacket->getClassName(), udpPacket->getName());
     }
@@ -491,7 +491,7 @@ void UDP::processUndeliverablePacket(UDPPacket *udpPacket, cObject *ctrl)
     numDroppedWrongPort++;
 
     // send back ICMP PORT_UNREACHABLE
-    if (dynamic_cast<IPv4ControlInfo *>(ctrl) != NULL) {
+    if (dynamic_cast<IPv4ControlInfo *>(ctrl) != nullptr) {
 #ifdef WITH_IPv4
         IPv4ControlInfo *ctrl4 = (IPv4ControlInfo *)ctrl;
         if (!icmp)
@@ -501,7 +501,7 @@ void UDP::processUndeliverablePacket(UDPPacket *udpPacket, cObject *ctrl)
         delete udpPacket;
 #endif // ifdef WITH_IPv4
     }
-    else if (dynamic_cast<IPv6ControlInfo *>(ctrl) != NULL) {
+    else if (dynamic_cast<IPv6ControlInfo *>(ctrl) != nullptr) {
 #ifdef WITH_IPv6
         IPv6ControlInfo *ctrl6 = (IPv6ControlInfo *)ctrl;
         if (!icmpv6)
@@ -511,10 +511,10 @@ void UDP::processUndeliverablePacket(UDPPacket *udpPacket, cObject *ctrl)
         delete udpPacket;
 #endif // ifdef WITH_IPv6
     }
-    else if (dynamic_cast<GenericNetworkProtocolControlInfo *>(ctrl) != NULL) {
+    else if (dynamic_cast<GenericNetworkProtocolControlInfo *>(ctrl) != nullptr) {
         delete udpPacket;
     }
-    else if (ctrl == NULL) {
+    else if (ctrl == nullptr) {
         throw cRuntimeError("(%s)%s arrived from lower layer without control info",
                 udpPacket->getClassName(), udpPacket->getName());
     }
@@ -532,13 +532,13 @@ void UDP::bind(int sockId, int gateIndex, const L3Address& localAddr, int localP
     if (localPort < -1 || localPort > 65535) // -1: ephemeral port
         throw cRuntimeError("bind: invalid local port number %d", localPort);
 
-    SocketsByIdMap::iterator it = socketsByIdMap.find(sockId);
-    SockDesc *sd = it != socketsByIdMap.end() ? it->second : NULL;
+    auto it = socketsByIdMap.find(sockId);
+    SockDesc *sd = it != socketsByIdMap.end() ? it->second : nullptr;
 
     // to allow two sockets to bind to the same address/port combination
     // both of them must have reuseAddr flag set
     SockDesc *existing = findFirstSocketByLocalAddress(localAddr, localPort);
-    if (existing != NULL && (!sd || !sd->reuseAddr || !existing->reuseAddr))
+    if (existing != nullptr && (!sd || !sd->reuseAddr || !existing->reuseAddr))
         throw cRuntimeError("bind: local address/port %s:%u already taken", localAddr.str().c_str(), localPort);
 
     if (sd) {
@@ -597,7 +597,7 @@ UDP::SockDesc *UDP::createSocket(int sockId, int gateIndex, const L3Address& loc
 void UDP::close(int sockId)
 {
     // remove from socketsByIdMap
-    SocketsByIdMap::iterator it = socketsByIdMap.find(sockId);
+    auto it = socketsByIdMap.find(sockId);
     if (it == socketsByIdMap.end())
         throw cRuntimeError("socket id=%d doesn't exist (already closed?)", sockId);
     SockDesc *sd = it->second;
@@ -607,7 +607,7 @@ void UDP::close(int sockId)
 
     // remove from socketsByPortMap
     SockDescList& list = socketsByPortMap[sd->localPort];
-    for (SockDescList::iterator it = list.begin(); it != list.end(); ++it)
+    for (auto it = list.begin(); it != list.end(); ++it)
         if (*it == sd) {
             list.erase(it);
             break;
@@ -621,11 +621,11 @@ void UDP::clearAllSockets()
 {
     EV_INFO << "Clear all sockets\n";
 
-    for (SocketsByPortMap::iterator it = socketsByPortMap.begin(); it != socketsByPortMap.end(); ++it) {
+    for (auto it = socketsByPortMap.begin(); it != socketsByPortMap.end(); ++it) {
         it->second.clear();
     }
     socketsByPortMap.clear();
-    for (SocketsByIdMap::iterator it = socketsByIdMap.begin(); it != socketsByIdMap.end(); ++it)
+    for (auto it = socketsByIdMap.begin(); it != socketsByIdMap.end(); ++it)
         delete it->second;
     socketsByIdMap.clear();
 }
@@ -651,28 +651,28 @@ ushort UDP::getEphemeralPort()
 
 UDP::SockDesc *UDP::findFirstSocketByLocalAddress(const L3Address& localAddr, ushort localPort)
 {
-    SocketsByPortMap::iterator it = socketsByPortMap.find(localPort);
+    auto it = socketsByPortMap.find(localPort);
     if (it == socketsByPortMap.end())
-        return NULL;
+        return nullptr;
 
     SockDescList& list = it->second;
-    for (SockDescList::iterator it = list.begin(); it != list.end(); ++it) {
+    for (auto it = list.begin(); it != list.end(); ++it) {
         SockDesc *sd = *it;
         if (sd->localAddr.isUnspecified() || sd->localAddr == localAddr)
             return sd;
     }
-    return NULL;
+    return nullptr;
 }
 
 UDP::SockDesc *UDP::findSocketForUnicastPacket(const L3Address& localAddr, ushort localPort, const L3Address& remoteAddr, ushort remotePort)
 {
-    SocketsByPortMap::iterator it = socketsByPortMap.find(localPort);
+    auto it = socketsByPortMap.find(localPort);
     if (it == socketsByPortMap.end())
-        return NULL;
+        return nullptr;
 
     // select the socket bound to ANY_ADDR only if there is no socket bound to localAddr
     SockDescList& list = it->second;
-    SockDesc *socketBoundToAnyAddress = NULL;
+    SockDesc *socketBoundToAnyAddress = nullptr;
     for (SockDescList::reverse_iterator it = list.rbegin(); it != list.rend(); ++it) {
         SockDesc *sd = *it;
         if (sd->onlyLocalPortIsSet || (
@@ -693,12 +693,12 @@ std::vector<UDP::SockDesc *> UDP::findSocketsForMcastBcastPacket(const L3Address
 {
     ASSERT(isMulticast || isBroadcast);
     std::vector<SockDesc *> result;
-    SocketsByPortMap::iterator it = socketsByPortMap.find(localPort);
+    auto it = socketsByPortMap.find(localPort);
     if (it == socketsByPortMap.end())
         return result;
 
     SockDescList& list = it->second;
-    for (SockDescList::iterator it = list.begin(); it != list.end(); ++it) {
+    for (auto it = list.begin(); it != list.end(); ++it) {
         SockDesc *sd = *it;
         if (isBroadcast) {
             if (sd->isBroadcast) {
@@ -708,7 +708,7 @@ std::vector<UDP::SockDesc *> UDP::findSocketsForMcastBcastPacket(const L3Address
             }
         }
         else if (isMulticast) {
-            MulticastMembershipTable::iterator membership = sd->findFirstMulticastMembership(localAddr);
+            auto membership = sd->findFirstMulticastMembership(localAddr);
             if (membership != sd->multicastMembershipTable.end()) {
                 if ((sd->remotePort == -1 || sd->remotePort == remotePort) &&
                     (sd->remoteAddr.isUnspecified() || sd->remoteAddr == remoteAddr) &&
@@ -831,7 +831,7 @@ UDPPacket *UDP::createUDPPacket(const char *name)
 
 UDP::SockDesc *UDP::getSocketById(int sockId)
 {
-    SocketsByIdMap::iterator it = socketsByIdMap.find(sockId);
+    auto it = socketsByIdMap.find(sockId);
     if (it == socketsByIdMap.end())
         throw cRuntimeError("socket id=%d doesn't exist (already closed?)", sockId);
     return it->second;
@@ -843,7 +843,7 @@ UDP::SockDesc *UDP::getOrCreateSocket(int sockId, int gateIndex)
     if (sockId == -1)
         throw cRuntimeError("sockId in UDP command not filled in");
 
-    SocketsByIdMap::iterator it = socketsByIdMap.find(sockId);
+    auto it = socketsByIdMap.find(sockId);
     if (it != socketsByIdMap.end())
         return it->second;
 
@@ -944,7 +944,7 @@ void UDP::leaveMulticastGroups(SockDesc *sd, const std::vector<L3Address>& multi
     std::vector<L3Address> empty;
 
     for (unsigned int i = 0; i < multicastAddresses.size(); i++) {
-        MulticastMembershipTable::iterator it = sd->findFirstMulticastMembership(multicastAddresses[i]);
+        auto it = sd->findFirstMulticastMembership(multicastAddresses[i]);
         while (it != sd->multicastMembershipTable.end()) {
             MulticastMembership *membership = *it;
             if (membership->multicastAddress != multicastAddresses[i])
@@ -991,7 +991,7 @@ void UDP::blockMulticastSources(SockDesc *sd, InterfaceEntry *ie, L3Address mult
     bool changed = false;
     for (unsigned int i = 0; i < sourceList.size(); ++i) {
         const L3Address& sourceAddress = sourceList[i];
-        std::vector<L3Address>::iterator it = std::find(excludedSources.begin(), excludedSources.end(), sourceAddress);
+        auto it = std::find(excludedSources.begin(), excludedSources.end(), sourceAddress);
         if (it != excludedSources.end()) {
             excludedSources.push_back(sourceAddress);
             changed = true;
@@ -1022,7 +1022,7 @@ void UDP::unblockMulticastSources(SockDesc *sd, InterfaceEntry *ie, L3Address mu
     bool changed = false;
     for (unsigned int i = 0; i < sourceList.size(); ++i) {
         const L3Address& sourceAddress = sourceList[i];
-        std::vector<L3Address>::iterator it = std::find(excludedSources.begin(), excludedSources.end(), sourceAddress);
+        auto it = std::find(excludedSources.begin(), excludedSources.end(), sourceAddress);
         if (it != excludedSources.end()) {
             excludedSources.erase(it);
             changed = true;
@@ -1056,7 +1056,7 @@ void UDP::joinMulticastSources(SockDesc *sd, InterfaceEntry *ie, L3Address multi
     bool changed = false;
     for (unsigned int i = 0; i < sourceList.size(); ++i) {
         const L3Address& sourceAddress = sourceList[i];
-        std::vector<L3Address>::iterator it = std::find(includedSources.begin(), includedSources.end(), sourceAddress);
+        auto it = std::find(includedSources.begin(), includedSources.end(), sourceAddress);
         if (it != includedSources.end()) {
             includedSources.push_back(sourceAddress);
             changed = true;
@@ -1087,7 +1087,7 @@ void UDP::leaveMulticastSources(SockDesc *sd, InterfaceEntry *ie, L3Address mult
     bool changed = false;
     for (unsigned int i = 0; i < sourceList.size(); ++i) {
         const L3Address& sourceAddress = sourceList[i];
-        std::vector<L3Address>::iterator it = std::find(includedSources.begin(), includedSources.end(), sourceAddress);
+        auto it = std::find(includedSources.begin(), includedSources.end(), sourceAddress);
         if (it != includedSources.end()) {
             includedSources.erase(it);
             changed = true;
@@ -1138,24 +1138,24 @@ bool UDP::handleOperationStage(LifecycleOperation *operation, int stage, IDoneCa
 
     if (dynamic_cast<NodeStartOperation *>(operation)) {
         if ((NodeStartOperation::Stage)stage == NodeStartOperation::STAGE_TRANSPORT_LAYER) {
-            icmp = NULL;
-            icmpv6 = NULL;
+            icmp = nullptr;
+            icmpv6 = nullptr;
             isOperational = true;
         }
     }
     else if (dynamic_cast<NodeShutdownOperation *>(operation)) {
         if ((NodeShutdownOperation::Stage)stage == NodeShutdownOperation::STAGE_TRANSPORT_LAYER) {
             clearAllSockets();
-            icmp = NULL;
-            icmpv6 = NULL;
+            icmp = nullptr;
+            icmpv6 = nullptr;
             isOperational = false;
         }
     }
     else if (dynamic_cast<NodeCrashOperation *>(operation)) {
         if ((NodeCrashOperation::Stage)stage == NodeCrashOperation::STAGE_CRASH) {
             clearAllSockets();
-            icmp = NULL;
-            icmpv6 = NULL;
+            icmp = nullptr;
+            icmpv6 = nullptr;
             isOperational = false;
         }
     }
@@ -1187,7 +1187,7 @@ UDP::MulticastMembershipTable::iterator UDP::SockDesc::findFirstMulticastMembers
     membership.multicastAddress = multicastAddress;
     membership.interfaceId = 0;    // less than any other interfaceId
 
-    UDP::MulticastMembershipTable::iterator it = lower_bound(multicastMembershipTable.begin(), multicastMembershipTable.end(), &membership, lessMembership);
+    auto it = lower_bound(multicastMembershipTable.begin(), multicastMembershipTable.end(), &membership, lessMembership);
     if (it != multicastMembershipTable.end() && (*it)->multicastAddress == multicastAddress)
         return it;
     else
@@ -1200,16 +1200,16 @@ UDP::MulticastMembership *UDP::SockDesc::findMulticastMembership(const L3Address
     membership.multicastAddress = multicastAddress;
     membership.interfaceId = interfaceId;
 
-    UDP::MulticastMembershipTable::iterator it = lower_bound(multicastMembershipTable.begin(), multicastMembershipTable.end(), &membership, lessMembership);
+    auto it = lower_bound(multicastMembershipTable.begin(), multicastMembershipTable.end(), &membership, lessMembership);
     if (it != multicastMembershipTable.end() && (*it)->multicastAddress == multicastAddress && (*it)->interfaceId == interfaceId)
         return *it;
     else
-        return NULL;
+        return nullptr;
 }
 
 void UDP::SockDesc::addMulticastMembership(MulticastMembership *membership)
 {
-    UDP::MulticastMembershipTable::iterator it = lower_bound(multicastMembershipTable.begin(), multicastMembershipTable.end(), membership, lessMembership);
+    auto it = lower_bound(multicastMembershipTable.begin(), multicastMembershipTable.end(), membership, lessMembership);
     multicastMembershipTable.insert(it, membership);
 }
 

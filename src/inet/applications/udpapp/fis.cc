@@ -159,7 +159,7 @@ static FILE *fisOpenFile(const char *file, const char *mode)
 {
 	FILE *fp;
 
-	if ((fp = fopen(file, mode)) == NULL){
+	if ((fp = fopen(file, mode)) == nullptr){
 		PRINTF("The file %s cannot be opened.", file);
 		fisError("\n");
 	}
@@ -175,23 +175,23 @@ void *fisCalloc(int num_of_x, int size_of_x)
 	void *ptr;
 
 #if (defined(MATLAB_MEX_FILE) &&  !defined(__SIMSTRUC__))
-	/* datstruc.c ln325 requires ptr = NULL when it supplies num_of_x = 0 */
+	/* datstruc.c ln325 requires ptr = nullptr when it supplies num_of_x = 0 */
 	if (num_of_x == 0) 
-            ptr = NULL; /* mxCalloc returns a NULL pointer if num_of_x or size_of_x = 0 */
+            ptr = nullptr; /* mxCalloc returns a nullptr pointer if num_of_x or size_of_x = 0 */
 	else {
             ptr = mxCalloc(num_of_x, size_of_x);
             /* however we still need to check that memory was allocated successfully,
                exclude the case when num_of_x = 0, and if unsuccessful issue an error */
-            if (ptr == NULL)
+            if (ptr == nullptr)
                 fisError("Could not allocate memory in mxCalloc function call.");}
 #else /* a Simulink file (defined(__SIMSTRUC__)), or standalone is being created */
 	if (num_of_x == 0) 
-            ptr = NULL; /* calloc returns a NULL pointer if num_of_x or size_of_x = 0 */
+            ptr = nullptr; /* calloc returns a nullptr pointer if num_of_x or size_of_x = 0 */
 	else {
             ptr = calloc(num_of_x, size_of_x);
             /* however we still need to check that memory was allocated successfully,
                exclude the case when num_of_x = 0, and if unsuccessful issue an error */
-            if (ptr == NULL)
+            if (ptr == nullptr)
                 fisError("Could not allocate memory in calloc function call.");}
 #endif
 
@@ -205,13 +205,13 @@ char **fisCreateMatrix(int row_n, int col_n, int element_size)
 	int i;
 
 	if (row_n == 0 && col_n == 0)
-		return(NULL);
+		return(nullptr);
 	matrix = (char **)fisCalloc(row_n, sizeof(char *));
-	if (matrix == NULL)
+	if (matrix == nullptr)
 		fisError("Calloc error in fisCreateMatrix!");
 	for (i = 0; i < row_n; i++) { 
 		matrix[i] = (char *)fisCalloc(col_n, element_size);
-		if (matrix[i] == NULL)
+		if (matrix[i] == nullptr)
 			fisError("Calloc error in fisCreateMatrix!");
 	}
 	return(matrix);
@@ -222,7 +222,7 @@ char **fisCreateMatrix(int row_n, int col_n, int element_size)
 static void fisFreeMatrix(void **matrix, int row_n)
 {
 	int i;
-	if (matrix != NULL) {
+	if (matrix != nullptr) {
 		for (i = 0; i < row_n; i++) {
 			FREE(matrix[i]);
 		}
@@ -717,8 +717,8 @@ void fisAssignMfPointer(FIS *fis)
 		{ "smf",	fisSMf },
 		{ "zmf",	fisZMf },
 		{ "pimf",	fisPiMf },
-		{ "linear",	NULL },
-		{ "constant",	NULL }
+		{ "linear",	nullptr },
+		{ "constant",	nullptr }
 	};
 
 	/* input MF's */
@@ -949,8 +949,8 @@ static void fisPrintData(FIS *fis)
 {
 	int i, j, k;
 
-	if (fis == NULL)
-		fisError("Given fis pointer is NULL, no data to print!");
+	if (fis == nullptr)
+		fisError("Given fis pointer is nullptr, no data to print!");
 
 	PRINTF("fis_name = %s\n", fis->name);
 	PRINTF("fis_type = %s\n", fis->type);
@@ -1078,7 +1078,7 @@ static void fisFreeIoList(IO *io_list, int n)
 
 void fisFreeFisNode(FIS *fis)
 {
-	if (fis == NULL)
+	if (fis == nullptr)
 		return;
 	fisFreeIoList(fis->input[0], fis->in_n);
 	FREE(fis->input);
@@ -1505,10 +1505,10 @@ static FIS *fisMatchHandle(FIS *head, int handle)
 {
 	FIS *p;
 
-	for (p = head; p != NULL; p = p->next)
+	for (p = head; p != nullptr; p = p->next)
 		if (p->handle == handle)
 			break;
-	if (p == NULL) {
+	if (p == nullptr) {
 		PRINTF("Given handle is %d.\n", handle);
 		fisError("Cannot find an FIS with this handle.");
 	}
@@ -1519,9 +1519,9 @@ static FIS *fisMatchHandle(FIS *head, int handle)
 /* If more than two are qualified, the largest handle is returned.  */
 static FIS *fisMatchName(FIS *head, char *name)
 {
-	FIS *p, *matched_p = NULL;
+	FIS *p, *matched_p = nullptr;
 
-	for (p = head; p != NULL; p = p->next)
+	for (p = head; p != nullptr; p = p->next)
 		if (strcmp(p->name, name) == 0)
 			matched_p = p;
 	return(matched_p);
@@ -1532,10 +1532,10 @@ static int fisFindMaxHandle(FIS *head)
 	FIS *p;
 	int max_handle = 0;
 
-	if (head == NULL)
+	if (head == nullptr)
 		return(0);
 
-	for (p = head; p != NULL; p = p->next)
+	for (p = head; p != nullptr; p = p->next)
 		if (p->handle > max_handle)
 			max_handle = p->handle;
 	return(max_handle);
@@ -1773,7 +1773,7 @@ void fisEvaluate(FIS *fis, int numofpoints)
 	DOUBLE total_w, total_wf;
 	int i, j, k, which_mf;
 
-	if (fis == NULL) {
+	if (fis == nullptr) {
 		PRINTF("FIS data structure has not been built yet.\n");
 		fisError("Exiting ...");
 	}
@@ -1919,8 +1919,8 @@ FILE *fp;
     int i, j;
 
     returned_value = fgets(buf, STR_LEN, fp);
-    if (NULL == returned_value)
-        return(NULL);
+    if (nullptr == returned_value)
+        return(nullptr);
 
     /* skip if it starts with '%' or '\n' */
     /* skip if it stars with 'V' to protect against version field
@@ -1954,7 +1954,7 @@ FILE *fp;
 	char string[STR_LEN];
 	DOUBLE num;
 
-	if (getNextLine(buf, fp) == NULL)
+	if (getNextLine(buf, fp) == nullptr)
 		fisError("getNumber: Incomplete FIS file!");
 
 	tmp = sscanf(buf, " %[^=] = %lf ", string, &num);
@@ -1986,7 +1986,7 @@ DOUBLE *array;
 	char string2[STR_LEN];
 	int tmp;
 
-	if (getNextLine(buf, fp) == NULL)
+	if (getNextLine(buf, fp) == nullptr)
 		fisError("getString: Incomplete FIS file!");
 	
 	tmp = sscanf(buf, " %[^'] '%[^']' ", string1, string2);
@@ -2061,7 +2061,7 @@ DOUBLE *out_mf_n;
 
 	for (i = 0; i < in_n+out_n; i++) {
 		while (1) {
-			if (getNextLine(buf, fp) == NULL)
+			if (getNextLine(buf, fp) == nullptr)
 				fisError("Not enough NumMFs in FIS file!");
 			if (sscanf(buf, " NumMFs = %d ", &tmp) == 1)
 				break;
@@ -2103,21 +2103,21 @@ int *col_n_p;
 	fp = fisOpenFile(filename, "r");
 	/* find in_n */
 	while (1) {
-		if (getNextLine(buf, fp) == NULL)
+		if (getNextLine(buf, fp) == nullptr)
 			fisError("Cannot find NumInputs in FIS file!");
 		if (sscanf(buf, " NumInputs = %d ", &in_n) == 1)
 			break;
 	}
 	/* find out_n */
 	while (1) {
-		if (getNextLine(buf, fp) == NULL)
+		if (getNextLine(buf, fp) == nullptr)
 			fisError("Cannot find NumOutputs in FIS file!");
 		if (sscanf(buf, " NumOutputs = %d ", &out_n) == 1)
 			break;
 	}
 	/* find rule_n */
 	while (1) {
-		if (getNextLine(buf, fp) == NULL)
+		if (getNextLine(buf, fp) == nullptr)
 			fisError("Cannot find NumRules in FIS file!");
 		if (sscanf(buf, " NumRules = %d ", &rule_n) == 1)
 			break;
@@ -2136,7 +2136,7 @@ int *col_n_p;
 	fp = fisOpenFile(filename, "r");
 	/* find FIS name */
 	while (1) {
-		if (getNextLine(buf, fp) == NULL)
+		if (getNextLine(buf, fp) == nullptr)
 			fisError("Cannot find FIS Name in FIS file!");
 		if (sscanf(buf, " Name = '%[^']' ", fisName) == 1)
 			break;
@@ -2145,13 +2145,13 @@ int *col_n_p;
 	col_n = MAX(col_n, 8);	/* 'centroid' defuzzification */
 	/* find FIS type */
 	while (1) {
-		if (getNextLine(buf, fp) == NULL)
+		if (getNextLine(buf, fp) == nullptr)
 			fisError("Cannot find FIS Type in FIS file!");
 		if (sscanf(buf, " Type = '%[^']' ", fisType) == 1)
 			break;
 	}
  	/* find IO names, MF labels, MF types */
-	while (getNextLine(buf, fp) != NULL) {
+	while (getNextLine(buf, fp) != nullptr) {
  		if (sscanf(buf, " Name = '%[^']' ", IoName) == 1)
  			col_n = MAX(col_n, (int)strlen(IoName));
 		if (sscanf(buf, " %[^'] '%[^']' : '%[^']' , [ %[^]] ",
@@ -2210,7 +2210,7 @@ int *col_n_p;
 	fp = fisOpenFile(fis_file, "r");
 	/* looping till it finds "[System]" */
 	while (1) {
-		if (getNextLine(buf, fp) == NULL)
+		if (getNextLine(buf, fp) == nullptr)
 			fisError("Cannot find [System] in FIS file!");
 		if (!strcmp(buf, "[System]")) /* found it! */
 			break;
@@ -2257,14 +2257,14 @@ int *col_n_p;
 	/* get rid of FIS name */
 	fp = fisOpenFile(fis_file, "r");
 	while (1) {
-		if (getNextLine(buf, fp) == NULL)
+		if (getNextLine(buf, fp) == nullptr)
 			fisError("Cannot find the first Name in FIS file!");
 		if (sscanf(buf, " Name = '%[^']' ", str1) == 1)
 			break;
 	}
 	for (i = 0; i < in_n+out_n; i++) {
 		while (1) {
-			if (getNextLine(buf, fp) == NULL)
+			if (getNextLine(buf, fp) == nullptr)
 				fisError("Not enough Name in FIS file!");
 			if (sscanf(buf, " Name = '%[^']' ", str1) == 1)
 				break;
@@ -2279,7 +2279,7 @@ int *col_n_p;
 	fp = fisOpenFile(fis_file, "r");
 	for (i = 0; i < in_n+out_n; i++) {
 		while (1) {
-			if (getNextLine(buf, fp) == NULL)
+			if (getNextLine(buf, fp) == nullptr)
 				fisError("Not enough Range in FIS file!");
 			if (sscanf(buf, " Range = [ %[^]] ", str1) == 1)
 				break;
@@ -2295,7 +2295,7 @@ int *col_n_p;
 		mf_n = i < in_n? in_mf_n[i]:out_mf_n[i-in_n];
 		for (j = 0; j < mf_n; j++) {
 			while (1) {
-				if (getNextLine(buf, fp) == NULL)
+				if (getNextLine(buf, fp) == nullptr)
 					fisError("Not enough MF Labels in FIS file!");
 				if (sscanf(buf, " %[^']'%[^']' : '%[^']' , [ %[^]] ",
 					str1, str2, str3, str4) == 4)
@@ -2314,7 +2314,7 @@ int *col_n_p;
 		mf_n = i < in_n? in_mf_n[i]:out_mf_n[i-in_n];
 		for (j = 0; j < mf_n; j++) {
 			while (1) {
-				if (getNextLine(buf, fp) == NULL)
+				if (getNextLine(buf, fp) == nullptr)
 					fisError("Not enough MF types in FIS file!");
 				if (sscanf(buf, " %[^']'%[^']' : '%[^']' , [ %[^]] ",
 					str1, str2, str3, str4) == 4)
@@ -2333,7 +2333,7 @@ int *col_n_p;
 		mf_n = i < in_n? in_mf_n[i]:out_mf_n[i-in_n];
 		for (j = 0; j < mf_n; j++) {
 			while (1) {
-				if (getNextLine(buf, fp) == NULL)
+				if (getNextLine(buf, fp) == nullptr)
 					fisError("Not enough MF parameters in FIS file!");
 				if (sscanf(buf, " %[^']'%[^']' : '%[^']' , [ %[^]] ",
 					str1, str2, str3, str4) == 4) {
@@ -2386,13 +2386,13 @@ int *col_n_p;
 	fp = fisOpenFile(fis_file, "r");
 	/* looping till it finds "[Rules]" */
 	while (1) {
-		if (getNextLine(buf, fp) == NULL)
+		if (getNextLine(buf, fp) == nullptr)
 			fisError("Cannot find [Rules] in FIS file!");
 		if (!strcmp(buf, "[Rules]")) /* found it! */
 			break;
 	}
 	for (i = 0; i < rule_n; i++) {
-		if (getNextLine(buf, fp) == NULL)
+		if (getNextLine(buf, fp) == nullptr)
 			fisError("Not enough rule list in FIS file!");
 		/* get rid of ",", "(" and ")" */
 		for (j = 0; j < (int)strlen(buf); j++)

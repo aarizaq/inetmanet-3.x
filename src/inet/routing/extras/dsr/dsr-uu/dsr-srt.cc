@@ -76,7 +76,7 @@ struct dsr_srt *dsr_srt_new(struct in_addr src, struct in_addr dst,
     sr = new dsr_srt;
 
     if (!sr)
-        return NULL;
+        return nullptr;
 
     sr->src.s_addr = src.s_addr;
     sr->dst.s_addr = dst.s_addr;
@@ -197,8 +197,8 @@ void dsr_srt_split_both(struct dsr_srt *srt, struct in_addr addr, struct in_addr
     int i, n,l;
     bool split;
 
-    struct dsr_srt *srt_to_dest = NULL;
-    struct dsr_srt *srt_to_src = NULL;
+    struct dsr_srt *srt_to_dest = nullptr;
+    struct dsr_srt *srt_to_src = nullptr;
     *srt_to_dest_ptr = srt_to_dest;
     *srt_to_src_ptr = srt_to_src;
     if (!srt)
@@ -385,11 +385,11 @@ struct dsr_srt *dsr_srt_new_rev(struct dsr_srt *srt)
     int i, n;
 
     if (!srt)
-        return NULL;
+        return nullptr;
 
     srt_rev = new dsr_srt;
     if (!srt_rev)
-        return NULL;
+        return nullptr;
     srt_rev->flags = srt->flags;
 
     srt_rev->src.s_addr = srt->dst.s_addr;
@@ -421,7 +421,7 @@ struct dsr_srt *dsr_srt_new_split(struct dsr_srt *srt, struct in_addr addr)
     int i, n;
 
     if (!srt)
-        return NULL;
+        return nullptr;
 
     n = srt->laddrs / SIZE_ADDRESS;
 
@@ -429,7 +429,7 @@ struct dsr_srt *dsr_srt_new_split(struct dsr_srt *srt, struct in_addr addr)
         opp_error("size mismatch ");
 
     if (n == 0)
-        return NULL;
+        return nullptr;
 
     for (i = 0; i < n; i++)
     {
@@ -437,12 +437,12 @@ struct dsr_srt *dsr_srt_new_split(struct dsr_srt *srt, struct in_addr addr)
             goto split;
     }
     /* Nothing to split */
-    return NULL;
+    return nullptr;
 split:
     srt_split = new dsr_srt;
 
     if (!srt_split)
-        return NULL;
+        return nullptr;
 
     srt_split->flags = srt->flags;
 
@@ -468,7 +468,7 @@ struct dsr_srt *dsr_srt_new_split_rev(struct dsr_srt *srt, struct in_addr addr)
     srt_split = dsr_srt_new_split(srt, addr);
 
     if (!srt_split)
-        return NULL;
+        return nullptr;
 
     srt_split_rev = dsr_srt_new_rev(srt_split);
 
@@ -484,7 +484,7 @@ struct dsr_srt *dsr_srt_shortcut(struct dsr_srt *srt, struct in_addr a1,
     int i, n, n_cut, a1_num, a2_num;
 
     if (!srt)
-        return NULL;
+        return nullptr;
 
     a1_num = a2_num = -1;
 
@@ -514,7 +514,7 @@ struct dsr_srt *dsr_srt_shortcut(struct dsr_srt *srt, struct in_addr a1,
     srt_cut = new dsr_srt;
 
     if (!srt_cut)
-        return NULL;
+        return nullptr;
 
 
     srt_cut->flags = srt->flags;
@@ -554,7 +554,7 @@ struct dsr_srt *dsr_srt_concatenate(struct dsr_srt *srt1, struct dsr_srt *srt2)
     int n, n1, n2;
 
     if (!srt1 || !srt2)
-        return NULL;
+        return nullptr;
 
     n1 = srt1->laddrs / SIZE_ADDRESS;
     if (n1 != (int)srt1->addrs.size())
@@ -572,7 +572,7 @@ struct dsr_srt *dsr_srt_concatenate(struct dsr_srt *srt1, struct dsr_srt *srt2)
     srt_cat = new dsr_srt;
 
     if (!srt_cat)
-        return NULL;
+        return nullptr;
 
     srt_cat->flags = srt1->flags & srt2->flags;
 
@@ -647,7 +647,7 @@ struct dsr_srt_opt *dsr_srt_opt_add(struct dsr_opt_hdr *opt_hdr, int len, int fl
     struct dsr_srt_opt *srt_opt;
 
     if (len < (int)DSR_SRT_OPT_LEN(srt))
-        return NULL;
+        return nullptr;
 
     srt_opt = new dsr_srt_opt ();
 
@@ -674,7 +674,7 @@ struct dsr_srt_opt *dsr_srt_opt_add_char(char *buf, int len, int flags,
         struct dsr_srt_opt *srt_opt;
 
         if (len < (int)DSR_SRT_OPT_LEN(srt))
-            return NULL;
+            return nullptr;
 
         srt_opt = (struct dsr_srt_opt *)buf;
 
@@ -820,8 +820,8 @@ int NSCLASS dsr_srt_opt_recv(struct dsr_pkt *dp, struct dsr_srt_opt *srt_opt)
         else
             ph_srt_add_node_map(dp->prv_hop,ConfValToUsecs(RouteCacheTimeout), 0,0);
 
-        struct dsr_srt * from_me_to_dest=NULL;
-        struct dsr_srt * from_me_to_src=NULL;
+        struct dsr_srt * from_me_to_dest=nullptr;
+        struct dsr_srt * from_me_to_src=nullptr;
         struct in_addr split_add;
 
         if (next_hop_intended.s_addr != myaddr.s_addr)

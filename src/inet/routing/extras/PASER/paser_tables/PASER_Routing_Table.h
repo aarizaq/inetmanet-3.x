@@ -111,14 +111,14 @@ public:
     /**
      *@brief Get the shortest route to the gateway.
      *
-     *@return Route to the gateway or NULL if no such route exists.
+     *@return Route to the gateway or nullptr if no such route exists.
      */
     PASER_Routing_Entry *getRouteToGw();
 
     /**
      *@brief Get the shortest route to gateway (similar to getRouteToGw()).
      *
-     *@return Route to the gateway or NULL if no such route exists.
+     *@return Route to the gateway or nullptr if no such route exists.
      */
     PASER_Routing_Entry *findBestGW();
 

@@ -80,7 +80,7 @@ void PassiveQueueBase::requestPacket()
     Enter_Method("requestPacket()");
 
     cMessage *msg = dequeue();
-    if (msg == NULL) {
+    if (msg == nullptr) {
         packetRequested++;
     }
     else {
@@ -94,7 +94,7 @@ void PassiveQueueBase::clear()
 {
     cMessage *msg;
 
-    while (NULL != (msg = dequeue()))
+    while (nullptr != (msg = dequeue()))
         delete msg;
 
     packetRequested = 0;
@@ -111,21 +111,21 @@ void PassiveQueueBase::finish()
 
 void PassiveQueueBase::addListener(IPassiveQueueListener *listener)
 {
-    std::list<IPassiveQueueListener *>::iterator it = find(listeners.begin(), listeners.end(), listener);
+    auto it = find(listeners.begin(), listeners.end(), listener);
     if (it == listeners.end())
         listeners.push_back(listener);
 }
 
 void PassiveQueueBase::removeListener(IPassiveQueueListener *listener)
 {
-    std::list<IPassiveQueueListener *>::iterator it = find(listeners.begin(), listeners.end(), listener);
+    auto it = find(listeners.begin(), listeners.end(), listener);
     if (it != listeners.end())
         listeners.erase(it);
 }
 
 void PassiveQueueBase::notifyListeners()
 {
-    for (std::list<IPassiveQueueListener *>::iterator it = listeners.begin(); it != listeners.end(); ++it)
+    for (auto it = listeners.begin(); it != listeners.end(); ++it)
         (*it)->packetEnqueued(this);
 }
 

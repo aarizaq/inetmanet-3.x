@@ -119,25 +119,25 @@ struct dsr_pkt
        src.s_addr = 0; /* IP level data */
        dst = nxt_hop = prv_hop = src;
        flags = salvage = numRetries = 0;
-       mac.raw = NULL;
+       mac.raw = nullptr;
        memset(mac_data,0,sizeof(mac_data));
-       nh.raw = NULL;
+       nh.raw = nullptr;
        memset(ip_data,0,sizeof(ip_data));
        num_rrep_opts = num_rerr_opts = num_rreq_opts = num_ack_opts =0;
-       srt_opt = NULL;
-       rreq_opt = NULL;  /* Can only be one */
+       srt_opt = nullptr;
+       rreq_opt = nullptr;  /* Can only be one */
        memset(rrep_opt,0,sizeof(rrep_opt));
        memset(rerr_opt,0,sizeof(rerr_opt));
        memset(ack_opt,0,sizeof(ack_opt));
-       ack_req_opt = NULL;
-       srt = NULL;
+       ack_req_opt = nullptr;
+       srt = nullptr;
        payload_len = 0;
        moreFragments = false;
        fragmentOffset = totalPayloadLength = 0;
-       payload = NULL;
-       ip_pkt = NULL;
+       payload = nullptr;
+       ip_pkt = nullptr;
        encapsulate_protocol = 0;
-       next = NULL;
+       next = nullptr;
     }
     struct dsr_pkt *dup();
 };

@@ -203,7 +203,7 @@ const ITransmission *Ieee802154UWBIRTransmitter::createTransmission(const IRadio
     const EulerAngles startOrientation = mobility->getCurrentAngularPosition();
     const EulerAngles endOrientation = mobility->getCurrentAngularPosition();
     const ConstMapping *powerMapping = generateIEEE802154AUWBSignal(startTime, bits);
-    return new DimensionalTransmission(transmitter, macFrame, startTime, endTime, startPosition, endPosition, startOrientation, endOrientation, NULL, -1, bitLength, cfg.centerFrequency, cfg.bandwidth, cfg.bitrate, powerMapping);
+    return new DimensionalTransmission(transmitter, macFrame, startTime, endTime, startPosition, endPosition, startOrientation, endOrientation, nullptr, -1, bitLength, cfg.centerFrequency, cfg.bandwidth, cfg.bitrate, powerMapping);
 }
 
 void Ieee802154UWBIRTransmitter::setChannelNumber(int newChannelNumber)
@@ -216,7 +216,7 @@ void Ieee802154UWBIRTransmitter::setChannelNumber(int newChannelNumber)
         flatReceiver->setCarrierFrequency(carrierFrequency);
         EV << "Changing radio channel from " << channelNumber << " to " << newChannelNumber << ".\n";
         channelNumber = newChannelNumber;
-        endReceptionTimer = NULL;
+        endReceptionTimer = nullptr;
         emit(radioChannelChangedSignal, newChannelNumber);
         emit(listeningChangedSignal, 0);
         */

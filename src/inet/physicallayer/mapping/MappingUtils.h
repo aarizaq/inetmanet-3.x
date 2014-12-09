@@ -868,7 +868,7 @@ class INET_API LinearIntplMappingIterator : public MappingIterator
     /**
      * @brief This method isn't supported by an interpolated mapping.
      */
-    virtual const Argument& getNextPosition() const { assert(false); return *((Argument *)NULL); }
+    virtual const Argument& getNextPosition() const { assert(false); return *((Argument *)nullptr); }
 };
 
 /**
@@ -920,7 +920,7 @@ class INET_API LinearIntplMapping : public Mapping
      * @brief Initializes the LinearIntplMapping with the passed left and right
      * Mapping to interpolate by the passed interpolation value.
      */
-    LinearIntplMapping(const ConstMapping *const left = NULL, const ConstMapping *const right = NULL, argument_value_cref_t f = Argument::MappedZero) :
+    LinearIntplMapping(const ConstMapping *const left = nullptr, const ConstMapping *const right = nullptr, argument_value_cref_t f = Argument::MappedZero) :
         Mapping(), left(left), right(right), factor(f) {}
 
     virtual ~LinearIntplMapping() {}
@@ -1519,7 +1519,7 @@ class MultiDimMappingIterator : public MappingIterator
     MultiDimMappingIterator(MultiDimMapping<Interpolator>& pMapping) :
         MappingIterator(), mapping(pMapping),
         valueIt(pMapping.entries.beginIntpl()),
-        subMapping(0), subIterator(NULL),
+        subMapping(0), subIterator(nullptr),
         position(), nextPosition()
     {
         subMapping = valueIt.getValue();
@@ -1543,7 +1543,7 @@ class MultiDimMappingIterator : public MappingIterator
     MultiDimMappingIterator(MultiDimMapping<Interpolator>& pMapping, const Argument& pos) :
         MappingIterator(), mapping(pMapping),
         valueIt(pMapping.entries.beginIntpl()    /*pMapping.entries.findIntpl(pos.getArgValue(pMapping.myDimension))*/),    //ATTENTION: pMapping.entries.findIntpl(...) results in GCC-Crash at -O2
-        subMapping(0), subIterator(NULL),
+        subMapping(0), subIterator(nullptr),
         position(pos), nextPosition()
     {
         // valueIt was not initialized with pMapping.entries.findIntpl(...), so we need the jumpTo-call
@@ -1560,7 +1560,7 @@ class MultiDimMappingIterator : public MappingIterator
     MultiDimMappingIterator(const MultiDimMappingIterator& o) :
         MappingIterator(o), mapping(o.mapping),
         valueIt(o.valueIt),
-        subMapping(o.subMapping), subIterator(NULL),
+        subMapping(o.subMapping), subIterator(nullptr),
         position(o.position), nextPosition(o.nextPosition)
     {
         // valueIt was not initialized with pMapping.entries.findIntpl(...), so we need the jumpTo-call
@@ -1882,16 +1882,16 @@ class MultiDimMapping : public Mapping
 
     void copySubMappings()
     {
-        const typename interpolator_map_type::iterator itEnd = entries.end();
+        const auto itEnd = entries.end();
         Dimension nextDim = *(--dimensions.find(myDimension));
 
         if (nextDim == Dimension::time) {
-            for (typename interpolator_map_type::iterator it = entries.begin(); it != itEnd; ++it) {
+            for (auto it = entries.begin(); it != itEnd; ++it) {
                 it->second = new TimeMapping<Interpolator>(*(static_cast<TimeMapping<Interpolator> *>(it->second)));
             }
         }
         else {
-            for (typename interpolator_map_type::iterator it = entries.begin(); it != itEnd; ++it) {
+            for (auto it = entries.begin(); it != itEnd; ++it) {
                 if (outOfRangeMapping == 0) {
                     it->second = new MultiDimMapping<Interpolator>(*(static_cast<MultiDimMapping<Interpolator> *>(it->second)));
                 }
@@ -2038,7 +2038,7 @@ class MultiDimMapping : public Mapping
     virtual void setValue(const Argument& pos, argument_value_cref_t value)
     {
         argument_value_cref_t argVal = pos.getArgValue(myDimension);
-        typename interpolator_map_type::iterator posIt = entries.lower_bound(argVal);
+        auto posIt = entries.lower_bound(argVal);
 
         if (posIt == entries.end() || (entries.key_comp()(argVal, posIt->first))) {
             posIt = entries.insert(posIt, std::make_pair(argVal, createSubSignal()));
@@ -2201,7 +2201,7 @@ class INET_API FilledUpMapping : public MultiDimMapping<Linear>
             return;
         }
         argument_value_cref_t argVal = pos.getArgValue(myDimension);
-        interpolator_map_type::iterator posIt = entries.lower_bound(argVal);
+        auto posIt = entries.lower_bound(argVal);
 
         if (posIt == entries.end() || (entries.key_comp()(argVal, posIt->first))) {
             posIt = entries.insert(posIt, std::make_pair(argVal, createSubSignal()));
@@ -2521,7 +2521,7 @@ class ConcatConstMapping : public ConstMapping
     ConcatConstMapping(const ConcatConstMapping& o)
         : ConstMapping(o)
         , mappings(o.mappings)
-        , refMapping(NULL)
+        , refMapping(nullptr)
         , continueOutOfRange(o.continueOutOfRange)
         , oorValue(o.oorValue)
         , op()

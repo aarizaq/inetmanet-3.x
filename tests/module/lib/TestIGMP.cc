@@ -42,8 +42,8 @@ class INET_API TestIGMP : public IGMPv2, public IScriptable
     virtual void sendToIP(IGMPMessage *msg, InterfaceEntry *ie, const IPv4Address& dest);
   private:
     void dumpMulticastGroups(const char* name, const char *ifname, IPv4AddressVector groups);
-    void startEvent(const char *event, int stateMask, InterfaceEntry *ie, const IPv4Address *group = NULL);
-    void endEvent(int stateMask, InterfaceEntry *ie, const IPv4Address *group = NULL);
+    void startEvent(const char *event, int stateMask, InterfaceEntry *ie, const IPv4Address *group = nullptr);
+    void endEvent(int stateMask, InterfaceEntry *ie, const IPv4Address *group = nullptr);
     void printStates(int stateMask, InterfaceEntry *ie, const IPv4Address *group);
 };
 
@@ -193,7 +193,7 @@ void TestIGMP::processCommand(const cXMLElement &node)
 
   const char *tag = node.getTagName();
   const char *ifname = node.getAttribute("ifname");
-  InterfaceEntry *ie = ifname ? ift->getInterfaceByName(ifname) : NULL;
+  InterfaceEntry *ie = ifname ? ift->getInterfaceByName(ifname) : nullptr;
 
   if (!strcmp(tag, "join"))
   {

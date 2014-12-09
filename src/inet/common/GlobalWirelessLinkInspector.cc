@@ -21,9 +21,9 @@
 
 namespace inet{
 
-GlobalWirelessLinkInspector::CostMap* GlobalWirelessLinkInspector::costMap = NULL;
-GlobalWirelessLinkInspector::GlobalRouteMap *GlobalWirelessLinkInspector::globalRouteMap = NULL;
-GlobalWirelessLinkInspector::LocatorMap *GlobalWirelessLinkInspector::globalLocatorMap = NULL;
+GlobalWirelessLinkInspector::CostMap* GlobalWirelessLinkInspector::costMap = nullptr;
+GlobalWirelessLinkInspector::GlobalRouteMap *GlobalWirelessLinkInspector::globalRouteMap = nullptr;
+GlobalWirelessLinkInspector::LocatorMap *GlobalWirelessLinkInspector::globalLocatorMap = nullptr;
 GlobalWirelessLinkInspector::QueueSize *GlobalWirelessLinkInspector::queueSize;
 
 Define_Module(GlobalWirelessLinkInspector);
@@ -31,16 +31,16 @@ Define_Module(GlobalWirelessLinkInspector);
 GlobalWirelessLinkInspector::GlobalWirelessLinkInspector()
 {
     // TODO Auto-generated constructor stub
-    costMap = NULL;
-    globalRouteMap = NULL;
-    globalLocatorMap = NULL;
-    queueSize = NULL;
+    costMap = nullptr;
+    globalRouteMap = nullptr;
+    globalLocatorMap = nullptr;
+    queueSize = nullptr;
 }
 
 GlobalWirelessLinkInspector::~GlobalWirelessLinkInspector()
 {
     // TODO Auto-generated destructor stub
-    if (costMap != NULL)
+    if (costMap != nullptr)
     {
         while (!costMap->empty())
         {
@@ -48,9 +48,9 @@ GlobalWirelessLinkInspector::~GlobalWirelessLinkInspector()
             costMap->erase(costMap->begin());
         }
         delete costMap;
-        costMap = NULL;
+        costMap = nullptr;
     }
-    if (globalRouteMap != NULL)
+    if (globalRouteMap != nullptr)
     {
         while (!globalRouteMap->empty())
         {
@@ -62,19 +62,19 @@ GlobalWirelessLinkInspector::~GlobalWirelessLinkInspector()
             globalRouteMap->erase(globalRouteMap->begin());
         }
         delete globalRouteMap;
-        globalRouteMap = NULL;
+        globalRouteMap = nullptr;
     }
-    if (globalLocatorMap != NULL)
+    if (globalLocatorMap != nullptr)
     {
         delete globalLocatorMap;
-        globalLocatorMap = NULL;
+        globalLocatorMap = nullptr;
     }
 }
 
 void GlobalWirelessLinkInspector::initialize()
 {
 
-    if (costMap == NULL)
+    if (costMap == nullptr)
     {
         costMap = new CostMap;
     }
@@ -83,7 +83,7 @@ void GlobalWirelessLinkInspector::initialize()
         opp_error("more that an instance of GlobalWirelessWirelessLinkInspector exist");
     }
 
-    if (globalRouteMap == NULL)
+    if (globalRouteMap == nullptr)
     {
         globalRouteMap = new GlobalRouteMap;
     }
@@ -91,7 +91,7 @@ void GlobalWirelessLinkInspector::initialize()
     {
         opp_error("more that an instance of GlobalWirelessWirelessLinkInspector exist");
     }
-    if (globalLocatorMap == NULL)
+    if (globalLocatorMap == nullptr)
     {
         globalLocatorMap = new LocatorMap;
     }
@@ -99,7 +99,7 @@ void GlobalWirelessLinkInspector::initialize()
     {
         opp_error("more that an instance of GlobalWirelessWirelessLinkInspector exist");
     }
-    if (queueSize == NULL)
+    if (queueSize == nullptr)
     {
         queueSize = new QueueSize;
     }
@@ -118,11 +118,11 @@ void GlobalWirelessLinkInspector::setLinkCost(const L3Address& org,const L3Addre
 {
     if (!costMap)
         return;
-    CostMap::iterator it = costMap->find(org);
+    auto it = costMap->find(org);
     if (it != costMap->end())
     {
         NodeLinkCost *nLinkCost = it->second;
-        NodeLinkCost::iterator it2 = nLinkCost->find(dest);
+        auto it2 = nLinkCost->find(dest);
         if (it2 != nLinkCost->end())
         {
             it2->second = link;
@@ -146,11 +146,11 @@ bool GlobalWirelessLinkInspector::getLinkCost(const L3Address& org,const L3Addre
 
     if (!costMap)
         return false;
-    CostMap::iterator it = costMap->find(org);
+    auto it = costMap->find(org);
     if (it != costMap->end())
     {
         NodeLinkCost *nLinkCost = it->second;
-        NodeLinkCost::iterator it2 = nLinkCost->find(dest);
+        auto it2 = nLinkCost->find(dest);
         if (it2 != nLinkCost->end())
         {
             link = it2->second;
@@ -208,12 +208,12 @@ bool GlobalWirelessLinkInspector::getWorst(const std::vector<L3Address>& path, L
 
 bool GlobalWirelessLinkInspector::setRoute(const cModule* mod,const L3Address &orgA, const L3Address &dest, const L3Address &gw, const bool &erase)
 {
-    if (globalRouteMap == NULL)
+    if (globalRouteMap == nullptr)
         return false;
-    GlobalRouteMap::iterator it = globalRouteMap->find(orgA);
+    auto it = globalRouteMap->find(orgA);
     if (it == globalRouteMap->end())
         return false;
-    RouteMap* routesVector = NULL;
+    RouteMap* routesVector = nullptr;
     for (unsigned int i = 0; i < it->second.size(); i++)
     {
         if (it->second[i].mod == mod)
@@ -224,7 +224,7 @@ bool GlobalWirelessLinkInspector::setRoute(const cModule* mod,const L3Address &o
     }
     if (!routesVector)
         return false;
-    RouteMap::iterator it2 = routesVector->find(dest);
+    auto it2 = routesVector->find(dest);
     if (it2 != routesVector->end())
     {
         if (erase)
@@ -242,9 +242,9 @@ bool GlobalWirelessLinkInspector::setRoute(const cModule* mod,const L3Address &o
 
 void GlobalWirelessLinkInspector::initRoutingTables (const cModule* mod,const L3Address &orgA, bool isProact)
 {
-    if (globalRouteMap == NULL)
+    if (globalRouteMap == nullptr)
         return;
-    GlobalRouteMap::iterator it = globalRouteMap->find(orgA);
+    auto it = globalRouteMap->find(orgA);
     if (it == globalRouteMap->end())
     {
         ProtocolRoutingData data;
@@ -267,7 +267,7 @@ void GlobalWirelessLinkInspector::initRoutingTables (const cModule* mod,const L3
 
 bool GlobalWirelessLinkInspector::getRoute(const L3Address &src, const L3Address &dest, std::vector<L3Address> &route)
 {
-    if (globalRouteMap == NULL)
+    if (globalRouteMap == nullptr)
         return false;
     L3Address next = src;
     route.clear();
@@ -276,7 +276,7 @@ bool GlobalWirelessLinkInspector::getRoute(const L3Address &src, const L3Address
         return true;
     while (1)
     {
-        GlobalRouteMap::iterator it = globalRouteMap->find(next);
+        auto it = globalRouteMap->find(next);
         if (it == globalRouteMap->end())
             return false;
         if (it->second.empty())
@@ -285,7 +285,7 @@ bool GlobalWirelessLinkInspector::getRoute(const L3Address &src, const L3Address
         if (it->second.size() == 1)
         {
             RouteMap * rt = it->second[0].routesVector;
-            RouteMap::iterator it2 = rt->find(dest);
+            auto it2 = rt->find(dest);
             if (it2 == rt->end())
                 return false;
             if (it2->second == dest)
@@ -309,7 +309,7 @@ bool GlobalWirelessLinkInspector::getRoute(const L3Address &src, const L3Address
                 rt = it->second[0].routesVector;
             else
                 rt = it->second[1].routesVector;
-            RouteMap::iterator it2 = rt->find(dest);
+            auto it2 = rt->find(dest);
             if (it2 == rt->end())
             {
                 // search in the reactive
@@ -340,7 +340,7 @@ bool GlobalWirelessLinkInspector::getRoute(const L3Address &src, const L3Address
 
 bool GlobalWirelessLinkInspector::getRouteWithLocator(const L3Address &src, const L3Address &dest, std::vector<L3Address> &route)
 {
-    if (globalRouteMap == NULL)
+    if (globalRouteMap == nullptr)
         return false;
     // search in the locator tables
     //
@@ -361,7 +361,7 @@ bool GlobalWirelessLinkInspector::getRouteWithLocator(const L3Address &src, cons
 
 void GlobalWirelessLinkInspector::setLocatorInfo(L3Address node, L3Address ap)
 {
-    if (globalLocatorMap == NULL)
+    if (globalLocatorMap == nullptr)
         return;
     if (!ap.isUnspecified())
         (*globalLocatorMap)[node] = ap;
@@ -375,7 +375,7 @@ void GlobalWirelessLinkInspector::setLocatorInfo(L3Address node, L3Address ap)
 
 bool GlobalWirelessLinkInspector::getLocatorInfo(L3Address node, L3Address &ap)
 {
-    if (globalLocatorMap == NULL)
+    if (globalLocatorMap == nullptr)
         return false;
     LocatorIteartor it =  globalLocatorMap->find(node);
     if (it == globalLocatorMap->end())
@@ -388,7 +388,7 @@ bool GlobalWirelessLinkInspector::getLocatorInfo(L3Address node, L3Address &ap)
 bool GlobalWirelessLinkInspector::getNumNodes(L3Address node, int &cont)
 {
     cont = 0;
-    if (globalLocatorMap == NULL)
+    if (globalLocatorMap == nullptr)
         return false;
     LocatorIteartor it =  globalLocatorMap->find(node);
     if (it == globalLocatorMap->end())
@@ -405,7 +405,7 @@ bool GlobalWirelessLinkInspector::getNumNodes(L3Address node, int &cont)
 bool GlobalWirelessLinkInspector::areNeighbour(const L3Address &node1, const L3Address &node2,bool &areNei)
 {
     areNei = false;
-    if (globalLocatorMap == NULL)
+    if (globalLocatorMap == nullptr)
         return false;
     LocatorIteartor it1 =  globalLocatorMap->find(node1);
     if (it1 == globalLocatorMap->end())
@@ -423,7 +423,7 @@ bool GlobalWirelessLinkInspector::areNeighbour(const L3Address &node1, const L3A
 
 bool GlobalWirelessLinkInspector::setQueueSize(const L3Address &node, const uint64_t &val)
 {
-    if (queueSize == NULL)
+    if (queueSize == nullptr)
         return false;
     (*queueSize)[node] = val;
     return true;
@@ -431,9 +431,9 @@ bool GlobalWirelessLinkInspector::setQueueSize(const L3Address &node, const uint
 
 bool GlobalWirelessLinkInspector::getQueueSize(const L3Address &node, uint64_t & val)
 {
-    if (queueSize == NULL)
+    if (queueSize == nullptr)
         return false;
-    QueueSize::iterator it = queueSize->find(node);
+    auto it = queueSize->find(node);
     if (it == queueSize->end())
         return false;
     val = it->second;

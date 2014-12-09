@@ -28,12 +28,6 @@ namespace inet {
 
 Define_Module(TCPBasicClientApp);
 
-TCPBasicClientApp::TCPBasicClientApp()
-{
-    timeoutMsg = NULL;
-    nodeStatus = NULL;
-}
-
 TCPBasicClientApp::~TCPBasicClientApp()
 {
     cancelAndDelete(timeoutMsg);
@@ -170,7 +164,7 @@ void TCPBasicClientApp::rescheduleOrDeleteTimer(simtime_t d, short int msgKind)
     }
     else {
         delete timeoutMsg;
-        timeoutMsg = NULL;
+        timeoutMsg = nullptr;
     }
 }
 

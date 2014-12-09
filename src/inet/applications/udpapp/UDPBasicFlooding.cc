@@ -42,12 +42,12 @@ simsignal_t UDPBasicFlooding::floodPkSignal = registerSignal("floodPk");
 
 UDPBasicFlooding::UDPBasicFlooding()
 {
-    messageLengthPar = NULL;
-    burstDurationPar = NULL;
-    sleepDurationPar = NULL;
-    sendIntervalPar = NULL;
-    timerNext = NULL;
-    addressModule = NULL;
+    messageLengthPar = nullptr;
+    burstDurationPar = nullptr;
+    sleepDurationPar = nullptr;
+    sendIntervalPar = nullptr;
+    timerNext = nullptr;
+    addressModule = nullptr;
     outputInterfaceMulticastBroadcast.clear();
 }
 
@@ -109,16 +109,16 @@ void UDPBasicFlooding::processStart()
         const char *ports = par("outputInterfaceMulticastBroadcast");
         cStringTokenizer tokenizer(ports);
         const char *token;
-        while ((token = tokenizer.nextToken()) != NULL)
+        while ((token = tokenizer.nextToken()) != nullptr)
         {
-            if (strstr(token, "ALL") != NULL)
+            if (strstr(token, "ALL") != nullptr)
             {
                 for (int i = 0; i < ift->getNumInterfaces(); i++)
                 {
                     InterfaceEntry *ie = ift->getInterface(i);
                     if (ie->isLoopback())
                         continue;
-                    if (ie == NULL)
+                    if (ie == nullptr)
                         throw cRuntimeError(this, "Invalid output interface name : %s", token);
                     outputInterfaceMulticastBroadcast.push_back(ie->getInterfaceId());
                 }
@@ -126,7 +126,7 @@ void UDPBasicFlooding::processStart()
             else
             {
                 InterfaceEntry *ie = ift->getInterfaceByName(token);
-                if (ie == NULL)
+                if (ie == nullptr)
                     throw cRuntimeError(this, "Invalid output interface name : %s", token);
                 outputInterfaceMulticastBroadcast.push_back(ie->getInterfaceId());
             }
@@ -214,7 +214,7 @@ void UDPBasicFlooding::processPacket(cPacket *pk)
             delete pk;
             return;
         }
-        SourceSequence::iterator it = sourceSequence.find(moduleId);
+        auto it = sourceSequence.find(moduleId);
         if (it != sourceSequence.end())
         {
             if (it->second >= msgId)
@@ -365,7 +365,7 @@ bool UDPBasicFlooding::handleNodeStart(IDoneCallback *doneCallback)
 
         if (strcmp(par("destAddresses").stringValue(),"") != 0)
         {
-            if (addressModule == NULL)
+            if (addressModule == nullptr)
             {
                 addressModule = new AddressModule();
                 addressModule->initModule(true);

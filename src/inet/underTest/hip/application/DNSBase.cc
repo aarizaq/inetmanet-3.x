@@ -58,7 +58,7 @@ void DNSBase::loadXml()
 {
     //read xml
     const char *fileName = par("dnsDataFile");
-    if (fileName == NULL || (!strcmp(fileName, "")) || !LoadDataFromXML(fileName))
+    if (fileName == nullptr || (!strcmp(fileName, "")) || !LoadDataFromXML(fileName))
         error("Error reading DNS configuration from file %s", fileName);
 }
 
@@ -78,7 +78,7 @@ void DNSBase::handleMessage(cMessage *msg)
          EV << dnsVector[i]->domainName;
          }*/
     }
-    else if (dynamic_cast<DNSRegRvsMsg *>(msg) != NULL)
+    else if (dynamic_cast<DNSRegRvsMsg *>(msg) != nullptr)
     {
         registerRvs(check_and_cast<DNSRegRvsMsg *>(msg));
     }
@@ -204,7 +204,7 @@ void DNSBase::handleMessage(cMessage *msg)
 bool DNSBase::LoadDataFromXML(const char * filename)
 {
     cXMLElement* dnsData = ev.getXMLDocument(filename);
-    if (dnsData == NULL)
+    if (dnsData == nullptr)
     {
         error("Cannot read DNS data from file: %s", filename);
     }

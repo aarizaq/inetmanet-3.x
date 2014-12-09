@@ -43,7 +43,7 @@ PASER_UU_RREP::PASER_UU_RREP(struct in_addr src, struct in_addr dest,
 
     keyNr = 0;
 
-    sign.buf = NULL;
+    sign.buf = nullptr;
     sign.len = 0;
 }
 

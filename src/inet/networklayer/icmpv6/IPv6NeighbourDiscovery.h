@@ -68,7 +68,7 @@ class INET_API IPv6NeighbourDiscovery : public cSimpleModule, public ILifecycle
      * link-layer address and the output interface of the next hop.
      *
      * If the neighbor cache does not contain this address or it's in the
-     * state INCOMPLETE, this method will return the NULL address, and the
+     * state INCOMPLETE, this method will return the nullptr address, and the
      * IPv6 module should then send the datagram here to IPv6NeighbourDiscovery
      * where it will be stored until neighbour resolution completes.
      *
@@ -140,10 +140,13 @@ class INET_API IPv6NeighbourDiscovery : public cSimpleModule, public ILifecycle
 
     //List of periodic RA msgs(used only for router interfaces)
     RATimerList raTimerList;
+
     //List of pending Duplicate Address Detections
     DADList dadList;
+
     //List of pending Router & Prefix Discoveries
     RDList rdList;
+
     //List of Advertising Interfaces
     AdvIfList advIfList;
 

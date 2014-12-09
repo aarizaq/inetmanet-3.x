@@ -107,8 +107,8 @@ void TrafGenPar::initialize(int aStage)
 
 TrafGenPar::TrafGenPar()
 {
-    mpSendMessage = NULL;
-    mpOnOffSwitch = NULL;
+    mpSendMessage = nullptr;
+    mpOnOffSwitch = nullptr;
 }
 
 /**

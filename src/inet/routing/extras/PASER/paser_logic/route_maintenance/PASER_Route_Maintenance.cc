@@ -38,7 +38,7 @@ void PASER_Route_Maintenance::handleSelfMsg(cMessage *msg) {
     PASER_Timer_Message *nextTimout =
             paser_global->getTimer_queue()->timer_get_next_timer();
     struct timeval now;
-    paser_modul->MYgettimeofday(&now, NULL);
+    paser_modul->MYgettimeofday(&now, nullptr);
     EV << "now: " << now.tv_sec << "." << now.tv_usec << "\n";
     if (now.tv_sec < nextTimout->timeout.tv_sec) {
         EV << "1\n";
@@ -51,7 +51,7 @@ void PASER_Route_Maintenance::handleSelfMsg(cMessage *msg) {
     }
     EV << "timeout: " << nextTimout->timeout.tv_sec << "\n";
 
-    if (nextTimout != NULL) {
+    if (nextTimout != nullptr) {
         switch (nextTimout->handler) {
         case KDC_REQUEST:
             EV << "KDC_REQUEST\n";
@@ -134,7 +134,7 @@ void PASER_Route_Maintenance::timeout_ROUTE_DISCOVERY_UB(
                 i++) {
             PASER_UB_RREQ *messageToSend = new PASER_UB_RREQ(*message);
             struct timeval now;
-            paser_modul->MYgettimeofday(&now, NULL);
+            paser_modul->MYgettimeofday(&now, nullptr);
             messageToSend->timestamp = now.tv_sec;
             messageToSend->srcAddress_var.S_addr =
                     paser_global->getNetDevice()[i].ipaddr.S_addr;
@@ -160,7 +160,7 @@ void PASER_Route_Maintenance::timeout_ROUTE_DISCOVERY_UB(
         }
         // SegNr++
         paser_global->setSeqNr(paser_global->getSeqNr() + 1);
-        paser_modul->MYgettimeofday(&(t->timeout), NULL);
+        paser_modul->MYgettimeofday(&(t->timeout), nullptr);
         t->timeout = timeval_add(t->timeout, PASER_UB_RREQ_WAIT_TIME);
         paser_global->getTimer_queue()->timer_sort();
         paser_global->resetHelloTimer();
@@ -173,7 +173,7 @@ void PASER_Route_Maintenance::timeout_ROUTE_DISCOVERY_UB(
     paser_global->getMessage_queue()->deleteMessages(t->destAddr);
     PASER_Routing_Entry *routeToGW =
             paser_global->getRouting_table()->findBestGW();
-    if (routeToGW == NULL) {
+    if (routeToGW == nullptr) {
         paser_global->getRoute_findung()->tryToRegister();
     }
     delete pend_rreq;
@@ -185,7 +185,7 @@ void PASER_Route_Maintenance::timeout_ROUTINGTABLE_DELETE_ENTRY(
     EV << "timeout_ROUTINGTABLE_DELETE_ENTRY\n";
     PASER_Routing_Entry *rEntry = paser_global->getRouting_table()->findDest(
             t->destAddr);
-    if (rEntry != NULL) {
+    if (rEntry != nullptr) {
         paser_global->getRouting_table()->delete_entry(rEntry);
         delete rEntry;
     }
@@ -199,9 +199,9 @@ void PASER_Route_Maintenance::timeout_ROUTINGTABLE_NO_VALID_ENTRY(
     struct in_addr destAddr = t->destAddr;
     PASER_Routing_Entry *rEntry = paser_global->getRouting_table()->findDest(
             t->destAddr);
-    if (rEntry != NULL) {
+    if (rEntry != nullptr) {
         rEntry->isValid = 0;
-        rEntry->validTimer = NULL;
+        rEntry->validTimer = nullptr;
     }
     paser_global->getTimer_queue()->timer_remove(t);
     delete t;
@@ -209,7 +209,7 @@ void PASER_Route_Maintenance::timeout_ROUTINGTABLE_NO_VALID_ENTRY(
             destAddr);
     PASER_Routing_Entry *routeToGW =
             paser_global->getRouting_table()->findBestGW();
-    if (routeToGW == NULL && !paser_configuration->getIsGW()) {
+    if (routeToGW == nullptr && !paser_configuration->getIsGW()) {
         EV << "tryTORegister\n";
         paser_global->setIsRegistered(false);
         paser_global->getRoute_findung()->tryToRegister();
@@ -221,7 +221,7 @@ void PASER_Route_Maintenance::timeout_NEIGHBORTABLE_DELETE_ENTRY(
     EV << "timeout_NEIGHBORTABLE_DELETE_ENTRY\n";
     PASER_Neighbor_Entry *nEntry = paser_global->getNeighbor_table()->findNeigh(
             t->destAddr);
-    if (nEntry != NULL) {
+    if (nEntry != nullptr) {
         paser_global->getNeighbor_table()->delete_entry(nEntry);
         delete nEntry;
     }
@@ -235,10 +235,10 @@ void PASER_Route_Maintenance::timeout_NEIGHBORTABLE_NO_VALID_ENTRY(
     struct in_addr destAddr = t->destAddr;
     PASER_Neighbor_Entry *nEntry = paser_global->getNeighbor_table()->findNeigh(
             t->destAddr);
-    if (nEntry != NULL) {
+    if (nEntry != nullptr) {
         nEntry->isValid = 0;
-//        nEntry->setValidTimer(NULL);
-        nEntry->validTimer = NULL;
+//        nEntry->setValidTimer(nullptr);
+        nEntry->validTimer = nullptr;
     }
     paser_global->getTimer_queue()->timer_remove(t);
     delete t;
@@ -246,7 +246,7 @@ void PASER_Route_Maintenance::timeout_NEIGHBORTABLE_NO_VALID_ENTRY(
             destAddr);
     PASER_Routing_Entry *routeToGW =
             paser_global->getRouting_table()->findBestGW();
-    if (routeToGW == NULL && !paser_configuration->getIsGW()) {
+    if (routeToGW == nullptr && !paser_configuration->getIsGW()) {
         EV << "tryTORegister\n";
         paser_global->setIsRegistered(false);
         paser_global->getRoute_findung()->tryToRegister();
@@ -276,7 +276,7 @@ void PASER_Route_Maintenance::timeout_TU_RREP_ACK_TIMEOUT(
 //    }
     message_rreq_entry *pend_rrep = paser_global->getRrep_list()->pending_find(
             t->destAddr);
-    if (pend_rrep == NULL) {
+    if (pend_rrep == nullptr) {
         EV << "ERROR!\n";
         paser_global->getTimer_queue()->timer_remove(t);
         delete t;
@@ -299,7 +299,7 @@ void PASER_Route_Maintenance::timeout_TU_RREP_ACK_TIMEOUT(
                         messageToSend->srcAddress_var);
         if (!rEntry) {
             delete messageToSend;
-            paser_modul->MYgettimeofday(&(t->timeout), NULL);
+            paser_modul->MYgettimeofday(&(t->timeout), nullptr);
             t->timeout = timeval_add(t->timeout, PASER_UU_RREP_WAIT_TIME);
             paser_global->getTimer_queue()->timer_sort();
             return;
@@ -309,7 +309,7 @@ void PASER_Route_Maintenance::timeout_TU_RREP_ACK_TIMEOUT(
                         rEntry->nxthop_addr);
         if (!nEntry) {
             delete messageToSend;
-            paser_modul->MYgettimeofday(&(t->timeout), NULL);
+            paser_modul->MYgettimeofday(&(t->timeout), nullptr);
             t->timeout = timeval_add(t->timeout, PASER_UU_RREP_WAIT_TIME);
             paser_global->getTimer_queue()->timer_sort();
             return;
@@ -319,7 +319,7 @@ void PASER_Route_Maintenance::timeout_TU_RREP_ACK_TIMEOUT(
         //SeqNr++
         paser_global->setSeqNr(paser_global->getSeqNr() + 1);
         paser_modul->MYgettimeofday(&(t->timeout),
-                NULL)/*MYgettimeofday(&(t->timeout), NULL)*/;
+                nullptr)/*MYgettimeofday(&(t->timeout), nullptr)*/;
         t->timeout = timeval_add(t->timeout, PASER_UU_RREP_WAIT_TIME);
         paser_global->getTimer_queue()->timer_sort();
         return;
@@ -337,7 +337,7 @@ void PASER_Route_Maintenance::timeout_HELLO_SEND_TIMEOUT(
     EV << "timeout_HELLO_SEND_TIMEOUT\n";
     if (!paser_configuration->isRootReady) {
         paser_modul->MYgettimeofday(&(t->timeout),
-                NULL)/*MYgettimeofday(&(t->timeout), NULL)*/;
+                nullptr)/*MYgettimeofday(&(t->timeout), nullptr)*/;
         t->timeout = timeval_add(t->timeout, PASER_TB_Hello_Interval);
         paser_global->getTimer_queue()->timer_sort();
         return;
@@ -403,7 +403,7 @@ void PASER_Route_Maintenance::timeout_HELLO_SEND_TIMEOUT(
         paser_global->setSeqNr(paser_global->getSeqNr() + 1);
     }
     paser_modul->MYgettimeofday(&(t->timeout),
-            NULL)/*MYgettimeofday(&(t->timeout), NULL)*/;
+            nullptr)/*MYgettimeofday(&(t->timeout), nullptr)*/;
     t->timeout = timeval_add(t->timeout, PASER_TB_Hello_Interval);
     paser_global->getTimer_queue()->timer_sort();
 }
@@ -422,16 +422,16 @@ void PASER_Route_Maintenance::messageFailed(struct in_addr src,
             << ", dest: " << dest.S_addr.getIPv4().str() << "\n";
     PASER_Routing_Entry *rEntry = paser_global->getRouting_table()->findDest(
             dest);
-    if (rEntry == NULL) {
+    if (rEntry == nullptr) {
         return;
     }
     PASER_Neighbor_Entry *nEntry = paser_global->getNeighbor_table()->findNeigh(
             rEntry->nxthop_addr);
-    if (nEntry == NULL) {
+    if (nEntry == nullptr) {
         return;
     }
     struct in_addr nextHop = nEntry->neighbor_addr;
-    if (paser_global->getRouting_table()->findDest(nextHop) == NULL) {
+    if (paser_global->getRouting_table()->findDest(nextHop) == nullptr) {
         return;
     }
     EV << "Link broken to neighbor " << nextHop.S_addr.getIPv4().str()
@@ -443,7 +443,7 @@ void PASER_Route_Maintenance::messageFailed(struct in_addr src,
             nextHop);
 
     struct timeval now;
-    paser_modul->MYgettimeofday(&now, NULL);
+    paser_modul->MYgettimeofday(&now, nullptr);
 
     //if(sendRERR && paser_global->getBlacklist()->setRerrTime(dest, now)){
     if (sendRERR) {

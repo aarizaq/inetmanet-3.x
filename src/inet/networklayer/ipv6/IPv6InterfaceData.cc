@@ -80,8 +80,8 @@ std::string IPv6InterfaceData::RouterMulticastData::detailedInfo()
 
 IPv6InterfaceData::IPv6InterfaceData()
 {
-    hostMcastData = NULL;
-    routerMcastData = NULL;
+    hostMcastData = nullptr;
+    routerMcastData = nullptr;
 #ifdef WITH_xMIPv6
     // rt6 = IPv6RoutingTableAccess().get();
 #endif /* WITH_xMIPv6 */
@@ -271,7 +271,7 @@ void IPv6InterfaceData::assignAddress(const IPv6Address& addr, bool tentative,
 void IPv6InterfaceData::updateMatchingAddressExpiryTimes(const IPv6Address& prefix, int length,
         simtime_t expiryTime, simtime_t prefExpiryTime)
 {
-    for (AddressDataVector::iterator it = addresses.begin(); it != addresses.end(); it++) {
+    for (auto it = addresses.begin(); it != addresses.end(); it++) {
         if (it->address.matches(prefix, length)) {
             it->expiryTime = expiryTime;
             it->prefExpiryTime = prefExpiryTime;
@@ -478,7 +478,7 @@ void IPv6InterfaceData::joinMulticastGroup(const IPv6Address& multicastAddress)
 
     changed1(F_MULTICAST_ADDRESSES);
 
-    cModule *m = ownerp ? dynamic_cast<cModule *>(ownerp->getInterfaceTable()) : NULL;
+    cModule *m = ownerp ? dynamic_cast<cModule *>(ownerp->getInterfaceTable()) : nullptr;
     if (m) {
         IPv6MulticastGroupInfo info(ownerp, multicastAddress);
         m->emit(NF_IPv6_MCAST_JOIN, &info);
@@ -500,7 +500,7 @@ void IPv6InterfaceData::leaveMulticastGroup(const IPv6Address& multicastAddress)
 
                 changed1(F_MULTICAST_ADDRESSES);
 
-                cModule *m = ownerp ? dynamic_cast<cModule *>(ownerp->getInterfaceTable()) : NULL;
+                cModule *m = ownerp ? dynamic_cast<cModule *>(ownerp->getInterfaceTable()) : nullptr;
                 if (m) {
                     IPv6MulticastGroupInfo info(ownerp, multicastAddress);
                     m->emit(NF_IPv6_MCAST_LEAVE, &info);
@@ -595,7 +595,7 @@ IPv6Address IPv6InterfaceData::removeAddress(IPv6InterfaceData::AddressType type
 {
     IPv6Address addr;
 
-    for (AddressDataVector::iterator it = addresses.begin(); it != addresses.end(); ++it) {    // 24.9.07 - CB
+    for (auto it = addresses.begin(); it != addresses.end(); ++it) {    // 24.9.07 - CB
         if ((*it).addrType == type) {
             addr = it->address;
             addresses.erase(it);

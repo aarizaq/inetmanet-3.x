@@ -30,11 +30,6 @@ Define_Module(TCPSessionApp);
 #define MSGKIND_SEND       2
 #define MSGKIND_CLOSE      3
 
-TCPSessionApp::TCPSessionApp()
-{
-    timeoutMsg = NULL;
-    nodeStatus = NULL;
-}
 
 TCPSessionApp::~TCPSessionApp()
 {
@@ -152,7 +147,7 @@ cPacket *TCPSessionApp::createDataPacket(long sendBytes)
     switch (socket.getDataTransferMode()) {
         case TCP_TRANSFER_BYTECOUNT:
         case TCP_TRANSFER_OBJECT: {
-            cPacket *msg = NULL;
+            cPacket *msg = nullptr;
             msg = new cPacket("data1");
             msg->setByteLength(sendBytes);
             return msg;
@@ -228,7 +223,7 @@ void TCPSessionApp::parseScript(const char *script)
         if (!isdigit(*s))
             throw cRuntimeError("Syntax error in script: number of bytes expected");
 
-        long numBytes = strtol(s, NULL, 10);
+        long numBytes = strtol(s, nullptr, 10);
 
         while (isdigit(*s))
             s++;

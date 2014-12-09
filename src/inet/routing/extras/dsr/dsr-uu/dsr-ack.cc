@@ -34,7 +34,7 @@ struct dsr_ack_opt *dsr_ack_opt_add(struct dsr_opt_hdr *buf, int len, struct in_
 
 
     if (len < (int)DSR_ACK_HDR_LEN)
-        return NULL;
+        return nullptr;
 
     struct dsr_ack_opt *ack = new dsr_ack_opt();
     ack->type = DSR_OPT_ACK;
@@ -63,7 +63,7 @@ int NSCLASS dsr_ack_send(struct in_addr dst, unsigned short id)
 
     len = DSR_OPT_HDR_LEN + /* DSR_SRT_OPT_LEN(srt) +  */ DSR_ACK_HDR_LEN;
 
-    dp = dsr_pkt_alloc(NULL);
+    dp = dsr_pkt_alloc(nullptr);
 
     dp->dst = dst;
     /* dp->srt = srt; */
@@ -130,7 +130,7 @@ static struct dsr_ack_req_opt *dsr_ack_req_opt_create(struct dsr_opt_hdr *buf, i
 {
 
     if (len < (int)DSR_ACK_REQ_HDR_LEN)
-        return NULL;
+        return nullptr;
 
     struct dsr_ack_req_opt *ack_req = new  dsr_ack_req_opt();
     /* Build option */
@@ -146,7 +146,7 @@ static struct dsr_ack_req_opt *dsr_ack_req_opt_create(struct dsr_opt_hdr *buf, i
 
 int NSCLASS dsr_ack_req_send(struct dsr_pkt *dp)
 {
-    DSRPkt *p=NULL;
+    DSRPkt *p=nullptr;
 
     /* srt = dsr_rtc_find(my_addr(), dst); */
 
@@ -222,7 +222,7 @@ int NSCLASS dsr_ack_req_send(struct dsr_pkt *dp)
     if (dp->dst.s_addr != DSR_BROADCAST)
     {
         /* Get hardware destination address */
-        IPv4ControlInfo *controlInfo=NULL;
+        IPv4ControlInfo *controlInfo=nullptr;
         if (p->getControlInfo())
         {
             if (dynamic_cast<IPv4ControlInfo*>(p->getControlInfo()))
@@ -231,7 +231,7 @@ int NSCLASS dsr_ack_req_send(struct dsr_pkt *dp)
                 delete p->removeControlInfo();
         }
 
-        if (controlInfo==NULL)
+        if (controlInfo==nullptr)
         {
             controlInfo = new IPv4ControlInfo();
             p->setControlInfo(controlInfo);
@@ -273,7 +273,7 @@ dsr_ack_req_opt_add(struct dsr_pkt *dp, unsigned short id)
     struct dsr_opt_hdr *buf;
 
     if (!dp)
-        return NULL;
+        return nullptr;
 
     /* If we are forwarding a packet and there is already an ACK REQ option,
      * we just overwrite the old one. */
@@ -313,7 +313,7 @@ dsr_ack_req_opt_add(struct dsr_pkt *dp, unsigned short id)
         buf = dsr_pkt_alloc_opts(dp);
         DEBUG("Allocating options for ACK REQ\n");
         if (dp->dh.opth.empty())
-            return NULL;
+            return nullptr;
 
         dsr_build_ip(dp, dp->src, dp->dst, IP_HDR_LEN,
                      tot_len + DSR_OPT_HDR_LEN + DSR_ACK_REQ_HDR_LEN,
@@ -322,7 +322,7 @@ dsr_ack_req_opt_add(struct dsr_pkt *dp, unsigned short id)
         dsr_opt_hdr_add(buf, DSR_OPT_HDR_LEN + DSR_ACK_REQ_HDR_LEN,prot);
 
         if (dp->dh.opth.empty())
-            return NULL;
+            return nullptr;
     }
     else
     {
@@ -332,7 +332,7 @@ dsr_ack_req_opt_add(struct dsr_pkt *dp, unsigned short id)
         DEBUG("Expanding options for ACK REQ p_len=%d\n",
               ntohs(dp->dh.opth.begin()->p_len));
         if (!buf)
-            return NULL;
+            return nullptr;
 
         dsr_build_ip(dp, dp->src, dp->dst, IP_HDR_LEN,
                      tot_len + DSR_ACK_REQ_HDR_LEN, IPPROTO_DSR, ttl);
@@ -353,7 +353,7 @@ int NSCLASS dsr_ack_req_send(struct in_addr neigh_addr, unsigned short id)
     int len = DSR_OPT_HDR_LEN + DSR_ACK_REQ_HDR_LEN;
     struct dsr_opt_hdr *buf;
 
-    dp = dsr_pkt_alloc(NULL);
+    dp = dsr_pkt_alloc(nullptr);
 
     dp->dst = neigh_addr;
     dp->nxt_hop = neigh_addr;

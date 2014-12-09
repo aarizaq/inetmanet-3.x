@@ -37,7 +37,7 @@ void IPv4RouteRule::setRule(Rule rule)
 
 IPv4RouteRule::IPv4RouteRule()
 {
-    interfacePtr = NULL;
+    interfacePtr = nullptr;
     rule = NONE;
     sPort = dPort = -1;
     srcAddress = IPv4Address::UNSPECIFIED_ADDRESS;

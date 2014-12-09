@@ -423,14 +423,14 @@ DsrDataBase::DijkstraShortest::State::State()
 {
     idPrev = L3Address();
     label = tent;
-    edge = NULL;
+    edge = nullptr;
 }
 
 DsrDataBase::DijkstraShortest::State::State(const double  &costData)
 {
     idPrev = L3Address();
     label = tent;
-    edge = NULL;
+    edge = nullptr;
     costAdd = costData;
 }
 

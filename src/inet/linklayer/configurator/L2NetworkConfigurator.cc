@@ -32,8 +32,6 @@ namespace inet {
 
 Define_Module(L2NetworkConfigurator);
 
-#define T(CODE)    { long startTime = clock(); CODE; printElapsedTime( #CODE, startTime); }
-
 inline bool isEmpty(const char *s)
 {
     return !s || !s[0];
@@ -42,11 +40,6 @@ inline bool isEmpty(const char *s)
 inline bool isNotEmpty(const char *s)
 {
     return s && s[0];
-}
-
-static void printElapsedTime(const char *name, long startTime)
-{
-    EV_INFO << "Time spent in L2NetworkConfigurator::" << name << ": " << ((double)(clock() - startTime) / CLOCKS_PER_SEC) << "s" << endl;
 }
 
 void L2NetworkConfigurator::initialize(int stage)
@@ -105,7 +98,7 @@ void L2NetworkConfigurator::extractTopology(L2Topology& topology)
 
                     Topology::LinkOut *linkOut = findLinkOut(node, interfaceEntry->getNodeOutputGateId());
 
-                    Node *childNode = NULL;
+                    Node *childNode = nullptr;
 
                     if (linkOut) {
                         childNode = (Node *)linkOut->getRemoteNode();
@@ -220,13 +213,10 @@ void L2NetworkConfigurator::readInterfaceConfiguration(Node *rootNode)
 void L2NetworkConfigurator::computeConfiguration()
 {
     long initializeStartTime = clock();
-
     // extract topology into the L2Topology object
-    T(extractTopology(topology));
-
+    TIME(extractTopology(topology));
     // read the configuration from XML; it will serve as input for port assignment
-    T(readInterfaceConfiguration(rootNode));
-
+    TIME(readInterfaceConfiguration(rootNode));
     printElapsedTime("initialize", initializeStartTime);
 }
 
@@ -243,7 +233,7 @@ Topology::LinkOut *L2NetworkConfigurator::findLinkOut(Node *node, int gateId)
             return node->getLinkOut(i);
 
 
-    return NULL;
+    return nullptr;
 }
 
 bool L2NetworkConfigurator::linkContainsMatchingHostExcept(InterfaceInfo *currentInfo, Matcher& hostMatcher,
@@ -251,7 +241,7 @@ bool L2NetworkConfigurator::linkContainsMatchingHostExcept(InterfaceInfo *curren
 {
     Node *childNode = currentInfo->childNode;
 
-    if (childNode == NULL)
+    if (childNode == nullptr)
         return false;
 
     cModule *hostModule = childNode->module;

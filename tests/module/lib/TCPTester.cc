@@ -174,7 +174,7 @@ void TCPScriptableTester::processIncomingSegment(TCPSegment *seg, bool fromA)
     int segno = fromA ? ++fromASeq : ++fromBSeq;
 
     // find entry in script
-    Command *cmd = NULL;
+    Command *cmd = nullptr;
     for (CommandVector::iterator i=commands.begin(); i!=commands.end(); ++i)
         if (i->fromA==fromA && i->segno==segno)
             cmd = &(*i);

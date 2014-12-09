@@ -32,9 +32,9 @@ namespace inet {
 Define_Module(GenericNetworkProtocol);
 
 GenericNetworkProtocol::GenericNetworkProtocol() :
-        interfaceTable(NULL),
-        routingTable(NULL),
-        arp(NULL),
+        interfaceTable(nullptr),
+        routingTable(nullptr),
+        arp(nullptr),
         queueOutBaseGateId(-1),
         defaultHopLimit(-1),
         numLocalDeliver(0),
@@ -46,7 +46,7 @@ GenericNetworkProtocol::GenericNetworkProtocol() :
 
 GenericNetworkProtocol::~GenericNetworkProtocol()
 {
-    for (DatagramQueueForHooks::iterator it = queuedDatagramsForHooks.begin(); it != queuedDatagramsForHooks.end(); ++it) {
+    for (auto it = queuedDatagramsForHooks.begin(); it != queuedDatagramsForHooks.end(); ++it) {
         delete it->datagram;
     }
     queuedDatagramsForHooks.clear();
@@ -111,7 +111,7 @@ void GenericNetworkProtocol::endService(cPacket *pk)
 const InterfaceEntry *GenericNetworkProtocol::getSourceInterfaceFrom(cPacket *msg)
 {
     cGate *g = msg->getArrivalGate();
-    return g ? interfaceTable->getInterfaceByNetworkLayerGateIndex(g->getIndex()) : NULL;
+    return g ? interfaceTable->getInterfaceByNetworkLayerGateIndex(g->getIndex()) : nullptr;
 }
 
 void GenericNetworkProtocol::handlePacketFromNetwork(GenericDatagram *datagram)
@@ -127,7 +127,7 @@ void GenericNetworkProtocol::handlePacketFromNetwork(GenericDatagram *datagram)
 
     L3Address nextHop;
     const InterfaceEntry *inIE = getSourceInterfaceFrom(datagram);
-    const InterfaceEntry *destIE = NULL;
+    const InterfaceEntry *destIE = nullptr;
     if (datagramPreRoutingHook(datagram, inIE, destIE, nextHop) != IHook::ACCEPT)
         return;
 
@@ -197,7 +197,7 @@ void GenericNetworkProtocol::routePacket(GenericDatagram *datagram, const Interf
 
         // error handling: destination address does not exist in routing table:
         // throw packet away and continue
-        if (re == NULL) {
+        if (re == nullptr) {
             EV_INFO << "unroutable, discarding packet\n";
             numUnroutable++;
             delete datagram;
@@ -224,7 +224,7 @@ void GenericNetworkProtocol::routeMulticastPacket(GenericDatagram *datagram, con
 {
     L3Address destAddr = datagram->getDestinationAddress();
     // if received from the network...
-    if (fromIE != NULL) {
+    if (fromIE != nullptr) {
         // check for local delivery
         if (routingTable->isLocalMulticastAddress(destAddr))
             sendDatagramToHL(datagram);
@@ -262,7 +262,7 @@ void GenericNetworkProtocol::routeMulticastPacket(GenericDatagram *datagram, con
 //    // route (provided routing table already contains srcAddr); otherwise
 //    // discard and continue.
 //    const InterfaceEntry *shortestPathIE = rt->getInterfaceForDestinationAddr(datagram->getSourceAddress());
-//    if (fromIE!=NULL && shortestPathIE!=NULL && fromIE!=shortestPathIE)
+//    if (fromIE!=nullptr && shortestPathIE!=nullptr && fromIE!=shortestPathIE)
 //    {
 //        // FIXME count dropped
 //        EV << "Packet dropped.\n";
@@ -271,7 +271,7 @@ void GenericNetworkProtocol::routeMulticastPacket(GenericDatagram *datagram, con
 //    }
 //
 //    // if received from the network...
-//    if (fromIE!=NULL)
+//    if (fromIE!=nullptr)
 //    {
 //        // check for local delivery
 //        if (rt->isLocalMulticastAddress(destAddr))
@@ -301,7 +301,7 @@ void GenericNetworkProtocol::routeMulticastPacket(GenericDatagram *datagram, con
 //    }
 //
 //    // routed explicitly via Generic_MULTICAST_IF
-//    if (destIE!=NULL)
+//    if (destIE!=nullptr)
 //    {
 //        ASSERT(datagram->getDestinationAddress().isMulticast());
 //
@@ -391,7 +391,7 @@ GenericDatagram *GenericNetworkProtocol::encapsulate(cPacket *transportPacket, c
     // of the outgoing interface after routing
     if (!src.isUnspecified()) {
         // if interface parameter does not match existing interface, do not send datagram
-        if (routingTable->getInterfaceByAddress(src) == NULL)
+        if (routingTable->getInterfaceByAddress(src) == nullptr)
             throw cRuntimeError("Wrong source address %s in (%s)%s: no interface with such address",
                     src.str().c_str(), transportPacket->getClassName(), transportPacket->getFullName());
         datagram->setSourceAddress(src);
@@ -496,7 +496,7 @@ void GenericNetworkProtocol::datagramLocalOut(GenericDatagram *datagram, const I
     if (!datagram->getDestinationAddress().isMulticast())
         routePacket(datagram, destIE, nextHop, true);
     else
-        routeMulticastPacket(datagram, destIE, NULL);
+        routeMulticastPacket(datagram, destIE, nullptr);
 }
 
 void GenericNetworkProtocol::registerHook(int priority, IHook *hook)
@@ -508,7 +508,7 @@ void GenericNetworkProtocol::registerHook(int priority, IHook *hook)
 void GenericNetworkProtocol::unregisterHook(int priority, IHook *hook)
 {
     Enter_Method("unregisterHook()");
-    for (std::multimap<int, IHook *>::iterator iter = hooks.begin(); iter != hooks.end(); iter++) {
+    for (auto iter = hooks.begin(); iter != hooks.end(); iter++) {
         if ((iter->first == priority) && (iter->second == hook)) {
             hooks.erase(iter);
             return;
@@ -519,7 +519,7 @@ void GenericNetworkProtocol::unregisterHook(int priority, IHook *hook)
 void GenericNetworkProtocol::dropQueuedDatagram(const INetworkDatagram *datagram)
 {
     Enter_Method("dropDatagram()");
-    for (std::list<QueuedDatagramForHook>::iterator iter = queuedDatagramsForHooks.begin(); iter != queuedDatagramsForHooks.end(); iter++) {
+    for (auto iter = queuedDatagramsForHooks.begin(); iter != queuedDatagramsForHooks.end(); iter++) {
         if (iter->datagram == datagram) {
             delete datagram;
             queuedDatagramsForHooks.erase(iter);
@@ -531,7 +531,7 @@ void GenericNetworkProtocol::dropQueuedDatagram(const INetworkDatagram *datagram
 void GenericNetworkProtocol::reinjectQueuedDatagram(const INetworkDatagram *datagram)
 {
     Enter_Method("reinjectDatagram()");
-    for (std::list<QueuedDatagramForHook>::iterator iter = queuedDatagramsForHooks.begin(); iter != queuedDatagramsForHooks.end(); iter++) {
+    for (auto iter = queuedDatagramsForHooks.begin(); iter != queuedDatagramsForHooks.end(); iter++) {
         if (iter->datagram == datagram) {
             GenericDatagram *datagram = iter->datagram;
             const InterfaceEntry *inIE = iter->inIE;
@@ -563,7 +563,7 @@ void GenericNetworkProtocol::reinjectQueuedDatagram(const INetworkDatagram *data
 
 INetfilter::IHook::Result GenericNetworkProtocol::datagramPreRoutingHook(GenericDatagram *datagram, const InterfaceEntry *inIE, const InterfaceEntry *& outIE, L3Address& nextHop)
 {
-    for (std::multimap<int, IHook *>::iterator iter = hooks.begin(); iter != hooks.end(); iter++) {
+    for (auto iter = hooks.begin(); iter != hooks.end(); iter++) {
         IHook::Result r = iter->second->datagramPreRoutingHook(datagram, inIE, outIE, nextHop);
         switch (r) {
             case IHook::ACCEPT:
@@ -576,7 +576,7 @@ INetfilter::IHook::Result GenericNetworkProtocol::datagramPreRoutingHook(Generic
             case IHook::QUEUE:
                 if (datagram->getOwner() != this)
                     throw cRuntimeError("Model error: netfilter hook changed the owner of queued datagram '%s'", datagram->getFullName());
-                queuedDatagramsForHooks.push_back(QueuedDatagramForHook(datagram, inIE, NULL, nextHop, INetfilter::IHook::PREROUTING));
+                queuedDatagramsForHooks.push_back(QueuedDatagramForHook(datagram, inIE, nullptr, nextHop, INetfilter::IHook::PREROUTING));
                 return r;
 
             case IHook::STOLEN:
@@ -591,7 +591,7 @@ INetfilter::IHook::Result GenericNetworkProtocol::datagramPreRoutingHook(Generic
 
 INetfilter::IHook::Result GenericNetworkProtocol::datagramForwardHook(GenericDatagram *datagram, const InterfaceEntry *inIE, const InterfaceEntry *& outIE, L3Address& nextHop)
 {
-    for (std::multimap<int, IHook *>::iterator iter = hooks.begin(); iter != hooks.end(); iter++) {
+    for (auto iter = hooks.begin(); iter != hooks.end(); iter++) {
         IHook::Result r = iter->second->datagramForwardHook(datagram, inIE, outIE, nextHop);
         switch (r) {
             case IHook::ACCEPT:
@@ -617,7 +617,7 @@ INetfilter::IHook::Result GenericNetworkProtocol::datagramForwardHook(GenericDat
 
 INetfilter::IHook::Result GenericNetworkProtocol::datagramPostRoutingHook(GenericDatagram *datagram, const InterfaceEntry *inIE, const InterfaceEntry *& outIE, L3Address& nextHop)
 {
-    for (std::multimap<int, IHook *>::iterator iter = hooks.begin(); iter != hooks.end(); iter++) {
+    for (auto iter = hooks.begin(); iter != hooks.end(); iter++) {
         IHook::Result r = iter->second->datagramPostRoutingHook(datagram, inIE, outIE, nextHop);
         switch (r) {
             case IHook::ACCEPT:
@@ -644,7 +644,7 @@ INetfilter::IHook::Result GenericNetworkProtocol::datagramPostRoutingHook(Generi
 INetfilter::IHook::Result GenericNetworkProtocol::datagramLocalInHook(GenericDatagram *datagram, const InterfaceEntry *inIE)
 {
     L3Address address;
-    for (std::multimap<int, IHook *>::iterator iter = hooks.begin(); iter != hooks.end(); iter++) {
+    for (auto iter = hooks.begin(); iter != hooks.end(); iter++) {
         IHook::Result r = iter->second->datagramLocalInHook(datagram, inIE);
         switch (r) {
             case IHook::ACCEPT:
@@ -655,7 +655,7 @@ INetfilter::IHook::Result GenericNetworkProtocol::datagramLocalInHook(GenericDat
                 return r;
 
             case IHook::QUEUE:
-                queuedDatagramsForHooks.push_back(QueuedDatagramForHook(datagram, inIE, NULL, address, INetfilter::IHook::LOCALIN));
+                queuedDatagramsForHooks.push_back(QueuedDatagramForHook(datagram, inIE, nullptr, address, INetfilter::IHook::LOCALIN));
                 return r;
 
             case IHook::STOLEN:
@@ -670,7 +670,7 @@ INetfilter::IHook::Result GenericNetworkProtocol::datagramLocalInHook(GenericDat
 
 INetfilter::IHook::Result GenericNetworkProtocol::datagramLocalOutHook(GenericDatagram *datagram, const InterfaceEntry *& outIE, L3Address& nextHop)
 {
-    for (std::multimap<int, IHook *>::iterator iter = hooks.begin(); iter != hooks.end(); iter++) {
+    for (auto iter = hooks.begin(); iter != hooks.end(); iter++) {
         IHook::Result r = iter->second->datagramLocalOutHook(datagram, outIE, nextHop);
         switch (r) {
             case IHook::ACCEPT:
@@ -681,7 +681,7 @@ INetfilter::IHook::Result GenericNetworkProtocol::datagramLocalOutHook(GenericDa
                 return r;
 
             case IHook::QUEUE:
-                queuedDatagramsForHooks.push_back(QueuedDatagramForHook(datagram, NULL, outIE, nextHop, INetfilter::IHook::LOCALOUT));
+                queuedDatagramsForHooks.push_back(QueuedDatagramForHook(datagram, nullptr, outIE, nextHop, INetfilter::IHook::LOCALOUT));
                 return r;
 
             case IHook::STOLEN:

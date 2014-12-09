@@ -120,7 +120,7 @@ bool PIMBase::handleNodeShutdown(IDoneCallback *doneCallback)
 {
     // TODO unregister IP_PROT_PIM
     cancelAndDelete(helloTimer);
-    helloTimer = NULL;
+    helloTimer = nullptr;
     return true;
 }
 
@@ -128,7 +128,7 @@ void PIMBase::handleNodeCrash()
 {
     // TODO unregister IP_PROT_PIM
     cancelAndDelete(helloTimer);
-    helloTimer = NULL;
+    helloTimer = nullptr;
 }
 
 void PIMBase::processHelloTimer(cMessage *timer)
@@ -188,7 +188,7 @@ void PIMBase::sendHelloPacket(PIMInterface *pimInterface)
 
 void PIMBase::processHelloPacket(PIMHello *packet)
 {
-    IPv4ControlInfo *ctrl = dynamic_cast<IPv4ControlInfo *>(packet->getControlInfo());
+    IPv4ControlInfo *ctrl = check_and_cast<IPv4ControlInfo *>(packet->getControlInfo());
     int interfaceId = ctrl->getInterfaceId();
     IPv4Address address = ctrl->getSrcAddr();
     int version = packet->getVersion();
@@ -202,11 +202,11 @@ void PIMBase::processHelloPacket(PIMHello *packet)
     for (unsigned int i = 0; i < packet->getOptionsArraySize(); i++) {
         HelloOption *option = packet->getOptions(i);
         if (dynamic_cast<HoldtimeOption *>(option))
-            holdTime = (double)dynamic_cast<HoldtimeOption *>(option)->getHoldTime();
+            holdTime = (double)static_cast<HoldtimeOption *>(option)->getHoldTime();
         else if (dynamic_cast<DRPriorityOption *>(option))
-            drPriority = check_and_cast<DRPriorityOption *>(option)->getPriority();
+            drPriority = static_cast<DRPriorityOption *>(option)->getPriority();
         else if (dynamic_cast<GenerationIDOption *>(option))
-            generationId = check_and_cast<GenerationIDOption *>(option)->getGenerationID();
+            generationId = static_cast<GenerationIDOption *>(option)->getGenerationID();
     }
 
     InterfaceEntry *ie = ift->getInterfaceById(interfaceId);

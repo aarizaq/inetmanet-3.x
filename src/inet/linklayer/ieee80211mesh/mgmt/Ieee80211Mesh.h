@@ -212,7 +212,7 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase, public cListener
         {
             if (isGateWay)
                 return gateWayDataMap;
-            return NULL;
+            return nullptr;
         }
         virtual bool selectGateWay(const L3Address &, MACAddress &);
 

@@ -195,7 +195,7 @@ void PASERUdpTrafficReceiver::handleExtMessage(cMessage *extMsg)
 
 	//Check if message is a TrafficMsg
 	PaserTrafficDataMsg *trafficMsg = dynamic_cast<PaserTrafficDataMsg*>(extMsg);
-	if(extMsg!=NULL){
+	if(extMsg!=nullptr){
 		//handle trafficMsg
 		handleTrafficMsg(trafficMsg);
 		numReceived++;
@@ -274,9 +274,6 @@ void PASERUdpTrafficReceiver::updateMapEntry(PaserTrafficDataMsg *trafficMsg)
 {
 	EV << "Method " << this->getFullPath() << ": updateMapEntry() called..." << endl;
 
-	//Initialize iterator
-	std::multimap<std::string,mapEntry>::iterator it;
-
 	//check if map entry exists
 	if(hasMapEntry(trafficMsg->getSrcId())==false){
 		error("Map entry does not exist. Please use addSenderToMap() Method!");
@@ -284,7 +281,7 @@ void PASERUdpTrafficReceiver::updateMapEntry(PaserTrafficDataMsg *trafficMsg)
 	}
 
 	//Get information of trafficMsg and update mapEntry
-	it=findMapEntry(trafficMsg->getSrcId());
+	auto it=findMapEntry(trafficMsg->getSrcId());
 
 	if(it==senderMap.end()){
 		error("Cannot find entry in table!");
@@ -316,10 +313,7 @@ bool PASERUdpTrafficReceiver::hasMapEntry(std::string searchId)
 {
 	EV<< "Method " << this->getFullPath() << ": hasMapEntry() called..." << endl;
 
-	//Initialize iterator
-	std::multimap<std::string,mapEntry>::iterator it;
-
-	for(it=senderMap.begin();it!=senderMap.end();it++){
+	for(auto it=senderMap.begin();it!=senderMap.end();++it){
 		if(strcmp((*it).first.c_str(),searchId.c_str())==0){
 			return true;
 		}
@@ -333,16 +327,13 @@ std::multimap<std::string,mapEntry>::iterator PASERUdpTrafficReceiver::findMapEn
 {
 	EV<< "Method " << this->getFullPath() << ": findMapEntry() called..." << endl;
 
-	//Initialize iterator
-	std::multimap<std::string,mapEntry>::iterator it;
-
 	//Check if map entry exists
 	if(hasMapEntry(searchId)==false){
 		error("Map Entry does not exist!");
 	}
 
 	//find position and return iterator
-	it=senderMap.find(searchId);
+	auto it=senderMap.find(searchId);
 
 	if(it==senderMap.end()){
 		error("Map Entry does not exist! HUGE ERROR!");
@@ -356,11 +347,8 @@ void PASERUdpTrafficReceiver::calculateAverageValues()
     numberOfOKReceivedPackets = 0;
 	EV<< "Method " << this->getFullPath() << ": calculateAverageValues() called..." << endl;
 
-	//Initialize iterator
-	std::multimap<std::string,mapEntry>::iterator it;
-
 	//Go threw senderMap and calculate values for every entry
-	for(it=senderMap.begin();it!=senderMap.end();it++){
+	for(auto it=senderMap.begin();it!=senderMap.end();++it){
 		//Fetch entry
 		std::string currentId = (*it).first;
 		mapEntry currentEntry = (*it).second;
@@ -501,9 +489,8 @@ void PASERUdpTrafficReceiver::finish()
 	double hopCount=0;
 	double maxDelay=0;
 	double minDelay=0;
-	std::multimap<std::string,mapEntry>::iterator it;
 	calculateAverageValues();
-	for(it=senderMap.begin();it!=senderMap.end();it++){
+	for(auto it=senderMap.begin(); it!=senderMap.end(); ++it){
 		delay = delay+(*it).second.averageDelay;
 		hopCount = hopCount+(*it).second.averageNumberOfHops;
 		maxDelay = maxDelay+(*it).second.maxDelay;
@@ -514,7 +501,7 @@ void PASERUdpTrafficReceiver::finish()
 	RandomWPMobility *mobilityModule = dynamic_cast<RandomWPMobility*>(findModuleWhereverInNode("mobility",this));
 	std::string waitTime="";
 	std::string speed="";
-	if(mobilityModule!=NULL){
+	if(mobilityModule!=nullptr){
 		waitTime=mobilityModule->par("waitTime").str();
 		speed=mobilityModule->par("speed").str();
 	}
@@ -563,9 +550,9 @@ void PASERUdpTrafficReceiver::savePlotParams()
 	double hopCount=0;
 	double maxDelay=0;
 	double minDelay=0;
-	std::multimap<std::string,mapEntry>::iterator it;
+
 	calculateAverageValues();
-	for(it=senderMap.begin();it!=senderMap.end();it++){
+	for(auto it=senderMap.begin();it!=senderMap.end(); ++it){
 		delay = delay+(*it).second.averageDelay;
 		hopCount = hopCount+(*it).second.averageNumberOfHops;
 		maxDelay = maxDelay+(*it).second.maxDelay;
@@ -576,7 +563,7 @@ void PASERUdpTrafficReceiver::savePlotParams()
 	RandomWPMobility *mobilityModule = dynamic_cast<RandomWPMobility*>(findModuleWhereverInNode("mobility",this));
 	std::string waitTime="";
 	std::string speed="";
-	if(mobilityModule!=NULL){
+	if(mobilityModule!=nullptr){
 		waitTime=mobilityModule->par("waitTime").str();
 		speed=mobilityModule->par("speed").str();
 	}

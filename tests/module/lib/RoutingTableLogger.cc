@@ -142,7 +142,7 @@ IRoutingTable *RoutingTableLogger::findRoutingTableInNode(cModule *node)
             return rt;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 void RoutingTableLogger::dumpRoutes(cModule *node, IRoutingTable *rt, DestFilter &filter)

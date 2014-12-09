@@ -92,13 +92,13 @@ public:
                     beaconInterval = 0.1;
                     authSeqExpected = -1;
                     isCandidate = -1;
-                    authTimeoutMsg_a = NULL;
-                    authTimeoutMsg_b = NULL;
-                    groupAuthTimeoutMsg = NULL;
+                    authTimeoutMsg_a = nullptr;
+                    authTimeoutMsg_b = nullptr;
+                    groupAuthTimeoutMsg = nullptr;
                     status=NOT_AUTHENTICATED;
-                    beaconTimeoutMsg = NULL;
+                    beaconTimeoutMsg = nullptr;
                     isAuthenticated = false;
-                    PTKTimerMsg =NULL;
+                    PTKTimerMsg =nullptr;
                     sideA=0;
                }
 

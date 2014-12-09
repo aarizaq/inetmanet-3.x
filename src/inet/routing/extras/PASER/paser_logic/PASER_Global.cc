@@ -32,7 +32,7 @@ PASER_Global::PASER_Global(PASER_Configurations *pConfig, PASER_Socket *pModul) 
 
     isGW = paser_configuration->getIsGW();
 
-    hello_message_interval = NULL;
+    hello_message_interval = nullptr;
 
     timer_queue = new PASER_Timer_Queue();
     neighbor_table = new PASER_Neighbor_Table(timer_queue, pModul);
@@ -60,7 +60,7 @@ PASER_Global::PASER_Global(PASER_Configurations *pConfig, PASER_Socket *pModul) 
 
     crypto_hash = new PASER_Crypto_Hash();
 
-//    GTK.buf = NULL;
+//    GTK.buf = nullptr;
 //    GTK.len = 0;
 
 //    if(isGW){
@@ -266,12 +266,12 @@ void PASER_Global::activateHelloMessageTimer() {
     if (!isHello) {
         return;
     }
-    if (hello_message_interval == NULL) {
+    if (hello_message_interval == nullptr) {
         hello_message_interval = new PASER_Timer_Message();
-        hello_message_interval->data = NULL;
+        hello_message_interval->data = nullptr;
         hello_message_interval->destAddr.S_addr = PASER_BROADCAST;
         hello_message_interval->handler = HELLO_SEND_TIMEOUT;
-        paser_modul->MYgettimeofday(&(hello_message_interval->timeout), NULL);
+        paser_modul->MYgettimeofday(&(hello_message_interval->timeout), nullptr);
         EV << "HelloTimeOut: " << hello_message_interval->timeout.tv_sec << "\n";
         hello_message_interval->timeout = timeval_add(
                 hello_message_interval->timeout, PASER_TB_Hello_Interval);
@@ -289,11 +289,11 @@ void PASER_Global::resetHelloTimer() {
     if (!isHello) {
         return;
     }
-    if (hello_message_interval == NULL) {
+    if (hello_message_interval == nullptr) {
         activateHelloMessageTimer();
         return;
     }
-    paser_modul->MYgettimeofday(&(hello_message_interval->timeout), NULL);
+    paser_modul->MYgettimeofday(&(hello_message_interval->timeout), nullptr);
     EV << "HelloTimeOut: " << hello_message_interval->timeout.tv_sec << "\n";
     hello_message_interval->timeout = timeval_add(hello_message_interval->timeout, 
     PASER_TB_Hello_Interval);
@@ -359,7 +359,7 @@ void PASER_Global::resetPASER() {
     timer_queue->timer_queue.clear();
 
     //Reset HELLO
-    hello_message_interval = NULL;
+    hello_message_interval = nullptr;
     resetHelloTimer();
 
     //Reset MessageQueue
@@ -375,10 +375,10 @@ void PASER_Global::resetPASER() {
     blackList->clearRerrList();
 
     //Delete GTK
-    lv_block nullBlock;
-    nullBlock.len = 0;
-    nullBlock.buf = NULL;
-    paser_configuration->setGTK(nullBlock);
+    lv_block nullptrBlock;
+    nullptrBlock.len = 0;
+    nullptrBlock.buf = nullptr;
+    paser_configuration->setGTK(nullptrBlock);
 
     isRegistered = false;
     wasRegistered = false;

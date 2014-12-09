@@ -88,7 +88,7 @@ int OSPFConfigReader::resolveInterfaceName(const std::string& name) const
 void OSPFConfigReader::getAreaListFromXML(const cXMLElement& routerNode, std::set<AreaID>& areaList) const
 {
     cXMLElementList routerConfig = routerNode.getChildren();
-    for (cXMLElementList::iterator routerConfigIt = routerConfig.begin(); routerConfigIt != routerConfig.end(); routerConfigIt++) {
+    for (auto routerConfigIt = routerConfig.begin(); routerConfigIt != routerConfig.end(); routerConfigIt++) {
         std::string nodeName = (*routerConfigIt)->getTagName();
         if ((nodeName == "PointToPointInterface") ||
             (nodeName == "BroadcastInterface") ||
@@ -109,7 +109,7 @@ void OSPFConfigReader::loadAreaFromXML(const cXMLElement& asConfig, AreaID areaI
     areaXPath += "']";
 
     cXMLElement *areaConfig = asConfig.getElementByPath(areaXPath.c_str());
-    if (areaConfig == NULL) {
+    if (areaConfig == nullptr) {
         throw cRuntimeError("No configuration for Area ID: %s at %s", areaID.str(false).c_str(), asConfig.getSourceLocation());
     }
     else {
@@ -118,7 +118,7 @@ void OSPFConfigReader::loadAreaFromXML(const cXMLElement& asConfig, AreaID areaI
 
     Area *area = new Area(ift, areaID);
     cXMLElementList areaDetails = areaConfig->getChildren();
-    for (cXMLElementList::iterator arIt = areaDetails.begin(); arIt != areaDetails.end(); arIt++) {
+    for (auto arIt = areaDetails.begin(); arIt != areaDetails.end(); arIt++) {
         std::string nodeName = (*arIt)->getTagName();
         if (nodeName == "AddressRange") {
             IPv4AddressRange addressRange;
@@ -266,11 +266,11 @@ void OSPFConfigReader::loadInterfaceParameters(const cXMLElement& ifConfig)
 
     cXMLElementList ifDetails = ifConfig.getChildren();
 
-    for (cXMLElementList::iterator ifElemIt = ifDetails.begin(); ifElemIt != ifDetails.end(); ifElemIt++) {
+    for (auto ifElemIt = ifDetails.begin(); ifElemIt != ifDetails.end(); ifElemIt++) {
         std::string nodeName = (*ifElemIt)->getTagName();
         if ((interfaceType == "NBMAInterface") && (nodeName == "NBMANeighborList")) {
             cXMLElementList neighborList = (*ifElemIt)->getChildren();
-            for (cXMLElementList::iterator neighborIt = neighborList.begin(); neighborIt != neighborList.end(); neighborIt++) {
+            for (auto neighborIt = neighborList.begin(); neighborIt != neighborList.end(); neighborIt++) {
                 std::string neighborNodeName = (*neighborIt)->getTagName();
                 if (neighborNodeName == "NBMANeighbor") {
                     Neighbor *neighbor = new Neighbor;
@@ -282,7 +282,7 @@ void OSPFConfigReader::loadInterfaceParameters(const cXMLElement& ifConfig)
         }
         if ((interfaceType == "PointToMultiPointInterface") && (nodeName == "PointToMultiPointNeighborList")) {
             cXMLElementList neighborList = (*ifElemIt)->getChildren();
-            for (cXMLElementList::iterator neighborIt = neighborList.begin(); neighborIt != neighborList.end(); neighborIt++) {
+            for (auto neighborIt = neighborList.begin(); neighborIt != neighborList.end(); neighborIt++) {
                 std::string neighborNodeName = (*neighborIt)->getTagName();
                 if (neighborNodeName == "PointToMultiPointNeighbor") {
                     Neighbor *neighbor = new Neighbor;
@@ -294,7 +294,7 @@ void OSPFConfigReader::loadInterfaceParameters(const cXMLElement& ifConfig)
     }
     // add the interface to it's Area
     Area *area = ospfRouter->getAreaByID(areaID);
-    if (area != NULL) {
+    if (area != nullptr) {
         area->addInterface(intf);
         intf->processEvent(Interface::INTERFACE_UP);    // notification should come from the blackboard...
     }
@@ -345,7 +345,7 @@ void OSPFConfigReader::loadExternalRoute(const cXMLElement& externalRouteConfig)
     long externalRouteTagVal = 0;    // default value
     const char *externalRouteTag = externalRouteConfig.getAttribute("externalRouteTag");
     if (externalRouteTag && *externalRouteTag) {
-        char *endp = NULL;
+        char *endp = nullptr;
         externalRouteTagVal = strtol(externalRouteTag, &endp, 0);
         if (*endp)
             throw cRuntimeError("Invalid externalRouteTag='%s' at %s", externalRouteTag, externalRouteConfig.getSourceLocation());
@@ -376,7 +376,7 @@ void OSPFConfigReader::loadHostRoute(const cXMLElement& hostRouteConfig)
 
     // add the host route to the OSPF data structure.
     Area *area = ospfRouter->getAreaByID(hostArea);
-    if (area != NULL) {
+    if (area != nullptr) {
         area->addHostRoute(hostParameters);
     }
     else {
@@ -412,7 +412,7 @@ void OSPFConfigReader::loadVirtualLink(const cXMLElement& virtualLinkConfig)
     Area *transitArea = ospfRouter->getAreaByID(intf->getAreaID());
     Area *backbone = ospfRouter->getAreaByID(BACKBONE_AREAID);
 
-    if ((backbone != NULL) && (transitArea != NULL) && (transitArea->getExternalRoutingCapability())) {
+    if ((backbone != nullptr) && (transitArea != nullptr) && (transitArea->getExternalRoutingCapability())) {
         backbone->addInterface(intf);
     }
     else {
@@ -436,8 +436,8 @@ bool OSPFConfigReader::loadConfigFromXML(cXMLElement *asConfig, Router *ospfRout
 
     // load information on this router
     cXMLElementList routers = asConfig->getElementsByTagName("Router");
-    cXMLElement *routerNode = NULL;
-    for (cXMLElementList::iterator routerIt = routers.begin(); routerIt != routers.end(); routerIt++) {
+    cXMLElement *routerNode = nullptr;
+    for (auto routerIt = routers.begin(); routerIt != routers.end(); routerIt++) {
         const char *nodeName = getRequiredAttribute(*(*routerIt), "name");
         inet::PatternMatcher pattern(nodeName, true, true, true);
         if (pattern.matches(nodeFullPath.c_str()) || pattern.matches(nodeShortenedFullPath.c_str())) {    // match Router@name and fullpath of my node
@@ -445,7 +445,7 @@ bool OSPFConfigReader::loadConfigFromXML(cXMLElement *asConfig, Router *ospfRout
             break;
         }
     }
-    if (routerNode == NULL) {
+    if (routerNode == nullptr) {
         throw cRuntimeError("No configuration for Router '%s' at '%s'", nodeFullPath.c_str(), asConfig->getSourceLocation());
     }
 
@@ -462,13 +462,13 @@ bool OSPFConfigReader::loadConfigFromXML(cXMLElement *asConfig, Router *ospfRout
         areaList.insert(BACKBONE_AREAID);
     }
     // load area information
-    for (std::set<AreaID>::iterator areaIt = areaList.begin(); areaIt != areaList.end(); areaIt++) {
+    for (auto areaIt = areaList.begin(); areaIt != areaList.end(); areaIt++) {
         loadAreaFromXML(*asConfig, *areaIt);
     }
 
     // load interface information
     cXMLElementList routerConfig = routerNode->getChildren();
-    for (cXMLElementList::iterator routerConfigIt = routerConfig.begin(); routerConfigIt != routerConfig.end(); routerConfigIt++) {
+    for (auto routerConfigIt = routerConfig.begin(); routerConfigIt != routerConfig.end(); routerConfigIt++) {
         std::string nodeName = (*routerConfigIt)->getTagName();
         if ((nodeName == "PointToPointInterface") ||
             (nodeName == "BroadcastInterface") ||

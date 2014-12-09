@@ -77,11 +77,11 @@ int RoutingTableParser::readRoutingTableFromFile(const char *filename)
     FILE *fp;
     int charpointer;
     char *file = new char[MAX_FILESIZE];
-    char *ifconfigFile = NULL;
-    char *routeFile = NULL;
+    char *ifconfigFile = nullptr;
+    char *routeFile = nullptr;
 
     fp = fopen(filename, "r");
-    if (fp == NULL)
+    if (fp == nullptr)
         throw cRuntimeError("Error opening routing table file `%s'", filename);
 
     // read the whole into the file[] char-array
@@ -167,7 +167,7 @@ void RoutingTableParser::parseInterfaces(char *ifconfigFile)
 {
     char buf[MAX_ENTRY_STRING_SIZE];
     int charpointer = 0;
-    InterfaceEntry *ie = NULL;
+    InterfaceEntry *ie = nullptr;
 
     // parsing of entries in interface definition
     while (ifconfigFile[charpointer] != '\0') {
@@ -283,7 +283,7 @@ void RoutingTableParser::parseMulticastGroups(char *groupStr, InterfaceEntry *it
     // Parse string (IPv4 addresses separated by colons)
     cStringTokenizer tokenizer(groupStr, ":");
     const char *token;
-    while ((token = tokenizer.nextToken()) != NULL)
+    while ((token = tokenizer.nextToken()) != nullptr)
         itf->ipv4Data()->joinMulticastGroup(IPv4Address(token));
 }
 
@@ -414,7 +414,7 @@ void RoutingTableParser::parseRules(char *rulesFile)
                    // find mask
                    IPv4Address mask("255.255.255.255");
                    char * p = strstr(str,"/");
-                   if (p != NULL)
+                   if (p != nullptr)
                    {
                        char strAux[30];
                        strcpy (strAux,p+1);
@@ -441,7 +441,7 @@ void RoutingTableParser::parseRules(char *rulesFile)
                    skipBlanks(rulesFile, pos);
                    IPv4Address mask("255.255.255.255");
                    char * p = strstr(str,"/");
-                   if (p!=NULL)
+                   if (p!=nullptr)
                    {
                        char strAux[30];
                        strcpy (strAux,p+1);
@@ -506,7 +506,7 @@ void RoutingTableParser::parseRules(char *rulesFile)
                   pos += strcpyword(str, rulesFile + pos);
                   skipBlanks(rulesFile, pos);
                   InterfaceEntry *ie = ift->getInterfaceByName(str);
-                  if (ie==NULL)
+                  if (ie==nullptr)
                        opp_error("Syntax error in routing file: `%s' should be a valid interface name", str);
                   else
                        e->setInterface(ie);

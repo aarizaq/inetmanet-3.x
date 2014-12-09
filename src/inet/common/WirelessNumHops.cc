@@ -61,7 +61,7 @@ void WirelessNumHops::reStart()
         IMobility *mod;
         cModule *host = destNode->getModule();
         mod = check_and_cast<IMobility *>(host->getSubmodule("mobility"));
-        if (mod == NULL)
+        if (mod == nullptr)
             opp_error("node or mobility module not found");
         nodeInfo info;
         info.mob = mod;
@@ -161,7 +161,7 @@ void WirelessNumHops::fillRoutingTables(const double &tDistance)
     routeCacheIp.clear();
     // clean edges
     cleanLinkArray();
-    for (LinkCache::iterator it = linkCache.begin(); it != linkCache.end(); ++it)
+    for (auto it = linkCache.begin(); it != linkCache.end(); ++it)
     {
         addEdge ((*it).node1, (*it).node2,1);
         addEdge ((*it).node2, (*it).node1,1);
@@ -250,7 +250,7 @@ void WirelessNumHops::fillRoutingTablesWitCost(const double &tDistance)
     routeCacheIp.clear();
     // clean edges
     cleanLinkArray();
-    for (LinkCache::iterator it = linkCache.begin(); it != linkCache.end(); ++it)
+    for (auto it = linkCache.begin(); it != linkCache.end(); ++it)
     {
         if ((*it).cost == -1)
         {
@@ -306,7 +306,7 @@ void WirelessNumHops::DijkstraShortest::State::setCostVector(const unsigned int 
 
 void WirelessNumHops::cleanLinkArray()
 {
-    for (LinkArray::iterator it=linkArray.begin();it!=linkArray.end();it++)
+    for (auto it=linkArray.begin();it!=linkArray.end();it++)
         while (!it->second.empty())
         {
             delete it->second.back();
@@ -317,8 +317,7 @@ void WirelessNumHops::cleanLinkArray()
 
 void WirelessNumHops::addEdge (const int & originNode, const int & last_node,unsigned int cost)
 {
-    LinkArray::iterator it;
-    it = linkArray.find(originNode);
+    auto it = linkArray.find(originNode);
     if (it!=linkArray.end())
     {
          for (unsigned int i=0;i<it->second.size();i++)
@@ -340,8 +339,7 @@ void WirelessNumHops::addEdge (const int & originNode, const int & last_node,uns
 
 void WirelessNumHops::addEdge (const int & originNode, const int & last_node,unsigned int cost, double costAdd, double costMax)
 {
-    LinkArray::iterator it;
-    it = linkArray.find(originNode);
+    auto it = linkArray.find(originNode);
     if (it!=linkArray.end())
     {
          for (unsigned int i=0;i<it->second.size();i++)
@@ -367,7 +365,7 @@ void WirelessNumHops::addEdge (const int & originNode, const int & last_node,uns
 
 int WirelessNumHops::getIdNode(const MACAddress &add)
 {
-    std::map<MACAddress,int>::iterator it = related.find(add);
+    auto it = related.find(add);
     if (it != related.end())
         return it->second;
     opp_error("Node not found with MAC Address %s",add.str().c_str());
@@ -376,7 +374,7 @@ int WirelessNumHops::getIdNode(const MACAddress &add)
 
 int WirelessNumHops::getIdNode(const IPv4Address &add)
 {
-    std::map<IPv4Address,int>::iterator it = relatedIp.find(add);
+    auto it = relatedIp.find(add);
     if (it != relatedIp.end())
         return it->second;
     opp_error("Node not found with IP Address %s", add.str().c_str());
@@ -396,8 +394,7 @@ void WirelessNumHops::run()
     if (linkArray.empty())
         return;
 
-    LinkArray::iterator it;
-    it = linkArray.find(rootNode);
+    auto it = linkArray.find(rootNode);
     if (it==linkArray.end())
         opp_error("Node root not found %i",rootNode);
     WirelessNumHops::DijkstraShortest::State state(0);
@@ -439,9 +436,7 @@ void WirelessNumHops::run()
         WirelessNumHops::DijkstraShortest::SetElem elem = *itHeap;
         heap.erase(itHeap);
 
-        RouteMap::iterator it;
-
-        it = routeMap.find(elem.iD);
+        auto it = routeMap.find(elem.iD);
         if (it==routeMap.end())
             opp_error("node not found in routeMap %i",elem.iD);
         if ((it->second).label == perm)
@@ -449,12 +444,12 @@ void WirelessNumHops::run()
 
         (it->second).label = perm;
 
-        LinkArray::iterator linkIt=linkArray.find(elem.iD);
+        auto linkIt=linkArray.find(elem.iD);
 
         for (unsigned int i=0;i<linkIt->second.size();i++)
         {
             WirelessNumHops::DijkstraShortest::Edge* current_edge= (linkIt->second)[i];
-            RouteMap::iterator itNext = routeMap.find(current_edge->last_node_);
+            auto itNext = routeMap.find(current_edge->last_node_);
             if (itNext != routeMap.end() && itNext->second.label == perm)
                 continue;
             unsigned int cost = current_edge->cost + (it->second).cost;
@@ -510,8 +505,7 @@ void WirelessNumHops::runUntil (const int &target)
     if (linkArray.empty())
         return;
 
-    LinkArray::iterator it;
-    it = linkArray.find(rootNode);
+    auto it = linkArray.find(rootNode);
     if (it==linkArray.end())
         opp_error("Root node not found %i",rootNode);
     WirelessNumHops::DijkstraShortest::State state(0);
@@ -555,9 +549,7 @@ void WirelessNumHops::runUntil (const int &target)
 
         heap.erase(heap.begin());
 
-        RouteMap::iterator it;
-
-        it = routeMap.find(elem.iD);
+        auto it = routeMap.find(elem.iD);
         if (it==routeMap.end())
             opp_error("node not found in routeMap %i",elem.iD);
         if ((it->second).label == perm)
@@ -566,12 +558,12 @@ void WirelessNumHops::runUntil (const int &target)
         if (target == elem.iD)
             return;
 
-        LinkArray::iterator linkIt=linkArray.find(elem.iD);
+        auto linkIt=linkArray.find(elem.iD);
 
         for (unsigned int i=0;i<linkIt->second.size();i++)
         {
             WirelessNumHops::DijkstraShortest::Edge* current_edge= (linkIt->second)[i];
-            RouteMap::iterator itNext = routeMap.find(current_edge->last_node_);
+            auto itNext = routeMap.find(current_edge->last_node_);
             unsigned int cost = current_edge->cost + (it->second).cost;
             double costAdd = current_edge->costAdd + (it->second).costAdd;
             double costMax = std::max(current_edge->costMax ,(it->second).costMax);
@@ -617,7 +609,7 @@ void WirelessNumHops::runUntil (const int &target)
 
 bool WirelessNumHops::getRoute(const int &nodeId,std::deque<int> &pathNode)
 {
-    RouteMap::iterator it = routeMap.find(nodeId);
+    auto it = routeMap.find(nodeId);
     if (it==routeMap.end())
         return false;
 
@@ -638,7 +630,7 @@ bool WirelessNumHops::getRoute(const int &nodeId,std::deque<int> &pathNode)
 
 bool WirelessNumHops::getRouteCost(const int &nodeId,std::deque<int> &pathNode,double &costAdd, double &costMax)
 {
-    RouteMap::iterator it = routeMap.find(nodeId);
+    auto it = routeMap.find(nodeId);
     if (it==routeMap.end())
         return false;
 
@@ -693,7 +685,7 @@ bool WirelessNumHops::findRouteWithCost(const double &coverageArea, const MACAdd
     else
         fillRoutingTables(coverageArea);
 
-    RouteCacheMac::iterator it = routeCacheMac.find(dest);
+    auto it = routeCacheMac.find(dest);
     if (it!=routeCacheMac.end())
     {
         pathNode = it->second;
@@ -707,7 +699,7 @@ bool WirelessNumHops::findRouteWithCost(const double &coverageArea, const MACAdd
         std::deque<MACAddress> path;
         for (unsigned int i = 0; i < route.size(); i++)
         {
-            for (std::map<MACAddress,int>::iterator it2 = related.begin(); it2 != related.end(); ++it2)
+            for (auto it2 = related.begin(); it2 != related.end(); ++it2)
             {
                 if (it2->second ==  route[i])
                     path.push_back(it2->first);
@@ -733,7 +725,7 @@ bool WirelessNumHops::findRouteWithCost(const double &coverageArea, const IPv4Ad
     else
         fillRoutingTables(coverageArea);
 
-    RouteCacheIp::iterator it = routeCacheIp.find(dest);
+    auto it = routeCacheIp.find(dest);
     if (it!=routeCacheIp.end())
     {
         pathNode = it->second;
@@ -747,7 +739,7 @@ bool WirelessNumHops::findRouteWithCost(const double &coverageArea, const IPv4Ad
         std::deque<IPv4Address> path;
         for (unsigned int i = 0; i < route.size(); i++)
         {
-            for (std::map<IPv4Address,int>::iterator it2 = relatedIp.begin(); it2 != relatedIp.end(); ++it2)
+            for (auto it2 = relatedIp.begin(); it2 != relatedIp.end(); ++it2)
             {
                 if (it2->second ==  route[i])
                     path.push_back(it2->first);
@@ -781,7 +773,7 @@ void WirelessNumHops::getNeighbours(const IPv4Address &node, std::vector<IPv4Add
             continue;
         if (pos.distance(vectorList[i].mob->getCurrentPosition()) < distance)
         {
-            for (std::map<IPv4Address,int>::iterator it2 = relatedIp.begin(); it2 != relatedIp.end(); ++it2)
+            for (auto it2 = relatedIp.begin(); it2 != relatedIp.end(); ++it2)
             {
                 if (it2->second ==  i)
                     list.push_back(it2->first);
@@ -803,7 +795,7 @@ void WirelessNumHops::getNeighbours(const MACAddress &node, std::vector<MACAddre
             continue;
         if (pos.distance(vectorList[i].mob->getCurrentPosition()) < distance)
         {
-            for (std::map<MACAddress,int>::iterator it2 = related.begin(); it2 != related.end(); ++it2)
+            for (auto it2 = related.begin(); it2 != related.end(); ++it2)
             {
                 if (it2->second ==  i)
                     list.push_back(it2->first);
@@ -816,9 +808,9 @@ void WirelessNumHops::getNeighbours(const MACAddress &node, std::vector<MACAddre
 std::deque<int> WirelessNumHops::getRoute(int index)
 {
     std::deque<int> route;
-    if (index>=routeMap.size())
+    if (index >= (int)routeMap.size())
         return route;
-    RouteMap::iterator it = routeMap.begin();
+    auto it = routeMap.begin();
     for (int i = 0; i<index; i++)
         ++it;
 
@@ -886,7 +878,7 @@ void WirelessNumHops::setIpRoutingTable(const IPv4Address &desAddress, const IPv
     IInterfaceTable* itable = L3AddressResolver().interfaceTableOf(node);
 
 
-    InterfaceEntry *iface = NULL;
+    InterfaceEntry *iface = nullptr;
     bool found = false;
     for (int j = 0; j < itable->getNumInterfaces(); j++)
     {
@@ -895,7 +887,7 @@ void WirelessNumHops::setIpRoutingTable(const IPv4Address &desAddress, const IPv
             continue;
         if (e->isLoopback())
             continue;
-        if (strstr(e->getName(), "wlan") != NULL)
+        if (strstr(e->getName(), "wlan") != nullptr)
         {
             iface = e;
             break;
@@ -905,7 +897,7 @@ void WirelessNumHops::setIpRoutingTable(const IPv4Address &desAddress, const IPv
     if (!iface)
         return;
 
-    IPv4Route *oldentry = NULL;
+    IPv4Route *oldentry = nullptr;
     for (int i = inet_rt->getNumRoutes(); i > 0; --i)
     {
         IPv4Route *e = inet_rt->getRoute(i - 1);
@@ -960,7 +952,7 @@ void WirelessNumHops::setIpRoutingTable(const IPv4Address &root, const IPv4Addre
 
 
     IIPv4RoutingTable *inet_rt = L3AddressResolver().routingTableOf(getContainingNode((cModule*)vectorList[id].mob));
-    InterfaceEntry *iface = NULL;
+    InterfaceEntry *iface = nullptr;
     bool found = false;
     for (int j = 0; j < vectorList[id].itable->getNumInterfaces(); j++)
     {
@@ -969,7 +961,7 @@ void WirelessNumHops::setIpRoutingTable(const IPv4Address &root, const IPv4Addre
             continue;
         if (e->isLoopback())
             continue;
-        if (strstr(e->getName(), "wlan") != NULL)
+        if (strstr(e->getName(), "wlan") != nullptr)
         {
             iface = e;
             break;
@@ -979,7 +971,7 @@ void WirelessNumHops::setIpRoutingTable(const IPv4Address &root, const IPv4Addre
     if (!iface)
         return;
 
-    IPv4Route *oldentry = NULL;
+    IPv4Route *oldentry = nullptr;
     for (int i = inet_rt->getNumRoutes(); i > 0; --i)
     {
         IPv4Route *e = inet_rt->getRoute(i - 1);

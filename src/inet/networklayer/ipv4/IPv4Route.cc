@@ -36,6 +36,7 @@ Register_Class(IPv4MulticastRoute);
 
 IPv4Route::~IPv4Route()
 {
+    delete protocolData;
 }
 
 std::string IPv4Route::info() const
@@ -108,7 +109,7 @@ IRoutingTable *IPv4Route::getRoutingTableAsGeneric() const
 IPv4MulticastRoute::~IPv4MulticastRoute()
 {
     delete inInterface;
-    for (OutInterfaceVector::iterator it = outInterfaces.begin(); it != outInterfaces.end(); ++it)
+    for (auto it = outInterfaces.begin(); it != outInterfaces.end(); ++it)
         delete *it;
     outInterfaces.clear();
 }
@@ -171,7 +172,7 @@ void IPv4MulticastRoute::setInInterface(InInterface *_inInterface)
 void IPv4MulticastRoute::clearOutInterfaces()
 {
     if (!outInterfaces.empty()) {
-        for (OutInterfaceVector::iterator it = outInterfaces.begin(); it != outInterfaces.end(); ++it)
+        for (auto it = outInterfaces.begin(); it != outInterfaces.end(); ++it)
             delete *it;
         outInterfaces.clear();
         changed(F_OUT);
@@ -187,26 +188,23 @@ void IPv4MulticastRoute::addOutInterface(OutInterface *outInterface)
 {
     ASSERT(outInterface);
 
-    OutInterfaceVector::iterator it;
-    for (it = outInterfaces.begin(); it != outInterfaces.end(); ++it) {
-        if ((*it)->getInterface() == outInterface->getInterface())
-            break;
+    auto it = outInterfaces.begin();
+    for ( ; it != outInterfaces.end(); ++it) {
+        if ((*it)->getInterface() == outInterface->getInterface()) {
+            delete *it;
+            *it = outInterface;
+            changed(F_OUT);
+            return;
+        }
     }
 
-    if (it != outInterfaces.end()) {
-        delete *it;
-        *it = outInterface;
-        changed(F_OUT);
-    }
-    else {
-        outInterfaces.push_back(outInterface);
-        changed(F_OUT);
-    }
+    outInterfaces.push_back(outInterface);
+    changed(F_OUT);
 }
 
 bool IPv4MulticastRoute::removeOutInterface(const InterfaceEntry *ie)
 {
-    for (OutInterfaceVector::iterator it = outInterfaces.begin(); it != outInterfaces.end(); ++it) {
+    for (auto it = outInterfaces.begin(); it != outInterfaces.end(); ++it) {
         if ((*it)->getInterface() == ie) {
             delete *it;
             outInterfaces.erase(it);

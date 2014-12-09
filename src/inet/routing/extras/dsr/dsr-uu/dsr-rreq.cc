@@ -134,14 +134,14 @@ NSCLASS rreq_tbl_entry *NSCLASS __rreq_tbl_entry_create(struct in_addr node_addr
     e = new rreq_tbl_entry;
 
     if (!e)
-        return NULL;
+        return nullptr;
 
     e->state = STATE_IDLE;
     e->node_addr = node_addr;
     e->ttl = 0;
     memset(&e->tx_time, 0, sizeof(struct timeval));
     e->num_rexmts = 0;
-    e->timer=NULL;
+    e->timer=nullptr;
 #ifndef OMNETPP
 #ifdef NS2
     e->timer = new DSRUUTimer(this, "RREQTblTimer");
@@ -154,7 +154,7 @@ NSCLASS rreq_tbl_entry *NSCLASS __rreq_tbl_entry_create(struct in_addr node_addr
     if (!e->timer)
     {
         delete e;
-        return NULL;
+        return nullptr;
     }
     init_timer(e->timer);
 
@@ -170,7 +170,7 @@ NSCLASS rreq_tbl_entry * NSCLASS __rreq_tbl_add(struct in_addr node_addr)
     e = __rreq_tbl_entry_create(node_addr);
 
     if (!e)
-        return NULL;
+        return nullptr;
     L3Address addr(IPv4Address(node_addr.s_addr));
     DsrRreqTbl::iterator it = dsrRreqTbl.find(addr);
     if (it != dsrRreqTbl.end())
@@ -185,11 +185,11 @@ int NSCLASS
 rreq_tbl_add_id(struct in_addr initiator, struct in_addr target,
                 unsigned short id,double cost,const VectorAddress &addr,int length)
 {
-    struct rreq_tbl_entry *e = NULL;
-    struct Id_Entry *id_e = NULL;
-    struct Id_Entry *id_entry=NULL;
+    struct rreq_tbl_entry *e = nullptr;
+    struct Id_Entry *id_e = nullptr;
+    struct Id_Entry *id_entry=nullptr;
     int exist=1;
-    struct Id_Entry_Route *id_r = NULL;
+    struct Id_Entry_Route *id_r = nullptr;
     int res = 0;
 
     L3Address addrInitiator(IPv4Address(initiator.s_addr));
@@ -269,7 +269,7 @@ rreq_tbl_add_id(struct in_addr initiator, struct in_addr target,
 
 int NSCLASS rreq_tbl_route_discovery_cancel(struct in_addr dst)
 {
-    struct rreq_tbl_entry *e = NULL;
+    struct rreq_tbl_entry *e = nullptr;
 
     L3Address addr(IPv4Address(dst.s_addr));
     DsrRreqTbl::iterator it = dsrRreqTbl.find(addr);
@@ -300,7 +300,7 @@ int NSCLASS rreq_tbl_route_discovery_cancel(struct in_addr dst)
 
 int NSCLASS dsr_rreq_route_discovery(struct in_addr target)
 {
-    struct rreq_tbl_entry *e = NULL;
+    struct rreq_tbl_entry *e = nullptr;
     int ttl, res = 0;
     struct timeval expires;
 
@@ -420,7 +420,7 @@ static struct dsr_rreq_opt *dsr_rreq_opt_add(dsr_opt_hdr *buf, unsigned int len,
 
 
     if (!buf || len < DSR_RREQ_HDR_LEN)
-        return NULL;
+        return nullptr;
 
     struct dsr_rreq_opt *rreq_opt =  new dsr_rreq_opt;
 
@@ -439,7 +439,7 @@ int NSCLASS dsr_rreq_send(struct in_addr target, int ttl)
     struct dsr_opt_hdr *buf;
     int len = DSR_OPT_HDR_LEN + DSR_RREQ_HDR_LEN;
 
-    dp = dsr_pkt_alloc(NULL);
+    dp = dsr_pkt_alloc(nullptr);
 
     if (!dp)
     {
@@ -627,7 +627,7 @@ int NSCLASS dsr_rreq_opt_recv(struct dsr_pkt *dp, struct dsr_rreq_opt *rreq_opt)
 
     /* TODO: Check Blacklist */
 
-    srt_rc = NULL;
+    srt_rc = nullptr;
     if (ConfVal(RREPDestinationOnly)==0)
     {
         srt_rc = dsr_rtc_find(myaddr, trg);

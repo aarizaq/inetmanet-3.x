@@ -72,7 +72,7 @@ void ProactivePreqTimer::expire()
 {
     EV << "expire " << endl;
     HwmpProtocol* hwmpProtocol = dynamic_cast<HwmpProtocol*>(agent_);
-    if (hwmpProtocol == NULL)
+    if (hwmpProtocol == nullptr)
         opp_error("agent not valid");
     hwmpProtocol->sendPreqProactive();
 }
@@ -81,7 +81,7 @@ void PreqTimeout::expire()
 {
     EV << "expire2 " << endl;
     HwmpProtocol* hwmpProtocol = dynamic_cast<HwmpProtocol*>(agent_);
-    if (hwmpProtocol == NULL)
+    if (hwmpProtocol == nullptr)
         opp_error("agent not valid");
     hwmpProtocol->retryPathDiscovery(dest);
 }
@@ -102,7 +102,7 @@ void PreqTimer::expire()
 {
     EV << "expire3 " << endl;
     HwmpProtocol* hwmpProtocol = dynamic_cast<HwmpProtocol*>(agent_);
-    if (hwmpProtocol == NULL)
+    if (hwmpProtocol == nullptr)
         opp_error("agent not valid");
     hwmpProtocol->sendMyPreq();
 }
@@ -111,7 +111,7 @@ void PerrTimer::expire()
 {
     EV << "expire4 " << endl;
     HwmpProtocol* hwmpProtocol = dynamic_cast<HwmpProtocol*>(agent_);
-    if (hwmpProtocol == NULL)
+    if (hwmpProtocol == nullptr)
         opp_error("agent not valid");
     hwmpProtocol->sendMyPerr();
 }
@@ -120,18 +120,18 @@ void GannTimer::expire()
 {
     EV << "expire5 " << endl;
     HwmpProtocol* hwmpProtocol = dynamic_cast<HwmpProtocol*>(agent_);
-    if (hwmpProtocol == NULL)
+    if (hwmpProtocol == nullptr)
         opp_error("agent not valid");
     hwmpProtocol->sendGann();
 }
 
 HwmpProtocol::HwmpProtocol()
 {    EV << "hwmp " << endl;
-    m_preqTimer = NULL;
-    m_perrTimer = NULL;
-    m_proactivePreqTimer = NULL;
-    m_rtable = NULL;
-    m_gannTimer = NULL;
+    m_preqTimer = nullptr;
+    m_perrTimer = nullptr;
+    m_proactivePreqTimer = nullptr;
+    m_rtable = nullptr;
+    m_gannTimer = nullptr;
     neighborMap.clear();
     useEtxProc = false;
     m_isGann = false;
@@ -203,7 +203,7 @@ void HwmpProtocol::initialize(int stage)
         WATCH(m_rtable->m_root);
         WATCH(nextProactive);
         Ieee80211Etx * etx = dynamic_cast<Ieee80211Etx *>(interface80211ptr->getEstimateCostProcess(0));
-        if (etx == NULL)
+        if (etx == nullptr)
             useEtxProc=false;
         else
             useEtxProc=true;
@@ -230,7 +230,7 @@ void HwmpProtocol::processData(cMessage *msg)
 {
     EV << "processdata " << endl;
     Ieee80211ActionMeshFrame * pkt = dynamic_cast<Ieee80211ActionMeshFrame*>(msg);
-    if (pkt == NULL)
+    if (pkt == nullptr)
     {
         Ieee80211MeshFrame * pkt = dynamic_cast<Ieee80211MeshFrame*>(msg);
         ControlManetRouting *ctrlmanet = dynamic_cast<ControlManetRouting*>(msg);
@@ -427,7 +427,7 @@ void HwmpProtocol::sendPreq(std::vector<PREQElem> preq, bool isProactive)
             Ieee802Ctrl *ctrlAux = ctrl->dup();
             ctrlAux->setDest(receivers[i]);
             int index = getInterfaceReceiver(receivers[i]);
-            InterfaceEntry *ie = NULL;
+            InterfaceEntry *ie = nullptr;
             if (index >= 0)
                 ie = getInterfaceEntryById(index);
             // Set the control info to the duplicate packet
@@ -483,7 +483,7 @@ void HwmpProtocol::sendPrep(MACAddress src,
 
     int index = getInterfaceReceiver(retransmitter);
     // Set the control info to the duplicate packet
-    InterfaceEntry *ie = NULL;
+    InterfaceEntry *ie = nullptr;
     if (index >= 0)
         ie = getInterfaceEntryById(index);
     if (ie)
@@ -704,7 +704,7 @@ void HwmpProtocol::retryPathDiscovery(MACAddress dst)
     }
     HwmpRtable::LookupResult resultProact = m_rtable->LookupProactive();
 
-    std::map<MACAddress, PreqEvent>::iterator i = m_preqTimeouts.find(dst);
+    auto i = m_preqTimeouts.find(dst);
     ASSERT(i != m_preqTimeouts.end()); // always must be the preqTimeouts in the table
     if (!result.retransmitter.isUnspecified()) // address valid, don't retransmit
     {
@@ -925,7 +925,7 @@ uint32_t HwmpProtocol::GetLinkMetric(const MACAddress &peerAddress)
 {
     EV << "createpreqetmetric " << endl;
     // TODO: Replace ETX by Airlink metric
-    std::map<MACAddress, Neighbor>::iterator it = neighborMap.find(peerAddress);
+    auto it = neighborMap.find(peerAddress);
     if (it == neighborMap.end())
         return 0xFFFFFFF; // no Neighbor
     if (it->second.lastTime + par("neighborLive") < simTime())
@@ -955,7 +955,7 @@ void HwmpProtocol::processPreq(cMessage *msg)
 {
     EV << "processpreq " << endl;
     Ieee80211ActionPREQFrame *frame = dynamic_cast<Ieee80211ActionPREQFrame*>(msg);
-    if (frame == NULL)
+    if (frame == nullptr)
     {
         delete msg;
         return;
@@ -980,7 +980,7 @@ void HwmpProtocol::processPrep(cMessage *msg)
 {
     EV << "processprep " << endl;
     Ieee80211ActionPREPFrame *frame = dynamic_cast<Ieee80211ActionPREPFrame*>(msg);
-    if (frame == NULL)
+    if (frame == nullptr)
     {
         delete msg;
         return;
@@ -1006,7 +1006,7 @@ void HwmpProtocol::processPerr(cMessage *msg)
 {
     EV << "processperr " << endl;
     Ieee80211ActionPERRFrame *frame = dynamic_cast<Ieee80211ActionPERRFrame*>(msg);
-    if (frame == NULL)
+    if (frame == nullptr)
     {
         delete msg;
         return;
@@ -1534,7 +1534,7 @@ void HwmpProtocol::processLinkBreak(const cPolymorphic *details)
     Ieee80211TwoAddressFrame *frame = dynamic_cast<Ieee80211TwoAddressFrame *>(const_cast<cPolymorphic*>(details));
     if (frame)
     {
-        std::map<MACAddress, Neighbor>::iterator it = neighborMap.find(frame->getReceiverAddress());
+        auto it = neighborMap.find(frame->getReceiverAddress());
         if (it != neighborMap.end())
         {
             EV<<"second.lost"<<it->second.lost<<endl;
@@ -1553,7 +1553,7 @@ void HwmpProtocol::processLinkBreakManagement(const cPolymorphic *details)
     Ieee80211ActionPREPFrame *frame = dynamic_cast<Ieee80211ActionPREPFrame *>(const_cast<cPolymorphic*>(details));
     if (frame)
     {
-        std::map<MACAddress, Neighbor>::iterator it = neighborMap.find(frame->getReceiverAddress());
+        auto it = neighborMap.find(frame->getReceiverAddress());
         if (it != neighborMap.end())
         {
             EV<<"second.lost++"<<it->second.lost<<endl;
@@ -1679,7 +1679,7 @@ std::vector<MACAddress> HwmpProtocol::getPreqReceivers(uint32_t interface)
     }
     else
     {
-        for (std::map<MACAddress, Neighbor>::iterator it = neighborMap.begin(); it != neighborMap.end(); it++)
+        for (auto it = neighborMap.begin(); it != neighborMap.end(); it++)
         {
             if (it->second.lastTime + par("neighborLive") < simTime())
                 neighborMap.erase(it);
@@ -1726,7 +1726,7 @@ std::vector<MACAddress> HwmpProtocol::getBroadcastReceivers(uint32_t interface)
     }
     else
     {
-        for (std::map<MACAddress, Neighbor>::iterator it = neighborMap.begin(); it != neighborMap.end(); it++)
+        for (auto it = neighborMap.begin(); it != neighborMap.end(); it++)
         {
             if (it->second.lastTime + par("neighborLive") < simTime())
                 neighborMap.erase(it);
@@ -1756,7 +1756,7 @@ HwmpProtocol::QueuedPacket HwmpProtocol::dequeueFirstPacketByDst(MACAddress dst)
 {
     HwmpProtocol::QueuedPacket retval;
     retval.pkt = 0;
-    for (std::deque<QueuedPacket>::iterator i = m_rqueue.begin(); i != m_rqueue.end(); i++)
+    for (auto i = m_rqueue.begin(); i != m_rqueue.end(); i++)
     {
         if ((*i).dst == dst)
         {
@@ -1825,7 +1825,7 @@ void HwmpProtocol::reactivePathResolved(MACAddress dst)
     {
         QueuedPacket packet = dequeueFirstPacketByDst(listAddress.back());
 
-        std::map<MACAddress, PreqEvent>::iterator i = m_preqTimeouts.find(listAddress.back());
+        auto i = m_preqTimeouts.find(listAddress.back());
         if (i != m_preqTimeouts.end()) // cancel pending preq
         {
             i->second.preqTimeout->removeTimer();
@@ -2126,7 +2126,7 @@ void HwmpProtocol::setRefreshRoute(const L3Address &destination, const L3Address
         else
         {
             EV<<"deleting route"<<endl;
-            route = NULL;
+            route = nullptr;
         }
     }
     else
@@ -2169,10 +2169,10 @@ void HwmpProtocol::setRefreshRoute(const L3Address &destination, const L3Address
 void HwmpProtocol::processFullPromiscuous(const cPolymorphic *details)
 {
     Enter_Method("HwmpProtocol Promiscuous");
-    if (details == NULL)
+    if (details == nullptr)
         return;
     Ieee80211TwoAddressFrame *frame = dynamic_cast<Ieee80211TwoAddressFrame *>(const_cast<cPolymorphic*>(details));
-    if (frame == NULL)
+    if (frame == nullptr)
         return;
 
     Radio80211aControlInfo * cinfo = dynamic_cast<Radio80211aControlInfo *>(frame->getControlInfo());uint32_t
@@ -2198,7 +2198,7 @@ void HwmpProtocol::processFullPromiscuous(const cPolymorphic *details)
         }
     }
 
-    std::map<MACAddress, Neighbor>::iterator it = neighborMap.find(frame->getTransmitterAddress());
+    auto it = neighborMap.find(frame->getTransmitterAddress());
 
     if (it != neighborMap.end())
     {
@@ -2229,20 +2229,20 @@ bool HwmpProtocol::getBestGan(L3Address &gannAddr, L3Address &nextHop)
     HwmpRtable::ProactiveRoute *rootPath = m_rtable->getLookupProactivePtr();
     if (ganVector.empty())
     {
-        if (rootPath == NULL)
+        if (rootPath == nullptr)
             return false;
         nextHop = L3Address(rootPath->retransmitter);
         gannAddr = L3Address(rootPath->root);
         return true;
     }
-    HwmpRtable::ReactiveRoute *bestGanPath = NULL;
+    HwmpRtable::ReactiveRoute *bestGanPath = nullptr;
     MACAddress bestGanPathAddr;
     for (unsigned int i = 0; i < ganVector.size(); i++)
     {
         HwmpRtable::ReactiveRoute *ganPath = m_rtable->getLookupReactivePtr(ganVector[i].gannAddr);
-        if (ganPath == NULL)
+        if (ganPath == nullptr)
             continue;
-        if (bestGanPath == NULL)
+        if (bestGanPath == nullptr)
         {
             bestGanPath = ganPath;
             bestGanPathAddr = ganVector[i].gannAddr;
@@ -2258,11 +2258,11 @@ bool HwmpProtocol::getBestGan(L3Address &gannAddr, L3Address &nextHop)
             bestGanPathAddr = ganVector[i].gannAddr;
         }
     }
-    if (bestGanPath == NULL && rootPath == NULL)
+    if (bestGanPath == nullptr && rootPath == nullptr)
     {
         return false;
     }
-    if (bestGanPath == NULL || (rootPath && (bestGanPath->metric > rootPath->metric)))
+    if (bestGanPath == nullptr || (rootPath && (bestGanPath->metric > rootPath->metric)))
     {
         nextHop = L3Address(rootPath->retransmitter);
         gannAddr = L3Address(rootPath->root);

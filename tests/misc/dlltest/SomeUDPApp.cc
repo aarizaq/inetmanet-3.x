@@ -49,7 +49,7 @@ void SomeUDPApp::initialize(int stage)
     const char *destAddrs = par("destAddresses");
     cStringTokenizer tokenizer(destAddrs);
     const char *token;
-    while ((token = tokenizer.nextToken())!=NULL)
+    while ((token = tokenizer.nextToken())!=nullptr)
         destAddresses.push_back(AddressResolver().resolve(token));
 
     if (destAddresses.empty())

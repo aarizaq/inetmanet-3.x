@@ -34,7 +34,7 @@ static struct maint_entry *maint_entry_create(struct dsr_pkt *dp,
                                      GFP_ATOMIC);
 
     if (!m)
-        return NULL;
+        return nullptr;
 
     m->nxt_hop = dp->nxt_hop;
     gettime(&m->tx_time);
@@ -52,7 +52,7 @@ static struct maint_entry *maint_entry_create(struct dsr_pkt *dp,
     m->dp = dsr_pkt_alloc(skb_copy(dp->skb, GFP_ATOMIC));
 #endif
 #else
-    m->dp = NULL;
+    m->dp = nullptr;
 
 #if 0
     if (dp->payload || (!dp->moreFragments || dp->fragmentOffset!=0))
@@ -106,7 +106,7 @@ static struct maint_entry *maint_entry_create(struct dsr_pkt *dp,
         {
             delete m->dp->ip_pkt;
         }
-        m->dp->ip_pkt = NULL;
+        m->dp->ip_pkt = nullptr;
     }
 #else
     if (dp->payload || (!dp->moreFragments || dp->fragmentOffset!=0))
@@ -114,14 +114,14 @@ static struct maint_entry *maint_entry_create(struct dsr_pkt *dp,
         m->dp = dp->dup();
         if (m->dp->ip_pkt)
             delete m->dp->ip_pkt;
-        m->dp->ip_pkt = NULL;
+        m->dp->ip_pkt = nullptr;
     }
 #endif
 #endif
     if (!m->dp)
     {
         delete m;
-        return NULL;
+        return nullptr;
     }
     m->dp->nxt_hop = dp->nxt_hop;
     return m;
@@ -138,7 +138,7 @@ void NSCLASS maint_insert(struct maint_entry *m)
     {
         if (maint_buf.begin()->second->dp->payload)
             drop(maint_buf.begin()->second->dp->payload, -1);
-        maint_buf.begin()->second->dp->payload = NULL;
+        maint_buf.begin()->second->dp->payload = nullptr;
         dsr_pkt_free(maint_buf.begin()->second->dp);
         maint_buf.erase(maint_buf.begin());
     }
@@ -152,7 +152,7 @@ NSCLASS maint_entry * NSCLASS maint_entry_create(struct dsr_pkt *dp, unsigned sh
     m = new struct maint_entry;
 
     if (!m)
-        return NULL;
+        return nullptr;
 
     m->nxt_hop = dp->nxt_hop;
     m->tx_time = simTime();
@@ -161,19 +161,19 @@ NSCLASS maint_entry * NSCLASS maint_entry_create(struct dsr_pkt *dp, unsigned sh
     m->id = id;
     m->rto = rto;
     m->ack_req_sent = 0;
-    m->dp = NULL;
+    m->dp = nullptr;
 
     if (dp->payload || (!dp->moreFragments || dp->fragmentOffset!=0))
     {
         m->dp = dp->dup();
         if (m->dp->ip_pkt)
             delete m->dp->ip_pkt;
-        m->dp->ip_pkt = NULL;
+        m->dp->ip_pkt = nullptr;
     }
     if (!m->dp)
     {
         delete m;
-        return NULL;
+        return nullptr;
     }
     m->dp->nxt_hop = dp->nxt_hop;
     return m;
@@ -194,7 +194,7 @@ int NSCLASS maint_buf_salvage(struct dsr_pkt *dp)
     {
         DEBUG("old internal source route exists\n");
         delete dp->srt;
-        dp->srt=NULL;
+        dp->srt=nullptr;
     }
 
     if (!alt_srt)
@@ -361,7 +361,7 @@ void NSCLASS maint_buf_timeout(unsigned long data)
         {
             if (m->dp->payload)
                 drop(m->dp->payload, -1);
-            m->dp->payload = NULL;
+            m->dp->payload = nullptr;
             dsr_pkt_free(m->dp);
         }
         else
@@ -378,7 +378,7 @@ void NSCLASS maint_buf_timeout(unsigned long data)
                 {
                     if (m2->dp->payload)
                         drop(m2->dp->payload, -1);
-                    m2->dp->payload = NULL;
+                    m2->dp->payload = nullptr;
                     dsr_pkt_free(m2->dp);
                 }
                 delete m2;
@@ -462,7 +462,7 @@ int NSCLASS maint_buf_add(struct dsr_pkt *dp)
 
     if (!dp)
     {
-        DEBUG("dp is NULL!?\n");
+        DEBUG("dp is nullptr!?\n");
         return -1;
     }
 

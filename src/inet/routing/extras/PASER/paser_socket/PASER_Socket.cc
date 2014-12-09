@@ -43,26 +43,26 @@ namespace inetmanet {
 Define_Module(PASER_Socket);
 
 PASER_Socket::PASER_Socket() {
-    timer_queue = NULL;
-    routing_table = NULL;
-    neighbor_table = NULL;
-    message_queue = NULL;
-    root = NULL;
-    crypto_sign = NULL;
-    crypto_hash = NULL;
-    paket_processing = NULL;
-    route_findung = NULL;
-    route_maintenance = NULL;
-    paser_global = NULL;
-    paser_configuration = NULL;
+    timer_queue = nullptr;
+    routing_table = nullptr;
+    neighbor_table = nullptr;
+    message_queue = nullptr;
+    root = nullptr;
+    crypto_sign = nullptr;
+    crypto_hash = nullptr;
+    paket_processing = nullptr;
+    route_findung = nullptr;
+    route_maintenance = nullptr;
+    paser_global = nullptr;
+    paser_configuration = nullptr;
 
-    rreq_list = NULL;///< List of IP addresses to which a route discovery is started.
+    rreq_list = nullptr;///< List of IP addresses to which a route discovery is started.
 
-    rrep_list = NULL; ///< List of IP addresses from which a TU-RREP-ACK is expected.
+    rrep_list = nullptr; ///< List of IP addresses from which a TU-RREP-ACK is expected.
 #ifdef OMNETPP
-    startMessage = NULL;
-    sendMessageEvent = NULL;
-    genRootEvent = NULL;
+    startMessage = nullptr;
+    sendMessageEvent = nullptr;
+    genRootEvent = nullptr;
 #endif
 
 
@@ -196,13 +196,13 @@ void PASER_Socket::GenNewRoot() {
     if (!firstRoot) {
         //Set timeout and send ROOT
         struct timeval now;
-        MYgettimeofday(&now, NULL);
+        MYgettimeofday(&now, nullptr);
 
         for (u_int32_t i = 0; i < paser_configuration->getRootRepetitions();
                 i++) {
             PASER_Timer_Message *timer = new PASER_Timer_Message();
             timer->handler = PASER_ROOT;
-            timer->data = NULL;
+            timer->data = nullptr;
             timer->destAddr.S_addr = PASER_BROADCAST;
             timer->timeout = timeval_add(now,
                     paser_configuration->getRootRepetitionsTimeout() * (i + 1));
@@ -333,7 +333,7 @@ std::ostream& operator<<(std::ostream& os, const message_rreq_entry& ob2) {
 
 void PASER_Socket::editNodeColor() {
     if (!paser_configuration->getIsGW()) {
-        if (paser_global->getRouting_table()->findBestGW() != NULL) {
+        if (paser_global->getRouting_table()->findBestGW() != nullptr) {
             paser_global->setIsRegistered(true);
         } else {
             paser_global->setIsRegistered(false);
@@ -360,9 +360,9 @@ void PASER_Socket::handleMessage(cMessage *msg) {
     EV << "handle Message\n";
     paketProcessingDelay = 0;
     data_message_send_total_delay = 0;
-    IPv4Datagram * ipDgram = NULL;
-    cMessage * msg_aux = NULL;
-    UDPPacket* udpPacket = NULL;
+    IPv4Datagram * ipDgram = nullptr;
+    cMessage * msg_aux = nullptr;
+    UDPPacket* udpPacket = nullptr;
     struct in_addr src_addr;
 
     //Falls genRootEvent => dann soll eine neue AuthTree generiert werden
@@ -407,7 +407,7 @@ void PASER_Socket::handleMessage(cMessage *msg) {
 
         PASER_Timer_Message *timeMessage = new PASER_Timer_Message();
         struct timeval now;
-        MYgettimeofday(&now, NULL);
+        MYgettimeofday(&now, nullptr);
         timeMessage->handler = KDC_REQUEST;
 //        timeMessage->timeout = timeval_add(now, PASER_KDC_REQUEST_TIME);
         timeMessage->timeout = timeval_add(now,
@@ -534,7 +534,7 @@ void PASER_Socket::handleMessage(cMessage *msg) {
 
     if (udpPacket) {
         delete udpPacket;
-        udpPacket = NULL;
+        udpPacket = nullptr;
     }
 
     if (!dynamic_cast<PASER_MSG *>(msg_aux)
@@ -608,7 +608,7 @@ void PASER_Socket::scheduleNextEvent() {
     //Der naechste Event wird geholt
     PASER_Timer_Message *next_timer_message = timer_queue->timer_get_next_timer();
     //Falls kein Event vorhanden => return
-    if (next_timer_message == NULL) {
+    if (next_timer_message == nullptr) {
         if (sendMessageEvent->isScheduled()) {
             cancelEvent(sendMessageEvent);
         }
@@ -617,7 +617,7 @@ void PASER_Socket::scheduleNextEvent() {
 //    EV << "nextEventTime: " << next_timer_message->timeout.tv_sec << "." << next_timer_message->timeout.tv_usec << "\n";
     //Berechne in wieviel Sekunden der Event auftritt
     struct timeval nextTimeout = next_timer_message->timeout;
-    MYgettimeofday(&now, NULL);
+    MYgettimeofday(&now, nullptr);
 //    EV << "now: " << now.tv_sec << "." << now.tv_usec << "\n";
     remaining.tv_usec = nextTimeout.tv_usec - now.tv_usec;
     remaining.tv_sec = nextTimeout.tv_sec - now.tv_sec;
@@ -781,7 +781,7 @@ int PASER_Socket::getIfIdFromIfIndex(int ifIndex) {
 }
 
 void PASER_Socket::processLinkBreak(const cPolymorphic *details) {
-    IPv4Datagram *dgram = NULL;
+    IPv4Datagram *dgram = nullptr;
     if (paser_configuration->isSetLinkLayerFeeback()) {
         if (dynamic_cast<IPv4Datagram *>(const_cast<cPolymorphic*>(details))) {
             dgram = check_and_cast<IPv4Datagram *>(details);
@@ -804,7 +804,7 @@ void PASER_Socket::processLinkBreak(const cPolymorphic *details) {
                 route_maintenance->messageFailed(src_addr, dest_addr, true);
 
                 struct timeval now;
-                MYgettimeofday(&now, NULL);
+                MYgettimeofday(&now, nullptr);
                 paser_global->getBlacklist()->setRerrTime(dest_addr, now);
             }
 
@@ -875,7 +875,7 @@ void PASER_Socket::MY_omnet_chg_rte(const L3Address &destination, const L3Addres
          return;
 
      bool found = false;
-     IPv4Route *oldentry = NULL;
+     IPv4Route *oldentry = nullptr;
 
      //TODO the entries with ALLONES netmasks stored at the begin of inet route entry vector,
      // let optimise next search!
@@ -1001,7 +1001,7 @@ bool PASER_Socket::parseIntTo(const char *s, double& destValue) {
 
 void PASER_Socket::sendUDPToIp(cPacket *msg, int srcPort, const Address& destAddr,
         int destPort, int ttl, double delay, int index) {
-    InterfaceEntry *ie = NULL;
+    InterfaceEntry *ie = nullptr;
 
     UDPPacket *udpPacket = new UDPPacket(msg->getName());
     //TODO set UDPSIZE
@@ -1048,7 +1048,7 @@ void PASER_Socket::sendUDPToIp(cPacket *msg, int srcPort, const Address& destAdd
         ipControlInfo->setTimeToLive(ttl);
         udpPacket->setControlInfo(ipControlInfo);
 
-        if (ie != NULL)
+        if (ie != nullptr)
             ipControlInfo->setInterfaceId(ie->getInterfaceId());
 
         ipControlInfo->setSrcAddr(srcadd);

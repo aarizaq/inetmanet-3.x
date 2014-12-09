@@ -45,7 +45,7 @@ PASER_TU_RREQ::PASER_TU_RREQ(struct in_addr src, struct in_addr dest,
 
     keyNr = 0;
 
-    cert.buf = NULL;
+    cert.buf = nullptr;
     cert.len = 0;
 }
 

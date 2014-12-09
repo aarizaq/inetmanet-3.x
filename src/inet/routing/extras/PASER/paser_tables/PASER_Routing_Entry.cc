@@ -32,7 +32,7 @@ PASER_Routing_Entry::~PASER_Routing_Entry() {
 //        free(Cert);
         X509_free((X509*) Cert);
     }
-    Cert = NULL;
+    Cert = nullptr;
 }
 
 bool PASER_Routing_Entry::operator ==(PASER_Routing_Entry ent) {

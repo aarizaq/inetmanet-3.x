@@ -19,6 +19,8 @@
 
 package inet.networklayer.configurator.ipv6;
 
+import inet.networklayer.configurator.contract.INetworkConfigurator;
+
 //
 // Configures IPv6 addresses and routing tables for a "flat" network,
 // "flat" meaning that all hosts and routers will have the same
@@ -28,7 +30,7 @@ package inet.networklayer.configurator.ipv6;
 //
 // @see ~FlatNetworkConfigurator
 //
-simple FlatNetworkConfigurator6
+simple FlatNetworkConfigurator6 like INetworkConfigurator
 {
     parameters:
         @display("i=block/cogwheel");

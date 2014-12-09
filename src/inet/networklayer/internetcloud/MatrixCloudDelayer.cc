@@ -35,7 +35,7 @@ inline bool isEmpty(const char *s)
 }
 
 //TODO suggestion: add to XMLUtils
-bool getBoolAttribute(const cXMLElement& element, const char *name, const bool *defaultValue = NULL)
+bool getBoolAttribute(const cXMLElement& element, const char *name, const bool *defaultValue = nullptr)
 {
     const char *s = element.getAttribute(name);
     if (isEmpty(s)) {
@@ -126,7 +126,7 @@ bool MatrixCloudDelayer::MatrixEntry::matches(const char *src, const char *dest)
 
 MatrixCloudDelayer::~MatrixCloudDelayer()
 {
-    for (MatrixEntryPtrVector::iterator i = matrixEntries.begin(); i != matrixEntries.end(); ++i)
+    for (auto i = matrixEntries.begin(); i != matrixEntries.end(); ++i)
         delete *i;
     matrixEntries.clear();
 }
@@ -182,7 +182,7 @@ void MatrixCloudDelayer::calculateDropAndDelay(const cMessage *msg, int srcID, i
 MatrixCloudDelayer::Descriptor *MatrixCloudDelayer::getOrCreateDescriptor(int srcID, int destID)
 {
     IDPair idPair(srcID, destID);
-    IDPairToDescriptorMap::iterator it = idPairToDescriptorMap.find(idPair);
+    auto it = idPairToDescriptorMap.find(idPair);
     if (it != idPairToDescriptorMap.end())
         return &(it->second);
 
@@ -190,7 +190,7 @@ MatrixCloudDelayer::Descriptor *MatrixCloudDelayer::getOrCreateDescriptor(int sr
     std::string dest = getPathOfConnectedNodeOnIfaceID(destID);
 
     // find first matching node in XML
-    MatrixEntry *reverseMatrixEntry = NULL;
+    MatrixEntry *reverseMatrixEntry = nullptr;
     for (unsigned int i = 0; i < matrixEntries.size(); i++) {
         MatrixEntry *matrixEntry = matrixEntries[i];
         if (matrixEntry->matches(src.c_str(), dest.c_str())) {
@@ -226,7 +226,7 @@ std::string MatrixCloudDelayer::getPathOfConnectedNodeOnIfaceID(int id)
         throw cRuntimeError("The interface id=%i not found in interfacetable", id);
 
     int gateId;
-    cGate *connectedGate = NULL;
+    cGate *connectedGate = nullptr;
 
     if ((gateId = ie->getNodeOutputGateId()) != -1)
         connectedGate = host->gate(gateId)->getPathEndGate();

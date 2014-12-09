@@ -312,7 +312,7 @@ class DSRUU:public cSimpleModule, public cListener, public ManetNetfilterHook
                 state = 0;
                 node_addr.s_addr = 0;
                 ttl = 0;
-                timer = NULL;
+                timer = nullptr;
                 tx_time.tv_sec = tx_time.tv_usec = 0;
                 last_used = tx_time;
                 timeout = 0;

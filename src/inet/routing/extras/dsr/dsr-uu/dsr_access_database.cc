@@ -22,7 +22,7 @@ struct dsr_srt *DSRUU::ph_srt_find_map(struct in_addr src, struct in_addr dst, u
         std::vector<PathCacheRoute> result;
         std::vector<PathCacheCost> resultCost;
         if (!pathCacheMap.getPaths(L3Address(IPv4Address(dst.s_addr)), result, resultCost))
-            return NULL;
+            return nullptr;
         double totalCost = 1e100;
         for (unsigned int i = 0; i < result.size(); i++)
         {
@@ -54,7 +54,7 @@ struct dsr_srt *DSRUU::ph_srt_find_map(struct in_addr src, struct in_addr dst, u
     {
         double cost;
         if (!pathCacheMap.getPath(L3Address(IPv4Address(dst.s_addr)),route,cost,timeout))
-            return NULL;
+            return nullptr;
     }
 
     // should refresh routes to intermediate nodes?
@@ -69,7 +69,7 @@ struct dsr_srt *DSRUU::ph_srt_find_map(struct in_addr src, struct in_addr dst, u
     if (!srt)
     {
         DEBUG("Could not allocate source route!!!\n");
-        return NULL;
+        return nullptr;
     }
 
     srt->dst = dst;
@@ -385,14 +385,14 @@ struct dsr_srt *DSRUU::ph_srt_find_link_route_map(struct in_addr src, struct in_
     pathCacheMap.setRoot(L3Address(IPv4Address(myAddr.s_addr)));
 
     if(!pathCacheMap.getRoute(L3Address(IPv4Address(dst.s_addr)),route,timeout))
-        return NULL;
+        return nullptr;
 
     dsr_srt *srt = new dsr_srt;
 
     if (!srt)
     {
         DEBUG("Could not allocate source route!!!\n");
-        return NULL;
+        return nullptr;
     }
 
     srt->dst = dst;

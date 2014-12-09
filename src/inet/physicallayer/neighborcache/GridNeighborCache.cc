@@ -25,11 +25,11 @@ namespace physicallayer {
 Define_Module(GridNeighborCache);
 
 GridNeighborCache::GridNeighborCache() :
-    grid(NULL),
-    radioMedium(NULL),
+    grid(nullptr),
+    radioMedium(nullptr),
     constraintAreaMin(Coord::NIL),
     constraintAreaMax(Coord::NIL),
-    refillCellsTimer(NULL),
+    refillCellsTimer(nullptr),
     refillPeriod(NaN),
     maxSpeed(NaN),
     cellSize(Coord::NIL)
@@ -113,7 +113,7 @@ void GridNeighborCache::addRadio(const IRadio *radio)
 
 void GridNeighborCache::removeRadio(const IRadio *radio)
 {
-    Radios::iterator it = find(radios.begin(), radios.end(), radio);
+    auto it = find(radios.begin(), radios.end(), radio);
     if (it != radios.end()) {
         radios.erase(it);
         Coord newConstraintAreaMin = radioMedium->getConstraintAreaMin();

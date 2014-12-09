@@ -27,7 +27,7 @@ const BonnMotionFile::Line *BonnMotionFile::getLine(int nodeId) const
     LineList::const_iterator it = lines.begin();
     for (int i = 0; i < nodeId && it != lines.end(); i++)
         it++;
-    return (it == lines.end()) ? NULL : &(*it);
+    return (it == lines.end()) ? nullptr : &(*it);
 }
 
 BonnMotionFileCache *BonnMotionFileCache::inst;
@@ -43,14 +43,14 @@ void BonnMotionFileCache::deleteInstance()
 {
     if (inst) {
         delete inst;
-        inst = NULL;
+        inst = nullptr;
     }
 }
 
 const BonnMotionFile *BonnMotionFileCache::getFile(const char *filename)
 {
     // if found, return it from cache
-    BMFileMap::iterator it = cache.find(std::string(filename));
+    auto it = cache.find(std::string(filename));
     if (it != cache.end())
         return &(it->second);
 

@@ -55,8 +55,8 @@ GlobalARP::GlobalARP()
             throw cRuntimeError("Global ARP cache not empty, model error in previous run?");
     }
 
-    ift = NULL;
-    rt = NULL;
+    ift = nullptr;
+    rt = nullptr;
 }
 
 void GlobalARP::initialize(int stage)
@@ -83,7 +83,7 @@ void GlobalARP::initialize(int stage)
             if (nextHopAddr.isUnspecified())
                 continue; // if the address is not defined it isn't included in the global cache
             // check if the entry exist
-            ARPCache::iterator it = globalArpCache.find(nextHopAddr);
+            auto it = globalArpCache.find(nextHopAddr);
             if (it != globalArpCache.end())
                 continue;
             ARPCacheEntry *entry = new ARPCacheEntry();
@@ -91,12 +91,12 @@ void GlobalARP::initialize(int stage)
             entry->ie = ie;
             entry->macAddress = ie->getMacAddress();
 
-            ARPCache::iterator where = globalArpCache.insert(globalArpCache.begin(), std::make_pair(nextHopAddr, entry));
+            auto where = globalArpCache.insert(globalArpCache.begin(), std::make_pair(nextHopAddr, entry));
             ASSERT(where->second == entry);
             entry->myIter = where;    // note: "inserting a new element into a map does not invalidate iterators that point to existing elements"
         }
         cModule *host = findContainingNode(this);
-        if (host != NULL)
+        if (host != nullptr)
             host->subscribe(NF_INTERFACE_IPv4CONFIG_CHANGED, this);
     }
 }
@@ -109,9 +109,9 @@ GlobalARP::~GlobalARP()
 {
     --globalArpCacheRefCnt;
     // delete my entries from the globalArpCache
-    for (ARPCache::iterator it = globalArpCache.begin(); it != globalArpCache.end(); ) {
+    for (auto it = globalArpCache.begin(); it != globalArpCache.end(); ) {
         if (it->second->owner == this) {
-            ARPCache::iterator cur = it++;
+            auto cur = it++;
             delete cur->second;
             globalArpCache.erase(cur);
         }
@@ -235,12 +235,12 @@ void GlobalARP::receiveSignal(cComponent *source, simsignal_t signalID, cObject 
         // rebuild the arp cache
         if (ie->isLoopback())
             return;
-        ARPCache::iterator it;
-        for (it = globalArpCache.begin(); it != globalArpCache.end(); ++it) {
+        auto it = globalArpCache.begin();
+        for ( ; it != globalArpCache.end(); ++it) {
             if (it->second->ie == ie)
                 break;
         }
-        ARPCacheEntry *entry = NULL;
+        ARPCacheEntry *entry = nullptr;
         if (it == globalArpCache.end()) {
             if (!ie->ipv4Data() || ie->ipv4Data()->getIPAddress().isUnspecified())
                 return; // if the address is not defined it isn't included in the global cache
@@ -260,7 +260,7 @@ void GlobalARP::receiveSignal(cComponent *source, simsignal_t signalID, cObject 
         }
         entry->macAddress = ie->getMacAddress();
         IPv4Address ipAddr = ie->ipv4Data()->getIPAddress();
-        ARPCache::iterator where = globalArpCache.insert(globalArpCache.begin(), std::make_pair(ipAddr, entry));
+        auto where = globalArpCache.insert(globalArpCache.begin(), std::make_pair(ipAddr, entry));
         ASSERT(where->second == entry);
         entry->myIter = where;    // note: "inserting a new element into a map does not invalidate iterators that point to existing elements"
     }

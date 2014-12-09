@@ -31,12 +31,12 @@ PASER_Neighbor_Entry::~PASER_Neighbor_Entry() {
     if (root) {
         free(root);
     }
-    root = NULL;
+    root = nullptr;
 
     if (Cert) {
         X509_free((X509*) Cert);
     }
-    Cert = NULL;
+    Cert = nullptr;
 }
 
 void PASER_Neighbor_Entry::setValidTimer(PASER_Timer_Message *_validTimer) {

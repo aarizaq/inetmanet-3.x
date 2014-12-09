@@ -133,15 +133,15 @@ void SCTPAssociation::process_SEND(SCTPEventCode& event, SCTPCommand *sctpComman
              << " streamId=" << sendCommand->getSid() << endl;
 
     SCTPSimpleMessage *smsg = check_and_cast<SCTPSimpleMessage *>((msg->decapsulate()));
-    SCTP::AssocStatMap::iterator iter = sctpMain->assocStatMap.find(assocId);
+    auto iter = sctpMain->assocStatMap.find(assocId);
     iter->second.sentBytes += smsg->getBitLength() / 8;
 
     // ------ Prepare SCTPDataMsg -----------------------------------------
     const uint32 streamId = sendCommand->getSid();
     const uint32 sendUnordered = sendCommand->getSendUnordered();
     const uint32 ppid = sendCommand->getPpid();
-    SCTPSendStream *stream = NULL;
-    SCTPSendStreamMap::iterator associter = sendStreams.find(streamId);
+    SCTPSendStream *stream = nullptr;
+    auto associter = sendStreams.find(streamId);
     if (associter != sendStreams.end()) {
         stream = associter->second;
     }
@@ -196,7 +196,7 @@ void SCTPAssociation::process_SEND(SCTPEventCode& event, SCTPCommand *sctpComman
 
         while (dropsize >= 0 && state->queuedDroppableBytes > 0) {
             lowestPriority = 0;
-            dropmsg = NULL;
+            dropmsg = nullptr;
 
             // Find lowest priority
             for (cQueue::Iterator iter(*strq); !iter.end(); iter++) {
@@ -306,7 +306,7 @@ void SCTPAssociation::process_SEND(SCTPEventCode& event, SCTPCommand *sctpComman
     // sendCommandInvoked() itself will call sendOnAllPaths() ...
     if (sendCommand->getLast() == true) {
         if (sendCommand->getPrimary()) {
-            sctpAlgorithm->sendCommandInvoked(NULL);
+            sctpAlgorithm->sendCommandInvoked(nullptr);
         }
         else {
             sctpAlgorithm->sendCommandInvoked(getPath(datMsg->getInitialDestination()));

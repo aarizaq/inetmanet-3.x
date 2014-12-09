@@ -64,7 +64,7 @@ void SCTPAssociation::sendAsconf(const char *type, const bool remote)
         strcpy(typecopy, type);
         char *token;
         token = strtok((char *)typecopy, ",");
-        while (token != NULL) {
+        while (token != nullptr) {
             switch (atoi(token)) {
                 case ADD_IP_ADDRESS: {
                     SCTPAddIPParameter *ipParam;
@@ -147,14 +147,14 @@ void SCTPAssociation::sendAsconf(const char *type, const bool remote)
                     printf("type %d not known\n", atoi(token));
                     break;
             }
-            token = strtok(NULL, ",");
+            token = strtok(nullptr, ",");
         }
         asconfChunk->setByteLength(chunkLength);
 
         if (state->auth && state->peerAuth) {
             authChunk = createAuthChunk();
             sctpAsconf->addChunk(authChunk);
-            SCTP::AssocStatMap::iterator it = sctpMain->assocStatMap.find(assocId);
+            auto it = sctpMain->assocStatMap.find(assocId);
             it->second.numAuthChunksSent++;
         }
         sctpAsconf->addChunk(asconfChunk);
@@ -180,7 +180,7 @@ void SCTPAssociation::retransmitAsconf()
     if (state->auth && state->peerAuth) {
         SCTPAuthenticationChunk *authChunk = createAuthChunk();
         sctpmsg->addChunk(authChunk);
-        SCTP::AssocStatMap::iterator it = sctpMain->assocStatMap.find(assocId);
+        auto it = sctpMain->assocStatMap.find(assocId);
         it->second.numAuthChunksSent++;
     }
     sctpmsg->addChunk(sctpasconf);
@@ -202,7 +202,7 @@ void SCTPAssociation::sendAsconfAck(const uint32 serialNumber)
     if (state->auth && state->peerAuth) {
         SCTPAuthenticationChunk *authChunk = createAuthChunk();
         sctpAsconfAck->addChunk(authChunk);
-        SCTP::AssocStatMap::iterator it = sctpMain->assocStatMap.find(assocId);
+        auto it = sctpMain->assocStatMap.find(assocId);
         it->second.numAuthChunksSent++;
     }
     sctpAsconfAck->addChunk(asconfAckChunk);
@@ -287,7 +287,7 @@ void SCTPAssociation::calculateAssocSharedKey()
 
 bool SCTPAssociation::typeInChunkList(const uint16 type)
 {
-    for (std::vector<uint16>::iterator i = state->peerChunkList.begin(); i != state->peerChunkList.end(); i++) {
+    for (auto i = state->peerChunkList.begin(); i != state->peerChunkList.end(); i++) {
         if ((*i) == type) {
             return true;
         }
@@ -297,7 +297,7 @@ bool SCTPAssociation::typeInChunkList(const uint16 type)
 
 bool SCTPAssociation::typeInOwnChunkList(const uint16 type)
 {
-    for (std::vector<uint16>::iterator i = state->chunkList.begin(); i != state->chunkList.end(); i++) {
+    for (auto i = state->chunkList.begin(); i != state->chunkList.end(); i++) {
         if ((*i) == type) {
             return true;
         }

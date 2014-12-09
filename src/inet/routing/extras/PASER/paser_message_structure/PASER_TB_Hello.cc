@@ -43,12 +43,12 @@ PASER_TB_Hello::PASER_TB_Hello(struct in_addr src, u_int32_t seqNr) {
     destAddress_var = src;
     seq = seqNr;
 
-    secret = NULL;
-    hash = NULL;
+    secret = nullptr;
+    hash = nullptr;
 }
 
 PASER_TB_Hello::~PASER_TB_Hello() {
-    if (secret != NULL) {
+    if (secret != nullptr) {
         free(secret);
     }
     for (std::list<u_int8_t *>::iterator it = auth.begin(); it != auth.end();
@@ -57,7 +57,7 @@ PASER_TB_Hello::~PASER_TB_Hello() {
         free(data);
     }
     auth.clear();
-    if (hash != NULL) {
+    if (hash != nullptr) {
         free(hash);
     }
 }

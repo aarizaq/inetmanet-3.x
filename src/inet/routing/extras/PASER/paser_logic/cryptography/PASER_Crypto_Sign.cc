@@ -51,16 +51,16 @@ void PASER_Crypto_Sign::init(char *certPath, char *keyPath, char *CAcertPath) {
     FILE *fp;
 
     fp = fopen(keyPath, "r");
-    if (fp == NULL) {
+    if (fp == nullptr) {
         printf("keyfile not found: %s", keyPath);
         exit(1);
     }
-    pkey = PEM_read_PrivateKey(fp, NULL, NULL, NULL);
+    pkey = PEM_read_PrivateKey(fp, nullptr, nullptr, nullptr);
     fclose(fp);
 
     /* Read cert */
     fp = fopen(certPath, "r");
-    if (fp == NULL) {
+    if (fp == nullptr) {
         printf("certfile not found: %s", certPath);
         exit(1);
     }
@@ -72,27 +72,27 @@ void PASER_Crypto_Sign::init(char *certPath, char *keyPath, char *CAcertPath) {
 //    fseek ( fp , 0 , SEEK_SET );
 
 //    x509=X509_new();
-    x509 = PEM_read_X509(fp, NULL, NULL, NULL);
+    x509 = PEM_read_X509(fp, nullptr, nullptr, nullptr);
     fclose(fp);
-    if (x509 == NULL) {
+    if (x509 == nullptr) {
         ERR_print_errors_fp (stderr);
         exit(1);
     }
 
     //read CA_file
     fp = fopen(CAcertPath, "r");
-    if (fp == NULL) {
+    if (fp == nullptr) {
         printf("CAcertPath not found: %s", CAcertPath);
         exit(1);
     }
-    ca_cert = PEM_read_X509(fp, NULL, NULL, NULL);
+    ca_cert = PEM_read_X509(fp, nullptr, nullptr, nullptr);
     fclose(fp);
-    if (ca_cert == NULL) {
+    if (ca_cert == nullptr) {
         ERR_print_errors_fp (stderr);
         exit(1);
     }
 
-    crl = NULL;
+    crl = nullptr;
 //    ca_store = X509_STORE_new();
 //    if(X509_STORE_add_cert(ca_store, ca_cert)!=1){
 //        ERR_print_errors_fp (stderr);
@@ -105,11 +105,11 @@ PASER_Crypto_Sign::~PASER_Crypto_Sign() {
     if (x509) {
         X509_free(x509);
     }
-    x509 = NULL;
+    x509 = nullptr;
     if (ca_cert) {
         X509_free(ca_cert);
     }
-    ca_cert = NULL;
+    ca_cert = nullptr;
     if (pkey) {
         EVP_PKEY_free(pkey);
     }
@@ -121,7 +121,7 @@ PASER_Crypto_Sign::~PASER_Crypto_Sign() {
 int PASER_Crypto_Sign::getCert(lv_block *cert) {
     int len;
     unsigned char *buf;
-    buf = NULL;
+    buf = nullptr;
     len = i2d_X509(x509, &buf);
     if (len < 0) {
         return 0;
@@ -137,7 +137,7 @@ int PASER_Crypto_Sign::getCert(lv_block *cert) {
 }
 
 int PASER_Crypto_Sign::setCRL(lv_block in) {
-    if (in.buf == NULL) {
+    if (in.buf == nullptr) {
         return 0;
     }
     X509_CRL *x;
@@ -146,8 +146,8 @@ int PASER_Crypto_Sign::setCRL(lv_block in) {
     buf = in.buf;
     len = in.len;
     p = buf;
-    x = d2i_X509_CRL(NULL, &p, len);
-    if (x == NULL) {
+    x = d2i_X509_CRL(nullptr, &p, len);
+    if (x == nullptr) {
         ERR_print_errors_fp(stderr);
         return 0;
     }
@@ -177,7 +177,7 @@ int PASER_Crypto_Sign::signUBRREQ(PASER_UB_RREQ * message) {
 #endif
         return 0;
     }
-    if (message->sign.buf != NULL) {
+    if (message->sign.buf != nullptr) {
         free(message->sign.buf);
     }
     message->sign.buf = sign;
@@ -193,8 +193,8 @@ int PASER_Crypto_Sign::checkSignUBRREQ(PASER_UB_RREQ * message) {
     buf = message->certForw.buf;
     len = message->certForw.len;
     p = buf;
-    x = d2i_X509(NULL, &p, len);
-    if (x == NULL) {
+    x = d2i_X509(nullptr, &p, len);
+    if (x == nullptr) {
         ERR_print_errors_fp(stderr);
         return 0;
     }
@@ -258,7 +258,7 @@ int PASER_Crypto_Sign::signUURREP(PASER_UU_RREP * message) {
 #endif
         return 0;
     }
-    if (message->sign.buf != NULL) {
+    if (message->sign.buf != nullptr) {
         free(message->sign.buf);
     }
     message->sign.buf = sign;
@@ -293,8 +293,8 @@ int PASER_Crypto_Sign::checkSignUURREP(PASER_UU_RREP * message) {
     buf = message->certForw.buf;
     len = message->certForw.len;
     p = buf;
-    x = d2i_X509(NULL, &p, len);
-    if (x == NULL) {
+    x = d2i_X509(nullptr, &p, len);
+    if (x == nullptr) {
         ERR_print_errors_fp(stderr);
         return 0;
     }
@@ -374,7 +374,7 @@ int PASER_Crypto_Sign::signB_ROOT(PASER_UB_Root_Refresh * message) {
 #endif
         return 0;
     }
-    if (message->sign.buf != NULL) {
+    if (message->sign.buf != nullptr) {
         free(message->sign.buf);
     }
     message->sign.buf = sign;
@@ -390,8 +390,8 @@ int PASER_Crypto_Sign::checkSignB_ROOT(PASER_UB_Root_Refresh * message) {
     buf = message->cert.buf;
     len = message->cert.len;
     p = buf;
-    x = d2i_X509(NULL, &p, len);
-    if (x == NULL) {
+    x = d2i_X509(nullptr, &p, len);
+    if (x == nullptr) {
         ERR_print_errors_fp(stderr);
         return 0;
     }
@@ -449,7 +449,7 @@ int PASER_Crypto_Sign::checkSignB_ROOT(PASER_UB_Root_Refresh * message) {
 //#endif
 //        return 0;
 //    }
-//    if(message->sign.buf != NULL){
+//    if(message->sign.buf != nullptr){
 //        free(message->sign.buf);
 //    }
 //    message->sign.buf = sign;
@@ -465,8 +465,8 @@ int PASER_Crypto_Sign::checkSignRESET(PASER_UB_Key_Refresh * message) {
     buf = message->cert.buf;
     len = message->cert.len;
     p = buf;
-    x = d2i_X509(NULL, &p, len);
-    if (x == NULL) {
+    x = d2i_X509(nullptr, &p, len);
+    if (x == nullptr) {
         ERR_print_errors_fp(stderr);
         return 0;
     }
@@ -510,7 +510,7 @@ int PASER_Crypto_Sign::checkSignRESET(PASER_UB_Key_Refresh * message) {
 
 int PASER_Crypto_Sign::checkSignKDC(kdc_block data) {
     //read CRL
-    if (data.CRL.buf == NULL) {
+    if (data.CRL.buf == nullptr) {
         return 0;
     }
     X509_CRL *crl_x;
@@ -519,15 +519,15 @@ int PASER_Crypto_Sign::checkSignKDC(kdc_block data) {
     buf = data.CRL.buf;
     len = data.CRL.len;
     p = buf;
-    crl_x = d2i_X509_CRL(NULL, &p, len);
-    if (crl_x == NULL) {
+    crl_x = d2i_X509_CRL(nullptr, &p, len);
+    if (crl_x == nullptr) {
         ERR_print_errors_fp(stderr);
         return 0;
     }
 
     //read KDC cert
     X509* kdc_cert = extractCert(data.cert_kdc);
-    if (kdc_cert == NULL) {
+    if (kdc_cert == nullptr) {
         EV << "kein KDC Zertifikat\n";
         X509_CRL_free(crl_x);
         return 0;
@@ -570,13 +570,13 @@ int PASER_Crypto_Sign::checkSignKDC(kdc_block data) {
     }
     //X509_STORE_CTX_init did not return an error condition in prior versions
 #if (OPENSSL_VERSION_NUMBER > 0x00907000L)
-    if (X509_STORE_CTX_init(verify_ctx, ca_store, kdc_cert, NULL) != 1) {
+    if (X509_STORE_CTX_init(verify_ctx, ca_store, kdc_cert, nullptr) != 1) {
         ERR_print_errors_fp (stderr);
         EV << "Error: X509_STORE_CTX_init\n";
         return 0;
     }
 #else
-    X509_STORE_CTX_init(verify_ctx, ca_store, kdc_cert, NULL);
+    X509_STORE_CTX_init(verify_ctx, ca_store, kdc_cert, nullptr);
 #endif
 
     //verify the certificate
@@ -646,8 +646,8 @@ int PASER_Crypto_Sign::checkSignKDC(kdc_block data) {
 }
 
 X509* PASER_Crypto_Sign::extractCert(lv_block cert) {
-    if (cert.buf == NULL) {
-        return NULL;
+    if (cert.buf == nullptr) {
+        return nullptr;
     }
     X509 *x;
     const u_int8_t *buf, *p;
@@ -655,10 +655,10 @@ X509* PASER_Crypto_Sign::extractCert(lv_block cert) {
     buf = cert.buf;
     len = cert.len;
     p = buf;
-    x = d2i_X509(NULL, &p, len);
-    if (x == NULL) {
+    x = d2i_X509(nullptr, &p, len);
+    if (x == nullptr) {
         ERR_print_errors_fp(stderr);
-        return NULL;
+        return nullptr;
     }
 
     return x;
@@ -666,15 +666,15 @@ X509* PASER_Crypto_Sign::extractCert(lv_block cert) {
 
 u_int8_t PASER_Crypto_Sign::isGwCert(X509 *cert) {
     EV << "isGwCert\n";
-    if (cert == NULL) {
-        EV << "cert = NULL\n";
+    if (cert == nullptr) {
+        EV << "cert = nullptr\n";
         return 0x00;
     }
     ASN1_IA5STRING *nscomment;
     nscomment = (ASN1_IA5STRING *) X509_get_ext_d2i(cert, NID_netscape_comment,
-            NULL, NULL);
-    if (nscomment == NULL) {
-        EV << "nscomment = NULL\n";
+            nullptr, nullptr);
+    if (nscomment == nullptr) {
+        EV << "nscomment = nullptr\n";
         return 0x00;
     }
     EV << "comment: " << nscomment->data << "\n";
@@ -690,15 +690,15 @@ u_int8_t PASER_Crypto_Sign::isGwCert(X509 *cert) {
 
 u_int8_t PASER_Crypto_Sign::isKdcCert(X509 *cert) {
     EV << "isKdcCert\n";
-    if (cert == NULL) {
-        EV << "cert = NULL\n";
+    if (cert == nullptr) {
+        EV << "cert = nullptr\n";
         return 0x00;
     }
     ASN1_IA5STRING *nscomment;
     nscomment = (ASN1_IA5STRING *) X509_get_ext_d2i(cert, NID_netscape_comment,
-            NULL, NULL);
-    if (nscomment == NULL) {
-        EV << "nscomment = NULL\n";
+            nullptr, nullptr);
+    if (nscomment == nullptr) {
+        EV << "nscomment = nullptr\n";
         return 0x00;
     }
     EV << "comment: " << nscomment->data << "\n";
@@ -714,7 +714,7 @@ u_int8_t PASER_Crypto_Sign::isKdcCert(X509 *cert) {
 
 int PASER_Crypto_Sign::rsa_encrypt(lv_block in, lv_block *out, X509 *cert) {
     EVP_PKEY *pubKey;
-    if (cert != NULL) {
+    if (cert != nullptr) {
         pubKey = X509_get_pubkey(cert);
     } else {
         pubKey = X509_get_pubkey(x509);
@@ -738,7 +738,7 @@ int PASER_Crypto_Sign::rsa_encrypt(lv_block in, lv_block *out, X509 *cert) {
 }
 
 int PASER_Crypto_Sign::rsa_dencrypt(lv_block in, lv_block *out) {
-    if (out->buf != NULL && out->len > 0) {
+    if (out->buf != nullptr && out->len > 0) {
         free(out->buf);
         out->len = 0;
     }
@@ -795,13 +795,13 @@ int PASER_Crypto_Sign::checkOneCert(X509 *cert) {
     }
     //X509_STORE_CTX_init did not return an error condition in prior versions
 #if (OPENSSL_VERSION_NUMBER > 0x00907000L)
-    if (X509_STORE_CTX_init(verify_ctx, ca_store, cert, NULL) != 1) {
+    if (X509_STORE_CTX_init(verify_ctx, ca_store, cert, nullptr) != 1) {
         ERR_print_errors_fp (stderr);
         EV << "Error: X509_STORE_CTX_init\n";
         return 0;
     }
 #else
-    X509_STORE_CTX_init(verify_ctx, ca_store, cert, NULL);
+    X509_STORE_CTX_init(verify_ctx, ca_store, cert, nullptr);
 #endif
 
     //verify the certificate
@@ -925,7 +925,7 @@ int PASER_Crypto_Sign::checkAllCertInRoutingTable(
 //    if (!(CAcerts = X509_STORE_new())) {
 //        EV << "MEGAERROR: X509_STORE_new\n";
 //    }
-//    if (X509_STORE_load_locations(CAcerts, "cert/cacert.pem", NULL) != 1) {
+//    if (X509_STORE_load_locations(CAcerts, "cert/cacert.pem", nullptr) != 1) {
 //        EV << "MEGAERROR: X509_STORE_load_locations\n";
 //    }
 //    if (X509_STORE_set_default_paths(CAcerts) != 1) {
@@ -936,13 +936,13 @@ int PASER_Crypto_Sign::checkAllCertInRoutingTable(
 //    if (!(fp = fopen("cert/router.pem", "r"))) {
 //        EV << "MEGAERROR: fopen\n";
 //    }
-//    if (!(cert = PEM_read_X509(fp, NULL, NULL, NULL))) {
+//    if (!(cert = PEM_read_X509(fp, nullptr, nullptr, nullptr))) {
 //        EV << "MEGAERROR: PEM_read_X509\n";
 //    }
 //    fclose(fp);
 //
 //    /* verify */
-//    if (X509_STORE_CTX_init(&ca_ctx, CAcerts, cert, NULL) != 1) {
+//    if (X509_STORE_CTX_init(&ca_ctx, CAcerts, cert, nullptr) != 1) {
 //        EV << "MEGAERROR: X509_STORE_CTX_init\n";
 //    }
 //

@@ -28,9 +28,9 @@ void Ieee80211BitDomainTest::initialize(int stage)
 {
     if (stage == INITSTAGE_LOCAL)
     {
-        convCoder = NULL;
-        interleaver = NULL;
-        scrambler = NULL;
+        convCoder = nullptr;
+        interleaver = nullptr;
+        scrambler = nullptr;
         testType = par("testType");
         if (!strcmp(testType,"convCoder"))
             convCoder = getModuleFromPar<ConvolutionalCoder>(par("convolutionalCoderModule"), this);
@@ -69,7 +69,7 @@ void Ieee80211BitDomainTest::testConvolutionalCoder(unsigned int numberOfRandomE
 {
     fileStream->clear();
     fileStream->seekg(0, std::ios::beg);
-    srand(time(NULL));
+    srand(time(nullptr));
     std::string line;
     while (*fileStream >> line)
     {

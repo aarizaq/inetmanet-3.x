@@ -62,7 +62,7 @@ void SimpleVoIPReceiver::TalkspurtInfo::addPacket(SimpleVoIPPacket *pk)
 
 SimpleVoIPReceiver::SimpleVoIPReceiver()
 {
-    selfTalkspurtFinished = NULL;
+    selfTalkspurtFinished = nullptr;
 }
 
 SimpleVoIPReceiver::~SimpleVoIPReceiver()
@@ -120,7 +120,7 @@ void SimpleVoIPReceiver::handleMessage(cMessage *msg)
     }
 
     SimpleVoIPPacket *packet = dynamic_cast<SimpleVoIPPacket *>(msg);
-    if (packet == NULL) {
+    if (packet == nullptr) {
         // TODO: throw exception instead?
         EV_ERROR << "VoIPReceiver: Unknown incoming message: " << msg->getClassName() << endl;
         delete msg;
@@ -176,9 +176,8 @@ void SimpleVoIPReceiver::evaluateTalkspurt(bool finish)
     unsigned int channelLoss;
 
     if (finish) {
-        PacketsVector::iterator it;
         unsigned int maxId = 0;
-        for (it = currentTalkspurt.packets.begin(); it != currentTalkspurt.packets.end(); it++)
+        for (auto it = currentTalkspurt.packets.begin(); it != currentTalkspurt.packets.end(); it++)
             maxId = std::max(maxId, (*it).packetID);
         channelLoss = maxId + 1 - currentTalkspurt.packets.size();
     }
@@ -201,7 +200,7 @@ void SimpleVoIPReceiver::evaluateTalkspurt(bool finish)
 
     // compute channelLoss, playoutLoss and tailDropLoss, needed for MOS and statistics
     PacketsList playoutQueue;
-    for (PacketsVector::iterator packet = currentTalkspurt.packets.begin(); packet != currentTalkspurt.packets.end(); ++packet) {
+    for (auto packet = currentTalkspurt.packets.begin(); packet != currentTalkspurt.packets.end(); ++packet) {
         packet->playoutTime = (firstPlayoutTime + ((int)packet->packetID - (int)firstPacketId) * currentTalkspurt.voiceDuration);
 
         lastLateness = packet->arrivalTime - packet->playoutTime;    // >0: packet is too late (missed its playout time)
@@ -223,7 +222,7 @@ void SimpleVoIPReceiver::evaluateTalkspurt(bool finish)
             // insert packet into playout buffer (if there is room in it)
 
             // remove packets from queue
-            PacketsList::iterator qi = playoutQueue.begin();
+            auto qi = playoutQueue.begin();
             while (qi != playoutQueue.end()) {
                 if ((*qi)->playoutTime < packet->arrivalTime) {
                     // EV_DEBUG << "REPRODUCED AND EXTRACT FROM BUFFER: TALK " << currentTalkspurt.talkspurtID << " PACKET " << (*qi)->packetID << "\n";

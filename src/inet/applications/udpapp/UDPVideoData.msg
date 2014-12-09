@@ -18,6 +18,7 @@ cplusplus {{
 #include "inet/common/INETDefs.h"
 }}
 
+namespace inet;
 //
 // Message class used by ~        
 //

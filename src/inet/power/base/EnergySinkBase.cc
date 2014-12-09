@@ -29,7 +29,7 @@ EnergySinkBase::EnergySinkBase() :
 W EnergySinkBase::computeTotalGeneratedPower()
 {
     W totalGeneratedPower = W(0);
-    for (std::vector<EnergyGeneratorEntry>::iterator it = energyGenerators.begin(); it != energyGenerators.end(); it++)
+    for (auto it = energyGenerators.begin(); it != energyGenerators.end(); it++)
         totalGeneratedPower += (*it).generatedPower;
     return totalGeneratedPower;
 }
@@ -49,7 +49,7 @@ int EnergySinkBase::addEnergyGenerator(const IEnergyGenerator *energyGenerator)
 void EnergySinkBase::removeEnergyGenerator(int energyGeneratorId)
 {
     energyGenerators[energyGeneratorId].generatedPower = W(0);
-    energyGenerators[energyGeneratorId].energyGenerator = NULL;
+    energyGenerators[energyGeneratorId].energyGenerator = nullptr;
     totalGeneratedPower = computeTotalGeneratedPower();
 }
 

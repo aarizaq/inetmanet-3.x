@@ -58,7 +58,7 @@ class INET_API UDPVideoStreamSvr2 : public ApplicationBase
         bool fileTrace;
         unsigned int traceIndex;
         simtime_t timeInit;
-        VideoStreamData() { timer = NULL; clientPort = 0; videoSize = bytesLeft = 0; numPkSent = 0; }
+        VideoStreamData() { timer = nullptr; clientPort = 0; videoSize = bytesLeft = 0; numPkSent = 0; }
     };
 
     struct VideoInfo

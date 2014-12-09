@@ -54,11 +54,11 @@ Define_Module(LocatorModule);
 LocatorModule::LocatorModule()
 {
     // TODO Auto-generated constructor stub
-    arp = NULL;
-    rt = NULL;
-    itable = NULL;
+    arp = nullptr;
+    rt = nullptr;
+    itable = nullptr;
     isInMacLayer = true;
-    socket = NULL;
+    socket = nullptr;
     useGlobal = false;
     mySequence = 0;
 }
@@ -112,7 +112,7 @@ void LocatorModule::handleMessage(cMessage *msg)
             delete pkt;
             return;
         }
-        std::map<L3Address,unsigned int>::iterator it = sequenceMap.find(pkt->getOrigin());
+        auto it = sequenceMap.find(pkt->getOrigin());
         if (it!=sequenceMap.end())
         {
             if (it->second >= pkt->getSequence())
@@ -169,9 +169,9 @@ void LocatorModule::handleMessage(cMessage *msg)
             sendRequest(apAddr);
 
         if ( pkt->getOpcode() == LocatorAssoc)
-            setTables(apAddr,staAddr,apIpaddr,staIpaddr,ASSOCIATION,NULL);
+            setTables(apAddr,staAddr,apIpaddr,staIpaddr,ASSOCIATION,nullptr);
         else if (pkt->getOpcode() == LocatorDisAssoc)
-            setTables(apAddr,staAddr,apIpaddr,staIpaddr,DISASSOCIATION,NULL);
+            setTables(apAddr,staAddr,apIpaddr,staIpaddr,DISASSOCIATION,nullptr);
     }
     if (socket)
     {
@@ -314,7 +314,7 @@ void LocatorModule::initialize(int stage)
 
 
 
-    InterfaceEntry *ie = NULL;
+    InterfaceEntry *ie = nullptr;
     if (dynamic_cast<UDP*>(gate("outGate")->getPathEndGate()->getOwnerModule()))
     {
         // bind the client to the udp port
@@ -424,7 +424,7 @@ void LocatorModule::receiveSignal(cComponent *source, simsignal_t category, cObj
                 if (add.isUnspecified())
                     sendRequest(infoSta->getStaAddress());
             }
-            InterfaceEntry * ie = NULL;
+            InterfaceEntry * ie = nullptr;
             for (int i =0 ; i < itable->getNumInterfaces();i++)
             {
                 if (itable->getInterface(i)->getMacAddress() == infoSta->getApAddress())
@@ -546,7 +546,7 @@ void LocatorModule::modifyInformationMac(const MACAddress &APaddr, const MACAddr
 {
     const IPv4Address staIpadd = getReverseAddress(STAaddr);
     const IPv4Address apIpAddr = getReverseAddress(APaddr);
-    InterfaceEntry * ie = NULL;
+    InterfaceEntry * ie = nullptr;
     for (int i =0 ; i < itable->getNumInterfaces();i++)
     {
         if (itable->getInterface(i)->getMacAddress() == APaddr)
@@ -562,7 +562,7 @@ void LocatorModule::modifyInformationIp(const IPv4Address &apIpAddr, const IPv4A
 {
     const MACAddress STAaddr = geDirectAddress(staIpAddr);
     const MACAddress APaddr = geDirectAddress(apIpAddr);
-    InterfaceEntry * ie = NULL;
+    InterfaceEntry * ie = nullptr;
     for (int i =0 ; i < itable->getNumInterfaces();i++)
     {
         if (itable->getInterface(i)->getMacAddress() == APaddr)
@@ -855,7 +855,7 @@ void LocatorModule::processARPPacket(cPacket *pkt)
             if (entry->getDestination() == srcIPAddress)
                 return;
         }
-        InterfaceEntry * ie = NULL;
+        InterfaceEntry * ie = nullptr;
         for (int i = 0; i < itable->getNumInterfaces(); i++)
         {
             if (itable->getInterface(i)->getMacAddress() == locEntry.apMacAddr)

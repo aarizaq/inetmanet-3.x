@@ -29,7 +29,7 @@ private:
         Ieee80211DataOrMgmtFrame * pkt;
         unsigned int shareCount;
         ShareStruct(){
-            pkt=NULL;
+            pkt=nullptr;
             shareCount =0;
         }
     };
@@ -38,7 +38,7 @@ private:
     bool _checkIfShare();
     void _detachShareVector(unsigned int i);
 public:
-    Ieee80211MpduA(const char *name=NULL, int kind=0);
+    Ieee80211MpduA(const char *name=nullptr, int kind=0);
     Ieee80211MpduA(Ieee80211MpduA &);
     Ieee80211MpduA(Ieee80211DataOrMgmtFrame *);
     virtual Ieee80211MpduA * dup(){return new Ieee80211MpduA(*this);}
@@ -76,11 +76,11 @@ public:
     virtual cPacket *decapsulate()
     {
         opp_error("operation not supported");
-        return NULL;
+        return nullptr;
     }
 
     /**
-     * Returns a pointer to the encapsulated packet, or NULL if there
+     * Returns a pointer to the encapsulated packet, or nullptr if there
      * is no encapsulated packet.
      *
      * IMPORTANT: see notes at encapsulate() about reference counting
@@ -89,14 +89,14 @@ public:
     virtual cPacket *getEncapsulatedPacket() const
     {
         opp_error("operation not supported");
-        return NULL;
+        return nullptr;
     }
 
 
     /**
      * Returns true if the packet contains an encapsulated packet, and false
      * otherwise. This method is potentially more efficient than
-     * <tt>getEncapsulatedPacket()!=NULL</tt>, because it does not need to
+     * <tt>getEncapsulatedPacket()!=nullptr</tt>, because it does not need to
      * unshare a shared encapsulated packet (see note at encapsulate()).
      */
     virtual bool hasEncapsulatedPacket() const

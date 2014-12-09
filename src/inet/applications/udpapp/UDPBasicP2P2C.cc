@@ -64,7 +64,7 @@ UDPBasicP2P2C::UDPBasicP2P2C()
 {
     myTimer = new cMessage("UDPBasicP2P-timer");
     queueTimer = new cMessage("UDPBasicP2P-queueTimer");
-    fuzzy = NULL;
+    fuzzy = nullptr;
     numSent = 0;
     numReceived = 0;
     numDeleted = 0;
@@ -74,14 +74,14 @@ UDPBasicP2P2C::UDPBasicP2P2C()
     vectorList.clear();
     writeData = false;
     numRegData = 0;
-    outfile = NULL;
+    outfile = nullptr;
     inverseAddress.clear();
     directAddress.clear();
     numRequestSent = 0;
     numRequestServed = 0;
     numRequestSegmentServed = 0;
     initNodes.clear();
-    routing = NULL;
+    routing = nullptr;
 
     numSentB = 0;
     numReceivedB = 0;
@@ -103,12 +103,12 @@ UDPBasicP2P2C::~UDPBasicP2P2C()
         delete timeQueue.back();
         timeQueue.pop_back();
     }
-    SegmentMap::iterator it = segmentMap.find(myAddress.toMAC().getInt());
+    auto it = segmentMap.find(myAddress.toMAC().getInt());
     if (it != segmentMap.end())
         segmentMap.erase(it);
     mySegmentList.clear();
     clientList.clear();
-    for (ParallelConnection::iterator it = parallelConnection.begin();it != parallelConnection.end();++it)
+    for (auto it = parallelConnection.begin();it != parallelConnection.end();++it)
     {
         cancelEvent(&it->timer);
         it->segmentInTransit.clear();
@@ -281,7 +281,7 @@ void UDPBasicP2P2C::initialize(int stage)
         cStringTokenizer tokenizer(listNodes);
         const char *token;
 
-        while ((token = tokenizer.nextToken()) != NULL)
+        while ((token = tokenizer.nextToken()) != nullptr)
         {
             L3Address addr = L3AddressResolver().resolve(token);
             if (addr == myAddr)
@@ -318,7 +318,7 @@ void UDPBasicP2P2C::initialize(int stage)
 
             }
             delete routing;
-            routing = NULL;
+            routing = nullptr;
         }
     }
 }
@@ -398,7 +398,7 @@ std::vector<UDPBasicP2P2C::InfoData> UDPBasicP2P2C::selectBestList(const std::ve
             //if (routing->findRouteWithCost(par("coverageArea").doubleValue(), MACAddress(address[i]),pathNode,true,costAdd,costMax))
             if (routing->findRoute(par("coverageArea").doubleValue(), MACAddress(address[i]),pathNode))
             {
-                InverseAddres::iterator it = inverseAddress.find(pathNode[0].getInt());
+                auto it = inverseAddress.find(pathNode[0].getInt());
                 if (it == inverseAddress.end())
                     throw cRuntimeError(" address not found %s", pathNode[0].str().c_str());
                 IPv4Address desAdd = it->second;
@@ -575,7 +575,7 @@ uint64_t UDPBasicP2P2C::selectBest(const std::vector<uint64_t> &address)
             //if (routing->findRouteWithCost(par("coverageArea").doubleValue(), aux.toMAC(), pathNode,true,costAdd,costMax))
             if (routing->findRoute(par("coverageArea").doubleValue(), MACAddress(address[i]),pathNode))
             {
-                InverseAddres::iterator it = inverseAddress.find(pathNode[0].getInt());
+                auto it = inverseAddress.find(pathNode[0].getInt());
                 if (it == inverseAddress.end())
                     throw cRuntimeError(" address not found %s", pathNode[0].str().c_str());
                 IPv4Address desAdd = it->second;
@@ -760,7 +760,7 @@ void UDPBasicP2P2C::handleMessage(cMessage *msg)
                     std::deque<MACAddress> pathNode;
 
                     routing->findRoute(par("coverageArea").doubleValue(), pkt->getDestination().toMAC(),pathNode);
-                    InverseAddres::iterator it = inverseAddress.find(pathNode[0].getInt());
+                    auto it = inverseAddress.find(pathNode[0].getInt());
                     if (it == inverseAddress.end())
                         throw cRuntimeError(" address not found %s", pathNode[0].str().c_str());
                     IPv4Address desAdd = it->second;
@@ -781,7 +781,7 @@ void UDPBasicP2P2C::handleMessage(cMessage *msg)
                 endReception = simTime();
             }
             bool endSim = true;
-            for (SegmentMap::iterator it = segmentMap.begin(); it != segmentMap.end(); ++it)
+            for (auto it = segmentMap.begin(); it != segmentMap.end(); ++it)
             {
                 if (it->second->size() != totalSegments)
                 {
@@ -825,7 +825,7 @@ void UDPBasicP2P2C::handleMessage(cMessage *msg)
 void UDPBasicP2P2C::sendNow(UDPBasicPacketP2P *pkt)
 {
 
-    InverseAddres::iterator it = inverseAddress.find(pkt->getDestination().toMAC().getInt());
+    auto it = inverseAddress.find(pkt->getDestination().toMAC().getInt());
     if (it == inverseAddress.end())
         throw cRuntimeError(" address not found %s", pkt->getDestination().toMAC().str().c_str());
     IPv4Address desAdd = it->second;
@@ -847,7 +847,7 @@ void UDPBasicP2P2C::sendNow(UDPBasicPacketP2P *pkt)
 void UDPBasicP2P2C::sendDelayed(UDPBasicPacketP2P *pkt,const simtime_t &delay)
 {
 
-    InverseAddres::iterator it = inverseAddress.find(pkt->getDestination().toMAC().getInt());
+    auto it = inverseAddress.find(pkt->getDestination().toMAC().getInt());
     if (it == inverseAddress.end())
         throw cRuntimeError(" address not found %s", pkt->getDestination().toMAC().str().c_str());
     IPv4Address desAdd = it->second;
@@ -867,7 +867,7 @@ void UDPBasicP2P2C::sendDelayed(UDPBasicPacketP2P *pkt,const simtime_t &delay)
 
 void UDPBasicP2P2C::purgePendingRequest(uint64_t segment)
 {
-    for (PendingRequest::iterator it = pendingRequest.begin(); it != pendingRequest.end();)
+    for (auto it = pendingRequest.begin(); it != pendingRequest.end();)
     {
         if(it->second->getSegmentId() == segment)
         {
@@ -893,7 +893,7 @@ void UDPBasicP2P2C::sendQueue()
     }
 
     timeQueue.pop_front();
-    InverseAddres::iterator it = inverseAddress.find(delayM->getDestination().toMAC().getInt());
+    auto it = inverseAddress.find(delayM->getDestination().toMAC().getInt());
     if (it == inverseAddress.end())
         throw cRuntimeError(" address not found %s", delayM->getDestination().toMAC().str().c_str());
     UDPBasicPacketP2P *pkt = delayM->getPkt(maxPacketSize);
@@ -910,7 +910,7 @@ void UDPBasicP2P2C::sendQueue()
         else
         {
             // search position
-            for (TimeQueue::iterator it = timeQueue.begin();it != timeQueue.end(); ++it)
+            for (auto it = timeQueue.begin();it != timeQueue.end(); ++it)
             {
                 if ((*it)->getNextTime() > delayM->getNextTime())
                 {
@@ -996,7 +996,7 @@ bool UDPBasicP2P2C::processPacket(cPacket *pk)
             std::deque<MACAddress> pathNode;
 
             routing->findRoute(par("coverageArea").doubleValue(), pkt->getDestination().toMAC(),pathNode);
-            InverseAddres::iterator it = inverseAddress.find(pathNode[0].getInt());
+            auto it = inverseAddress.find(pathNode[0].getInt());
             if (it == inverseAddress.end())
                 throw cRuntimeError(" address not found %s", pathNode[0].str().c_str());
             IPv4Address desAdd = it->second;
@@ -1018,7 +1018,7 @@ bool UDPBasicP2P2C::processPacket(cPacket *pk)
         if (myTimer->isScheduled())
             cancelEvent(myTimer);
         numRequestSegmentServed++;
-        SegmentList::iterator it = mySegmentList.find(pkt->getSegmentId());
+        auto it = mySegmentList.find(pkt->getSegmentId());
 
         // in transit, purge
         purgePendingRequest(pkt->getSegmentId());
@@ -1047,7 +1047,7 @@ bool UDPBasicP2P2C::processPacket(cPacket *pk)
                     itPar = (parallelConnection.end()-1);
                 }
                         // erase the subsegment from transit list
-                std::set<uint16_t>::iterator itaux = itPar->segmentInTransit.find(pkt->getSubSegmentId());
+                auto itaux = itPar->segmentInTransit.find(pkt->getSubSegmentId());
                 if  (itaux != itPar->segmentInTransit.end())
                 {
                     itPar->segmentInTransit.erase(itaux);
@@ -1071,7 +1071,7 @@ bool UDPBasicP2P2C::processPacket(cPacket *pk)
         }
         else
         {
-            for (ParallelConnection::iterator itPar = parallelConnection.begin(); itPar != parallelConnection.end();++itPar)
+            for (auto itPar = parallelConnection.begin(); itPar != parallelConnection.end();++itPar)
             {
                 if (itPar->segmentId == pkt->getSegmentId())
                 {
@@ -1097,7 +1097,7 @@ bool UDPBasicP2P2C::processPacket(cPacket *pk)
 
 void UDPBasicP2P2C::generateRequestSub()
 {
-    for (ParallelConnection::iterator itPar = parallelConnection.begin(); itPar != parallelConnection.end();)
+    for (auto itPar = parallelConnection.begin(); itPar != parallelConnection.end();)
     {
         if (itPar->segmentInTransit.empty())
         {
@@ -1125,7 +1125,7 @@ void UDPBasicP2P2C::generateRequestSub()
         else
             node = chooseDestAddr(segmentId);
 
-        ClientList::iterator it = clientList.find(itPar->nodeId.toMAC().getInt());
+        auto it = clientList.find(itPar->nodeId.toMAC().getInt());
 
         if (it == clientList.end())
         {
@@ -1146,7 +1146,7 @@ void UDPBasicP2P2C::generateRequestSub()
         simtime_t now = simTime();
         simtime_t rateRequest = par("rateRequest").doubleValue();
 
-        for (std::set<uint16_t>::iterator itset = itPar->segmentInTransit.begin();itset != itPar->segmentInTransit.end(); ++itset)
+        for (auto itset = itPar->segmentInTransit.begin();itset != itPar->segmentInTransit.end(); ++itset)
         {
             vectorAux.push_back(*itset);
             if (vectorAux.size() == requestPerPacket)
@@ -1203,7 +1203,7 @@ void UDPBasicP2P2C::generateRequestNew()
         pkt->setSegmentRequest(0);
         pkt->setSegmentId(0);
 
-        ClientList::iterator it = clientList.find(best);
+        auto it = clientList.find(best);
         if (it == clientList.end())
         {
 
@@ -1215,7 +1215,7 @@ void UDPBasicP2P2C::generateRequestNew()
         else
             it->second.numRequest++;
 
-        InverseAddres::iterator it2 = inverseAddress.find(best);
+        auto it2 = inverseAddress.find(best);
         if (it2 == inverseAddress.end())
             throw cRuntimeError("arp->getInverseAddressResolution address not found %s", MACAddress(best).str().c_str());
         IPv4Address desAdd = it2->second;
@@ -1233,9 +1233,9 @@ void UDPBasicP2P2C::getList(std::vector<uint64_t> &address)
     address.clear();
     SegmentList tempMySegmentList(mySegmentList);
     // include segment in transit
-    for (ParallelConnection::iterator itPar =  parallelConnection.begin(); itPar != parallelConnection.end();)
+    for (auto itPar =  parallelConnection.begin(); itPar != parallelConnection.end();)
     {
-        SegmentList::iterator it = mySegmentList.find(itPar->segmentId);
+        auto it = mySegmentList.find(itPar->segmentId);
 
         if (it != mySegmentList.end())
         {
@@ -1250,7 +1250,7 @@ void UDPBasicP2P2C::getList(std::vector<uint64_t> &address)
         }
     }
 
-    for (SegmentMap::iterator it = segmentMap.begin(); it != segmentMap.end(); ++it)
+    for (auto it = segmentMap.begin(); it != segmentMap.end(); ++it)
     {
         if (it->first == myAddress.toMAC().getInt())
             continue;
@@ -1266,13 +1266,13 @@ void UDPBasicP2P2C::getList(std::vector<uint64_t> &address)
 void UDPBasicP2P2C::getList(std::vector<uint64_t> &address,uint32_t segmentId)
 {
     address.clear();
-    for (SegmentMap::iterator it = segmentMap.begin(); it != segmentMap.end(); ++it)
+    for (auto it = segmentMap.begin(); it != segmentMap.end(); ++it)
     {
         if (it->first == myAddress.toMAC().getInt())
             continue;
         SegmentList * nodeSegmentList = it->second;
         SegmentList result;
-        SegmentList::iterator it2 = nodeSegmentList->find(segmentId);
+        auto it2 = nodeSegmentList->find(segmentId);
         if (it2 != nodeSegmentList->end())
             address.push_back(it->first);
     }
@@ -1283,7 +1283,7 @@ void UDPBasicP2P2C::getList(std::vector<uint64_t> &address, std::vector<SegmentL
 {
     address.clear();
     segmentData.clear();
-    for (SegmentMap::iterator it = segmentMap.begin(); it != segmentMap.end(); ++it)
+    for (auto it = segmentMap.begin(); it != segmentMap.end(); ++it)
     {
         if (it->first == myAddress.toMAC().getInt())
             continue;
@@ -1303,7 +1303,7 @@ void UDPBasicP2P2C::getList(std::vector<uint64_t> &address, std::vector<SegmentL
 uint64_t UDPBasicP2P2C::searchBestSegment(const uint64_t & address)
 {
 
-    SegmentMap::iterator it = segmentMap.find(address);
+    auto it = segmentMap.find(address);
     if (it == segmentMap.end())
         throw cRuntimeError("Node not found in segmentMap");
     SegmentList * nodeSegmentList = it->second;
@@ -1313,9 +1313,9 @@ uint64_t UDPBasicP2P2C::searchBestSegment(const uint64_t & address)
         throw cRuntimeError("request error");
     uint16_t min = 64000;
     uint64_t seg = UINT64_MAX;
-    for (SegmentList::iterator it2 = result.begin(); it2 != result.end(); ++it2)
+    for (auto it2 = result.begin(); it2 != result.end(); ++it2)
     {
-        SegmentList::iterator it3 =  mySegmentList.find(*it2);
+        auto it3 =  mySegmentList.find(*it2);
         if (it3 == mySegmentList.end())
         {
             throw cRuntimeError("request error segment not found in my list");
@@ -1353,7 +1353,7 @@ void UDPBasicP2P2C::processRequest(cPacket *p)
         return;
 
     // check if this node is under service
-    ClientList::iterator it = clientList.find(pkt->getNodeId().toMAC().getInt());
+    auto it = clientList.find(pkt->getNodeId().toMAC().getInt());
     if (it == clientList.end())
     {
 
@@ -1374,7 +1374,7 @@ int UDPBasicP2P2C::getQueueSize()
         return 0;
     // search position
     uint64_t remain = 0;
-    for (TimeQueue::iterator it = timeQueue.begin();it != timeQueue.end(); ++it)
+    for (auto it = timeQueue.begin();it != timeQueue.end(); ++it)
         remain += (*it)->getRemain();
     return ceil((double)remain/(double)maxPacketSize);
 }
@@ -1385,7 +1385,7 @@ void UDPBasicP2P2C::answerRequest(UDPBasicPacketP2P *pkt)
 
     if (pkt->getSegmentId() != 0) // specific segment check if the segment is present in the node
     {
-        SegmentList::iterator it =  mySegmentList.find(pkt->getSegmentId());
+        auto it =  mySegmentList.find(pkt->getSegmentId());
         if (it == mySegmentList.end())
             return;
     }
@@ -1437,7 +1437,7 @@ void UDPBasicP2P2C::answerRequest(UDPBasicPacketP2P *pkt)
         else
         {
             // search position
-            for (TimeQueue::iterator it = timeQueue.begin();it != timeQueue.end(); ++it)
+            for (auto it = timeQueue.begin();it != timeQueue.end(); ++it)
             {
                 if ((*it)->getNextTime() > delayM->getNextTime())
                 {
@@ -1450,7 +1450,7 @@ void UDPBasicP2P2C::answerRequest(UDPBasicPacketP2P *pkt)
     else
     {
         delete delayM;
-        delayM = NULL;
+        delayM = nullptr;
     }
     sendNow(pktSend);
 
@@ -1462,7 +1462,7 @@ void UDPBasicP2P2C::answerRequest(UDPBasicPacketP2P *pkt)
         else
         {
             // search position
-            for (TimeQueue::iterator it = timeQueue.begin();it != timeQueue.end(); ++it)
+            for (auto it = timeQueue.begin();it != timeQueue.end(); ++it)
             {
                 if ((*it)->getNextTime() > delayM->getNextTime())
                 {
@@ -1533,7 +1533,7 @@ void UDPBasicP2P2C::WirelessNumNeig()
                 continue;
             if (!notfound)
                 break;
-            for(SegmentMap::iterator it = segmentMap.begin(); it != segmentMap.end();++it)
+            for(auto it = segmentMap.begin(); it != segmentMap.end();++it)
             {
                 if (it->first == e->getMacAddress().getInt())
                 {
@@ -1549,7 +1549,7 @@ void UDPBasicP2P2C::WirelessNumNeig()
 
         cModule *host = getContainingNode(this);
         mod = check_and_cast<IMobility *>(host->getSubmodule("mobility"));
-        if (mod == NULL)
+        if (mod == nullptr)
             throw cRuntimeError("node or mobility module not found");
 
         vectorList[add] = mod;
@@ -1558,12 +1558,12 @@ void UDPBasicP2P2C::WirelessNumNeig()
 
 int UDPBasicP2P2C::getNumNeighNodes(uint64_t add,double dist)
 {
-    VectorList::iterator it = vectorList.find(add);
+    auto it = vectorList.find(add);
     if (it == vectorList.end())
         throw cRuntimeError("Node not found");
     int cont = 0;
     Coord ci = it->second->getCurrentPosition();
-    for (VectorList::iterator it2 = vectorList.begin();it2 != vectorList.end();++it2)
+    for (auto it2 = vectorList.begin();it2 != vectorList.end();++it2)
     {
         if (it2->first == add)
             continue;

@@ -33,18 +33,18 @@ PhysicalEnvironment::PhysicalEnvironment() :
     temperature(sNaN),
     spaceMin(Coord(sNaN, sNaN, sNaN)),
     spaceMax(Coord(sNaN, sNaN, sNaN)),
-    objectCache(NULL),
-    objectsLayer(NULL)
+    objectCache(nullptr),
+    objectsLayer(nullptr)
 {
 }
 
 PhysicalEnvironment::~PhysicalEnvironment()
 {
-    for (std::vector<const ShapeBase *>::iterator it = shapes.begin(); it != shapes.end(); it++)
+    for (auto it = shapes.begin(); it != shapes.end(); it++)
         delete *it;
-    for (std::vector<const Material *>::iterator it = materials.begin(); it != materials.end(); it++)
+    for (auto it = materials.begin(); it != materials.end(); it++)
         delete *it;
-    for (std::vector<const PhysicalObject *>::iterator it = objects.begin(); it != objects.end(); it++)
+    for (auto it = objects.begin(); it != objects.end(); it++)
         delete *it;
 }
 
@@ -85,7 +85,7 @@ void PhysicalEnvironment::parseShapes(cXMLElement *xml)
     for (cXMLElementList::const_iterator it = children.begin(); it != children.end(); ++it)
     {
         cXMLElement *element = *it;
-        ShapeBase *shape = NULL;
+        ShapeBase *shape = nullptr;
         // id
         const char *idAttribute = element->getAttribute("id");
         int id = -1;
@@ -247,7 +247,7 @@ void PhysicalEnvironment::parseObjects(cXMLElement *xml)
                 orientation.gamma = math::deg2rad(atof(tokenizer.nextToken()));
         }
         // shape
-        const ShapeBase *shape = NULL;
+        const ShapeBase *shape = nullptr;
         const char *shapeAttribute = element->getAttribute("shape");
         if (!shapeAttribute)
             throw cRuntimeError("Missing shape attribute of object");
@@ -292,7 +292,7 @@ void PhysicalEnvironment::parseObjects(cXMLElement *xml)
             Coord center = (boundingBox.getMax() - boundingBox.getMin()) / 2 + boundingBox.getMin();
             center.z = height / 2;
             std::vector<Coord> prismPoints;
-            for (std::vector<Coord>::iterator it = points.begin(); it != points.end(); it++)
+            for (auto it = points.begin(); it != points.end(); it++)
                 prismPoints.push_back(*it - center);
             shape = new Prism(height, Polygon(prismPoints));
             shapes.push_back(shape);
@@ -314,7 +314,7 @@ void PhysicalEnvironment::parseObjects(cXMLElement *xml)
             Box boundingBox = Box::computeBoundingBox(points);
             Coord center = (boundingBox.getMax() - boundingBox.getMin()) / 2 + boundingBox.getMin();
             std::vector<Coord> PolyhedronPoints;
-            for (std::vector<Coord>::iterator it = points.begin(); it != points.end(); it++)
+            for (auto it = points.begin(); it != points.end(); it++)
                 PolyhedronPoints.push_back(*it - center);
             shape = new Polyhedron(PolyhedronPoints);
             shapes.push_back(shape);
@@ -469,7 +469,7 @@ void PhysicalEnvironment::updateCanvas()
     // KLUDGE: TODO: sorting objects with their rotated position's z coordinate to draw them in a "better" order
     std::vector<const PhysicalObject *> objectsCopy = objects;
     std::sort(objectsCopy.begin(), objectsCopy.end(), ObjectPositionComparator(viewRotation));
-    for (std::vector<const PhysicalObject *>::iterator it = objectsCopy.begin(); it != objectsCopy.end(); it++)
+    for (auto it = objectsCopy.begin(); it != objectsCopy.end(); it++)
     {
         const PhysicalObject *object = *it;
         const ShapeBase *shape = object->getShape();
@@ -575,7 +575,7 @@ const PhysicalObject *PhysicalEnvironment::getObjectById(int id) const
 {
     std::map<int, const PhysicalObject *>::const_iterator it = idToObjectMap.find(id);
     if (it == idToObjectMap.end())
-        return NULL;
+        return nullptr;
     else
         return it->second;
 }

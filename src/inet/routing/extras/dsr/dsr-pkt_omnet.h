@@ -71,7 +71,7 @@ class DSRPkt : public IPv4Datagram
     void clean();
 
   public:
-    explicit DSRPkt(const char *name=NULL) : IPv4Datagram(name) {costVector.clear(); options.clear(); dsr_ttl=0;}
+    explicit DSRPkt(const char *name=nullptr) : IPv4Datagram(name) {costVector.clear(); options.clear(); dsr_ttl=0;}
     ~DSRPkt ();
     DSRPkt (const DSRPkt  &m);
     DSRPkt (struct dsr_pkt *dp,int interface_id);
@@ -132,7 +132,7 @@ class DSRPktExt: public IPv4Datagram
     void clean() { clearExtension(); }
 
   public:
-    explicit DSRPktExt(const char *name=NULL) : IPv4Datagram(name) {size=0; extension=NULL;}
+    explicit DSRPktExt(const char *name=nullptr) : IPv4Datagram(name) {size=0; extension=nullptr;}
     ~DSRPktExt ();
     DSRPktExt (const DSRPktExt  &m);
     DSRPktExt &     operator= (const DSRPktExt &m);

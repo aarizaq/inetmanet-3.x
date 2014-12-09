@@ -50,7 +50,7 @@ void DNSClient::handleMessage(cPacket* msg)
     {
         delete msg;
     }
-    else if (dynamic_cast<DNSBaseMsg *>(msg)!= NULL)
+    else if (dynamic_cast<DNSBaseMsg *>(msg)!= nullptr)
     {
       if (msg->isName("DNS Request"))
     	  // Sending response

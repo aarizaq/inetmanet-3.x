@@ -82,7 +82,7 @@ void HostAutoConfigurator2::initialize(int stage)
             cModule* host = getParentModule();
             IInterfaceTable *ift = L3AddressResolver().interfaceTableOf(host);
             InterfaceEntry* ie = ift->getInterfaceByName(par("defaultAddressInterface"));
-            if (ie==NULL)
+            if (ie==nullptr)
                 opp_error("default ID interface doesn't exist");
             defaultAddr=ie->ipv4Data()->getIPAddress();
         }
@@ -152,7 +152,7 @@ void HostAutoConfigurator2::addDefaultRoutes()
 
     // count non-loopback interfaces
     int numIntf = 0;
-    InterfaceEntry *ie = NULL;
+    InterfaceEntry *ie = nullptr;
     for (int k=0; k<ift->getNumInterfaces(); k++)
         if (!ift->getInterface(k)->isLoopback())
             {ie = ift->getInterface(k); numIntf++;}
@@ -245,19 +245,19 @@ void HostAutoConfigurator2::setupNetworkLayer()
     std::vector<std::string> vectorInterfaceToken;
     std::vector<std::string> vectorAddressToken;
     std::vector<std::string> vectorMaskToken;
-    while((ifname = interfaceTokenizer.nextToken()) != NULL)
+    while((ifname = interfaceTokenizer.nextToken()) != nullptr)
     {
     	std::string val(ifname);
     	vectorInterfaceToken.push_back(val);
     }
 
-    while((ifname = addressBaseTokenizer.nextToken()) != NULL)
+    while((ifname = addressBaseTokenizer.nextToken()) != nullptr)
     {
     	std::string val(ifname);
     	vectorAddressToken.push_back(val);
     }
 
-    while((ifname = addressMaskTokenizer.nextToken()) != NULL)
+    while((ifname = addressMaskTokenizer.nextToken()) != nullptr)
     {
     	std::string val(ifname);
     	vectorMaskToken.push_back(val);
@@ -350,19 +350,19 @@ void HostAutoConfigurator2::setupRoutingTable()
     std::vector<std::string> vectorInterfaceToken;
     std::vector<std::string> vectorAddressToken;
     std::vector<std::string> vectorMaskToken;
-    while((ifname = interfaceTokenizer.nextToken()) != NULL)
+    while((ifname = interfaceTokenizer.nextToken()) != nullptr)
     {
     	std::string val(ifname);
     	vectorInterfaceToken.push_back(val);
     }
 
-    while((ifname = addressBaseTokenizer.nextToken()) != NULL)
+    while((ifname = addressBaseTokenizer.nextToken()) != nullptr)
     {
     	std::string val(ifname);
     	vectorAddressToken.push_back(val);
     }
 
-    while((ifname = addressMaskTokenizer.nextToken()) != NULL)
+    while((ifname = addressMaskTokenizer.nextToken()) != nullptr)
     {
     	std::string val(ifname);
     	vectorMaskToken.push_back(val);
@@ -407,7 +407,7 @@ void HostAutoConfigurator2::setupRoutingTable()
     if (!defaultAddr.isUnspecified())
     {
     	InterfaceEntry* ie = ift->getInterfaceByName(par("defaultInterface"));
-        if (ie==NULL)
+        if (ie==nullptr)
             opp_error("default ID interface doesn't exist");
         IPv4Route *e = new IPv4Route();
         e->setDestination(IPv4Address());
@@ -448,7 +448,7 @@ void HostAutoConfigurator2::fillRoutingTables()
 
         // get our interface table
         IInterfaceTable *ift = L3AddressResolver().interfaceTableOf(topo.getNode(i)->getModule());
-        if (ift==NULL)
+        if (ift==nullptr)
             continue;
 
         // add route (with host=destNode) to every routing table in the network
@@ -465,7 +465,7 @@ void HostAutoConfigurator2::fillRoutingTables()
                 continue; // not connected
 
             IInterfaceTable *iftN = L3AddressResolver().interfaceTableOf(topo.getNode(j)->getModule());
-            if (iftN==NULL)
+            if (iftN==nullptr)
             	continue;
 
           	int outputGateIdTarget =  atNode->getPath(atNode->getNumInLinks()-1)->getLocalGate()->getId();

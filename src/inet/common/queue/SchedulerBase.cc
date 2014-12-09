@@ -23,7 +23,7 @@
 namespace inet {
 
 SchedulerBase::SchedulerBase()
-    : packetsRequestedFromUs(0), packetsToBeRequestedFromInputs(0), outGate(NULL)
+    : packetsRequestedFromUs(0), packetsToBeRequestedFromInputs(0), outGate(nullptr)
 {
 }
 
@@ -53,7 +53,7 @@ void SchedulerBase::initialize()
 
 void SchedulerBase::finalize()
 {
-    for (std::vector<IPassiveQueue *>::iterator it = inputQueues.begin(); it != inputQueues.end(); ++it)
+    for (auto it = inputQueues.begin(); it != inputQueues.end(); ++it)
         (*it)->removeListener(this);
 }
 
@@ -95,7 +95,7 @@ void SchedulerBase::sendOut(cMessage *msg)
 
 bool SchedulerBase::isEmpty()
 {
-    for (std::vector<IPassiveQueue *>::iterator it = inputQueues.begin(); it != inputQueues.end(); ++it)
+    for (auto it = inputQueues.begin(); it != inputQueues.end(); ++it)
         if (!(*it)->isEmpty())
             return false;
 
@@ -104,7 +104,7 @@ bool SchedulerBase::isEmpty()
 
 void SchedulerBase::clear()
 {
-    for (std::vector<IPassiveQueue *>::iterator it = inputQueues.begin(); it != inputQueues.end(); ++it)
+    for (auto it = inputQueues.begin(); it != inputQueues.end(); ++it)
         (*it)->clear();
 
     packetsRequestedFromUs = 0;
@@ -113,30 +113,30 @@ void SchedulerBase::clear()
 
 cMessage *SchedulerBase::pop()
 {
-    for (std::vector<IPassiveQueue *>::iterator it = inputQueues.begin(); it != inputQueues.end(); ++it)
+    for (auto it = inputQueues.begin(); it != inputQueues.end(); ++it)
         if (!(*it)->isEmpty())
             return (*it)->pop();
 
-    return NULL;
+    return nullptr;
 }
 
 void SchedulerBase::addListener(IPassiveQueueListener *listener)
 {
-    std::list<IPassiveQueueListener *>::iterator it = find(listeners.begin(), listeners.end(), listener);
+    auto it = find(listeners.begin(), listeners.end(), listener);
     if (it == listeners.end())
         listeners.push_back(listener);
 }
 
 void SchedulerBase::removeListener(IPassiveQueueListener *listener)
 {
-    std::list<IPassiveQueueListener *>::iterator it = find(listeners.begin(), listeners.end(), listener);
+    auto it = find(listeners.begin(), listeners.end(), listener);
     if (it != listeners.end())
         listeners.erase(it);
 }
 
 void SchedulerBase::notifyListeners()
 {
-    for (std::list<IPassiveQueueListener *>::iterator it = listeners.begin(); it != listeners.end(); ++it)
+    for (auto it = listeners.begin(); it != listeners.end(); ++it)
         (*it)->packetEnqueued(this);
 }
 

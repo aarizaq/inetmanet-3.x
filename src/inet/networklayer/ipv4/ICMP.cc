@@ -165,14 +165,14 @@ bool ICMP::possiblyLocalBroadcast(const IPv4Address& addr, int interfaceId)
     IInterfaceTable *ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
     if (interfaceId != -1) {
         InterfaceEntry *ie = ift->getInterfaceById(interfaceId);
-        bool interfaceUnconfigured = (ie->ipv4Data() == NULL) || ie->ipv4Data()->getIPAddress().isUnspecified();
+        bool interfaceUnconfigured = (ie->ipv4Data() == nullptr) || ie->ipv4Data()->getIPAddress().isUnspecified();
         return interfaceUnconfigured;
     }
     else {
         // if all interfaces are configured, we are OK
         bool allInterfacesConfigured = true;
         for (int i = 0; i < (int)ift->getNumInterfaces(); i++)
-            if ((ift->getInterface(i)->ipv4Data() == NULL) || ift->getInterface(i)->ipv4Data()->getIPAddress().isUnspecified())
+            if ((ift->getInterface(i)->ipv4Data() == nullptr) || ift->getInterface(i)->ipv4Data()->getIPAddress().isUnspecified())
                 allInterfacesConfigured = false;
 
         return !allInterfacesConfigured;
@@ -251,7 +251,7 @@ void ICMP::processEchoReply(ICMPMessage *reply)
     payload->setControlInfo(ctrl);
     delete reply;
     long originatorId = payload->getOriginatorId();
-    PingMap::iterator i = pingMap.find(originatorId);
+    auto i = pingMap.find(originatorId);
     if (i != pingMap.end()) {
         EV_INFO << "Sending " << payload << " to upper layer.\n";
         send(payload, "pingOut", i->second);

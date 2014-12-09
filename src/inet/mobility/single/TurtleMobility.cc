@@ -23,8 +23,8 @@ namespace inet {
 Define_Module(TurtleMobility);
 
 TurtleMobility::TurtleMobility() :
-    turtleScript(NULL),
-    nextStatement(NULL),
+    turtleScript(nullptr),
+    nextStatement(nullptr),
     speed(0),
     angle(0),
     borderPolicy(REFLECT),
@@ -88,7 +88,7 @@ void TurtleMobility::resumeScript()
     simtime_t now = simTime();
 
     while (nextChange == now) {
-        if (nextStatement != NULL) {
+        if (nextStatement != nullptr) {
             executeStatement(nextStatement);
             gotoNextStatement();
         }
@@ -330,7 +330,7 @@ void TurtleMobility::gotoNextStatement()
         }
         else {
             // end of script
-            nextStatement = NULL;
+            nextStatement = nullptr;
         }
     }
     else {
@@ -344,7 +344,7 @@ void TurtleMobility::computeMaxSpeed(cXMLElement *nodes)
     // Recursively traverse the whole config file, looking for
     // speed attributes
     cXMLElementList childs = nodes->getChildren();
-    for (cXMLElementList::iterator it = childs.begin(); it != childs.end(); it++)
+    for (auto it = childs.begin(); it != childs.end(); it++)
     {
         const char *speedAttr = (*it)->getAttribute("speed");
         if (speedAttr)

@@ -183,7 +183,7 @@ void EtherEncapMesh::processFrameFromWifiMesh(Ieee80211Frame *msg)
                frameAux->setByteLength(MAX_ETHERNET_DATA_BYTES);
                frameAux->setIsFragment(true);
                remain -= MAX_ETHERNET_DATA_BYTES;
-               EtherFrame *frame = NULL;
+               EtherFrame *frame = nullptr;
                if (useSNAP)
                {
                    EtherFrameWithSNAP *snapFrame = new EtherFrameWithSNAP(msg->getName());
@@ -213,7 +213,7 @@ void EtherEncapMesh::processFrameFromWifiMesh(Ieee80211Frame *msg)
 
            if (remain>0 && remain<=MAX_ETHERNET_DATA_BYTES)
            {
-               EtherFrame *frame = NULL;
+               EtherFrame *frame = nullptr;
                if (useSNAP)
                {
                    EtherFrameWithSNAP *snapFrame = new EtherFrameWithSNAP(msg->getName());
@@ -259,7 +259,7 @@ void EtherEncapMesh::processFrameFromWifiMesh(Ieee80211Frame *msg)
                frameAux->setByteLength(MAX_ETHERNET_DATA_BYTES);
                frameAux->setIsFragment(true);
                remain -= MAX_ETHERNET_DATA_BYTES;
-               EtherFrame *frame = NULL;
+               EtherFrame *frame = nullptr;
                if (useSNAP)
                {
                    EtherFrameWithSNAP *snapFrame = new EtherFrameWithSNAP(msg->getName());
@@ -289,7 +289,7 @@ void EtherEncapMesh::processFrameFromWifiMesh(Ieee80211Frame *msg)
 
            if (remain>0 && remain<=MAX_ETHERNET_DATA_BYTES)
            {
-               EtherFrame *frame = NULL;
+               EtherFrame *frame = nullptr;
                if (useSNAP)
                {
                    EtherFrameWithSNAP *snapFrame = new EtherFrameWithSNAP(msg->getName());

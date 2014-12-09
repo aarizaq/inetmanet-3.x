@@ -89,7 +89,7 @@ void OLSR_Timer::removeTimer()
 OLSR_Timer::OLSR_Timer(OLSR* agent) : cOwnedObject("OLSR_Timer")
 {
     agent_ = agent;
-    tuple_ = NULL;
+    tuple_ = nullptr;
 }
 
 OLSR_Timer::~OLSR_Timer()
@@ -100,9 +100,9 @@ OLSR_Timer::~OLSR_Timer()
 OLSR_Timer::OLSR_Timer() : cOwnedObject("OLSR_Timer")
 {
     agent_ = dynamic_cast <OLSR*> (this->getOwner());
-    if (agent_==NULL)
+    if (agent_==nullptr)
         throw cRuntimeError("timer ower is bad");
-    tuple_ = NULL;
+    tuple_ = nullptr;
 }
 
 void OLSR_Timer::removeQueueTimer()
@@ -203,8 +203,8 @@ OLSR_DupTupleTimer::~OLSR_DupTupleTimer()
     if (!tuple_)
         return;
     OLSR_dup_tuple* tuple = dynamic_cast<OLSR_dup_tuple*> (tuple_);
-    tuple->asocTimer = NULL;
-    if (agent_->state_ptr==NULL)
+    tuple->asocTimer = nullptr;
+    if (agent_->state_ptr==nullptr)
         return;
     agent_->rm_dup_tuple(tuple);
     delete tuple_;
@@ -262,8 +262,8 @@ OLSR_LinkTupleTimer::~OLSR_LinkTupleTimer()
     if (!tuple_)
         return;
     OLSR_link_tuple* tuple = dynamic_cast<OLSR_link_tuple*> (tuple_);
-    tuple->asocTimer = NULL;
-    if (agent_->state_ptr==NULL)
+    tuple->asocTimer = nullptr;
+    if (agent_->state_ptr==nullptr)
         return;
     agent_->rm_link_tuple(tuple);
     agent_->setTopologyChanged(true);
@@ -301,8 +301,8 @@ OLSR_Nb2hopTupleTimer::~OLSR_Nb2hopTupleTimer()
     if (!tuple_)
         return;
     OLSR_nb2hop_tuple* tuple = dynamic_cast<OLSR_nb2hop_tuple*> (tuple_);
-    tuple->asocTimer = NULL;
-    if (agent_->state_ptr==NULL)
+    tuple->asocTimer = nullptr;
+    if (agent_->state_ptr==nullptr)
         return;
     agent_->rm_nb2hop_tuple(tuple);
     agent_->setTopologyChanged(true);
@@ -342,8 +342,8 @@ OLSR_MprSelTupleTimer::~OLSR_MprSelTupleTimer()
     if (!tuple_)
         return;
     OLSR_mprsel_tuple* tuple = dynamic_cast<OLSR_mprsel_tuple*> (tuple_);
-    tuple->asocTimer = NULL;
-    if (agent_->state_ptr==NULL)
+    tuple->asocTimer = nullptr;
+    if (agent_->state_ptr==nullptr)
         return;
     agent_->rm_mprsel_tuple(tuple);
     delete tuple_;
@@ -382,8 +382,8 @@ OLSR_TopologyTupleTimer::~OLSR_TopologyTupleTimer()
     if (!tuple_)
         return;
     OLSR_topology_tuple* tuple = dynamic_cast<OLSR_topology_tuple*> (tuple_);
-    tuple->asocTimer = NULL;
-    if (agent_->state_ptr==NULL)
+    tuple->asocTimer = nullptr;
+    if (agent_->state_ptr==nullptr)
         return;
     agent_->rm_topology_tuple(tuple);
     agent_->setTopologyChanged(true);
@@ -419,8 +419,8 @@ OLSR_IfaceAssocTupleTimer::~OLSR_IfaceAssocTupleTimer()
     if (!tuple_)
         return;
     OLSR_iface_assoc_tuple* tuple = dynamic_cast<OLSR_iface_assoc_tuple*> (tuple_);
-    tuple->asocTimer = NULL;
-    if (agent_->state_ptr==NULL)
+    tuple->asocTimer = nullptr;
+    if (agent_->state_ptr==nullptr)
         return;
     agent_->rm_ifaceassoc_tuple(tuple);
     agent_->setTopologyChanged(true);
@@ -564,7 +564,7 @@ void OLSR::handleMessage(cMessage *msg)
         while (timerQueuePtr->begin()->first<=simTime())
         {
             OLSR_Timer *timer = timerQueuePtr->begin()->second;
-            if (timer==NULL)
+            if (timer==nullptr)
                 throw cRuntimeError("timer ower is bad");
             else
             {
@@ -587,7 +587,7 @@ void OLSR::handleMessage(cMessage *msg)
 OLSR_pkt *
 OLSR::check_packet(cPacket* msg, nsaddr_t &src_addr, int &index)
 {
-    cPacket *msg_aux = NULL;
+    cPacket *msg_aux = nullptr;
     OLSR_pkt *op;
     index = getWlanInterfaceIndex(0);
     if (isInMacLayer())
@@ -595,7 +595,7 @@ OLSR::check_packet(cPacket* msg, nsaddr_t &src_addr, int &index)
         if (!dynamic_cast<OLSR_pkt  *>(msg)) // Check if olsr packet
         {
             delete  msg;
-            return NULL;
+            return nullptr;
         }
         else
         {
@@ -603,7 +603,7 @@ OLSR::check_packet(cPacket* msg, nsaddr_t &src_addr, int &index)
             if (op->reduceFuncionality() && par("reduceFuncionality").boolValue())
             {
                 delete msg;
-                return NULL;
+                return nullptr;
             }
             Ieee802Ctrl* ctrl = check_and_cast<Ieee802Ctrl*>(msg->removeControlInfo());
             src_addr = L3Address(ctrl->getSrc());
@@ -619,21 +619,21 @@ OLSR::check_packet(cPacket* msg, nsaddr_t &src_addr, int &index)
         if (udpPacket->getDestinationPort() != RT_PORT) // Check port
         {
             delete  msg;
-            return NULL;
+            return nullptr;
         }
         msg_aux = msg->decapsulate();
         if (!dynamic_cast<OLSR_pkt  *>(msg_aux)) // Check if olsr packet
         {
             delete  msg;
             delete msg_aux;
-            return NULL;
+            return nullptr;
         }
 
     }
     else
     {
         delete msg;
-        return NULL;
+        return nullptr;
     }
 // Extract information and delete the cantainer without more use
     op = check_and_cast<OLSR_pkt  *>(msg_aux);
@@ -641,7 +641,7 @@ OLSR::check_packet(cPacket* msg, nsaddr_t &src_addr, int &index)
     {
         delete msg;
         delete op;
-        return NULL;
+        return nullptr;
     }
     INetworkProtocolControlInfo* controlInfo = check_and_cast<INetworkProtocolControlInfo*>(msg->removeControlInfo());
     src_addr = controlInfo->getSourceAddress();
@@ -678,7 +678,7 @@ OLSR::recv_olsr(cMessage* msg)
     // so we check it.
 
     op = check_packet(PK(msg), src_addr, index);
-    if (op==NULL)
+    if (op==nullptr)
         return;
 
     // If the packet contains no messages must be silently discarded.
@@ -710,7 +710,7 @@ OLSR::recv_olsr(cMessage* msg)
         bool do_forwarding = true;
 
         OLSR_dup_tuple* duplicated = state_.find_dup_tuple(msg.orig_addr(), msg.msg_seq_num());
-        if (duplicated == NULL)
+        if (duplicated == nullptr)
         {
             // Process the message according to its type
             if (msg.msg_type() == OLSR_HELLO_MSG)
@@ -815,17 +815,17 @@ OLSR::mpr_computation()
         bool ok = true;
 
         OLSR_nb_tuple* nb_tuple = state_.find_sym_nb_tuple(nb2hop_tuple->nb_main_addr());
-        if (nb_tuple == NULL)
+        if (nb_tuple == nullptr)
             ok = false;
         else
         {
             nb_tuple = state_.find_nb_tuple(nb2hop_tuple->nb_main_addr(), OLSR_WILL_NEVER);
-            if (nb_tuple != NULL)
+            if (nb_tuple != nullptr)
                 ok = false;
             else
             {
                 nb_tuple = state_.find_sym_nb_tuple(nb2hop_tuple->nb2hop_addr());
-                if (nb_tuple != NULL)
+                if (nb_tuple != nullptr)
                     ok = false;
             }
         }
@@ -987,7 +987,7 @@ OLSR::mpr_computation()
         // reachability, select the node as MPR whose D(y) is
         // greater. Remove the nodes from N2 which are now covered
         // by a node in the MPR set.
-        OLSR_nb_tuple* max = NULL;
+        OLSR_nb_tuple* max = nullptr;
         int max_r = 0;
         for (std::set<int>::iterator it = rs.begin(); it != rs.end(); it++)
         {
@@ -999,7 +999,7 @@ OLSR::mpr_computation()
                         it2++)
                 {
                     OLSR_nb_tuple* nb_tuple = *it2;
-                    if (max == NULL || nb_tuple->willingness() > max->willingness())
+                    if (max == nullptr || nb_tuple->willingness() > max->willingness())
                     {
                         max = nb_tuple;
                         max_r = r;
@@ -1023,7 +1023,7 @@ OLSR::mpr_computation()
                 }
             }
         }
-        if (max != NULL)
+        if (max != nullptr)
         {
             state_.insert_mpr_addr(max->nb_main_addr());
             std::set<nsaddr_t> nb2hop_addrs;
@@ -1229,7 +1229,7 @@ OLSR::mpr_computation()
         // reachability, select the node as MPR whose D(y) is
         // greater. Remove the nodes from N2 which are now covered
         // by a node in the MPR set.
-        OLSR_nb_tuple *max = NULL;
+        OLSR_nb_tuple *max = nullptr;
         int max_r = 0;
         for (std::set<int>::iterator it = rs.begin(); it != rs.end(); it++)
         {
@@ -1242,7 +1242,7 @@ OLSR::mpr_computation()
                     it2 != reachability[r].end(); it2++)
             {
                 OLSR_nb_tuple *nb_tuple = *it2;
-                if (max == NULL || nb_tuple->willingness() > max->willingness())
+                if (max == nullptr || nb_tuple->willingness() > max->willingness())
                 {
                     max = nb_tuple;
                     max_r = r;
@@ -1265,7 +1265,7 @@ OLSR::mpr_computation()
                 }
             }
         }
-        if (max != NULL)
+        if (max != nullptr)
         {
             state_.insert_mpr_addr(max->nb_main_addr());
             CoverTwoHopNeighbors(max->nb_main_addr(), N2);
@@ -1307,7 +1307,7 @@ OLSR::rtable_computation()
         if (nb_tuple->getStatus() == OLSR_STATUS_SYM)
         {
             bool nb_main_addr = false;
-            OLSR_link_tuple* lt = NULL;
+            OLSR_link_tuple* lt = nullptr;
             for (linkset_t::iterator it2 = linkset().begin(); it2 != linkset().end(); it2++)
             {
                 OLSR_link_tuple* link_tuple = *it2;
@@ -1333,7 +1333,7 @@ OLSR::rtable_computation()
                         nb_main_addr = true;
                 }
             }
-            if (!nb_main_addr && lt != NULL)
+            if (!nb_main_addr && lt != nullptr)
             {
                 rtable_.add_entry(nb_tuple->nb_main_addr(),
                                   lt->nb_iface_addr(),
@@ -1365,17 +1365,17 @@ OLSR::rtable_computation()
         OLSR_nb2hop_tuple* nb2hop_tuple = *it;
         bool ok = true;
         OLSR_nb_tuple* nb_tuple = state_.find_sym_nb_tuple(nb2hop_tuple->nb_main_addr());
-        if (nb_tuple == NULL)
+        if (nb_tuple == nullptr)
             ok = false;
         else
         {
             nb_tuple = state_.find_nb_tuple(nb2hop_tuple->nb_main_addr(), OLSR_WILL_NEVER);
-            if (nb_tuple != NULL)
+            if (nb_tuple != nullptr)
                 ok = false;
             else
             {
                 nb_tuple = state_.find_sym_nb_tuple(nb2hop_tuple->nb2hop_addr());
-                if (nb_tuple != NULL)
+                if (nb_tuple != nullptr)
                     ok = false;
             }
         }
@@ -1384,7 +1384,7 @@ OLSR::rtable_computation()
         if (ok)
         {
             OLSR_rt_entry* entry = rtable_.lookup(nb2hop_tuple->nb_main_addr());
-            assert(entry != NULL);
+            assert(entry != nullptr);
             // check if the entry is already in the routing table and the new is a better alternative
             bool insert = true;
             OLSR_rt_entry* entry2hop = rtable_.lookup(nb2hop_tuple->nb2hop_addr());
@@ -1393,7 +1393,7 @@ OLSR::rtable_computation()
                 // check if the node is a better alternative
                 OLSR_nb_tuple* nb_tupleNew = state_.find_sym_nb_tuple(nb2hop_tuple->nb_main_addr());
                 OLSR_nb_tuple* nb_tupleOld = state_.find_sym_nb_tuple(entry2hop->next_addr());
-                if (nb_tupleOld != NULL && nb_tupleOld->willingness() > nb_tupleNew->willingness())
+                if (nb_tupleOld != nullptr && nb_tupleOld->willingness() > nb_tupleNew->willingness())
                     insert = false;
             }
             if (insert)
@@ -1433,7 +1433,7 @@ OLSR::rtable_computation()
             OLSR_topology_tuple* topology_tuple = *it;
             OLSR_rt_entry* entry1 = rtable_.lookup(topology_tuple->dest_addr());
             OLSR_rt_entry* entry2 = rtable_.lookup(topology_tuple->last_addr());
-            if (entry1 == NULL && entry2 != NULL && entry2->dist() == h)
+            if (entry1 == nullptr && entry2 != nullptr && entry2->dist() == h)
             {
                 rtable_.add_entry(topology_tuple->dest_addr(),
                                   entry2->next_addr(),
@@ -1469,7 +1469,7 @@ OLSR::rtable_computation()
             OLSR_iface_assoc_tuple* tuple = *it;
             OLSR_rt_entry* entry1 = rtable_.lookup(tuple->main_addr());
             OLSR_rt_entry* entry2 = rtable_.lookup(tuple->iface_addr());
-            if (entry1 != NULL && entry2 == NULL)
+            if (entry1 != nullptr && entry2 == nullptr)
             {
                 rtable_.add_entry(tuple->iface_addr(),
                                   entry1->next_addr(),
@@ -1540,7 +1540,7 @@ OLSR::process_tc(OLSR_msg& msg, const nsaddr_t &sender_iface, const int &index)
     // 1. If the sender interface of this message is not in the symmetric
     // 1-hop neighborhood of this node, the message MUST be discarded.
     OLSR_link_tuple* link_tuple = state_.find_sym_link_tuple(sender_iface, now);
-    if (link_tuple == NULL)
+    if (link_tuple == nullptr)
         return false;
 
     // 2. If there exist some tuple in the topology set where:
@@ -1550,7 +1550,7 @@ OLSR::process_tc(OLSR_msg& msg, const nsaddr_t &sender_iface, const int &index)
     // performed.
     OLSR_topology_tuple* topology_tuple =
         state_.find_newer_topology_tuple(msg.orig_addr(), tc.ansn());
-    if (topology_tuple != NULL)
+    if (topology_tuple != nullptr)
         return false;
 
     // 3. All tuples in the topology set where:
@@ -1572,7 +1572,7 @@ OLSR::process_tc(OLSR_msg& msg, const nsaddr_t &sender_iface, const int &index)
         //  T_time      =  current time + validity time.
         OLSR_topology_tuple* topology_tuple =
             state_.find_topology_tuple(addr, msg.orig_addr());
-        if (topology_tuple != NULL)
+        if (topology_tuple != nullptr)
             topology_tuple->time() = now + OLSR::emf_to_seconds(msg.vtime());
         // 4.2. Otherwise, a new tuple MUST be recorded in the topology
         // set where:
@@ -1617,7 +1617,7 @@ OLSR::process_mid(OLSR_msg& msg, const nsaddr_t &sender_iface, const int &index)
     // 1. If the sender interface of this message is not in the symmetric
     // 1-hop neighborhood of this node, the message MUST be discarded.
     OLSR_link_tuple* link_tuple = state_.find_sym_link_tuple(sender_iface, now);
-    if (link_tuple == NULL)
+    if (link_tuple == nullptr)
         return;
 
     // 2. For each interface address listed in the MID message
@@ -1659,7 +1659,7 @@ OLSR::process_mid(OLSR_msg& msg, const nsaddr_t &sender_iface, const int &index)
 ///
 /// \param p the %OLSR packet which has been received.
 /// \param msg the %OLSR message which must be forwarded.
-/// \param dup_tuple NULL if the message has never been considered for forwarding,
+/// \param dup_tuple nullptr if the message has never been considered for forwarding,
 /// or a duplicate tuple in other case.
 /// \param local_iface the address of the interface where the message was received from.
 ///
@@ -1673,12 +1673,12 @@ OLSR::forward_default(OLSR_msg& msg, OLSR_dup_tuple* dup_tuple, const nsaddr_t &
 
 
     OLSR_link_tuple* link_tuple = state_.find_sym_link_tuple(src_addr, now);
-    if (link_tuple == NULL)
+    if (link_tuple == nullptr)
         return;
 
     // If the message has already been considered for forwarding,
     // it must not be retransmitted again
-    if (dup_tuple != NULL && dup_tuple->retransmitted())
+    if (dup_tuple != nullptr && dup_tuple->retransmitted())
     {
         debug("%f: Node %s does not forward a message received"
               " from %s because it is duplicated\n",
@@ -1696,7 +1696,7 @@ OLSR::forward_default(OLSR_msg& msg, OLSR_dup_tuple* dup_tuple, const nsaddr_t &
     {
         OLSR_mprsel_tuple* mprsel_tuple =
             state_.find_mprsel_tuple(get_main_addr(src_addr));
-        if (mprsel_tuple != NULL)
+        if (mprsel_tuple != nullptr)
         {
             OLSR_msg& new_msg = msg;
             new_msg.ttl()--;
@@ -1709,7 +1709,7 @@ OLSR::forward_default(OLSR_msg& msg, OLSR_dup_tuple* dup_tuple, const nsaddr_t &
     }
 
     // Update duplicate tuple...
-    if (dup_tuple != NULL)
+    if (dup_tuple != nullptr)
     {
         dup_tuple->time() = now + OLSR_DUP_HOLD_TIME;
         dup_tuple->retransmitted() = retransmitted;
@@ -1755,7 +1755,7 @@ OLSR::forward_data(cMessage* p, nsaddr_t addr)
         if ((uint32_t)ih->daddr() != IP_BROADCAST)
         {
             OLSR_rt_entry* entry = rtable_.lookup(ih->daddr());
-            if (entry == NULL)
+            if (entry == nullptr)
             {
                 debug("%f: Node %d can not forward a packet destined to %d\n",
                       CURRENT_TIME,
@@ -1767,7 +1767,7 @@ OLSR::forward_data(cMessage* p, nsaddr_t addr)
             else
             {
                 entry = rtable_.find_send_entry(entry);
-                assert(entry != NULL);
+                assert(entry != nullptr);
                 ch->next_hop() = entry->next_addr();
 
             }
@@ -2032,7 +2032,7 @@ OLSR::link_sensing(OLSR_msg& msg, const nsaddr_t &receiver_iface, const nsaddr_t
     bool created = false;
 
     OLSR_link_tuple* link_tuple = state_.find_link_tuple(sender_iface);
-    if (link_tuple == NULL)
+    if (link_tuple == nullptr)
     {
         // We have to create a new tuple
         link_tuple = new OLSR_link_tuple;
@@ -2092,7 +2092,7 @@ OLSR::link_sensing(OLSR_msg& msg, const nsaddr_t &receiver_iface, const nsaddr_t
         updated_link_tuple(link_tuple, hello.willingness());
 
     // Schedules link tuple deletion
-    if (created && link_tuple != NULL)
+    if (created && link_tuple != nullptr)
     {
         OLSR_LinkTupleTimer* link_timer =
             new OLSR_LinkTupleTimer(this, link_tuple);
@@ -2113,7 +2113,7 @@ OLSR::populate_nbset(OLSR_msg& msg)
     OLSR_hello& hello = msg.hello();
 
     OLSR_nb_tuple* nb_tuple = state_.find_nb_tuple(msg.orig_addr());
-    if (nb_tuple != NULL)
+    if (nb_tuple != nullptr)
         nb_tuple->willingness() = hello.willingness();
     return false;
 }
@@ -2159,7 +2159,7 @@ OLSR::populate_nb2hopset(OLSR_msg& msg)
                                 // Otherwise, a 2-hop tuple is created
                                 OLSR_nb2hop_tuple* nb2hop_tuple =
                                     state_.find_nb2hop_tuple(msg.orig_addr(), nb2hop_addr);
-                                if (nb2hop_tuple == NULL)
+                                if (nb2hop_tuple == nullptr)
                                 {
                                     nb2hop_tuple =
                                         new OLSR_nb2hop_tuple;
@@ -2230,7 +2230,7 @@ OLSR::populate_mprselset(OLSR_msg& msg)
                     // We must create a new entry into the mpr selector set
                     OLSR_mprsel_tuple* mprsel_tuple =
                         state_.find_mprsel_tuple(msg.orig_addr());
-                    if (mprsel_tuple == NULL)
+                    if (mprsel_tuple == nullptr)
                     {
                         mprsel_tuple = new OLSR_mprsel_tuple;
                         mprsel_tuple->main_addr() = msg.orig_addr();
@@ -2278,7 +2278,7 @@ OLSR::mac_failed(IPv4Datagram* p)
     if (entry)
     {
         OLSR_link_tuple* link_tuple = state_.find_link_tuple(entry->next_addr());
-        if (link_tuple != NULL)
+        if (link_tuple != nullptr)
         {
             link_tuple->lost_time() = now + OLSR_NEIGHB_HOLD_TIME;
             link_tuple->time() = now + OLSR_NEIGHB_HOLD_TIME;
@@ -2442,7 +2442,7 @@ OLSR::updated_link_tuple(OLSR_link_tuple* tuple, uint8_t willingness)
     // Each time a link tuple changes, the associated neighbor tuple must be recomputed
     OLSR_nb_tuple* nb_tuple = find_or_add_nb(tuple, willingness);
 
-    if (nb_tuple != NULL)
+    if (nb_tuple != nullptr)
     {
         if (use_mac() && tuple->lost_time() >= now)
             nb_tuple->getStatus() = OLSR_STATUS_NOT_SYM;
@@ -2461,7 +2461,7 @@ OLSR::updated_link_tuple(OLSR_link_tuple* tuple, uint8_t willingness)
 OLSR_nb_tuple* OLSR::find_or_add_nb(OLSR_link_tuple* tuple, uint8_t willingness)
 {
     OLSR_nb_tuple* nb_tuple = state_.find_nb_tuple(get_main_addr(tuple->nb_iface_addr()));
-    if (nb_tuple == NULL)
+    if (nb_tuple == nullptr)
     {
         double now = CURRENT_TIME;
         state_.erase_nb_tuple(tuple->nb_iface_addr());
@@ -2667,7 +2667,7 @@ OLSR::get_main_addr(const nsaddr_t &iface_addr) const
     OLSR_iface_assoc_tuple* tuple =
         state_.find_ifaceassoc_tuple(iface_addr);
 
-    if (tuple != NULL)
+    if (tuple != nullptr)
         return tuple->main_addr();
     return iface_addr;
 }
@@ -2704,7 +2704,7 @@ OLSR::degree(OLSR_nb_tuple* tuple)
             //OLSR_nb_tuple* nb_tuple =
             //    state_.find_nb_tuple(nb2hop_tuple->nb_main_addr());
             OLSR_nb_tuple* nb_tuple = state_.find_nb_tuple(nb2hop_tuple->nb2hop_addr());
-            if (nb_tuple == NULL)
+            if (nb_tuple == nullptr)
                 degree++;
         }
     }
@@ -2783,7 +2783,7 @@ OLSR::node_id(const nsaddr_t &addr)
             return addr;
         // Getting node id
         Node* node = Node::get_node_by_address(addr);
-        assert(node != NULL);
+        assert(node != nullptr);
         return node->nodeid();
     */
 }
@@ -2813,14 +2813,14 @@ void OLSR::finish()
     rtable_.clear();
     msgs_.clear();
     delete state_ptr;
-    state_ptr=NULL;
+    state_ptr=nullptr;
     cancelAndDelete(&hello_timer_);
     cancelAndDelete(&tc_timer_);
     cancelAndDelete(&mid_timer_);
 
-    helloTimer= NULL;   ///< Timer for sending HELLO messages.
-    tcTimer= NULL;  ///< Timer for sending TC messages.
-    midTimer = NULL;    ///< Timer for sending MID messages.
+    helloTimer= nullptr;   ///< Timer for sending HELLO messages.
+    tcTimer= nullptr;  ///< Timer for sending TC messages.
+    midTimer = nullptr;    ///< Timer for sending MID messages.
     */
 }
 
@@ -2831,7 +2831,7 @@ OLSR::~OLSR()
     if (state_ptr)
     {
         delete state_ptr;
-        state_ptr = NULL;
+        state_ptr = nullptr;
     }
     /*
         mprset().clear();
@@ -2844,53 +2844,53 @@ OLSR::~OLSR()
         ifaceassocset().clear();
     */
     /*
-        if (&hello_timer_!=NULL)
+        if (&hello_timer_!=nullptr)
             cancelAndDelete(&hello_timer_);
-        if (&tc_timer_!=NULL)
+        if (&tc_timer_!=nullptr)
             cancelAndDelete(&tc_timer_);
-        if (&mid_timer_!=NULL)
+        if (&mid_timer_!=nullptr)
             cancelAndDelete(&mid_timer_);
     */
     if (timerMessage)
     {
         cancelAndDelete(timerMessage);
-        timerMessage = NULL;
+        timerMessage = nullptr;
     }
 
     while (timerQueuePtr && timerQueuePtr->size()>0)
     {
         OLSR_Timer * timer = timerQueuePtr->begin()->second;
         timerQueuePtr->erase(timerQueuePtr->begin());
-        timer->setTuple(NULL);
+        timer->setTuple(nullptr);
         if (helloTimer==timer)
-            helloTimer = NULL;
+            helloTimer = nullptr;
         else if (tcTimer==timer)
-            tcTimer = NULL;
+            tcTimer = nullptr;
         else if (midTimer==timer)
-            midTimer = NULL;
+            midTimer = nullptr;
         delete timer;
     }
 
     if (helloTimer)
     {
         delete helloTimer;
-        helloTimer = NULL;
+        helloTimer = nullptr;
     }
     if (tcTimer)
     {
         delete tcTimer;
-        tcTimer = NULL;
+        tcTimer = nullptr;
     }
     if (midTimer)
     {
         delete midTimer;
-        midTimer = NULL;
+        midTimer = nullptr;
     }
 
     if (timerQueuePtr)
     {
         delete timerQueuePtr;
-        timerQueuePtr = NULL;
+        timerQueuePtr = nullptr;
     }
 }
 
@@ -3138,7 +3138,7 @@ void OLSR::computeDistributionPath(const nsaddr_t &initNode)
         OLSR_rtable *val = it->second;
         mprset_t::iterator itMin = mpr.end();
         int hops = 1000;
-        OLSR_rt_entry* segmentRoute = NULL;
+        OLSR_rt_entry* segmentRoute = nullptr;
         for (mprset_t::iterator it2 = mpr.begin();it2 != mpr.end();++it2)
         {
 
@@ -3149,7 +3149,7 @@ void OLSR::computeDistributionPath(const nsaddr_t &initNode)
             else
             {
                 OLSR_rt_entry*  entry = val->lookup(*it2);
-                if (entry == NULL)
+                if (entry == nullptr)
                     return;
                 if (hops > (int)entry->dist())
                 {
@@ -3202,12 +3202,12 @@ OLSR::isNodeCandidate(const nsaddr_t &src_addr)
 
 
     OLSR_link_tuple* link_tuple = state_.find_sym_link_tuple(src_addr, now);
-    if (link_tuple == NULL)
+    if (link_tuple == nullptr)
         return false;
 
 
     OLSR_mprsel_tuple* mprsel_tuple = state_.find_mprsel_tuple(get_main_addr(src_addr));
-    if (mprsel_tuple != NULL)
+    if (mprsel_tuple != nullptr)
         return true;
     return false;
 }

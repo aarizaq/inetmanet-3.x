@@ -101,7 +101,7 @@ DSRPkt::DSRPkt(struct dsr_pkt *dp, int interface_id) : IPv4Datagram()
         if (dp->payload)
         {
             encapsulate(dp->payload);
-            dp->payload = NULL;
+            dp->payload = nullptr;
             setEncapProtocol((IPProtocolId)dp->encapsulate_protocol);
 
         }
@@ -157,7 +157,7 @@ void DSRPkt::ModOptions(struct dsr_pkt *dp, int interface_id)
             if (msg)
                 delete msg;
             encapsulate(dp->payload);
-            dp->payload = NULL;
+            dp->payload = nullptr;
             setEncapProtocol((IPProtocolId)dp->encapsulate_protocol);
 
         }
@@ -338,7 +338,7 @@ void DSRPktExt::copy(const DSRPktExt& msg)
     size = msg.size;
     if (size==0)
     {
-        extension = NULL;
+        extension = nullptr;
         return;
     }
     extension = new EtxList[size];
@@ -365,7 +365,7 @@ EtxList * DSRPktExt::addExtension(int len)
     EtxList * extension_aux;
     if (len<0)
     {
-        return NULL;
+        return nullptr;
     }
     extension_aux = new EtxList [size+len];
     memcpy(extension_aux, extension, size*sizeof(EtxList));
@@ -381,12 +381,12 @@ EtxList * DSRPktExt::delExtension(int len)
     EtxList * extension_aux;
     if (len<0)
     {
-        return NULL;
+        return nullptr;
     }
     if (size-len<=0)
     {
         delete [] extension;
-        extension = NULL;
+        extension = nullptr;
         size = 0;
         return extension;
     }

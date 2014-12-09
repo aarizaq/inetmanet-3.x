@@ -58,7 +58,7 @@ void SecurityIeee80211MgmtBase::handleMessage(cMessage *msg)
         EV << "Frame arrived from MAC: " << msg << "\n";
 
         // if verschlüsselt
-        if(strstr(msg->getName() ,"CCMPFrame")!=NULL && hasSecurity)
+        if(strstr(msg->getName() ,"CCMPFrame")!=nullptr && hasSecurity)
         {
             EV << "CCMPFrame Frame arrived from MAC, send it to SecurityModule" << msg << "\n";
             send(msg, "securityOut");
@@ -82,24 +82,24 @@ void SecurityIeee80211MgmtBase::handleMessage(cMessage *msg)
         handleCommand(msgkind, ctrl);
     }
 
-    else if(strstr(msg->getName() ,"Beacon")!=NULL ||
-                strstr(msg->getName() ,"Open Authentication Request")!=NULL || strstr(msg->getName() ,"Open Authentication Response")!=NULL ||
-                strstr(msg->getName() ,"Auth")!=NULL || strstr(msg->getName() ,"Auth-OK")!=NULL || strstr(msg->getName() ,"Auth-ERROR")!=NULL ||
-                strstr(msg->getName() ,"Auth msg 1/4")!=NULL || strstr(msg->getName() ,"Auth msg 2/4")!=NULL ||strstr(msg->getName() ,"Auth msg 3/4")!=NULL ||
-                strstr(msg->getName() ,"Auth msg 4/4")!=NULL || strstr(msg->getName() , "Group msg 1/2")!=NULL || strstr(msg->getName() ,"Group msg 2/2")!=NULL )
+    else if(strstr(msg->getName() ,"Beacon")!=nullptr ||
+                strstr(msg->getName() ,"Open Authentication Request")!=nullptr || strstr(msg->getName() ,"Open Authentication Response")!=nullptr ||
+                strstr(msg->getName() ,"Auth")!=nullptr || strstr(msg->getName() ,"Auth-OK")!=nullptr || strstr(msg->getName() ,"Auth-ERROR")!=nullptr ||
+                strstr(msg->getName() ,"Auth msg 1/4")!=nullptr || strstr(msg->getName() ,"Auth msg 2/4")!=nullptr ||strstr(msg->getName() ,"Auth msg 3/4")!=nullptr ||
+                strstr(msg->getName() ,"Auth msg 4/4")!=nullptr || strstr(msg->getName() , "Group msg 1/2")!=nullptr || strstr(msg->getName() ,"Group msg 2/2")!=nullptr )
         {
             sendOrEnqueue(PK(msg));
         }
 
-    // else if (strstr(gateName,"securityIn")!=NULL && hasSecurity)
+    // else if (strstr(gateName,"securityIn")!=nullptr && hasSecurity)
     else if (msg->arrivedOn("securityIn")&&hasSecurity)
     {
-        if(strstr(msg->getName() ,"CCMPFrame")!=NULL)
+        if(strstr(msg->getName() ,"CCMPFrame")!=nullptr)
         {
             EV << "CCMPFrame Frame arrived from Security, send it to Mac_" <<endl;
             sendOrEnqueue(PK(msg));
         }
-        else if(strstr(msg->getName() ,"DecCCMP")!=NULL)
+        else if(strstr(msg->getName() ,"DecCCMP")!=nullptr)
         {
             EV << "Frame arrived from Security, send it to upper layers: " << msg << "\n";
             Ieee80211DataOrMgmtFrame *frame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg);

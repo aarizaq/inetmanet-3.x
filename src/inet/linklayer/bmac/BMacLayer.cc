@@ -120,8 +120,7 @@ BMacLayer::~BMacLayer()
     cancelAndDelete(ack_timeout);
     cancelAndDelete(resend_data);
 
-    MacQueue::iterator it;
-    for (it = macQueue.begin(); it != macQueue.end(); ++it) {
+    for (auto it = macQueue.begin(); it != macQueue.end(); ++it) {
         delete (*it);
     }
     macQueue.clear();
@@ -481,8 +480,8 @@ void BMacLayer::handleSelfMessage(cMessage *msg)
                 else {
                     EV_DETAIL << "Received " << mac << " is not for us, dropping frame." << endl;
                     delete msg;
-                    msg = NULL;
-                    mac = NULL;
+                    msg = nullptr;
+                    mac = nullptr;
                 }
 
                 cancelEvent(data_timeout);

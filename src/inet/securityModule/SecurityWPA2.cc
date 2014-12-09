@@ -101,16 +101,16 @@ bool SecurityWPA2::statsAlreadyRecorded;
 SecurityWPA2::SecurityWPA2()
 {
     // TODO Auto-generated constructor stub
-    rt = NULL;
-    itable = NULL;
+    rt = nullptr;
+    itable = nullptr;
 }
 
 SecurityWPA2::~SecurityWPA2()
 {
     /*  if(PTKTimer)
-        PTKTimer =NULL;
+        PTKTimer =nullptr;
     if(GTKTimer)
-        GTKTimer =NULL;*/
+        GTKTimer =nullptr;*/
 }
 
 
@@ -140,7 +140,7 @@ void SecurityWPA2::initialize(int stage)
 
         counter=0;
         IInterfaceTable *ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
-        myIface = NULL;
+        myIface = nullptr;
         if (!ift)
         {
             myIface = ift->getInterfaceByName(getParentModule()->getFullName());
@@ -213,31 +213,31 @@ void SecurityWPA2::handleMessage(cMessage *msg)
 void SecurityWPA2::handleResponse(cMessage *msg)
 {
     // EV << "handleResponse() " <<msg->getName() << "\n";
-    if(strstr(msg->getName() ,"Beacon")!=NULL)
+    if(strstr(msg->getName() ,"Beacon")!=nullptr)
     {
         Ieee80211BeaconFrame *frame= (check_and_cast<Ieee80211BeaconFrame *>(msg));
         handleBeaconFrame(frame);
     }
 
-    else if(strstr(msg->getName() ,"Open Auth-Req")!=NULL || strstr(msg->getName() ,"Open Auth-Resp")!=NULL)
+    else if(strstr(msg->getName() ,"Open Auth-Req")!=nullptr || strstr(msg->getName() ,"Open Auth-Resp")!=nullptr)
     {
         Ieee80211AuthenticationFrame *frame= (check_and_cast<Ieee80211AuthenticationFrame *>(msg));
         handleOpenAuthenticationFrame(frame);
     }
-    else if(strstr(msg->getName() ,"Auth")!=NULL || strstr(msg->getName() ,"Auth-OK")!=NULL || strstr(msg->getName() ,"Auth-ERROR")!=NULL
-            || strstr(msg->getName() ,"Auth msg 1/4")!=NULL || strstr(msg->getName() ,"Auth msg 2/4")!=NULL ||
-            strstr(msg->getName() ,"Auth msg 3/4")!=NULL || strstr(msg->getName() ,"Auth msg 4/4")!=NULL)
+    else if(strstr(msg->getName() ,"Auth")!=nullptr || strstr(msg->getName() ,"Auth-OK")!=nullptr || strstr(msg->getName() ,"Auth-ERROR")!=nullptr
+            || strstr(msg->getName() ,"Auth msg 1/4")!=nullptr || strstr(msg->getName() ,"Auth msg 2/4")!=nullptr ||
+            strstr(msg->getName() ,"Auth msg 3/4")!=nullptr || strstr(msg->getName() ,"Auth msg 4/4")!=nullptr)
     {
         Ieee80211AuthenticationFrame *frame= (check_and_cast<Ieee80211AuthenticationFrame *>(msg));
         handleAuthenticationFrame(frame);
     }
-    else if(strstr(msg->getName() ,"Deauth")!=NULL)
+    else if(strstr(msg->getName() ,"Deauth")!=nullptr)
     {
         Ieee80211AuthenticationFrame *frame= (check_and_cast<Ieee80211AuthenticationFrame *>(msg));
         handleDeauthenticationFrame(frame);
     }
 
-    else if(strstr(msg->getName() , "Group msg 1/2")!=NULL || strstr(msg->getName() ,"Group msg 2/2")!=NULL)
+    else if(strstr(msg->getName() , "Group msg 1/2")!=nullptr || strstr(msg->getName() ,"Group msg 2/2")!=nullptr)
     {
         Ieee80211AuthenticationFrame *frame= (check_and_cast<Ieee80211AuthenticationFrame *>(msg));
         handleGroupHandshakeFrame(frame);
@@ -372,7 +372,7 @@ void SecurityWPA2::handleTimer(cMessage *msg)
         scheduleAt(simTime()+beaconInterval, beaconTimer);
     }
 
-    else if (dynamic_cast<newcMessage *>(msg) != NULL)
+    else if (dynamic_cast<newcMessage *>(msg) != nullptr)
     {
         newcMessage *newmsg = (check_and_cast<newcMessage *>(msg));
         if(newmsg->getKind())
@@ -472,7 +472,7 @@ void SecurityWPA2::handleBeaconFrame(Ieee80211BeaconFrame *frame)
     if(mesh)
     {
         // just to avoid undefined states
-        if(mesh->authTimeoutMsg_a!=NULL && mesh->authTimeoutMsg_b!=NULL)
+        if(mesh->authTimeoutMsg_a!=nullptr && mesh->authTimeoutMsg_b!=nullptr)
         {
             EV << "Authentication in Progress, ignore Beacon"<<endl;
             counter ++;
@@ -487,16 +487,16 @@ void SecurityWPA2::handleBeaconFrame(Ieee80211BeaconFrame *frame)
         else
         {
             // no Authentication in progress, start negotiation
-            if (mesh->status==NOT_AUTHENTICATED && mesh->authTimeoutMsg_a==NULL &&mesh->authTimeoutMsg_b==NULL)
+            if (mesh->status==NOT_AUTHENTICATED && mesh->authTimeoutMsg_a==nullptr &&mesh->authTimeoutMsg_b==nullptr)
             {
                 sendOpenAuthenticateRequest(mesh);
             }
             // if authenticated Mesh, restart beacon timeout
-            else if (mesh->status==AUTHENTICATED && mesh->authTimeoutMsg_a==NULL &&mesh->authTimeoutMsg_b==NULL && mesh->sideA==1)
+            else if (mesh->status==AUTHENTICATED && mesh->authTimeoutMsg_a==nullptr &&mesh->authTimeoutMsg_b==nullptr && mesh->sideA==1)
             {
                 EV << "Beacon is from authenticated Mesh, restarting beacon timeout timer"<<endl;
                 EV << "++++++++++++++++++++++++++++++++++++++++++++++++++" <<endl;
-                ASSERT(mesh->beaconTimeoutMsg!=NULL);
+                ASSERT(mesh->beaconTimeoutMsg!=nullptr);
                 cancelEvent(mesh->beaconTimeoutMsg);
                 scheduleAt(simTime()+MAX_BEACONS_MISSED*mesh->beaconInterval, mesh->beaconTimeoutMsg);
 
@@ -521,13 +521,13 @@ void SecurityWPA2::storeMeshInfo(const MACAddress& address, const Ieee80211Beaco
         meshList.push_back(MeshInfo());
         mesh = &meshList.back();
         mesh->status = NOT_AUTHENTICATED;
-        mesh->authTimeoutMsg_a=NULL;
-        mesh->authTimeoutMsg_b=NULL;
+        mesh->authTimeoutMsg_a=nullptr;
+        mesh->authTimeoutMsg_b=nullptr;
 
         mesh->authSeqExpected = 1;
         mesh->isCandidate=0;
-        mesh->groupAuthTimeoutMsg=NULL;
-        mesh->PTKTimerMsg=NULL;
+        mesh->groupAuthTimeoutMsg=nullptr;
+        mesh->PTKTimerMsg=nullptr;
         mesh->sideA=0;
     }
     //mesh->channel = body.getChannelNumber();
@@ -548,38 +548,38 @@ void SecurityWPA2::clearMeshNode(const MACAddress& address)
 
     if(mesh)
     {
-        if(mesh->beaconTimeoutMsg!=NULL)
+        if(mesh->beaconTimeoutMsg!=nullptr)
         {
             delete cancelEvent(mesh->beaconTimeoutMsg);
-            mesh->beaconTimeoutMsg=NULL;
+            mesh->beaconTimeoutMsg=nullptr;
         }
-        if(mesh->authTimeoutMsg_a!=NULL)
+        if(mesh->authTimeoutMsg_a!=nullptr)
         {
             delete cancelEvent(mesh->authTimeoutMsg_a);
-            mesh->authTimeoutMsg_a=NULL;
+            mesh->authTimeoutMsg_a=nullptr;
         }
-        if(mesh->authTimeoutMsg_b!=NULL)
+        if(mesh->authTimeoutMsg_b!=nullptr)
         {
             delete cancelEvent(mesh->authTimeoutMsg_b);
-            mesh->authTimeoutMsg_b=NULL;
+            mesh->authTimeoutMsg_b=nullptr;
         }
 
-        if(mesh->groupAuthTimeoutMsg!=NULL)
+        if(mesh->groupAuthTimeoutMsg!=nullptr)
         {
             delete cancelEvent(mesh->groupAuthTimeoutMsg);
-            mesh->groupAuthTimeoutMsg=NULL;
+            mesh->groupAuthTimeoutMsg=nullptr;
         }
-        if(mesh->PTKTimerMsg!=NULL)
+        if(mesh->PTKTimerMsg!=nullptr)
         {
             delete cancelEvent(mesh->PTKTimerMsg);
-            mesh->PTKTimerMsg=NULL;
+            mesh->PTKTimerMsg=nullptr;
         }
 
         mesh->status=NOT_AUTHENTICATED;
         mesh->isAuthenticated=0;
         mesh->isCandidate=0;
-        mesh->authTimeoutMsg_a=NULL;
-        mesh->authTimeoutMsg_b=NULL;
+        mesh->authTimeoutMsg_a=nullptr;
+        mesh->authTimeoutMsg_b=nullptr;
         mesh->sideA=0;
         /*for(MeshList::iterator it=meshList.begin(); it != meshList.end();)
         {
@@ -626,7 +626,7 @@ SecurityWPA2::MeshInfo *SecurityWPA2::lookupMesh(const MACAddress& address)
     for (MeshList::iterator it=meshList.begin(); it!=meshList.end(); ++it)
         if (it->address == address)
             return &(*it);
-    return NULL;
+    return nullptr;
 }
 
 
@@ -687,7 +687,7 @@ void SecurityWPA2::sendOpenAuthenticateRequest(MeshInfo *mesh)//, simtime_t time
     sendManagementFrame(frame, mesh->address);
 
     // schedule timeout for side A
-    ASSERT(mesh->authTimeoutMsg_a==NULL);
+    ASSERT(mesh->authTimeoutMsg_a==nullptr);
     mesh->authTimeoutMsg_a = new newcMessage("authTimeout", MK_AUTH_TIMEOUT);
     mesh->authTimeoutMsg_a->setMeshMACAddress_AuthTimeout(mesh->address);
     scheduleAt(simTime()+authenticationTimeout_a, mesh->authTimeoutMsg_a);
@@ -712,16 +712,16 @@ void SecurityWPA2::handleOpenAuthenticationFrame(Ieee80211AuthenticationFrame *f
         mesh->authSeqExpected = 1;
         mesh->isCandidate=0;
         mesh->beaconInterval=beaconInterval;
-        mesh->authTimeoutMsg_a=NULL;
-        mesh->authTimeoutMsg_b=NULL;
-        mesh->groupAuthTimeoutMsg=NULL;
+        mesh->authTimeoutMsg_a=nullptr;
+        mesh->authTimeoutMsg_b=nullptr;
+        mesh->groupAuthTimeoutMsg=nullptr;
         mesh->sideA=0;
     }
     if(strstr(frame->getName() ,"Open Auth-Req") || strstr(frame->getName() ,"Open Auth-Resp"))
     {
         if(frameAuthSeq ==100)
         {
-            if (mesh->authTimeoutMsg_b!=NULL)
+            if (mesh->authTimeoutMsg_b!=nullptr)
             {
                 EV << "previous authentication attempt was broken" <<endl;;
                 clearMeshNode(mesh->address);
@@ -735,7 +735,7 @@ void SecurityWPA2::handleOpenAuthenticationFrame(Ieee80211AuthenticationFrame *f
             resp->getBody().setStatusCode(SC_SUCCESSFUL);
             resp->setByteLength(34);
 
-            ASSERT(mesh->authTimeoutMsg_b==NULL);
+            ASSERT(mesh->authTimeoutMsg_b==nullptr);
             mesh->authTimeoutMsg_b = new newcMessage("authTimeout", MK_AUTH_TIMEOUT);
             mesh->authTimeoutMsg_b->setMeshMACAddress_AuthTimeout(mesh->address);
             scheduleAt(simTime()+authenticationTimeout_b, mesh->authTimeoutMsg_b);
@@ -750,7 +750,7 @@ void SecurityWPA2::handleOpenAuthenticationFrame(Ieee80211AuthenticationFrame *f
         {
 
 
-            if (mesh->authTimeoutMsg_a==NULL)
+            if (mesh->authTimeoutMsg_a==nullptr)
             {
                 EV << "No Authentication in progress, ignoring frame\n";
                 EV << mesh->authTimeoutMsg_a <<endl;
@@ -779,7 +779,7 @@ void SecurityWPA2::checkForAuthenticationStart(MeshInfo *mesh)
 {
     if (mesh)
     {
-        if (mesh->authTimeoutMsg_a!=NULL && mesh->authTimeoutMsg_b==NULL)
+        if (mesh->authTimeoutMsg_a!=nullptr && mesh->authTimeoutMsg_b==nullptr)
         {
             EV <<"Start Authentication"<<endl;
             Ieee80211Prim_AuthenticateRequest *ctrl = new  Ieee80211Prim_AuthenticateRequest();
@@ -861,7 +861,7 @@ void SecurityWPA2::handleAuthenticationFrame(Ieee80211AuthenticationFrame *frame
 
     if(mesh)
     {
-        if(mesh->authTimeoutMsg_a!=NULL && mesh->authTimeoutMsg_b!=NULL)
+        if(mesh->authTimeoutMsg_a!=nullptr && mesh->authTimeoutMsg_b!=nullptr)
         {
             EV << "illegal state!" <<endl;
             return;
@@ -873,7 +873,7 @@ void SecurityWPA2::handleAuthenticationFrame(Ieee80211AuthenticationFrame *frame
     {
         EV << "<<<<< 4 >>>>>"<<endl;
 
-        if (mesh->authTimeoutMsg_a==NULL)
+        if (mesh->authTimeoutMsg_a==nullptr)
         {
             EV << "No Authentication in progress, ignoring frame\n";
             EV << mesh->authTimeoutMsg_a <<endl;
@@ -888,14 +888,14 @@ void SecurityWPA2::handleAuthenticationFrame(Ieee80211AuthenticationFrame *frame
 
         EV << "Initiator: Authentication with Mesh-Peer completed"<<endl;
 
-        ASSERT(mesh->authTimeoutMsg_a!=NULL);
+        ASSERT(mesh->authTimeoutMsg_a!=nullptr);
         delete cancelEvent(mesh->authTimeoutMsg_a);
-        mesh->authTimeoutMsg_a = NULL;
+        mesh->authTimeoutMsg_a = nullptr;
 
-        if(mesh->beaconTimeoutMsg!=NULL)
+        if(mesh->beaconTimeoutMsg!=nullptr)
         {
             delete cancelEvent(mesh->beaconTimeoutMsg);
-            mesh->beaconTimeoutMsg = NULL;
+            mesh->beaconTimeoutMsg = nullptr;
         }
 
         mesh->beaconTimeoutMsg = new newcMessage("beaconTimeout");
@@ -945,11 +945,11 @@ void SecurityWPA2::handleAuthenticationFrame(Ieee80211AuthenticationFrame *frame
 
         AuthTime=  simTime()-AuthTime;
 
-        if (mesh->authTimeoutMsg_b!=NULL)
+        if (mesh->authTimeoutMsg_b!=nullptr)
         {
 
             delete cancelEvent(mesh->authTimeoutMsg_b);
-            mesh->authTimeoutMsg_b = NULL;
+            mesh->authTimeoutMsg_b = nullptr;
 
         }
 
@@ -961,7 +961,7 @@ void SecurityWPA2::handleAuthenticationFrame(Ieee80211AuthenticationFrame *frame
 
     if (frameAuthSeq == 1)
     {
-        if (mesh->authTimeoutMsg_b==NULL)
+        if (mesh->authTimeoutMsg_b==nullptr)
         {
             EV << "No Authentication in progress, ignoring frame\n";
             EV << mesh->authTimeoutMsg_b <<endl;
@@ -1013,7 +1013,7 @@ void SecurityWPA2::handleAuthenticationFrame(Ieee80211AuthenticationFrame *frame
 
     if (frameAuthSeq == 2)
     {
-        if (mesh->authTimeoutMsg_a==NULL)
+        if (mesh->authTimeoutMsg_a==nullptr)
         {
             EV << "No Authentication in progress, ignoring frame\n";
             EV << mesh->authTimeoutMsg_a <<endl;
@@ -1098,7 +1098,7 @@ void SecurityWPA2::handleAuthenticationFrame(Ieee80211AuthenticationFrame *frame
 
     if (frameAuthSeq == 3)
     {
-        if (mesh->authTimeoutMsg_b==NULL)
+        if (mesh->authTimeoutMsg_b==nullptr)
         {
             EV << "No Authentication in progress, ignoring frame\n";
             EV << mesh->authTimeoutMsg_b <<endl;
@@ -1238,7 +1238,7 @@ void SecurityWPA2::updateGroupKey()
                 {
                     Ieee80211Prim_AuthenticateRequest *ctrl = new  Ieee80211Prim_AuthenticateRequest();
                     ctrl->setTimeout(groupAuthenticationTimeout);
-                    if(mesh->groupAuthTimeoutMsg==NULL)
+                    if(mesh->groupAuthTimeoutMsg==nullptr)
                         sendGroupHandshakeMsg(mesh,ctrl->getTimeout());
                 }
             }
@@ -1253,7 +1253,7 @@ void SecurityWPA2::sendGroupHandshakeMsg(MeshInfo *mesh,  simtime_t timeout)
 {
 
     EV << "Initialize Group key Handshake\n";
-    if(mesh->groupAuthTimeoutMsg!=NULL)
+    if(mesh->groupAuthTimeoutMsg!=nullptr)
         error("startAuthentication: already authenticated with Mesh address=", mesh->address.str().c_str());
     double delay=0;
 
@@ -1291,7 +1291,7 @@ void SecurityWPA2::sendGroupHandshakeMsg(MeshInfo *mesh,  simtime_t timeout)
     frame->setByteLength(125);
     sendDelayedManagementFrame(frame, mesh->address,delay);
     // schedule timeout
-    ASSERT(mesh->groupAuthTimeoutMsg==NULL);
+    ASSERT(mesh->groupAuthTimeoutMsg==nullptr);
     mesh->groupAuthTimeoutMsg = new newcMessage("groupauthTimeout", GK_AUTH_TIMEOUT);
     mesh->groupAuthTimeoutMsg->setMeshMACAddress_AuthTimeout(mesh->address);
     scheduleAt(simTime()+timeout, mesh->groupAuthTimeoutMsg);
@@ -1376,10 +1376,10 @@ void SecurityWPA2::handleGroupHandshakeFrame(Ieee80211AuthenticationFrame *frame
             {
                 if(checkAuthState(frame->getTransmitterAddress())==0)
                 {
-                    if(mesh->groupAuthTimeoutMsg!=NULL)
+                    if(mesh->groupAuthTimeoutMsg!=nullptr)
                     {
                         delete cancelEvent(mesh->groupAuthTimeoutMsg);
-                        mesh->groupAuthTimeoutMsg = NULL;
+                        mesh->groupAuthTimeoutMsg = nullptr;
                         return;
                     }
                 }
@@ -1414,10 +1414,10 @@ void SecurityWPA2::handleGroupHandshakeFrame(Ieee80211AuthenticationFrame *frame
                     return;
                 }
 
-                //    ASSERT(mesh->groupAuthTimeoutMsg!=NULL);
-                if(mesh->groupAuthTimeoutMsg!=NULL)
+                //    ASSERT(mesh->groupAuthTimeoutMsg!=nullptr);
+                if(mesh->groupAuthTimeoutMsg!=nullptr)
                     delete cancelEvent(mesh->groupAuthTimeoutMsg);
-                mesh->groupAuthTimeoutMsg = NULL;
+                mesh->groupAuthTimeoutMsg = nullptr;
                 //   mic.buf.clear();
 
                 GTKTimer = new newcMessage("GTKTimer");
@@ -1540,7 +1540,7 @@ Ieee80211ActionMeshFrame *  SecurityWPA2::encryptActionHWMPFrame(Ieee80211Action
      *      unsigned int originatorSeqNumber;
      */
 
-    if(strstr(frame->getClassName() ,"Ieee80211ActionPREQFrame")!=NULL)
+    if(strstr(frame->getClassName() ,"Ieee80211ActionPREQFrame")!=nullptr)
     {
         Ieee80211ActionPREQFrame *preq = (check_and_cast<Ieee80211ActionPREQFrame *>(frame));
         if(preq)
@@ -1580,7 +1580,7 @@ Ieee80211ActionMeshFrame *  SecurityWPA2::encryptActionHWMPFrame(Ieee80211Action
     }
 
 
-    else if(strstr(frame->getClassName() ,"Ieee80211ActionPREPFrame")!=NULL){
+    else if(strstr(frame->getClassName() ,"Ieee80211ActionPREPFrame")!=nullptr){
         Ieee80211ActionPREPFrame *prep = (check_and_cast<Ieee80211ActionPREPFrame *>(frame));
         if(prep)
         {
@@ -1627,10 +1627,10 @@ void SecurityWPA2::handleIeee80211MeshFrame(cMessage *msg)
 {
     double delay=0;
     //Decryption
-    if(strstr(msg->getName() ,"CCMPFrame")!=NULL)
+    if(strstr(msg->getName() ,"CCMPFrame")!=nullptr)
     {
         EV << "msg from Mac >>> decrypt msg ...." <<endl;
-        //  cPacket* payloadMsg=NULL;
+        //  cPacket* payloadMsg=nullptr;
         Ieee80211MeshFrame *frame = (check_and_cast<Ieee80211MeshFrame *>(msg));
         MeshInfo *mesh = lookupMesh(frame->getTransmitterAddress());
         EV<< frame->getTransmitterAddress()<<endl;
@@ -1669,7 +1669,7 @@ void SecurityWPA2::handleIeee80211MeshFrame(cMessage *msg)
     {
         // New Frame = Old MAC Header | CCMP Header | ENC (Encapsulated Old MSG)
         EV << "encrypt msg ...."<<msg->getClassName() <<" " << msg->getName() <<endl;
-        //  cPacket* payloadMsg=NULL;
+        //  cPacket* payloadMsg=nullptr;
         Ieee80211MeshFrame *frame = (check_and_cast<Ieee80211MeshFrame *>(msg));
         MeshInfo *mesh = lookupMesh(frame->getReceiverAddress());
 
@@ -1701,7 +1701,7 @@ void SecurityWPA2::handleIeee80211MeshFrame(cMessage *msg)
             }
             else
             {
-                if (frame==NULL)
+                if (frame==nullptr)
                 {
                     frame = new Ieee80211MeshFrame(msg->getName());
                     frame->setTimestamp(msg->getCreationTime());
@@ -1737,7 +1737,7 @@ void SecurityWPA2::handleIeee80211MeshFrame(cMessage *msg)
 void SecurityWPA2::handleIeee80211ActionMeshFrame(cMessage *msg)
 {
     //Decryption
-    if(strstr(msg->getName() ,"CCMPFrame")!=NULL)
+    if(strstr(msg->getName() ,"CCMPFrame")!=nullptr)
     {
         Ieee80211ActionMeshFrame *hwmpFrame = dynamic_cast<Ieee80211ActionMeshFrame *>(msg);
         MeshInfo *mesh = lookupMesh(hwmpFrame->getTransmitterAddress());
@@ -1789,10 +1789,10 @@ void SecurityWPA2::handleIeee80211DataFrameWithSNAP(cMessage *msg)
 {
     double delay=0;
     //Decryption
-    if(strstr(msg->getName() ,"CCMPFrame")!=NULL)
+    if(strstr(msg->getName() ,"CCMPFrame")!=nullptr)
     {
         EV << "msg from Mac >>> decrypt msg ...." <<endl;
-        //  cPacket* payloadMsg=NULL;
+        //  cPacket* payloadMsg=nullptr;
         Ieee80211DataFrameWithSNAP *frame = (check_and_cast<Ieee80211DataFrameWithSNAP *>(msg));
         MeshInfo *mesh = lookupMesh(frame->getTransmitterAddress());
         //  EV << "transmitter address before lookup"<< frame->getTransmitterAddress()<<endl;
@@ -1841,7 +1841,7 @@ void SecurityWPA2::handleIeee80211DataFrameWithSNAP(cMessage *msg)
     {
         // New Frame = Old MAC Header | CCMP Header | ENC (Encapsulated Old MSG)
         EV << "encrypt msg ...."<<msg->getClassName() <<" " << msg->getName() <<endl;
-        //  cPacket* payloadMsg=NULL;
+        //  cPacket* payloadMsg=nullptr;
         Ieee80211DataFrameWithSNAP *frame = (check_and_cast<Ieee80211DataFrameWithSNAP *>(msg));
         // EV << "receiver address before lookup"<<frame->getReceiverAddress()<<endl;
 
@@ -1895,7 +1895,7 @@ else
             }
             else
             {
-                if (frame==NULL)
+                if (frame==nullptr)
                 {
                     frame = new Ieee80211DataFrameWithSNAP(msg->getName());
                     frame->setTimestamp(msg->getCreationTime());
@@ -1946,30 +1946,30 @@ void SecurityWPA2::handleDeauthenticationFrame(Ieee80211AuthenticationFrame *fra
     delete frame;
     if(mesh){
         sendDeauthentication(mesh->address);
-        if(mesh->beaconTimeoutMsg!=NULL)
+        if(mesh->beaconTimeoutMsg!=nullptr)
         {
             delete cancelEvent(mesh->beaconTimeoutMsg);
-            //  mesh->beaconTimeoutMsg=NULL;
+            //  mesh->beaconTimeoutMsg=nullptr;
         }
-        if(mesh->authTimeoutMsg_a!=NULL)
+        if(mesh->authTimeoutMsg_a!=nullptr)
         {
             delete cancelEvent(mesh->authTimeoutMsg_a);
-            mesh->authTimeoutMsg_a=NULL;
+            mesh->authTimeoutMsg_a=nullptr;
         }
-        if(mesh->authTimeoutMsg_b!=NULL)
+        if(mesh->authTimeoutMsg_b!=nullptr)
         {
             delete cancelEvent(mesh->authTimeoutMsg_b);
-            mesh->authTimeoutMsg_b=NULL;
+            mesh->authTimeoutMsg_b=nullptr;
         }
-        if(mesh->groupAuthTimeoutMsg!=NULL)
+        if(mesh->groupAuthTimeoutMsg!=nullptr)
         {
             delete cancelEvent(mesh->groupAuthTimeoutMsg);
-            mesh->groupAuthTimeoutMsg=NULL;
+            mesh->groupAuthTimeoutMsg=nullptr;
         }
-        if(mesh->PTKTimerMsg!=NULL)
+        if(mesh->PTKTimerMsg!=nullptr)
         {
             delete cancelEvent(mesh->PTKTimerMsg);
-            mesh->PTKTimerMsg=NULL;
+            mesh->PTKTimerMsg=nullptr;
         }
         /*   for(MeshList::iterator it=meshList.begin(); it != meshList.end();)
             {
@@ -1995,7 +1995,7 @@ void SecurityWPA2::handleAck()
             MeshInfo *mesh = lookupMesh(it->address);
             if(mesh)
             {
-                if (mesh->authTimeoutMsg_b==NULL)
+                if (mesh->authTimeoutMsg_b==nullptr)
                 {
                     EV << "No Authentication in progress, ignoring frame\n";
                     EV << mesh->authTimeoutMsg_b <<endl;
@@ -2013,17 +2013,17 @@ void SecurityWPA2::handleAck()
                 scheduleAt(simTime()+PTKTimeout, mesh->PTKTimerMsg);
 
                 //start Authentication with other party
-                ASSERT(mesh->authTimeoutMsg_b!=NULL);
+                ASSERT(mesh->authTimeoutMsg_b!=nullptr);
                 delete cancelEvent(mesh->authTimeoutMsg_b);
-                mesh->authTimeoutMsg_b = NULL;
+                mesh->authTimeoutMsg_b = nullptr;
 
                 if(mesh->isAuthenticated==3)
                 {
                     mesh->isAuthenticated=4;
-                    if(mesh->authTimeoutMsg_a!=NULL)
+                    if(mesh->authTimeoutMsg_a!=nullptr)
                     {
                         delete cancelEvent(mesh->authTimeoutMsg_a);
-                        mesh->authTimeoutMsg_a = NULL;
+                        mesh->authTimeoutMsg_a = nullptr;
                     }
                     if(mesh->isCandidate==1)
                         sendOpenAuthenticateRequest(mesh);
@@ -2221,8 +2221,8 @@ void SecurityWPA2::derivePTKKeys(MeshInfo *mesh, key384 key)
     unsigned int payloadlen;
     static unsigned int iplen = 20; // we don't generate IP options
     static unsigned int udplen = 8;
-    cPacket* payloadMsg = NULL;
-    char* buf = NULL, *payload = NULL;
+    cPacket* payloadMsg = nullptr;
+    char* buf = nullptr, *payload = nullptr;
     uint32_t saddr, daddr;
     volatile iphdr* ip_buf;
     struct newiphdr {

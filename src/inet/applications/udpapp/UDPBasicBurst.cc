@@ -44,18 +44,6 @@ simsignal_t UDPBasicBurst::rcvdPkSignal = registerSignal("rcvdPk");
 simsignal_t UDPBasicBurst::outOfOrderPkSignal = registerSignal("outOfOrderPk");
 simsignal_t UDPBasicBurst::dropPkSignal = registerSignal("dropPk");
 
-UDPBasicBurst::UDPBasicBurst()
-{
-    messageLengthPar = NULL;
-    burstDurationPar = NULL;
-    sleepDurationPar = NULL;
-    sendIntervalPar = NULL;
-    timerNext = NULL;
-    outputInterface = -1;
-    isSource = false;
-    outputInterfaceMulticastBroadcast.clear();
-}
-
 UDPBasicBurst::~UDPBasicBurst()
 {
     cancelAndDelete(timerNext);
@@ -148,7 +136,7 @@ void UDPBasicBurst::initialConfiguration()
     if (strcmp(par("outputInterface").stringValue(),"") != 0)
     {
         InterfaceEntry *ie = ift->getInterfaceByName(par("outputInterface").stringValue());
-        if (ie == NULL)
+        if (ie == nullptr)
             throw cRuntimeError(this, "Invalid output interface name : %s",par("outputInterface").stringValue());
         outputInterface = ie->getInterfaceId();
     }
@@ -159,16 +147,16 @@ void UDPBasicBurst::initialConfiguration()
         const char *ports = par("outputInterfaceMulticastBroadcast");
         cStringTokenizer tokenizer(ports);
         const char *token;
-        while ((token = tokenizer.nextToken()) != NULL)
+        while ((token = tokenizer.nextToken()) != nullptr)
         {
-            if (strstr(token, "ALL") != NULL)
+            if (strstr(token, "ALL") != nullptr)
             {
                 for (int i = 0; i < ift->getNumInterfaces(); i++)
                 {
                     InterfaceEntry *ie = ift->getInterface(i);
                     if (ie->isLoopback())
                         continue;
-                    if (ie == NULL)
+                    if (ie == nullptr)
                         throw cRuntimeError(this, "Invalid output interface name : %s", token);
                     outputInterfaceMulticastBroadcast.push_back(ie->getInterfaceId());
                 }
@@ -176,15 +164,15 @@ void UDPBasicBurst::initialConfiguration()
             else
             {
                 InterfaceEntry *ie = ift->getInterfaceByName(token);
-                if (ie == NULL)
+                if (ie == nullptr)
                     throw cRuntimeError(this, "Invalid output interface name : %s", token);
                 outputInterfaceMulticastBroadcast.push_back(ie->getInterfaceId());
             }
         }
     }
 
-    while ((token = tokenizer.nextToken()) != NULL) {
-        if (strstr(token, "Broadcast") != NULL)
+    while ((token = tokenizer.nextToken()) != nullptr) {
+        if (strstr(token, "Broadcast") != nullptr)
             destAddresses.push_back(IPv4Address::ALLONES_ADDRESS);
         else {
             L3Address addr = L3AddressResolver().resolve(token);
@@ -283,7 +271,7 @@ void UDPBasicBurst::processPacket(cPacket *pk)
         // duplicate control
         int moduleId = (int)pk->par("sourceId");
         int msgId = (int)pk->par("msgId");
-        SourceSequence::iterator it = sourceSequence.find(moduleId);
+        auto it = sourceSequence.find(moduleId);
         if (it != sourceSequence.end()) {
             if (it->second >= msgId) {
                 EV_DEBUG << "Out of order packet: " << UDPSocket::getReceivedPacketInfo(pk) << endl;

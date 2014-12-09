@@ -59,9 +59,9 @@ void AddressModule::initModule(bool mode)
         if (!L3AddressResolver().tryResolve(owner->getParentModule()->getFullPath().c_str(), myAddress))
             return;
 
-        while ((token = tokenizer.nextToken()) != NULL)
+        while ((token = tokenizer.nextToken()) != nullptr)
         {
-            if (strstr(token, "Broadcast") != NULL)
+            if (strstr(token, "Broadcast") != nullptr)
             {
                 if (myAddress.getType() == L3Address::IPv6)
                     destAddresses.push_back(IPv4Address::ALLONES_ADDRESS);
@@ -151,15 +151,15 @@ void AddressModule::receiveSignal(cComponent *src, simsignal_t id, cObject *obj)
     const char *token;
 
     L3Address myAddr = L3AddressResolver().resolve(owner->getParentModule()->getFullPath().c_str());
-    while ((token = tokenizer.nextToken()) != NULL)
+    while ((token = tokenizer.nextToken()) != nullptr)
     {
-        if (strstr(token, "Broadcast") != NULL)
+        if (strstr(token, "Broadcast") != nullptr)
             destAddresses.push_back(IPv4Address::ALLONES_ADDRESS);
         else
         {
             if (id == changeAddressSignalDelete)
             {
-                if (strstr(obj->getFullPath().c_str(),token) != NULL)
+                if (strstr(obj->getFullPath().c_str(),token) != nullptr)
                     continue;
             }
             L3Address addr = L3AddressResolver().resolve(token);
@@ -197,9 +197,9 @@ void AddressModule::rebuildAddressList()
     const char *destAddrs = owner->par("destAddresses");
     cStringTokenizer tokenizer(destAddrs);
     const char *token;
-    while ((token = tokenizer.nextToken()) != NULL)
+    while ((token = tokenizer.nextToken()) != nullptr)
     {
-        if (strstr(token, "Broadcast") != NULL)
+        if (strstr(token, "Broadcast") != nullptr)
             destAddresses.push_back(IPv4Address::ALLONES_ADDRESS);
         else
         {

@@ -34,7 +34,6 @@ namespace inet {
  */
 class TraCITestApp : public cSimpleModule, protected cListener, public ILifecycle
 {
-
   protected:
     // parameter
     int testNumber;
@@ -59,8 +58,9 @@ class TraCITestApp : public cSimpleModule, protected cListener, public ILifecycl
 
     virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback)
     { Enter_Method_Silent(); throw cRuntimeError("Unsupported lifecycle operation '%s'", operation->getClassName()); return true; }
+
   public:
-    TraCITestApp() { traci = NULL; }
+    TraCITestApp() { traci = nullptr; }
 };
 
 } // namespace inet

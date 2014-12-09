@@ -105,12 +105,12 @@ public:
                     channel = -1;
                     beaconInterval = 0.1;
                     authSeqExpected = -1;
-                    authTimeoutMsg_a = NULL;
-                    authTimeoutMsg_b = NULL;
-                    groupAuthTimeoutMsg = NULL;
+                    authTimeoutMsg_a = nullptr;
+                    authTimeoutMsg_b = nullptr;
+                    groupAuthTimeoutMsg = nullptr;
                     status=NOT_AUTHENTICATED;
-                    beaconTimeoutMsg = NULL;
-                    PMKTimerMsg = NULL;
+                    beaconTimeoutMsg = nullptr;
+                    PMKTimerMsg = nullptr;
                     PWE=0;
                     csA=0;
                     ceA=0;

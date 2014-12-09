@@ -108,15 +108,12 @@ void Flood::handleUpperPacket(cPacket *m)
 
     if (plainFlooding) {
         if (bcMsgs.size() >= bcMaxEntries) {
-            cBroadcastList::iterator it;
-
             //serach the broadcast list of outdated entries and delete them
-            for (it = bcMsgs.begin(); it != bcMsgs.end(); ++it) {
-                if (it->delTime < simTime()) {
-                    bcMsgs.erase(it);
-                    it--;
-                    break;
-                }
+            for (auto it = bcMsgs.begin(); it != bcMsgs.end(); ) {
+                if (it->delTime < simTime())
+                    it = bcMsgs.erase(it);
+                else
+                    ++it;
             }
             //delete oldest entry if max size is reached
             if (bcMsgs.size() >= bcMaxEntries) {
@@ -188,7 +185,7 @@ void Flood::handleLowerPacket(cPacket *m)
                 msg->setTtl(msg->getTtl() - 1);
                 // needs to set the next hop address again to broadcast
                 cObject *const pCtrlInfo = msg->removeControlInfo();
-                if (pCtrlInfo != NULL)
+                if (pCtrlInfo != nullptr)
                     delete pCtrlInfo;
                 setDownControlInfo(msg, MACAddress::BROADCAST_ADDRESS);
                 sendDown(msg);
@@ -221,20 +218,19 @@ bool Flood::notBroadcasted(FloodDatagram *msg)
     if (!plainFlooding)
         return true;
 
-    cBroadcastList::iterator it;
-
     //serach the broadcast list of outdated entries and delete them
-    for (it = bcMsgs.begin(); it != bcMsgs.end(); it++) {
+    for (auto it = bcMsgs.begin(); it != bcMsgs.end(); ) {
         if (it->delTime < simTime()) {
-            bcMsgs.erase(it);
-            it--;
+            it = bcMsgs.erase(it);
         }
         //message was already broadcasted
-        if ((it->srcAddr == msg->getSourceAddress()) && (it->seqNum == msg->getSeqNum())) {
+        else if ((it->srcAddr == msg->getSourceAddress()) && (it->seqNum == msg->getSeqNum())) {
             // update entry
             it->delTime = simTime() + bcDelTime;
             return false;
         }
+        else
+            ++it;
     }
 
     //delete oldest entry if max size is reached
@@ -276,7 +272,7 @@ FloodDatagram *Flood::encapsMsg(cPacket *appPkt)
     pkt->setTransportProtocol(cInfo->getTransportProtocol());
     pkt->setBitLength(headerLength);
 
-    if (cInfo == NULL) {
+    if (cInfo == nullptr) {
         EV << "warning: Application layer did not specifiy a destination L3 address\n"
            << "\tusing broadcast address instead\n";
         netwAddr = netwAddr.getAddressType()->getBroadcastAddress();

@@ -41,7 +41,7 @@ bool IPv4MulticastSourceList::add(IPv4Address source)
 {
     size_t oldSize = sources.size();
     if (filterMode == MCAST_INCLUDE_SOURCES) {
-        IPv4AddressVector::iterator it = std::lower_bound(sources.begin(), sources.end(), source);
+        auto it = std::lower_bound(sources.begin(), sources.end(), source);
         if (it == sources.end() || *it != source)
             sources.insert(it, source);
     }
@@ -58,7 +58,7 @@ bool IPv4MulticastSourceList::remove(IPv4Address source)
         sources.erase(std::remove(sources.begin(), sources.end(), source), sources.end());
     }
     else {
-        IPv4AddressVector::iterator it = lower_bound(sources.begin(), sources.end(), source);
+        auto it = lower_bound(sources.begin(), sources.end(), source);
         if (it == sources.end() || *it != source)
             sources.insert(it, source);
     }
@@ -86,7 +86,7 @@ std::string IPv4MulticastSourceList::detailedInfo() const
 
 IPv4InterfaceData::HostMulticastData::~HostMulticastData()
 {
-    for (HostMulticastGroupVector::iterator it = joinedMulticastGroups.begin(); it != joinedMulticastGroups.end(); ++it)
+    for (auto it = joinedMulticastGroups.begin(); it != joinedMulticastGroups.end(); ++it)
         delete (*it);
     joinedMulticastGroups.clear();
 }
@@ -119,7 +119,7 @@ std::string IPv4InterfaceData::HostMulticastData::detailedInfo()
 
 IPv4InterfaceData::RouterMulticastData::~RouterMulticastData()
 {
-    for (RouterMulticastGroupVector::iterator it = reportedMulticastGroups.begin(); it != reportedMulticastGroups.end(); ++it)
+    for (auto it = reportedMulticastGroups.begin(); it != reportedMulticastGroups.end(); ++it)
         delete *it;
     reportedMulticastGroups.clear();
 }
@@ -157,8 +157,8 @@ IPv4InterfaceData::IPv4InterfaceData()
 {
     netmask = IPv4Address::ALLONES_ADDRESS;
     metric = 0;
-    hostData = NULL;
-    routerData = NULL;
+    hostData = nullptr;
+    routerData = nullptr;
 }
 
 IPv4InterfaceData::~IPv4InterfaceData()
@@ -235,7 +235,7 @@ void IPv4InterfaceData::changeMulticastGroupMembership(IPv4Address multicastAddr
 
     std::map<IPv4Address, int> *counts = oldFilterMode == MCAST_INCLUDE_SOURCES ? &entry->includeCounts : &entry->excludeCounts;
     for (IPv4AddressVector::const_iterator source = oldSourceList.begin(); source != oldSourceList.end(); ++source) {
-        std::map<IPv4Address, int>::iterator count = counts->find(*source);
+        auto count = counts->find(*source);
         if (count == counts->end())
             throw cRuntimeError("Inconsistent reference counts in IPv4InterfaceData.");
         else if (count->second == 1)
@@ -246,7 +246,7 @@ void IPv4InterfaceData::changeMulticastGroupMembership(IPv4Address multicastAddr
 
     counts = newFilterMode == MCAST_INCLUDE_SOURCES ? &entry->includeCounts : &entry->excludeCounts;
     for (IPv4AddressVector::const_iterator source = newSourceList.begin(); source != newSourceList.end(); ++source) {
-        std::map<IPv4Address, int>::iterator count = counts->find(*source);
+        auto count = counts->find(*source);
         if (count == counts->end())
             (*counts)[*source] = 1;
         else
@@ -265,7 +265,7 @@ void IPv4InterfaceData::changeMulticastGroupMembership(IPv4Address multicastAddr
     if (changed) {
         changed1(F_MULTICAST_ADDRESSES);
 
-        cModule *m = ownerp ? dynamic_cast<cModule *>(ownerp->getInterfaceTable()) : NULL;
+        cModule *m = ownerp ? dynamic_cast<cModule *>(ownerp->getInterfaceTable()) : nullptr;
         if (m) {
             IPv4MulticastGroupSourceInfo info(ownerp, multicastAddress, entry->sourceList);
             m->emit(NF_IPv4_MCAST_CHANGE, &info);
@@ -273,7 +273,7 @@ void IPv4InterfaceData::changeMulticastGroupMembership(IPv4Address multicastAddr
 
         // Legacy notifications
         if (oldFilterMode != newFilterMode && oldSourceList.empty() && newSourceList.empty()) {
-            cModule *m = ownerp ? dynamic_cast<cModule *>(ownerp->getInterfaceTable()) : NULL;
+            cModule *m = ownerp ? dynamic_cast<cModule *>(ownerp->getInterfaceTable()) : nullptr;
             if (m) {
                 IPv4MulticastGroupInfo info2(ownerp, multicastAddress);
                 m->emit(newFilterMode == MCAST_EXCLUDE_SOURCES ? NF_IPv4_MCAST_JOIN : NF_IPv4_MCAST_LEAVE, &info2);
@@ -300,13 +300,13 @@ bool IPv4InterfaceData::HostMulticastGroupData::updateSourceList()
     IPv4AddressVector sourceList;
     if (numOfExcludeModeSockets == 0) {
         // If all socket is in INCLUDE mode, then the sourceList is the union of included sources
-        for (std::map<IPv4Address, int>::iterator it = includeCounts.begin(); it != includeCounts.end(); ++it)
+        for (auto it = includeCounts.begin(); it != includeCounts.end(); ++it)
             sourceList.push_back(it->first);
     }
     else {
         // If some socket is in EXCLUDE mode, then the sourceList contains the sources that are
         // excluded by all EXCLUDE mode sockets except if there is a socket including the source.
-        for (std::map<IPv4Address, int>::iterator it = excludeCounts.begin(); it != excludeCounts.end(); ++it)
+        for (auto it = excludeCounts.begin(); it != excludeCounts.end(); ++it)
             if (it->second == numOfExcludeModeSockets && includeCounts.find(it->first) == includeCounts.end())
                 sourceList.push_back(it->first);
 
@@ -329,14 +329,14 @@ IPv4InterfaceData::RouterMulticastGroupData *IPv4InterfaceData::findRouterGroupD
         if ((*it)->multicastGroup == multicastAddress)
             return *it;
 
-    return NULL;
+    return nullptr;
 }
 
 bool IPv4InterfaceData::removeRouterGroupData(IPv4Address multicastAddress)
 {
     ASSERT(multicastAddress.isMulticast());
     RouterMulticastGroupVector& entries = getRouterData()->reportedMulticastGroups;
-    for (RouterMulticastGroupVector::iterator it = entries.begin(); it != entries.end(); ++it)
+    for (auto it = entries.begin(); it != entries.end(); ++it)
         if ((*it)->multicastGroup == multicastAddress) {
             delete *it;
             entries.erase(it);
@@ -467,18 +467,18 @@ IPv4InterfaceData::HostMulticastGroupData *IPv4InterfaceData::findHostGroupData(
 {
     ASSERT(multicastAddress.isMulticast());
     HostMulticastGroupVector& entries = getHostData()->joinedMulticastGroups;
-    for (HostMulticastGroupVector::iterator it = entries.begin(); it != entries.end(); ++it)
+    for (auto it = entries.begin(); it != entries.end(); ++it)
         if ((*it)->multicastGroup == multicastAddress)
             return *it;
 
-    return NULL;
+    return nullptr;
 }
 
 bool IPv4InterfaceData::removeHostGroupData(IPv4Address multicastAddress)
 {
     ASSERT(multicastAddress.isMulticast());
     HostMulticastGroupVector& entries = getHostData()->joinedMulticastGroups;
-    for (HostMulticastGroupVector::iterator it = entries.begin(); it != entries.end(); ++it)
+    for (auto it = entries.begin(); it != entries.end(); ++it)
         if ((*it)->multicastGroup == multicastAddress) {
             delete *it;
             entries.erase(it);

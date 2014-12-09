@@ -48,9 +48,9 @@ Define_Module(DYMO);
 //
 
 DYMO::DYMO() :
-    clientAddresses(NULL),
+    clientAddresses(nullptr),
     useMulticastRREP(false),
-    interfaces(NULL),
+    interfaces(nullptr),
     activeInterval(NaN),
     maxIdleTime(NaN),
     maxSequenceNumberLifetime(NaN),
@@ -65,20 +65,20 @@ DYMO::DYMO() :
     sendIntermediateRREP(false),
     minHopLimit(-1),
     maxHopLimit(-1),
-    host(NULL),
-    nodeStatus(NULL),
-    addressType(NULL),
-    interfaceTable(NULL),
-    routingTable(NULL),
-    networkProtocol(NULL),
-    expungeTimer(NULL),
+    host(nullptr),
+    nodeStatus(nullptr),
+    addressType(nullptr),
+    interfaceTable(nullptr),
+    routingTable(nullptr),
+    networkProtocol(nullptr),
+    expungeTimer(nullptr),
     sequenceNumber(0)
 {
 }
 
 DYMO::~DYMO()
 {
-    for (std::map<L3Address, RREQTimer *>::iterator it = targetAddressToRREQTimer.begin(); it != targetAddressToRREQTimer.end(); it++)
+    for (auto it = targetAddressToRREQTimer.begin(); it != targetAddressToRREQTimer.end(); it++)
         cancelAndDelete(it->second);
     cancelAndDelete(expungeTimer);
 }
@@ -211,9 +211,9 @@ void DYMO::completeRouteDiscovery(const L3Address& target)
 {
     EV_INFO << "Completing route discovery: originator = " << getSelfAddress() << ", target = " << target << endl;
     ASSERT(hasOngoingRouteDiscovery(target));
-    std::multimap<L3Address, INetworkDatagram *>::iterator lt = targetAddressToDelayedPackets.lower_bound(target);
-    std::multimap<L3Address, INetworkDatagram *>::iterator ut = targetAddressToDelayedPackets.upper_bound(target);
-    for (std::multimap<L3Address, INetworkDatagram *>::iterator it = lt; it != ut; it++)
+    auto lt = targetAddressToDelayedPackets.lower_bound(target);
+    auto ut = targetAddressToDelayedPackets.upper_bound(target);
+    for (auto it = lt; it != ut; it++)
         reinjectDelayedDatagram(it->second);
     eraseDelayedDatagrams(target);
 }
@@ -222,9 +222,9 @@ void DYMO::cancelRouteDiscovery(const L3Address& target)
 {
     EV_INFO << "Canceling route discovery: originator = " << getSelfAddress() << ", target = " << target << endl;
     ASSERT(hasOngoingRouteDiscovery(target));
-    std::multimap<L3Address, INetworkDatagram *>::iterator lt = targetAddressToDelayedPackets.lower_bound(target);
-    std::multimap<L3Address, INetworkDatagram *>::iterator ut = targetAddressToDelayedPackets.upper_bound(target);
-    for (std::multimap<L3Address, INetworkDatagram *>::iterator it = lt; it != ut; it++)
+    auto lt = targetAddressToDelayedPackets.lower_bound(target);
+    auto ut = targetAddressToDelayedPackets.upper_bound(target);
+    for (auto it = lt; it != ut; it++)
         dropDelayedDatagram(it->second);
     eraseDelayedDatagrams(target);
 }
@@ -260,8 +260,8 @@ void DYMO::dropDelayedDatagram(INetworkDatagram *datagram)
 void DYMO::eraseDelayedDatagrams(const L3Address& target)
 {
     EV_DEBUG << "Erasing the list of delayed datagrams: originator = " << getSelfAddress() << ", destination = " << target << endl;
-    std::multimap<L3Address, INetworkDatagram *>::iterator lt = targetAddressToDelayedPackets.lower_bound(target);
-    std::multimap<L3Address, INetworkDatagram *>::iterator ut = targetAddressToDelayedPackets.upper_bound(target);
+    auto lt = targetAddressToDelayedPackets.lower_bound(target);
+    auto ut = targetAddressToDelayedPackets.upper_bound(target);
     targetAddressToDelayedPackets.erase(lt, ut);
 }
 
@@ -276,19 +276,19 @@ bool DYMO::hasDelayedDatagrams(const L3Address& target)
 
 void DYMO::cancelRREQTimer(const L3Address& target)
 {
-    std::map<L3Address, RREQTimer *>::iterator tt = targetAddressToRREQTimer.find(target);
+    auto tt = targetAddressToRREQTimer.find(target);
     cancelEvent(tt->second);
 }
 
 void DYMO::deleteRREQTimer(const L3Address& target)
 {
-    std::map<L3Address, RREQTimer *>::iterator tt = targetAddressToRREQTimer.find(target);
+    auto tt = targetAddressToRREQTimer.find(target);
     delete tt->second;
 }
 
 void DYMO::eraseRREQTimer(const L3Address& target)
 {
-    std::map<L3Address, RREQTimer *>::iterator tt = targetAddressToRREQTimer.find(target);
+    auto tt = targetAddressToRREQTimer.find(target);
     targetAddressToRREQTimer.erase(tt);
 }
 
@@ -621,7 +621,7 @@ RREQ *DYMO::createRREQ(const L3Address& target, int retryCount)
     targetNode.setPrefixLength(addressType->getMaxPrefixLength());
     // 6. If a previous value of the TargNode's SeqNum is known RREQ_Gen SHOULD
     //    include TargNode.SeqNum in all but the last RREQ attempt.
-    std::map<L3Address, DYMOSequenceNumber>::iterator st = targetAddressToSequenceNumber.find(target);
+    auto st = targetAddressToSequenceNumber.find(target);
     if (st != targetAddressToSequenceNumber.end() && retryCount < discoveryAttemptsMax - 1) {
         targetNode.setHasSequenceNumber(true);
         targetNode.setSequenceNumber(st->second);
@@ -654,7 +654,7 @@ void DYMO::sendRREQ(RREQ *rreq)
     const L3Address& originator = rreq->getOriginatorNode().getAddress();
     rreq->setBitLength(computeRREQBitLength(rreq));
     EV_DETAIL << "Sending RREQ: originator = " << originator << ", target = " << target << endl;
-    sendDYMOPacket(rreq, NULL, addressType->getLinkLocalManetRoutersMulticastAddress(), uniform(0, maxJitter).dbl());
+    sendDYMOPacket(rreq, nullptr, addressType->getLinkLocalManetRoutersMulticastAddress(), uniform(0, maxJitter).dbl());
 }
 
 void DYMO::processRREQ(RREQ *rreqIncoming)
@@ -715,7 +715,7 @@ int DYMO::computeRREQBitLength(RREQ *rreq)
 
 RREP *DYMO::createRREP(RteMsg *rteMsg)
 {
-    return createRREP(rteMsg, NULL);
+    return createRREP(rteMsg, nullptr);
 }
 
 RREP *DYMO::createRREP(RteMsg *rteMsg, IRoute *route)
@@ -765,7 +765,7 @@ void DYMO::sendRREP(RREP *rrep)
     const L3Address& originator = rrep->getOriginatorNode().getAddress();
     rrep->setBitLength(computeRREPBitLength(rrep));
     EV_DETAIL << "Sending broadcast RREP: originator = " << originator << ", target = " << target << endl;
-    sendDYMOPacket(rrep, NULL, addressType->getLinkLocalManetRoutersMulticastAddress(), 0);
+    sendDYMOPacket(rrep, nullptr, addressType->getLinkLocalManetRoutersMulticastAddress(), 0);
 }
 
 void DYMO::sendRREP(RREP *rrep, IRoute *route)
@@ -843,7 +843,7 @@ RERR *DYMO::createRERR(std::vector<L3Address>& unreachableAddresses)
         addressBlock->setHasValidityTime(false);
         addressBlock->setHasMetric(false);
         addressBlock->setHasMetricType(false);
-        std::map<L3Address, DYMOSequenceNumber>::iterator st = targetAddressToSequenceNumber.find(unreachableAddress);
+        auto st = targetAddressToSequenceNumber.find(unreachableAddress);
         if (st != targetAddressToSequenceNumber.end()) {
             addressBlock->setHasSequenceNumber(true);
             addressBlock->setSequenceNumber(st->second);
@@ -862,7 +862,7 @@ void DYMO::sendRERR(RERR *rerr)
 {
     rerr->setBitLength(computeRERRBitLength(rerr));
     EV_DETAIL << "Sending RERR: unreachableNodeCount = " << rerr->getUnreachableNodeArraySize() << endl;
-    sendDYMOPacket(rerr, NULL, addressType->getLinkLocalManetRoutersMulticastAddress(), 0);
+    sendDYMOPacket(rerr, nullptr, addressType->getLinkLocalManetRoutersMulticastAddress(), 0);
 }
 
 void DYMO::sendRERRForUndeliverablePacket(const L3Address& destination)
@@ -1077,7 +1077,7 @@ void DYMO::updateRoutes(RteMsg *rteMsg, AddressBlock& addressBlock)
         // 6.1. Evaluating Incoming Routing Information
         // HandRtr searches its route table to see if there is a route table
         // entry with the same MetricType of the RteMsg, matching RteMsg.Addr.
-        IRoute *route = NULL;
+        IRoute *route = nullptr;
         for (int i = 0; i < routingTable->getNumRoutes(); i++) {
             IRoute *routeCandidate = routingTable->getRoute(i);
             if (routeCandidate->getSource() == this) {
@@ -1319,7 +1319,7 @@ bool DYMO::isClientAddress(const L3Address& address)
     if (routingTable->isLocalAddress(address))
         return true;
     else {
-        for (std::vector<std::pair<L3Address, int> >::iterator it = clientAddressAndPrefixLengthPairs.begin(); it != clientAddressAndPrefixLengthPairs.end(); it++)
+        for (auto it = clientAddressAndPrefixLengthPairs.begin(); it != clientAddressAndPrefixLengthPairs.end(); it++)
             // TODO: check for prefix length too
             if (it->first == address)
                 return true;
@@ -1385,7 +1385,7 @@ INetfilter::IHook::Result DYMO::ensureRouteForDatagram(INetworkDatagram *datagra
     else {
         EV_DETAIL << "Finding route: source = " << source << ", destination = " << destination << endl;
         IRoute *route = routingTable->findBestMatchingRoute(destination);
-        DYMORouteData *routeData = route ? dynamic_cast<DYMORouteData *>(route->getProtocolData()) : NULL;
+        DYMORouteData *routeData = route ? dynamic_cast<DYMORouteData *>(route->getProtocolData()) : nullptr;
         bool broken = routeData && routeData->getBroken();
         if (route && !route->getNextHopAsGeneric().isUnspecified() && !broken) {
             EV_DETAIL << "Route found: source = " << source << ", destination = " << destination << ", route: " << route << endl;
@@ -1424,7 +1424,7 @@ bool DYMO::handleOperationStage(LifecycleOperation *operation, int stage, IDoneC
     else if (dynamic_cast<NodeShutdownOperation *>(operation)) {
         if ((NodeShutdownOperation::Stage)stage == NodeShutdownOperation::STAGE_APPLICATION_LAYER)
             // TODO: send a RERR to notify peers about broken routes
-            for (std::map<L3Address, RREQTimer *>::iterator it = targetAddressToRREQTimer.begin(); it != targetAddressToRREQTimer.end(); it++)
+            for (auto it = targetAddressToRREQTimer.begin(); it != targetAddressToRREQTimer.end(); it++)
                 cancelRouteDiscovery(it->first);
 
     }

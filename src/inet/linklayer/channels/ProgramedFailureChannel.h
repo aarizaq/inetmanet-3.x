@@ -26,7 +26,7 @@ class ProgramedFailureDataRateChannel : public cDatarateChannel
   private:
     LinkFailureManager* lfm;
   public:
-    ProgramedFailureDataRateChannel(const char* name=NULL);
+    ProgramedFailureDataRateChannel(const char* name=nullptr);
     ProgramedFailureDataRateChannel(const ProgramedFailureDataRateChannel& ch);
 
     virtual ~ProgramedFailureDataRateChannel();
@@ -45,7 +45,7 @@ class ProgramedFailureChannel : public cDelayChannel
   private:
     LinkFailureManager* lfm;
   public:
-    ProgramedFailureChannel(const char* name=NULL);
+    ProgramedFailureChannel(const char* name=nullptr);
     ProgramedFailureChannel(const ProgramedFailureChannel& ch);
 
     virtual ~ProgramedFailureChannel();

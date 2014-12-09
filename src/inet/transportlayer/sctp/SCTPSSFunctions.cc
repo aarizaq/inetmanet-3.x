@@ -108,7 +108,7 @@ int32 SCTPAssociation::numUsableStreams(void)
 {
     int32 count = 0;
 
-    for (SCTPSendStreamMap::iterator iter = sendStreams.begin(); iter != sendStreams.end(); iter++)
+    for (auto iter = sendStreams.begin(); iter != sendStreams.end(); iter++)
         if (iter->second->getStreamQ()->length() > 0 || iter->second->getUnorderedStreamQ()->length() > 0) {
             count++;
         }
@@ -173,7 +173,7 @@ int32 SCTPAssociation::streamSchedulerRandomPacket(SCTPPathVariables *path, bool
     EV_INFO << "Stream Scheduler: RandomPacket (peek: " << peek << ")" << endl;
 
     if (state->ssNextStream) {
-        for (SCTPSendStreamMap::iterator iter = sendStreams.begin(); iter != sendStreams.end(); ++iter) {
+        for (auto iter = sendStreams.begin(); iter != sendStreams.end(); ++iter) {
             if (iter->second->getUnorderedStreamQ()->length() > 0 ||
                 iter->second->getStreamQ()->length() > 0)
             {
@@ -272,7 +272,7 @@ int32 SCTPAssociation::streamSchedulerFairBandwidthPacket(SCTPPathVariables *pat
     EV_INFO << "Stream Scheduler: FairBandwidthPacket (peek: " << peek << ")" << endl;
 
     if (state->ssFairBandwidthMap.empty()) {
-        for (SCTPSendStreamMap::iterator iter = sendStreams.begin(); iter != sendStreams.end(); ++iter) {
+        for (auto iter = sendStreams.begin(); iter != sendStreams.end(); ++iter) {
             state->ssFairBandwidthMap[iter->first] = -1;
             EV_DETAIL << "initialize sid " << iter->first << " in fb map." << endl;
         }
@@ -280,7 +280,7 @@ int32 SCTPAssociation::streamSchedulerFairBandwidthPacket(SCTPPathVariables *pat
 
     if (peek) {
         EV_DETAIL << "just peeking, use duplicate fb map." << endl;
-        for (std::map<uint16, int32>::iterator iter = state->ssFairBandwidthMap.begin(); iter != state->ssFairBandwidthMap.end(); ++iter) {
+        for (auto iter = state->ssFairBandwidthMap.begin(); iter != state->ssFairBandwidthMap.end(); ++iter) {
             peekMap[iter->first] = iter->second;
         }
         mapPointer = &peekMap;
@@ -288,7 +288,7 @@ int32 SCTPAssociation::streamSchedulerFairBandwidthPacket(SCTPPathVariables *pat
 
     lastDataChunkSize = (*mapPointer)[state->lastStreamScheduled];
 
-    for (SCTPSendStreamMap::iterator iter = sendStreams.begin(); iter != sendStreams.end(); ++iter) {
+    for (auto iter = sendStreams.begin(); iter != sendStreams.end(); ++iter) {
         /* There is data in this stream */
         if (iter->second->getUnorderedStreamQ()->length() > 0 || iter->second->getStreamQ()->length() > 0) {
             /* Get size of the first packet in stream */
@@ -338,7 +338,7 @@ int32 SCTPAssociation::streamSchedulerFairBandwidthPacket(SCTPPathVariables *pat
     }
 
     if (state->ssNextStream) {
-        for (std::map<uint16, int32>::iterator iter = mapPointer->begin(); iter != mapPointer->end(); ++iter) {
+        for (auto iter = mapPointer->begin(); iter != mapPointer->end(); ++iter) {
             if ((sid < 0 || (uint32)iter->second < bandwidth) && iter->second >= 0) {
                 sid = iter->first;
                 bandwidth = iter->second;
@@ -463,7 +463,7 @@ int32 SCTPAssociation::pathStreamSchedulerMapToPath(SCTPPathVariables *path, boo
 {
     int32 thisPath = -1;
     int32 workingPaths = 0;
-    for (SCTPPathMap::iterator iterator = sctpPathMap.begin(); iterator != sctpPathMap.end(); ++iterator) {
+    for (auto iterator = sctpPathMap.begin(); iterator != sctpPathMap.end(); ++iterator) {
         SCTPPathVariables *myPath = iterator->second;
         if (myPath->activePath) {
             if (myPath == path) {

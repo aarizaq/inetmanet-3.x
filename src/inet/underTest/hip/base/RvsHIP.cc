@@ -47,11 +47,11 @@ void RvsHIP::specInitialize()
 // Handles incoming I1 messages
 void RvsHIP::handleMsgFromNetwork(cMessage *msg)
 {
-    if (dynamic_cast<HIPHeaderMessage *>(msg) != NULL)
+    if (dynamic_cast<HIPHeaderMessage *>(msg) != nullptr)
     {
         HIPHeaderMessage *hipHeader = check_and_cast<HIPHeaderMessage *>(msg);
         //HIP msg
-        if (hipHeader != NULL)
+        if (hipHeader != nullptr)
         {
             IPv6ControlInfo *networkControlInfo = check_and_cast<IPv6ControlInfo*>(msg->removeControlInfo());
 

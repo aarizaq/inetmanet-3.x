@@ -197,8 +197,8 @@ void Ieee80211MgmtBase::sendOrEnqueue(cPacket *frame)
 cMessage *Ieee80211MgmtBase::enqueue(cMessage *msg)
 {
     Ieee80211DataOrMgmtFrame *frame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg);
-    ASSERT(frame != NULL);
-    bool isDataFrame = dynamic_cast<Ieee80211DataFrame *>(msg) != NULL;
+    ASSERT(frame != nullptr);
+    bool isDataFrame = dynamic_cast<Ieee80211DataFrame *>(msg) != nullptr;
     int cat = 0;
 
     if (numQueues > 1 && isDataFrame)
@@ -209,7 +209,7 @@ cMessage *Ieee80211MgmtBase::enqueue(cMessage *msg)
     if (!isDataFrame) {
         // management frames are inserted into mgmtQueue
         mgmtQueue.push_back(frame);
-        return NULL;
+        return nullptr;
     }
     else if (frameCapacity && (int) dataQueue[cat].size() >= frameCapacity) {
         EV << "Queue full, dropping packet.\n";
@@ -221,7 +221,7 @@ cMessage *Ieee80211MgmtBase::enqueue(cMessage *msg)
         for (int i = 0; i < numQueues; i++)
             length += dataQueue[i].size();
         emit(dataQueueLenSignal, length);
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -229,13 +229,13 @@ cMessage *Ieee80211MgmtBase::enqueue(cMessage *msg)
 cMessage *Ieee80211MgmtBase::enqueue(cMessage *msg, const int &cat)
 {
     Ieee80211DataOrMgmtFrame *frame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg);
-    ASSERT(frame != NULL);
-    bool isDataFrame = dynamic_cast<Ieee80211DataFrame *>(msg) != NULL;
+    ASSERT(frame != nullptr);
+    bool isDataFrame = dynamic_cast<Ieee80211DataFrame *>(msg) != nullptr;
 
     if (!isDataFrame) {
         // management frames are inserted into mgmtQueue
         mgmtQueue.push_back(frame);
-        return NULL;
+        return nullptr;
     }
     else if (frameCapacity && (int) dataQueue[cat].size() >= frameCapacity) {
         EV << "Queue full, dropping packet.\n";
@@ -247,7 +247,7 @@ cMessage *Ieee80211MgmtBase::enqueue(cMessage *msg, const int &cat)
         for (int i = 0; i < numQueues; i++)
             length += dataQueue[i].size();
         emit(dataQueueLenSignal, length);
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -290,7 +290,7 @@ void Ieee80211MgmtBase::requestPacket(const int &cat)
     Enter_Method("requestPacket(int)");
 
     cMessage *msg = dequeue(cat);
-    if (msg == NULL) {
+    if (msg == nullptr) {
         if (cat == 0)
             packetRequested++;
         else
@@ -438,7 +438,7 @@ void Ieee80211MgmtBase::clear()
     cMessage *msg;
     for (int i = 0 ; i < numQueues; i++)
     {
-        while (NULL != (msg = dequeue(i)))
+        while (nullptr != (msg = dequeue(i)))
             delete msg;
         packetRequestedCat[i] = 0;
     }
@@ -447,7 +447,7 @@ void Ieee80211MgmtBase::clear()
 void Ieee80211MgmtBase::clear(const int & category)
 {
     cMessage *msg;
-    while (NULL != (msg = dequeue(category)))
+    while (nullptr != (msg = dequeue(category)))
           delete msg;
     packetRequestedCat[category] = 0;
 }
@@ -471,7 +471,7 @@ void Ieee80211MgmtBase::stop()
 Ieee80211DataOrMgmtFrame * Ieee80211MgmtBase::getQueueElement(const int &cat, const int &pos) const
 {
     if (cat > (int) dataQueue.size())
-        return NULL;
+        return nullptr;
     if (pos < (int) mgmtQueue.size())
     {
         return mgmtQueue.at(pos);

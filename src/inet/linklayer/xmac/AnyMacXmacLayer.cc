@@ -161,8 +161,7 @@ AnyMacXmacLayer::~AnyMacXmacLayer()
 	cancelAndDelete(ack2_tx_over);
 	cancelAndDelete(cca2_timeout);
 
-	MacQueue::iterator it;
-	for(it = macQueue.begin(); it != macQueue.end(); ++it)
+	for(auto it = macQueue.begin(); it != macQueue.end(); ++it)
 	{
 		delete (*it);
 	}
@@ -909,8 +908,8 @@ void AnyMacXmacLayer::handleSelfMessage(cMessage *msg)
 				sendUp(decapsMsg(mac));
 			} else {
 				delete msg;
-				msg = NULL;
-				mac = NULL;
+				msg = nullptr;
+				mac = nullptr;
 			}
 
 			cancelEvent(data_timeout);

@@ -38,7 +38,7 @@ void PASER_Crypto_Hash::init() {
 int PASER_Crypto_Hash::computeHmacTURREQ(PASER_TU_RREQ * message, lv_block GTK) {
     HMAC_CTX ctx;
     HMAC_CTX_init(&ctx);
-    HMAC_Init_ex(&ctx, GTK.buf, GTK.len, EVP_sha256(), NULL);
+    HMAC_Init_ex(&ctx, GTK.buf, GTK.len, EVP_sha256(), nullptr);
 
     int len = 0;
     u_int8_t *data = message->toByteArray(&len);
@@ -67,7 +67,7 @@ int PASER_Crypto_Hash::computeHmacTURREQ(PASER_TU_RREQ * message, lv_block GTK) 
 int PASER_Crypto_Hash::checkHmacTURREQ(PASER_TU_RREQ * message, lv_block GTK) {
     HMAC_CTX ctx;
     HMAC_CTX_init(&ctx);
-    HMAC_Init_ex(&ctx, GTK.buf, GTK.len, EVP_sha256(), NULL);
+    HMAC_Init_ex(&ctx, GTK.buf, GTK.len, EVP_sha256(), nullptr);
 
     int len = 0;
     u_int8_t *data = message->toByteArray(&len);
@@ -100,7 +100,7 @@ int PASER_Crypto_Hash::checkHmacTURREQ(PASER_TU_RREQ * message, lv_block GTK) {
 int PASER_Crypto_Hash::computeHmacTURREP(PASER_TU_RREP * message, lv_block GTK) {
     HMAC_CTX ctx;
     HMAC_CTX_init(&ctx);
-    HMAC_Init_ex(&ctx, GTK.buf, GTK.len, EVP_sha256(), NULL);
+    HMAC_Init_ex(&ctx, GTK.buf, GTK.len, EVP_sha256(), nullptr);
 
     int len = 0;
     u_int8_t *data = message->toByteArray(&len);
@@ -120,7 +120,7 @@ int PASER_Crypto_Hash::computeHmacTURREP(PASER_TU_RREP * message, lv_block GTK) 
 int PASER_Crypto_Hash::checkHmacTURREP(PASER_TU_RREP * message, lv_block GTK) {
     HMAC_CTX ctx;
     HMAC_CTX_init(&ctx);
-    HMAC_Init_ex(&ctx, GTK.buf, GTK.len, EVP_sha256(), NULL);
+    HMAC_Init_ex(&ctx, GTK.buf, GTK.len, EVP_sha256(), nullptr);
 
     int len = 0;
     u_int8_t *data = message->toByteArray(&len);
@@ -145,7 +145,7 @@ int PASER_Crypto_Hash::computeHmacTURREPACK(PASER_TU_RREP_ACK * message,
         lv_block GTK) {
     HMAC_CTX ctx;
     HMAC_CTX_init(&ctx);
-    HMAC_Init_ex(&ctx, GTK.buf, GTK.len, EVP_sha256(), NULL);
+    HMAC_Init_ex(&ctx, GTK.buf, GTK.len, EVP_sha256(), nullptr);
 
     int len = 0;
     u_int8_t *data = message->toByteArray(&len);
@@ -176,7 +176,7 @@ int PASER_Crypto_Hash::checkHmacTURREPACK(PASER_TU_RREP_ACK * message,
         lv_block GTK) {
     HMAC_CTX ctx;
     HMAC_CTX_init(&ctx);
-    HMAC_Init_ex(&ctx, GTK.buf, GTK.len, EVP_sha256(), NULL);
+    HMAC_Init_ex(&ctx, GTK.buf, GTK.len, EVP_sha256(), nullptr);
 
     int len = 0;
     u_int8_t *data = message->toByteArray(&len);
@@ -223,7 +223,7 @@ int PASER_Crypto_Hash::checkHmacTURREPACK(PASER_TU_RREP_ACK * message,
 int PASER_Crypto_Hash::computeHmacRERR(PASER_TB_RERR * message, lv_block GTK) {
     HMAC_CTX ctx;
     HMAC_CTX_init(&ctx);
-    HMAC_Init_ex(&ctx, GTK.buf, GTK.len, EVP_sha256(), NULL);
+    HMAC_Init_ex(&ctx, GTK.buf, GTK.len, EVP_sha256(), nullptr);
 
     int len = 0;
     u_int8_t *data = message->toByteArray(&len);
@@ -244,7 +244,7 @@ int PASER_Crypto_Hash::computeHmacRERR(PASER_TB_RERR * message, lv_block GTK) {
 int PASER_Crypto_Hash::checkHmacRERR(PASER_TB_RERR * message, lv_block GTK) {
     HMAC_CTX ctx;
     HMAC_CTX_init(&ctx);
-    HMAC_Init_ex(&ctx, GTK.buf, GTK.len, EVP_sha256(), NULL);
+    HMAC_Init_ex(&ctx, GTK.buf, GTK.len, EVP_sha256(), nullptr);
 
     int len = 0;
     u_int8_t *data = message->toByteArray(&len);
@@ -269,7 +269,7 @@ int PASER_Crypto_Hash::checkHmacRERR(PASER_TB_RERR * message, lv_block GTK) {
 int PASER_Crypto_Hash::computeHmacHELLO(PASER_TB_Hello * message, lv_block GTK) {
     HMAC_CTX ctx;
     HMAC_CTX_init(&ctx);
-    HMAC_Init_ex(&ctx, GTK.buf, GTK.len, EVP_sha256(), NULL);
+    HMAC_Init_ex(&ctx, GTK.buf, GTK.len, EVP_sha256(), nullptr);
 
     int len = 0;
     u_int8_t *data = message->toByteArray(&len);
@@ -290,7 +290,7 @@ int PASER_Crypto_Hash::computeHmacHELLO(PASER_TB_Hello * message, lv_block GTK) 
 int PASER_Crypto_Hash::checkHmacHELLO(PASER_TB_Hello * message, lv_block GTK) {
     HMAC_CTX ctx;
     HMAC_CTX_init(&ctx);
-    HMAC_Init_ex(&ctx, GTK.buf, GTK.len, EVP_sha256(), NULL);
+    HMAC_Init_ex(&ctx, GTK.buf, GTK.len, EVP_sha256(), nullptr);
 
     int len = 0;
     u_int8_t *data = message->toByteArray(&len);

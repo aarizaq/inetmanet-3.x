@@ -30,12 +30,12 @@ namespace inet {
 
 IPv6FragBuf::IPv6FragBuf()
 {
-    icmpModule = NULL;
+    icmpModule = nullptr;
 }
 
 IPv6FragBuf::~IPv6FragBuf()
 {
-    for (Buffers::iterator it = bufs.begin(); it != bufs.end(); ++it) {
+    for (auto it = bufs.begin(); it != bufs.end(); ++it) {
         delete it->second.datagram;
     }
 }
@@ -53,13 +53,13 @@ IPv6Datagram *IPv6FragBuf::addFragment(IPv6Datagram *datagram, IPv6FragmentHeade
     key.src = datagram->getSrcAddress();
     key.dest = datagram->getDestAddress();
 
-    Buffers::iterator i = bufs.find(key);
+    auto i = bufs.find(key);
 
-    DatagramBuffer *buf = NULL;
+    DatagramBuffer *buf = nullptr;
     if (i == bufs.end()) {
         // this is the first fragment of that datagram, create reassembly buffer for it
         buf = &bufs[key];
-        buf->datagram = NULL;
+        buf->datagram = nullptr;
         buf->createdAt = now;
     }
     else {
@@ -80,7 +80,7 @@ IPv6Datagram *IPv6FragBuf::addFragment(IPv6Datagram *datagram, IPv6FragmentHeade
     // the fragment packet.
     if (moreFragments && (fragmentLength % 8) != 0) {
         icmpModule->sendErrorMessage(datagram, ICMPv6_PARAMETER_PROBLEM, ERROREOUS_HDR_FIELD);    // TODO set pointer
-        return NULL;
+        return nullptr;
     }
 
     // RFC 2460 4.5:
@@ -92,7 +92,7 @@ IPv6Datagram *IPv6FragBuf::addFragment(IPv6Datagram *datagram, IPv6FragmentHeade
     // fragment packet.
     if (offset + fragmentLength > 65535) {
         icmpModule->sendErrorMessage(datagram, ICMPv6_PARAMETER_PROBLEM, ERROREOUS_HDR_FIELD);    // TODO set pointer
-        return NULL;
+        return nullptr;
     }
 
     // add fragment to buffer
@@ -123,7 +123,7 @@ IPv6Datagram *IPv6FragBuf::addFragment(IPv6Datagram *datagram, IPv6FragmentHeade
     }
     else {
         // there are still missing fragments
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -145,7 +145,7 @@ void IPv6FragBuf::purgeStaleFragments(simtime_t lastupdate)
 
     ASSERT(icmpModule);
 
-    for (Buffers::iterator i = bufs.begin(); i != bufs.end(); ) {
+    for (auto i = bufs.begin(); i != bufs.end(); ) {
         // if too old, remove it
         DatagramBuffer& buf = i->second;
         if (buf.createdAt < lastupdate) {
@@ -156,7 +156,7 @@ void IPv6FragBuf::purgeStaleFragments(simtime_t lastupdate)
             }
 
             // delete
-            Buffers::iterator oldi = i++;
+            auto oldi = i++;
             bufs.erase(oldi);
         }
         else {

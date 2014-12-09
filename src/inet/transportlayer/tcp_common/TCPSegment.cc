@@ -173,9 +173,11 @@ unsigned int TCPSegment::getPayloadArraySize() const
 
 TCPPayloadMessage& TCPSegment::getPayload(unsigned int k)
 {
-    PayloadList::iterator i = payloadList.begin();
+    auto i = payloadList.begin();
     while (k > 0 && i != payloadList.end())
         (++i, --k);
+    if (i == payloadList.end())
+        throw cRuntimeError("Model error at getPayload(): index out of range");
     return *i;
 }
 
@@ -197,7 +199,7 @@ void TCPSegment::addPayloadMessage(cPacket *msg, uint32 endSequenceNo)
 cPacket *TCPSegment::removeFirstPayloadMessage(uint32& endSequenceNo)
 {
     if (payloadList.empty())
-        return NULL;
+        return nullptr;
 
     cPacket *msg = payloadList.front().msg;
     endSequenceNo = payloadList.front().endSequenceNo;

@@ -27,7 +27,7 @@ namespace inet {
 
 IPv4FragBuf::IPv4FragBuf()
 {
-    icmpModule = NULL;
+    icmpModule = nullptr;
 }
 
 IPv4FragBuf::~IPv4FragBuf()
@@ -53,14 +53,14 @@ IPv4Datagram *IPv4FragBuf::addFragment(IPv4Datagram *datagram, simtime_t now)
     key.src = datagram->getSrcAddress();
     key.dest = datagram->getDestAddress();
 
-    Buffers::iterator i = bufs.find(key);
+    auto i = bufs.find(key);
 
-    DatagramBuffer *buf = NULL;
+    DatagramBuffer *buf = nullptr;
 
     if (i == bufs.end()) {
         // this is the first fragment of that datagram, create reassembly buffer for it
         buf = &bufs[key];
-        buf->datagram = NULL;
+        buf->datagram = nullptr;
     }
     else {
         // use existing buffer
@@ -76,10 +76,10 @@ IPv4Datagram *IPv4FragBuf::addFragment(IPv4Datagram *datagram, simtime_t now)
     // store datagram. Only one fragment carries the actual modelled
     // content (getEncapsulatedPacket()), other (empty) ones are only
     // preserved so that we can send them in ICMP if reassembly times out.
-    if (buf->datagram == NULL) {
+    if (buf->datagram == nullptr) {
         buf->datagram = datagram;
     }
-    else if (buf->datagram->getEncapsulatedPacket() == NULL && datagram->getEncapsulatedPacket() != NULL) {
+    else if (buf->datagram->getEncapsulatedPacket() == nullptr && datagram->getEncapsulatedPacket() != nullptr) {
         delete buf->datagram;
         buf->datagram = datagram;
     }
@@ -100,7 +100,7 @@ IPv4Datagram *IPv4FragBuf::addFragment(IPv4Datagram *datagram, simtime_t now)
     else {
         // there are still missing fragments
         buf->lastupdate = now;
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -111,7 +111,7 @@ void IPv4FragBuf::purgeStaleFragments(simtime_t lastupdate)
 
     ASSERT(icmpModule);
 
-    for (Buffers::iterator i = bufs.begin(); i != bufs.end(); ) {
+    for (auto i = bufs.begin(); i != bufs.end(); ) {
         // if too old, remove it
         DatagramBuffer& buf = i->second;
         if (buf.lastupdate < lastupdate) {
@@ -123,7 +123,7 @@ void IPv4FragBuf::purgeStaleFragments(simtime_t lastupdate)
             icmpModule->sendErrorMessage(buf.datagram, -1    /*TODO*/, ICMP_TIME_EXCEEDED, 0);
 
             // delete
-            Buffers::iterator oldi = i++;
+            auto oldi = i++;
             bufs.erase(oldi);
         }
         else {

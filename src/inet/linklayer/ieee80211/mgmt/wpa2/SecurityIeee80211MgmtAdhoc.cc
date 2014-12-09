@@ -42,34 +42,34 @@ void SecurityIeee80211MgmtAdhoc::handleUpperMessage(cPacket *msg)
 
 
     //KATZE check classes and look for further
-//    ASSERT(dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg)!=NULL);
+//    ASSERT(dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg)!=nullptr);
     ev << msg->getClassName() << endl;
     cPacket *msg2 = (cPacket *)msg->getEncapsulatedPacket();
     ev << msg2->getClassName() << endl;
     cPacket *msg3 = (cPacket *)msg2->getEncapsulatedPacket();
     ev << msg3->getClassName() << endl;
-    Ieee80211DataFrame *frame = NULL;
-//    Ieee80211ManagementFrame *mframe = NULL;
-//     bool isOLSRFrame = check_and_cast<OLSR_pkt *>(msg3)!=NULL;
+    Ieee80211DataFrame *frame = nullptr;
+//    Ieee80211ManagementFrame *mframe = nullptr;
+//     bool isOLSRFrame = check_and_cast<OLSR_pkt *>(msg3)!=nullptr;
 //        if (!isOLSRFrame)
         if(strcmp(msg3->getClassName(), "OLSR_pkt") == 0)
         {            // management frames are inserted into mgmtQueue
 //            mgmtQueue.insert(msg);
             ev << "OLSRKATZE" << endl;
             frame = encapsulate(msg);
-            if(frame != NULL)
+            if(frame != nullptr)
                    sendOrEnqueue(frame);
         }
         else{
             ev << "OLSRMIMI" << endl;
             frame = encapsulate(msg);
-            if(frame != NULL)
+            if(frame != nullptr)
                    sendOrEnqueue(frame);
         }
 
 //    Ieee80211ManagementFrame *frame = encapsulateMgmt(msg);
     ev << "KRAULBARS" << endl;
-//    if(frame != NULL)
+//    if(frame != nullptr)
 //        sendOrEnqueue(frame);
 }
 

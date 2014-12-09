@@ -41,7 +41,7 @@ message_rreq_entry* PASER_RREQ_List::pending_add(struct in_addr dest_addr) {
         return entry;
     entry = new message_rreq_entry();
 
-    if (entry == NULL) {
+    if (entry == nullptr) {
         opp_error("failed malloc()");
         exit(EXIT_FAILURE);
     }
@@ -87,7 +87,7 @@ message_rreq_entry* PASER_RREQ_List::pending_find(struct in_addr dest_addr) {
 //            return temp;
 //        }
 //    }
-//    return NULL;
+//    return nullptr;
     std::map<L3Address, message_rreq_entry *>::iterator it = rreq_list.find(
             dest_addr.s_addr);
     if (it != rreq_list.end()) {
@@ -97,7 +97,7 @@ message_rreq_entry* PASER_RREQ_List::pending_find(struct in_addr dest_addr) {
         else
             opp_error("Error in rreq_list table");
     }
-    return NULL;
+    return nullptr;
 }
 
 message_rreq_entry* PASER_RREQ_List::pending_find_addr_with_mask(
@@ -110,7 +110,7 @@ message_rreq_entry* PASER_RREQ_List::pending_find_addr_with_mask(
             return entry;
         }
     }
-    return NULL;
+    return nullptr;
 //    std::map<L3Address, message_rreq_entry * >::iterator it = rreq_list.find(dest_addr.s_addr);
 //    if (it != rreq_list.end())
 //    {
@@ -120,7 +120,7 @@ message_rreq_entry* PASER_RREQ_List::pending_find_addr_with_mask(
 //        else
 //            opp_error("Error in rreq_list table");
 //    }
-//    return NULL;
+//    return nullptr;
 }
 
 }

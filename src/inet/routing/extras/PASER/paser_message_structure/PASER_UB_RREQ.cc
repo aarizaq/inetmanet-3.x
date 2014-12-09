@@ -46,7 +46,7 @@ PASER_UB_RREQ::PASER_UB_RREQ(struct in_addr src, struct in_addr dest,
 
     keyNr = 0;
 
-    sign.buf = NULL;
+    sign.buf = nullptr;
     sign.len = 0;
 
     timestamp = 0;

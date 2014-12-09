@@ -145,7 +145,7 @@ void WiseRoute::handleLowerPacket(cPacket *msg)
         delete netwMsg;
     }
     else {
-        const cObject *pCtrlInfo = NULL;
+        const cObject *pCtrlInfo = nullptr;
         // If the message is a route flood, update the routing table.
         if (netwMsg->getKind() == ROUTE_FLOOD)
             updateRouteTable(initialSrcAddr, srcAddr, rssi, ber);
@@ -199,7 +199,7 @@ void WiseRoute::handleLowerPacket(cPacket *msg)
                 netwMsg->setSrcAddr(myNetwAddr);
                 netwMsg->setDestAddr(nextHop);
                 pCtrlInfo = netwMsg->removeControlInfo();
-                MACAddress nextHopMacAddr = arp->resolveL3Address(nextHop, NULL);    //FIXME interface entry pointer needed
+                MACAddress nextHopMacAddr = arp->resolveL3Address(nextHop, nullptr);    //FIXME interface entry pointer needed
                 if (nextHopMacAddr.isUnspecified())
                     throw cRuntimeError("Cannot immediately resolve MAC address. Please configure a GenericARP module.");
                 setDownControlInfo(netwMsg, nextHopMacAddr);
@@ -209,7 +209,7 @@ void WiseRoute::handleLowerPacket(cPacket *msg)
                 nbPureUnicastForwarded++;
             }
         }
-        if (pCtrlInfo != NULL)
+        if (pCtrlInfo != nullptr)
             delete pCtrlInfo;
     }
 }
@@ -224,7 +224,7 @@ void WiseRoute::handleUpperPacket(cPacket *msg)
 
     pkt->setByteLength(headerLength);
 
-    if (cInfo == NULL) {
+    if (cInfo == nullptr) {
         EV << "WiseRoute warning: Application layer did not specifiy a destination L3 address\n"
            << "\tusing broadcast address instead\n";
         finalDestAddr = myNetwAddr.getAddressType()->getBroadcastAddress();
@@ -260,7 +260,7 @@ void WiseRoute::handleUpperPacket(cPacket *msg)
     else {
         pkt->setIsFlood(0);
         nbPureUnicastSent++;
-        nextHopMacAddr = arp->resolveL3Address(nextHopAddr, NULL);    //FIXME interface entry pointer needed
+        nextHopMacAddr = arp->resolveL3Address(nextHopAddr, nullptr);    //FIXME interface entry pointer needed
         if (nextHopMacAddr.isUnspecified())
             throw cRuntimeError("Cannot immediately resolve MAC address. Please configure a GenericARP module.");
     }
@@ -289,9 +289,7 @@ void WiseRoute::finish()
 
 void WiseRoute::updateRouteTable(const L3Address& origin, const L3Address& lastHop, double rssi, double ber)
 {
-    tRouteTable::iterator pos;
-
-    pos = routeTable.find(origin);
+    auto pos = routeTable.find(origin);
     receivedRSSI.record(rssi);
     receivedBER.record(ber);
     if (pos == routeTable.end()) {
@@ -342,8 +340,8 @@ cMessage *WiseRoute::decapsMsg(WiseRouteDatagram *msg)
 WiseRoute::floodTypes WiseRoute::updateFloodTable(bool isFlood, const tFloodTable::key_type& srcAddr, const tFloodTable::key_type& destAddr, unsigned long seqNum)
 {
     if (isFlood) {
-        tFloodTable::iterator pos = floodTable.lower_bound(srcAddr);
-        tFloodTable::iterator posEnd = floodTable.upper_bound(srcAddr);
+        auto pos = floodTable.lower_bound(srcAddr);
+        auto posEnd = floodTable.upper_bound(srcAddr);
 
         while (pos != posEnd) {
             if (seqNum == pos->second)

@@ -142,17 +142,17 @@ static std::ostream& operator<<(std::ostream& osP, const TCP_NSC_Connection::Soc
 }
 
 TCP_NSC::TCP_NSC()
-    : pStackM(NULL),
-    pNsiTimerM(NULL),
+    : pStackM(nullptr),
+    pNsiTimerM(nullptr),
     isAliveM(false),
     curAddrCounterM(0),
-    curConnM(NULL),
+    curConnM(nullptr),
 
     // statistics:
-    sndNxtVector(NULL),
-    sndAckVector(NULL),
-    rcvSeqVector(NULL),
-    rcvAckVector(NULL)
+    sndNxtVector(nullptr),
+    sndAckVector(nullptr),
+    rcvSeqVector(nullptr),
+    rcvAckVector(nullptr)
 {
     // statistics:
     if (true) {    // (getTcpMain()->recordStatistics)
@@ -167,15 +167,14 @@ TCP_NSC::TCP_NSC()
 // if addrP not exists in map, it's create a new nsc addr
 uint32_t TCP_NSC::mapRemote2Nsc(L3Address const& addrP)
 {
-    Remote2NscMap::iterator i = remote2NscMapM.find(addrP);
+    auto i = remote2NscMapM.find(addrP);
     if (i != remote2NscMapM.end()) {
         return i->second;
     }
 
     // get first free remote NSC IP
     uint32_t ret = remoteFirstInnerIpS.toIPv4().getInt();
-    Nsc2RemoteMap::iterator j;
-    for (j = nsc2RemoteMapM.begin(); j != nsc2RemoteMapM.end(); j++) {
+    for (auto j = nsc2RemoteMapM.begin(); j != nsc2RemoteMapM.end(); j++) {
         if (j->first > ret)
             break;
         ret = j->first + 1;
@@ -194,7 +193,7 @@ uint32_t TCP_NSC::mapRemote2Nsc(L3Address const& addrP)
 // nscAddrP in host byte order!
 L3Address const& TCP_NSC::mapNsc2Remote(uint32_t nscAddrP)
 {
-    Nsc2RemoteMap::iterator i = nsc2RemoteMapM.find(nscAddrP);
+    auto i = nsc2RemoteMapM.find(nscAddrP);
 
     if (i != nsc2RemoteMapM.end())
         return i->second;
@@ -252,7 +251,7 @@ TCP_NSC::~TCP_NSC()
     isAliveM = false;
 
     while (!tcpAppConnMapM.empty()) {
-        TcpAppConnMap::iterator i = tcpAppConnMapM.begin();
+        auto i = tcpAppConnMapM.begin();
         delete (*i).second.pNscSocketM;
         tcpAppConnMapM.erase(i);
     }
@@ -311,7 +310,7 @@ void TCP_NSC::handleIpInputMessage(TCPSegment *tcpsegP)
     inetSockPair.localM.ipAddrM = controlInfo->getDestinationAddress();
     //int interfaceId = controlInfo->getInterfaceId();
 
-    if (dynamic_cast<IPv6ControlInfo *>(ctrl) != NULL) {
+    if (dynamic_cast<IPv6ControlInfo *>(ctrl) != nullptr) {
         {
             // HACK: when IPv6, then correcting the TCPOPTION_MAXIMUM_SEGMENT_SIZE option
             //       with IP header size difference
@@ -401,17 +400,16 @@ void TCP_NSC::handleIpInputMessage(TCPSegment *tcpsegP)
     pStackM->if_receive_packet(0, data, totalIpLen);
 
     // Attempt to read from sockets
-    TcpAppConnMap::iterator j;
     int changes = 0;
 
-    for (j = tcpAppConnMapM.begin(); j != tcpAppConnMapM.end(); ++j) {
+    for (auto j = tcpAppConnMapM.begin(); j != tcpAppConnMapM.end(); ++j) {
         TCP_NSC_Connection& c = j->second;
 
         if (c.pNscSocketM && c.isListenerM) {
             // accepting socket
             EV_DETAIL << this << ": NSC: attempting to accept:\n";
 
-            INetStreamSocket *sock = NULL;
+            INetStreamSocket *sock = nullptr;
             int err;
 
             err = c.pNscSocketM->accept(&sock);
@@ -492,7 +490,7 @@ void TCP_NSC::handleIpInputMessage(TCPSegment *tcpsegP)
             if (hasData) {
                 cPacket *dataMsg;
 
-                while (NULL != (dataMsg = c.receiveQueueM->extractBytesUpTo())) {
+                while (nullptr != (dataMsg = c.receiveQueueM->extractBytesUpTo())) {
                     TCPConnectInfo *tcpConnectInfo = new TCPConnectInfo();
                     tcpConnectInfo->setConnId(c.connIdM);
                     tcpConnectInfo->setLocalAddr(c.inetSockPairM.localM.ipAddrM);
@@ -611,7 +609,7 @@ void TCP_NSC::handleAppMessage(cMessage *msgP)
         conn->tcpNscM = this;
         conn->connIdM = connId;
         conn->appGateIndexM = msgP->getArrivalGate()->getIndex();
-        conn->pNscSocketM = NULL;    // will be filled in within processAppCommand()
+        conn->pNscSocketM = nullptr;    // will be filled in within processAppCommand()
 
         TCPDataTransferMode transferMode = (TCPDataTransferMode)(openCmd->getDataTransferMode());
         // create send queue
@@ -687,20 +685,20 @@ void TCP_NSC::updateDisplayString()
 
 TCP_NSC_Connection *TCP_NSC::findAppConn(int connIdP)
 {
-    TcpAppConnMap::iterator i = tcpAppConnMapM.find(connIdP);
-    return i == tcpAppConnMapM.end() ? NULL : &(i->second);
+    auto i = tcpAppConnMapM.find(connIdP);
+    return i == tcpAppConnMapM.end() ? nullptr : &(i->second);
 }
 
 TCP_NSC_Connection *TCP_NSC::findConnByInetSockPair(TCP_NSC_Connection::SockPair const& sockPairP)
 {
-    SockPair2ConnIdMap::iterator i = inetSockPair2ConnIdMapM.find(sockPairP);
-    return i == inetSockPair2ConnIdMapM.end() ? NULL : findAppConn(i->second);
+    auto i = inetSockPair2ConnIdMapM.find(sockPairP);
+    return i == inetSockPair2ConnIdMapM.end() ? nullptr : findAppConn(i->second);
 }
 
 TCP_NSC_Connection *TCP_NSC::findConnByNscSockPair(TCP_NSC_Connection::SockPair const& sockPairP)
 {
-    SockPair2ConnIdMap::iterator i = nscSockPair2ConnIdMapM.find(sockPairP);
-    return i == nscSockPair2ConnIdMapM.end() ? NULL : findAppConn(i->second);
+    auto i = nscSockPair2ConnIdMapM.find(sockPairP);
+    return i == nscSockPair2ConnIdMapM.end() ? nullptr : findAppConn(i->second);
 }
 
 void TCP_NSC::finish()
@@ -710,7 +708,7 @@ void TCP_NSC::finish()
 
 void TCP_NSC::removeConnection(int connIdP)
 {
-    TcpAppConnMap::iterator i = tcpAppConnMapM.find(connIdP);
+    auto i = tcpAppConnMapM.find(connIdP);
     if (i != tcpAppConnMapM.end())
         tcpAppConnMapM.erase(i);
 }
@@ -723,8 +721,8 @@ void TCP_NSC::printConnBrief(TCP_NSC_Connection& connP)
 
 void TCP_NSC::loadStack(const char *stacknameP, int bufferSizeP)
 {
-    void *handle = NULL;
-    FCreateStack create = NULL;
+    void *handle = nullptr;
+    FCreateStack create = nullptr;
 
     EV_DETAIL << this << ": Loading stack " << stacknameP << "\n";
 
@@ -740,7 +738,7 @@ void TCP_NSC::loadStack(const char *stacknameP, int bufferSizeP)
         throw cRuntimeError("The '%s' NSC stack creation unsuccessful: %s", stacknameP, dlerror());
     }
 
-    pStackM = create(this, this, NULL);
+    pStackM = create(this, this, nullptr);
 
     EV_DETAIL << "TCP_NSC " << this << " has stack " << pStackM << "\n";
 
@@ -989,7 +987,7 @@ void TCP_NSC::process_OPEN_ACTIVE(TCP_NSC_Connection& connP, TCPCommand *tcpComm
     ASSERT(!curConnM);
     curConnM = &connP;
     connP.connect(*pStackM, inetSockPair, nscSockPair);
-    curConnM = NULL;
+    curConnM = nullptr;
 
     // and add to map:
     // TODO sendToIp already set the addresses.
@@ -1037,7 +1035,7 @@ void TCP_NSC::process_OPEN_PASSIVE(TCP_NSC_Connection& connP, TCPCommand *tcpCom
     ASSERT(!curConnM);
     curConnM = &connP;
     connP.listen(*pStackM, inetSockPair, nscSockPair);
-    curConnM = NULL;
+    curConnM = nullptr;
 
     changeAddresses(connP, inetSockPair, nscSockPair);
 
@@ -1057,7 +1055,7 @@ void TCP_NSC::process_SEND(TCP_NSC_Connection& connP, TCPCommand *tcpCommandP, c
 
 void TCP_NSC::do_SEND_all()
 {
-    for (TcpAppConnMap::iterator j = tcpAppConnMapM.begin(); j != tcpAppConnMapM.end(); ++j) {
+    for (auto j = tcpAppConnMapM.begin(); j != tcpAppConnMapM.end(); ++j) {
         TCP_NSC_Connection& conn = j->second;
         conn.do_SEND();
     }

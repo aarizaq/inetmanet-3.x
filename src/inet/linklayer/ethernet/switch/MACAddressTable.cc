@@ -61,9 +61,9 @@ static char *fgetline(FILE *fp)
 {
     // alloc buffer and read a line
     char *line = new char[MAX_LINE];
-    if (fgets(line, MAX_LINE, fp) == NULL) {
+    if (fgets(line, MAX_LINE, fp) == nullptr) {
         delete[] line;
-        return NULL;
+        return nullptr;
     }
 
     // chop CR/LF
@@ -83,7 +83,7 @@ void MACAddressTable::handleMessage(cMessage *)
 /*
  * getTableForVid
  * Returns a MAC Address Table for a specified VLAN ID
- * or NULL pointer if it is not found
+ * or nullptr pointer if it is not found
  */
 
 MACAddressTable::AddressTable *MACAddressTable::getTableForVid(unsigned int vid)
@@ -91,11 +91,10 @@ MACAddressTable::AddressTable *MACAddressTable::getTableForVid(unsigned int vid)
     if (vid == 0)
         return addressTable;
 
-    MACAddressTable::VlanAddressTable::iterator iter;
-    iter = vlanAddressTable.find(vid);
+    auto iter = vlanAddressTable.find(vid);
     if (iter != vlanAddressTable.end())
         return iter->second;
-    return NULL;
+    return nullptr;
 }
 
 /*
@@ -110,10 +109,10 @@ int MACAddressTable::getPortForAddress(MACAddress& address, unsigned int vid)
 
     AddressTable *table = getTableForVid(vid);
     // VLAN ID vid does not exist
-    if (table == NULL)
+    if (table == nullptr)
         return -1;
 
-    AddressTable::iterator iter = table->find(address);
+    auto iter = table->find(address);
 
     if (iter == table->end()) {
         // not found
@@ -142,7 +141,7 @@ bool MACAddressTable::updateTableWithAddress(int portno, MACAddress& address, un
     AddressTable::iterator iter;
     AddressTable *table = getTableForVid(vid);
 
-    if (table == NULL) {
+    if (table == nullptr) {
         // MAC Address Table does not exist for VLAN ID vid, so we create it
         table = new AddressTable();
 
@@ -181,10 +180,10 @@ bool MACAddressTable::updateTableWithAddress(int portno, MACAddress& address, un
 void MACAddressTable::flush(int portno)
 {
     Enter_Method("MACAddressTable::flush():  Clearing gate %d cache", portno);
-    for (VlanAddressTable::iterator i = vlanAddressTable.begin(); i != vlanAddressTable.end(); i++) {
+    for (auto i = vlanAddressTable.begin(); i != vlanAddressTable.end(); i++) {
         AddressTable *table = i->second;
-        for (AddressTable::iterator j = table->begin(); j != table->end(); ) {
-            AddressTable::iterator cur = j++;
+        for (auto j = table->begin(); j != table->end(); ) {
+            auto cur = j++;
             if (cur->second.portno == portno)
                 table->erase(cur);
         }
@@ -199,18 +198,18 @@ void MACAddressTable::printState()
 {
     EV << endl << "MAC Address Table" << endl;
     EV << "VLAN ID    MAC    Port    Inserted" << endl;
-    for (VlanAddressTable::iterator i = vlanAddressTable.begin(); i != vlanAddressTable.end(); i++) {
+    for (auto i = vlanAddressTable.begin(); i != vlanAddressTable.end(); i++) {
         AddressTable *table = i->second;
-        for (AddressTable::iterator j = table->begin(); j != table->end(); j++)
+        for (auto j = table->begin(); j != table->end(); j++)
             EV << j->second.vid << "   " << j->first << "   " << j->second.portno << "   " << j->second.insertionTime << endl;
     }
 }
 
 void MACAddressTable::copyTable(int portA, int portB)
 {
-    for (VlanAddressTable::iterator i = vlanAddressTable.begin(); i != vlanAddressTable.end(); i++) {
+    for (auto i = vlanAddressTable.begin(); i != vlanAddressTable.end(); i++) {
         AddressTable *table = i->second;
-        for (AddressTable::iterator j = table->begin(); j != table->end(); j++)
+        for (auto j = table->begin(); j != table->end(); j++)
             if (j->second.portno == portA)
                 j->second.portno = portB;
 
@@ -220,11 +219,11 @@ void MACAddressTable::copyTable(int portA, int portB)
 void MACAddressTable::removeAgedEntriesFromVlan(unsigned int vid)
 {
     AddressTable *table = getTableForVid(vid);
-    if (table == NULL)
+    if (table == nullptr)
         return;
     // TODO: this part could be factored out
-    for (AddressTable::iterator iter = table->begin(); iter != table->end(); ) {
-        AddressTable::iterator cur = iter++;    // iter will get invalidated after erase()
+    for (auto iter = table->begin(); iter != table->end(); ) {
+        auto cur = iter++;    // iter will get invalidated after erase()
         AddressEntry& entry = cur->second;
         if (entry.insertionTime + agingTime <= simTime()) {
             EV << "Removing aged entry from Address Table: "
@@ -236,11 +235,11 @@ void MACAddressTable::removeAgedEntriesFromVlan(unsigned int vid)
 
 void MACAddressTable::removeAgedEntriesFromAllVlans()
 {
-    for (VlanAddressTable::iterator i = vlanAddressTable.begin(); i != vlanAddressTable.end(); i++) {
+    for (auto i = vlanAddressTable.begin(); i != vlanAddressTable.end(); i++) {
         AddressTable *table = i->second;
         // TODO: this part could be factored out
-        for (AddressTable::iterator j = table->begin(); j != table->end(); ) {
-            AddressTable::iterator cur = j++;    // iter will get invalidated after erase()
+        for (auto j = table->begin(); j != table->end(); ) {
+            auto cur = j++;    // iter will get invalidated after erase()
             AddressEntry& entry = cur->second;
             if (entry.insertionTime + agingTime <= simTime()) {
                 EV << "Removing aged entry from Address Table: "
@@ -264,7 +263,7 @@ void MACAddressTable::removeAgedEntriesIfNeeded()
 void MACAddressTable::readAddressTable(const char *fileName)
 {
     FILE *fp = fopen(fileName, "r");
-    if (fp == NULL)
+    if (fp == nullptr)
         throw cRuntimeError("cannot open address table file `%s'", fileName);
 
     //  Syntax of the file goes as:
@@ -279,7 +278,7 @@ void MACAddressTable::readAddressTable(const char *fileName)
     //  and uses strtok to extract tokens from the resulting string
     char *line;
     int lineno = 0;
-    while ((line = fgetline(fp)) != NULL) {
+    while ((line = fgetline(fp)) != nullptr) {
         lineno++;
 
         // lines beginning with '#' are treated as comments
@@ -289,9 +288,9 @@ void MACAddressTable::readAddressTable(const char *fileName)
         // scan in VLAN ID
         char *vlanID = strtok(line, " \t");
         // scan in hexaddress
-        char *hexaddress = strtok(NULL, " \t");
+        char *hexaddress = strtok(nullptr, " \t");
         // scan in port number
-        char *portno = strtok(NULL, " \t");
+        char *portno = strtok(nullptr, " \t");
 
         // empty line?
         if (!vlanID)
@@ -305,7 +304,7 @@ void MACAddressTable::readAddressTable(const char *fileName)
         AddressEntry entry(atoi(vlanID), atoi(portno), 0);
         AddressTable *table = getTableForVid(entry.vid);
 
-        if (table == NULL) {
+        if (table == nullptr) {
             table = new AddressTable();
             vlanAddressTable[entry.vid] = table;
         }
@@ -320,16 +319,16 @@ void MACAddressTable::readAddressTable(const char *fileName)
 
 void MACAddressTable::clearTable()
 {
-    for (VlanAddressTable::iterator iter = vlanAddressTable.begin(); iter != vlanAddressTable.end(); iter++)
+    for (auto iter = vlanAddressTable.begin(); iter != vlanAddressTable.end(); iter++)
         delete iter->second;
 
     vlanAddressTable.clear();
-    addressTable = NULL;
+    addressTable = nullptr;
 }
 
 MACAddressTable::~MACAddressTable()
 {
-    for (VlanAddressTable::iterator iter = vlanAddressTable.begin(); iter != vlanAddressTable.end(); iter++)
+    for (auto iter = vlanAddressTable.begin(); iter != vlanAddressTable.end(); iter++)
         delete iter->second;
 }
 

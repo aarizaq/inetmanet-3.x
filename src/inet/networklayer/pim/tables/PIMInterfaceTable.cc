@@ -46,7 +46,7 @@ std::string PIMInterface::info() const
 
 PIMInterfaceTable::~PIMInterfaceTable()
 {
-    for (std::vector<PIMInterface *>::iterator it = pimInterfaces.begin(); it != pimInterfaces.end(); ++it)
+    for (auto it = pimInterfaces.begin(); it != pimInterfaces.end(); ++it)
         delete *it;
 }
 
@@ -96,7 +96,7 @@ PIMInterface *PIMInterfaceTable::createInterface(InterfaceEntry *ie, cXMLElement
 {
     const char *modeAttr = config->getAttribute("mode");
     if (!modeAttr)
-        return NULL;
+        return nullptr;
 
     PIMInterface::PIMMode mode;
     if (strcmp(modeAttr, "dense") == 0)
@@ -118,7 +118,7 @@ PIMInterface *PIMInterfaceTable::getInterfaceById(int interfaceId)
         if (interfaceId == getInterface(i)->getInterfaceId())
             return getInterface(i);
 
-    return NULL;
+    return nullptr;
 }
 
 void PIMInterfaceTable::receiveSignal(cComponent *source, simsignal_t signalID, cObject *details)
@@ -140,7 +140,7 @@ void PIMInterfaceTable::receiveSignal(cComponent *source, simsignal_t signalID, 
 
 PIMInterfaceTable::PIMInterfaceVector::iterator PIMInterfaceTable::findInterface(InterfaceEntry *ie)
 {
-    for (PIMInterfaceVector::iterator it = pimInterfaces.begin(); it != pimInterfaces.end(); ++it)
+    for (auto it = pimInterfaces.begin(); it != pimInterfaces.end(); ++it)
         if ((*it)->getInterfacePtr() == ie)
             return it;
 
@@ -165,7 +165,7 @@ void PIMInterfaceTable::addInterface(InterfaceEntry *ie)
 
 void PIMInterfaceTable::removeInterface(InterfaceEntry *ie)
 {
-    PIMInterfaceVector::iterator it = findInterface(ie);
+    auto it = findInterface(ie);
     if (it != pimInterfaces.end())
         pimInterfaces.erase(it);
 }

@@ -153,7 +153,7 @@ edge* Dijkstra::get_edge(const nsaddr_t & dest_node, const nsaddr_t & last_node)
         if (current_edge->last_node() == last_node)
             return current_edge;
     }
-    return NULL;
+    return nullptr;
 }
 
 void Dijkstra::run()
@@ -178,7 +178,7 @@ void Dijkstra::run()
             // .. and adjacent to 'current_node'...
             // note: edge has destination '*dest_node' and last hop '*current_node'
             edge* current_edge = get_edge(*dest_node, *current_node);
-            if (current_edge == NULL)
+            if (current_edge == nullptr)
                 continue;
             // D(node) = min (D(node), D(current_node) + edge(current_node, node).cost())
             DijkstraMap::iterator itDest = dijkstraMap.find(*dest_node);
@@ -322,9 +322,9 @@ void Dijkstra::clear()
     all_nodes_->clear();
     delete all_nodes_;
 
-    link_array_ = NULL;
-    nonprocessed_nodes_ = NULL;
-    all_nodes_ = NULL;
+    link_array_ = nullptr;
+    nonprocessed_nodes_ = nullptr;
+    all_nodes_ = nullptr;
 }
 
 Dijkstra::~Dijkstra()

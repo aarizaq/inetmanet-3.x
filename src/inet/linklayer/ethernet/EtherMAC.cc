@@ -44,12 +44,6 @@ Define_Module(EtherMAC);
 simsignal_t EtherMAC::collisionSignal = registerSignal("collision");
 simsignal_t EtherMAC::backoffSignal = registerSignal("backoff");
 
-EtherMAC::EtherMAC()
-{
-    frameBeingReceived = NULL;
-    endJammingMsg = endRxMsg = endBackoffMsg = NULL;
-}
-
 EtherMAC::~EtherMAC()
 {
     delete frameBeingReceived;
@@ -109,7 +103,7 @@ void EtherMAC::processConnectDisconnect()
 {
     if (!connected) {
         delete frameBeingReceived;
-        frameBeingReceived = NULL;
+        frameBeingReceived = nullptr;
         cancelEvent(endRxMsg);
         cancelEvent(endBackoffMsg);
         cancelEvent(endJammingMsg);
@@ -241,7 +235,7 @@ void EtherMAC::processFrameFromUpperLayer(EtherFrame *frame)
     if (frame->getSrc().isUnspecified())
         frame->setSrc(address);
 
-    bool isPauseFrame = (dynamic_cast<EtherPauseFrame *>(frame) != NULL);
+    bool isPauseFrame = (dynamic_cast<EtherPauseFrame *>(frame) != nullptr);
 
     if (!isPauseFrame) {
         numFramesFromHL++;
@@ -249,7 +243,7 @@ void EtherMAC::processFrameFromUpperLayer(EtherFrame *frame)
     }
 
     if (txQueue.extQueue) {
-        ASSERT(curTxFrame == NULL);
+        ASSERT(curTxFrame == nullptr);
         curTxFrame = frame;
         fillIFGIfInBurst();
     }
@@ -283,11 +277,10 @@ void EtherMAC::addReceptionInReconnectState(long packetTreeId, simtime_t endRxTi
     while (!endRxTimeList.empty() && endRxTimeList.front().endTime <= now)
         endRxTimeList.pop_front();
 
-    EndRxTimeList::iterator i;
-
     // remove old entry with same packet tree ID (typically: a frame reception
     // doesn't go through but is canceled by a jam signal)
-    for (i = endRxTimeList.begin(); i != endRxTimeList.end(); i++) {
+    auto i = endRxTimeList.begin();
+    for ( ; i != endRxTimeList.end(); i++) {
         if (i->packetTreeId == packetTreeId) {
             endRxTimeList.erase(i);
             break;
@@ -441,7 +434,7 @@ void EtherMAC::processDetectedCollision()
 {
     if (receiveState != RX_COLLISION_STATE) {
         delete frameBeingReceived;
-        frameBeingReceived = NULL;
+        frameBeingReceived = nullptr;
 
         numCollisions++;
         emit(collisionSignal, 1L);
@@ -513,7 +506,7 @@ void EtherMAC::startFrameTransmission()
 
         if (receiveState == RECEIVING_STATE) {
             delete frameBeingReceived;
-            frameBeingReceived = NULL;
+            frameBeingReceived = nullptr;
 
             numCollisions++;
             emit(collisionSignal, 1L);
@@ -539,12 +532,12 @@ void EtherMAC::handleEndTxPeriod()
 
     currentSendPkTreeID = 0;
 
-    if (curTxFrame == NULL)
+    if (curTxFrame == nullptr)
         throw cRuntimeError("Frame under transmission cannot be found");
 
     emit(packetSentToLowerSignal, curTxFrame);    //consider: emit with start time of frame
 
-    if (dynamic_cast<EtherPauseFrame *>(curTxFrame) != NULL) {
+    if (dynamic_cast<EtherPauseFrame *>(curTxFrame) != nullptr) {
         numPauseFramesSent++;
         emit(txPausePkUnitsSignal, ((EtherPauseFrame *)curTxFrame)->getPauseTime());
     }
@@ -557,7 +550,7 @@ void EtherMAC::handleEndTxPeriod()
 
     EV_INFO << "Transmission of " << curTxFrame << " successfully completed.\n";
     delete curTxFrame;
-    curTxFrame = NULL;
+    curTxFrame = nullptr;
     lastTxFinishTime = simTime();
     getNextFrameFromQueue();
 
@@ -586,7 +579,7 @@ void EtherMAC::handleEndTxPeriod()
 
 void EtherMAC::scheduleEndRxPeriod(EtherTraffic *frame)
 {
-    ASSERT(frameBeingReceived == NULL);
+    ASSERT(frameBeingReceived == nullptr);
     ASSERT(!endRxMsg->isScheduled());
 
     frameBeingReceived = frame;
@@ -630,7 +623,7 @@ void EtherMAC::handleEndBackoffPeriod()
     if (transmitState != BACKOFF_STATE)
         throw cRuntimeError("At end of BACKOFF and not in BACKOFF_STATE");
 
-    if (curTxFrame == NULL)
+    if (curTxFrame == nullptr)
         throw cRuntimeError("At end of BACKOFF and no frame to transmit");
 
     if (receiveState == RX_IDLE_STATE) {
@@ -677,7 +670,7 @@ void EtherMAC::handleRetransmission()
     if (++backoffs > MAX_ATTEMPTS) {
         EV_DETAIL << "Number of retransmit attempts of frame exceeds maximum, cancelling transmission of frame\n";
         delete curTxFrame;
-        curTxFrame = NULL;
+        curTxFrame = nullptr;
         transmitState = TX_IDLE_STATE;
         backoffs = 0;
         getNextFrameFromQueue();
@@ -756,9 +749,9 @@ void EtherMAC::handleEndPausePeriod()
 void EtherMAC::frameReceptionComplete()
 {
     EtherTraffic *msg = frameBeingReceived;
-    frameBeingReceived = NULL;
+    frameBeingReceived = nullptr;
 
-    if (dynamic_cast<EtherIFG *>(msg) != NULL) {
+    if (dynamic_cast<EtherIFG *>(msg) != nullptr) {
         delete msg;
         return;
     }
@@ -778,7 +771,7 @@ void EtherMAC::frameReceptionComplete()
     if (dropFrameNotForUs(frame))
         return;
 
-    if (dynamic_cast<EtherPauseFrame *>(frame) != NULL) {
+    if (dynamic_cast<EtherPauseFrame *>(frame) != nullptr) {
         processReceivedPauseFrame((EtherPauseFrame *)frame);
     }
     else {

@@ -16,6 +16,9 @@
 //
 // TODO generated message class
 //
+
+namespace inet;
+
 packet PaserTrafficDataMsg {
     string srcId;
     int counter;

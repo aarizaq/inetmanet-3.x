@@ -208,7 +208,7 @@ class HwmpProtocol : public ManetRoutingBase
                 uint32_t inInterface; ///< incoming device interface ID. (if packet has come from upper layers, this is Mesh point ID)
                 QueuedPacket()
                 {
-                    pkt = NULL; ///< the packet
+                    pkt = nullptr; ///< the packet
                     src = MACAddress::UNSPECIFIED_ADDRESS; ///< src address
                     dst = MACAddress::UNSPECIFIED_ADDRESS; ///< dst address
                     protocol = 0; ///< protocol number

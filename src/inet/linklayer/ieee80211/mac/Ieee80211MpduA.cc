@@ -17,12 +17,6 @@
 
 //#define SHAREDBLOCK
 
-// Template rule which fires if a struct or class doesn't have operator<<
-template<typename T>
-std::ostream& operator<<(std::ostream& out, const T&)
-{
-    return out;
-}
 
 // Another default rule (prevents compiler from choosing base class' doPacking())
 template<typename T>
@@ -43,6 +37,13 @@ void doUnpacking(cCommBuffer *, T& t)
 
 namespace inet {
 namespace ieee80211 {
+
+// Template rule which fires if a struct or class doesn't have operator<<
+template<typename T>
+std::ostream& operator<<(std::ostream& out, const T&)
+{
+    return out;
+}
 
 Ieee80211MpduA::~Ieee80211MpduA()
 {
@@ -121,7 +122,7 @@ void Ieee80211MpduA::_deleteEncapVector()
 Ieee80211DataOrMgmtFrame *Ieee80211MpduA::popBack()
 {
     if (encapsulateVector.empty())
-        return NULL;
+        return nullptr;
     if (getBitLength() > 0)
         setBitLength(getBitLength() - encapsulateVector.back()->pkt->getBitLength());
     if (getBitLength() < 0)
@@ -147,7 +148,7 @@ Ieee80211DataOrMgmtFrame *Ieee80211MpduA::popBack()
 Ieee80211DataOrMgmtFrame *Ieee80211MpduA::popFrom()
 {
     if (encapsulateVector.empty())
-        return NULL;
+        return nullptr;
     if (getBitLength() > 0)
         setBitLength(getBitLength() - encapsulateVector.front()->pkt->getBitLength());
     if (getBitLength() < 0)
@@ -173,7 +174,7 @@ Ieee80211DataOrMgmtFrame *Ieee80211MpduA::popFrom()
 
 void Ieee80211MpduA::pushBack(Ieee80211DataOrMgmtFrame *pkt)
 {
-    if (pkt == NULL)
+    if (pkt == nullptr)
         return;
 
     // Sanity check, check if the packet is already in the vector
@@ -213,7 +214,7 @@ void Ieee80211MpduA::pushBack(Ieee80211DataOrMgmtFrame *pkt)
 
 void Ieee80211MpduA::pushFrom(Ieee80211DataOrMgmtFrame *pkt)
 {
-    if (pkt == NULL)
+    if (pkt == nullptr)
         return;
     // Sanity check, check if the packet is already in the vector
     for (unsigned int i = 0; i < encapsulateVector.size(); i++)
@@ -256,7 +257,7 @@ Ieee80211DataOrMgmtFrame *Ieee80211MpduA::getPacket(unsigned int i) const
 {
 
     if (i >= encapsulateVector.size())
-        return NULL;
+        return nullptr;
     const_cast<Ieee80211MpduA*>(this)->_detachShareVector(i);
     return encapsulateVector[i]->pkt;
 }
@@ -265,7 +266,7 @@ cPacket *Ieee80211MpduA::decapsulatePacket(unsigned int i)
 {
 
     if (i >= encapsulateVector.size())
-        return NULL;
+        return nullptr;
     const_cast<Ieee80211MpduA*>(this)->_detachShareVector(i);
     cPacket * pkt = encapsulateVector[i]->pkt;
     if (getBitLength() > 0)

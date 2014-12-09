@@ -399,7 +399,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     Ieee80211PassiveQueue *queueModule;
 
     /**
-     * The last change channel message received and not yet sent to the physical layer, or NULL.
+     * The last change channel message received and not yet sent to the physical layer, or nullptr.
      * The message will be sent down when the state goes to IDLE or DEFER next time.
      */
     cMessage *pendingRadioConfigMsg;
@@ -723,7 +723,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
 
     virtual void handleNodeCrash();
 
-    virtual void sendNotification(simsignal_t category, cMessage *pkt = NULL)
+    virtual void sendNotification(simsignal_t category, cMessage *pkt = nullptr)
     {
         if (pkt)
         {
@@ -733,7 +733,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
             pkt->setKind(tempKind);
         }
         else
-            emit(category, (cObject *)NULL);
+            emit(category, (cObject *)nullptr);
     }
   public:
     virtual void setQueueModeTrue() {queueMode = true;}
