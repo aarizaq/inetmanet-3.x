@@ -1052,7 +1052,7 @@ void AnyMacXmacLayer::handleSelfMessage(cMessage *msg)
 		if (msg->getKind() == XMAC_PREAMBLE)
 		{
 		    XMacPkt *macPkt = dynamic_cast<XMacPkt*>(msg);
-		    if (preambleCont < macPkt->getPreambleCont())
+		    if ((int) preambleCont < macPkt->getPreambleCont())
 		    {
 		        // lost
 	            cancelEvent(ack_timeout);
