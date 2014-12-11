@@ -195,6 +195,7 @@ Ieee80211Mac::Ieee80211Mac() :
     endReserve(nullptr),
     mediumStateChange(nullptr)
 {
+
 }
 
 Ieee80211Mac::~Ieee80211Mac()
@@ -241,6 +242,18 @@ void Ieee80211Mac::initialize(int stage)
     //TODO: revise it: it's too big; should revise stages, too!!!
     if (stage == INITSTAGE_LOCAL)
     {
+        fsm = new Ieee802MacBaseFsm(10);
+        //fsm->setNumStates(10);
+        fsm->setStateMethod(IDLE, &Ieee80211Mac::stateIdle,"IDLE");
+        fsm->setStateMethod(DEFER, &Ieee80211Mac::stateDefer,"DEFER");
+        fsm->setStateMethod(WAITAIFS, &Ieee80211Mac::stateWaitAifs,"WAITAIFS");
+        fsm->setStateMethod(BACKOFF, &Ieee80211Mac::stateBackoff,"BACKOFF");
+        fsm->setStateMethod(WAITACK, &Ieee80211Mac::stateWaitAck,"WAITACK");
+        fsm->setStateMethod(WAITMULTICAST, &Ieee80211Mac::stateWaitMulticast,"WAITMULTICAST");
+        fsm->setStateMethod(WAITCTS, &Ieee80211Mac::stateWaitCts,"WAITCTS");
+        fsm->setStateMethod(WAITSIFS, &Ieee80211Mac::stateWaitSift,"WAITSIFS");
+        fsm->setStateMethod(RECEIVE, &Ieee80211Mac::stateReceive,"RECEIVE");
+        fsm->setStateMethod(WAITBLOCKACK, &Ieee80211Mac::stateWaitBlockAck,"WAITBLOCKACK");
 
         // initialize parameters
         const char *opModeStr = par("opMode").stringValue();
@@ -396,7 +409,7 @@ void Ieee80211Mac::initialize(int stage)
         initializeQueueModule();    //FIXME STAGE: this should be in L2 initialization!!!!
 
         // state variables
-        fsm.setName("Ieee80211Mac State Machine");
+        fsm->setName("Ieee80211Mac State Machine");
         mode = DCF;
         sequenceNumber = 0;
 
@@ -770,7 +783,7 @@ void Ieee80211Mac::handleUpperCommand(cMessage *msg)
             pendingRadioConfigMsg = nullptr;
         }
 
-        if (fsm.getState() == IDLE || fsm.getState() == DEFER || fsm.getState() == BACKOFF) {
+        if (fsm->getState() == IDLE || fsm->getState() == DEFER || fsm->getState() == BACKOFF) {
             EV_DEBUG << "Sending it down immediately\n";
 /*
    // Dynamic power
@@ -1775,7 +1788,7 @@ double Ieee80211Mac::computeFrameDuration(int bits, double bitrate)
 void Ieee80211Mac::logState()
 {
     int numCategs = numCategories();
-    EV_TRACE << "# state information: mode = " << modeName(mode) << ", state = " << fsm.getStateName();
+    EV_TRACE << "# state information: mode = " << modeName(mode) << ", state = " << fsm->getStateName();
     EV_TRACE << ", backoff 0.." << numCategs << " =";
     for (int i=0; i<numCategs; i++)
         EV_TRACE << " " << edcCAF[i].backoff;

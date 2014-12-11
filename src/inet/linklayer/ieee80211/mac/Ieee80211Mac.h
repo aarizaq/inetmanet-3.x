@@ -34,6 +34,7 @@
 
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Consts.h"
+#include "inet/linklayer/ieee80211/mac/Ieee802MacBaseFsm.h"
 
 
 namespace inet {
@@ -244,7 +245,9 @@ class INET_API Ieee80211Mac : public MACProtocolBase
         WAITBLOCKACK,
     };
   protected:
-    cFSM fsm;
+
+    //cFSM fsm;
+      Ieee802MacBaseFsm *fsm;
 
     struct Edca
     {
@@ -512,6 +515,19 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     //@}
     virtual bool  initFsm(cMessage *msg, bool &, Ieee80211Frame *&);
     virtual void  endFsm(cMessage *msg);
+
+    virtual void stateIdle(Ieee802MacBaseFsm * , cMessage *);
+    virtual void stateDefer(Ieee802MacBaseFsm * , cMessage *);
+    virtual void stateWaitAifs(Ieee802MacBaseFsm * , cMessage *);
+    virtual void stateBackoff(Ieee802MacBaseFsm * , cMessage *);
+    virtual void stateWaitAck(Ieee802MacBaseFsm * , cMessage *);
+    virtual void stateWaitBlockAck(Ieee802MacBaseFsm * , cMessage *);
+    virtual void stateWaitMulticast(Ieee802MacBaseFsm * ,cMessage *);
+    virtual void stateWaitCts(Ieee802MacBaseFsm * , cMessage *);
+    virtual void stateWaitSift(Ieee802MacBaseFsm * , cMessage *);
+    virtual void stateReceive(Ieee802MacBaseFsm * , cMessage *);
+
+
   protected:
     /**
      * @name Timing functions
@@ -738,7 +754,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
   public:
     virtual void setQueueModeTrue() {queueMode = true;}
     virtual void setQueueModeFalse() {queueMode = false;}
-    virtual State getState() {return static_cast<State>(fsm.getState());}
+    virtual State getState() {return static_cast<State>(fsm->getState());}
     virtual unsigned int getQueueSize() {return transmissionQueueSize();}
     virtual int getQueueSizeAddress(const MACAddress &addr);
 };
