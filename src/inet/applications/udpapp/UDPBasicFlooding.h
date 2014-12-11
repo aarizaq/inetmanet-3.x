@@ -28,8 +28,8 @@
 
 #include "inet/common/INETDefs.h"
 #include "inet/transportlayer/contract/udp/UDPSocket.h"
-#include "inet/applications/common/AddressModule.h"
-#include "inet/applications/common/ApplicationBase.h"
+#include "inet/applications/base/AddressModule.h"
+#include "inet/applications/base/ApplicationBase.h"
 
 
 namespace inet {

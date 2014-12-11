@@ -24,7 +24,7 @@
 #define __INET_UDPBASICBURSTNOTIFICATION_H
 
 #include "UDPBasicBurst.h"
-#include "inet/applications/common/AddressModule.h"
+#include "inet/applications/base/AddressModule.h"
 
 namespace inet {
 

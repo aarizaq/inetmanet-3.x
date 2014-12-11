@@ -30,7 +30,7 @@ namespace inet {
 namespace inetmanet {
 
 PASER_Message_Queue::~PASER_Message_Queue() {
-    for (std::list<message_queue_entry>::iterator it = message_queue_list.begin();
+    for (auto it = message_queue_list.begin();
             it != message_queue_list.end(); it++) {
         struct message_queue_entry temp = (struct message_queue_entry) *it;
         delete temp.p;
@@ -55,7 +55,7 @@ void PASER_Message_Queue::getAllPaketsTo(struct in_addr dest_addr,
     bool tryAgain = true;
     while (tryAgain) {
         tryAgain = false;
-        for (std::list<message_queue_entry>::iterator it =
+        for (auto it =
                 message_queue_list.begin(); it != message_queue_list.end();
                 it++) {
             struct message_queue_entry temp = (struct message_queue_entry) *it;
@@ -74,7 +74,7 @@ void PASER_Message_Queue::getAllPaketsToAddWithMask(struct in_addr dest_addr,
     bool tryAgain = true;
     while (tryAgain) {
         tryAgain = false;
-        for (std::list<message_queue_entry>::iterator it =
+        for (auto it =
                 message_queue_list.begin(); it != message_queue_list.end();
                 it++) {
             struct message_queue_entry temp = (struct message_queue_entry) *it;
@@ -93,7 +93,7 @@ void PASER_Message_Queue::send_queued_messages(struct in_addr dest_addr) {
             << "\n";
     std::list<message_queue_entry> datagrams;
     getAllPaketsTo(dest_addr, &datagrams);
-    for (std::list<message_queue_entry>::iterator it = datagrams.begin();
+    for (auto it = datagrams.begin();
             it != datagrams.end(); it++) {
         struct message_queue_entry temp = (message_queue_entry) *it;
 //        paser_modul->send(temp.p, "to_ip");
@@ -112,10 +112,10 @@ void PASER_Message_Queue::send_queued_messages(struct in_addr dest_addr) {
 
 void PASER_Message_Queue::send_queued_messages_for_AddList(
         std::list<address_list> AddList) {
-    for (std::list<address_list>::iterator it = AddList.begin();
+    for (auto it = AddList.begin();
             it != AddList.end(); it++) {
         address_list tempList = (address_list) *it;
-        for (std::list<address_range>::iterator it = tempList.range.begin();
+        for (auto it = tempList.range.begin();
                 it != tempList.range.end(); it++) {
             address_range destRange = (address_range) *it;
             struct in_addr dest_addr = destRange.ipaddr;
@@ -125,7 +125,7 @@ void PASER_Message_Queue::send_queued_messages_for_AddList(
                     << mask_addr.S_addr.getIPv4().str() << "\n";
             std::list<message_queue_entry> datagrams;
             getAllPaketsToAddWithMask(dest_addr, mask_addr, &datagrams);
-            for (std::list<message_queue_entry>::iterator it = datagrams.begin();
+            for (auto it = datagrams.begin();
                     it != datagrams.end(); it++) {
                 struct message_queue_entry temp = (message_queue_entry) *it;
 //                paser_modul->send(temp.p, "to_ip");
@@ -144,7 +144,7 @@ void PASER_Message_Queue::deleteMessages(struct in_addr dest_addr) {
             << "\n";
     std::list<message_queue_entry> datagrams;
     getAllPaketsTo(dest_addr, &datagrams);
-    for (std::list<message_queue_entry>::iterator it = datagrams.begin();
+    for (auto it = datagrams.begin();
             it != datagrams.end(); it++) {
         struct message_queue_entry temp = (message_queue_entry) *it;
         paser_modul->MY_sendICMP(temp.p);

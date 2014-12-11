@@ -21,7 +21,7 @@
 // * This work is part of the secure wireless mesh networks framework, which is currently under development by CNI
 // ********************************************************************************/
 package inet.routing.extras.PASER;
-import inet.applications.IUDPApp;
+import inet.applications.contract.IUDPApp;
 
 simple SimpleKDC like IUDPApp
 {

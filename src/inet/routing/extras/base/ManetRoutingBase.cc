@@ -326,7 +326,7 @@ void ManetRoutingBase::registerRoutingModule()
     hostModule->subscribe(NF_L2_AP_ASSOCIATED, this);
 
 #ifdef WITH_80211MESH
-    locator = LocatorModuleAccess().getIfExists();
+    locator = dynamic_cast<ILocator *>(getContainingNode(this)->getSubmodule("locator"));
     if (locator)
     {
         InterfaceEntry *ie = getInterfaceWlanByAddress();
@@ -347,7 +347,7 @@ void ManetRoutingBase::registerRoutingModule()
             globalRouteMap = new GlobalRouteMap;
         }
 
-        GlobalRouteMap::iterator it = globalRouteMap->find(getAddress());
+        auto it = globalRouteMap->find(getAddress());
         if (it == globalRouteMap->end())
         {
             ProtocolRoutingData data;
@@ -409,7 +409,7 @@ ManetRoutingBase::~ManetRoutingBase()
 
     if (globalRouteMap)
     {
-        GlobalRouteMap::iterator it = globalRouteMap->find(getAddress());
+        auto it = globalRouteMap->find(getAddress());
         if (it != globalRouteMap->end())
             globalRouteMap->erase(it);
         if (globalRouteMap->empty())
@@ -1247,7 +1247,7 @@ void ManetRoutingBase::scheduleEvent()
             cancelEvent(timerMessagePtr);
         return;
     }
-    TimerMultiMap::iterator e = timerMultiMapPtr->begin();
+    auto e = timerMultiMapPtr->begin();
     while (timerMultiMapPtr->begin()->first<=simTime())
     {
         timerMultiMapPtr->erase(e);
@@ -1286,7 +1286,7 @@ bool ManetRoutingBase::checkTimer(cMessage *msg)
         throw cRuntimeError("ManetRoutingBase::checkTimer throw cRuntimeError timerMessagePtr doens't exist");
     if (timerMultiMapPtr->empty())
         return true;
-    TimerMultiMap::iterator it = timerMultiMapPtr->begin();
+    auto it = timerMultiMapPtr->begin();
     while (it->first <= simTime())
     {
         ManetTimer * timer = it->second;
@@ -1348,7 +1348,7 @@ L3Address ManetRoutingBase::getNextHopInternal(const L3Address &dest)
         return L3Address();
     if (routesVector->empty())
         return L3Address();
-    RouteMap::iterator it = routesVector->find(dest);
+    auto it = routesVector->find(dest);
     if (it!=routesVector->end())
         return it->second;
     return L3Address();
@@ -1831,7 +1831,7 @@ void ManetRoutingBase::setRouteInternalStorege(const L3Address &dest, const L3Ad
      }
      else if (createInternalStore && routesVector)
      {
-         RouteMap::iterator it = routesVector->find(dest);
+         auto it = routesVector->find(dest);
          if (it != routesVector->end())
          {
              if (erase)
@@ -1853,7 +1853,7 @@ bool ManetRoutingBase::getRouteFromGlobal(const L3Address &src, const L3Address 
     route.push_back(src);
     while (1)
     {
-        GlobalRouteMap::iterator it = globalRouteMap->find(next);
+        auto it = globalRouteMap->find(next);
         if (it==globalRouteMap->end())
             return false;
         if (it->second.empty())
@@ -1862,7 +1862,7 @@ bool ManetRoutingBase::getRouteFromGlobal(const L3Address &src, const L3Address 
         if (it->second.size() == 1)
         {
             RouteMap *rt = it->second[0].routesVector;
-            RouteMap::iterator it2 = rt->find(dest);
+            auto it2 = rt->find(dest);
             if (it2 == rt->end())
                 return false;
             if (it2->second == dest)
@@ -1886,7 +1886,7 @@ bool ManetRoutingBase::getRouteFromGlobal(const L3Address &src, const L3Address 
                 rt = it->second[0].routesVector;
             else
                 rt = it->second[1].routesVector;
-            RouteMap::iterator it2 = rt->find(dest);
+            auto it2 = rt->find(dest);
             if (it2 == rt->end())
             {
                 // search in the reactive

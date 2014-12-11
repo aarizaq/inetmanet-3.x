@@ -315,7 +315,7 @@ bool PASER_Global::isLinkLayerActive() {
  */
 void PASER_Global::resetPASER() {
     //Reset rreq_list
-    for (std::map<L3Address, message_rreq_entry *>::iterator it =
+    for (auto it =
             rreq_list->rreq_list.begin(); it != rreq_list->rreq_list.end();
             it++) {
         delete it->second;
@@ -323,7 +323,7 @@ void PASER_Global::resetPASER() {
     rreq_list->rreq_list.clear();
 
     //Reset rrep_list
-    for (std::map<L3Address, message_rreq_entry *>::iterator it =
+    for (auto it =
             rrep_list->rreq_list.begin(); it != rrep_list->rreq_list.end();
             it++) {
         delete it->second;
@@ -331,7 +331,7 @@ void PASER_Global::resetPASER() {
     rrep_list->rreq_list.clear();
 
     //Reset RoutinigTable
-    for (std::map<L3Address, PASER_Routing_Entry*>::iterator it =
+    for (auto it =
             routing_table->route_table.begin();
             it != routing_table->route_table.end(); it++) {
         PASER_Routing_Entry *temp = it->second;
@@ -341,7 +341,7 @@ void PASER_Global::resetPASER() {
     paser_modul->resetKernelRoutingTable();
 
     //Reset NeighborTable
-    for (std::map<L3Address, PASER_Neighbor_Entry*>::iterator it =
+    for (auto it =
             neighbor_table->neighbor_table_map.begin();
             it != neighbor_table->neighbor_table_map.end(); it++) {
         PASER_Neighbor_Entry *temp = it->second;
@@ -350,7 +350,7 @@ void PASER_Global::resetPASER() {
     neighbor_table->neighbor_table_map.clear();
 
     //Reset TimerQueue
-    for (std::list<PASER_Timer_Message *>::iterator it =
+    for (auto it =
             timer_queue->timer_queue.begin();
             it != timer_queue->timer_queue.end(); it++) {
         PASER_Timer_Message *temp = (PASER_Timer_Message*) *it;
@@ -363,7 +363,7 @@ void PASER_Global::resetPASER() {
     resetHelloTimer();
 
     //Reset MessageQueue
-    for (std::list<message_queue_entry>::iterator it =
+    for (auto it =
             message_queue->message_queue_list.begin();
             it != message_queue->message_queue_list.end(); it++) {
         struct message_queue_entry temp = (message_queue_entry) *it;

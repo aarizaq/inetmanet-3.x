@@ -26,7 +26,7 @@
 
 
 package inet.underTest.hip.application;
-import inet.applications.IUDPApp;
+import inet.applications.contract.IUDPApp;
 
 simple DNSBase like IUDPApp
 {

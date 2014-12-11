@@ -121,8 +121,7 @@ void HIP::receiveChangeNotification(int category, const cObject * details)
         if (category == NF_L2_DISASSOCIATED)
         {
             mapIfaceToConnected[ie] = false;
-            std::map<InterfaceEntry *, bool>::iterator it;
-            for (it = mapIfaceToConnected.begin(); it != mapIfaceToConnected.end(); it++)
+            for (auto it = mapIfaceToConnected.begin(); it != mapIfaceToConnected.end(); ++it)
             {
                 InterfaceEntry *ie2 = it->first;
                 if (!(ie2->isLoopback()) && (ie2->isUp()) && it->second == true)
@@ -149,8 +148,7 @@ void HIP::receiveChangeNotification(int category, const cObject * details)
     else if (category == NF_IPv6_HANDOVER_OCCURRED)
     {
 
-        std::map<InterfaceEntry *, bool>::iterator it;
-        for (it = mapIfaceToConnected.begin(); it != mapIfaceToConnected.end(); it++)
+        for (auto it = mapIfaceToConnected.begin(); it != mapIfaceToConnected.end(); ++it)
         {
             InterfaceEntry *ie = it->first;
             if (!(ie->isLoopback()) && (ie->isUp()) && it->second == true)

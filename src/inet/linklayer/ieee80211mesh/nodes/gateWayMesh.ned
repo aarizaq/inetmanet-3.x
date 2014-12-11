@@ -35,13 +35,14 @@ import inet.linklayer.ieee80211mesh.Ieee80211NicMeshMulti;
 import inet.networklayer.configurator.ipv4.HostAutoConfigurator2;
 import inet.linklayer.loopback.LoopbackInterface;
 
+import inet.applications.contract.IPingApp;
+import inet.applications.contract.ISCTPApp;
+import inet.applications.contract.ITCPApp;
+import inet.applications.contract.IUDPApp;
+
 import inet.transportlayer.IUDP;
 import inet.transportlayer.ITCP;
 import inet.transportlayer.ISCTP;
-import inet.applications.IPingApp;
-import inet.applications.IUDPApp;
-import inet.applications.ITCPApp;
-import inet.applications.ISCTPApp;
 
 //
 // BaseHost contains the common lower layers (linklayer and networklayer)

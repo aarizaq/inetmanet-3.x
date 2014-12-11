@@ -48,20 +48,20 @@ namespace inet {
  */
 class INET_API TraCIScenarioManagerLaunchd : public TraCIScenarioManager
 {
-    public:
-        virtual ~TraCIScenarioManagerLaunchd();
-        virtual int numInitStages() const { return NUM_INIT_STAGES; }
-        virtual void initialize(int stage);
-        virtual void finish();
+  public:
+    virtual ~TraCIScenarioManagerLaunchd();
+    virtual int numInitStages() const { return NUM_INIT_STAGES; }
+    virtual void initialize(int stage);
+    virtual void finish();
 
-    protected:
-        cXMLElement* launchConfig; /**< launch configuration to send to sumo-launchd */
-        int seed; /**< seed value to set in launch configuration, if missing (-1: current run number) */
+  protected:
+    cXMLElement *launchConfig;    /**< launch configuration to send to sumo-launchd */
+    int seed;    /**< seed value to set in launch configuration, if missing (-1: current run number) */
 
-        virtual void init_traci();
+    virtual void init_traci();
 };
 
-} //namespace
+} // namespace inet
 
 #endif    // WITH_TRACI
 

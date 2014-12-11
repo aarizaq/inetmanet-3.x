@@ -632,7 +632,7 @@ void DYMOUM::storeMacAddressIpAddressPairOf(INetworkDatagram *dgram) const
         if (ctrl != nullptr)
         {
             MACAddress macAddressConv = ctrl->getSrc();
-            MacToIpAddress::iterator it = macToIpAdress->find(macAddressConv);
+            auto it = macToIpAdress->find(macAddressConv);
             if (it == macToIpAdress->end())
             {
                 L3Address ip_src = dgram->getSourceAddress();
@@ -770,7 +770,7 @@ void DYMOUM::processPacket(IPv4Datagram * p, unsigned int ifindex )
                         // ctrlmac->getSrc().getAddressBytes(macAddressConv.address);  /* destination eth addr */
                         // memcpy (&dest,ctrlmac->getDest().getAddressBytes(),6);   /* destination eth addr */
                         delete ctrl;
-                        MacToIpAddress::iterator it = macToIpAdress->find(macAddressConv);
+                        auto it = macToIpAdress->find(macAddressConv);
                         if (it!=macToIpAdress->end())
                         {
                             addr.s_addr = it->second;
@@ -977,7 +977,7 @@ void DYMOUM::processPromiscuous(const cObject *details)
             // memcpy (macAddressConv.address,frame->getTransmitterAddress().getAddressBytes(),6);
             // frame->getTransmitterAddress().getAddressBytes(macAddressConv.address);
             macAddressConv = frame->getTransmitterAddress();
-            MacToIpAddress::iterator it = macToIpAdress->find(macAddressConv);
+            auto it = macToIpAdress->find(macAddressConv);
 
             if (ip_msg)
                 source.s_addr = L3Address(ip_msg->getSrcAddress());
@@ -1097,7 +1097,7 @@ void DYMOUM::processFullPromiscuous(const cObject *details)
         if (!isInMacLayer())
         {
             macAddressConv = twoAddressFrame->getTransmitterAddress();
-            MacToIpAddress::iterator it = macToIpAdress->find(macAddressConv);
+            auto it = macToIpAdress->find(macAddressConv);
             if (it!=macToIpAdress->end())
                 addr.s_addr = it->second;
             else
@@ -1314,7 +1314,7 @@ void DYMOUM::packetFailed(IPv4Datagram *dgram)
             }
         }
 #else
-        for (DymoRoutingTable::iterator it = dymoRoutingTable->begin(); it != dymoRoutingTable->end(); it++)
+        for (auto it = dymoRoutingTable->begin(); it != dymoRoutingTable->end(); it++)
         {
             rtable_entry_t * entry = it->second;
             if (entry->rt_nxthop_addr.s_addr == next_hop.s_addr)
@@ -1378,7 +1378,7 @@ void DYMOUM::packetFailedMac(Ieee80211DataFrame *dgram)
         }
     }
 #else
-    for (DymoRoutingTable::iterator it = dymoRoutingTable->begin(); it != dymoRoutingTable->end(); it++)
+    for (auto it = dymoRoutingTable->begin(); it != dymoRoutingTable->end(); it++)
     {
         rtable_entry_t *entry = it->second;
         if (entry->rt_nxthop_addr.s_addr == next_hop.s_addr)
@@ -1453,7 +1453,7 @@ bool  DYMOUM::getNextHop(const L3Address &dest, L3Address &add, int &iface, doub
         destAddr = apAddr;
     }
     rtable_entry_t * fwd_rt = nullptr;
-    DymoRoutingTable::iterator it = dymoRoutingTable->find(destAddr);
+    auto it = dymoRoutingTable->find(destAddr);
     if (it != dymoRoutingTable->end())
     {
           if (it->second)
@@ -1509,7 +1509,7 @@ void DYMOUM::setRefreshRoute(const L3Address &destination, const L3Address & nex
         next = apAddr;
     }
 
-    DymoRoutingTable::iterator it = dymoRoutingTable->find(next);
+    auto it = dymoRoutingTable->find(next);
     if (it != dymoRoutingTable->end())
     {
           if (it->second)

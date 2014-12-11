@@ -498,7 +498,7 @@ void PASERUdpTrafficReceiver::finish()
 	}
 
 	//Get Mobility Module for waitTime and speed (mps) (for Filename)
-	RandomWPMobility *mobilityModule = dynamic_cast<RandomWPMobility*>(findModuleWhereverInNode("mobility",this));
+	RandomWPMobility *mobilityModule = dynamic_cast<RandomWPMobility*>(getContainingNode(this)->getSubmodule("mobility"));
 	std::string waitTime="";
 	std::string speed="";
 	if(mobilityModule!=nullptr){
@@ -560,7 +560,7 @@ void PASERUdpTrafficReceiver::savePlotParams()
 	}
 
 	//Get Mobility Module for waitTime and speed (mps) (for Filename)
-	RandomWPMobility *mobilityModule = dynamic_cast<RandomWPMobility*>(findModuleWhereverInNode("mobility",this));
+	RandomWPMobility *mobilityModule = dynamic_cast<RandomWPMobility*>(getContainingNode(this)->getSubmodule("mobility"));
 	std::string waitTime="";
 	std::string speed="";
 	if(mobilityModule!=nullptr){

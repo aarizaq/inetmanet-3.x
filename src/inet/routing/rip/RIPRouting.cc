@@ -164,15 +164,6 @@ std::ostream& operator<<(std::ostream& os, const RIPInterfaceEntry& e)
 
 RIPRouting::RIPRouting()
 {
-    host = nullptr;
-    ift = nullptr;
-    rt = nullptr;
-    addressType = nullptr;
-    updateTimer = nullptr;
-    triggeredUpdateTimer = nullptr;
-    startupTimer = nullptr;
-    shutdownTimer = nullptr;
-    isOperational = false;
 }
 
 RIPRouting::~RIPRouting()
@@ -520,6 +511,7 @@ void RIPRouting::handleMessage(cMessage *msg)
             throw cRuntimeError("Model error: self msg '%s' received when isOperational is false", msg->getName());
         EV_ERROR << "Application is turned off, dropping '" << msg->getName() << "' message\n";
         delete msg;
+        return;
     }
 
     if (msg->isSelfMessage()) {

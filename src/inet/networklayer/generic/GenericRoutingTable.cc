@@ -173,7 +173,7 @@ void GenericRoutingTable::configureRouterId()
 void GenericRoutingTable::configureInterface(InterfaceEntry *ie)
 {
     int metric = (int)(ceil(2e9 / ie->getDatarate()));    // use OSPF cost as default
-    int interfaceModuleId = ie->getInterfaceModule() ? ie->getInterfaceModule()->getParentModule()->getId() : -1;
+    int interfaceModuleId = ie->getInterfaceModule() ? ie->getInterfaceModule()->getId() : -1;
     // mac
     GenericNetworkProtocolInterfaceData *d = new GenericNetworkProtocolInterfaceData();
     d->setMetric(metric);
@@ -420,7 +420,7 @@ IRoute *GenericRoutingTable::createRoute()
     return new GenericRoute();
 }
 
-void GenericRoutingTable::printRoutingTable()
+void GenericRoutingTable::printRoutingTable() const
 {
     for (auto i = routes.begin(); i != routes.end(); ++i)
         EV_INFO << (*i)->getInterface()->getFullPath() << " -> " << (*i)->getDestinationAsGeneric().str() << " as " << (*i)->info() << endl;

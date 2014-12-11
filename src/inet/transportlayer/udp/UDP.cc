@@ -48,9 +48,6 @@
 
 namespace inet {
 
-#define EPHEMERAL_PORTRANGE_START    1024
-#define EPHEMERAL_PORTRANGE_END      5000
-
 Define_Module(UDP);
 
 simsignal_t UDP::rcvdPkSignal = registerSignal("rcvdPk");
@@ -98,15 +95,6 @@ UDP::SockDesc::SockDesc(int sockId_, int appGateIndex_)
 {
     sockId = sockId_;
     appGateIndex = appGateIndex_;
-    onlyLocalPortIsSet = false;    // for now
-    reuseAddr = false;
-    localPort = -1;
-    remotePort = -1;
-    isBroadcast = false;
-    multicastOutputInterfaceId = -1;
-    multicastLoop = DEFAULT_MULTICAST_LOOP;
-    ttl = -1;
-    typeOfService = 0;
 }
 
 UDP::SockDesc::~SockDesc()
@@ -120,10 +108,6 @@ UDP::SockDesc::~SockDesc()
 //--------
 UDP::UDP()
 {
-    isOperational = false;
-    ift = nullptr;
-    icmp = nullptr;
-    icmpv6 = nullptr;
 }
 
 UDP::~UDP()
@@ -898,7 +882,6 @@ void UDP::joinMulticastGroups(SockDesc *sd, const std::vector<L3Address>& multic
         membership->interfaceId = interfaceId;
         membership->multicastAddress = multicastAddr;
         membership->filterMode = UDP_EXCLUDE_MCAST_SOURCES;
-        membership->sourceList.clear();
         sd->addMulticastMembership(membership);
 
         // add the multicast address to the selected interface or all interfaces
@@ -1045,6 +1028,7 @@ void UDP::joinMulticastSources(SockDesc *sd, InterfaceEntry *ie, L3Address multi
         membership->interfaceId = ie->getInterfaceId();
         membership->multicastAddress = multicastAddress;
         membership->filterMode = UDP_INCLUDE_MCAST_SOURCES;
+        sd->addMulticastMembership(membership);
     }
 
     if (membership->filterMode == UDP_EXCLUDE_MCAST_SOURCES)
@@ -1113,6 +1097,7 @@ void UDP::setMulticastSourceFilter(SockDesc *sd, InterfaceEntry *ie, L3Address m
         membership->interfaceId = ie->getInterfaceId();
         membership->multicastAddress = multicastAddress;
         membership->filterMode = UDP_INCLUDE_MCAST_SOURCES;
+        sd->addMulticastMembership(membership);
     }
 
     bool changed = membership->filterMode != filterMode ||

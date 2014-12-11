@@ -986,7 +986,7 @@ void IPv4_paser::arpResolutionCompleted(IARP::Notification *entry)
 {
     if (entry->l3Address.getType() != L3Address::IPv4)
         return;
-    PendingPackets::iterator it = pendingPackets.find(entry->l3Address.toIPv4());
+    auto it = pendingPackets.find(entry->l3Address.toIPv4());
     if (it != pendingPackets.end())
     {
         cPacketQueue& packetQueue = it->second;
@@ -1007,7 +1007,7 @@ void IPv4_paser::arpResolutionTimedOut(IARP::Notification *entry)
 {
     if (entry->l3Address.getType() != L3Address::IPv4)
         return;
-    PendingPackets::iterator it = pendingPackets.find(entry->l3Address.toIPv4());
+    auto it = pendingPackets.find(entry->l3Address.toIPv4());
     if (it != pendingPackets.end())
     {
         cPacketQueue& packetQueue = it->second;
@@ -1065,7 +1065,7 @@ void IPv4_paser::registerHook(int priority, INetfilter::IHook* hook)
 void IPv4_paser::unregisterHook(int priority, INetfilter::IHook* hook)
 {
     Enter_Method("unregisterHook()");
-    for (HookList::iterator iter = hooks.begin(); iter != hooks.end(); iter++) {
+    for (auto iter = hooks.begin(); iter != hooks.end(); iter++) {
         if ((iter->first == priority) && (iter->second == hook)) {
             hooks.erase(iter);
             return;
@@ -1076,7 +1076,7 @@ void IPv4_paser::unregisterHook(int priority, INetfilter::IHook* hook)
 
 INetfilter::IHook::Result IPv4_paser::datagramPreRoutingHook(INetworkDatagram* datagram, const InterfaceEntry* inIE, const InterfaceEntry*& outIE, L3Address& nextHopAddr)
 {
-    for (HookList::iterator iter = hooks.begin(); iter != hooks.end(); iter++) {
+    for (auto iter = hooks.begin(); iter != hooks.end(); iter++) {
         IHook::Result r = iter->second->datagramPreRoutingHook(datagram, inIE, outIE, nextHopAddr);
         switch(r)
         {
@@ -1092,7 +1092,7 @@ INetfilter::IHook::Result IPv4_paser::datagramPreRoutingHook(INetworkDatagram* d
 
 INetfilter::IHook::Result IPv4_paser::datagramForwardHook(INetworkDatagram* datagram, const InterfaceEntry* inIE, const InterfaceEntry*& outIE, L3Address& nextHopAddr)
 {
-    for (HookList::iterator iter = hooks.begin(); iter != hooks.end(); iter++) {
+    for (auto iter = hooks.begin(); iter != hooks.end(); iter++) {
         IHook::Result r = iter->second->datagramForwardHook(datagram, inIE, outIE, nextHopAddr);
         switch(r)
         {
@@ -1108,7 +1108,7 @@ INetfilter::IHook::Result IPv4_paser::datagramForwardHook(INetworkDatagram* data
 
 INetfilter::IHook::Result IPv4_paser::datagramPostRoutingHook(INetworkDatagram* datagram, const InterfaceEntry* inIE, const InterfaceEntry*& outIE, L3Address& nextHopAddr)
 {
-    for (HookList::iterator iter = hooks.begin(); iter != hooks.end(); iter++) {
+    for (auto iter = hooks.begin(); iter != hooks.end(); iter++) {
         IHook::Result r = iter->second->datagramPostRoutingHook(datagram, inIE, outIE, nextHopAddr);
         switch(r)
         {
@@ -1167,7 +1167,7 @@ bool IPv4_paser::isNodeUp()
 
 INetfilter::IHook::Result IPv4_paser::datagramLocalInHook(INetworkDatagram* datagram, const InterfaceEntry* inIE)
 {
-    for (HookList::iterator iter = hooks.begin(); iter != hooks.end(); iter++) {
+    for (auto iter = hooks.begin(); iter != hooks.end(); iter++) {
         IHook::Result r = iter->second->datagramLocalInHook(datagram, inIE);
         switch(r)
         {
@@ -1183,7 +1183,7 @@ INetfilter::IHook::Result IPv4_paser::datagramLocalInHook(INetworkDatagram* data
 
 INetfilter::IHook::Result IPv4_paser::datagramLocalOutHook(INetworkDatagram* datagram, const InterfaceEntry*& outIE, L3Address& nextHopAddr)
 {
-    for (HookList::iterator iter = hooks.begin(); iter != hooks.end(); iter++) {
+    for (auto iter = hooks.begin(); iter != hooks.end(); iter++) {
         IHook::Result r = iter->second->datagramLocalOutHook(datagram, outIE, nextHopAddr);
         switch(r)
         {
@@ -1452,7 +1452,7 @@ const IPv4RouteRule * IPv4_paser::checkOutputRuleMulticast(const IPv4Datagram* d
 void IPv4_paser::dropQueuedDatagram(const INetworkDatagram* datagram)
 {
     Enter_Method("dropQueuedDatagram()");
-    for (DatagramQueueForHooks::iterator iter = queuedDatagramsForHooks.begin(); iter != queuedDatagramsForHooks.end(); iter++) {
+    for (auto iter = queuedDatagramsForHooks.begin(); iter != queuedDatagramsForHooks.end(); iter++) {
         if (iter->datagram == datagram) {
             delete datagram;
             queuedDatagramsForHooks.erase(iter);
@@ -1464,7 +1464,7 @@ void IPv4_paser::dropQueuedDatagram(const INetworkDatagram* datagram)
 void IPv4_paser::reinjectQueuedDatagram(const INetworkDatagram* datagram)
 {
     Enter_Method("reinjectDatagram()");
-    for (DatagramQueueForHooks::iterator iter = queuedDatagramsForHooks.begin(); iter != queuedDatagramsForHooks.end(); iter++) {
+    for (auto iter = queuedDatagramsForHooks.begin(); iter != queuedDatagramsForHooks.end(); iter++) {
         if (iter->datagram == datagram) {
             IPv4Datagram* datagram = iter->datagram;
             take(datagram);

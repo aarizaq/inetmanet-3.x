@@ -368,7 +368,7 @@ void NSCLASS maint_buf_timeout(unsigned long data)
             n++;
         /* Salvage other packets in maintenance buffer with the
          *              * same next hop */
-        for (MaintBuf::iterator it = maint_buf.begin(); it != maint_buf.end();)
+        for (auto it = maint_buf.begin(); it != maint_buf.end();)
         {
             m2 = it->second;
             if (m2->nxt_hop.s_addr == m->nxt_hop.s_addr)
@@ -436,7 +436,7 @@ void NSCLASS maint_buf_set_timeout(void)
         return;
     }
 */
-    MaintBuf::iterator it =  maint_buf.begin();
+    auto it =  maint_buf.begin();
 
     if (it->first <= simTime()+0.0001)
         maint_buf_timeout(0);
@@ -513,7 +513,7 @@ int NSCLASS maint_buf_del_all(struct in_addr nxt_hop)
     if (timer_pending(&ack_timer))
         del_timer_sync(&ack_timer);
 
-    for (MaintBuf::iterator it = maint_buf.begin(); it != maint_buf.end();)
+    for (auto it = maint_buf.begin(); it != maint_buf.end();)
     {
         if (it->second->nxt_hop.s_addr == nxt_hop.s_addr)
         {
@@ -537,7 +537,7 @@ int NSCLASS maint_buf_del_all_id(struct in_addr nxt_hop, unsigned short id)
 
     if (timer_pending(&ack_timer))
         del_timer_sync(&ack_timer);
-    for (MaintBuf::iterator it = maint_buf.begin(); it != maint_buf.end();)
+    for (auto it = maint_buf.begin(); it != maint_buf.end();)
     {
         if (it->second->nxt_hop.s_addr == nxt_hop.s_addr && it->second->id <= id)
         {
@@ -571,7 +571,7 @@ int NSCLASS maint_buf_del_addr(struct in_addr nxt_hop)
     if (timer_pending(&ack_timer))
         del_timer_sync(&ack_timer);
 
-    for (MaintBuf::iterator it = maint_buf.begin(); it != maint_buf.end();)
+    for (auto it = maint_buf.begin(); it != maint_buf.end();)
     {
         if (it->second->nxt_hop.s_addr == nxt_hop.s_addr)
         {

@@ -31,7 +31,7 @@
 #include <omnetpp.h>
 
 #include "inet/common/INETDefs.h"
-#include "inet/mobility/common/MobilityBase.h"
+#include "inet/mobility/base/MobilityBase.h"
 #include "inet/common/ModuleAccess.h"
 #include "inet/mobility/group/TraCIScenarioManager.h"
 
@@ -204,11 +204,6 @@ class INET_API TraCIMobility : public MobilityBase
         double calculateCO2emission(double v, double a) const;
 };
 
-class TraCIMobilityAccess : public ModuleAccess<TraCIMobility>
-{
-    public:
-        TraCIMobilityAccess() : ModuleAccess<TraCIMobility>("mobility") {};
-};
 
 #endif // ifdef WITH_TRACI
 

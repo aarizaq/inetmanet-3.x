@@ -24,7 +24,6 @@ void NSCLASS send_buf_timeout(unsigned long data)
     if (packetBuffer.empty())
         return;
 
-    PacketBuffer::iterator it;
     simtime_t now = simTime();
     simtime_t minTimeout = SimTime::getMaxTime();
 
@@ -32,7 +31,7 @@ void NSCLASS send_buf_timeout(unsigned long data)
     int pkts = 0;
 
 
-    for (PacketBuffer::iterator it = packetBuffer.begin();it != packetBuffer.end();)
+    for (auto it = packetBuffer.begin();it != packetBuffer.end();)
     {
         double packetTimeout = SIMTIME_DBL(now - it->second.time)+0.01;// this value avoid problems of rounds, if the time to discard this packet is less than 0.01 seconds discard this packet also
         if (packetTimeout >= timeout)
@@ -79,8 +78,8 @@ int NSCLASS send_buf_enqueue_packet(struct dsr_pkt *dp)
     else if (packetBuffer.size() >= buffMaxlen)
     {
         // delete oldest
-        PacketBuffer::iterator itAux = packetBuffer.begin();
-        for (PacketBuffer::iterator it = packetBuffer.begin();it != packetBuffer.end();++it)
+        auto itAux = packetBuffer.begin();
+        for (auto it = packetBuffer.begin();it != packetBuffer.end();++it)
         {
             if (itAux->second.time > it->second.time)
                 itAux = it;
@@ -101,7 +100,7 @@ int NSCLASS send_buf_set_verdict(int verdict, struct in_addr dst)
     if(ret.first == ret.second)
         return pkts; // no packets
 
-    for (PacketBuffer::iterator it=ret.first; it!=ret.second; ++it)
+    for (auto it=ret.first; it!=ret.second; ++it)
     {
         struct dsr_pkt *dp = it->second.packet;
         pkts++;

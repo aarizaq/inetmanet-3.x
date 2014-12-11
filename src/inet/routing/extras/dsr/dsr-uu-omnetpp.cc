@@ -482,7 +482,7 @@ DSRUU::~DSRUU()
 // delete ETX
     while (!etxNeighborTable.empty())
     {
-        ETXNeighborTable::iterator i = etxNeighborTable.begin();
+        auto i = etxNeighborTable.begin();
         delete (*i).second;
         etxNeighborTable.erase(i);
     }
@@ -923,7 +923,7 @@ void DSRUU::EtxMsgSend(unsigned long data)
     msg->setControlInfo(ipControlInfo);
 
     int numNeighbor = 0;
-    for (ETXNeighborTable::iterator iter = etxNeighborTable.begin(); iter!=etxNeighborTable.end();)
+    for (auto iter = etxNeighborTable.begin(); iter!=etxNeighborTable.end();)
     {
         // remove old data
         ETXEntry *entry = (*iter).second;
@@ -1003,7 +1003,7 @@ void DSRUU::EtxMsgProc(cMessage *m)
             break;
         }
     }
-    ETXNeighborTable::iterator it = etxNeighborTable.find(srcAddress);
+    auto it = etxNeighborTable.find(srcAddress);
     ETXEntry *entry = nullptr;
     if (it==etxNeighborTable.end())
     {
@@ -1038,7 +1038,7 @@ void DSRUU::EtxMsgProc(cMessage *m)
 
 double DSRUU::getCost(IPv4Address add)
 {
-    ETXNeighborTable::iterator it = etxNeighborTable.find(add);
+    auto it = etxNeighborTable.find(add);
     if (it==etxNeighborTable.end())
         return -1;
     ETXEntry *entry = (*it).second;
@@ -1257,7 +1257,7 @@ bool DSRUU::handleOperationStage(LifecycleOperation *operation, int stage, IDone
             maint_buf_cleanup();
             while (!etxNeighborTable.empty())
             {
-                ETXNeighborTable::iterator i = etxNeighborTable.begin();
+                auto i = etxNeighborTable.begin();
                 delete (*i).second;
                 etxNeighborTable.erase(i);
             }
@@ -1281,7 +1281,7 @@ bool DSRUU::handleOperationStage(LifecycleOperation *operation, int stage, IDone
             maint_buf_cleanup();
             while (!etxNeighborTable.empty())
             {
-                ETXNeighborTable::iterator i = etxNeighborTable.begin();
+                auto i = etxNeighborTable.begin();
                 delete (*i).second;
                 etxNeighborTable.erase(i);
             }

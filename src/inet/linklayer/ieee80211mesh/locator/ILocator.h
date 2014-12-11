@@ -48,11 +48,7 @@ class INET_API ILocator
 
 };
 
-class INET_API LocatorModuleAccess : public ModuleAccess<ILocator>
-{
-  public:
-    LocatorModuleAccess() : ModuleAccess<ILocator>("locator") {}
-};
+
 }
 }
 

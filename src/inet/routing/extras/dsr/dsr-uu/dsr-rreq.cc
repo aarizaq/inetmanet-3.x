@@ -75,7 +75,7 @@ void NSCLASS rreq_tbl_timeout(unsigned long data)
     if (!e)
         return;
 
-    DsrRreqTbl::iterator it = dsrRreqTbl.find(L3Address(IPv4Address(e->node_addr.s_addr)));
+    auto it = dsrRreqTbl.find(L3Address(IPv4Address(e->node_addr.s_addr)));
     if (it != dsrRreqTbl.end())
     {
         if (it->second != e)
@@ -172,7 +172,7 @@ NSCLASS rreq_tbl_entry * NSCLASS __rreq_tbl_add(struct in_addr node_addr)
     if (!e)
         return nullptr;
     L3Address addr(IPv4Address(node_addr.s_addr));
-    DsrRreqTbl::iterator it = dsrRreqTbl.find(addr);
+    auto it = dsrRreqTbl.find(addr);
     if (it != dsrRreqTbl.end())
     {
         opp_error("dsrRreqTbl entry already in the table");
@@ -193,7 +193,7 @@ rreq_tbl_add_id(struct in_addr initiator, struct in_addr target,
     int res = 0;
 
     L3Address addrInitiator(IPv4Address(initiator.s_addr));
-    DsrRreqTbl::iterator it = dsrRreqTbl.find(addrInitiator);
+    auto it = dsrRreqTbl.find(addrInitiator);
     if (it != dsrRreqTbl.end())
     {
         e = it->second;
@@ -272,7 +272,7 @@ int NSCLASS rreq_tbl_route_discovery_cancel(struct in_addr dst)
     struct rreq_tbl_entry *e = nullptr;
 
     L3Address addr(IPv4Address(dst.s_addr));
-    DsrRreqTbl::iterator it = dsrRreqTbl.find(addr);
+    auto it = dsrRreqTbl.find(addr);
     if (it != dsrRreqTbl.end())
     {
         e = it->second;
@@ -307,7 +307,7 @@ int NSCLASS dsr_rreq_route_discovery(struct in_addr target)
 #define TTL_START 10
 
     L3Address addr(IPv4Address(target.s_addr));
-    DsrRreqTbl::iterator it = dsrRreqTbl.find(addr);
+    auto it = dsrRreqTbl.find(addr);
     if (it != dsrRreqTbl.end())
         e = it->second;
 
@@ -374,7 +374,7 @@ int NSCLASS dsr_rreq_duplicate(struct in_addr initiator, struct in_addr target,
 
 
     L3Address addrInitiator(IPv4Address(initiator.s_addr));
-    DsrRreqTbl::iterator it = dsrRreqTbl.find(addrInitiator);
+    auto it = dsrRreqTbl.find(addrInitiator);
     if (it == dsrRreqTbl.end())
         return 0;
     struct rreq_tbl_entry *e = it->second;
@@ -726,7 +726,7 @@ void __exit NSCLASS rreq_tbl_cleanup(void)
 {
     while (!dsrRreqTbl.empty())
     {
-        DsrRreqTbl::iterator it =  dsrRreqTbl.begin();
+        auto it =  dsrRreqTbl.begin();
         rreq_tbl_entry *e = it->second;
         del_timer_sync(e->timer);
         delete e->timer;
@@ -738,7 +738,7 @@ void __exit NSCLASS rreq_tbl_cleanup(void)
 #ifdef OMNETPP
 void NSCLASS rreq_timer_test(cMessage *msg)
 {
-    for (DsrRreqTbl::iterator it =  dsrRreqTbl.begin();it !=dsrRreqTbl.end();++it)
+    for (auto it =  dsrRreqTbl.begin();it !=dsrRreqTbl.end();++it)
     {
         if (it->second->timer->testAndExcute(msg))
             return;

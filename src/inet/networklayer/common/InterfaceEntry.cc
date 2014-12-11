@@ -22,6 +22,7 @@
 //#include <algorithm>
 //#include <sstream>
 
+#include "inet/common/ModuleAccess.h"
 #include "inet/networklayer/common/InterfaceEntry.h"
 
 #include "inet/networklayer/common/IInterfaceTable.h"
@@ -62,9 +63,9 @@ std::string InterfaceEntryChangeDetails::detailedInfo() const
     return out.str();
 }
 
-InterfaceEntry::InterfaceEntry(cModule *ifmod)
+InterfaceEntry::InterfaceEntry(cModule *module)
 {
-    interfaceModule = ifmod;
+    interfaceModule = findModuleUnderContainingNode(module);
     state = UP;
     carrier = true;
     datarate = 0;
@@ -151,6 +152,10 @@ std::string InterfaceEntry::detailedInfo() const
     if (ipv6data)
         out << " " << ipv6data->detailedInfo() << "\n";
 #endif // ifdef WITH_IPv6
+#ifdef WITH_GENERIC
+    if (genericNetworkProtocolData)
+        out << " " << genericNetworkProtocolData->detailedInfo() << "\n";
+#endif // ifdef WITH_GENERIC
     if (isisdata)
         out << " " << ((InterfaceProtocolData *)isisdata)->detailedInfo() << "\n"; // Khmm...
     if (trilldata)

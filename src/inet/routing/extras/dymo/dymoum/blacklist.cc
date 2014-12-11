@@ -64,10 +64,9 @@ int NS_CLASS blacklist_remove(blacklist_t *entry)
     if (!entry)
         return 0;
 
-    DymoBlackList::iterator it;
-    for (it=dymoBlackList->begin(); it != dymoBlackList->end(); )
+    for (auto it=dymoBlackList->begin(); it != dymoBlackList->end(); )
     {
-        DymoBlackList::iterator cur = it;
+        auto cur = it;
         it++;
         if ((*cur).second==entry)
         {
@@ -81,7 +80,7 @@ int NS_CLASS blacklist_remove(blacklist_t *entry)
 
 blacklist_t *NS_CLASS blacklist_find(struct in_addr addr)
 {
-    DymoBlackList::iterator it = dymoBlackList->find(addr.s_addr);
+    auto it = dymoBlackList->find(addr.s_addr);
     if (it != dymoBlackList->end())
     {
         if ((*it).second)

@@ -210,7 +210,7 @@ bool DNSBase::LoadDataFromXML(const char * filename)
     }
     //building the vector conataining dns data
     cXMLElementList xmlDnsEntries = dnsData->getChildren();
-    for (cXMLElementList::iterator dnsIt = xmlDnsEntries.begin(); dnsIt != xmlDnsEntries.end(); dnsIt++)
+    for (auto dnsIt = xmlDnsEntries.begin(); dnsIt != xmlDnsEntries.end(); dnsIt++)
     {
         std::string nodeName = (*dnsIt)->getTagName();
         if (nodeName == "DNSEntry")

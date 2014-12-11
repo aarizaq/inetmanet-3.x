@@ -51,26 +51,7 @@ Define_Module(IPv4);
 #define NEWFRAGMENT
 simsignal_t IPv4::iPv4PromiscousPacket = registerSignal("iPv4PromiscousPacket");
 IPv4::IPv4() :
-    rt(nullptr),
-    ift(nullptr),
-    arp(nullptr),
-    icmp(nullptr),
-    arpInGate(nullptr),
-    arpOutGate(nullptr),
-    transportInGateBaseId(-1),
-    queueOutGateBaseId(-1),
-    defaultTimeToLive(-1),
-    defaultMCTimeToLive(-1),
-    forceBroadcast(false),
-    useProxyARP(false),
-    isUp(true),
-    curFragmentId(-1),
-    numMulticast(0),
-    numLocalDeliver(0),
-    numDropped(0),
-    numUnroutable(0),
-    numForwarded(0),
-    isDsr(false)
+    isUp(true)
 {
 }
 

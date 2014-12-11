@@ -23,7 +23,7 @@
  // This is constant bit rate APP - Similar to Iperf UDP
 package inet.applications.udpapp;
 
-import inet.applications.IUDPApp;
+import inet.applications.contract.IUDPApp;
 
 simple PASERUdpTrafficReceiver like IUDPApp
 {

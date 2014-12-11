@@ -831,8 +831,7 @@ int PASER_Crypto_Sign::checkAllCertInRoutingTable(
     while (found) {
         found = false;
         int j = 0;
-        for (std::map<L3Address, PASER_Neighbor_Entry *>::iterator it =
-                neighbor_table->neighbor_table_map.begin();
+        for (auto it = neighbor_table->neighbor_table_map.begin();
                 it != neighbor_table->neighbor_table_map.end(); it++) {
             if (j >= i) {
                 PASER_Neighbor_Entry *nEntry = it->second;
@@ -871,8 +870,7 @@ int PASER_Crypto_Sign::checkAllCertInRoutingTable(
                         std::list<PASER_Routing_Entry*> routeList =
                                 routing_table->getListWithNextHop(
                                         nEntry->neighbor_addr);
-                        for (std::list<PASER_Routing_Entry*>::iterator it2 =
-                                routeList.begin(); it2 != routeList.end();
+                        for (auto it2 = routeList.begin(); it2 != routeList.end();
                                 it2++) {
                             PASER_Routing_Entry *tempEntry =
                                     (PASER_Routing_Entry*) *it2;

@@ -563,7 +563,7 @@ void NS_CLASS handleMessage (cMessage *msg)
             }
         }
         // delete rreqList from the list
-        for (std::map<PacketDestOrigin,RREQProcessed*>::iterator it = rreqProc.begin(); it != rreqProc.end(); ++it)
+        for (auto it = rreqProc.begin(); it != rreqProc.end(); ++it)
         {
             if (it->second == rreqList)
             {
@@ -737,7 +737,7 @@ void NS_CLASS handleMessage (cMessage *msg)
         if (getDestAddressRreq(aodvMsg,orgDest,rreqInfo))
         {
             rreqInfo.pkt = aodvMsg;
-            std::map<PacketDestOrigin,RREQProcessed*>::iterator it = rreqProc.find(orgDest);
+            auto it = rreqProc.find(orgDest);
             if (it == rreqProc.end())
             {
                 RREQProcessed* proc = new RREQProcessed;
@@ -1367,7 +1367,7 @@ void NS_CLASS processPromiscuous(const cObject *details)
                 {
                     RREP* rrep = dynamic_cast<RREP *> (pktAux2);
                     PacketDestOrigin destOrigin(rrep->dest_addr,rrep->orig_addr);
-                    std::map<PacketDestOrigin,RREPProcessed>::iterator it = rrepProc.find(destOrigin);
+                    auto it = rrepProc.find(destOrigin);
                     if (it == rrepProc.end())
                     {
                         // new
@@ -1611,7 +1611,7 @@ bool  NS_CLASS setRoute(const L3Address &dest,const L3Address &add, const int &i
                              1, &DEV_IFINDEX(NS_IFINDEX));
         }
         L3Address dest = fwd_rt->dest_addr.s_addr;
-        AodvRtTableMap::iterator it = aodvRtTableMap.find(dest);
+        auto it = aodvRtTableMap.find(dest);
         if (it != aodvRtTableMap.end())
         {
             if (it->second != fwd_rt)
@@ -1674,7 +1674,7 @@ bool  NS_CLASS setRoute(const L3Address &dest,const L3Address &add, const char  
                              1, &DEV_IFINDEX(NS_IFINDEX));
         }
         L3Address dest = fwd_rt->dest_addr.s_addr;
-        AodvRtTableMap::iterator it = aodvRtTableMap.find(dest);
+        auto it = aodvRtTableMap.find(dest);
         if (it != aodvRtTableMap.end())
         {
             if (it->second != fwd_rt)
@@ -1842,7 +1842,7 @@ bool NS_CLASS isThisRrepPrevSent(cMessage *msg)
          return false; // no information, send
 
     PacketDestOrigin destOrigin(rrep->dest_addr,rrep->orig_addr);
-    std::map<PacketDestOrigin,RREPProcessed>::iterator it = rrepProc.find(destOrigin);
+    auto it = rrepProc.find(destOrigin);
     if (it != rrepProc.end()) // only send if the seq num is bigger
     {
         if (it->second.dest_seqno > rrep->dest_seqno)
@@ -1870,7 +1870,7 @@ void NS_CLASS actualizeTablesWithCollaborative(const L3Address &dest)
     {
         u_int8_t hops = cost;
         destination.s_addr = dest;
-        std::map<L3Address,u_int32_t *>::iterator it =  mapSeqNum.find(dest);
+        auto it =  mapSeqNum.find(dest);
         if (it == mapSeqNum.end())
             opp_error("node not found in mapSeqNum");
         uint32_t sqnum = *(it->second);

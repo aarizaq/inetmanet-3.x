@@ -15,10 +15,12 @@
 
 package inet.routing.extras.PASER;
 
-import inet.applications.IPingApp;
-import inet.applications.ISCTPApp;
-import inet.applications.ITCPApp;
-import inet.applications.IUDPApp;
+
+import inet.applications.contract.ISCTPApp;
+import inet.applications.contract.ITCPApp;
+import inet.applications.contract.IUDPApp;
+import inet.applications.contract.IPingApp;
+
 import inet.power.contract.IEnergyStorage;
 import inet.power.contract.IEnergyGenerator;
 import inet.linklayer.IExternalNic;
@@ -29,10 +31,7 @@ import inet.networklayer.IManetRouting;
 import inet.networklayer.common.InterfaceTable;
 import inet.networklayer.common.IRoutingTable;
 import inet.common.lifecycle.NodeStatus;
-import inet.applications.IPingApp;
-import inet.applications.ISCTPApp;
-import inet.applications.ITCPApp;
-import inet.applications.IUDPApp;
+
 import inet.transportlayer.ISCTP;
 import inet.transportlayer.ITCP;
 import inet.transportlayer.IUDP;

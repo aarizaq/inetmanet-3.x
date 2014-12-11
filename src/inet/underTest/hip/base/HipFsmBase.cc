@@ -170,7 +170,7 @@ void HipFsmBase::handleAddressChange()
 
     HipLocator *addrLoc;
     int i = 0;
-    for(std::list<IPv6Address>::iterator iter = srcAddressList.begin(); iter != srcAddressList.end(); iter++)
+    for(auto iter = srcAddressList.begin(); iter != srcAddressList.end(); ++iter)
     {
         addrLoc = new HipLocator();
         addrLoc->locatorIPv6addr = *iter;
@@ -615,7 +615,7 @@ void HipFsmBase::createHIPpacket(int kind, const char name[], IPv6Address& via_r
             case R1:
                 hipHead->setReg_info(1);
                 hipHead->setLocatorArraySize(2 + srcAddressList.size());
-                for (std::list<IPv6Address>::iterator i = srcAddressList.begin(); i != srcAddressList.end(); i++)
+                for (auto i = srcAddressList.begin(); i != srcAddressList.end(); ++i)
                 {
                     addrLoc = new HipLocator();
                     addrLoc->locatorIPv6addr = *i;
@@ -626,7 +626,7 @@ void HipFsmBase::createHIPpacket(int kind, const char name[], IPv6Address& via_r
             case I2:
                 hipHead->setReg_req(1);
                 hipHead->setLocatorArraySize(2 + srcAddressList.size());
-                for (std::list<IPv6Address>::iterator i = srcAddressList.begin(); i != srcAddressList.end(); i++)
+                for (auto i = srcAddressList.begin(); i != srcAddressList.end(); ++i)
                 {
                     addrLoc = new HipLocator();
                     addrLoc->locatorIPv6addr = *i;

@@ -34,10 +34,10 @@ package inet.underTest.hip.nodes;
 
 import inet.underTest.hip.base.HIP;
 import inet.node.ipv6.NodeBase6;
-import inet.applications.IPingApp;
-import inet.applications.ISCTPApp;
-import inet.applications.ITCPApp;
-import inet.applications.IUDPApp;
+import inet.applications.contract.IPingApp;
+import inet.applications.contract.ISCTPApp;
+import inet.applications.contract.ITCPApp;
+import inet.applications.contract.IUDPApp;
 import inet.transport.ISCTP;
 import inet.transport.ITCP;
 import inet.transport.IUDP;

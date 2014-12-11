@@ -25,7 +25,7 @@
 #define __INET_UDPVIDEOSTREAMCLI2_H
 
 #include "inet/common/INETDefs.h"
-#include "inet/applications/common/ApplicationBase.h"
+#include "inet/applications/base/ApplicationBase.h"
 #include "inet/transportlayer/contract/udp/UDPSocket.h"
 /**
  * A "Realtime" VideoStream client application.

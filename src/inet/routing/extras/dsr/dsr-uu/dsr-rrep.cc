@@ -115,8 +115,7 @@ int NSCLASS grat_rrep_tbl_add(struct in_addr src, struct in_addr prev_hop)
     }
     else
     {
-        std::deque<grat_rrep_entry*>::iterator it;
-        for (it = gratRrep.begin() ; it != gratRrep.end() ; ++it)
+        for (auto it = gratRrep.begin() ; it != gratRrep.end() ; ++it)
         {
             if (timeval_diff(&((*it)->expires), &(e->expires)) > 0)
             {

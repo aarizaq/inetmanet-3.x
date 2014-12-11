@@ -93,7 +93,7 @@ int NSCLASS neigh_tbl_add(struct in_addr neigh_addr, struct ethhdr *ethh)
 
     L3Address nAddress(IPv4Address(neigh_addr.s_addr));
 
-    NeighborMap::iterator it = neighborMap.find(nAddress);
+    auto it = neighborMap.find(nAddress);
     if (it != neighborMap.end())
         return 0;
 
@@ -113,7 +113,7 @@ int NSCLASS neigh_tbl_add(struct in_addr neigh_addr, struct ethhdr *ethh)
 int NSCLASS neigh_tbl_del(struct in_addr neigh_addr)
 {
     L3Address nAddress(IPv4Address(neigh_addr.s_addr));
-    NeighborMap::iterator it = neighborMap.find(nAddress);
+    auto it = neighborMap.find(nAddress);
     if (it != neighborMap.end())
     {
         delete it->second;
@@ -126,7 +126,7 @@ int NSCLASS neigh_tbl_del(struct in_addr neigh_addr)
 int NSCLASS neigh_tbl_set_ack_req_time(struct in_addr neigh_addr)
 {
     L3Address nAddress(IPv4Address(neigh_addr.s_addr));
-    NeighborMap::iterator it = neighborMap.find(nAddress);
+    auto it = neighborMap.find(nAddress);
     if (it != neighborMap.end())
     {
         gettime(&it->second->last_ack_req);
@@ -139,7 +139,7 @@ int NSCLASS
 neigh_tbl_set_rto(struct in_addr neigh_addr, struct neighbor_info *neigh_info)
 {
     L3Address nAddress(IPv4Address(neigh_addr.s_addr));
-    NeighborMap::iterator it = neighborMap.find(nAddress);
+    auto it = neighborMap.find(nAddress);
     if (it != neighborMap.end())
     {
         struct timeval now;
@@ -174,7 +174,7 @@ int NSCLASS
 neigh_tbl_query(struct in_addr neigh_addr, struct neighbor_info *neigh_info)
 {
     L3Address nAddress(IPv4Address(neigh_addr.s_addr));
-    NeighborMap::iterator it = neighborMap.find(nAddress);
+    auto it = neighborMap.find(nAddress);
     if (it != neighborMap.end())
     {
         if (!neigh_info)
@@ -196,7 +196,7 @@ neigh_tbl_query(struct in_addr neigh_addr, struct neighbor_info *neigh_info)
 int NSCLASS neigh_tbl_id_inc(struct in_addr neigh_addr)
 {
     L3Address nAddress(IPv4Address(neigh_addr.s_addr));
-    NeighborMap::iterator it = neighborMap.find(nAddress);
+    auto it = neighborMap.find(nAddress);
     if (it != neighborMap.end())
     {
         it->second->id++;

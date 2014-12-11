@@ -42,13 +42,13 @@ PASER_Crypto_Root::~PASER_Crypto_Root() {
 }
 
 void PASER_Crypto_Root::clear_lists() {
-    for (std::list<u_int8_t *>::iterator it = secret_list.begin();
+    for (auto it = secret_list.begin();
             it != secret_list.end(); it++) {
         u_int8_t *data = (u_int8_t *) *it;
         free(data);
     }
     secret_list.clear();
-    for (std::list<u_int8_t *>::iterator it = tree.begin(); it != tree.end();
+    for (auto it = tree.begin(); it != tree.end();
             it++) {
         u_int8_t *data = (u_int8_t *) *it;
         free(data);
@@ -105,7 +105,7 @@ int PASER_Crypto_Root::root_regenerate() {
 }
 
 void PASER_Crypto_Root::calculateTree() {
-    for (std::list<u_int8_t *>::iterator it = secret_list.begin();
+    for (auto it = secret_list.begin();
             it != secret_list.end(); it++) {
         u_int8_t *data = root_getOneHash((u_int8_t *) *it, PASER_SECRET_LEN);
         tree.push_back(data);
@@ -113,7 +113,7 @@ void PASER_Crypto_Root::calculateTree() {
 
     for (int i = param; i > 0; i--) {
         int steps = 1 << (i - 1);
-        std::list<u_int8_t *>::iterator it = tree.begin();
+        auto it = tree.begin();
         std::list<u_int8_t *> temp;
         for (int k = 0; k < steps; k++) {
             u_int8_t *data1 = (u_int8_t *) *it;
@@ -138,7 +138,7 @@ u_int8_t* PASER_Crypto_Root::root_get_root() {
 std::list<u_int8_t *> PASER_Crypto_Root::root_get_next_secret(int *nr,
         u_int8_t *secret) {
     std::list<u_int8_t *> iv;
-    std::list<u_int8_t *>::iterator it = tree.end();
+    auto it = tree.end();
     it--;
     int point = iv_nr;
     for (int i = param; i > 0; i--) {
@@ -170,7 +170,7 @@ std::list<u_int8_t *> PASER_Crypto_Root::root_get_next_secret(int *nr,
         point = point / 2;
     }
     u_int32_t count = 0;
-    for (std::list<u_int8_t *>::iterator IT = secret_list.begin();
+    for (auto IT = secret_list.begin();
             IT != secret_list.end(); IT++) {
         if (count == iv_nr) {
             u_int8_t *temp = (u_int8_t *) *IT;
@@ -225,7 +225,7 @@ u_int8_t *PASER_Crypto_Root::root_getHash(u_int8_t* h1, u_int8_t* h2) {
 //std::list<u_int8_t *> PASER_Crypto_Root::root_getIvTree(int iv, int begin, int end){
 //    std::list<u_int8_t *> temp;
 //    if (begin == end){
-//        std::list<u_int8_t *>::iterator it = secret_list.begin();
+//        auto it = secret_list.begin();
 //        for (int i=0; i<begin; i++){
 //            it++;
 //        }
@@ -259,7 +259,7 @@ u_int8_t *PASER_Crypto_Root::root_getHash(u_int8_t* h1, u_int8_t* h2) {
 //
 //u_int8_t* PASER_Crypto_Root::root_getHashTreeValue(int begin, int end){
 //    if(begin == end){
-//        std::list<u_int8_t *>::iterator it = secret_list.begin();
+//        auto it = secret_list.begin();
 //        for (int i=0; i<begin; i++){
 //            it++;
 //        }
@@ -296,7 +296,7 @@ int PASER_Crypto_Root::root_check_root(u_int8_t* root, u_int8_t* secret,
 
     u_int8_t *buf;
     buf = root_getOneHash(secret, PASER_SECRET_LEN);
-    for (std::list<u_int8_t *>::iterator it = iv_list.begin();
+    for (auto it = iv_list.begin();
             it != iv_list.end(); it++) {
         if (new_iv % 2 == 1) {
             u_int8_t * temp = root_getHash((u_int8_t *) *it, buf);

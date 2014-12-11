@@ -151,9 +151,9 @@ void NetworkConfiguratorBase::extractTopology(Topology& topology)
                 linkIJ->setWeight(computeWirelessLinkWeight(linkIJ));
                 topology.addLink(linkIJ, interfaceInfoI->node, interfaceInfoJ->node);
                 Link *linkJI = new Link();
-                linkJI->setWeight(computeWirelessLinkWeight(linkJI));
                 linkJI->sourceInterfaceInfo = interfaceInfoJ;
                 linkJI->destinationInterfaceInfo = interfaceInfoI;
+                linkJI->setWeight(computeWirelessLinkWeight(linkJI));
                 topology.addLink(linkJI, interfaceInfoJ->node, interfaceInfoI->node);
             }
         }
@@ -326,8 +326,8 @@ double NetworkConfiguratorBase::computeWirelessLinkWeight(Link *link)
         // compute the packet error rate between the two interfaces using a dummy transmission
         InterfaceInfo *transmitterInterfaceInfo = link->sourceInterfaceInfo;
         InterfaceInfo *receiverInterfaceInfo = link->destinationInterfaceInfo;
-        cModule *transmitterInterfaceModule = transmitterInterfaceInfo->node->module;
-        cModule *receiverInterfaceModule = receiverInterfaceInfo->node->module;
+        cModule *transmitterInterfaceModule = transmitterInterfaceInfo->interfaceEntry->getInterfaceModule();
+        cModule *receiverInterfaceModule = receiverInterfaceInfo->interfaceEntry->getInterfaceModule();
         IRadio *transmitterRadio = check_and_cast<IRadio *>(transmitterInterfaceModule->getSubmodule("radio"));
         IRadio *receiverRadio = check_and_cast<IRadio *>(receiverInterfaceModule->getSubmodule("radio"));
         const NarrowbandReceiverBase *receiver = dynamic_cast<const NarrowbandReceiverBase *>(receiverRadio->getReceiver());
@@ -396,7 +396,7 @@ const char *NetworkConfiguratorBase::getWirelessId(InterfaceEntry *interfaceEntr
     cModule *module = interfaceEntry->getInterfaceModule();
     if (!module)
         module = hostModule;
-    cSimpleModule *mgmtModule = ModuleAccess<cSimpleModule>("mgmt").getIfExists(module);
+    cModule *mgmtModule = module->getSubmodule("mgmt");
     if (mgmtModule) {
         if (mgmtModule->hasPar("ssid"))
             return mgmtModule->par("ssid");

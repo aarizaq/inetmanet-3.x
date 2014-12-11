@@ -37,11 +37,10 @@ import inet.linklayer.loopback.LoopbackInterface;
 import inet.transportlayer.IUDP;
 import inet.transportlayer.ITCP;
 import inet.transportlayer.ISCTP;
-import inet.applications.IPingApp;
-import inet.applications.IUDPApp;
-import inet.applications.ITCPApp;
-import inet.applications.ISCTPApp;
-
+import inet.applications.contract.IPingApp;
+import inet.applications.contract.ISCTPApp;
+import inet.applications.contract.ITCPApp;
+import inet.applications.contract.IUDPApp;
 //
 // BaseHost contains the common lower layers (linklayer and networklayer)
 // of Router, StandardHost, WirelessHost etc. 

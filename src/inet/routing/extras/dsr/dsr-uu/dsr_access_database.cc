@@ -35,7 +35,7 @@ struct dsr_srt *DSRUU::ph_srt_find_map(struct in_addr src, struct in_addr dst, u
                 else
                     cost = getCost(IPv4Address(myAddr.s_addr));
                 resultCost[i].front() = cost;
-                for (PathCacheCost::iterator it = resultCost[i].begin(); it != resultCost[i].end();++it)
+                for (auto it = resultCost[i].begin(); it != resultCost[i].end();++it)
                     costRoute += (*it);
             }
             else

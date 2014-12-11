@@ -25,7 +25,7 @@
 //**********************************************************************************
 
 package inet.underTest.hip.application;
-import inet.applications.IUDPApp;
+import inet.applications.contract.IUDPApp;
 
 simple UDPEchoStream like IUDPApp {
     parameters:
