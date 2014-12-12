@@ -18,13 +18,13 @@
 package inet.examples.bgpv4.BGPUpdate;
 
 import inet.common.misc.MessageChecker;
-import inet.linklayer.IWiredNic;
+import inet.linklayer.contract.IWiredNic;
 import inet.networklayer.common.InterfaceTable;
 import inet.networklayer.ipv4.IPv4NetworkLayer;
 import inet.networklayer.ipv4.IPv4RoutingTable;
 import inet.routing.bgpv4.BGPRouting;
 import inet.routing.ospfv2.OSPFRouting;
-import inet.transportlayer.ITCP;
+import inet.transportlayer.contract.ITCP;
 
 
 //
@@ -36,7 +36,7 @@ module BGPRouterEx
         @node();
         @labels(node,ethernet-node);
         @display("i=abstract/router");
-        string tcpType = default(firstAvailable("TCP","TCP_lwIP","TCP_NSC","TCP_None"));  // tcp implementation (e.g. ~TCP, ~TCP_lwIP, ~TCP_NSC) or ~TCPSpoof
+        string tcpType = default(firstAvailable("TCP","TCP_lwIP","TCP_NSC"));  // tcp implementation (e.g. ~TCP, ~TCP_lwIP, ~TCP_NSC) or ~TCPSpoof
         *.interfaceTableModule = default(absPath(".interfaceTable"));
         *.routingTableModule = default(absPath(".routingTable"));
     gates:

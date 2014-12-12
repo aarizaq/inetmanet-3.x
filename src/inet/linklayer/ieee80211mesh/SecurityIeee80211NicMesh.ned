@@ -20,7 +20,7 @@
 package inet.linklayer.ieee80211mesh;
 
 import inet.common.IHook;
-import inet.linklayer.IWirelessNic;
+import inet.linklayer.contract.IWirelessNic;
 import inet.linklayer.ieee80211.mac.Ieee80211Mac;
 import inet.linklayer.ieee80211.mgmt.Ieee80211AgentSTA;
 import inet.physicallayer.contract.IRadio;

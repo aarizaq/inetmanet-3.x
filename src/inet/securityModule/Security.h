@@ -28,7 +28,7 @@
 #include <csimplemodule.h>
 #include <map>
 #include <set>
-#include "inet/networklayer/common/IRoutingTable.h"
+#include "inet/networklayer/contract/IRoutingTable.h"
 #include "inet/networklayer/ipv4/IIPv4RoutingTable.h"
 
 #include <iostream>

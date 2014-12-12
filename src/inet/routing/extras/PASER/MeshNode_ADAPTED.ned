@@ -23,18 +23,18 @@ import inet.applications.contract.IPingApp;
 
 import inet.power.contract.IEnergyStorage;
 import inet.power.contract.IEnergyGenerator;
-import inet.linklayer.IExternalNic;
-import inet.linklayer.IWiredNic;
-import inet.linklayer.IWirelessNic;
+import inet.linklayer.contract.IExternalNic;
+import inet.linklayer.contract.IWiredNic;
+import inet.linklayer.contract.IWirelessNic;
 import inet.mobility.contract.IMobility;
-import inet.networklayer.IManetRouting;
+import inet.networklayer.contract.IManetRouting;
 import inet.networklayer.common.InterfaceTable;
-import inet.networklayer.common.IRoutingTable;
+import inet.networklayer.contract.IRoutingTable;
 import inet.common.lifecycle.NodeStatus;
 
-import inet.transportlayer.ISCTP;
-import inet.transportlayer.ITCP;
-import inet.transportlayer.IUDP;
+import inet.transportlayer.contract.ISCTP;
+import inet.transportlayer.contract.ITCP;
+import inet.transportlayer.contract.IUDP;
 
 
 //

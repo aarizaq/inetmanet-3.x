@@ -34,7 +34,7 @@
 #include "inet/networklayer/ipv4/IPv4InterfaceData.h"
 #include "inet/common/lifecycle/NodeOperations.h"
 #include "inet/common/lifecycle/NodeStatus.h"
-#include "inet/networklayer/common/IInterfaceTable.h"
+#include "inet/networklayer/contract/IInterfaceTable.h"
 #include "inet/networklayer/common/IPSocket.h"
 #include "inet/transportlayer/udp/UDPPacket.h"
 #include "inet/transportlayer/tcp_common/TCPSegment.h"
