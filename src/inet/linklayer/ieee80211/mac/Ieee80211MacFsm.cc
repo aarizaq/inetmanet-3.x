@@ -80,7 +80,6 @@ void Ieee80211Mac::stateIdle(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
     FSMIEEE80211_Enter(fsmLocal)
     {
         sendDownPendingRadioConfigMsg();
-        return;
     }
 
     FSMIEEE80211_Event_Transition(fsmLocal,isUpperMessage(msg))
@@ -108,7 +107,6 @@ void Ieee80211Mac::stateDefer(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
     FSMIEEE80211_Enter(fsmLocal)
     {
         sendDownPendingRadioConfigMsg();
-        return;
     }
 
     FSMIEEE80211_Event_Transition(fsmLocal,isMediumStateChange(msg) && isMediumFree())
@@ -134,7 +132,6 @@ void Ieee80211Mac::stateWaitAifs(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
     FSMIEEE80211_Enter(fsmLocal)
     {
         scheduleAIFSPeriod();
-        return;
     }
 
     FSMIEEE80211_Event_Transition(fsmLocal,isMsgAIFS(msg) && transmissionQueue()->empty())
@@ -264,7 +261,6 @@ void Ieee80211Mac::stateBackoff(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
     FSMIEEE80211_Enter(fsmLocal)
     {
         scheduleBackoffPeriod();
-        return;
     }
 
     if (getCurrentTransmission())
@@ -367,7 +363,6 @@ void Ieee80211Mac::stateWaitAck(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
     FSMIEEE80211_Enter(fsmLocal)
     {
         scheduleDataTimeoutPeriod(getCurrentTransmission());
-        return;
     }
     Ieee80211Frame *frame = dynamic_cast<Ieee80211Frame*>(msg);
     bool receptionError = false;
@@ -524,7 +519,6 @@ void Ieee80211Mac::stateWaitBlockAck(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
     FSMIEEE80211_Enter(fsmLocal)
     {
         scheduleDataTimeoutPeriod(getCurrentTransmission());
-        return;
     }
 }
 
@@ -534,7 +528,6 @@ void Ieee80211Mac::stateWaitMulticast(Ieee802MacBaseFsm * fsmLocal,cMessage *msg
     FSMIEEE80211_Enter(fsmLocal)
     {
         scheduleMulticastTimeoutPeriod(getCurrentTransmission());
-        return;
     }
     FSMIEEE80211_Event_Transition(fsmLocal, msg == endTimeout)
     {
@@ -555,7 +548,6 @@ void Ieee80211Mac::stateWaitCts(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
     FSMIEEE80211_Enter(fsmLocal)
     {
         scheduleCTSTimeoutPeriod();
-        return;
     }
     Ieee80211Frame *frame = dynamic_cast<Ieee80211Frame*>(msg);
     bool receptionError = false;
@@ -615,7 +607,6 @@ void Ieee80211Mac::stateWaitSift(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
     {
         Ieee80211Frame *frame = dynamic_cast<Ieee80211Frame*>(msg);
         scheduleSIFSPeriod(frame);
-        return;
     }
 
     FSMIEEE80211_Event_Transition(fsmLocal,
@@ -646,7 +637,7 @@ void Ieee80211Mac::stateWaitSift(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
     }
 
     FSMIEEE80211_Event_Transition(fsmLocal,
-            msg == endSIFS && getFrameReceivedBeforeSIFS()->getType() == ST_CTS);
+            msg == endSIFS && getFrameReceivedBeforeSIFS()->getType() == ST_CTS)
     {
         if (fsmLocal->debug()) EV_DEBUG << "Transmit-DATA \n";
         sendDataFrameOnEndSIFS(getCurrentTransmission());
@@ -747,8 +738,10 @@ void Ieee80211Mac::handleWithFSM(cMessage *msg)
     Ieee80211Frame *frame;
     if (!initFsm(msg, receptionError, frame))
         return;
+    setProtectionTrue();
     fsm->execute(msg);
     endFsm(msg);
+    setProtectionFalse();
 }
 
 

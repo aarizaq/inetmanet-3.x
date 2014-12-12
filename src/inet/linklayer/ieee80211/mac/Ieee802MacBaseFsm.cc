@@ -47,18 +47,17 @@ Ieee802MacBaseFsm::~Ieee802MacBaseFsm()
 
 bool Ieee802MacBaseFsm::isCondition()
 {
-    if (!___is_event)
+    if (!event())
     {
-        if (!___condition_seen)
+        if (!condition())
         {
-            ___condition_seen = true;
-            exit() = false;
-            return false;
+            condition() = true;
         }
         else
             throw cRuntimeError("FSMIEEE80211_Enter() must precede all FSMA_*_Transition()'s in the code"); \
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool Ieee802MacBaseFsm::isEvent()
@@ -87,6 +86,7 @@ void Ieee802MacBaseFsm::execute(cMessage *msg)
         {
             // continue
             exit() = false;
+            condition() = false;
         }
     } while(!exit());
     EV_DEBUG << "End Ieee80211 FSM, state" <<  vectorInfo[getState()] << endl;
@@ -94,7 +94,7 @@ void Ieee802MacBaseFsm::execute(cMessage *msg)
 
 void Ieee802MacBaseFsm::Ieee802MacBaseFsm::setStateMethod(int state, Ieee80211MacStateMethod p, const char *msg)
 {
-    if (state < 0 || vectorStates.size())
+    if (state < 0 || state >= (int)vectorStates.size())
         throw cRuntimeError("Invalid stae: '%d'", state);
     vectorStates[state] = p;
     vectorInfo[state] = msg;

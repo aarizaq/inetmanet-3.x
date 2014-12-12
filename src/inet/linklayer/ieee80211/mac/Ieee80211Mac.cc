@@ -84,7 +84,7 @@ void Ieee80211Mac::initializeCategories()
         }
         else
             throw cRuntimeError("parameters %s , %s don't exist", strAifs.c_str(), strTxop.c_str());
-        edcCAF[i].saveSize = par(strSaveSize.c_str());
+        edcCAF[i].saveSize = 0;//par(strSaveSize.c_str());
     }
     if (numCategories() == 1)
         AIFSN(0) = par("AIFSN");
@@ -928,9 +928,13 @@ void Ieee80211Mac::receiveSignal(cComponent *source, simsignal_t signalID, long 
 {
     Enter_Method_Silent();
     if (signalID == IRadio::receptionStateChangedSignal)
-        handleWithFSM(mediumStateChange);
+    {
+        if (!checkProtection(mediumStateChange))
+            handleWithFSM(mediumStateChange);
+    }
     else if (signalID == IRadio::transmissionStateChangedSignal) {
-        handleWithFSM(mediumStateChange);
+        if (!checkProtection(mediumStateChange))
+            handleWithFSM(mediumStateChange);
         IRadio::TransmissionState newRadioTransmissionState = (IRadio::TransmissionState)value;
         if (transmissionState == IRadio::TRANSMISSION_STATE_TRANSMITTING && newRadioTransmissionState == IRadio::TRANSMISSION_STATE_IDLE)
             radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
@@ -2507,6 +2511,28 @@ void Ieee80211Mac::handleNodeCrash()
             delete temp;
         }
     }
+}
+
+
+void Ieee80211Mac::setProtectionFalse()
+{
+    isprotected = false;
+    while (!pendingMessages.empty())
+    {
+        cMessage *msg = pendingMessages.front();
+        pendingMessages.pop_front();
+        handleWithFSM(msg);
+    }
+}
+
+bool Ieee80211Mac::checkProtection(cMessage *msg)
+{
+    if (isprotected)
+    {
+        pendingMessages.push_back(msg);
+        return true;
+    }
+    return false;
 }
 
 } // namespace ieee80211

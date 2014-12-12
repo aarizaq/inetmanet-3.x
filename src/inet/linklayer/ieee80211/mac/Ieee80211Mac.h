@@ -107,7 +107,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
         }
     };
 
-    bool registerErrors;
+    bool registerErrors = false;
     typedef std::map<MACAddress, std::vector<Ieee80211PacketErrorInfo> > Ieee80211ErrorInfo;
     Ieee80211ErrorInfo errorInfo;
 
@@ -407,6 +407,16 @@ class INET_API Ieee80211Mac : public MACProtocolBase
      */
     cMessage *pendingRadioConfigMsg;
     //@}
+
+    // protection mechanism
+    bool isprotected = false;
+
+    virtual void setProtectionTrue() {isprotected = true;}
+    virtual void setProtectionFalse();
+    std::list<cMessage *> pendingMessages;
+    virtual bool checkProtection(cMessage *msg);
+
+
 
   protected:
     /** @name Timer messages */
