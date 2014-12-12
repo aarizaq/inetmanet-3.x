@@ -19,8 +19,8 @@
 //
 package inet.networklayer.ipv6;
 
-import inet.networklayer.IIPv6Tunneling;
-import inet.networklayer.IxMIPv6Support;
+import inet.networklayer.contract.IIPv6Tunneling;
+import inet.networklayer.contract.IxMIPv6Support;
 import inet.networklayer.contract.INetworkLayer;
 import inet.networklayer.icmpv6.ICMPv6;
 import inet.networklayer.icmpv6.IPv6NeighbourDiscovery;
@@ -73,11 +73,11 @@ module IPv6NetworkLayer like INetworkLayer
             parameters:
                 @display("p=257,149");
         }
-        iptunneling: <default(firstAvailable("IPv6Tunneling","IPv6Tunneling_None"))> like IIPv6Tunneling {
+        iptunneling: <default(firstAvailable("IPv6Tunneling"))> like IIPv6Tunneling {
             parameters:
                 @display("p=44,168");
         }
-        mipv6support: <default(xMIPv6Support?"xMIPv6Support":"xMIPv6Support_None")> like IxMIPv6Support {
+        mipv6support: <default("xMIPv6Support")> like IxMIPv6Support if xMIPv6Support {
             parameters:
                 @display("p=44,79");
         }

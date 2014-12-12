@@ -22,7 +22,7 @@
 
 package inet.routing.extras;
 
-import inet.networklayer.IManetRouting;
+import inet.networklayer.contract.IManetRouting;
 import inet.routing.extras.base.BaseRouting;
 
 //

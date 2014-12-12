@@ -22,10 +22,9 @@ import inet.applications.contract.IPingApp;
 import inet.applications.contract.ISCTPApp;
 import inet.applications.contract.ITCPApp;
 import inet.applications.contract.IUDPApp;
-import inet.transportlayer.ISCTP;
-import inet.transportlayer.ITCP;
-import inet.transportlayer.IUDP;
-
+import inet.transportlayer.contract.ISCTP;
+import inet.transportlayer.contract.ITCP;
+import inet.transportlayer.contract.IUDP;
 
 //
 // IPv4 host with SCTP, TCP, UDP layers and applications.
@@ -55,9 +54,9 @@ module StandardHost extends NodeBase
         bool hasTcp = default(numTcpApps>0);
         bool hasUdp = default(numUdpApps>0);
         bool hasSctp = default(numSctpApps>0);
-        string tcpType = default(firstAvailable("TCP", "TCP_lwIP", "TCP_NSC", "TCP_None"));  // tcp implementation (e.g. ~TCP, ~TCP_lwIP, ~TCP_NSC) or ~TCPSpoof
-        string udpType = default(firstAvailable("UDP","UDP_None"));
-        string sctpType = default(firstAvailable("SCTP","SCTP_None"));
+        string tcpType = default(firstAvailableOrEmpty("TCP", "TCP_lwIP", "TCP_NSC"));  // tcp implementation (e.g. ~TCP, ~TCP_lwIP, ~TCP_NSC) or ~TCPSpoof
+        string udpType = default(firstAvailableOrEmpty("UDP"));
+        string sctpType = default(firstAvailableOrEmpty("SCTP"));
         forwarding = default(false);  // disable routing by default
         networkLayer.proxyARP = default(false);
     submodules:

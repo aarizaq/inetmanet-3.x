@@ -25,7 +25,7 @@
 #include <algorithm>
 #include "inet/networklayer/ipv4/IPv4InterfaceData.h"
 #include "inet/common/ModuleAccess.h"
-#include "inet/networklayer/common/IRoutingTable.h"
+#include "inet/networklayer/contract/IRoutingTable.h"
 #include "IMobility.h"
 
 namespace inet {

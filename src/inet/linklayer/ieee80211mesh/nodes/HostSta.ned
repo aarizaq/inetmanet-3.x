@@ -15,7 +15,7 @@
 
 package inet.linklayer.ieee80211mesh.nodes;
 
-import inet.networklayer.IManetRouting;
+import inet.networklayer.contract.IManetRouting;
 import inet.node.inet.WirelessHost;
 import inet.networklayer.configurator.ipv4.HostAutoConfigurator2;
 

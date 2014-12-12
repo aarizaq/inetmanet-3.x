@@ -17,7 +17,7 @@
 
 #include <stdio.h>
 #include "inet/linklayer/ieee80211mesh/ethernet/EtherEncapMesh.h"
-#include "inet/networklayer/common/IInterfaceTable.h"
+#include "inet/networklayer/contract/IInterfaceTable.h"
 #include "inet/linklayer/common/Ieee802Ctrl.h"
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtFrames_m.h"
 

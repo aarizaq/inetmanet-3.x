@@ -36,7 +36,7 @@
 #include "inet/common/lifecycle/NodeStatus.h"
 #include "inet/transportlayer/udp/UDPPacket.h"
 #include "inet/transportlayer/tcp_common/TCPSegment.h"
-#include "inet/networklayer/common/INetfilter.h"
+#include "inet/networklayer/contract/INetfilter.h"
 
 
 #define PASER_SUBNETZ  0x0A000100

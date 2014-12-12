@@ -19,17 +19,17 @@
 
 package inet.linklayer.ieee80211mesh.nodes;
 
-import inet.linklayer.IMACRelayUnit;
+import inet.linklayer.contract.IMACRelayUnit;
 import inet.networklayer.common.InterfaceTable;
 import inet.mobility.contract.IMobility;
 import inet.linklayer.ieee80211mesh.ethernet.EthernetInterfaceMesh;
-import inet.linklayer.IWirelessNic;
-import inet.linklayer.IWiredNic;
-import inet.linklayer.IExternalNic;
+import inet.linklayer.contract.IWirelessNic;
+import inet.linklayer.contract.IWiredNic;
+import inet.linklayer.contract.IExternalNic;
 import inet.linklayer.ieee80211mesh.Ieee80211NicMesh;
 import inet.linklayer.ieee80211mesh.Ieee80211NicMeshMulti;
 import inet.networklayer.configurator.ipv4.HostAutoConfigurator2;
-import inet.linklayer.IMACAddressTable;
+import inet.linklayer.contract.IMACAddressTable;
 
 //
 // BaseHost contains the common lower layers (linklayer and networklayer)

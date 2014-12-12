@@ -18,11 +18,10 @@
 package inet.node.inet;
 
 import inet.applications.contract.IUDPApp;
-import inet.routing.IBGPRouting;
-import inet.routing.IIPRouting;
-import inet.transportlayer.ITCP;
-import inet.transportlayer.IUDP;
-
+import inet.routing.contract.IBGPRouting;
+import inet.routing.contract.IIPRouting;
+import inet.transportlayer.contract.ITCP;
+import inet.transportlayer.contract.IUDP;
 
 //
 // IPv4 router that supports wireless, Ethernet, PPP and external interfaces.
@@ -55,7 +54,7 @@ module Router extends NodeBase
         bool hasOSPF = default(false);
         bool hasRIP = default(false);
         bool hasBGP = default(false);
-        string tcpType = default(firstAvailable("TCP", "TCP_lwIP", "TCP_NSC", "TCP_None"));  // tcp implementation (e.g. ~TCP, ~TCP_lwIP, ~TCP_NSC) or ~TCPSpoof
+        string tcpType = default(firstAvailableOrEmpty("TCP", "TCP_lwIP", "TCP_NSC"));  // tcp implementation (e.g. ~TCP, ~TCP_lwIP, ~TCP_NSC) or ~TCPSpoof
         string udpType = default("UDP");
 
     submodules:
@@ -68,7 +67,7 @@ module Router extends NodeBase
                 ospfRoutingModule = default(hasOSPF ? "^.ospf" : "");
                 @display("p=214,80;i=block/network");
         }
-        tcp: <tcpType> like ITCP if hasBGP {
+        tcp: <tcpType> like ITCP if hasBGP && tcpType != "" {
             parameters:
                 @display("p=214,180;i=block/transport");
         }

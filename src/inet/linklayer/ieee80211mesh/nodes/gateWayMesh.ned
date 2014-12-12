@@ -21,13 +21,13 @@ package inet.linklayer.ieee80211mesh.nodes;
 
 
 import inet.common.packet.PcapRecorder;
-import inet.networklayer.common.IRoutingTable;
+import inet.networklayer.contract.IRoutingTable;
 import inet.networklayer.common.InterfaceTable;
 import inet.mobility.contract.IMobility;
 import inet.linklayer.ieee80211mesh.ethernet.EthernetInterfaceMesh;
-import inet.linklayer.IWirelessNic;
-import inet.linklayer.IWiredNic;
-import inet.linklayer.IExternalNic;
+import inet.linklayer.contract.IWirelessNic;
+import inet.linklayer.contract.IWiredNic;
+import inet.linklayer.contract.IExternalNic;
 
 import inet.networklayer.contract.INetworkLayer;
 import inet.linklayer.ieee80211mesh.Ieee80211NicMesh;
@@ -40,9 +40,9 @@ import inet.applications.contract.ISCTPApp;
 import inet.applications.contract.ITCPApp;
 import inet.applications.contract.IUDPApp;
 
-import inet.transportlayer.IUDP;
-import inet.transportlayer.ITCP;
-import inet.transportlayer.ISCTP;
+import inet.transportlayer.contract.IUDP;
+import inet.transportlayer.contract.ITCP;
+import inet.transportlayer.contract.ISCTP;
 
 //
 // BaseHost contains the common lower layers (linklayer and networklayer)

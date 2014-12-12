@@ -12,7 +12,7 @@
 package inet.node.mpls;
 
 import inet.common.lifecycle.NodeStatus;
-import inet.linklayer.IWiredNic;
+import inet.linklayer.contract.IWiredNic;
 import inet.linklayer.loopback.LoopbackInterface;
 import inet.networklayer.common.InterfaceTable;
 import inet.networklayer.ipv4.IPv4NetworkLayer;
@@ -22,8 +22,8 @@ import inet.networklayer.mpls.LIBTable;
 import inet.networklayer.mpls.MPLS;
 import inet.networklayer.ted.LinkStateRouting;
 import inet.networklayer.ted.TED;
-import inet.transportlayer.ITCP;
-import inet.transportlayer.IUDP;
+import inet.transportlayer.contract.ITCP;
+import inet.transportlayer.contract.IUDP;
 
 
 //
@@ -42,7 +42,7 @@ module LDP_LSR
         double helloInterval @unit("s") = default(5s);
         string peers;
         string routerId = default("auto");
-        string tcpType = default(firstAvailable("TCP","TCP_lwIP","TCP_NSC","TCP_None"));  // tcp implementation (e.g. ~TCP, ~TCP_lwIP, ~TCP_NSC) or ~TCPSpoof
+        string tcpType = default(firstAvailable("TCP","TCP_lwIP","TCP_NSC"));  // tcp implementation (e.g. ~TCP, ~TCP_lwIP, ~TCP_NSC) or ~TCPSpoof
         *.interfaceTableModule = default(absPath(".interfaceTable"));
         *.routingTableModule = default(absPath(".routingTable"));
         *.tedModule = default(absPath(".ted"));
@@ -82,7 +82,7 @@ module LDP_LSR
             parameters:
                 @display("p=177,145");
         }
-        udp: <default(firstAvailable("UDP","UDP_None"))> like IUDP {
+        udp: <default(firstAvailable("UDP"))> like IUDP {
             parameters:
                 @display("p=267,145");
         }

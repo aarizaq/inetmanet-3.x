@@ -26,7 +26,7 @@
 #include <deque>
 #include "inet/common/INETDefs.h"
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtBase.h"
-#include "inet/networklayer/common/IInterfaceTable.h"
+#include "inet/networklayer/contract/IInterfaceTable.h"
 #include "inet/linklayer/ieee80211mesh/mgmt/lwmpls_data.h"
 #include "inet/linklayer/ieee80211mesh/mgmt/LWMPLSPacket_m.h"
 #include "inet/networklayer/common/L3Address.h"
