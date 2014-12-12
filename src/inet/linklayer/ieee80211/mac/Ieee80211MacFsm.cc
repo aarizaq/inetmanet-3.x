@@ -347,7 +347,7 @@ void Ieee80211Mac::stateBackoff(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
          FSMIEEE80211_Transition(fsmLocal,IDLE);
     }
 
-    FSMIEEE80211_Event_Transition(fsmLocal,isBackoffMsg(msg) && transmissionQueueEmpty())
+    FSMIEEE80211_Event_Transition(fsmLocal, isMediumStateChange(msg) && !isMediumFree())
     {
         if (fsmLocal->debug()) EV_DEBUG  << "Backoff-Busy \n";
         cancelAIFSPeriod();
