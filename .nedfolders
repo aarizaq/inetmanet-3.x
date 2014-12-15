@@ -3,12 +3,12 @@ src
 -inet.transportlayer.tcp_lwip
 -inet.applications.voiptool
 -inet.transportlayer.tcp_nsc
+-inet.applications.voipstream
 -inet.examples.emulation
 -inet.transport.tcp_lwip
--inet.examples.voiptool
 -inet.transport.tcp_nsc
+-inet.examples.voiptool
 -inet.examples.hip
--inet.linklayer.ext
--inet.examples.voipstream
--inet.applications.voipstream
 -inet.underTest.hip
+-inet.examples.voipstream
+-inet.linklayer.ext
