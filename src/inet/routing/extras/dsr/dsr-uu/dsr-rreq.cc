@@ -96,7 +96,6 @@ void NSCLASS rreq_tbl_timeout(unsigned long data)
 
         /*      DSR_WRITE_UNLOCK(&rreq_tbl); */
         //if (e->timer)
-        delete e->timer;
         delete e;
         //tbl_add_tail(&rreq_tbl, &e->l);
         return;
@@ -235,8 +234,8 @@ rreq_tbl_add_id(struct in_addr initiator, struct in_addr target,
             return 1;
         }
         id_r = new Id_Entry_Route;
-        id_r->length=length;
-        id_r->cost=cost;
+        id_r->length = length;
+        id_r->cost = cost;
         id_r->add = addr;
         id_e->rreq_id_tbl_routes.push_back(id_r);
         id_e->trg_addr = target;
@@ -258,8 +257,8 @@ rreq_tbl_add_id(struct in_addr initiator, struct in_addr target,
                     return 1;
             }
             id_r = new Id_Entry_Route;
-            id_r->length=length;
-            id_r->cost=cost;
+            id_r->length = length;
+            id_r->cost = cost;
             id_r->add = addr;
             id_entry->rreq_id_tbl_routes.push_back(id_r);
         }
@@ -269,6 +268,8 @@ rreq_tbl_add_id(struct in_addr initiator, struct in_addr target,
 
 int NSCLASS rreq_tbl_route_discovery_cancel(struct in_addr dst)
 {
+    if (dsrRreqTbl.empty())
+        return 1; // nothing to-to
     struct rreq_tbl_entry *e = nullptr;
 
     L3Address addr(IPv4Address(dst.s_addr));
@@ -292,7 +293,6 @@ int NSCLASS rreq_tbl_route_discovery_cancel(struct in_addr dst)
     e->state = STATE_IDLE;
     gettime(&e->last_used);
     //if (e->timer)
-    delete e->timer;
     delete e;
     //tbl_add_tail(&rreq_tbl, &e->l);
     return 1;
@@ -529,7 +529,7 @@ int NSCLASS dsr_rreq_opt_recv(struct dsr_pkt *dp, struct dsr_rreq_opt *rreq_opt)
         if (dp->src.s_addr == myaddr.s_addr)
             return DSR_PKT_DROP;
         n = DSR_RREQ_ADDRS_LEN(rreq_opt) / sizeof(struct in_addr);
-        for (i = 0; i < n; i++)
+        for (i = 0; i < rreq_opt->addrs.size(); i++)
             if (rreq_opt->addrs[i] == myaddr.s_addr)
             {
                 return DSR_PKT_DROP;
@@ -592,8 +592,15 @@ int NSCLASS dsr_rreq_opt_recv(struct dsr_pkt *dp, struct dsr_rreq_opt *rreq_opt)
 
     neigh_tbl_add(dp->prv_hop, dp->mac.ethh);
 
-    /* Send buffered packets */
+    /* Send buffered packets and cancel discovery*/
+    for (unsigned int i = 0; i < srt_rev->addrs.size(); i++ )
+    {
+        send_buf_set_verdict(SEND_BUF_SEND, srt_rev->addrs[i]);
+        rreq_tbl_route_discovery_cancel(srt_rev->addrs[i]);
+    }
+
     send_buf_set_verdict(SEND_BUF_SEND, srt_rev->dst);
+    rreq_tbl_route_discovery_cancel(srt_rev->dst);
 
     if (rreq_opt->target == myaddr.s_addr)
     {
@@ -679,8 +686,8 @@ int NSCLASS dsr_rreq_opt_recv(struct dsr_pkt *dp, struct dsr_rreq_opt *rreq_opt)
 rreq_forward:
 
         rreq_opt->addrs.push_back(myaddr.s_addr);
-        rreq_opt->length += 4;
-        dp->dh.opth.begin()->p_len += 4;
+        rreq_opt->length += DSR_ADDRESS_SIZE;
+        dp->dh.opth.begin()->p_len += DSR_ADDRESS_SIZE;
 #ifdef __KERNEL__
         dsr_build_ip(dp, dp->src, dp->dst, IP_HDR_LEN,
                      ntohs(dp->nh.iph->tot_len) +

@@ -92,6 +92,8 @@ int NSCLASS send_buf_enqueue_packet(struct dsr_pkt *dp)
 
 int NSCLASS send_buf_set_verdict(int verdict, struct in_addr dst)
 {
+    if (packetBuffer.empty())
+        return 0;  // nothing to-to
     L3Address destination(IPv4Address(dst.s_addr));
     std::pair <PacketBuffer::iterator, PacketBuffer::iterator> ret;
     ret = packetBuffer.equal_range(destination);

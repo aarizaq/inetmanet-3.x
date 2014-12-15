@@ -326,6 +326,8 @@ class DSRUU:public cSimpleModule, public cListener, public ManetNetfilterHook
                     delete rreq_id_tbl.back();
                     rreq_id_tbl.pop_back();
                 }
+                if (timer)
+                    delete timer;
             }
 
         };
