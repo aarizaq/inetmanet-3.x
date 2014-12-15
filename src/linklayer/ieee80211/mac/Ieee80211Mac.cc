@@ -232,8 +232,12 @@ void Ieee80211Mac::initialize(int stage)
 
             edcCAF[i].saveSize = par(strSaveSize.c_str());
         }
+
+
         if (numCategories()==1)
             AIFSN(0) = par("AIFSN");
+
+        difsSlot = par("AIFSN");
 
         for (int i = 0; i < numCategories(); i++)
         {
@@ -254,6 +258,18 @@ void Ieee80211Mac::initialize(int stage)
                 cwMax(i) = (cwMinData + 1) / 2 - 1;
             }
         }
+
+        initialBackoffExponent = 0;
+        if (classifier == NULL)
+        {
+            int val = 1;
+            while (val < cwMinData)
+            {
+                initialBackoffExponent++;
+                val = (1 << initialBackoffExponent);
+            }
+        }
+
 
         ST = par("slotTime"); //added by sorin
         if (ST==-1)
@@ -1652,20 +1668,9 @@ simtime_t Ieee80211Mac::getPIFS()
     return getSIFS() + getSlotTime();
 }
 
-simtime_t Ieee80211Mac::getDIFS(int category)
+simtime_t Ieee80211Mac::getDIFS()
 {
-    if (category<0 || category>(numCategories()-1))
-    {
-        int index = numCategories()-1;
-        if (index<0)
-            index = 0;
-        return getSIFS() + ((double)AIFSN(index) * getSlotTime());
-    }
-    else
-    {
-        return getSIFS() + ((double)AIFSN(category)) * getSlotTime();
-    }
-
+    return getSIFS() + (difsSlot * getSlotTime());
 }
 
 simtime_t Ieee80211Mac::getAIFS(int AccessCategory)
@@ -1690,10 +1695,23 @@ simtime_t Ieee80211Mac::computeBackoffPeriod(Ieee80211Frame *msg, int r)
     {
         ASSERT(0 <= r && r < transmissionLimit);
 
-        cw = (cwMin() + 1) * (1 << r) - 1;
+        if (classifier == NULL)
+        {
+            // Compute Backoff: 9.3.3 Random backoff time
+            if (r == 0)
+                cw = cwMin();
+            else
+                cw = (1 << (initialBackoffExponent  + r)) - 1;
+        }
+        else
+        {
+            // Compute Backoff:  9.19.2.5 EDCA backoff procedure
+            cw = (cwMin() + 1) * (1 << r) - 1;
+        }
 
         if (cw > cwMax())
             cw = cwMax();
+
     }
 
     int c = intrand(cw + 1);
@@ -1736,6 +1754,34 @@ void Ieee80211Mac::cancelDIFSPeriod()
 void Ieee80211Mac::scheduleAIFSPeriod()
 {
     bool schedule = false;
+    if (classifier == NULL) //DCF
+    {
+        currentAC = 0;
+        if (!transmissionQueue(0)->empty() && !endAIFS(0)->isScheduled())
+        {
+            if (!endDIFS->isScheduled())
+            {
+                if (lastReceiveFailed)
+                {
+                    EV << "reception of last frame failed, scheduling EIFS period \n";
+                    scheduleAt(simTime() + getEIFS(), endAIFS(0));
+                }
+                else
+                {
+                    EV << "scheduling DIFS period (frame pending)\n";
+                    scheduleAt(simTime() + getDIFS(), endAIFS(0));
+                }
+            }
+        }
+        if (!endAIFS(0)->isScheduled() && !endDIFS->isScheduled())
+        {
+            // schedule default DIFS
+            EV << "scheduling DIFS period (no frame pending)\n";
+            scheduleDIFSPeriod();
+        }
+        return;
+    }
+
     for (int i = 0; i<numCategories(); i++)
     {
         if (!endAIFS(i)->isScheduled() && !transmissionQueue(i)->empty())

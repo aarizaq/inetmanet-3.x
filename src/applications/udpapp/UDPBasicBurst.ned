@@ -120,7 +120,8 @@ simple UDPBasicBurst like IUDPApp
         double delayLimit @unit(s) = default(0); // maximum accepted delay for a packet; packets with a bigger delay are discarded (dropped), zero value means no limit
         string outputInterface = default(""); // select the interface in which the packets will be sent
         string outputInterfaceMulticastBroadcast = default(""); // select the interface in which the broadcast packets will be sent
-        bool setBroadcast = default(false); // Configure the socket for receive broadcast packets   
+        bool setBroadcast = default(false); // Configure the socket for receive broadcast packets
+        bool configureInInit = default(true);
         @signal[sentPk](type=cPacket);
         @signal[rcvdPk](type=cPacket);
         @signal[dropPk](type=cPacket);

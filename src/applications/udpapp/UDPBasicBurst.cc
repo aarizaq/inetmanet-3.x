@@ -60,6 +60,7 @@ UDPBasicBurst::UDPBasicBurst()
     sendIntervalPar = NULL;
     timerNext = NULL;
     outputInterface = -1;
+    isSource = false;
     outputInterfaceMulticastBroadcast.clear();
 }
 
@@ -111,6 +112,11 @@ void UDPBasicBurst::initialize(int stage)
 
         timerNext = new cMessage("UDPBasicBurstTimer");
     }
+    else if (stage == 3)
+    {
+        if (par("configureInInit").boolValue())
+            initialConfiguration();
+    }
 }
 
 IPvXAddress UDPBasicBurst::chooseDestAddr()
@@ -135,7 +141,7 @@ cPacket *UDPBasicBurst::createPacket()
     return payload;
 }
 
-void UDPBasicBurst::processStart()
+void UDPBasicBurst::initialConfiguration()
 {
     socket.setOutputGate(gate("udpOut"));
     socket.bind(localPort);
@@ -186,7 +192,6 @@ void UDPBasicBurst::processStart()
             }
         }
     }
-
 #ifdef WITH_IPv4
     IRoutingTable *rt = RoutingTableAccess().getIfExists();
 #endif
@@ -212,6 +217,13 @@ void UDPBasicBurst::processStart()
             destAddresses.push_back(addr);
         }
     }
+}
+
+void UDPBasicBurst::processStart()
+{
+
+    if (!par("configureInInit").boolValue())
+        initialConfiguration();
 
     nextSleep = simTime();
     nextBurst = simTime();

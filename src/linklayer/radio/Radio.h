@@ -263,7 +263,6 @@ class INET_API Radio : public ChannelAccess, public ILifecycle
     static simsignal_t radioStateSignal; //enum
     static simsignal_t channelNumberSignal;
     static simsignal_t lossRateSignal;
-    static simsignal_t endTransmissionSignal; //enum
 };
 
 #endif

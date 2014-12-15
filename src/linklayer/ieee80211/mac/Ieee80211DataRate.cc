@@ -54,8 +54,51 @@ const Ieee80211DescriptorData Ieee80211Descriptor::data[] =
     {'g', 36000000, WifiModulationType::GetErpOfdmRate36Mbps(),false},
     {'g', 48000000, WifiModulationType::GetErpOfdmRate48Mbps(),false},
     {'g', 54000000, WifiModulationType::GetErpOfdmRate54Mbps(),false},
+ 
+    {'n',  1000000, WifiModulationType::GetDsssRate1Mbps(),false},
+    {'n',  2000000, WifiModulationType::GetDsssRate2Mbps(),false},
+    {'n',  5500000, WifiModulationType::GetDsssRate5_5Mbps(),false},
+    {'n',  6000000, WifiModulationType::GetErpOfdmRate6Mbps(),false},
+    {'n',  6500000, WifiModulationType::GetOfdmRate6_5MbpsBW20MHz(),false},
+    {'n',  7200000, WifiModulationType::GetOfdmRate7_2MbpsBW20MHz(),true},
+    {'n', 11000000, WifiModulationType::GetDsssRate11Mbps(),false},
+    {'n', 12000000, WifiModulationType::GetErpOfdmRate12Mbps(),false},
+    {'n', 13000000, WifiModulationType::GetOfdmRate13MbpsBW20MHz(),false},
+    {'n', 13500000, WifiModulationType::GetOfdmRate13_5MbpsBW40MHz(),false},
+    {'n', 14400000, WifiModulationType::GetOfdmRate14_4MbpsBW20MHz(),true},
+    {'n', 15000000, WifiModulationType::GetOfdmRate15MbpsBW40MHz(),true},
+    {'n', 19500000, WifiModulationType::GetOfdmRate19_5MbpsBW20MHz(),false},
+    {'n', 21000000, WifiModulationType::GetOfdmRate21_7MbpsBW20MHz(),true},
+    {'n', 24000000, WifiModulationType::GetErpOfdmRate24Mbps(),false},
+    {'n', 26000000, WifiModulationType::GetOfdmRate26MbpsBW20MHz(),false},
+    {'n', 27000000, WifiModulationType::GetOfdmRate27MbpsBW40MHz(),false},
+    {'n', 28900000, WifiModulationType::GetOfdmRate28_9MbpsBW20MHz(),true},
+    {'n', 30000000, WifiModulationType::GetOfdmRate30MbpsBW40MHz(),true},
+    {'n', 39000000, WifiModulationType::GetOfdmRate39MbpsBW20MHz(),false},
+    {'n', 40500000, WifiModulationType::GetOfdmRate40_5MbpsBW40MHz(),false},
+    {'n', 43300000, WifiModulationType::GetOfdmRate43_3MbpsBW20MHz(),true},
+    {'n', 45000000, WifiModulationType::GetOfdmRate45MbpsBW40MHz(),true},
+    {'n', 52000000, WifiModulationType::GetOfdmRate52MbpsBW20MHz(),false},
+    {'n', 54000000, WifiModulationType::GetOfdmRate54MbpsBW40MHz(),false},
+    {'n', 57800000, WifiModulationType::GetOfdmRate57_8MbpsBW20MHz(),true},
+    {'n', 58500000, WifiModulationType::GetOfdmRate58_5MbpsBW20MHz(),false},
+    {'n', 60000000, WifiModulationType::GetOfdmRate60MbpsBW40MHz(),true},
+    {'n', 65000000, WifiModulationType::GetOfdmRate65MbpsBW20MHz(),false},
+    {'n', 65000000, WifiModulationType::GetOfdmRate65MbpsBW20MHzShGi(),true}, // 1n short guard repeat bit rate
+    {'n', 72000000, WifiModulationType::GetOfdmRate72_2MbpsBW20MHz(),true},
+    {'n', 81000000, WifiModulationType::GetOfdmRate81MbpsBW40MHz(),false},
+    {'n', 90000000, WifiModulationType::GetOfdmRate90MbpsBW40MHz(),true},
+    {'n', 108000000, WifiModulationType::GetOfdmRate108MbpsBW40MHz(),false},
+    {'n', 120000000, WifiModulationType::GetOfdmRate120MbpsBW40MHz(),true},
+    {'n', 121500000, WifiModulationType::GetOfdmRate121_5MbpsBW40MHz(),false},
+    {'n', 135000000, WifiModulationType::GetOfdmRate135MbpsBW40MHz(),false},
+    {'n', 135000000, WifiModulationType::GetOfdmRate65MbpsBW20MHzShGi(),true}, // 1n short guard repeat bit rate
+    {'n', 150000000, WifiModulationType::GetOfdmRate150MbpsBW40MHz(),true},
 
-    {'p',  3000000, WifiModulationType::GetOfdmRate3MbpsBW10MHz(),false},
+
+
+
+    {'p',  3000000, WifiModulationType::GetOfdmRate3MbpsBW10MHz(),false},
     {'p',  4500000, WifiModulationType::GetOfdmRate4_5MbpsBW10MHz(),false},
     {'p',  6000000, WifiModulationType::GetOfdmRate6MbpsBW10MHz(),false},
     {'p',  9000000, WifiModulationType::GetOfdmRate9MbpsBW10MHz(),false},
@@ -63,52 +106,6 @@ const Ieee80211DescriptorData Ieee80211Descriptor::data[] =
     {'p', 18000000, WifiModulationType::GetOfdmRate18MbpsBW10MHz(),false},
     {'p', 24000000, WifiModulationType::GetOfdmRate24MbpsBW10MHz(),false},
     {'p', 27000000, WifiModulationType::GetOfdmRate27MbpsBW10MHz(),false},
-
-    {'n',  1000000, WifiModulationType::GetDsssRate1Mbps(),false},
-    {'n',  2000000, WifiModulationType::GetDsssRate2Mbps(),false},
-    {'n',  5500000, WifiModulationType::GetDsssRate5_5Mbps(),false},
-    {'n',  6000000, WifiModulationType::GetErpOfdmRate6Mbps(),false},
-    {'n', 11000000, WifiModulationType::GetDsssRate11Mbps(),false},
-    {'n', 12000000, WifiModulationType::GetErpOfdmRate12Mbps(),false},
-    {'n', 24000000, WifiModulationType::GetErpOfdmRate24Mbps(),false},
-
-    {'n',  6500000, WifiModulationType::GetOfdmRate6_5MbpsBW20MHz(),false},
-    {'n', 13000000, WifiModulationType::GetOfdmRate13MbpsBW20MHz(),false},
-    {'n', 19500000, WifiModulationType::GetOfdmRate19_5MbpsBW20MHz(),false},
-    {'n', 26000000, WifiModulationType::GetOfdmRate26MbpsBW20MHz(),false},
-    {'n', 39000000, WifiModulationType::GetOfdmRate39MbpsBW20MHz(),false},
-    {'n', 52000000, WifiModulationType::GetOfdmRate52MbpsBW20MHz(),false},
-    {'n', 58500000, WifiModulationType::GetOfdmRate58_5MbpsBW20MHz(),false},
-    {'n', 65000000, WifiModulationType::GetOfdmRate65MbpsBW20MHz(),false},
-
-    {'n',  7200000, WifiModulationType::GetOfdmRate7_2MbpsBW20MHz(),true},
-    {'n', 14400000, WifiModulationType::GetOfdmRate14_4MbpsBW20MHz(),true},
-    {'n', 21000000, WifiModulationType::GetOfdmRate21_7MbpsBW20MHz(),true},
-    {'n', 28900000, WifiModulationType::GetOfdmRate28_9MbpsBW20MHz(),true},
-    {'n', 43300000, WifiModulationType::GetOfdmRate43_3MbpsBW20MHz(),true},
-    {'n', 57800000, WifiModulationType::GetOfdmRate57_8MbpsBW20MHz(),true},
-    {'n', 65000000, WifiModulationType::GetOfdmRate65MbpsBW20MHzShGi(),true}, // 1n short guard repeat bit rate
-    {'n', 72000000, WifiModulationType::GetOfdmRate72_2MbpsBW20MHz(),true},
-
-
-    {'n',  13500000, WifiModulationType::GetOfdmRate13_5MbpsBW40MHz(),false},
-    {'n',  27000000, WifiModulationType::GetOfdmRate27MbpsBW40MHz(),false},
-    {'n',  40500000, WifiModulationType::GetOfdmRate40_5MbpsBW40MHz(),false},
-    {'n',  54000000, WifiModulationType::GetOfdmRate54MbpsBW40MHz(),false},
-    {'n',  81000000, WifiModulationType::GetOfdmRate81MbpsBW40MHz(),false},
-    {'n', 108000000, WifiModulationType::GetOfdmRate108MbpsBW40MHz(),false},
-    {'n', 121500000, WifiModulationType::GetOfdmRate121_5MbpsBW40MHz(),false},
-    {'n', 135000000, WifiModulationType::GetOfdmRate135MbpsBW40MHz(),false},
-
-    {'n',  15000000, WifiModulationType::GetOfdmRate15MbpsBW40MHz(),true},
-    {'n',  30000000, WifiModulationType::GetOfdmRate30MbpsBW40MHz(),true},
-    {'n',  45000000, WifiModulationType::GetOfdmRate45MbpsBW40MHz(),true},
-    {'n',  60000000, WifiModulationType::GetOfdmRate60MbpsBW40MHz(),true},
-    {'n',  90000000, WifiModulationType::GetOfdmRate90MbpsBW40MHz(),true},
-    {'n', 120000000, WifiModulationType::GetOfdmRate120MbpsBW40MHz(),true},
-    {'n', 135000000, WifiModulationType::GetOfdmRate65MbpsBW20MHzShGi(),true}, // 1n short guard repeat bit rate
-    {'n', 150000000, WifiModulationType::GetOfdmRate150MbpsBW40MHz(),true},
-
 
 
 };

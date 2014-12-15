@@ -159,9 +159,10 @@ namespace {
     }
 }
 
-double Obstacle::calculateReceivedPower(double pSend, double carrierFrequency, const Coord& senderPos, double senderAngle, const Coord& receiverPos, double receiverAngle) const {
+double Obstacle::calculateReceivedPower(double pSend, double carrierFrequency, const Coord& senderPos, double senderAngle, const Coord& receiverPos, double receiverAngle, bool &saveCache) const {
 
     // if obstacles has neither walls nor matter: bail.
+    saveCache = true;
     if (getShape().size() < 2) return pSend;
 
     // get a list of points (in [0, 1]) along the line between sender and receiver where the beam intersects with this obstacle
@@ -249,10 +250,13 @@ double Obstacle::calculateReceivedPower(double pSend, double carrierFrequency, c
 
     if (type == probability)
     {
+        saveCache = false;
         if (mean >= 1)
+            return 0;
+        if (mean <= 0)
             return pSend;
         double prob = uniform(0,1);
-        if (prob>mean)
+        if (prob < mean)
             return 0;
         return pSend;
     }
@@ -264,11 +268,20 @@ double Obstacle::calculateReceivedPower(double pSend, double carrierFrequency, c
         attenuation = (attenuationPerWall * numWalls) + (attenuationPerMeter * fractionInObstacle * totalDistance);
     }
     else if (type == normalDist)
+    {
         attenuation = normal(mean,deviation);
+        saveCache = false;
+    }
     else if (type == lognormalDist)
+    {
         attenuation = lognormal(mean,deviation);
+        saveCache = false;
+    }
     else if (type == exponentialDist)
+    {
         attenuation = exponential(mean);
+        saveCache = false;
+    }
     else
         opp_error("obstacle type not supported");
 

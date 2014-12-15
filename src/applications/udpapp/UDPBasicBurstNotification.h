@@ -39,6 +39,7 @@ class INET_API UDPBasicBurstNotification : public UDPBasicBurst, protected INoti
     virtual IPvXAddress chooseDestAddr();
     virtual void generateBurst();
     virtual void processStart();
+    virtual void initialConfiguration();
     virtual void receiveChangeNotification(int category, const cObject *details);
   public:
     UDPBasicBurstNotification();

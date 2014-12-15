@@ -42,7 +42,7 @@ class Obstacle {
         const Coord getBboxP1() const;
         const Coord getBboxP2() const;
 
-        double calculateReceivedPower(double pSend, double carrierFrequency, const Coord& senderPos, double senderAngle, const Coord& receiverPos, double receiverAngle) const;
+        double calculateReceivedPower(double pSend, double carrierFrequency, const Coord& senderPos, double senderAngle, const Coord& receiverPos, double receiverAngle, bool &saveCache) const;
 
         AnnotationManager::Annotation* visualRepresentation;
 
