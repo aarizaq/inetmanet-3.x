@@ -836,11 +836,26 @@ int NSCLASS dsr_srt_opt_recv(struct dsr_pkt *dp, struct dsr_srt_opt *srt_opt)
         if (from_me_to_dest)
         {
             dsr_rtc_add(from_me_to_dest, ConfValToUsecs(RouteCacheTimeout), 0);
+            /* Send buffered packets and cancel discovery*/
+            for (unsigned int i = 0; i < from_me_to_dest->addrs.size(); i++ )
+            {
+                send_buf_set_verdict(SEND_BUF_SEND, from_me_to_dest->addrs[i]);
+                rreq_tbl_route_discovery_cancel(from_me_to_dest->addrs[i]);
+            }
+            send_buf_set_verdict(SEND_BUF_SEND, from_me_to_dest->dst);
+            rreq_tbl_route_discovery_cancel(from_me_to_dest->dst);
             delete from_me_to_dest;
         }
         if (from_me_to_src)
         {
             dsr_rtc_add(from_me_to_src, ConfValToUsecs(RouteCacheTimeout), 0);
+            for (unsigned int i = 0; i < from_me_to_src->addrs.size(); i++ )
+            {
+                send_buf_set_verdict(SEND_BUF_SEND, from_me_to_src->addrs[i]);
+                rreq_tbl_route_discovery_cancel(from_me_to_src->addrs[i]);
+            }
+            send_buf_set_verdict(SEND_BUF_SEND, from_me_to_src->dst);
+            rreq_tbl_route_discovery_cancel(from_me_to_src->dst);
             delete from_me_to_src;
         }
 
@@ -855,6 +870,19 @@ int NSCLASS dsr_srt_opt_recv(struct dsr_pkt *dp, struct dsr_srt_opt *srt_opt)
         else
             ph_add_link_map(my_addr(), dp->prv_hop,
                         ConfValToUsecs(RouteCacheTimeout), 0, 1);
+
+        for (unsigned int i = 0; i < dp->srt->addrs.size(); i++ )
+        {
+            send_buf_set_verdict(SEND_BUF_SEND, dp->srt->addrs[i]);
+            rreq_tbl_route_discovery_cancel(dp->srt->addrs[i]);
+        }
+
+        send_buf_set_verdict(SEND_BUF_SEND, dp->srt->src);
+        rreq_tbl_route_discovery_cancel(dp->srt->src);
+
+        send_buf_set_verdict(SEND_BUF_SEND, dp->srt->dst);
+        rreq_tbl_route_discovery_cancel(dp->srt->dst);
+
 
         dsr_rtc_add(dp->srt, ConfValToUsecs(RouteCacheTimeout), 0);
     }
