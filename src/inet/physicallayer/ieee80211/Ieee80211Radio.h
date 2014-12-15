@@ -18,13 +18,13 @@
 #ifndef __INET_IEEE80211RADIO_H
 #define __INET_IEEE80211RADIO_H
 
-#include "inet/physicallayer/common/Radio.h"
+#include "inet/physicallayer/base/NarrowbandRadioBase.h"
 
 namespace inet {
 
 namespace physicallayer {
 
-class INET_API Ieee80211Radio : public Radio
+class INET_API Ieee80211Radio : public NarrowbandRadioBase
 {
   public:
     /**
@@ -44,7 +44,6 @@ class INET_API Ieee80211Radio : public Radio
   public:
     Ieee80211Radio();
 
-    virtual void setBitrate(bps newBitrate);
     virtual void setChannelNumber(int newChannelNumber);
 };
 
