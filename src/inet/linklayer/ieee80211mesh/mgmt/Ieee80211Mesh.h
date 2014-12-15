@@ -35,7 +35,7 @@
 #include "inet/common/WirelessNumHops.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Mac.h"
 //#include "Radio.h"
-#include "securityPkt_m.h"
+#include "inet/securityModule/message/securityPkt_m.h"
 
 namespace inet{
 

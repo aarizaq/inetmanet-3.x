@@ -36,8 +36,8 @@
 #include "LinkBreak.h"
 #endif
 
-#include "dsr-uu/DsrDataBase.h"
-#include "ILifecycle.h"
+#include "inet/routing/extras/dsr/dsr-uu/DsrDataBase.h"
+#include "inet/common/lifecycle/ILifecycle.h"
 
 // generate ev prints
 #ifdef _WIN32

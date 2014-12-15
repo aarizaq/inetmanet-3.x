@@ -34,7 +34,7 @@
 #include "inet/linklayer/csma/CSMAFrame_m.h"
 #include "inet/linklayer/bmac/BMacFrame_m.h"
 
-#include "NodeOperations.h"
+#include "inet/common/lifecycle/NodeOperations.h"
 
 
 namespace inet {

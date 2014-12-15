@@ -16,11 +16,11 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 //
 
-#include "WirelessGetNeig.h"
+#include "inet/common/WirelessGetNeig.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
-#include "IInterfaceTable.h"
+#include "inet/networklayer/contract/IInterfaceTable.h"
 #include "inet/networklayer/ipv4/IPv4InterfaceData.h"
-#include "IMobility.h"
+#include "inet/mobility/contract/IMobility.h"
 
 namespace inet{
 

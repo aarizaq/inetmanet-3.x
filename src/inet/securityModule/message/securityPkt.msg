@@ -5,11 +5,10 @@ cplusplus {{
 }}
 
 cplusplus {{
-
-#include "MACAddress.h"
-#include "Ieee80211MgmtFrames_m.h"
-#include "Security.h"
-#include "SecurityKeys.h"
+#include "inet/linklayer/common/MACAddress.h"
+#include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtFrames_m.h"
+#include "inet/securityModule/Security.h"
+#include "inet/securityModule/SecurityKeys.h"
 #include <iostream>
 #include <vector>
 

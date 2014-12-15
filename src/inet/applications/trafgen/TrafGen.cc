@@ -21,7 +21,7 @@
 
 #include <string>
 
-#include "applications/trafgen/TrafGen.h"
+#include "inet/applications/trafgen/TrafGen.h"
 
 //Define_Module(TrafGen);
 

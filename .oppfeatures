@@ -966,25 +966,6 @@
         />
 
     <feature
-        id="Ieee802154"
-        name="802.15.4 code"
-        description = "Wpan 802.15.4"
-        initiallyEnabled = "true"
-        requires = ""
-        labels = ""
-         nedPackages = "
-                       inet.wpan.applications.Ieee802154TestApp
-                       inet.wpan.Isabel.Base
-                       inet.wpan.Isabel.Analysis
-                       inet.wpan.linklayer.ieee802154
-                       inet.wpan.networklayer.Ieee802154StarRouting
-                       inet.wpan.nodes
-                      "
-        extraSourceFolders = ""
-        compileFlags = "-DWITH_80215"
-        linkerFlags = ""
-        />    
-    <feature
         id="HIP"
         name="Host Identity Protocol"
         description = "Host Identity Protocol"

@@ -22,8 +22,8 @@
 #include <cownedobject.h>
 #include <vector>
 #include <map>
-#include "Coord.h"
-#include "IPv4Address.h"
+#include "inet/common/geometry/common/Coord.h"
+#include "inet/networklayer/contract/ipv4/IPv4Address.h"
 
 namespace inet{
 

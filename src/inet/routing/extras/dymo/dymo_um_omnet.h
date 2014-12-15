@@ -59,8 +59,8 @@
 /* Needed by some network-related datatypes */
 #include "inet/routing/extras/base/ManetRoutingBase.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
-#include "dymoum/dlist.h"
-#include "dymo_msg_struct.h"
+#include "inet/routing/extras/dymo/dymoum/dlist.h"
+#include "inet/routing/extras/dymo/dymo_msg_struct.h"
 #include "inet/networklayer/contract/INetworkDatagram.h"
 
 #include <map>
@@ -70,7 +70,7 @@ namespace inet { namespace inetmanet { class DYMOUM; } }
 
 /* Global definitions and lib functions */
 
-#include "dymoum/defs_dymo.h"
+#include "inet/routing/extras/dymo/dymoum/defs_dymo.h"
 
 #ifndef IP_BROADCAST
 #define IP_BROADCAST ((u_int32_t) 0xffffffff)
@@ -81,23 +81,23 @@ namespace inet { namespace inetmanet { class DYMOUM; } }
 #define NS_NO_DECLARATIONS
 
 //#include "dymoum/defs.h"
-#include "dymoum/debug_dymo.h"
-#include "dymoum/dlist.h"
-#include "dymoum/dymo_generic.h"
-#include "dymoum/dymo_re.h"
-#include "dymoum/dymo_uerr.h"
-#include "dymoum/dymo_rerr.h"
-#include "dymoum/dymo_socket.h"
-#include "dymoum/dymo_timeout.h"
-#include "dymoum/rtable.h"
-#include "dymoum/pending_rreq.h"
-#include "dymoum/timer_queue.h"
-#include "dymoum/blacklist.h"
-#include "dymoum/icmp_socket.h"
-#include "dymoum/dymo_hello.h"
-#include "dymoum/dymo_nb.h"
+#include "inet/routing/extras/dymo/dymoum/debug_dymo.h"
+#include "inet/routing/extras/dymo/dymoum/dlist.h"
+#include "inet/routing/extras/dymo/dymoum/dymo_generic.h"
+#include "inet/routing/extras/dymo/dymoum/dymo_re.h"
+#include "inet/routing/extras/dymo/dymoum/dymo_uerr.h"
+#include "inet/routing/extras/dymo/dymoum/dymo_rerr.h"
+#include "inet/routing/extras/dymo/dymoum/dymo_socket.h"
+#include "inet/routing/extras/dymo/dymoum/dymo_timeout.h"
+#include "inet/routing/extras/dymo/dymoum/rtable.h"
+#include "inet/routing/extras/dymo/dymoum/pending_rreq.h"
+#include "inet/routing/extras/dymo/dymoum/timer_queue.h"
+#include "inet/routing/extras/dymo/dymoum/blacklist.h"
+#include "inet/routing/extras/dymo/dymoum/icmp_socket.h"
+#include "inet/routing/extras/dymo/dymoum/dymo_hello.h"
+#include "inet/routing/extras/dymo/dymoum/dymo_nb.h"
 
-#include "dymo_packet_queue_omnet.h"
+#include "inet/routing/extras/dymo/dymo_packet_queue_omnet.h"
 
 #undef NS_NO_DECLARATIONS
 
