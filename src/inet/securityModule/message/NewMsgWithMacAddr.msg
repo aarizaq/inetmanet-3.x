@@ -1,7 +1,8 @@
 class noncobject MACAddress;
 cplusplus {{
-    #include "MACAddress.h"
 #include "inet/common/INETDefs.h"
+#include "inet/linklayer/common/MACAddress.h"
+
 }}
 
 namespace inet::ieee80211;

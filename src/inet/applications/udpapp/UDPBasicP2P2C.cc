@@ -21,12 +21,12 @@
 #include "inet/transportlayer/contract/udp/UDPControlInfo_m.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
 #include "inet/networklayer/common/InterfaceTable.h"
-#include "GlobalWirelessLinkInspector.h"
+#include "inet/common/GlobalWirelessLinkInspector.h"
 #include <algorithm>
 #include "inet/networklayer/ipv4/IPv4InterfaceData.h"
 #include "inet/common/ModuleAccess.h"
 #include "inet/networklayer/contract/IRoutingTable.h"
-#include "IMobility.h"
+#include "inet/mobility/contract/IMobility.h"
 
 namespace inet {
 

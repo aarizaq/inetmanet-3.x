@@ -38,7 +38,7 @@
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
 #include "inet/networklayer/ipv4/IPv4Datagram.h"
 #include "inet/transportlayer/udp/UDPPacket_m.h"
-#include "NewMsgWithMacAddr_m.h"
+#include "inet/securityModule/message/NewMsgWithMacAddr_m.h"
 #include "inet/securityModule/SecurityKeys.h"
 
 namespace inet {

@@ -17,7 +17,7 @@
 
 #include <omnetpp.h>
 #include "dijktraKShortest.h"
-#include "ModuleIdAddress.h"
+#include "inet/networklayer/common/ModuleIdAddress.h"
 
 namespace inet{
 

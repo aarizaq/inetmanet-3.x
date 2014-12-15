@@ -21,7 +21,7 @@
 #include <map>
 #include <omnetpp.h>
 #include "inet/common/INETDefs.h"
-#include "Coord.h"
+#include "inet/common/geometry/common/Coord.h"
 
 namespace inet {
 

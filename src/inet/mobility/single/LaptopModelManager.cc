@@ -16,8 +16,8 @@
 // 
 //
 
-#include "LaptopModelManager.h"
-#include "MobilityBase.h"
+#include "inet/mobility/single/LaptopModelManager.h"
+#include "inet/mobility/base/MobilityBase.h"
 
 namespace inet {
 

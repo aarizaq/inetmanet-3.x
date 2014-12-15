@@ -41,7 +41,7 @@
 #include "inet/networklayer/common/L3Address.h"
 #include "inet/routing/extras/base/ControlManetRouting_m.h"
 #ifdef WITH_80211MESH
-#include "LocatorNotificationInfo_m.h"
+#include "inet/routing/extras/base/LocatorNotificationInfo_m.h"
 #endif
 
 namespace inet {

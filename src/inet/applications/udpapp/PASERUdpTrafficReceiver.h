@@ -28,7 +28,7 @@
 #include "PaserTrafficDataMsg_m.h"
 #include "csimplemodule.h"
 #include "inet/transportlayer/contract/udp/UDPSocket.h"
-#include "RandomWPMobility.h"
+#include "inet/mobility/single/RandomWPMobility.h"
 
 //#define No_init_manetStats
 

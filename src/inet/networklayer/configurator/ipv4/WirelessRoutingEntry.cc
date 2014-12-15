@@ -13,12 +13,12 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-#include <WirelessRoutingEntry.h>
+#include "inet/networklayer/configurator/ipv4/WirelessRoutingEntry.h"
 #include "inet/common/WirelessNumHops.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
 #include "inet/common/ModuleAccess.h"
-#include "IIPv4RoutingTable.h"
-#include "IInterfaceTable.h"
+#include "inet/networklayer/ipv4/IIPv4RoutingTable.h"
+#include "inet/networklayer/contract/IInterfaceTable.h"
 
 namespace inet{
 

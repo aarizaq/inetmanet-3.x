@@ -18,13 +18,13 @@
 
 #include "inet/common/WirelessNumHops.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
-#include "IInterfaceTable.h"
+#include "inet/networklayer/contract/IInterfaceTable.h"
 #include "inet/networklayer/ipv4/IPv4InterfaceData.h"
-#include "GlobalWirelessLinkInspector.h"
+#include "inet/common/GlobalWirelessLinkInspector.h"
 #include <algorithm>    // std::max
-#include "IIPv4RoutingTable.h"
+#include "inet/networklayer/ipv4/IIPv4RoutingTable.h"
 #include "inet/common/ModuleAccess.h"
-#include "IMobility.h"
+#include "inet/mobility/contract/IMobility.h"
 
 namespace inet{
 
