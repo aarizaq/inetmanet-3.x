@@ -72,7 +72,6 @@
                        inet.networklayer.ipv4
                        inet.networklayer.configurator.ipv4
                        inet.networklayer.arp.ipv4
-                       inet.node.inet
                        inet.common.serializer.ipv4
                       "
         extraSourceFolders = ""
@@ -591,7 +590,7 @@
         requires = ""
         labels = ""
         nedPackages = "
-                       inet.mobility.common
+                       inet.mobility.base
                        inet.mobility.group
                        inet.mobility.single
                        inet.mobility.static
@@ -644,22 +643,54 @@
         linkerFlags = ""
         />
     <feature
+        id="physicalenvironment"
+        name="Physical environment"
+        description = "Physical environment support"
+        requires = ""
+        labels = ""
+        nedPackages = "
+                       inet.environment
+                       inet.environment.objectcache
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
+    <feature
+        id="physicalenvironment_examples"
+        name="Physical environment examples"
+        description = "Physical environment examples"
+        requires = ""
+        labels = ""
+        nedPackages = "
+                       inet.examples.objectcache
+                       inet.examples.geometry
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
+    <feature
         id="radio"
         name="Radio"
         description = "Radio support for wireless simulations"
         requires = ""
         labels = ""
         nedPackages = "
+                       inet.physicallayer.apsk
                        inet.physicallayer.base
+                       inet.physicallayer.backgroundnoise
                        inet.physicallayer.antenna
-                       inet.physicallayer.dimensional
                        inet.physicallayer.common
+                       inet.physicallayer.errormodel
                        inet.physicallayer.ideal
                        inet.physicallayer.mapping
+                       inet.physicallayer.neighborcache
+                       inet.physicallayer.obstacleloss
                        inet.physicallayer.pathloss
-                       inet.physicallayer.power
+                       inet.physicallayer.energyconsumer
                        inet.physicallayer.propagation
-                       inet.physicallayer.scalar
+                       inet.physicallayer.analogmodel
                       "
         extraSourceFolders = ""
         compileFlags = "-DWITH_RADIO"
@@ -698,6 +729,21 @@
         linkerFlags = ""
         />
     <feature
+        id="Ieee802154"
+        name="802.15.4a UWBIR"
+        description = "IEEE 802.15.4a UWBIR"
+        initiallyEnabled = "true"
+        requires = "mobility radio"
+        labels = "nic wireless"
+        nedPackages = "
+                       inet.linklayer.ieee802154
+                       inet.physicallayer.ieee802154
+                      "
+        extraSourceFolders = ""
+        compileFlags = "-DWITH_IEEE80211"
+        linkerFlags = ""
+        />
+    <feature
         id="idealwireless"
         name="Ideal Wireless Communication"
         description = "Provides a simple (dummy) wireless interface that consists
@@ -724,6 +770,7 @@
         labels = "nic wireless"
         nedPackages = "
                        inet.examples.adhoc
+                       inet.examples.neighborcache
                        inet.examples.wireless
                       "
         extraSourceFolders = ""
@@ -978,23 +1025,6 @@
         extraSourceFolders = ""
         compileFlags = "-DWITH_80211MESH"
         linkerFlags = ""
-        />
-        
-      <feature
-        id="Ieee80211Extensions"
-        name="Ieee80211Extensions"
-        description = "under test Ieee80211Extensions model"
-        initiallyEnabled = "false"
-        requires = "mobility radio TCP_INET MANET OSPFv2 MPLS UDP IPv4 IPv6 SCTP"
-        labels = ""
-        nedPackages = "
-                       inet.underTest.Ieee80211
-                      "
-        extraSourceFolders = ""
-        compileFlags = "-DWITH_IEEE80211EXT"
-        linkerFlags = ""
-        />
-        
-       
+        />       
 </features>
 
