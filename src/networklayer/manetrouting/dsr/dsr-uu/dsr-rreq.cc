@@ -93,7 +93,6 @@ void NSCLASS rreq_tbl_timeout(unsigned long data)
 
         /*      DSR_WRITE_UNLOCK(&rreq_tbl); */
         //if (e->timer)
-        delete e->timer;
         delete e;
         //tbl_add_tail(&rreq_tbl, &e->l);
         return;
@@ -138,7 +137,6 @@ NSCLASS rreq_tbl_entry *NSCLASS __rreq_tbl_entry_create(struct in_addr node_addr
     e->ttl = 0;
     memset(&e->tx_time, 0, sizeof(struct timeval));
     e->num_rexmts = 0;
-    e->timer=NULL;
 #ifndef OMNETPP
 #ifdef NS2
     e->timer = new DSRUUTimer(this, "RREQTblTimer");
@@ -268,6 +266,9 @@ int NSCLASS rreq_tbl_route_discovery_cancel(struct in_addr dst)
 {
     struct rreq_tbl_entry *e = NULL;
 
+    if (dsrRreqTbl.empty())
+        return 1; // nothing to-to
+
     ManetAddress addr(IPv4Address(dst.s_addr));
     DsrRreqTbl::iterator it = dsrRreqTbl.find(addr);
     if (it != dsrRreqTbl.end())
@@ -289,7 +290,6 @@ int NSCLASS rreq_tbl_route_discovery_cancel(struct in_addr dst)
     e->state = STATE_IDLE;
     gettime(&e->last_used);
     //if (e->timer)
-    delete e->timer;
     delete e;
     //tbl_add_tail(&rreq_tbl, &e->l);
     return 1;
@@ -589,8 +589,15 @@ int NSCLASS dsr_rreq_opt_recv(struct dsr_pkt *dp, struct dsr_rreq_opt *rreq_opt)
 
     neigh_tbl_add(dp->prv_hop, dp->mac.ethh);
 
-    /* Send buffered packets */
+    /* Send buffered packets and cancel discovery*/
+    for (unsigned int i = 0; i < srt_rev->addrs.size(); i++ )
+    {
+        send_buf_set_verdict(SEND_BUF_SEND, srt_rev->addrs[i]);
+        rreq_tbl_route_discovery_cancel(srt_rev->addrs[i]);
+    }
+
     send_buf_set_verdict(SEND_BUF_SEND, srt_rev->dst);
+    rreq_tbl_route_discovery_cancel(srt_rev->dst);
 
     if (rreq_opt->target == myaddr.s_addr)
     {
@@ -726,7 +733,6 @@ void __exit NSCLASS rreq_tbl_cleanup(void)
         DsrRreqTbl::iterator it =  dsrRreqTbl.begin();
         rreq_tbl_entry *e = it->second;
         del_timer_sync(e->timer);
-        delete e->timer;
         delete e;
         dsrRreqTbl.erase(it);
     }

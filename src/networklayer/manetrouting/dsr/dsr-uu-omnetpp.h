@@ -197,12 +197,12 @@ class DSRUU:public cSimpleModule, public INotifiable, ILifecycle, ManetNetfilter
         struct dsr_srt *ph_srt_find_link_route_map(struct in_addr src, struct in_addr dst, unsigned int timeout);
 
 // Buffer storate
-
+public:
         struct PacketStoreage{
                 simtime_t time;
                 struct dsr_pkt *packet;
         };
-
+private:
         unsigned int buffMaxlen;
         typedef std::multimap<ManetAddress, PacketStoreage> PacketBuffer;
         PacketBuffer packetBuffer;
@@ -314,8 +314,9 @@ class DSRUU:public cSimpleModule, public INotifiable, ILifecycle, ManetNetfilter
                     delete rreq_id_tbl.back();
                     rreq_id_tbl.pop_back();
                 }
+                if (timer)
+                    delete timer;
             }
-
         };
 
         typedef std::map<ManetAddress,rreq_tbl_entry*> DsrRreqTbl;

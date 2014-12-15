@@ -65,6 +65,15 @@ std::ostream& operator<<(std::ostream& os, const DsrDataBase::PathsToDestination
     return os;
 };
 
+std::ostream& operator<<(std::ostream& os, const DSRUU::PacketStoreage& e)
+{
+    os << "expire :" << e.time << " ";
+
+    os << "destination :" << IPv4Address(e.packet->dst.S_addr);
+    return os;
+};
+
+
 
 struct iphdr *DSRUU::dsr_build_ip(struct dsr_pkt *dp, struct in_addr src,
                                   struct in_addr dst, int ip_len, int tot_len,
