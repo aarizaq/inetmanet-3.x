@@ -17,9 +17,13 @@
 
 package inet.physicallayer.ieee80211;
 
-module Ieee80211ScalarRadioMedium extends Ieee80211RadioMedium
+import inet.physicallayer.base.NarrowbandTransmitterBase;
+
+module Ieee80211TransmitterBase extends NarrowbandTransmitterBase
 {
     parameters:
-        analogModelType = default("ScalarAnalogModel");
-        backgroundNoiseType = default("IsotropicScalarBackgroundNoise");
+        int channelNumber;
+        string opMode @enum("b","g","a","p");
+        string preambleMode @enum("long", "short");
+        modulation = default("BPSK"); // TODO: this is simply false
 }

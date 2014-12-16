@@ -17,9 +17,14 @@
 
 package inet.physicallayer.antenna;
 
-import inet.physicallayer.contract.IAntenna;
+import inet.physicallayer.base.AntennaBase;
 
-module DipoleAntenna like IAntenna
+//
+// This antenna model describes the well-known dipole antenna or doublet. It
+// consists of two identical conductive elements, which are bilaterally
+// symmetrical.
+//
+module DipoleAntenna extends AntennaBase
 {
     parameters:
         double length @unit(m); // the length of the dipole antenna

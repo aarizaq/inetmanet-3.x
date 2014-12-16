@@ -15,11 +15,18 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-package inet.physicallayer.ieee80211;
+package inet.physicallayer.base;
 
-module Ieee80211ScalarRadioMedium extends Ieee80211RadioMedium
+import inet.physicallayer.common.Radio;
+
+//
+// This module servces as a base module for narrowband radio models.
+//
+module NarrowbandRadioBase extends Radio
 {
     parameters:
-        analogModelType = default("ScalarAnalogModel");
-        backgroundNoiseType = default("IsotropicScalarBackgroundNoise");
+        double carrierFrequency @unit(Hz);     // center frequency of the band where the radio transmits and receives signals on the medium
+        double bandwidth @unit(Hz);            // bandwidth of the band where the radio transmits and receives signals on the medium
+        *.carrierFrequency = carrierFrequency; // passed down to transmitter and receiver by default
+        *.bandwidth = bandwidth;               // passed down to transmitter and receiver by default
 }

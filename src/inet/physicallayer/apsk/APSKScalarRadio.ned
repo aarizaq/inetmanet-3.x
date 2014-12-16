@@ -17,17 +17,12 @@
 
 package inet.physicallayer.apsk;
 
-import inet.physicallayer.common.Radio;
+import inet.physicallayer.base.NarrowbandRadioBase;
 
-module APSKScalarRadio extends Radio
+module APSKScalarRadio extends NarrowbandRadioBase
 {
     parameters:
-        double carrierFrequency @unit(Hz);
-        double bandwidth @unit(Hz);
         antennaType = default("IsotropicAntenna");
         transmitterType = default("APSKScalarTransmitter");
         receiverType = default("APSKScalarReceiver");
-        *.carrierFrequency = carrierFrequency;
-        *.bandwidth = bandwidth;
-        @class(Radio);
 }

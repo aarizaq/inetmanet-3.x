@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2013 OpenSim Ltd
+// Copyright (C) 2013 OpenSim Ltd.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -15,11 +15,16 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-package inet.physicallayer.ieee80211;
+package inet.physicallayer.base;
 
-module Ieee80211ScalarRadioMedium extends Ieee80211RadioMedium
+import inet.physicallayer.contract.IAntenna;
+
+//
+// This module servces as the base module for antenna models.
+//
+module AntennaBase like IAntenna
 {
     parameters:
-        analogModelType = default("ScalarAnalogModel");
-        backgroundNoiseType = default("IsotropicScalarBackgroundNoise");
+        string mobilityModule = default(".mobility"); // the path to the mobility module relative to the network node
+        @display("i=device/antennatower");
 }
