@@ -17,6 +17,10 @@
 
 package inet.physicallayer.contract;
 
+//
+// The analog model describes how the analog representation of the transmissions
+// is turned into the analog representation of the receptions.
+//
 moduleinterface IAnalogModel
 {
     parameters:

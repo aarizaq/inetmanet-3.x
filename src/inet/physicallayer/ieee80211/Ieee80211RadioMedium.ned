@@ -17,12 +17,13 @@
 
 package inet.physicallayer.ieee80211;
 
-import inet.physicallayer.apsk.APSKScalarRadioMedium;
+import inet.physicallayer.common.RadioMedium;
 
-// TODO: rename to Ieee80211ScalarRadioMedium
-module Ieee80211RadioMedium extends APSKScalarRadioMedium
+module Ieee80211RadioMedium extends RadioMedium
 {
     parameters:
+        propagationType = default("ConstantSpeedPropagation");
+        pathLossType = default("FreeSpacePathLoss");
         // TODO: move to addRadio, query radios for these parameters
         carrierFrequency = default(2.4GHz);
         minReceptionPower = default(-85dBm);
