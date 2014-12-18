@@ -738,10 +738,8 @@ void Ieee80211Mac::handleWithFSM(cMessage *msg)
     Ieee80211Frame *frame;
     if (!initFsm(msg, receptionError, frame))
         return;
-    setProtectionTrue();
     fsm->execute(msg);
     endFsm(msg);
-    setProtectionFalse();
 }
 
 

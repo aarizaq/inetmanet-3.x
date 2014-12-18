@@ -408,16 +408,6 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     cMessage *pendingRadioConfigMsg;
     //@}
 
-    // protection mechanism
-    bool isprotected = false;
-
-    virtual void setProtectionTrue() {isprotected = true;}
-    virtual void setProtectionFalse();
-    std::list<cMessage *> pendingMessages;
-    virtual bool checkProtection(cMessage *msg);
-
-
-
   protected:
     /** @name Timer messages */
     //@{
@@ -640,8 +630,6 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     virtual void flushQueue();
     virtual void clearQueue();
 
-    bool transmissionQueueWithReserveFull(int categorie);
-
     /** @brief Mapping to access categories. */
     virtual int mappingAccessCategory(Ieee80211DataOrMgmtFrame *frame);
 
@@ -761,6 +749,9 @@ class INET_API Ieee80211Mac : public MACProtocolBase
         else
             emit(category, (cObject *)nullptr);
     }
+
+    virtual void configureRadioMode(IRadio::RadioMode radioMode);
+
   public:
     virtual void setQueueModeTrue() {queueMode = true;}
     virtual void setQueueModeFalse() {queueMode = false;}
