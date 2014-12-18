@@ -723,7 +723,7 @@ int Ieee80211Mac::mappingAccessCategory(Ieee80211DataOrMgmtFrame *frame)
                 transmissionQueue()->push_back(frame);
             else {
                 // in other case search the possition
-                std::list<Ieee80211DataOrMgmtFrame *>::iterator p = transmissionQueue()->end();
+                auto p = transmissionQueue()->end();
                 while ((*p)->getReceiverAddress().isMulticast() && (p != transmissionQueue()->begin())) {    // search the first broadcast frame
                     if (dynamic_cast<Ieee80211DataFrame *>(*p) == nullptr)
                         break;
@@ -878,7 +878,7 @@ void Ieee80211Mac::handleLowerPacket(cPacket *msg)
 
     if (registerErrors && twoAddressFrame)
     {
-        Ieee80211ErrorInfo::iterator it = errorInfo.find(frame->getReceiverAddress());
+        auto it = errorInfo.find(frame->getReceiverAddress());
         if (it == errorInfo.end())
         {
             Ieee80211PacketErrorInfo info;
@@ -1437,7 +1437,7 @@ Ieee80211DataOrMgmtFrame *Ieee80211Mac::buildDataFrame(Ieee80211DataOrMgmtFrame 
 
     Ieee80211DataOrMgmtFrame *frame = (Ieee80211DataOrMgmtFrame *)frameToSend->dup();
 
-    if (frameToSend->getControlInfo()!=nullptr)
+    if (frameToSend->getControlInfo() != nullptr)
     {
         cObject * ctr = frameToSend->getControlInfo();
         TransmissionRequest *ctrl = dynamic_cast <TransmissionRequest*> (ctr);
@@ -1449,16 +1449,12 @@ Ieee80211DataOrMgmtFrame *Ieee80211Mac::buildDataFrame(Ieee80211DataOrMgmtFrame 
         frame->setDuration(0);
     else if (!frameToSend->getMoreFragments())
     {
-        if (txop && transmissionQueue()->size() > 1)
-
+        int queueSize = (int) queueModule->getDataSize(currentAC) + (int) queueModule->getManagementSize();
+        if (txop && queueSize > 1)
         {
-            // ++ operation is safe because txop is true
-            std::list<Ieee80211DataOrMgmtFrame*>::iterator nextframeToSend;
-            nextframeToSend = transmissionQueue()->begin();
-            nextframeToSend++;
-            ASSERT(transmissionQueue()->end() != nextframeToSend);
+            Ieee80211DataOrMgmtFrame* nextframeToSend = queueModule->getQueueElement(currentAC,0);
             double bitRate = bitrate;
-            int size = (*nextframeToSend)->getBitLength();
+            int size = nextframeToSend->getBitLength();
             if (transmissionQueue()->front()->getControlInfo() && dynamic_cast<TransmissionRequest*>(transmissionQueue()->front()->getControlInfo()))
             {
                 bitRate = dynamic_cast<TransmissionRequest*>(transmissionQueue()->front()->getControlInfo())->getBitrate().get();
