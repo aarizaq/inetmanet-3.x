@@ -739,10 +739,9 @@ int Ieee80211Mac::mappingAccessCategory(Ieee80211DataOrMgmtFrame *frame)
             transmissionQueue()->push_back(frame);
         }
         else {
-            std::list<Ieee80211DataOrMgmtFrame *>::iterator p;
             //we don't know if first frame in the queue is in middle of transmission
             //so for sure we placed it on second place
-            p = transmissionQueue()->begin();
+            auto p = transmissionQueue()->begin();
             p++;
             while ((dynamic_cast<Ieee80211DataFrame *>(*p) == nullptr) && (p != transmissionQueue()->end())) // search the first not management frame
                 p++;
@@ -920,7 +919,7 @@ void Ieee80211Mac::receiveSignal(cComponent *source, simsignal_t signalID, long 
         handleWithFSM(mediumStateChange);
         IRadio::TransmissionState newRadioTransmissionState = (IRadio::TransmissionState)value;
         if (transmissionState == IRadio::TRANSMISSION_STATE_TRANSMITTING && newRadioTransmissionState == IRadio::TRANSMISSION_STATE_IDLE)
-            radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
+            configureRadioMode(IRadio::RADIO_MODE_RECEIVER);
         transmissionState = newRadioTransmissionState;
     }
 }
@@ -1533,7 +1532,7 @@ Ieee80211DataOrMgmtFrame *Ieee80211Mac::buildMulticastFrame(Ieee80211DataOrMgmtF
 
 Ieee80211Frame *Ieee80211Mac::setBasicBitrate(Ieee80211Frame *frame)
 {
-    ASSERT(frame->getControlInfo()==nullptr);
+    ASSERT(frame->getControlInfo() == nullptr);
     TransmissionRequest *ctrl = new TransmissionRequest();
     ctrl->setBitrate(bps(basicBitrate));
     frame->setControlInfo(ctrl);
@@ -1544,27 +1543,25 @@ Ieee80211Frame *Ieee80211Mac::setControlBitrate(Ieee80211Frame *frame)
 {
     ASSERT(frame->getControlInfo()==nullptr);
     TransmissionRequest *ctrl = new TransmissionRequest();
-    ctrl->setBitrate(bps(controlBitRate));
+    ctrl->setBitrate((bps)controlBitRate);
     frame->setControlInfo(ctrl);
     return frame;
 }
 
 Ieee80211Frame *Ieee80211Mac::setBitrateFrame(Ieee80211Frame *frame)
 {
-    if (rateControlMode == RATE_CR && forceBitRate == false)
-    {
+    if (rateControlMode == RATE_CR && forceBitRate == false) {
         if (frame->getControlInfo())
-            delete  frame->removeControlInfo();
+            delete frame->removeControlInfo();
         return frame;
     }
     TransmissionRequest *ctrl = nullptr;
-    if (frame->getControlInfo()==nullptr)
-    {
+    if (frame->getControlInfo() == nullptr) {
         ctrl = new TransmissionRequest();
         frame->setControlInfo(ctrl);
     }
     else
-        ctrl = dynamic_cast<TransmissionRequest*>(frame->getControlInfo());
+        ctrl = dynamic_cast<TransmissionRequest *>(frame->getControlInfo());
     if (ctrl)
         ctrl->setBitrate(bps(getBitrate()));
     return frame;
@@ -1582,7 +1579,7 @@ void Ieee80211Mac::finishCurrentTransmission()
 
 void Ieee80211Mac::giveUpCurrentTransmission()
 {
-    Ieee80211DataOrMgmtFrame *temp = (Ieee80211DataOrMgmtFrame*) transmissionQueue()->front();
+    Ieee80211DataOrMgmtFrame *temp = (Ieee80211DataOrMgmtFrame *)transmissionQueue()->front();
     sendNotification(NF_LINK_BREAK, temp);
     popTransmissionQueue();
     resetStateVariables();
@@ -1596,7 +1593,7 @@ void Ieee80211Mac::retryCurrentTransmission()
     if (rateControlMode == RATE_AARF || rateControlMode == RATE_ARF)
         reportDataFailed();
     else
-        retryCounter() ++;
+        retryCounter()++;
     numRetry()++;
     backoff() = true;
     generateBackoffPeriod();
@@ -1609,8 +1606,7 @@ Ieee80211DataOrMgmtFrame *Ieee80211Mac::getCurrentTransmission()
 
 void Ieee80211Mac::sendDownPendingRadioConfigMsg()
 {
-    if (pendingRadioConfigMsg != nullptr)
-    {
+    if (pendingRadioConfigMsg != nullptr) {
         sendDown(pendingRadioConfigMsg);
         pendingRadioConfigMsg = nullptr;
     }
@@ -1632,13 +1628,11 @@ void Ieee80211Mac::resetStateVariables()
     else
         retryCounter() = 0;
 
-    if (!transmissionQueue()->empty())
-    {
+    if (!transmissionQueue()->empty()) {
         backoff() = true;
         getCurrentTransmission()->setRetry(false);
     }
-    else
-    {
+    else {
         backoff() = false;
     }
 }
@@ -1671,12 +1665,10 @@ bool Ieee80211Mac::isForUs(Ieee80211Frame *frame)
 
 bool Ieee80211Mac::isSentByUs(Ieee80211Frame *frame)
 {
-
-    if (dynamic_cast<Ieee80211DataOrMgmtFrame *>(frame))
-    {
+    if (dynamic_cast<Ieee80211DataOrMgmtFrame *>(frame)) {
         //EV_DEBUG << "ad3 "<<((Ieee80211DataOrMgmtFrame *)frame)->getAddress3();
         //EV_DEBUG << "myad "<<address<<endl;
-        if ( ((Ieee80211DataOrMgmtFrame *)frame)->getAddress3() == address)//received frame sent by us
+        if (((Ieee80211DataOrMgmtFrame *)frame)->getAddress3() == address) //received frame sent by us
             return 1;
     }
     else
@@ -1688,12 +1680,12 @@ bool Ieee80211Mac::isSentByUs(Ieee80211Frame *frame)
 
 bool Ieee80211Mac::isDataOrMgmtFrame(Ieee80211Frame *frame)
 {
-    return dynamic_cast<Ieee80211DataOrMgmtFrame*>(frame);
+    return dynamic_cast<Ieee80211DataOrMgmtFrame *>(frame);
 }
 
 bool Ieee80211Mac::isMsgAIFS(cMessage *msg)
 {
-    for (int i = 0; i<numCategories(); i++)
+    for (int i = 0; i < numCategories(); i++)
         if (msg == endAIFS(i))
             return true;
     return false;
@@ -1710,10 +1702,8 @@ void Ieee80211Mac::popTransmissionQueue()
     Ieee80211Frame *temp = dynamic_cast<Ieee80211Frame *>(transmissionQueue()->front());
     ASSERT(!transmissionQueue()->empty());
     transmissionQueue()->pop_front();
-    if (queueModule)
-    {
-        if (numCategories()==1)
-        {
+    if (queueModule) {
+        if (numCategories() == 1) {
             // the module are continuously asking for packets
             EV_DEBUG << "requesting another frame from queue module\n";
             queueModule->requestPacket();
@@ -1734,10 +1724,9 @@ double Ieee80211Mac::computeFrameDuration(Ieee80211Frame *msg)
     TransmissionRequest *ctrl;
     double duration;
     EV_DEBUG << *msg;
-    ctrl = dynamic_cast<TransmissionRequest*> ( msg->removeControlInfo() );
-    if ( ctrl )
-    {
-        EV_DEBUG << "Per frame2 params bitrate "<<ctrl->getBitrate()/1e6<<endl;
+    ctrl = dynamic_cast<TransmissionRequest *>(msg->removeControlInfo());
+    if (ctrl) {
+        EV_DEBUG << "Per frame2 params bitrate " << ctrl->getBitrate().get() / 1e6 << "Mb" << endl;
         duration = computeFrameDuration(msg->getBitLength(), ctrl->getBitrate().get());
         delete ctrl;
         return duration;
@@ -1768,7 +1757,7 @@ double Ieee80211Mac::computeFrameDuration(int bits, double bitrate)
     else
         duration = SIMTIME_DBL(Ieee80211Modulation::getPayloadDuration(bits, modType)) + PHY_HEADER_LENGTH;
 
-    EV_DEBUG << " duration="<<duration*1e6<<"us("<<bits<<"bits "<<bitrate/1e6<<"Mbps)"<<endl;
+    EV_DEBUG << " duration=" << duration * 1e6 << "us(" << bits << "bits " << bitrate / 1e6 << "Mbps)" << endl;
     return duration;
 }
 
@@ -1777,26 +1766,26 @@ void Ieee80211Mac::logState()
     int numCategs = numCategories();
     EV_TRACE << "# state information: mode = " << modeName(mode) << ", state = " << fsm.getStateName();
     EV_TRACE << ", backoff 0.." << numCategs << " =";
-    for (int i=0; i<numCategs; i++)
+    for (int i = 0; i < numCategs; i++)
         EV_TRACE << " " << edcCAF[i].backoff;
-    EV_TRACE <<  "\n# backoffPeriod 0.." << numCategs << " =";
-    for (int i=0; i<numCategs; i++)
+    EV_TRACE << "\n# backoffPeriod 0.." << numCategs << " =";
+    for (int i = 0; i < numCategs; i++)
         EV_TRACE << " " << edcCAF[i].backoffPeriod;
     EV_TRACE << "\n# retryCounter 0.." << numCategs << " =";
-    for (int i=0; i<numCategs; i++)
+    for (int i = 0; i < numCategs; i++)
         EV_TRACE << " " << edcCAF[i].retryCounter;
     EV_TRACE << ", radioMode = " << radio->getRadioMode()
              << ", receptionState = " << radio->getReceptionState()
              << ", transmissionState = " << radio->getTransmissionState()
-             << ", nav = " << nav <<  ", txop is "<< txop << "\n";
+             << ", nav = " << nav << ", txop is " << txop << "\n";
     EV_TRACE << "#queue size 0.." << numCategs << " =";
-    for (int i=0; i<numCategs; i++)
+    for (int i = 0; i < numCategs; i++)
         EV_TRACE << " " << transmissionQueue(i)->size();
     EV_TRACE << ", medium is " << (isMediumFree() ? "free" : "busy") << ", scheduled AIFS are";
-    for (int i=0; i<numCategs; i++)
+    for (int i = 0; i < numCategs; i++)
         EV_TRACE << " " << i << "(" << (edcCAF[i].endAIFS->isScheduled() ? "scheduled" : "") << ")";
     EV_TRACE << ", scheduled backoff are";
-    for (int i=0; i<numCategs; i++)
+    for (int i = 0; i < numCategs; i++)
         EV_TRACE << " " << i << "(" << (edcCAF[i].endBackoff->isScheduled() ? "scheduled" : "") << ")";
     EV_TRACE << "\n# currentAC: " << currentAC << ", oldcurrentAC: " << oldcurrentAC;
     if (getCurrentTransmission() != nullptr)
@@ -1808,10 +1797,10 @@ void Ieee80211Mac::logState()
 
 const char *Ieee80211Mac::modeName(int mode)
 {
-#define CASE(x) case x: s=#x; break
+#define CASE(x)    case x: \
+        s = #x; break
     const char *s = "???";
-    switch (mode)
-    {
+    switch (mode) {
         CASE(DCF);
         CASE(PCF);
     }
@@ -1821,34 +1810,20 @@ const char *Ieee80211Mac::modeName(int mode)
 
 bool Ieee80211Mac::transmissionQueueEmpty()
 {
-    for (int i=0; i<numCategories(); i++)
-       if (!transmissionQueue(i)->empty()) return false;
+    for (int i = 0; i < numCategories(); i++)
+        if (!transmissionQueue(i)->empty())
+            return false;
+
     return true;
 }
 
 unsigned int Ieee80211Mac::transmissionQueueSize()
 {
-    unsigned int totalSize=0;
-    for (int i=0; i<numCategories(); i++)
-        totalSize+=transmissionQueue(i)->size();
+    unsigned int totalSize = 0;
+    for (int i = 0; i < numCategories(); i++)
+        totalSize += transmissionQueue(i)->size();
     return totalSize;
 }
-
-bool Ieee80211Mac::transmissionQueueWithReserveFull(int categorie)
-{
-    unsigned int totalSize = 0;
-    unsigned int residual = 0;
-    for (int i=0; i<numCategories(); i++)
-    {
-        totalSize+=transmissionQueue(i)->size();
-        if (transmissionQueue(i)->size() < edcCAF[i].saveSize && i != categorie)
-            residual += (edcCAF[i].saveSize - transmissionQueue(i)->size());
-    }
-    if (maxQueueSize - residual > totalSize)
-        return false;
-    return true;
-}
-
 
 void Ieee80211Mac::flushQueue()
 {
@@ -1864,10 +1839,8 @@ void Ieee80211Mac::flushQueue()
         ((IPassiveQueue*)queueModule)->clear(); // clear request count
     }
 
-    for (int i=0; i<numCategories(); i++)
-    {
-        while (!transmissionQueue(i)->empty())
-        {
+    for (int i = 0; i < numCategories(); i++) {
+        while (!transmissionQueue(i)->empty()) {
             cMessage *msg = transmissionQueue(i)->front();
             transmissionQueue(i)->pop_front();
             //TODO emit(dropPkIfaceDownSignal, msg); -- 'pkDropped' signals are missing in this module!
@@ -1882,10 +1855,8 @@ void Ieee80211Mac::clearQueue()
         ((IPassiveQueue*)queueModule)->clear(); // clear request count
     }
 
-    for (int i=0; i<numCategories(); i++)
-    {
-        while (!transmissionQueue(i)->empty())
-        {
+    for (int i = 0; i < numCategories(); i++) {
+        while (!transmissionQueue(i)->empty()) {
             cMessage *msg = transmissionQueue(i)->front();
             transmissionQueue(i)->pop_front();
             delete msg;
@@ -1896,13 +1867,13 @@ void Ieee80211Mac::clearQueue()
 void Ieee80211Mac::reportDataOk()
 {
     retryCounter() = 0;
-    if (rateControlMode==RATE_CR)
+    if (rateControlMode == RATE_CR)
         return;
-    successCounter ++;
+    successCounter++;
     failedCounter = 0;
     recovery = false;
     if ((successCounter == getSuccessThreshold() || timer == getTimerTimeout())
-            && Ieee80211Descriptor::incIdx(rateIndex))
+        && Ieee80211Descriptor::incIdx(rateIndex))
     {
         setBitrate(Ieee80211Descriptor::getDescriptor(rateIndex).bitrate);
         timer = 0;
@@ -1915,30 +1886,25 @@ void Ieee80211Mac::reportDataFailed(void)
 {
     retryCounter()++;
     if (rateControlMode == RATE_CR)
-       return;
+        return;
     timer++;
     failedCounter++;
     successCounter = 0;
-    if (recovery)
-    {
-        if (retryCounter() == 1)
-        {
+    if (recovery) {
+        if (retryCounter() == 1) {
             reportRecoveryFailure();
             if (Ieee80211Descriptor::decIdx(rateIndex))
                 setBitrate(Ieee80211Descriptor::getDescriptor(rateIndex).bitrate);
         }
         timer = 0;
     }
-    else
-    {
-        if (needNormalFallback())
-        {
+    else {
+        if (needNormalFallback()) {
             reportFailure();
             if (Ieee80211Descriptor::decIdx(rateIndex))
                 setBitrate(Ieee80211Descriptor::getDescriptor(rateIndex).bitrate);
         }
-        if (retryCounter() >= 2)
-        {
+        if (retryCounter() >= 2) {
             timer = 0;
         }
     }
@@ -1981,17 +1947,15 @@ void Ieee80211Mac::setSuccessThreshold(int success_threshold)
 
 void Ieee80211Mac::reportRecoveryFailure(void)
 {
-    if (rateControlMode == RATE_AARF)
-    {
-        setSuccessThreshold((int)(std::min((double)getSuccessThreshold() * successCoeff, (double) maxSuccessThreshold)));
+    if (rateControlMode == RATE_AARF) {
+        setSuccessThreshold((int)(std::min((double)getSuccessThreshold() * successCoeff, (double)maxSuccessThreshold)));
         setTimerTimeout((int)(std::max((double)getMinTimerTimeout(), (double)(getSuccessThreshold() * timerCoeff))));
     }
 }
 
 void Ieee80211Mac::reportFailure(void)
 {
-    if (rateControlMode == RATE_AARF)
-    {
+    if (rateControlMode == RATE_AARF) {
         setTimerTimeout(getMinTimerTimeout());
         setSuccessThreshold(getMinSuccessThreshold());
     }
@@ -1999,12 +1963,10 @@ void Ieee80211Mac::reportFailure(void)
 
 bool Ieee80211Mac::needRecoveryFallback(void)
 {
-    if (retryCounter() == 1)
-    {
+    if (retryCounter() == 1) {
         return true;
     }
-    else
-    {
+    else {
         return false;
     }
 }
@@ -2012,12 +1974,10 @@ bool Ieee80211Mac::needRecoveryFallback(void)
 bool Ieee80211Mac::needNormalFallback(void)
 {
     int retryMod = (retryCounter() - 1) % 2;
-    if (retryMod == 1)
-    {
+    if (retryMod == 1) {
         return true;
     }
-    else
-    {
+    else {
         return false;
     }
 }
@@ -2037,249 +1997,245 @@ void Ieee80211Mac::setBitrate(double rate)
 
 
 // methods for access to specific AC data
-bool & Ieee80211Mac::backoff(int i)
+bool& Ieee80211Mac::backoff(int i)
 {
-    if (i==-1)
+    if (i == -1)
         i = currentAC;
-    if (i>=(int)edcCAF.size())
+    if (i >= (int)edcCAF.size())
         throw cRuntimeError("AC doesn't exist");
     return edcCAF[i].backoff;
 }
 
-simtime_t & Ieee80211Mac::TXOP(int i)
+simtime_t& Ieee80211Mac::TXOP(int i)
 {
-    if (i==-1)
+    if (i == -1)
         i = currentAC;
-    if (i>=(int)edcCAF.size())
+    if (i >= (int)edcCAF.size())
         throw cRuntimeError("AC doesn't exist");
     return edcCAF[i].TXOP;
 }
 
-simtime_t & Ieee80211Mac::backoffPeriod(int i)
+simtime_t& Ieee80211Mac::backoffPeriod(int i)
 {
-    if (i==-1)
+    if (i == -1)
         i = currentAC;
-    if (i>=(int)edcCAF.size())
+    if (i >= (int)edcCAF.size())
         throw cRuntimeError("AC doesn't exist");
     return edcCAF[i].backoffPeriod;
 }
 
-int & Ieee80211Mac::retryCounter(int i)
+int& Ieee80211Mac::retryCounter(int i)
 {
-    if (i==-1)
+    if (i == -1)
         i = currentAC;
-    if (i>=(int)edcCAF.size())
+    if (i >= (int)edcCAF.size())
         throw cRuntimeError("AC doesn't exist");
     return edcCAF[i].retryCounter;
 }
 
-int & Ieee80211Mac::AIFSN(int i)
+int& Ieee80211Mac::AIFSN(int i)
 {
-    if (i==-1)
+    if (i == -1)
         i = currentAC;
-    if (i>=(int)edcCAF.size())
+    if (i >= (int)edcCAF.size())
         throw cRuntimeError("AC doesn't exist");
     return edcCAF[i].AIFSN;
 }
 
-int & Ieee80211Mac::cwMax(int i)
+int& Ieee80211Mac::cwMax(int i)
 {
-    if (i==-1)
+    if (i == -1)
         i = currentAC;
-    if (i>=(int)edcCAF.size())
+    if (i >= (int)edcCAF.size())
         throw cRuntimeError("AC doesn't exist");
     return edcCAF[i].cwMax;
 }
 
-int & Ieee80211Mac::cwMin(int i)
+int& Ieee80211Mac::cwMin(int i)
 {
-    if (i==-1)
+    if (i == -1)
         i = currentAC;
-    if (i>=(int)edcCAF.size())
+    if (i >= (int)edcCAF.size())
         throw cRuntimeError("AC doesn't exist");
     return edcCAF[i].cwMin;
 }
 
-cMessage * Ieee80211Mac::endAIFS(int i)
+cMessage *Ieee80211Mac::endAIFS(int i)
 {
-    if (i==-1)
+    if (i == -1)
         i = currentAC;
-    if (i>=(int)edcCAF.size())
+    if (i >= (int)edcCAF.size())
         throw cRuntimeError("AC doesn't exist");
     return edcCAF[i].endAIFS;
 }
 
-cMessage * Ieee80211Mac::endBackoff(int i)
+cMessage *Ieee80211Mac::endBackoff(int i)
 {
-    if (i==-1)
+    if (i == -1)
         i = currentAC;
-    if (i>=(int)edcCAF.size())
+    if (i >= (int)edcCAF.size())
         throw cRuntimeError("AC doesn't exist");
     return edcCAF[i].endBackoff;
 }
 
 const bool Ieee80211Mac::isBackoffMsg(cMessage *msg)
 {
-    for (unsigned int i=0; i<edcCAF.size(); i++)
-    {
-        if (msg==edcCAF[i].endBackoff)
+    for (unsigned int i = 0; i < edcCAF.size(); i++) {
+        if (msg == edcCAF[i].endBackoff)
             return true;
     }
     return false;
 }
 
 // Statistics
-long & Ieee80211Mac::numRetry(int i)
+long& Ieee80211Mac::numRetry(int i)
 {
-    if (i==-1)
+    if (i == -1)
         i = currentAC;
-    if (i>=(int)edcCAF.size())
+    if (i >= (int)edcCAF.size())
         throw cRuntimeError("AC doesn't exist");
     return edcCAF[i].numRetry;
 }
 
-long & Ieee80211Mac::numSentWithoutRetry(int i)
+long& Ieee80211Mac::numSentWithoutRetry(int i)
 {
-    if (i==-1)
+    if (i == -1)
         i = currentAC;
-    if (i>=(int)numCategories())
+    if (i >= (int)numCategories())
         throw cRuntimeError("AC doesn't exist");
     return edcCAF[i].numSentWithoutRetry;
 }
 
-long & Ieee80211Mac::numGivenUp(int i)
+long& Ieee80211Mac::numGivenUp(int i)
 {
-    if (i==-1)
+    if (i == -1)
         i = currentAC;
-    if (i>=(int)edcCAF.size())
+    if (i >= (int)edcCAF.size())
         throw cRuntimeError("AC doesn't exist");
     return edcCAF[i].numGivenUp;
 }
 
-long & Ieee80211Mac::numSent(int i)
+long& Ieee80211Mac::numSent(int i)
 {
-    if (i==-1)
+    if (i == -1)
         i = currentAC;
-    if (i>=(int)edcCAF.size())
+    if (i >= (int)edcCAF.size())
         throw cRuntimeError("AC doesn't exist");
     return edcCAF[i].numSent;
 }
 
-long & Ieee80211Mac::numDropped(int i)
+long& Ieee80211Mac::numDropped(int i)
 {
-    if (i==-1)
+    if (i == -1)
         i = currentAC;
-    if (i>=(int)edcCAF.size())
+    if (i >= (int)edcCAF.size())
         throw cRuntimeError("AC doesn't exist");
     return edcCAF[i].numDropped;
 }
 
-long & Ieee80211Mac::bits(int i)
+long& Ieee80211Mac::bits(int i)
 {
-    if (i==-1)
+    if (i == -1)
         i = currentAC;
-    if (i>=(int)edcCAF.size())
+    if (i >= (int)edcCAF.size())
         throw cRuntimeError("AC doesn't exist");
     return edcCAF[i].bits;
 }
 
-simtime_t & Ieee80211Mac::minJitter(int i)
+simtime_t& Ieee80211Mac::minJitter(int i)
 {
-    if (i==-1)
+    if (i == -1)
         i = currentAC;
-    if (i>=(int)edcCAF.size())
+    if (i >= (int)edcCAF.size())
         throw cRuntimeError("AC doesn't exist");
     return edcCAF[i].minjitter;
 }
 
-simtime_t & Ieee80211Mac::maxJitter(int i)
+simtime_t& Ieee80211Mac::maxJitter(int i)
 {
-    if (i==-1)
+    if (i == -1)
         i = currentAC;
-    if (i>=(int)edcCAF.size())
+    if (i >= (int)edcCAF.size())
         throw cRuntimeError("AC doesn't exist");
     return edcCAF[i].maxjitter;
 }
 
 // out vectors
 
-
-cOutVector * Ieee80211Mac::jitter(int i)
+cOutVector *Ieee80211Mac::jitter(int i)
 {
-    if (i==-1)
+    if (i == -1)
         i = currentAC;
-    if (i>=(int)edcCAF.size())
+    if (i >= (int)edcCAF.size())
         throw cRuntimeError("AC doesn't exist");
     return edcCAFOutVector[i].jitter;
 }
 
-cOutVector * Ieee80211Mac::macDelay(int i)
+cOutVector *Ieee80211Mac::macDelay(int i)
 {
-    if (i==-1)
+    if (i == -1)
         i = currentAC;
-    if (i>=(int)edcCAF.size())
+    if (i >= (int)edcCAF.size())
         throw cRuntimeError("AC doesn't exist");
     return edcCAFOutVector[i].macDelay;
 }
 
-cOutVector * Ieee80211Mac::throughput(int i)
+cOutVector *Ieee80211Mac::throughput(int i)
 {
-    if (i==-1)
+    if (i == -1)
         i = currentAC;
-    if (i>=(int)edcCAF.size())
+    if (i >= (int)edcCAF.size())
         throw cRuntimeError("AC doesn't exist");
     return edcCAFOutVector[i].throughput;
 }
 
-Ieee80211Mac::Ieee80211DataOrMgmtFrameList * Ieee80211Mac::transmissionQueue(int i)
+Ieee80211Mac::Ieee80211DataOrMgmtFrameList *Ieee80211Mac::transmissionQueue(int i)
 {
-    if (i==-1)
+    if (i == -1)
         i = currentAC;
-    if (i>=(int)edcCAF.size())
+    if (i >= (int)edcCAF.size())
         throw cRuntimeError("AC doesn't exist");
     return &(edcCAF[i].transmissionQueue);
 }
 
 
-ModulationType
-Ieee80211Mac::getControlAnswerMode(ModulationType reqMode)
+ModulationType Ieee80211Mac::getControlAnswerMode(ModulationType reqMode)
 {
-  /**
-   * The standard has relatively unambiguous rules for selecting a
-   * control response rate (the below is quoted from IEEE 802.11-2007,
-   * Section 9.6):
-   *
-   *   To allow the transmitting STA to calculate the contents of the
-   *   Duration/ID field, a STA responding to a received frame shall
-   *   transmit its Control Response frame (either CTS or ACK), other
-   *   than the BlockAck control frame, at the highest rate in the
-   *   BSSBasicRateSet parameter that is less than or equal to the
-   *   rate of the immediately previous frame in the frame exchange
-   *   sequence (as defined in 9.12) and that is of the same
-   *   modulation class (see 9.6.1) as the received frame...
-   */
+    /**
+     * The standard has relatively unambiguous rules for selecting a
+     * control response rate (the below is quoted from IEEE 802.11-2007,
+     * Section 9.6):
+     *
+     *   To allow the transmitting STA to calculate the contents of the
+     *   Duration/ID field, a STA responding to a received frame shall
+     *   transmit its Control Response frame (either CTS or ACK), other
+     *   than the BlockAck control frame, at the highest rate in the
+     *   BSSBasicRateSet parameter that is less than or equal to the
+     *   rate of the immediately previous frame in the frame exchange
+     *   sequence (as defined in 9.12) and that is of the same
+     *   modulation class (see 9.6.1) as the received frame...
+     */
 
-  /**
-   * If no suitable basic rate was found, we search the mandatory
-   * rates. The standard (IEEE 802.11-2007, Section 9.6) says:
-   *
-   *   ...If no rate contained in the BSSBasicRateSet parameter meets
-   *   these conditions, then the control frame sent in response to a
-   *   received frame shall be transmitted at the highest mandatory
-   *   rate of the PHY that is less than or equal to the rate of the
-   *   received frame, and that is of the same modulation class as the
-   *   received frame. In addition, the Control Response frame shall
-   *   be sent using the same PHY options as the received frame,
-   *   unless they conflict with the requirement to use the
-   *   BSSBasicRateSet parameter.
-   *
-   * TODO: Note that we're ignoring the last sentence for now, because
-   * there is not yet any manipulation here of PHY options.
-   */
+    /**
+     * If no suitable basic rate was found, we search the mandatory
+     * rates. The standard (IEEE 802.11-2007, Section 9.6) says:
+     *
+     *   ...If no rate contained in the BSSBasicRateSet parameter meets
+     *   these conditions, then the control frame sent in response to a
+     *   received frame shall be transmitted at the highest mandatory
+     *   rate of the PHY that is less than or equal to the rate of the
+     *   received frame, and that is of the same modulation class as the
+     *   received frame. In addition, the Control Response frame shall
+     *   be sent using the same PHY options as the received frame,
+     *   unless they conflict with the requirement to use the
+     *   BSSBasicRateSet parameter.
+     *
+     * TODO: Note that we're ignoring the last sentence for now, because
+     * there is not yet any manipulation here of PHY options.
+     */
     bool found = false;
     ModulationType mode;
-    for (int idx = Ieee80211Descriptor::getMinIdx(opMode); idx < Ieee80211Descriptor::size(); idx++)
-    {
+    for (int idx = Ieee80211Descriptor::getMinIdx(opMode); idx < Ieee80211Descriptor::size(); idx++) {
         if (Ieee80211Descriptor::getDescriptor(idx).mode != opMode)
             break;
         ModulationType thismode;
@@ -2288,19 +2244,19 @@ Ieee80211Mac::getControlAnswerMode(ModulationType reqMode)
         if (opMode == 'n' && carrierFrequency == 5e6)
             Ieee80211Modulation::setHTFrequency11n5Gh(thismode);
 
-      /* If the rate:
-       *
-       *  - is a mandatory rate for the PHY, and
-       *  - is equal to or faster than our current best choice, and
-       *  - is less than or equal to the rate of the received frame, and
-       *  - is of the same modulation class as the received frame
-       *
-       * ...then it's our best choice so far.
-       */
+        /* If the rate:
+         *
+         *  - is a mandatory rate for the PHY, and
+         *  - is equal to or faster than our current best choice, and
+         *  - is less than or equal to the rate of the received frame, and
+         *  - is of the same modulation class as the received frame
+         *
+         * ...then it's our best choice so far.
+         */
         if (thismode.getIsMandatory()
-                && (!found || thismode.getPhyRate() > mode.getPhyRate())
-                && thismode.getPhyRate() <= reqMode.getPhyRate()
-                && thismode.getModulationClass() == reqMode.getModulationClass())
+            && (!found || thismode.getPhyRate() > mode.getPhyRate())
+            && thismode.getPhyRate() <= reqMode.getPhyRate()
+            && thismode.getModulationClass() == reqMode.getModulationClass())
         {
             mode = thismode;
             // As above; we've found a potentially-suitable transmit
@@ -2321,8 +2277,7 @@ Ieee80211Mac::getControlAnswerMode(ModulationType reqMode)
      * Either way, it is serious - we can either disobey the standard or
      * fail, and I have chosen to do the latter...
      */
-    if (!found)
-    {
+    if (!found) {
         throw cRuntimeError("Can't find response rate for reqMode. Check standard and selected rates match.");
     }
 
@@ -2334,8 +2289,7 @@ void Ieee80211Mac::sendUp(cMessage *msg)
 {
     EV_INFO << "sending up " << msg << "\n";
 
-    if (!isDuplicated(msg)) // duplicate detection filter
-    {
+    if (!isDuplicated(msg)) {    // duplicate detection filter
         if (msg->isPacket())
             emit(packetSentToUpperSignal, msg);
 
@@ -2345,14 +2299,11 @@ void Ieee80211Mac::sendUp(cMessage *msg)
 
 void Ieee80211Mac::removeOldTuplesFromDuplicateMap()
 {
-    if (duplicateDetect && lastTimeDelete+duplicateTimeOut>=simTime())
-    {
-        lastTimeDelete=simTime();
-        for (Ieee80211ASFTupleList::iterator it = asfTuplesList.begin(); it!=asfTuplesList.end(); )
-        {
-            if (it->second.receivedTime+duplicateTimeOut<simTime())
-            {
-                Ieee80211ASFTupleList::iterator itAux=it;
+    if (duplicateDetect && lastTimeDelete + duplicateTimeOut >= simTime()) {
+        lastTimeDelete = simTime();
+        for (auto it = asfTuplesList.begin(); it != asfTuplesList.end(); ) {
+            if (it->second.receivedTime + duplicateTimeOut < simTime()) {
+                auto itAux = it;
                 it++;
                 asfTuplesList.erase(itAux);
             }
@@ -2362,7 +2313,7 @@ void Ieee80211Mac::removeOldTuplesFromDuplicateMap()
     }
 }
 
-const MACAddress & Ieee80211Mac::isInterfaceRegistered()
+const MACAddress& Ieee80211Mac::isInterfaceRegistered()
 {
     if (!par("multiMac").boolValue())
         return MACAddress::UNSPECIFIED_ADDRESS;
@@ -2379,30 +2330,25 @@ const MACAddress & Ieee80211Mac::isInterfaceRegistered()
 
 bool Ieee80211Mac::isDuplicated(cMessage *msg)
 {
-    if (duplicateDetect) // duplicate detection filter
-    {
-        Ieee80211DataOrMgmtFrame *frame = dynamic_cast<Ieee80211DataOrMgmtFrame*>(msg);
-        if (frame)
-        {
-            Ieee80211ASFTupleList::iterator it = asfTuplesList.find(frame->getTransmitterAddress());
-            if (it == asfTuplesList.end())
-            {
+    if (duplicateDetect) {    // duplicate detection filter
+        Ieee80211DataOrMgmtFrame *frame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg);
+        if (frame) {
+            auto it = asfTuplesList.find(frame->getTransmitterAddress());
+            if (it == asfTuplesList.end()) {
                 Ieee80211ASFTuple tuple;
                 tuple.receivedTime = simTime();
                 tuple.sequenceNumber = frame->getSequenceNumber();
                 tuple.fragmentNumber = frame->getFragmentNumber();
                 asfTuplesList.insert(std::pair<MACAddress, Ieee80211ASFTuple>(frame->getTransmitterAddress(), tuple));
             }
-            else
-            {
+            else {
                 // check if duplicate
                 if (it->second.sequenceNumber == frame->getSequenceNumber()
-                        && it->second.fragmentNumber == frame->getFragmentNumber())
+                    && it->second.fragmentNumber == frame->getFragmentNumber())
                 {
                     return true;
                 }
-                else
-                {
+                else {
                     // actualize
                     it->second.sequenceNumber = frame->getSequenceNumber();
                     it->second.fragmentNumber = frame->getFragmentNumber();
@@ -2422,8 +2368,7 @@ void Ieee80211Mac::promiscousFrame(cMessage *msg)
 
 bool Ieee80211Mac::isBackoffPending()
 {
-    for (unsigned int i = 0; i<edcCAF.size(); i++)
-    {
+    for (unsigned int i = 0; i < edcCAF.size(); i++) {
         if (edcCAF[i].backoff)
             return true;
     }
@@ -2450,12 +2395,12 @@ int Ieee80211Mac::getQueueSizeAddress(const MACAddress &addr)
 double Ieee80211Mac::controlFrameTxTime(int bits)
 {
      double duration;
-     if (PHY_HEADER_LENGTH<0)
+     if (PHY_HEADER_LENGTH < 0)
          duration = SIMTIME_DBL(Ieee80211Modulation::calculateTxDuration(bits, controlFrameModulationType, wifiPreambleType));
      else
-         duration = SIMTIME_DBL(Ieee80211Modulation::getPayloadDuration(bits, controlFrameModulationType))+PHY_HEADER_LENGTH;
+         duration = SIMTIME_DBL(Ieee80211Modulation::getPayloadDuration(bits, controlFrameModulationType)) + PHY_HEADER_LENGTH;
 
-     EV<<" duration="<<duration*1e6<<"us("<<bits<<"bits "<<controlFrameModulationType.getPhyRate()/1e6<<"Mbps)"<<endl;
+     EV_DEBUG << " duration=" << duration*1e6 << "us(" << bits << "bits " << controlFrameModulationType.getPhyRate()/1e6 << "Mbps)" << endl;
      return duration;
 }
 
@@ -2493,6 +2438,17 @@ void Ieee80211Mac::handleNodeCrash()
             transmissionQueue(i)->pop_front();
             delete temp;
         }
+    }
+}
+
+void Ieee80211Mac::configureRadioMode(IRadio::RadioMode radioMode)
+{
+    if (radio->getRadioMode() != radioMode) {
+        ConfigureRadioCommand *configureCommand = new ConfigureRadioCommand();
+        configureCommand->setRadioMode(radioMode);
+        cMessage *message = new cMessage("configureRadioMode", RADIO_C_CONFIGURE);
+        message->setControlInfo(configureCommand);
+        sendDown(message);
     }
 }
 

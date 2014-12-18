@@ -614,8 +614,6 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     virtual void flushQueue();
     virtual void clearQueue();
 
-    bool transmissionQueueWithReserveFull(int categorie);
-
     /** @brief Mapping to access categories. */
     virtual int mappingAccessCategory(Ieee80211DataOrMgmtFrame *frame);
 
@@ -735,6 +733,9 @@ class INET_API Ieee80211Mac : public MACProtocolBase
         else
             emit(category, (cObject *)nullptr);
     }
+
+    virtual void configureRadioMode(IRadio::RadioMode radioMode);
+
   public:
     virtual void setQueueModeTrue() {queueMode = true;}
     virtual void setQueueModeFalse() {queueMode = false;}
