@@ -299,6 +299,7 @@ void DsrDataBase::erasePathWithNode(const ManetAddress &dest)
         return;
     deleteAddress(dest);
     simtime_t now = simTime();
+    std::vector<PathsDataBase::iterator> erased;
 
     for (PathsDataBase::iterator itMap = pathsCache.begin();itMap != pathsCache.end();++itMap)
     {
@@ -316,7 +317,14 @@ void DsrDataBase::erasePathWithNode(const ManetAddress &dest)
                 continue;
             }
             ++itPaths;
-       }
+        }
+        if (itMap->second.empty())
+            erased.push_back(itMap);
+    }
+    while(!erased.empty())
+    {
+        pathsCache.erase(erased.back());
+        erased.pop_back();
     }
 }
 
@@ -328,6 +336,7 @@ void DsrDataBase::erasePathWithLink(const ManetAddress &addr1,const ManetAddress
     simtime_t now = simTime();
     ManetAddress sequence[] = {addr1,addr2};
     ManetAddress sequenceRev[] = {addr2,addr1};
+    std::vector<PathsDataBase::iterator> erased;
     for (PathsDataBase::iterator itMap = pathsCache.begin();itMap != pathsCache.end();++itMap)
     {
         for(PathsToDestination::iterator itPaths = itMap->second.begin(); itPaths != itMap->second.end();)
@@ -377,9 +386,15 @@ void DsrDataBase::erasePathWithLink(const ManetAddress &addr1,const ManetAddress
                 }
 
             }
-
             ++itPaths;
-       }
+        }
+        if (itMap->second.empty())
+                  erased.push_back(itMap);
+    }
+    while(!erased.empty())
+    {
+        pathsCache.erase(erased.back());
+        erased.pop_back();
     }
 }
 
