@@ -666,7 +666,7 @@ bool DsrDataBase::getRoute(const L3Address &nodeId,PathCacheRoute &pathNode, uns
         if (it==routeMap.end())
             opp_error("error in data routeMap");
     }
-    for (unsigned int i = path.size()-1 ; i > 0 ; i--)
+    for (int i = (int)path.size()-1 ; i > 0 ; i--)
         pathNode.push_back(path[i]);
     return true;
 }

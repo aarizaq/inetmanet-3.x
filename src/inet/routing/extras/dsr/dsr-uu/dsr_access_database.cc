@@ -165,11 +165,11 @@ void DSRUU::ph_srt_add_map(struct dsr_srt *srt, usecs_t timeout, unsigned short 
     else if (srt->dst.s_addr==myaddr.s_addr)
     {
         is_last = true;
-        for (unsigned int i = srt->addrs.size()-1 ; i >= 0; i--)
+        for (int i = (int)srt->addrs.size()-1 ; i >= 0; i--)
         {
             route2.push_back(L3Address(IPv4Address(srt->addrs[i].s_addr)));
         }
-        for (unsigned int i = srt->cost.size()-1 ; i >= 0; i--)
+        for (int i = (int)srt->cost.size()-1 ; i >= 0; i--)
         {
             costVect2.push_back(srt->cost[i]);
         }
