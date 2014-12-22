@@ -304,6 +304,7 @@ void DsrDataBase::erasePathWithNode(const L3Address &dest)
         return;
     deleteAddress(dest);
     simtime_t now = simTime();
+    std::vector<PathsDataBase::iterator> erased;
 
     for (auto itMap = pathsCache.begin();itMap != pathsCache.end();++itMap)
     {
@@ -321,7 +322,14 @@ void DsrDataBase::erasePathWithNode(const L3Address &dest)
                 continue;
             }
             ++itPaths;
-       }
+        }
+        if (itMap->second.empty())
+            erased.push_back(itMap);
+    }
+    while(!erased.empty())
+    {
+        pathsCache.erase(erased.back());
+        erased.pop_back();
     }
 }
 
@@ -333,6 +341,7 @@ void DsrDataBase::erasePathWithLink(const L3Address &addr1,const L3Address &addr
     simtime_t now = simTime();
     L3Address sequence[] = {addr1,addr2};
     L3Address sequenceRev[] = {addr2,addr1};
+    std::vector<PathsDataBase::iterator> erased;
     for (auto itMap = pathsCache.begin();itMap != pathsCache.end();++itMap)
     {
         for(auto itPaths = itMap->second.begin(); itPaths != itMap->second.end();)
@@ -384,7 +393,14 @@ void DsrDataBase::erasePathWithLink(const L3Address &addr1,const L3Address &addr
             }
 
             ++itPaths;
-       }
+        }
+        if (itMap->second.empty())
+            erased.push_back(itMap);
+    }
+    while(!erased.empty())
+    {
+        pathsCache.erase(erased.back());
+        erased.pop_back();
     }
 }
 
@@ -712,7 +728,7 @@ bool DsrDataBase::getRouteCost(const L3Address &nodeId, PathCacheRoute &pathNode
 void DsrDataBase::purgePathCache()
 {
     std::vector<PathsDataBase::iterator> erased;
-    for (auto itmap = pathsCache.begin();itmap != pathsCache.end();++itmap)
+    for (auto itmap = pathsCache.begin(); itmap != pathsCache.end(); ++itmap)
     {
         simtime_t now = simTime();
         for (auto itPaths = itmap->second.begin();  itPaths != itmap->second.end();)
