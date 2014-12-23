@@ -28,7 +28,7 @@ bool DsrDataBase::getPaths(const ManetAddress &addr, std::vector<PathCacheRoute>
 {
     result.clear();
     resultCost.clear();
-    PathsDataBase::iterator it = pathsCache.find(addr);
+    auto it = pathsCache.find(addr);
     if (it == pathsCache.end())
         return false;
     simtime_t now = simTime();
@@ -38,7 +38,7 @@ bool DsrDataBase::getPaths(const ManetAddress &addr, std::vector<PathCacheRoute>
         pathsCache.erase(it);
         return false;
     }
-    for (PathsToDestination::iterator itPaths = it->second.begin();  itPaths != it->second.end();)
+    for (auto itPaths = it->second.begin();  itPaths != it->second.end();)
     {
         // check timers
         if (now >= itPaths->getExpires())
@@ -67,7 +67,7 @@ bool DsrDataBase::getPath(const ManetAddress &dest, PathCacheRoute &route, doubl
 
     bool found = false;
 
-    PathsDataBase::iterator it = pathsCache.find(dest);
+    auto it = pathsCache.find(dest);
     if (it == pathsCache.end())
         return found;
     if (it->second.empty()) // check active routes
@@ -80,48 +80,50 @@ bool DsrDataBase::getPath(const ManetAddress &dest, PathCacheRoute &route, doubl
     int cont = -1;
     simtime_t now = simTime();
 
-    for (PathsToDestination::iterator itPaths = it->second.begin();  itPaths != it->second.end();)
+    for (auto itPaths = it->second.begin();  itPaths != it->second.end();)
     {
         // check timers
         if (now >= itPaths->getExpires())
-            itPaths = it->second.erase(itPaths);
-        else
         {
-            cont++;
-            if (itPaths->status == VALID)
-            {
-                double costPath;
-                if (!itPaths->vector_cost.empty())
-                {
-                    itPaths->vector_cost[0] = cost;
-                    for (unsigned int i = 0; i< itPaths->vector_cost.size(); i++)
-                    {
-                        costPath += itPaths->vector_cost[i];
-                    }
-                }
-                else
-                {
-                    costPath = itPaths->route.size()+1;
-                }
-                if (!found || cost > costPath)
-                {
-
-                    position = cont;
-                    route = itPaths->getRoute();
-                    cost = costPath;
-                }
-                found = true;
-            }
-            ++itPaths;
+            itPaths = it->second.erase(itPaths);
+            continue;
         }
+        cont++;
+        if (itPaths->status == VALID)
+        {
+            double costPath;
+            if (!itPaths->vector_cost.empty())
+            {
+                itPaths->vector_cost[0] = cost;
+                for (unsigned int i = 0; i< itPaths->vector_cost.size(); i++)
+                {
+                    costPath += itPaths->vector_cost[i];
+                }
+            }
+            else
+            {
+                costPath = itPaths->route.size()+1;
+            }
+            if (!found || cost > costPath)
+            {
+                position = cont;
+                route = itPaths->getRoute();
+                cost = costPath;
+            }
+            found = true;
+        }
+        ++itPaths;
     }
 
+    if (it->second.empty()) // check active routes
+    {
+        pathsCache.erase(it);
+        return found;
+    }
 
     if (timeout > 0 && position >= 0)
         it->second[position].expires = simTime() + (((double)timeout)/1000000.0);
 
-    if (it->second.empty()) // check active routes
-        pathsCache.erase(it);
     return found;
 }
 
@@ -135,7 +137,7 @@ bool DsrDataBase::getPathCosVect(const ManetAddress &dest, PathCacheRoute &route
 
     bool found = false;
 
-    PathsDataBase::iterator it = pathsCache.find(dest);
+    auto it = pathsCache.find(dest);
     if (it == pathsCache.end())
         return found;
     if (it->second.empty()) // check active routes
@@ -148,53 +150,58 @@ bool DsrDataBase::getPathCosVect(const ManetAddress &dest, PathCacheRoute &route
     int cont = -1;
     simtime_t now = simTime();
 
-    for (PathsToDestination::iterator itPaths = it->second.begin();  itPaths != it->second.end();)
+    for (auto itPaths = it->second.begin();  itPaths != it->second.end();)
     {
         // check timers
         if (now >= itPaths->getExpires())
-            itPaths = it->second.erase(itPaths);
-        else
         {
-            cont++;
-            if (itPaths->status == VALID)
-            {
-                double costPath;
-                if (!itPaths->vector_cost.empty())
-                {
-                    for (unsigned int i = 0; i< itPaths->vector_cost.size(); i++)
-                    {
-                        costPath += itPaths->vector_cost[i];
-                    }
-                }
-                else
-                {
-                    costPath = itPaths->route.size()+1;
-                }
-                if (!found || cost > costPath)
-                {
-                    position = cont;
-                    route = itPaths->getRoute();
-                    costVect = itPaths->getCostVector();
-                    cost = costPath;
-                }
-                found = true;
-            }
-            ++itPaths;
+            itPaths = it->second.erase(itPaths);
+            continue;
         }
+
+        cont++;
+        if (itPaths->status == VALID)
+        {
+            double costPath;
+            if (!itPaths->vector_cost.empty())
+            {
+                for (unsigned int i = 0; i< itPaths->vector_cost.size(); i++)
+                {
+                    costPath += itPaths->vector_cost[i];
+                }
+            }
+            else
+            {
+                costPath = itPaths->route.size()+1;
+            }
+            if (!found || cost > costPath)
+            {
+                position = cont;
+                route = itPaths->getRoute();
+                costVect = itPaths->getCostVector();
+                cost = costPath;
+            }
+            found = true;
+        }
+        ++itPaths;
+    }
+
+    if (it->second.empty()) // check active routes
+    {
+        pathsCache.erase(it);
+        return found;
     }
 
     if (timeout>0 && position >=0)
         it->second[position].expires = simTime() + (((double)timeout)/1000000.0);
 
-    if (it->second.empty()) // check active routes
-        pathsCache.erase(it);
     return found;
 }
 
 
 void DsrDataBase::setPath(const ManetAddress &dest,const PathCacheRoute &route,const PathCacheCost& costVect,const double &cost, int status, const unsigned int &timeout)
 {
-    PathsDataBase::iterator it = pathsCache.find(dest);
+    auto it = pathsCache.find(dest);
     simtime_t now = simTime();
     if (it == pathsCache.end())
     {
@@ -202,7 +209,7 @@ void DsrDataBase::setPath(const ManetAddress &dest,const PathCacheRoute &route,c
         it = pathsCache.find(dest);
     }
     // check if route exist
-    for (PathsToDestination::iterator itPaths = it->second.begin();  itPaths != it->second.end();)
+    for (auto itPaths = it->second.begin();  itPaths != it->second.end();)
     {
         // check timers
         if (route == itPaths->route)
@@ -233,13 +240,13 @@ void DsrDataBase::setPath(const ManetAddress &dest,const PathCacheRoute &route,c
 
 void DsrDataBase::setPathStatus(const ManetAddress &dest,const PathCacheRoute &route, int status)
 {
-    PathsDataBase::iterator it = pathsCache.find(dest);
+    auto it = pathsCache.find(dest);
     simtime_t now = simTime();
     if (it == pathsCache.end())
         return;
 
     // check if route exist
-    for (PathsToDestination::iterator itPaths = it->second.begin();  itPaths != it->second.end();)
+    for (auto itPaths = it->second.begin();  itPaths != it->second.end();)
     {
         // check timers
         if (route == itPaths->route)
@@ -255,11 +262,13 @@ void DsrDataBase::setPathStatus(const ManetAddress &dest,const PathCacheRoute &r
         else
             ++itPaths;
     }
+    if (it->second.empty())
+        pathsCache.erase(it);
 }
 
 void DsrDataBase::setPathsTimer(const ManetAddress &dest,const PathCacheRoute &route, const unsigned int &timeout)
 {
-    PathsDataBase::iterator it = pathsCache.find(dest);
+    auto it = pathsCache.find(dest);
     simtime_t now = simTime();
 
     if (timeout == 0)
@@ -268,7 +277,7 @@ void DsrDataBase::setPathsTimer(const ManetAddress &dest,const PathCacheRoute &r
         return;
 
     // check if route exist
-    for (PathsToDestination::iterator itPaths = it->second.begin();  itPaths != it->second.end();)
+    for (auto itPaths = it->second.begin();  itPaths != it->second.end();)
     {
         // check timers
         if (route == itPaths->route)
@@ -284,12 +293,14 @@ void DsrDataBase::setPathsTimer(const ManetAddress &dest,const PathCacheRoute &r
         else
             ++itPaths;
     }
+    if (it->second.empty())
+         pathsCache.erase(it);
 }
 
 
 void DsrDataBase::deleteAddress(const ManetAddress &dest)
 {
-    PathsDataBase::iterator it = pathsCache.find(dest);
+    auto it = pathsCache.find(dest);
     if (it != pathsCache.end())
         pathsCache.erase(it);
 }
@@ -302,16 +313,16 @@ void DsrDataBase::erasePathWithNode(const ManetAddress &dest)
     simtime_t now = simTime();
     std::vector<PathsDataBase::iterator> erased;
 
-    for (PathsDataBase::iterator itMap = pathsCache.begin();itMap != pathsCache.end();++itMap)
+    for (auto itMap = pathsCache.begin();itMap != pathsCache.end();++itMap)
     {
-        for(PathsToDestination::iterator itPaths = itMap->second.begin(); itPaths != itMap->second.end();)
+        for(auto itPaths = itMap->second.begin(); itPaths != itMap->second.end();)
         {
             if (now >= itPaths->getExpires())
             {
                 itPaths = itMap->second.erase(itPaths);
                 continue;
             }
-            std::vector<ManetAddress>::iterator pos = std::find(itPaths->route.begin(),itPaths->route.end(),dest);
+            auto pos = std::find(itPaths->route.begin(),itPaths->route.end(),dest);
             if (pos != itPaths->route.end())
             {
                 itPaths = itMap->second.erase(itPaths);
@@ -338,9 +349,63 @@ void DsrDataBase::erasePathWithLink(const ManetAddress &addr1,const ManetAddress
     ManetAddress sequence[] = {addr1,addr2};
     ManetAddress sequenceRev[] = {addr2,addr1};
     std::vector<PathsDataBase::iterator> erased;
-    for (PathsDataBase::iterator itMap = pathsCache.begin();itMap != pathsCache.end();++itMap)
+
+    if (rootNode == addr1)
     {
-        for(PathsToDestination::iterator itPaths = itMap->second.begin(); itPaths != itMap->second.end();)
+        auto itMap = pathsCache.find(addr2);
+        if (itMap != pathsCache.end())
+        {
+            for(auto itPaths = itMap->second.begin(); itPaths != itMap->second.end();)
+            {
+                if (now >= itPaths->getExpires())
+                {
+                    itPaths = itMap->second.erase(itPaths);
+                    continue;
+                }
+                if (itPaths->route.empty())
+                {
+                    itPaths = itMap->second.erase(itPaths);
+                    continue;
+                }
+                ++itPaths;
+            }
+            if (itMap->second.empty())
+                pathsCache.erase(itMap);
+        }
+
+        for (itMap = pathsCache.begin();itMap != pathsCache.end();++itMap)
+        {
+            unsigned int size = itMap->second.size();
+            int contador = 0;
+            for(auto itPaths = itMap->second.begin(); itPaths != itMap->second.end();)
+            {
+                contador++;
+                if (now >= itPaths->getExpires())
+                {
+                    itPaths = itMap->second.erase(itPaths);
+                    continue;
+                }
+                if (!itPaths->route.empty() && itPaths->route[0] == addr2)
+                {
+                    itPaths = itMap->second.erase(itPaths);
+                    continue;
+                }
+                ++itPaths;
+            }
+            if (itMap->second.empty())
+                erased.push_back(itMap);
+        }
+        while(!erased.empty())
+        {
+            pathsCache.erase(erased.back());
+            erased.pop_back();
+        }
+        return;
+    }
+
+    for (auto itMap = pathsCache.begin();itMap != pathsCache.end();++itMap)
+    {
+        for(auto itPaths = itMap->second.begin(); itPaths != itMap->second.end();)
         {
             if (now >= itPaths->getExpires())
             {
@@ -366,7 +431,7 @@ void DsrDataBase::erasePathWithLink(const ManetAddress &addr1,const ManetAddress
                     continue;
                 }
             }
-            std::vector<ManetAddress>::iterator pos = std::search(itPaths->route.begin(),itPaths->route.end(),sequence,sequence+1);
+            auto pos = std::search(itPaths->route.begin(),itPaths->route.end(),sequence,sequence+1);
             if (pos != itPaths->route.end())
             {
                 itPaths = itMap->second.erase(itPaths);
@@ -379,7 +444,7 @@ void DsrDataBase::erasePathWithLink(const ManetAddress &addr1,const ManetAddress
                     itPaths = itMap->second.erase(itPaths);
                     continue;
                 }
-                std::vector<ManetAddress>::iterator pos = std::search(itPaths->route.begin(),itPaths->route.end(),sequenceRev,sequenceRev+1);
+                auto pos = std::search(itPaths->route.begin(),itPaths->route.end(),sequenceRev,sequenceRev+1);
                 if (pos != itPaths->route.end())
                 {
                     itPaths = itMap->second.erase(itPaths);
@@ -390,7 +455,7 @@ void DsrDataBase::erasePathWithLink(const ManetAddress &addr1,const ManetAddress
             ++itPaths;
         }
         if (itMap->second.empty())
-                  erased.push_back(itMap);
+            erased.push_back(itMap);
     }
     while(!erased.empty())
     {
@@ -452,7 +517,7 @@ void DsrDataBase::DijkstraShortest::State::setCostVector(const double &costData)
 
 void DsrDataBase::cleanLinkArray()
 {
-    for (LinkArray::iterator it=linkArray.begin();it!=linkArray.end();it++)
+    for (auto it=linkArray.begin();it!=linkArray.end();it++)
         while (!it->second.empty())
         {
             delete it->second.back();
@@ -465,8 +530,7 @@ void DsrDataBase::addEdge (const ManetAddress & originNode, const ManetAddress &
 {
     // invalidate data base
     routeMap.clear();
-    LinkArray::iterator it;
-    it = linkArray.find(originNode);
+    auto it = linkArray.find(originNode);
     if (it!=linkArray.end())
     {
          for (unsigned int i=0;i<it->second.size();i++)
@@ -496,11 +560,10 @@ void DsrDataBase::deleteEdge (const ManetAddress & originNode, const ManetAddres
     // invalidate data base
     routeMap.clear();
 
-    LinkArray::iterator it;
-    it = linkArray.find(originNode);
+    auto it = linkArray.find(originNode);
     if (it!=linkArray.end())
     {
-         for ( LinkCon::iterator itAux= it->second.begin(); itAux != it->second.end();++itAux)
+         for (auto itAux= it->second.begin(); itAux != it->second.end();++itAux)
          {
              if (last_node == (*itAux)->last_node_)
              {
@@ -514,7 +577,7 @@ void DsrDataBase::deleteEdge (const ManetAddress & originNode, const ManetAddres
         it = linkArray.find(last_node);
         if (it!=linkArray.end())
         {
-             for ( LinkCon::iterator itAux= it->second.begin(); itAux != it->second.end();++itAux)
+             for (auto itAux= it->second.begin(); itAux != it->second.end();++itAux)
              {
                  if (originNode == (*itAux)->last_node_)
                  {
@@ -543,8 +606,7 @@ void DsrDataBase::run(const ManetAddress &target)
     if (linkArray.empty())
         return;
 
-    LinkArray::iterator it;
-    it = linkArray.find(rootNode);
+    auto it = linkArray.find(rootNode);
     if (it==linkArray.end())
     {
         return;
@@ -587,9 +649,7 @@ void DsrDataBase::run(const ManetAddress &target)
         DsrDataBase::DijkstraShortest::SetElem elem = *itHeap;
         heap.erase(itHeap);
 
-        RouteMap::iterator it;
-
-        it = routeMap.find(elem.iD);
+        auto it = routeMap.find(elem.iD);
         if (it==routeMap.end())
             opp_error("node not found in routeMap %s",elem.iD.getIPv4().str().c_str());
 
@@ -600,9 +660,9 @@ void DsrDataBase::run(const ManetAddress &target)
         if (target == elem.iD)
             return;
 
-        LinkArray::iterator linkIt=linkArray.find(elem.iD);
+        auto linkIt=linkArray.find(elem.iD);
 
-        for (LinkCon::iterator itCon = linkIt->second.begin() ; itCon != linkIt->second.end();)
+        for (auto itCon = linkIt->second.begin() ; itCon != linkIt->second.end();)
         {
             // first check if link is valid
             if ((*itCon)->expires <= simTime())
@@ -611,7 +671,7 @@ void DsrDataBase::run(const ManetAddress &target)
                 continue;
             }
             DsrDataBase::DijkstraShortest::Edge* current_edge = *itCon;
-            RouteMap::iterator itNext = routeMap.find(current_edge->last_node_);
+            auto itNext = routeMap.find(current_edge->last_node_);
             if (itNext != routeMap.end() && itNext->second.label == perm)
             {
                 ++itCon;
@@ -659,7 +719,7 @@ bool DsrDataBase::getRoute(const ManetAddress &nodeId,PathCacheRoute &pathNode, 
     if (routeMap.empty())
         run(); // built routes
 
-    RouteMap::iterator it = routeMap.find(nodeId);
+    auto it = routeMap.find(nodeId);
     if (it==routeMap.end())
         return false;
 
@@ -693,7 +753,7 @@ bool DsrDataBase::getRouteCost(const ManetAddress &nodeId, PathCacheRoute &pathN
     if (routeMap.empty())
         run(); // built routes
 
-    RouteMap::iterator it = routeMap.find(nodeId);
+    auto it = routeMap.find(nodeId);
     if (it==routeMap.end())
         return false;
 
@@ -728,10 +788,10 @@ bool DsrDataBase::getRouteCost(const ManetAddress &nodeId, PathCacheRoute &pathN
 void DsrDataBase::purgePathCache()
 {
     std::vector<PathsDataBase::iterator> erased;
-    for (PathsDataBase::iterator itmap = pathsCache.begin();itmap != pathsCache.end();++itmap)
+    for (auto itmap = pathsCache.begin();itmap != pathsCache.end();++itmap)
     {
         simtime_t now = simTime();
-        for (PathsToDestination::iterator itPaths = itmap->second.begin();  itPaths != itmap->second.end();)
+        for (auto itPaths = itmap->second.begin();  itPaths != itmap->second.end();)
         {
             // check timers
             if (now >= itPaths->getExpires())

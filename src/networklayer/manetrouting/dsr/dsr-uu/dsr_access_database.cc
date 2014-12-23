@@ -378,9 +378,6 @@ struct dsr_srt *DSRUU::ph_srt_find_link_route_map(struct in_addr src, struct in_
     PathCacheRoute route;
     PathCacheCost vector_cost;
 
-    struct in_addr myAddr = my_addr();
-    pathCacheMap.setRoot(ManetAddress(IPv4Address(myAddr.s_addr)));
-
     if(!pathCacheMap.getRoute(ManetAddress(IPv4Address(dst.s_addr)),route,timeout))
         return NULL;
 

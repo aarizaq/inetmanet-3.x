@@ -150,7 +150,7 @@ int NSCLASS dsr_rerr_send(struct dsr_pkt *dp_trigg, struct in_addr unr_addr)
     len -= DSR_OPT_HDR_LEN;
     dp->dh.opth.begin()->p_len = len;
 
-    dsr_srt_opt_add(buf, len, 0, 0, dp->srt);
+    dp->srt_opt = dsr_srt_opt_add(buf, len, 0, 0, dp->srt);
 
     if (!dp->srt_opt)
     {

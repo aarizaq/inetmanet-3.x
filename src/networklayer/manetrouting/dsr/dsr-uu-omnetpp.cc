@@ -444,6 +444,8 @@ void DSRUU::initialize(int stage)
             }
         }
         interface80211ptr->ipv4Data()->joinMulticastGroup(IPv4Address::LL_MANET_ROUTERS);
+        struct in_addr myAddr = my_addr();
+        pathCacheMap.setRoot(ManetAddress(IPv4Address(myAddr.s_addr)));
         is_init = true;
         EV << "Dsr active" << "\n";
         WATCH_MAP(pathCacheMap.pathsCache);
