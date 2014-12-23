@@ -282,7 +282,7 @@ void DSRUU::ph_srt_add_map(struct dsr_srt *srt, usecs_t timeout, unsigned short 
     if (is_first)
         return;
 
-    if (srt->flags & SRT_BIDIR&flags)
+    if (srt->flags & SRT_BIDIR & flags)
     {
 
         for (unsigned int i = 0; i < route2.size(); i++)

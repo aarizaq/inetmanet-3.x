@@ -117,7 +117,7 @@ bool DsrDataBase::getPath(const ManetAddress &dest, PathCacheRoute &route, doubl
     }
 
 
-    if (timeout>0 && position >=0)
+    if (timeout > 0 && position >= 0)
         it->second[position].expires = simTime() + (((double)timeout)/1000000.0);
 
     if (it->second.empty()) // check active routes
@@ -227,6 +227,7 @@ void DsrDataBase::setPath(const ManetAddress &dest,const PathCacheRoute &route,c
     path.vector_cost = costVect;
     path.status = status;
     path.route = route;
+    path.expires = simTime() + (((double)timeout)/1000000.0);
     it->second.push_back(path);
 }
 
@@ -472,7 +473,7 @@ void DsrDataBase::addEdge (const ManetAddress & originNode, const ManetAddress &
          {
              if (last_node == it->second[i]->last_node_)
              {
-                  it->second[i]->costAdd =cost;
+                  it->second[i]->costAdd = cost;
                   it->second[i]->expires = simTime() + (((double)exp)/1000000.0);
                   return;
              }

@@ -474,6 +474,7 @@ DSRUU::DSRUU():cSimpleModule(), INotifiable()
     ack_timer_ptr = new DSRUUTimer(this);
     etx_timer_ptr = new DSRUUTimer(this);
     is_init = false;
+    rreqInfoMap.clear();
 }
 
 DSRUU::~DSRUU()
@@ -484,6 +485,7 @@ DSRUU::~DSRUU()
     send_buf_cleanup();
     maint_buf_cleanup();
     pathCacheMap.cleanAllDataBase();
+    rreqInfoMap.clear();
     struct dsr_pkt * pkt;
     pkt = lifoDsrPkt;
 // delete ETX
@@ -902,6 +904,7 @@ struct dsr_srt *DSRUU:: RouteFind(struct in_addr src, struct in_addr dst)
 int DSRUU::RouteAdd(struct dsr_srt *srt, unsigned long timeout, unsigned short flags)
 {
 
+    flags |= SRT_BIDIR;
 
     if (ConfVal(PathCache))
     {

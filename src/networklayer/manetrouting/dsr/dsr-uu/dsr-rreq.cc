@@ -369,8 +369,61 @@ int NSCLASS dsr_rreq_duplicate(struct in_addr initiator, struct in_addr target,
     d.length=&length;
     d.addrs = &addrs;
 
-
     ManetAddress addrInitiator(IPv4Address(initiator.s_addr));
+    auto ite = rreqInfoMap.find(addrInitiator);
+    if (ite != rreqInfoMap.end())
+    {
+        for (auto itId = ite->second.begin() ; itId != ite->second.end(); )
+        {
+            if (simTime() - itId->time > 100)
+            {
+                itId = ite->second.erase(itId);
+                continue;
+            }
+            if (itId->seq != id)
+            {
+                ++itId;
+                continue;
+            }
+            if (itId->seq == id)
+            {
+
+                if (ConfVal(RREQMulVisit) && itId->paths.size() < ConfVal(RREQMulVisit))
+                {
+                    for (unsigned int i = 0; i < itId->paths.size(); i++)
+                    {
+                        VectorAddress ad = itId->paths[i];
+                        if (ad == addrs)
+                            return 1;
+                    }
+                }
+                else
+                    return 1;
+            }
+        }
+    }
+
+    if (ite == rreqInfoMap.end())
+    {
+       RreqSeqInfo infoData;
+       infoData.seq = id;
+       infoData.time = simTime();
+       infoData.paths.push_back(addrs);
+       RreqSeqInfoVector vec;
+       vec.push_back(infoData);
+       rreqInfoMap[addrInitiator] = vec;
+    }
+    else
+    {
+        RreqSeqInfo infoData;
+        infoData.seq = id;
+        infoData.time = simTime();
+        infoData.paths.push_back(addrs);
+        ite->second.push_back(infoData);
+    }
+
+
+
     DsrRreqTbl::iterator it = dsrRreqTbl.find(addrInitiator);
     if (it == dsrRreqTbl.end())
         return 0;
@@ -597,6 +650,7 @@ int NSCLASS dsr_rreq_opt_recv(struct dsr_pkt *dp, struct dsr_rreq_opt *rreq_opt)
     }
 
     send_buf_set_verdict(SEND_BUF_SEND, srt_rev->dst);
+
     rreq_tbl_route_discovery_cancel(srt_rev->dst);
 
     if (rreq_opt->target == myaddr.s_addr)
