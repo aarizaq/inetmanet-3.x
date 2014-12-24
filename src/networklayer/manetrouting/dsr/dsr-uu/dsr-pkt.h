@@ -77,12 +77,11 @@ struct dsr_pkt
          std::vector<struct dsr_opt_hdr>opth;
     } dh;
 
-    int num_rrep_opts, num_rerr_opts, num_rreq_opts, num_ack_opts;
     struct dsr_srt_opt *srt_opt;
-    struct dsr_rreq_opt *rreq_opt;  /* Can only be one */
-    struct dsr_rrep_opt *rrep_opt[MAX_RREP_OPTS];
-    struct dsr_rerr_opt *rerr_opt[MAX_RERR_OPTS];
-    struct dsr_ack_opt *ack_opt[MAX_ACK_OPTS];
+    std::vector<struct dsr_rreq_opt *> rreq_opt;  /* Can only be one */
+    std::vector<struct dsr_rrep_opt *> rrep_opt;
+    std::vector<struct dsr_rerr_opt *> rerr_opt;
+    std::vector<struct dsr_ack_opt *> ack_opt;
     struct dsr_ack_req_opt *ack_req_opt;
     struct dsr_srt *srt;    /* Source route */
     int payload_len;
@@ -111,30 +110,30 @@ struct dsr_pkt
     {
         costVector.clear();
         dh.opth.clear();
+        src.s_addr = 0; /* IP level data */
+        dst = nxt_hop = prv_hop = src;
+        flags = salvage = numRetries = 0;
+        mac.raw = NULL;
+        memset(mac_data,0,sizeof(mac_data));
+        nh.raw = NULL;
+        memset(ip_data,0,sizeof(ip_data));
+        srt_opt = NULL;
+        ack_req_opt = NULL;
+        srt = NULL;
+        srt_opt = NULL;
+        payload_len = 0;
+        moreFragments = false;
+        fragmentOffset = totalPayloadLength = 0;
+        payload = NULL;
+        ip_pkt = NULL;
+        encapsulate_protocol = 0;
+        next = NULL;
 
+        rreq_opt.clear();  /* Can only be one */
+        rrep_opt.clear();
+        rerr_opt.clear();
+        ack_opt.clear();
 
-       src.s_addr = 0; /* IP level data */
-       dst = nxt_hop = prv_hop = src;
-       flags = salvage = numRetries = 0;
-       mac.raw = NULL;
-       memset(mac_data,0,sizeof(mac_data));
-       nh.raw = NULL;
-       memset(ip_data,0,sizeof(ip_data));
-       num_rrep_opts = num_rerr_opts = num_rreq_opts = num_ack_opts =0;
-       srt_opt = NULL;
-       rreq_opt = NULL;  /* Can only be one */
-       memset(rrep_opt,0,sizeof(rrep_opt));
-       memset(rerr_opt,0,sizeof(rerr_opt));
-       memset(ack_opt,0,sizeof(ack_opt));
-       ack_req_opt = NULL;
-       srt = NULL;
-       payload_len = 0;
-       moreFragments = false;
-       fragmentOffset = totalPayloadLength = 0;
-       payload = NULL;
-       ip_pkt = NULL;
-       encapsulate_protocol = 0;
-       next = NULL;
     }
     struct dsr_pkt *dup();
 };

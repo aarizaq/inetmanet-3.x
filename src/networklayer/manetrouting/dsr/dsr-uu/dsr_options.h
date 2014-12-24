@@ -252,7 +252,9 @@ struct dsr_rerr_opt : public dsr_opt
     u_int8_t salv:4;
     u_int32_t err_src;
     u_int32_t err_dst;
-    std::vector<char>info;
+
+    u_int32_t info;
+    //std::vector<char>info;
 
     dsr_rerr_opt &  operator= (const dsr_rerr_opt &m)
      {
@@ -280,7 +282,8 @@ struct dsr_rerr_opt : public dsr_opt
          salv = 0;
          err_src = 0;
          err_dst = 0;
-         info.clear();
+         info = 0;
+         //info.clear();
 
      }
 

@@ -121,8 +121,6 @@ int dsr_opt_parse(struct dsr_pkt *dp)
         return -1;
 
 
-    dp->num_rrep_opts = dp->num_rerr_opts = dp->num_rreq_opts = dp->num_ack_opts = 0;
-
     dp->srt_opt = NULL;
     dp->ack_req_opt = NULL;
 
@@ -136,24 +134,24 @@ int dsr_opt_parse(struct dsr_pkt *dp)
                  case DSR_OPT_PADN:
                  break;
                  case DSR_OPT_RREQ:
-                     if (dp->num_rreq_opts == 0)
-                         dp->rreq_opt = (struct dsr_rreq_opt *)dopt;
+                     if (dp->rreq_opt.empty())
+                         dp->rreq_opt.push_back((struct dsr_rreq_opt *)dopt);
                      #ifndef NS2
                      else
                          DEBUG("ERROR: More than one RREQ option!!\n");
                      #endif
                  break;
                  case DSR_OPT_RREP:
-                     if (dp->num_rrep_opts < MAX_RREP_OPTS)
-                         dp->rrep_opt[dp->num_rrep_opts++] = (struct dsr_rrep_opt *)dopt;
+                     if (dp->rrep_opt.size() < MAX_RREP_OPTS)
+                         dp->rrep_opt.push_back((struct dsr_rrep_opt *)dopt);
                        #ifndef NS2
                           else
                              DEBUG("Maximum RREP opts in one packet reached\n");
                        #endif
                  break;
                  case DSR_OPT_RERR:
-                     if (dp->num_rerr_opts < MAX_RERR_OPTS)
-                          dp->rerr_opt[dp->num_rerr_opts++] = (struct dsr_rerr_opt *)dopt;
+                     if (dp->rerr_opt.size() < MAX_RERR_OPTS)
+                          dp->rerr_opt.push_back((struct dsr_rerr_opt *)dopt);
                      #ifndef NS2
                      else
                           DEBUG("Maximum RERR opts in one packet reached\n");
@@ -162,8 +160,8 @@ int dsr_opt_parse(struct dsr_pkt *dp)
                  case DSR_OPT_PREV_HOP:
                  break;
                  case DSR_OPT_ACK:
-                     if (dp->num_ack_opts < MAX_ACK_OPTS)
-                         dp->ack_opt[dp->num_ack_opts++] = (struct dsr_ack_opt *)dopt;
+                     if (dp->ack_opt.size() < MAX_ACK_OPTS)
+                         dp->ack_opt.push_back((struct dsr_ack_opt *)dopt);
                      #ifndef NS2
                      else
                            DEBUG("Maximum ACK opts in one packet reached\n");
@@ -249,7 +247,7 @@ int NSCLASS dsr_opt_recv(struct dsr_pkt *dp)
                 case DSR_OPT_RERR:
                     if (dp->flags & PKT_PROMISC_RECV)
                         break;
-                    if (dp->num_rerr_opts < MAX_RERR_OPTS)
+                    if (dp->rerr_opt.size() < MAX_RERR_OPTS)
                     {
                         action |= dsr_rerr_opt_recv(dp, (struct dsr_rerr_opt *)dopt);
                     }
@@ -259,10 +257,9 @@ int NSCLASS dsr_opt_recv(struct dsr_pkt *dp)
                 case DSR_OPT_ACK:
                     if (dp->flags & PKT_PROMISC_RECV)
                         break;
-                    if (dp->num_ack_opts < MAX_ACK_OPTS)
+                    if (dp->ack_opt.size()  < MAX_ACK_OPTS)
                     {
-                        dp->ack_opt[dp->num_ack_opts++] =
-                                (struct dsr_ack_opt *)dopt;
+                        dp->ack_opt.push_back((struct dsr_ack_opt *)dopt);
                         action |=
                                 dsr_ack_opt_recv((struct dsr_ack_opt *) dopt);
                     }

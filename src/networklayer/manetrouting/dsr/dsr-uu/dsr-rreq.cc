@@ -524,9 +524,9 @@ int NSCLASS dsr_rreq_send(struct in_addr target, int ttl)
     len -= DSR_OPT_HDR_LEN;
     dp->dh.opth.begin()->p_len = len;
 
-    dp->rreq_opt = dsr_rreq_opt_add(buf, len, target, ++rreq_seqno);
+    dp->rreq_opt.push_back(dsr_rreq_opt_add(buf, len, target, ++rreq_seqno));
 
-    if (!dp->rreq_opt)
+    if (!dp->rreq_opt.back())
     {
         DEBUG("Could not create RREQ opt\n");
         goto out_err;
@@ -561,15 +561,13 @@ int NSCLASS dsr_rreq_opt_recv(struct dsr_pkt *dp, struct dsr_rreq_opt *rreq_opt)
     if (!dp || !rreq_opt || (dp->flags & PKT_PROMISC_RECV))
         return DSR_PKT_DROP;
 
-    dp->num_rreq_opts++;
-
-    if (dp->num_rreq_opts > 1)
+    if (dp->rreq_opt.size() > 1)
     {
         DEBUG("More than one RREQ opt!!! - Ignoring\n");
         return DSR_PKT_ERROR;
     }
 
-    dp->rreq_opt = rreq_opt;
+    dp->rreq_opt.push_back(rreq_opt);
 
     myaddr = my_addr();
 

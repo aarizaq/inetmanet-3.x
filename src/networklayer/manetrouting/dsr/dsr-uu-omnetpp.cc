@@ -69,7 +69,7 @@ std::ostream& operator<<(std::ostream& os, const DSRUU::PacketStoreage& e)
 {
     os << "expire :" << e.time << " ";
 
-    os << "destination :" << IPv4Address(e.packet->dst.S_addr);
+    os << "destination :" << IPv4Address(e.packet->dst.s_addr);
     return os;
 };
 
@@ -1099,7 +1099,7 @@ double DSRUU::PathCost(struct dsr_pkt *dp)
     double totalCost;
     if (!etxActive)
     {
-        totalCost = (double)(DSR_RREQ_ADDRS_LEN(dp->rreq_opt)/DSR_ADDRESS_SIZE);
+        totalCost = (double)(DSR_RREQ_ADDRS_LEN(dp->rreq_opt.front())/DSR_ADDRESS_SIZE);
         totalCost += 1;
         return totalCost;
     }
