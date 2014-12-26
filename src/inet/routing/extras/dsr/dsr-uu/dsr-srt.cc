@@ -820,8 +820,8 @@ int NSCLASS dsr_srt_opt_recv(struct dsr_pkt *dp, struct dsr_srt_opt *srt_opt)
         else
             ph_srt_add_node_map(dp->prv_hop,ConfValToUsecs(RouteCacheTimeout), 0,0);
 
-        struct dsr_srt * from_me_to_dest=nullptr;
-        struct dsr_srt * from_me_to_src=nullptr;
+        struct dsr_srt * from_me_to_dest = nullptr;
+        struct dsr_srt * from_me_to_src = nullptr;
         struct in_addr split_add;
 
         if (next_hop_intended.s_addr != myaddr.s_addr)
@@ -837,6 +837,7 @@ int NSCLASS dsr_srt_opt_recv(struct dsr_pkt *dp, struct dsr_srt_opt *srt_opt)
         {
             dsr_rtc_add(from_me_to_dest, ConfValToUsecs(RouteCacheTimeout), 0);
             /* Send buffered packets and cancel discovery*/
+            /*
             for (unsigned int i = 0; i < from_me_to_dest->addrs.size(); i++ )
             {
                 send_buf_set_verdict(SEND_BUF_SEND, from_me_to_dest->addrs[i]);
@@ -844,11 +845,13 @@ int NSCLASS dsr_srt_opt_recv(struct dsr_pkt *dp, struct dsr_srt_opt *srt_opt)
             }
             send_buf_set_verdict(SEND_BUF_SEND, from_me_to_dest->dst);
             rreq_tbl_route_discovery_cancel(from_me_to_dest->dst);
+            */
             delete from_me_to_dest;
         }
         if (from_me_to_src)
         {
             dsr_rtc_add(from_me_to_src, ConfValToUsecs(RouteCacheTimeout), 0);
+            /*
             for (unsigned int i = 0; i < from_me_to_src->addrs.size(); i++ )
             {
                 send_buf_set_verdict(SEND_BUF_SEND, from_me_to_src->addrs[i]);
@@ -856,6 +859,7 @@ int NSCLASS dsr_srt_opt_recv(struct dsr_pkt *dp, struct dsr_srt_opt *srt_opt)
             }
             send_buf_set_verdict(SEND_BUF_SEND, from_me_to_src->dst);
             rreq_tbl_route_discovery_cancel(from_me_to_src->dst);
+            */
             delete from_me_to_src;
         }
 

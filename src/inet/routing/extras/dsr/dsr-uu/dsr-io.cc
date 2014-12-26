@@ -103,12 +103,12 @@ int NSCLASS dsr_recv(struct dsr_pkt *dp)
             DEBUG("Send ICMP\n");
             break;
         case DSR_PKT_SEND_BUFFERED:
-            if (dp->rrep_opt)
+            if (!dp->rrep_opt.empty())
             {
                 struct in_addr rrep_srt_dst;
                 int i;
 
-                for (i = 0; i < dp->num_rrep_opts; i++)
+                for (i = 0; i < (int)dp->rrep_opt.size(); i++)
                 {
                     for (unsigned int j = 0; j < dp->rrep_opt[i]->addrs.size(); j++)
                     {

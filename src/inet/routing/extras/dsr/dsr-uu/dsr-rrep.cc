@@ -261,10 +261,9 @@ int NSCLASS dsr_rrep_send(struct dsr_srt *srt, struct dsr_srt *srt_to_me)
 
     len -= DSR_SRT_OPT_LEN(srt);
 
-    dp->rrep_opt[dp->num_rrep_opts++] =
-        dsr_rrep_opt_add(buf, len, srt_to_me);
+    dp->rrep_opt.push_back(dsr_rrep_opt_add(buf, len, srt_to_me));
 
-    if (!dp->rrep_opt[dp->num_rrep_opts - 1])
+    if (!dp->rrep_opt.back())
     {
         DEBUG("Could not create RREP option header\n");
         goto out_err;
@@ -308,8 +307,8 @@ int NSCLASS dsr_rrep_opt_recv(struct dsr_pkt *dp, struct dsr_rrep_opt *rrep_opt)
     if (!dp || !rrep_opt || dp->flags & PKT_PROMISC_RECV)
         return DSR_PKT_ERROR;
 
-    if (dp->num_rrep_opts < MAX_RREP_OPTS)
-        dp->rrep_opt[dp->num_rrep_opts++] = rrep_opt;
+    if (dp->rrep_opt.size() < MAX_RREP_OPTS)
+        dp->rrep_opt.push_back(rrep_opt);
     else
         return DSR_PKT_ERROR;
 

@@ -209,12 +209,12 @@ class DSRUU:public cSimpleModule, public cListener, public ManetNetfilterHook
         struct dsr_srt *ph_srt_find_link_route_map(struct in_addr src, struct in_addr dst, unsigned int timeout);
 
 // Buffer storate
-
-        struct PacketStoreage{
+    public:
+        struct PacketStoreage {
                 simtime_t time;
                 struct dsr_pkt *packet;
         };
-
+    private:
         unsigned int buffMaxlen;
         typedef std::multimap<L3Address, PacketStoreage> PacketBuffer;
         PacketBuffer packetBuffer;
@@ -329,8 +329,18 @@ class DSRUU:public cSimpleModule, public cListener, public ManetNetfilterHook
                 if (timer)
                     delete timer;
             }
-
         };
+
+        struct RreqSeqInfo
+        {
+             unsigned int seq;
+             simtime_t time;
+             std::vector<VectorAddress> paths;
+        };
+
+        typedef std::deque<RreqSeqInfo> RreqSeqInfoVector;
+        typedef std::map<L3Address,RreqSeqInfoVector> RreqInfoMap;
+        RreqInfoMap rreqInfoMap;
 
         typedef std::map<L3Address,rreq_tbl_entry*> DsrRreqTbl;
         DsrRreqTbl dsrRreqTbl;

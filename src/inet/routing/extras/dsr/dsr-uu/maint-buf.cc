@@ -418,8 +418,6 @@ void NSCLASS maint_buf_set_timeout(void)
     if (maint_buf.empty())
         return;
 
-    struct maint_entry *m;
-
 // I am not sure if the time out must be, in theory only m->ack_req_sent active must be in the queue, in other case the packets aren't included
  /*
     MaintBuf::iterator it;
@@ -619,6 +617,7 @@ void NSCLASS maint_buf_cleanup(void)
         maint_buf.erase(maint_buf.begin());
     }
 }
+
 
 } // namespace inetmanet
 
