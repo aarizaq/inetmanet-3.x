@@ -67,6 +67,15 @@ std::ostream& operator<<(std::ostream& os, const DsrDataBase::PathsToDestination
     return os;
 };
 
+std::ostream& operator<<(std::ostream& os, const DSRUU::PacketStoreage& e)
+{
+    os << "expire :" << e.time << " ";
+
+    os << "destination :" << IPv4Address(e.packet->dst.s_addr);
+    return os;
+};
+
+
 
 struct iphdr *DSRUU::dsr_build_ip(struct dsr_pkt *dp, struct in_addr src,
                                   struct in_addr dst, int ip_len, int tot_len,
@@ -438,6 +447,8 @@ void DSRUU::initialize(int stage)
             }
         }
         interface80211ptr->ipv4Data()->joinMulticastGroup(IPv4Address::LL_MANET_ROUTERS);
+        struct in_addr myAddr = my_addr();
+        pathCacheMap.setRoot(L3Address(IPv4Address(myAddr.s_addr)));
         is_init = true;
         EV_INFO << "Dsr active" << "\n";
         WATCH_MAP(pathCacheMap.pathsCache);
@@ -467,6 +478,7 @@ DSRUU::DSRUU():cSimpleModule(), cListener()
     ack_timer_ptr = new DSRUUTimer(this);
     etx_timer_ptr = new DSRUUTimer(this);
     is_init = false;
+    rreqInfoMap.clear();
 }
 
 DSRUU::~DSRUU()
@@ -477,6 +489,7 @@ DSRUU::~DSRUU()
     send_buf_cleanup();
     maint_buf_cleanup();
     pathCacheMap.cleanAllDataBase();
+    rreqInfoMap.clear();
     struct dsr_pkt * pkt;
     pkt = lifoDsrPkt;
 // delete ETX
@@ -1081,7 +1094,7 @@ double DSRUU::PathCost(struct dsr_pkt *dp)
     double totalCost;
     if (!etxActive)
     {
-        totalCost = (double)(DSR_RREQ_ADDRS_LEN(dp->rreq_opt)/DSR_ADDRESS_SIZE);
+        totalCost = (double)(DSR_RREQ_ADDRS_LEN(dp->rreq_opt.front())/DSR_ADDRESS_SIZE);
         totalCost += 1;
         return totalCost;
     }

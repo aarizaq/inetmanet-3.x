@@ -165,11 +165,11 @@ void DSRUU::ph_srt_add_map(struct dsr_srt *srt, usecs_t timeout, unsigned short 
     else if (srt->dst.s_addr==myaddr.s_addr)
     {
         is_last = true;
-        for (int i = (int)srt->addrs.size()-1 ; i >= 0; i--)
+        for (unsigned int i = srt->addrs.size()-1 ; i >= 0; i--)
         {
             route2.push_back(L3Address(IPv4Address(srt->addrs[i].s_addr)));
         }
-        for (int i = (int)srt->cost.size()-1 ; i >= 0; i--)
+        for (unsigned int i = srt->cost.size()-1 ; i >= 0; i--)
         {
             costVect2.push_back(srt->cost[i]);
         }
@@ -380,9 +380,6 @@ struct dsr_srt *DSRUU::ph_srt_find_link_route_map(struct in_addr src, struct in_
 {
     PathCacheRoute route;
     PathCacheCost vector_cost;
-
-    struct in_addr myAddr = my_addr();
-    pathCacheMap.setRoot(L3Address(IPv4Address(myAddr.s_addr)));
 
     if(!pathCacheMap.getRoute(L3Address(IPv4Address(dst.s_addr)),route,timeout))
         return nullptr;

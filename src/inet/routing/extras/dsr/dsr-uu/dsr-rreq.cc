@@ -140,7 +140,6 @@ NSCLASS rreq_tbl_entry *NSCLASS __rreq_tbl_entry_create(struct in_addr node_addr
     e->ttl = 0;
     memset(&e->tx_time, 0, sizeof(struct timeval));
     e->num_rexmts = 0;
-    e->timer=nullptr;
 #ifndef OMNETPP
 #ifdef NS2
     e->timer = new DSRUUTimer(this, "RREQTblTimer");
@@ -374,6 +373,59 @@ int NSCLASS dsr_rreq_duplicate(struct in_addr initiator, struct in_addr target,
 
 
     L3Address addrInitiator(IPv4Address(initiator.s_addr));
+    auto ite = rreqInfoMap.find(addrInitiator);
+    if (ite != rreqInfoMap.end())
+    {
+        for (auto itId = ite->second.begin() ; itId != ite->second.end(); )
+        {
+            if (simTime() - itId->time > 100)
+            {
+                itId = ite->second.erase(itId);
+                continue;
+            }
+            if (itId->seq != id)
+            {
+                ++itId;
+                continue;
+            }
+            if (itId->seq == id)
+            {
+
+                if (ConfVal(RREQMulVisit) && itId->paths.size() < ConfVal(RREQMulVisit))
+                {
+                    for (unsigned int i = 0; i < itId->paths.size(); i++)
+                    {
+                        VectorAddress ad = itId->paths[i];
+                        if (ad == addrs)
+                            return 1;
+                    }
+                }
+                else
+                    return 1;
+            }
+        }
+    }
+
+    if (ite == rreqInfoMap.end())
+    {
+       RreqSeqInfo infoData;
+       infoData.seq = id;
+       infoData.time = simTime();
+       infoData.paths.push_back(addrs);
+       RreqSeqInfoVector vec;
+       vec.push_back(infoData);
+       rreqInfoMap[addrInitiator] = vec;
+    }
+    else
+    {
+        RreqSeqInfo infoData;
+        infoData.seq = id;
+        infoData.time = simTime();
+        infoData.paths.push_back(addrs);
+        ite->second.push_back(infoData);
+    }
+
+
     auto it = dsrRreqTbl.find(addrInitiator);
     if (it == dsrRreqTbl.end())
         return 0;
@@ -474,9 +526,9 @@ int NSCLASS dsr_rreq_send(struct in_addr target, int ttl)
     len -= DSR_OPT_HDR_LEN;
     dp->dh.opth.begin()->p_len = len;
 
-    dp->rreq_opt = dsr_rreq_opt_add(buf, len, target, ++rreq_seqno);
+    dp->rreq_opt.push_back(dsr_rreq_opt_add(buf, len, target, ++rreq_seqno));
 
-    if (!dp->rreq_opt)
+    if (!dp->rreq_opt.back())
     {
         DEBUG("Could not create RREQ opt\n");
         goto out_err;
@@ -511,15 +563,13 @@ int NSCLASS dsr_rreq_opt_recv(struct dsr_pkt *dp, struct dsr_rreq_opt *rreq_opt)
     if (!dp || !rreq_opt || (dp->flags & PKT_PROMISC_RECV))
         return DSR_PKT_DROP;
 
-    dp->num_rreq_opts++;
-
-    if (dp->num_rreq_opts > 1)
+    if (dp->rreq_opt.size() > 1)
     {
         DEBUG("More than one RREQ opt!!! - Ignoring\n");
         return DSR_PKT_ERROR;
     }
 
-    dp->rreq_opt = rreq_opt;
+    dp->rreq_opt.push_back(rreq_opt);
 
     myaddr = my_addr();
 
@@ -529,7 +579,7 @@ int NSCLASS dsr_rreq_opt_recv(struct dsr_pkt *dp, struct dsr_rreq_opt *rreq_opt)
         if (dp->src.s_addr == myaddr.s_addr)
             return DSR_PKT_DROP;
         n = DSR_RREQ_ADDRS_LEN(rreq_opt) / sizeof(struct in_addr);
-        for (i = 0; i < rreq_opt->addrs.size(); i++)
+        for (i = 0; i < n; i++)
             if (rreq_opt->addrs[i] == myaddr.s_addr)
             {
                 return DSR_PKT_DROP;
@@ -736,7 +786,6 @@ void __exit NSCLASS rreq_tbl_cleanup(void)
         auto it =  dsrRreqTbl.begin();
         rreq_tbl_entry *e = it->second;
         del_timer_sync(e->timer);
-        delete e->timer;
         delete e;
         dsrRreqTbl.erase(it);
     }

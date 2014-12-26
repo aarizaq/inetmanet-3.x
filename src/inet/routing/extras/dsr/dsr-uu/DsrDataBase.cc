@@ -84,49 +84,53 @@ bool DsrDataBase::getPath(const L3Address &dest, PathCacheRoute &route, double &
     int position = -1;
     int cont = -1;
     simtime_t now = simTime();
+    simtime_t expire;
 
     for (auto itPaths = it->second.begin();  itPaths != it->second.end();)
     {
         // check timers
         if (now >= itPaths->getExpires())
-            itPaths = it->second.erase(itPaths);
-        else
         {
-            cont++;
-            if (itPaths->status == VALID)
-            {
-                double costPath;
-                if (!itPaths->vector_cost.empty())
-                {
-                    itPaths->vector_cost[0] = cost;
-                    for (unsigned int i = 0; i< itPaths->vector_cost.size(); i++)
-                    {
-                        costPath += itPaths->vector_cost[i];
-                    }
-                }
-                else
-                {
-                    costPath = itPaths->route.size()+1;
-                }
-                if (!found || cost > costPath)
-                {
-
-                    position = cont;
-                    route = itPaths->getRoute();
-                    cost = costPath;
-                }
-                found = true;
-            }
-            ++itPaths;
+            itPaths = it->second.erase(itPaths);
+            continue;
         }
+        cont++;
+        if (itPaths->status == VALID)
+        {
+            double costPath;
+            if (!itPaths->vector_cost.empty())
+            {
+                itPaths->vector_cost[0] = cost;
+                for (unsigned int i = 0; i< itPaths->vector_cost.size(); i++)
+                {
+                    costPath += itPaths->vector_cost[i];
+                }
+            }
+            else
+            {
+                costPath = itPaths->route.size()+1;
+            }
+            if (!found || (cost > costPath) || (cost == costPath && expire < itPaths->getExpires()))
+            {
+                position = cont;
+                route = itPaths->getRoute();
+                cost = costPath;
+                expire = itPaths->getExpires();
+            }
+            found = true;
+        }
+        ++itPaths;
     }
 
+    if (it->second.empty()) // check active routes
+    {
+        pathsCache.erase(it);
+        return found;
+    }
 
-    if (timeout>0 && position >=0)
+    if (timeout > 0 && position >= 0)
         it->second[position].expires = simTime() + (((double)timeout)/1000000.0);
 
-    if (it->second.empty()) // check active routes
-        pathsCache.erase(it);
     return found;
 }
 
@@ -152,47 +156,54 @@ bool DsrDataBase::getPathCosVect(const L3Address &dest, PathCacheRoute &route, P
     int position = -1;
     int cont = -1;
     simtime_t now = simTime();
+    simtime_t expire;
 
     for (auto itPaths = it->second.begin();  itPaths != it->second.end();)
     {
         // check timers
         if (now >= itPaths->getExpires())
-            itPaths = it->second.erase(itPaths);
-        else
         {
-            cont++;
-            if (itPaths->status == VALID)
-            {
-                double costPath;
-                if (!itPaths->vector_cost.empty())
-                {
-                    for (unsigned int i = 0; i< itPaths->vector_cost.size(); i++)
-                    {
-                        costPath += itPaths->vector_cost[i];
-                    }
-                }
-                else
-                {
-                    costPath = itPaths->route.size()+1;
-                }
-                if (!found || cost > costPath)
-                {
-                    position = cont;
-                    route = itPaths->getRoute();
-                    costVect = itPaths->getCostVector();
-                    cost = costPath;
-                }
-                found = true;
-            }
-            ++itPaths;
+            itPaths = it->second.erase(itPaths);
+            continue;
         }
+
+        cont++;
+        if (itPaths->status == VALID)
+        {
+            double costPath;
+            if (!itPaths->vector_cost.empty())
+            {
+                for (unsigned int i = 0; i< itPaths->vector_cost.size(); i++)
+                {
+                    costPath += itPaths->vector_cost[i];
+                }
+            }
+            else
+            {
+                costPath = itPaths->route.size()+1;
+            }
+            if (!found || cost > costPath || (cost == costPath && expire < itPaths->getExpires()))
+            {
+                position = cont;
+                route = itPaths->getRoute();
+                costVect = itPaths->getCostVector();
+                cost = costPath;
+                expire = itPaths->getExpires();
+            }
+            found = true;
+        }
+        ++itPaths;
+    }
+
+    if (it->second.empty()) // check active routes
+    {
+        pathsCache.erase(it);
+        return found;
     }
 
     if (timeout>0 && position >=0)
         it->second[position].expires = simTime() + (((double)timeout)/1000000.0);
 
-    if (it->second.empty()) // check active routes
-        pathsCache.erase(it);
     return found;
 }
 
@@ -232,6 +243,7 @@ void DsrDataBase::setPath(const L3Address &dest,const PathCacheRoute &route,cons
     path.vector_cost = costVect;
     path.status = status;
     path.route = route;
+    path.expires = simTime() + (((double)timeout)/1000000.0);
     it->second.push_back(path);
 }
 
@@ -259,6 +271,8 @@ void DsrDataBase::setPathStatus(const L3Address &dest,const PathCacheRoute &rout
         else
             ++itPaths;
     }
+    if (it->second.empty())
+        pathsCache.erase(it);
 }
 
 void DsrDataBase::setPathsTimer(const L3Address &dest,const PathCacheRoute &route, const unsigned int &timeout)
@@ -288,6 +302,8 @@ void DsrDataBase::setPathsTimer(const L3Address &dest,const PathCacheRoute &rout
         else
             ++itPaths;
     }
+    if (it->second.empty())
+         pathsCache.erase(it);
 }
 
 
@@ -342,6 +358,60 @@ void DsrDataBase::erasePathWithLink(const L3Address &addr1,const L3Address &addr
     L3Address sequence[] = {addr1,addr2};
     L3Address sequenceRev[] = {addr2,addr1};
     std::vector<PathsDataBase::iterator> erased;
+
+    if (rootNode == addr1)
+    {
+        auto itMap = pathsCache.find(addr2);
+        if (itMap != pathsCache.end())
+        {
+            for(auto itPaths = itMap->second.begin(); itPaths != itMap->second.end();)
+            {
+                if (now >= itPaths->getExpires())
+                {
+                    itPaths = itMap->second.erase(itPaths);
+                    continue;
+                }
+                if (itPaths->route.empty())
+                {
+                    itPaths = itMap->second.erase(itPaths);
+                    continue;
+                }
+                ++itPaths;
+            }
+            if (itMap->second.empty())
+                pathsCache.erase(itMap);
+        }
+
+        for (itMap = pathsCache.begin();itMap != pathsCache.end();++itMap)
+        {
+            unsigned int size = itMap->second.size();
+            int contador = 0;
+            for(auto itPaths = itMap->second.begin(); itPaths != itMap->second.end();)
+            {
+                contador++;
+                if (now >= itPaths->getExpires())
+                {
+                    itPaths = itMap->second.erase(itPaths);
+                    continue;
+                }
+                if (!itPaths->route.empty() && itPaths->route[0] == addr2)
+                {
+                    itPaths = itMap->second.erase(itPaths);
+                    continue;
+                }
+                ++itPaths;
+            }
+            if (itMap->second.empty())
+                erased.push_back(itMap);
+        }
+        while(!erased.empty())
+        {
+            pathsCache.erase(erased.back());
+            erased.pop_back();
+        }
+        return;
+    }
+
     for (auto itMap = pathsCache.begin();itMap != pathsCache.end();++itMap)
     {
         for(auto itPaths = itMap->second.begin(); itPaths != itMap->second.end();)
@@ -391,7 +461,6 @@ void DsrDataBase::erasePathWithLink(const L3Address &addr1,const L3Address &addr
                 }
 
             }
-
             ++itPaths;
         }
         if (itMap->second.empty())
@@ -682,7 +751,7 @@ bool DsrDataBase::getRoute(const L3Address &nodeId,PathCacheRoute &pathNode, uns
         if (it==routeMap.end())
             opp_error("error in data routeMap");
     }
-    for (int i = (int)path.size()-1 ; i > 0 ; i--)
+    for (unsigned int i = path.size()-1 ; i > 0 ; i--)
         pathNode.push_back(path[i]);
     return true;
 }
@@ -728,7 +797,7 @@ bool DsrDataBase::getRouteCost(const L3Address &nodeId, PathCacheRoute &pathNode
 void DsrDataBase::purgePathCache()
 {
     std::vector<PathsDataBase::iterator> erased;
-    for (auto itmap = pathsCache.begin(); itmap != pathsCache.end(); ++itmap)
+    for (auto itmap = pathsCache.begin();itmap != pathsCache.end();++itmap)
     {
         simtime_t now = simTime();
         for (auto itPaths = itmap->second.begin();  itPaths != itmap->second.end();)
