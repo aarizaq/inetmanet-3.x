@@ -294,7 +294,7 @@ void DSRUU::ph_srt_add_map(struct dsr_srt *srt, usecs_t timeout, unsigned short 
                 subCost.resize(i+1);
                 std::copy(costVect2.begin(),costVect2.begin()+i+1,subCost.begin());            }
 
-            pathCacheMap.setPath(route[i],subRoute,subCost,subRoute.size()+1,0,timeout);
+            pathCacheMap.setPath(route2[i],subRoute,subCost,subRoute.size()+1,0,timeout);
         }
         // now the whole route
         if (myAddress != sourceAddress)

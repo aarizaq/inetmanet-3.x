@@ -79,6 +79,7 @@ bool DsrDataBase::getPath(const ManetAddress &dest, PathCacheRoute &route, doubl
     int position = -1;
     int cont = -1;
     simtime_t now = simTime();
+    simtime_t expire;
 
     for (auto itPaths = it->second.begin();  itPaths != it->second.end();)
     {
@@ -104,11 +105,12 @@ bool DsrDataBase::getPath(const ManetAddress &dest, PathCacheRoute &route, doubl
             {
                 costPath = itPaths->route.size()+1;
             }
-            if (!found || cost > costPath)
+            if (!found || (cost > costPath) || (cost == costPath && expire < itPaths->getExpires()))
             {
                 position = cont;
                 route = itPaths->getRoute();
                 cost = costPath;
+                expire = itPaths->getExpires();
             }
             found = true;
         }
@@ -149,6 +151,7 @@ bool DsrDataBase::getPathCosVect(const ManetAddress &dest, PathCacheRoute &route
     int position = -1;
     int cont = -1;
     simtime_t now = simTime();
+    simtime_t expire;
 
     for (auto itPaths = it->second.begin();  itPaths != it->second.end();)
     {
@@ -174,12 +177,13 @@ bool DsrDataBase::getPathCosVect(const ManetAddress &dest, PathCacheRoute &route
             {
                 costPath = itPaths->route.size()+1;
             }
-            if (!found || cost > costPath)
+            if (!found || cost > costPath || (cost == costPath && expire < itPaths->getExpires()))
             {
                 position = cont;
                 route = itPaths->getRoute();
                 costVect = itPaths->getCostVector();
                 cost = costPath;
+                expire = itPaths->getExpires();
             }
             found = true;
         }
