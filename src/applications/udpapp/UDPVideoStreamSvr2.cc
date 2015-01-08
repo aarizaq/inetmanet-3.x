@@ -69,7 +69,20 @@ void UDPVideoStreamSvr2::fileParser(const char *fileName)
         float VPSNR = 0;
         int len = 0;
         char frameType = 0;
-        inFile >> seqNum >>  time >> frameType >> len >> YPSNR >> UPSNR >> VPSNR;
+        std::string line;
+        std::getline (inFile,line);
+        size_t pos = line.find("#");
+        if (pos != std::string::npos)
+        {
+            if (pos == 0)
+                line.clear();
+            else
+                line = line.substr(0,pos-1);
+        }
+        if (line.empty())
+            continue;
+        std::istringstream(line) >> seqNum >>  time >> frameType >> len >> YPSNR >> UPSNR >> VPSNR;
+        // inFile >> seqNum >>  time >> frameType >> len >> YPSNR >> UPSNR >> VPSNR;
         VideoInfo info;
         info.seqNum = seqNum;
         info.type = frameType;
