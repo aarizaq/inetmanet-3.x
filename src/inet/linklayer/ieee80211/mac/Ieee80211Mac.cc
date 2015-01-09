@@ -931,8 +931,11 @@ void Ieee80211Mac::receiveSignal(cComponent *source, simsignal_t signalID, long 
     else if (signalID == IRadio::transmissionStateChangedSignal) {
         handleWithFSM(mediumStateChange);
         IRadio::TransmissionState newRadioTransmissionState = (IRadio::TransmissionState)value;
-        if (transmissionState == IRadio::TRANSMISSION_STATE_TRANSMITTING && newRadioTransmissionState == IRadio::TRANSMISSION_STATE_IDLE)
-            configureRadioMode(IRadio::RADIO_MODE_RECEIVER);
+        if (!MpduModeTranssmision)
+        {
+            if (transmissionState == IRadio::TRANSMISSION_STATE_TRANSMITTING && newRadioTransmissionState == IRadio::TRANSMISSION_STATE_IDLE)
+                configureRadioMode(IRadio::RADIO_MODE_RECEIVER);
+        }
         transmissionState = newRadioTransmissionState;
     }
 }

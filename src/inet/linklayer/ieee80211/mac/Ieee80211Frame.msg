@@ -87,6 +87,7 @@ packet Ieee80211Frame
     short AID = -1;          // "id" (Association ID) in the Duration/ID field (-1=no ID)
     MACAddress receiverAddress; // aka address1
     simtime_t MACArrive;    // FIXME remove it, technical data, used inside of MAC module
+    bool isMpdu = false; // convenience parameter for MPDU transmission/reception frames.
 }
 
 //

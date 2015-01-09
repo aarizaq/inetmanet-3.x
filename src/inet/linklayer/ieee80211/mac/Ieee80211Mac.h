@@ -33,8 +33,10 @@
 #include "inet/linklayer/base/MACProtocolBase.h"
 
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MpduA.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Consts.h"
 #include "inet/linklayer/ieee80211/mac/Ieee802MacBaseFsm.h"
+
 
 
 namespace inet {
@@ -248,6 +250,11 @@ class INET_API Ieee80211Mac : public MACProtocolBase
 
     //cFSM fsm;
       Ieee802MacBaseFsm *fsm;
+      bool MpduModeTranssmision = false;
+      bool blockAckModeReception = false;
+      int indexBlockAck = 0;
+      Ieee80211MpduA *mpdu = nullptr;
+
 
     struct Edca
     {

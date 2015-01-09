@@ -142,24 +142,23 @@ void Ieee80211Mac::stateWaitAifs(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
     }
 
     FSMIEEE80211_Event_Transition(fsmLocal, isMsgAIFS(msg) && !transmissionQueue()->empty() && !isMulticast(getCurrentTransmission())
-            && isMpduA(getCurrentTransmission())  && !backoff() && useRtsMpduA)
+            && isMpduA(getCurrentTransmission())  && !backoff())
     {
         if (fsmLocal->debug()) EV_DEBUG  << "Immediate - Transmit - RTS \n";
         sendRTSFrame(getCurrentTransmission());
         oldcurrentAC = currentAC;
         cancelAIFSPeriod();
-        FSMIEEE80211_Transition(fsmLocal,WAITCTS);
+        if (useRtsMpduA)
+        {
+            if (fsmLocal->debug()) EV_DEBUG  << "Immediate - Transmit - RTS \n";
+            FSMIEEE80211_Transition(fsmLocal,WAITCTS);
+        }
+        else
+        {
+            if (fsmLocal->debug()) EV_DEBUG  << "Immediate - Transmit - MPDU \n";
+            FSMIEEE80211_Transition(fsmLocal,WAITBLOCKACK);
+        }
     }
-
-    FSMIEEE80211_Event_Transition(fsmLocal, isMsgAIFS(msg) && !transmissionQueue()->empty() && !isMulticast(getCurrentTransmission())
-            && isMpduA(getCurrentTransmission())  && !backoff() && !useRtsMpduA)
-     {
-         if (fsmLocal->debug()) EV_DEBUG  << "Immediate - Transmit - MPDU \n";
-         sendRTSFrame(getCurrentTransmission());
-         oldcurrentAC = currentAC;
-         cancelAIFSPeriod();
-         FSMIEEE80211_Transition(fsmLocal,WAITBLOCKACK);
-     }
 
     FSMIEEE80211_Event_Transition(fsmLocal, isMsgAIFS(msg) && !transmissionQueue()->empty() && !isMulticast(getCurrentTransmission())
             && getCurrentTransmission()->getByteLength() >= rtsThreshold && !backoff())
@@ -190,30 +189,26 @@ void Ieee80211Mac::stateWaitAifs(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
         FSMIEEE80211_Transition(fsmLocal,WAITACK);
     }
 
-    FSMIEEE80211_Event_Transition(fsmLocal, isMsgAIFS(msg))
-    {
-        if (fsmLocal->debug()) EV_DEBUG  << "AIFS - Over \n";
-        if (isInvalidBackoffPeriod())
-            generateBackoffPeriod();
-        FSMIEEE80211_Transition(fsmLocal,BACKOFF);
-    }
 
-    FSMIEEE80211_Event_Transition(fsmLocal, msg == endDIFS  && transmissionQueueEmpty())
+    FSMIEEE80211_Event_Transition(fsmLocal, isMsgAIFS(msg) || msg == endDIFS)
     {
-        if (fsmLocal->debug()) EV_DEBUG  << "DIFS - Over \n";
-        if (isInvalidBackoffPeriod())
-            generateBackoffPeriod();
-        FSMIEEE80211_Transition(fsmLocal,BACKOFF);
-    }
-
-    FSMIEEE80211_Event_Transition(fsmLocal, msg == endDIFS)
-    {
-        if (fsmLocal->debug()) EV_DEBUG  << "DIFS - Over \n";
-        for (int i = numCategories() - 1; i >= 0; i--)
+        if (isMsgAIFS(msg))
+            if (fsmLocal->debug()) EV_DEBUG  << "AIFS - Over \n";
+        else // msg == endDIFS && !transmissionQueueEmpty()
         {
-            if (!transmissionQueue(i)->empty())
+            if (fsmLocal->debug()) EV_DEBUG  << "DIFS - Over \n";
+
+            if (transmissionQueueEmpty())
+                currentAC = numCategories() - 1;
+            else
             {
-                currentAC = i;
+                for (int i = numCategories() - 1; i >= 0; i--)
+                {
+                    if (!transmissionQueue(i)->empty())
+                    {
+                        currentAC = i;
+                    }
+                }
             }
         }
         if (isInvalidBackoffPeriod())
@@ -469,6 +464,7 @@ void Ieee80211Mac::stateWaitAck(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
         resetCurrentBackOff();
         FSMIEEE80211_Transition(fsmLocal,DEFER);
     }
+
     FSMIEEE80211_Event_Transition(fsmLocal,
                                   msg == endTimeout && retryCounter(oldcurrentAC) == transmissionLimit - 1)
     {
@@ -478,6 +474,7 @@ void Ieee80211Mac::stateWaitAck(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
         if (endTXOP->isScheduled()) cancelEvent(endTXOP);
         FSMIEEE80211_Transition(fsmLocal,IDLE);
     }
+
     FSMIEEE80211_Event_Transition(fsmLocal,
                                   msg == endTimeout)
     {
@@ -488,30 +485,25 @@ void Ieee80211Mac::stateWaitAck(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
         if (endTXOP->isScheduled()) cancelEvent(endTXOP);
         FSMIEEE80211_Transition(fsmLocal,DEFER);
     }
-    FSMIEEE80211_Event_Transition(fsmLocal,
-                                  isLowerMessage(msg) && retryCounter(oldcurrentAC) == transmissionLimit - 1)
+
+    FSMIEEE80211_Event_Transition(fsmLocal,isLowerMessage(msg))
     {
-        if (fsmLocal->debug()) EV_DEBUG  << "Interrupted-ACK-Failure \n";
         currentAC=oldcurrentAC;
         cancelTimeoutPeriod();
-        giveUpCurrentTransmission();
+        if (retryCounter(oldcurrentAC) == transmissionLimit - 1)
+        {
+            if (fsmLocal->debug()) EV_DEBUG  << "Interrupted-ACK-Failure \n";
+            giveUpCurrentTransmission();
+        }
+        else
+        {
+            if (fsmLocal->debug()) EV_DEBUG  << "Retry-Interrupted-ACK \n";
+            retryCurrentTransmission();
+        }
         txop = false;
         if (endTXOP->isScheduled()) cancelEvent(endTXOP);
         FSMIEEE80211_Transition(fsmLocal,RECEIVE);
     }
-
-    FSMIEEE80211_Event_Transition(fsmLocal,
-                                 isLowerMessage(msg))
-    {
-        if (fsmLocal->debug()) EV_DEBUG  << "Retry-Interrupted-ACK \n";
-        currentAC=oldcurrentAC;
-        cancelTimeoutPeriod();
-        retryCurrentTransmission();
-        txop = false;
-        if (endTXOP->isScheduled()) cancelEvent(endTXOP);
-        FSMIEEE80211_Transition(fsmLocal,RECEIVE);
-    }
-
 }
 
 void Ieee80211Mac::stateWaitBlockAck(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
@@ -582,6 +574,7 @@ void Ieee80211Mac::stateWaitCts(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
         cancelTimeoutPeriod();
         FSMIEEE80211_Transition(fsmLocal,WAITSIFS);
     }
+
     FSMIEEE80211_Event_Transition(fsmLocal,
                                   msg == endTimeout && retryCounter(oldcurrentAC) == transmissionLimit - 1)
     {
@@ -590,6 +583,7 @@ void Ieee80211Mac::stateWaitCts(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
         giveUpCurrentTransmission();
         FSMIEEE80211_Transition(fsmLocal,IDLE);
     }
+
     FSMIEEE80211_Event_Transition(fsmLocal,
                                   msg == endTimeout)
     {
@@ -672,6 +666,7 @@ void Ieee80211Mac::stateReceive(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
         finishReception();
         FSMIEEE80211_Transition(fsmLocal,WAITSIFS);
     }
+
     FSMIEEE80211_No_Event_Transition(fsmLocal,
                     isLowerMessage(msg) && receptionError)
     {
@@ -681,6 +676,7 @@ void Ieee80211Mac::stateReceive(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
         finishReception();
         FSMIEEE80211_Transition(fsmLocal,IDLE);
     }
+
     FSMIEEE80211_No_Event_Transition(fsmLocal,
                     isLowerMessage(msg) && isMulticast(frame) && !isSentByUs(frame) && isDataOrMgmtFrame(frame))
     {
@@ -690,6 +686,7 @@ void Ieee80211Mac::stateReceive(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
         finishReception();
         FSMIEEE80211_Transition(fsmLocal,IDLE);
     }
+
     FSMIEEE80211_No_Event_Transition(fsmLocal,
                     isLowerMessage(msg) && isForUs(frame) && isDataOrMgmtFrame(frame))
     {
@@ -699,18 +696,21 @@ void Ieee80211Mac::stateReceive(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
 
         FSMIEEE80211_Transition(fsmLocal,WAITSIFS);
     }
+
     FSMIEEE80211_No_Event_Transition(fsmLocal,
                     isLowerMessage(msg) && isForUs(frame) && frameType == ST_RTS)
     {
         if (fsmLocal->debug()) EV_DEBUG << "Immediate-Receive-RTS \n";
         FSMIEEE80211_Transition(fsmLocal,WAITSIFS);
     }
+
     FSMIEEE80211_No_Event_Transition(fsmLocal,
                     isLowerMessage(msg) && isBackoffPending())
     {
         if (fsmLocal->debug()) EV_DEBUG << "Immediate-Receive-Other-backtobackoff \n";
         FSMIEEE80211_Transition(fsmLocal,DEFER);
     }
+
     FSMIEEE80211_No_Event_Transition(fsmLocal,
                     isLowerMessage(msg) && !isForUs(frame) && isDataOrMgmtFrame(frame))
     {
@@ -721,6 +721,7 @@ void Ieee80211Mac::stateReceive(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
 
         FSMIEEE80211_Transition(fsmLocal,IDLE);
     }
+
     FSMIEEE80211_No_Event_Transition(fsmLocal,
                     isLowerMessage(msg))
     {
