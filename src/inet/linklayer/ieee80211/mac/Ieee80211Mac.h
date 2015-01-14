@@ -25,7 +25,9 @@
 // un-comment this if you do not want to log state machine transitions
 //#define FSM_DEBUG
 
+#include "inet/common/INETDefs.h"
 #include "inet/common/FSMA.h"
+#include "inet/common/INETMath.h"
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211PassiveQueue.h"
 #include "inet/common/lifecycle/ILifecycle.h"
 #include "inet/physicallayer/contract/IRadio.h"
@@ -110,18 +112,21 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     typedef std::map<MACAddress, std::vector<Ieee80211PacketErrorInfo> > Ieee80211ErrorInfo;
     Ieee80211ErrorInfo errorInfo;
 
-    enum
+    enum RateControlMode
     {
         RATE_ARF,   // Auto Rate Fallback
         RATE_AARF,  // Adaptatice ARF
         RATE_CR,    // Constant Rate
-    } rateControlMode;
+    };
 
-    Ieee80211PreambleMode wifiPreambleType;
+    RateControlMode rateControlMode = (RateControlMode)-1;
+
+    Ieee80211PreambleMode wifiPreambleType = (Ieee80211PreambleMode)-1;
     ModulationType recFrameModulationType;
-    bool validRecMode;
-    bool useModulationParameters;
-    bool prioritizeMulticast;
+    bool validRecMode = false;
+    bool useModulationParameters = false;
+    bool prioritizeMulticast = false;
+
     // used by 11n
     double carrierFrequency;
     ModulationType controlFrameModulationType;
@@ -129,7 +134,8 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     ModulationType basicTransmisionMode;
 
   protected:
-    IRadio::TransmissionState transmissionState;
+    bool isInHandleWithFSM = false;
+    IRadio::TransmissionState transmissionState = IRadio::TRANSMISSION_STATE_UNDEFINED;
     /**
      * @name Configuration parameters
      * These are filled in during the initialization phase and not supposed to change afterwards.
@@ -137,53 +143,53 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     //@{
     /** MAC address */
     MACAddress address;
-    char opMode;
+    char opMode = 0;
     /** The bitrate is used to send unicast data and mgmt frames; be sure to use a valid 802.11 bitrate */
-    double bitrate;
+    double bitrate = NaN;
 
     /** The basic bitrate (1 or 2 Mbps) is used to transmit control frames and multicast/broadcast frames */
-    double basicBitrate;
-    double controlBitRate;
+    double basicBitrate = NaN;
+    double controlBitRate = NaN;
 
     // Variables used by the auto bit rate
-    bool forceBitRate; //if true the
-    unsigned int intrateIndex;
-    int contI;
-    int contJ;
-    int samplingCoeff;
-    double recvdThroughput;
-    int autoBitrate;
-    int rateIndex;
-    int successCounter;
-    int failedCounter;
-    bool recovery;
-    int timer;
-    int successThreshold;
-    int maxSuccessThreshold;
-    int timerTimeout;
-    int minSuccessThreshold;
-    int minTimerTimeout;
-    double successCoeff;
-    double timerCoeff;
-    double _snr;
-    double snr;
-    double lossRate;
+    bool forceBitRate = false;    //if true the
+    unsigned int intrateIndex = 0;
+    int contI = 0;
+    int contJ = 0;
+    int samplingCoeff = 0;
+    double recvdThroughput = NaN;
+    int autoBitrate = 0;
+    int rateIndex = 0;
+    int successCounter = 0;
+    int failedCounter = 0;
+    bool recovery = false;
+    int timer = 0;
+    int successThreshold = 0;
+    int maxSuccessThreshold = 0;
+    int timerTimeout = 0;
+    int minSuccessThreshold = 0;
+    int minTimerTimeout = 0;
+    double successCoeff = NaN;
+    double timerCoeff = NaN;
+    double _snr = NaN;
+    double snr = NaN;
+    double lossRate = NaN;
     simtime_t timeStampLastMessageReceived;
     // used to measure the throughput over a period
-    uint64_t recBytesOverPeriod;
-    simtime_t throughputTimePeriod;
-    cMessage *throughputTimer;
-    double throughputLastPeriod;
+    uint64_t recBytesOverPeriod = 0;
+    simtime_t throughputTimePeriod = 0;
+    cMessage *throughputTimer = nullptr;
+    double throughputLastPeriod = NaN;
 
     /** Maximum number of frames in the queue; should be set in the omnetpp.ini */
-    int maxQueueSize;
-    int maxCategorieQueueSize;
+    int maxQueueSize = 0;
+    int maxCategorieQueueSize = 0;
 
     /**
      * The minimum length of MPDU to use RTS/CTS mechanism. 0 means always, extremely
      * large value means never. See spec 9.2.6 and 361.
      */
-    int rtsThreshold;
+    int rtsThreshold = 0;
 
     bool useRtsMpduA = false;
 
@@ -198,26 +204,25 @@ class INET_API Ieee80211Mac : public MACProtocolBase
      *    failure condition is indicated. The default value of this
      *    attribute shall be 7'
      */
-    int transmissionLimit;
-
+    int transmissionLimit = 0;
 
     /** Default access catagory */
-    int defaultAC;
+    int defaultAC = 0;
 
     /** Slot time 9us(fast slot time 802.11g only) 20us(802.11b / 802.11g backward compatible)*/
     simtime_t ST;
 
-    double PHY_HEADER_LENGTH;
+    double PHY_HEADER_LENGTH = NaN;
     /** Minimum contention window. */
-    int cwMinData;
+    int cwMinData = 0;
     //int cwMin[4];
 
     /** Maximum contention window. */
-    int cwMaxData;
+    int cwMaxData = 0;
     // int cwMax[4];
 
     /** Contention window size for multicast messages. */
-    int cwMinMulticast;
+    int cwMinMulticast = 0;
 
     /** Messages longer than this threshold will be sent in multiple fragments. see spec 361 */
     static const int fragmentationThreshold = 2346;
@@ -350,87 +355,85 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     };
   protected:
     // if true MAC sublayer store the frames instead of the management sublayer
-    bool queueMode;
+    bool queueMode = false;
 
-    Mode mode;
+    Mode mode = (Mode)-1;
 
     /** Sequence number to be assigned to the next frame */
-    int sequenceNumber;
+    int sequenceNumber = 0;
 
     /**
      * Indicates that the last frame received had bit errors in it or there was a
      * collision during receiving the frame. If this flag is set, then the MAC
      * will wait EIFS - DIFS + AIFS  instead of AIFS period of time in WAITAIFS state.
      */
-    bool lastReceiveFailed;
-
-
+    bool lastReceiveFailed = false;
 
     /** True during network allocation period. This flag is present to be able to watch this state. */
-    bool nav;
+    bool nav = false;
 
     /** True if we are in txop bursting packets. */
-    bool txop;
+    bool txop = false;
 
     /** Indicates which queue is acite. Depends on access category. */
-    int currentAC;
+    int currentAC = 0;
 
     /** Remember currentAC. We need this to figure out internal colision. */
-    int oldcurrentAC;
+    int oldcurrentAC = 0;
 
     /** XXX Remember for which AC we wait for ACK. */
     //int ACKcurrentAC;
 
-    IRadio *radio;
+    IRadio *radio = nullptr;
 
-    Ieee80211DataOrMgmtFrame *fr;
+    Ieee80211DataOrMgmtFrame *fr = nullptr;
 
     /**
      * A list of last sender, sequence and fragment number tuples to identify
      * duplicates, see spec 9.2.9.
      */
-    bool duplicateDetect;
-    bool purgeOldTuples;
+    bool duplicateDetect = false;
+    bool purgeOldTuples = false;
     simtime_t duplicateTimeOut;
     simtime_t lastTimeDelete;
     Ieee80211ASFTupleList asfTuplesList;
 
     /** Passive queue module to request messages from */
-    Ieee80211PassiveQueue *queueModule;
+    Ieee80211PassiveQueue *queueModule = nullptr;
 
     /**
      * The last change channel message received and not yet sent to the physical layer, or nullptr.
      * The message will be sent down when the state goes to IDLE or DEFER next time.
      */
-    cMessage *pendingRadioConfigMsg;
+    cMessage *pendingRadioConfigMsg = nullptr;
     //@}
 
   protected:
     /** @name Timer messages */
     //@{
     /** End of the Short Inter-Frame Time period */
-    cMessage *endSIFS;
+    cMessage *endSIFS = nullptr;
 
     /** End of the Data Inter-Frame Time period */
-    cMessage *endDIFS;
+    cMessage *endDIFS = nullptr;
 
     /** End of the Arbitration Inter-Frame Time period */
 //    cMessage *endAIFS[4];
 
     /** End of the TXOP time limit period */
-    cMessage *endTXOP;
+    cMessage *endTXOP = nullptr;
 
     /** End of the backoff period */
     //cMessage *endBackoff[4];
 
     /** Timeout after the transmission of an RTS, a CTS, or a DATA frame */
-    cMessage *endTimeout;
+    cMessage *endTimeout = nullptr;
 
     /** End of medium reserve period (NAV) when two other nodes were communicating on the channel */
-    cMessage *endReserve;
+    cMessage *endReserve = nullptr;
 
     /** Radio state change self message. Currently this is optimized away and sent directly */
-    cMessage *mediumStateChange;
+    cMessage *mediumStateChange = nullptr;
     //@}
 
   protected:
@@ -439,17 +442,17 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     // long numRetry[4];
     // long numSentWithoutRetry[4];
     // long numGivenUp[4];
-    long numCollision;
-    long numInternalCollision;
+    long numCollision = 0;
+    long numInternalCollision = 0;
     // long numSent[4];
-    long numBits;
-    long numSentTXOP;
-    long numReceived;
-    long numSentMulticast;
-    long numReceivedMulticast;
+    long numBits = 0;
+    long numSentTXOP = 0;
+    long numReceived = 0;
+    long numSentMulticast = 0;
+    long numReceivedMulticast = 0;
     // long numDropped[4];
-    long numReceivedOther;
-    long numAckSend;
+    long numReceivedOther = 0;
+    long numAckSend = 0;
     cOutVector stateVector;
     simtime_t last;
     // long bits[4];
@@ -615,7 +618,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     virtual void clearQueue();
 
     /** @brief Mapping to access categories. */
-    virtual int mappingAccessCategory(Ieee80211DataOrMgmtFrame *frame);
+    virtual int mappingAccessCategory(Ieee80211DataOrMgmtFrame *frame);     // FIXME rename it, change return type, change 'return 200'
 
     /** @brief Send down the change channel message to the physical layer if there is any. */
     virtual void sendDownPendingRadioConfigMsg();

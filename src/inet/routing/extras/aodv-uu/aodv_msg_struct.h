@@ -8,7 +8,7 @@
 //#include <sys/time.h>
 //#include <sys/types.h>
 #include "inet/routing/extras/base/compatibility.h"
-
+#include "inet/routing/extras/base/ManetRoutingBase.h"
 #include "aodv_msg_struct_m.h"
 
 #define AddressSizeUsed 4
@@ -87,7 +87,16 @@ struct RERR : public AODV_msg
     unsigned short res2;
     u_int8_t dest_count;
     RERR_udest *   _udest;
-    explicit RERR(const char *name="RERRAodvMsg");
+    explicit RERR(const char *name="RERRAodvMsg") : AODV_msg (name)
+    {
+        res1 = 0;
+        n = 0;
+        res2 = 0;
+        dest_count = 0;
+        _udest = nullptr;
+        ManetRoutingBase * owner = check_and_cast<ManetRoutingBase*>(this->getOwner());
+        setBitLength((8+(owner->getAddressSize()*2))*8);
+    }
     ~RERR ();
     RERR (const RERR &m);
     unsigned short getRes1() const {return res1;}
@@ -127,7 +136,24 @@ struct RREP : public AODV_msg
     uint32_t cost;
     uint8_t  hopfix;
     uint8_t  totalHops;
-    explicit RREP (const char *name="RREPAodvMsg");
+    explicit RREP (const char *name="RREPAodvMsg") : AODV_msg (name)
+    {
+        ManetRoutingBase * owner = check_and_cast<ManetRoutingBase*>(this->getOwner());
+        setBitLength((12+(owner->getAddressSize()*2))*8);
+        res1 = 0;
+        a = 0;
+        r = 0;
+        prefix = 0;
+        res2 = 0;
+        hcnt = 0;
+        dest_addr = L3Address();
+        dest_seqno = 0;
+        orig_addr = L3Address();
+        lifetime = 0;
+        cost = 0;
+        hopfix = 0;
+        totalHops = 0;
+    }
     RREP (const RREP &m);
     RREP &  operator= (const RREP &m);
     virtual RREP *dup() const {return new RREP(*this);}
@@ -184,7 +210,25 @@ struct RREQ : public AODV_msg
     u_int32_t orig_seqno;
     uint32_t   cost;
     uint8_t  hopfix;
-    explicit RREQ(const char *name="RREQAodvMsg");
+    explicit RREQ(const char *name="RREQAodvMsg") : AODV_msg (name)
+    {
+        j = 0;
+        r = 0;     /* Repair flag */
+        g = 0;     /* Gratuitous RREP flag */
+        d = 0;     /* Destination only respond */
+        res1 = 0;
+        res2 = 0;
+        hcnt  = 0;
+        rreq_id = 0;
+        dest_addr = L3Address();
+        dest_seqno = 0;
+        orig_addr = L3Address();
+        orig_seqno = 0;
+        cost = 0;
+        hopfix = 0;
+        ManetRoutingBase * owner = check_and_cast<ManetRoutingBase*>(this->getOwner());
+        setBitLength((16+(owner->getAddressSize()*2))*8);
+    }
 
     RREQ (const RREQ &m);
     RREQ &  operator= (const RREQ &m);

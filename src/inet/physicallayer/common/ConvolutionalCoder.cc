@@ -528,13 +528,14 @@ BitVector ConvolutionalCoder::decode(const BitVector& encodedBits) const
         for (int i = 1; i != numberOfStates; i++)
         {
             TrellisGraphNode currentNode = trellisGraph[i][time];
-            if (!currentNode.symbol != -1 && currentNode.comulativeHammingDistance < bestNode.comulativeHammingDistance)
+            if (currentNode.symbol != -1 && currentNode.comulativeHammingDistance < bestNode.comulativeHammingDistance)
                 bestNode = currentNode;
         }
     }
     if (!isTruncatedMode && bestNode.symbol == -1)
         throw cRuntimeError("None of the paths in the trellis graph lead to the all-zeros state");
     BitVector decodedMsg = traversePath(bestNode, trellisGraph);
+    delete [] trellisGraph;
     EV_DETAIL << "Recovered message: " << decodedMsg << endl
     << " Number of errors: " << bestNode.numberOfErrors
     << " Cumulative error (Hamming distance): " << bestNode.comulativeHammingDistance

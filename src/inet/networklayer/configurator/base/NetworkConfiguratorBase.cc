@@ -302,7 +302,7 @@ double NetworkConfiguratorBase::computeWiredLinkWeight(Link *link)
     }
     else if (!strcmp(linkWeightMode, "errorRate")) {
         cDatarateChannel *transmissionChannel = dynamic_cast<cDatarateChannel *>(linkOut->getLocalGate()->getTransmissionChannel());
-        if (!transmissionChannel) {
+        if (transmissionChannel) {
             InterfaceInfo *sourceInterfaceInfo = link->sourceInterfaceInfo;
             double bitErrorRate = transmissionChannel->getBitErrorRate();
             double packetErrorRate = 1.0 - pow(1.0 - bitErrorRate, sourceInterfaceInfo->interfaceEntry->getMTU());
@@ -325,7 +325,7 @@ double NetworkConfiguratorBase::computeWirelessLinkWeight(Link *link)
         cModule *transmitterInterfaceModule = link->sourceInterfaceInfo->interfaceEntry->getInterfaceModule();
         IRadio *transmitterRadio = check_and_cast<IRadio *>(transmitterInterfaceModule->getSubmodule("radio"));
         const NarrowbandTransmitterBase *transmitter = dynamic_cast<const NarrowbandTransmitterBase *>(transmitterRadio->getTransmitter());
-        double dataRate = transmitter->getBitrate().get();
+        double dataRate = transmitter ? transmitter->getBitrate().get() : 0;
         return dataRate != 0 ? 1 / dataRate : defaultLinkWeight;
 #else
         throw cRuntimeError("Radio feature is disabled");

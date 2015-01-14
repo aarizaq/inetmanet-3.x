@@ -44,7 +44,6 @@ std::ostream& operator<<(std::ostream& os, const GenericMulticastRoute& e)
 
 GenericRoutingTable::GenericRoutingTable()
 {
-    ift = nullptr;
 }
 
 GenericRoutingTable::~GenericRoutingTable()
@@ -325,7 +324,8 @@ IRoute *GenericRoutingTable::getRoute(int k) const
 IRoute *GenericRoutingTable::getDefaultRoute() const
 {
     // if there is a default route entry, it is the last valid entry
-    for (RouteVector::const_reverse_iterator i = routes.rbegin(); i != routes.rend() && (*i)->getPrefixLength() == 0; ++i)
+    auto i = routes.rbegin();
+    if (i != routes.rend() && (*i)->getPrefixLength() == 0)
         return *i;
     return nullptr;
 }
@@ -334,7 +334,7 @@ void GenericRoutingTable::addRoute(IRoute *route)
 {
     Enter_Method("addRoute(...)");
 
-    GenericRoute *entry = dynamic_cast<GenericRoute *>(route);
+    GenericRoute *entry = check_and_cast<GenericRoute *>(route);
 
     // check that the interface exists
     if (!entry->getInterface())

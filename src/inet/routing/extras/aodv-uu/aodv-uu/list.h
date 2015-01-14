@@ -34,7 +34,7 @@ typedef struct list_t
     struct list_t *prev, *next;
 } list_t;
 
-#define LIST_nullptr -1
+#define LIST_NULL -1
 #define LIST_SUCCESS 1
 
 #define LIST(name) list_t name = { &(name), &(name) }

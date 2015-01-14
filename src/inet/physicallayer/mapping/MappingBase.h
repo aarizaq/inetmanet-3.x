@@ -53,10 +53,10 @@ class INET_API Dimension
 {
   protected:
     /** @brief The unique name of the dimension this instance represents.*/
-    const char *name;
+    const char *name = nullptr;
 
     /** @brief The unique id of the dimension this instance represents.*/
-    int id;
+    int id = 0;
 
   public:
     /** @brief Shortcut to the time Dimension, same as 'Dimension("time")',
@@ -68,9 +68,7 @@ class INET_API Dimension
     static const Dimension frequency;
 
   public:
-    Dimension() :
-        id(0)
-    {}
+    Dimension() {}
 
     /**
      * @brief Creates a new dimension instance representing the
@@ -1001,6 +999,7 @@ class INET_API ConstMapping
             const std::string& sTableHead = std::string("o\\ms"),
             const Dimension *const pOnlyDim = nullptr) const
     {
+        std::ostream::fmtflags outFlags = out.flags();
         const ConstMapping& m = *this;
         DimensionSet::value_type otherDim;
         const DimensionSet& dims = m.getDimensionSet();
@@ -1041,6 +1040,7 @@ class INET_API ConstMapping
 
         if (!it->inRange()) {
             out << "Mapping is empty." << endl;
+            out.flags(outFlags);
             return out;
         }
 
@@ -1103,6 +1103,7 @@ class INET_API ConstMapping
         if (!bIs2Dim && !bOnlyDimFound) {
             if (!bOnlyDimFound && pOnlyDim != nullptr) {
                 out << "map contains no " << pOnlyDim->getName() << " dimension!" << endl;
+                out.flags(outFlags);
                 return out;
             }
             else
@@ -1110,6 +1111,7 @@ class INET_API ConstMapping
         }
         if (bOnlyDimFound && otherPositions.empty()) {
             out << "Defines no own key entries for " << pOnlyDim->getName() << " dimension! That does NOT mean it doesn't define any attenuation." << endl;
+            out.flags(outFlags);
             return out;
         }
 
@@ -1174,6 +1176,7 @@ class INET_API ConstMapping
             }
         }
         out << std::endl << osBorder.str() << std::endl;
+        out.flags(outFlags);
         return out;
     }
 

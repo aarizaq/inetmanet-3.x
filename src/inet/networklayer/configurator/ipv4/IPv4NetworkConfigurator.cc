@@ -422,8 +422,10 @@ void IPv4NetworkConfigurator::assignAddresses(Topology& topology)
             int netmaskLength = -1;
             uint32 networkAddress = 0;    // network part of the addresses  (e.g. 10.1.1.0)
             uint32 networkNetmask = 0;    // netmask for the network (e.g. 255.255.255.0)
+            ASSERT(maximumNetmaskLength < bitSize);
             for (netmaskLength = maximumNetmaskLength; netmaskLength >= minimumNetmaskLength; netmaskLength--) {
-                networkNetmask = (((uint32)1 << netmaskLength) - (uint32)1) << (bitSize - netmaskLength);
+                ASSERT(netmaskLength < bitSize);
+                networkNetmask = ~(~((uint32)0) >> netmaskLength);
                 EV_DEBUG << "Trying network netmask: " << IPv4Address(networkNetmask) << " : " << netmaskLength << endl;
                 networkAddress = mergedAddress & mergedAddressSpecifiedBits & networkNetmask;
                 uint32 networkAddressUnspecifiedBits = ~mergedAddressSpecifiedBits & networkNetmask;    // 1 means the network address unspecified
@@ -697,8 +699,9 @@ void IPv4NetworkConfigurator::dumpAddresses(Topology& topology)
         EV_INFO << "Link " << i << endl;
         LinkInfo *linkInfo = topology.linkInfos[i];
         for (int j = 0; j < (int)linkInfo->interfaceInfos.size(); j++) {
-            InterfaceEntry *interfaceEntry = linkInfo->interfaceInfos[j]->interfaceEntry;
-            cModule *host = dynamic_cast<cModule *>(interfaceEntry->getInterfaceTable())->getParentModule();
+            InterfaceInfo *interfaceInfo = static_cast<InterfaceInfo *>(linkInfo->interfaceInfos[j]);
+            InterfaceEntry *interfaceEntry = interfaceInfo->interfaceEntry;
+            cModule *host = interfaceInfo->node->module;
             EV_INFO << "    " << host->getFullName() << " / " << interfaceEntry->info() << endl;
         }
     }
