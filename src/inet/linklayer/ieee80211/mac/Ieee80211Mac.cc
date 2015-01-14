@@ -181,19 +181,7 @@ void Ieee80211Mac::initializeCategories()
         WATCH_LIST(edcCAF[i].transmissionQueue);
 }
 
-Ieee80211Mac::Ieee80211Mac() :
-    transmissionState(IRadio::TRANSMISSION_STATE_UNDEFINED),
-    throughputTimer(nullptr),
-    radio(nullptr),
-    fr(nullptr),
-    queueModule(nullptr),
-    pendingRadioConfigMsg(nullptr),
-    endSIFS(nullptr),
-    endDIFS(nullptr),
-    endTXOP(nullptr),
-    endTimeout(nullptr),
-    endReserve(nullptr),
-    mediumStateChange(nullptr)
+Ieee80211Mac::Ieee80211Mac()
 {
 
 }

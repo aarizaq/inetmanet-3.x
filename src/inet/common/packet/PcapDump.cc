@@ -66,11 +66,6 @@ struct pcaprec_hdr
     uint32 orig_len;    /* actual length of packet */
 };
 
-PcapDump::PcapDump()
-{
-    dumpfile = nullptr;
-}
-
 PcapDump::~PcapDump()
 {
     closePcap();
@@ -89,6 +84,8 @@ void PcapDump::openPcap(const char *filename, unsigned int snaplen_par)
         throw cRuntimeError("Cannot open pcap file [%s] for writing: %s", filename, strerror(errno));
 
     snaplen = snaplen_par;
+
+    flush = false;
 
     fh.magic = PCAP_MAGIC;
     fh.version_major = 2;
@@ -110,8 +107,8 @@ void PcapDump::writeFrame(simtime_t stime, const IPv4Datagram *ipPacket)
     memset((void *)&buf, 0, sizeof(buf));
 
     struct pcaprec_hdr ph;
-    ph.ts_sec = (int32)stime.dbl();
-    ph.ts_usec = (uint32)((stime.dbl() - ph.ts_sec) * 1000000);
+    ph.ts_sec = (int32)stime.inUnit(0);
+    ph.ts_usec = (uint32)(stime.inUnit(-6) - (uint32)1000000 * stime.inUnit(0));
     // Write Ethernet header
     uint32 hdr = 2;    //AF_INET
 
@@ -122,6 +119,8 @@ void PcapDump::writeFrame(simtime_t stime, const IPv4Datagram *ipPacket)
     fwrite(&ph, sizeof(ph), 1, dumpfile);
     fwrite(&hdr, sizeof(uint32), 1, dumpfile);
     fwrite(buf, ph.incl_len - sizeof(uint32), 1, dumpfile);
+    if (flush)
+        fflush(dumpfile);
 #else // ifdef WITH_IPv4
     throw cRuntimeError("Cannot write frame: INET compiled without IPv4 feature");
 #endif // ifdef WITH_IPv4
@@ -137,8 +136,8 @@ void PcapDump::writeIPv6Frame(simtime_t stime, const IPv6Datagram *ipPacket)
     memset((void *)&buf, 0, sizeof(buf));
 
     struct pcaprec_hdr ph;
-    ph.ts_sec = (int32)stime.dbl();
-    ph.ts_usec = (uint32)((stime.dbl() - ph.ts_sec) * 1000000);
+    ph.ts_sec = (int32)stime.inUnit(0);
+    ph.ts_usec = (uint32)(stime.inUnit(-6) - (uint32)1000000 * stime.inUnit(0));
     // Write Ethernet header
     uint32 hdr = 2;    //AF_INET
 
@@ -150,6 +149,8 @@ void PcapDump::writeIPv6Frame(simtime_t stime, const IPv6Datagram *ipPacket)
         fwrite(&ph, sizeof(ph), 1, dumpfile);
         fwrite(&hdr, sizeof(uint32), 1, dumpfile);
         fwrite(buf, ph.incl_len - sizeof(uint32), 1, dumpfile);
+        if (flush)
+            fflush(dumpfile);
     }
 #else // ifdef WITH_IPv6
     throw cRuntimeError("Cannot write frame: INET compiled without IPv6 feature");

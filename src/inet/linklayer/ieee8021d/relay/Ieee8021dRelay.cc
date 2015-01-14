@@ -27,9 +27,6 @@ Define_Module(Ieee8021dRelay);
 
 Ieee8021dRelay::Ieee8021dRelay()
 {
-    ifTable = nullptr;
-    macTable = nullptr;
-    ie = nullptr;
 }
 
 void Ieee8021dRelay::initialize(int stage)
@@ -189,7 +186,7 @@ void Ieee8021dRelay::dispatchBPDU(BPDU *bpdu)
     MACAddress address = controlInfo->getDest();
     delete controlInfo;
 
-    if (portNum >= portCount || portNum < 0)
+    if (portNum >= portCount)
         throw cRuntimeError("Output port %d doesn't exist!", portNum);
 
     // TODO: use LLCFrame
