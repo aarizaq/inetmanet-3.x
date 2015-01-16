@@ -24,7 +24,7 @@
 
 // un-comment this if you do not want to log state machine transitions
 //#define FSM_DEBUG
-
+#include <deque>
 #include "inet/common/INETDefs.h"
 #include "inet/common/FSMA.h"
 #include "inet/common/INETMath.h"
@@ -250,15 +250,53 @@ class INET_API Ieee80211Mac : public MACProtocolBase
         WAITSIFS,
         RECEIVE,
         WAITBLOCKACK,
+        SENDMPUA,
     };
   protected:
 
     //cFSM fsm;
       Ieee802MacBaseFsm *fsm;
+
+    // MPDU information variables
+      unsigned long aMpduSeq = 0;
       bool MpduModeTranssmision = false;
       bool blockAckModeReception = false;
-      int indexBlockAck = 0;
-      Ieee80211MpduA *mpdu = nullptr;
+      int indexMpduTransmission = 0;
+      Ieee80211MpduA *mpduInTransmission = nullptr;
+      typedef std::deque<Ieee80211DataOrMgmtFrame *> MpduAInReception;
+      typedef std::vector<int> Confirmed;
+      class MpduAInProc
+      {
+          public:
+              simtime_t time;
+              MpduAInReception inReception;
+              Confirmed confirmed;
+              ~MpduAInProc()
+              {
+                  while(!inReception.empty())
+                  {
+                      delete inReception.back();
+                      inReception.pop_back();
+                  }
+              }
+      };
+      class MpduAKey
+      {
+          public:
+              MACAddress addr;
+              unsigned long seq;
+              bool operator<(const MpduAKey& other) const;
+              bool operator>(const MpduAKey& other) const { return other < *this; };
+              bool operator==(const MpduAKey& other) const;
+              bool operator!=(const MpduAKey& other) const;
+
+      };
+
+      std::map<MpduAKey,MpduAInProc> processingMpdu;
+
+      int retryMpduAConfirmation = 0;
+      int retryMpduA = 0;
+
 
 
     struct Edca
@@ -531,6 +569,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     virtual void stateWaitAifs(Ieee802MacBaseFsm * , cMessage *);
     virtual void stateBackoff(Ieee802MacBaseFsm * , cMessage *);
     virtual void stateWaitAck(Ieee802MacBaseFsm * , cMessage *);
+    virtual void stateSendMpuA(Ieee802MacBaseFsm * , cMessage *);
     virtual void stateWaitBlockAck(Ieee802MacBaseFsm * , cMessage *);
     virtual void stateWaitMulticast(Ieee802MacBaseFsm * ,cMessage *);
     virtual void stateWaitCts(Ieee802MacBaseFsm * , cMessage *);
@@ -603,8 +642,11 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     virtual void sendDataFrame(Ieee80211DataOrMgmtFrame *frameToSend);
     virtual void sendMulticastFrame(Ieee80211DataOrMgmtFrame *frameToSend);
 
-    virtual void processMpduA(Ieee80211Frame *frame);
+    // handle MPDU-A
+    virtual void processMpduA(Ieee80211DataOrMgmtFrame *frame);
+    virtual void sendBLOCKACKFrameOnEndSIFS();
     virtual bool isMpduA(Ieee80211Frame *frame);
+    virtual Ieee80211MpduDelimiter* buildMpduDataFrame(Ieee80211Frame *frameToSend);
 
     //@}
 

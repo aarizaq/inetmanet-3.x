@@ -87,7 +87,6 @@ packet Ieee80211Frame
     short AID = -1;          // "id" (Association ID) in the Duration/ID field (-1=no ID)
     MACAddress receiverAddress; // aka address1
     simtime_t MACArrive;    // FIXME remove it, technical data, used inside of MAC module
-    bool isMpdu = false; // convenience parameter for MPDU transmission/reception frames.
 }
 
 //
@@ -142,6 +141,8 @@ packet Ieee80211DataOrMgmtFrame extends Ieee80211TwoAddressFrame
     MACAddress address3;
     short fragmentNumber;
     uint16 sequenceNumber;
+    unsigned long aMpduSeq = 0; // convenience parameter for A-MPDU transmission/reception frames.
+    bool lastMpdu = true;
 }
 
 //
@@ -200,7 +201,6 @@ packet Ieee80211MeshFrame extends Ieee80211DataFrame
 
 packet Ieee80211BlockAckFrameReq extends Ieee80211TwoAddressFrame
 {
-    @customize(true);
     type = ST_BLOCKACK_REQ;
     byteLength = 24;
     bool barAckPolicy;
@@ -213,7 +213,6 @@ packet Ieee80211BlockAckFrameReq extends Ieee80211TwoAddressFrame
 
 packet Ieee80211BlockAckFrame extends Ieee80211TwoAddressFrame
 {
-    @customize(true);
     type = ST_BLOCKACK;
     byteLength = 152;
     bool baAckPolicy;
@@ -221,4 +220,9 @@ packet Ieee80211BlockAckFrame extends Ieee80211TwoAddressFrame
     bool compressed;
     unsigned short tidInfo;
     unsigned short startingSequence;
+}
+
+packet Ieee80211MpduDelimiter
+{
+    byteLength = 4;
 }

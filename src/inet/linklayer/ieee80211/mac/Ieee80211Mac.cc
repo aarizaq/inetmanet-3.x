@@ -49,7 +49,8 @@ Register_Enum(inet::Ieee80211Mac,
          Ieee80211Mac::WAITCTS,
          Ieee80211Mac::WAITSIFS,
          Ieee80211Mac::RECEIVE,
-         Ieee80211Mac::WAITBLOCKACK));
+         Ieee80211Mac::WAITBLOCKACK,
+         Ieee80211Mac::SENDMPUA));
 
 /****************************************************************
  * Construction functions.
@@ -242,6 +243,7 @@ void Ieee80211Mac::initialize(int stage)
         fsm->setStateMethod(WAITSIFS, &Ieee80211Mac::stateWaitSift,"WAITSIFS");
         fsm->setStateMethod(RECEIVE, &Ieee80211Mac::stateReceive,"RECEIVE");
         fsm->setStateMethod(WAITBLOCKACK, &Ieee80211Mac::stateWaitBlockAck,"WAITBLOCKACK");
+        fsm->setStateMethod(SENDMPUA, &Ieee80211Mac::stateSendMpuA,"SENDMPUA");
 
         // initialize parameters
         const char *opModeStr = par("opMode").stringValue();
@@ -673,10 +675,16 @@ void Ieee80211Mac::handleUpperPacket(cPacket *msg)
 
     // must be a Ieee80211DataOrMgmtFrame, within the max size because we don't support fragmentation
     Ieee80211DataOrMgmtFrame *frame = check_and_cast<Ieee80211DataOrMgmtFrame *>(msg);
+    Ieee80211MpduA *mpdu = dynamic_cast<Ieee80211MpduA *>(msg);
 
-    if (frame->getByteLength() > fragmentationThreshold)
-        throw cRuntimeError("message from higher layer (%s)%s is too long for 802.11b, %d bytes (fragmentation is not supported yet)",
-                msg->getClassName(), msg->getName(), (int)(msg->getByteLength()));
+
+    if (mpdu == nullptr)
+    {
+        if (frame->getByteLength() > fragmentationThreshold)
+            throw cRuntimeError("message from higher layer (%s)%s is too long for 802.11b, %d bytes (fragmentation is not supported yet)",
+                    msg->getClassName(), msg->getName(), (int)(msg->getByteLength()));
+    }
+
     EV_DEBUG << "frame " << frame << " received from higher layer, receiver = " << frame->getReceiverAddress() << endl;
 
     // if you get error from this assert check if is client associated to AP
@@ -811,7 +819,7 @@ void Ieee80211Mac::handleLowerPacket(cPacket *msg)
             validRecMode = true;
     }
 
-    Ieee80211Frame *frame = dynamic_cast<Ieee80211Frame *>(msg);
+    //Ieee80211Frame *frame = dynamic_cast<Ieee80211Frame *>(msg);
 
     bool error = msg->hasBitError();
 
@@ -844,7 +852,21 @@ void Ieee80211Mac::handleLowerPacket(cPacket *msg)
     }
     contI++;
 
-    frame = dynamic_cast<Ieee80211Frame *>(msg);
+    Ieee80211Frame *frame = nullptr;
+    Ieee80211MpduDelimiter *delimiter = dynamic_cast<Ieee80211MpduDelimiter *>(msg);
+    if (delimiter != nullptr)
+    {
+        if (!delimiter->hasEncapsulatedPacket())
+        {
+            delete msg;
+            return;
+        }
+        frame = dynamic_cast<Ieee80211Frame *>(delimiter->decapsulate());
+        frame->setBitError(delimiter->hasBitError());
+        delete msg;
+    }
+    else
+        frame = dynamic_cast<Ieee80211Frame *>(msg);
     if (timeStampLastMessageReceived == SIMTIME_ZERO)
         timeStampLastMessageReceived = simTime();
     else {
@@ -1160,6 +1182,9 @@ void Ieee80211Mac::scheduleDataTimeoutPeriod(Ieee80211DataOrMgmtFrame *frameToSe
     }
     if (!endTimeout->isScheduled()) {
         EV_DEBUG << "scheduling data timeout period\n";
+        bool isNotMpu = true;
+        if (dynamic_cast<Ieee80211MpduA *>(frameToSend) != nullptr)
+            isNotMpu = false;
         if (useModulationParameters) {
             ModulationType modType;
             if (basicTransmisionMode.getDataRate() == (uint32_t) bitRate)
@@ -1177,7 +1202,10 @@ void Ieee80211Mac::scheduleDataTimeoutPeriod(Ieee80211DataOrMgmtFrame *frameToSe
             double slot = SIMTIME_DBL(Ieee80211Modulation::getSlotDuration(modType,wifiPreambleType));
             double sifs =  SIMTIME_DBL(Ieee80211Modulation::getSifsTime(modType,wifiPreambleType));
             double PHY_RX_START = SIMTIME_DBL(Ieee80211Modulation::get_aPHY_RX_START_Delay (modType,wifiPreambleType));
-            tim = duration + slot + sifs + PHY_RX_START;
+            if (isNotMpu)
+                tim = duration + slot + sifs + PHY_RX_START;
+            else
+                tim = duration + slot + sifs + PHY_RX_START;
         }
         else
             tim = computeFrameDuration(frameToSend) + SIMTIME_DBL( getSlotTime()) +SIMTIME_DBL( getSIFS()) + controlFrameTxTime(LENGTH_ACK) + MAX_PROPAGATION_DELAY * 2;
@@ -1395,18 +1423,6 @@ void Ieee80211Mac::sendCTSFrame(Ieee80211RTSFrame *rtsFrame)
 }
 
 
-void Ieee80211Mac::processMpduA(Ieee80211Frame *frame)
-{
-
-}
-
-bool Ieee80211Mac::isMpduA(Ieee80211Frame *frame)
-{
-    if (dynamic_cast<Ieee80211MpduA*>(frame))
-        return true;
-    return false;
-}
-
 /****************************************************************
  * Frame builder functions.
  */
@@ -1414,29 +1430,8 @@ Ieee80211DataOrMgmtFrame *Ieee80211Mac::buildDataFrame(Ieee80211DataOrMgmtFrame 
 {
     if (retryCounter() == 0)
     {
-#ifdef  USEMULTIQUEUE
-        FrameBlock *blk = dynamic_cast<FrameBlock *> (frameToSend);
-        if (blk == nullptr)
-        {
-            frameToSend->setSequenceNumber(sequenceNumber);
-            sequenceNumber = (sequenceNumber+1) % 4096;  //XXX seqNum must be checked upon reception of frames!
-        }
-        else
-        {
-            for (unsigned int i = 0; i < blk->getNumEncap() ;i++)
-            {
-                Ieee80211DataOrMgmtFrame * frameAux = dynamic_cast<Ieee80211DataOrMgmtFrame *> (blk->getPacket(i));
-                if (frameAux )
-                {
-                    frameAux->setSequenceNumber(sequenceNumber);
-                    sequenceNumber = (sequenceNumber+1) % 4096;  //XXX seqNum must be checked upon reception of frames!
-                }
-            }
-        }
-#else
         frameToSend->setSequenceNumber(sequenceNumber);
         sequenceNumber = (sequenceNumber+1) % 4096;  //XXX seqNum must be checked upon reception of frames!
-#endif
     }
 
     Ieee80211DataOrMgmtFrame *frame = (Ieee80211DataOrMgmtFrame *)frameToSend->dup();
