@@ -111,13 +111,10 @@ class INET_API UDPVideoStreamSvr2 : public ApplicationBase
     virtual void broadcastVideo();
     virtual int broadcastInterface();
 
-  public:
-    UDPVideoStreamSvr2();
-    virtual ~UDPVideoStreamSvr2();
-
-  protected:
     ///@name Overridden cSimpleModule functions
     //@{
+
+    virtual int numInitStages() const { return NUM_INIT_STAGES; }
     virtual void initialize(int stage);
     virtual void finish();
     virtual void handleMessageWhenUp(cMessage* msg);
@@ -128,6 +125,11 @@ class INET_API UDPVideoStreamSvr2 : public ApplicationBase
     virtual bool handleNodeStart(IDoneCallback *doneCallback);
     virtual bool handleNodeShutdown(IDoneCallback *doneCallback);
     virtual void handleNodeCrash();
+
+  public:
+    UDPVideoStreamSvr2();
+    virtual ~UDPVideoStreamSvr2();
+
 };
 
 }

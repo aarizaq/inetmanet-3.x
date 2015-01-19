@@ -62,19 +62,15 @@ class INET_API UDPVideoStreamCli2 : public ApplicationBase
 
     bool recieved;
 
-
-  public:
-    UDPVideoStreamCli2();
-    virtual ~UDPVideoStreamCli2();
   protected:
     ///@name Overridden cSimpleModule functions
     //@{
+    virtual int numInitStages() const { return NUM_INIT_STAGES; }
     virtual void initialize(int stage);
     virtual void finish();
     virtual void handleMessageWhenUp(cMessage *msg);
     //@}
 
-  protected:
     virtual void requestStream();
     virtual void receiveStream(cPacket *msg);
     virtual void timeOutData();
@@ -83,6 +79,11 @@ class INET_API UDPVideoStreamCli2 : public ApplicationBase
     virtual bool handleNodeStart(IDoneCallback *doneCallback);
     virtual bool handleNodeShutdown(IDoneCallback *doneCallback);
     virtual void handleNodeCrash();
+
+  public:
+    UDPVideoStreamCli2();
+    virtual ~UDPVideoStreamCli2();
+
 };
 
 }
