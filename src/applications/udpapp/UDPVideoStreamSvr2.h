@@ -114,6 +114,7 @@ class INET_API UDPVideoStreamSvr2 : public ApplicationBase
   protected:
     ///@name Overridden cSimpleModule functions
     //@{
+    virtual int numInitStages() const { return 4; }
     virtual void initialize(int stage);
     virtual void finish();
     virtual void handleMessageWhenUp(cMessage* msg);
