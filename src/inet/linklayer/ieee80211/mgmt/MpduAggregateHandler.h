@@ -25,7 +25,7 @@
 #include <utility>
 #include "inet/linklayer/ieee80211/mac/IQoSClassifier.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
-
+#include "inet/linklayer/ieee80211/mac/Ieee80211MpduA.h"
 
 namespace inet {
 
@@ -107,17 +107,17 @@ class INET_API MpduAggregateHandler : public cOwnedObject
         std::map<MACAddress,ADDBAInfo *> listAllowAddress;
         MACAddress neighAddress;
 
-        bool allAddress;
-        bool resetAfterSend;
-        int automaticMimimumAddress; // if the number of "free" address is bigger than this value the MpduAggregateHandler changes to automatically the handle Ack mode, 0 or lower disabled
+        bool allAddress = false;
+        bool perpetual = true;
+        bool resetAfterSend = false;
+        bool requestProcedure = true;
+        int automaticMimimumAddress = -1; // if the number of "free" address is bigger than this value the MpduAggregateHandler changes to automatically the handle Ack mode, 0 or lower disabled
 
         std::vector<CategotyInfo> categories;
-        virtual void increaseSize(Ieee80211DataOrMgmtFrame* val, int cat);
-        virtual void decreaseSize(Ieee80211DataOrMgmtFrame* val, int cat);
-
 
         virtual int findAddress(const MACAddress  &,int = -1);
         virtual int findAddressFree(const MACAddress &addr,int = -1);
+
         virtual void createBlocks(const MACAddress &, int = -1);
         virtual void removeBlock(const MACAddress &, int = -1);
 
@@ -135,6 +135,11 @@ class INET_API MpduAggregateHandler : public cOwnedObject
              //  ADDBAInfo management
 
     public:
+
+        virtual void increaseSize(Ieee80211DataOrMgmtFrame* val, int cat);
+        virtual void decreaseSize(Ieee80211DataOrMgmtFrame* val, int cat);
+
+
         MpduAggregateHandler();
         virtual ~MpduAggregateHandler();
         virtual void setNumQueues(int num){categories.resize(num);}
@@ -144,10 +149,14 @@ class INET_API MpduAggregateHandler : public cOwnedObject
         virtual bool checkState(const Ieee80211DataOrMgmtFrame *);
         virtual bool handleFrames(Ieee80211DataOrMgmtFrame *pkt);
 
+        virtual Ieee80211MpduA* getBlock(const MACAddress &, int , int  = -1);
+        virtual Ieee80211MpduA* getBlock(cMessage *, int , int  = -1);
+
         virtual void setAllAddress(const bool &p) {allAddress = p;}
         virtual void setResetAfterSend(const bool &p) {resetAfterSend = p;}
         virtual void setADDBAInfo(const MACAddress &addr, ADDBAInfo *);
         virtual bool isAllowAddress(const MACAddress &add, ADDBAInfo *&iaddai);
+        virtual void setPerpetual(const bool &p){perpetual = p;}
 
         //
         virtual void setAutomaticMimimumAddress(const int & p) {automaticMimimumAddress = p;} // if the number of "free" address is bigger than this value the MpduAggregateHandler changes to automatically the handle Ack mode, 0 or lower disabled

@@ -8,7 +8,7 @@ namespace inet {
 namespace ieee80211 {
 
 
-
+/*
 bool Ieee80211Mac::MpduAKey::operator<(const MpduAKey& other) const
 {
     if (other.addr != addr)
@@ -25,6 +25,26 @@ bool Ieee80211Mac::MpduAKey::operator!=(const MpduAKey& other) const
 {
     return (addr != other.addr || seq != other.seq);
 }
+*/
+
+// Handle MPDU-A frames.
+void Ieee80211Mac::sendMpuAPending(const MACAddress &addr)
+{
+    auto it = processingMpdu.find(addr);
+    if (it == processingMpdu.end())
+        return;
+    // Send to up until first erroneous
+    while (!it->second.inReception.empty() && !it->second.inReception.front()->hasBitError())
+    {
+        // send to up
+        if (!it->second.inReception.front()->hasBitError())
+            sendUp(it->second.inReception.front());
+        else
+            delete it->second.inReception.front();
+        it->second.inReception.pop_front();
+    }
+    processingMpdu.erase(it);
+}
 
 // Handle MPDU-A frames.
 void Ieee80211Mac::processMpduA(Ieee80211DataOrMgmtFrame *frame)
@@ -32,12 +52,16 @@ void Ieee80211Mac::processMpduA(Ieee80211DataOrMgmtFrame *frame)
 
     if (!isForUs(frame))
         return;
+    // if is correct store the frame in the confirmation array
+
+    bool duplicate = isDuplicated(frame);
 
     // handle
-    MpduAKey key;
-    key.seq = frame->getAMpduSeq();
-    key.addr = frame->getTransmitterAddress();
-    auto it = processingMpdu.find(key);
+    // MpduAKey key;
+    // key.seq = frame->getAMpduSeq();
+    // key.addr = frame->getTransmitterAddress();
+    // auto it = processingMpdu.find(key);
+    auto it = processingMpdu.find(frame->getTransmitterAddress());
     if (it == processingMpdu.end())
     {
         // clear old
@@ -50,10 +74,64 @@ void Ieee80211Mac::processMpduA(Ieee80211DataOrMgmtFrame *frame)
         }
         MpduAInProc proc;
         proc.time = simTime();
-        processingMpdu[key] = proc;
-        it  = processingMpdu.find(key);
+        processingMpdu[frame->getTransmitterAddress()] = proc;
+        it  = processingMpdu.find(frame->getTransmitterAddress());
         // check old frames
     }
+    else
+    {
+        //
+        if (!MpduModeReception)
+        {
+            // check if the node has received the seqNumber before
+            bool included = false;
+            if (!duplicate)
+            {
+                for (unsigned int i = 0; i < it->second.inReception.size(); i++)
+                {
+                    if (it->second.inReception[i]->getSequenceNumber() == frame->getSequenceNumber())
+                    {
+                        included = true;
+                        break;
+                    }
+                }
+            }
+            if (!duplicate && !included) // other frame clean stored information
+            {
+                if (simTime() - it->second.time < 0.001)
+                { // before delete send up received frames
+                    for (unsigned int i = 0; i < it->second.inReception.size(); i++)
+                    {
+                        if (!it->second.inReception[i]->hasBitError())
+                            sendUp(it->second.inReception[i]);
+                    }
+                }
+                while (!it->second.inReception.empty())
+                {
+                    delete it->second.inReception.front();
+                    it->second.inReception.pop_front();
+                }
+                it->second.time = simTime();
+            }
+        }
+    }
+
+    if (!MpduModeReception)
+    {
+        MpduModeReception = true;
+        it->second.confirmed.clear();
+    }
+
+    if (frame->getLastMpdu())
+        MpduModeReception = false;
+
+    if (!frame->hasBitError())
+    {
+        it->second.confirmed.push_back(frame->getSequenceNumber());
+    }
+
+    if (duplicate)
+        return; // nothing to do
 
     bool included = false;
 
@@ -76,14 +154,22 @@ void Ieee80211Mac::processMpduA(Ieee80211DataOrMgmtFrame *frame)
 
     if (frame->getLastMpdu())
     {
-        // Send to up until first erroenous
-        bool correct = true;
+        // Send to up until first erroneous
         while (!it->second.inReception.empty() && !it->second.inReception.front()->hasBitError())
         {
             // send to up
             sendUp(it->second.inReception.front());
             it->second.inReception.pop_front();
         }
+    }
+    // prepare timer
+    if (mpduRetEnd->isScheduled())
+        cancelEvent(mpduRetEnd);
+
+    if (!it->second.inReception.empty())
+    {
+        if (frame->getLastMpdu())
+            scheduleAt(simTime()+mpudRetTimeOut,mpduRetEnd);
     }
 }
 
@@ -96,8 +182,37 @@ bool Ieee80211Mac::isMpduA(Ieee80211Frame *frame)
 
 void Ieee80211Mac::sendBLOCKACKFrameOnEndSIFS()
 {
-
+    Ieee80211Frame *frameToACK = (Ieee80211Frame *)endSIFS->getContextPointer();
+    Ieee80211DataOrMgmtFrame *frame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(frameToACK);
+    MACAddress addr = frame->getTransmitterAddress();
+    endSIFS->setContextPointer(nullptr);
+    delete frameToACK;
+    sendBlockAckFrame(addr);
 }
+
+
+void Ieee80211Mac::sendBlockAckFrame(const MACAddress & addr)
+{
+    auto it = processingMpdu.find(addr);
+    if (it == processingMpdu.end())
+        throw cRuntimeError("No data for to send Block Ack frame  %s",addr.str().c_str());
+
+    Ieee80211BlockAckFrame * frame = new Ieee80211BlockAckFrame();
+    if (!it->second.confirmed.empty())
+    {
+        frame->setStartingSequence(it->second.confirmed.front());
+        frame->setSequencesArraySize(it->second.confirmed.size()-1);
+    }
+
+    for (int i = 0 ; i < ((int)it->second.confirmed.size()-1);i++)
+        frame->setSequences(i,it->second.confirmed[i+1]);
+
+    frame->setDuration(0);
+    frame->setReceiverAddress(addr);
+    sendDown(setBitrateFrame(frame));
+}
+
+
 
 Ieee80211MpduDelimiter *Ieee80211Mac::buildMpduDataFrame(Ieee80211Frame *frameToSend)
 {
@@ -682,16 +797,16 @@ void Ieee80211Mac::stateSendMpuA(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
         indexMpduTransmission = 0;
         configureRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
         mpduInTransmission = check_and_cast<Ieee80211MpduA *>(msg);
-        if (mpduInTransmission->getPacket(0)->getAMpduSeq() == 0)
+        if (!mpduInTransmission->getPacket(0)->getIsMpduA())
         {
-            aMpduSeq++;
             for (unsigned int i = 0 ; i < mpduInTransmission->getNumEncap(); i++)
-                mpduInTransmission->getPacket(i)->setAMpduSeq(aMpduSeq);
+                mpduInTransmission->getPacket(i)->setIsMpduA(true);
         }
         for (unsigned int i = 0 ; i < mpduInTransmission->getNumEncap()-1; i++)
         {
             mpduInTransmission->getPacket(i)->setLastMpdu(false);
         }
+        mpduInTransmission->getPacket(mpduInTransmission->getNumEncap()-1)->setLastMpdu(true);
         sendDown(buildMpduDataFrame(check_and_cast<Ieee80211DataOrMgmtFrame *>(setBitrateFrame(mpduInTransmission->getPacket(indexMpduTransmission)))));
     }
 
@@ -871,7 +986,7 @@ void Ieee80211Mac::stateReceive(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
 
     int frameType = frame ? frame->getType() : -1;
 
-    FSMIEEE80211_No_Event_Transition(fsmLocal, dataFrame != nullptr && isLowerMessage(msg)  && isForUs(frame) && dataFrame->getAMpduSeq() !=0)
+    FSMIEEE80211_No_Event_Transition(fsmLocal, dataFrame != nullptr && isLowerMessage(msg)  && isForUs(frame) && dataFrame->getIsMpduA())
     {
         if (fsmLocal->debug()) EV_DEBUG << "Immediate-Receive-MPDUA \n";
         processMpduA(dataFrame);

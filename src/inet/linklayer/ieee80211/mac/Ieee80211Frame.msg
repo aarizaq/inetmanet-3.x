@@ -141,8 +141,8 @@ packet Ieee80211DataOrMgmtFrame extends Ieee80211TwoAddressFrame
     MACAddress address3;
     short fragmentNumber;
     uint16 sequenceNumber;
-    unsigned long aMpduSeq = 0; // convenience parameter for A-MPDU transmission/reception frames.
-    bool lastMpdu = true;
+    bool lastMpdu = true; // convenience parameter for A-MPDU transmission/reception frames.
+    bool isMpduA = false;
 }
 
 //
@@ -215,11 +215,12 @@ packet Ieee80211BlockAckFrame extends Ieee80211TwoAddressFrame
 {
     type = ST_BLOCKACK;
     byteLength = 152;
-    bool baAckPolicy;
+    bool barAckPolicy;
     bool multiTid;
     bool compressed;
     unsigned short tidInfo;
     unsigned short startingSequence;
+    unsigned short sequences[]; // conveinience, instead of to use the bit map we use this
 }
 
 packet Ieee80211MpduDelimiter

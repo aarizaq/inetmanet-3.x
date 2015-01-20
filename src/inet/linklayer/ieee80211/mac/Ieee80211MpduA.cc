@@ -208,7 +208,8 @@ void Ieee80211MpduA::pushBack(Ieee80211DataOrMgmtFrame *pkt)
     if (pkt->getOwner() != simulation.getContextSimpleModule())
         throw cRuntimeError(this, "pushBack(): not owner of message (%s)%s, owner is (%s)%s", pkt->getClassName(),
                 pkt->getFullName(), pkt->getOwner()->getClassName(), pkt->getOwner()->getFullPath().c_str());
-    take(shareStructPtr->pkt = pkt);
+    take(pkt);
+    shareStructPtr->pkt = pkt;
     encapsulateVector.push_back(shareStructPtr);
 }
 

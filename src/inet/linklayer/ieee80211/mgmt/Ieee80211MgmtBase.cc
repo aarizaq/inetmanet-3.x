@@ -220,6 +220,9 @@ cMessage *Ieee80211MgmtBase::enqueue(cMessage *msg)
         int length = 0;
         for (int i = 0; i < numQueues; i++)
             length += dataQueue[i].size();
+        if (mpduAggregateHandler)
+            mpduAggregateHandler->increaseSize(frame,cat);
+
         emit(dataQueueLenSignal, length);
         return nullptr;
     }
@@ -246,6 +249,9 @@ cMessage *Ieee80211MgmtBase::enqueue(cMessage *msg, const int &cat)
         int length = 0;
         for (int i = 0; i < numQueues; i++)
             length += dataQueue[i].size();
+        if (mpduAggregateHandler)
+            mpduAggregateHandler->increaseSize(frame,cat);
+
         emit(dataQueueLenSignal, length);
         return nullptr;
     }
@@ -277,11 +283,15 @@ cMessage *Ieee80211MgmtBase::dequeue()
         for (int i = 0; i < numQueues; i++)
             length += dataQueue[i].size();
         emit(dataQueueLenSignal, length);
+        if (mpduAggregateHandler)
+            mpduAggregateHandler->decreaseSize(pk,0);
+
+
     }
     if (mpduAggregateHandler)
+    {
         mpduAggregateHandler->checkState(pk);
-
-
+    }
     return pk;
 }
 
@@ -300,7 +310,24 @@ void Ieee80211MgmtBase::requestPacket(const int &cat)
         emit(dequeuePkSignal, msg);
         emit(queueingTimeSignal, simTime() - msg->getArrivalTime());
         msg->setKind(cat);
+        if (mpduAggregateHandler)
+        {
+
+            cMessage * aux = mpduAggregateHandler->getBlock(msg,64,cat);
+            if (aux)
+                msg = aux;
+        }
         sendOut(msg);
+    }
+}
+
+void Ieee80211MgmtBase::requestMpuA(const MACAddress &addr, const int &size, const int &cat)
+{
+    if (mpduAggregateHandler)
+    {
+        cMessage * msg = mpduAggregateHandler->getBlock(addr,size,cat);
+        if (msg)
+            sendOut(msg);
     }
 }
 
@@ -321,6 +348,13 @@ cMessage *Ieee80211MgmtBase::dequeue(const int & cat)
         int length = 0;
         for (int i = 0; i < numQueues; i++)
             length += dataQueue[i].size();
+        if (mpduAggregateHandler)
+        {
+            Ieee80211DataOrMgmtFrame *frame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(pk);
+            mpduAggregateHandler->increaseSize(frame,cat);
+        }
+
+
         emit(dataQueueLenSignal, length);
     }
     return pk;
@@ -347,6 +381,11 @@ void Ieee80211MgmtBase::sendUp(cMessage *msg)
 
 void Ieee80211MgmtBase::processFrame(Ieee80211DataOrMgmtFrame *frame)
 {
+    if (mpduAggregateHandler)
+    {
+        if (mpduAggregateHandler->handleFrames(frame))
+            return;
+    }
     switch (frame->getType()) {
         case ST_DATA:
             numDataFramesReceived++;
@@ -495,6 +534,11 @@ unsigned int Ieee80211MgmtBase::getManagementSize() const
 cMessage * Ieee80211MgmtBase::pop(const int& cat) {
     cMessage *msg = dataQueue[cat].front();
     dataQueue[cat].pop_front();
+    if (mpduAggregateHandler)
+    {
+        Ieee80211DataOrMgmtFrame *frame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg);
+        mpduAggregateHandler->increaseSize(frame,cat);
+    }
     return msg;
 }
 

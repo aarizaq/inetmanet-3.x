@@ -258,9 +258,12 @@ class INET_API Ieee80211Mac : public MACProtocolBase
       Ieee802MacBaseFsm *fsm;
 
     // MPDU information variables
-      unsigned long aMpduSeq = 0;
       bool MpduModeTranssmision = false;
+      bool MpduModeReception = false;
       bool blockAckModeReception = false;
+      cMessage *mpduRetEnd = nullptr;
+      simtime_t mpudRetTimeOut;
+
       int indexMpduTransmission = 0;
       Ieee80211MpduA *mpduInTransmission = nullptr;
       typedef std::deque<Ieee80211DataOrMgmtFrame *> MpduAInReception;
@@ -280,6 +283,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
                   }
               }
       };
+      /*
       class MpduAKey
       {
           public:
@@ -291,8 +295,9 @@ class INET_API Ieee80211Mac : public MACProtocolBase
               bool operator!=(const MpduAKey& other) const;
 
       };
+      */
 
-      std::map<MpduAKey,MpduAInProc> processingMpdu;
+      std::map<MACAddress, MpduAInProc> processingMpdu;
 
       int retryMpduAConfirmation = 0;
       int retryMpduA = 0;
@@ -643,10 +648,12 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     virtual void sendMulticastFrame(Ieee80211DataOrMgmtFrame *frameToSend);
 
     // handle MPDU-A
+    virtual void sendMpuAPending(const MACAddress &addr);
     virtual void processMpduA(Ieee80211DataOrMgmtFrame *frame);
     virtual void sendBLOCKACKFrameOnEndSIFS();
     virtual bool isMpduA(Ieee80211Frame *frame);
     virtual Ieee80211MpduDelimiter* buildMpduDataFrame(Ieee80211Frame *frameToSend);
+    virtual void sendBlockAckFrame(const MACAddress &);
 
     //@}
 
