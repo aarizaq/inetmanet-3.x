@@ -3325,6 +3325,16 @@ void OLSR_ETX::finish()
     linkQualityTimer = nullptr;
 }
 
+OLSR_ETX::OLSR_ETX() :
+    OLSR(),
+    tc_msg_ttl_(),
+    tc_msg_ttl_index_(-1),
+    cap_sn_(-1),
+    state_etx_ptr(nullptr),
+    linkQualityTimer(nullptr)
+{
+}
+
 OLSR_ETX::~OLSR_ETX()
 {
 

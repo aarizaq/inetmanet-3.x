@@ -49,7 +49,7 @@ class INET_API UDPBasicBurst : public ApplicationBase
 
     // parameters
     std::vector<L3Address> destAddresses;
-    ChooseDestAddrMode chooseDestAddrMode;
+    ChooseDestAddrMode chooseDestAddrMode = (ChooseDestAddrMode)0;
     simtime_t delayLimit;
     simtime_t startTime;
     simtime_t stopTime;
@@ -96,10 +96,10 @@ class INET_API UDPBasicBurst : public ApplicationBase
     virtual void processPacket(cPacket *msg);
     virtual void generateBurst();
 
-    virtual int numInitStages() const { return NUM_INIT_STAGES; }
-    virtual void initialize(int stage);
-    virtual void handleMessageWhenUp(cMessage *msg);
-    virtual void finish();
+    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
+    virtual void initialize(int stage) override;
+    virtual void handleMessageWhenUp(cMessage *msg) override;
+    virtual void finish() override;
     virtual bool sendBroadcast(const L3Address &dest, cPacket *pkt);
     virtual void initialConfiguration();
 
@@ -107,9 +107,9 @@ class INET_API UDPBasicBurst : public ApplicationBase
     virtual void processSend();
     virtual void processStop();
 
-    virtual bool handleNodeStart(IDoneCallback *doneCallback);
-    virtual bool handleNodeShutdown(IDoneCallback *doneCallback);
-    virtual void handleNodeCrash();
+    virtual bool handleNodeStart(IDoneCallback *doneCallback) override;
+    virtual bool handleNodeShutdown(IDoneCallback *doneCallback) override;
+    virtual void handleNodeCrash() override;
 
   public:
     UDPBasicBurst() {}
