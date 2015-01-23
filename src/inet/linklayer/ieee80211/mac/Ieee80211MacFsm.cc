@@ -27,6 +27,21 @@ bool Ieee80211Mac::MpduAKey::operator!=(const MpduAKey& other) const
 }
 */
 
+void Ieee80211Mac::retryCurrentMpduA()
+{
+    ASSERT(retryCounter() < transmissionLimit - 1);
+    getCurrentTransmission()->setRetry(true);
+    if (rateControlMode == RATE_AARF || rateControlMode == RATE_ARF)
+        reportDataFailed();
+    else
+        retryMpduA++;
+
+    numRetry()++;
+    backoff() = true;
+    generateBackoffPeriod();
+}
+
+
 // Handle MPDU-A frames.
 void Ieee80211Mac::sendMpuAPending(const MACAddress &addr)
 {
@@ -209,15 +224,95 @@ void Ieee80211Mac::sendBlockAckFrame(const MACAddress & addr)
 
     frame->setDuration(0);
     frame->setReceiverAddress(addr);
+    frame->setTransmitterAddress(address);
     sendDown(setBitrateFrame(frame));
 }
 
+void Ieee80211Mac::processBlockAckFrame(Ieee80211Frame *frameToSend)
+{
+    MpduAInReception retFrames;
+    std::vector<int> retries;
+
+    Ieee80211BlockAckFrame *frame  = check_and_cast<Ieee80211BlockAckFrame*>(frameToSend);
+
+    // process first packet correctly received.
+    int size = mpduInTransmission->getNumEncap();
 
 
-Ieee80211MpduDelimiter *Ieee80211Mac::buildMpduDataFrame(Ieee80211Frame *frameToSend)
+    while (mpduInTransmission->getNumEncap()>0 && frame->getStartingSequence() != mpduInTransmission->getPacket(0)->getSequenceNumber())
+    {
+        int retry = mpduInTransmission->getNumRetries(0);
+        if (retry == transmissionLimit - 1)
+        {
+            delete mpduInTransmission->decapsulatePacket(0); // packet lost.
+            numGivenUp()++;
+            continue;
+        }
+        retries.push_back(retry+1);
+        retFrames.push_back(mpduInTransmission->decapsulatePacket(0));
+    }
+
+    if (mpduInTransmission->getNumEncap()>0)
+    {
+        int retry = mpduInTransmission->getNumRetries(0);
+        if (retry == 0) numSentWithoutRetry()++;
+        numSent()++;
+        delete mpduInTransmission->decapsulatePacket(0); // packet correctly received.
+    }
+
+    // check the other packets.
+
+    for (int i = 0 ; i < frame->getSequencesArraySize();i++)
+    {
+        while (mpduInTransmission->getNumEncap()>0 && frame->getSequences(i) != mpduInTransmission->getPacket(0)->getSequenceNumber())
+        {
+            int retry = mpduInTransmission->getNumRetries(0);
+            if (retry == transmissionLimit - 1)
+            {
+                delete mpduInTransmission->decapsulatePacket(0); // packet lost.
+                numGivenUp()++;
+                continue;
+            }
+            retries.push_back(retry+1);
+            retFrames.push_back(mpduInTransmission->decapsulatePacket(0));
+        }
+        if (mpduInTransmission->getNumEncap()>0)
+        {
+
+            int retry = mpduInTransmission->getNumRetries(0);
+            if (retry == 0) numSentWithoutRetry()++;
+            numSent()++;
+            delete mpduInTransmission->decapsulatePacket(0); // packet correctly received.
+        }
+    }
+    if (retFrames.empty())
+    {
+        // transmission success
+        delete mpduInTransmission;
+        mpduInTransmission = nullptr;
+    }
+    else
+    {
+        // retransmissions
+        for (unsigned int i = 0; i < retFrames.size(); i++)
+        {
+            mpduInTransmission->pushBack(retFrames[i],retries[i]);
+        }
+        if (mpduInTransmission->getNumEncap()<64)
+        {
+            retryMpduA++;
+            // request packet and create a new MTUA with size 64
+            queueModule->requestMpuA(mpduInTransmission->getReceiverAddress(), 64 - mpduInTransmission->getNumEncap(), mpduAClass);
+            numMduRequested++;
+        }
+    }
+}
+
+
+Ieee80211MpduDelimiter *Ieee80211Mac::buildMpduDataFrame(Ieee80211Frame *frameToSend, int retry)
 {
     Ieee80211DataOrMgmtFrame *frameAux = dynamic_cast<Ieee80211DataOrMgmtFrame *>(frameToSend);
-    if (frameAux && retryMpduA  == 0)
+    if (frameAux && retry  == 0)
     {
         frameAux->setSequenceNumber(sequenceNumber);
         sequenceNumber = (sequenceNumber+1) % 4096;  //XXX seqNum must be checked upon reception of frames!
@@ -225,6 +320,10 @@ Ieee80211MpduDelimiter *Ieee80211Mac::buildMpduDataFrame(Ieee80211Frame *frameTo
 
     Ieee80211Frame *frame = (Ieee80211DataOrMgmtFrame *)frameToSend->dup();
 
+    if (frameAux && frameAux->getTransmitterAddress().isUnspecified())
+    {
+        frameAux->setTransmitterAddress(address);
+    }
     if (frameToSend->getControlInfo() != nullptr)
     {
         cObject * ctr = frameToSend->getControlInfo();
@@ -745,45 +844,184 @@ void Ieee80211Mac::stateWaitAck(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
 
 void Ieee80211Mac::stateWaitBlockAck(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
 {
+
+    Ieee80211Frame *frame = dynamic_cast<Ieee80211Frame*>(msg);
+    bool receptionError = false;
+    if (frame && isLowerMessage(frame))
+        receptionError = frame ? frame->hasBitError() : false;
+    int frameType = frame ? frame->getType() : -1;
+
     FSMIEEE80211_Enter(fsmLocal)
     {
-        scheduleDataTimeoutPeriod(getCurrentTransmission());
-        MpduModeTranssmision = true;
-        indexMpduTransmission = 0;
-        configureRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
-        mpduInTransmission = check_and_cast<Ieee80211MpduA *>(msg);
-        // if you get error from this assert check if is client associated to AP
-        Ieee80211DataOrMgmtFrame * frame =  check_and_cast<Ieee80211DataOrMgmtFrame *>(setBitrateFrame(mpduInTransmission->getPacket(indexMpduTransmission)->dup()));
+        if (mpduInTransmission == nullptr)
+            FSMIEEE80211_Transition(fsmLocal,DEFER);
+        Ieee80211BlockAckFrameReq rreqAck;
+       // TODO: scheduleDataTimeoutPeriod(&rreqAck);
 
-
-
-        ASSERT(!frame->getReceiverAddress().isUnspecified());
-        frame->setTransmitterAddress(mpduInTransmission->getTransmitterAddress());
-        frame->setMACArrive(mpduInTransmission->getMACArrive());
-        sendDown(frame);
     }
 
-    if (msg == mediumStateChange && radio->getTransmissionState() == IRadio::TRANSMISSION_STATE_IDLE)
-    {
-        // send next
-        indexMpduTransmission++;
-        currentAC = oldcurrentAC;
+     FSMIEEE80211_Event_Transition(fsmLocal,
+              isLowerMessage(msg) && receptionError && retryMpduA == transmissionLimit - 1)
+     {
+          if (fsmLocal->debug()) EV_DEBUG  << "Reception-BLOCK ACK-failed \n";
+          currentAC = oldcurrentAC;
+          cancelTimeoutPeriod();
+          giveUpCurrentTransmission();
+          txop = false;
+          if (endTXOP->isScheduled()) cancelEvent(endTXOP);
+          mpduInTransmission = nullptr;
+          FSMIEEE80211_Transition(fsmLocal,IDLE);
+      }
 
-        if ((int)mpduInTransmission->getNumEncap() < indexMpduTransmission)
-        {
-            Ieee80211DataOrMgmtFrame * frame =  check_and_cast<Ieee80211DataOrMgmtFrame *>(setBitrateFrame(mpduInTransmission->getPacket(indexMpduTransmission)->dup()));
-            ASSERT(!frame->getReceiverAddress().isUnspecified());
-            frame->setTransmitterAddress(mpduInTransmission->getTransmitterAddress());
-            frame->setMACArrive(mpduInTransmission->getMACArrive());
-            sendDown(frame);
-        }
-        else
-        {
+      FSMIEEE80211_Event_Transition(fsmLocal, isLowerMessage(msg) && receptionError)
+      {
+          if (fsmLocal->debug()) EV_DEBUG  << "Reception-ACK-error \n";
+          currentAC=oldcurrentAC;
+          retryMpduA++;
 
-            // add block ack request   ?
-            FSMIEEE80211_Transition(fsmLocal,WAITACK);
-        }
-    }
+          cancelTimeoutPeriod();
+          retryCurrentMpduA();
+          txop = false;
+          if (endTXOP->isScheduled()) cancelEvent(endTXOP);
+          FSMIEEE80211_Transition(fsmLocal,DEFER);
+      }
+
+      FSMIEEE80211_Event_Transition(fsmLocal,
+                                    isLowerMessage(msg) && isForUs(frame) && frameType == ST_BLOCKACK)
+      {
+
+          if (fsmLocal->debug()) EV_DEBUG  << "Receive-ACK-TXOP-Empty \n";
+          sendNotification(NF_TX_ACKED);// added by aaq
+          int size = mpduInTransmission->getNumEncap();
+
+          processBlockAckFrame(frame);
+          currentAC = oldcurrentAC;
+          if (mpduInTransmission)
+          {
+              // more frames
+              FSMIEEE80211_Transition(fsmLocal,SENDMPUA);
+          }
+          else
+          {
+              // no more frames
+              if (retryMpduA == 0) numSentWithoutRetry() += size;
+              numSent() += size;
+
+              FSMIEEE80211_Transition(fsmLocal,DEFER);
+          }
+
+          if (retryMpduA == 0) numSentWithoutRetry() + size;
+          numSent()++;
+
+          fr = getCurrentTransmission();
+          numBits += fr->getBitLength();
+          bits() += fr->getBitLength();
+          macDelay()->record(simTime() - fr->getMACArrive());
+          if (maxJitter() == SIMTIME_ZERO || maxJitter() < (simTime() - fr->getMACArrive()))
+              maxJitter() = simTime() - fr->getMACArrive();
+          if (minJitter() == SIMTIME_ZERO || minJitter() > (simTime() - fr->getMACArrive()))
+              minJitter() = simTime() - fr->getMACArrive();
+          if (fsmLocal->debug()) EV_DEBUG << "record macDelay AC" << currentAC << " value " << simTime() - fr->getMACArrive() <<endl;
+          numSentTXOP++;
+          cancelTimeoutPeriod();
+          finishCurrentTransmission();
+          resetCurrentBackOff();
+          txop = false;
+          if (endTXOP->isScheduled()) cancelEvent(endTXOP);
+          FSMIEEE80211_Transition(fsmLocal,DEFER);
+      }
+
+      FSMIEEE80211_Event_Transition(fsmLocal,
+                                    isLowerMessage(msg) && isForUs(frame) && frameType == ST_ACK && txop)
+      {
+          if (fsmLocal->debug()) EV_DEBUG  << "Receive-ACK-TXOP \n";
+          sendNotification(NF_TX_ACKED);// added by aaq
+          currentAC = oldcurrentAC;
+          if (retryCounter() == 0) numSentWithoutRetry()++;
+          numSent()++;
+          fr = getCurrentTransmission();
+          numBits += fr->getBitLength();
+          bits() += fr->getBitLength();
+
+
+          macDelay()->record(simTime() - fr->getMACArrive());
+          if (maxJitter() == SIMTIME_ZERO || maxJitter() < (simTime() - fr->getMACArrive()))
+              maxJitter() = simTime() - fr->getMACArrive();
+          if (minJitter() == SIMTIME_ZERO || minJitter() > (simTime() - fr->getMACArrive()))
+              minJitter() = simTime() - fr->getMACArrive();
+          if (fsmLocal->debug()) EV_DEBUG << "record macDelay AC" << currentAC << " value " << simTime() - fr->getMACArrive() <<endl;
+          numSentTXOP++;
+          cancelTimeoutPeriod();
+          finishCurrentTransmission();
+
+          FSMIEEE80211_Transition(fsmLocal,WAITSIFS);
+      }
+               /*Ieee 802.11 2007 9.9.1.2 EDCA TXOPs*/
+      FSMIEEE80211_Event_Transition(fsmLocal,
+                                    isLowerMessage(msg) && isForUs(frame) && frameType == ST_ACK)
+      {
+          if (fsmLocal->debug()) EV_DEBUG  << "Receive-ACK \n";
+          sendNotification(NF_TX_ACKED);// added by mhn **************************************
+          currentAC = oldcurrentAC;
+          if (retryCounter() == 0)
+              numSentWithoutRetry()++;
+          numSent()++;
+          fr = getCurrentTransmission();
+          numBits += fr->getBitLength();
+          bits() += fr->getBitLength();
+
+          macDelay()->record(simTime() - fr->getMACArrive());
+          if (maxJitter() == SIMTIME_ZERO || maxJitter() < (simTime() - fr->getMACArrive()))
+              maxJitter() = simTime() - fr->getMACArrive();
+          if (minJitter() == SIMTIME_ZERO || minJitter() > (simTime() - fr->getMACArrive()))
+              minJitter() = simTime() - fr->getMACArrive();
+          if (fsmLocal->debug()) EV_DEBUG << "record macDelay AC" << currentAC << " value " << simTime() - fr->getMACArrive() <<endl;
+          cancelTimeoutPeriod();
+          finishCurrentTransmission();
+          resetCurrentBackOff();
+          FSMIEEE80211_Transition(fsmLocal,DEFER);
+      }
+
+      FSMIEEE80211_Event_Transition(fsmLocal,
+                                    msg == endTimeout && retryCounter(oldcurrentAC) == transmissionLimit - 1)
+      {
+          currentAC = oldcurrentAC;
+          giveUpCurrentTransmission();
+          txop = false;
+          if (endTXOP->isScheduled()) cancelEvent(endTXOP);
+          FSMIEEE80211_Transition(fsmLocal,IDLE);
+      }
+
+      FSMIEEE80211_Event_Transition(fsmLocal,
+                                    msg == endTimeout)
+      {
+          if (fsmLocal->debug()) EV_DEBUG  << "Receive-ACK-Timeout \n";
+          currentAC = oldcurrentAC;
+          retryCurrentTransmission();
+          txop = false;
+          if (endTXOP->isScheduled()) cancelEvent(endTXOP);
+          FSMIEEE80211_Transition(fsmLocal,DEFER);
+      }
+
+      FSMIEEE80211_Event_Transition(fsmLocal,isLowerMessage(msg))
+      {
+          currentAC=oldcurrentAC;
+          cancelTimeoutPeriod();
+          if (retryCounter(oldcurrentAC) == transmissionLimit - 1)
+          {
+              if (fsmLocal->debug()) EV_DEBUG  << "Interrupted-ACK-Failure \n";
+              giveUpCurrentTransmission();
+          }
+          else
+          {
+              if (fsmLocal->debug()) EV_DEBUG  << "Retry-Interrupted-ACK \n";
+              retryCurrentTransmission();
+          }
+          txop = false;
+          if (endTXOP->isScheduled()) cancelEvent(endTXOP);
+          FSMIEEE80211_Transition(fsmLocal,RECEIVE);
+      }
+
 }
 
 void Ieee80211Mac::stateSendMpuA(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
@@ -796,18 +1034,20 @@ void Ieee80211Mac::stateSendMpuA(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
         MpduModeTranssmision = true;
         indexMpduTransmission = 0;
         configureRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
-        mpduInTransmission = check_and_cast<Ieee80211MpduA *>(msg);
-        if (!mpduInTransmission->getPacket(0)->getIsMpduA())
-        {
-            for (unsigned int i = 0 ; i < mpduInTransmission->getNumEncap(); i++)
-                mpduInTransmission->getPacket(i)->setIsMpduA(true);
-        }
+        if (mpduInTransmission == nullptr)
+            mpduInTransmission = check_and_cast<Ieee80211MpduA *>(msg);
+
+        for (unsigned int i = 0 ; i < mpduInTransmission->getNumEncap(); i++)
+            mpduInTransmission->getPacket(i)->setIsMpduA(true);
+
         for (unsigned int i = 0 ; i < mpduInTransmission->getNumEncap()-1; i++)
         {
             mpduInTransmission->getPacket(i)->setLastMpdu(false);
         }
+
         mpduInTransmission->getPacket(mpduInTransmission->getNumEncap()-1)->setLastMpdu(true);
-        sendDown(buildMpduDataFrame(check_and_cast<Ieee80211DataOrMgmtFrame *>(setBitrateFrame(mpduInTransmission->getPacket(indexMpduTransmission)))));
+        int retry = mpduInTransmission->getNumRetries(indexMpduTransmission);
+        sendDown(buildMpduDataFrame(check_and_cast<Ieee80211DataOrMgmtFrame *>(setBitrateFrame(mpduInTransmission->getPacket(indexMpduTransmission))),retry));
     }
 
     if (msg == mediumStateChange && radio->getTransmissionState() == IRadio::TRANSMISSION_STATE_IDLE)
@@ -815,16 +1055,18 @@ void Ieee80211Mac::stateSendMpuA(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
         // send next
         indexMpduTransmission++;
         currentAC = oldcurrentAC;
+        int retry = mpduInTransmission->getNumRetries(indexMpduTransmission);
         if ((int)mpduInTransmission->getNumEncap() < indexMpduTransmission)
-            sendDown(buildDataFrame(check_and_cast<Ieee80211DataOrMgmtFrame *>(setBitrateFrame(mpduInTransmission->getPacket(indexMpduTransmission)))));
+            sendDown(buildMpduDataFrame(check_and_cast<Ieee80211DataOrMgmtFrame *>(setBitrateFrame(mpduInTransmission->getPacket(indexMpduTransmission))),retry));
         else
         {
             // transmit BlockAck request.
             // transmit BlockAck request.
-            Ieee80211BlockAckFrameReq *reqFrame = nullptr;
-            setBitrateFrame(reqFrame);
-            sendDown(buildMpduDataFrame(reqFrame));
-            delete reqFrame;
+            Ieee80211BlockAckFrameReq reqFrame;
+            reqFrame.setReceiverAddress(mpduInTransmission->getReceiverAddress());
+            reqFrame.setTransmitterAddress(address);
+            setBitrateFrame(&reqFrame);
+            sendDown(buildMpduDataFrame(&reqFrame,0));
             FSMIEEE80211_Transition(fsmLocal,WAITBLOCKACK);
         }
     }

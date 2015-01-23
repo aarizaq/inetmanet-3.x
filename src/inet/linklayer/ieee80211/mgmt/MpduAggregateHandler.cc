@@ -339,7 +339,7 @@ Ieee80211MpduA* MpduAggregateHandler::getBlock(cMessage *msg,int maxSize, int ca
         Ieee80211MpduA* block = getBlock(frame->getReceiverAddress(),maxSize-1,cat);
         if (block)
         {
-            block->pushFrom(frame);
+            block->pushFront(frame);
             return block;
         }
     }
@@ -527,14 +527,14 @@ void MpduAggregateHandler::removeBlock(const MACAddress &addr, int cat)
         }
         while (frame->getEncapSize() > 1)
         {
-            Ieee80211DataOrMgmtFrame *pkt = frame->popFrom();
+            Ieee80211DataOrMgmtFrame *pkt = frame->popFront();
             // check ownership
             if (pkt->getOwner() == this)
                 drop(pkt);
             categories[cat].queue->insert(it,pkt);
             itDest2->second++;
         }
-        *it = frame->popFrom();
+        *it = frame->popFront();
         if ((*it)->getOwner() == this)
             drop(*it);
         itDest2->second++;

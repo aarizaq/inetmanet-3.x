@@ -145,7 +145,7 @@ Ieee80211DataOrMgmtFrame *Ieee80211MpduA::popBack()
     return msg;
 }
 
-Ieee80211DataOrMgmtFrame *Ieee80211MpduA::popFrom()
+Ieee80211DataOrMgmtFrame *Ieee80211MpduA::popFront()
 {
     if (encapsulateVector.empty())
         return nullptr;
@@ -173,6 +173,18 @@ Ieee80211DataOrMgmtFrame *Ieee80211MpduA::popFrom()
 }
 
 void Ieee80211MpduA::pushBack(Ieee80211DataOrMgmtFrame *pkt)
+{
+    pushBack(pkt, 0);
+}
+
+void Ieee80211MpduA::pushFront(Ieee80211DataOrMgmtFrame *pkt)
+{
+    pushFront(pkt, 0);
+}
+
+
+
+void Ieee80211MpduA::pushBack(Ieee80211DataOrMgmtFrame *pkt, int retries)
 {
     if (pkt == nullptr)
         return;
@@ -210,10 +222,11 @@ void Ieee80211MpduA::pushBack(Ieee80211DataOrMgmtFrame *pkt)
                 pkt->getFullName(), pkt->getOwner()->getClassName(), pkt->getOwner()->getFullPath().c_str());
     take(pkt);
     shareStructPtr->pkt = pkt;
+    shareStructPtr->numRetries = retries;
     encapsulateVector.push_back(shareStructPtr);
 }
 
-void Ieee80211MpduA::pushFrom(Ieee80211DataOrMgmtFrame *pkt)
+void Ieee80211MpduA::pushFront(Ieee80211DataOrMgmtFrame *pkt, int retries)
 {
     if (pkt == nullptr)
         return;
@@ -232,6 +245,8 @@ void Ieee80211MpduA::pushFrom(Ieee80211DataOrMgmtFrame *pkt)
         throw cRuntimeError(this, "pushFrom(): not owner of message (%s)%s, owner is (%s)%s", pkt->getClassName(),
                 pkt->getFullName(), pkt->getOwner()->getClassName(), pkt->getOwner()->getFullPath().c_str());
     take(shareStructPtr->pkt = pkt);
+    shareStructPtr->numRetries = retries;
+
     encapsulateVector.insert(encapsulateVector.begin(), shareStructPtr);
 }
 
@@ -263,13 +278,22 @@ Ieee80211DataOrMgmtFrame *Ieee80211MpduA::getPacket(unsigned int i) const
     return encapsulateVector[i]->pkt;
 }
 
-cPacket *Ieee80211MpduA::decapsulatePacket(unsigned int i)
+int Ieee80211MpduA::getNumRetries(unsigned int i) const
+{
+
+    if (i >= encapsulateVector.size())
+        return 0;
+    const_cast<Ieee80211MpduA*>(this)->_detachShareVector(i);
+    return encapsulateVector[i]->numRetries;
+}
+
+Ieee80211DataOrMgmtFrame *Ieee80211MpduA::decapsulatePacket(unsigned int i)
 {
 
     if (i >= encapsulateVector.size())
         return nullptr;
     const_cast<Ieee80211MpduA*>(this)->_detachShareVector(i);
-    cPacket * pkt = encapsulateVector[i]->pkt;
+    Ieee80211DataOrMgmtFrame * pkt = encapsulateVector[i]->pkt;
     if (getBitLength() > 0)
         setBitLength(getBitLength() - encapsulateVector.front()->pkt->getBitLength());
     if (pkt->getOwner() != this)

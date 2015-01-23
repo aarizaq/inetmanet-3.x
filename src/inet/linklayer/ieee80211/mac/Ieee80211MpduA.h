@@ -28,9 +28,11 @@ private:
     struct ShareStruct{
         Ieee80211DataOrMgmtFrame * pkt;
         unsigned int shareCount;
+        int numRetries = 0;
         ShareStruct(){
             pkt=nullptr;
-            shareCount =0;
+            shareCount = 0;
+            numRetries = 0;
         }
     };
     std::vector<ShareStruct*> encapsulateVector;
@@ -45,6 +47,8 @@ public:
     virtual ~Ieee80211MpduA();
     Ieee80211MpduA& operator=(const Ieee80211MpduA& msg);
     virtual Ieee80211DataOrMgmtFrame *getPacket(unsigned int i) const;
+    virtual int getNumRetries(unsigned int i) const;
+
     virtual void setPacketKind(unsigned int i,int kind);
     virtual unsigned int getNumEncap() const {return encapsulateVector.size();}
     uint64_t getPktLength(unsigned int i) const
@@ -53,12 +57,17 @@ public:
             return encapsulateVector[i]->pkt->getBitLength();
         return 0;
     }
-    cPacket *decapsulatePacket(unsigned int i);
+
+    Ieee80211DataOrMgmtFrame *decapsulatePacket(unsigned int i);
     virtual unsigned int getEncapSize() {return encapsulateVector.size();}
 
-    virtual void pushFrom(Ieee80211DataOrMgmtFrame *);
+    virtual void pushFront(Ieee80211DataOrMgmtFrame *);
     virtual void pushBack(Ieee80211DataOrMgmtFrame *);
-    virtual Ieee80211DataOrMgmtFrame *popFrom();
+
+    virtual void pushFront(Ieee80211DataOrMgmtFrame *,int);
+    virtual void pushBack(Ieee80211DataOrMgmtFrame *,int);
+
+    virtual Ieee80211DataOrMgmtFrame *popFront();
     virtual Ieee80211DataOrMgmtFrame *popBack();
     virtual bool haveBlock(){return !encapsulateVector.empty();}
     virtual void forEachChild(cVisitor *v);
