@@ -533,12 +533,12 @@ class INET_API Ieee80211Mac : public MACProtocolBase
      */
     //@{
     /** @brief Initialization of the module and its variables */
-    virtual int numInitStages() const { return NUM_INIT_STAGES; }
+    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
     virtual void initializeCategories();
-    virtual void initialize(int);
-    virtual InterfaceEntry *createInterfaceEntry();
+    virtual void initialize(int) override;
+    virtual InterfaceEntry *createInterfaceEntry() override;
     virtual void initializeQueueModule();
-    virtual void finish();
+    virtual void finish() override;
     virtual void configureAutoBitRate();
     virtual void initWatches();
     virtual const MACAddress& isInterfaceRegistered();
@@ -551,19 +551,19 @@ class INET_API Ieee80211Mac : public MACProtocolBase
      */
     //@{
     /** @brief Called by the signal handler whenever a change occurs we're interested in */
-    virtual void receiveSignal(cComponent *source, simsignal_t signalID, long value);
+    virtual void receiveSignal(cComponent *source, simsignal_t signalID, long value) override;
 
     /** @brief Handle commands (msg kind+control info) coming from upper layers */
-    virtual void handleUpperCommand(cMessage *msg);
+    virtual void handleUpperCommand(cMessage *msg) override;
 
     /** @brief Handle timer self messages */
-    virtual void handleSelfMessage(cMessage *msg);
+    virtual void handleSelfMessage(cMessage *msg) override;
 
     /** @brief Handle messages from upper layer */
-    virtual void handleUpperPacket(cPacket *msg);
+    virtual void handleUpperPacket(cPacket *msg) override;
 
     /** @brief Handle messages from lower (physical) layer */
-    virtual void handleLowerPacket(cPacket *msg);
+    virtual void handleLowerPacket(cPacket *msg) override;
 
     /** @brief Handle all kinds of messages and notifications with the state machine */
     virtual void handleWithFSM(cMessage *msg);
@@ -787,7 +787,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     ModulationType getControlAnswerMode(ModulationType reqMode);
     //@}
 
-    virtual void sendUp(cMessage *msg);
+    virtual void sendUp(cMessage *msg) override;
 
     virtual void removeOldTuplesFromDuplicateMap();
 
@@ -795,11 +795,11 @@ class INET_API Ieee80211Mac : public MACProtocolBase
 
     virtual bool isDuplicated(cMessage *msg);
 
-    virtual bool handleNodeStart(IDoneCallback *doneCallback);
+    virtual bool handleNodeStart(IDoneCallback *doneCallback) override;
 
-    virtual bool handleNodeShutdown(IDoneCallback *doneCallback);
+    virtual bool handleNodeShutdown(IDoneCallback *doneCallback) override;
 
-    virtual void handleNodeCrash();
+    virtual void handleNodeCrash() override;
 
     virtual void sendNotification(simsignal_t category, cMessage *pkt = nullptr)
     {

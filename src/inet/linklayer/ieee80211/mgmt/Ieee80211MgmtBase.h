@@ -70,11 +70,11 @@ class INET_API Ieee80211MgmtBase : public Ieee80211PassiveQueue, public ILifecyc
     MpduAggregateHandler *mpduAggregateHandler = nullptr;
 
   protected:
-    virtual int numInitStages() const { return NUM_INIT_STAGES; }
-    virtual void initialize(int);
+    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
+    virtual void initialize(int) override;
 
     /** Dispatches incoming messages to handleTimer(), handleUpperMessage() or processFrame(). */
-    virtual void handleMessage(cMessage *msg);
+    virtual void handleMessage(cMessage *msg) override;
 
     /** Should be redefined to deal with self-messages */
     virtual void handleTimer(cMessage *frame) = 0;
@@ -92,7 +92,7 @@ class INET_API Ieee80211MgmtBase : public Ieee80211PassiveQueue, public ILifecyc
     virtual void sendOrEnqueue(cPacket *frame, const int &);
 
     /** Redefined from PassiveQueueBase: send message to MAC */
-    virtual void sendOut(cMessage *msg);
+    virtual void sendOut(cMessage *msg) override;
 
     /** Utility method to dispose of an unhandled frame */
     virtual void dropManagementFrame(Ieee80211ManagementFrame *frame);
@@ -129,18 +129,18 @@ class INET_API Ieee80211MgmtBase : public Ieee80211PassiveQueue, public ILifecyc
     virtual void clear(const int &);
 
   public:
-    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback);
+    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback) override;
     //@}
   public:
     // access queue information
     /** Redefined from PassiveQueueBase. */
-    virtual cMessage *enqueue(cMessage *msg);
+    virtual cMessage *enqueue(cMessage *msg) override;
 
     /** Redefined from PassiveQueueBase. */
-    virtual cMessage *dequeue();
+    virtual cMessage *dequeue() override;
 
     /** Redefined from IPassiveQueue. */
-    virtual bool isEmpty();
+    virtual bool isEmpty() override;
     virtual bool isEmpty(const int&) {return dataQueue.empty();}
 
 

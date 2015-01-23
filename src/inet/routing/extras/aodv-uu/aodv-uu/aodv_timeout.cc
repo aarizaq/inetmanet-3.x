@@ -125,10 +125,10 @@ void NS_CLASS route_discovery_timeout(void *arg)
 #ifdef NS_PORT
         std::vector<L3Address> list;
         getListRelatedAp(seek_entry->dest_addr.s_addr, list);
-        for (unsigned int i = 0; i < list.size();i ++)
+        for (auto & elem : list)
         {
             struct in_addr auxAaddr;
-            auxAaddr.s_addr = list[i];
+            auxAaddr.s_addr = elem;
             packet_queue_set_verdict(auxAaddr, PQ_DROP);
         }
 #else
@@ -210,9 +210,10 @@ void NS_CLASS local_repair_timeout(void *arg)
             {
                 if (!DEV_NR(i).enabled)
                     continue;
-                aodv_socket_send((AODV_msg *) rerr, rerr_dest,
+                aodv_socket_send((AODV_msg *) rerr->dup(), rerr_dest,
                                  RERR_CALC_SIZE(rerr), 1, &DEV_NR(i));
             }
+            delete rerr;
         }
         DEBUG(LOG_DEBUG, 0, "Sending RERR about %s to %s",
               ip_to_str(rt->dest_addr), ip_to_str(rerr_dest));

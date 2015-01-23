@@ -37,14 +37,14 @@ namespace inetmanet {
 class INET_API ManetNetfilterHook : public INetfilter::IHook
 {
   protected:
-    cModule* module;    // Manet module
-    IPv4 *ipLayer;      // IPv4 module
-    IInterfaceTable *ift;
-    IRoutingTable *rt;
-    bool isReactive;    // true if it's a reactive routing
+    cModule* module = nullptr;    // Manet module
+    IPv4 *ipLayer = nullptr;      // IPv4 module
+    IInterfaceTable *ift = nullptr;
+    IRoutingTable *rt = nullptr;
+    bool isReactive = false;    // true if it's a reactive routing
 
   public:
-    ManetNetfilterHook() : module(nullptr), ipLayer(nullptr), isReactive(false) {}
+    ManetNetfilterHook() {}
 
   protected:
     void initHook(cModule* module);
@@ -79,11 +79,11 @@ class INET_API ManetNetfilterHook : public INetfilter::IHook
     virtual bool checkPacketUnroutable(INetworkDatagram* datagram, const InterfaceEntry* outIE);
 
   public:
-    virtual IHook::Result datagramPreRoutingHook(INetworkDatagram* datagram, const InterfaceEntry* inIE, const InterfaceEntry*& outIE, L3Address& nextHopAddr);
-    virtual IHook::Result datagramForwardHook(INetworkDatagram* datagram, const InterfaceEntry* inIE, const InterfaceEntry*& outIE, L3Address& nextHopAddr);
-    virtual IHook::Result datagramPostRoutingHook(INetworkDatagram* datagram, const InterfaceEntry* inIE, const InterfaceEntry*& outIE, L3Address& nextHopAddr);
-    virtual IHook::Result datagramLocalInHook(INetworkDatagram* datagram, const InterfaceEntry* inIE);
-    virtual IHook::Result datagramLocalOutHook(INetworkDatagram* datagram, const InterfaceEntry*& outIE, L3Address& nextHopAddr);
+    virtual IHook::Result datagramPreRoutingHook(INetworkDatagram* datagram, const InterfaceEntry* inIE, const InterfaceEntry*& outIE, L3Address& nextHopAddr) override;
+    virtual IHook::Result datagramForwardHook(INetworkDatagram* datagram, const InterfaceEntry* inIE, const InterfaceEntry*& outIE, L3Address& nextHopAddr) override;
+    virtual IHook::Result datagramPostRoutingHook(INetworkDatagram* datagram, const InterfaceEntry* inIE, const InterfaceEntry*& outIE, L3Address& nextHopAddr) override;
+    virtual IHook::Result datagramLocalInHook(INetworkDatagram* datagram, const InterfaceEntry* inIE) override;
+    virtual IHook::Result datagramLocalOutHook(INetworkDatagram* datagram, const InterfaceEntry*& outIE, L3Address& nextHopAddr) override;
 };
 
 } // namespace inetmanet

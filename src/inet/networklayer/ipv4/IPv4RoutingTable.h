@@ -369,17 +369,17 @@ class INET_API IPv4RoutingTable : public cSimpleModule, public IIPv4RoutingTable
     /**
      * ILifecycle method
      */
-    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback);
+    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback) override;
 
-    virtual L3Address getRouterIdAsGeneric() const { return getRouterId(); }
-    virtual bool isLocalAddress(const L3Address& dest) const { return isLocalAddress(dest.toIPv4()); }
-    virtual InterfaceEntry *getInterfaceByAddress(const L3Address& address) const { return getInterfaceByAddress(address.toIPv4()); }
-    virtual IRoute *findBestMatchingRoute(const L3Address& dest) const { return findBestMatchingRoute(dest.toIPv4()); }
-    virtual InterfaceEntry *getOutputInterfaceForDestination(const L3Address& dest) const { return getInterfaceForDestAddr(dest.toIPv4()); }    //XXX inconsistent names
-    virtual L3Address getNextHopForDestination(const L3Address& dest) const { return getGatewayForDestAddr(dest.toIPv4()); }    //XXX inconsistent names
-    virtual bool isLocalMulticastAddress(const L3Address& dest) const { return isLocalMulticastAddress(dest.toIPv4()); }
-    virtual IMulticastRoute *findBestMatchingMulticastRoute(const L3Address& origin, const L3Address& group) const { return const_cast<IPv4MulticastRoute *>(findBestMatchingMulticastRoute(origin.toIPv4(), group.toIPv4())); }    //XXX remove 'const' from IPv4 method?
-    virtual IRoute *createRoute() { return new IPv4Route(); }
+    virtual L3Address getRouterIdAsGeneric() const override { return getRouterId(); }
+    virtual bool isLocalAddress(const L3Address& dest) const override { return isLocalAddress(dest.toIPv4()); }
+    virtual InterfaceEntry *getInterfaceByAddress(const L3Address& address) const override { return getInterfaceByAddress(address.toIPv4()); }
+    virtual IRoute *findBestMatchingRoute(const L3Address& dest) const override { return findBestMatchingRoute(dest.toIPv4()); }
+    virtual InterfaceEntry *getOutputInterfaceForDestination(const L3Address& dest) const override { return getInterfaceForDestAddr(dest.toIPv4()); }    //XXX inconsistent names
+    virtual L3Address getNextHopForDestination(const L3Address& dest) const override { return getGatewayForDestAddr(dest.toIPv4()); }    //XXX inconsistent names
+    virtual bool isLocalMulticastAddress(const L3Address& dest) const override { return isLocalMulticastAddress(dest.toIPv4()); }
+    virtual IMulticastRoute *findBestMatchingMulticastRoute(const L3Address& origin, const L3Address& group) const override { return const_cast<IPv4MulticastRoute *>(findBestMatchingMulticastRoute(origin.toIPv4(), group.toIPv4())); }    //XXX remove 'const' from IPv4 method?
+    virtual IRoute *createRoute() override { return new IPv4Route(); }
 
     // IPv4 tables rules
     virtual void addRule(bool output, IPv4RouteRule *entry);
@@ -388,13 +388,13 @@ class INET_API IPv4RoutingTable : public cSimpleModule, public IIPv4RoutingTable
     virtual int getNumRules(bool output);
     virtual const IPv4RouteRule * findRule(bool output, int prot, int sPort, const IPv4Address &srcAddr, int dPort, const IPv4Address &destAddr, const InterfaceEntry *) const;
   private:
-    virtual void addRoute(IRoute *entry) { addRoute(check_and_cast<IPv4Route *>(entry)); }
-    virtual IRoute *removeRoute(IRoute *entry) { return removeRoute(check_and_cast<IPv4Route *>(entry)); }
-    virtual bool deleteRoute(IRoute *entry) { return deleteRoute(check_and_cast<IPv4Route *>(entry)); }
+    virtual void addRoute(IRoute *entry) override { addRoute(check_and_cast<IPv4Route *>(entry)); }
+    virtual IRoute *removeRoute(IRoute *entry) override { return removeRoute(check_and_cast<IPv4Route *>(entry)); }
+    virtual bool deleteRoute(IRoute *entry) override { return deleteRoute(check_and_cast<IPv4Route *>(entry)); }
 
-    virtual void addMulticastRoute(IMulticastRoute *entry) { addMulticastRoute(check_and_cast<IPv4MulticastRoute *>(entry)); }
-    virtual IMulticastRoute *removeMulticastRoute(IMulticastRoute *entry) { return removeMulticastRoute(check_and_cast<IPv4MulticastRoute *>(entry)); }
-    virtual bool deleteMulticastRoute(IMulticastRoute *entry) { return deleteMulticastRoute(check_and_cast<IPv4MulticastRoute *>(entry)); }
+    virtual void addMulticastRoute(IMulticastRoute *entry) override { addMulticastRoute(check_and_cast<IPv4MulticastRoute *>(entry)); }
+    virtual IMulticastRoute *removeMulticastRoute(IMulticastRoute *entry) override { return removeMulticastRoute(check_and_cast<IPv4MulticastRoute *>(entry)); }
+    virtual bool deleteMulticastRoute(IMulticastRoute *entry) override { return deleteMulticastRoute(check_and_cast<IPv4MulticastRoute *>(entry)); }
 };
 
 } // namespace inet
