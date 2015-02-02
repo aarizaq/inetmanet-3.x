@@ -71,6 +71,9 @@ void Ieee80211Mac::processMpduA(Ieee80211DataOrMgmtFrame *frame)
 
     bool duplicate = isDuplicated(frame);
 
+    if (frame->hasBitError())
+        numCollision++;
+
     // handle
     // MpduAKey key;
     // key.seq = frame->getAMpduSeq();
@@ -150,15 +153,15 @@ void Ieee80211Mac::processMpduA(Ieee80211DataOrMgmtFrame *frame)
 
     bool included = false;
 
-    for (unsigned int i = 0; i < it->second.inReception.size(); i++)
+    for (auto &elem : it->second.inReception)
     {
-        if (it->second.inReception[i]->getSequenceNumber() == frame->getSequenceNumber())
+        if (elem->getSequenceNumber() == frame->getSequenceNumber())
         {
             // check errors
-            if (it->second.inReception[i]->hasBitError() && !frame->hasBitError())
+            if (elem->hasBitError() && !frame->hasBitError())
             {
                 // actualize
-                it->second.inReception[i]->setBitError(frame->hasBitError());
+                elem->setBitError(frame->hasBitError());
             }
             included = true;
             break;
@@ -236,8 +239,6 @@ void Ieee80211Mac::processBlockAckFrame(Ieee80211Frame *frameToSend)
     Ieee80211BlockAckFrame *frame  = check_and_cast<Ieee80211BlockAckFrame*>(frameToSend);
 
     // process first packet correctly received.
-    int size = mpduInTransmission->getNumEncap();
-
 
     while (mpduInTransmission->getNumEncap()>0 && frame->getStartingSequence() != mpduInTransmission->getPacket(0)->getSequenceNumber())
     {
@@ -262,7 +263,7 @@ void Ieee80211Mac::processBlockAckFrame(Ieee80211Frame *frameToSend)
 
     // check the other packets.
 
-    for (int i = 0 ; i < frame->getSequencesArraySize();i++)
+    for (int i = 0 ; i < (int)frame->getSequencesArraySize();i++)
     {
         while (mpduInTransmission->getNumEncap()>0 && frame->getSequences(i) != mpduInTransmission->getPacket(0)->getSequenceNumber())
         {
@@ -278,7 +279,6 @@ void Ieee80211Mac::processBlockAckFrame(Ieee80211Frame *frameToSend)
         }
         if (mpduInTransmission->getNumEncap()>0)
         {
-
             int retry = mpduInTransmission->getNumRetries(0);
             if (retry == 0) numSentWithoutRetry()++;
             numSent()++;
@@ -342,7 +342,6 @@ Ieee80211MpduDelimiter *Ieee80211Mac::buildMpduDataFrame(Ieee80211Frame *frameTo
 
 bool Ieee80211Mac::initFsm(cMessage *msg,bool &receptionError, Ieee80211Frame *& frame)
 {
-
     removeOldTuplesFromDuplicateMap();
     // skip those cases where there's nothing to do, so the switch looks simpler
     if (isUpperMessage(msg) && fsm->getState() != IDLE) {
@@ -910,7 +909,7 @@ void Ieee80211Mac::stateWaitBlockAck(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
               FSMIEEE80211_Transition(fsmLocal,DEFER);
           }
 
-          if (retryMpduA == 0) numSentWithoutRetry() + size;
+          if (retryMpduA == 0) numSentWithoutRetry() += size;
           numSent()++;
 
           fr = getCurrentTransmission();
@@ -1234,8 +1233,13 @@ void Ieee80211Mac::stateReceive(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
         processMpduA(dataFrame);
         // finishReception();
         // FSMIEEE80211_Transition(fsmLocal,WAITSIFS);
-        finishReception();
-        FSMIEEE80211_Transition(fsmLocal,IDLE);
+        if (frame->getLastMpdu())
+        {
+            finishReception();
+            FSMIEEE80211_Transition(fsmLocal,WAITSIFS);
+        }
+        else
+            FSMIEEE80211_Transition(fsmLocal,IDLE);// IDLE->RECV,
     }
 
     FSMIEEE80211_No_Event_Transition(fsmLocal,
