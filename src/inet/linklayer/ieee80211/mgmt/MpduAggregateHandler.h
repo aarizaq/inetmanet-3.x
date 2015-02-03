@@ -78,6 +78,7 @@ class INET_API MpduAggregateHandler : public cOwnedObject
         class ADDBAInfo
         {
             public:
+                uint8_t exponent = 3;
                 State state = DEFAULT;
                 simtime_t startBlockAck;
                 uint64_t bytesSend;
@@ -149,8 +150,8 @@ class INET_API MpduAggregateHandler : public cOwnedObject
         virtual bool checkState(const Ieee80211DataOrMgmtFrame *);
         virtual bool handleFrames(Ieee80211DataOrMgmtFrame *pkt);
 
-        virtual Ieee80211MpduA* getBlock(const MACAddress &, int , int  = -1);
-        virtual Ieee80211MpduA* getBlock(cMessage *, int , int  = -1);
+        virtual Ieee80211MpduA* getBlock(const MACAddress &, int, int64_t, int  = -1);
+        virtual Ieee80211MpduA* getBlock(Ieee80211DataOrMgmtFrame *, int , int64_t, int  = -1);
 
         virtual void setAllAddress(const bool &p) {allAddress = p;}
         virtual void setResetAfterSend(const bool &p) {resetAfterSend = p;}

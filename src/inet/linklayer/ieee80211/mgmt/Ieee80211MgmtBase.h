@@ -151,7 +151,7 @@ class INET_API Ieee80211MgmtBase : public Ieee80211PassiveQueue, public ILifecyc
     virtual cMessage *dequeue(const int&);
     virtual cMessage *enqueue(cMessage *, const int &);
     virtual cMessage *pop(const int&);
-    virtual void requestMpuA(const MACAddress &, const int &, const int & = 0);
+    virtual void requestMpuA(const MACAddress &, const int &,const int64_t &, const int & = 0);
 
     virtual Ieee80211DataOrMgmtFrame *getQueueElement(const int &, const int &) const;
     virtual unsigned int getDataSize(const int &cat) const;

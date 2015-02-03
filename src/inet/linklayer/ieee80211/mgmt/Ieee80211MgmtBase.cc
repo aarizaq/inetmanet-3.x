@@ -312,22 +312,38 @@ void Ieee80211MgmtBase::requestPacket(const int &cat)
         msg->setKind(cat);
         if (mpduAggregateHandler)
         {
+            Ieee80211DataOrMgmtFrame * frame = dynamic_cast<Ieee80211DataOrMgmtFrame*>(msg);
+            if (frame)
+            {
+                if (mpduAggregateHandler->isAllowAddress(frame->getReceiverAddress()))
+                {
+                    cMessage * aux = mpduAggregateHandler->getBlock(frame,64,-1,cat);
+                    if (aux)
+                        msg = aux;
+                }
 
-            cMessage * aux = mpduAggregateHandler->getBlock(msg,64,cat);
-            if (aux)
-                msg = aux;
+            }
         }
         sendOut(msg);
     }
 }
 
-void Ieee80211MgmtBase::requestMpuA(const MACAddress &addr, const int &size, const int &cat)
+void Ieee80211MgmtBase::requestMpuA(const MACAddress &addr, const int &size, const int64_t &remanent, const int &cat)
 {
     if (mpduAggregateHandler)
     {
-        cMessage * msg = mpduAggregateHandler->getBlock(addr,size,cat);
-        if (msg)
-            sendOut(msg);
+
+        MpduAggregateHandler::ADDBAInfo *infoAdda;
+        if (mpduAggregateHandler->isAllowAddress(addr, infoAdda))
+        {
+            int64_t maxByteSize = 65535;
+            if (infoAdda)
+                maxByteSize = exp2(13+infoAdda->exponent)-1;
+            maxByteSize -= remanent;
+            cMessage * msg = mpduAggregateHandler->getBlock(addr,size,cat);
+            if (msg)
+                sendOut(msg);
+        }
     }
 }
 

@@ -41,6 +41,14 @@ void Ieee80211Mac::retryCurrentMpduA()
     generateBackoffPeriod();
 }
 
+void Ieee80211Mac::setBlockAckTimeOut()
+{
+    uint64_t blkAckFrameSize = 152*8;
+    uint64_t blocAckReqSize = 24*8;
+    // TODO: check this time out
+    simtime_t delay = computeFrameDuration(blocAckReqSize, bitrate) + SIMTIME_DBL( getSlotTime()) +SIMTIME_DBL( getSIFS()) + computeFrameDuration(blkAckFrameSize, bitrate) + MAX_PROPAGATION_DELAY * 2;
+    scheduleAt(simTime()+delay,endTimeout);
+}
 
 // Handle MPDU-A frames.
 void Ieee80211Mac::sendMpuAPending(const MACAddress &addr)
@@ -74,11 +82,6 @@ void Ieee80211Mac::processMpduA(Ieee80211DataOrMgmtFrame *frame)
     if (frame->hasBitError())
         numCollision++;
 
-    // handle
-    // MpduAKey key;
-    // key.seq = frame->getAMpduSeq();
-    // key.addr = frame->getTransmitterAddress();
-    // auto it = processingMpdu.find(key);
     auto it = processingMpdu.find(frame->getTransmitterAddress());
     if (it == processingMpdu.end())
     {
@@ -140,35 +143,35 @@ void Ieee80211Mac::processMpduA(Ieee80211DataOrMgmtFrame *frame)
         it->second.confirmed.clear();
     }
 
+    if (it->second.timeOut.isScheduled()) // cancel time out
+        cancelEvent(&(it->second.timeOut));
+
     if (frame->getLastMpdu())
         MpduModeReception = false;
 
     if (!frame->hasBitError())
-    {
         it->second.confirmed.push_back(frame->getSequenceNumber());
-    }
 
-    if (duplicate)
-        return; // nothing to do
-
-    bool included = false;
-
-    for (auto &elem : it->second.inReception)
-    {
-        if (elem->getSequenceNumber() == frame->getSequenceNumber())
+    if (!duplicate)
+    { // if the frame has been sent to upper doesn't include it in pending list
+        bool included = false;
+        for (auto &elem : it->second.inReception)
         {
-            // check errors
-            if (elem->hasBitError() && !frame->hasBitError())
+            if (elem->getSequenceNumber() == frame->getSequenceNumber())
             {
-                // actualize
-                elem->setBitError(frame->hasBitError());
+                // check errors
+                if (elem->hasBitError() && !frame->hasBitError())
+                {
+                    // actualize
+                    elem->setBitError(frame->hasBitError());
+                }
+                included = true;
+                break;
             }
-            included = true;
-            break;
         }
+        if (!included)
+            it->second.inReception.push_back(frame->dup()); // include in the pending list.
     }
-    if (!included)
-        it->second.inReception.push_back(frame->dup()); // include in the pending list.
 
     if (frame->getLastMpdu())
     {
@@ -179,15 +182,26 @@ void Ieee80211Mac::processMpduA(Ieee80211DataOrMgmtFrame *frame)
             sendUp(it->second.inReception.front());
             it->second.inReception.pop_front();
         }
-    }
-    // prepare timer
-    if (mpduRetEnd->isScheduled())
-        cancelEvent(mpduRetEnd);
-
-    if (!it->second.inReception.empty())
-    {
-        if (frame->getLastMpdu())
-            scheduleAt(simTime()+mpudRetTimeOut,mpduRetEnd);
+        // prepare timer if there are pending correct frames.
+        if (!it->second.inReception.empty())
+        {
+            // only set the timer if there is frames correctly received pending of to send to the upper layers
+            bool setTimer = false;
+            for (auto &elem : it->second.inReception)
+            {
+                if (!elem->hasBitError())
+                {
+                    setTimer = true;
+                    break;
+                }
+            }
+            if (setTimer)
+            {
+                // there are correct frames in the pending list, set the time out
+                it->second.timeOut.setControlInfo(&it->second);
+                scheduleAt(simTime()+mpudRetTimeOut,&(it->second.timeOut));
+            }
+        }
     }
 }
 
@@ -302,7 +316,7 @@ void Ieee80211Mac::processBlockAckFrame(Ieee80211Frame *frameToSend)
         {
             retryMpduA++;
             // request packet and create a new MTUA with size 64
-            queueModule->requestMpuA(mpduInTransmission->getReceiverAddress(), 64 - mpduInTransmission->getNumEncap(), mpduAClass);
+            queueModule->requestMpuA(mpduInTransmission->getReceiverAddress(), 64 - mpduInTransmission->getNumEncap(),mpduInTransmission->getByteLength(), mpduAClass);
             numMduRequested++;
         }
     }
@@ -363,6 +377,32 @@ bool Ieee80211Mac::initFsm(cMessage *msg,bool &receptionError, Ieee80211Frame *&
         }
         if (fsm->debug()) EV_DEBUG << "deferring upper message transmission in " << fsm->getStateName() << " state\n";
         return false;
+    }
+
+    if (msg->isSelfMessage())
+    {
+        MpduAInProc *proc = dynamic_cast<MpduAInProc *>(msg->getControlInfo());
+        if (proc)
+        {
+            // end time out, send to up the rest of the frame
+            auto it = processingMpdu.begin();
+            for (;it!=processingMpdu.end();++it)
+            {
+                if (&it->second == proc)
+                    break;
+            }
+            if (it == processingMpdu.end())
+                throw cRuntimeError("MpduAInProc not found");
+            while (!it->second.inReception.empty())
+            {
+                // send to up
+                if (!it->second.inReception.front()->hasBitError())
+                    sendUp(it->second.inReception.front());
+                it->second.inReception.pop_front();
+            }
+            processingMpdu.erase(it);
+            return false;
+        }
     }
 
 // Special case, is  endTimeout ACK and the radio state  is RECV, the system must wait until end reception (9.3.2.8 ACK procedure)
@@ -855,13 +895,12 @@ void Ieee80211Mac::stateWaitBlockAck(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
         if (mpduInTransmission == nullptr)
             FSMIEEE80211_Transition(fsmLocal,DEFER);
         Ieee80211BlockAckFrameReq rreqAck;
-       // TODO: scheduleDataTimeoutPeriod(&rreqAck);
-
+        setBlockAckTimeOut();
     }
 
-     FSMIEEE80211_Event_Transition(fsmLocal,
+    FSMIEEE80211_Event_Transition(fsmLocal,
               isLowerMessage(msg) && receptionError && retryMpduA == transmissionLimit - 1)
-     {
+    {
           if (fsmLocal->debug()) EV_DEBUG  << "Reception-BLOCK ACK-failed \n";
           currentAC = oldcurrentAC;
           cancelTimeoutPeriod();
@@ -893,7 +932,7 @@ void Ieee80211Mac::stateWaitBlockAck(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
           sendNotification(NF_TX_ACKED);// added by aaq
           int size = mpduInTransmission->getNumEncap();
 
-          processBlockAckFrame(frame);
+          processBlockAckFrame(frame); //
           currentAC = oldcurrentAC;
           if (mpduInTransmission)
           {
@@ -1020,7 +1059,6 @@ void Ieee80211Mac::stateWaitBlockAck(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
           if (endTXOP->isScheduled()) cancelEvent(endTXOP);
           FSMIEEE80211_Transition(fsmLocal,RECEIVE);
       }
-
 }
 
 void Ieee80211Mac::stateSendMpuA(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
@@ -1059,7 +1097,6 @@ void Ieee80211Mac::stateSendMpuA(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
             sendDown(buildMpduDataFrame(check_and_cast<Ieee80211DataOrMgmtFrame *>(setBitrateFrame(mpduInTransmission->getPacket(indexMpduTransmission))),retry));
         else
         {
-            // transmit BlockAck request.
             // transmit BlockAck request.
             Ieee80211BlockAckFrameReq reqFrame;
             reqFrame.setReceiverAddress(mpduInTransmission->getReceiverAddress());
@@ -1176,7 +1213,7 @@ void Ieee80211Mac::stateWaitSift(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
         if (fsmLocal->debug()) EV_DEBUG << "Transmit-Data-TXOP \n";
         sendBLOCKACKFrameOnEndSIFS();
         oldcurrentAC = currentAC;
-        FSMIEEE80211_Transition(fsmLocal,DEFER);
+        FSMIEEE80211_Transition(fsmLocal,IDLE);
     }
 
     FSMIEEE80211_Event_Transition(fsmLocal,
@@ -1233,13 +1270,7 @@ void Ieee80211Mac::stateReceive(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
         processMpduA(dataFrame);
         // finishReception();
         // FSMIEEE80211_Transition(fsmLocal,WAITSIFS);
-        if (frame->getLastMpdu())
-        {
-            finishReception();
-            FSMIEEE80211_Transition(fsmLocal,WAITSIFS);
-        }
-        else
-            FSMIEEE80211_Transition(fsmLocal,IDLE);// IDLE->RECV,
+        FSMIEEE80211_Transition(fsmLocal,IDLE);// IDLE->RECV,
     }
 
     FSMIEEE80211_No_Event_Transition(fsmLocal,

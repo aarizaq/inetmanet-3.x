@@ -245,6 +245,7 @@ void Ieee80211Mac::initialize(int stage)
         fsm->setStateMethod(WAITBLOCKACK, &Ieee80211Mac::stateWaitBlockAck,"WAITBLOCKACK");
         fsm->setStateMethod(SENDMPUA, &Ieee80211Mac::stateSendMpuA,"SENDMPUA");
 
+        mpudRetTimeOut = 0.01;
         // initialize parameters
         const char *opModeStr = par("opMode").stringValue();
         if (strcmp("b", opModeStr) == 0)
