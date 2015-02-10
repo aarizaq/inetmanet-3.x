@@ -64,6 +64,7 @@ UDPBasicP2P2C::UDPBasicP2P2C()
 {
     myTimer = new cMessage("UDPBasicP2P-timer");
     queueTimer = new cMessage("UDPBasicP2P-queueTimer");
+    informTimeOut = new cMessage("UDPBasicP2P-informTimeOut");
     parallelConnection.clear();
     vectorList.clear();
     inverseAddress.clear();
@@ -78,6 +79,7 @@ UDPBasicP2P2C::~UDPBasicP2P2C()
     cancelAndDelete(myTimer);
     cancelAndDelete(queueTimer);
     cancelEvent(&periodicTimer);
+    cancelAndDelete(informTimeOut);
     while(!timeQueue.empty())
     {
         delete timeQueue.back();
@@ -140,6 +142,9 @@ void UDPBasicP2P2C::initialize(int stage)
             fuzzy = new FuzzYControl(par("fuzzyFisFile").stringValue());
             fuzzy->setSizeParam(par("numVarFuzzy").longValue());
         }
+
+        if (par("useGlobal"))
+            useGlobal = true;
 
         totalSegments = par("totalSegments").longValue();
         segmentSize = par("segmentSize").longValue();
@@ -258,6 +263,11 @@ void UDPBasicP2P2C::initialize(int stage)
         numSegPresent = (int) mySegmentList.size();
 
         numParallelRequest = par("numParallelRequest");
+
+        if (numSegPresent>0)
+        {
+            scheduleAt(simTime()+uniform(0,0.01),informTimeOut);
+        }
 
         clientList.clear();
         timeQueue.clear();
@@ -399,8 +409,6 @@ std::vector<UDPBasicP2P2C::InfoData> UDPBasicP2P2C::selectBestList(const std::ve
         {
             validRoute = true;
         }
-
-
         if(validRoute)
         {
             if (fuzzy)
@@ -709,6 +717,11 @@ void UDPBasicP2P2C::handleMessage(cMessage *msg)
             EV << "\n";
     if (msg->isSelfMessage())
     {
+        if (informTimeOut)
+        {
+            informChanges();
+            return;
+        }
         if (msg == &periodicTimer)
         {
             emit(queueLengthSignal, timeQueue.size());
@@ -736,7 +749,6 @@ void UDPBasicP2P2C::handleMessage(cMessage *msg)
     }
     else if (msg->getKind() == UDP_I_DATA)
     {
-
         UDPBasicPacketP2P *pkt = check_and_cast<UDPBasicPacketP2P*>(msg);
         if (pkt->getType() == GENERAL)
         {
@@ -811,7 +823,6 @@ void UDPBasicP2P2C::handleMessage(cMessage *msg)
 
 void UDPBasicP2P2C::sendNow(UDPBasicPacketP2P *pkt)
 {
-
     auto it = inverseAddress.find(pkt->getDestination().toMAC().getInt());
     if (it == inverseAddress.end())
         throw cRuntimeError(" address not found %s", pkt->getDestination().toMAC().str().c_str());
@@ -1013,7 +1024,10 @@ bool UDPBasicP2P2C::processPacket(cPacket *pk)
         {
             // check sub segments
             if (pkt->getSubSegmentId() == 0)
+            {
                 mySegmentList.insert(pkt->getSegmentId());
+                informChanges();
+            }
             else
             {
                 auto itPar = parallelConnection.begin();
@@ -1043,6 +1057,7 @@ bool UDPBasicP2P2C::processPacket(cPacket *pk)
                 {
 
                     mySegmentList.insert(pkt->getSegmentId());
+                    informChanges();
                     if (itPar->timer.isScheduled())
                         cancelEvent(&(itPar->timer));
                     parallelConnection.erase(itPar);
@@ -1053,7 +1068,6 @@ bool UDPBasicP2P2C::processPacket(cPacket *pk)
                         cancelEvent(&(itPar->timer));
                     scheduleAt(simTime()+par("requestTimer"),&(itPar->timer));
                 }
-
             }
         }
         else
@@ -1194,7 +1208,8 @@ void UDPBasicP2P2C::actualizePacketMap(UDPBasicPacketP2P *pkt)
         val |= aux;
         pkt->setMapSegments(pos,val);
     }
-    pkt->setByteLength(pkt->getByteLength()+size*4+4); // map size + seq num // id can extracted from ip
+    // we suppose 64 bits of CRC
+    pkt->setByteLength(pkt->getByteLength()+8+4); // map size + seq num // id can extracted from ip
 }
 
 void UDPBasicP2P2C::generateRequestNew()
@@ -1212,7 +1227,6 @@ void UDPBasicP2P2C::generateRequestNew()
         auto it = clientList.find(best);
         if (it == clientList.end())
         {
-
             InfoClient infoC;
             infoC.numRequest = 1;
             infoC.numRequestRec = 0;
@@ -1257,15 +1271,32 @@ void UDPBasicP2P2C::getList(std::vector<uint64_t> &address)
         }
     }
 
-    for (auto it = segmentMap.begin(); it != segmentMap.end(); ++it)
+    if (useGlobal)
     {
-        if (it->first == myAddress.toMAC().getInt())
-            continue;
-        SegmentList * nodeSegmentList = it->second;
-        SegmentList result;
-        std::set_difference(nodeSegmentList->begin(),nodeSegmentList->end(),tempMySegmentList.begin(),tempMySegmentList.end(),std::inserter(result, result.end()));
-        if (!result.empty())
-            address.push_back(it->first);
+        for (auto &elem : segmentMap)
+        {
+            if (elem.first == myAddress.toMAC().getInt())
+                continue;
+            SegmentList * nodeSegmentList = elem.second;
+            SegmentList result;
+            std::set_difference(nodeSegmentList->begin(), nodeSegmentList->end(), tempMySegmentList.begin(),
+                    tempMySegmentList.end(), std::inserter(result, result.end()));
+            if (!result.empty())
+                address.push_back(elem.first);
+        }
+    }
+    else
+    {
+        for (auto &elem : networkSegmentMap)
+        {
+            if (elem.first == myAddress.toMAC().getInt())
+                continue;
+            SegmentList * nodeSegmentList = elem.second;
+            SegmentList result;
+            std::set_difference(nodeSegmentList->begin(),nodeSegmentList->end(),tempMySegmentList.begin(),tempMySegmentList.end(),std::inserter(result, result.end()));
+            if (!result.empty())
+                address.push_back(elem.first);
+        }
     }
 }
 
@@ -1273,15 +1304,31 @@ void UDPBasicP2P2C::getList(std::vector<uint64_t> &address)
 void UDPBasicP2P2C::getList(std::vector<uint64_t> &address,uint32_t segmentId)
 {
     address.clear();
-    for (auto it = segmentMap.begin(); it != segmentMap.end(); ++it)
+    if (useGlobal)
     {
-        if (it->first == myAddress.toMAC().getInt())
-            continue;
-        SegmentList * nodeSegmentList = it->second;
-        SegmentList result;
-        auto it2 = nodeSegmentList->find(segmentId);
-        if (it2 != nodeSegmentList->end())
-            address.push_back(it->first);
+        for (auto &elem : segmentMap)
+        {
+            if (elem.first == myAddress.toMAC().getInt())
+                continue;
+            SegmentList * nodeSegmentList = elem.second;
+            SegmentList result;
+            auto it2 = nodeSegmentList->find(segmentId);
+            if (it2 != nodeSegmentList->end())
+                address.push_back(elem.first);
+        }
+    }
+    else
+    {
+        for (auto &elem : networkSegmentMap)
+        {
+            if (elem.first == myAddress.toMAC().getInt())
+                continue;
+            SegmentList * nodeSegmentList = elem.second;
+            SegmentList result;
+            auto it2 = nodeSegmentList->find(segmentId);
+            if (it2 != nodeSegmentList->end())
+                address.push_back(elem.first);
+        }
     }
 }
 
@@ -1290,17 +1337,37 @@ void UDPBasicP2P2C::getList(std::vector<uint64_t> &address, std::vector<SegmentL
 {
     address.clear();
     segmentData.clear();
-    for (auto it = segmentMap.begin(); it != segmentMap.end(); ++it)
+    if (useGlobal)
     {
-        if (it->first == myAddress.toMAC().getInt())
-            continue;
-        SegmentList * nodeSegmentList = it->second;
-        SegmentList result;
-        std::set_difference(nodeSegmentList->begin(),nodeSegmentList->end(),mySegmentList.begin(),mySegmentList.end(),std::inserter(result, result.end()));
-        if (!result.empty())
+        for (auto &elem : segmentMap)
         {
-            address.push_back(it->first);
-            segmentData.push_back(result);
+            if (elem.first == myAddress.toMAC().getInt())
+                continue;
+            SegmentList * nodeSegmentList = elem.second;
+            SegmentList result;
+            std::set_difference(nodeSegmentList->begin(), nodeSegmentList->end(), mySegmentList.begin(),
+                    mySegmentList.end(), std::inserter(result, result.end()));
+            if (!result.empty())
+            {
+                address.push_back(elem.first);
+                segmentData.push_back(result);
+            }
+        }
+    }
+    else
+    {
+        for (auto &elem : networkSegmentMap)
+        {
+            if (elem.first == myAddress.toMAC().getInt())
+                continue;
+            SegmentList * nodeSegmentList = elem.second;
+            SegmentList result;
+            std::set_difference(nodeSegmentList->begin(),nodeSegmentList->end(),mySegmentList.begin(),mySegmentList.end(),std::inserter(result, result.end()));
+            if (!result.empty())
+            {
+                address.push_back(elem.first);
+                segmentData.push_back(result);
+            }
         }
     }
 }
@@ -1767,12 +1834,14 @@ UDPBasicPacketP2PNotification *UDPBasicP2P2C::getPacketWitMap()
         val |= aux;
         pkt->setMapSegments(pos,val);
     }
-    pkt->setByteLength(size*4+4); // map size + seq num // id can extracted from ip
+    pkt->setByteLength(8+4); // map size + seq num // id can extracted from ip
     return pkt;
 }
 
 void UDPBasicP2P2C::informChanges()
 {
+    if (useGlobal)
+        return;
     UDPBasicPacketP2PNotification *pkt = getPacketWitMap();
     socket.sendTo(pkt, L3Address(IPv4Address::ALLONES_ADDRESS), destPort);
 }

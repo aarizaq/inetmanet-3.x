@@ -176,14 +176,17 @@ private:
     SegmentMap networkSegmentMap;
     SegmentList mySegmentList;
     SequenceList sequenceList;
+    bool useGlobal = false;
 
     std::deque<uint16_t> request;
     L3Address myAddress;
     IPv4Address myAddressIp4;
     cMessage *myTimer = nullptr;
     cMessage *retryTimer = nullptr;
+    cMessage *informTimeOut = nullptr;
     FuzzYControl *fuzzy = nullptr;
     uint64_t mySeqNumber = 0;
+
 
     int numSent = 0;
     int numReceived = 0;
