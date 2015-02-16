@@ -26,6 +26,7 @@ enum PacketType
     REQUEST = 1;
     SEGMEN = 2;
     GENERAL = 3;
+    CONFIRMATION = 4;
 }
 
 packet UDPBasicPacketP2P 

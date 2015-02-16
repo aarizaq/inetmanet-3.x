@@ -271,7 +271,7 @@ private:
     virtual void generateRequestNew();
     virtual void generateRequestSub();
     virtual void actualizePacketMap(UDPBasicPacketP2P *pkt);
-    virtual bool processPacket(cPacket *pk);
+    virtual bool processPacket(UDPBasicPacketP2P *pk);
     virtual void processRequest(cPacket *pkt);
     virtual void actualizeList(UDPBasicPacketP2P *pkt);
     virtual void answerRequest(UDPBasicPacketP2P *pkt);
@@ -293,9 +293,13 @@ private:
     virtual void purgePendingRequest(uint64_t segment);
 
 
+    // create a packet with the map of the node
     UDPBasicPacketP2PNotification *getPacketWitMap();
+    // Send a broadcast packet with the information
     virtual void informChanges();
+    // process the packet with the information of status
     virtual bool processMsgChanges(cPacket *msg);
+
 
 
    public:

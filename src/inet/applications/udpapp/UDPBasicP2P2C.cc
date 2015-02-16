@@ -749,7 +749,17 @@ void UDPBasicP2P2C::handleMessage(cMessage *msg)
     }
     else if (msg->getKind() == UDP_I_DATA)
     {
+        UDPBasicPacketP2PNotification *pktNot = dynamic_cast<UDPBasicPacketP2PNotification*>(msg);
+        if (pktNot)
+        {
+            processMsgChanges(pktNot);
+            return;
+        }
+
         UDPBasicPacketP2P *pkt = check_and_cast<UDPBasicPacketP2P*>(msg);
+
+        // I am not sure if the actualization of the list must be here
+        actualizeList(pkt);
         if (pkt->getType() == GENERAL)
         {
             if (routing)
@@ -976,17 +986,8 @@ bool UDPBasicP2P2C::processMyTimer(cMessage *msg)
     return false;
 }
 
-bool UDPBasicP2P2C::processPacket(cPacket *pk)
+bool UDPBasicP2P2C::processPacket(UDPBasicPacketP2P *pkt)
 {
-    if (pk->getKind() == UDP_I_ERROR)
-    {
-        EV << "UDP error received\n";
-        delete pk;
-        return false;
-    }
-
-    UDPBasicPacketP2P *pkt = check_and_cast<UDPBasicPacketP2P*>(pk);
-
     if (routing)
     {
         if (pkt->getDestination() != myAddress)
@@ -1006,10 +1007,11 @@ bool UDPBasicP2P2C::processPacket(cPacket *pk)
     }
 
     bool change = false;
+
     if (pkt->getType() == REQUEST)
     {
         numRequestServed++;
-        processRequest(pk);
+        processRequest(pkt);
     }
     else if (pkt->getType() == SEGMEN)
     {
@@ -1089,10 +1091,10 @@ bool UDPBasicP2P2C::processPacket(cPacket *pk)
             generateRequestNew();
     }
 
-    EV << "Received packet: " << UDPSocket::getReceivedPacketInfo(pk) << endl;
-    emit(rcvdPkSignal, pk);
+    EV << "Received packet: " << UDPSocket::getReceivedPacketInfo(pkt) << endl;
+    emit(rcvdPkSignal, pkt);
     numReceived++;
-    delete pk;
+    delete pkt;
     return change;
 }
 
@@ -1196,6 +1198,9 @@ void UDPBasicP2P2C::generateRequestSub()
 // actualize the node actual segment list
 void UDPBasicP2P2C::actualizePacketMap(UDPBasicPacketP2P *pkt)
 {
+    if (useGlobal) // no necessary
+        return;
+
     int size = static_cast<int>(std::ceil(static_cast<double>(totalSegments)/8.0));
     pkt->setMapSegmentsArraySize(size);
     for (auto & elem : mySegmentList)
@@ -1458,6 +1463,9 @@ int UDPBasicP2P2C::getQueueSize()
 
 void UDPBasicP2P2C::actualizeList(UDPBasicPacketP2P *pkt)
 {
+    if (pkt->getMapSegmentsArraySize() == 0)
+        return; // nothing to do
+
     auto itSegList = networkSegmentMap.find(pkt->getNodeId().toMAC().getInt());
     SegmentList * segList = nullptr;
     if (itSegList != networkSegmentMap.end())
@@ -1488,15 +1496,12 @@ void UDPBasicP2P2C::actualizeList(UDPBasicPacketP2P *pkt)
 void UDPBasicP2P2C::answerRequest(UDPBasicPacketP2P *pkt)
 {
 
-    actualizeList(pkt);
-
     if (pkt->getSegmentId() != 0) // specific segment check if the segment is present in the node
     {
         auto it =  mySegmentList.find(pkt->getSegmentId());
         if (it == mySegmentList.end())
             return;
     }
-
 
     // prepare a delayed
     DelayMessage *delayM = new DelayMessage();
@@ -1560,7 +1565,6 @@ void UDPBasicP2P2C::answerRequest(UDPBasicPacketP2P *pkt)
         delayM = nullptr;
     }
     sendNow(pktSend);
-
 
     if (delayM)
     {
@@ -1909,8 +1913,6 @@ bool UDPBasicP2P2C::processMsgChanges(cPacket *msg)
     socket.sendTo(msg, L3Address(IPv4Address::ALLONES_ADDRESS), destPort); // propagate
     return true;
 }
-
-
 
 }
 
