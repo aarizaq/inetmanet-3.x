@@ -32,7 +32,6 @@
 #include "inet/common/INETMath.h"
 #include "inet/networklayer/common/InterfaceEntry.h"
 #include "inet/linklayer/contract/IMACProtocolControlInfo.h"
-#include "inet/common/FindModule.h"
 #include "inet/linklayer/common/SimpleLinkLayerControlInfo.h"
 #include "inet/linklayer/csma/CSMAFrame_m.h"
 
@@ -156,9 +155,6 @@ void CSMA802154::initializeMACAddress()
 InterfaceEntry *CSMA802154::createInterfaceEntry()
 {
     InterfaceEntry *e = new InterfaceEntry(this);
-
-    // interface name: NIC module's name without special characters ([])
-    e->setName(utils::stripnonalnum(getParentModule()->getFullName()).c_str());
 
     // data rate
     e->setDatarate(bitrate);
