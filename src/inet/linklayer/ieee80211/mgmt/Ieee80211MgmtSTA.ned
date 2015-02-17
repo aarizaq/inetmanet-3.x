@@ -26,7 +26,7 @@ package inet.linklayer.ieee80211.mgmt;
 // @author Andras Varga
 //
 simple Ieee80211MgmtSTA like IIeee80211Mgmt
-{    
+{
     parameters:
         bool EDCA = default(false); // enable Enhanced Distributed Channel Access (802.11e)
         // parameters for EDCA = true
@@ -34,6 +34,7 @@ simple Ieee80211MgmtSTA like IIeee80211Mgmt
         string interfaceTableModule;   // The path to the InterfaceTable module
         int numChannels = default(1);  // number of channels to scan
         int frameCapacity = default(100); // maximum queue length
+        string macModule;               // The path to the MAC module
         @display("i=block/cogwheel");
         @signal[enqueuePk](type=cPacket);
         @signal[dequeuePk](type=cPacket);

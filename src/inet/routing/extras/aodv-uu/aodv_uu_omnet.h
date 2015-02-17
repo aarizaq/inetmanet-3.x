@@ -121,8 +121,8 @@ class AODVUU : public ManetRoutingBase
     int RERR_SIZE;
     int RREP_SIZE;
     int  RREQ_SIZE;
-  private:
-    char nodeName[50];
+
+    opp_string nodeName;
     bool useIndex;
     bool isRoot;
     uint32_t costStatic;
@@ -346,7 +346,7 @@ class AODVUU : public ManetRoutingBase
     int optimized_hellos;
     int ratelimit;
     int llfeedback;
-    char *progname;
+    const char *progname;
     int wait_on_reboot;
     struct timer worb_timer;
 

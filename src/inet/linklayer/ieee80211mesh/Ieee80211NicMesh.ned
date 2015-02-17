@@ -71,6 +71,7 @@ module Ieee80211NicMesh like IWirelessNic
         mgmt: Ieee80211Mesh {
             parameters:
                 locatorActive = hasLocator;
+                macModule = "^.mac";
                 @display("p=96,136;q=wlanDataQueue;i=block/switch");
              gates:
                 macIn;

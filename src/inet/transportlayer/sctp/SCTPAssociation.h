@@ -564,6 +564,7 @@ class INET_API SCTPStateVariables : public cObject
     bool peerWindowFull;
     bool zeroWindow;
     bool stopSending;    // will be called when SCTP_E_SHUTDOWN arrived
+    bool stopReading;    // will be called when CLOSE was called and no data will be accepted
     bool inOut;
     bool noMoreOutstanding;
     uint32 numGapReports;
@@ -591,6 +592,7 @@ class INET_API SCTPStateVariables : public cObject
     uint64 queuedReceivedBytes;    // Number of bytes in receiver queue
     uint32 lastStreamScheduled;
     uint32 assocPmtu;    // smallest overall path mtu
+    uint32 fragPoint;    // maximum size of a fragment
     uint32 msgNum;    // indicates the sequence number of the message
     uint64 bytesRcvd;
     uint32 numRequests;

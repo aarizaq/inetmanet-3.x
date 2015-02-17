@@ -26,6 +26,7 @@ enum PacketType
     REQUEST = 1;
     SEGMEN = 2;
     GENERAL = 3;
+    CONFIRMATION = 4;
 }
 
 packet UDPBasicPacketP2P 
@@ -38,5 +39,13 @@ packet UDPBasicPacketP2P
     uint64_t segmentId;
     uint16_t subSegmentId;
     uint16_t subSegmentRequest[];
+    char mapSegments[];
 }
 
+packet UDPBasicPacketP2PNotification 
+{
+    L3Address nodeId;
+    uint64_t seqnum;    
+    int mapSegmentsSize;
+    char mapSegments[];
+}

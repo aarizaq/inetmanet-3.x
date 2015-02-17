@@ -124,6 +124,8 @@ void IPv6RoutingTable::initialize(int stage)
 
 void IPv6RoutingTable::parseXMLConfigFile()
 {
+    cModule *host = getContainingNode(this);
+
     // configure interfaces from XML config file
     cXMLElement *config = par("routes");
     for (cXMLElement *child = config->getFirstChild(); child; child = child->getNextSibling()) {
@@ -133,7 +135,7 @@ void IPv6RoutingTable::parseXMLConfigFile()
         if (opp_strcmp(child->getTagName(), "local") != 0)
             continue;
         //ensure that this is the right parent module we are configuring.
-        if (opp_strcmp(child->getAttribute("node"), getParentModule()->getFullName()) != 0)
+        if (opp_strcmp(child->getAttribute("node"), host->getFullName()) != 0)
             continue;
         //Go one level deeper.
         //child = child->getFirstChild();
@@ -852,6 +854,22 @@ void IPv6RoutingTable::deletePrefixes(int interfaceID)
     updateDisplayString();
 }
 
+bool IPv6RoutingTable::isOnLinkAddress(const IPv6Address& address)
+{
+    for (int j = 0; j < ift->getNumInterfaces(); j++) {
+        InterfaceEntry *ie = ift->getInterface(j);
+
+        for (int i = 0; i < ie->ipv6Data()->getNumAdvPrefixes(); i++)
+            if (address.matches(ie->ipv6Data()->getAdvPrefix(i).prefix, ie->ipv6Data()->getAdvPrefix(i).prefixLength))
+                return true;
+
+    }
+
+    return false;
+}
+
+#endif /* WITH_xMIPv6 */
+
 void IPv6RoutingTable::deleteInterfaceRoutes(const InterfaceEntry *entry)
 {
     bool changed = false;
@@ -876,22 +894,6 @@ void IPv6RoutingTable::deleteInterfaceRoutes(const InterfaceEntry *entry)
         updateDisplayString();
     }
 }
-
-bool IPv6RoutingTable::isOnLinkAddress(const IPv6Address& address)
-{
-    for (int j = 0; j < ift->getNumInterfaces(); j++) {
-        InterfaceEntry *ie = ift->getInterface(j);
-
-        for (int i = 0; i < ie->ipv6Data()->getNumAdvPrefixes(); i++)
-            if (address.matches(ie->ipv6Data()->getAdvPrefix(i).prefix, ie->ipv6Data()->getAdvPrefix(i).prefixLength))
-                return true;
-
-    }
-
-    return false;
-}
-
-#endif /* WITH_xMIPv6 */
 
 bool IPv6RoutingTable::handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback)
 {

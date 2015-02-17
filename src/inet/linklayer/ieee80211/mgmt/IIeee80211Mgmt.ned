@@ -27,6 +27,10 @@ moduleinterface IIeee80211Mgmt
 {
     parameters:
         @display("i=block/cogwheel");
+        bool EDCA;
+        // parameters for EDCA = true
+        string classifier;
+        string macModule;               // The path to the MAC module
     gates:
         input upperLayerIn;
         output upperLayerOut;

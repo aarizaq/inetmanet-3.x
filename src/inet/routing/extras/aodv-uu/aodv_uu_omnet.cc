@@ -29,6 +29,7 @@
 #include "inet/transportlayer/udp/UDPPacket.h"
 #include "inet/networklayer/contract/INetworkProtocolControlInfo.h"
 #include "inet/networklayer/ipv4/ICMPMessage_m.h"
+#include "inet/common/ModuleAccess.h"
 #include "inet/common/NotifierConsts.h"
 #include "inet/networklayer/ipv4/IPv4Datagram.h"
 #include "inet/networklayer/ipv4/IPv4InterfaceData.h"
@@ -275,7 +276,7 @@ void NS_CLASS initialize(int stage)
         }
 
         propagateProactive = par("propagateProactive");
-        strcpy(nodeName,getParentModule()->getParentModule()->getFullName());
+        nodeName = getContainingNode(this)->getFullName();
         aodv_socket_init();
         rt_table_init();
         packet_queue_init();
@@ -1920,7 +1921,7 @@ bool NS_CLASS handleNodeStart(IDoneCallback *doneCallback)
     }
 
     propagateProactive = par("propagateProactive");
-    strcpy(nodeName,getParentModule()->getParentModule()->getFullName());
+
     aodv_socket_init();
     rt_table_init();
     packet_queue_init();
