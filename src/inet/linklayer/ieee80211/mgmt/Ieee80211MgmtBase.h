@@ -127,6 +127,7 @@ class INET_API Ieee80211MgmtBase : public Ieee80211PassiveQueue, public ILifecyc
 
     virtual void clear();
     virtual void clear(const int &);
+    ~Ieee80211MgmtBase();
 
   public:
     virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback) override;

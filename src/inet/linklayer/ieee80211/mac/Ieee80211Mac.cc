@@ -231,7 +231,7 @@ void Ieee80211Mac::initialize(int stage)
     //TODO: revise it: it's too big; should revise stages, too!!!
     if (stage == INITSTAGE_LOCAL)
     {
-        fsm = new Ieee802MacBaseFsm(10);
+        fsm = new Ieee802MacBaseFsm(11);
         //fsm->setNumStates(10);
         fsm->setStateMethod(IDLE, &Ieee80211Mac::stateIdle,"IDLE");
         fsm->setStateMethod(DEFER, &Ieee80211Mac::stateDefer,"DEFER");
@@ -586,7 +586,7 @@ void Ieee80211Mac::initializeQueueModule()
 {
     // use of external queue module is optional -- find it if there's one specified
     if (par("queueModule").stringValue()[0]) {
-        cModule *module = getParentModule()->getSubmodule(par("queueModule").stringValue());
+        cModule *module = getModuleFromPar<cModule>(par("queueModule"), this);
         queueModule = check_and_cast<Ieee80211PassiveQueue *>(module);
 
         EV_DEBUG << "Requesting first two frames from queue module\n";

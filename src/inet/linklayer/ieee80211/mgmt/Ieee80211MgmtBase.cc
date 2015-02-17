@@ -38,6 +38,13 @@ static std::ostream& operator<<(std::ostream& out, cMessage *msg)
     return out;
 }
 
+Ieee80211MgmtBase::~Ieee80211MgmtBase()
+{
+    clear();
+    if (mpduAggregateHandler)
+        delete mpduAggregateHandler;
+}
+
 void Ieee80211MgmtBase::initialize(int stage)
 {
     if (stage == INITSTAGE_LOCAL) {
@@ -83,6 +90,13 @@ void Ieee80211MgmtBase::initialize(int stage)
 
         // configuration
         frameCapacity = par("frameCapacity");
+        if (par("aggregateHandler").boolValue())
+        {
+            mpduAggregateHandler = new MpduAggregateHandler();
+            // for testing
+            mpduAggregateHandler->setAllAddress(true);
+            mpduAggregateHandler->setRequestProcedure(false); // disable request procedure for testing
+        }
 
 
     }

@@ -166,6 +166,8 @@ class INET_API MpduAggregateHandler : public cOwnedObject
         virtual bool getAllAddress() const {return allAddress;}
         virtual bool getResetAfterSend() const {return resetAfterSend;}
         virtual bool isAllowAddress(const MACAddress &add);
+        virtual void setRequestProcedure(const bool &p) {requestProcedure = p;}
+        virtual bool getRequestProcedure() const {return requestProcedure;}
 
 };
 
