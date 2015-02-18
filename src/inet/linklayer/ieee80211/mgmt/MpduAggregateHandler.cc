@@ -66,9 +66,9 @@ void MpduAggregateHandler::checkTimer()
 
 bool MpduAggregateHandler::checkPending(const MACAddress & addr, const TimerType &type)
 {
-    for (auto it = timerQueue.begin(); it !=  timerQueue.end(); ++it)
+    for (auto &elem : timerQueue)
     {
-        if (it->second.nodeId == addr && it->second.type == type)
+        if (elem.second.nodeId == addr && elem.second.type == type)
             return true;
     }
     return false;
@@ -338,7 +338,7 @@ int MpduAggregateHandler::findAddressFree(const MACAddress &addr ,int cat)
     return 0;
 }
 
-Ieee80211MpduA* MpduAggregateHandler::getBlock(Ieee80211DataOrMgmtFrame *frame,int maxPkSize, int64_t maxByteSize, int cat)
+Ieee80211MpduA* MpduAggregateHandler::getBlock(Ieee80211DataOrMgmtFrame *frame,int maxPkSize, int64_t maxByteSize, int cat, int minSize)
 {
 
     if (maxByteSize == -1)
@@ -350,7 +350,7 @@ Ieee80211MpduA* MpduAggregateHandler::getBlock(Ieee80211DataOrMgmtFrame *frame,i
             maxByteSize = exp2(13+infoAdda->exponent)-1;
     }
 
-    Ieee80211MpduA* block = getBlock(frame->getReceiverAddress(),maxPkSize-1, maxByteSize - frame->getByteLength(),cat);
+    Ieee80211MpduA* block = getBlock(frame->getReceiverAddress(),maxPkSize-1, maxByteSize - frame->getByteLength(),cat , minSize);
     if (block)
     {
         block->pushFront(frame);
@@ -359,7 +359,7 @@ Ieee80211MpduA* MpduAggregateHandler::getBlock(Ieee80211DataOrMgmtFrame *frame,i
     return nullptr;
 }
 
-Ieee80211MpduA* MpduAggregateHandler::getBlock(const MACAddress &addr,int maxPkSize,int64_t maxByteSize, int cat)
+Ieee80211MpduA* MpduAggregateHandler::getBlock(const MACAddress &addr,int maxPkSize,int64_t maxByteSize, int cat, int minSize)
 {
     if (cat >= (int) categories.size())
          throw cRuntimeError("MultiQueue::size Queue doesn't exist");
@@ -389,18 +389,19 @@ Ieee80211MpduA* MpduAggregateHandler::getBlock(const MACAddress &addr,int maxPkS
     if (infoAdda->state != SENDBLOCK)
         return nullptr;
 
-    Ieee80211MpduA *block = nullptr;
-
     auto itDest2 = categories[cat].numFramesDestinationFree.find(addr);
-    if (itDest2 != categories[cat].numFramesDestinationFree.end())
+    if (itDest2 == categories[cat].numFramesDestinationFree.end())
         return nullptr; // non free
 
+    if (minSize >= 0 && itDest2->second < minSize)
+        return nullptr; // not enough free
 
-    auto itAux = categories[cat].queue->end();
+    Ieee80211MpduA *block = nullptr;
+
     for (auto it = categories[cat].queue->begin() ;it != categories[cat].queue->end();)
     {
         Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame*>(*it);
-        if (frame == nullptr || !frame->getReceiverAddress().compareTo(addr))
+        if (frame == nullptr || frame->getReceiverAddress().compareTo(addr) != 0)
         {
             ++it;
             continue;
@@ -409,33 +410,26 @@ Ieee80211MpduA* MpduAggregateHandler::getBlock(const MACAddress &addr,int maxPkS
         if (!block)
         {
             block = new Ieee80211MpduA();
-            if (itAux == categories[cat].queue->end())
-                *it = block;
-            else
-            {
-                ++itAux;
-                if (block->getOwner() == this)
+            block->setReceiverAddress(addr);
+            if (block->getOwner() == this)
                     drop(block);
-
-                if (block->getByteLength() + frame->getByteLength() >= maxByteSize)
-                    break;
-
-                categories[cat].queue->insert(itAux,block);
-                it = categories[cat].queue->erase(it);
-            }
         }
-        else
-            it = categories[cat].queue->erase(it);
+
+    // check sizes
+        if (block->getByteLength() + frame->getByteLength() >= maxByteSize)
+            break;
+
+        if (block->getEncapSize()+1 > (unsigned int)maxPkSize)
+            break;
+
+        it = categories[cat].queue->erase(it);
+        take(frame);
         drop(frame);
         block->pushBack(frame);
         itDest2->second--;
         if (itDest2->second <= 0)
         {
             categories[cat].numFramesDestinationFree.erase(itDest2);
-            break;
-        }
-        if (block->getEncapSize() >= (unsigned int)maxPkSize)
-        {
             break;
         }
     }
@@ -461,7 +455,7 @@ void MpduAggregateHandler::createBlocks(const MACAddress &addr, int cat)
     Ieee80211MpduA *block = nullptr;
 
     auto itDest2 = categories[cat].numFramesDestinationFree.find(addr);
-    if (itDest2 != categories[cat].numFramesDestinationFree.end())
+    if (itDest2 == categories[cat].numFramesDestinationFree.end())
         return; // non free
 
     int64_t maxSize = 65535;
@@ -474,7 +468,7 @@ void MpduAggregateHandler::createBlocks(const MACAddress &addr, int cat)
     for (auto it = categories[cat].queue->begin() ;it != categories[cat].queue->end();)
     {
         Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame*>(*it);
-        if (frame == nullptr || !frame->getReceiverAddress().compareTo(addr))
+        if (frame == nullptr || frame->getReceiverAddress().compareTo(addr) != 0)
         {
             ++it;
             continue;
@@ -484,6 +478,7 @@ void MpduAggregateHandler::createBlocks(const MACAddress &addr, int cat)
         if (!block)
         {
             block = new Ieee80211MpduA();
+            block->setReceiverAddress(addr);
             if (itAux == categories[cat].queue->end())
                 *it = block;
             else
@@ -551,7 +546,7 @@ void MpduAggregateHandler::removeBlock(const MACAddress &addr, int cat)
     for (auto it = categories[cat].queue->begin() ;it != categories[cat].queue->end();++it)
     {
         Ieee80211MpduA *frame = dynamic_cast<Ieee80211MpduA*>(*it);
-        if (frame == nullptr || !frame->getReceiverAddress().compareTo(addr))
+        if (frame == nullptr || frame->getReceiverAddress().compareTo(addr) != 0)
         {
             ++it;
             continue;

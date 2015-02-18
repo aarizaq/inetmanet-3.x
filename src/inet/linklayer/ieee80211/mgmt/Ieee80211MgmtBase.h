@@ -57,6 +57,8 @@ class INET_API Ieee80211MgmtBase : public Ieee80211PassiveQueue, public ILifecyc
     std::vector<DataQueue> dataQueue;    // queue for data frames
     DataQueue mgmtQueue;    // queue for management frames (higher priority than data frames)
 
+    int minMpduASize = 3;
+
     // statistics
     long numDataFramesReceived;
     long numMgmtFramesReceived;
@@ -139,6 +141,7 @@ class INET_API Ieee80211MgmtBase : public Ieee80211PassiveQueue, public ILifecyc
 
     /** Redefined from PassiveQueueBase. */
     virtual cMessage *dequeue() override;
+    virtual void requestPacket() override;
 
     /** Redefined from IPassiveQueue. */
     virtual bool isEmpty() override;

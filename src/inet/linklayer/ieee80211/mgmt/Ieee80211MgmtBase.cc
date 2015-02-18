@@ -96,6 +96,7 @@ void Ieee80211MgmtBase::initialize(int stage)
             // for testing
             mpduAggregateHandler->setAllAddress(true);
             mpduAggregateHandler->setRequestProcedure(false); // disable request procedure for testing
+            mpduAggregateHandler->setAutomaticMimimumAddress(minMpduASize);
         }
 
 
@@ -300,17 +301,50 @@ cMessage *Ieee80211MgmtBase::dequeue()
 
 
     }
-    if (mpduAggregateHandler)
+    if (mpduAggregateHandler && pk != nullptr)
     {
         mpduAggregateHandler->checkState(pk);
     }
     return pk;
 }
 
+void Ieee80211MgmtBase::requestPacket()
+{
+    Enter_Method("requestPacket(int)");
+
+    bool dataFrame = mgmtQueue.empty();
+    cMessage *msg = dequeue();
+    if (msg == nullptr) {
+        packetRequested++;
+    }
+    else {
+        emit(dequeuePkSignal, msg);
+        emit(queueingTimeSignal, simTime() - msg->getArrivalTime());
+        if (mpduAggregateHandler && dataFrame)
+        {
+            Ieee80211DataOrMgmtFrame * frame = dynamic_cast<Ieee80211DataOrMgmtFrame*>(msg);
+            if (frame)
+            {
+                if (mpduAggregateHandler->isAllowAddress(frame->getReceiverAddress()))
+                {
+                    cMessage * aux = mpduAggregateHandler->getBlock(frame,64,-1,0,minMpduASize);
+                    if (aux)
+                        msg = aux;
+                }
+
+            }
+        }
+        msg->setKind(0);
+        sendOut(msg);
+    }
+}
+
+
 void Ieee80211MgmtBase::requestPacket(const int &cat)
 {
     Enter_Method("requestPacket(int)");
 
+    bool dataFrame = mgmtQueue.empty();
     cMessage *msg = dequeue(cat);
     if (msg == nullptr) {
         if (cat == 0)
@@ -321,21 +355,21 @@ void Ieee80211MgmtBase::requestPacket(const int &cat)
     else {
         emit(dequeuePkSignal, msg);
         emit(queueingTimeSignal, simTime() - msg->getArrivalTime());
-        msg->setKind(cat);
-        if (mpduAggregateHandler)
+        if (mpduAggregateHandler && dataFrame)
         {
             Ieee80211DataOrMgmtFrame * frame = dynamic_cast<Ieee80211DataOrMgmtFrame*>(msg);
             if (frame)
             {
                 if (mpduAggregateHandler->isAllowAddress(frame->getReceiverAddress()))
                 {
-                    cMessage * aux = mpduAggregateHandler->getBlock(frame,64,-1,cat);
+                    cMessage * aux = mpduAggregateHandler->getBlock(frame,64,-1,cat,minMpduASize);
                     if (aux)
                         msg = aux;
                 }
 
             }
         }
+        msg->setKind(cat);
         sendOut(msg);
     }
 }
@@ -352,7 +386,7 @@ void Ieee80211MgmtBase::requestMpuA(const MACAddress &addr, const int &size, con
             if (infoAdda)
                 maxByteSize = exp2(13+infoAdda->exponent)-1;
             maxByteSize -= remanent;
-            cMessage * msg = mpduAggregateHandler->getBlock(addr,size,cat);
+            cMessage * msg = mpduAggregateHandler->getBlock(addr,size,maxByteSize,cat,-1);
             if (msg)
                 sendOut(msg);
         }
@@ -379,7 +413,8 @@ cMessage *Ieee80211MgmtBase::dequeue(const int & cat)
         if (mpduAggregateHandler)
         {
             Ieee80211DataOrMgmtFrame *frame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(pk);
-            mpduAggregateHandler->increaseSize(frame,cat);
+            if (frame)
+                mpduAggregateHandler->decreaseSize(frame,cat);
         }
 
 
@@ -409,7 +444,7 @@ void Ieee80211MgmtBase::sendUp(cMessage *msg)
 
 void Ieee80211MgmtBase::processFrame(Ieee80211DataOrMgmtFrame *frame)
 {
-    if (mpduAggregateHandler)
+    if (mpduAggregateHandler && frame != nullptr)
     {
         if (mpduAggregateHandler->handleFrames(frame))
             return;
@@ -565,7 +600,8 @@ cMessage * Ieee80211MgmtBase::pop(const int& cat) {
     if (mpduAggregateHandler)
     {
         Ieee80211DataOrMgmtFrame *frame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg);
-        mpduAggregateHandler->increaseSize(frame,cat);
+        if (frame != nullptr)
+            mpduAggregateHandler->decreaseSize(frame,cat);
     }
     return msg;
 }

@@ -80,8 +80,8 @@ module SecurityIeee80211NicMesh like IWirelessNic
                 locatorActive = hasLocator;
                 @display("p=96,136;q=wlanDataQueue;i=block/switch");
             gates:
-                macIn[1];
-                macOut[1];
+                macIn;
+                macOut;
         }
         mac: Ieee80211Mac {
             parameters:
@@ -99,8 +99,8 @@ module SecurityIeee80211NicMesh like IWirelessNic
         radio.upperLayerIn <-- mac.lowerLayerOut;
         radio.upperLayerOut --> mac.lowerLayerIn;
 
-        mac.upperLayerOut --> mgmt.macIn[0];
-        mac.upperLayerIn <-- mgmt.macOut[0];
+        mac.upperLayerOut --> mgmt.macIn;
+        mac.upperLayerIn <-- mgmt.macOut;
 
         mgmt.agentOut --> agent.mgmtIn if _agentNeeded;
         mgmt.agentIn <-- agent.mgmtOut if _agentNeeded;

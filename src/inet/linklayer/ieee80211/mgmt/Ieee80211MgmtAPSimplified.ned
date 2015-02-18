@@ -50,7 +50,8 @@ simple Ieee80211MgmtAPSimplified like IIeee80211Mgmt
     parameters:
         bool EDCA = default(false); // enable Enhanced Distributed Channel Access (802.11e)
         // parameters for EDCA = true
-        string classifier = default("Ieee80211eClassifier");        
+        string classifier = default("Ieee80211eClassifier");
+        bool aggregateHandler = default(false);
         int frameCapacity = default(100);
         string encapDecap = default("eth") @enum("true", "false", "eth");   // if "eth", frames sent up are converted to EthernetIIFrame
         string macModule;               // The path to the MAC module

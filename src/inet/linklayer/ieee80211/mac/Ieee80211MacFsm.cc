@@ -1063,16 +1063,29 @@ void Ieee80211Mac::stateWaitBlockAck(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
 
 void Ieee80211Mac::stateSendMpuA(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
 {
+    Ieee80211MpduA *frame;
     FSMIEEE80211_Enter(fsmLocal)
     {
 
-        scheduleDataTimeoutPeriod(getCurrentTransmission()); // TODO: compute Schedule MPUA with immediate block ACK
+        if (endSIFS == msg)
+        {
+            Ieee80211Frame *frameAux = (Ieee80211Frame *)endSIFS->getContextPointer();
+            ASSERT(frameAux != nullptr);
+            frame = check_and_cast<Ieee80211MpduA *>(frameAux);
+        }
+        else
+        {
+            frame = check_and_cast<Ieee80211MpduA *>(msg);
+        }
+
+        scheduleDataTimeoutPeriod(frame); // TODO: compute Schedule MPUA with immediate block ACK
+
 
         MpduModeTranssmision = true;
         indexMpduTransmission = 0;
         configureRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
         if (mpduInTransmission == nullptr)
-            mpduInTransmission = check_and_cast<Ieee80211MpduA *>(msg);
+            mpduInTransmission = frame;
 
         for (unsigned int i = 0 ; i < mpduInTransmission->getNumEncap(); i++)
             mpduInTransmission->getPacket(i)->setIsMpduA(true);
