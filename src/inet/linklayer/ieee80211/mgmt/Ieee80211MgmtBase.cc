@@ -543,7 +543,7 @@ void Ieee80211MgmtBase::start()
 void Ieee80211MgmtBase::clear()
 {
     cMessage *msg;
-    for (int i = 0 ; i < numQueues; i++)
+    for (unsigned int i = 0 ; i < dataQueue.size(); i++)
     {
         while (nullptr != (msg = dequeue(i)))
             delete msg;

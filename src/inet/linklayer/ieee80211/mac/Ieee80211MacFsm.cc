@@ -1021,10 +1021,12 @@ void Ieee80211Mac::stateSendMpuA(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
     Ieee80211MpduA *frame;
     FSMIEEE80211_Enter(fsmLocal)
     {
-
         if (endSIFS == msg)
         {
-            Ieee80211Frame *frameAux = (Ieee80211Frame *)endSIFS->getContextPointer();
+            if (endSIFS->getContextPointer())
+                delete (Ieee80211Frame*)endSIFS->getContextPointer();
+            endSIFS->setContextPointer(nullptr);
+            Ieee80211Frame *frameAux = getCurrentTransmission();
             ASSERT(frameAux != nullptr);
             frame = check_and_cast<Ieee80211MpduA *>(frameAux);
         }
@@ -1051,17 +1053,16 @@ void Ieee80211Mac::stateSendMpuA(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
         }
 
         mpduInTransmission->getPacket(mpduInTransmission->getNumEncap()-1)->setLastMpdu(true);
-        int retry = mpduInTransmission->getNumRetries(indexMpduTransmission);
-        sendDown(buildMpduDataFrame(check_and_cast<Ieee80211DataOrMgmtFrame *>(setBitrateFrame(mpduInTransmission->getPacket(indexMpduTransmission))),retry));
+        // int retry = mpduInTransmission->getNumRetries(indexMpduTransmission);
+        // sendDown(buildMpduDataFrame(check_and_cast<Ieee80211DataOrMgmtFrame *>(setBitrateFrame(mpduInTransmission->getPacket(indexMpduTransmission))),retry));
     }
 
     if (msg == mediumStateChange && radio->getTransmissionState() == IRadio::TRANSMISSION_STATE_IDLE)
     {
         // send next
-        indexMpduTransmission++;
         currentAC = oldcurrentAC;
         int retry = mpduInTransmission->getNumRetries(indexMpduTransmission);
-        if ((int)mpduInTransmission->getNumEncap() < indexMpduTransmission)
+        if ((int)mpduInTransmission->getNumEncap() > indexMpduTransmission)
             sendDown(buildMpduDataFrame(check_and_cast<Ieee80211DataOrMgmtFrame *>(setBitrateFrame(mpduInTransmission->getPacket(indexMpduTransmission))),retry));
         else
         {
@@ -1070,9 +1071,11 @@ void Ieee80211Mac::stateSendMpuA(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
             reqFrame.setReceiverAddress(mpduInTransmission->getReceiverAddress());
             reqFrame.setTransmitterAddress(address);
             setBitrateFrame(&reqFrame);
+            MpduModeTranssmision = false;
             sendDown(buildMpduDataFrame(&reqFrame,0));
             FSMIEEE80211_Transition(fsmLocal,WAITBLOCKACK);
         }
+        indexMpduTransmission++;
     }
  }
 
