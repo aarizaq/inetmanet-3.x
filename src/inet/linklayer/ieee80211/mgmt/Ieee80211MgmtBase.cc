@@ -374,7 +374,7 @@ void Ieee80211MgmtBase::requestPacket(const int &cat)
     }
 }
 
-void Ieee80211MgmtBase::requestMpuA(const MACAddress &addr, const int &size, const int64_t &remanent, const int &cat)
+cMessage *Ieee80211MgmtBase::requestMpuA(const MACAddress &addr, const int &size, const int64_t &remanent, const int &cat)
 {
     if (mpduAggregateHandler)
     {
@@ -388,9 +388,14 @@ void Ieee80211MgmtBase::requestMpuA(const MACAddress &addr, const int &size, con
             maxByteSize -= remanent;
             cMessage * msg = mpduAggregateHandler->getBlock(addr,size,maxByteSize,cat,-1);
             if (msg)
-                sendOut(msg);
+            {
+                if (msg->getOwner() == this)
+                    drop(msg);
+                return msg;
+            }
         }
     }
+    return nullptr;
 }
 
 cMessage *Ieee80211MgmtBase::dequeue(const int & cat)

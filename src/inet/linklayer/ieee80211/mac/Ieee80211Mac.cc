@@ -50,7 +50,7 @@ Register_Enum(inet::Ieee80211Mac,
          Ieee80211Mac::WAITSIFS,
          Ieee80211Mac::RECEIVE,
          Ieee80211Mac::WAITBLOCKACK,
-         Ieee80211Mac::SENDMPUA));
+         Ieee80211Mac::SENDMPDUA));
 
 /****************************************************************
  * Construction functions.
@@ -243,7 +243,7 @@ void Ieee80211Mac::initialize(int stage)
         fsm->setStateMethod(WAITSIFS, &Ieee80211Mac::stateWaitSift,"WAITSIFS");
         fsm->setStateMethod(RECEIVE, &Ieee80211Mac::stateReceive,"RECEIVE");
         fsm->setStateMethod(WAITBLOCKACK, &Ieee80211Mac::stateWaitBlockAck,"WAITBLOCKACK");
-        fsm->setStateMethod(SENDMPUA, &Ieee80211Mac::stateSendMpuA,"SENDMPUA");
+        fsm->setStateMethod(SENDMPDUA, &Ieee80211Mac::stateSendMpuA,"SENDMPUA");
 
         mpudRetTimeOut = 0.01;
         // initialize parameters
@@ -699,6 +699,13 @@ void Ieee80211Mac::handleUpperPacket(cPacket *msg)
     if (mappingAccessCategory(frame) == 200) {
         // if function mappingAccessCategory() returns 200, it means transsmissionQueue is full
         return;
+    }
+    if (mpdu != nullptr)
+    {
+        for (unsigned int i = 0; i < mpdu->getNumEncap();i++)
+        {
+            mpdu->getPacket(i)->setMACArrive(simTime());
+        }
     }
     frame->setMACArrive(simTime());
     handleWithFSM(frame);
@@ -1576,10 +1583,14 @@ void Ieee80211Mac::finishCurrentTransmission()
 void Ieee80211Mac::giveUpCurrentTransmission()
 {
     Ieee80211DataOrMgmtFrame *temp = (Ieee80211DataOrMgmtFrame *)transmissionQueue()->front();
+    Ieee80211MpduA *aux = dynamic_cast<Ieee80211MpduA *>(temp);
     sendNotification(NF_LINK_BREAK, temp);
+    if (aux != nullptr)
+        numGivenUp()+=aux->getNumEncap();
+    else
+        numGivenUp()++;
     popTransmissionQueue();
     resetStateVariables();
-    numGivenUp()++;
 }
 
 void Ieee80211Mac::retryCurrentTransmission()
@@ -1623,6 +1634,8 @@ void Ieee80211Mac::resetStateVariables()
         reportDataOk();
     else
         retryCounter() = 0;
+    numConsecutiveMpduA = 0;
+    retryMpduA = 0;
 
     if (!transmissionQueue()->empty()) {
         backoff() = true;
@@ -1863,6 +1876,8 @@ void Ieee80211Mac::clearQueue()
 void Ieee80211Mac::reportDataOk()
 {
     retryCounter() = 0;
+    numConsecutiveMpduA = 0;
+    retryMpduA = 0;
     if (rateControlMode == RATE_CR)
         return;
     successCounter++;

@@ -250,7 +250,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
         WAITSIFS,
         RECEIVE,
         WAITBLOCKACK,
-        SENDMPUA,
+        SENDMPDUA,
     };
   protected:
 
@@ -309,6 +309,8 @@ class INET_API Ieee80211Mac : public MACProtocolBase
       int retryMpduAConfirmation = 0;
       int retryMpduA = 0;
       int numMduRequested = 0;
+      int numConsecutiveMpduA = 0;
+      int maxConsecutiveMpduA = 4;
 
 
 
