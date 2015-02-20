@@ -58,7 +58,7 @@ void Ieee80211MgmtBase::initialize(int stage)
             numQueues = classifier->getNumQueues();
         }
         dataQueue.resize(numQueues);
-        packetRequestedCat.resize(numQueues-1);
+        packetRequestedCat.resize(numQueues);
         // mgmtQueue.setName("wlanMgmtQueue");
         int length = 0;
         if (numQueues == 1)

@@ -216,7 +216,7 @@ bool Ieee80211Mac::isMpduA(Ieee80211Frame *frame)
 void Ieee80211Mac::sendBLOCKACKFrameOnEndSIFS()
 {
     Ieee80211Frame *frameToACK = (Ieee80211Frame *)endSIFS->getContextPointer();
-    Ieee80211DataOrMgmtFrame *frame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(frameToACK);
+    Ieee80211TwoAddressFrame *frame = dynamic_cast<Ieee80211TwoAddressFrame *>(frameToACK);
     MACAddress addr = frame->getTransmitterAddress();
     endSIFS->setContextPointer(nullptr);
     delete frameToACK;
@@ -1056,7 +1056,6 @@ void Ieee80211Mac::stateSendMpuA(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
         // int retry = mpduInTransmission->getNumRetries(indexMpduTransmission);
         // sendDown(buildMpduDataFrame(check_and_cast<Ieee80211DataOrMgmtFrame *>(setBitrateFrame(mpduInTransmission->getPacket(indexMpduTransmission))),retry));
     }
-
     if (msg == mediumStateChange && radio->getTransmissionState() == IRadio::TRANSMISSION_STATE_IDLE)
     {
         // send next
@@ -1064,15 +1063,19 @@ void Ieee80211Mac::stateSendMpuA(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
         int retry = mpduInTransmission->getNumRetries(indexMpduTransmission);
         if ((int)mpduInTransmission->getNumEncap() > indexMpduTransmission)
             sendDown(buildMpduDataFrame(check_and_cast<Ieee80211DataOrMgmtFrame *>(setBitrateFrame(mpduInTransmission->getPacket(indexMpduTransmission))),retry));
-        else
+        else if ((int)mpduInTransmission->getNumEncap() == indexMpduTransmission) // block ACK
         {
             // transmit BlockAck request.
             Ieee80211BlockAckFrameReq reqFrame;
             reqFrame.setReceiverAddress(mpduInTransmission->getReceiverAddress());
             reqFrame.setTransmitterAddress(address);
             setBitrateFrame(&reqFrame);
-            MpduModeTranssmision = false;
             sendDown(buildMpduDataFrame(&reqFrame,0));
+        }
+        else
+        {
+            // end transmission
+            MpduModeTranssmision = false;
             FSMIEEE80211_Transition(fsmLocal,WAITBLOCKACK);
         }
         indexMpduTransmission++;

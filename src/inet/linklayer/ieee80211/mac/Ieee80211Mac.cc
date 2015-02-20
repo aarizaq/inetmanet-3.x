@@ -870,6 +870,8 @@ void Ieee80211Mac::handleLowerPacket(cPacket *msg)
             return;
         }
         frame = dynamic_cast<Ieee80211Frame *>(delimiter->decapsulate());
+        cMessage *aux = frame;
+        *aux = *msg;
         frame->setBitError(delimiter->hasBitError());
         delete msg; // delete MPDU-A delimiter
         msg = frame; // now msg must be the frame contained in the delimiter.
