@@ -705,6 +705,7 @@ void Ieee80211Mac::handleUpperPacket(cPacket *msg)
         for (unsigned int i = 0; i < mpdu->getNumEncap();i++)
         {
             mpdu->getPacket(i)->setMACArrive(simTime());
+            mpdu->getPacket(i)->setTransmitterAddress(address);
         }
     }
     frame->setMACArrive(simTime());

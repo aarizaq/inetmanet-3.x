@@ -15,9 +15,6 @@
 
 #include "inet/linklayer/ieee80211/mac/Ieee80211MpduA.h"
 
-//#define SHAREDBLOCK
-
-
 // Another default rule (prevents compiler from choosing base class' doPacking())
 template<typename T>
 void doPacking(cCommBuffer *, T& t)
@@ -78,10 +75,7 @@ void Ieee80211MpduA::forEachChild(cVisitor *v)
     if (!encapsulateVector.empty())
     {
         for (unsigned int i = 0; i < encapsulateVector.size(); i++)
-        {
-            _detachShareVector(i); // see method comment why this is needed
             v->visit(encapsulateVector[i]->pkt);
-        }
     }
 }
 
@@ -101,20 +95,9 @@ void Ieee80211MpduA::_deleteEncapVector()
 {
     while (!encapsulateVector.empty())
     {
-#ifdef SHAREDBLOCK
-        if (encapsulateVector.back()->shareCount>0)
-        {
-            encapsulateVector.back()->shareCount--;
-        }
-        else
-        {
-            if (encapsulateVector.back()->pkt->getOwner()!=this)
-            take (encapsulateVector.back()->pkt);
-            delete encapsulateVector.back()->pkt;
-        }
-#else
+        if (encapsulateVector.back()->pkt->getOwner()!=this)
+            take(encapsulateVector.back()->pkt);
         delete encapsulateVector.back()->pkt;
-#endif
         encapsulateVector.pop_back();
     }
 }
@@ -129,15 +112,6 @@ Ieee80211DataOrMgmtFrame *Ieee80211MpduA::popBack()
         throw cRuntimeError(this, "popBack(): packet length is smaller than encapsulated packet");
     if (encapsulateVector.back()->pkt->getOwner() != this)
         take(encapsulateVector.back()->pkt);
-#ifdef SHAREDBLOCK
-    if (encapsulateVector.back()->shareCount>0)
-    {
-        encapsulateVector.back()->shareCount--;
-        cPacket * msg = encapsulateVector.front()->pkt->dup();
-        encapsulateVector.pop_back();
-        return msg;
-    }
-#endif
     Ieee80211DataOrMgmtFrame *msg = encapsulateVector.back()->pkt;
     encapsulateVector.pop_back();
     if (msg)
@@ -155,16 +129,6 @@ Ieee80211DataOrMgmtFrame *Ieee80211MpduA::popFront()
         throw cRuntimeError(this, "popFrom(): packet length is smaller than encapsulated packet");
     if (encapsulateVector.front()->pkt->getOwner() != this)
         take(encapsulateVector.front()->pkt);
-#ifdef SHAREDBLOCK
-    if (encapsulateVector.front()->shareCount>0)
-    {
-        encapsulateVector.front()->shareCount--;
-        cPacket *msg = encapsulateVector.front()->pkt->dup();
-        encapsulateVector.erase (encapsulateVector.begin());
-        if (msg) drop(msg);
-        return msg;
-    }
-#endif
     Ieee80211DataOrMgmtFrame *msg = encapsulateVector.front()->pkt;
     encapsulateVector.erase(encapsulateVector.begin());
     if (msg)
@@ -216,7 +180,7 @@ void Ieee80211MpduA::pushBack(Ieee80211DataOrMgmtFrame *pkt, int retries)
     }
 
     setBitLength(getBitLength() + pkt->getBitLength());
-    ShareStruct * shareStructPtr = new ShareStruct();
+    PacketStruct * shareStructPtr = new PacketStruct();
     if (pkt->getOwner() != simulation.getContextSimpleModule())
         throw cRuntimeError(this, "pushBack(): not owner of message (%s)%s, owner is (%s)%s", pkt->getClassName(),
                 pkt->getFullName(), pkt->getOwner()->getClassName(), pkt->getOwner()->getFullPath().c_str());
@@ -240,7 +204,7 @@ void Ieee80211MpduA::pushFront(Ieee80211DataOrMgmtFrame *pkt, int retries)
 
     }
     setBitLength(getBitLength() + pkt->getBitLength());
-    ShareStruct * shareStructPtr = new ShareStruct();
+    PacketStruct * shareStructPtr = new PacketStruct();
     if (pkt->getOwner() != simulation.getContextSimpleModule())
         throw cRuntimeError(this, "pushFrom(): not owner of message (%s)%s, owner is (%s)%s", pkt->getClassName(),
                 pkt->getFullName(), pkt->getOwner()->getClassName(), pkt->getOwner()->getFullPath().c_str());
@@ -250,41 +214,29 @@ void Ieee80211MpduA::pushFront(Ieee80211DataOrMgmtFrame *pkt, int retries)
     encapsulateVector.insert(encapsulateVector.begin(), shareStructPtr);
 }
 
-void Ieee80211MpduA::_detachShareVector(unsigned int i)
-{
-    if (i < encapsulateVector.size())
-    {
-#ifdef SHAREDBLOCK
-        if (encapsulateVector[i]->shareCount>0)
-        {
-            ShareStruct *share = new ShareStruct;
-            if (encapsulateVector.front()->pkt->getOwner()!=this)
-            take (encapsulateVector[i]->pkt);
-            share->shareCount=0;
-            take (share->pkt=encapsulateVector[i]->pkt->dup());
-            encapsulateVector[i]->shareCount--;
-            encapsulateVector[i]=share;
-        }
-#endif
-    }
-}
 
 Ieee80211DataOrMgmtFrame *Ieee80211MpduA::getPacket(unsigned int i) const
 {
 
     if (i >= encapsulateVector.size())
         return nullptr;
-    const_cast<Ieee80211MpduA*>(this)->_detachShareVector(i);
     return encapsulateVector[i]->pkt;
 }
 
-int Ieee80211MpduA::getNumRetries(unsigned int i) const
+int Ieee80211MpduA::getNumRetries(const unsigned int &i) const
 {
 
     if (i >= encapsulateVector.size())
         return 0;
-    const_cast<Ieee80211MpduA*>(this)->_detachShareVector(i);
     return encapsulateVector[i]->numRetries;
+}
+
+void Ieee80211MpduA::setNumRetries(const unsigned int &i, const int &val)
+{
+
+    if (i >= encapsulateVector.size())
+        return;
+    encapsulateVector[i]->numRetries = val;
 }
 
 Ieee80211DataOrMgmtFrame *Ieee80211MpduA::decapsulatePacket(unsigned int i)
@@ -292,22 +244,11 @@ Ieee80211DataOrMgmtFrame *Ieee80211MpduA::decapsulatePacket(unsigned int i)
 
     if (i >= encapsulateVector.size())
         return nullptr;
-    const_cast<Ieee80211MpduA*>(this)->_detachShareVector(i);
     Ieee80211DataOrMgmtFrame * pkt = encapsulateVector[i]->pkt;
     if (getBitLength() > 0)
         setBitLength(getBitLength() - encapsulateVector.front()->pkt->getBitLength());
     if (pkt->getOwner() != this)
         take(pkt);
-#ifdef SHAREDBLOCK
-    if (pkt->shareCount>0)
-    {
-        pkt->shareCount--;
-        cPacket *msg = encapsulateVector.front()->pkt->dup();
-        encapsulateVector.erase (encapsulateVector.begin()+i);
-        if (msg) drop(msg);
-        return msg;
-    }
-#endif
     encapsulateVector.erase(encapsulateVector.begin() + i);
     if (pkt)
         drop(pkt);
@@ -318,7 +259,6 @@ void Ieee80211MpduA::setPacketKind(unsigned int i, int kind)
 {
     if (i >= encapsulateVector.size())
         return;
-    this->_detachShareVector(i);
     encapsulateVector[i]->pkt->setKind(kind);
 }
 
@@ -333,20 +273,12 @@ Ieee80211MpduA& Ieee80211MpduA::operator=(const Ieee80211MpduA& msg)
     }
     if (msg.encapsulateVector.size() > 0)
     {
-#ifdef SHAREDBLOCK
-        encapsulateVector = msg.encapsulateVector;
-        for (unsigned int i=0;i<msg.encapsulateVector.size();i++)
-        {
-            encapsulateVector[i]->shareCount++;
-        }
-#else
         for (unsigned int i = 0; i < msg.encapsulateVector.size(); i++)
         {
-            ShareStruct * shareStructPtr = new ShareStruct();
+            PacketStruct * shareStructPtr = new PacketStruct();
             shareStructPtr->pkt = encapsulateVector[i]->pkt->dup();
             encapsulateVector.push_back(shareStructPtr);
         }
-#endif
     }
     return *this;
 }

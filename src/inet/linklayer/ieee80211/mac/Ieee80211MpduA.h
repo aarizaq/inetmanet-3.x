@@ -17,6 +17,7 @@
 #define FRAMEBLOCK_H_
 #include <omnetpp.h>
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
+#include <deque>
 
 namespace inet {
 namespace ieee80211 {
@@ -25,20 +26,18 @@ namespace ieee80211 {
 class Ieee80211MpduA : public Ieee80211DataOrMgmtFrame
 {
 private:
-    struct ShareStruct{
+    struct PacketStruct{
         Ieee80211DataOrMgmtFrame * pkt;
         unsigned int shareCount;
         int numRetries = 0;
-        ShareStruct(){
-            pkt=nullptr;
+        PacketStruct(){
+            pkt = nullptr;
             shareCount = 0;
             numRetries = 0;
         }
     };
-    std::vector<ShareStruct*> encapsulateVector;
+    std::deque<PacketStruct*> encapsulateVector;
     void _deleteEncapVector();
-    bool _checkIfShare();
-    void _detachShareVector(unsigned int i);
 public:
     Ieee80211MpduA(const char *name=nullptr, int kind=0);
     Ieee80211MpduA(Ieee80211MpduA &);
@@ -47,7 +46,8 @@ public:
     virtual ~Ieee80211MpduA();
     Ieee80211MpduA& operator=(const Ieee80211MpduA& msg);
     virtual Ieee80211DataOrMgmtFrame *getPacket(unsigned int i) const;
-    virtual int getNumRetries(unsigned int i) const;
+    virtual int getNumRetries(const unsigned int &i) const;
+    virtual void setNumRetries(const unsigned int &i,const int &val);
 
     virtual void setPacketKind(unsigned int i,int kind);
     virtual unsigned int getNumEncap() const {return encapsulateVector.size();}

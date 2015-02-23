@@ -266,6 +266,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
       int indexMpduTransmission = 0;
       Ieee80211MpduA *mpduInTransmission = nullptr;
       int mpduAClass = 0;
+      int numBlockAckReqRetries = 0;
       typedef std::deque<Ieee80211DataOrMgmtFrame *> MpduAInReception;
       typedef std::vector<int> Confirmed;
       class MpduAInProc : public cObject
@@ -308,7 +309,6 @@ class INET_API Ieee80211Mac : public MACProtocolBase
 
       int retryMpduAConfirmation = 0;
       int retryMpduA = 0;
-      int numMduRequested = 0;
       int numConsecutiveMpduA = 0;
       int maxConsecutiveMpduA = 4;
 
@@ -660,7 +660,10 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     // handle MPDU-A
     virtual void setBlockAckTimeOut();
     virtual void retryCurrentMpduA();
+
     virtual void sendMpuAPending(const MACAddress &addr);
+
+    virtual void retryBlockAckReq();
 
     virtual void processMpduA(Ieee80211DataOrMgmtFrame *frame);
     virtual void sendBLOCKACKFrameOnEndSIFS();
