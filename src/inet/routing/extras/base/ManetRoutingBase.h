@@ -86,34 +86,35 @@ class INET_API ManetRoutingBase : public cSimpleModule, public cListener, public
     class ProtocolRoutingData
     {
         public:
-            RouteMap* routesVector;
-            bool isProactive;
+            RouteMap* routesVector = nullptr;
+            bool isProactive = false;
     };
 
     typedef std::vector<ProtocolRoutingData> ProtocolsRoutes;
     typedef std::map<L3Address,ProtocolsRoutes>GlobalRouteMap;
-    RouteMap *routesVector;
+
+    RouteMap *routesVector = nullptr;
     static bool createInternalStore;
     static GlobalRouteMap *globalRouteMap;
 
-    IIPv4RoutingTable *inet_rt;
-    IInterfaceTable *inet_ift;
-    cModule *hostModule;
-    ICMP *icmpModule;
-    bool mac_layer_;
+    IIPv4RoutingTable *inet_rt = nullptr;
+    IInterfaceTable *inet_ift = nullptr;
+    cModule *hostModule = nullptr;
+    ICMP *icmpModule = nullptr;
+    bool mac_layer_ = false;
     L3Address    hostAddress;
     L3Address    routerId;
     Coord curPosition;
     Coord curSpeed;
     simtime_t posTimer;
-    bool   regPosition;
-    bool   useManetLabelRouting;
-    bool   isRegistered;
-    void *commonPtr;
-    bool sendToICMP;
-    ManetRoutingBase *collaborativeProtocol;
+    bool   regPosition = false;
+    bool   useManetLabelRouting = false;
+    bool   isRegistered = false;
+    void *commonPtr = nullptr;
+    bool sendToICMP = false;
+    ManetRoutingBase *collaborativeProtocol = nullptr;
 
-    IARP *arp;
+    IARP *arp = nullptr;
 
     typedef struct InterfaceIdentification
     {
@@ -128,12 +129,12 @@ class INET_API ManetRoutingBase : public cSimpleModule, public cListener, public
     } InterfaceIdentification;
     typedef std::vector <InterfaceIdentification> InterfaceVector;
 
-    InterfaceVector *interfaceVector;
-    TimerMultiMap *timerMultiMapPtr;
-    cMessage *timerMessagePtr;
+    InterfaceVector *interfaceVector = nullptr;
+    TimerMultiMap *timerMultiMapPtr = nullptr;
+    cMessage *timerMessagePtr = nullptr;
     std::vector<AddressGroup> addressGroupVector;
     std::vector<int> inAddressGroup;
-    bool staticNode;
+    bool staticNode = false;
 
     struct ManetProxyAddress
     {
@@ -141,7 +142,7 @@ class INET_API ManetRoutingBase : public cSimpleModule, public cListener, public
         L3Address address;
     };
 
-    bool isGateway;     /// true if the node will work like gateway for address in the list
+    bool isGateway = false;     /// true if the node will work like gateway for address in the list
 
     std::vector<ManetProxyAddress> proxyAddress;
 
@@ -251,7 +252,7 @@ class INET_API ManetRoutingBase : public cSimpleModule, public cListener, public
      *
      * ManetRoutingBase is subscribed to position changes.
      */
-    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj);
+    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj) override;
     virtual void processLinkBreak(const cObject *details);
     virtual void processLinkBreakManagement(const cObject *details);
     virtual void processPromiscuous(const cObject *details);
@@ -418,11 +419,11 @@ class INET_API ManetRoutingBase : public cSimpleModule, public cListener, public
     virtual bool getAddressGroup(AddressGroup &, int group = 0);
     virtual bool getAddressGroup(std::vector<L3Address> &, int group = 0);
 
-    virtual int  getRouteGroup(const AddressGroup &gr, std::vector<L3Address> &){opp_error("getRouteGroup, method is not implemented"); return 0;}
-    virtual int  getRouteGroup(const L3Address&, std::vector<L3Address> &, L3Address&, bool &, int group = 0){opp_error("getRouteGroup, method is not implemented"); return 0;}
+    virtual int  getRouteGroup(const AddressGroup &gr, std::vector<L3Address> &) { throw cRuntimeError("getRouteGroup, method is not implemented"); return 0;}
+    virtual int  getRouteGroup(const L3Address&, std::vector<L3Address> &, L3Address&, bool &, int group = 0) {opp_error("getRouteGroup, method is not implemented"); return 0;}
 
-    virtual bool getNextHopGroup(const AddressGroup &gr, L3Address &add, int &iface, L3Address&){opp_error("getNextHopGroup, method is not implemented"); return false;}
-    virtual bool getNextHopGroup(const L3Address&, L3Address &add, int &iface, L3Address&, bool &, int group = 0){opp_error("getNextHopGroup, method is not implemented"); return false;}
+    virtual bool getNextHopGroup(const AddressGroup &gr, L3Address &add, int &iface, L3Address&) { throw cRuntimeError("getNextHopGroup, method is not implemented"); return false;}
+    virtual bool getNextHopGroup(const L3Address&, L3Address &add, int &iface, L3Address&, bool &, int group = 0) { throw cRuntimeError("getNextHopGroup, method is not implemented"); return false;}
 
 
     /// proxy/gateway methods, this methods help to the reactive protocols to answer the RREQ for a address that are in other subnetwork

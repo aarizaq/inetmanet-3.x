@@ -41,20 +41,20 @@ class INET_API IPvXTrafGen : public cSimpleModule, public ILifecycle
     // parameters: see the NED files for more info
     simtime_t startTime;
     simtime_t stopTime;
-    cPar *sendIntervalPar;
-    cPar *packetLengthPar;
-    int protocol;
+    cPar *sendIntervalPar = nullptr;
+    cPar *packetLengthPar = nullptr;
+    int protocol = -1;
     std::vector<L3Address> destAddresses;
-    int numPackets;
+    int numPackets = 0;
 
     // state
-    NodeStatus *nodeStatus;
-    cMessage *timer;
-    bool isOperational;
+    NodeStatus *nodeStatus = nullptr;
+    cMessage *timer = nullptr;
+    bool isOperational = false;
 
     // statistic
-    int numSent;
-    int numReceived;
+    int numSent = 0;
+    int numReceived = 0;
     static simsignal_t sentPkSignal;
     static simsignal_t rcvdPkSignal;
 
@@ -67,15 +67,15 @@ class INET_API IPvXTrafGen : public cSimpleModule, public ILifecycle
     virtual L3Address chooseDestAddr();
     virtual void sendPacket();
 
-    virtual int numInitStages() const { return NUM_INIT_STAGES; }
-    virtual void initialize(int stage);
-    virtual void handleMessage(cMessage *msg);
+    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
+    virtual void initialize(int stage) override;
+    virtual void handleMessage(cMessage *msg) override;
 
     virtual void startApp();
 
     virtual void printPacket(cPacket *msg);
     virtual void processPacket(cPacket *msg);
-    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback);
+    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback) override;
 
   public:
     IPvXTrafGen();

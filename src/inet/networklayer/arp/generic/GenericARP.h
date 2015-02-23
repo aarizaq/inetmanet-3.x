@@ -40,21 +40,21 @@ class IInterfaceTable;
 class INET_API GenericARP : public cSimpleModule, public IARP
 {
   private:
-    IInterfaceTable *ift;
+    IInterfaceTable *ift = nullptr;
 
   public:
     GenericARP() {}
     virtual ~GenericARP() {}
-    virtual int numInitStages() const { return NUM_INIT_STAGES; }
+    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
 
-    virtual bool deletePacket(const L3Address& address) {return false;}
+    virtual bool deletePacket(const L3Address& address) override {return false;}
 
-    virtual MACAddress resolveL3Address(const L3Address& address, const InterfaceEntry *ie);
-    virtual L3Address getL3AddressFor(const MACAddress&) const { throw cRuntimeError("getL3AddressFor() not implemented yet"); }
+    virtual MACAddress resolveL3Address(const L3Address& address, const InterfaceEntry *ie) override;
+    virtual L3Address getL3AddressFor(const MACAddress&) const override { throw cRuntimeError("getL3AddressFor() not implemented yet"); }
 
   protected:
-    virtual void initialize(int stage);
-    virtual void handleMessage(cMessage *msg);
+    virtual void initialize(int stage) override;
+    virtual void handleMessage(cMessage *msg) override;
 
     MACAddress mapUnicastAddress(L3Address addr);
     MACAddress mapMulticastAddress(L3Address addr);

@@ -97,12 +97,12 @@ class INET_API IPv6NeighbourDiscovery : public cSimpleModule, public ILifecycle
     //Packets awaiting Address Resolution or Next-Hop Determination.
     cQueue pendingQueue;
 
-    IInterfaceTable *ift;
-    IPv6RoutingTable *rt6;
-    ICMPv6 *icmpv6;
+    IInterfaceTable *ift = nullptr;
+    IPv6RoutingTable *rt6 = nullptr;
+    ICMPv6 *icmpv6 = nullptr;
 
 #ifdef WITH_xMIPv6
-    xMIPv6 *mipv6;    // in case the node has MIP support
+    xMIPv6 *mipv6 = nullptr;    // in case the node has MIP support
 #endif /* WITH_xMIPv6 */
 
     IPv6NeighbourCache neighbourCache;
@@ -169,12 +169,12 @@ class INET_API IPv6NeighbourDiscovery : public cSimpleModule, public ILifecycle
 
   protected:
     /************************Miscellaneous Stuff***************************/
-    virtual int numInitStages() const { return NUM_INIT_STAGES; }
-    virtual void initialize(int stage);
-    virtual void handleMessage(cMessage *msg);
+    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
+    virtual void initialize(int stage) override;
+    virtual void handleMessage(cMessage *msg) override;
     virtual void processNDMessage(ICMPv6Message *msg, IPv6ControlInfo *ctrlInfo);
-    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback);
-    virtual void finish();
+    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback) override;
+    virtual void finish() override;
 
     virtual void processIPv6Datagram(IPv6Datagram *datagram);
     virtual IPv6NeighbourDiscovery::AdvIfEntry *fetchAdvIfEntry(InterfaceEntry *ie);

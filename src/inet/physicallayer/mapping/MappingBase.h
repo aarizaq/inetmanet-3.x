@@ -53,10 +53,10 @@ class INET_API Dimension
 {
   protected:
     /** @brief The unique name of the dimension this instance represents.*/
-    const char *name;
+    const char *name = nullptr;
 
     /** @brief The unique id of the dimension this instance represents.*/
-    int id;
+    int id = 0;
 
   public:
     /** @brief Shortcut to the time Dimension, same as 'Dimension("time")',
@@ -68,9 +68,7 @@ class INET_API Dimension
     static const Dimension frequency;
 
   public:
-    Dimension() :
-        id(0)
-    {}
+    Dimension() {}
 
     /**
      * @brief Creates a new dimension instance representing the
@@ -1001,6 +999,7 @@ class INET_API ConstMapping
             const std::string& sTableHead = std::string("o\\ms"),
             const Dimension *const pOnlyDim = nullptr) const
     {
+        std::ostream::fmtflags outFlags = out.flags();
         const ConstMapping& m = *this;
         DimensionSet::value_type otherDim;
         const DimensionSet& dims = m.getDimensionSet();
@@ -1041,6 +1040,7 @@ class INET_API ConstMapping
 
         if (!it->inRange()) {
             out << "Mapping is empty." << endl;
+            out.flags(outFlags);
             return out;
         }
 
@@ -1103,6 +1103,7 @@ class INET_API ConstMapping
         if (!bIs2Dim && !bOnlyDimFound) {
             if (!bOnlyDimFound && pOnlyDim != nullptr) {
                 out << "map contains no " << pOnlyDim->getName() << " dimension!" << endl;
+                out.flags(outFlags);
                 return out;
             }
             else
@@ -1110,6 +1111,7 @@ class INET_API ConstMapping
         }
         if (bOnlyDimFound && otherPositions.empty()) {
             out << "Defines no own key entries for " << pOnlyDim->getName() << " dimension! That does NOT mean it doesn't define any attenuation." << endl;
+            out.flags(outFlags);
             return out;
         }
 
@@ -1174,6 +1176,7 @@ class INET_API ConstMapping
             }
         }
         out << std::endl << osBorder.str() << std::endl;
+        out.flags(outFlags);
         return out;
     }
 
@@ -1331,7 +1334,7 @@ class INET_API Mapping : public ConstMapping
      *
      * Override this method if your ConstIterator differs from the normal iterator.
      */
-    virtual ConstMappingIterator *createConstIterator() const
+    virtual ConstMappingIterator *createConstIterator() const override
     {
         return dynamic_cast<ConstMappingIterator *>(const_cast<Mapping *>(this)->createIterator());
     }
@@ -1342,7 +1345,7 @@ class INET_API Mapping : public ConstMapping
      *
      * Override this method if your ConstIterator differs from the normal iterator.
      */
-    virtual ConstMappingIterator *createConstIterator(const Argument& pos) const
+    virtual ConstMappingIterator *createConstIterator(const Argument& pos) const override
     {
         return dynamic_cast<ConstMappingIterator *>(const_cast<Mapping *>(this)->createIterator(pos));
     }
@@ -1356,7 +1359,7 @@ class INET_API Mapping : public ConstMapping
      * @brief Returns a deep const copy of this mapping by using
      * the according "clone()"-implementation.
      */
-    virtual ConstMapping *constClone() const { return clone(); }
+    virtual ConstMapping *constClone() const override { return clone(); }
 };
 
 //###################################################################################
@@ -1442,7 +1445,7 @@ class INET_API SimpleConstMappingIterator : public ConstMappingIterator
      *
      * Throws an NoNextIteratorException if there is no next point of interest.
      */
-    virtual const Argument& getNextPosition() const
+    virtual const Argument& getNextPosition() const override
     {
         if (nextEntry == keyEntries->end())
             throw NoNextIteratorException();
@@ -1454,7 +1457,7 @@ class INET_API SimpleConstMappingIterator : public ConstMappingIterator
      *
      * This method has logarithmic complexity (over the number of key entries).
      */
-    virtual void jumpTo(const Argument& pos)
+    virtual void jumpTo(const Argument& pos) override
     {
         position.setArgValues(pos, true);
         nextEntry = keyEntries->upper_bound(position);
@@ -1466,7 +1469,7 @@ class INET_API SimpleConstMappingIterator : public ConstMappingIterator
      *
      * This method has constant complexity.
      */
-    virtual void jumpToBegin()
+    virtual void jumpToBegin() override
     {
         nextEntry = keyEntries->begin();
 
@@ -1488,7 +1491,7 @@ class INET_API SimpleConstMappingIterator : public ConstMappingIterator
      *
      * This method has constant complexity.
      */
-    virtual void iterateTo(const Argument& pos)
+    virtual void iterateTo(const Argument& pos) override
     {
         position.setArgValues(pos, true);
         const KeyEntrySet::const_iterator keyEntriesEnd = keyEntries->end();
@@ -1503,7 +1506,7 @@ class INET_API SimpleConstMappingIterator : public ConstMappingIterator
      *
      * This method has constant complexity.
      */
-    virtual void next()
+    virtual void next() override
     {
         if (nextEntry == keyEntries->end())
             throw NoNextIteratorException();
@@ -1519,7 +1522,7 @@ class INET_API SimpleConstMappingIterator : public ConstMappingIterator
      *
      * Has constant complexity.
      */
-    virtual bool inRange() const
+    virtual bool inRange() const override
     {
         return !(keyEntries->empty()
                  || (*(keyEntries->rbegin()) < position)
@@ -1531,14 +1534,14 @@ class INET_API SimpleConstMappingIterator : public ConstMappingIterator
      *
      * Has constant complexity.
      */
-    virtual bool hasNext() const { return nextEntry != keyEntries->end(); }
+    virtual bool hasNext() const override { return nextEntry != keyEntries->end(); }
 
     /**
      * @brief Returns the current position of the iterator.
      *
      * Constant complexity.
      */
-    virtual const Argument& getPosition() const { return position; }
+    virtual const Argument& getPosition() const override { return position; }
 
     /**
      * @brief Returns the value of the underlying mapping at the current
@@ -1547,7 +1550,7 @@ class INET_API SimpleConstMappingIterator : public ConstMappingIterator
      * This method has the same complexity as the "getValue()" method of the
      * underlying mapping.
      */
-    virtual argument_value_t getValue() const { return mapping->getValue(position); }
+    virtual argument_value_t getValue() const override { return mapping->getValue(position); }
 };
 
 /**
@@ -1601,7 +1604,7 @@ class INET_API SimpleConstMapping : public ConstMapping
      *
      * This method asserts that the mapping had been fully initialized.
      */
-    virtual ConstMappingIterator *createConstIterator() const
+    virtual ConstMappingIterator *createConstIterator() const override
     {
         return new SimpleConstMappingIterator(this, &keyEntries);
     }
@@ -1612,7 +1615,7 @@ class INET_API SimpleConstMapping : public ConstMapping
      *
      * This method asserts that the mapping had been fully initialized.
      */
-    virtual ConstMappingIterator *createConstIterator(const Argument& pos) const
+    virtual ConstMappingIterator *createConstIterator(const Argument& pos) const override
     {
         return new SimpleConstMappingIterator(this, &keyEntries, pos);
     }

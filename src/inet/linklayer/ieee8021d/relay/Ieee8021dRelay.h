@@ -39,24 +39,25 @@ class INET_API Ieee8021dRelay : public cSimpleModule, public ILifecycle
 
   protected:
     MACAddress bridgeAddress;
-    IInterfaceTable *ifTable;
-    IMACAddressTable *macTable;
-    InterfaceEntry *ie;
-    bool isOperational;
-    bool isStpAware;
-    unsigned int portCount;    // number of ports in the switch
+    IInterfaceTable *ifTable = nullptr;
+    IMACAddressTable *macTable = nullptr;
+    InterfaceEntry *ie = nullptr;
+    bool isOperational = false;
+    bool isStpAware = false;
+    unsigned int portCount = 0;    // number of ports in the switch
 
     // statistics: see finish() for details.
-    int numReceivedNetworkFrames;
-    int numDroppedFrames;
-    int numReceivedBPDUsFromSTP;
-    int numDeliveredBDPUsToSTP;
-    int numDispatchedNonBPDUFrames;
-    int numDispatchedBDPUFrames;
+    int numReceivedNetworkFrames = 0;
+    int numDroppedFrames = 0;
+    int numReceivedBPDUsFromSTP = 0;
+    int numDeliveredBDPUsToSTP = 0;
+    int numDispatchedNonBPDUFrames = 0;
+    int numDispatchedBDPUFrames = 0;
 
-    virtual void initialize(int stage);
-    virtual int numInitStages() const { return NUM_INIT_STAGES; }
-    virtual void handleMessage(cMessage *msg);
+  protected:
+    virtual void initialize(int stage) override;
+    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
+    virtual void handleMessage(cMessage *msg) override;
 
     /**
      * Updates address table (if the port is in learning state)
@@ -86,7 +87,7 @@ class INET_API Ieee8021dRelay : public cSimpleModule, public ILifecycle
     // For lifecycle
     virtual void start();
     virtual void stop();
-    bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback);
+    bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback) override;
 
     /*
      * Gets port data from the InterfaceTable
@@ -97,7 +98,7 @@ class INET_API Ieee8021dRelay : public cSimpleModule, public ILifecycle
      * Returns the first non-loopback interface.
      */
     virtual InterfaceEntry *chooseInterface();
-    virtual void finish();
+    virtual void finish() override;
 };
 
 } // namespace inet

@@ -36,10 +36,6 @@ simsignal_t IdealMac::dropPkNotForUsSignal = registerSignal("dropPkNotForUs");
 
 IdealMac::IdealMac()
 {
-    queueModule = nullptr;
-    radio = nullptr;
-    lastSentPk = nullptr;
-    ackTimeoutMsg = nullptr;
 }
 
 IdealMac::~IdealMac()
@@ -117,9 +113,6 @@ void IdealMac::initializeMACAddress()
 InterfaceEntry *IdealMac::createInterfaceEntry()
 {
     InterfaceEntry *e = new InterfaceEntry(this);
-
-    // interface name: NIC module's name without special characters ([])
-    e->setName(utils::stripnonalnum(getParentModule()->getFullName()).c_str());
 
     // data rate
     e->setDatarate(bitrate);

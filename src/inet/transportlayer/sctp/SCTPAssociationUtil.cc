@@ -1327,7 +1327,7 @@ static uint32 copyToRGaps(SCTPSackChunk *sackChunk,
 {
     const uint32 count = gapList->getNumGaps(type);
     uint32 last = gapList->getCumAckTSN();
-    uint32 keys = min(space / 4, count);    // Each entry occupies 2+2 bytes => at most space/4 entries
+    uint32 keys = min((uint32)(space / 4), count);    // Each entry occupies 2+2 bytes => at most space/4 entries
     if (compression) {
         keys = count;    // Get all entries first, compress them later
     }
@@ -1362,7 +1362,7 @@ static uint32 copyToNRGaps(SCTPSackChunk *sackChunk,
 {
     const uint32 count = gapList->getNumGaps(type);
     uint32 last = gapList->getCumAckTSN();
-    uint32 keys = min(space / 4, count);    // Each entry occupies 2+2 bytes => at most space/4 entries
+    uint32 keys = min((uint32)(space / 4), count);    // Each entry occupies 2+2 bytes => at most space/4 entries
     if (compression) {
         keys = count;    // Get all entries first, compress them later
     }
@@ -1606,9 +1606,11 @@ SCTPSackChunk *SCTPAssociation::createSack()
             }
             else {
                 if (sackLength > allowedLength) {
+                    double revokableFraction = 1.0;
                     const uint32 blocksBeRemoved = (sackLength - allowedLength) / 4;
-                    const double revokableFraction = numRevokableGaps / (double)(numRevokableGaps + numNonRevokableGaps);
-
+                    if (numRevokableGaps + numNonRevokableGaps > 0) {
+                        revokableFraction = numRevokableGaps / (double)(numRevokableGaps + numNonRevokableGaps);
+                    }
                     const uint32 removeRevokable = (uint32)ceil(blocksBeRemoved * revokableFraction);
                     const uint32 removeNonRevokable = (uint32)ceil(blocksBeRemoved * (1.0 - revokableFraction));
                     numRevokableGaps -= std::min(removeRevokable, numRevokableGaps);
@@ -2285,13 +2287,13 @@ SCTPDataMsg *SCTPAssociation::dequeueOutboundDataMsg(SCTPPathVariables *path,
                 int32 b = ADD_PADDING(((SCTPDataMsg *)streamQ->front())->getEncapsulatedPacket()->getByteLength() + SCTP_DATA_CHUNK_LENGTH);
 
                 /* check if chunk found in queue has to be fragmented */
-                if (b > (int32)state->assocPmtu - IP_HEADER_LENGTH - SCTP_COMMON_HEADER) {
+                if (b > state->fragPoint + SCTP_DATA_CHUNK_LENGTH) {
                     /* START FRAGMENTATION */
                     SCTPDataMsg *datMsgQueued = (SCTPDataMsg *)streamQ->pop();
                     cPacket *datMsgQueuedEncMsg = datMsgQueued->getEncapsulatedPacket();
                     SCTPDataMsg *datMsgLastFragment = nullptr;
                     uint32 offset = 0;
-                    uint32 msgbytes = state->assocPmtu - IP_HEADER_LENGTH - SCTP_COMMON_HEADER - SCTP_DATA_CHUNK_LENGTH;
+                    uint32 msgbytes = state->fragPoint;
                     const uint16 fullSizedPackets = (uint16)(datMsgQueued->getByteLength() / msgbytes);
                     EV_DETAIL << "Fragmentation: chunk " << &datMsgQueued << ", size = " << datMsgQueued->getByteLength() << endl;
                     EV_DETAIL << assocId << ": number of fullSizedPackets: " << fullSizedPackets << endl;
@@ -2455,9 +2457,9 @@ bool SCTPAssociation::nextChunkFitsIntoPacket(SCTPPathVariables *path, int32 byt
             int32 b = ADD_PADDING(((SCTPDataMsg *)streamQ->front())->getEncapsulatedPacket()->getByteLength() + SCTP_DATA_CHUNK_LENGTH);
 
             /* Check if next message would be fragmented */
-            if (b > (int32)state->assocPmtu - IP_HEADER_LENGTH - SCTP_COMMON_HEADER) {
+            if (b > state->fragPoint + SCTP_DATA_CHUNK_LENGTH) {
                 /* Test if fragment fits */
-                if (bytes >= (int32)state->assocPmtu - IP_HEADER_LENGTH - SCTP_COMMON_HEADER - SCTP_DATA_CHUNK_LENGTH)
+                if (bytes >= state->fragPoint)
                     return true;
                 else
                     return false;
@@ -2571,6 +2573,9 @@ void SCTPAssociation::pmStartPathManagement()
         if (path->pmtu < state->assocPmtu) {
             state->assocPmtu = path->pmtu;
         }
+        if (state->fragPoint > state->assocPmtu) {
+            state->fragPoint = state->assocPmtu;
+        }
         initCCParameters(path);
         path->pathRto = (double)sctpMain->par("rtoInitial");
         path->srtt = path->pathRto;
@@ -2591,7 +2596,8 @@ void SCTPAssociation::pmStartPathManagement()
         if (state->enableHeartbeats) {
             path->heartbeatTimeout = (double)sctpMain->par("hbInterval") + i * path->pathRto;
             stopTimer(path->HeartbeatTimer);
-            sendHeartbeat(path);
+            if (!path->confirmed)
+                sendHeartbeat(path);
             startTimer(path->HeartbeatTimer, path->heartbeatTimeout);
             startTimer(path->HeartbeatIntervalTimer, path->heartbeatIntervalTimeout);
         }

@@ -34,15 +34,6 @@ simsignal_t VoIPStreamSender::sentPkSignal = registerSignal("sentPk");
 
 VoIPStreamSender::VoIPStreamSender()
 {
-    codec = nullptr;
-    soundFile = nullptr;
-    pFormatCtx = nullptr;
-    pCodecCtx = nullptr;
-    pCodec = nullptr;
-    pReSampleCtx = nullptr;
-    pEncoderCtx = nullptr;
-    pCodecEncoder = nullptr;
-    timer = nullptr;
 }
 
 VoIPStreamSender::~VoIPStreamSender()
@@ -492,7 +483,7 @@ void VoIPStreamSender::readFrame()
                 int in_nb_samples = frame->nb_samples;
 
                 uint8_t *out_data[AVRESAMPLE_MAX_CHANNELS] = {
-                    0
+                    nullptr
                 };
                 int maxOutSamples = sampleBuffer.availableSpace() / outBytesPerSample;
                 int out_linesize;

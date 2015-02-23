@@ -30,8 +30,8 @@ class INET_API DSCPMarker : public cSimpleModule
   protected:
     std::vector<int> dscps;
 
-    int numRcvd;
-    int numMarked;
+    int numRcvd = 0;
+    int numMarked = 0;
 
     static simsignal_t markPkSignal;
 
@@ -39,9 +39,9 @@ class INET_API DSCPMarker : public cSimpleModule
     DSCPMarker() {}
 
   protected:
-    virtual void initialize();
+    virtual void initialize() override;
 
-    virtual void handleMessage(cMessage *msg);
+    virtual void handleMessage(cMessage *msg) override;
 
     virtual bool markPacket(cPacket *msg, int dscp);
 };

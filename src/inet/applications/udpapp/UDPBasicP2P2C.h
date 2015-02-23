@@ -51,7 +51,7 @@ public:
         CONCAVO = 1, ADITIVO, ADITIVO_PONDERADO,MIN_HOP,RANDOM
     };
 private:
-    modoP2P modo;
+    modoP2P modo = ADITIVO;
 
     typedef std::map<uint64_t,IPv4Address> InverseAddres;
     typedef std::map<IPv4Address, uint64_t> DirectAddres;
@@ -59,12 +59,12 @@ private:
     static InverseAddres inverseAddress;
     static DirectAddres directAddress;
 
-    int numRequestSent;
-    int numRequestServed;
-    int numRequestSegmentServed;
+    int numRequestSent = 0;
+    int numRequestServed = 0;
+    int numRequestSegmentServed = 0;
 
     static std::vector<int> initNodes;
-    WirelessNumHops *routing;
+    WirelessNumHops *routing = nullptr;
 
     private:
     class DelayMessage
@@ -135,18 +135,18 @@ private:
 
 
     typedef std::deque<DelayMessage*> TimeQueue;
-    int MaxServices;
+    int MaxServices = 1;
     TimeQueue timeQueue;
     int getQueueSize();
-    cMessage *queueTimer;
-    double serverTimer;
+    cMessage *queueTimer = nullptr;
+    double serverTimer = 0;
     simtime_t lastServer;
 
     struct InfoClient
     {
             simtime_t lastMessage;
-            unsigned int numRequest;
-            unsigned int numRequestRec;
+            unsigned int numRequest = 0;
+            unsigned int numRequestRec = 0;
     };
 
     typedef std::map<uint64_t,InfoClient> ClientList;
@@ -162,7 +162,7 @@ private:
     typedef std::set<uint32_t> SegmentList;
     struct InfoData
     {
-            uint64_t nodeId;
+            uint64_t nodeId = 0;
             SegmentList list;
     };
 
@@ -170,28 +170,37 @@ private:
     IARP *arp;
 
     typedef std::map<uint64_t,SegmentList *> SegmentMap;
+    typedef std::map<uint64_t,uint64_t> SequenceList;
+
     static SegmentMap segmentMap;
+    SegmentMap networkSegmentMap;
     SegmentList mySegmentList;
+    SequenceList sequenceList;
+    bool useGlobal = false;
+
     std::deque<uint16_t> request;
     L3Address myAddress;
     IPv4Address myAddressIp4;
-    cMessage *myTimer;
-    cMessage *retryTimer;
-    FuzzYControl *fuzzy;
-
-    int numSent;
-    int numReceived;
-    int numDeleted;
-    int numDuplicated;
-    int numSegPresent;
-    simtime_t endReception;
-    simtime_t startReception;
+    cMessage *myTimer = nullptr;
+    cMessage *retryTimer = nullptr;
+    cMessage *informTimeOut = nullptr;
+    FuzzYControl *fuzzy = nullptr;
+    uint64_t mySeqNumber = 0;
 
 
-    int numSentB;
-    int numReceivedB;
-    int numDeletedB;
-    int numDuplicatedB;
+    int numSent = 0;
+    int numReceived = 0;
+    int numDeleted = 0;
+    int numDuplicated = 0;
+    int numSegPresent = 0;
+    simtime_t endReception = 0;
+    simtime_t startReception = 0;
+
+
+    int numSentB = 0;
+    int numReceivedB = 0;
+    int numDeletedB = 0;
+    int numDuplicatedB = 0;
 
     struct ConnectInTransit
     {
@@ -223,8 +232,8 @@ private:
     typedef std::deque<ConnectInTransit> ParallelConnection;
     ParallelConnection parallelConnection;
     PendingRequest pendingRequest;
-    cMessage *pendingRequestTimer;
-    unsigned int numParallelRequest;
+    cMessage *pendingRequestTimer = nullptr;
+    unsigned int numParallelRequest = 0;
 
     uint16_t requestPerPacket;
 
@@ -236,19 +245,19 @@ private:
 
     cMessage periodicTimer; // periodic timer
 
-    uint32_t totalSegments;
-    uint32_t segmentSize;
-    uint32_t  maxPacketSize;
+    uint32_t totalSegments = 0;
+    uint32_t segmentSize = 0;
+    uint32_t  maxPacketSize = 0;
 
-    int destPort;
-    int localPort;
+    int destPort = 0;
+    int localPort = 0;
 
     simtime_t lastPacket;
-    double rateLimit;
+    double rateLimit = 0;
 
-    bool writeData;
-    unsigned int numRegData;
-    std::ofstream *outfile;
+    bool writeData = false;
+    unsigned int numRegData  = 0;
+    std::ofstream *outfile = nullptr;
 
   protected:
 
@@ -261,8 +270,10 @@ private:
     // chooses random destination address
     virtual void generateRequestNew();
     virtual void generateRequestSub();
-    virtual bool processPacket(cPacket *pk);
+    virtual void actualizePacketMap(UDPBasicPacketP2P *pkt);
+    virtual bool processPacket(UDPBasicPacketP2P *pk);
     virtual void processRequest(cPacket *pkt);
+    virtual void actualizeList(UDPBasicPacketP2P *pkt);
     virtual void answerRequest(UDPBasicPacketP2P *pkt);
     virtual void sendNow(UDPBasicPacketP2P *pkt);
     virtual void sendDelayed(UDPBasicPacketP2P *pkt,const simtime_t &delay);
@@ -280,6 +291,15 @@ private:
     virtual std::vector<UDPBasicP2P2C::InfoData>  chooseDestAddrList();
 
     virtual void purgePendingRequest(uint64_t segment);
+
+
+    // create a packet with the map of the node
+    UDPBasicPacketP2PNotification *getPacketWitMap();
+    // Send a broadcast packet with the information
+    virtual void informChanges();
+    // process the packet with the information of status
+    virtual bool processMsgChanges(cPacket *msg);
+
 
 
    public:

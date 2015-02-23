@@ -40,7 +40,6 @@ void SCTPServer::initialize(int stage)
     cSimpleModule::initialize(stage);
 
     if (stage == INITSTAGE_LOCAL) {
-        numSessions = packetsSent = packetsRcvd = bytesSent = notificationsReceived = 0;
         WATCH(numSessions);
         WATCH(packetsSent);
         WATCH(packetsRcvd);
@@ -54,14 +53,10 @@ void SCTPServer::initialize(int stage)
         outboundStreams = par("outboundStreams");
         ordered = par("ordered").boolValue();
         queueSize = par("queueSize");
-        lastStream = 0;
-        //abort = nullptr;
-        //abortSent = false;
         timeoutMsg = new cMessage("SrvAppTimer");
         delayTimer = new cMessage("delayTimer");
         delayTimer->setContextPointer(this);
         delayFirstReadTimer = new cMessage("delayFirstReadTimer");
-        firstData = true;
 
         echo = par("echo");
         delay = par("echoDelay");
@@ -71,8 +66,6 @@ void SCTPServer::initialize(int stage)
             readInt = false;
         else
             readInt = true;
-        schedule = false;
-        shutdownReceived = false;
     }
     else if (stage == INITSTAGE_APPLICATION_LAYER) {
         const char *addressesString = par("localAddress");
@@ -360,6 +353,7 @@ void SCTPServer::handleMessage(cMessage *msg)
                                 serverAssocStatMap[assocId].abortSent = true;
                                 j->second.stop = simulation.getSimTime();
                                 j->second.lifeTime = j->second.stop - j->second.start;
+                                delete msg;
                                 break;
                             }
                             else {
@@ -428,13 +422,21 @@ void SCTPServer::handleMessage(cMessage *msg)
                 break;
             }
 
-            case SCTP_I_CLOSED:
+            case SCTP_I_CLOSED: {
+                SCTPCommand *command = check_and_cast<SCTPCommand *>(msg->removeControlInfo());
+                id = command->getAssocId();
+                EV_INFO << "server: SCTP_I_CLOSED for assoc "  << id << endl;
+                ServerAssocStatMap::iterator i = serverAssocStatMap.find(id);
+                i->second.stop = simulation.getSimTime();
+                i->second.lifeTime = i->second.stop - i->second.start;
                 if (delayTimer->isScheduled())
                     cancelEvent(delayTimer);
                 if (finishEndsSimulation)
                     endSimulation();
+                delete command;
                 delete msg;
                 break;
+            }
 
             default:
                 delete msg;
@@ -501,15 +503,15 @@ void SCTPServer::finish()
 {
     EV_INFO << getFullPath() << ": opened " << numSessions << " sessions\n";
     EV_INFO << getFullPath() << ": sent " << bytesSent << " bytes in " << packetsSent << " packets\n";
-    for (auto l = serverAssocStatMap.begin(); l != serverAssocStatMap.end(); ++l) {
-        EV_DETAIL << getFullPath() << " Assoc: " << l->first << "\n";
-        EV_DETAIL << "\tstart time: " << l->second.start << "\n";
-        EV_DETAIL << "\tstop time: " << l->second.stop << "\n";
-        EV_DETAIL << "\tlife time: " << l->second.lifeTime << "\n";
-        EV_DETAIL << "\treceived bytes:" << l->second.rcvdBytes << "\n";
-        EV_DETAIL << "\tthroughput: " << (l->second.rcvdBytes / l->second.lifeTime.dbl()) * 8 << " bit/sec\n";
-        recordScalar("bytes rcvd", l->second.rcvdBytes);
-        recordScalar("throughput", (l->second.rcvdBytes / l->second.lifeTime.dbl()) * 8);
+    for (auto & elem : serverAssocStatMap) {
+        EV_DETAIL << getFullPath() << " Assoc: " << elem.first << "\n";
+        EV_DETAIL << "\tstart time: " << elem.second.start << "\n";
+        EV_DETAIL << "\tstop time: " << elem.second.stop << "\n";
+        EV_DETAIL << "\tlife time: " << elem.second.lifeTime << "\n";
+        EV_DETAIL << "\treceived bytes:" << elem.second.rcvdBytes << "\n";
+        EV_DETAIL << "\tthroughput: " << (elem.second.rcvdBytes / elem.second.lifeTime.dbl()) * 8 << " bit/sec\n";
+        recordScalar("bytes rcvd", elem.second.rcvdBytes);
+        recordScalar("throughput", (elem.second.rcvdBytes / elem.second.lifeTime.dbl()) * 8);
     }
     EV_INFO << getFullPath() << "Over all " << packetsRcvd << " packets received\n ";
     EV_INFO << getFullPath() << "Over all " << notificationsReceived << " notifications received\n ";
@@ -518,11 +520,11 @@ void SCTPServer::finish()
 
 SCTPServer::~SCTPServer()
 {
-    for (auto i = bytesPerAssoc.begin(); i != bytesPerAssoc.end(); ++i)
-        delete i->second;
+    for (auto & elem : bytesPerAssoc)
+        delete elem.second;
 
-    for (auto i = endToEndDelay.begin(); i != endToEndDelay.end(); ++i)
-        delete i->second;
+    for (auto & elem : endToEndDelay)
+        delete elem.second;
 
     bytesPerAssoc.clear();
     endToEndDelay.clear();
@@ -539,6 +541,28 @@ SCTPServer::SCTPServer()
     socket = nullptr;
     delayFirstReadTimer = nullptr;
     delayTimer = nullptr;
+    numSessions = 0;
+    packetsSent = 0;
+    packetsRcvd = 0;
+    bytesSent = 0;
+    notificationsReceived = 0;
+    inboundStreams = 17;
+    outboundStreams = 1;
+    queueSize = 0;
+    delay = 0;
+    delayFirstRead = 0;
+    finishEndsSimulation = true;
+    echo = false;
+    ordered = true;
+    lastStream = 0;
+    assocId = 0;
+    readInt = false;
+    schedule = false;
+    firstData = true;
+    shutdownReceived = false;
+    abortSent = false;
+    count = 0;
+    numRequestsToSend = 0;
 }
 
 } // namespace inet

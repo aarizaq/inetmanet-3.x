@@ -113,9 +113,7 @@ void HttpBrowserBase::initialize(int stage)
         if (rdProcessingDelay == nullptr)
             throw cRuntimeError("Processing delay random object could not be created");
 
-        controller = dynamic_cast<HttpController *>(getParentModule()->getParentModule()->getSubmodule("controller"));
-        if (controller == nullptr)
-            throw cRuntimeError("Controller module not found");
+        controller = getModuleFromPar<HttpController>(par("httpBrowserControllerModule"), this);
 
         httpProtocol = par("httpProtocol");
 
@@ -336,8 +334,7 @@ void HttpBrowserBase::handleDataMessage(cMessage *msg)
             cStringTokenizer lineTokenizer((const char *)appmsg->payload(), "\n");
             std::vector<std::string> lines = lineTokenizer.asVector();
             std::map<std::string, HttpRequestQueue> requestQueues;
-            for (auto iter = lines.begin(); iter != lines.end(); iter++) {
-                std::string resourceLine = *iter;
+            for (auto resourceLine : lines) {
                 cStringTokenizer fieldTokenizer(resourceLine.c_str(), ";");
                 std::vector<std::string> fields = fieldTokenizer.asVector();
                 if (fields.size() < 1) {

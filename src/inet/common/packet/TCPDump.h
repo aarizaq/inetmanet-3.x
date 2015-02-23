@@ -37,17 +37,16 @@ class INET_API TCPDump : public cSimpleModule
   protected:
     PcapDump pcapDump;
     PacketDump tcpdump;
-    unsigned int snaplen;
-    unsigned long first, last, space;
-    bool dumpBadFrames;
-    bool dropBadFrames;
+    unsigned int snaplen = 0;
+    bool dumpBadFrames = false;
+    bool dropBadFrames = false;
 
   public:
-    TCPDump();
+    TCPDump() {}
     ~TCPDump();
-    virtual void handleMessage(cMessage *msg);
-    virtual void initialize();
-    virtual void finish();
+    virtual void handleMessage(cMessage *msg) override;
+    virtual void initialize() override;
+    virtual void finish() override;
 };
 
 } // namespace inet

@@ -29,8 +29,7 @@ Define_Module(STP);
 
 const double STP::tickInterval = 1;
 
-STP::STP() :
-    tick(nullptr)
+STP::STP()
 {
 }
 
@@ -120,8 +119,8 @@ void STP::handleBPDU(BPDU *bpdu)
             macTable->setAgingTime(currentFwdDelay);
 
             // config BPDU with TC flag
-            for (unsigned int i = 0; i < desPorts.size(); i++)
-                generateBPDU(desPorts.at(i), MACAddress::STP_MULTICAST_ADDRESS, true, false);
+            for (auto & elem : desPorts)
+                generateBPDU(elem, MACAddress::STP_MULTICAST_ADDRESS, true, false);
         }
         else {
             macTable->resetDefaultAging();
@@ -129,8 +128,8 @@ void STP::handleBPDU(BPDU *bpdu)
             EV_INFO << "Sending BPDUs on all designated ports." << endl;
 
             // BPDUs are sent on all designated ports
-            for (unsigned int i = 0; i < desPorts.size(); i++)
-                generateBPDU(desPorts.at(i));
+            for (auto & elem : desPorts)
+                generateBPDU(elem);
         }
     }
 

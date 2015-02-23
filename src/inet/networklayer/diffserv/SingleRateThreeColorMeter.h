@@ -20,6 +20,7 @@
 #define __INET_SINGLERATETHREECOLORMETER_H
 
 #include "inet/common/INETDefs.h"
+#include "inet/common/INETMath.h"
 
 namespace inet {
 
@@ -34,28 +35,28 @@ namespace inet {
 class INET_API SingleRateThreeColorMeter : public cSimpleModule
 {
   protected:
-    double CIR;    // Commited Information Rate (bits/sec)
-    long CBS;    // Committed Burst Size (bits)
-    long EBS;    // Excess Burst Size (bits)
-    bool colorAwareMode;
+    double CIR = NaN;    // Commited Information Rate (bits/sec)
+    long CBS = 0;    // Committed Burst Size (bits)
+    long EBS = 0;    // Excess Burst Size (bits)
+    bool colorAwareMode = false;
 
-    long Tc;    // token bucket for committed burst
-    long Te;    // token bucket for excess burst
+    long Tc = 0;    // token bucket for committed burst
+    long Te = 0;    // token bucket for excess burst
     simtime_t lastUpdateTime;
 
-    int numRcvd;
-    int numYellow;
-    int numRed;
+    int numRcvd = 0;
+    int numYellow = 0;
+    int numRed = 0;
 
   public:
     SingleRateThreeColorMeter() {}
 
   protected:
-    virtual int numInitStages() const { return NUM_INIT_STAGES; }
+    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
 
-    virtual void initialize(int stage);
+    virtual void initialize(int stage) override;
 
-    virtual void handleMessage(cMessage *msg);
+    virtual void handleMessage(cMessage *msg) override;
 
     virtual int meterPacket(cPacket *packet);
 };

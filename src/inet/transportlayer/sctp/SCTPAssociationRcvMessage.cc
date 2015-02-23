@@ -230,6 +230,16 @@ bool SCTPAssociation::process_RCV_Message(SCTPMessage *sctpmsg,
                 if (fsm->getState() == SCTP_S_COOKIE_ECHOED) {
                     trans = performStateTransition(SCTP_E_RCV_COOKIE_ACK);
                 }
+                if (state->stopReading) {
+                    if (state->shutdownChunk) {
+                        delete state->shutdownChunk;
+                    }
+                    delete header;
+                    sendAbort();
+                    sctpMain->removeAssociation(this);
+                    trans = true;
+                    break;
+                }
                 if (!(fsm->getState() == SCTP_S_SHUTDOWN_RECEIVED || fsm->getState() == SCTP_S_SHUTDOWN_ACK_SENT)) {
                     SCTPDataChunk *dataChunk;
                     dataChunk = check_and_cast<SCTPDataChunk *>(header);
@@ -957,9 +967,11 @@ SCTPEventCode SCTPAssociation::processSackArrived(SCTPSackChunk *sackChunk)
         }
         lastTSN = sackChunk->getGapStop(i);
     }
-    assocStat->sumRGapRanges += ((sackChunk->getCumTsnAck() <= lastTSN) ?
-                                 (uint64)(lastTSN - sackChunk->getCumTsnAck()) :
-                                 (uint64)(sackChunk->getCumTsnAck() - lastTSN));
+    if (assocStat) {
+        assocStat->sumRGapRanges += ((sackChunk->getCumTsnAck() <= lastTSN) ?
+                                     (uint64)(lastTSN - sackChunk->getCumTsnAck()) :
+                                     (uint64)(sackChunk->getCumTsnAck() - lastTSN));
+    }
     if (sackChunk->getNrSubtractRGaps() == false) {
         lastTSN = sackChunk->getCumTsnAck();
         for (uint32 i = 0; i < sackChunk->getNumNrGaps(); i++) {
@@ -990,9 +1002,11 @@ SCTPEventCode SCTPAssociation::processSackArrived(SCTPSackChunk *sackChunk)
             lastTSN = sackChunk->getNrGapStop(i);
         }
     }
-    assocStat->sumNRGapRanges += (sackChunk->getCumTsnAck() <= lastTSN) ?
-        (uint64)(lastTSN - sackChunk->getCumTsnAck()) :
-        (uint64)(sackChunk->getCumTsnAck() - lastTSN);
+    if (assocStat) {
+        assocStat->sumNRGapRanges += (sackChunk->getCumTsnAck() <= lastTSN) ?
+            (uint64)(lastTSN - sackChunk->getCumTsnAck()) :
+            (uint64)(sackChunk->getCumTsnAck() - lastTSN);
+    }
     const uint16 numGaps = sackGapList.getNumGaps(SCTPGapList::GT_Any);
 
     // ====== Print some information =========================================

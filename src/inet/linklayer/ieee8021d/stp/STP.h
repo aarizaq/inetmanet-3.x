@@ -43,13 +43,13 @@ class INET_API STP : public STPBase
 
   protected:
     static const double tickInterval;    // interval between two ticks
-    bool isRoot;
-    unsigned int rootPort;
+    bool isRoot = false;
+    unsigned int rootPort = 0;
     std::vector<unsigned int> desPorts;    // set of designated ports
 
     // Discovered values
-    unsigned int rootPathCost;
-    unsigned int rootPriority;
+    unsigned int rootPathCost = 0;
+    unsigned int rootPriority = 0;
     MACAddress rootAddress;
 
     simtime_t currentMaxAge;
@@ -58,13 +58,13 @@ class INET_API STP : public STPBase
     simtime_t helloTime;
 
     // Parameter change detection
-    unsigned int currentBridgePriority;
+    unsigned int currentBridgePriority = 0;
     // Topology change commencing
-    bool topologyChangeNotification;
-    bool topologyChangeRecvd;
+    bool topologyChangeNotification = false;
+    bool topologyChangeRecvd = false;
 
     PortInfo defaultPort;
-    cMessage *tick;
+    cMessage *tick = nullptr;
 
   public:
     STP();
@@ -80,9 +80,9 @@ class INET_API STP : public STPBase
      * Topology change handling
      */
     void handleTCN(BPDU *tcn);
-    virtual void handleMessage(cMessage *msg);
-    virtual void initialize(int stage);
-    virtual int numInitStages() const { return NUM_INIT_STAGES; }
+    virtual void handleMessage(cMessage *msg) override;
+    virtual void initialize(int stage) override;
+    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
 
     /*
      * Send BPDU with specified parameters (portNum, TCA flag, etc.)
@@ -156,8 +156,8 @@ class INET_API STP : public STPBase
     // for lifecycle:
 
   protected:
-    virtual void start();
-    virtual void stop();
+    virtual void start() override;
+    virtual void stop() override;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Ieee8021dInterfaceData::PortRole r)

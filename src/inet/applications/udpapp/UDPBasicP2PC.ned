@@ -49,7 +49,8 @@ simple UDPBasicP2P2C like IUDPApp
         string modoP2P @enum("concavo","aditivo","aditivo_ponderado","minhop","random");
         volatile double periodicTimer @unit(s) = default(2s);
         bool setBroadcast = default(true);
-        double rateRequest @unit(s) = default(0.2s);        
+        double rateRequest @unit(s) = default(0.2s);
+        bool useGlobal = default(false);     
         @signal[sentPk](type=cPacket);
         @signal[rcvdPk](type=cPacket);
         @signal[dropPk](type=cPacket);

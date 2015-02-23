@@ -42,8 +42,7 @@ void MPLS::initialize(int stage)
 
         lt = getModuleFromPar<LIBTable>(par("libTableModule"), this);
         ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
-
-        pct = check_and_cast<IClassifier *>(getParentModule()->getSubmodule(par("classifier")));
+        pct = getModuleFromPar<IClassifier>(par("classifierModule"), this);
     }
 }
 
@@ -147,8 +146,6 @@ void MPLS::doStackOps(MPLSPacket *mplsPacket, const LabelOpVector& outLabel)
     unsigned int n = outLabel.size();
 
     EV_INFO << "doStackOps: " << outLabel << endl;
-
-    ASSERT(n >= 0);
 
     for (unsigned int i = 0; i < n; i++) {
         switch (outLabel[i].optcode) {

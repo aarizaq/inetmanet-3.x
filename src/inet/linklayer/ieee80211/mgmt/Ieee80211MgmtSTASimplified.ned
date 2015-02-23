@@ -39,6 +39,7 @@ simple Ieee80211MgmtSTASimplified like IIeee80211Mgmt
         string classifier = default("Ieee80211eClassifier");        
         string accessPointAddress; // MAC address of associate AP
         int frameCapacity = default(100);
+        string macModule;               // The path to the MAC module
         @display("i=block/cogwheel");
         @signal[enqueuePk](type=cPacket);
         @signal[dequeuePk](type=cPacket);

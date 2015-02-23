@@ -68,9 +68,9 @@ class TED : public cSimpleModule, public ILifecycle
     virtual ~TED();
 
   protected:
-    virtual void initialize(int stage);
-    virtual int numInitStages() const { return NUM_INIT_STAGES; }
-    virtual void handleMessage(cMessage *msg);
+    virtual void initialize(int stage) override;
+    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
+    virtual void handleMessage(cMessage *msg) override;
 
     virtual void initializeTED();
 
@@ -93,18 +93,18 @@ class TED : public cSimpleModule, public ILifecycle
     virtual void rebuildRoutingTable();
     //@}
 
-    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback);
+    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback) override;
 
   protected:
-    IIPv4RoutingTable *rt;
-    IInterfaceTable *ift;
+    IIPv4RoutingTable *rt = nullptr;
+    IInterfaceTable *ift = nullptr;
     IPv4Address routerId;
 
     IPAddressVector interfaceAddrs;    // list of local interface addresses
 
-  protected:
-    int maxMessageId;
+    int maxMessageId = 0;
 
+  protected:
     virtual int assignIndex(std::vector<vertex_t>& vertices, IPv4Address nodeAddr);
 
     std::vector<vertex_t> calculateShortestPaths(const TELinkStateInfoVector& topology,

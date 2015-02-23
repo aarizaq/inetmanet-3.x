@@ -37,22 +37,22 @@ class IIPv4RoutingTable;
 class INET_API FlatNetworkConfigurator : public cSimpleModule
 {
   protected:
-    struct NodeInfo
+    class NodeInfo
     {
-        NodeInfo() { isIPNode = false; ift = nullptr; rt = nullptr; usesDefaultRoute = false; }
-        bool isIPNode;
-        IInterfaceTable *ift;
-        IIPv4RoutingTable *rt;
+      public:
+        bool isIPNode = false;
+        IInterfaceTable *ift = nullptr;
+        IIPv4RoutingTable *rt = nullptr;
         IPv4Address address;
-        bool usesDefaultRoute;
-        bool ipForwardEnabled;
+        bool usesDefaultRoute = false;
+        bool ipForwardEnabled = false;
     };
     typedef std::vector<NodeInfo> NodeInfoVector;
 
   protected:
-    virtual int numInitStages() const { return NUM_INIT_STAGES; }
-    virtual void initialize(int stage);
-    virtual void handleMessage(cMessage *msg);
+    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
+    virtual void initialize(int stage) override;
+    virtual void handleMessage(cMessage *msg) override;
 
     virtual void extractTopology(cTopology& topo, NodeInfoVector& nodeInfo);
     virtual void assignAddresses(cTopology& topo, NodeInfoVector& nodeInfo);

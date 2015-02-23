@@ -40,8 +40,8 @@ class INET_API ScenarioManager : public cSimpleModule
 {
   protected:
     // total number of changes, and number of changes already done
-    int numChanges;
-    int numDone;
+    int numChanges = 0;
+    int numDone = 0;
 
   protected:
     // utilities
@@ -68,8 +68,8 @@ class INET_API ScenarioManager : public cSimpleModule
     ScenarioManager() {}
 
   protected:
-    virtual void initialize();
-    virtual void handleMessage(cMessage *msg);
+    virtual void initialize() override;
+    virtual void handleMessage(cMessage *msg) override;
     virtual void updateDisplayString();
 };
 

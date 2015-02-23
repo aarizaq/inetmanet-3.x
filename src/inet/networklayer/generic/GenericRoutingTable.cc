@@ -44,15 +44,14 @@ std::ostream& operator<<(std::ostream& os, const GenericMulticastRoute& e)
 
 GenericRoutingTable::GenericRoutingTable()
 {
-    ift = nullptr;
 }
 
 GenericRoutingTable::~GenericRoutingTable()
 {
-    for (unsigned int i = 0; i < routes.size(); i++)
-        delete routes[i];
-    for (unsigned int i = 0; i < multicastRoutes.size(); i++)
-        delete multicastRoutes[i];
+    for (auto & elem : routes)
+        delete elem;
+    for (auto & elem : multicastRoutes)
+        delete elem;
 }
 
 void GenericRoutingTable::initialize(int stage)
@@ -275,8 +274,8 @@ GenericRoute *GenericRoutingTable::findBestMatchingRoute(const L3Address& dest) 
     // find best match (one with longest prefix)
     // default route has zero prefix length, so (if exists) it'll be selected as last resort
     GenericRoute *bestRoute = nullptr;
-    for (RouteVector::const_iterator i = routes.begin(); i != routes.end(); ++i) {
-        GenericRoute *e = *i;
+    for (auto e : routes) {
+        
         if (dest.matches(e->getDestinationAsGeneric(), e->getPrefixLength())) {
             bestRoute = const_cast<GenericRoute *>(e);
             break;
@@ -325,7 +324,8 @@ IRoute *GenericRoutingTable::getRoute(int k) const
 IRoute *GenericRoutingTable::getDefaultRoute() const
 {
     // if there is a default route entry, it is the last valid entry
-    for (RouteVector::const_reverse_iterator i = routes.rbegin(); i != routes.rend() && (*i)->getPrefixLength() == 0; ++i)
+    auto i = routes.rbegin();
+    if (i != routes.rend() && (*i)->getPrefixLength() == 0)
         return *i;
     return nullptr;
 }
@@ -334,7 +334,7 @@ void GenericRoutingTable::addRoute(IRoute *route)
 {
     Enter_Method("addRoute(...)");
 
-    GenericRoute *entry = dynamic_cast<GenericRoute *>(route);
+    GenericRoute *entry = check_and_cast<GenericRoute *>(route);
 
     // check that the interface exists
     if (!entry->getInterface())
@@ -422,8 +422,8 @@ IRoute *GenericRoutingTable::createRoute()
 
 void GenericRoutingTable::printRoutingTable() const
 {
-    for (auto i = routes.begin(); i != routes.end(); ++i)
-        EV_INFO << (*i)->getInterface()->getFullPath() << " -> " << (*i)->getDestinationAsGeneric().str() << " as " << (*i)->info() << endl;
+    for (const auto & elem : routes)
+        EV_INFO << (elem)->getInterface()->getFullPath() << " -> " << (elem)->getDestinationAsGeneric().str() << " as " << (elem)->info() << endl;
 }
 
 } // namespace inet

@@ -53,6 +53,7 @@ IPv6::~IPv6()
 {
 }
 
+#ifdef WITH_xMIPv6
 IPv6::ScheduledDatagram::ScheduledDatagram(IPv6Datagram *datagram, const InterfaceEntry *ie, MACAddress macAddr, bool fromHL) :
         datagram(datagram),
         ie(ie),
@@ -65,6 +66,7 @@ IPv6::ScheduledDatagram::~ScheduledDatagram()
 {
     delete datagram;
 }
+#endif /* WITH_xMIPv6 */
 
 void IPv6::initialize(int stage)
 {
@@ -975,8 +977,8 @@ void IPv6::reinjectQueuedDatagram(const INetworkDatagram *datagram)
 
 INetfilter::IHook::Result IPv6::datagramPreRoutingHook(INetworkDatagram *datagram, const InterfaceEntry *inIE, const InterfaceEntry *& outIE, L3Address& nextHopAddr)
 {
-    for (auto iter = hooks.begin(); iter != hooks.end(); iter++) {
-        IHook::Result r = iter->second->datagramPreRoutingHook(datagram, inIE, outIE, nextHopAddr);
+    for (auto & elem : hooks) {
+        IHook::Result r = elem.second->datagramPreRoutingHook(datagram, inIE, outIE, nextHopAddr);
         switch (r) {
             case INetfilter::IHook::ACCEPT:
                 break;    // continue iteration
@@ -1001,8 +1003,8 @@ INetfilter::IHook::Result IPv6::datagramPreRoutingHook(INetworkDatagram *datagra
 
 INetfilter::IHook::Result IPv6::datagramForwardHook(INetworkDatagram *datagram, const InterfaceEntry *inIE, const InterfaceEntry *& outIE, L3Address& nextHopAddr)
 {
-    for (auto iter = hooks.begin(); iter != hooks.end(); iter++) {
-        IHook::Result r = iter->second->datagramForwardHook(datagram, inIE, outIE, nextHopAddr);
+    for (auto & elem : hooks) {
+        IHook::Result r = elem.second->datagramForwardHook(datagram, inIE, outIE, nextHopAddr);
         switch (r) {
             case INetfilter::IHook::ACCEPT:
                 break;    // continue iteration
@@ -1027,8 +1029,8 @@ INetfilter::IHook::Result IPv6::datagramForwardHook(INetworkDatagram *datagram, 
 
 INetfilter::IHook::Result IPv6::datagramPostRoutingHook(INetworkDatagram *datagram, const InterfaceEntry *inIE, const InterfaceEntry *& outIE, L3Address& nextHopAddr)
 {
-    for (auto iter = hooks.begin(); iter != hooks.end(); iter++) {
-        IHook::Result r = iter->second->datagramPostRoutingHook(datagram, inIE, outIE, nextHopAddr);
+    for (auto & elem : hooks) {
+        IHook::Result r = elem.second->datagramPostRoutingHook(datagram, inIE, outIE, nextHopAddr);
         switch (r) {
             case INetfilter::IHook::ACCEPT:
                 break;    // continue iteration
@@ -1053,8 +1055,8 @@ INetfilter::IHook::Result IPv6::datagramPostRoutingHook(INetworkDatagram *datagr
 
 INetfilter::IHook::Result IPv6::datagramLocalInHook(INetworkDatagram *datagram, const InterfaceEntry *inIE)
 {
-    for (auto iter = hooks.begin(); iter != hooks.end(); iter++) {
-        IHook::Result r = iter->second->datagramLocalInHook(datagram, inIE);
+    for (auto & elem : hooks) {
+        IHook::Result r = elem.second->datagramLocalInHook(datagram, inIE);
         switch (r) {
             case INetfilter::IHook::ACCEPT:
                 break;    // continue iteration
@@ -1079,8 +1081,8 @@ INetfilter::IHook::Result IPv6::datagramLocalInHook(INetworkDatagram *datagram, 
 
 INetfilter::IHook::Result IPv6::datagramLocalOutHook(INetworkDatagram *datagram, const InterfaceEntry *& outIE, L3Address& nextHopAddr)
 {
-    for (auto iter = hooks.begin(); iter != hooks.end(); iter++) {
-        IHook::Result r = iter->second->datagramLocalOutHook(datagram, outIE, nextHopAddr);
+    for (auto & elem : hooks) {
+        IHook::Result r = elem.second->datagramLocalOutHook(datagram, outIE, nextHopAddr);
         switch (r) {
             case INetfilter::IHook::ACCEPT:
                 break;    // continue iteration

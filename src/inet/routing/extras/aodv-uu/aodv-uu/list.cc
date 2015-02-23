@@ -50,7 +50,7 @@ int list_add(list_t * head, list_t * le)
 {
 
     if (!head || !le)
-        return LIST_nullptr;
+        return LIST_NULL;
 
     listelm_add(le, head, head->next);
 
@@ -61,7 +61,7 @@ int list_add_tail(list_t * head, list_t * le)
 {
 
     if (!head || !le)
-        return LIST_nullptr;
+        return LIST_NULL;
 
     listelm_add(le, head->prev, head);
 
@@ -71,7 +71,7 @@ int list_add_tail(list_t * head, list_t * le)
 int list_detach(list_t * le)
 {
     if (!le)
-        return LIST_nullptr;
+        return LIST_NULL;
 
     listelm_detach(le->prev, le->next);
 

@@ -51,7 +51,6 @@ class INET_API DHCPClient : public cSimpleModule, public cListener, public ILife
     int serverPort = -1;
     int clientPort = -1;
     UDPSocket socket;    // UDP socket for client-server communication
-    std::string hostName;
     simtime_t startTime;    // application start time
     MACAddress macAddress;    // client's MAC address
     cModule *host = nullptr;    // containing host module (@node)
@@ -76,10 +75,10 @@ class INET_API DHCPClient : public cSimpleModule, public cListener, public ILife
     int responseTimeout = 0;    // timeout waiting for DHCPACKs, DHCPOFFERs
 
   protected:
-    virtual int numInitStages() const { return NUM_INIT_STAGES; }
-    virtual void initialize(int stage);
-    virtual void finish();
-    virtual void handleMessage(cMessage *msg);
+    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
+    virtual void initialize(int stage) override;
+    virtual void finish() override;
+    virtual void handleMessage(cMessage *msg) override;
     virtual void scheduleTimerTO(TimerType type);
     virtual void scheduleTimerT1();
     virtual void scheduleTimerT2();
@@ -107,7 +106,7 @@ class INET_API DHCPClient : public cSimpleModule, public cListener, public ILife
     /*
      * Signal handler for cObject, override cListener function.
      */
-    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj);
+    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj) override;
 
     /*
      * Performs UDP transmission.
@@ -178,7 +177,7 @@ class INET_API DHCPClient : public cSimpleModule, public cListener, public ILife
     // Lifecycle methods
     virtual void startApp();
     virtual void stopApp();
-    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback);
+    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback) override;
 
   public:
     DHCPClient() {}

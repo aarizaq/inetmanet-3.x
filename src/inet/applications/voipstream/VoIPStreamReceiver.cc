@@ -120,7 +120,7 @@ void VoIPStreamReceiver::Connection::writeAudioFrame(uint8_t *inbuf, int inbytes
 
     int gotFrame;
     AVFrame decodedFrame = {
-        { 0 }
+        { nullptr }
     };
     int consumedBytes = avcodec_decode_audio4(decCtx, &decodedFrame, &gotFrame, &avpkt);
     if (consumedBytes < 0 || !gotFrame)
@@ -255,6 +255,13 @@ void VoIPStreamReceiver::finish()
 {
     EV_TRACE << "Sink finish()" << endl;
     closeConnection();
+}
+
+bool VoIPStreamReceiver::handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback)
+{
+    Enter_Method_Silent();
+    throw cRuntimeError("Unsupported lifecycle operation '%s'", operation->getClassName());
+    //return true;
 }
 
 } // namespace inet

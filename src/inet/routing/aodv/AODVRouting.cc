@@ -135,10 +135,9 @@ void AODVRouting::handleMessage(cMessage *msg)
             throw cRuntimeError("Unknown self message");
     }
     else {
-        UDPPacket *udpPacket = dynamic_cast<UDPPacket *>(msg);
+        UDPPacket *udpPacket = check_and_cast<UDPPacket *>(msg);
         AODVControlPacket *ctrlPacket = check_and_cast<AODVControlPacket *>(udpPacket->decapsulate());
-        INetworkProtocolControlInfo *udpProtocolCtrlInfo = dynamic_cast<INetworkProtocolControlInfo *>(udpPacket->getControlInfo());
-        ASSERT(udpProtocolCtrlInfo != nullptr);
+        INetworkProtocolControlInfo *udpProtocolCtrlInfo = check_and_cast<INetworkProtocolControlInfo *>(udpPacket->getControlInfo());
         L3Address sourceAddr = udpProtocolCtrlInfo->getSourceAddress();
         unsigned int arrivalPacketTTL = udpProtocolCtrlInfo->getHopLimit();
 
@@ -224,17 +223,6 @@ INetfilter::IHook::Result AODVRouting::ensureRouteForDatagram(INetworkDatagram *
 
 AODVRouting::AODVRouting()
 {
-    interfaceTable = nullptr;
-    host = nullptr;
-    routingTable = nullptr;
-    isOperational = false;
-    networkProtocol = nullptr;
-    addressType = nullptr;
-    helloMsgTimer = nullptr;
-    expungeTimer = nullptr;
-    blacklistTimer = nullptr;
-    rrepAckTimer = nullptr;
-    jitterPar = nullptr;
 }
 
 bool AODVRouting::hasOngoingRouteDiscovery(const L3Address& target)
@@ -1229,8 +1217,8 @@ void AODVRouting::clearState()
 {
     rerrCount = rreqCount = rreqId = sequenceNum = 0;
     addressToRreqRetries.clear();
-    for (auto it = waitForRREPTimers.begin(); it != waitForRREPTimers.end(); ++it)
-        cancelAndDelete(it->second);
+    for (auto & elem : waitForRREPTimers)
+        cancelAndDelete(elem.second);
 
     // FIXME: Drop the queued datagrams.
     //for (auto it = targetAddressToDelayedPackets.begin(); it != targetAddressToDelayedPackets.end(); it++)
@@ -1658,7 +1646,7 @@ void AODVRouting::handleBlackListTimer()
         auto current = it++;
 
         // Nodes are removed from the blacklist set after a BLACKLIST_TIMEOUT period
-        if (it->second <= simTime()) {
+        if (current->second <= simTime()) {
             EV_DETAIL << "Blacklist lifetime has expired for " << current->first << " removing it from the blacklisted addresses" << endl;
             blacklist.erase(current);
         }

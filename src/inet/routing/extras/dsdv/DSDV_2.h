@@ -44,35 +44,35 @@ using namespace std;
 class INET_API DSDV_2 : public cSimpleModule    // proactive protocol, don't need to ManetIPv4Hook
 {
   private:
-    cMessage *event;
-    cPar *broadcastDelay;
+    cMessage *event = nullptr;
+    cPar *broadcastDelay = nullptr;
     struct forwardHello
     {
-        cMessage *event;
-        DSDV_HelloMessage *hello;
+        cMessage *event = nullptr;
+        DSDV_HelloMessage *hello = nullptr;
+        forwardHello() {}
         ~forwardHello();
-        forwardHello();
     };
-    list<forwardHello*> *forwardList;
+    list<forwardHello*> *forwardList  = nullptr;
     //DSDV_HelloMessage *Hello;
-    InterfaceEntry *interface80211ptr;
-    int interfaceId;
-    unsigned int sequencenumber;
+    InterfaceEntry *interface80211ptr = nullptr;
+    int interfaceId = -1;
+    unsigned int sequencenumber = 0;
     simtime_t routeLifetime;
 
   protected:
     simtime_t hellomsgperiod_DSDV;
-    IInterfaceTable *ift;
-    IIPv4RoutingTable *rt;
+    IInterfaceTable *ift = nullptr;
+    IIPv4RoutingTable *rt = nullptr;
 
   public:
     DSDV_2();
     ~DSDV_2();
 
   protected:
-    virtual int numInitStages() const { return NUM_INIT_STAGES; }
-    virtual void initialize(int stage);
-    virtual void handleMessage(cMessage *msg);
+    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
+    virtual void initialize(int stage) override;
+    virtual void handleMessage(cMessage *msg) override;
 
 };
 
@@ -86,7 +86,7 @@ class INET_API DSDVIPv4Route : public IPv4Route
         simtime_t expiryTime;  // time the routing entry is valid until
 
     public:
-        virtual bool isValid() const { return expiryTime == 0 || expiryTime > simTime(); }
+        virtual bool isValid() const override { return expiryTime == 0 || expiryTime > simTime(); }
 
         simtime_t getExpiryTime() const {return expiryTime;}
         void setExpiryTime(simtime_t time) {expiryTime = time;}

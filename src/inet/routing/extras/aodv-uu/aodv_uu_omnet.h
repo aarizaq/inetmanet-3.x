@@ -121,8 +121,8 @@ class AODVUU : public ManetRoutingBase
     int RERR_SIZE;
     int RREP_SIZE;
     int  RREQ_SIZE;
-  private:
-    char nodeName[50];
+
+    opp_string nodeName;
     bool useIndex;
     bool isRoot;
     uint32_t costStatic;
@@ -231,7 +231,7 @@ class AODVUU : public ManetRoutingBase
   public:
     static int  log_file_fd;
     static bool log_file_fd_init;
-    AODVUU() {isRoot = false; is_init = false; log_file_fd_init = false; sendMessageEvent = new cMessage(); mapSeqNum.clear(); /*&messageEvent;*/storeRreq = false;}
+    AODVUU() { progname = nullptr; isRoot = false; is_init = false; log_file_fd_init = false; sendMessageEvent = new cMessage(); mapSeqNum.clear(); /*&messageEvent;*/storeRreq = false;}
     ~AODVUU();
 
     void actualizeTablesWithCollaborative(const L3Address &);
@@ -240,17 +240,17 @@ class AODVUU : public ManetRoutingBase
     void packetFailedMac(ieee80211::Ieee80211DataFrame *);
 
     // Routing information access
-    virtual bool supportGetRoute() {return false;}
-    virtual uint32_t getRoute(const L3Address &,std::vector<L3Address> &);
-    virtual bool getNextHop(const L3Address &,L3Address &add,int &iface,double &);
-    virtual bool isProactive();
-    virtual void setRefreshRoute(const L3Address &destination, const L3Address & nextHop,bool isReverse);
-    virtual bool setRoute(const L3Address & destination, const L3Address &nextHop, const int &ifaceIndex,const int &hops, const L3Address &mask=L3Address());
-    virtual bool setRoute(const L3Address & destination, const L3Address &nextHop, const char *ifaceName,const int &hops, const L3Address &mask=L3Address());
+    virtual bool supportGetRoute() override {return false;}
+    virtual uint32_t getRoute(const L3Address &,std::vector<L3Address> &) override;
+    virtual bool getNextHop(const L3Address &,L3Address &add,int &iface,double &) override;
+    virtual bool isProactive() override;
+    virtual void setRefreshRoute(const L3Address &destination, const L3Address & nextHop,bool isReverse) override;
+    virtual bool setRoute(const L3Address & destination, const L3Address &nextHop, const int &ifaceIndex,const int &hops, const L3Address &mask=L3Address()) override;
+    virtual bool setRoute(const L3Address & destination, const L3Address &nextHop, const char *ifaceName,const int &hops, const L3Address &mask=L3Address()) override;
 
-    virtual bool handleNodeStart(IDoneCallback *doneCallback);
-    virtual bool handleNodeShutdown(IDoneCallback *doneCallback);
-    virtual void handleNodeCrash();
+    virtual bool handleNodeStart(IDoneCallback *doneCallback) override;
+    virtual bool handleNodeShutdown(IDoneCallback *doneCallback) override;
+    virtual void handleNodeCrash() override;
 
   protected:
     bool is_init;
@@ -264,11 +264,11 @@ class AODVUU : public ManetRoutingBase
     const char *if_indextoname(int, char *);
     IPv4Datagram *pkt_encapsulate(IPv4Datagram *, IPv4Address);
     IPv4Datagram *pkt_decapsulate(IPv4Datagram *);
-    virtual void handleMessage(cMessage *msg);
-    virtual void finish();
+    virtual void handleMessage(cMessage *msg) override;
+    virtual void finish() override;
 
-    virtual int numInitStages() const { return NUM_INIT_STAGES; }
-    virtual void initialize(int stage);
+    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
+    virtual void initialize(int stage) override;
 
 
     cMessage * sendMessageEvent;
@@ -346,7 +346,7 @@ class AODVUU : public ManetRoutingBase
     int optimized_hellos;
     int ratelimit;
     int llfeedback;
-    char *progname;
+    const char *progname;
     int wait_on_reboot;
     struct timer worb_timer;
 
@@ -420,12 +420,12 @@ class AODVUU : public ManetRoutingBase
     int totalRerrRec;
     int totalLocalRep;
 #endif
-    virtual void processPromiscuous(const cObject *details);
+    virtual void processPromiscuous(const cObject *details) override;
     // used for break link notification
-    virtual void processLinkBreak(const cObject *details);
-    virtual void processFullPromiscuous(const cObject *details);
-    virtual bool isOurType(cPacket *);
-    virtual bool getDestAddress(cPacket *,L3Address &);
+    virtual void processLinkBreak(const cObject *details) override;
+    virtual void processFullPromiscuous(const cObject *details) override;
+    virtual bool isOurType(cPacket *) override;
+    virtual bool getDestAddress(cPacket *,L3Address &) override;
 
 
 };

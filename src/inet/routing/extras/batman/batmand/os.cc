@@ -104,7 +104,7 @@ int Batman::add_del_interface_rules(int8_t rule_action)
         if ((batman_if = is_batman_if(ifr))==nullptr)
             continue;
 
-        add_del_rule(netaddr.getAddress(), mask, BATMAN_RT_TABLE_TUNNEL, (rule_action == RULE_DEL ? 0 : BATMAN_RT_PRIO_TUNNEL + if_count), 0, RULE_TYPE_SRC, rule_action);
+        add_del_rule(netaddr.getAddress(), mask, BATMAN_RT_TABLE_TUNNEL, (rule_action == RULE_DEL ? 0 : BATMAN_RT_PRIO_TUNNEL + if_count), nullptr, RULE_TYPE_SRC, rule_action);
 
         if (ifr->isLoopback())
             add_del_rule(L3Address(), 0, BATMAN_RT_TABLE_TUNNEL, BATMAN_RT_PRIO_TUNNEL, ifr, RULE_TYPE_IIF, rule_action);
@@ -135,8 +135,8 @@ void Batman::activate_interface(BatmanIf *iface)
 void Batman::check_active_inactive_interfaces(void)
 {
     /* all available interfaces are deactive */
-    for (unsigned int i=0; i<if_list.size(); i++){
-        BatmanIf* batman_if = if_list[i];
+    for (auto & elem : if_list){
+        BatmanIf* batman_if = elem;
         if ((batman_if->if_active) && (!batman_if->dev->isUp()))
         {
             deactivate_interface(batman_if);
@@ -157,8 +157,8 @@ void Batman::check_inactive_interfaces(void)
     if (found_ifs == active_ifs)
         return;
 
-    for (unsigned int i=0; i<if_list.size(); i++){
-        BatmanIf* batman_if = if_list[i];
+    for (auto & elem : if_list){
+        BatmanIf* batman_if = elem;
 
         if ((!batman_if->if_active) && (batman_if->dev->isUp()))
         {
@@ -173,9 +173,9 @@ void Batman::check_active_interfaces(void)
     /* all available interfaces are deactive */
     if (active_ifs == 0)
         return;
-    for (unsigned int i=0; i<if_list.size(); i++)
+    for (auto & elem : if_list)
     {
-        BatmanIf* batman_if = if_list[i];
+        BatmanIf* batman_if = elem;
         if ((batman_if->if_active) && (!batman_if->dev->isUp()))
         {
             deactivate_interface(batman_if);

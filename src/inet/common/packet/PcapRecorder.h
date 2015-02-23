@@ -38,19 +38,18 @@ class INET_API PcapRecorder : public cSimpleModule, protected cListener
     SignalList signalList;
     PacketDump packetDumper;
     PcapDump pcapDumper;
-    unsigned int snaplen;
-    unsigned long first, last, space;
-    bool dumpBadFrames;
+    unsigned int snaplen = 0;
+    bool dumpBadFrames = false;
 
   public:
     PcapRecorder();
     ~PcapRecorder();
 
   protected:
-    virtual void initialize();
-    virtual void handleMessage(cMessage *msg);
-    virtual void finish();
-    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj);
+    virtual void initialize() override;
+    virtual void handleMessage(cMessage *msg) override;
+    virtual void finish() override;
+    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj) override;
     virtual void recordPacket(cPacket *msg, bool l2r);
 };
 

@@ -20,11 +20,16 @@
 package inet.linklayer.ieee80211.mgmt;
 
 //simple Ieee80211Mesh like IIeee80211Mgmt
-simple SecurityIeee80211MgmtAdhoc
+simple SecurityIeee80211MgmtAdhoc like IIeee80211Mgmt
 {
     parameters:
         @class(SecurityIeee80211MgmtAdhoc);
         @macRouting;  // Mac layer with routing protocol working in the level 2
+        
+        bool EDCA = default(false); // enable Enhanced Distributed Channel Access (802.11e)
+        // parameters for EDCA = true
+        string classifier = default("Ieee80211eClassifier");
+                
         string meshReactiveRoutingProtocol = default("inet.networklayer.manetrouting.DYMOUM");
         int frameCapacity = default(100);
         bool useHwmp = default(false); // If active automatically deactivate useProactive and useReactive and activate ETXEstimate
@@ -57,6 +62,9 @@ simple SecurityIeee80211MgmtAdhoc
         double lifeTimeForInterface @unit(s) = default(5s);
         string selectionCriteria @enum("Etx","MinQueue","LastUsed","MinQueueLastUsed","LastUsedMinQueue") = default("MinQueue");// if ETX active the ETX proc
         bool inteligentBroadcastRouting = default(false);
+
+        string macModule;               // The path to the MAC module
+
         @signal[enqueuePk](type=cMessage);
         @signal[dequeuePk](type=cMessage);
         @signal[dropPkByQueue](type=cMessage);

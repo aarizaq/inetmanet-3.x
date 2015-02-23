@@ -81,10 +81,10 @@ std::ostream& operator<<(std::ostream& out, const PIMSM::Route& route)
 
 PIMSM::~PIMSM()
 {
-    for (auto it = gRoutes.begin(); it != gRoutes.end(); ++it)
-        delete it->second;
-    for (auto it = sgRoutes.begin(); it != sgRoutes.end(); ++it)
-        delete it->second;
+    for (auto & elem : gRoutes)
+        delete elem.second;
+    for (auto & elem : sgRoutes)
+        delete elem.second;
     // XXX rt contains references to the deleted route entries
 }
 
@@ -612,8 +612,8 @@ void PIMSM::processRegisterPacket(PIMRegister *pkt)
             if (!routeSG->isFlagSet(Route::SPT_BIT)) {    // only if isn't build SPT between RP and registering DR
                 // decapsulate and forward the inner packet to inherited_olist(S,G,rpt)
                 // XXX we are forwarding on inherited_olist(*,G)
-                for (unsigned i = 0; i < routeG->downstreamInterfaces.size(); i++) {
-                    DownstreamInterface *downstream = routeG->downstreamInterfaces[i];
+                for (auto & elem : routeG->downstreamInterfaces) {
+                    DownstreamInterface *downstream = elem;
                     if (downstream->isInInheritedOlist())
                         forwardMulticastData(encapData->dup(), downstream->getInterfaceId());
                 }
@@ -687,7 +687,8 @@ void PIMSM::processAssertPacket(PIMAssert *pkt)
         if (routeSG) {
             PimsmInterface *incomingInterface = routeSG->upstreamInterface->getInterfaceId() == incomingInterfaceId ?
                 static_cast<PimsmInterface *>(routeSG->upstreamInterface) :
-                static_cast<PimsmInterface *>(routeSG->findDownstreamInterfaceByInterfaceId(incomingInterfaceId));
+                static_cast<PimsmInterface *>(routeSG->getDownstreamInterfaceByInterfaceId(incomingInterfaceId));
+            ASSERT(incomingInterface);
 
             Interface::AssertState stateBefore = incomingInterface->assertState;
             processAssertSG(incomingInterface, receivedMetric);
@@ -705,7 +706,7 @@ void PIMSM::processAssertPacket(PIMAssert *pkt)
     if (routeG) {
         PimsmInterface *incomingInterface = routeG->upstreamInterface->getInterfaceId() == incomingInterfaceId ?
             static_cast<PimsmInterface *>(routeG->upstreamInterface) :
-            static_cast<PimsmInterface *>(routeG->findDownstreamInterfaceByInterfaceId(incomingInterfaceId));
+            static_cast<PimsmInterface *>(routeG->getDownstreamInterfaceByInterfaceId(incomingInterfaceId));
         ASSERT(incomingInterface);
         processAssertG(incomingInterface, receivedMetric);
     }
@@ -718,7 +719,7 @@ void PIMSM::processAssertSG(PimsmInterface *interface, const AssertMetric& recei
     Route *routeSG = interface->route();
     AssertMetric myMetric = interface->couldAssert() ? // XXX check routeG metric too
         routeSG->metric.setAddress(interface->ie->ipv4Data()->getIPAddress()) :
-        AssertMetric::Infinite;
+        AssertMetric::PIM_INFINITE;
 
     // A "preferred assert" is one with a better metric than the current winner.
     bool isPreferredAssert = receivedMetric < interface->winnerMetric;
@@ -826,7 +827,7 @@ void PIMSM::processAssertG(PimsmInterface *interface, const AssertMetric& receiv
     Route *routeG = interface->route();
     AssertMetric myMetric = interface->couldAssert() ?
         routeG->metric.setAddress(interface->ie->ipv4Data()->getIPAddress()) :
-        AssertMetric::Infinite;
+        AssertMetric::PIM_INFINITE;
 
     // A "preferred assert" is one with a better metric than the current winner.
     bool isPreferredAssert = receivedMetric < interface->winnerMetric;
@@ -1163,7 +1164,7 @@ void PIMSM::multicastReceiverRemoved(InterfaceEntry *ie, IPv4Address group)
 
     Route *routeG = findRouteG(group);
     if (routeG) {
-        DownstreamInterface *downstream = routeG->findDownstreamInterfaceByInterfaceId(ie->getInterfaceId());
+        DownstreamInterface *downstream = routeG->getDownstreamInterfaceByInterfaceId(ie->getInterfaceId());
         downstream->setLocalReceiverInclude(false);
         updateJoinDesired(routeG);
     }
@@ -1177,7 +1178,7 @@ void PIMSM::multicastReceiverAdded(InterfaceEntry *ie, IPv4Address group)
     if (!routeG)
         routeG = addNewRouteG(group, Route::PRUNED);
 
-    DownstreamInterface *downstream = routeG->findDownstreamInterfaceByInterfaceId(ie->getInterfaceId());
+    DownstreamInterface *downstream = routeG->getDownstreamInterfaceByInterfaceId(ie->getInterfaceId());
     downstream->setLocalReceiverInclude(true);
 
     updateJoinDesired(routeG);
@@ -1590,9 +1591,9 @@ void PIMSM::updateJoinDesired(Route *route)
             // TODO
         }
         else if (route->type == G) {
-            for (auto it = sgRoutes.begin(); it != sgRoutes.end(); ++it) {
-                if (it->second->gRoute == route)
-                    updateJoinDesired(it->second);
+            for (auto & elem : sgRoutes) {
+                if (elem.second->gRoute == route)
+                    updateJoinDesired(elem.second);
             }
         }
     }
@@ -1716,9 +1717,9 @@ bool PIMSM::deleteMulticastRoute(Route *route)
 
         // unlink
         if (route->type == G) {
-            for (auto it = sgRoutes.begin(); it != sgRoutes.end(); ++it)
-                if (it->second->gRoute == route)
-                    it->second->gRoute = nullptr;
+            for (auto & elem : sgRoutes)
+                if (elem.second->gRoute == route)
+                    elem.second->gRoute = nullptr;
 
         }
 
@@ -1745,12 +1746,12 @@ void PIMSM::clearRoutes()
     }
 
     // clear local tables
-    for (auto it = gRoutes.begin(); it != gRoutes.end(); ++it)
-        delete it->second;
+    for (auto & elem : gRoutes)
+        delete elem.second;
     gRoutes.clear();
 
-    for (auto it = sgRoutes.begin(); it != sgRoutes.end(); ++it)
-        delete it->second;
+    for (auto & elem : sgRoutes)
+        delete elem.second;
     sgRoutes.clear();
 }
 
@@ -1794,9 +1795,9 @@ PIMSM::Route *PIMSM::addNewRouteG(IPv4Address group, int flags)
     rt->addMulticastRoute(createIPv4Route(newRouteG));
 
     // set (*,G) route in (S,G) and (S,G,rpt) routes
-    for (auto it = sgRoutes.begin(); it != sgRoutes.end(); ++it) {
-        if (it->first.group == group) {
-            Route *sgRoute = it->second;
+    for (auto & elem : sgRoutes) {
+        if (elem.first.group == group) {
+            Route *sgRoute = elem.second;
             sgRoute->gRoute = newRouteG;
         }
     }
@@ -1941,8 +1942,8 @@ PIMSM::Route::~Route()
     owner->cancelAndDelete(registerStopTimer);
     owner->cancelAndDelete(joinTimer);
     delete upstreamInterface;
-    for (auto it = downstreamInterfaces.begin(); it != downstreamInterfaces.end(); ++it)
-        delete *it;
+    for (auto & elem : downstreamInterfaces)
+        delete elem;
 }
 
 void PIMSM::Route::startKeepAliveTimer(double keepAlivePeriod)
@@ -1969,12 +1970,20 @@ void PIMSM::Route::startJoinTimer(double joinPrunePeriod)
 
 PIMSM::DownstreamInterface *PIMSM::Route::findDownstreamInterfaceByInterfaceId(int interfaceId)
 {
-    for (unsigned int i = 0; i < downstreamInterfaces.size(); i++) {
-        DownstreamInterface *downstream = downstreamInterfaces[i];
+    for (auto & elem : downstreamInterfaces) {
+        DownstreamInterface *downstream = elem;
         if (downstream->getInterfaceId() == interfaceId)
             return downstream;
     }
     return nullptr;
+}
+
+PIMSM::DownstreamInterface *PIMSM::Route::getDownstreamInterfaceByInterfaceId(int interfaceId)
+{
+    DownstreamInterface *downstream = findDownstreamInterfaceByInterfaceId(interfaceId);
+    if (!downstream)
+        throw cRuntimeError("getDownstreamInterfaceByInterfaceId(): interface %d not found", interfaceId);
+    return downstream;
 }
 
 int PIMSM::Route::findDownstreamInterface(InterfaceEntry *ie)
@@ -1989,8 +1998,8 @@ int PIMSM::Route::findDownstreamInterface(InterfaceEntry *ie)
 
 bool PIMSM::Route::isImmediateOlistNull()
 {
-    for (unsigned int i = 0; i < downstreamInterfaces.size(); i++)
-        if (downstreamInterfaces[i]->isInImmediateOlist())
+    for (auto & elem : downstreamInterfaces)
+        if (elem->isInImmediateOlist())
             return false;
 
     return true;
@@ -1998,8 +2007,8 @@ bool PIMSM::Route::isImmediateOlistNull()
 
 bool PIMSM::Route::isInheritedOlistNull()
 {
-    for (unsigned int i = 0; i < downstreamInterfaces.size(); i++)
-        if (downstreamInterfaces[i]->isInInheritedOlist())
+    for (auto & elem : downstreamInterfaces)
+        if (elem->isInInheritedOlist())
             return false;
 
     return true;

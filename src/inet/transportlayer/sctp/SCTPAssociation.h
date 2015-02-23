@@ -564,6 +564,7 @@ class INET_API SCTPStateVariables : public cObject
     bool peerWindowFull;
     bool zeroWindow;
     bool stopSending;    // will be called when SCTP_E_SHUTDOWN arrived
+    bool stopReading;    // will be called when CLOSE was called and no data will be accepted
     bool inOut;
     bool noMoreOutstanding;
     uint32 numGapReports;
@@ -591,6 +592,7 @@ class INET_API SCTPStateVariables : public cObject
     uint64 queuedReceivedBytes;    // Number of bytes in receiver queue
     uint32 lastStreamScheduled;
     uint32 assocPmtu;    // smallest overall path mtu
+    uint32 fragPoint;    // maximum size of a fragment
     uint32 msgNum;    // indicates the sequence number of the message
     uint64 bytesRcvd;
     uint32 numRequests;
@@ -699,8 +701,6 @@ class INET_API SCTPStateVariables : public cObject
     bool cmtUseSFR;    // Split Fast Retransmission (SFR) for CMT
     bool cmtUseDAC;    // Delayed Ack for CMT (DAC)
     bool cmtUseFRC;    // Fast Recovery for CMT (FRC)
-    bool cmtIntelligentReneging;    // Consider SACK path on reneging
-    bool cmtSuspendPathOnBlocking;    // After moving blocking chunk, do not use path for Timer-Based RTX during 1 RTO
     bool cmtMovedChunksReduceCwnd;    // Subtract moved chunk from cwnd of old path
     double movedChunkFastRTXFactor;
     unsigned int blockingTSNsMoved;
@@ -845,7 +845,6 @@ class INET_API SCTPAssociation : public cObject
     uint16 remotePort;    // Local port from last message
     uint32 localVTag;    // Local verification tag
     uint32 peerVTag;    // Remote verification tag
-    bool listen;
 
     // Timers
     cMessage *T1_InitTimer;

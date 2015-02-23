@@ -41,7 +41,8 @@ namespace ospf {
 
 using namespace xmlutils;
 
-OSPFConfigReader::OSPFConfigReader(cModule *ospfModule, IInterfaceTable *ift) : ospfModule(ospfModule), ift(ift)
+OSPFConfigReader::OSPFConfigReader(cModule *ospfModule, IInterfaceTable *ift) :
+        ospfModule(ospfModule), ift(ift)
 {
 }
 
@@ -416,8 +417,8 @@ void OSPFConfigReader::loadVirtualLink(const cXMLElement& virtualLinkConfig)
         backbone->addInterface(intf);
     }
     else {
-        delete intf;
         throw cRuntimeError("Loading VirtualLink to %s through Area %s aborted at ", endPoint.c_str(), intf->getAreaID().str(false).c_str(), virtualLinkConfig.getSourceLocation());
+        //delete intf;
     }
 }
 

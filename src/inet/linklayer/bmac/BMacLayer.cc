@@ -57,7 +57,7 @@ void BMacLayer::initialize(int stage)
         initializeMACAddress();
         registerInterface();
 
-        cModule *radioModule = getParentModule()->getSubmodule("radio");
+        cModule *radioModule = getModuleFromPar<cModule>(par("radioModule"), this);
         radioModule->subscribe(IRadio::radioModeChangedSignal, this);
         radioModule->subscribe(IRadio::transmissionStateChangedSignal, this);
         radio = check_and_cast<IRadio *>(radioModule);
@@ -120,8 +120,8 @@ BMacLayer::~BMacLayer()
     cancelAndDelete(ack_timeout);
     cancelAndDelete(resend_data);
 
-    for (auto it = macQueue.begin(); it != macQueue.end(); ++it) {
-        delete (*it);
+    for (auto & elem : macQueue) {
+        delete (elem);
     }
     macQueue.clear();
 }
@@ -160,9 +160,6 @@ void BMacLayer::initializeMACAddress()
 InterfaceEntry *BMacLayer::createInterfaceEntry()
 {
     InterfaceEntry *e = new InterfaceEntry(this);
-
-    // interface name: NIC module's name without special characters ([])
-    e->setName(utils::stripnonalnum(getParentModule()->getFullName()).c_str());
 
     // data rate
     e->setDatarate(bitrate);

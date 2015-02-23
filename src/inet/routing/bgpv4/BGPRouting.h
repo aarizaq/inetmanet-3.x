@@ -40,23 +40,22 @@ class BGPSession;
 class INET_API BGPRouting : public cSimpleModule, public ILifecycle, public TCPSocket::CallbackInterface
 {
   public:
-    BGPRouting()
-        : _myAS(0), _inft(0), _rt(0) {}
+    BGPRouting() {}
 
     virtual ~BGPRouting();
 
   protected:
-    virtual int numInitStages() const { return NUM_INIT_STAGES; }
-    virtual void initialize(int stage);
-    virtual void handleMessage(cMessage *msg);
-    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback);
-    virtual void finish();
+    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
+    virtual void initialize(int stage) override;
+    virtual void handleMessage(cMessage *msg) override;
+    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback) override;
+    virtual void finish() override;
 
-    virtual void socketDataArrived(int connId, void *yourPtr, cPacket *msg, bool urgent);
-    virtual void socketEstablished(int connId, void *yourPtr);
-    virtual void socketFailure(int connId, void *yourPtr, int code);
-    virtual void socketPeerClosed(int connId, void *yourPtr) {}
-    virtual void socketClosed(int connId, void *yourPtr) {}
+    virtual void socketDataArrived(int connId, void *yourPtr, cPacket *msg, bool urgent) override;
+    virtual void socketEstablished(int connId, void *yourPtr) override;
+    virtual void socketFailure(int connId, void *yourPtr, int code) override;
+    virtual void socketPeerClosed(int connId, void *yourPtr) override {}
+    virtual void socketClosed(int connId, void *yourPtr) override {}
 
     friend class BGPSession;
     //functions used by the BGPSession class
@@ -131,11 +130,11 @@ class INET_API BGPRouting : public cSimpleModule, public ILifecycle, public TCPS
     unsigned int calculateStartDelay(int rtListSize, unsigned char rtPosition, unsigned char rtPeerPosition);
 
     TCPSocketMap _socketMap;
-    ASID _myAS;
-    SessionID _currSessionId;
+    ASID _myAS = 0;
+    SessionID _currSessionId = 0;
 
-    IInterfaceTable *_inft;
-    IIPv4RoutingTable *_rt;    // The IP routing table
+    IInterfaceTable *_inft = nullptr;
+    IIPv4RoutingTable *_rt = nullptr;    // The IP routing table
     typedef std::vector<RoutingTableEntry *> RoutingTableEntryVector;
     RoutingTableEntryVector _BGPRoutingTable;    // The BGP routing table
     RoutingTableEntryVector _prefixListIN;

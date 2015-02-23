@@ -48,19 +48,19 @@ class INET_API RTCP : public cSimpleModule, public ILifecycle
   public:
     RTCP();
     virtual ~RTCP();
-    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback);
+    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback) override;
 
   protected:
     /**
      * Initializes variables.
      */
-    virtual void initialize(int stage);
-    virtual int numInitStages() const { return NUM_INIT_STAGES; }
+    virtual void initialize(int stage) override;
+    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
 
     /**
      * Message handling. Dispatches messages by arrival gate.
      */
-    virtual void handleMessage(cMessage *msg);
+    virtual void handleMessage(cMessage *msg) override;
 
     /**
      * Handles messages from the RTP module.
@@ -172,17 +172,17 @@ class INET_API RTCP : public cSimpleModule, public ILifecycle
     /**
      * The maximum size an RTCPCompundPacket can have.
      */
-    int _mtu;
+    int _mtu = 0;
 
     /**
      * The bandwidth for this RTP session.
      */
-    int _bandwidth;
+    int _bandwidth = 0;
 
     /**
      * The percentage of bandwidth for rtcp.
      */
-    int _rtcpPercentage;
+    int _rtcpPercentage = 0;
 
     /**
      * The destination address.
@@ -192,22 +192,22 @@ class INET_API RTCP : public cSimpleModule, public ILifecycle
     /**
      * The rtcp port.
      */
-    int _port;
+    int _port = -1;
 
     /**
      * True when this end system has chosen its ssrc identifier.
      */
-    bool _ssrcChosen;
+    bool _ssrcChosen = false;
 
     /**
      * True when this end system is about to leave the session.
      */
-    bool _leaveSession;
+    bool _leaveSession = false;
 
     /**
      * The RTPSenderInfo about this end system.
      */
-    RTPSenderInfo *_senderInfo;
+    RTPSenderInfo *_senderInfo = nullptr;
 
     /**
      * Information about all known RTP end system participating in
@@ -224,12 +224,12 @@ class INET_API RTCP : public cSimpleModule, public ILifecycle
      * The number of packets this rtcp module has
      * calculated.
      */
-    int _packetsCalculated;
+    int _packetsCalculated = 0;
 
     /**
      * The average size of an RTCPCompoundPacket.
      */
-    double _averagePacketSize;
+    double _averagePacketSize = 0;
 
     /**
      * The output vector for statistical data about the

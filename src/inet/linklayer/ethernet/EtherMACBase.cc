@@ -198,7 +198,7 @@ void EtherMACBase::initialize(int stage)
 void EtherMACBase::initializeQueueModule()
 {
     if (par("queueModule").stringValue()[0]) {
-        cModule *module = getParentModule()->getSubmodule(par("queueModule").stringValue());
+        cModule *module = getModuleFromPar<cModule>(par("queueModule"), this);
         IPassiveQueue *queueModule;
         if (module->isSimple())
             queueModule = check_and_cast<IPassiveQueue *>(module);
@@ -285,9 +285,6 @@ void EtherMACBase::initializeStatistics()
 InterfaceEntry *EtherMACBase::createInterfaceEntry()
 {
     InterfaceEntry *interfaceEntry = new InterfaceEntry(this);
-
-    // interface name: NIC module's name without special characters ([])
-    interfaceEntry->setName(utils::stripnonalnum(findModuleUnderContainingNode(this)->getFullName()).c_str());
 
     // generate a link-layer address to be used as interface token for IPv6
     interfaceEntry->setMACAddress(address);
@@ -522,9 +519,9 @@ void EtherMACBase::readChannelParameters(bool errorWhenAsymmetric)
 
     if (connected) {
         // Check valid speeds
-        for (int i = 0; i < NUM_OF_ETHERDESCRS; i++) {
-            if (txRate == etherDescrs[i].txrate) {
-                curEtherDescr = &(etherDescrs[i]);
+        for (auto & etherDescr : etherDescrs) {
+            if (txRate == etherDescr.txrate) {
+                curEtherDescr = &(etherDescr);
                 if (interfaceEntry) {
                     interfaceEntry->setCarrier(true);
                     interfaceEntry->setDatarate(txRate);

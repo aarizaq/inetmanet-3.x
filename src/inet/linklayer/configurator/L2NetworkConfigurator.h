@@ -37,7 +37,7 @@ namespace inet {
 class L2NetworkConfigurator : public cSimpleModule
 {
   public:
-    L2NetworkConfigurator() { rootNode = nullptr; }
+    L2NetworkConfigurator() { }
     typedef Ieee8021dInterfaceData::PortInfo PortInfo;
 
   protected:
@@ -71,7 +71,7 @@ class L2NetworkConfigurator : public cSimpleModule
 
       public:
         InterfaceInfo(Node *node, Node *childNode, InterfaceEntry *interfaceEntry);
-        virtual std::string getFullPath() const { return interfaceEntry->getFullPath(); }
+        virtual std::string getFullPath() const override { return interfaceEntry->getFullPath(); }
     };
 
     class Matcher
@@ -101,17 +101,18 @@ class L2NetworkConfigurator : public cSimpleModule
     class L2Topology : public Topology
     {
       protected:
-        virtual Node *createNode(cModule *module) { return new L2NetworkConfigurator::Node(module); }
-        virtual Link *createLink() { return new L2NetworkConfigurator::Link(); }
+        virtual Node *createNode(cModule *module) override { return new L2NetworkConfigurator::Node(module); }
+        virtual Link *createLink() override { return new L2NetworkConfigurator::Link(); }
     };
 
-    cXMLElement *configuration;
+    cXMLElement *configuration = nullptr;
     L2Topology topology;
-    Node *rootNode;
+    Node *rootNode = nullptr;
 
-    virtual void initialize(int stage);
-    virtual int numInitStages() const { return NUM_INIT_STAGES; }
-    virtual void handleMessage(cMessage *msg) { throw cRuntimeError("this module doesn't handle messages, it runs only in initialize()"); }
+  protected:
+    virtual void initialize(int stage) override;
+    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
+    virtual void handleMessage(cMessage *msg) override { throw cRuntimeError("this module doesn't handle messages, it runs only in initialize()"); }
 
     /**
      * Extracts network topology by walking through the module hierarchy.

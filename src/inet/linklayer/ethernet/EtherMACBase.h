@@ -145,8 +145,8 @@ class INET_API EtherMACBase : public MACBase
 
     // state
     bool channelsDiffer = false;    // true when tx and rx channels differ (only one of them exists, or 'datarate' or 'disable' parameters differ) (configuration error, or between changes of tx/rx channels)
-    MACTransmitState transmitState;    // "transmit state" of the MAC
-    MACReceiveState receiveState;    // "receive state" of the MAC
+    MACTransmitState transmitState = (MACTransmitState)-1;    // "transmit state" of the MAC
+    MACReceiveState receiveState = (MACReceiveState)-1;    // "receive state" of the MAC
     simtime_t lastTxFinishTime;    // time of finishing the last transmission
     int pauseUnitsRequested = 0;    // requested pause duration, or zero -- examined at endTx
     EtherFrame *curTxFrame = nullptr;    // frame being transmitted
@@ -195,19 +195,19 @@ class INET_API EtherMACBase : public MACBase
     double getTxRate() { return curEtherDescr->txrate; }
     bool isActive() { return connected && !disabled; }
 
-    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback);
+    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback) override;
 
   protected:
     //  initialization
-    virtual void initialize(int stage);
-    virtual int numInitStages() const { return NUM_INIT_STAGES; }
+    virtual void initialize(int stage) override;
+    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
     virtual void initializeFlags();
     virtual void initializeMACAddress();
     virtual void initializeQueueModule();
     virtual void initializeStatistics();
 
     // finish
-    virtual void finish();
+    virtual void finish() override;
 
     /** Checks destination address and drops the frame when frame is not for us; returns true if frame is dropped */
     virtual bool dropFrameNotForUs(EtherFrame *frame);
@@ -225,17 +225,17 @@ class INET_API EtherMACBase : public MACBase
     virtual void processConnectDisconnect();
 
     // MACBase
-    virtual InterfaceEntry *createInterfaceEntry();
-    virtual void flushQueue();
-    virtual void clearQueue();
-    virtual bool isUpperMsg(cMessage *msg) { return msg->getArrivalGate() == upperLayerInGate; }
+    virtual InterfaceEntry *createInterfaceEntry() override;
+    virtual void flushQueue() override;
+    virtual void clearQueue() override;
+    virtual bool isUpperMsg(cMessage *msg) override { return msg->getArrivalGate() == upperLayerInGate; }
 
     // display
     virtual void updateDisplayString();
     virtual void updateConnectionColor(int txState);
 
     // model change related functions
-    virtual void receiveSignal(cComponent *src, simsignal_t signalId, cObject *obj);
+    virtual void receiveSignal(cComponent *src, simsignal_t signalId, cObject *obj) override;
     virtual void refreshConnection();
 };
 

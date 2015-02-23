@@ -22,8 +22,12 @@
 //#include <algorithm>
 //#include <sstream>
 
-#include "inet/common/ModuleAccess.h"
+
+
 #include "inet/networklayer/common/InterfaceEntry.h"
+
+#include "inet/common/INETUtils.h"
+#include "inet/common/ModuleAccess.h"
 
 #include "inet/networklayer/contract/IInterfaceTable.h"
 
@@ -66,6 +70,9 @@ std::string InterfaceEntryChangeDetails::detailedInfo() const
 InterfaceEntry::InterfaceEntry(cModule *module)
 {
     interfaceModule = findModuleUnderContainingNode(module);
+    if (!interfaceModule)
+        throw cRuntimeError("NIC module not found in the host");
+    setName(utils::stripnonalnum(interfaceModule->getFullName()).c_str());
     state = UP;
     carrier = true;
     datarate = 0;
@@ -351,8 +358,8 @@ void InterfaceEntry::joinMulticastGroup(const L3Address& address) const
 static void toIPv4AddressVector(const std::vector<L3Address>& addresses, std::vector<IPv4Address>& result)
 {
     result.reserve(addresses.size());
-    for (unsigned int i = 0; i < addresses.size(); ++i)
-        result.push_back(addresses[i].toIPv4());
+    for (auto & addresse : addresses)
+        result.push_back(addresse.toIPv4());
 }
 
 void InterfaceEntry::changeMulticastGroupMembership(const L3Address& multicastAddress,

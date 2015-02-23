@@ -60,6 +60,8 @@ void TraCIScenarioManager::initialize(int stage)
         updateInterval = par("updateInterval");
         if (firstStepAt == -1)
             firstStepAt = connectAt + updateInterval;
+        if (firstStepAt <= connectAt)
+            throw cRuntimeError("bad parameters: firstStepAt should be larger than connectAt");
         moduleType = par("moduleType").stdstringValue();
         moduleName = par("moduleName").stdstringValue();
         moduleDisplayString = par("moduleDisplayString").stdstringValue();
@@ -114,8 +116,9 @@ void TraCIScenarioManager::initialize(int stage)
         subscribedVehicles.clear();
         activeVehicleCount = 0;
         autoShutdownTriggered = false;
-        socketPtr = 0;
-        ASSERT(firstStepAt > connectAt);
+
+        socketPtr = nullptr;
+
         connectAndStartTrigger = new cMessage("connect");
         scheduleAt(connectAt, connectAndStartTrigger);
         executeOneTimestepTrigger = new cMessage("step");

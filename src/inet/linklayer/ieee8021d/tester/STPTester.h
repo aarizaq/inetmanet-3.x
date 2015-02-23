@@ -43,22 +43,22 @@ class INET_API STPTester : public cSimpleModule
     };
 
   protected:
-    bool loop;
-    int numOfVisitedNodes;
-    int numOfNodes;
+    bool loop = false;
+    int numOfVisitedNodes = 0;
+    int numOfNodes = 0;
     std::map<Topology::Node *, int> color;
     std::map<Topology::Node *, Topology::Node *> parent;
     Topology graph;
 
     simtime_t checkTime;
-    cMessage *checkTimer;
+    cMessage *checkTimer = nullptr;
 
   public:
     // Includes network topology extraction
     STPTester();
     ~STPTester();
-    virtual void initialize();
-    virtual void handleMessage(cMessage *msg);
+    virtual void initialize() override;
+    virtual void handleMessage(cMessage *msg) override;
 
   protected:
     void dfsVisit(Topology::Node *node);

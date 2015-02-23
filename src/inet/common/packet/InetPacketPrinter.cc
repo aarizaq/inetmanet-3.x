@@ -58,8 +58,8 @@ class INET_API InetPacketPrinter : public cMessagePrinter
   public:
     InetPacketPrinter() {}
     virtual ~InetPacketPrinter() {}
-    virtual int getScoreFor(cMessage *msg) const;
-    virtual void printMessage(std::ostream& os, cMessage *msg) const;
+    virtual int getScoreFor(cMessage *msg) const override;
+    virtual void printMessage(std::ostream& os, cMessage *msg) const override;
 };
 
 Register_MessagePrinter(InetPacketPrinter);
@@ -74,8 +74,8 @@ void InetPacketPrinter::printMessage(std::ostream& os, cMessage *msg) const
     L3Address srcAddr, destAddr;
 
     for (cPacket *pk = dynamic_cast<cPacket *>(msg); pk; pk = pk->getEncapsulatedPacket()) {
-        if (dynamic_cast<INetworkDatagram *>(pk)) {
-            INetworkDatagram *dgram = dynamic_cast<INetworkDatagram *>(pk);
+        INetworkDatagram *dgram = dynamic_cast<INetworkDatagram *>(pk);
+        if (dgram) {
             srcAddr = dgram->getSourceAddress();
             destAddr = dgram->getDestinationAddress();
 #ifdef WITH_IPv4
