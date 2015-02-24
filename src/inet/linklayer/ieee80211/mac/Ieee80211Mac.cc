@@ -28,6 +28,8 @@
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtBase.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211MpduA.h"
 
+// TODO: MDPU-A configure inter-space mupdu-a subframe, now the value is constant.
+// TODO: MDPU-A check sates, verify the backoff procedure is correct
 
 namespace inet {
 
@@ -1588,7 +1590,22 @@ void Ieee80211Mac::giveUpCurrentTransmission()
 {
     Ieee80211DataOrMgmtFrame *temp = (Ieee80211DataOrMgmtFrame *)transmissionQueue()->front();
     Ieee80211MpduA *aux = dynamic_cast<Ieee80211MpduA *>(temp);
-    sendNotification(NF_LINK_BREAK, temp);
+    if (aux == nullptr)
+    {
+        sendNotification(NF_LINK_BREAK, temp);
+    }
+    else
+    {
+        if (mpduInTransmission != nullptr)
+        {
+            if (mpduInTransmission != temp)
+                throw cRuntimeError("mpduInTransmission != transmissionQueue()->front()");
+            mpduInTransmission = nullptr;
+        }
+        for (unsigned int i = 0; i < aux->getNumEncap(); i++)
+            sendNotification(NF_LINK_BREAK, aux->getPacket(i));
+    }
+
     if (aux != nullptr)
         numGivenUp()+=aux->getNumEncap();
     else
@@ -1766,7 +1783,7 @@ double Ieee80211Mac::computeFrameDuration(int bits, double bitrate)
         modType = transmisionMode;
 
     if (PHY_HEADER_LENGTH<0)
-        duration = SIMTIME_DBL(Ieee80211Modulation::calculateTxDuration(bits, modType, wifiPreambleType));
+        duration = SIMTIME_DBL(Ieee80211Modulation::calculateTxDuration(bits, modType, wifiPreambleType,false));
     else
         duration = SIMTIME_DBL(Ieee80211Modulation::getPayloadDuration(bits, modType)) + PHY_HEADER_LENGTH;
 
@@ -2411,7 +2428,7 @@ double Ieee80211Mac::controlFrameTxTime(int bits)
 {
      double duration;
      if (PHY_HEADER_LENGTH < 0)
-         duration = SIMTIME_DBL(Ieee80211Modulation::calculateTxDuration(bits, controlFrameModulationType, wifiPreambleType));
+         duration = SIMTIME_DBL(Ieee80211Modulation::calculateTxDuration(bits, controlFrameModulationType, wifiPreambleType,false));
      else
          duration = SIMTIME_DBL(Ieee80211Modulation::getPayloadDuration(bits, controlFrameModulationType)) + PHY_HEADER_LENGTH;
 

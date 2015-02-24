@@ -1135,13 +1135,21 @@ simtime_t Ieee80211Modulation::getPreambleAndHeader(ModulationType payloadMode, 
     return (getPlcpPreambleDuration(payloadMode, preamble) + getPlcpHeaderDuration(payloadMode, preamble));
 }
 
-simtime_t Ieee80211Modulation::calculateTxDuration(uint64_t size, ModulationType payloadMode, Ieee80211PreambleMode preamble,
+simtime_t Ieee80211Modulation::calculateTxDuration(uint64_t size, ModulationType payloadMode, Ieee80211PreambleMode preamble,const bool &noPhyHeader,
         const uint32_t & nss, const uint32_t & ness, bool isStbc)
 {
-    simtime_t duration = getPlcpPreambleDuration(payloadMode, preamble) + getPlcpHeaderDuration(payloadMode, preamble)
-            + getPayloadDuration(size, payloadMode, nss, isStbc) + getPlcpHtSigHeaderDuration(payloadMode, preamble)
-            + getPlcpHtTrainingSymbolDuration(payloadMode, preamble, nss, ness);
-    return duration;
+    if (!noPhyHeader)
+    {
+        simtime_t duration = getPlcpPreambleDuration(payloadMode, preamble) + getPlcpHeaderDuration(payloadMode, preamble)
+                + getPayloadDuration(size, payloadMode, nss, isStbc) + getPlcpHtSigHeaderDuration(payloadMode, preamble)
+                + getPlcpHtTrainingSymbolDuration(payloadMode, preamble, nss, ness);
+        return duration;
+    }
+    else
+    {
+        simtime_t duration = getPayloadDuration(size, payloadMode, nss, isStbc) + getPlcpHtSigHeaderDuration(payloadMode, preamble);
+        return duration;
+    }
 }
 
 ModulationType Ieee80211Modulation::getPlcpHeaderMode(ModulationType payloadMode, Ieee80211PreambleMode preamble)

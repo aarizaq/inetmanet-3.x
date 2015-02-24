@@ -152,6 +152,9 @@ packet Ieee80211DataFrame extends Ieee80211DataOrMgmtFrame
 {
     byteLength = LENGTH_DATAHDR / 8;
     type = ST_DATA;
+    char QoSControlTid = 0;
+    bool QoSControlEosp = false;
+    char QoSAckPolicy = 0;    
     MACAddress address4;
 }
 

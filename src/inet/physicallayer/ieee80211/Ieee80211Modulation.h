@@ -129,7 +129,7 @@ class Ieee80211Modulation
         static simtime_t getPreambleAndHeader(ModulationType payloadMode, Ieee80211PreambleMode preamble);
         static simtime_t getPayloadDuration(uint64_t size, ModulationType payloadMode, const uint32_t & nss = 1, bool =
                 false);
-        static simtime_t calculateTxDuration(uint64_t size, ModulationType payloadMode, Ieee80211PreambleMode preamble,
+        static simtime_t calculateTxDuration(uint64_t size, ModulationType payloadMode, Ieee80211PreambleMode preamble, const bool &,
                 const uint32_t & nss = 1, const uint32_t & ness = 0, bool isStbc = false);
         static simtime_t getSlotDuration(ModulationType payloadMode, Ieee80211PreambleMode preamble);
         static simtime_t getSifsTime(ModulationType payloadMode, Ieee80211PreambleMode preamble);

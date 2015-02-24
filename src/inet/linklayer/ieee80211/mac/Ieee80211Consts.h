@@ -27,7 +27,8 @@ const unsigned int LENGTH_RTS = 160;    //bits
 const unsigned int LENGTH_CTS = 112;    //bits
 const unsigned int LENGTH_ACK = 112;    //bits
 const unsigned int LENGTH_MGMT = 28 * 8;    //bits
-const unsigned int LENGTH_DATAHDR = 34 * 8;    //bits
+//const unsigned int LENGTH_DATAHDR = 34 * 8;    //bits
+const unsigned int LENGTH_DATAHDR = 40 * 8;    //bits
 
 const unsigned int SNAP_HEADER_BYTES = 8;
 

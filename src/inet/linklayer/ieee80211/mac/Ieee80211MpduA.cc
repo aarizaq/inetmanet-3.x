@@ -71,7 +71,7 @@ Ieee80211MpduA::Ieee80211MpduA(Ieee80211MpduA &other) :
 
 void Ieee80211MpduA::forEachChild(cVisitor *v)
 {
-    Ieee80211MpduA::forEachChild(v);
+    cPacket::forEachChild(v);
     if (!encapsulateVector.empty())
     {
         for (unsigned int i = 0; i < encapsulateVector.size(); i++)

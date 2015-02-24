@@ -7,26 +7,7 @@ namespace inet {
 
 namespace ieee80211 {
 
-// TODO: handle MPDU-A of a frame like normal transmission
-
-/*
-bool Ieee80211Mac::MpduAKey::operator<(const MpduAKey& other) const
-{
-    if (other.addr != addr)
-        return other.addr < addr;
-    return other.seq < seq;
-}
-
-bool Ieee80211Mac::MpduAKey::operator==(const MpduAKey& other) const
-{
-    return (addr == other.addr && seq == other.seq);
-}
-
-bool Ieee80211Mac::MpduAKey::operator!=(const MpduAKey& other) const
-{
-    return (addr != other.addr || seq != other.seq);
-}
-*/
+// TODO: handle MPDU-A with only a sub frame like normal transmission
 
 void Ieee80211Mac::retryCurrentMpduA()
 {
@@ -37,20 +18,29 @@ void Ieee80211Mac::retryCurrentMpduA()
         retryMpduA++;
 
     int numRet = 0;
+    simtime_t lifetime;
+    lifetime = dot11MaxTransmitMSDULifetime * 1024e-6;
 
     for (int i = (int)mpduInTransmission->getEncapSize(); i >= 0; i--)
     {
         mpduInTransmission->setNumRetries(i,mpduInTransmission->getNumRetries(i)+1);
-        if (mpduInTransmission->getNumRetries(i) == transmissionLimit - 1)
+        if (simTime() - mpduInTransmission->getPacket(i)->getMACArrive() > lifetime) // the standard doesn't limit the number if retransmissions in this case, only the lifetime
         {
             Ieee80211DataOrMgmtFrame *temp = mpduInTransmission->decapsulatePacket(i);
             sendNotification(NF_LINK_BREAK, temp);
+            delete temp;
             numGivenUp()++;
-            popTransmissionQueue();
-            resetStateVariables();
         }
         else
             numRet++;
+    }
+
+    if (mpduInTransmission->getNumEncap() == 0)
+    {
+        popTransmissionQueue();
+        resetStateVariables();
+        mpduInTransmission = nullptr;
+        return;
     }
 
     if (mpduInTransmission->getNumEncap()<64 && numConsecutiveMpduA < maxConsecutiveMpduA)
@@ -124,6 +114,83 @@ void Ieee80211Mac::sendMpuAPending(const MACAddress &addr)
     if (it->second.confirmed.empty())
         processingMpdu.erase(it);
 }
+
+
+void Ieee80211Mac::sendNextFrameMpduA(cMessage *msg)
+{
+    // search currentAC
+    currentAC = -1;
+    for(int i = 0; i < numCategories() ; i++)
+    {
+        if (transmissionQueue(i)->front() ==  mpduInTransmission)
+        {
+            currentAC = i;
+            break;
+        }
+    }
+    if (currentAC == -1)
+        throw cRuntimeError("MPDU-A Category not found");
+
+    if (msg == mediumStateChange && radio->getTransmissionState() == IRadio::TRANSMISSION_STATE_IDLE)
+    {
+        // send next
+        if  (!interSpaceMpdu)
+        {
+            int retry = mpduInTransmission->getNumRetries(indexMpduTransmission);
+
+            if (indexMpduTransmission+1 < (int)mpduInTransmission->getNumEncap())
+                interSpaceMpdu = true;
+
+            if ((int)mpduInTransmission->getNumEncap() > indexMpduTransmission)
+            {
+                Ieee80211DataFrame *frame = check_and_cast<Ieee80211DataFrame*>(mpduInTransmission->getPacket(indexMpduTransmission));
+                if (sendBlockAckEndMpduA)
+                    frame->setQoSAckPolicy(3);
+                else
+                    frame->setQoSAckPolicy(0);
+                sendDown(buildMpduDataFrame(check_and_cast<Ieee80211DataOrMgmtFrame *>(setBitrateFrame(mpduInTransmission->getPacket(indexMpduTransmission))),retry));
+            }
+            else if ((int)mpduInTransmission->getNumEncap() == indexMpduTransmission) // block ACK
+            {
+                // transmit BlockAck request.
+                Ieee80211BlockAckFrameReq reqFrame("BlockAckFrameReq");
+                reqFrame.setReceiverAddress(mpduInTransmission->getReceiverAddress());
+                reqFrame.setTransmitterAddress(address);
+                setBitrateFrame(&reqFrame);
+                sendDown(buildMpduDataFrame(&reqFrame,0));
+            }
+            else
+            {
+                // end transmission
+                MpduModeTranssmision = false;
+                return;
+            }
+            indexMpduTransmission++;
+            if (!sendBlockAckEndMpduA &&  ((int)mpduInTransmission->getNumEncap() == indexMpduTransmission))
+            {
+                MpduModeTranssmision = false;
+                return;
+            }
+        }
+        else
+        {
+            interSpaceMpdu = false;
+            Ieee80211MpduDelimiter * delimiter = new Ieee80211MpduDelimiter("mpdua-delimiter");
+            // 1/2 usec
+            int64_t sizeDelimiter = (5e-7 * getBitrate());
+            delimiter->setByteLength(sizeDelimiter);
+            if (rateControlMode != RATE_CR || forceBitRate != false)
+            {
+                TransmissionRequest *ctrl = nullptr;
+                 ctrl = new TransmissionRequest();
+                 delimiter->setControlInfo(ctrl);
+                 ctrl->setBitrate(bps(getBitrate()));
+            }
+            sendDown(delimiter);
+        }
+    }
+ }
+
 
 // Handle MPDU-A frames.
 void Ieee80211Mac::processMpduA(Ieee80211DataOrMgmtFrame *frame)
@@ -305,21 +372,19 @@ void Ieee80211Mac::sendBlockAckFrame(const MACAddress & addr)
 void Ieee80211Mac::processBlockAckFrame(Ieee80211Frame *frameToSend)
 {
     MpduAInReception retFrames;
+    MpduAInReception expiredFrames;
     std::vector<int> retries;
 
     Ieee80211BlockAckFrame *frame  = check_and_cast<Ieee80211BlockAckFrame*>(frameToSend);
 
     // process first packet correctly received.
+    if (transmissionQueue()->front() != mpduInTransmission)
+        throw cRuntimeError("Transmission queue front and mpduInTransmission are different");
+    mpduInTransmission = nullptr;
 
     while (mpduInTransmission->getNumEncap()>0 && frame->getStartingSequence() != mpduInTransmission->getPacket(0)->getSequenceNumber())
     {
         int retry = mpduInTransmission->getNumRetries(0);
-        if (retry == transmissionLimit - 1)
-        {
-            delete mpduInTransmission->decapsulatePacket(0); // packet lost.
-            numGivenUp()++;
-            continue;
-        }
         retries.push_back(retry+1);
         retFrames.push_back(mpduInTransmission->decapsulatePacket(0));
     }
@@ -336,7 +401,6 @@ void Ieee80211Mac::processBlockAckFrame(Ieee80211Frame *frameToSend)
             minJitter() = simTime() - pkt->getMACArrive();
         if (fsm->debug()) EV_DEBUG << "record macDelay AC" << currentAC << " value " << simTime() - pkt->getMACArrive() <<endl;
 
-
         int retry = mpduInTransmission->getNumRetries(0);
         if (retry == 0) numSentWithoutRetry()++;
         numSent()++;
@@ -349,14 +413,7 @@ void Ieee80211Mac::processBlockAckFrame(Ieee80211Frame *frameToSend)
     {
         while (mpduInTransmission->getNumEncap()>0 && frame->getSequences(i) != mpduInTransmission->getPacket(0)->getSequenceNumber())
         {
-            int retry = mpduInTransmission->getNumRetries(0);
-            if (retry == transmissionLimit - 1)
-            {
-                delete mpduInTransmission->decapsulatePacket(0); // packet lost.
-                numGivenUp()++;
-                continue;
-            }
-            retries.push_back(retry+1);
+            retries.push_back(mpduInTransmission->getNumRetries(i)+1);
             retFrames.push_back(mpduInTransmission->decapsulatePacket(0));
         }
         if (mpduInTransmission->getNumEncap()>0)
@@ -379,16 +436,42 @@ void Ieee80211Mac::processBlockAckFrame(Ieee80211Frame *frameToSend)
     if (retFrames.empty())
     {
         // transmission success
+        if (transmissionQueue()->front() != mpduInTransmission)
+            throw cRuntimeError("Transmission queue front and mpduInTransmission are different");
         mpduInTransmission = nullptr;
-        finishCurrentTransmission();
     }
     else
     {
         // retransmissions
+        simtime_t lifetime;
+        lifetime = dot11MaxTransmitMSDULifetime * 1024e-6;
+
         for (unsigned int i = 0; i < retFrames.size(); i++)
         {
-            mpduInTransmission->pushBack(retFrames[i],retries[i]);
+            if (simTime() - mpduInTransmission->getPacket(i)->getMACArrive() > lifetime) // the standard doesn't limit the number if retransmissions in this case, only the lifetime
+            {
+                mpduInTransmission->pushBack(retFrames[i],retries[i]);
+            }
+            else
+            {
+                expiredFrames.push_back(retFrames[i]);
+            }
         }
+        while(!expiredFrames.empty()) // expired frames, delete
+        {
+            numGivenUp()++;
+            delete expiredFrames.back();
+            expiredFrames.pop_back();
+        }
+
+        if (mpduInTransmission->getNumEncap() == 0) //
+        {
+            popTransmissionQueue();
+            resetStateVariables();
+            mpduInTransmission = nullptr;
+            return;
+        }
+
         if (mpduInTransmission->getNumEncap()<64 && numConsecutiveMpduA < maxConsecutiveMpduA)
         {
             retryMpduA++;
@@ -980,10 +1063,14 @@ void Ieee80211Mac::stateWaitBlockAck(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
 
     FSMIEEE80211_Enter(fsmLocal)
     {
-        if (mpduInTransmission == nullptr)
-            FSMIEEE80211_Transition(fsmLocal,DEFER);
         numBlockAckReqRetries = 0;
         setBlockAckTimeOut();
+    }
+
+    FSMIEEE80211_No_Event_Transition(fsmLocal, mpduInTransmission == nullptr)
+    {
+        cancelTimeoutPeriod();
+        FSMIEEE80211_Transition(fsmLocal,DEFER);
     }
 
     FSMIEEE80211_Event_Transition(fsmLocal, isLowerMessage(msg) && receptionError)
@@ -1015,11 +1102,14 @@ void Ieee80211Mac::stateWaitBlockAck(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
           if (endTXOP->isScheduled()) cancelEvent(endTXOP);
           if (mpduInTransmission)
           {
+              // not all mpdu-a frames are been confirmed, re-try
               FSMIEEE80211_Transition(fsmLocal,WAITSIFS);
           }
           else
           {
               // no more frames
+              finishCurrentTransmission();
+              resetCurrentBackOff();
               FSMIEEE80211_Transition(fsmLocal,DEFER);
           }
       }
@@ -1028,11 +1118,8 @@ void Ieee80211Mac::stateWaitBlockAck(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
       {
           if (fsmLocal->debug()) EV_DEBUG  << "Receive-BLOCK_ACK-Timeout \n";
           currentAC = oldcurrentAC;
-
           if (endTXOP->isScheduled()) cancelEvent(endTXOP);
-
           // check retries
-
           txop = false;
           if (endTXOP->isScheduled()) cancelEvent(endTXOP);
           if (numBlockAckReqRetries != transmissionLimit - 1)
@@ -1086,6 +1173,8 @@ void Ieee80211Mac::stateSendMpuA(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
         scheduleDataTimeoutPeriod(frame); // TODO: compute Schedule MPUA with immediate block ACK
         MpduModeTranssmision = true;
         indexMpduTransmission = 0;
+        interSpaceMpdu = false;
+
         configureRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
         if (mpduInTransmission == nullptr)
             mpduInTransmission = frame;
@@ -1102,40 +1191,25 @@ void Ieee80211Mac::stateSendMpuA(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
         // sendDown(buildMpduDataFrame(check_and_cast<Ieee80211DataOrMgmtFrame *>(setBitrateFrame(mpduInTransmission->getPacket(indexMpduTransmission))),retry));
     }
     // search currentAC
-    currentAC = -1;
-    for(int i = 0; i < numCategories() ; i++)
-    {
-        if (transmissionQueue(i)->front() ==  mpduInTransmission)
-        {
-            currentAC = i;
-            break;
-        }
-    }
-    if (currentAC == -1)
-        throw cRuntimeError("MPDU-A Category not found");
 
-    if (msg == mediumStateChange && radio->getTransmissionState() == IRadio::TRANSMISSION_STATE_IDLE)
+    FSMIEEE80211_No_Event_Transition(fsmLocal,MpduModeTranssmision)
     {
-        // send next
-        int retry = mpduInTransmission->getNumRetries(indexMpduTransmission);
-        if ((int)mpduInTransmission->getNumEncap() > indexMpduTransmission)
-            sendDown(buildMpduDataFrame(check_and_cast<Ieee80211DataOrMgmtFrame *>(setBitrateFrame(mpduInTransmission->getPacket(indexMpduTransmission))),retry));
-        else if ((int)mpduInTransmission->getNumEncap() == indexMpduTransmission) // block ACK
-        {
-            // transmit BlockAck request.
-            Ieee80211BlockAckFrameReq reqFrame("BlockAckFrameReq");
-            reqFrame.setReceiverAddress(mpduInTransmission->getReceiverAddress());
-            reqFrame.setTransmitterAddress(address);
-            setBitrateFrame(&reqFrame);
-            sendDown(buildMpduDataFrame(&reqFrame,0));
-        }
-        else
-        {
-            // end transmission
-            MpduModeTranssmision = false;
-            FSMIEEE80211_Transition(fsmLocal,WAITBLOCKACK);
-        }
-        indexMpduTransmission++;
+        sendNextFrameMpduA(msg);
+    }
+
+    FSMIEEE80211_Event_Transition(fsmLocal,MpduModeTranssmision)
+    {
+        sendNextFrameMpduA(msg);
+    }
+
+    FSMIEEE80211_Event_Transition(fsmLocal, !MpduModeTranssmision)
+    {
+        FSMIEEE80211_Transition(fsmLocal,WAITBLOCKACK);
+    }
+
+    FSMIEEE80211_No_Event_Transition(fsmLocal, !MpduModeTranssmision)
+    {
+        FSMIEEE80211_Transition(fsmLocal,WAITBLOCKACK);
     }
  }
 
@@ -1222,6 +1296,8 @@ void Ieee80211Mac::stateWaitCts(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
 
 void Ieee80211Mac::stateWaitSift(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
 {
+    Ieee80211DataOrMgmtFrame *dataFrame = dynamic_cast<Ieee80211DataOrMgmtFrame*>(getFrameReceivedBeforeSIFS());
+
     FSMIEEE80211_Enter(fsmLocal)
     {
         Ieee80211Frame *frame = dynamic_cast<Ieee80211Frame*>(msg);
@@ -1245,6 +1321,16 @@ void Ieee80211Mac::stateWaitSift(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
         oldcurrentAC = currentAC;
         FSMIEEE80211_Transition(fsmLocal,IDLE);
     }
+
+    FSMIEEE80211_Event_Transition(fsmLocal,
+                           msg == endSIFS && dataFrame != nullptr && dataFrame->getIsMpduA() && !sendBlockAckEndMpduA)
+    {
+        if (fsmLocal->debug()) EV_DEBUG << "Transmit-BLOCKACK \n";
+        sendBLOCKACKFrameOnEndSIFS();
+        oldcurrentAC = currentAC;
+        FSMIEEE80211_Transition(fsmLocal,IDLE);
+    }
+
 
     FSMIEEE80211_Event_Transition(fsmLocal,
                        msg == endSIFS && getFrameReceivedBeforeSIFS()->getType() == ST_BLOCKACK && mpduInTransmission == nullptr)
@@ -1304,7 +1390,7 @@ void Ieee80211Mac::stateReceive(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
     bool receptionError = false;
     if (frame && isLowerMessage(frame))
         receptionError = frame ? frame->hasBitError() : false;
-    Ieee80211DataOrMgmtFrame *dataFrame = dynamic_cast<Ieee80211DataOrMgmtFrame*>(frame);
+    Ieee80211DataFrame *dataFrame = dynamic_cast<Ieee80211DataFrame*>(frame);
 
     int frameType = frame ? frame->getType() : -1;
 
@@ -1314,6 +1400,8 @@ void Ieee80211Mac::stateReceive(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
         processMpduA(dataFrame);
         // finishReception();
         // FSMIEEE80211_Transition(fsmLocal,WAITSIFS);
+        if (!MpduModeReception && dataFrame->getQoSAckPolicy() == 0)
+            FSMIEEE80211_Transition(fsmLocal,WAITSIFS);// SEND block-ack,
         FSMIEEE80211_Transition(fsmLocal,IDLE);// IDLE->RECV,
     }
 
@@ -1364,7 +1452,7 @@ void Ieee80211Mac::stateReceive(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
     FSMIEEE80211_No_Event_Transition(fsmLocal,
                     isLowerMessage(msg) && isBackoffPending())
     {
-        if (fsmLocal->debug()) EV_DEBUG << "Immediate-Receive-Other-backtobackoff \n";
+        if (fsmLocal->debug()) EV_DEBUG << "Immediate-Receive-Other-backoff \n";
         FSMIEEE80211_Transition(fsmLocal,DEFER);
     }
 
@@ -1375,7 +1463,6 @@ void Ieee80211Mac::stateReceive(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
         promiscousFrame(frame);
         finishReception();
         numReceivedOther++;
-
         FSMIEEE80211_Transition(fsmLocal,IDLE);
     }
 

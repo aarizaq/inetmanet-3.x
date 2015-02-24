@@ -137,7 +137,6 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     ModulationType basicTransmisionMode;
 
   protected:
-    bool isInHandleWithFSM = false;
     IRadio::TransmissionState transmissionState = IRadio::TRANSMISSION_STATE_UNDEFINED;
     /**
      * @name Configuration parameters
@@ -209,6 +208,15 @@ class INET_API Ieee80211Mac : public MACProtocolBase
      */
     int transmissionLimit = 0;
 
+    /* The source STA shall maintain a transmit MSDU timer for each MSDU being transmitted. The attribute
+     * dot11MaxTransmitMSDULifetime specifies the maximum amount of time allowed to transmit an MSDU. The
+     * timer starts on the initial attempt to transmit the first fragment of the MSDU. If the timer exceeds
+     * dot11MaxTransmitMSDULifetime, then all remaining fragments are discarded by the source STA and no
+     * attempt is made to complete transmission of the MSDU.
+     */
+
+    int dot11MaxTransmitMSDULifetime = 512;
+
     /** Default access catagory */
     int defaultAC = 0;
 
@@ -258,15 +266,18 @@ class INET_API Ieee80211Mac : public MACProtocolBase
       Ieee802MacBaseFsm *fsm;
 
     // MPDU information variables
-      bool MpduModeTranssmision = false;
+      bool MpduModeTranssmision = false; // used to avoid that the radio could out from transmission mode if
       bool MpduModeReception = false;
-      bool blockAckModeReception = false;
+      bool sendBlockAckEndMpduA = false; // if true the node sends a request block ack after mpdu-a transmission
       simtime_t mpudRetTimeOut;
 
-      int indexMpduTransmission = 0;
-      Ieee80211MpduA *mpduInTransmission = nullptr;
+      int indexMpduTransmission = 0; // index of the frame in the mdpu that must be transmitted.
+      bool interSpaceMpdu = false; // determine if it is necessary to send a inter space mudp-a delimiter or the next frame
+      Ieee80211MpduA *mpduInTransmission = nullptr; // the mpdu-a that is been transmitted.
       int mpduAClass = 0;
       int numBlockAckReqRetries = 0;
+
+
       typedef std::deque<Ieee80211DataOrMgmtFrame *> MpduAInReception;
       typedef std::vector<int> Confirmed;
       class MpduAInProc : public cObject
@@ -662,6 +673,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     virtual void retryCurrentMpduA();
 
     virtual void sendMpuAPending(const MACAddress &addr);
+    virtual void sendNextFrameMpduA(cMessage *msg);
 
     virtual void retryBlockAckReq();
 
