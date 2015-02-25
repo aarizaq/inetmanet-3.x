@@ -1166,12 +1166,6 @@ void Ieee80211Mac::stateWaitBlockAck(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
           if (endTXOP->isScheduled()) cancelEvent(endTXOP);
           FSMIEEE80211_Transition(fsmLocal,RECEIVE);
       }
-
-      FSMIEEE80211_Event_Transition(fsmLocal,isMediumStateChange(msg) && radio->getTransmissionState() == IRadio::TRANSMISSION_STATE_IDLE)
-      {
-
-
-      }
 }
 
 void Ieee80211Mac::stateSendMpuA(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
