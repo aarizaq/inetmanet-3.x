@@ -97,6 +97,7 @@ void Ieee80211MpduA::_deleteEncapVector()
     {
         if (encapsulateVector.back()->pkt->getOwner()!=this)
             take(encapsulateVector.back()->pkt);
+        drop(encapsulateVector.back()->pkt);
         delete encapsulateVector.back()->pkt;
         encapsulateVector.pop_back();
     }
