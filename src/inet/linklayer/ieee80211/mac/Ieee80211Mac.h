@@ -678,7 +678,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
 
     virtual void retryBlockAckReq();
 
-    virtual void processMpduA(Ieee80211DataOrMgmtFrame *frame);
+    virtual bool processMpduA(Ieee80211DataOrMgmtFrame *frame);
     virtual void sendBLOCKACKFrameOnEndSIFS();
     virtual bool isMpduA(Ieee80211Frame *frame);
     virtual Ieee80211MpduDelimiter* buildMpduDataFrame(Ieee80211Frame *frameToSend, const int &retry, const bool &);

@@ -190,11 +190,9 @@ void Ieee80211Mac::sendNextFrameMpduA(cMessage *msg)
 
 
 // Handle MPDU-A frames.
-void Ieee80211Mac::processMpduA(Ieee80211DataOrMgmtFrame *frame)
+bool Ieee80211Mac::processMpduA(Ieee80211DataOrMgmtFrame *frame)
 {
 
-    if (!isForUs(frame))
-        return;
     // if is correct store the frame in the confirmation array
 
     bool duplicate = isDuplicated(frame);
@@ -323,6 +321,7 @@ void Ieee80211Mac::processMpduA(Ieee80211DataOrMgmtFrame *frame)
             }
         }
     }
+    return !it->second.confirmed.empty();
 }
 
 bool Ieee80211Mac::isMpduA(Ieee80211Frame *frame)
@@ -1420,13 +1419,20 @@ void Ieee80211Mac::stateReceive(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
     FSMIEEE80211_No_Event_Transition(fsmLocal, (dataFrame != nullptr && isLowerMessage(msg)  && isForUs(frame) && dataFrame->getIsMpduA()))
     {
         if (fsmLocal->debug()) EV_DEBUG << "Immediate-Receive-MPDUA \n";
-        processMpduA(dataFrame);
+        bool thereAreCorrectFrames = processMpduA(dataFrame);
         // finishReception();
         // FSMIEEE80211_Transition(fsmLocal,WAITSIFS);
         char policy =  dataFrame->getQoSAckPolicy();
-        if (!MpduModeReception && policy == 0)
+        if (!MpduModeReception && policy == 0) // Immediate block-ack
         {
-            FSMIEEE80211_Transition(fsmLocal,WAITSIFS);// SEND block-ack,
+            if (thereAreCorrectFrames)
+            {
+                FSMIEEE80211_Transition(fsmLocal,WAITSIFS);// SEND block-ack,
+            }
+            else
+            {
+                FSMIEEE80211_Transition(fsmLocal,IDLE);// IDLE->RECV,
+            }
         }
         else
         {
