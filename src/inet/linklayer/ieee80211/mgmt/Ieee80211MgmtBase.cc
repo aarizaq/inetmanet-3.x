@@ -98,8 +98,6 @@ void Ieee80211MgmtBase::initialize(int stage)
             mpduAggregateHandler->setRequestProcedure(false); // disable request procedure for testing
             mpduAggregateHandler->setAutomaticMimimumAddress(minMpduASize);
         }
-
-
     }
     else if (stage == INITSTAGE_LINK_LAYER) {
         NodeStatus *nodeStatus = dynamic_cast<NodeStatus *>(findContainingNode(this)->getSubmodule("status"));
@@ -229,6 +227,7 @@ cMessage *Ieee80211MgmtBase::enqueue(cMessage *msg)
         return msg;
     }
     else {
+        bool includedInMsduA = false;
         // if broadcast and musticast frames must be transmit before
         if ((frame->getReceiverAddress().isBroadcast() || frame->getReceiverAddress().isMulticast()))
         {
@@ -247,11 +246,19 @@ cMessage *Ieee80211MgmtBase::enqueue(cMessage *msg)
                 dataQueue[cat].push_back(frame);
         }
         else
-            dataQueue[cat].push_back(frame);
+        {
+            if (mpduAggregateHandler)
+            {
+                includedInMsduA = mpduAggregateHandler->setMpduA(frame,cat);
+                    dataQueue[cat].push_back(frame);
+            }
+            if (!includedInMsduA)
+                dataQueue[cat].push_back(frame);
+        }
         int length = 0;
         for (int i = 0; i < numQueues; i++)
             length += dataQueue[i].size();
-        if (mpduAggregateHandler)
+        if (mpduAggregateHandler && !includedInMsduA)
             mpduAggregateHandler->increaseSize(frame,cat);
 
         emit(dataQueueLenSignal, length);
@@ -276,6 +283,7 @@ cMessage *Ieee80211MgmtBase::enqueue(cMessage *msg, const int &cat)
         return msg;
     }
     else {
+        bool includedInMsduA = false;
         // if broadcast and musticast frames must be transmit before
         if ((frame->getReceiverAddress().isBroadcast() || frame->getReceiverAddress().isMulticast()))
         {
@@ -294,11 +302,19 @@ cMessage *Ieee80211MgmtBase::enqueue(cMessage *msg, const int &cat)
                 dataQueue[cat].push_back(frame);
         }
         else
-            dataQueue[cat].push_back(frame);
+        {
+            if (mpduAggregateHandler)
+            {
+                includedInMsduA = mpduAggregateHandler->setMpduA(frame,cat); // return true if the frame is included in a msdu-A frame.
+                    dataQueue[cat].push_back(frame);
+            }
+            if (!includedInMsduA)
+                dataQueue[cat].push_back(frame);
+        }
         int length = 0;
         for (int i = 0; i < numQueues; i++)
             length += dataQueue[i].size();
-        if (mpduAggregateHandler)
+        if (mpduAggregateHandler && !includedInMsduA)
             mpduAggregateHandler->increaseSize(frame,cat);
 
         emit(dataQueueLenSignal, length);

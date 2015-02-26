@@ -169,6 +169,8 @@ class INET_API MpduAggregateHandler : public cOwnedObject
         virtual void setRequestProcedure(const bool &p) {requestProcedure = p;}
         virtual bool getRequestProcedure() const {return requestProcedure;}
 
+        virtual bool setMpduA(Ieee80211DataOrMgmtFrame *,const int &) {return false;}
+
 };
 
 }
