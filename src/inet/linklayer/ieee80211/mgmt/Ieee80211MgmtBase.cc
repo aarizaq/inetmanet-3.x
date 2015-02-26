@@ -229,7 +229,25 @@ cMessage *Ieee80211MgmtBase::enqueue(cMessage *msg)
         return msg;
     }
     else {
-        dataQueue[cat].push_back(frame);
+        // if broadcast and musticast frames must be transmit before
+        if ((frame->getReceiverAddress().isBroadcast() || frame->getReceiverAddress().isMulticast()))
+        {
+            if (!dataQueue[cat].empty() && !dataQueue[cat].back()->getReceiverAddress().isBroadcast() && !dataQueue[cat].back()->getReceiverAddress().isMulticast())
+            {
+                // search for the first non multicast frame
+                auto it = dataQueue[cat].begin();
+                for (;it != dataQueue[cat].end();++it)
+                {
+                    if (!(*it)->getReceiverAddress().isBroadcast() && !(*it)->getReceiverAddress().isMulticast())
+                        break;
+                }
+                dataQueue[cat].insert(it,frame);
+            }
+            else
+                dataQueue[cat].push_back(frame);
+        }
+        else
+            dataQueue[cat].push_back(frame);
         int length = 0;
         for (int i = 0; i < numQueues; i++)
             length += dataQueue[i].size();
@@ -258,7 +276,25 @@ cMessage *Ieee80211MgmtBase::enqueue(cMessage *msg, const int &cat)
         return msg;
     }
     else {
-        dataQueue[cat].push_back(frame);
+        // if broadcast and musticast frames must be transmit before
+        if ((frame->getReceiverAddress().isBroadcast() || frame->getReceiverAddress().isMulticast()))
+        {
+            if (!dataQueue[cat].empty() && !dataQueue[cat].back()->getReceiverAddress().isBroadcast() && !dataQueue[cat].back()->getReceiverAddress().isMulticast())
+            {
+                // search for the first non multicast frame
+                auto it = dataQueue[cat].begin();
+                for (;it != dataQueue[cat].end();++it)
+                {
+                    if (!(*it)->getReceiverAddress().isBroadcast() && !(*it)->getReceiverAddress().isMulticast())
+                        break;
+                }
+                dataQueue[cat].insert(it,frame);
+            }
+            else
+                dataQueue[cat].push_back(frame);
+        }
+        else
+            dataQueue[cat].push_back(frame);
         int length = 0;
         for (int i = 0; i < numQueues; i++)
             length += dataQueue[i].size();
