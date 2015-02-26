@@ -28,7 +28,7 @@
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtBase.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211MpduA.h"
 
-// TODO: MDPU-A configure inter-space mupdu-a subframe, now the value is constant.
+// TODO: MSDU-A Handle MSDU-A frames.
 // TODO: MDPU-A check sates, verify the backoff procedure is correct
 
 namespace inet {
