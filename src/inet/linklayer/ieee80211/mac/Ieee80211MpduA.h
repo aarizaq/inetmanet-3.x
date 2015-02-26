@@ -23,11 +23,11 @@ namespace inet {
 namespace ieee80211 {
 
 
-class Ieee80211MpduA : public Ieee80211DataOrMgmtFrame
+class Ieee80211MpduA : public Ieee80211DataFrame
 {
 private:
     struct PacketStruct{
-        Ieee80211DataOrMgmtFrame * pkt;
+        Ieee80211DataFrame * pkt;
         unsigned int shareCount;
         int numRetries = 0;
         PacketStruct(){
@@ -41,11 +41,11 @@ private:
 public:
     Ieee80211MpduA(const char *name=nullptr, int kind=0);
     Ieee80211MpduA(Ieee80211MpduA &);
-    Ieee80211MpduA(Ieee80211DataOrMgmtFrame *);
+    Ieee80211MpduA(Ieee80211DataFrame *);
     virtual Ieee80211MpduA * dup(){return new Ieee80211MpduA(*this);}
     virtual ~Ieee80211MpduA();
     Ieee80211MpduA& operator=(const Ieee80211MpduA& msg);
-    virtual Ieee80211DataOrMgmtFrame *getPacket(unsigned int i) const;
+    virtual Ieee80211DataFrame *getPacket(unsigned int i) const;
     virtual int getNumRetries(const unsigned int &i) const;
     virtual void setNumRetries(const unsigned int &i,const int &val);
 
@@ -58,17 +58,17 @@ public:
         return 0;
     }
 
-    Ieee80211DataOrMgmtFrame *decapsulatePacket(unsigned int i);
+    Ieee80211DataFrame *decapsulatePacket(unsigned int i);
     virtual unsigned int getEncapSize() {return encapsulateVector.size();}
 
-    virtual void pushFront(Ieee80211DataOrMgmtFrame *);
-    virtual void pushBack(Ieee80211DataOrMgmtFrame *);
+    virtual void pushFront(Ieee80211DataFrame *);
+    virtual void pushBack(Ieee80211DataFrame *);
 
-    virtual void pushFront(Ieee80211DataOrMgmtFrame *,int);
-    virtual void pushBack(Ieee80211DataOrMgmtFrame *,int);
+    virtual void pushFront(Ieee80211DataFrame *,int);
+    virtual void pushBack(Ieee80211DataFrame *,int);
 
-    virtual Ieee80211DataOrMgmtFrame *popFront();
-    virtual Ieee80211DataOrMgmtFrame *popBack();
+    virtual Ieee80211DataFrame *popFront();
+    virtual Ieee80211DataFrame *popBack();
     virtual bool haveBlock(){return !encapsulateVector.empty();}
     virtual void forEachChild(cVisitor *v);
 

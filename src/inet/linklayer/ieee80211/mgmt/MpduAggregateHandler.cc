@@ -338,7 +338,7 @@ int MpduAggregateHandler::findAddressFree(const MACAddress &addr ,int cat)
     return 0;
 }
 
-Ieee80211MpduA* MpduAggregateHandler::getBlock(Ieee80211DataOrMgmtFrame *frame,int maxPkSize, int64_t maxByteSize, int cat, int minSize)
+Ieee80211MpduA* MpduAggregateHandler::getBlock(Ieee80211DataFrame *frame,int maxPkSize, int64_t maxByteSize, int cat, int minSize)
 {
 
     if (maxByteSize == -1)

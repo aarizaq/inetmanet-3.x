@@ -51,21 +51,16 @@ Ieee80211MsduA::~Ieee80211MsduA()
     _deleteEncapVector();
 }
 
-Ieee80211MsduA::Ieee80211MsduA(Ieee80211DataOrMgmtFrame *frame) :
-        Ieee80211DataOrMgmtFrame(*frame)
-{
-    encapsulateVector.clear();
-    pushBack(frame);
-}
+
 
 Ieee80211MsduA::Ieee80211MsduA(const char *name, int kind) :
-        Ieee80211DataOrMgmtFrame(name, kind)
+        Ieee80211DataFrame(name, kind)
 {
     encapsulateVector.clear();
 }
 
 Ieee80211MsduA::Ieee80211MsduA(Ieee80211MsduA &other) :
-        Ieee80211DataOrMgmtFrame()
+        Ieee80211DataFrame()
 {
     encapsulateVector.clear();
     setName(other.getName());
@@ -119,7 +114,7 @@ void Ieee80211MsduA::_deleteEncapVector()
     }
 }
 
-Ieee80211DataOrMgmtFrame *Ieee80211MsduA::popBack()
+Ieee80211MsduASubframe *Ieee80211MsduA::popBack()
 {
     if (encapsulateVector.empty())
         return nullptr;
@@ -138,14 +133,14 @@ Ieee80211DataOrMgmtFrame *Ieee80211MsduA::popBack()
         return msg;
     }
 #endif
-    Ieee80211DataOrMgmtFrame *msg = encapsulateVector.back()->pkt;
+    Ieee80211MsduASubframe *msg = encapsulateVector.back()->pkt;
     encapsulateVector.pop_back();
     if (msg)
         drop(msg);
     return msg;
 }
 
-Ieee80211DataOrMgmtFrame *Ieee80211MsduA::popFrom()
+Ieee80211MsduASubframe *Ieee80211MsduA::popFrom()
 {
     if (encapsulateVector.empty())
         return nullptr;
@@ -165,14 +160,14 @@ Ieee80211DataOrMgmtFrame *Ieee80211MsduA::popFrom()
         return msg;
     }
 #endif
-    Ieee80211DataOrMgmtFrame *msg = encapsulateVector.front()->pkt;
+    Ieee80211MsduASubframe *msg = encapsulateVector.front()->pkt;
     encapsulateVector.erase(encapsulateVector.begin());
     if (msg)
         drop(msg);
     return msg;
 }
 
-void Ieee80211MsduA::pushBack(Ieee80211DataOrMgmtFrame *pkt)
+void Ieee80211MsduA::pushBack(Ieee80211MsduASubframe *pkt)
 {
     if (pkt == nullptr)
         return;
@@ -212,7 +207,7 @@ void Ieee80211MsduA::pushBack(Ieee80211DataOrMgmtFrame *pkt)
     encapsulateVector.push_back(shareStructPtr);
 }
 
-void Ieee80211MsduA::pushFrom(Ieee80211DataOrMgmtFrame *pkt)
+void Ieee80211MsduA::pushFrom(Ieee80211MsduASubframe *pkt)
 {
     if (pkt == nullptr)
         return;
@@ -253,7 +248,7 @@ void Ieee80211MsduA::_detachShareVector(unsigned int i)
     }
 }
 
-Ieee80211DataOrMgmtFrame *Ieee80211MsduA::getPacket(unsigned int i) const
+Ieee80211MsduASubframe *Ieee80211MsduA::getPacket(unsigned int i) const
 {
 
     if (i >= encapsulateVector.size())

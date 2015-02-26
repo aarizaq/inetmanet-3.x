@@ -374,7 +374,7 @@ void Ieee80211MgmtBase::requestPacket()
         emit(queueingTimeSignal, simTime() - msg->getArrivalTime());
         if (mpduAggregateHandler && dataFrame)
         {
-            Ieee80211DataOrMgmtFrame * frame = dynamic_cast<Ieee80211DataOrMgmtFrame*>(msg);
+            Ieee80211DataFrame * frame = dynamic_cast<Ieee80211DataFrame*>(msg);
             if (frame)
             {
                 if (mpduAggregateHandler->isAllowAddress(frame->getReceiverAddress()))
@@ -409,7 +409,7 @@ void Ieee80211MgmtBase::requestPacket(const int &cat)
         emit(queueingTimeSignal, simTime() - msg->getArrivalTime());
         if (mpduAggregateHandler && dataFrame)
         {
-            Ieee80211DataOrMgmtFrame * frame = dynamic_cast<Ieee80211DataOrMgmtFrame*>(msg);
+            Ieee80211DataFrame * frame = dynamic_cast<Ieee80211DataFrame*>(msg);
             if (frame)
             {
                 if (mpduAggregateHandler->isAllowAddress(frame->getReceiverAddress()))

@@ -279,7 +279,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
       bool reqBlockAck = false;
 
 
-      typedef std::deque<Ieee80211DataOrMgmtFrame *> MpduAInReception;
+      typedef std::deque<Ieee80211DataFrame *> MpduAInReception;
       typedef std::vector<int> Confirmed;
       class MpduAInProc : public cObject
       {
@@ -678,7 +678,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
 
     virtual void retryBlockAckReq();
 
-    virtual bool processMpduA(Ieee80211DataOrMgmtFrame *frame);
+    virtual bool processMpduA(Ieee80211DataFrame *frame);
     virtual void sendBLOCKACKFrameOnEndSIFS();
     virtual bool isMpduA(Ieee80211Frame *frame);
     virtual Ieee80211MpduDelimiter* buildMpduDataFrame(Ieee80211Frame *frameToSend, const int &retry, const bool &);

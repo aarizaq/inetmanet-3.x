@@ -48,21 +48,21 @@ Ieee80211MpduA::~Ieee80211MpduA()
     _deleteEncapVector();
 }
 
-Ieee80211MpduA::Ieee80211MpduA(Ieee80211DataOrMgmtFrame *frame) :
-        Ieee80211DataOrMgmtFrame(*frame)
+Ieee80211MpduA::Ieee80211MpduA(Ieee80211DataFrame *frame) :
+        Ieee80211DataFrame(*frame)
 {
     encapsulateVector.clear();
     pushBack(frame);
 }
 
 Ieee80211MpduA::Ieee80211MpduA(const char *name, int kind) :
-        Ieee80211DataOrMgmtFrame(name, kind)
+        Ieee80211DataFrame(name, kind)
 {
     encapsulateVector.clear();
 }
 
 Ieee80211MpduA::Ieee80211MpduA(Ieee80211MpduA &other) :
-        Ieee80211DataOrMgmtFrame()
+        Ieee80211DataFrame()
 {
     encapsulateVector.clear();
     setName(other.getName());
@@ -103,7 +103,7 @@ void Ieee80211MpduA::_deleteEncapVector()
     }
 }
 
-Ieee80211DataOrMgmtFrame *Ieee80211MpduA::popBack()
+Ieee80211DataFrame *Ieee80211MpduA::popBack()
 {
     if (encapsulateVector.empty())
         return nullptr;
@@ -113,14 +113,14 @@ Ieee80211DataOrMgmtFrame *Ieee80211MpduA::popBack()
         throw cRuntimeError(this, "popBack(): packet length is smaller than encapsulated packet");
     if (encapsulateVector.back()->pkt->getOwner() != this)
         take(encapsulateVector.back()->pkt);
-    Ieee80211DataOrMgmtFrame *msg = encapsulateVector.back()->pkt;
+    Ieee80211DataFrame *msg = encapsulateVector.back()->pkt;
     encapsulateVector.pop_back();
     if (msg)
         drop(msg);
     return msg;
 }
 
-Ieee80211DataOrMgmtFrame *Ieee80211MpduA::popFront()
+Ieee80211DataFrame *Ieee80211MpduA::popFront()
 {
     if (encapsulateVector.empty())
         return nullptr;
@@ -130,26 +130,26 @@ Ieee80211DataOrMgmtFrame *Ieee80211MpduA::popFront()
         throw cRuntimeError(this, "popFrom(): packet length is smaller than encapsulated packet");
     if (encapsulateVector.front()->pkt->getOwner() != this)
         take(encapsulateVector.front()->pkt);
-    Ieee80211DataOrMgmtFrame *msg = encapsulateVector.front()->pkt;
+    Ieee80211DataFrame *msg = encapsulateVector.front()->pkt;
     encapsulateVector.erase(encapsulateVector.begin());
     if (msg)
         drop(msg);
     return msg;
 }
 
-void Ieee80211MpduA::pushBack(Ieee80211DataOrMgmtFrame *pkt)
+void Ieee80211MpduA::pushBack(Ieee80211DataFrame *pkt)
 {
     pushBack(pkt, 0);
 }
 
-void Ieee80211MpduA::pushFront(Ieee80211DataOrMgmtFrame *pkt)
+void Ieee80211MpduA::pushFront(Ieee80211DataFrame *pkt)
 {
     pushFront(pkt, 0);
 }
 
 
 
-void Ieee80211MpduA::pushBack(Ieee80211DataOrMgmtFrame *pkt, int retries)
+void Ieee80211MpduA::pushBack(Ieee80211DataFrame *pkt, int retries)
 {
     if (pkt == nullptr)
         return;
@@ -191,7 +191,7 @@ void Ieee80211MpduA::pushBack(Ieee80211DataOrMgmtFrame *pkt, int retries)
     encapsulateVector.push_back(shareStructPtr);
 }
 
-void Ieee80211MpduA::pushFront(Ieee80211DataOrMgmtFrame *pkt, int retries)
+void Ieee80211MpduA::pushFront(Ieee80211DataFrame *pkt, int retries)
 {
     if (pkt == nullptr)
         return;
@@ -216,7 +216,7 @@ void Ieee80211MpduA::pushFront(Ieee80211DataOrMgmtFrame *pkt, int retries)
 }
 
 
-Ieee80211DataOrMgmtFrame *Ieee80211MpduA::getPacket(unsigned int i) const
+Ieee80211DataFrame *Ieee80211MpduA::getPacket(unsigned int i) const
 {
 
     if (i >= encapsulateVector.size())
@@ -240,12 +240,12 @@ void Ieee80211MpduA::setNumRetries(const unsigned int &i, const int &val)
     encapsulateVector[i]->numRetries = val;
 }
 
-Ieee80211DataOrMgmtFrame *Ieee80211MpduA::decapsulatePacket(unsigned int i)
+Ieee80211DataFrame *Ieee80211MpduA::decapsulatePacket(unsigned int i)
 {
 
     if (i >= encapsulateVector.size())
         return nullptr;
-    Ieee80211DataOrMgmtFrame * pkt = encapsulateVector[i]->pkt;
+    Ieee80211DataFrame * pkt = encapsulateVector[i]->pkt;
     if (getBitLength() > 0)
         setBitLength(getBitLength() - encapsulateVector.front()->pkt->getBitLength());
     if (pkt->getOwner() != this)

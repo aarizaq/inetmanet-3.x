@@ -55,7 +55,7 @@ void Ieee80211Mac::retryCurrentMpduA()
             Ieee80211MpduA  *mpdua = check_and_cast<Ieee80211MpduA*>(msg);
             while (mpdua->getNumEncap() > 0)
             {
-                Ieee80211DataOrMgmtFrame * frame = mpdua->popFront();
+                Ieee80211DataFrame * frame = mpdua->popFront();
                 frame->setMACArrive(simTime());
                 mpduInTransmission->pushBack(frame);
             }
@@ -190,7 +190,7 @@ void Ieee80211Mac::sendNextFrameMpduA(cMessage *msg)
 
 
 // Handle MPDU-A frames.
-bool Ieee80211Mac::processMpduA(Ieee80211DataOrMgmtFrame *frame)
+bool Ieee80211Mac::processMpduA(Ieee80211DataFrame *frame)
 {
 
     // if is correct store the frame in the confirmation array
@@ -479,9 +479,9 @@ void Ieee80211Mac::processBlockAckFrame(Ieee80211Frame *frameToSend)
                 Ieee80211MpduA  *mpdua = check_and_cast<Ieee80211MpduA*>(msg);
                 while (mpdua->getNumEncap() > 0)
                 {
-                    Ieee80211DataOrMgmtFrame * frame = mpdua->popFront();
+                    Ieee80211DataFrame * dataFrame = mpdua->popFront();
                     frame->setMACArrive(simTime());
-                    mpduInTransmission->pushBack(frame);
+                    mpduInTransmission->pushBack(dataFrame);
                 }
             }
         }
