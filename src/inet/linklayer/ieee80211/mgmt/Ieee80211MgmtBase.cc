@@ -249,10 +249,11 @@ cMessage *Ieee80211MgmtBase::enqueue(cMessage *msg)
         {
             if (mpduAggregateHandler)
             {
-                includedInMsduA = mpduAggregateHandler->setMpduA(frame,cat);
+                includedInMsduA = mpduAggregateHandler->setMsduA((Ieee80211DataFrame *)frame,cat); // it is safe, the frame must be Ieee80211DataFrame if the core arrive here
+                if (!includedInMsduA)
                     dataQueue[cat].push_back(frame);
             }
-            if (!includedInMsduA)
+            else
                 dataQueue[cat].push_back(frame);
         }
         int length = 0;
@@ -305,10 +306,11 @@ cMessage *Ieee80211MgmtBase::enqueue(cMessage *msg, const int &cat)
         {
             if (mpduAggregateHandler)
             {
-                includedInMsduA = mpduAggregateHandler->setMpduA(frame,cat); // return true if the frame is included in a msdu-A frame.
+                includedInMsduA = mpduAggregateHandler->setMsduA((Ieee80211DataFrame *)frame,cat); // it is safe, the frame must be Ieee80211DataFrame if the core arrive here, return true if the frame is included in a msdu-A frame.
+                if (!includedInMsduA)
                     dataQueue[cat].push_back(frame);
             }
-            if (!includedInMsduA)
+            else
                 dataQueue[cat].push_back(frame);
         }
         int length = 0;

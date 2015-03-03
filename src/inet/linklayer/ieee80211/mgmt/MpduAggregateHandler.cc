@@ -709,6 +709,22 @@ void MpduAggregateHandler::setMacDiscardMpdu(const MACAddress &addr)
     */
 }
 
+bool MpduAggregateHandler::setMsduA(Ieee80211DataFrame * frame, const int &cat)
+{
+    // check if other frames with the same destination are available.
+    auto itDest = categories[cat].numFramesDestination.find(addr);
+    if (itDest != categories[cat].numFramesDestination.end())
+        return false; // no frames
+    if (itDest->second <= 0)
+    {
+        categories[cat].numFramesDestination.erase(itDest);
+        return false; // no frames
+    }
+    // if frames search for frames of the same type,
+
+    return false;
+}
+
 
 } // namespace ieee80211
 
