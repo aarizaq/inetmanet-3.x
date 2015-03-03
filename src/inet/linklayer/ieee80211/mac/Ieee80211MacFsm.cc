@@ -121,6 +121,11 @@ void Ieee80211Mac::sendNextFrameMpduA(cMessage *msg)
 {
     // search currentAC
     currentAC = -1;
+    // 1/2 usec
+    int64_t sizeDelimiter = (0.25e-6 * par("interFrameMpduATime").doubleValue() * getBitrate());
+    if (sizeDelimiter == 0)
+        interSpaceMpdu = false; // no interspace
+
     for(int i = 0; i < numCategories() ; i++)
     {
         if (transmissionQueue(i)->front() ==  mpduInTransmission)
