@@ -122,9 +122,7 @@ class INET_API MpduAggregateHandler : public cOwnedObject
         virtual void createBlocks(const MACAddress &, int = -1);
         virtual void removeBlock(const MACAddress &, int = -1);
 
-        //
-        virtual void setMacAcceptMpdu(const MACAddress &);
-        virtual void setMacDiscardMpdu(const MACAddress &);
+
 
         // management of frame control
         virtual void prepareADDBA(const MACAddress &);
@@ -168,6 +166,11 @@ class INET_API MpduAggregateHandler : public cOwnedObject
         virtual bool isAllowAddress(const MACAddress &add);
         virtual void setRequestProcedure(const bool &p) {requestProcedure = p;}
         virtual bool getRequestProcedure() const {return requestProcedure;}
+
+        // Include an address in the list of allowed address
+        virtual void setMacAcceptMpdu(const MACAddress &);
+        // remove an address in the list of allowed address
+        virtual void setMacDiscardMpdu(const MACAddress &);
 
         virtual bool setMsduA(Ieee80211DataFrame *,const int &);
 

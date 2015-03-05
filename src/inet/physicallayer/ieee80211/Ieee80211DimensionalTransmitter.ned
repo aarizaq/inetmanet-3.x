@@ -34,7 +34,7 @@ module Ieee80211DimensionalTransmitter extends APSKDimensionalTransmitter
     parameters:
         // TODO: remove parameters when base module is changed
         int channelNumber;
-        string opMode @enum("b","g","a","p");
+        string opMode @enum("b","g","a","p","n");
         string preambleMode @enum("long", "short");
         @class(Ieee80211DimensionalTransmitter);
 }

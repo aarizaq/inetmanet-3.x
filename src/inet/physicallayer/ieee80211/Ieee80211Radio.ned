@@ -36,7 +36,7 @@ module Ieee80211Radio extends NarrowbandRadioBase
 {
     parameters:
         int channelNumber = default(0);                               // initial channel number
-        string opMode @enum("b","g","a","p") = default("g");          // operation mode
+        string opMode @enum("b","g","a","p","n") = default("g");          // operation mode
         string preambleMode @enum("long", "short") = default("long"); // preamble length
         carrierFrequency @unit(Hz) = default(2.412GHz);               // the center frequency of the band is automatically set by the radio
         bandwidth @unit(Hz) = default(2MHz);

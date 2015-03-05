@@ -15,6 +15,7 @@
 
 #include "inet/linklayer/ieee80211/mgmt/MpduAggregateHandler.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211MpduA.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA.h"
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtFrames_m.h"
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtBase.h"
 
@@ -686,41 +687,111 @@ void MpduAggregateHandler::sendDELBA(const MACAddress &addr)
     queueManagement->push_back(frame);
 }
 
-// Configire mac mthods
+
 void MpduAggregateHandler::setMacAcceptMpdu(const MACAddress &addr)
 {
-    /*
-    EV << "Tuning to channel #" << channelNum << "\n";
-    cMessage *msg = new cMessage("changeChannel", RADIO_C_CONFIGURE);
-    msg->setControlInfo(configureCommand);
-
-    send(msg, "macOut");
-    */
+    auto it = listAllowAddress.find(addr);
+    if (it == listAllowAddress.end())
+    {
+        ADDBAInfo *infoAdda = new ADDBAInfo();
+        if (!requestProcedure)
+            infoAdda->state = SENDBLOCK;
+        listAllowAddress[addr] = infoAdda;
+    }
 }
 
 void MpduAggregateHandler::setMacDiscardMpdu(const MACAddress &addr)
 {
-    /*
-    EV << "Tuning to channel #" << channelNum << "\n";
-    cMessage *msg = new cMessage("changeChannel", RADIO_C_CONFIGURE);
-    msg->setControlInfo(configureCommand);
-
-    send(msg, "macOut");
-    */
+    auto it = listAllowAddress.find(addr);
+    if (it != listAllowAddress.end())
+    {
+        delete it->second;
+        listAllowAddress.erase(it);
+    }
 }
 
 bool MpduAggregateHandler::setMsduA(Ieee80211DataFrame * frame, const int &cat)
 {
+
+    return false;
+
     // check if other frames with the same destination are available.
     auto itDest = categories[cat].numFramesDestination.find(frame->getReceiverAddress());
     if (itDest != categories[cat].numFramesDestination.end())
         return false; // no frames
+    MACAddress dest = frame->getReceiverAddress();
+    MACAddress addr3 = frame->getAddress3();
+    MACAddress addr4 = frame->getAddress4();
+
     if (itDest->second <= 0)
     {
         categories[cat].numFramesDestination.erase(itDest);
         return false; // no frames
     }
     // if frames search for frames of the same type,
+    // search frames to the same destination and characteristics
+
+    int64_t maxSize = 7000;
+
+    // search for msda-a in the queues
+    for (auto it = categories[cat].queue->begin() ;it != categories[cat].queue->end();)
+    {
+        Ieee80211MsduA *frameMsda = dynamic_cast<Ieee80211MsduA*>(*it); // check if msdu-a
+        if (frameMsda == nullptr)
+        {
+            ++it;
+            continue;
+        }
+
+        if (frameMsda->getByteLength() + frame->getByteLength() >= maxSize)
+        {
+            ++it;
+            continue;
+        }
+
+        MACAddress destAux = frameMsda->getReceiverAddress();
+        MACAddress addr3Aux = frameMsda->getAddress3();
+        MACAddress addr4Aux = frameMsda->getAddress4();
+        // Compare addresses
+        if (destAux.compareTo(dest) != 0 || addr3Aux.compareTo(addr3) != 0 || addr4Aux.compareTo(addr4) != 0 )
+        {
+            ++it;
+            continue;
+        }
+        // add to the msdu-a
+
+        return true;
+    }
+
+    // search for other frame and create an Msdu-a
+    for (auto it = categories[cat].queue->begin() ;it != categories[cat].queue->end();)
+    {
+
+        Ieee80211MsduA *frameMsda= dynamic_cast<Ieee80211MsduA*>(*it); // check if msdu-a
+        if (frameMsda != nullptr)
+        {
+            ++it;
+            continue;
+        }
+        Ieee80211DataFrame * frameAux = (Ieee80211DataFrame *)(*it);
+        MACAddress destAux = frameAux->getReceiverAddress();
+        MACAddress addr3Aux = frameAux->getAddress3();
+        MACAddress addr4Aux = frameAux->getAddress4();
+        // Compare addresses
+        if (destAux.compareTo(dest) != 0 || addr3Aux.compareTo(addr3) != 0 || addr4Aux.compareTo(addr4) != 0 )
+        {
+            ++it;
+            continue;
+        }
+
+        frameMsda = new Ieee80211MsduA();
+        frameMsda->setReceiverAddress(destAux);
+        frameMsda->setAddress3(addr3Aux);
+        frameMsda->setAddress4(addr4Aux);
+        drop(frameMsda);
+        return true;
+    }
+
 
     return false;
 }
