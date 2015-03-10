@@ -1,6 +1,28 @@
+2015-02-24  Levente Mészáros
+
+	Removed header success rate calculation from Ieee80211BerTableErrorModel.
+	The returned packet error rate value should already include all possible
+	header errors. Updated fingerprints.
+
+	Refactored 802.11 error models to reflect recent changes in the mode descriptors.
+	Introduced bps and Hz units where appropriate. Extracted
+	Ieee80211BerTableErrorModel as a separate error model. Removed opMode and
+	autoHeaderSize parameters for Ieee80211NistErrorModel and
+	Ieee80211YansErrorModel. They rather use the meta data on the transmission.
+
+2015-01-21  Zoltan Bojthe
+
+	Applied C++ source code modernizer.
+
 2014-11-07  ------ inet-2.99.0 released ------
 
 2013-07-25  ====== inet-3.x development started (integration branch) ======
+
+2015-03-04  ------ inet-2.6 released ------
+
+2014-11-07  ------ inet-2.5.1 released ------
+
+2014-10-29  ------ inet-2.5.0 released ------
 
 2014-06-12  ------ inet-2.4.0 released ------
 
@@ -50,4 +72,3 @@
 2011-04-15  Rudolf Hornig
 
 	Added new ieee802.11 model from INETMANET, supporting a,b,g,p modes.
-

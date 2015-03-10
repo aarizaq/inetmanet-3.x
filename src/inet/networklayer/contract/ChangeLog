@@ -1,3 +1,15 @@
+2015-01-21  Zoltan Bojthe
+
+	Applied C++ source code modernizer.
+
+2014-12-16  Zoltan Bojthe
+
+	Fixed defects found by static code analyzer (Coverity).
+
+2014-12-11  Levente Mészáros
+
+	Moved interfaces and module interfaces from common to contract.
+
 2014-11-07  ------ inet-2.99.0 released ------
 
 2014-07-30  Andras Varga
@@ -5,7 +17,7 @@
 	Changes on the inet-3.x branch so far:
 
 	Network layer abstraction (Levente Meszaros, Andras Varga):
-	- added INetworkDatagram, INetworkLayer, INetworkProtocol, 
+	- added INetworkDatagram, INetworkLayer, INetworkProtocol,
 	  INetworkProtocolControlInfo, NetworkProtocolCommand
 
 	Directory restructuring:
@@ -19,6 +31,12 @@
 	- code has been moved into the inet namespace
 
 2013-07-25  ====== inet-3.x development started (integration branch) ======
+
+2015-03-04  ------ inet-2.6 released ------
+
+2014-11-07  ------ inet-2.5.1 released ------
+
+2014-10-29  ------ inet-2.5.0 released ------
 
 2014-06-12  ------ inet-2.4.0 released ------
 

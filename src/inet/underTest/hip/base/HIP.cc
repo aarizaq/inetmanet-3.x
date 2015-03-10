@@ -59,7 +59,7 @@ void HIP::initialize(int stage)
 {
     if (stage==INITSTAGE_LOCAL)
     {
-        ev << "Initializing HIP...\n";
+        EV << "Initializing HIP...\n";
         expectingDnsResp = false;
         expectingRvsDnsResp = false;
         fsmType = cModuleType::get("inet.underTest.hip.base.HipFsm");
@@ -96,8 +96,8 @@ void HIP::specInitialize()
     //partnerHIT = -1; //will get from DNS
     if ((int) this->par("registerAtRVS") == 1)
     {
-        ev<< "hip init3\n";
-        ev << "k" << this->par("RVSAddr").getName() << "k" << endl;
+        EV << "hip init3\n";
+        EV << "k" << this->par("RVSAddr").getName() << "k" << endl;
         //if rvsipaddress.. get rvsip from dns... scheduleAt
         scheduleAt(this->par("REG_StartTime"),new cPacket("HIP_REGISTER_AT_RVS"));
     }
@@ -171,11 +171,11 @@ void HIP::handleRvsRegistration(cMessage *msg)
     if (msg->isName("HIP_REGISTER_AT_RVS"))
     {
         delete msg;
-        ev<< "rvs selfmsg arrived\n";
+        EV << "rvs selfmsg arrived\n";
         if (rvsIPaddress.isUnspecified())
         {
 
-            ev<< "Starting dns request for " << par("RVSAddr").getName() << endl;
+            EV << "Starting dns request for " << par("RVSAddr").getName() << endl;
 
             // Generating the DNS message
             DNSBaseMsg* dnsReqMsg = new DNSBaseMsg("DNS Request");//the request
@@ -252,7 +252,7 @@ void HIP::handleRvsRegistration(cMessage *msg)
         IPv6ControlInfo *networkControlInfo = check_and_cast<IPv6ControlInfo*>(msg->removeControlInfo());
         srcWorkAddress = networkControlInfo->getDestAddr();
         //set rvs ip, rvs HIT
-        ev << "Getting partner HIT from dns resp \n";
+        EV << "Getting partner HIT from dns resp \n";
         DNSBaseMsg* dnsMsg = check_and_cast<DNSBaseMsg *>(check_and_cast<cPacket *>(msg)->decapsulate());
         _rvsHit.set(dnsMsg->data());
         rvsIPaddress = dnsMsg->addrData().get6();
@@ -289,7 +289,7 @@ void HIP::handleMessage(cMessage *msg)
                 partnerHIT.set(dnsMsg->data());
                 if (listHITtoTriggerDNS.count(partnerHIT) > 0)
                 {
-                    ev<< "DNS response recieved, starting FSM\n";
+                    EV << "DNS response recieved, starting FSM\n";
                     // if (partnerHIT.isUnspecified()) partnerHIT.set(this->par("PARTNER_HIT"));
                     sendDirect(listHITtoTriggerDNS.find(partnerHIT)->second, createStateMachine( dnsMsg->addrData().get6(), partnerHIT), "localIn");
                     listHITtoTriggerDNS.erase(partnerHIT);
@@ -305,7 +305,7 @@ void HIP::handleMessage(cMessage *msg)
         }
         else
         {
-            ev<< "DNS response when not expected, dropping...\n";
+            EV << "DNS response when not expected, dropping...\n";
             delete msg;
         }
     }
@@ -350,7 +350,7 @@ void HIP::handleMessage(cMessage *msg)
         }
         else if (msg->arrivedOn("tcp6In") || msg->arrivedOn("udp6In"))
         {
-            ev << "handleMsgFromNetwork invoke\n";
+            EV << "handleMsgFromNetwork invoke\n";
             handleMsgFromNetwork(msg);
         }
         else if(msg->arrivedOn("fromFsmTrigger")) //process previously received message which was trigger
@@ -390,7 +390,7 @@ void HIP::handleMsgFromTransport(cMessage *msg)
     bool exists = false;
 
     //try to receive HIT from dest address
-    ev<< "Registered dest addr (HIT): " << networkControlInfo->getDestAddr() << endl;;
+    EV << "Registered dest addr (HIT): " << networkControlInfo->getDestAddr() << endl;;
     //original destination address
     IPv6Address originalHIT = networkControlInfo->getDestAddr();
 
@@ -399,7 +399,7 @@ void HIP::handleMsgFromTransport(cMessage *msg)
     {
         if (originalHIT == hitToIpMapIt->first)
         {
-            ev<< "Existing HIP association found...sending msg to it....FROM_TRANSPORT\n";
+            EV << "Existing HIP association found...sending msg to it....FROM_TRANSPORT\n";
             msg->setControlInfo(networkControlInfo);
             sendDirect(msg, findStateMachine(hitToIpMapIt->second->fsmId),"localIn");
             exists = true;
@@ -411,7 +411,7 @@ void HIP::handleMsgFromTransport(cMessage *msg)
     {
         // Need IP address for target HIT
         // Sending DNS
-        ev<< "Host not associated, need IP address, sending out DNS...\n";
+        EV << "Host not associated, need IP address, sending out DNS...\n";
         msg->setControlInfo(networkControlInfo);
         listHITtoTriggerDNS[originalHIT] = msg;
 
@@ -484,7 +484,7 @@ void HIP::handleMsgFromNetwork(cMessage *msg)
     if (dynamic_cast<HIPHeaderMessage *>(msg))
     {
         HIPHeaderMessage *hipHeader = check_and_cast<HIPHeaderMessage *>(msg);
-        EV<< "Its a hip header\n";
+        EV << "Its a hip header\n";
         //if dest locator's SPI is unknown -it is an I1 msg
         int fsmId = -1;
         if (hitToIpMap.find(hipHeader->getSrcHIT()) != hitToIpMap.end())
@@ -518,7 +518,7 @@ void HIP::handleMsgFromNetwork(cMessage *msg)
         ESPMessage *espHeader = check_and_cast<ESPMessage *>(msg);
         //TODO check if esp header exists
         //which spi?
-        EV<< "Got esp head: " << espHeader->getEsp()->getSpi() << endl;
+        EV << "Got esp head: " << espHeader->getEsp()->getSpi() << endl;
         int spi = espHeader->getEsp()->getSpi();
         //decapsulating the msg
         //cPacket *transportPacket = msg->decapsulate();

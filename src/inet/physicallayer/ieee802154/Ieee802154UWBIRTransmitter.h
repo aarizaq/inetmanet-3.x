@@ -61,7 +61,6 @@ class INET_API Ieee802154UWBIRTransmitter : public TransmitterBase
 
   public:
     virtual Ieee802154UWBIRMode getRadioConfiguration() const {return cfg;}
-    virtual void setChannelNumber(int newChannelNumber);
     Ieee802154UWBIRTransmitter();
 
     virtual const ITransmission *createTransmission(const IRadio *transmitter, const cPacket *macFrame, const simtime_t startTime) const override;

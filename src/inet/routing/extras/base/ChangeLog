@@ -1,6 +1,20 @@
+2015-01-21  Zoltan Bojthe
+
+	Applied C++ source code modernizer.
+
+2015-01-13  Zoltan Bojthe
+
+	Fixed defects found by static code analyzer (Coverity).
+
 2014-11-07  ------ inet-2.99.0 released ------
 
 2013-07-25  ====== inet-3.x development started (integration branch) ======
+
+2015-03-04  ------ inet-2.6 released ------
+
+2014-11-07  ------ inet-2.5.1 released ------
+
+2014-10-29  ------ inet-2.5.0 released ------
 
 2014-06-12  ------ inet-2.4.0 released ------
 
@@ -26,7 +40,6 @@
 
 	We must not send ICMP error in reply to any bcast/mcast packet, but
 	network-directed bcasts (e.g. 10.0.0.255) were checked for.
-
 
 2013-08-22  ------ inet-2.2.0 released ------
 

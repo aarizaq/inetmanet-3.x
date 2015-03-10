@@ -41,21 +41,19 @@ class INET_API MACAddress
   private:
     uint64 address;    // 6*8=48 bit address, lowest 6 bytes are used, highest 2 bytes are always zero
     static unsigned int autoAddressCtr;    // global counter for generateAutoAddress()
-    static bool simulationLifetimeListenerAdded;
+    static bool simulationLifecycleListenerAdded;
     bool macAddress64;
 
   public:
 #if OMNETPP_VERSION >= 0x500
-    class SimulationLifetimeListener : public cISimulationLifetimeListener
+    class SimulationLifecycleListener : public cISimulationLifecycleListener
     {
-        virtual void lifetimeEvent(SimulationLifetimeEventType eventType, cObject *details)
-        {
+        virtual void lifecycleEvent(SimulationLifecycleEventType eventType, cObject *details) {
             if (eventType == LF_PRE_NETWORK_INITIALIZE)
                 autoAddressCtr = 0;
         }
 
-        virtual void listenerRemoved()
-        {
+        virtual void listenerRemoved() {
             delete this;
         }
     };

@@ -31,7 +31,8 @@
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211PassiveQueue.h"
 #include "inet/common/lifecycle/ILifecycle.h"
 #include "inet/physicallayer/contract/IRadio.h"
-#include "inet/physicallayer/ieee80211/Ieee80211Modulation.h"
+#include "inet/physicallayer/ieee80211/mode/IIeee80211Mode.h"
+#include "inet/physicallayer/ieee80211/mode/Ieee80211ModeSet.h"
 #include "inet/linklayer/base/MACProtocolBase.h"
 
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
@@ -121,17 +122,10 @@ class INET_API Ieee80211Mac : public MACProtocolBase
 
     RateControlMode rateControlMode = (RateControlMode)-1;
 
-    Ieee80211PreambleMode wifiPreambleType = (Ieee80211PreambleMode)-1;
-    ModulationType recFrameModulationType;
+    const IIeee80211Mode *recFrameModulation = nullptr;
     bool validRecMode = false;
     bool useModulationParameters = false;
     bool prioritizeMulticast = false;
-
-    // used by 11n
-    double carrierFrequency;
-    ModulationType controlFrameModulationType;
-    ModulationType transmisionMode;
-    ModulationType basicTransmisionMode;
 
   protected:
     bool isInHandleWithFSM = false;
@@ -143,13 +137,14 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     //@{
     /** MAC address */
     MACAddress address;
-    char opMode = 0;
+    const Ieee80211ModeSet *modeSet = nullptr;
     /** The bitrate is used to send unicast data and mgmt frames; be sure to use a valid 802.11 bitrate */
-    double bitrate = NaN;
+    const IIeee80211Mode *dataFrameMode = nullptr;
+
 
     /** The basic bitrate (1 or 2 Mbps) is used to transmit control frames and multicast/broadcast frames */
-    double basicBitrate = NaN;
-    double controlBitRate = NaN;
+    const IIeee80211Mode *basicFrameMode = nullptr;
+    const IIeee80211Mode *controlFrameMode = nullptr;
 
     // Variables used by the auto bit rate
     bool forceBitRate = false;    //if true the
@@ -707,7 +702,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
 
     virtual bool isBackoffPending();
 
-    ModulationType getControlAnswerMode(ModulationType reqMode);
+    const IIeee80211Mode *getControlAnswerMode(const IIeee80211Mode *reqMode);
     //@}
 
     virtual void sendUp(cMessage *msg) override;

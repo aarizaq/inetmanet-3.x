@@ -1625,7 +1625,7 @@ void HwmpProtocol::forwardPathError(PathError perr)
 std::vector<std::pair<uint32_t, MACAddress> > HwmpProtocol::getPerrReceivers(const
         std::vector<HwmpFailedDestination> &failedDest)
 {
-    ev<<"getPerrReceivers"<<endl;
+    EV << "getPerrReceivers"<<endl;
     HwmpRtable::PrecursorList retval;
     for (unsigned int i = 0; i < failedDest.size(); i++)
     {

@@ -1,9 +1,17 @@
+2015-01-21  Zoltan Bojthe
+
+	Applied C++ source code modernizer.
+
+2014-11-25  Florian Meier
+
+	Added range computation for BreakpointPathLoss.
+
 2014-11-07  ------ inet-2.99.0 released ------
 
 2014-10-31  Levente Meszaros
 
 	Added initial implementation:
-	BreakpointPathLoss, FreeSpacePathLoss, LogNormalShadowing, NakagamiFading, 
+	BreakpointPathLoss, FreeSpacePathLoss, LogNormalShadowing, NakagamiFading,
 	RayleighFading, RicianFading, SUIPathLoss, TwoRayGroundReflection,
 	UWBIRStochasticPathLoss
 

@@ -19,8 +19,7 @@
 #define __INET_IEEE80211ERRORMODELBASE_H
 
 #include "inet/physicallayer/base/ErrorModelBase.h"
-#include "inet/physicallayer/common/ModulationType.h"
-#include "inet/physicallayer/ieee80211/BerParseFile.h"
+#include "inet/physicallayer/ieee80211/mode/IIeee80211Mode.h"
 
 namespace inet {
 
@@ -29,18 +28,10 @@ namespace physicallayer {
 class INET_API Ieee80211ErrorModelBase : public ErrorModelBase
 {
   protected:
-    // TODO: remove opMode from here and also from BerParseFile
-    char opMode;
-    bool autoHeaderSize;
-    BerParseFile *berTableFile;
-
-  protected:
-    virtual void initialize(int stage) override;
-    virtual double GetChunkSuccessRate(ModulationType mode, double snr, uint32_t nbits) const = 0;
+    virtual double GetChunkSuccessRate(const IIeee80211ChunkMode *chunkMode, double snr, uint32_t nbits) const = 0;
 
   public:
     Ieee80211ErrorModelBase();
-    virtual ~Ieee80211ErrorModelBase();
 
     virtual double computePacketErrorRate(const ISNIR *snir) const override;
     virtual double computeBitErrorRate(const ISNIR *snir) const override;

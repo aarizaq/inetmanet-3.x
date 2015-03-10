@@ -62,7 +62,7 @@ void DNSClient::handleMessage(cPacket* msg)
     }
     else
     {
-    	ev << "Packet not a DNSRequest, dropping...";
+    	EV << "Packet not a DNSRequest, dropping...";
         delete msg;
     }
 }

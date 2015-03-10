@@ -22,6 +22,8 @@
 #include <algorithm>
 #include <fstream>
 #include "inet/common/IntervalTree.h"
+#include "inet/common/TrailFigure.h"
+#include "inet/environment/MaterialRegistry.h"
 #include "inet/physicallayer/contract/ISNIR.h"
 #include "inet/physicallayer/contract/INeighborCache.h"
 #include "inet/physicallayer/contract/IRadioMedium.h"
@@ -31,7 +33,6 @@
 #include "inet/physicallayer/contract/IAnalogModel.h"
 #include "inet/physicallayer/contract/IBackgroundNoise.h"
 #include "inet/linklayer/common/MACAddress.h"
-#include "inet/common/TrailFigure.h"
 
 namespace inet {
 
@@ -63,8 +64,15 @@ class INET_API RadioMedium : public cSimpleModule, public cListener, public IRad
         const ISNIR *snir;
         const IReceptionDecision *decision;
 
+      private:
+        ReceptionCacheEntry(const ReceptionCacheEntry & other);
+        ReceptionCacheEntry & operator=(const ReceptionCacheEntry & other);
+
       public:
         ReceptionCacheEntry();
+        ReceptionCacheEntry(ReceptionCacheEntry && other);
+        ReceptionCacheEntry & operator=(ReceptionCacheEntry && other);
+        virtual ~ReceptionCacheEntry();
     };
 
     /**
@@ -533,7 +541,7 @@ class INET_API RadioMedium : public cSimpleModule, public cListener, public IRad
     virtual Coord getConstraintAreaMin() const { return constraintAreaMin; }
     virtual Coord getConstraintAreaMax() const { return constraintAreaMax; }
 
-    virtual const Material *getMaterial() const override { return Material::getMaterial("air"); }
+    virtual const Material *getMaterial() const override { return MaterialRegistry::getMaterial("air"); }
     virtual const IPropagation *getPropagation() const override { return propagation; }
     virtual const IPathLoss *getPathLoss() const override { return pathLoss; }
     virtual const IObstacleLoss *getObstacleLoss() const override { return obstacleLoss; }
