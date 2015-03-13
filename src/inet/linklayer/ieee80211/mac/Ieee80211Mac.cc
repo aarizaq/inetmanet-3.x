@@ -75,7 +75,7 @@ void Ieee80211Mac::initializeCategories()
         os << i;
         std::string strAifs = "AIFSN" + os.str();
         std::string strTxop = "TXOP" + os.str();
-        std::string strSaveSize = "saveSize" + os.str();
+        // std::string strSaveSize = "saveSize" + os.str();
         if (hasPar(strAifs.c_str()) && hasPar(strTxop.c_str()))
         {
             AIFSN(i) = par(strAifs.c_str());
@@ -83,7 +83,7 @@ void Ieee80211Mac::initializeCategories()
         }
         else
             throw cRuntimeError("parameters %s , %s don't exist", strAifs.c_str(), strTxop.c_str());
-        edcCAF[i].saveSize = par(strSaveSize.c_str());
+        edcCAF[i].saveSize = 100;//par(strSaveSize.c_str());
     }
     if (numCategories() == 1)
         AIFSN(0) = par("AIFSN");
@@ -333,6 +333,9 @@ void Ieee80211Mac::initialize(int stage)
         endTimeout = new cMessage("Timeout");
         endReserve = new cMessage("Reserve");
         mediumStateChange = new cMessage("MediumStateChange");
+
+        // obtain pointer to external queue
+        initializeQueueModule();    //FIXME STAGE: this should be in L2 initialization!!!!
 
         // state variables
         fsm.setName("Ieee80211Mac State Machine");
