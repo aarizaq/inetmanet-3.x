@@ -334,9 +334,6 @@ void Ieee80211Mac::initialize(int stage)
         endReserve = new cMessage("Reserve");
         mediumStateChange = new cMessage("MediumStateChange");
 
-        // obtain pointer to external queue
-        initializeQueueModule();    //FIXME STAGE: this should be in L2 initialization!!!!
-
         // state variables
         fsm.setName("Ieee80211Mac State Machine");
         mode = DCF;
@@ -520,7 +517,7 @@ void Ieee80211Mac::initializeQueueModule()
 {
     // use of external queue module is optional -- find it if there's one specified
     if (par("queueModule").stringValue()[0]) {
-        cModule *module = getParentModule()->getSubmodule(par("queueModule").stringValue());
+        cModule *module = getModuleFromPar<cModule>(par("queueModule"), this);
         queueModule = check_and_cast<Ieee80211PassiveQueue *>(module);
 
         EV_DEBUG << "Requesting first two frames from queue module\n";
