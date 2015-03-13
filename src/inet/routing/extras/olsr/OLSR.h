@@ -370,12 +370,12 @@ class OLSR : public ManetRoutingBase
   protected:
 
     //std::priority_queue<TimerQueueElem> *timerQueuePtr;
-    bool topologyChange;
+    bool topologyChange = false;
     virtual void setTopologyChanged(bool p) {topologyChange = p;}
     virtual bool getTopologyChanged() {return topologyChange;}
-    TimerQueue *timerQueuePtr;
+    TimerQueue *timerQueuePtr = nullptr;
 
-    cMessage *timerMessage;
+    cMessage *timerMessage = nullptr;
 
 // must be protected and used for dereved class OLSR_ETX
     /// A list of pending messages which are buffered awaiting for being sent.
@@ -387,17 +387,17 @@ class OLSR : public ManetRoutingBase
     static GlobalRtable globalRtable;
     typedef std::map<nsaddr_t,std::vector<nsaddr_t> > DistributionPath;
     static DistributionPath distributionPath;
-    bool computed;
+    bool computed = false;
     /// Internal state with all needed data structs.
 
-    OLSR_state      *state_ptr;
+    OLSR_state      *state_ptr = nullptr;
 
     /// Packets sequence number counter.
-    uint16_t    pkt_seq_;
+    uint16_t    pkt_seq_ = OLSR_MAX_SEQ_NUM;
     /// Messages sequence number counter.
-    uint16_t    msg_seq_;
+    uint16_t    msg_seq_ = OLSR_MAX_SEQ_NUM;
     /// Advertised Neighbor Set sequence number.
-    uint16_t    ansn_;
+    uint16_t    ansn_ = OLSR_MAX_SEQ_NUM;
 
     /// HELLO messages' emission interval.
     cPar     *hello_ival_ = nullptr;
@@ -415,7 +415,7 @@ class OLSR : public ManetRoutingBase
     /// Address of the routing agent.
     nsaddr_t ra_addr_;
 
-    bool optimizedMid;
+    bool optimizedMid = false;
 
   protected:
 // Omnet INET vaiables and functions
@@ -427,9 +427,9 @@ class OLSR : public ManetRoutingBase
     // PortClassifier*  dmux_;      ///< For passing packets up to agents.
     // Trace*       logtarget_; ///< For logging.
 
-    OLSR_HelloTimer *helloTimer;    ///< Timer for sending HELLO messages.
-    OLSR_TcTimer    *tcTimer;   ///< Timer for sending TC messages.
-    OLSR_MidTimer   *midTimer;  ///< Timer for sending MID messages.
+    OLSR_HelloTimer *helloTimer = nullptr;    ///< Timer for sending HELLO messages.
+    OLSR_TcTimer    *tcTimer = nullptr;   ///< Timer for sending TC messages.
+    OLSR_MidTimer   *midTimer = nullptr;  ///< Timer for sending MID messages.
 
 #define hello_timer_  (*helloTimer)
 #define  tc_timer_  (*tcTimer)

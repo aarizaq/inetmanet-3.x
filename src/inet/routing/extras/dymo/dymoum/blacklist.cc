@@ -64,7 +64,7 @@ int NS_CLASS blacklist_remove(blacklist_t *entry)
     if (!entry)
         return 0;
 
-    for (auto it=dymoBlackList->begin(); it != dymoBlackList->end(); )
+    for (auto it = dymoBlackList->begin(); it != dymoBlackList->end(); )
     {
         auto cur = it;
         it++;
