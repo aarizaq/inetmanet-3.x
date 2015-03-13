@@ -25,9 +25,11 @@
 //**********************************************************************************
 
 
-#include "DNSClient.h"
+#include "inet/underTest/hip/application/DNSClient.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
-#include "DNSBaseMsg.h"
+#include "inet/underTest/hip/application/DNSBaseMsg_m.h"
+
+namespace inet {
 
 
 Define_Module(DNSClient);
@@ -54,7 +56,7 @@ void DNSClient::handleMessage(cPacket* msg)
     {
       if (msg->isName("DNS Request"))
     	  // Sending response
-          socket.sendTo(msg, AddressResolver().resolve(par("dnsAddress")), 23);
+          socket.sendTo(msg, L3AddressResolver().resolve(par("dnsAddress")), 23);
       else
       {
          sendDirect(msg,this->getParentModule()->getSubmodule(par("tcpAppName"),par("tcpAppIndex")),"dns");
@@ -67,4 +69,4 @@ void DNSClient::handleMessage(cPacket* msg)
     }
 }
 
-
+}

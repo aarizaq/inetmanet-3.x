@@ -27,8 +27,9 @@
 #ifndef __RVSHIP_H__
 #define __RVSHIP_H__
 
-#include <HIP.h>
-#include "IPv6Address.h"
+#include "HIP.h"
+
+namespace inet {
 
 class INET_API RvsHIP : public HIP
 {
@@ -49,5 +50,7 @@ protected:
 	virtual void handleAddressChange();
 
 };
+
+}
 
 #endif

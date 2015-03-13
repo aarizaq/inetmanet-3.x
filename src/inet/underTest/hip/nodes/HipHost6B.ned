@@ -33,63 +33,25 @@
 package inet.underTest.hip.nodes;
 
 import inet.underTest.hip.base.HIP;
-import inet.node.ipv6.NodeBase6;
+import inet.node.ipv6.StandardHost6;
 import inet.applications.contract.IPingApp;
 import inet.applications.contract.ISCTPApp;
 import inet.applications.contract.ITCPApp;
 import inet.applications.contract.IUDPApp;
-import inet.transport.ISCTP;
-import inet.transport.ITCP;
-import inet.transport.IUDP;
+import inet.transportlayer.contract.ISCTP;
+import inet.transportlayer.contract.ITCP;
+import inet.transportlayer.contract.IUDP;
 
 
 
 //
 // \IPv6 host with TCP, UDP layers and applications.
 //
-module HipHost6B extends NodeBase6
+module HipHost6B extends StandardHost6
 {
      parameters:
         @display("i=device/pc2");
-        int numTcpApps = default(0);  // no of TCP apps. Specify the app types in INI file with tcpApp[0..1].typename="TCPEchoApp" syntax
-        int numUdpApps = default(0);  // no of UDP apps. Specify the app types in INI file with udpApp[0..1].typename="UDPVideoStreamCli" syntax
-        int numSctpApps = default(0); // no of SCTP apps. Specify the app types in INI file with sctpApp[0..1].typename="SCTPServer" syntax
-        int numPingApps = default(0);  // no of PING apps. Specify the app types in INI file with pingApp[0..1].typename="PingApp" syntax
-        string tcpType = default(firstAvailable("TCP", "TCP_lwIP", "TCP_NSC", "TCP_None"));  // tcp implementation (e.g. ~TCP, ~TCP_lwIP, ~TCP_NSC) or ~TCPSpoof
-        string udpType = default(firstAvailable("UDP","UDP_None"));
-        string sctpType = default(firstAvailable("SCTP","SCTP_None"));
-        bool hasTcp = default(numTcpApps>0);
-        bool hasUdp = default(numUdpApps>0);
-        bool hasSctp = default(numSctpApps>0);
-        IPForward = default(false);  // disable routing by default
     submodules:
-        tcpApp[numTcpApps]: <> like ITCPApp {
-            parameters:
-                @display("p=186,54");
-        }
-        tcp: <tcpType> like ITCP if numTcpApps>0 {
-            parameters:
-                @display("p=186,141");
-        }
-        udpApp[numUdpApps]: <> like IUDPApp {
-            parameters:
-                @display("p=336,54");
-        }
-        udp: <udpType> like IUDP if numUdpApps>0 {
-            parameters:
-                @display("p=336,141");
-        }
-        sctpApp[numSctpApps]: <> like ISCTPApp {
-            parameters:
-                @display("p=501,54");
-        }
-        sctp: <sctpType> like ISCTP if numSctpApps>0 {
-            @display("p=501,141");
-        }
-        pingApp[numPingApps]: <default("PingApp")> like IPingApp {
-            parameters:
-                @display("p=501,230");
-        }
         hip: HIP {
             parameters:
                 @display("i=block/star;p=297,200");
@@ -100,9 +62,9 @@ module HipHost6B extends NodeBase6
             tcpApp[i].tcpIn <-- tcp.appOut++;
         }
        
-        tcp.ipv6Out --> hip.tcpIn  if hasTcp;
+        tcp.ipOut --> hip.tcpIn  if hasTcp;
         hip.tcp6Out --> networkLayer.transportIn++ if hasTcp;
-        tcp.ipv6In <-- hip.tcpOut if hasTcp;
+        tcp.ipIn <-- hip.tcpOut if hasTcp;
         hip.tcp6In <-- networkLayer.transportOut++ if hasTcp;
 
 
@@ -111,9 +73,9 @@ module HipHost6B extends NodeBase6
             udpApp[i].udpIn <-- udp.appOut++;
         }
 
-        udp.ipv6Out --> hip.udpIn if hasUdp;
+        udp.ipOut --> hip.udpIn if hasUdp;
         hip.udp6Out --> networkLayer.transportIn++ if hasUdp;
-        udp.ipv6In <-- hip.udpOut if hasUdp;
+        udp.ipIn <-- hip.udpOut if hasUdp;
         hip.udp6In <-- networkLayer.transportOut++ if hasUdp;
         
         for i=0..numSctpApps-1 {
@@ -121,12 +83,12 @@ module HipHost6B extends NodeBase6
             sctp.to_appl++ --> sctpApp[i].sctpIn;
         }
         
-        sctp.to_ipv6 --> networkLayer.transportIn++ if hasSctp;
-        networkLayer.transportOut++ --> sctp.from_ipv6 if hasSctp;
+        sctp.to_ip --> networkLayer.transportIn++ if hasSctp;
+        networkLayer.transportOut++ --> sctp.from_ip if hasSctp;
 
         for i=0..numPingApps-1 {
-            networkLayer.pingOut++ --> pingApp[i].pingv6In;
-            networkLayer.pingIn++ <-- pingApp[i].pingv6Out;
+            networkLayer.pingOut++ --> pingApp[i].pingIn;
+            networkLayer.pingIn++ <-- pingApp[i].pingOut;
         }
         //hip.fromNetworkAddrChange <-- networkLayer.ipchangeOut;
 }

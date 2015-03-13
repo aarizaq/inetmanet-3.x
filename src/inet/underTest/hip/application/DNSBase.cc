@@ -32,6 +32,9 @@
 #include "inet/networklayer/common/L3AddressResolver.h"
 using namespace std;
 
+namespace inet {
+
+
 Define_Module(DNSBase);
 
 DNSBase::DNSBase()
@@ -118,7 +121,7 @@ void DNSBase::handleMessage(cMessage *msg)
             case 1: {
                 for (unsigned int i = 0; i < dnsVector.size(); i++)
                 {
-                    if (dnsVector[i]->HIT == dnsMsg->addrData().get6())
+                    if (dnsVector[i]->HIT == dnsMsg->addrData().toIPv6())
                     {
                         //char HITchar[5];
                         //itoa(dnsVector[i]->HIT, HITchar, 10);
@@ -217,11 +220,11 @@ bool DNSBase::LoadDataFromXML(const char * filename)
         {
             DNSData *d = new DNSData;
             const char *address = (*dnsIt)->getChildrenByTagName("Address")[0]->getNodeValue();
-            d->addr = AddressResolver().resolve(address);
+            d->addr = L3AddressResolver().resolve(address);
             d->HIT.set((*dnsIt)->getChildrenByTagName("HIT")[0]->getNodeValue());
             d->domainName = (*dnsIt)->getChildrenByTagName("Name")[0]->getNodeValue();
             if ((*dnsIt)->getChildrenByTagName("RVS").size() > 0)
-                d->rvs = AddressResolver().resolve((*dnsIt)->getChildrenByTagName("RVS")[0]->getNodeValue());
+                d->rvs = L3AddressResolver().resolve((*dnsIt)->getChildrenByTagName("RVS")[0]->getNodeValue());
             //strcpy(d->domainName, (*dnsIt)->getChildrenByTagName ("Name")[0]->getNodeValue () );
             dnsVector.push_back(d);
         }
@@ -244,4 +247,5 @@ bool DNSBase::registerRvs(DNSRegRvsMsg* regMsg)
         }
     }
     return hostFound;
+}
 }

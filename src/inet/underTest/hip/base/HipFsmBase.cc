@@ -27,7 +27,10 @@
 #include <omnetpp.h>
 #include "HipFsmBase.h"
 #include "inet/networklayer/common/InterfaceTable.h"
+#include "inet/common/ModuleAccess.h"
 #include "HIP.h"
+
+namespace inet {
 
 HipFsmBase::HipFsmBase()
 {
@@ -70,7 +73,7 @@ void HipFsmBase::initialize()
     updSeq = 0;
 
     // Building source address list
-    InterfaceTable* ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
+    IInterfaceTable* ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
     for (int i = 0; i < ift->getNumInterfaces(); i++)
     {
         InterfaceEntry *ie = ift->getInterface(i);
@@ -134,7 +137,7 @@ void HipFsmBase::handleAddressChange()
 {
 
     EV<< "IPv6 address changed, need updating" << endl;
-    InterfaceTable* ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
+    IInterfaceTable* ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
     srcAddressList.clear();;
     for (int i=0; i<ift->getNumInterfaces(); i++)
     {
@@ -672,4 +675,6 @@ void HipFsmBase::addControlInfoAndSend(HIPHeaderMessage *hipPacket)
     hipPacket->setControlInfo(networkControlInfo);
     sendDirect(hipPacket, this->getParentModule(), "fromFsmOut");
     hipmodule->incHipMsgCounter();
+}
+
 }

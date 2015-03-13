@@ -25,9 +25,11 @@
 //**********************************************************************************
 
 #include "RvsHIP.h"
-#include "IPv6ControlInfo.h"
+#include "inet/networklayer/contract/ipv6/IPv6ControlInfo.h"
 #include "HipMessages_m.h"
-#include "IPv6Datagram.h"
+#include "inet/networklayer/ipv6/IPv6Datagram.h"
+
+namespace inet {
 
 Define_Module(RvsHIP)
 ;
@@ -123,4 +125,5 @@ void RvsHIP::handleMsgFromTransport(cMessage *msg)
 void RvsHIP::handleAddressChange()
 {
     return;
+}
 }

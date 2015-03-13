@@ -26,6 +26,8 @@
 
 #include "HipFsm.h"
 
+namespace inet {
+
 Define_Module(HipFsm);
 
 HipFsm::HipFsm()
@@ -68,4 +70,6 @@ void HipFsm::deleteAllIPaddress(IPv6Address &HIT)
     hitToIpMapIt = hitToIpMap->find(HIT);
     while (hitToIpMapIt->second->addr.size() > 0)
         hitToIpMapIt->second->addr.pop_back();
+}
+
 }
