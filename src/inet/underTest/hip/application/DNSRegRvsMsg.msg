@@ -28,10 +28,12 @@
 // HIP host registers its RVS with this msg
 //
 cplusplus {{
-#include "IPvXAddress.h"
+#include "inet/networklayer/common/L3Address.h"
 }}
 
-class noncobject IPvXAddress;
+namespace inet;
+
+class noncobject L3Address;
 
 
 packet DNSRegRvsMsg
@@ -41,5 +43,5 @@ packet DNSRegRvsMsg
     short opcode = 0;
     short rcode = 0;
     string data;
-    IPvXAddress addrData;
+    L3Address addrData;
 }

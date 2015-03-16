@@ -28,17 +28,20 @@
 #define __HIP_H__
 
 #include <omnetpp.h>
-#include "IPv6Address.h"
-#include "HipMessages_m.h"
+#include "inet/networklayer/contract/ipv6/IPv6Address.h"
+#include "inet/underTest/hip/base/HipMessages_m.h"
 #include "inet/networklayer/common/InterfaceEntry.h"
-#include "INotifiable.h"
 #include "inet/common/INETDefs.h"
+#include "inet/networklayer/contract/IInterfaceTable.h"
 
 
 #define HIP_START_CHECK_TIMER 4
 #define HIP_CHECK_TIMER 0.1
 
-class INET_API HIP : public cSimpleModule, public INotifiable
+namespace inet {
+
+
+class INET_API HIP : public cSimpleModule, public cListener
 {
 
    protected:
@@ -57,7 +60,7 @@ class INET_API HIP : public cSimpleModule, public INotifiable
 	bool udpPresent;
 	bool tcpPresent;
 
-	IInterfaceTable ift;
+	IInterfaceTable *ift;
 
    public:
     //constructor/destructor
@@ -108,7 +111,8 @@ class INET_API HIP : public cSimpleModule, public INotifiable
 	//returns if there was a HIT-IP swap
 	//bool isAddressSwitched();
 
-	void receiveChangeNotification(int category, const cObject * details);
+	//void receiveChangeNotification(int category, const cObject * details);
+	virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj) override;
 
   protected:
 	virtual int getTempId();
@@ -135,5 +139,6 @@ class INET_API HIP : public cSimpleModule, public INotifiable
     bool _isRvs;
 	IPv6Address _rvsHit;
 };
+}
 
 #endif

@@ -27,11 +27,11 @@
 
 
 
-#include "UDPEchoStream.h"
+#include "inet/underTest/hip/application/UDPEchoStream.h"
 #include "inet/transportlayer/contract/udp/UDPControlInfo_m.h"
-#include "UDPEchoAppMsg_m.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
 
+namespace inet {
 
 Define_Module(UDPEchoStream);
 
@@ -51,7 +51,7 @@ void UDPEchoStream::initialize()
     port = par("port");
 	double startTime = par("startTime");
 	destPort = par("destPort");
-    destAddr.set(par("destAddress"));
+    destAddr.tryParse(par("destAddress"));
 
 	rttVector.setName("streamRTT");
 	jitterVector.setName("streamJitter");
@@ -111,8 +111,7 @@ void UDPEchoStream::sendRequest() {
     EV << "Requesting stream from " << destAddr << ":" << destPort << "\n";
 
 
-    UDPEchoAppMsg *msg = new UDPEchoAppMsg("StrmReq");
-	msg->setIsRequest(true);
+    cPacket *msg = new cPacket("StrmReq");
     socket.sendTo(msg, destAddr, destPort);
 }
 
@@ -141,8 +140,7 @@ void UDPEchoStream::sendStreamData(cMessage *timer)
 {
 	EV << "Sending stream to " << destAddr << ":" << destPort << "\n";
     // generate and send a packet
-    UDPEchoAppMsg *pkt = new UDPEchoAppMsg("StrmPk");
-	pkt->setIsRequest(true);
+	cPacket *pkt = new cPacket("StrmPk");
     int pktLen = (*packetLen);
     pkt->setByteLength(pktLen);
     socket.sendTo(pkt, destAddr, destPort);
@@ -154,4 +152,5 @@ void UDPEchoStream::sendStreamData(cMessage *timer)
     double interval = (*waitInterval);
     scheduleAt(simTime()+interval, timer);
 
+}
 }

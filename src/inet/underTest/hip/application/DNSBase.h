@@ -33,15 +33,15 @@
 
 #include <vector>
 #include <omnetpp.h>
-#include "DNSBaseMsg.h"
-#include "DNSRegRvsMsg.h"
+#include "inet/underTest/hip/application/DNSBaseMsg_m.h"
+#include "inet/underTest/hip/application/DNSRegRvsMsg_m.h"
 #include "inet/networklayer/common/L3Address.h"
 #include <string.h>
 #include "inet/transportlayer/contract/udp/UDPSocket.h"
 
 using namespace std;
 
-
+namespace inet {
 
 class DNSBase : public cSimpleModule
 {
@@ -51,10 +51,10 @@ class DNSBase : public cSimpleModule
      */
     struct DNSData
     {
-        Address addr;   //ipv6 address
+        L3Address addr;   //ipv6 address
         IPv6Address HIT;           //HIT (see HIP module)
         string domainName;  //domain name
-        Address rvs; //HIP RVS
+        L3Address rvs; //HIP RVS
     };
 
   protected:
@@ -80,5 +80,6 @@ class DNSBase : public cSimpleModule
     void    loadXml();
     bool    registerRvs(DNSRegRvsMsg* regMsg);
 };
+}
 
 #endif

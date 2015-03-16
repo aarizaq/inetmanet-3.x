@@ -26,12 +26,12 @@
 
 
 cplusplus {{
-#include "IPv6Address.h"
-#include "IPv6Datagram.h"
-#include "IPv6ExtensionHeaders_m.h"
+#include "inet/networklayer/contract/ipv6/IPv6Address.h"
+#include "inet/networklayer/ipv6/IPv6Datagram.h"
+#include "inet/networklayer/ipv6/IPv6ExtensionHeaders_m.h"
 }}
 
-
+namespace inet;
 
 //
 // HIP header section, 2008.02 ML

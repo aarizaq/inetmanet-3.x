@@ -1,9 +1,21 @@
+2015-03-02  Levente Mészáros & Zoltan Bojthe
+
+	Fixed memory leaks detected by valgrind memcheck.
+
+2015-01-21  Zoltan Bojthe
+
+	Applied C++ source code modernizer.
+
+2014-12-18  Zoltan Bojthe
+
+	Fixed defects found by static code analyzer (Coverity).
+
 2014-11-07  ------ inet-2.99.0 released ------
 
 2014-07-03  Levente Meszaros & Benjamin Seregi
 
 	Environment: Removed obsolete Obstacle, ObstacleControl and AnnotationManager classes
-    
+
 	Replaced by:
 	- Shape/Cuboid/Sphere/Prism/etc (in common/geometry/)
 	- PhysicalEnvironment/PhysicalObject/Material
@@ -21,6 +33,10 @@
 	Rest of the ChangeLog describes world/obstacles/.
 
 2013-07-25  ====== inet-3.x development started (integration branch) ======
+
+2015-03-04  ------ inet-2.6 released ------
+
+2014-11-07  ------ inet-2.5.1 released ------
 
 2014-06-12  ------ inet-2.4.0 released ------
 

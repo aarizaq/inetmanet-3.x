@@ -19,8 +19,6 @@
 #define __INET_SCALARSNIR_H
 
 #include "inet/physicallayer/base/SNIRBase.h"
-#include "inet/physicallayer/analogmodel/ScalarReception.h"
-#include "inet/physicallayer/analogmodel/ScalarNoise.h"
 
 namespace inet {
 
@@ -35,7 +33,7 @@ class INET_API ScalarSNIR : public SNIRBase
     virtual double computeMin() const;
 
   public:
-    ScalarSNIR(const ScalarReception *reception, const ScalarNoise *noise);
+    ScalarSNIR(const IReception *reception, const INoise *noise);
 
     virtual void printToStream(std::ostream& stream) const override;
 

@@ -1,3 +1,19 @@
+2015-03-02  Levente Mészáros
+
+	Fixed memory managements bugs found by valgrind memcheck.
+
+2015-02-24  Levente Mészáros
+
+	Updated analog model to support layered radio.
+
+2015-01-21  Zoltan Bojthe
+
+	Applied C++ source code modernizer.
+
+2014-12-04  Florian Meier
+
+	Added Arrival to computeReception of IAnalogModel.
+
 2014-11-07  ------ inet-2.99.0 released ------
 
 2014-10-31  Levente Meszaros

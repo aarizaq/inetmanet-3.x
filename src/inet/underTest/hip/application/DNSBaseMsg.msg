@@ -27,12 +27,14 @@
 //
 // Message class used by DNSBase.
 //
+
 cplusplus {{
-#include "IPvXAddress.h"
+#include "inet/networklayer/common/L3Address.h"
 }}
 
+namespace inet;
 
-class noncobject IPvXAddress;
+class noncobject L3Address;
 
 
 
@@ -43,5 +45,5 @@ packet DNSBaseMsg
     short opcode = 0;
     short rcode = 0;
     string data;
-    IPvXAddress addrData;
+    L3Address addrData;
 }

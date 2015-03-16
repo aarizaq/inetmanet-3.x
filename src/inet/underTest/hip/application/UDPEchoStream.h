@@ -33,6 +33,8 @@
 #include "inet/transportlayer/contract/udp/UDPSocket.h"
 #include "inet/networklayer/common/L3Address.h"
 
+namespace inet {
+
 class UDPEchoStream : public cSimpleModule
 {
 
@@ -42,7 +44,7 @@ class UDPEchoStream : public cSimpleModule
     cPar *waitInterval;
     cPar *packetLen;
 	bool first;
-	Address destAddr;
+	L3Address destAddr;
 	int destPort;
 	UDPSocket socket;
 
@@ -78,5 +80,6 @@ class UDPEchoStream : public cSimpleModule
     //@}
 };
 
+}
 
 #endif

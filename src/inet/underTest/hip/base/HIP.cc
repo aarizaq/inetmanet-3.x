@@ -24,12 +24,12 @@
 // Part of: HIPSim++ Host Identity Protocol Simulation Framework developed by BME-HT
 //**********************************************************************************
 
-#include "HIP.h"
+#include "inet/underTest/hip/base/HIP.h"
 #include "inet/networklayer/contract/ipv6/IPv6ControlInfo.h"
 #include "inet/networklayer/ipv6/IPv6ExtensionHeaders_m.h"
 #include "inet/networklayer/ipv6/IPv6Datagram.h"
-#include "DNSBaseMsg_m.h"
-#include "DNSRegRvsMsg_m.h"
+#include "inet/underTest/hip/application/DNSBaseMsg_m.h"
+#include "inet/underTest/hip/application/DNSRegRvsMsg_m.h"
 #include "inet/transportlayer/udp/UDPPacket.h"
 #include "inet/transportlayer/contract/udp/UDPControlInfo_m.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
@@ -37,6 +37,9 @@
 #include "inet/networklayer/common/InterfaceEntry.h"
 #include "inet/networklayer/ipv6/IPv6InterfaceData.h"
 #include "inet/networklayer/common/IPSocket.h"
+#include "inet/common/ModuleAccess.h"
+
+namespace inet {
 
 Define_Module(HIP)
 
@@ -59,7 +62,7 @@ void HIP::initialize(int stage)
 {
     if (stage==INITSTAGE_LOCAL)
     {
-        ev << "Initializing HIP...\n";
+        EV << "Initializing HIP...\n";
         expectingDnsResp = false;
         expectingRvsDnsResp = false;
         fsmType = cModuleType::get("inet.underTest.hip.base.HipFsm");
@@ -96,8 +99,8 @@ void HIP::specInitialize()
     //partnerHIT = -1; //will get from DNS
     if ((int) this->par("registerAtRVS") == 1)
     {
-        ev<< "hip init3\n";
-        ev << "k" << this->par("RVSAddr").getName() << "k" << endl;
+        EV << "hip init3\n";
+        EV << "k" << this->par("RVSAddr").getName() << "k" << endl;
         //if rvsipaddress.. get rvsip from dns... scheduleAt
         scheduleAt(this->par("REG_StartTime"),new cPacket("HIP_REGISTER_AT_RVS"));
     }
@@ -106,19 +109,20 @@ void HIP::specInitialize()
 }
 
 // Changes in interface states and addresses handled here with the help of the NotificationBoard object
-void HIP::receiveChangeNotification(int category, const cObject * details)
+//void HIP::receiveChangeNotification(int category, const cObject * details)
+void HIP::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj)
 {
-    Enter_Method_Silent
-    ();
-    printNotificationBanner(category, details);
+    Enter_Method_Silent();
+
+    // printNotificationBanner(category, details);
 
     // OLD AP, or disassociating, update is needed
-    if (category == NF_L2_DISASSOCIATED || category == NF_L2_ASSOCIATED_OLDAP)
+    if (signalID == NF_L2_DISASSOCIATED || signalID == NF_L2_ASSOCIATED_OLDAP)
     {
-        InterfaceEntry *ie = dynamic_cast<InterfaceEntry *>(const_cast<cObject*>(details));
+        InterfaceEntry *ie = dynamic_cast<InterfaceEntry *>(const_cast<cObject*>(obj));
         if (!(ie->isLoopback()) && (ie->isUp()))
             return;
-        if (category == NF_L2_DISASSOCIATED)
+        if (signalID == NF_L2_DISASSOCIATED)
         {
             mapIfaceToConnected[ie] = false;
             for (auto it = mapIfaceToConnected.begin(); it != mapIfaceToConnected.end(); ++it)
@@ -139,13 +143,13 @@ void HIP::receiveChangeNotification(int category, const cObject * details)
         }
     }
     // Iface is connected to a new AP, wait for address change and then update
-    else if (category == NF_L2_ASSOCIATED_NEWAP)
+    else if (signalID == NF_L2_ASSOCIATED_NEWAP)
     {
-        InterfaceEntry *ie = dynamic_cast<InterfaceEntry *>(const_cast<cObject*>(details));
+        InterfaceEntry *ie = dynamic_cast<InterfaceEntry *>(const_cast<cObject*>(obj));
         if (!(ie->isLoopback()) && (ie->isUp()))
             mapIfaceToConnected[ie] = true;
     }
-    else if (category == NF_IPv6_HANDOVER_OCCURRED)
+    else if (signalID == NF_IPv6_HANDOVER_OCCURRED)
     {
 
         for (auto it = mapIfaceToConnected.begin(); it != mapIfaceToConnected.end(); ++it)
@@ -171,11 +175,11 @@ void HIP::handleRvsRegistration(cMessage *msg)
     if (msg->isName("HIP_REGISTER_AT_RVS"))
     {
         delete msg;
-        ev<< "rvs selfmsg arrived\n";
+        EV << "rvs selfmsg arrived\n";
         if (rvsIPaddress.isUnspecified())
         {
 
-            ev<< "Starting dns request for " << par("RVSAddr").getName() << endl;
+            EV << "Starting dns request for " << par("RVSAddr").getName() << endl;
 
             // Generating the DNS message
             DNSBaseMsg* dnsReqMsg = new DNSBaseMsg("DNS Request");//the request
@@ -214,8 +218,8 @@ void HIP::handleRvsRegistration(cMessage *msg)
 
             IPv6ControlInfo *ipControlInfo = new IPv6ControlInfo();
             ipControlInfo->setProtocol(IP_PROT_UDP);
-            ipControlInfo->setSrcAddr(ctrl->getSrcAddr().get6());
-            ipControlInfo->setDestAddr(ctrl->getDestAddr().get6());
+            ipControlInfo->setSrcAddr(ctrl->getSrcAddr().toIPv6() ());
+            ipControlInfo->setDestAddr(ctrl->getDestAddr().toIPv6() ());
             ipControlInfo->setInterfaceId(tempIfId);
             udpPacket->setControlInfo(ipControlInfo);
 #else
@@ -231,7 +235,7 @@ void HIP::handleRvsRegistration(cMessage *msg)
             IPv6ControlInfo *ipControlInfo = new IPv6ControlInfo();
             ipControlInfo->setProtocol(IP_PROT_UDP);
             ipControlInfo->setSrcAddr(ift->getInterfaceById(tempIfId)->ipv6Data()->getPreferredAddress());
-            ipControlInfo->setDestAddr(L3AddressResolver().resolve(par("dnsAddress")).get6());
+            ipControlInfo->setDestAddr(L3AddressResolver().resolve(par("dnsAddress")).toIPv6());
             ipControlInfo->setInterfaceId(tempIfId);
             udpPacket->setControlInfo(ipControlInfo);
 #endif
@@ -252,10 +256,10 @@ void HIP::handleRvsRegistration(cMessage *msg)
         IPv6ControlInfo *networkControlInfo = check_and_cast<IPv6ControlInfo*>(msg->removeControlInfo());
         srcWorkAddress = networkControlInfo->getDestAddr();
         //set rvs ip, rvs HIT
-        ev << "Getting partner HIT from dns resp \n";
+        EV << "Getting partner HIT from dns resp \n";
         DNSBaseMsg* dnsMsg = check_and_cast<DNSBaseMsg *>(check_and_cast<cPacket *>(msg)->decapsulate());
         _rvsHit.set(dnsMsg->data());
-        rvsIPaddress = dnsMsg->addrData().get6();
+        rvsIPaddress = dnsMsg->addrData().toIPv6();
         EV << _rvsHit << endl;
         delete msg;
         delete dnsMsg;
@@ -289,9 +293,9 @@ void HIP::handleMessage(cMessage *msg)
                 partnerHIT.set(dnsMsg->data());
                 if (listHITtoTriggerDNS.count(partnerHIT) > 0)
                 {
-                    ev<< "DNS response recieved, starting FSM\n";
+                    EV << "DNS response recieved, starting FSM\n";
                     // if (partnerHIT.isUnspecified()) partnerHIT.set(this->par("PARTNER_HIT"));
-                    sendDirect(listHITtoTriggerDNS.find(partnerHIT)->second, createStateMachine( dnsMsg->addrData().get6(), partnerHIT), "localIn");
+                    sendDirect(listHITtoTriggerDNS.find(partnerHIT)->second, createStateMachine( dnsMsg->addrData().toIPv6(), partnerHIT), "localIn");
                     listHITtoTriggerDNS.erase(partnerHIT);
                     if(listHITtoTriggerDNS.empty())
                     expectingDnsResp = false;
@@ -305,7 +309,7 @@ void HIP::handleMessage(cMessage *msg)
         }
         else
         {
-            ev<< "DNS response when not expected, dropping...\n";
+            EV << "DNS response when not expected, dropping...\n";
             delete msg;
         }
     }
@@ -350,7 +354,7 @@ void HIP::handleMessage(cMessage *msg)
         }
         else if (msg->arrivedOn("tcp6In") || msg->arrivedOn("udp6In"))
         {
-            ev << "handleMsgFromNetwork invoke\n";
+            EV << "handleMsgFromNetwork invoke\n";
             handleMsgFromNetwork(msg);
         }
         else if(msg->arrivedOn("fromFsmTrigger")) //process previously received message which was trigger
@@ -390,7 +394,7 @@ void HIP::handleMsgFromTransport(cMessage *msg)
     bool exists = false;
 
     //try to receive HIT from dest address
-    ev<< "Registered dest addr (HIT): " << networkControlInfo->getDestAddr() << endl;;
+    EV << "Registered dest addr (HIT): " << networkControlInfo->getDestAddr() << endl;;
     //original destination address
     IPv6Address originalHIT = networkControlInfo->getDestAddr();
 
@@ -399,7 +403,7 @@ void HIP::handleMsgFromTransport(cMessage *msg)
     {
         if (originalHIT == hitToIpMapIt->first)
         {
-            ev<< "Existing HIP association found...sending msg to it....FROM_TRANSPORT\n";
+            EV << "Existing HIP association found...sending msg to it....FROM_TRANSPORT\n";
             msg->setControlInfo(networkControlInfo);
             sendDirect(msg, findStateMachine(hitToIpMapIt->second->fsmId),"localIn");
             exists = true;
@@ -411,7 +415,7 @@ void HIP::handleMsgFromTransport(cMessage *msg)
     {
         // Need IP address for target HIT
         // Sending DNS
-        ev<< "Host not associated, need IP address, sending out DNS...\n";
+        EV << "Host not associated, need IP address, sending out DNS...\n";
         msg->setControlInfo(networkControlInfo);
         listHITtoTriggerDNS[originalHIT] = msg;
 
@@ -446,8 +450,8 @@ void HIP::handleMsgFromTransport(cMessage *msg)
 
         IPv6ControlInfo *ipControlInfo = new IPv6ControlInfo();
         ipControlInfo->setProtocol(IP_PROT_UDP);
-        ipControlInfo->setSrcAddr(ctrl->getSrcAddr().get6());
-        ipControlInfo->setDestAddr(ctrl->getDestAddr().get6());
+        ipControlInfo->setSrcAddr(ctrl->getSrcAddr().toIPv6() ());
+        ipControlInfo->setDestAddr(ctrl->getDestAddr().toIPv6() ());
         ipControlInfo->setInterfaceId(tempId);//FIXME extend IPv6 with this!!!
         udpPacket->setControlInfo(ipControlInfo);
 #else
@@ -464,7 +468,7 @@ void HIP::handleMsgFromTransport(cMessage *msg)
         IPv6ControlInfo *ipControlInfo = new IPv6ControlInfo();
         ipControlInfo->setProtocol(IP_PROT_UDP);
         ipControlInfo->setSrcAddr(ift->getInterfaceById(tempId)->ipv6Data()->getPreferredAddress());
-        ipControlInfo->setDestAddr(L3AddressResolver().resolve(par("dnsAddress")).get6());
+        ipControlInfo->setDestAddr(L3AddressResolver().resolve(par("dnsAddress")).toIPv6());
         ipControlInfo->setInterfaceId(tempId);//FIXME extend IPv6 with this!!!
         udpPacket->setControlInfo(ipControlInfo);
 #endif
@@ -484,7 +488,7 @@ void HIP::handleMsgFromNetwork(cMessage *msg)
     if (dynamic_cast<HIPHeaderMessage *>(msg))
     {
         HIPHeaderMessage *hipHeader = check_and_cast<HIPHeaderMessage *>(msg);
-        EV<< "Its a hip header\n";
+        EV << "Its a hip header\n";
         //if dest locator's SPI is unknown -it is an I1 msg
         int fsmId = -1;
         if (hitToIpMap.find(hipHeader->getSrcHIT()) != hitToIpMap.end())
@@ -518,7 +522,7 @@ void HIP::handleMsgFromNetwork(cMessage *msg)
         ESPMessage *espHeader = check_and_cast<ESPMessage *>(msg);
         //TODO check if esp header exists
         //which spi?
-        EV<< "Got esp head: " << espHeader->getEsp()->getSpi() << endl;
+        EV << "Got esp head: " << espHeader->getEsp()->getSpi() << endl;
         int spi = espHeader->getEsp()->getSpi();
         //decapsulating the msg
         //cPacket *transportPacket = msg->decapsulate();
@@ -645,4 +649,6 @@ void HIP::incHipMsgCounter()
 void HIP::finish()
 {
     recordScalar("HIP msg counter", hipMsgSent);
+}
+
 }

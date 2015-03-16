@@ -25,7 +25,7 @@ namespace inet {
 
 namespace physicallayer {
 
-class INET_API TransmissionBase : public virtual ITransmission
+class INET_API TransmissionBase : public virtual ITransmission, public virtual ITransmissionAnalogModel
 {
   protected:
     const int id;
@@ -45,17 +45,21 @@ class INET_API TransmissionBase : public virtual ITransmission
 
     virtual void printToStream(std::ostream& stream) const override;
 
-    virtual const IRadio *getTransmitter() const override { return transmitter; }
-    virtual const cPacket *getMacFrame() const override { return macFrame; }
+    virtual const IRadio *getTransmitter() const { return transmitter; }
+    virtual const cPacket *getPhyFrame() const { return nullptr; }
+    virtual const cPacket *getMacFrame() const { return macFrame; }
 
-    virtual const simtime_t getStartTime() const override { return startTime; }
-    virtual const simtime_t getEndTime() const override { return endTime; }
+    virtual const simtime_t getStartTime() const { return startTime; }
+    virtual const simtime_t getEndTime() const { return endTime; }
+    virtual const simtime_t getDuration() const { return endTime - startTime; }
 
     virtual const Coord getStartPosition() const override { return startPosition; }
     virtual const Coord getEndPosition() const override { return endPosition; }
 
-    virtual const EulerAngles getStartOrientation() const override { return startOrientation; }
-    virtual const EulerAngles getEndOrientation() const override { return endOrientation; }
+    virtual const EulerAngles getStartOrientation() const { return startOrientation; }
+    virtual const EulerAngles getEndOrientation() const { return endOrientation; }
+
+    virtual const ITransmissionAnalogModel *getAnalogModel() const { return check_and_cast<const ITransmissionAnalogModel *>(this); }
 };
 
 } // namespace physicallayer

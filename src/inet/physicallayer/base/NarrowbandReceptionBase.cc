@@ -31,7 +31,7 @@ NarrowbandReceptionBase::NarrowbandReceptionBase(const IRadio *receiver, const I
 void NarrowbandReceptionBase::printToStream(std::ostream& stream) const
 {
     stream << "carrierFrequency = " << carrierFrequency << ", "
-           << "bandwidth = " << bandwidth;
+           << "bandwidth = " << bandwidth << ", ";
     ReceptionBase::printToStream(stream);
 }
 

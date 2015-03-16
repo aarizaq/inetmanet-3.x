@@ -36,6 +36,8 @@
  simple DNS client module to provide DNS access to tcp apps
  */
 
+namespace inet {
+
 
 class INET_API DNSClient : public cSimpleModule
 {
@@ -49,5 +51,6 @@ class INET_API DNSClient : public cSimpleModule
     //@}
 
 };
+}
 
 #endif

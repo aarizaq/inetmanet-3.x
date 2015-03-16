@@ -25,9 +25,11 @@
 //**********************************************************************************
 
 #include "RvsHIP.h"
-#include "IPv6ControlInfo.h"
+#include "inet/networklayer/contract/ipv6/IPv6ControlInfo.h"
 #include "HipMessages_m.h"
-#include "IPv6Datagram.h"
+#include "inet/networklayer/ipv6/IPv6Datagram.h"
+
+namespace inet {
 
 Define_Module(RvsHIP)
 ;
@@ -56,24 +58,24 @@ void RvsHIP::handleMsgFromNetwork(cMessage *msg)
             IPv6ControlInfo *networkControlInfo = check_and_cast<IPv6ControlInfo*>(msg->removeControlInfo());
 
             //dest is RVS's HIT, it's a registration
-            ev<< "destHIT ? ownHIT " << hipHeader->getDestHIT() << " ? " << ownHIT << endl;
+            EV << "destHIT ? ownHIT " << hipHeader->getDestHIT() << " ? " << ownHIT << endl;
             if (hipHeader->getDestHIT() == ownHIT)
             {
-                ev<< "true" << endl;
+                EV << "true" << endl;
                 int fsmId = -1;
                 if(hitToIpMap.find(hipHeader->getSrcHIT()) != hitToIpMap.end())
                 fsmId = hitToIpMap.find(hipHeader->getSrcHIT())->second->fsmId;
                 if(fsmId < 0)
                 {
                     //create new daemon and fw to it
-                    ev << "RVS received I1" << endl;
+                    EV << "RVS received I1" << endl;
                     msg->setControlInfo(networkControlInfo);
                     sendDirect(msg, createStateMachine(networkControlInfo->getSrcAddr(), hipHeader->getSrcHIT()), "remoteIn");
                 }
                 else
                 {
                     //spi is known, find daemon and fw to it
-                    ev << "RVS received SPI (possible UPDATE, BE) " << hipHeader->getLocator(1).locatorESP_SPI << endl;
+                    EV << "RVS received SPI (possible UPDATE, BE) " << hipHeader->getLocator(1).locatorESP_SPI << endl;
                     msg->setControlInfo(networkControlInfo);
                     sendDirect(msg, findStateMachine(fsmId),"remoteIn");
                 }
@@ -123,4 +125,5 @@ void RvsHIP::handleMsgFromTransport(cMessage *msg)
 void RvsHIP::handleAddressChange()
 {
     return;
+}
 }

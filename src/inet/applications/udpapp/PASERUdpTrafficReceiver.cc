@@ -294,7 +294,7 @@ void PASERUdpTrafficReceiver::updateMapEntry(PaserTrafficDataMsg *trafficMsg)
 	currentEntry.expectCounterVector.insert(currentEntry.expectCounterVector.end(),expectedValue);
 	currentEntry.hopVector.insert(currentEntry.hopVector.end(),trafficMsg->getHops());
 	double packetDelay = (simTime().dbl()-trafficMsg->getTimestamp());
-	ev << "packetDelay: " << packetDelay << "\n";
+	EV << "packetDelay: " << packetDelay << "\n";
 	currentEntry.delayVector.insert(currentEntry.delayVector.end(),packetDelay);
 	if(currentEntry.maxDelay < packetDelay){
 	    currentEntry.maxDelay = packetDelay;
@@ -352,7 +352,7 @@ void PASERUdpTrafficReceiver::calculateAverageValues()
 		//Fetch entry
 		std::string currentId = (*it).first;
 		mapEntry currentEntry = (*it).second;
-		ev << "Sender: " << currentId << "\n";
+		EV << "Sender: " << currentId << "\n";
 		//Calculate OK Received Packet
 		numberOfOKReceivedPackets += calculateOkReceivedPackets(currentEntry);
 //		printLostPackets(currentEntry);

@@ -30,9 +30,10 @@
 #include <omnetpp.h>
 #include "HipFsmBase.h"
 #include "HIP.h"
-#include "IPv6Address.h"
+#include "inet/networklayer/contract/ipv6/IPv6Address.h"
 #include "HipMessages_m.h"
 
+namespace inet {
 
 
 class HipFsm : public HipFsmBase
@@ -56,5 +57,7 @@ protected:
 	virtual void addIPaddress(IPv6Address &HIT, IPv6Address& IP);
 	virtual void deleteAllIPaddress(IPv6Address &HIT);
 };
+
+}
 
 #endif

@@ -23,6 +23,17 @@
 
 namespace inet {
 
+#if OMNETPP_VERSION >= 0x500
+    typedef uint64_t uint64;
+    typedef int64_t  int64;
+    typedef uint32_t uint32;
+    typedef int32_t  int32;
+    typedef uint16_t uint16;
+    typedef int16_t  int16;
+    typedef uint8_t  uint8;
+#endif  // OMNETPP_VERSION >= 0x500
+
+
 #if OMNETPP_VERSION < 0x500
 #  define EV_FATAL                         EV << "FATAL: "
         #  define EV_ERROR                 EV << "ERROR: "
@@ -78,7 +89,12 @@ inline double fmax(double a, double b)
 
 #endif    // _MSC_VER
 
+} // namespace inet
+
 #if OMNETPP_VERSION < 0x0500
+
+NAMESPACE_BEGIN
+
 /**
  * A check_and_cast<> that accepts pointers other than cObject*, too.
  * For compatibility; OMNeT++ 5.0 and later already contain this.
@@ -127,9 +143,9 @@ T check_and_cast_nullable(P *p)
     return check_and_cast<T>(p);
 }
 
-#endif    // OMNETPP_VERSION < 0x0500
+NAMESPACE_END
 
-} // namespace inet
+#endif    // OMNETPP_VERSION < 0x0500
 
 #endif // ifndef __INET_COMPAT_H
 

@@ -29,14 +29,14 @@
 #define __HIPFSMBASE_H__
 
 #include <omnetpp.h>
-#include "IPv6ControlInfo.h"
+#include "inet/networklayer/contract/ipv6/IPv6ControlInfo.h"
 #include "HipMessages_m.h"
-#include "IPv6Datagram.h"
+//#include "IPv6Datagram.h"
 //#include <stdlib.h>
 //#include <time.h>
-#include "InterfaceTableAccess.h"
-#include "IPv6InterfaceData.h"
 #include "HIP.h"
+
+namespace inet {
 
 
 class INET_API HipFsmBase : public cSimpleModule
@@ -121,5 +121,6 @@ protected:
 	virtual void createHIPpacket(int kind, const char name[], IPv6Address& via_rvs);
 	virtual void addControlInfoAndSend(HIPHeaderMessage *hipPacket);
 };
+}
 
 #endif

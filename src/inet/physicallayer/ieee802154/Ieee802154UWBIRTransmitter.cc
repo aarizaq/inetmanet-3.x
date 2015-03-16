@@ -203,26 +203,8 @@ const ITransmission *Ieee802154UWBIRTransmitter::createTransmission(const IRadio
     const EulerAngles startOrientation = mobility->getCurrentAngularPosition();
     const EulerAngles endOrientation = mobility->getCurrentAngularPosition();
     const ConstMapping *powerMapping = generateIEEE802154AUWBSignal(startTime, bits);
-    return new DimensionalTransmission(transmitter, macFrame, startTime, endTime, startPosition, endPosition, startOrientation, endOrientation, nullptr, -1, bitLength, cfg.centerFrequency, cfg.bandwidth, cfg.bitrate, powerMapping);
+    return new DimensionalTransmission(transmitter, macFrame, startTime, endTime, startPosition, endPosition, startOrientation, endOrientation, -1, bitLength, cfg.bitrate, nullptr, cfg.centerFrequency, cfg.bandwidth, powerMapping);
 }
-
-void Ieee802154UWBIRTransmitter::setChannelNumber(int newChannelNumber)
-{
-    if (cfg.channel != newChannelNumber) {
-        /*
-        FlatTransmitterBase *flatTransmitter = const_cast<FlatTransmitterBase *>(check_and_cast<const FlatTransmitterBase *>(transmitter));
-        FlatReceiverBase *flatReceiver = const_cast<FlatReceiverBase *>(check_and_cast<const FlatReceiverBase *>(receiver));
-        flatTransmitter->setCarrierFrequency(carrierFrequency);
-        flatReceiver->setCarrierFrequency(carrierFrequency);
-        EV << "Changing radio channel from " << channelNumber << " to " << newChannelNumber << ".\n";
-        channelNumber = newChannelNumber;
-        endReceptionTimer = nullptr;
-        emit(radioChannelChangedSignal, newChannelNumber);
-        emit(listeningChangedSignal, 0);
-        */
-    }
-}
-
 
 } // namespace physicallayer
 
