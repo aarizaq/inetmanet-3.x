@@ -1,7 +1,6 @@
 
 #include "inet/linklayer/ieee80211/mac/Ieee80211Mac.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211MpduA.h"
-#include "inet/physicallayer/ieee80211/Ieee80211Modulation.h"
 
 
 namespace inet {
@@ -92,7 +91,7 @@ void Ieee80211Mac::setBlockAckTimeOut()
     uint64_t blkAckFrameSize = 152*8;
     uint64_t blocAckReqSize = 24*8;
     // TODO: check this time out
-    simtime_t delay = computeFrameDuration(blocAckReqSize, bitrate) + SIMTIME_DBL( getSlotTime()) +SIMTIME_DBL( getSIFS()) + computeFrameDuration(blkAckFrameSize, bitrate) + MAX_PROPAGATION_DELAY * 2;
+    simtime_t delay = computeFrameDuration(blocAckReqSize, dataFrameMode->getDataMode()->getNetBitrate().get()) + SIMTIME_DBL( getSlotTime()) +SIMTIME_DBL( getSIFS()) + computeFrameDuration(blkAckFrameSize, dataFrameMode->getDataMode()->getNetBitrate().get()) + MAX_PROPAGATION_DELAY * 2;
     scheduleAt(simTime()+delay,endTimeout);
 }
 
@@ -526,16 +525,18 @@ Ieee80211MpduDelimiter *Ieee80211Mac::buildMpduDataFrame(Ieee80211Frame *frameTo
 
     ctrl->setNoPhyHeader(noheader);
     // frame->setControlInfo(ctrl->dup());
+    const IIeee80211Mode *modType = modeSet->getMode(bps(dataFrameMode->getDataMode()->getNetBitrate().get()));
     double duration;
     if (PHY_HEADER_LENGTH < 0)
     {
-        if (!noheader)
-            duration = SIMTIME_DBL(Ieee80211Modulation::calculateTxDuration(frame->getBitLength(), controlFrameModulationType, wifiPreambleType,false));
+
+        if (noheader)
+            duration = SIMTIME_DBL(modType->getPayloadDuration(frame->getBitLength()));
         else
-            duration = SIMTIME_DBL(Ieee80211Modulation::getPayloadDuration(frame->getBitLength(), controlFrameModulationType, wifiPreambleType,false));
+            duration = SIMTIME_DBL(modType->getDuration(frame->getBitLength()));
     }
     else
-        duration = SIMTIME_DBL(Ieee80211Modulation::getPayloadDuration(frame->getBitLength(), controlFrameModulationType)) + PHY_HEADER_LENGTH;
+        duration = SIMTIME_DBL(modType->getDataMode()->getDuration(frame->getBitLength())) + PHY_HEADER_LENGTH;
 
     frame->setDuration(duration);
     Ieee80211MpduDelimiter * delimiter = new Ieee80211MpduDelimiter(frame->getName());
@@ -709,7 +710,8 @@ void Ieee80211Mac::stateWaitAifs(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
             && isMpduA(getCurrentTransmission())  && !backoff())
     {
         if (fsmLocal->debug()) EV_DEBUG  << "Immediate - Transmit - RTS \n";
-        sendRTSFrame(getCurrentTransmission());
+        if (useRtsMpduA)
+            sendRTSFrame(getCurrentTransmission());
         oldcurrentAC = currentAC;
         cancelAIFSPeriod();
         if (useRtsMpduA)

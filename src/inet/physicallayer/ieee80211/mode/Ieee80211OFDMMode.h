@@ -132,6 +132,7 @@ class INET_API Ieee80211OFDMMode : public Ieee80211OFDMModeBase, public IIeee802
     virtual const Ieee80211OFDMSignalMode *getSignalMode() const { return signalMode; }
 
     virtual inline const simtime_t getDuration(int dataBitLength) const override { return preambleMode->getDuration() + signalMode->getDuration() + dataMode->getDuration(dataBitLength); }
+    virtual inline const simtime_t getPayloadDuration(int dataBitLength) const override { return dataMode->getDuration(dataBitLength);}
 
     // Table 18-17—OFDM PHY characteristics
     virtual const simtime_t getSlotTime() const override;

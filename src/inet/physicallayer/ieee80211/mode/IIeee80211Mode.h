@@ -59,6 +59,7 @@ class INET_API IIeee80211Mode
     virtual const IIeee80211HeaderMode *getHeaderMode() const = 0;
     virtual const IIeee80211DataMode *getDataMode() const = 0;
     virtual const simtime_t getDuration(int dataBitLength) const = 0;
+    virtual const simtime_t getPayloadDuration(int dataBitLength) const = 0;
 
     virtual const simtime_t getSlotTime() const = 0;
     virtual const simtime_t getSifsTime() const = 0;

@@ -768,6 +768,9 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     virtual double computeFrameDuration(Ieee80211Frame *msg);
     virtual double computeFrameDuration(int bits, double bitrate);
 
+    virtual double computeMpduADuration(Ieee80211MpduA *);
+
+
     /** @brief Logs all state information */
     virtual void logState();
 

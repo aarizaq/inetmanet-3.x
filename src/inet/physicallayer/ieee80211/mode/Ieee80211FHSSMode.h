@@ -90,6 +90,7 @@ class INET_API Ieee80211FhssMode : public IIeee80211Mode
     virtual const IIeee80211DataMode *getDataMode() const override { return dataMode; }
 
     virtual inline const simtime_t getDuration(int dataBitLength) const override { return preambleMode->getDuration() + headerMode->getDuration() + dataMode->getDuration(dataBitLength); }
+    virtual inline const simtime_t getPayloadDuration(int dataBitLength) const override { return dataMode->getDuration(dataBitLength); }
 
     // TODO: fill in
     virtual inline const simtime_t getSlotTime() const override { return 50E-6; }

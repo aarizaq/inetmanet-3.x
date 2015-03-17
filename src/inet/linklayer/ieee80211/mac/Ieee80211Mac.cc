@@ -1410,9 +1410,25 @@ Ieee80211RTSFrame *Ieee80211Mac::buildRTSFrame(Ieee80211DataOrMgmtFrame *frameTo
     Ieee80211RTSFrame *frame = new Ieee80211RTSFrame("wlan-rts");
     frame->setTransmitterAddress(address);
     frame->setReceiverAddress(frameToSend->getReceiverAddress());
-    frame->setDuration(3 * getSIFS() + controlFrameTxTime(LENGTH_CTS)
+    Ieee80211MpduA *mpdu = dynamic_cast<Ieee80211MpduA*>(frameToSend);
+    if (mpdu == nullptr)
+    {
+        frame->setDuration(3 * getSIFS() + controlFrameTxTime(LENGTH_CTS)
             + computeFrameDuration(frameToSend)
             + controlFrameTxTime(LENGTH_ACK));
+    }
+    else
+    {
+        uint64_t blkAckFrameSize = 152*8;
+        TransmissionRequest *ctrl = dynamic_cast<TransmissionRequest *>(frameToSend->getControlInfo());
+        double bitrate = dataFrameMode->getDataMode()->getNetBitrate().get();
+        if (ctrl) {
+            bitrate = ctrl->getBitrate().get();
+        }
+        frame->setDuration(3 * getSIFS() + controlFrameTxTime(LENGTH_CTS)
+                    + computeMpduADuration(mpdu)
+                    + computeFrameDuration(blkAckFrameSize,bitrate)); // blockAck
+    }
 
     return frame;
 }
@@ -1666,6 +1682,23 @@ double Ieee80211Mac::computeFrameDuration(Ieee80211Frame *msg)
     }
     else
         return computeFrameDuration(msg->getBitLength(), dataFrameMode->getDataMode()->getNetBitrate().get());
+}
+
+
+double Ieee80211Mac::computeMpduADuration(Ieee80211MpduA *frame)
+{
+    uint64_t totalSize = 0;
+    double bitrate = getBitrate();
+    int64_t sizeDelimiter = (0.25e-6 * par("interFrameMpduATime").doubleValue() * bitrate);
+    for (unsigned int i = 0; i < frame->getNumEncap(); i++)
+    {
+        uint64_t frameSize =  frame->getPacket(i)->getBitLength();
+        while ((frameSize%4) != 0)
+            frameSize++;
+        totalSize += frameSize;
+    }
+    totalSize += (frame->getNumEncap()-1) * sizeDelimiter;
+    return computeFrameDuration(totalSize, bitrate);
 }
 
 double Ieee80211Mac::computeFrameDuration(int bits, double bitrate)
