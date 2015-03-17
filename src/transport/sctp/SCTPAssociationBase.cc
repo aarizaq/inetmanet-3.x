@@ -114,7 +114,7 @@ SCTPPathVariables::SCTPPathVariables(const IPvXAddress& addr, SCTPAssociation* a
     blockingTimeout = simTime();
     packetsInBurst = 0;
     highSpeedCCThresholdIdx = 0;
-
+    oliaSentBytes = 0;
     numberOfFastRetransmissions = 0;
     numberOfTimerBasedRetransmissions = 0;
     numberOfHeartbeatsSent = 0;
@@ -144,6 +144,8 @@ SCTPPathVariables::SCTPPathVariables(const IPvXAddress& addr, SCTPAssociation* a
     snprintf(str, sizeof(str), "ASCONF_TIMER %d:%s", assoc->assocId, addr.str().c_str());
     AsconfTimer = new cMessage(str);
     AsconfTimer->setContextPointer(association);
+    snprintf(str, sizeof(str), "BLOCKING_TIMER %d:%s", assoc->assocId, addr.str().c_str());
+    BlockingTimer = new cMessage(str);
     HeartbeatTimer->setContextPointer(association);
     HeartbeatIntervalTimer->setContextPointer(association);
     CwndTimer->setContextPointer(association);
@@ -154,6 +156,7 @@ SCTPPathVariables::SCTPPathVariables(const IPvXAddress& addr, SCTPAssociation* a
     CwndTimer->setControlInfo(pinfo->dup());
     ResetTimer->setControlInfo(pinfo->dup());
     AsconfTimer->setControlInfo(pinfo->dup());
+    BlockingTimer->setControlInfo(pinfo->dup());
 
     snprintf(str, sizeof(str), "RTO %d:%s", assoc->assocId, addr.str().c_str());
     statisticsPathRTO = new cOutVector(str);
@@ -1232,13 +1235,15 @@ void SCTPAssociation::stateEntered(int32 status)
                state->cmtCCVariant = SCTPStateVariables::CCCV_CMT;
                state->allowCMT     = true;
             }
-            else if( (strcmp((const char*)sctpMain->par("cmtCCVariant"), "like-mptcp") == 0) ||
-                     (strcmp((const char*)sctpMain->par("cmtCCVariant"), "mptcp-like") == 0) ) {
-               state->cmtCCVariant = SCTPStateVariables::CCCV_Like_MPTCP;
+            else if(strcmp((const char*)sctpMain->par("cmtCCVariant"), "lia") == 0){
+               state->cmtCCVariant = SCTPStateVariables::CCCV_CMT_LIA;
                state->allowCMT     = true;
             }
-            else if( (strcmp((const char*)sctpMain->par("cmtCCVariant"), "cmtrp") == 0) ||
-                     (strcmp((const char*)sctpMain->par("cmtCCVariant"), "cmtrpv1") == 0) ) {
+            else if(strcmp((const char*)sctpMain->par("cmtCCVariant"), "olia") == 0){
+               state->cmtCCVariant = SCTPStateVariables::CCCV_CMT_OLIA;
+               state->allowCMT     = true;
+            }
+            else if(strcmp((const char*)sctpMain->par("cmtCCVariant"), "cmtrpv1") == 0){
                state->cmtCCVariant = SCTPStateVariables::CCCV_CMTRPv1;
                state->allowCMT     = true;
             }
@@ -1437,6 +1442,8 @@ void SCTPAssociation::removePath()
         delete path->ResetTimer;
         stopTimer(path->AsconfTimer);
         delete path->AsconfTimer;
+        stopTimer(path->BlockingTimer);
+        delete path->BlockingTimer;
         delete path;
         sctpPathMap.erase(pathIterator);
     }

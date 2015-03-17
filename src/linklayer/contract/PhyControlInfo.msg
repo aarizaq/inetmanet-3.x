@@ -42,7 +42,6 @@ class PhyControlInfo
     double bitrate = -1; // with PHY_C_CONFIGURERADIO: the bitrate to switch to
     bool adaptiveSensitivity = false;
     double transmitterPower = -1; // With PHY_C_CHANGETRANSMITTERPOWER: the transmission power to swith to
-    int remainframes = -1; // train of frames, inform to the radio that it must continue with the radio on
 }
 
 //
