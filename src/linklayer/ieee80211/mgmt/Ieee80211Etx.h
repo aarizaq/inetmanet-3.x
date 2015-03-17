@@ -254,21 +254,12 @@ class INET_API Ieee80211Etx : public cSimpleModule, public MacEstimateCostProces
 
     virtual double getNumCost() {return 4;}
     virtual int getNumNeighbors() {return neighbors.size();}
-    virtual int getNeighbors(MACAddress add[])
+    virtual int getNeighbors(std::vector<MACAddress> &add)
     {
-        return getNeighbors(add,0);
+        getNeighbors(add,0);
+        return (int)add.size();
     }
 
-    virtual int getNeighbors(MACAddress add[], const int &iface)
-    {
-        int i = 0;
-        for (NeighborsMap::iterator it = neighbors[iface].begin(); it != neighbors[iface].end(); it++)
-        {
-            add[i] = it->second.getAddress();
-            i++;
-        }
-        return i;
-    }
 
 };
 

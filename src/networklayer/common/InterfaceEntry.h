@@ -45,7 +45,7 @@ public:
     virtual double getCost(int, MACAddress &) = 0;
     virtual double getNumCost() = 0;
     virtual int getNumNeighbors() = 0;
-    virtual int getNeighbors(MACAddress []) = 0;
+    virtual int getNeighbors(std::vector<MACAddress> &) = 0;
 };
 
 /**
