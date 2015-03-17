@@ -1671,7 +1671,7 @@ std::vector<MACAddress> HwmpProtocol::getPreqReceivers(uint32_t interface)
             retval.push_back(MACAddress::BROADCAST_ADDRESS);
             return retval;
         }
-        MACAddress addr[m_unicastPreqThreshold];
+        std::vector<MACAddress> addr;
         ie->getEstimateCostProcess(0)->getNeighbors(addr);
         retval.clear();
         for (int i = 0; i < numNeigh; i++)
@@ -1718,7 +1718,7 @@ std::vector<MACAddress> HwmpProtocol::getBroadcastReceivers(uint32_t interface)
             return retval;
         }
 
-        MACAddress addr[m_unicastDataThreshold];
+        std::vector<MACAddress> addr;
         ie->getEstimateCostProcess(0)->getNeighbors(addr);
         retval.clear();
         for (int i = 0; i < numNeigh; i++)
