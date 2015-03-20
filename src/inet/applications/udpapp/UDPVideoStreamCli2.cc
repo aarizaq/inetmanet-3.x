@@ -1,6 +1,6 @@
 //
 // Copyright (C) 2005 Andras Varga
-// Copyright (C) 2012 Alfonso Ariza
+// Copyright (C) 2015 A. Ariza (Malaga University)
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -147,10 +147,12 @@ void UDPVideoStreamCli2::receiveStream(cPacket *pk)
         cancelEvent(reintentTimer);
     if (timeOutMsg->isScheduled())
         cancelEvent(timeOutMsg);
-    if (timeOut > 0)
-        scheduleAt(simTime()+timeOut,timeOutMsg);
 
     recieved = true;
+
+    if (timeOut > 0 && par("multipleRequest").boolValue())
+        scheduleAt(simTime()+timeOut,timeOutMsg); // only if multiple request is active
+
 
     if (simTime() - pk->getCreationTime() > limitDelay)
     {

@@ -19,13 +19,15 @@
 
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211Etx.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
-#include "inet/physicallayer/ieee80211/Ieee80211aControlInfo_m.h"
+#include "inet/physicallayer/ieee80211/packetlevel/Ieee80211ControlInfo_m.h"
 #include "inet/common/GlobalWirelessLinkInspector.h"
 #include "inet/common/ModuleAccess.h"
 
 namespace inet {
 
 namespace ieee80211 {
+
+using namespace physicallayer;
 
 Define_Module(Ieee80211Etx);
 
@@ -838,7 +840,7 @@ void Ieee80211Etx::receiveSignal(cComponent *source, simsignal_t signalID, cObje
             it->second.setNumFailures(0);
         if (powerWindow>0)
         {
-            Radio80211aControlInfo * cinfo = dynamic_cast<Radio80211aControlInfo *> (frame->getControlInfo());
+            Ieee80211ReceptionIndication * cinfo = dynamic_cast<Ieee80211ReceptionIndication *> (frame->getControlInfo());
             // use only data frames
             if (!dynamic_cast<Ieee80211DataFrame *>(frame))
                 return;

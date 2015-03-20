@@ -23,7 +23,7 @@
 #include "inet/linklayer/ieee80211mesh/hwmp/hwmp.h"
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211Etx.h"
 #include "inet/routing/extras/base/ControlManetRouting_m.h"
-#include "inet/physicallayer/ieee80211/Ieee80211aControlInfo_m.h"
+#include "inet/physicallayer/ieee80211/packetlevel/Ieee80211ControlInfo_m.h"
 #include "inet/linklayer/common/Ieee802Ctrl.h"
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtFrames_m.h"
 
@@ -32,6 +32,8 @@
 namespace inet {
 
 namespace ieee80211 {
+
+using namespace physicallayer;
 
 std::ostream& operator<<(std::ostream& os, const HwmpRtable::ReactiveRoute& e)
 {
@@ -2175,8 +2177,8 @@ void HwmpProtocol::processFullPromiscuous(const cPolymorphic *details)
     if (frame == nullptr)
         return;
 
-    Radio80211aControlInfo * cinfo = dynamic_cast<Radio80211aControlInfo *>(frame->getControlInfo());uint32_t
-    cost = 1;
+    Ieee80211ReceptionIndication * cinfo = dynamic_cast<Ieee80211ReceptionIndication *>(frame->getControlInfo());
+    uint32_t cost = 1;
     if (cinfo)
     {
         if (dynamic_cast<Ieee80211DataFrame *>(frame))

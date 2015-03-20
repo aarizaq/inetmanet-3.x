@@ -19,8 +19,6 @@
 
 #include "inet/common/INETUtils.h"
 #include "inet/common/INETMath.h"
-
-
 #include "inet/networklayer/common/InterfaceEntry.h"
 #include "inet/common/ModuleAccess.h"
 #include "inet/linklayer/contract/IMACProtocolControlInfo.h"

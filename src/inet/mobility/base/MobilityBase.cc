@@ -20,14 +20,16 @@
  * part of:     framework implementation developed by tkn
  **************************************************************************/
 
-#include "inet/mobility/base/MobilityBase.h"
 #include "inet/common/INETMath.h"
-#include "inet/environment/PhysicalEnvironment.h"
+#include "inet/environment/contract/IPhysicalEnvironment.h"
+#include "inet/mobility/base/MobilityBase.h"
 
 namespace inet {
 Coord MobilityBase::mininumArea;
 Coord MobilityBase::maximumArea;
 bool  MobilityBase::areaInitalized=false;
+
+using namespace inet::physicalenvironment;
 
 Register_Abstract_Class(MobilityBase);
 
@@ -223,7 +225,7 @@ void MobilityBase::updateVisualRepresentation()
 {
     EV_DEBUG << "current position = " << lastPosition << endl;
     if (ev.isGUI() && visualRepresentation) {
-        cFigure::Point point = PhysicalEnvironment::computeCanvasPoint(lastPosition);
+        cFigure::Point point = IPhysicalEnvironment::computeCanvasPoint(lastPosition);
         visualRepresentation->getDisplayString().setTagArg("p", 0, (long)point.x);
         visualRepresentation->getDisplayString().setTagArg("p", 1, (long)point.y);
     }

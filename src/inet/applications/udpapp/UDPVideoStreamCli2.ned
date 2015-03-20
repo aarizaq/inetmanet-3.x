@@ -1,5 +1,6 @@
 //
 // Copyright (C) 2005 Andras Varga
+// Copyright (C) 2015 A. Ariza (Malaga University)
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -40,11 +41,11 @@ simple UDPVideoStreamCli2 like IUDPApp
         int localPort = default(-1);  // local port (-1: use ephemeral port)
         string serverAddress;  // server address
         int serverPort;  // server port
-        double startTime @unit(s) = default(1s);
-        volatile double reintent @unit(s) = default(60s);
-        bool multipleRequest = default(false);
-        double timeOut @unit(s) = default(10s);
-        double limitDelay @unit(s) = default(0.5s);
+        double startTime @unit(s) = default(1s); // start time of the client
+        volatile double reintent @unit(s) = default(60s); // The client will request a new sequence if no video frame has arrived after this period, if a video frame has been received, the client can request other sequences only if the parameter multipleRequest is true   
+        bool multipleRequest = default(false);  // if true the client request other sequence after finish the current 
+        double timeOut @unit(s) = default(10s); // maximum time without receive a frame that the client use to determine a fail of request or end of sequence. If it is a end of sequence and multipleRequest = false the client doesn't request other sequence, if the client has never received a video frame, it will request other sequence
+        double limitDelay @unit(s) = default(0.5s); // maximum delay in a video frame to discard it
         @display("i=block/app");
         @signal[rcvdPk](type=cPacket);
         @statistic[rcvdPk](title="packets received"; source=rcvdPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);

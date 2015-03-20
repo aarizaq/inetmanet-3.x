@@ -28,7 +28,7 @@
 #define __INET_CSMA802154_H
 
 #include "inet/linklayer/csma/CSMA.h"
-#include "inet/physicallayer/ieee802154/Ieee802154UWBIRTransmitter.h"
+#include "inet/physicallayer/ieee802154/bitlevel/Ieee802154UWBIRTransmitter.h"
 
 namespace inet {
 
