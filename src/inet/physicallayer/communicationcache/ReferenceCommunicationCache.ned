@@ -18,14 +18,14 @@ package inet.physicallayer.communicationcache;
 import inet.physicallayer.contract.packetlevel.ICommunicationCache;
 
 //
-// This communication cache model stores radio, transmission and reception
-// related intermediate computation results in map data structures. It's primarily
-// useful for simulations with both static *and* dynamic radios, and with both
-// short *and* long transmission durations.
+// This communication cache model allows validating other implementations. It
+// can be used to provide a reference for communication logs, simulation
+// fingerprints, and statistical results that can be compared with results of
+// other communication cache implementations.
 //
-module MapCommunicationCache like ICommunicationCache
+module ReferenceCommunicationCache like ICommunicationCache
 {
     parameters:
         @display("i=block/table2");
-        @class(MapCommunicationCache);
+        @class(ReferenceCommunicationCache);
 }
