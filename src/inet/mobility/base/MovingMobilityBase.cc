@@ -53,9 +53,9 @@ void MovingMobilityBase::initialize(int stage)
         updateInterval = par("updateInterval");
         leaveMovementTrail = par("leaveMovementTrail");
         if (leaveMovementTrail) {
-            movementTrail = new TrailFigure(100, "movement trail");
+            movementTrail = new TrailFigure(100, true, "movement trail");
             cCanvas *canvas = visualRepresentation->getParentModule()->getCanvas();
-            canvas->addFigure(movementTrail, canvas->findFigure("submodules"));
+            canvas->addFigureBelow(movementTrail, canvas->getSubmodulesLayer());
         }
     }
 }
@@ -95,7 +95,14 @@ void MovingMobilityBase::updateVisualRepresentation()
             movementLine->setTags("movement_trail recent_history");
             movementLine->setStart(startPosition);
             movementLine->setEnd(endPosition);
+            movementLine->setLineWidth(1);
+#if OMNETPP_CANVAS_VERSION >= 0x20140908
+            cFigure::Color color = cFigure::GOOD_DARK_COLORS[getId() % (sizeof(cFigure::GOOD_DARK_COLORS) / sizeof(cFigure::Color))];
+            movementLine->setLineColor(color);
+            movementLine->setScaleLineWidth(false);
+#else
             movementLine->setLineColor(cFigure::BLACK);
+#endif
             movementTrail->addFigure(movementLine);
         }
     }

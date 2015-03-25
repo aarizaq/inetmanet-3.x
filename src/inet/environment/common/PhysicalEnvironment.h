@@ -62,12 +62,14 @@ class INET_API PhysicalEnvironment : public cModule, public IPhysicalEnvironment
     K temperature;
     Coord spaceMin;
     Coord spaceMax;
+    bool displayAxes;
     //@}
 
     /** @name Internal state */
     //@{
     EulerAngles viewAngle;
     Rotation viewRotation;
+    cFigure::Point viewTranslation;
     std::vector<const ShapeBase *> shapes;
     std::vector<const Material *> materials;
     std::vector<const PhysicalObject *> objects;
@@ -100,6 +102,7 @@ class INET_API PhysicalEnvironment : public cModule, public IPhysicalEnvironment
 
     virtual void computeFacePoints(const PhysicalObject *object, std::vector<std::vector<Coord> >& faces, const Rotation& rotation);
     virtual EulerAngles computeViewAngle(const char *viewAngle);
+    virtual cFigure::Point computeViewTranslation(const char *viewTranslation);
 
   public:
     PhysicalEnvironment();
@@ -111,6 +114,7 @@ class INET_API PhysicalEnvironment : public cModule, public IPhysicalEnvironment
 
     virtual const EulerAngles& getViewAngle() const override { return viewAngle; }
     virtual const Rotation& getViewRotation() const override { return viewRotation; }
+    virtual const cFigure::Point& getViewTranslation() const override { return viewTranslation; }
     virtual const IMaterialRegistry *getMaterialRegistry() const override { return &MaterialRegistry::singleton; }
 
     virtual int getNumObjects() const { return objects.size(); }

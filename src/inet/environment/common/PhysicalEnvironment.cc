@@ -34,6 +34,7 @@ PhysicalEnvironment::PhysicalEnvironment() :
     temperature(sNaN),
     spaceMin(Coord(sNaN, sNaN, sNaN)),
     spaceMax(Coord(sNaN, sNaN, sNaN)),
+    displayAxes(false),
     objectCache(nullptr),
     objectsLayer(nullptr)
 {
@@ -61,11 +62,13 @@ void PhysicalEnvironment::initialize(int stage)
         spaceMax.x = par("spaceMaxX");
         spaceMax.y = par("spaceMaxY");
         spaceMax.z = par("spaceMaxZ");
+        displayAxes = par("displayAxes");
         viewAngle = computeViewAngle(par("viewAngle"));
         viewRotation = Rotation(viewAngle);
+        viewTranslation = computeViewTranslation(par("viewTranslation"));
         objectsLayer = new cGroupFigure();
         cCanvas *canvas = getParentModule()->getCanvas();
-        canvas->addFigure(objectsLayer, canvas->findFigure("submodules"));
+        canvas->addFigureBelow(objectsLayer, canvas->getSubmodulesLayer());
     }
     else if (stage == INITSTAGE_PHYSICAL_ENVIRONMENT)
     {
@@ -484,7 +487,6 @@ void PhysicalEnvironment::updateCanvas()
     std::sort(objectsCopy.begin(), objectsCopy.end(), ObjectPositionComparator(viewRotation));
     for (auto object : objectsCopy)
     {
-
         const ShapeBase *shape = object->getShape();
         const Coord& position = object->getPosition();
         const EulerAngles& orientation = object->getOrientation();
@@ -504,8 +506,8 @@ void PhysicalEnvironment::updateCanvas()
             double radius = sphere->getRadius();
             cOvalFigure *figure = new cOvalFigure();
             figure->setFilled(true);
-            cFigure::Point topLeft = computeCanvasPoint(position - Coord(radius, radius, radius), viewRotation);
-            cFigure::Point bottomRight = computeCanvasPoint(position + Coord(radius, radius, radius), viewRotation);
+            cFigure::Point topLeft = computeCanvasPoint(position - Coord(radius, radius, radius), viewRotation, viewTranslation);
+            cFigure::Point bottomRight = computeCanvasPoint(position + Coord(radius, radius, radius), viewRotation, viewTranslation);
             figure->setBounds(cFigure::Rectangle(topLeft.x, topLeft.y, bottomRight.x - topLeft.x, bottomRight.y - topLeft.y));
             figure->setLineWidth(object->getLineWidth());
             figure->setLineColor(object->getLineColor());
@@ -513,6 +515,7 @@ void PhysicalEnvironment::updateCanvas()
 #if OMNETPP_CANVAS_VERSION >= 0x20140908
             figure->setLineOpacity(object->getOpacity());
             figure->setFillOpacity(object->getOpacity());
+            figure->setScaleLineWidth(false);
 #endif
             std::string tags("physical_object ");
             if (object->getTags())
@@ -542,15 +545,61 @@ void PhysicalEnvironment::updateCanvas()
         {
 #if OMNETPP_CANVAS_VERSION >= 0x20140908
             cLabelFigure *nameFigure = new cLabelFigure();
-            nameFigure->setPosition(computeCanvasPoint(position, viewRotation));
+            nameFigure->setPosition(computeCanvasPoint(position, viewRotation, viewTranslation));
 #else
             cTextFigure *nameFigure = new cTextFigure();
-            nameFigure->setLocation(computeCanvasPoint(position, viewRotation));
+            nameFigure->setLocation(computeCanvasPoint(position, viewRotation, viewTranslation));
 #endif
             nameFigure->setTags("physical_object object_name label");
             nameFigure->setText(name);
             objectsLayer->addFigure(nameFigure);
         }
+    }
+    if (displayAxes) {
+        cLineFigure *xAxis = new cLineFigure();
+        cLineFigure *yAxis = new cLineFigure();
+        cLineFigure *zAxis = new cLineFigure();
+        xAxis->setLineWidth(1);
+        yAxis->setLineWidth(1);
+        zAxis->setLineWidth(1);
+#if OMNETPP_CANVAS_VERSION >= 0x20140908
+        xAxis->setScaleLineWidth(false);
+        yAxis->setScaleLineWidth(false);
+        zAxis->setScaleLineWidth(false);
+#endif
+        xAxis->setStart(computeCanvasPoint(Coord::ZERO));
+        yAxis->setStart(computeCanvasPoint(Coord::ZERO));
+        zAxis->setStart(computeCanvasPoint(Coord::ZERO));
+        xAxis->setEnd(computeCanvasPoint(Coord(1000, 0, 0)));
+        yAxis->setEnd(computeCanvasPoint(Coord(0, 1000, 0)));
+        zAxis->setEnd(computeCanvasPoint(Coord(0, 0, 1000)));
+        objectsLayer->addFigure(xAxis);
+        objectsLayer->addFigure(yAxis);
+        objectsLayer->addFigure(zAxis);
+#if OMNETPP_CANVAS_VERSION >= 0x20140908
+        cLabelFigure *xLabel = new cLabelFigure();
+        cLabelFigure *yLabel = new cLabelFigure();
+        cLabelFigure *zLabel = new cLabelFigure();
+#else
+        cTextFigure *xLabel = new cTextFigure();
+        cTextFigure *yLabel = new cTextFigure();
+        cTextFigure *zLabel = new cTextFigure();
+#endif
+        xLabel->setText("X");
+        yLabel->setText("Y");
+        zLabel->setText("Z");
+#if OMNETPP_CANVAS_VERSION >= 0x20140908
+        xLabel->setPosition(computeCanvasPoint(Coord(1000, 0, 0)));
+        yLabel->setPosition(computeCanvasPoint(Coord(0, 1000, 0)));
+        zLabel->setPosition(computeCanvasPoint(Coord(0, 0, 1000)));
+#else
+        xLabel->setLocation(computeCanvasPoint(Coord(1000, 0, 0)));
+        yLabel->setLocation(computeCanvasPoint(Coord(0, 1000, 0)));
+        zLabel->setLocation(computeCanvasPoint(Coord(0, 0, 1000)));
+#endif
+        objectsLayer->addFigure(xLabel);
+        objectsLayer->addFigure(yLabel);
+        objectsLayer->addFigure(zLabel);
     }
 }
 
@@ -563,7 +612,7 @@ void PhysicalEnvironment::computeFacePoints(const PhysicalObject *object, std::v
         const std::vector<Coord>& facePoints = *it;
         for (const auto & facePoint : facePoints)
         {
-            cFigure::Point canvPoint = computeCanvasPoint(rotation.rotateVectorClockwise(facePoint) + position, viewRotation);
+            cFigure::Point canvPoint = computeCanvasPoint(rotation.rotateVectorClockwise(facePoint) + position, viewRotation, viewTranslation);
             canvasPoints.push_back(canvPoint);
         }
         cPolygonFigure *figure = new cPolygonFigure();
@@ -575,6 +624,7 @@ void PhysicalEnvironment::computeFacePoints(const PhysicalObject *object, std::v
 #if OMNETPP_CANVAS_VERSION >= 0x20140908
         figure->setLineOpacity(object->getOpacity());
         figure->setFillOpacity(object->getOpacity());
+        figure->setScaleLineWidth(false);
 #endif
         std::string tags("physical_object ");
         if (object->getTags())
@@ -604,10 +654,13 @@ void PhysicalEnvironment::visitObjects(const IVisitor *visitor, const LineSegmen
 
 void PhysicalEnvironment::handleParameterChange(const char* name)
 {
-    if (name && !strcmp(name, "viewAngle"))
-    {
+    if (name && !strcmp(name, "viewAngle")) {
         viewAngle = computeViewAngle(par("viewAngle"));
         viewRotation = Rotation(viewAngle);
+        updateCanvas();
+    }
+    else if (name && !strcmp(name, "viewTranslation")) {
+        viewTranslation = computeViewTranslation(par("viewTranslation"));
         updateCanvas();
     }
 }
@@ -631,6 +684,24 @@ EulerAngles PhysicalEnvironment::computeViewAngle(const char* viewAngle)
     {
         x = y = z = 0;
     }
+    else if (!strncmp(viewAngle, "isometric", 9))
+    {
+        int v;
+        int l = strlen(viewAngle);
+        switch (l) {
+            case 9: v = 0; break;
+            case 10: v = viewAngle[9] - '0'; break;
+            case 11: v = (viewAngle[9] - '0') * 10 + viewAngle[10] - '0'; break;
+            default: throw cRuntimeError("Invalid isometric viewAngle parameter");
+        }
+        // 1st axis can point on the 2d plane in 6 directions
+        // 2nd axis can point on the 2d plane in 4 directions (the opposite direction is forbidden)
+        // 3rd axis can point on the 2d plane in 2 directions
+        // this results in 6 * 4 * 2 = 48 different configurations
+        x = math::deg2rad(45 + v % 4 * 90);
+        y = math::deg2rad(v / 24 % 2 ? 35.27 : -35.27);
+        z = math::deg2rad(30 + v / 4 % 6 * 60);
+    }
     else if (sscanf(viewAngle, "%lf %lf %lf", &x, &y, &z) == 3)
     {
         x = math::deg2rad(x);
@@ -638,8 +709,21 @@ EulerAngles PhysicalEnvironment::computeViewAngle(const char* viewAngle)
         z = math::deg2rad(z);
     }
     else
-        throw cRuntimeError("viewAngle must be a triplet representing three degrees");
+        throw cRuntimeError("The viewAngle parameter must be a predefined string or a triplet representing three degrees");
     return EulerAngles(x, y, z);
+}
+
+cFigure::Point PhysicalEnvironment::computeViewTranslation(const char* viewTranslation)
+{
+    double x, y;
+    if (sscanf(viewTranslation, "%lf %lf", &x, &y) == 2)
+    {
+        x = math::deg2rad(x);
+        y = math::deg2rad(y);
+    }
+    else
+        throw cRuntimeError("The viewTranslation parameter must be a pair of doubles");
+    return cFigure::Point(x, y);
 }
 
 } // namespace physicalenvironment
