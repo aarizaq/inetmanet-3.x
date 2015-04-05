@@ -332,7 +332,6 @@ private:
 
         typedef std::map<ManetAddress,rreq_tbl_entry*> DsrRreqTbl;
         DsrRreqTbl dsrRreqTbl;
-
         rreq_tbl_entry *__rreq_tbl_entry_create(struct in_addr node_addr);
         rreq_tbl_entry *__rreq_tbl_add(struct in_addr node_addr);
 

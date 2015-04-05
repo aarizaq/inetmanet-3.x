@@ -120,6 +120,10 @@ int dsr_opt_parse(struct dsr_pkt *dp)
     if (!dp)
         return -1;
 
+    dp->rreq_opt.clear();  /* Can only be one */
+    dp->rrep_opt.clear();
+    dp->rerr_opt.clear();
+    dp->ack_opt.clear();
 
     dp->srt_opt = NULL;
     dp->ack_req_opt = NULL;

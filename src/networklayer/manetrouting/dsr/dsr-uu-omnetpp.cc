@@ -945,7 +945,7 @@ void DSRUU::EtxMsgSend(unsigned long data)
     {
         // remove old data
         ETXEntry *entry = (*iter).second;
-        while (simTime()-entry->timeVector.front()>etxWindowSize)
+        while (!entry->timeVector.empty() && simTime()-entry->timeVector.front()>etxWindowSize)
             entry->timeVector.erase(entry->timeVector.begin());
         if (entry->timeVector.size()==0)
         {
@@ -1034,7 +1034,7 @@ void DSRUU::EtxMsgProc(cMessage *m)
     else
     {
         entry = (*it).second;
-        while (simTime()-entry->timeVector.front()>etxWindowSize)
+        while (!entry->timeVector.empty() && simTime()-entry->timeVector.front()>etxWindowSize)
             entry->timeVector.erase(entry->timeVector.begin());
     }
     double delivery;

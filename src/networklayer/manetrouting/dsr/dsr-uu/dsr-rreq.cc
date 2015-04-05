@@ -423,7 +423,6 @@ int NSCLASS dsr_rreq_duplicate(struct in_addr initiator, struct in_addr target,
     }
 
 
-
     DsrRreqTbl::iterator it = dsrRreqTbl.find(addrInitiator);
     if (it == dsrRreqTbl.end())
         return 0;

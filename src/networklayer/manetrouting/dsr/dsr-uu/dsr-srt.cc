@@ -817,8 +817,8 @@ int NSCLASS dsr_srt_opt_recv(struct dsr_pkt *dp, struct dsr_srt_opt *srt_opt)
         else
             ph_srt_add_node_map(dp->prv_hop,ConfValToUsecs(RouteCacheTimeout), 0,0);
 
-        struct dsr_srt * from_me_to_dest=NULL;
-        struct dsr_srt * from_me_to_src=NULL;
+        struct dsr_srt * from_me_to_dest = NULL;
+        struct dsr_srt * from_me_to_src = NULL;
         struct in_addr split_add;
 
         if (next_hop_intended.s_addr != myaddr.s_addr)
@@ -887,8 +887,6 @@ int NSCLASS dsr_srt_opt_recv(struct dsr_pkt *dp, struct dsr_srt_opt *srt_opt)
 
         dsr_rtc_add(dp->srt, ConfValToUsecs(RouteCacheTimeout), 0);
     }
-
-
 
 #else
     lc_link_add(my_addr(), dp->prv_hop,
