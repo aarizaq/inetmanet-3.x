@@ -15,33 +15,28 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "inet/physicallayer/ieee80211/bitlevel/Ieee80211InterleaverModule.h"
+#include "inet/physicallayer/common/bitlevel/AdditiveScrambling.h"
 
 namespace inet {
 
 namespace physicallayer {
 
-Define_Module(Ieee80211InterleaverModule);
-
-void Ieee80211InterleaverModule::initialize(int stage)
+AdditiveScrambling::AdditiveScrambling(const ShortBitVector& seed, const ShortBitVector& generatorPolynomial) :
+    seed(seed),
+    generatorPolynomial(generatorPolynomial)
 {
-    if (stage == INITSTAGE_LOCAL) {
-        int numberOfCodedBitsPerSymbol = par("numberOfCodedBitsPerSymbol");
-        int numberOfCodedBitsPerSubcarrier = par("numberOfCodedBitsPerSubcarrier");
-        const Ieee80211Interleaving *interleaving = new Ieee80211Interleaving(numberOfCodedBitsPerSymbol, numberOfCodedBitsPerSubcarrier);
-        interleaver = new Ieee80211Interleaver(interleaving);
-    }
 }
 
-void Ieee80211InterleaverModule::printToStream(std::ostream& stream) const
+std::ostream& AdditiveScrambling::printToStream(std::ostream& stream, int level) const
 {
-    stream << interleaver;
+    stream << "AdditiveScrambling";
+    if (level >= PRINT_LEVEL_TRACE)
+        stream << ", seed = " << seed
+               << ", generatorPolynomial = " << generatorPolynomial;
+    return stream;
 }
 
-Ieee80211InterleaverModule::~Ieee80211InterleaverModule()
-{
-    delete interleaver;
-}
 } /* namespace physicallayer */
+
 } /* namespace inet */
 

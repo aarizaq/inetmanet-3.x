@@ -38,10 +38,7 @@ class INET_API Ieee80211IrPreambleMode : public IIeee80211PreambleMode
     inline int getSlotLength() const { return getSyncSlotLength() + getSFDSlotLength(); }
     inline const simtime_t getSlotDuration() const { return 250E-9; }
 
-    virtual inline bps getNetBitrate() const override { return bps(NaN); }
-    virtual inline bps getGrossBitrate() const override { return bps(NaN); }
     virtual inline const simtime_t getDuration() const override { return getSlotLength() * getSlotDuration(); }
-    virtual const IModulation *getModulation() const override { return nullptr; }
 };
 
 class INET_API Ieee80211IrHeaderMode : public IIeee80211HeaderMode
@@ -79,6 +76,7 @@ class INET_API Ieee80211IrDataMode : public IIeee80211DataMode
     virtual int getBitLength(int dataBitLength) const override { return dataBitLength; }
     virtual inline const simtime_t getDuration(int bitLength) const override { return bitLength / getGrossBitrate().get(); }
     virtual const PPMModulationBase *getModulation() const override { return modulation; }
+    virtual int getNumberOfSpatialStreams() const override { return 1; }
 };
 
 /**
@@ -94,6 +92,8 @@ class INET_API Ieee80211IrMode : public IIeee80211Mode
 
   public:
     Ieee80211IrMode(const Ieee80211IrPreambleMode *preambleMode, const Ieee80211IrHeaderMode *headerMode, const Ieee80211IrDataMode *dataMode);
+
+    virtual std::ostream& printToStream(std::ostream& stream, int level) const override { return stream << "Ieee80211IrMode"; }
 
     virtual const IIeee80211PreambleMode *getPreambleMode() const override { return preambleMode; }
     virtual const IIeee80211HeaderMode *getHeaderMode() const override { return headerMode; }

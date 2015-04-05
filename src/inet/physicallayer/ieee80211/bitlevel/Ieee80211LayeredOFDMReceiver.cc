@@ -87,6 +87,29 @@ const IReceptionAnalogModel *Ieee80211LayeredOFDMReceiver::createAnalogModel(con
     return nullptr;
 }
 
+std::ostream& Ieee80211LayeredOFDMReceiver::printToStream(std::ostream& stream, int level) const
+{
+    stream << "Ieee80211LayeredOFDMReceiver";
+    if (level >= PRINT_LEVEL_TRACE)
+        stream << ", levelOfDetail = " << levelOfDetail
+               << ", mode = " << printObjectToString(mode, level - 1)
+               << ", errorModel = " << printObjectToString(errorModel, level - 1)
+               << ", dataDecoder = " << printObjectToString(dataDecoder, level - 1)
+               << ", signalDecoder = " << printObjectToString(signalDecoder, level - 1)
+               << ", dataDemodulator = " << printObjectToString(dataDemodulator, level - 1)
+               << ", signalDemodulator = " << printObjectToString(signalDemodulator, level - 1)
+               << ", pulseFilter = " << printObjectToString(pulseFilter, level - 1)
+               << ", analogDigitalConverter = " << printObjectToString(analogDigitalConverter, level - 1)
+               << ", energyDetection = " << energyDetection
+               << ", sensitivity = " << energyDetection
+               << ", carrierFrequency = " << carrierFrequency
+               << ", bandwidth = " << bandwidth
+               << ", channelSpacing = " << channelSpacing
+               << ", snirThreshold = " << snirThreshold
+               << ", isCompliant = " << isCompliant;
+    return stream;
+}
+
 const IReceptionSampleModel *Ieee80211LayeredOFDMReceiver::createSampleModel(const LayeredTransmission *transmission, const ISNIR *snir) const
 {
     if (levelOfDetail == SAMPLE_DOMAIN)
@@ -120,9 +143,7 @@ double Ieee80211LayeredOFDMReceiver::getCodeRateFromDecoderModule(const IDecoder
     const Ieee80211OFDMDecoderModule *decoderModule = check_and_cast<const Ieee80211OFDMDecoderModule *>(decoder);
     const Ieee80211OFDMCode *code = decoderModule->getCode();
     const ConvolutionalCode *convolutionalCode = code->getConvolutionalCode();
-    if (convolutionalCode)
-        return 1.0 * convolutionalCode->getCodeRatePuncturingN() / convolutionalCode->getCodeRatePuncturingK();
-    return 1;
+    return convolutionalCode ? 1.0 * convolutionalCode->getCodeRatePuncturingN() / convolutionalCode->getCodeRatePuncturingK() : 1;
 }
 
 const IReceptionBitModel *Ieee80211LayeredOFDMReceiver::createCompleteBitModel(const IReceptionBitModel *signalFieldBitModel, const IReceptionBitModel *dataFieldBitModel) const
@@ -324,7 +345,7 @@ const IReceptionPacketModel *Ieee80211LayeredOFDMReceiver::createCompletePacketM
         mergedBits->appendBit(dataBits->getBit(i));
     Ieee80211PhySerializer deserializer;
     cPacket *phyFrame = deserializer.deserialize(mergedBits);
-    return new ReceptionPacketModel(phyFrame, mergedBits, bps(NaN), 0, true);
+    return new ReceptionPacketModel(phyFrame, mergedBits, bps(NaN), 0, !phyFrame->hasBitError());
 }
 
 const Ieee80211OFDMMode *Ieee80211LayeredOFDMReceiver::computeMode(Hz bandwidth) const
@@ -335,7 +356,7 @@ const Ieee80211OFDMMode *Ieee80211LayeredOFDMReceiver::computeMode(Hz bandwidth)
     const Ieee80211OFDMDemodulatorModule *ofdmDataDemodulatorModule = check_and_cast<const Ieee80211OFDMDemodulatorModule *>(dataDemodulator);
     const Ieee80211OFDMSignalMode *signalMode = new Ieee80211OFDMSignalMode(ofdmSignalDecoderModule->getCode(), ofdmSignalDemodulatorModule->getModulation(), channelSpacing, bandwidth, 0);
     const Ieee80211OFDMDataMode *dataMode = new Ieee80211OFDMDataMode(ofdmDataDecoderModule->getCode(), ofdmDataDemodulatorModule->getModulation(), channelSpacing, bandwidth);
-    return new Ieee80211OFDMMode(new Ieee80211OFDMPreambleMode(channelSpacing, bandwidth), signalMode, dataMode, channelSpacing, bandwidth);
+    return new Ieee80211OFDMMode(new Ieee80211OFDMPreambleMode(channelSpacing), signalMode, dataMode, channelSpacing, bandwidth);
 }
 
 const IReceptionDecision *Ieee80211LayeredOFDMReceiver::computeReceptionDecision(const IListening *listening, const IReception *reception, const IInterference *interference) const
@@ -356,6 +377,7 @@ const IReceptionDecision *Ieee80211LayeredOFDMReceiver::computeReceptionDecision
     const IReceptionPacketModel *signalFieldPacketModel = createSignalFieldPacketModel(signalFieldBitModel);
     if (isCompliant) {
         uint8_t rate = getRate(signalFieldPacketModel->getSerializedPacket());
+        // TODO: handle erroneous rate field
         mode = &Ieee80211OFDMCompliantModes::getCompliantMode(rate, channelSpacing);
     }
     else if (!mode)

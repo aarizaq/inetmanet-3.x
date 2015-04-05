@@ -16,6 +16,7 @@
 //
 
 #include <algorithm>    // std::min
+
 #include "platdep/sockets.h" // htonl, ntohl, etc. on Windows
 
 #include "inet/common/serializer/ipv6/IPv6Serializer.h"

@@ -483,6 +483,7 @@ void UDP::processUndeliverablePacket(UDPPacket *udpPacket, cObject *ctrl)
         icmp->sendErrorMessage(udpPacket, ctrl4, ICMP_DESTINATION_UNREACHABLE, ICMP_DU_PORT_UNREACHABLE);
 #else // ifdef WITH_IPv4
         delete udpPacket;
+        delete ctrl;
 #endif // ifdef WITH_IPv4
     }
     else if (dynamic_cast<IPv6ControlInfo *>(ctrl) != nullptr) {
@@ -493,10 +494,12 @@ void UDP::processUndeliverablePacket(UDPPacket *udpPacket, cObject *ctrl)
         icmpv6->sendErrorMessage(udpPacket, ctrl6, ICMPv6_DESTINATION_UNREACHABLE, PORT_UNREACHABLE);
 #else // ifdef WITH_IPv6
         delete udpPacket;
+        delete ctrl;
 #endif // ifdef WITH_IPv6
     }
     else if (dynamic_cast<GenericNetworkProtocolControlInfo *>(ctrl) != nullptr) {
         delete udpPacket;
+        delete ctrl;
     }
     else if (ctrl == nullptr) {
         throw cRuntimeError("(%s)%s arrived from lower layer without control info",

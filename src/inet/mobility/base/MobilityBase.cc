@@ -38,13 +38,12 @@ static bool parseIntTo(const char *s, double& destValue)
     if (!s || !*s)
         return false;
 
-    char *endptr;
-    int value = strtol(s, &endptr, 10);
-
-    if (*endptr)
+    /* This method is only used to convert positions from the display strings,
+     * which can contain floating point values.
+     */
+    if(sscanf(s, "%lf", &destValue) != 1)
         return false;
 
-    destValue = value;
     return true;
 }
 

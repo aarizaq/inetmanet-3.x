@@ -21,9 +21,9 @@
 #include "inet/common/INETDefs.h"
 #include "inet/physicallayer/contract/bitlevel/IDecoder.h"
 #include "inet/physicallayer/ieee80211/bitlevel/Ieee80211OFDMDecoder.h"
-#include "inet/physicallayer/ieee80211/bitlevel/Ieee80211Interleaver.h"
+#include "inet/physicallayer/ieee80211/bitlevel/Ieee80211OFDMInterleaver.h"
 #include "inet/physicallayer/common/bitlevel/AdditiveScrambler.h"
-#include "inet/physicallayer/ieee80211/bitlevel/Ieee80211Interleaving.h"
+#include "inet/physicallayer/ieee80211/bitlevel/Ieee80211OFDMInterleaving.h"
 #include "inet/physicallayer/common/bitlevel/ConvolutionalCoder.h"
 
 namespace inet {
@@ -47,7 +47,7 @@ class INET_API Ieee80211OFDMDecoderModule : public cSimpleModule, public IDecode
   public:
     virtual ~Ieee80211OFDMDecoderModule();
 
-    virtual void printToStream(std::ostream& stream) const { stream << "IEEE 802.11 OFDM Decoder"; }
+    virtual std::ostream& printToStream(std::ostream& stream, int level) const override;
     const Ieee80211OFDMCode *getCode() const { return code; }
     const IReceptionPacketModel *decode(const IReceptionBitModel *bitModel) const;
 };

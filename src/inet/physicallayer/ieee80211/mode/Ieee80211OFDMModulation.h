@@ -29,19 +29,20 @@ class INET_API Ieee80211OFDMModulation : public IModulation
         const APSKModulationBase *subcarrierModulation;
 
     public:
-        Ieee80211OFDMModulation(const APSKModulationBase *modulation);
+        Ieee80211OFDMModulation(const APSKModulationBase *subcarrierModulation);
 
         const APSKModulationBase *getSubcarrierModulation() const { return subcarrierModulation; }
         virtual double calculateBER(double snir, Hz bandwidth, bps bitrate) const { return subcarrierModulation->calculateBER(snir, bandwidth, bitrate); }
         virtual double calculateSER(double snir, Hz bandwidth, bps bitrate) const { return subcarrierModulation->calculateSER(snir, bandwidth, bitrate); }
 
-        virtual void printToStream(std::ostream& stream) const { std::cout << "Ieee80211OFDMModulation"; }
+        virtual std::ostream& printToStream(std::ostream& stream, int level) const override;
 };
 
 class INET_API Ieee80211OFDMCompliantModulations
 {
   // Modulations supported by the OFDM PHY: Table 18-12—Major parameters of the OFDM PHY
   public:
+    static const Ieee80211OFDMModulation qbpskModulation;
     static const Ieee80211OFDMModulation bpskModulation;
     static const Ieee80211OFDMModulation qpskModulation;
     static const Ieee80211OFDMModulation qam16Modulation;

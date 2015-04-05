@@ -39,10 +39,10 @@ class INET_API Ieee80211DsssPreambleMode : public Ieee80211DsssChunkMode, public
     inline int getSFDBitLength() const { return 16; }
     inline int getBitLength() const { return getSYNCBitLength() + getSFDBitLength(); }
 
-    virtual inline bps getNetBitrate() const override { return Mbps(1); }
-    virtual inline bps getGrossBitrate() const override { return getNetBitrate(); }
+    virtual inline bps getNetBitrate() const { return Mbps(1); }
+    virtual inline bps getGrossBitrate() const { return getNetBitrate(); }
     virtual inline const simtime_t getDuration() const override { return getBitLength() / getNetBitrate().get(); }
-    virtual const DBPSKModulation *getModulation() const override { return &DBPSKModulation::singleton; }
+    virtual const DBPSKModulation *getModulation() const { return &DBPSKModulation::singleton; }
 };
 
 class INET_API Ieee80211DsssHeaderMode : public Ieee80211DsssChunkMode, public IIeee80211HeaderMode
@@ -75,6 +75,7 @@ class INET_API Ieee80211DsssDataMode : public Ieee80211DsssChunkMode, public IIe
     virtual int getBitLength(int dataBitLength) const override { return dataBitLength; }
     virtual const simtime_t getDuration(int bitLength) const override;
     virtual const DPSKModulationBase *getModulation() const override { return modulation; }
+    virtual int getNumberOfSpatialStreams() const override { return 1; }
 };
 
 /**
@@ -91,6 +92,8 @@ class INET_API Ieee80211DsssMode : public IIeee80211Mode
   public:
     Ieee80211DsssMode(const Ieee80211DsssPreambleMode *preambleMode, const Ieee80211DsssHeaderMode *headerMode, const Ieee80211DsssDataMode *dataMode);
 
+    virtual std::ostream& printToStream(std::ostream& stream, int level) const override { return stream << "Ieee80211DsssMode"; }
+
     virtual const IIeee80211PreambleMode *getPreambleMode() const override { return preambleMode; }
     virtual const IIeee80211HeaderMode *getHeaderMode() const override { return headerMode; }
     virtual const IIeee80211DataMode *getDataMode() const override { return dataMode; }
@@ -100,8 +103,9 @@ class INET_API Ieee80211DsssMode : public IIeee80211Mode
 
     virtual inline const simtime_t getDuration(int dataBitLength) const override { return preambleMode->getDuration() + headerMode->getDuration() + dataMode->getDuration(dataBitLength); }
 
-    // TODO: fill in
+    // Table 19-8—ERP characteristics
     virtual inline const simtime_t getSlotTime() const override { return 20E-6; }
+    virtual inline const simtime_t getShortSlotTime() const { return 9E-6; }
     virtual inline const simtime_t getSifsTime() const override { return 10E-6; }
     virtual inline const simtime_t getCcaTime() const override { return 15E-6; }
     virtual inline const simtime_t getPhyRxStartDelay() const override { return 192E-6; }
