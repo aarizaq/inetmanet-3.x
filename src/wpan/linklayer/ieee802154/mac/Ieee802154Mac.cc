@@ -1449,13 +1449,20 @@ bool Ieee802154Mac::frameFilter(Ieee802154Frame* frame)
         {
             if (frmCtrl.dstAddrMode == defFrmCtrl_AddrMode16 && frame->getDstAddr().getInt() != getShortAddress(aExtendedAddress))
             // if dsr addr does not match
+            {
+                EV << "[MAC]: ACK discarded destination: addr" << frame->getDstAddr().getInt() << "Node Addr " << getShortAddress(aExtendedAddress) << endl;
                 return true;
+            }
             else
             {
                 if (frame->getDstAddr() != aExtendedAddress)
+                {
                     // if dsr addr does not match
+                    EV << "[MAC]: ACK discarded: destination addr" << frame->getDstAddr() << "Node Addr " << aExtendedAddress << endl;
                     return true;
+                }
             }
+            EV << "[MAC]: ACK acepted: destination addr" << frame->getDstAddr() << "Node Addr " << aExtendedAddress << endl;
         }
 
         //check for Data/Cmd frame only with source address:: destined for PAN coordinator
