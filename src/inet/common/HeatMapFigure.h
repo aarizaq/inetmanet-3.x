@@ -15,29 +15,40 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef __INET_TRANSMITTERBASE_H
-#define __INET_TRANSMITTERBASE_H
+#ifndef __INET_HEATMAPFIGURE_H
+#define __INET_HEATMAPFIGURE_H
 
-#include "inet/physicallayer/contract/packetlevel/ITransmitter.h"
+#include "inet/common/INETDefs.h"
 
 namespace inet {
 
-namespace physicallayer {
 
-class INET_API TransmitterBase : public cModule, public virtual ITransmitter
+#if OMNETPP_CANVAS_VERSION >= 0x20140908
+class INET_API HeatMapFigure : public cPixmapFigure
 {
   protected:
-    virtual int numInitStages() const { return NUM_INIT_STAGES; }
+    double alpha = 0.5;
+    double coolingSpeed = 0.01;
+    cFigure::Color fromColor = cFigure::BLACK;
+    cFigure::Color toColor = cFigure::RED;
+    simtime_t lastCoolDown;
+
+  protected:
+    double getHeat(int x, int y);
+    void setHeat(int x, int y, double value);
 
   public:
-    virtual W getMaxPower() const override { return W(NaN); }
-    virtual m getMaxCommunicationRange() const override { return m(NaN); }
-    virtual m getMaxInterferenceRange() const override { return m(NaN); }
-};
+    HeatMapFigure(int size, const char *name);
 
-} // namespace physicallayer
+    virtual const char *getClassNameForRenderer() const { return "cPixmapFigure"; }
+
+    virtual void heatPoint(int x, int y);
+    virtual void heatLine(int x1, int y1, int x2, int y2);
+    virtual void coolDown();
+};
+#endif
 
 } // namespace inet
 
-#endif // ifndef __INET_TRANSMITTERBASE_H
+#endif // ifndef __INET_HEATMAPFIGURE_H
 
