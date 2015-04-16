@@ -236,7 +236,7 @@ void PASERUdpTrafficSender::sendDataMessage(PaserTrafficDataMsg *dataMsg, std::s
 //	sendToUDP(dataMsg,myPort,IPv4Address(destId.c_str()),destPort);
 
 	numSent++;
-    if (ev.isGUI())
+    if (hasGUI())
     {
         char buf[40];
         sprintf(buf, "sent: %d pks", numSent);

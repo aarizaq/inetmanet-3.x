@@ -168,7 +168,7 @@ void IPv4_paser::endService(cPacket *packet)
             throw cRuntimeError(packet, "Unexpected packet type");
     }
 
-    if (ev.isGUI())
+    if (hasGUI())
         updateDisplayString();
 }
 
