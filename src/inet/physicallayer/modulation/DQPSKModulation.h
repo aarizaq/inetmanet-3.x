@@ -18,7 +18,7 @@
 #ifndef __INET_DQPSKMODULATION_H
 #define __INET_DQPSKMODULATION_H
 
-#include "inet/physicallayer/base/DPSKModulationBase.h"
+#include "inet/physicallayer/base/packetlevel/DPSKModulationBase.h"
 
 namespace inet {
 
@@ -32,7 +32,7 @@ class INET_API DQPSKModulation : public DPSKModulationBase
   public:
     DQPSKModulation();
 
-    virtual void printToStream(std::ostream& stream) const { stream << "DQPSKModulation"; }
+    virtual std::ostream& printToStream(std::ostream& stream, int level) const override { return stream << "DQPSKModulation"; }
 };
 
 } // namespace physicallayer

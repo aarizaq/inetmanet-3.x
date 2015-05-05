@@ -175,7 +175,7 @@ void PASER_Socket::initialize(int stage) {
         WATCH_PTRMAP(rreq_list->rreq_list);
 //        WATCH(seqNr);
 
-        if (ev.isGUI() && paser_global->getIsRegistered()) {
+        if (hasGUI() && paser_global->getIsRegistered()) {
             cDisplayString& connDispStr = getParentModule()->getDisplayString();
             connDispStr.setTagArg("i", 1, "green");
         }
@@ -339,14 +339,14 @@ void PASER_Socket::editNodeColor() {
             paser_global->setIsRegistered(false);
         }
     }
-    if (ev.isGUI() && paser_global->getIsRegistered()) {
+    if (hasGUI() && paser_global->getIsRegistered()) {
         cDisplayString& connDispStr = getParentModule()->getDisplayString();
         connDispStr.setTagArg("i", 1, "green");
-    } else if (ev.isGUI() && !paser_global->getIsRegistered()
+    } else if (hasGUI() && !paser_global->getIsRegistered()
             && paser_global->getWasRegistered()) {
         cDisplayString& connDispStr = getParentModule()->getDisplayString();
         connDispStr.setTagArg("i", 1, "yellow");
-    } else if (ev.isGUI()) {
+    } else if (hasGUI()) {
         cDisplayString& connDispStr = getParentModule()->getDisplayString();
         connDispStr.setTagArg("i", 1, "");
     }

@@ -18,7 +18,7 @@
 #ifndef __INET_DIPOLEANTENNA_H
 #define __INET_DIPOLEANTENNA_H
 
-#include "inet/physicallayer/base/AntennaBase.h"
+#include "inet/physicallayer/base/packetlevel/AntennaBase.h"
 
 namespace inet {
 
@@ -35,7 +35,7 @@ class INET_API DipoleAntenna : public AntennaBase
   public:
     DipoleAntenna();
 
-    virtual void printToStream(std::ostream& stream) const override;
+    virtual std::ostream& printToStream(std::ostream& stream, int level) const override;
     virtual m getLength() const { return length; }
     virtual double getMaxGain() const override { return 1.5; }
     virtual double computeGain(const EulerAngles direction) const override;

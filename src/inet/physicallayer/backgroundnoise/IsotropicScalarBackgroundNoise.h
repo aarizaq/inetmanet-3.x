@@ -18,7 +18,7 @@
 #ifndef __INET_ISOTROPICSCALARBACKGROUNDNOISE_H
 #define __INET_ISOTROPICSCALARBACKGROUNDNOISE_H
 
-#include "inet/physicallayer/contract/IBackgroundNoise.h"
+#include "inet/physicallayer/contract/packetlevel/IBackgroundNoise.h"
 
 namespace inet {
 
@@ -35,7 +35,7 @@ class INET_API IsotropicScalarBackgroundNoise : public cModule, public IBackgrou
   public:
     IsotropicScalarBackgroundNoise();
 
-    virtual void printToStream(std::ostream& stream) const override;
+    virtual std::ostream& printToStream(std::ostream& stream, int level) const override;
     virtual W getPower() const { return power; }
     virtual const INoise *computeNoise(const IListening *listening) const override;
 };

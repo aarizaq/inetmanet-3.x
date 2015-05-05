@@ -167,7 +167,7 @@ class INET_API RTPParticipantInfo : public RTPParticipantInfo_Base
      */
     virtual void addSDESItem(SDESItem::SDES_ITEM_TYPE type, const char *content);
 
-    virtual void parsimPack(cCommBuffer *b) override { throw cRuntimeError("The parsimPack() not implemented."); }
+    virtual void parsimPack(cCommBuffer *b) PARSIMPACK_CONST override { throw cRuntimeError(this, "parsimPack() not implemented"); }
     virtual void parsimUnpack(cCommBuffer *b) override { throw cRuntimeError("The parsimUnpack() not implemented."); }
 
     /**
@@ -175,7 +175,7 @@ class INET_API RTPParticipantInfo : public RTPParticipantInfo_Base
      * an 8 character hexadecimal number which is used as name
      * of an RTPParticipantInfo object.
      */
-    static char *ssrcToName(uint32 ssrc);
+    static std::string ssrcToName(uint32 ssrc);
 
   private:
     void copy(const RTPParticipantInfo& other);

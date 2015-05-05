@@ -18,7 +18,7 @@
 #ifndef __INET_MQAMMODULATION_H
 #define __INET_MQAMMODULATION_H
 
-#include "inet/physicallayer/base/MQAMModulationBase.h"
+#include "inet/physicallayer/base/packetlevel/MQAMModulationBase.h"
 
 namespace inet {
 
@@ -36,7 +36,7 @@ class INET_API MQAMModulation : public MQAMModulationBase
     MQAMModulation(unsigned int codeWordSize);
     virtual ~MQAMModulation();
 
-    virtual void printToStream(std::ostream& stream) const;
+    virtual std::ostream& printToStream(std::ostream& stream, int level) const override;
 };
 
 } // namespace physicallayer

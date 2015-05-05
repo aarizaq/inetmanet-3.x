@@ -19,8 +19,6 @@
 
 #include "inet/common/INETUtils.h"
 #include "inet/common/INETMath.h"
-
-
 #include "inet/networklayer/common/InterfaceEntry.h"
 #include "inet/common/ModuleAccess.h"
 #include "inet/linklayer/contract/IMACProtocolControlInfo.h"
@@ -778,8 +776,11 @@ void AnyMacXmacLayer::handleSelfMessage(cMessage *msg)
 			{
 				EV_DETAIL << "State WAIT_ACK, message XMAC_ACK_TIMEOUT, new state"
 						  " SLEEP" << endl;
-				delete macQueue.front();
-				macQueue.pop_front();
+                //drop the packet
+                cMessage *mac = macQueue.front();
+                macQueue.pop_front();
+                emit(NF_LINK_BREAK, mac);
+                delete mac;
 				preambleCont = 0;
 				// if something in the queue, wakeup soon.
 				if (macQueue.size() > 0)

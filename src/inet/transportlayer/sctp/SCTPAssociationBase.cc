@@ -1,6 +1,6 @@
 //
 // Copyright (C) 2005-2010 Irene Ruengeler
-// Copyright (C) 2009-2012 Thomas Dreibholz
+// Copyright (C) 2009-2015 Thomas Dreibholz
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -82,7 +82,7 @@ SCTPPathVariables::SCTPPathVariables(const L3Address& addr, SCTPAssociation *ass
 
     cmtCCGroup = 0;
     lastTransmission = simTime();
-    sendAllRandomizer = uniform(0, (1 << 31));
+    sendAllRandomizer = RNGCONTEXT uniform(0, (1 << 31));
     pseudoCumAck = 0;
     newPseudoCumAck = false;
     findPseudoCumAck = true;    // Set findPseudoCumAck to TRUE for new destination.
@@ -751,7 +751,7 @@ bool SCTPAssociation::processTimer(cMessage *msg)
 {
     SCTPPathVariables *path = nullptr;
 
-    EV_INFO << msg->getName() << " timer expired at " << simulation.getSimTime() << "\n";
+    EV_INFO << msg->getName() << " timer expired at " << simTime() << "\n";
 
     SCTPPathInfo *pinfo = check_and_cast<SCTPPathInfo *>(msg->getControlInfo());
     L3Address addr = pinfo->getRemoteAddress();
@@ -767,7 +767,7 @@ bool SCTPAssociation::processTimer(cMessage *msg)
         process_TIMEOUT_INIT_REXMIT(event);
     }
     else if (msg == SackTimer) {
-        EV_DETAIL << simulation.getSimTime() << " delayed Sack: cTsnAck=" << state->gapList.getCumAckTSN() << " highestTsnReceived=" << state->gapList.getHighestTSNReceived() << " lastTsnReceived=" << state->lastTsnReceived << " ackState=" << state->ackState << " numGaps=" << state->gapList.getNumGaps(SCTPGapList::GT_Any) << "\n";
+        EV_DETAIL << simTime() << " delayed Sack: cTsnAck=" << state->gapList.getCumAckTSN() << " highestTsnReceived=" << state->gapList.getHighestTSNReceived() << " lastTsnReceived=" << state->lastTsnReceived << " ackState=" << state->ackState << " numGaps=" << state->gapList.getNumGaps(SCTPGapList::GT_Any) << "\n";
         sendSack();
     }
     else if (msg == T2_ShutdownTimer) {
@@ -816,14 +816,14 @@ bool SCTPAssociation::processTimer(cMessage *msg)
     else if (msg == FairStartTimer) {
         auto it = sctpMain->assocStatMap.find(assocId);
         if (it != sctpMain->assocStatMap.end()) {
-            it->second.fairStart = simulation.getSimTime();
+            it->second.fairStart = simTime();
             fairTimer = true;
         }
     }
     else if (msg == FairStopTimer) {
         auto it = sctpMain->assocStatMap.find(assocId);
         if (it != sctpMain->assocStatMap.end()) {
-            it->second.fairStop = simulation.getSimTime();
+            it->second.fairStop = simTime();
             it->second.fairLifeTime = it->second.fairStop - it->second.fairStart;
             it->second.fairThroughput = it->second.fairAckedBytes / it->second.fairLifeTime.dbl();
             fairTimer = false;
@@ -922,7 +922,7 @@ SCTPEventCode SCTPAssociation::preanalyseAppCommandEvent(int32 commandCode)
     }
 }
 
-bool SCTPAssociation::processAppCommand(cPacket *msg)
+bool SCTPAssociation::processAppCommand(cMessage *msg)
 {
     printAssocBrief();
 
@@ -1505,7 +1505,7 @@ void SCTPAssociation::stateEntered(int32 status)
             sackFrequency = sctpMain->par("sackFrequency");
             SCTP::AssocStat stat;
             stat.assocId = assocId;
-            stat.start = simulation.getSimTime();
+            stat.start = simTime();
             stat.stop = 0;
             stat.rcvdBytes = 0;
             stat.ackedBytes = 0;
@@ -1545,6 +1545,7 @@ void SCTPAssociation::stateEntered(int32 status)
             switch (ccModule) {
                 case RFC4960: {
                     ccFunctions.ccInitParams = &SCTPAssociation::initCCParameters;
+                    ccFunctions.ccUpdateBeforeSack = &SCTPAssociation::cwndUpdateBeforeSack;
                     ccFunctions.ccUpdateAfterSack = &SCTPAssociation::cwndUpdateAfterSack;
                     ccFunctions.ccUpdateAfterCwndTimeout = &SCTPAssociation::cwndUpdateAfterCwndTimeout;
                     ccFunctions.ccUpdateAfterRtxTimeout = &SCTPAssociation::cwndUpdateAfterRtxTimeout;
@@ -1561,7 +1562,7 @@ void SCTPAssociation::stateEntered(int32 status)
                 const bool addIP = (bool)sctpMain->par("addIP");
                 EV_DETAIL << getFullPath() << ": addIP = " << addIP << " time = " << (double)sctpMain->par("addTime") << "\n";
                 if (addIP == true && (double)sctpMain->par("addTime") > 0) {
-                    EV_DETAIL << "startTimer addTime to expire at " << simulation.getSimTime() + (double)sctpMain->par("addTime") << "\n";
+                    EV_DETAIL << "startTimer addTime to expire at " << simTime() + (double)sctpMain->par("addTime") << "\n";
 
                     scheduleTimeout(StartAddIP, (double)sctpMain->par("addTime"));
                 }

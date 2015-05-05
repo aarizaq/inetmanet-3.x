@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <sstream>
 
+#include "inet/common/PatternMatcher.h"
 #include "inet/networklayer/ipv4/IPv4RoutingTable.h"
 
 #include "inet/networklayer/contract/IInterfaceTable.h"
@@ -74,11 +75,14 @@ void IPv4RoutingTable::initialize(int stage)
 
         ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
 
+        netmaskRoutes = par("netmaskRoutes");
         forwarding = par("forwarding").boolValue();
         multicastForward = par("multicastForwarding");
+        useAdminDist = par("useAdminDist");
 
         WATCH_PTRVECTOR(routes);
         WATCH_PTRVECTOR(multicastRoutes);
+        WATCH(netmaskRoutes);
         WATCH(forwarding);
         WATCH(multicastForward);
         WATCH(routerId);
@@ -139,7 +143,7 @@ void IPv4RoutingTable::configureRouterId()
 
 void IPv4RoutingTable::updateDisplayString()
 {
-    if (!ev.isGUI())
+    if (!hasGUI())
         return;
 
     char buf[80];
@@ -157,7 +161,7 @@ void IPv4RoutingTable::handleMessage(cMessage *msg)
 
 void IPv4RoutingTable::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj)
 {
-    if (simulation.getContextType() == CTX_INITIALIZE)
+    if (getSimulation()->getContextType() == CTX_INITIALIZE)
         return; // ignore notifications during initialize
 
     Enter_Method_Silent();
@@ -456,7 +460,6 @@ IPv4Route *IPv4RoutingTable::findBestMatchingRoute(const IPv4Address& dest) cons
     // default route has zero prefix length, so (if exists) it'll be selected as last resort
     IPv4Route *bestRoute = nullptr;
     for (auto e : routes) {
-        
         if (e->isValid()) {
             if (IPv4Address::maskedAddrAreEqual(dest, e->getDestination(), e->getNetmask())) {    // match
                 bestRoute = const_cast<IPv4Route *>(e);
@@ -494,7 +497,6 @@ const IPv4MulticastRoute *IPv4RoutingTable::findBestMatchingMulticastRoute(const
     // TODO caching?
 
     for (auto e : multicastRoutes) {
-        
         if (e->isValid() && e->matches(origin, group))
             return e;
     }
@@ -522,7 +524,7 @@ IPv4Route *IPv4RoutingTable::getDefaultRoute() const
 // The 'routes' vector stores the routes in this order.
 // The best matching route should precede the other matching routes,
 // so the method should return true if a is better the b.
-bool IPv4RoutingTable::routeLessThan(const IPv4Route *a, const IPv4Route *b)
+bool IPv4RoutingTable::routeLessThan(const IPv4Route *a, const IPv4Route *b) const
 {
     // longer prefixes are better, because they are more specific
     if (a->getNetmask() != b->getNetmask())
@@ -533,8 +535,8 @@ bool IPv4RoutingTable::routeLessThan(const IPv4Route *a, const IPv4Route *b)
 
     // for the same destination/netmask:
 
-    // smaller administration distance is better
-    if (a->getAdminDist() != b->getAdminDist())
+    // smaller administration distance is better (if useAdminDist)
+    if (useAdminDist && (a->getAdminDist() != b->getAdminDist()))
         return a->getAdminDist() < b->getAdminDist();
 
     // smaller metric is better
@@ -579,7 +581,7 @@ void IPv4RoutingTable::internalAddRoute(IPv4Route *entry)
     // add to tables
     // we keep entries sorted by netmask desc, metric asc in routeList, so that we can
     // stop at the first match when doing the longest netmask matching
-    auto pos = upper_bound(routes.begin(), routes.end(), entry, routeLessThan);
+    auto pos = upper_bound(routes.begin(), routes.end(), entry, RouteLessThan(*this));
     routes.insert(pos, entry);
 
     entry->setRoutingTable(this);
@@ -793,9 +795,11 @@ void IPv4RoutingTable::updateNetmaskRoutes()
     // then re-add them, according to actual interface configuration
     // TODO: say there's a node somewhere in the network that belongs to the interface's subnet
     // TODO: and it is not on the same link, and the gateway does not use proxy ARP, how will packets reach that node?
+    PatternMatcher interfaceNameMatcher(netmaskRoutes, false, true, true);
     for (int i = 0; i < ift->getNumInterfaces(); i++) {
         InterfaceEntry *ie = ift->getInterface(i);
-        if (ie->ipv4Data() && ie->ipv4Data()->getNetmask() != IPv4Address::ALLONES_ADDRESS) {
+        if (interfaceNameMatcher.matches(ie->getFullName()) && ie->ipv4Data() && ie->ipv4Data()->getNetmask() != IPv4Address::ALLONES_ADDRESS)
+        {
             IPv4Route *route = createNewRoute();
             route->setSourceType(IRoute::IFACENETMASK);
             route->setSource(ie);
@@ -806,7 +810,7 @@ void IPv4RoutingTable::updateNetmaskRoutes()
             route->setMetric(ie->ipv4Data()->getMetric());
             route->setInterface(ie);
             route->setRoutingTable(this);
-            auto pos = upper_bound(routes.begin(), routes.end(), route, routeLessThan);
+            auto pos = upper_bound(routes.begin(), routes.end(), route, RouteLessThan(*this));
             routes.insert(pos, route);
             emit(NF_ROUTE_ADDED, route);
         }

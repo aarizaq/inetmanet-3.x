@@ -35,7 +35,6 @@
 #include "inet/transportlayer/contract/tcp/TCPSocket.h"
 #include "inet/transportlayer/contract/sctp/SCTPSocket.h"
 #include "NetPerfMeter_m.h"
-#include "inet/transportlayer/sctp/SCTPAssociation.h"
 #include "inet/transportlayer/contract/tcp/TCPCommand_m.h"
 #include "inet/transportlayer/contract/sctp/SCTPCommand_m.h"
 #include "inet/transportlayer/contract/udp/UDPControlInfo_m.h"
@@ -56,7 +55,7 @@ class INET_API NetPerfMeter : public cSimpleModule
    virtual void handleMessage(cMessage *msg);
 
    inline void setStatusString(const char* status) {
-      if(ev.isGUI()) {
+      if(hasGUI()) {
          getDisplayString().setTagArg("t", 0, status);
       }
    }

@@ -27,6 +27,18 @@
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
 #endif // ifdef WITH_IEEE80211
 
+#ifdef WITH_CSMA
+#include "inet/linklayer/csma/CSMAFrame_m.h"
+#endif // ifdef WITH_CSMA
+
+#ifdef WITH_LMAC
+#include "inet/linklayer/lmac/LMacFrame_m.h"
+#endif // ifdef WITH_LMAC
+
+#ifdef WITH_BMAC
+#include "inet/linklayer/bmac/BMacFrame_m.h"
+#endif // ifdef WITH_BMAC
+
 #include "inet/networklayer/common/IPSocket.h"
 #include "inet/transportlayer/contract/udp/UDPControlInfo.h"
 #include "inet/common/ModuleAccess.h"
@@ -409,7 +421,7 @@ AODVRREQ *AODVRouting::createRREQ(const L3Address& destAddr)
 
     RREQIdentifier rreqIdentifier(getSelfIPAddress(), rreqId);
     rreqsArrivalTime[rreqIdentifier] = simTime();
-
+    rreqPacket->setByteLength(24);
     return rreqPacket;
 }
 
@@ -488,6 +500,8 @@ AODVRREP *AODVRouting::createRREP(AODVRREQ *rreq, IRoute *destRoute, IRoute *ori
 
         rrep->setLifeTime(destRouteData->getLifeTime() - simTime());
     }
+
+    rrep->setByteLength(20);
     return rrep;
 }
 
@@ -521,6 +535,7 @@ AODVRREP *AODVRouting::createGratuitousRREP(AODVRREQ *rreq, IRoute *originatorRo
     grrep->setOriginatorAddr(rreq->getDestAddr());
     grrep->setLifeTime(routeData->getLifeTime());
 
+    grrep->setByteLength(20);
     return grrep;
 }
 
@@ -663,10 +678,10 @@ void AODVRouting::handleRREP(AODVRREP *rrep, const L3Address& sourceAddr)
                 // source (originator).
 
                 IRoute *nextHopToDestRoute = routingTable->findBestMatchingRoute(destRoute->getNextHopAsGeneric());
-                ASSERT(nextHopToDestRoute);
-                AODVRouteData *nextHopToDestRouteData = check_and_cast<AODVRouteData *>(nextHopToDestRoute->getProtocolData());
-                nextHopToDestRouteData->addPrecursor(originatorRoute->getNextHopAsGeneric());
-
+                if (nextHopToDestRoute && nextHopToDestRoute->getSource() == this) {
+                    AODVRouteData *nextHopToDestRouteData = check_and_cast<AODVRouteData *>(nextHopToDestRoute->getProtocolData());
+                    nextHopToDestRouteData->addPrecursor(originatorRoute->getNextHopAsGeneric());
+                }
                 AODVRREP *outgoingRREP = rrep->dup();
                 forwardRREP(outgoingRREP, originatorRoute->getNextHopAsGeneric(), 100);
             }
@@ -984,7 +999,7 @@ void AODVRouting::receiveSignal(cComponent *source, simsignal_t signalID, cObjec
     Enter_Method("receiveChangeNotification");
     if (signalID == NF_LINK_BREAK) {
         EV_DETAIL << "Received link break signal" << endl;
-        // XXX: This is a hack for supporting both IdealMac and Ieee80211Mac.
+        // XXX: This is a hack for supporting both IdealMac and Ieee80211Mac. etc
         cPacket *frame = check_and_cast<cPacket *>(obj);
         INetworkDatagram *datagram = nullptr;
         if (false
@@ -994,6 +1009,15 @@ void AODVRouting::receiveSignal(cComponent *source, simsignal_t signalID, cObjec
 #ifdef WITH_IDEALWIRELESS
             || dynamic_cast<IdealMacFrame *>(frame)
 #endif // ifdef WITH_IDEALWIRELESS
+#ifdef WITH_CSMA
+            || dynamic_cast<CSMAFrame *>(frame)
+#endif // ifdef WITH_CSMA
+#ifdef WITH_LMAC
+            || dynamic_cast<LMacFrame *>(frame)
+#endif // ifdef WITH_LMAC
+#ifdef WITH_BMAC
+            || dynamic_cast<BMacFrame *>(frame)
+#endif // ifdef WITH_BMAC
             )
             datagram = dynamic_cast<INetworkDatagram *>(frame->getEncapsulatedPacket());
         else
@@ -1115,6 +1139,8 @@ AODVRERR *AODVRouting::createRERR(const std::vector<UnreachableNode>& unreachabl
         node.seqNum = unreachableNodes[i].seqNum;
         rerr->setUnreachableNodes(i, node);
     }
+
+    rerr->setByteLength(4 + 4 * 2 * destCount);
     return rerr;
 }
 
@@ -1330,6 +1356,7 @@ AODVRREP *AODVRouting::createHelloMessage()
     helloMessage->setDestSeqNum(sequenceNum);
     helloMessage->setHopCount(0);
     helloMessage->setLifeTime(allowedHelloLoss * helloInterval);
+    helloMessage->setByteLength(20);
 
     return helloMessage;
 }
@@ -1598,6 +1625,7 @@ AODVRREPACK *AODVRouting::createRREPACK()
 {
     AODVRREPACK *rrepACK = new AODVRREPACK("AODV-RREPACK");
     rrepACK->setPacketType(RREPACK);
+    rrepACK->setByteLength(2);
     return rrepACK;
 }
 

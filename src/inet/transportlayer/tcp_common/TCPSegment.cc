@@ -85,12 +85,12 @@ void TCPSegment::truncateSegment(uint32 firstSeqNo, uint32 endSeqNo)
     truncateData(truncleft, truncright);
 }
 
-unsigned short TCPSegment::getOptionsArrayLength()
+unsigned short TCPSegment::getHeaderOptionArrayLength()
 {
     unsigned short usedLength = 0;
 
-    for (uint i = 0; i < getOptionsArraySize(); i++)
-        usedLength += getOptions(i).getLength();
+    for (uint i = 0; i < getHeaderOptionArraySize(); i++)
+        usedLength += getHeaderOption(i)->getLength();
 
     return usedLength;
 }
@@ -109,6 +109,8 @@ void TCPSegment::copy(const TCPSegment& other)
 {
     for (PayloadList::const_iterator i = other.payloadList.begin(); i != other.payloadList.end(); ++i)
         addPayloadMessage(i->msg->dup(), i->endSequenceNo);
+    for (const auto opt: other.headerOptionList)
+        addHeaderOption(opt->dup());
 }
 
 TCPSegment::~TCPSegment()
@@ -118,6 +120,8 @@ TCPSegment::~TCPSegment()
 
 void TCPSegment::clean()
 {
+    dropHeaderOptions();
+
     while (!payloadList.empty()) {
         cPacket *msg = payloadList.front().msg;
         payloadList.pop_front();
@@ -149,16 +153,36 @@ void TCPSegment::truncateData(unsigned int truncleft, unsigned int truncright)
     }
 }
 
-void TCPSegment::parsimPack(cCommBuffer *b)
+void TCPSegment::parsimPack(cCommBuffer *b) PARSIMPACK_CONST
 {
     TCPSegment_Base::parsimPack(b);
-    doPacking(b, payloadList);
+    b->pack((int)headerOptionList.size());
+    for (const auto opt: headerOptionList) {
+        b->packObject(opt);
+    }
+    b->pack((int)payloadList.size());
+    for (PayloadList::const_iterator it = payloadList.begin(); it != payloadList.end(); it++) {
+        b->pack(it->endSequenceNo);
+        b->packObject(it->msg);
+    }
 }
 
 void TCPSegment::parsimUnpack(cCommBuffer *b)
 {
     TCPSegment_Base::parsimUnpack(b);
-    doUnpacking(b, payloadList);
+    int i, n;
+    b->unpack(n);
+    for (i = 0; i < n; i++) {
+        TCPOption *opt = check_and_cast<TCPOption*>(b->unpackObject());
+        headerOptionList.push_back(opt);
+    }
+    b->unpack(n);
+    for (i = 0; i < n; i++) {
+        TCPPayloadMessage payload;
+        b->unpack(payload.endSequenceNo);
+        payload.msg = check_and_cast<cPacket*>(b->unpackObject());
+        payloadList.push_back(payload);
+    }
 }
 
 void TCPSegment::setPayloadArraySize(unsigned int size)
@@ -207,6 +231,39 @@ cPacket *TCPSegment::removeFirstPayloadMessage(uint32& endSequenceNo)
     drop(msg);
     return msg;
 }
+
+void TCPSegment::addHeaderOption(TCPOption *option)
+{
+    headerOptionList.push_back(option);
+}
+
+void TCPSegment::setHeaderOptionArraySize(unsigned int size)
+{
+    throw cRuntimeError(this, "setHeaderOptionArraySize() not supported, use addHeaderOption()");
+}
+
+unsigned int TCPSegment::getHeaderOptionArraySize() const
+{
+    return headerOptionList.size();
+}
+
+TCPOptionPtr& TCPSegment::getHeaderOption(unsigned int k)
+{
+    return headerOptionList.at(k);
+}
+
+void TCPSegment::setHeaderOption(unsigned int k, const TCPOptionPtr& headerOption)
+{
+    throw cRuntimeError(this, "setHeaderOption() not supported, use addHeaderOption()");
+}
+
+void TCPSegment::dropHeaderOptions()
+{
+    for (auto opt : headerOptionList)
+        delete opt;
+    headerOptionList.clear();
+}
+
 
 } // namespace tcp
 

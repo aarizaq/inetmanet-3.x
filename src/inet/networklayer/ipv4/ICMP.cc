@@ -89,7 +89,7 @@ void ICMP::sendErrorMessage(IPv4Datagram *origDatagram, int inputInterfaceId, IC
     // do not reply with error message to error message
     if (origDatagram->getTransportProtocol() == IP_PROT_ICMP) {
         ICMPMessage *recICMPMsg = check_and_cast<ICMPMessage *>(origDatagram->getEncapsulatedPacket());
-        if (recICMPMsg->getType() < 128) {
+        if (!isIcmpInfoType(recICMPMsg->getType())) {
             EV_DETAIL << "ICMP error received -- do not reply to it" << endl;
             delete origDatagram;
             return;
@@ -271,6 +271,7 @@ void ICMP::sendEchoRequest(PingPayload *msg)
     IPv4ControlInfo *ctrl = check_and_cast<IPv4ControlInfo *>(msg->removeControlInfo());
     ctrl->setProtocol(IP_PROT_ICMP);
     ICMPMessage *request = new ICMPMessage(msg->getName());
+    request->setByteLength(4);
     request->setType(ICMP_ECHO_REQUEST);
     request->encapsulate(msg);
     request->setControlInfo(ctrl);

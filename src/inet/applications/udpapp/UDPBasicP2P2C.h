@@ -31,9 +31,9 @@
 #include <fstream>
 
 #include "inet/common/INETDefs.h"
+#include "inet/networklayer/contract/IARP.h"
 #include "inet/transportlayer/contract/udp/UDPSocket.h"
 
-#include "inet/networklayer/arp/IARP.h"
 #include "inet/applications/udpapp/fis.h"
 #include "inet/common/WirelessNumHops.h"
 #include "inet/applications/udpapp/UDPBasicPacketP2P_m.h"

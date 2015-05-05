@@ -107,7 +107,7 @@ void PingApp::handleMessage(cMessage *msg)
     else
         processPingResponse(check_and_cast<PingPayload *>(msg));
 
-    if (ev.isGUI()) {
+    if (hasGUI()) {
         char buf[40];
         sprintf(buf, "sent: %ld pks\nrcvd: %ld pks", sentCount, numPongs);
         getDisplayString().setTagArg("t", 0, buf);
@@ -137,7 +137,7 @@ bool PingApp::handleOperationStage(LifecycleOperation *operation, int stage, IDo
 void PingApp::startSendingPingRequests()
 {
     ASSERT(!timer->isScheduled());
-    pid = simulation.getUniqueNumber();
+    pid = getSimulation()->getUniqueNumber();
     lastStart = simTime();
     scheduleNextPingRequest(-1);
 }
@@ -191,7 +191,7 @@ void PingApp::sendPingRequest()
     PingPayload *msg = new PingPayload(name);
     msg->setOriginatorId(pid);
     msg->setSeqNo(sendSeqNo);
-    msg->setByteLength(packetSize);
+    msg->setByteLength(packetSize + 4);
 
     // store the sending time in a circular buffer so we can compute RTT when the packet returns
     sendTimeHistory[sendSeqNo % PING_HISTORY_SIZE] = simTime();

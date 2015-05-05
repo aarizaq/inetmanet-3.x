@@ -65,7 +65,7 @@ static cNEDValue pareto(cComponent *context, cNEDValue argv[], int argc)
     const double location = argv[0].doubleValueInUnit(argv[0].getUnit());
     const double shape    = argv[1].doubleValueInUnit(argv[1].getUnit());
 
-    const double r      = uniform(0.0, 1.0, rng);
+    const double r      = RNGCONTEXT uniform(0.0, 1.0, rng);
     const double result = location / pow(r, 1.0 / shape);
 
     // printf("%1.6f  => %1.6f   (location=%1.6f shape=%1.6f)\n", r, result, location, shape);
@@ -260,7 +260,7 @@ void NetPerfMeter::finish()
 
 // ###### Show I/O status ###################################################
 void NetPerfMeter::showIOStatus() {
-   if(ev.isGUI()) {
+   if(hasGUI()) {
       unsigned long long totalSentBytes = 0;
       for(std::map<unsigned int, SenderStatistics*>::const_iterator iterator = SenderStatisticsMap.begin();
          iterator != SenderStatisticsMap.end(); iterator++) {
@@ -892,7 +892,7 @@ unsigned long NetPerfMeter::transmitFrame(const unsigned int frameSize,
                                           const unsigned int streamID)
 {
    EV << simTime() << ", " << getFullPath() << ": Transmit frame of size "
-                       << frameSize << " on stream #" << streamID << endl;
+      << frameSize << " on stream #" << streamID << endl;
    assert(OnTimer == NULL);
 
    // ====== TCP ============================================================
@@ -1009,9 +1009,6 @@ unsigned long NetPerfMeter::getFrameSize(const unsigned int streamID)
    unsigned long frameSize;
    if(FrameSizeExpressionVector.size() == 0) {
       frameSize = par("frameSize");
-      // FIXME Merge
-      if(!frameSize)
-          frameSize = 1424;
    }
    else {
       frameSize =

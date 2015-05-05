@@ -65,7 +65,7 @@ void EtherEncapMesh::handleMessage(cMessage *msg)
         }
     }
 
-    if (ev.isGUI())
+    if (hasGUI())
         updateDisplayString();
 }
 

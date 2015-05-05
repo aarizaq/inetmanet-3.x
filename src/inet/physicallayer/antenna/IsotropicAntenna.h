@@ -18,7 +18,7 @@
 #ifndef __INET_ISOTROPICANTENNA_H
 #define __INET_ISOTROPICANTENNA_H
 
-#include "inet/physicallayer/base/AntennaBase.h"
+#include "inet/physicallayer/base/packetlevel/AntennaBase.h"
 
 namespace inet {
 
@@ -29,7 +29,7 @@ class INET_API IsotropicAntenna : public AntennaBase
   public:
     IsotropicAntenna();
 
-    virtual void printToStream(std::ostream& stream) const override { stream << "IsotropicAntenna"; }
+    virtual std::ostream& printToStream(std::ostream& stream, int level) const override;
     virtual double getMaxGain() const override { return 1; }
     virtual double computeGain(const EulerAngles direction) const override { return 1; }
 };

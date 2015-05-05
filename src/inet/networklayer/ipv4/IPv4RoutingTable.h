@@ -78,9 +78,11 @@ class INET_API IPv4RoutingTable : public cSimpleModule, public IIPv4RoutingTable
     IInterfaceTable *ift = nullptr;    // cached pointer
 
     IPv4Address routerId;
+    const char *netmaskRoutes = nullptr;
     bool forwarding = false;
     bool multicastForward = false;
     bool isNodeUp = false;
+    bool useAdminDist = false;     // Use Cisco like administrative distances
 
     // for convenience
     typedef IPv4MulticastRoute::OutInterface OutInterface;
@@ -134,7 +136,14 @@ class INET_API IPv4RoutingTable : public cSimpleModule, public IIPv4RoutingTable
     virtual void invalidateCache();
 
     // helper for sorting routing table, used by addRoute()
-    static bool routeLessThan(const IPv4Route *a, const IPv4Route *b);
+    class RouteLessThan
+    {
+        const IPv4RoutingTable &c;
+      public:
+        RouteLessThan(const IPv4RoutingTable& c) : c(c) {}
+        bool operator () (const IPv4Route *a, const IPv4Route *b) { return c.routeLessThan(a, b); }
+    };
+    bool routeLessThan(const IPv4Route *a, const IPv4Route *b) const;
 
     // helper for sorting multicast routing table, used by addMulticastRoute()
     static bool multicastRouteLessThan(const IPv4MulticastRoute *a, const IPv4MulticastRoute *b);
@@ -150,72 +159,72 @@ class INET_API IPv4RoutingTable : public cSimpleModule, public IIPv4RoutingTable
     virtual ~IPv4RoutingTable();
 
   protected:
-    virtual int numInitStages() const { return NUM_INIT_STAGES; }
-    virtual void initialize(int stage);
+    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
+    virtual void initialize(int stage) override;
 
     /**
      * Raises an error.
      */
-    virtual void handleMessage(cMessage *);
+    virtual void handleMessage(cMessage *) override;
 
     /**
      * Called by the signal handler whenever a change of a category
      * occurs to which this client has subscribed.
      */
-    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj);
+    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj) override;
 
   public:
     /**
      * For debugging
      */
-    virtual void printRoutingTable() const;
+    virtual void printRoutingTable() const override;
 
     /**
      * For debugging
      */
-    virtual void printMulticastRoutingTable() const;
+    virtual void printMulticastRoutingTable() const override;
 
     /**
      * Returns the host or router this routing table lives in.
      */
-    virtual cModule *getHostModule();
+    virtual cModule *getHostModule() override;
 
     /** @name Interfaces */
     //@{
-    virtual void configureInterfaceForIPv4(InterfaceEntry *ie);
+    virtual void configureInterfaceForIPv4(InterfaceEntry *ie) override;
 
     /**
      * Returns an interface given by its address. Returns nullptr if not found.
      */
-    virtual InterfaceEntry *getInterfaceByAddress(const IPv4Address& address) const;
+    virtual InterfaceEntry *getInterfaceByAddress(const IPv4Address& address) const override;
     //@}
 
     /**
      * IPv4 forwarding on/off
      */
-    virtual bool isForwardingEnabled() const { return forwarding; }
+    virtual bool isForwardingEnabled() const override { return forwarding; }
 
     /**
      * IPv4 multicast forwarding on/off
      */
-    virtual bool isMulticastForwardingEnabled() const { return multicastForward; }
+    virtual bool isMulticastForwardingEnabled() const override { return multicastForward; }
 
     /**
      * Returns routerId.
      */
-    virtual IPv4Address getRouterId() const { return routerId; }
+    virtual IPv4Address getRouterId() const override { return routerId; }
 
     /**
      * Sets routerId.
      */
-    virtual void setRouterId(IPv4Address a);
+    virtual void setRouterId(IPv4Address a) override;
 
     /** @name Routing functions (query the route table) */
     //@{
     /**
      * Checks if the address is a local one, i.e. one of the host's.
      */
-    virtual bool isLocalAddress(const IPv4Address& dest) const;
+    virtual bool isLocalAddress(const IPv4Address& dest) const override;
 
     /** @name Routing functions (query the route table) */
     //@{
@@ -223,20 +232,20 @@ class INET_API IPv4RoutingTable : public cSimpleModule, public IIPv4RoutingTable
      * Checks if the address is a local network broadcast address, i.e. one of the
      * broadcast addresses derived from the interface addresses and netmasks.
      */
-    virtual bool isLocalBroadcastAddress(const IPv4Address& dest) const;
+    virtual bool isLocalBroadcastAddress(const IPv4Address& dest) const override;
 
     /**
      * Returns the interface entry having the specified address
      * as its local broadcast address.
      */
-    virtual InterfaceEntry *findInterfaceByLocalBroadcastAddress(const IPv4Address& dest) const;
+    virtual InterfaceEntry *findInterfaceByLocalBroadcastAddress(const IPv4Address& dest) const override;
 
     /**
      * The routing function. Performs longest prefix match for the given
      * destination address, and returns the resulting route. Returns nullptr
      * if there is no matching route.
      */
-    virtual IPv4Route *findBestMatchingRoute(const IPv4Address& dest) const;
+    virtual IPv4Route *findBestMatchingRoute(const IPv4Address& dest) const override;
 
     /**
      * Convenience function based on findBestMatchingRoute().
@@ -244,7 +253,7 @@ class INET_API IPv4RoutingTable : public cSimpleModule, public IIPv4RoutingTable
      * Returns the output interface for the packets with dest as destination
      * address, or nullptr if the destination is not in routing table.
      */
-    virtual InterfaceEntry *getInterfaceForDestAddr(const IPv4Address& dest) const;
+    virtual InterfaceEntry *getInterfaceForDestAddr(const IPv4Address& dest) const override;
 
     /**
      * Convenience function based on findBestMatchingRoute().
@@ -253,7 +262,7 @@ class INET_API IPv4RoutingTable : public cSimpleModule, public IIPv4RoutingTable
      * address if the destination is not in routing table or the gateway field
      * is not filled in in the route.
      */
-    virtual IPv4Address getGatewayForDestAddr(const IPv4Address& dest) const;
+    virtual IPv4Address getGatewayForDestAddr(const IPv4Address& dest) const override;
     //@}
 
     /** @name Multicast routing functions */
@@ -263,12 +272,12 @@ class INET_API IPv4RoutingTable : public cSimpleModule, public IIPv4RoutingTable
      * Checks if the address is in one of the local multicast group
      * address list.
      */
-    virtual bool isLocalMulticastAddress(const IPv4Address& dest) const;
+    virtual bool isLocalMulticastAddress(const IPv4Address& dest) const override;
 
     /**
      * Returns route for a multicast source and multicast group.
      */
-    virtual const IPv4MulticastRoute *findBestMatchingMulticastRoute(const IPv4Address& origin, const IPv4Address& group) const;
+    virtual const IPv4MulticastRoute *findBestMatchingMulticastRoute(const IPv4Address& origin, const IPv4Address& group) const override;
     //@}
 
     /** @name Route table manipulation */
@@ -278,92 +287,92 @@ class INET_API IPv4RoutingTable : public cSimpleModule, public IIPv4RoutingTable
      * Returns the total number of routes (unicast, multicast, plus the
      * default route).
      */
-    virtual int getNumRoutes() const { return routes.size(); }
+    virtual int getNumRoutes() const override { return routes.size(); }
 
     /**
      * Returns the kth route.
      */
-    virtual IPv4Route *getRoute(int k) const;
+    virtual IPv4Route *getRoute(int k) const override;
 
     /**
      * Finds and returns the default route, or nullptr if it doesn't exist
      */
-    virtual IPv4Route *getDefaultRoute() const;
+    virtual IPv4Route *getDefaultRoute() const override;
 
     /**
      * Adds a route to the routing table. Routes are allowed to be modified
      * while in the routing table. (There is a notification mechanism that
      * allows routing table internals to be updated on a routing entry change.)
      */
-    virtual void addRoute(IPv4Route *entry);
+    virtual void addRoute(IPv4Route *entry) override;
 
     /**
      * Removes the given route from the routing table, and returns it.
      * nullptr is returned of the route was not in the routing table.
      */
-    virtual IPv4Route *removeRoute(IPv4Route *entry);
+    virtual IPv4Route *removeRoute(IPv4Route *entry) override;
 
     /**
      * Removes the given route from the routing table, and delete it.
      * Returns true if the route was deleted, and false if it was
      * not in the routing table.
      */
-    virtual bool deleteRoute(IPv4Route *entry);
+    virtual bool deleteRoute(IPv4Route *entry) override;
 
     /**
      * Returns the total number of multicast routes.
      */
-    virtual int getNumMulticastRoutes() const { return multicastRoutes.size(); }
+    virtual int getNumMulticastRoutes() const override { return multicastRoutes.size(); }
 
     /**
      * Returns the kth multicast route.
      */
-    virtual IPv4MulticastRoute *getMulticastRoute(int k) const { return k < (int)multicastRoutes.size() ? multicastRoutes[k] : nullptr; }
+    virtual IPv4MulticastRoute *getMulticastRoute(int k) const override { return k < (int)multicastRoutes.size() ? multicastRoutes[k] : nullptr; }
 
     /**
      * Adds a multicast route to the routing table. Routes are allowed to be modified
      * while in the routing table. (There is a notification mechanism that
      * allows routing table internals to be updated on a routing entry change.)
      */
-    virtual void addMulticastRoute(IPv4MulticastRoute *entry);
+    virtual void addMulticastRoute(IPv4MulticastRoute *entry) override;
 
     /**
      * Removes the given route from the routing table, and returns it.
      * nullptr is returned of the route was not in the routing table.
      */
-    virtual IPv4MulticastRoute *removeMulticastRoute(IPv4MulticastRoute *entry);
+    virtual IPv4MulticastRoute *removeMulticastRoute(IPv4MulticastRoute *entry) override;
 
     /**
      * Deletes the given multicast route from the routing table.
      * Returns true if the route was deleted, and false if it was
      * not in the routing table.
      */
-    virtual bool deleteMulticastRoute(IPv4MulticastRoute *entry);
+    virtual bool deleteMulticastRoute(IPv4MulticastRoute *entry) override;
 
     /**
      * Deletes invalid routes from the routing table. Invalid routes are those
      * where the isValid() method returns false.
      */
-    virtual void purge();
+    virtual void purge() override;
 
     /**
      * Utility function: Returns a vector of all addresses of the node.
      */
-    virtual std::vector<IPv4Address> gatherAddresses() const;
+    virtual std::vector<IPv4Address> gatherAddresses() const override;
 
     /**
      * To be called from route objects whenever a field changes. Used for
      * maintaining internal data structures and firing "routing table changed"
      * notifications.
      */
-    virtual void routeChanged(IPv4Route *entry, int fieldCode);
+    virtual void routeChanged(IPv4Route *entry, int fieldCode) override;
 
     /**
      * To be called from multicast route objects whenever a field changes. Used for
      * maintaining internal data structures and firing "routing table changed"
      * notifications.
      */
-    virtual void multicastRouteChanged(IPv4MulticastRoute *entry, int fieldCode);
+    virtual void multicastRouteChanged(IPv4MulticastRoute *entry, int fieldCode) override;
     //@}
 
     /**
@@ -382,11 +391,11 @@ class INET_API IPv4RoutingTable : public cSimpleModule, public IIPv4RoutingTable
     virtual IRoute *createRoute() override { return new IPv4Route(); }
 
     // IPv4 tables rules
-    virtual void addRule(bool output, IPv4RouteRule *entry);
-    virtual void delRule(IPv4RouteRule *entry);
-    virtual const IPv4RouteRule * getRule(bool output,int index) const;
-    virtual int getNumRules(bool output);
-    virtual const IPv4RouteRule * findRule(bool output, int prot, int sPort, const IPv4Address &srcAddr, int dPort, const IPv4Address &destAddr, const InterfaceEntry *) const;
+    virtual void addRule(bool output, IPv4RouteRule *entry) override;
+    virtual void delRule(IPv4RouteRule *entry) override;
+    virtual const IPv4RouteRule * getRule(bool output,int index) const override;
+    virtual int getNumRules(bool output) override;
+    virtual const IPv4RouteRule * findRule(bool output, int prot, int sPort, const IPv4Address &srcAddr, int dPort, const IPv4Address &destAddr, const InterfaceEntry *) const override;
   private:
     virtual void addRoute(IRoute *entry) override { addRoute(check_and_cast<IPv4Route *>(entry)); }
     virtual IRoute *removeRoute(IRoute *entry) override { return removeRoute(check_and_cast<IPv4Route *>(entry)); }

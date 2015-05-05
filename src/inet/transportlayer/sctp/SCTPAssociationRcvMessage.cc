@@ -198,6 +198,7 @@ bool SCTPAssociation::process_RCV_Message(SCTPMessage *sctpmsg,
                     else if (initAckChunk->getInitTag() == 0) {
                         sendAbort();
                         sctpMain->removeAssociation(this);
+                        return true;
                     }
                     i = numberOfChunks - 1;
                     delete initAckChunk;
@@ -237,8 +238,7 @@ bool SCTPAssociation::process_RCV_Message(SCTPMessage *sctpmsg,
                     delete header;
                     sendAbort();
                     sctpMain->removeAssociation(this);
-                    trans = true;
-                    break;
+                    return true;
                 }
                 if (!(fsm->getState() == SCTP_S_SHUTDOWN_RECEIVED || fsm->getState() == SCTP_S_SHUTDOWN_ACK_SENT)) {
                     SCTPDataChunk *dataChunk;
@@ -272,6 +272,7 @@ bool SCTPAssociation::process_RCV_Message(SCTPMessage *sctpmsg,
                     else {
                         sendAbort();
                         sctpMain->removeAssociation(this);
+                        return true;
                     }
                     delete dataChunk;
                 }
@@ -707,8 +708,6 @@ bool SCTPAssociation::processInitAckArrived(SCTPInitAckChunk *initAckChunk)
         trans = performStateTransition(SCTP_E_RCV_INIT_ACK);
         //delete state->initChunk; will be deleted when state ESTABLISHED is entered
         if (trans) {
-            state->initialPrimaryPath = remoteAddr;
-            state->setPrimaryPath(getPath(remoteAddr));
             initPeerTsn = initAckChunk->getInitTSN();
             localVTag = initAckChunk->getInitTag();
             state->gapList.setInitialCumAckTSN(initPeerTsn - 1);
@@ -746,6 +745,8 @@ bool SCTPAssociation::processInitAckArrived(SCTPInitAckChunk *initAckChunk)
                 qCounter.roomRetransQ[remoteAddr] = 0;
                 qCounter.bookedTransQ[remoteAddr] = 0;
             }
+            state->initialPrimaryPath = remoteAddr;
+            state->setPrimaryPath(getPath(remoteAddr));
             inboundStreams = ((initAckChunk->getNoOutStreams() < inboundStreams) ? initAckChunk->getNoOutStreams() : inboundStreams);
             outboundStreams = ((initAckChunk->getNoInStreams() < outboundStreams) ? initAckChunk->getNoInStreams() : outboundStreams);
             (this->*ssFunctions.ssInitStreams)(inboundStreams, outboundStreams);

@@ -18,7 +18,7 @@
 #ifndef __INET_QAM16MODULATION_H
 #define __INET_QAM16MODULATION_H
 
-#include "inet/physicallayer/base/MQAMModulationBase.h"
+#include "inet/physicallayer/base/packetlevel/MQAMModulationBase.h"
 
 namespace inet {
 
@@ -41,7 +41,7 @@ class INET_API QAM16Modulation : public MQAMModulationBase
   public:
     QAM16Modulation();
 
-    virtual void printToStream(std::ostream& stream) const { stream << "QAM16Modulation"; }
+    virtual std::ostream& printToStream(std::ostream& stream, int level) const override { return stream << "QAM16Modulation"; }
 };
 
 } // namespace physicallayer

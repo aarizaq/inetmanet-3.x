@@ -228,7 +228,7 @@ void VoIPStreamReceiver::decodePacket(VoIPStreamPacket *vp)
         emit(lostPacketsSignal, newSeqNo - (curConn.seqNo + 1));
 
     // for fingerprint
-    cHasher *hasher = simulation.getHasher();
+    cHasher *hasher = getSimulation()->getHasher();
 
     if (simTime() > curConn.lastPacketFinish) {
         int lostSamples = ceil(SIMTIME_DBL((simTime() - curConn.lastPacketFinish) * curConn.sampleRate));
@@ -243,9 +243,9 @@ void VoIPStreamReceiver::decodePacket(VoIPStreamPacket *vp)
     emit(delaySignal, curConn.lastPacketFinish - vp->getCreationTime());
     curConn.seqNo = newSeqNo;
 
-    int len = vp->getByteArray().getDataArraySize();
+    int len = vp->getBytes().getDataArraySize();
     uint8_t buff[len];
-    vp->copyDataToBuffer(buff, len);
+    vp->getBytes().copyDataToBuffer(buff, len);
     curConn.writeAudioFrame(buff, len);
     if (hasher)
         hasher->add((const char *)buff, len);

@@ -391,7 +391,7 @@ void SCTPAssociation::sendEstabIndicationToApp()
     EV_INFO << "sendEstabIndicationToApp: localPort="
             << localPort << " remotePort=" << remotePort << endl;
 
-    cPacket *msg = new cPacket(indicationName(SCTP_I_ESTABLISHED));
+    cMessage *msg = new cMessage(indicationName(SCTP_I_ESTABLISHED));
     msg->setKind(SCTP_I_ESTABLISHED);
 
     SCTPConnectInfo *establishIndication = new SCTPConnectInfo("CI");
@@ -414,7 +414,7 @@ void SCTPAssociation::sendEstabIndicationToApp()
     }
 }
 
-void SCTPAssociation::sendToApp(cPacket *msg)
+void SCTPAssociation::sendToApp(cMessage *msg)
 {
     sctpMain->send(msg, "to_appl", appGateIndex);
 }
@@ -482,7 +482,7 @@ void SCTPAssociation::sendInit()
     sctpmsg->setByteLength(SCTP_COMMON_HEADER);
     SCTPInitChunk *initChunk = new SCTPInitChunk("INIT");
     initChunk->setChunkType(INIT);
-    initChunk->setInitTag((uint32)(fmod(intrand(INT32_MAX), 1.0 + (double)(unsigned)0xffffffffUL)) & 0xffffffffUL);
+    initChunk->setInitTag((uint32)(fmod(RNGCONTEXT intrand(INT32_MAX), 1.0 + (double)(unsigned)0xffffffffUL)) & 0xffffffffUL);
 
     peerVTag = initChunk->getInitTag();
     EV_INFO << "INIT from " << localAddr << ":InitTag=" << peerVTag << "\n";
@@ -498,6 +498,16 @@ void SCTPAssociation::sendInit()
     state->asconfSn = 1000;
 
     initTsn = initChunk->getInitTSN();
+#ifdef WITH_IPv4
+    initChunk->setIpv4Supported(true);
+#else
+    initChunk->setIpv4Supported(false);
+#endif
+#ifdef WITH_IPv6
+    initChunk->setIpv6Supported(true);
+#else
+    initChunk->setIpv6Supported(false);
+#endif
     EV_INFO << "add local address\n";
     if (localAddressList.front().isUnspecified()) {
         for (int32 i = 0; i < ift->getNumInterfaces(); ++i) {
@@ -522,6 +532,9 @@ void SCTPAssociation::sendInit()
     else {
         adv = localAddressList;
         EV_DETAIL << "gebundene Adresse " << localAddr << " wird hinzugefuegt\n";    // todo
+    }
+    if (initChunk->getIpv4Supported() || initChunk->getIpv6Supported()) {
+        length += 8;
     }
     uint32 addrNum = 0;
     bool friendly = false;
@@ -575,7 +588,7 @@ void SCTPAssociation::sendInit()
         state->keyVector[2] = 36;
         for (int32 k = 0; k < 32; k++) {
             initChunk->setRandomArraySize(k + 1);
-            initChunk->setRandom(k, (uint8)(intrand(256)));
+            initChunk->setRandom(k, (uint8)(RNGCONTEXT intrand(256)));
             state->keyVector[k + 2] = initChunk->getRandom(k);
         }
         state->sizeKeyVector = 36;
@@ -599,7 +612,7 @@ void SCTPAssociation::sendInit()
         state->sizeKeyVector++;
         initChunk->setHmacTypesArraySize(1);
         initChunk->setHmacTypes(0, 1);
-        length += initChunk->getChunkTypesArraySize() + 46;
+        length += initChunk->getChunkTypesArraySize() + 50;
     }
 
     if (sctpMain->pktdrop) {
@@ -616,8 +629,12 @@ void SCTPAssociation::sendInit()
         initChunk->setSepChunksArraySize(++count);
         initChunk->setSepChunks(count - 1, ASCONF_ACK);
     }
+    if (count > 0) {
+        length += ADD_PADDING(SCTP_SUPPORTED_EXTENSIONS_PARAMETER_LENGTH + count);
+    }
     if (state->prMethod != 0) {
         initChunk->setForwardTsn(true);
+        length += 4;
     }
 
     sctpMain->printInfoAssocMap();
@@ -686,7 +703,7 @@ void SCTPAssociation::sendInitAck(SCTPInitChunk *initChunk)
     cookie->setPeerTieTagArraySize(32);
     if (fsm->getState() == SCTP_S_CLOSED) {
         while (peerVTag == 0) {
-            peerVTag = (uint32)intrand(INT32_MAX);
+            peerVTag = (uint32)RNGCONTEXT intrand(INT32_MAX);
         }
         initAckChunk->setInitTag(peerVTag);
         initAckChunk->setInitTSN(2000);
@@ -712,10 +729,10 @@ void SCTPAssociation::sendInitAck(SCTPInitChunk *initChunk)
         cookie->setLocalTag(initChunk->getInitTag());
         cookie->setPeerTag(peerVTag);
         for (int32 i = 0; i < 32; i++) {
-            cookie->setPeerTieTag(i, (uint8)(intrand(256)));
+            cookie->setPeerTieTag(i, (uint8)(RNGCONTEXT intrand(256)));
             state->peerTieTag[i] = cookie->getPeerTieTag(i);
             if (fsm->getState() == SCTP_S_COOKIE_ECHOED) {
-                cookie->setLocalTieTag(i, (uint8)(intrand(256)));
+                cookie->setLocalTieTag(i, (uint8)(RNGCONTEXT intrand(256)));
                 state->localTieTag[i] = cookie->getLocalTieTag(i);
             }
             else
@@ -728,7 +745,7 @@ void SCTPAssociation::sendInitAck(SCTPInitChunk *initChunk)
         EV_INFO << "other state\n";
         uint32 tag = 0;
         while (tag == 0) {
-            tag = (uint32)(fmod(intrand(INT32_MAX), 1.0 + (double)(unsigned)0xffffffffUL)) & 0xffffffffUL;
+            tag = (uint32)(fmod(RNGCONTEXT intrand(INT32_MAX), 1.0 + (double)(unsigned)0xffffffffUL)) & 0xffffffffUL;
         }
         initAckChunk->setInitTag(tag);
         initAckChunk->setInitTSN(state->nextTSN);
@@ -740,7 +757,7 @@ void SCTPAssociation::sendInitAck(SCTPInitChunk *initChunk)
         }
         sctpinitack->setTag(initChunk->getInitTag());
     }
-    cookie->setByteLength(SCTP_COOKIE_LENGTH);
+    cookie->setByteLength(SCTP_COOKIE_LENGTH + 4);
     initAckChunk->setStateCookie(cookie);
     initAckChunk->setCookieArraySize(0);
     initAckChunk->setA_rwnd(sctpMain->par("arwnd"));
@@ -749,6 +766,19 @@ void SCTPAssociation::sendInitAck(SCTPInitChunk *initChunk)
     initAckChunk->setNoOutStreams((unsigned int)min(outboundStreams, initChunk->getNoInStreams()));
     initAckChunk->setNoInStreams((unsigned int)min(inboundStreams, initChunk->getNoOutStreams()));
     initTsn = initAckChunk->getInitTSN();
+#ifdef WITH_IPv4
+    initAckChunk->setIpv4Supported(true);
+#else
+    initAckChunk->setIpv4Supported(false);
+#endif
+#ifdef WITH_IPv6
+    initAckChunk->setIpv6Supported(true);
+#else
+    initAckChunk->setIpv6Supported(false);
+#endif
+    if (initAckChunk->getIpv4Supported() || initAckChunk->getIpv6Supported()) {
+        length += 8;
+    }
     uint32 addrNum = 0;
     bool friendly = false;
     if (sctpMain->hasPar("natFriendly")) {
@@ -758,7 +788,11 @@ void SCTPAssociation::sendInitAck(SCTPInitChunk *initChunk)
         for (auto k = state->localAddresses.begin(); k != state->localAddresses.end(); ++k) {
             initAckChunk->setAddressesArraySize(addrNum + 1);
             initAckChunk->setAddresses(addrNum++, (*k));
-            length += 8;
+            if ((*k).getType() == L3Address::IPv4) {
+                length += 8;
+            } else if ((*k).getType() == L3Address::IPv6) {
+                length += 20;
+            }
         }
 
     uint16 count = 0;
@@ -767,7 +801,7 @@ void SCTPAssociation::sendInitAck(SCTPInitChunk *initChunk)
         initAckChunk->setSepChunks(count - 1, AUTH);
         for (int32 k = 0; k < 32; k++) {
             initAckChunk->setRandomArraySize(k + 1);
-            initAckChunk->setRandom(k, (uint8)(intrand(256)));
+            initAckChunk->setRandom(k, (uint8)(RNGCONTEXT intrand(256)));
         }
         initAckChunk->setChunkTypesArraySize(state->chunkList.size());
         int32 k = 0;
@@ -777,7 +811,7 @@ void SCTPAssociation::sendInitAck(SCTPInitChunk *initChunk)
         }
         initAckChunk->setHmacTypesArraySize(1);
         initAckChunk->setHmacTypes(0, 1);
-        length += initAckChunk->getChunkTypesArraySize() + 46;
+        length += initAckChunk->getChunkTypesArraySize() + 50;
     }
     uint32 unknownLen = initChunk->getUnrecognizedParametersArraySize();
     if (unknownLen > 0) {
@@ -805,10 +839,13 @@ void SCTPAssociation::sendInitAck(SCTPInitChunk *initChunk)
         initAckChunk->setSepChunksArraySize(++count);
         initAckChunk->setSepChunks(count - 1, ASCONF_ACK);
     }
+    if (count > 0) {
+        length += ADD_PADDING(SCTP_SUPPORTED_EXTENSIONS_PARAMETER_LENGTH + count);
+    }
     if (state->prMethod != 0) {
         initAckChunk->setForwardTsn(true);
+        length += 4;
     }
-    length += count;
 
     initAckChunk->setByteLength(length + initAckChunk->getCookieArraySize() + cookie->getByteLength());
     inboundStreams = ((initChunk->getNoOutStreams() < initAckChunk->getNoInStreams()) ? initChunk->getNoOutStreams() : initAckChunk->getNoInStreams());
@@ -1712,7 +1749,7 @@ void SCTPAssociation::sendDataArrivedNotification(uint16 sid)
 {
     EV_INFO << "SendDataArrivedNotification\n";
 
-    cPacket *cmsg = new cPacket("DataArrivedNotification");
+    cMessage *cmsg = new cMessage("DataArrivedNotification");
     cmsg->setKind(SCTP_I_DATA_NOTIFICATION);
     SCTPCommand *cmd = new SCTPCommand("notification");
     cmd->setAssocId(assocId);
@@ -1854,7 +1891,7 @@ void SCTPAssociation::pushUlp()
             }
             EV_DETAIL << "Push TSN " << chunk->tsn
                       << ": sid=" << chunk->sid << " ssn=" << chunk->ssn << endl;
-            cPacket *msg = (cPacket *)chunk->userData;
+            cMessage *msg = (cMessage *)chunk->userData;
             msg->setKind(SCTP_I_DATA);
             SCTPRcvCommand *cmd = new SCTPRcvCommand("push");
             cmd->setAssocId(assocId);
@@ -2287,7 +2324,7 @@ SCTPDataMsg *SCTPAssociation::dequeueOutboundDataMsg(SCTPPathVariables *path,
                 int32 b = ADD_PADDING(((SCTPDataMsg *)streamQ->front())->getEncapsulatedPacket()->getByteLength() + SCTP_DATA_CHUNK_LENGTH);
 
                 /* check if chunk found in queue has to be fragmented */
-                if (b > state->fragPoint + SCTP_DATA_CHUNK_LENGTH) {
+                if (b > (int32)state->fragPoint + (int32)SCTP_DATA_CHUNK_LENGTH) {
                     /* START FRAGMENTATION */
                     SCTPDataMsg *datMsgQueued = (SCTPDataMsg *)streamQ->pop();
                     cPacket *datMsgQueuedEncMsg = datMsgQueued->getEncapsulatedPacket();
@@ -2457,9 +2494,9 @@ bool SCTPAssociation::nextChunkFitsIntoPacket(SCTPPathVariables *path, int32 byt
             int32 b = ADD_PADDING(((SCTPDataMsg *)streamQ->front())->getEncapsulatedPacket()->getByteLength() + SCTP_DATA_CHUNK_LENGTH);
 
             /* Check if next message would be fragmented */
-            if (b > state->fragPoint + SCTP_DATA_CHUNK_LENGTH) {
+            if (b > (int32)state->fragPoint + (int32)SCTP_DATA_CHUNK_LENGTH) {
                 /* Test if fragment fits */
-                if (bytes >= state->fragPoint)
+                if (bytes >= (int32)state->fragPoint)
                     return true;
                 else
                     return false;

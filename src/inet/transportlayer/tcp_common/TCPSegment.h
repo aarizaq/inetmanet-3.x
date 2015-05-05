@@ -20,6 +20,7 @@
 
 #include <list>
 #include "inet/common/INETDefs.h"
+#include "inet/transportlayer/contract/ITransportPacket.h"
 #include "inet/transportlayer/tcp_common/TCPSegment_m.h"
 
 namespace inet {
@@ -56,11 +57,13 @@ class Sack : public Sack_Base
  * Represents a TCP segment. More info in the TCPSegment.msg file
  * (and the documentation generated from it).
  */
-class INET_API TCPSegment : public TCPSegment_Base
+class INET_API TCPSegment : public TCPSegment_Base, public ITransportPacket
 {
   protected:
     typedef std::list<TCPPayloadMessage> PayloadList;
     PayloadList payloadList;
+    typedef std::vector<TCPOption *> OptionList;
+    OptionList headerOptionList;
 
   private:
     void copy(const TCPSegment& other);
@@ -72,7 +75,7 @@ class INET_API TCPSegment : public TCPSegment_Base
     ~TCPSegment();
     TCPSegment& operator=(const TCPSegment& other);
     virtual TCPSegment *dup() const override { return new TCPSegment(*this); }
-    virtual void parsimPack(cCommBuffer *b) override;
+    virtual void parsimPack(cCommBuffer *b) PARSIMPACK_CONST override;
     virtual void parsimUnpack(cCommBuffer *b) override;
 
     /** Generated but unused method, should not be called. */
@@ -118,10 +121,35 @@ class INET_API TCPSegment : public TCPSegment_Base
      */
     virtual void truncateSegment(uint32 firstSeqNo, uint32 endSeqNo);
 
-    /**
-     * Calculate Length of Options Array in bytes
-     */
-    virtual unsigned short getOptionsArrayLength();
+    // manage header options:
+
+    /** Calculate Length of TCP Options Array in bytes */
+    virtual unsigned short getHeaderOptionArrayLength();
+
+    /** Generated but unused method, should not be called. */
+    virtual void setHeaderOptionArraySize(unsigned int size);
+
+    /** Returns the number of TCP options in this TCP segment */
+    virtual unsigned int getHeaderOptionArraySize() const;
+
+    /** Returns the kth TCP options in this TCP segment */
+    virtual TCPOptionPtr& getHeaderOption(unsigned int k);
+    virtual const TCPOptionPtr& getHeaderOption(unsigned int k) const {return const_cast<TCPSegment*>(this)->getHeaderOption(k);}
+
+    /** Generated but unused method, should not be called. */
+    virtual void setHeaderOption(unsigned int k, const TCPOptionPtr& headerOption);
+
+    /** Adds a TCP option to the TCP segment */
+    virtual void addHeaderOption(TCPOption *headerOption);
+
+    /** Drops all TCP options of the TCP segment */
+    virtual void dropHeaderOptions();
+
+
+    virtual unsigned int getSourcePort() const override { return TCPSegment_Base::getSrcPort(); }
+    virtual void setSourcePort(unsigned int port) override { TCPSegment_Base::setSrcPort(port); }
+    virtual unsigned int getDestinationPort() const override { return TCPSegment_Base::getDestPort(); }
+    virtual void setDestinationPort(unsigned int port) override { TCPSegment_Base::setDestPort(port); }
 
   protected:
     /**

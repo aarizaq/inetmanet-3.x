@@ -314,14 +314,16 @@ void TCP_NSC::handleIpInputMessage(TCPSegment *tcpsegP)
         {
             // HACK: when IPv6, then correcting the TCPOPTION_MAXIMUM_SEGMENT_SIZE option
             //       with IP header size difference
-            unsigned short numOptions = tcpsegP->getOptionsArraySize();
+            unsigned short numOptions = tcpsegP->getHeaderOptionArraySize();
             for (unsigned short i = 0; i < numOptions; i++) {
-                TCPOption& option = tcpsegP->getOptions(i);
-                if (option.getKind() == TCPOPTION_MAXIMUM_SEGMENT_SIZE) {
-                    unsigned int value = option.getValues(0);
-                    value -= sizeof(struct nsc_ipv6hdr) - sizeof(struct nsc_iphdr);
-                    option.setValues(0, value);
-                    //tcpsegP->setOptions(i, option);
+                TCPOption* option = tcpsegP->getHeaderOption(i);
+                if (option->getKind() == TCPOPTION_MAXIMUM_SEGMENT_SIZE) {
+                    TCPOptionMaxSegmentSize *mssOption = dynamic_cast<TCPOptionMaxSegmentSize *>(option);
+                    if (mssOption) {
+                        unsigned int value = mssOption->getMaxSegmentSize();
+                        value -= sizeof(struct nsc_ipv6hdr) - sizeof(struct nsc_iphdr);
+                        mssOption->setMaxSegmentSize(value);
+                    }
                 }
             }
         }
@@ -380,20 +382,21 @@ void TCP_NSC::handleIpInputMessage(TCPSegment *tcpsegP)
     if (!conn)
         conn = findConnByInetSockPair(inetSockPairAny);
 
-    totalTcpLen = TCPSerializer().serialize(tcpsegP, (unsigned char *)tcph, totalTcpLen);
+    Buffer b(tcph, totalTcpLen);
+    Context c;
+    c.l3AddressesPtr = &ih->saddr;
+    c.l3AddressesLength = 8;
+    TCPSerializer().serializePacket(tcpsegP, b, c);
+    totalTcpLen = b.getPos();
 
     if (conn) {
         conn->receiveQueueM->notifyAboutIncomingSegmentProcessing(tcpsegP);
     }
 
-    // calculate TCP checksum
-    tcph->th_sum = 0;
-    tcph->th_sum = TCPSerializer().checksum(tcph, totalTcpLen, nscSockPair.remoteM.ipAddrM, nscSockPair.localM.ipAddrM);
-
     size_t totalIpLen = ipHdrLen + totalTcpLen;
     ih->tot_len = htons(totalIpLen);
     ih->check = 0;
-    ih->check = TCPIPchecksum::checksum(ih, ipHdrLen);
+    ih->check = htons(TCPIPchecksum::checksum(ih, ipHdrLen));
 
     // receive msg from network
 
@@ -423,7 +426,7 @@ void TCP_NSC::handleIpInputMessage(TCPSegment *tcpsegP)
                 ++changes;
 
                 TCP_NSC_Connection *conn;
-                int newConnId = ev.getUniqueNumber();
+                int newConnId = getEnvir()->getUniqueNumber();
                 // add into appConnMap
                 conn = &tcpAppConnMapM[newConnId];
                 conn->tcpNscM = this;
@@ -674,7 +677,7 @@ void TCP_NSC::handleMessage(cMessage *msgP)
         handleAppMessage(msgP);
     }
 
-    if (ev.isGUI())
+    if (hasGUI())
         updateDisplayString();
 }
 
@@ -862,9 +865,7 @@ void TCP_NSC::sendToIP(const void *dataP, int lenP)
         dest = conn->inetSockPairM.remoteM.ipAddrM;
     }
     else {
-        tcpseg = new TCPSegment("tcp-segment");
-
-        TCPSerializer().parse((const unsigned char *)tcph, totalLen - ipHdrLen, tcpseg, true);
+        tcpseg = TCPSerializer().deserialize((const unsigned char *)tcph, totalLen - ipHdrLen, true);
         dest = mapNsc2Remote(ntohl(iph->daddr));
     }
 

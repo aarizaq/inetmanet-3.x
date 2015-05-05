@@ -24,7 +24,7 @@
 #include "inet/common/packet/PacketDump.h"
 
 #ifdef WITH_UDP
-#include "inet/transportlayer/udp/UDPPacket_m.h"
+#include "inet/transportlayer/udp/UDPPacket.h"
 #endif // ifdef WITH_UDP
 
 #ifdef WITH_SCTP
@@ -67,7 +67,7 @@ void PacketDump::sctpDump(const char *label, sctp::SCTPMessage *sctpmsg,
 
     // seq and time (not part of the tcpdump format)
     char buf[30];
-    sprintf(buf, "[%.3f%s] ", simulation.getSimTime().dbl(), label);
+    sprintf(buf, "[%.3f%s] ", simTime().dbl(), label);
     out << buf;
 
 #ifndef WITH_SCTP
@@ -359,7 +359,7 @@ void PacketDump::dump(const char *label, const char *msg)
     // seq and time (not part of the tcpdump format)
     char buf[30];
 
-    sprintf(buf, "[%.3f%s] ", simulation.getSimTime().dbl(), label);
+    sprintf(buf, "[%.3f%s] ", simTime().dbl(), label);
     out << buf << msg << endl;
 }
 
@@ -432,7 +432,7 @@ void PacketDump::udpDump(bool l2r, const char *label, UDPPacket *udppkt,
     std::ostream& out = *outp;
 
     char buf[30];
-    sprintf(buf, "[%.3f%s] ", simulation.getSimTime().dbl(), label);
+    sprintf(buf, "[%.3f%s] ", simTime().dbl(), label);
     out << buf;
 
 #ifndef WITH_UDP
@@ -476,7 +476,7 @@ void PacketDump::dumpARP(bool l2r, const char *label, ARPPacket *dgram, const ch
 #ifdef WITH_IPv4
     std::ostream& out = *outp;
     char buf[30];
-    sprintf(buf, "[%.3f%s] ", simulation.getSimTime().dbl(), label);
+    sprintf(buf, "[%.3f%s] ", simTime().dbl(), label);
     out << buf << " src: " << dgram->getSrcIPAddress() << ", " << dgram->getSrcMACAddress()
         << "; dest: " << dgram->getDestIPAddress() << ", " << dgram->getDestMACAddress() << endl;
 #endif // ifdef WITH_IPv4
@@ -486,6 +486,7 @@ void PacketDump::dumpIPv4(bool l2r, const char *label, IPv4Datagram *dgram, cons
 {
     std::ostream& out = *outp;
     char buf[30];
+    std::string classes;
 
 #ifdef WITH_IPv4
     cPacket *encapmsg = dgram->getEncapsulatedPacket();
@@ -519,9 +520,15 @@ void PacketDump::dumpIPv4(bool l2r, const char *label, IPv4Datagram *dgram, cons
         // seq and time (not part of the tcpdump format)
         sprintf(buf, "[%.3f%s] ", SIMTIME_DBL(simTime()), label);
         out << buf;
+        out << "[IPv4] " << dgram->getSrcAddress() << " > " << dgram->getDestAddress();
 
-        // packet class and name
-        out << "? " << encapmsg->getClassName() << " \"" << encapmsg->getName() << "\"";
+        if (dgram->getMoreFragments() || dgram->getFragmentOffset())
+            out << ((dgram->getMoreFragments()) ? " inner" : " last") << " fragment from offset " << dgram->getFragmentOffset();
+
+        if (encapmsg) {
+            // packet class and name
+            out << " ? " << encapmsg->getClassName() << " \"" << encapmsg->getName() << "\"";
+        }
 
         // comment
         if (comment)
@@ -666,14 +673,12 @@ void PacketDump::tcpDump(bool l2r, const char *label, tcp::TCPSegment *tcpseg,
         const char *direction = l2r ? "sent" : "received";
 
         if (verbose) {
-            unsigned short numOptions = tcpseg->getOptionsArraySize();
+            unsigned short numOptions = tcpseg->getHeaderOptionArraySize();
             out << "\n  TCP Header Option(s) " << direction << ":\n";
 
             for (int i = 0; i < numOptions; i++) {
-                TCPOption option = tcpseg->getOptions(i);
-                unsigned short kind = option.getKind();
-                unsigned short length = option.getLength();
-                out << "    " << (i + 1) << ". option kind=" << kind << " length=" << length << "\n";
+                TCPOption *option = tcpseg->getHeaderOption(i);
+                out << "    " << (i + 1) << ". option kind=" << option->getKind() << " length=" << option->getLength() << "\n";
             }
         }
     }

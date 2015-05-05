@@ -18,8 +18,8 @@
 #ifndef __INET_ISOTROPICDIMENSIONALBACKGROUNDNOISE_H
 #define __INET_ISOTROPICDIMENSIONALBACKGROUNDNOISE_H
 
-#include "inet/physicallayer/contract/IBackgroundNoise.h"
-#include "inet/physicallayer/mapping/MappingBase.h"
+#include "inet/physicallayer/contract/packetlevel/IBackgroundNoise.h"
+#include "inet/common/mapping/MappingBase.h"
 
 namespace inet {
 
@@ -39,7 +39,7 @@ class INET_API IsotropicDimensionalBackgroundNoise : public cModule, public IBac
     IsotropicDimensionalBackgroundNoise();
 
   public:
-    virtual void printToStream(std::ostream& stream) const override;
+    virtual std::ostream& printToStream(std::ostream& stream, int level) const override;
     virtual const INoise *computeNoise(const IListening *listening) const override;
 };
 

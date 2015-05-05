@@ -18,7 +18,7 @@
 #ifndef __INET_INTERPOLATINGANTENNA_H
 #define __INET_INTERPOLATINGANTENNA_H
 
-#include "inet/physicallayer/base/AntennaBase.h"
+#include "inet/physicallayer/base/packetlevel/AntennaBase.h"
 
 namespace inet {
 
@@ -41,7 +41,7 @@ class INET_API InterpolatingAntenna : public AntennaBase
   public:
     InterpolatingAntenna();
 
-    virtual void printToStream(std::ostream& stream) const override;
+    virtual std::ostream& printToStream(std::ostream& stream, int level) const override;
     virtual double getMinGain() const { return minGain; }
     virtual double getMaxGain() const override { return maxGain; }
     virtual double computeGain(const EulerAngles direction) const override;

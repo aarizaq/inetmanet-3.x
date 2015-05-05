@@ -1,6 +1,6 @@
 //
 // Copyright (C) 2005-2010 Irene Ruengeler
-// Copyright (C) 2009-2012 Thomas Dreibholz
+// Copyright (C) 2009-2015 Thomas Dreibholz
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -99,7 +99,7 @@ void SCTP::initialize(int stage)
         sizeAssocMap = 0;
         nextEphemeralPort = (uint16)(intrand(10000) + 30000);
 
-        cModule *netw = simulation.getSystemModule();
+        cModule *netw = getSimulation()->getSystemModule();
         if (netw->hasPar("testTimeout")) {
             testTimeout = (simtime_t)netw->par("testTimeout");
         }
@@ -144,10 +144,12 @@ void SCTP::handleMessage(cMessage *msg)
         EV_DEBUG << "selfMessage\n";
 
         SCTPAssociation *assoc = (SCTPAssociation *)msg->getContextPointer();
-        bool ret = assoc->processTimer(msg);
+        if (assoc) {
+            bool ret = assoc->processTimer(msg);
 
-        if (!ret)
-            removeAssociation(assoc);
+            if (!ret)
+                removeAssociation(assoc);
+        }
     }
     else if (msg->arrivedOn("from_ip")) {
         EV_INFO << "Message from IP\n";
@@ -191,6 +193,10 @@ void SCTP::handleMessage(cMessage *msg)
                 findListen = true;
 
             SCTPAssociation *assoc = findAssocForMessage(srcAddr, destAddr, sctpmsg->getSrcPort(), sctpmsg->getDestPort(), findListen);
+            if (!assoc && sctpAssocMap.size() > 0 && (((SCTPChunk *)(sctpmsg->getChunks(0)))->getChunkType() == INIT_ACK)) {
+                SCTPInitAckChunk* initack = check_and_cast<SCTPInitAckChunk *>((SCTPChunk *)(sctpmsg->getChunks(0)));
+                assoc = findAssocForInitAck(initack, srcAddr, destAddr, sctpmsg->getSrcPort(), sctpmsg->getDestPort(), findListen);
+            }
             if (!assoc && sctpAssocMap.size() > 0 && (((SCTPChunk *)(sctpmsg->getChunks(0)))->getChunkType() == ERRORTYPE
                                                       || (sctpmsg->getChunksArraySize() > 1 &&
                                                           (((SCTPChunk *)(sctpmsg->getChunks(1)))->getChunkType() == ASCONF || ((SCTPChunk *)(sctpmsg->getChunks(1)))->getChunkType() == ASCONF_ACK))))
@@ -265,7 +271,7 @@ void SCTP::handleMessage(cMessage *msg)
                     key.assocId = assocId;
                     sctpAppAssocMap[key] = assoc;
                     EV_INFO << "SCTP association created for appGateIndex " << appGateIndex << " and assoc " << assocId << "\n";
-                    bool ret = assoc->processAppCommand(PK(msg));
+                    bool ret = assoc->processAppCommand(msg);
                     if (!ret) {
                         removeAssociation(assoc);
                     }
@@ -274,14 +280,14 @@ void SCTP::handleMessage(cMessage *msg)
         }
         else {
             EV_INFO << "assoc found\n";
-            bool ret = assoc->processAppCommand(PK(msg));
+            bool ret = assoc->processAppCommand(msg);
 
             if (!ret)
                 removeAssociation(assoc);
         }
         delete msg;
     }
-    if (ev.isGUI())
+    if (hasGUI())
         updateDisplayString();
 }
 
@@ -353,7 +359,7 @@ void SCTP::sendShutdownCompleteFromMain(SCTPMessage *sctpmsg, L3Address fromAddr
 void SCTP::updateDisplayString()
 {
 #if 0
-    if (ev.disable_tracing) {
+    if (getEnvir()->disable_tracing) {
         // in express mode, we don't bother to update the display
         // (std::map's iteration is not very fast if map is large)
         getDisplayString().setTagArg("t", 0, "");
@@ -450,6 +456,22 @@ SCTPAssociation *SCTP::findAssocWithVTag(uint32 peerVTag, uint32 remotePort, uin
     return nullptr;
 }
 
+SCTPAssociation *SCTP::findAssocForInitAck(SCTPInitAckChunk *initAckChunk, L3Address srcAddr, L3Address destAddr, uint32 srcPort, uint32 destPort, bool findListen)
+{
+    SCTPAssociation *assoc = nullptr;
+    int numberAddresses = initAckChunk->getAddressesArraySize();
+    for (int32 j = 0; j < numberAddresses; j++) {
+        if (initAckChunk->getAddresses(j).getType() == L3Address::IPv6)
+            continue;
+        assoc = findAssocForMessage(initAckChunk->getAddresses(j), destAddr, srcPort, destPort, findListen);
+        if (assoc) {
+            break;
+        }
+    }
+    return assoc;
+}
+
+
 SCTPAssociation *SCTP::findAssocForMessage(L3Address srcAddr, L3Address destAddr, uint32 srcPort, uint32 destPort, bool findListen)
 {
     SockPair key;
@@ -528,6 +550,16 @@ void SCTP::updateSockPair(SCTPAssociation *assoc, L3Address localAddr, L3Address
     key.remoteAddr = (assoc->remoteAddr = remoteAddr);
     key.localPort = assoc->localPort = localPort;
     key.remotePort = assoc->remotePort = remotePort;
+
+    // Do not update a sock pair that is already stored
+    for (auto i = sctpAssocMap.begin(); i != sctpAssocMap.end(); i++) {
+        if (i->second == assoc &&
+            i->first.localAddr == key.localAddr &&
+            i->first.remoteAddr == key.remoteAddr &&
+            i->first.localPort == key.localPort
+            && i->first.remotePort == key.remotePort)
+            return;
+    }
 
     for (auto i = sctpAssocMap.begin(); i != sctpAssocMap.end(); i++) {
         if (i->second == assoc) {
@@ -721,7 +753,7 @@ void SCTP::removeAssociation(SCTPAssociation *assoc)
     if (sizeAssocMap > 0) {
         auto assocStatMapIterator = assocStatMap.find(assoc->assocId);
         if (assocStatMapIterator != assocStatMap.end()) {
-            assocStatMapIterator->second.stop = simulation.getSimTime();
+            assocStatMapIterator->second.stop = simTime();
             assocStatMapIterator->second.lifeTime = assocStatMapIterator->second.stop - assocStatMapIterator->second.start;
             assocStatMapIterator->second.throughput = assocStatMapIterator->second.ackedBytes * 8 / assocStatMapIterator->second.lifeTime.dbl();
         }

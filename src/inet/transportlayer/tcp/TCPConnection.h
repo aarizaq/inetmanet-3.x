@@ -90,6 +90,7 @@ enum TCPEventCode {
     TCP_E_ABORT,
     TCP_E_STATUS,
     TCP_E_QUEUE_BYTES_LIMIT,
+    TCP_E_READ,
 
     // TPDU types
     TCP_E_RCV_DATA,
@@ -129,9 +130,7 @@ enum TCPEventCode {
 #define TCP_OPTION_TS_SIZE            12  // 12 bytes, option length = 10 bytes + 2 bytes (NOP)
 #define PAWS_IDLE_TIME_THRESH         (24 * 24 * 3600)  // 24 days in seconds (RFC 1323)
 
-#ifndef SACKS_AS_C_ARRAY
 typedef std::list<Sack> SackList;
-#endif // ifndef SACKS_AS_C_ARRAY
 
 /**
  * Contains state variables ("TCB") for TCP.
@@ -239,11 +238,7 @@ class INET_API TCPStateVariables : public cObject
     uint32 end_seqno;    // end sequence number of last received out-of-order segment
     bool snd_sack;    // set if received vaild out-of-order segment or rcv_nxt changed, but receivedQueue is not empty
     bool snd_dsack;    // set if received duplicated segment (sequenceNo+PLength < rcv_nxt) or (segment is not acceptable)
-#ifdef SACKS_AS_C_ARRAY
-    Sack sacks_array[MAX_SACK_BLOCKS];    // MAX_SACK_BLOCKS is set to 60
-#else // ifdef SACKS_AS_C_ARRAY
     SackList sacks_array;    // MAX_SACK_BLOCKS is set to 60
-#endif // ifdef SACKS_AS_C_ARRAY
     uint32 highRxt;    // RFC 3517, page 3: ""HighRxt" is the highest sequence number which has been retransmitted during the current loss recovery phase."
     uint32 pipe;    // RFC 3517, page 3: ""Pipe" is a sender's estimate of the number of bytes outstanding in the network."
     uint32 recoveryPoint;    // RFC 3517
@@ -398,6 +393,7 @@ class INET_API TCPConnection
     virtual void process_ABORT(TCPEventCode& event, TCPCommand *tcpCommand, cMessage *msg);
     virtual void process_STATUS(TCPEventCode& event, TCPCommand *tcpCommand, cMessage *msg);
     virtual void process_QUEUE_BYTES_LIMIT(TCPEventCode& event, TCPCommand *tcpCommand, cMessage *msg);
+    virtual void process_READ_REQUEST(TCPEventCode& event, TCPCommand *tcpCommand, cMessage *msg);
     //@}
 
     /** @name Processing TCP segment arrivals. Invoked from processTCPSegment(). */
@@ -421,11 +417,11 @@ class INET_API TCPConnection
 
     /** @name Processing of TCP options. Invoked from readHeaderOptions(). Return value indicates whether the option was valid. */
     //@{
-    virtual bool processMSSOption(TCPSegment *tcpseg, const TCPOption& option);
-    virtual bool processWSOption(TCPSegment *tcpseg, const TCPOption& option);
-    virtual bool processSACKPermittedOption(TCPSegment *tcpseg, const TCPOption& option);
-    virtual bool processSACKOption(TCPSegment *tcpseg, const TCPOption& option);
-    virtual bool processTSOption(TCPSegment *tcpseg, const TCPOption& option);
+    virtual bool processMSSOption(TCPSegment *tcpseg, const TCPOptionMaxSegmentSize& option);
+    virtual bool processWSOption(TCPSegment *tcpseg, const TCPOptionWindowScale& option);
+    virtual bool processSACKPermittedOption(TCPSegment *tcpseg, const TCPOptionSackPermitted& option);
+    virtual bool processSACKOption(TCPSegment *tcpseg, const TCPOptionSack& option);
+    virtual bool processTSOption(TCPSegment *tcpseg, const TCPOptionTimestamp& option);
     //@}
 
     /** @name Processing timeouts. Invoked from processTimer(). */

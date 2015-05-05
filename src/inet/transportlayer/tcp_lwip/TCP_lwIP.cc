@@ -174,11 +174,12 @@ void TCP_lwIP::handleIpInputMessage(TCPSegment *tcpsegP)
 
     size_t totalTcpLen = maxBufferSize - ipHdrLen;
 
-    totalTcpLen = TCPSerializer().serialize(tcpsegP, (unsigned char *)tcph, totalTcpLen);
-
-    // calculate TCP checksum
-    tcph->th_sum = 0;
-    tcph->th_sum = TCPSerializer().checksum(tcph, totalTcpLen, srcAddr, destAddr);
+    Buffer b(tcph, totalTcpLen);
+    Context c;
+    //    c.l3AddressesPtr = ?;
+    //    c.l3AddressesLength = ?;
+    TCPSerializer().serializePacket(tcpsegP, b, c);
+    totalTcpLen = b.getPos();
 
     size_t totalIpLen = ipHdrLen + totalTcpLen;
     ih->_chksum = 0;
@@ -291,7 +292,7 @@ err_t TCP_lwIP::lwip_tcp_event(void *arg, LwipTcpLayer::tcp_pcb *pcb,
 
 err_t TCP_lwIP::tcp_event_accept(TcpLwipConnection& conn, LwipTcpLayer::tcp_pcb *pcb, err_t err)
 {
-    int newConnId = ev.getUniqueNumber();
+    int newConnId = getEnvir()->getUniqueNumber();
     TcpLwipConnection *newConn = new TcpLwipConnection(conn, newConnId, pcb);
     // add into appConnMap
     tcpAppConnMapM[newConnId] = newConn;
@@ -470,13 +471,13 @@ void TCP_lwIP::handleMessage(cMessage *msgP)
             scheduleAt(roundTime(simTime() + 0.250, 4), pLwipFastTimerM);
     }
 
-    if (ev.isGUI())
+    if (hasGUI())
         updateDisplayString();
 }
 
 void TCP_lwIP::updateDisplayString()
 {
-    if (ev.isDisabled()) {
+    if (getEnvir()->isDisabled()) {
         // in express mode, we don't bother to update the display
         // (std::map's iteration is not very fast if map is large)
         getDisplayString().setTagArg("t", 0, "");
@@ -601,9 +602,7 @@ void TCP_lwIP::ip_output(LwipTcpLayer::tcp_pcb *pcb, L3Address const& srcP,
         tcpseg = conn->sendQueueM->createSegmentWithBytes(dataP, lenP);
     }
     else {
-        tcpseg = new TCPSegment("tcp-segment");
-
-        TCPSerializer().parse((const unsigned char *)dataP, lenP, tcpseg, true);
+        tcpseg = TCPSerializer().deserialize((const unsigned char *)dataP, lenP, true);
         ASSERT(tcpseg->getPayloadLength() == 0);
     }
 

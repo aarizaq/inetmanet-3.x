@@ -18,7 +18,7 @@
 #ifndef __INET_VECTORCOMMUNICATIONCACHE_H
 #define __INET_VECTORCOMMUNICATIONCACHE_H
 
-#include "inet/physicallayer/base/CommunicationCacheBase.h"
+#include "inet/physicallayer/base/packetlevel/CommunicationCacheBase.h"
 
 namespace inet {
 
@@ -64,7 +64,7 @@ class INET_API VectorCommunicationCache : public CommunicationCacheBase
     VectorCommunicationCache();
     virtual ~VectorCommunicationCache();
 
-    virtual void printToStream(std::ostream &stream) const { stream << "VectorCommunicationCache"; }
+    virtual std::ostream& printToStream(std::ostream &stream, int level) const { return stream << "VectorCommunicationCache"; }
 
     /** @name Medium state change notifications */
     //@{

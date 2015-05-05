@@ -15,7 +15,7 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "inet/physicallayer/contract/IRadio.h"
+#include "inet/physicallayer/contract/packetlevel/IRadio.h"
 #include "inet/physicallayer/communicationcache/VectorCommunicationCache.h"
 
 namespace inet {
@@ -36,8 +36,6 @@ VectorCommunicationCache::~VectorCommunicationCache()
         delete transmissionCacheEntry.frame;
         delete static_cast<std::vector<ReceptionCacheEntry> *>(transmissionCacheEntry.receptionCacheEntries);
     }
-    for (auto &radioCacheEntry : radioCache)
-        delete radioCacheEntry.receptionIntervals;
 }
 
 VectorCommunicationCache::RadioCacheEntry *VectorCommunicationCache::getRadioCacheEntry(const IRadio *radio)

@@ -23,7 +23,7 @@
 #include "inet/linklayer/ieee80211mesh/hwmp/hwmp.h"
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211Etx.h"
 #include "inet/routing/extras/base/ControlManetRouting_m.h"
-#include "inet/physicallayer/ieee80211/Ieee80211aControlInfo_m.h"
+#include "inet/physicallayer/ieee80211/packetlevel/Ieee80211ControlInfo_m.h"
 #include "inet/linklayer/common/Ieee802Ctrl.h"
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtFrames_m.h"
 
@@ -32,6 +32,8 @@
 namespace inet {
 
 namespace ieee80211 {
+
+using namespace physicallayer;
 
 std::ostream& operator<<(std::ostream& os, const HwmpRtable::ReactiveRoute& e)
 {
@@ -1671,7 +1673,7 @@ std::vector<MACAddress> HwmpProtocol::getPreqReceivers(uint32_t interface)
             retval.push_back(MACAddress::BROADCAST_ADDRESS);
             return retval;
         }
-        MACAddress addr[m_unicastPreqThreshold];
+        std::vector<MACAddress> addr;
         ie->getEstimateCostProcess(0)->getNeighbors(addr);
         retval.clear();
         for (int i = 0; i < numNeigh; i++)
@@ -1718,7 +1720,7 @@ std::vector<MACAddress> HwmpProtocol::getBroadcastReceivers(uint32_t interface)
             return retval;
         }
 
-        MACAddress addr[m_unicastDataThreshold];
+        std::vector<MACAddress> addr;
         ie->getEstimateCostProcess(0)->getNeighbors(addr);
         retval.clear();
         for (int i = 0; i < numNeigh; i++)
@@ -2175,8 +2177,8 @@ void HwmpProtocol::processFullPromiscuous(const cPolymorphic *details)
     if (frame == nullptr)
         return;
 
-    Radio80211aControlInfo * cinfo = dynamic_cast<Radio80211aControlInfo *>(frame->getControlInfo());uint32_t
-    cost = 1;
+    Ieee80211ReceptionIndication * cinfo = dynamic_cast<Ieee80211ReceptionIndication *>(frame->getControlInfo());
+    uint32_t cost = 1;
     if (cinfo)
     {
         if (dynamic_cast<Ieee80211DataFrame *>(frame))

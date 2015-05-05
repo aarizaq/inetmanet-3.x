@@ -18,7 +18,7 @@
 #ifndef __INET_NEIGHBORLISTNEIGHBORCACHE_H
 #define __INET_NEIGHBORLISTNEIGHBORCACHE_H
 
-#include "inet/physicallayer/common/RadioMedium.h"
+#include "inet/physicallayer/common/packetlevel/RadioMedium.h"
 #include <set>
 #include <vector>
 
@@ -64,7 +64,7 @@ class NeighborListNeighborCache : public cSimpleModule, public INeighborCache
     NeighborListNeighborCache();
     ~NeighborListNeighborCache();
 
-    virtual void printToStream(std::ostream& stream) const override;
+    virtual std::ostream& printToStream(std::ostream& stream, int level) const override;
     virtual void addRadio(const IRadio *radio) override;
     virtual void removeRadio(const IRadio *radio) override;
     virtual void sendToNeighbors(IRadio *transmitter, const IRadioFrame *frame, double range) const override;

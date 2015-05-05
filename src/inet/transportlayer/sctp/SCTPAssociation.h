@@ -1,6 +1,6 @@
 //
 // Copyright (C) 2005-2010 Irene Ruengeler
-// Copyright (C) 2009-2012 Thomas Dreibholz
+// Copyright (C) 2009-2015 Thomas Dreibholz
 // Copyright (C) 2015 Martin Becke
 //
 // This program is free software; you can redistribute it and/or
@@ -211,6 +211,7 @@ enum SCTPStreamSchedulers {
 #define SCTP_INCOMING_RESET_REQUEST_PARAMETER_LENGTH    8   // without streams
 #define SCTP_SSN_TSN_RESET_REQUEST_PARAMETER_LENGTH     8
 #define SCTP_STREAM_RESET_RESPONSE_PARAMETER_LENGTH     12
+#define SCTP_SUPPORTED_EXTENSIONS_PARAMETER_LENGTH      4
 #define SCTP_ADD_IP_CHUNK_LENGTH                        8
 #define SCTP_ADD_IP_PARAMETER_LENGTH                    8
 #define SCTP_AUTH_CHUNK_LENGTH                          8
@@ -306,7 +307,7 @@ class INET_API SCTPPathVariables : public cObject
     cMessage *CwndTimer;
     cMessage *T3_RtxTimer;
     cMessage *BlockingTimer;
-    cPacket *ResetTimer;
+    cMessage *ResetTimer;
     cMessage *AsconfTimer;
     // ====== High-Speed CC ===============================================
     unsigned int highSpeedCCThresholdIdx;
@@ -720,10 +721,10 @@ class INET_API SCTPStateVariables : public cObject
     enum CCCVariant {
         CCCV_Off = 0,    // Standard SCTP
         CCCV_CMT = 1,    // CMT-SCTP
-        CCCV_CMTRPv1 = 2,    // CMT/RP-SCTP with path MTU optimization
-        CCCV_CMTRPv2 = 3,    // CMT/RP-SCTP with path MTU optimization and bandwidth consideration
-        CCCV_CMT_LIA  = 4,   // RP like MPTCP
-        CCCV_CMT_OLIA    = 5,   // OLIA CC
+        CCCV_CMTRPv1 = 2,    // CMT/RPv1-SCTP (old CMT/RP)
+        CCCV_CMTRPv2 = 3,    // CMT/RPv2-SCTP (new CMT/RP with bandwidth consideration)
+        CCCV_CMT_LIA = 4,    // LIA CC
+        CCCV_CMT_OLIA = 5,    // OLIA CC
         CCCV_CMTRP_Test1 = 100,
         CCCV_CMTRP_Test2 = 101
     };
@@ -982,7 +983,7 @@ class INET_API SCTPAssociation : public cObject
      * Normally returns true. A return value of false means that the
      * connection structure must be deleted by the caller (SCTP).
      */
-    bool processAppCommand(cPacket *msg);
+    bool processAppCommand(cMessage *msg);
     void removePath();
     void removePath(const L3Address& addr);
     void deleteStreams();
@@ -1021,12 +1022,12 @@ class INET_API SCTPAssociation : public cObject
     //@}
     /** @name Processing app commands. Invoked from processAppCommand(). */
     //@{
-    void process_ASSOCIATE(SCTPEventCode& event, SCTPCommand *sctpCommand, cPacket *msg);
-    void process_OPEN_PASSIVE(SCTPEventCode& event, SCTPCommand *sctpCommand, cPacket *msg);
-    void process_SEND(SCTPEventCode& event, SCTPCommand *sctpCommand, cPacket *msg);
+    void process_ASSOCIATE(SCTPEventCode& event, SCTPCommand *sctpCommand, cMessage *msg);
+    void process_OPEN_PASSIVE(SCTPEventCode& event, SCTPCommand *sctpCommand, cMessage *msg);
+    void process_SEND(SCTPEventCode& event, SCTPCommand *sctpCommand, cMessage *msg);
     void process_CLOSE(SCTPEventCode& event);
     void process_ABORT(SCTPEventCode& event);
-    void process_STATUS(SCTPEventCode& event, SCTPCommand *sctpCommand, cPacket *msg);
+    void process_STATUS(SCTPEventCode& event, SCTPCommand *sctpCommand, cMessage *msg);
     void process_RECEIVE_REQUEST(SCTPEventCode& event, SCTPCommand *sctpCommand);
     void process_PRIMARY(SCTPEventCode& event, SCTPCommand *sctpCommand);
     void process_STREAM_RESET(SCTPCommand *sctpCommand);
@@ -1112,7 +1113,7 @@ class INET_API SCTPAssociation : public cObject
     /** Utility: start a timer */
     inline void scheduleTimeout(cMessage *msg, const simtime_t& timeout)
     {
-        sctpMain->scheduleAt(simulation.getSimTime() + timeout, msg);
+        sctpMain->scheduleAt(simTime() + timeout, msg);
     }
 
     /** Utility: cancel a timer */
@@ -1122,7 +1123,7 @@ class INET_API SCTPAssociation : public cObject
     }
 
     /** Utility: sends packet to application */
-    void sendToApp(cPacket *msg);
+    void sendToApp(cMessage *msg);
 
     /** Utility: sends status indication (SCTP_I_xxx) to application */
     void sendIndicationToApp(const int32 code, const int32 value = 0);

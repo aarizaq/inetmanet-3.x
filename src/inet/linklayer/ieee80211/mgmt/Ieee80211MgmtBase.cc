@@ -183,7 +183,7 @@ void Ieee80211MgmtBase::sendOrEnqueue(cPacket *frame, const int &cat)
             notifyListeners();
     }
 
-    if (ev.isGUI())
+    if (hasGUI())
     {
         char buf[40];
         sprintf(buf, "q rcvd: %d\nq dropped: %d", numQueueReceived, numQueueDropped);

@@ -18,10 +18,10 @@
 //
 
 #include "inet/linklayer/ieee80211/mac/Ieee80211Mac.h"
-#include "inet/physicallayer/contract/IRadio.h"
+#include "inet/physicallayer/contract/packetlevel/IRadio.h"
 #include "inet/networklayer/contract/IInterfaceTable.h"
-#include "inet/physicallayer/contract/RadioControlInfo_m.h"
-#include "inet/physicallayer/ieee80211/Ieee80211aControlInfo_m.h"
+#include "inet/physicallayer/contract/packetlevel/RadioControlInfo_m.h"
+#include "inet/physicallayer/ieee80211/packetlevel/Ieee80211ControlInfo_m.h"
 #include "inet/common/INETUtils.h"
 #include "inet/common/ModuleAccess.h"
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtBase.h"
@@ -310,7 +310,7 @@ void Ieee80211Mac::initialize(int stage)
 
         double controlBitRate = par("controlBitrate");
         if (controlBitRate == -1)
-            controlFrameMode = modeSet->getFastestMode();
+            controlFrameMode = modeSet->getSlowestMode();
         else
             controlFrameMode = modeSet->getMode(bps(controlBitRate));
 
@@ -764,7 +764,7 @@ void Ieee80211Mac::handleLowerPacket(cPacket *msg)
 {
     EV_TRACE << "->Enter handleLowerMsg...\n";
     EV_DEBUG << "received message from lower layer: " << msg << endl;
-    Radio80211aControlInfo *cinfo = dynamic_cast<Radio80211aControlInfo *>(msg->getControlInfo());
+    Ieee80211ReceptionIndication *cinfo = dynamic_cast<Ieee80211ReceptionIndication *>(msg->getControlInfo());
     if (cinfo && cinfo->getAirtimeMetric()) {
         double rtsTime = 0;
         if (rtsThreshold * 8 < cinfo->getTestFrameSize())

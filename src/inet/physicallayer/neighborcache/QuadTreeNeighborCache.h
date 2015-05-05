@@ -18,7 +18,7 @@
 #ifndef __INET_QUADTREENEIGHBORCACHE_H
 #define __INET_QUADTREENEIGHBORCACHE_H
 
-#include "inet/physicallayer/common/RadioMedium.h"
+#include "inet/physicallayer/common/packetlevel/RadioMedium.h"
 #include "inet/common/geometry/container/QuadTree.h"
 
 namespace inet {
@@ -65,7 +65,7 @@ class QuadTreeNeighborCache : public cSimpleModule, public INeighborCache
     QuadTreeNeighborCache();
     ~QuadTreeNeighborCache();
 
-    virtual void printToStream(std::ostream& stream) const override;
+    virtual std::ostream& printToStream(std::ostream& stream, int level) const override;
     virtual void addRadio(const IRadio *radio) override;
     virtual void removeRadio(const IRadio *radio) override;
     virtual void sendToNeighbors(IRadio *transmitter, const IRadioFrame *frame, double range) const override;

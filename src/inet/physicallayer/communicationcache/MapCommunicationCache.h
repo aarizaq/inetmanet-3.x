@@ -18,7 +18,7 @@
 #ifndef __INET_MAPCOMMUNICATIONCACHE_H
 #define __INET_MAPCOMMUNICATIONCACHE_H
 
-#include "inet/physicallayer/base/CommunicationCacheBase.h"
+#include "inet/physicallayer/base/packetlevel/CommunicationCacheBase.h"
 
 namespace inet {
 
@@ -27,11 +27,12 @@ namespace physicallayer {
 class INET_API MapCommunicationCache : public CommunicationCacheBase
 {
   protected:
+    /** @name Cache */
+    //@{
     /**
      * Caches intermediate computation results for radios.
      */
     std::map<const IRadio *, RadioCacheEntry> radioCache;
-    /** @name Cache */
     /**
      * Caches intermediate computation results for transmissions.
      */
@@ -50,7 +51,7 @@ class INET_API MapCommunicationCache : public CommunicationCacheBase
     MapCommunicationCache();
     virtual ~MapCommunicationCache();
 
-    virtual void printToStream(std::ostream &stream) const { stream << "MapCommunicationCache"; }
+    virtual std::ostream& printToStream(std::ostream &stream, int level) const { return stream << "MapCommunicationCache"; }
 
     /** @name Medium state change notifications */
     //@{

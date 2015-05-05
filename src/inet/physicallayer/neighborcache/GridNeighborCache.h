@@ -18,7 +18,7 @@
 #ifndef __INET_GRIDNEIGHBORCACHE_H
 #define __INET_GRIDNEIGHBORCACHE_H
 
-#include "inet/physicallayer/common/RadioMedium.h"
+#include "inet/physicallayer/common/packetlevel/RadioMedium.h"
 #include "inet/common/geometry/container/SpatialGrid.h"
 
 namespace inet {
@@ -63,7 +63,7 @@ class INET_API GridNeighborCache : public cSimpleModule, public INeighborCache
     GridNeighborCache();
     virtual ~GridNeighborCache();
 
-    virtual void printToStream(std::ostream& stream) const override;
+    virtual std::ostream& printToStream(std::ostream& stream, int level) const override;
 
     virtual void addRadio(const IRadio *radio) override;
     virtual void removeRadio(const IRadio *radio) override;

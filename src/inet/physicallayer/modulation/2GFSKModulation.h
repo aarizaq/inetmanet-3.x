@@ -18,7 +18,7 @@
 #ifndef __INET_2GFSKMODULATION_H
 #define __INET_2GFSKMODULATION_H
 
-#include "inet/physicallayer/base/GFSKModulationBase.h"
+#include "inet/physicallayer/base/packetlevel/GFSKModulationBase.h"
 
 namespace inet {
 
@@ -32,7 +32,7 @@ class INET_API _2GFSKModulation : public GFSKModulationBase
   public:
     _2GFSKModulation();
 
-    virtual void printToStream(std::ostream& stream) const { stream << "2GFSKModulation"; }
+    virtual std::ostream& printToStream(std::ostream& stream, int level) const override { return stream << "2GFSKModulation"; }
 };
 
 } // namespace physicallayer

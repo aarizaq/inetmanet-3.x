@@ -35,7 +35,6 @@
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211Primitives_m.h"
 #include "inet/common/NotifierConsts.h"
-#include "inet/common/ByteArrayMessage.h"
 #include "inet/transportlayer/tcp/queues/TCPByteStreamRcvQueue.h"
 #include "inet/common/ModuleAccess.h"
 

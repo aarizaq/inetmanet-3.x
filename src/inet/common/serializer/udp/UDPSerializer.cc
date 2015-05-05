@@ -15,7 +15,7 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <platdep/sockets.h>
+#include "inet/common/serializer/SerializerUtil.h"
 
 #include "inet/common/serializer/udp/UDPSerializer.h"
 
@@ -25,8 +25,10 @@
 #include "inet/common/serializer/headers/in_systm.h"
 #include "inet/common/serializer/udp/headers/udphdr.h"
 
-#include "inet/common/ByteArrayMessage.h"
+#include "inet/common/RawPacket.h"
 #include "inet/common/serializer/TCPIPchecksum.h"
+#include "inet/networklayer/common/IPProtocolId_m.h"
+#include "inet/transportlayer/udp/UDPPacket.h"
 
 #if !defined(_WIN32) && !defined(__WIN32__) && !defined(WIN32) && !defined(__CYGWIN__) && !defined(_WIN64)
 #include <netinet/in.h>    // htonl, ntohl, ...
@@ -34,34 +36,70 @@
 
 namespace inet {
 
-using namespace serializer;
+namespace serializer {
 
-int UDPSerializer::serialize(const UDPPacket *pkt, unsigned char *buf, unsigned int bufsize)
+Register_Serializer(UDPPacket, IP_PROT, IP_PROT_UDP, UDPSerializer);
+
+/*
+ * Udp protocol header.
+ * Per RFC 768, September, 1981.
+ */
+#if 0
+struct udphdr
 {
-    struct udphdr *udphdr = (struct udphdr *)(buf);
-    int packetLength;
+    u_short uh_sport;    /* source port */
+    u_short uh_dport;    /* destination port */
+    u_short uh_ulen;    /* udp packet length (udp header + payload) */
+    u_short uh_sum;    /* udp checksum */
+};
+#endif
 
-    packetLength = pkt->getByteLength();
-    udphdr->uh_sport = htons(pkt->getSourcePort());
-    udphdr->uh_dport = htons(pkt->getDestinationPort());
-    udphdr->uh_ulen = htons(packetLength);
-    udphdr->uh_sum = TCPIPchecksum::checksum(buf, packetLength);
-    return packetLength;
+void UDPSerializer::serialize(const cPacket *_pkt, Buffer &b, Context& c)
+{
+    ASSERT(b.getPos() == 0);
+    const UDPPacket *pkt = check_and_cast<const UDPPacket *>(_pkt);
+    int packetLength = pkt->getByteLength();
+    b.writeUint16(pkt->getSourcePort());
+    b.writeUint16(pkt->getDestinationPort());
+    b.writeUint16(pkt->getTotalLengthField());
+    unsigned int chksumPos = b.getPos();
+    b.writeUint16(0);  // place for checksum
+    const cPacket *encapPkt = pkt->getEncapsulatedPacket();
+    if (encapPkt) {
+        SerializerBase::lookupAndSerialize(encapPkt, b, c, UNKNOWN, 0);
+    }
+    else {
+        b.fillNBytes(packetLength - UDP_HDR_LEN, 0);   // payload place
+    }
+    unsigned int endPos = b.getPos();
+    b.writeUint16To(chksumPos, TCPIPchecksum::checksum(IP_PROT_UDP, b._getBuf(), endPos, c.l3AddressesPtr, c.l3AddressesLength));
 }
 
-void UDPSerializer::parse(const unsigned char *buf, unsigned int bufsize, UDPPacket *dest)
+cPacket *UDPSerializer::deserialize(const Buffer &b, Context& c)
 {
-    struct udphdr *udphdr = (struct udphdr *)buf;
-
-    dest->setSourcePort(ntohs(udphdr->uh_sport));
-    dest->setDestinationPort(ntohs(udphdr->uh_dport));
-    dest->setByteLength(8);
-    ByteArrayMessage *encapPacket = new ByteArrayMessage("Payload-from-wire");
-    encapPacket->setDataFromBuffer(buf + sizeof(struct udphdr), ntohs(udphdr->uh_ulen) - sizeof(struct udphdr));
-    encapPacket->setName((const char *)buf + sizeof(struct udphdr));
-    dest->encapsulate(encapPacket);
-    dest->setName(encapPacket->getName());
+    ASSERT(b.getPos() == 0);
+    UDPPacket *pkt = new UDPPacket("parsed-udp");
+    pkt->setSourcePort(b.readUint16());
+    pkt->setDestinationPort(b.readUint16());
+    unsigned int length = b.readUint16();
+    pkt->setTotalLengthField(length);
+    uint16_t chksum = b.readUint16();
+    if (length > UDP_HDR_LEN) {
+        unsigned int payloadLength = length - UDP_HDR_LEN;
+        Buffer subBuffer(b, payloadLength);
+        cPacket *encapPacket = serializers.byteArraySerializer.deserializePacket(subBuffer, c);
+        b.accessNBytes(payloadLength);
+        pkt->encapsulate(encapPacket);
+    }
+    if (chksum != 0 && c.l3AddressesPtr && c.l3AddressesLength)
+        chksum = TCPIPchecksum::checksum(IP_PROT_UDP, b._getBuf(), b.getPos(), c.l3AddressesPtr, c.l3AddressesLength);
+    else chksum = 0;
+    if (length < UDP_HDR_LEN || chksum != 0 || pkt->getByteLength() != length)
+        pkt->setBitError(true);
+    return pkt;
 }
+
+} // namespace serializer
 
 } // namespace inet
 

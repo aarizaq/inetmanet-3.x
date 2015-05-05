@@ -18,7 +18,7 @@
 #ifndef __INET_CONSTANTGAINANTENNA_H
 #define __INET_CONSTANTGAINANTENNA_H
 
-#include "inet/physicallayer/base/AntennaBase.h"
+#include "inet/physicallayer/base/packetlevel/AntennaBase.h"
 
 namespace inet {
 
@@ -35,7 +35,7 @@ class INET_API ConstantGainAntenna : public AntennaBase
   public:
     ConstantGainAntenna();
 
-    virtual void printToStream(std::ostream& stream) const override;
+    virtual std::ostream& printToStream(std::ostream& stream, int level) const override;
     virtual double getMaxGain() const override { return gain; }
     virtual double computeGain(const EulerAngles direction) const override { return gain; }
 };

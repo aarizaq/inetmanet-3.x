@@ -18,7 +18,7 @@
 #ifndef __INET_CONSTANTTIMEPROPAGATION_H
 #define __INET_CONSTANTTIMEPROPAGATION_H
 
-#include "inet/physicallayer/base/PropagationBase.h"
+#include "inet/physicallayer/base/packetlevel/PropagationBase.h"
 
 namespace inet {
 
@@ -35,7 +35,7 @@ class INET_API ConstantTimePropagation : public PropagationBase
   public:
     ConstantTimePropagation();
 
-    virtual void printToStream(std::ostream& stream) const override;
+    virtual std::ostream& printToStream(std::ostream& stream, int level) const override;
 
     virtual const IArrival *computeArrival(const ITransmission *transmission, IMobility *mobility) const override;
 };

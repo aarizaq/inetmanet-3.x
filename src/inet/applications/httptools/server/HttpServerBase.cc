@@ -179,7 +179,7 @@ void HttpServerBase::finish()
 
 void HttpServerBase::updateDisplay()
 {
-    if (ev.isGUI()) {
+    if (hasGUI()) {
         char buf[1024];
         sprintf(buf, "%ld", htmlDocsServed);
         cDisplayString& ds = host->getDisplayString();
@@ -340,6 +340,16 @@ HttpReplyMessage *HttpServerBase::generateResourceMessage(HttpRequestMessage *re
     else if (category == CT_IMAGE)
         imgResourcesServed++;
 
+    int size;
+    if (scriptedMode)
+        size = resources[resource];
+    else if (category==CT_TEXT)
+        size = (int) rdTextResourceSize->draw();
+    else if (category==CT_IMAGE)
+        size = (int) rdImageResourceSize->draw();
+    else
+        error("Invalid resource category");
+
     char szReply[512];
     sprintf(szReply, "HTTP/1.1 200 OK (%s)", resource.c_str());
     HttpReplyMessage *replymsg = new HttpReplyMessage(szReply);
@@ -350,7 +360,7 @@ HttpReplyMessage *HttpServerBase::generateResourceMessage(HttpRequestMessage *re
     replymsg->setSerial(request->serial());
     replymsg->setResult(200);
     replymsg->setContentType(category);    // Emulates the content-type header field
-    replymsg->setByteLength(resources[resource]);    // Set the resource size
+    replymsg->setByteLength(size); // Set the resource size
     replymsg->setKind(HTTPT_RESPONSE_MESSAGE);
 
     sprintf(szReply, "RESOURCE-BODY:%s", resource.c_str());
@@ -399,7 +409,7 @@ std::string HttpServerBase::generateBody()
 void HttpServerBase::registerWithController()
 {
     // Find controller object and register
-    HttpController *controller = check_and_cast_nullable<HttpController *>(simulation.getSystemModule()->getSubmodule("controller"));
+    HttpController *controller = check_and_cast_nullable<HttpController *>(getSimulation()->getSystemModule()->getSubmodule("controller"));
     if (controller == nullptr)
         throw cRuntimeError("Controller module not found");
     controller->registerServer(host->getFullName(), hostName.c_str(), port, INSERT_END, activationTime);

@@ -27,9 +27,9 @@ Define_Module(NeighborListNeighborCache);
 NeighborListNeighborCache::NeighborListNeighborCache() :
     radioMedium(nullptr),
     updateNeighborListsTimer(nullptr),
-    refillPeriod(sNaN),
-    range(sNaN),
-    maxSpeed(sNaN)
+    refillPeriod(NaN),
+    range(NaN),
+    maxSpeed(NaN)
 {
 }
 
@@ -42,18 +42,20 @@ void NeighborListNeighborCache::initialize(int stage)
         updateNeighborListsTimer = new cMessage("updateNeighborListsTimer");
     }
     else if (stage == INITSTAGE_LINK_LAYER_2) {
-        maxSpeed = radioMedium->getMaxSpeed().get();
+        maxSpeed = radioMedium->getMediumLimitCache()->getMaxSpeed().get();
         updateNeighborLists();
         scheduleAt(simTime() + refillPeriod, updateNeighborListsTimer);
     }
 }
 
-void NeighborListNeighborCache::printToStream(std::ostream& stream) const
+std::ostream& NeighborListNeighborCache::printToStream(std::ostream& stream, int level) const
 {
-    stream << "NeighborListNeighborCache, "
-           << "refillPeriod = " << refillPeriod << ", "
-           << "range = " << range << ", "
-           << "maxSpeed = " << maxSpeed;
+    stream << "NeighborListNeighborCache";
+    if (level >= PRINT_LEVEL_TRACE)
+        stream << ", refillPeriod = " << refillPeriod
+               << ", range = " << range
+               << ", maxSpeed = " << maxSpeed;
+    return stream;
 }
 
 void NeighborListNeighborCache::sendToNeighbors(IRadio *transmitter, const IRadioFrame *frame, double range) const
@@ -105,7 +107,7 @@ void NeighborListNeighborCache::addRadio(const IRadio *radio)
     radios.push_back(newEntry);
     radioToEntry[radio] = newEntry;
     updateNeighborLists();
-    maxSpeed = radioMedium->getMaxSpeed().get();
+    maxSpeed = radioMedium->getMediumLimitCache()->getMaxSpeed().get();
     if (maxSpeed != 0 && !updateNeighborListsTimer->isScheduled() && initialized())
         scheduleAt(simTime() + refillPeriod, updateNeighborListsTimer);
 }
@@ -116,7 +118,7 @@ void NeighborListNeighborCache::removeRadio(const IRadio *radio)
     if (it != radios.end()) {
         removeRadioFromNeighborLists(radio);
         radios.erase(it);
-        maxSpeed = radioMedium->getMaxSpeed().get();
+        maxSpeed = radioMedium->getMediumLimitCache()->getMaxSpeed().get();
         if (maxSpeed == 0 && initialized())
             cancelEvent(updateNeighborListsTimer);
     }

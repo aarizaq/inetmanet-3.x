@@ -151,9 +151,9 @@ void Ieee80211Mac::sendNextFrameMpduA(cMessage *msg)
             {
                 Ieee80211DataFrame *frame = check_and_cast<Ieee80211DataFrame*>(mpduInTransmission->getPacket(indexMpduTransmission));
                 if (sendBlockAckEndMpduA)
-                    frame->setQoSAckPolicy(3);
+                    frame->setQos(frame->getQos() | 0x60);
                 else
-                    frame->setQoSAckPolicy(0);
+                    frame->setQos(frame->getQos()&0xFF9F);
                 sendDown(buildMpduDataFrame(check_and_cast<Ieee80211DataOrMgmtFrame *>(setBitrateFrame(mpduInTransmission->getPacket(indexMpduTransmission))),retry,header));
             }
             else if ((int)mpduInTransmission->getNumEncap() == indexMpduTransmission && sendBlockAckEndMpduA) // block ACK
@@ -1346,7 +1346,7 @@ void Ieee80211Mac::stateWaitSift(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
     }
 
     FSMIEEE80211_Event_Transition(fsmLocal,
-                           msg == endSIFS && dataFrame != nullptr && dataFrame->getIsMpduA() && dataFrame->getQoSAckPolicy() == 0)
+                           msg == endSIFS && dataFrame != nullptr && dataFrame->getIsMpduA() && (dataFrame->getQos() & 0x60) == 0)
     {
         if (fsmLocal->debug()) EV_DEBUG << "Transmit-BLOCKACK \n";
         sendBLOCKACKFrameOnEndSIFS();
@@ -1423,7 +1423,7 @@ void Ieee80211Mac::stateReceive(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
         bool thereAreCorrectFrames = processMpduA(dataFrame);
         // finishReception();
         // FSMIEEE80211_Transition(fsmLocal,WAITSIFS);
-        char policy =  dataFrame->getQoSAckPolicy();
+        char policy =  (dataFrame->getQos() >> 5) & 0x3;
         if (!MpduModeReception && policy == 0) // Immediate block-ack
         {
             if (thereAreCorrectFrames)

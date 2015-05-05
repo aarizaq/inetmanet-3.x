@@ -21,11 +21,12 @@ namespace inet;
 
 //
 // Class that carries raw bytes.
-// For example, used by ~ByteArrayMessage and some TCP queues.
+// For example, used by ~RawPacket and some TCP queues.
 //
 class ByteArray
 {
     @customize(true);
+    @fieldNameSuffix("_var"); //TODO remove when OMNeT++ 4.x compatibility is no longer required
     char data[];
 }
 

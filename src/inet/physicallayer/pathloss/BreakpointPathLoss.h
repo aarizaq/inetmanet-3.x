@@ -1,7 +1,7 @@
 #ifndef __INET_BREAKPOINTPATHLOSS_H
 #define __INET_BREAKPOINTPATHLOSS_H
 
-#include "inet/physicallayer/contract/IPathLoss.h"
+#include "inet/physicallayer/contract/packetlevel/IPathLoss.h"
 
 namespace inet {
 
@@ -25,7 +25,7 @@ class INET_API BreakpointPathLoss : public cModule, public IPathLoss
 
   public:
 	BreakpointPathLoss();
-	virtual void printToStream(std::ostream& stream) const override;
+	virtual std::ostream& printToStream(std::ostream& stream, int level) const override;
     virtual double computePathLoss(mps propagationSpeed, Hz frequency, m distance) const override;
     virtual m computeRange(mps propagationSpeed, Hz frequency, double loss) const override;
 };

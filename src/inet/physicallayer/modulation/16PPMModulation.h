@@ -18,7 +18,7 @@
 #ifndef __INET_16PPMMODULATION_H
 #define __INET_16PPMMODULATION_H
 
-#include "inet/physicallayer/base/PPMModulationBase.h"
+#include "inet/physicallayer/base/packetlevel/PPMModulationBase.h"
 
 namespace inet {
 
@@ -32,7 +32,7 @@ class INET_API _16PPMModulation : public PPMModulationBase
   public:
     _16PPMModulation();
 
-    virtual void printToStream(std::ostream& stream) const { stream << "16PPMModulation"; }
+    virtual std::ostream& printToStream(std::ostream& stream, int level) const override { return stream << "16PPMModulation"; }
 };
 
 } // namespace physicallayer

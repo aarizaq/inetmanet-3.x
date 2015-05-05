@@ -1,3 +1,15 @@
+====== inet-3.x ======
+
+2015-04-13  Levente Mészáros
+
+    Added energyBalance to IdealEnergyStorage, it's also emitted for statistics.
+
+2015-04-13  Levente Mészáros
+
+    Added a few helpful WATCHes.
+
+2015-04-22  ------ inet-2.99.1 released ------
+
 2015-01-21  Zoltan Bojthe
 
 	Applied C++ source code modernizer.
@@ -12,4 +24,4 @@
 
 	Added initial implementation: IdealEnergyStorage, SimpleEnergyStorage
 
-2013-07-25  ====== inet-3.x development started (integration branch) ======
+====== inet-2.x ======
