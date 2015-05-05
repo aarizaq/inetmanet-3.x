@@ -879,8 +879,7 @@ void IPv4::sendDatagramToOutput(IPv4Datagram *datagram, const InterfaceEntry *ie
                     delete datagram;
                 else {
                     EV_INFO << "Pending " << datagram << " to ARP resolution.\n";
-                    pendingPackets[nextHopAddr].insert(datagram);
-                    arp->resolveL3Address(nextHopAddr, ie);
+                    pendingPackets[nextHopAddr].insert(datagram);                  
                 }
             }
             else {

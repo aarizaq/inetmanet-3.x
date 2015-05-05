@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <sstream>
 
+#include "inet/common/PatternMatcher.h"
 #include "inet/networklayer/ipv4/IPv4RoutingTable.h"
 
 #include "inet/networklayer/contract/IInterfaceTable.h"
@@ -74,11 +75,14 @@ void IPv4RoutingTable::initialize(int stage)
 
         ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
 
+        netmaskRoutes = par("netmaskRoutes");
         forwarding = par("forwarding").boolValue();
         multicastForward = par("multicastForwarding");
+        useAdminDist = par("useAdminDist");
 
         WATCH_PTRVECTOR(routes);
         WATCH_PTRVECTOR(multicastRoutes);
+        WATCH(netmaskRoutes);
         WATCH(forwarding);
         WATCH(multicastForward);
         WATCH(routerId);
@@ -157,7 +161,7 @@ void IPv4RoutingTable::handleMessage(cMessage *msg)
 
 void IPv4RoutingTable::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj)
 {
-    if (simulation.getContextType() == CTX_INITIALIZE)
+    if (getSimulation()->getContextType() == CTX_INITIALIZE)
         return; // ignore notifications during initialize
 
     Enter_Method_Silent();
@@ -791,9 +795,11 @@ void IPv4RoutingTable::updateNetmaskRoutes()
     // then re-add them, according to actual interface configuration
     // TODO: say there's a node somewhere in the network that belongs to the interface's subnet
     // TODO: and it is not on the same link, and the gateway does not use proxy ARP, how will packets reach that node?
+    PatternMatcher interfaceNameMatcher(netmaskRoutes, false, true, true);
     for (int i = 0; i < ift->getNumInterfaces(); i++) {
         InterfaceEntry *ie = ift->getInterface(i);
-        if (ie->ipv4Data() && ie->ipv4Data()->getNetmask() != IPv4Address::ALLONES_ADDRESS) {
+        if (interfaceNameMatcher.matches(ie->getFullName()) && ie->ipv4Data() && ie->ipv4Data()->getNetmask() != IPv4Address::ALLONES_ADDRESS)
+        {
             IPv4Route *route = createNewRoute();
             route->setSourceType(IRoute::IFACENETMASK);
             route->setSource(ie);

@@ -50,7 +50,6 @@ class TransmissionRequest
 {
     bps bitrate = bps(NaN); // override default bitrate in the range (0, +infinity) or NaN if not set.
     W power = W(NaN);       // override default transmission power in the range (0, +infinity) or NaN if not set.
-    bool noPhyHeader;
 }
 
 //
