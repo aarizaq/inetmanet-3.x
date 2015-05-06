@@ -31,8 +31,18 @@
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
 #include "inet/networklayer/ipv4/ICMPMessage_m.h"
 #include "inet/common/ModuleAccess.h"
+
+#ifdef WITH_CSMA
 #include "inet/linklayer/csma/CSMAFrame_m.h"
+#endif // ifdef WITH_CSMA
+
+#ifdef WITH_BMAC
 #include "inet/linklayer/bmac/BMacFrame_m.h"
+#endif
+
+#ifdef WITH_XMAC
+#include "inet/linklayer/xmac/XMacPkt_m.h"
+#endif // ifdef WITH_BMAC
 
 #include "inet/common/lifecycle/NodeOperations.h"
 
@@ -676,6 +686,7 @@ void DSRUU::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj
     }
     else
     {
+#ifdef WITH_CSMA
         CSMAFrame *frame15 = dynamic_cast<CSMAFrame *>(obj);
         if (frame15)
         {
@@ -686,6 +697,8 @@ void DSRUU::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj
             sender = frame15->getSrcAddr();
             receiver = frame15->getDestAddr();
         }
+#endif
+#ifdef WITH_BMAC
         BMacFrame *frameB = dynamic_cast<BMacFrame *>(obj);
         if (frameB)
         {
@@ -696,6 +709,21 @@ void DSRUU::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj
             sender = MACAddress(frameB->getSrcAddr());
             receiver = MACAddress(frameB->getDestAddr());
         }
+#endif
+
+#ifdef WITH_XMAC
+        XMacPkt *frameX = dynamic_cast<XMacPkt *>(obj);
+        if (frameX)
+        {
+            if (dynamic_cast<IPv4Datagram *>(frameX->getEncapsulatedPacket()))
+                dgram = check_and_cast<IPv4Datagram *>(frameX->getEncapsulatedPacket());
+            else
+                return;
+            sender = MACAddress(frameX->getSrcAddr());
+            receiver = MACAddress(frameX->getDestAddr());
+        }
+#endif
+
     }
     if (signalID == NF_TX_ACKED)
     {
