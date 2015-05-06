@@ -1,6 +1,215 @@
 Recent changes in the INET Framework
 ====================================
 
+INET-2.99.1 (March, 2015)
+--------------------------
+
+This release is the next development snapshot of the upcoming INET-3.0 version.
+
+The highlights of this release are:
+
+1. Includes a new packet/bit/symbol level physical layer model for the 802.11
+   OFDM PHY according to the IEEE 802.11-2012 standard, and a hypothetical
+   generic packet/bit/symbol level APSK physical layer model for further
+   experimentation. The new implementations include forward error correction
+   encoding/decoding, scrambling/descrambling, interleaving/deinterleaving, and
+   modulation/demodulation.
+
+2. Contains fixes for more than 300 defects found by Coverity, an online C++
+   static code analysis tool. The reported Defect Density is decreased to
+   0.5/kLoC which is considered a result. You can find the detailed results at
+   https://scan.coverity.com/projects/3472
+
+3. Contains several other memory leak and memory management fixes reported by
+   valgrind memcheck.
+
+4. Modernizes C++ source code using new C++11 features such as nullptr, auto
+   types, range loop, override, etc.
+
+Read on for further details.
+
+All components:
+ - Replaced all variants of findModuleWherever calls with module parameters,
+   because their behavior is non-predictable and less composable.
+ - Replaced most getParentModule calls with module parameters to make modules
+   less dependent on their context, and thus more reusable.
+ - Replaced UnimplementedModule and all related *_None modules with calls to
+   firstAvailableOrEmpty NED function, and changed affected submodules to be
+   present conditionally.
+ - Moved interface classes under contract subdirectories. Moved base classes
+   under base subdirectories.
+ 
+Nodes:
+ - All "node type" modules implement the INode module interface so it is now 
+   possible to create networks (using the <"actualNodeType"> like INode construct) 
+   where the actual node type can be configured from an ini file.
+
+Emulation:
+ - Network Emulation feature no longer depends on OMNeT++ to detect the presence
+   of PCAP. Instead the feature can be turned on/off by the user.
+
+Common:
+ - Added create-module and delete-module commands to ScenarioManager.
+ - New macros in INETDefs.h to test INET version: INET_VERSION (format: 0xAABB 
+   where AA is the major while BB is the minor version in hex) and 
+   INET_PATCH_LEVEL (format: 0xCC is the patch level in hex).
+ - On Linux, specifying --valgrind as the first argument for the opp_run script
+   (or a run script in the examples folder) will start the simulation using the
+   'valgrind' memory profiler.
+ - Added a reusable HeatMapFigure.
+ - Added a reusable DelayedInitializer to support static member initialization
+   without having to worry about the initialization order.
+ - Renamed ByteArrayMessage to RawPacket.
+
+Environment:
+ - Added isometric view angles to physical environment visualization.
+ - Added class and module interfaces to physical environment.
+
+Mobility:
+ - Added a new StaticConcentricMobility similar to StaticGridMobility that places
+   nodes on concentric circles.
+ - Removed TracCI and TraCIScenarioManager because these modules are maintained
+   in the Veins framework.
+
+Serializer:
+ - Refactored packet serializer classes to use a safe buffer class to read and
+   write binary data. This allows parsing incorrect binary representations without
+   runtime errors required by bit precise physical layer models.
+ - Refactored recursion in serializers to be extensible with new packet formats
+   without modifying existing code. 
+ - Fixed a number of packet length bugs and inconsistencies between serialized
+   and non-serialized forms.
+
+Application:
+ - Merged NetPerfMeter application from the master branch added by Thomas Dreibholz.
+
+PCAP:
+ - Allow flushing the pcapFile after each write to ensure that all packets are
+   captured in case of a crash.
+
+Transport Layer:
+ - Added ITransportPacket interface to TCPSegment, UDPPacket, and SCTPMessage.
+   It allows generic handling of transport packets.
+
+SCTP:
+ - Added fragPoint parameter to limit the size of fragments.
+ - After the handshake only send heartbeats on unconfirmed paths.
+ - Fixed close command handling, i.e. stop reading when the command is sent.
+ - Handle SACK and NR_SACK separately and use getByteLength instead of getBitLength.
+
+TCP:
+ - Refactored and cleaned up TCP header options.
+ - Fixed scaling window bug (Martin Becke).
+
+Network Layer:
+ - Factored out the network topology extraction algorithm from IPv4NetworkConfigurator
+   into a base class.
+ - Added support to IPv4NetworkConfigurator for computing wireless shortest path
+   based on a simple packet error rate estimation.
+ - Added netmaskRoutes parameter to IPv4RoutingTable to control whether netmask
+   routes are maintained or not.
+ - Added useAdminDist parameter to IPv4RoutingTable to enable/disable the use
+   of Cisco specific routing entry extension (disabled by default).
+
+Configurator:
+ - Refactored supported metrics (hopCount, delay, dataRate, errorRate) and related
+   parameters in IPv4NetworkConfigurator.
+ - Added autoroute XML configuration element to IPv4NetworkConfigurator. It provides
+   parameters for the automatic route discovery. The autoroute element determines
+   the set of routing tables that will be modified, the set of destinations for
+   which the shortest path will be computed, the used metric and the cost for nodes
+   and links.
+
+Link layer:
+ - Added TUN/TAP virtual network interfaces thanks to Irene Ruengeler. This kind
+   of interfaces send/receive packets to/from TUN applications.
+ - Updated the 802.11 MAC implementation to use the new 802.11 mode descriptors.
+ - Replaced the old 802.11 operational mode and modulation descriptor classes.
+   This change modifies the fingerprint of a few simulations, because the header
+   length was computed incorrectly.
+ - Changed the 802.11 MAC to use asynchronous commands to set the radio mode.
+ - Updated the 802.11 MAC state machine diagram (graphviz) to reflect the current
+   state of the implementation.
+ - Added safety guard to the 802.11 MAC against recursively calling handleWithFSM.
+ - Fixed packet order in transmissionQueue.
+ - Renamed getNetworkInterfaceModule to getInterfaceModule in InterfaceEntry.
+ - Improved response time on external interfaces. On Linux cSocketScheduler is now
+   using immediate mode to reduce the CPU usage while still maintaining a fast
+   sub millisec response time (Artur Scussel). On Windows and MAC OS X the polling 
+   interval was reduced to improve the response time.
+ - Added support for sending NF_LINK_BREAK signal from BMAC and CSMA. This is 
+   required for certain routing protocols (i.e. AODV) to function properly.
+ - Extended Ethernet macs accept raw packet
+
+Physical layer:
+ - Extended the physical layer contract interfaces for layered implementations.
+ - Added signal representations for packet domain, bit domain, symbol domain,
+   sample domain and analog domain, and also added contracts for the processing
+   components in all of these domains.
+ - Added a detailed 802.11 OFDM physical layer implementation that supports
+   packet-level, bit-level, and symbol-level simulations in compliant, and also
+   in freely configurable non-compliant operational modes.
+ - Replaced the old 802.11 operational mode and modulation descriptor classes.
+   The new classes are more detailed and more complete implementations. They
+   supports both the flat and the layered physical layer models and provide PHY
+   characteristics. The implemented 802.11 modes are: DSSS, HR-DSSS, FHSS, IR,
+   OFDM, ERP-OFDM.
+ - Added IEEE 802.11 High Throughput mode descriptor. This mode is defined in
+   Clause 20. High Throughput (HT) PHY specification in the IEEE 802.11-2012
+   specification. The new HT mode makes available the Wifi n modes in the
+   Ieee80211ModeSet.
+ - Added a simple hypothetical APSK physical layer implementation that supports
+   packet-level, bit-level, and symbol-level simulations with widely configurable
+   bit-domain and symbol-domain parameters.
+ - Consistently moved packet level and bit level implementations into separate
+   subdirectories throughout the physical layer.
+ - Added a generic convolutional encoder/decoder, a generic additive
+   scrambler/descrambler, and a 802.11 specific interleaver/deinterleaver.
+ - Added a separate modulations folder that contains descriptor classes for
+   various keying techniques such as BPSK, QPSK, QAM16, QAM64, QAM256, MQAM,
+   DBPSK, DQPSK, MASK, MFSK, MPSK, DSSS-OQPSK-16, etc.
+ - Reimplemented the computation of BER and SER based on the SNIR for the QAM-like
+   modulations according to wikipedia.
+ - Added a special IntervalTree cache for efficiently computing arrival intervals
+   for transmissions. This change drastically increases the physical layer
+   performance for large networks with lots of ongoing transmissions.
+ - Refactored the radio medium model to support the optional representation of
+   PHY frames for the layered physical layer models.
+ - Refactored the medium analog model to simultaneously support the new layered
+   and the already existing flat radio signal models.
+ - Refactored the existing 802.11 statistical error models to use the new
+   operation mode descriptors.
+ - Extracted the BER table based 802.11 statistical error model into a separate
+   class. This change modifies the fingerprint of simulations that use this
+   error model.
+ - Added a new detailed 802.11 error model that computes erroneous packet
+   domain, bit domain or symbol domain signal representations.
+ - Added 802.11 OFDM PHY frame serializer.
+ - Extracted separate CommunicationCache classes from RadioMedium.
+ - Extracted separate CommunicationLog class from RadioMedium.
+ - Extracted a separate MediumLimitCache module from RadioMedium.
+ - Extracted a separate MediumVisualizer module from RadioMedium.
+ - Added optional recent communication heat map to MediumVisualizer.
+ - Renamed radio control info classes to TransmissionRequest and ReceptionIndication.
+ - Added Ieee80211TransmissionRequest with an optional IIeee80211Mode parameter
+   to allow the mac module to determine the exact physical layer operational mode.
+ - Added basic antenna array support to be used with 802.11 HT modes.
+ - Added arrival parameter to computeReceptionPower. Added snir parameter to
+   computeIsReceptionSuccessful. Added snir parameter to computeReceptionDecision.
+ - Added level parameter to printToStream function to better support logging.
+ - Fixed the indefinite heap growth bug in the RadioMedium.
+
+Tests:
+ - Added separate automated tests for convolutional encoding/decoding,
+   interleaving/deinterleaving, scrambling/descrambling, modulation/demodulation
+   and various combinations.
+
+Examples:
+ - Added a new detailed 802.11 OFDM radio example that supports configurable
+   packet-level, bit-level, and symbol-level simulations for model verification.
+ - Also added a simple hypothetical APSK radio example that supports configurable
+   packet-level, bit-level, and symbol-level simulations for model verification.
+
 INET-2.99.0 (November 2014)
 ---------------------------
 
@@ -245,6 +454,41 @@ Directory reorganization:
  - applications/httptools/ has been split up to several subdirectories: browser/,
    server/, configurator/, common/.
 
+INET 2.6 (March 05, 2015)
+-------------------------
+
+This release requires OMNeT++ 4.4 or later. It contains the following changes:
+
+   - made compatible with OMNeT++ 5.0b1
+   - added OLIA for CMT-SCTP (by Martin Becke)
+   - added a trace player feature to NetPerfMeter
+   - fixed compile errors when using OMNeT++ 5.0b1
+   - fixed an issue with too small initial value of 'ssthreshold' in TCP
+   - fixed window scaling in TCP
+   - added INET_VERSION macro (in hexadecimal form e.g.: 0x0206)
+
+
+INET 2.5.1 (Nov 7, 2014)
+------------------------
+
+This release requires OMNeT++ 4.4.
+
+Changes:
+
+   - fixed a crash in SCTP
+   - now builds with all features turned off
+
+
+INET 2.5.0 (Oct 29, 2014)
+-------------------------
+
+This release requires OMNeT++ 4.4.
+
+Changes:
+
+   - made the codebase compile in C++11 mode. (required by OMNeT++ 4.6)
+   - added netperfmeter application by Thomas Dreibholz
+
 
 INET-2.4.0 (June 12, 2014)
 --------------------------
@@ -254,7 +498,7 @@ New AODV protocol implementation:
    - From-scratch AODV implementation backported from the integration
      branch; see src/network/routing/
 
-Miscellaneous:
+Changes:
 
    - Added support for link break detection in IdealWireless
      (using the NF_LINK_BREAK signal)
@@ -264,11 +508,13 @@ Miscellaneous:
    - Fixed non-conformant 802.11 WAITACK timeout computation
 
 
+
 INET-2.3.0 (March 17, 2014)
 ---------------------------
 
 This release contains several new protocols, and a lot of changes that were
 backported from the current integration branch (destined to be INET 3.0).
+This release requires OMNeT++ 4.3.
 
 Application startTime/stopTime fixes:
 
@@ -385,6 +631,7 @@ INET-2.2.0 (August 22, 2013)
 
 The main highlight of this release is the long-sought support for
 simulating node shutdown/restart events for network nodes.
+This release requires OMNeT++ 4.2 or later.
 
 New features:
 
