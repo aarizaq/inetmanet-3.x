@@ -56,6 +56,8 @@ void Ieee80211RadioModel::initializeFrom(cModule *radioModule)
         phyOpMode = 'a';
     else if (strcmp("p", radioModule->par("phyOpMode").stringValue())==0)
         phyOpMode = 'p';
+    else if (strcmp("n", radioModule->par("phyOpMode").stringValue())==0)
+        phyOpMode = 'n';
     else
         phyOpMode = 'g';
 
@@ -211,6 +213,13 @@ double Ieee80211RadioModel::getTestFrameError(double snirMin, double bitrate)
                     SIMTIME_DBL(WifiModulationType::getPlcpHeaderDuration (modeBody, preambleUsed))
                             * modeHeader.getDataRate());
     }
+    else if (phyOpMode == 'n')
+    {
+        if (autoHeaderSize)
+            headerSize = ceil(
+                    SIMTIME_DBL(WifiModulationType::getPlcpHeaderDuration (modeBody, preambleUsed))
+                            * modeHeader.getDataRate());
+    }
     else
     {
         opp_error("Radio model not supported yet, must be a,b,g or p");
@@ -251,7 +260,7 @@ bool Ieee80211RadioModel::isPacketOK(double snirMin, int lengthMPDU, double bitr
            headerSize = ceil(SIMTIME_DBL(WifiModulationType::getPlcpHeaderDuration(modeBodyA, preambleUsed))*modeHeader.getDataRate());
         }
     }
-    else if (phyOpMode=='b' || phyOpMode=='a' || phyOpMode=='p')
+    else if (phyOpMode=='b' || phyOpMode=='a' || phyOpMode=='p' || phyOpMode=='n')
     {
         if (autoHeaderSize)
              headerSize = ceil(SIMTIME_DBL(WifiModulationType::getPlcpHeaderDuration(modeBody, preambleUsed))*modeHeader.getDataRate());

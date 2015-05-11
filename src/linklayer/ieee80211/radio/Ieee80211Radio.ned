@@ -34,7 +34,7 @@ simple Ieee80211Radio extends Radio
         radioModel = "Ieee80211RadioModel";  // specify the radio model responsible for modulation, error correction and frame length calculation
         double snirThreshold @unit("dB") = default(4dB); // if signal-noise ratio is below this threshold, frame is considered noise (in dB)
         string berTableFile = default("");
-        string phyOpMode @enum("b","g","a","p") = default("g");
+        string phyOpMode @enum("b","g","a","p","n") = default("g");
         string wifiPreambleMode @enum("LONG","SHORT") = default("LONG"); // Wifi preambre mode Ieee 2007, 19.3.2
         string errorModel @enum("YansModel","NistModel") = default("NistModel");
         int btSize @unit("b") = default(8192b);// test size frame for Airtime Link Metric

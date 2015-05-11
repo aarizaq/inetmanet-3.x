@@ -87,7 +87,7 @@ simple Ieee80211Mac
         bool prioritizeMulticast = default(false); // if true, prioritize multicast frames (9.3.2.1 Fundamental access)
 
         double bitrate @unit("bps");
-        string opMode @enum("b","g","a","p") = default("g");
+        string opMode @enum("b","g","a","p","n") = default("g");
         string wifiPreambleMode @enum("LONG","SHORT") = default("LONG"); // preamble mode; see IEEE 2007, 19.3.2
 
         double basicBitrate @unit("bps") = default(1e6bps); // used for broadcast frames

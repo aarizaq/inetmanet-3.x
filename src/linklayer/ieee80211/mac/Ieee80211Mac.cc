@@ -145,6 +145,8 @@ void Ieee80211Mac::initialize(int stage)
             opMode = 'a';
         else if (strcmp("p", opModeStr)==0)
              opMode = 'p';
+        else if (strcmp("n", opModeStr)==0)
+             opMode = 'n';
         else
             throw cRuntimeError("Invalid opMode='%s'", opModeStr);
 
