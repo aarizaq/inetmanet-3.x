@@ -145,7 +145,7 @@ class ModulationType
   void setModulationClass(enum ModulationClass p) {modulationClass = p;}
 
   void setIsMandatory(bool val){isMandatory = val;}
-  bool getIsMandatory(){return isMandatory;}
+  bool getIsMandatory() const {return isMandatory;}
   ModulationType()
   {
       isMandatory = false;
@@ -159,7 +159,13 @@ class ModulationType
   }
   bool operator==(const ModulationType &b)
   {
-      return *this == b;
+      return  ((getIsMandatory() == b.getIsMandatory()) &&
+              (getBandwidth() == b.getBandwidth()) &&
+              (getDataRate() == b.getDataRate()) &&
+              (getCodeRate() == b.getCodeRate()) &&
+              (getConstellationSize() == b.getConstellationSize()) &&
+              (getPhyRate() == b.getPhyRate()) &&
+              (getFrequency() == b.getFrequency()));
   }
 private:
   bool isMandatory;
@@ -171,8 +177,5 @@ private:
   enum ModulationClass modulationClass;
   uint32_t frequency;
 };
-
-bool operator==(const ModulationType &a, const ModulationType &b);
-
 
 #endif
