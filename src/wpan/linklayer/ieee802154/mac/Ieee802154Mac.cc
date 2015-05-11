@@ -160,6 +160,7 @@ void Ieee802154Mac::commonInitialize()
     }
     iface=NULL;
     aExtendedAddress = macaddress;
+    aExtendedAddress.convert64();
 
     registerInterface();
      // get gate I
@@ -1448,13 +1449,20 @@ bool Ieee802154Mac::frameFilter(Ieee802154Frame* frame)
         {
             if (frmCtrl.dstAddrMode == defFrmCtrl_AddrMode16 && frame->getDstAddr().getInt() != getShortAddress(aExtendedAddress))
             // if dsr addr does not match
+            {
+                EV << "[MAC]: ACK discarded destination: addr" << frame->getDstAddr().getInt() << "Node Addr " << getShortAddress(aExtendedAddress) << endl;
                 return true;
+            }
             else
             {
                 if (frame->getDstAddr() != aExtendedAddress)
+                {
                     // if dsr addr does not match
+                    EV << "[MAC]: ACK discarded: destination addr" << frame->getDstAddr() << "Node Addr " << aExtendedAddress << endl;
                     return true;
+                }
             }
+            EV << "[MAC]: ACK acepted: destination addr" << frame->getDstAddr() << "Node Addr " << aExtendedAddress << endl;
         }
 
         //check for Data/Cmd frame only with source address:: destined for PAN coordinator
@@ -1515,7 +1523,9 @@ void Ieee802154Mac::constructACK(Ieee802154Frame* rxFrame)
     // and locating backoff boundary before txing ACK in <handle_PLME_SET_TRX_STATE_confirm>
     // we still set a hidden dsr addr (it's hidden, because dstAddrMode has been set to 0 above)
     if (rxFrame->getFrmCtrl().srcAddrMode == defFrmCtrl_AddrMode16)
+    {
         tmpAck->setDstAddr(getLongAddress((UINT_16)rxFrame->getSrcAddr().getInt()));              // TO CHECK: if src addr alway exists
+    }
     else
         tmpAck->setDstAddr(rxFrame->getSrcAddr());              // TO CHECK: if src addr alway exists
     tmpAck->setFrmCtrl(ackFrmCtrl);
@@ -3906,18 +3916,8 @@ bool Ieee802154Mac::gtsCanProceed()
 MACAddress Ieee802154Mac::getLongAddress(UINT_16 val)
 {
     MACAddress tmp;
-
-
-    unsigned char addrbytes[MAC_ADDRESS_SIZE64];
-    addrbytes[0] = 0x00;
-    addrbytes[1] = 0x00;
-    addrbytes[2] = 0x00;
-    addrbytes[3] = 0xff;
-    addrbytes[4] = 0xfe;
-    addrbytes[5] = 0x00;
-    addrbytes[6] = (val>>8)&0xff;
-    addrbytes[7] = (val>>0)&0xff;
-    tmp.setFlagEui64(true);
-    tmp.setAddressBytes(addrbytes);
+    tmp = aExtendedAddress;
+    tmp.setAddressByte(6,val>>8&0xff);
+    tmp.setAddressByte(7,val & 0xff);
     return tmp;
 }
