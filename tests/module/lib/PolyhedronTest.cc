@@ -25,7 +25,7 @@ Define_Module(PolyhedronTest);
 
 PolyhedronTest::PolyhedronTest()
 {
-    polyhedron = nullptr;
+    polyhedron = NULL;
 }
 
 void PolyhedronTest::parsePoints(const char* strPoints)

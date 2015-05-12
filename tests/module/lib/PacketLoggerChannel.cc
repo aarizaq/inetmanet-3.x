@@ -33,7 +33,7 @@ class INET_API PacketLoggerChannel : public cDatarateChannel
     std::ofstream logfile;
 
   public:
-    explicit PacketLoggerChannel(const char *name = nullptr) : cDatarateChannel(name) { counter = 0; }
+    explicit PacketLoggerChannel(const char *name = NULL) : cDatarateChannel(name) { counter = 0; }
     virtual void processMessage(cMessage *msg, simtime_t t, result_t& result);
 
   protected:
