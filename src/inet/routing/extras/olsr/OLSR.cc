@@ -591,14 +591,14 @@ OLSR::check_packet(cPacket* msg, nsaddr_t &src_addr, int &index)
     index = getWlanInterfaceIndex(0);
     if (isInMacLayer())
     {
-        if (!dynamic_cast<OLSR_pkt  *>(msg)) // Check if olsr packet
+        op = dynamic_cast<OLSR_pkt  *>(msg);
+        if (!op) // Check if olsr packet
         {
             delete  msg;
             return nullptr;
         }
         else
         {
-            op = check_and_cast<OLSR_pkt  *>(msg);
             if (op->reduceFuncionality() && par("reduceFuncionality").boolValue())
             {
                 delete msg;
@@ -2797,12 +2797,9 @@ void OLSR:: processLinkBreak(const cObject *details)
 {
     if (use_mac())
     {
-        if (dynamic_cast<IPv4Datagram *>(const_cast<cObject*>(details)))
-        {
-            IPv4Datagram * dgram = const_cast<IPv4Datagram *>(check_and_cast<const IPv4Datagram *>(details));
+        IPv4Datagram * dgram = dynamic_cast<IPv4Datagram *>(const_cast<cObject*>(details));
+        if (dgram)
             mac_failed(dgram);
-            return;
-        }
     }
 }
 

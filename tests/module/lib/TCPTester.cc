@@ -40,7 +40,7 @@ void TCPTesterBase::initialize()
 
 void TCPTesterBase::dump(TCPSegment *seg, bool fromA, const char *comment)
 {
-    if (ev.isDisabled()) return;
+    if (getEnvir()->isDisabled()) return;
 
     char lbl[32];
     sprintf(lbl," %c%03d", fromA ? 'A' : 'B', fromA ? fromASeq : fromBSeq);
@@ -174,7 +174,7 @@ void TCPScriptableTester::processIncomingSegment(TCPSegment *seg, bool fromA)
     int segno = fromA ? ++fromASeq : ++fromBSeq;
 
     // find entry in script
-    Command *cmd = nullptr;
+    Command *cmd = NULL;
     for (CommandVector::iterator i=commands.begin(); i!=commands.end(); ++i)
         if (i->fromA==fromA && i->segno==segno)
             cmd = &(*i);

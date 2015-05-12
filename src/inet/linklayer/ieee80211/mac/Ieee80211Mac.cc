@@ -154,30 +154,6 @@ void Ieee80211Mac::initializeCategories()
         edcCAFOutVector.push_back(outVectors);
     }
 
-    for (int i=0; i<numCategories(); i++)
-        WATCH(edcCAF[i].retryCounter);
-    for (int i=0; i<numCategories(); i++)
-        WATCH(edcCAF[i].backoff);
-    for (int i=0; i<numCategories(); i++)
-        WATCH(edcCAF[i].backoffPeriod);
-
-    for (int i=0; i<numCategories(); i++)
-        WATCH_LIST(edcCAF[i].transmissionQueue);
-
-    for (int i=0; i<numCategories(); i++)
-        WATCH(edcCAF[i].numRetry);
-    for (int i=0; i<numCategories(); i++)
-        WATCH(edcCAF[i].numSentWithoutRetry);
-    for (int i=0; i<numCategories(); i++)
-        WATCH(edcCAF[i].numGivenUp);
-    WATCH(numCollision);
-    for (int i=0; i<numCategories(); i++)
-        WATCH(edcCAF[i].numSent);
-
-    for (int i=0; i<numCategories(); i++)
-        WATCH(edcCAF[i].numDropped);
-    for (int i=0; i<numCategories(); i++)
-        WATCH_LIST(edcCAF[i].transmissionQueue);
 }
 
 Ieee80211Mac::Ieee80211Mac()
@@ -269,10 +245,10 @@ void Ieee80211Mac::initialize(int stage)
 
         defaultAC = par("defaultAC");
 
-        ST = par("slotTime"); //added by sorin
-        if (ST==-1)
-            ST = 20e-6; //20us    
-    
+        ST = par("slotTime");    //added by sorin
+        if (ST == -1)
+            ST = 20e-6; //20us
+
         duplicateDetect = par("duplicateDetectionFilter");
         purgeOldTuples = par("purgeOldTuples");
         duplicateTimeOut = par("duplicateTimeOut");
@@ -386,8 +362,6 @@ void Ieee80211Mac::initialize(int stage)
         // end initialize variables throughput over a period of time
         // initialize watches
         validRecMode = false;
-        initWatches();
-
         cModule *radioModule = gate("lowerLayerOut")->getNextGate()->getOwnerModule();
         radioModule->subscribe(IRadio::radioModeChangedSignal, this);
         radioModule->subscribe(IRadio::receptionStateChangedSignal, this);
@@ -403,6 +377,7 @@ void Ieee80211Mac::initialize(int stage)
         // interface
         if (isInterfaceRegistered().isUnspecified()) //TODO do we need multi-MAC feature? if so, should they share interfaceEntry??  --Andras
             registerInterface();
+        initWatches();
     }
 }
 
@@ -424,6 +399,30 @@ void Ieee80211Mac::initWatches()
 
      if (throughputTimer)
          WATCH(throughputLastPeriod);
+    for (int i=0; i<numCategories(); i++)
+        WATCH(edcCAF[i].retryCounter);
+    for (int i=0; i<numCategories(); i++)
+        WATCH(edcCAF[i].backoff);
+    for (int i=0; i<numCategories(); i++)
+        WATCH(edcCAF[i].backoffPeriod);
+
+    for (int i=0; i<numCategories(); i++)
+        WATCH_LIST(edcCAF[i].transmissionQueue);
+
+    for (int i=0; i<numCategories(); i++)
+        WATCH(edcCAF[i].numRetry);
+    for (int i=0; i<numCategories(); i++)
+        WATCH(edcCAF[i].numSentWithoutRetry);
+    for (int i=0; i<numCategories(); i++)
+        WATCH(edcCAF[i].numGivenUp);
+    WATCH(numCollision);
+    for (int i=0; i<numCategories(); i++)
+        WATCH(edcCAF[i].numSent);
+
+    for (int i=0; i<numCategories(); i++)
+        WATCH(edcCAF[i].numDropped);
+    for (int i=0; i<numCategories(); i++)
+        WATCH_LIST(edcCAF[i].transmissionQueue);
 }
 
 void Ieee80211Mac::configureAutoBitRate()
@@ -697,8 +696,8 @@ void Ieee80211Mac::handleUpperCommand(cMessage *msg)
         EV_DEBUG << "Passing on command " << msg->getName() << " to physical layer\n";
         if (pendingRadioConfigMsg != nullptr) {
             // merge contents of the old command into the new one, then delete it
-            ConfigureRadioCommand *oldConfigureCommand = check_and_cast<ConfigureRadioCommand *>(pendingRadioConfigMsg->getControlInfo());
-            ConfigureRadioCommand *newConfigureCommand = check_and_cast<ConfigureRadioCommand *>(msg->getControlInfo());
+            Ieee80211ConfigureRadioCommand *oldConfigureCommand = check_and_cast<Ieee80211ConfigureRadioCommand *>(pendingRadioConfigMsg->getControlInfo());
+            Ieee80211ConfigureRadioCommand *newConfigureCommand = check_and_cast<Ieee80211ConfigureRadioCommand *>(msg->getControlInfo());
             if (newConfigureCommand->getChannelNumber() == -1 && oldConfigureCommand->getChannelNumber() != -1)
                 newConfigureCommand->setChannelNumber(oldConfigureCommand->getChannelNumber());
             if (isNaN(newConfigureCommand->getBitrate().get()) && !isNaN(oldConfigureCommand->getBitrate().get()))

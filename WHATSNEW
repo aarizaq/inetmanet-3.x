@@ -1,7 +1,7 @@
 Recent changes in the INET Framework
 ====================================
 
-INET-2.99.1 (March, 2015)
+INET-2.99.1 (May, 2015)
 --------------------------
 
 This release is the next development snapshot of the upcoming INET-3.0 version.
@@ -38,7 +38,14 @@ All components:
    present conditionally.
  - Moved interface classes under contract subdirectories. Moved base classes
    under base subdirectories.
- 
+ - Introduced a new script called 'inet_featuretool' in the root folder of the
+   project that allows listing/enabling/disabling specific features from the
+   command line. Use 'inet_featuretool -h' for further info.
+   The 'make makefiles' command now uses this tool to extract the required
+   command line options to generate the makefile. This means that after
+   enabling/disabling a feature you always have to invoke 'make makefiles'
+   to regenerate the makefile based on the new feature enablement state.
+
 Nodes:
  - All "node type" modules implement the INode module interface so it is now 
    possible to create networks (using the <"actualNodeType"> like INode construct) 
@@ -56,7 +63,7 @@ Common:
  - On Linux, specifying --valgrind as the first argument for the opp_run script
    (or a run script in the examples folder) will start the simulation using the
    'valgrind' memory profiler.
- - Added a reusable HeatMapFigure.
+ - Added a reusable HeatMapFigure and a GaugeFigure.
  - Added a reusable DelayedInitializer to support static member initialization
    without having to worry about the initialization order.
  - Renamed ByteArrayMessage to RawPacket.
@@ -96,6 +103,7 @@ SCTP:
  - After the handshake only send heartbeats on unconfirmed paths.
  - Fixed close command handling, i.e. stop reading when the command is sent.
  - Handle SACK and NR_SACK separately and use getByteLength instead of getBitLength.
+ - Fixed several bugs.
 
 TCP:
  - Refactored and cleaned up TCP header options.
@@ -110,6 +118,13 @@ Network Layer:
    routes are maintained or not.
  - Added useAdminDist parameter to IPv4RoutingTable to enable/disable the use
    of Cisco specific routing entry extension (disabled by default).
+ - Added IGMPv3 implementation (the orinal code came from the ANSA project).
+   It has been almost fully rewritten and extended by Tamas Borbely.
+
+Routing:
+ - Added PIM-DM and PIM-SM implementation. The original codebase (from the ANSA project
+   http://nes.fit.vutbr.cz/ansa) has been extensively reviewed, refactored and 
+   extended by Tamas Borbely.
 
 Configurator:
  - Refactored supported metrics (hopCount, delay, dataRate, errorRate) and related
@@ -209,6 +224,7 @@ Examples:
    packet-level, bit-level, and symbol-level simulations for model verification.
  - Also added a simple hypothetical APSK radio example that supports configurable
    packet-level, bit-level, and symbol-level simulations for model verification.
+ - Added a work in progress Wireless tutorial in the tutorials/wireless folder.
 
 INET-2.99.0 (November 2014)
 ---------------------------

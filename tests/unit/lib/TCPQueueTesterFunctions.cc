@@ -87,7 +87,7 @@ void extractBytesUpTo(TCPMsgBasedRcvQueue *rq, uint32 seq)
 {
     EV << "RQ:" << "extractUpTo(" << seq << "): <";
     cPacket *msg;
-    while ((msg=rq->extractBytesUpTo(seq)) != nullptr)
+    while ((msg=rq->extractBytesUpTo(seq)) != NULL)
     {
         EV << " < " << msg->getName() << ": " << msg->getByteLength() << " bytes >";
         delete msg;
@@ -129,7 +129,7 @@ void extractBytesUpTo(TCPVirtualDataRcvQueue *q, uint32 seq)
 {
     EV << "RQ:" << "extractUpTo(" << seq << "):";
     cPacket *msg;
-    while ((msg=q->extractBytesUpTo(seq))!=nullptr)
+    while ((msg=q->extractBytesUpTo(seq))!=NULL)
     {
         EV << " msglen=" << msg->getByteLength();
         delete msg;
