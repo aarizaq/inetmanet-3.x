@@ -118,6 +118,8 @@ simple Ieee80211Mac extends MACProtocolBase like IMACProtocol
         double throughputTimePeriod @unit("s") = default(0); // period of time used by throughput measurement statistic
         bool multiMac = default(false); // allows multiples mac interfaces in the same link layer
 
+        int interFrameMpduATime = default(1);//Inter mpdu time in units of 1/4 us, 1 = 0.25 us, 2 0.5us ....
+
         @class(Ieee80211Mac);
         @display("i=block/layer");
 

@@ -27,6 +27,8 @@
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtBase.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211MpduA.h"
 
+// TODO: MSDU-A Handle MSDU-A frames.
+// TODO: MDPU-A check sates, verify the backoff procedure is correct
 
 namespace inet {
 
@@ -48,7 +50,8 @@ Register_Enum(inet::Ieee80211Mac,
          Ieee80211Mac::WAITCTS,
          Ieee80211Mac::WAITSIFS,
          Ieee80211Mac::RECEIVE,
-         Ieee80211Mac::WAITBLOCKACK));
+         Ieee80211Mac::WAITBLOCKACK,
+         Ieee80211Mac::SENDMPDUA));
 
 /****************************************************************
  * Construction functions.
@@ -158,6 +161,7 @@ void Ieee80211Mac::initializeCategories()
 
 Ieee80211Mac::Ieee80211Mac()
 {
+
 }
 
 Ieee80211Mac::~Ieee80211Mac()
@@ -204,7 +208,21 @@ void Ieee80211Mac::initialize(int stage)
     //TODO: revise it: it's too big; should revise stages, too!!!
     if (stage == INITSTAGE_LOCAL)
     {
+        fsm = new Ieee802MacBaseFsm(11);
+        //fsm->setNumStates(10);
+        fsm->setStateMethod(IDLE, &Ieee80211Mac::stateIdle,"IDLE");
+        fsm->setStateMethod(DEFER, &Ieee80211Mac::stateDefer,"DEFER");
+        fsm->setStateMethod(WAITAIFS, &Ieee80211Mac::stateWaitAifs,"WAITAIFS");
+        fsm->setStateMethod(BACKOFF, &Ieee80211Mac::stateBackoff,"BACKOFF");
+        fsm->setStateMethod(WAITACK, &Ieee80211Mac::stateWaitAck,"WAITACK");
+        fsm->setStateMethod(WAITMULTICAST, &Ieee80211Mac::stateWaitMulticast,"WAITMULTICAST");
+        fsm->setStateMethod(WAITCTS, &Ieee80211Mac::stateWaitCts,"WAITCTS");
+        fsm->setStateMethod(WAITSIFS, &Ieee80211Mac::stateWaitSift,"WAITSIFS");
+        fsm->setStateMethod(RECEIVE, &Ieee80211Mac::stateReceive,"RECEIVE");
+        fsm->setStateMethod(WAITBLOCKACK, &Ieee80211Mac::stateWaitBlockAck,"WAITBLOCKACK");
+        fsm->setStateMethod(SENDMPDUA, &Ieee80211Mac::stateSendMpuA,"SENDMPUA");
 
+        mpudRetTimeOut = 0.01;
         // initialize parameters
         modeSet = Ieee80211ModeSet::getModeSet(*par("opMode").stringValue());
 
@@ -314,7 +332,7 @@ void Ieee80211Mac::initialize(int stage)
         initializeQueueModule();    //FIXME STAGE: this should be in L2 initialization!!!!
 
         // state variables
-        fsm.setName("Ieee80211Mac State Machine");
+        fsm->setName("Ieee80211Mac State Machine");
         mode = DCF;
         sequenceNumber = 0;
 
@@ -609,10 +627,16 @@ void Ieee80211Mac::handleUpperPacket(cPacket *msg)
 
     // must be a Ieee80211DataOrMgmtFrame, within the max size because we don't support fragmentation
     Ieee80211DataOrMgmtFrame *frame = check_and_cast<Ieee80211DataOrMgmtFrame *>(msg);
+    Ieee80211MpduA *mpdu = dynamic_cast<Ieee80211MpduA *>(msg);
 
-    if (frame->getByteLength() > fragmentationThreshold)
-        throw cRuntimeError("message from higher layer (%s)%s is too long for 802.11b, %d bytes (fragmentation is not supported yet)",
-                msg->getClassName(), msg->getName(), (int)(msg->getByteLength()));
+
+    if (mpdu == nullptr)
+    {
+        if (frame->getByteLength() > fragmentationThreshold)
+            throw cRuntimeError("message from higher layer (%s)%s is too long for 802.11b, %d bytes (fragmentation is not supported yet)",
+                    msg->getClassName(), msg->getName(), (int)(msg->getByteLength()));
+    }
+
     EV_DEBUG << "frame " << frame << " received from higher layer, receiver = " << frame->getReceiverAddress() << endl;
 
     // if you get error from this assert check if is client associated to AP
@@ -626,6 +650,14 @@ void Ieee80211Mac::handleUpperPacket(cPacket *msg)
     if (mappingAccessCategory(frame) == 200) {
         // if function mappingAccessCategory() returns 200, it means transsmissionQueue is full
         return;
+    }
+    if (mpdu != nullptr)
+    {
+        for (unsigned int i = 0; i < mpdu->getNumEncap();i++)
+        {
+            mpdu->getPacket(i)->setMACArrive(simTime());
+            mpdu->getPacket(i)->setTransmitterAddress(address);
+        }
     }
     frame->setMACArrive(simTime());
     handleWithFSM(frame);
@@ -706,7 +738,7 @@ void Ieee80211Mac::handleUpperCommand(cMessage *msg)
             pendingRadioConfigMsg = nullptr;
         }
 
-        if (fsm.getState() == IDLE || fsm.getState() == DEFER || fsm.getState() == BACKOFF) {
+        if (fsm->getState() == IDLE || fsm->getState() == DEFER || fsm->getState() == BACKOFF) {
             EV_DEBUG << "Sending it down immediately\n";
 /*
    // Dynamic power
@@ -746,7 +778,7 @@ void Ieee80211Mac::handleLowerPacket(cPacket *msg)
             validRecMode = true;
     }
 
-    Ieee80211Frame *frame = dynamic_cast<Ieee80211Frame *>(msg);
+    //Ieee80211Frame *frame = dynamic_cast<Ieee80211Frame *>(msg);
 
     bool error = msg->hasBitError();
 
@@ -773,7 +805,24 @@ void Ieee80211Mac::handleLowerPacket(cPacket *msg)
     }
     contI++;
 
-    frame = dynamic_cast<Ieee80211Frame *>(msg);
+    Ieee80211Frame *frame = nullptr;
+    Ieee80211MpduDelimiter *delimiter = dynamic_cast<Ieee80211MpduDelimiter *>(msg);
+    if (delimiter != nullptr)
+    {
+        if (!delimiter->hasEncapsulatedPacket())
+        {
+            delete msg;
+            return;
+        }
+        frame = dynamic_cast<Ieee80211Frame *>(delimiter->decapsulate());
+        cMessage *aux = frame;
+        *aux = *msg;
+        frame->setBitError(delimiter->hasBitError());
+        delete msg; // delete MPDU-A delimiter
+        msg = frame; // now msg must be the frame contained in the delimiter.
+    }
+    else
+        frame = dynamic_cast<Ieee80211Frame *>(msg);
     if (timeStampLastMessageReceived == SIMTIME_ZERO)
         timeStampLastMessageReceived = simTime();
     else {
@@ -848,8 +897,11 @@ void Ieee80211Mac::receiveSignal(cComponent *source, simsignal_t signalID, long 
     else if (signalID == IRadio::transmissionStateChangedSignal) {
         handleWithFSM(mediumStateChange);
         IRadio::TransmissionState newRadioTransmissionState = (IRadio::TransmissionState)value;
-        if (transmissionState == IRadio::TRANSMISSION_STATE_TRANSMITTING && newRadioTransmissionState == IRadio::TRANSMISSION_STATE_IDLE)
-            configureRadioMode(IRadio::RADIO_MODE_RECEIVER);
+        if (!MpduModeTranssmision)
+        {
+            if (transmissionState == IRadio::TRANSMISSION_STATE_TRANSMITTING && newRadioTransmissionState == IRadio::TRANSMISSION_STATE_IDLE)
+                configureRadioMode(IRadio::RADIO_MODE_RECEIVER);
+        }
         transmissionState = newRadioTransmissionState;
     }
 }
@@ -1067,13 +1119,20 @@ void Ieee80211Mac::scheduleDataTimeoutPeriod(Ieee80211DataOrMgmtFrame *frameToSe
     }
     if (!endTimeout->isScheduled()) {
         EV_DEBUG << "scheduling data timeout period\n";
+        bool isNotMpu = true;
+        if (dynamic_cast<Ieee80211MpduA *>(frameToSend) != nullptr)
+            isNotMpu = false;
         if (useModulationParameters) {
             const IIeee80211Mode *modType = modeSet->getMode(bps(bitRate));
             double duration = computeFrameDuration(frameToSend);
+
             double slot = SIMTIME_DBL(modType->getSlotTime());
-            double sifs = SIMTIME_DBL(modType->getSifsTime());
+            double sifs =  SIMTIME_DBL(modType->getSifsTime());
             double PHY_RX_START = SIMTIME_DBL(modType->getPhyRxStartDelay());
-            tim = duration + slot + sifs + PHY_RX_START;
+            if (isNotMpu)
+                tim = duration + slot + sifs + PHY_RX_START;
+            else
+                tim = duration + slot + sifs + PHY_RX_START;
         }
         else
             tim = computeFrameDuration(frameToSend) + SIMTIME_DBL( getSlotTime()) +SIMTIME_DBL( getSIFS()) + controlFrameTxTime(LENGTH_ACK) + MAX_PROPAGATION_DELAY * 2;
@@ -1284,18 +1343,6 @@ void Ieee80211Mac::sendCTSFrame(Ieee80211RTSFrame *rtsFrame)
 }
 
 
-void Ieee80211Mac::processMpduA(Ieee80211Frame *frame)
-{
-
-}
-
-bool Ieee80211Mac::isMpduA(Ieee80211Frame *frame)
-{
-    if (dynamic_cast<Ieee80211MpduA*>(frame))
-        return true;
-    return false;
-}
-
 /****************************************************************
  * Frame builder functions.
  */
@@ -1362,9 +1409,25 @@ Ieee80211RTSFrame *Ieee80211Mac::buildRTSFrame(Ieee80211DataOrMgmtFrame *frameTo
     Ieee80211RTSFrame *frame = new Ieee80211RTSFrame("wlan-rts");
     frame->setTransmitterAddress(address);
     frame->setReceiverAddress(frameToSend->getReceiverAddress());
-    frame->setDuration(3 * getSIFS() + controlFrameTxTime(LENGTH_CTS)
+    Ieee80211MpduA *mpdu = dynamic_cast<Ieee80211MpduA*>(frameToSend);
+    if (mpdu == nullptr)
+    {
+        frame->setDuration(3 * getSIFS() + controlFrameTxTime(LENGTH_CTS)
             + computeFrameDuration(frameToSend)
             + controlFrameTxTime(LENGTH_ACK));
+    }
+    else
+    {
+        uint64_t blkAckFrameSize = 152*8;
+        TransmissionRequest *ctrl = dynamic_cast<TransmissionRequest *>(frameToSend->getControlInfo());
+        double bitrate = dataFrameMode->getDataMode()->getNetBitrate().get();
+        if (ctrl) {
+            bitrate = ctrl->getBitrate().get();
+        }
+        frame->setDuration(3 * getSIFS() + controlFrameTxTime(LENGTH_CTS)
+                    + computeMpduADuration(mpdu)
+                    + computeFrameDuration(blkAckFrameSize,bitrate)); // blockAck
+    }
 
     return frame;
 }
@@ -1444,10 +1507,29 @@ void Ieee80211Mac::finishCurrentTransmission()
 void Ieee80211Mac::giveUpCurrentTransmission()
 {
     Ieee80211DataOrMgmtFrame *temp = (Ieee80211DataOrMgmtFrame *)transmissionQueue()->front();
-    sendNotification(NF_LINK_BREAK, temp);
+    Ieee80211MpduA *aux = dynamic_cast<Ieee80211MpduA *>(temp);
+    if (aux == nullptr)
+    {
+        sendNotification(NF_LINK_BREAK, temp);
+    }
+    else
+    {
+        if (mpduInTransmission != nullptr)
+        {
+            if (mpduInTransmission != temp)
+                throw cRuntimeError("mpduInTransmission != transmissionQueue()->front()");
+            mpduInTransmission = nullptr;
+        }
+        for (unsigned int i = 0; i < aux->getNumEncap(); i++)
+            sendNotification(NF_LINK_BREAK, aux->getPacket(i));
+    }
+
+    if (aux != nullptr)
+        numGivenUp()+=aux->getNumEncap();
+    else
+        numGivenUp()++;
     popTransmissionQueue();
     resetStateVariables();
-    numGivenUp()++;
 }
 
 void Ieee80211Mac::retryCurrentTransmission()
@@ -1491,6 +1573,8 @@ void Ieee80211Mac::resetStateVariables()
         reportDataOk();
     else
         retryCounter() = 0;
+    numConsecutiveMpduA = 0;
+    retryMpduA = 0;
 
     if (!transmissionQueue()->empty()) {
         backoff() = true;
@@ -1599,6 +1683,23 @@ double Ieee80211Mac::computeFrameDuration(Ieee80211Frame *msg)
         return computeFrameDuration(msg->getBitLength(), dataFrameMode->getDataMode()->getNetBitrate().get());
 }
 
+
+double Ieee80211Mac::computeMpduADuration(Ieee80211MpduA *frame)
+{
+    uint64_t totalSize = 0;
+    double bitrate = getBitrate();
+    int64_t sizeDelimiter = (0.25e-6 * par("interFrameMpduATime").doubleValue() * bitrate);
+    for (unsigned int i = 0; i < frame->getNumEncap(); i++)
+    {
+        uint64_t frameSize =  frame->getPacket(i)->getBitLength();
+        while ((frameSize%4) != 0)
+            frameSize++;
+        totalSize += frameSize;
+    }
+    totalSize += (frame->getNumEncap()-1) * sizeDelimiter;
+    return computeFrameDuration(totalSize, bitrate);
+}
+
 double Ieee80211Mac::computeFrameDuration(int bits, double bitrate)
 {
     double duration;
@@ -1615,7 +1716,7 @@ double Ieee80211Mac::computeFrameDuration(int bits, double bitrate)
 void Ieee80211Mac::logState()
 {
     int numCategs = numCategories();
-    EV_TRACE << "# state information: mode = " << modeName(mode) << ", state = " << fsm.getStateName();
+    EV_TRACE << "# state information: mode = " << modeName(mode) << ", state = " << fsm->getStateName();
     EV_TRACE << ", backoff 0.." << numCategs << " =";
     for (int i = 0; i < numCategs; i++)
         EV_TRACE << " " << edcCAF[i].backoff;
@@ -1718,6 +1819,8 @@ void Ieee80211Mac::clearQueue()
 void Ieee80211Mac::reportDataOk()
 {
     retryCounter() = 0;
+    numConsecutiveMpduA = 0;
+    retryMpduA = 0;
     if (rateControlMode == RATE_CR)
         return;
     successCounter++;

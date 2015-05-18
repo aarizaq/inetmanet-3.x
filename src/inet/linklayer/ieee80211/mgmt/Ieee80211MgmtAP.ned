@@ -44,7 +44,8 @@ simple Ieee80211MgmtAP like IIeee80211Mgmt
     parameters:
         bool EDCA = default(false); // enable Enhanced Distributed Channel Access (802.11e)
         // parameters for EDCA = true
-        string classifier = default("Ieee80211eClassifier");           
+        string classifier = default("Ieee80211eClassifier");
+        bool aggregateHandler = default(false);
         string ssid = default("SSID");
         double beaconInterval @unit("s") = default(100ms);
         int frameCapacity = default(100); // maximum queue length

@@ -71,6 +71,7 @@ module Ieee80211NicMeshMulti
         mgmt: Ieee80211Mesh {
             parameters:
                 locatorActive = hasLocator;
+                macModule = "^.mac[0]";
                 @display("p=96,136;q=wlanDataQueue;i=block/switch");
              gates:
                 macInMulti[meshChannels];
@@ -78,7 +79,7 @@ module Ieee80211NicMeshMulti
         }
         mac[meshChannels]: Ieee80211Mac {
             parameters:
-                queueModule = "mgmt";
+                queueModule = "^.mgmt";
                 @display("p=96,222");
         }
         radio[meshChannels]: <radioType> like IRadio {

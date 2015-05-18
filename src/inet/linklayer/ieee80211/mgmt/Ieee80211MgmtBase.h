@@ -57,6 +57,8 @@ class INET_API Ieee80211MgmtBase : public Ieee80211PassiveQueue, public ILifecyc
     std::vector<DataQueue> dataQueue;    // queue for data frames
     DataQueue mgmtQueue;    // queue for management frames (higher priority than data frames)
 
+    int minMpduASize = 3;
+
     // statistics
     long numDataFramesReceived;
     long numMgmtFramesReceived;
@@ -127,6 +129,7 @@ class INET_API Ieee80211MgmtBase : public Ieee80211PassiveQueue, public ILifecyc
 
     virtual void clear();
     virtual void clear(const int &);
+    ~Ieee80211MgmtBase();
 
   public:
     virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback) override;
@@ -138,23 +141,25 @@ class INET_API Ieee80211MgmtBase : public Ieee80211PassiveQueue, public ILifecyc
 
     /** Redefined from PassiveQueueBase. */
     virtual cMessage *dequeue() override;
+    virtual void requestPacket() override;
 
     /** Redefined from IPassiveQueue. */
     virtual bool isEmpty() override;
-    virtual bool isEmpty(const int&) {return dataQueue.empty();}
+    virtual bool isEmpty(const int&) override {return dataQueue.empty();}
 
 
     // * multi queue methods
-    virtual int getNumQueues() {return numQueues;}
-    virtual int getNumPendingRequests(const int& cat) {return packetRequestedCat[cat];}
-    virtual void requestPacket(const int&);
-    virtual cMessage *dequeue(const int&);
-    virtual cMessage *enqueue(cMessage *, const int &);
-    virtual cMessage *pop(const int&);
+    virtual int getNumQueues() override {return numQueues;}
+    virtual int getNumPendingRequests(const int& cat) override {return packetRequestedCat[cat];}
+    virtual void requestPacket(const int&) override;
+    virtual cMessage *dequeue(const int&) override;
+    virtual cMessage *enqueue(cMessage *, const int &) override;
+    virtual cMessage *pop(const int&) override;
+    virtual cMessage *requestMpuA(const MACAddress &, const int &,const int64_t &, const int & = 0) override;
 
-    virtual Ieee80211DataOrMgmtFrame *getQueueElement(const int &, const int &) const;
-    virtual unsigned int getDataSize(const int &cat) const;
-    virtual unsigned int getManagementSize() const;
+    virtual Ieee80211DataOrMgmtFrame *getQueueElement(const int &, const int &) const override;
+    virtual unsigned int getDataSize(const int &cat) const override;
+    virtual unsigned int getManagementSize() const override;
 };
 
 } // namespace ieee80211

@@ -40,14 +40,16 @@ module SecurityIeee80211NicMesh like IWirelessNic
         
         string mgmtType = default("SecurityIeee80211Mesh"); // name of the management module type (implements IIeee80211Mgmt)
         string radioType = default("Ieee80211Radio");
-        string opMode @enum("b","g","a","p") = default("g");
+        string opMode @enum("b","g","a","p","n") = default("g");
         int numOutputHooks = default(0);
         int numInputHooks = default(0);
         double bitrate @unit("bps") = default(opMode == "b" ? 11Mbps : opMode == "p" ? 27Mbps : 54Mbps);
         bool _agentNeeded = false;   // internal par. do not use, shows if optional agent module is needed        
         bool hasLocator = default(false);
         bool securityNeeded = true;
-        bool hasSecurity = default(false);        
+        bool hasSecurity = default(false);
+        **.opMode = opMode;
+        **.bitrate = bitrate;
         @display("i=block/ifcard;bgb=259,357");
         *.interfaceTableModule = default(absPath(interfaceTableModule));
         *.powerSourceModule = default(absPath(powerSourceModule));
@@ -77,17 +79,16 @@ module SecurityIeee80211NicMesh like IWirelessNic
 
         mgmt: SecurityIeee80211Mesh {
             parameters:
+                macModule = "^.mac";
                 locatorActive = hasLocator;
                 @display("p=96,136;q=wlanDataQueue;i=block/switch");
             gates:
-                macIn[1];
-                macOut[1];
+                macIn;
+                macOut;
         }
         mac: Ieee80211Mac {
             parameters:
-                opMode = opMode;
-                queueModule = "mgmt";
-                bitrate = bitrate;
+                queueModule = "^.mgmt";
                 @display("p=96,222");
         }
         radio: <radioType> like IRadio {
@@ -99,8 +100,8 @@ module SecurityIeee80211NicMesh like IWirelessNic
         radio.upperLayerIn <-- mac.lowerLayerOut;
         radio.upperLayerOut --> mac.lowerLayerIn;
 
-        mac.upperLayerOut --> mgmt.macIn[0];
-        mac.upperLayerIn <-- mgmt.macOut[0];
+        mac.upperLayerOut --> mgmt.macIn;
+        mac.upperLayerIn <-- mgmt.macOut;
 
         mgmt.agentOut --> agent.mgmtIn if _agentNeeded;
         mgmt.agentIn <-- agent.mgmtOut if _agentNeeded;

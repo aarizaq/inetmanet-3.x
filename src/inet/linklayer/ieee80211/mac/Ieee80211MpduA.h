@@ -13,38 +13,42 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-#ifndef FRAMEBLOCK_H_
-#define FRAMEBLOCK_H_
+#ifndef __IEEE80211MPDUA_H__
+#define __IEEE80211MPDUA_H__
 #include <omnetpp.h>
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
+#include <deque>
 
 namespace inet {
 namespace ieee80211 {
 
 
-class Ieee80211MpduA : public Ieee80211DataOrMgmtFrame
+class Ieee80211MpduA : public Ieee80211DataFrame
 {
 private:
-    struct ShareStruct{
-        Ieee80211DataOrMgmtFrame * pkt;
+    struct PacketStruct{
+        Ieee80211DataFrame * pkt;
         unsigned int shareCount;
-        ShareStruct(){
-            pkt=nullptr;
-            shareCount =0;
+        int numRetries = 0;
+        PacketStruct(){
+            pkt = nullptr;
+            shareCount = 0;
+            numRetries = 0;
         }
     };
-    std::vector<ShareStruct*> encapsulateVector;
+    std::deque<PacketStruct*> encapsulateVector;
     void _deleteEncapVector();
-    bool _checkIfShare();
-    void _detachShareVector(unsigned int i);
 public:
     Ieee80211MpduA(const char *name=nullptr, int kind=0);
     Ieee80211MpduA(Ieee80211MpduA &);
-    Ieee80211MpduA(Ieee80211DataOrMgmtFrame *);
+    Ieee80211MpduA(Ieee80211DataFrame *);
     virtual Ieee80211MpduA * dup(){return new Ieee80211MpduA(*this);}
     virtual ~Ieee80211MpduA();
     Ieee80211MpduA& operator=(const Ieee80211MpduA& msg);
-    virtual Ieee80211DataOrMgmtFrame *getPacket(unsigned int i) const;
+    virtual Ieee80211DataFrame *getPacket(unsigned int i) const;
+    virtual int getNumRetries(const unsigned int &i) const;
+    virtual void setNumRetries(const unsigned int &i,const int &val);
+
     virtual void setPacketKind(unsigned int i,int kind);
     virtual unsigned int getNumEncap() const {return encapsulateVector.size();}
     uint64_t getPktLength(unsigned int i) const
@@ -53,13 +57,18 @@ public:
             return encapsulateVector[i]->pkt->getBitLength();
         return 0;
     }
-    cPacket *decapsulatePacket(unsigned int i);
+
+    Ieee80211DataFrame *decapsulatePacket(unsigned int i);
     virtual unsigned int getEncapSize() {return encapsulateVector.size();}
 
-    virtual void pushFrom(Ieee80211DataOrMgmtFrame *);
-    virtual void pushBack(Ieee80211DataOrMgmtFrame *);
-    virtual Ieee80211DataOrMgmtFrame *popFrom();
-    virtual Ieee80211DataOrMgmtFrame *popBack();
+    virtual void pushFront(Ieee80211DataFrame *);
+    virtual void pushBack(Ieee80211DataFrame *);
+
+    virtual void pushFront(Ieee80211DataFrame *,int);
+    virtual void pushBack(Ieee80211DataFrame *,int);
+
+    virtual Ieee80211DataFrame *popFront();
+    virtual Ieee80211DataFrame *popBack();
     virtual bool haveBlock(){return !encapsulateVector.empty();}
     virtual void forEachChild(cVisitor *v);
 
