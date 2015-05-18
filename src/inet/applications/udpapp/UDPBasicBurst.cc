@@ -91,7 +91,7 @@ void UDPBasicBurst::initialize(int stage)
 
         timerNext = new cMessage("UDPBasicBurstTimer");
     }
-    else if (stage == INITSTAGE_NETWORK_LAYER)
+    else if (stage == INITSTAGE_APPLICATION_LAYER)
     {
         if (par("configureInInit").boolValue())
             initialConfiguration();
@@ -128,10 +128,22 @@ void UDPBasicBurst::initialConfiguration()
     const char *destAddrs = par("destAddresses");
     cStringTokenizer tokenizer(destAddrs);
     const char *token;
+
     bool excludeLocalDestAddresses = par("excludeLocalDestAddresses").boolValue();
     if (par("setBroadcast").boolValue())
         socket.setBroadcast(true);
     IInterfaceTable *ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
+
+    while ((token = tokenizer.nextToken()) != nullptr) {
+         if (strstr(token, "Broadcast") != nullptr)
+             destAddresses.push_back(IPv4Address::ALLONES_ADDRESS);
+         else {
+             L3Address addr = L3AddressResolver().resolve(token);
+             if (excludeLocalDestAddresses && ift && ift->isLocalAddress(addr))
+                 continue;
+             destAddresses.push_back(addr);
+         }
+    }
 
     if (strcmp(par("outputInterface").stringValue(),"") != 0)
     {
@@ -168,17 +180,6 @@ void UDPBasicBurst::initialConfiguration()
                     throw cRuntimeError(this, "Invalid output interface name : %s", token);
                 outputInterfaceMulticastBroadcast.push_back(ie->getInterfaceId());
             }
-        }
-    }
-
-    while ((token = tokenizer.nextToken()) != nullptr) {
-        if (strstr(token, "Broadcast") != nullptr)
-            destAddresses.push_back(IPv4Address::ALLONES_ADDRESS);
-        else {
-            L3Address addr = L3AddressResolver().resolve(token);
-            if (excludeLocalDestAddresses && ift && ift->isLocalAddress(addr))
-                continue;
-            destAddresses.push_back(addr);
         }
     }
 }
