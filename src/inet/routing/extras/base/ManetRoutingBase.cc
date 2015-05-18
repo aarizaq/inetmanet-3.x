@@ -365,7 +365,8 @@ void ManetRoutingBase::registerRoutingModule()
             it->second.push_back(data);
         }
     }
-
+    ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
+    rt = getModuleFromPar<IIPv4RoutingTable>(par("routingTableModule"), this);
     if (!mac_layer_)
         initHook(this);
     GlobalWirelessLinkInspector::initRoutingTables(this,getAddress(),isProactive());
