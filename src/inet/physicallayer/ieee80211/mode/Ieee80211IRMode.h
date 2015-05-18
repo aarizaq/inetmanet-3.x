@@ -100,7 +100,6 @@ class INET_API Ieee80211IrMode : public IIeee80211Mode
     virtual const IIeee80211DataMode *getDataMode() const override { return dataMode; }
 
     virtual inline const simtime_t getDuration(int dataBitLength) const override { return preambleMode->getDuration() + headerMode->getDuration() + dataMode->getDuration(dataBitLength); }
-    virtual inline const simtime_t getPayloadDuration(int dataBitLength) const override { return dataMode->getDuration(dataBitLength); }
 
     // TODO: fill in
     virtual inline const simtime_t getSlotTime() const override { return 8E-6; }

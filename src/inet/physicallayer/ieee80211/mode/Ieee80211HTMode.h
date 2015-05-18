@@ -262,7 +262,6 @@ class INET_API Ieee80211HTMode : public IIeee80211Mode
         virtual BandMode getCarrierFrequencyMode() const { return carrierFrequencyMode; }
 
         virtual const simtime_t getDuration(int dataBitLength) const override { return preambleMode->getDuration() + dataMode->getDuration(dataBitLength); }
-        virtual const simtime_t getPayloadDuration(int dataBitLength) const override { return dataMode->getDuration(dataBitLength); }
 };
 
 // A specification of the high-throughput (HT) physical layer (PHY)
