@@ -146,9 +146,9 @@ bool ManetRoutingBase::isThisInterfaceRegistered(InterfaceEntry * ie)
 {
     if (!isRegistered)
         throw cRuntimeError("Manet routing protocol is not register");
-    for (unsigned int i=0; i<interfaceVector->size(); i++)
+    for (auto & elem : *interfaceVector)
     {
-        if ((*interfaceVector)[i].interfacePtr==ie)
+        if (elem.interfacePtr==ie)
             return true;
     }
     return false;
@@ -230,7 +230,7 @@ void ManetRoutingBase::registerRoutingModule()
     }
     else
     {
-        cModule *mod = getParentModule()->getParentModule();
+        cModule *mod = getContainingNode(this);
         char *interfaceName = new char[strlen(mod->getFullName()) + 1];
         char *d = interfaceName;
         for (const char *s = mod->getFullName(); *s; s++)
@@ -316,9 +316,9 @@ void ManetRoutingBase::registerRoutingModule()
     // register LL-MANET-Routers
     if (!mac_layer_)
     {
-        for (unsigned int i = 0; i<interfaceVector->size(); i++)
+        for (auto & elem : *interfaceVector)
         {
-            (*interfaceVector)[i].interfacePtr->ipv4Data()->joinMulticastGroup(IPv4Address::LL_MANET_ROUTERS);
+            elem.interfacePtr->ipv4Data()->joinMulticastGroup(IPv4Address::LL_MANET_ROUTERS);
         }
         arp = getModuleFromPar<IARP>(par("arpModule"), this);
     }
@@ -478,9 +478,7 @@ void ManetRoutingBase::registerPosition()
     if (!isRegistered)
         throw cRuntimeError("Manet routing protocol is not register");
     regPosition = true;
-    cModule *mod = findContainingNode(getParentModule());
-    if (!mod)
-        mod = getParentModule();
+    cModule *mod = getContainingNode(this);
     mod->subscribe(mobilityStateChangedSignal, this);
 
     IMobility *imod = check_and_cast<IMobility *>(mod->getSubmodule("mobility"));
@@ -544,7 +542,6 @@ void ManetRoutingBase::sendToIpOnIface(cPacket *msg, int srcPort, const L3Addres
     }
 
     UDPPacket *udpPacket = new UDPPacket(msg->getName());
-    udpPacket->setByteLength(UDP_HDR_LEN);
     udpPacket->encapsulate(msg);
     //Address srcAddr = interfaceWlanptr->ipv4Data()->getIPAddress();
 
@@ -1013,9 +1010,9 @@ void ManetRoutingBase::receiveSignal(cComponent *source, simsignal_t signalID, c
     {
         if (obj == nullptr)
             return;
-        if (dynamic_cast<Ieee80211DataOrMgmtFrame *>(obj))
+        if (dynamic_cast<Ieee80211DataOrMgmtFrame *>(const_cast<cObject*>(obj)))
         {
-            Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame *>(obj);
+            Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame *>(const_cast<cObject*>(obj));
             if (frame)
             {
                 cPacket * pktAux = frame->getEncapsulatedPacket();
@@ -1034,14 +1031,14 @@ void ManetRoutingBase::receiveSignal(cComponent *source, simsignal_t signalID, c
             else
             {
                 Ieee80211ManagementFrame *frame =
-                        dynamic_cast<Ieee80211ManagementFrame *>(obj);
+                        dynamic_cast<Ieee80211ManagementFrame *>(const_cast<cObject*>(obj));
                 if (frame)
                     processLinkBreakManagement(obj);
             }
         }
-        else if (dynamic_cast<CSMAFrame *>(obj))
+        else if (dynamic_cast<CSMAFrame *>(const_cast<cObject*>(obj)))
         {
-            CSMAFrame *frame = dynamic_cast<CSMAFrame *>(obj);
+            CSMAFrame *frame = dynamic_cast<CSMAFrame *>(const_cast<cObject*>(obj));
             cPacket * pktAux = frame->getEncapsulatedPacket();
             if (!mac_layer_ && pktAux != nullptr)
             {
@@ -1053,9 +1050,9 @@ void ManetRoutingBase::receiveSignal(cComponent *source, simsignal_t signalID, c
                 delete pkt;
             }
         }
-        else if (dynamic_cast<XMacPkt *>(obj))
+        else if (dynamic_cast<XMacPkt *>(const_cast<cObject*>(obj)))
         {
-            XMacPkt *frame = dynamic_cast<XMacPkt *>(obj);
+            XMacPkt *frame = dynamic_cast<XMacPkt *>(const_cast<cObject*>(obj));
             cPacket * pktAux = frame->getEncapsulatedPacket();
             if (!mac_layer_ && pktAux != nullptr)
             {
@@ -1078,7 +1075,7 @@ void ManetRoutingBase::receiveSignal(cComponent *source, simsignal_t signalID, c
     }
     else if(signalID == NF_L2_AP_DISASSOCIATED || signalID == NF_L2_AP_ASSOCIATED)
     {
-        Ieee80211MgmtAP::NotificationInfoSta *infoSta = dynamic_cast<Ieee80211MgmtAP::NotificationInfoSta *>(obj);
+        Ieee80211MgmtAP::NotificationInfoSta *infoSta = dynamic_cast<Ieee80211MgmtAP::NotificationInfoSta *>(const_cast<cObject*>(obj));
         if (infoSta)
         {
             L3Address addr;
@@ -1155,17 +1152,17 @@ int ManetRoutingBase::getWlanInterfaceIndexByAddress(L3Address add)
     if (add.isUnspecified())
         return interfaceVector->front().index;
 
-    for (unsigned int i=0; i<interfaceVector->size(); i++)
+    for (auto & elem : *interfaceVector)
     {
         if (add.getType() == L3Address::MAC)
         {
-            if ((*interfaceVector)[i].interfacePtr->getMacAddress() == add.toMAC())
-                return (*interfaceVector)[i].index;
+            if (elem.interfacePtr->getMacAddress() == add.toMAC())
+                return elem.index;
         }
         else
         {
-            if ((*interfaceVector)[i].interfacePtr->ipv4Data()->getIPAddress() == add.toIPv4())
-                return (*interfaceVector)[i].index;
+            if (elem.interfacePtr->ipv4Data()->getIPAddress() == add.toIPv4())
+                return elem.index;
         }
     }
     return -1;
@@ -1182,17 +1179,17 @@ InterfaceEntry *ManetRoutingBase::getInterfaceWlanByAddress(L3Address add) const
     if (add.isUnspecified())
         return interfaceVector->front().interfacePtr;
 
-    for (unsigned int i=0; i<interfaceVector->size(); i++)
+    for (auto & elem : *interfaceVector)
     {
         if (add.getType() == L3Address::MAC)
         {
-            if ((*interfaceVector)[i].interfacePtr->getMacAddress() == add.toMAC())
-                return (*interfaceVector)[i].interfacePtr;
+            if (elem.interfacePtr->getMacAddress() == add.toMAC())
+                return elem.interfacePtr;
         }
         else
         {
-            if ((*interfaceVector)[i].interfacePtr->ipv4Data()->getIPAddress() == add.toIPv4())
-                return (*interfaceVector)[i].interfacePtr;
+            if (elem.interfacePtr->ipv4Data()->getIPAddress() == add.toIPv4())
+                return elem.interfacePtr;
         }
     }
     return nullptr;
@@ -1586,9 +1583,9 @@ void ManetRoutingBase::addInAddressGroup(const L3Address& addr, int group)
     // check if the node is already in the group
     if (isLocalAddress(addr))
     {
-        for (unsigned int i=0; i<inAddressGroup.size(); i++)
+        for (auto & elem : inAddressGroup)
         {
-            if (inAddressGroup[i]==group)
+            if (elem==group)
                 return;
         }
         inAddressGroup.push_back(group);
@@ -1607,8 +1604,8 @@ bool ManetRoutingBase::delInAddressGroup(const L3Address& addr, int group)
     if (isLocalAddress(addr))
     {
         // check if other address is in the group
-        for (AddressGroupIterator it = addressGroupVector[group].begin(); it!=addressGroupVector[group].end(); it++)
-            if (isLocalAddress(*it)) return true;
+        for (const auto & elem : addressGroupVector[group])
+            if (isLocalAddress(elem)) return true;
         for (unsigned int i=0; i<inAddressGroup.size(); i++)
         {
             if (inAddressGroup[i]==group)
@@ -1649,8 +1646,8 @@ bool ManetRoutingBase::isInAddressGroup(int group)
 {
     if (inAddressGroup.empty())
         return false;
-    for (unsigned int i=0; i<inAddressGroup.size(); i++)
-        if (group==inAddressGroup[i])
+    for (auto & elem : inAddressGroup)
+        if (group==elem)
             return true;
     return false;
 }
@@ -1668,8 +1665,8 @@ bool ManetRoutingBase::getAddressGroup(std::vector<L3Address> &addressGroup, int
     if ((int)addressGroupVector.size()<=group)
         return false;
     addressGroup.clear();
-    for (AddressGroupIterator it=addressGroupVector[group].begin(); it!=addressGroupVector[group].end(); it++)
-        addressGroup.push_back(*it);
+    for (const auto & elem : addressGroupVector[group])
+        addressGroup.push_back(elem);
     return true;
 }
 
@@ -1678,10 +1675,10 @@ bool ManetRoutingBase::isAddressInProxyList(const L3Address & addr)
 {
     if (proxyAddress.empty())
         return false;
-    for (unsigned int i = 0; i < proxyAddress.size(); i++)
+    for (auto & elem : proxyAddress)
     {
         //if ((addr & proxyAddress[i].mask) == proxyAddress[i].address)
-        if (addr == proxyAddress[i].address)   //FIXME
+        if (addr == elem.address)   //FIXME
             return true;
     }
     return false;
@@ -1690,9 +1687,9 @@ bool ManetRoutingBase::isAddressInProxyList(const L3Address & addr)
 void ManetRoutingBase::setAddressInProxyList(const L3Address & addr,const L3Address & mask)
 {
     // search if exist
-    for (unsigned int i = 0; i < proxyAddress.size(); i++)
+    for (auto & elem : proxyAddress)
     {
-        if ((addr == proxyAddress[i].address) && (mask == proxyAddress[i].mask))
+        if ((addr == elem.address) && (mask == elem.mask))
             return;
     }
     ManetProxyAddress val;
@@ -1717,10 +1714,10 @@ bool ManetRoutingBase::addressIsForUs(const L3Address &addr) const
         return true;
     if (proxyAddress.empty())
         return false;
-    for (unsigned int i = 0; i < proxyAddress.size(); i++)
+    for (auto & elem : proxyAddress)
     {
         //if ((addr & proxyAddress[i].mask) == proxyAddress[i].address)
-        if (addr == proxyAddress[i].address)   //FIXME
+        if (addr == elem.address)   //FIXME
             return true;
     }
     return false;
@@ -1790,9 +1787,9 @@ void ManetRoutingBase::getListRelatedAp(const L3Address & add, std::vector<L3Add
         std::vector<MACAddress> listAux;
         getApList(add.toMAC(), listAux);
         list.clear();
-        for (unsigned int i = 0; i < listAux.size(); i++)
+        for (auto & elem : listAux)
         {
-            list.push_back(L3Address(listAux[i]));
+            list.push_back(L3Address(elem));
         }
     }
     else
@@ -1800,9 +1797,9 @@ void ManetRoutingBase::getListRelatedAp(const L3Address & add, std::vector<L3Add
         std::vector<IPv4Address> listAux;
         getApListIp(add.toIPv4(), listAux);
         list.clear();
-        for (unsigned int i = 0; i < listAux.size(); i++)
+        for (auto & elem : listAux)
         {
-            list.push_back(L3Address(listAux[i]));
+            list.push_back(L3Address(elem));
         }
     }
 }
