@@ -871,7 +871,7 @@ void Ieee80211Mac::handleLowerPacket(cPacket *msg)
         else
         {
 
-            while (simTime() - it->second.front().timeRec > 10)
+            while (!it->second.empty() && (simTime() - it->second.front().timeRec > 10))
                 it->second.erase(it->second.begin());
             Ieee80211PacketErrorInfo info;
             info.Size = frame->getByteLength();

@@ -60,7 +60,7 @@ struct dsr_srt *DSRUU::ph_srt_find_map(struct in_addr src, struct in_addr dst, u
     // should refresh routes to intermediate nodes?
     if (par("refreshIntermediate").boolValue())
     {
-        for (unsigned int i = 0; i < route.size()-1;i++)
+        for (int i = 0; i < (int)route.size() - 1; i++)
             pathCacheMap.setPathsTimer(route[i],PathCacheRoute(route.begin(),route.begin()+1),timeout);
     }
 
