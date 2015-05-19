@@ -165,11 +165,11 @@ void DSRUU::ph_srt_add_map(struct dsr_srt *srt, usecs_t timeout, unsigned short 
     else if (srt->dst.s_addr==myaddr.s_addr)
     {
         is_last = true;
-        for (unsigned int i = srt->addrs.size()-1 ; i >= 0; i--)
+        for (int i = (int)srt->addrs.size()-1 ; i >= 0; i--)
         {
             route2.push_back(L3Address(IPv4Address(srt->addrs[i].s_addr)));
         }
-        for (unsigned int i = srt->cost.size()-1 ; i >= 0; i--)
+        for (int i = (int)srt->cost.size()-1 ; i >= 0; i--)
         {
             costVect2.push_back(srt->cost[i]);
         }
@@ -178,7 +178,7 @@ void DSRUU::ph_srt_add_map(struct dsr_srt *srt, usecs_t timeout, unsigned short 
     {
         if (!is_first && !is_last)
         {
-            for (unsigned int i = 0; i < srt->addrs.size(); i++)
+            for (int i = 0; i < (int)srt->addrs.size(); i++)
             {
                 if (srt->addrs[i].s_addr == myaddr.s_addr)
                 {
@@ -215,10 +215,10 @@ void DSRUU::ph_srt_add_map(struct dsr_srt *srt, usecs_t timeout, unsigned short 
 
         if (!is_first && !is_last && pos == -1)
         {
-            std::vector<unsigned int> neigh; // store array positions
+            std::vector<int> neigh; // store array positions
             // my address is not present
             // try to find a neighbor
-            for (unsigned int i = 0; i < srt->addrs.size(); i++)
+            for (int i = 0; i < (int )srt->addrs.size(); i++)
             {
                 PathCacheRoute routeAux;
                 PathCacheCost costVectAux;
@@ -231,10 +231,10 @@ void DSRUU::ph_srt_add_map(struct dsr_srt *srt, usecs_t timeout, unsigned short 
                         neigh.push_back(i);
                 }
             }
-            for (unsigned int i = 0; i < neigh.size(); i++)
+            for (int i = 0; i < (int)neigh.size(); i++)
             {
                 PathCacheRoute val;
-                for (unsigned int j = neigh[i]; j < srt->addrs.size(); j++)
+                for (int j = neigh[i]; j < (int)srt->addrs.size(); j++)
                 {
                     L3Address addr(IPv4Address(srt->addrs[j].s_addr));
                     val.push_back(addr);
@@ -242,7 +242,7 @@ void DSRUU::ph_srt_add_map(struct dsr_srt *srt, usecs_t timeout, unsigned short 
                 // reverse path
                 Direct.push(val);
                 val.clear();
-                for (unsigned int j = neigh[i]; j >= 0; j--)
+                for (int j = (int) neigh[i]; j >= 0; j--)
                 {
                     L3Address addr(IPv4Address(srt->addrs[j].s_addr));
                     val.push_back(addr);
@@ -254,23 +254,23 @@ void DSRUU::ph_srt_add_map(struct dsr_srt *srt, usecs_t timeout, unsigned short 
                     IPv4Address addr(srt->addrs[i].s_addr);
                     valCost.resize(1);
                     valCost[0] = getCost(addr);
-                    for (unsigned int j = neigh[i] + 1; j < srt->cost.size(); j++)
+                    for (int j = neigh[i] + 1; j < (int)srt->cost.size(); j++)
                         valCost.push_back(srt->cost[j]);
                     DirectCost.push(valCost);
                     // reverse path
                     valCost.resize(1);
-                    for (unsigned int j = neigh[i] + 1; j >= 0; j--)
+                    for (int j = neigh[i] + 1; j >= 0; j--)
                         valCost.push_back(srt->cost[j]);
                     ReverseCost.push(valCost);
                 }
             }
         }
     }
-    for (unsigned int i = 0; i < route.size(); i++)
+    for (int i = 0; i < (int)route.size(); i++)
     {
         PathCacheRoute subRoute(route.begin(),route.begin()+i);
         PathCacheCost subCost;
-        if (etxActive && i+1 < costVect.size())
+        if (etxActive && i+1 < (int)costVect.size())
         {
             subCost.resize(i+1);
             std::copy(costVect.begin(),costVect.begin()+i+1,subCost.begin());
@@ -288,11 +288,11 @@ void DSRUU::ph_srt_add_map(struct dsr_srt *srt, usecs_t timeout, unsigned short 
     if (srt->flags & SRT_BIDIR&flags)
     {
 
-        for (unsigned int i = 0; i < route2.size(); i++)
+        for (int i = 0; i < (int)route2.size(); i++)
         {
             PathCacheRoute subRoute(route2.begin(),route2.begin()+i);
             PathCacheCost subCost;
-            if (etxActive && i+1 < costVect2.size())
+            if (etxActive && i+1 < (int)costVect2.size())
             {
                 subCost.resize(i+1);
                 std::copy(costVect2.begin(),costVect2.begin()+i+1,subCost.begin());            }
@@ -367,7 +367,7 @@ void DSRUU::ph_srt_add_link_map(struct dsr_srt *srt, usecs_t timeout)
     pathCacheMap.addEdge(destinationAddress,L3Address(IPv4Address(srt->addrs.back().s_addr)),1,timeout);
     pathCacheMap.addEdge(L3Address(IPv4Address(srt->addrs.back().s_addr)),destinationAddress,1,timeout);
 
-    for (unsigned int i = 0; i < srt->addrs.size()-1; i++)
+    for (int i = 0; i < (int)srt->addrs.size()-1; i++)
     {
         L3Address addr1(IPv4Address(srt->addrs[i].s_addr));
         L3Address addr2(IPv4Address(srt->addrs[i+1].s_addr));
@@ -395,7 +395,7 @@ struct dsr_srt *DSRUU::ph_srt_find_link_route_map(struct in_addr src, struct in_
     srt->dst = dst;
     srt->src = src;
     srt->laddrs = route.size() * DSR_ADDRESS_SIZE;
-    for (unsigned int i = 0; i < route.size();i++)
+    for (int i = 0; i < (int)route.size();i++)
     {
         struct in_addr auxAddr;
         auxAddr.s_addr = route[i].toIPv4().getInt();
