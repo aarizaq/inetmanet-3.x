@@ -69,7 +69,7 @@ void Ieee80211MgmtBase::initialize(int stage)
                 // dataQueue[i].setName(str.c_str());
                 length += dataQueue[i].size();
             }
-            for (int i = 0; i < numQueues -1 ; i++)
+            for (int i = 0; i < numQueues - 1 ; i++)
                 packetRequestedCat[i] = 0;
         }
         emit(dataQueueLenSignal, length);
@@ -440,6 +440,10 @@ void Ieee80211MgmtBase::clear()
             delete msg;
         packetRequestedCat[i] = 0;
     }
+
+    for (int i = 0 ; i < numQueues - 1; i++)
+        packetRequestedCat[i] = 0;
+    packetRequested = 0;
 }
 
 void Ieee80211MgmtBase::clear(const int & category)
@@ -447,7 +451,10 @@ void Ieee80211MgmtBase::clear(const int & category)
     cMessage *msg;
     while (nullptr != (msg = dequeue(category)))
           delete msg;
-    packetRequestedCat[category] = 0;
+    if (category == 0)
+        packetRequested = 0;
+    else
+        packetRequestedCat[category -1] = 0;
 }
 
 
