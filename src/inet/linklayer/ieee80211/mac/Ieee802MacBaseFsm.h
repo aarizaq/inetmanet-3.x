@@ -18,6 +18,7 @@
 
 #include <omnetpp.h>
 #include <vector>
+#include <string>
 
 
 
@@ -25,20 +26,42 @@ namespace inet {
 namespace ieee80211 {
 
 class Ieee80211Mac;
+class Ieee802MacBaseFsm;
+typedef void (Ieee80211Mac::*Ieee80211MacStateMethod) (Ieee802MacBaseFsm *, cMessage*);
+
+
+#define FSMIEEE80211_Enter(___fsm)  if (___fsm->isCondition())
+
+#define FSMIEEE80211_No_Event_Transition(__fsm, condition) if ((condition) && ! __fsm->event())
+
+#define FSMIEEE80211_Transition(___fsm, target) \
+    ___fsm->setState(target, #target); \
+    return
+
+#define FSMIEEE80211_Event_Transition(__fsm, condition) if ((condition) &&  __fsm->isEvent())
 
 class Ieee802MacBaseFsm : public cFSM
 {
-        Ieee80211Mac *mac;
-        typedef void (Ieee80211Mac::*StateMethod) (Ieee802MacBaseFsm &, cMessage*);
-        std::vector<StateMethod> vectorStates;
-        bool initialState = true;
-        bool isImmediate = false;
+        Ieee80211Mac *mac = nullptr;
+        std::vector<Ieee80211MacStateMethod> vectorStates;
+        std::vector<std::string> vectorInfo;
+        bool ___is_event = true;
+        bool ___exit = false;
+        bool ___condition_seen = false;
+        bool ___debug = false;
     public:
-        Ieee802MacBaseFsm();
-        virtual ~Ieee802MacBaseFsm();
-        virtual void setNumStates(const unsigned int &states){vectorStates.resize(states);}
-        virtual void execute(cMessage *);
+        virtual bool & debug() {return ___debug;}
+        virtual bool & event() {return ___is_event;}
+        virtual bool & exit() {return ___exit;}
+        virtual bool & condition() {return ___condition_seen;}
+        virtual bool isCondition();
+        virtual bool isEvent();
 
+        virtual ~Ieee802MacBaseFsm();
+        Ieee802MacBaseFsm(int);
+        //virtual void setNumStates(int);
+        virtual void execute(cMessage *);
+        virtual void setStateMethod(int state, Ieee80211MacStateMethod p, const char *msg);
 };
 
 } /* namespace ieee80211 */

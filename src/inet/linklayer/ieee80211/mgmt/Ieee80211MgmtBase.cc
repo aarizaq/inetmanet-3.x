@@ -38,6 +38,13 @@ static std::ostream& operator<<(std::ostream& out, cMessage *msg)
     return out;
 }
 
+Ieee80211MgmtBase::~Ieee80211MgmtBase()
+{
+    clear();
+    if (mpduAggregateHandler)
+        delete mpduAggregateHandler;
+}
+
 void Ieee80211MgmtBase::initialize(int stage)
 {
     if (stage == INITSTAGE_LOCAL) {
@@ -51,7 +58,7 @@ void Ieee80211MgmtBase::initialize(int stage)
             numQueues = classifier->getNumQueues();
         }
         dataQueue.resize(numQueues);
-        packetRequestedCat.resize(numQueues-1);
+        packetRequestedCat.resize(numQueues);
         // mgmtQueue.setName("wlanMgmtQueue");
         int length = 0;
         if (numQueues == 1)
@@ -83,8 +90,14 @@ void Ieee80211MgmtBase::initialize(int stage)
 
         // configuration
         frameCapacity = par("frameCapacity");
-
-
+        if (par("aggregateHandler").boolValue())
+        {
+            mpduAggregateHandler = new MpduAggregateHandler();
+            // for testing
+            mpduAggregateHandler->setAllAddress(true);
+            mpduAggregateHandler->setRequestProcedure(false); // disable request procedure for testing
+            mpduAggregateHandler->setAutomaticMimimumAddress(minMpduASize);
+        }
     }
     else if (stage == INITSTAGE_LINK_LAYER) {
         NodeStatus *nodeStatus = dynamic_cast<NodeStatus *>(findContainingNode(this)->getSubmodule("status"));
@@ -214,10 +227,41 @@ cMessage *Ieee80211MgmtBase::enqueue(cMessage *msg)
         return msg;
     }
     else {
-        dataQueue[cat].push_back(frame);
+        bool includedInMsduA = false;
+        // if broadcast and musticast frames must be transmit before
+        if ((frame->getReceiverAddress().isBroadcast() || frame->getReceiverAddress().isMulticast()))
+        {
+            if (!dataQueue[cat].empty() && !dataQueue[cat].back()->getReceiverAddress().isBroadcast() && !dataQueue[cat].back()->getReceiverAddress().isMulticast())
+            {
+                // search for the first non multicast frame
+                auto it = dataQueue[cat].begin();
+                for (;it != dataQueue[cat].end();++it)
+                {
+                    if (!(*it)->getReceiverAddress().isBroadcast() && !(*it)->getReceiverAddress().isMulticast())
+                        break;
+                }
+                dataQueue[cat].insert(it,frame);
+            }
+            else
+                dataQueue[cat].push_back(frame);
+        }
+        else
+        {
+            if (mpduAggregateHandler)
+            {
+                includedInMsduA = mpduAggregateHandler->setMsduA((Ieee80211DataFrame *)frame,cat); // it is safe, the frame must be Ieee80211DataFrame if the core arrive here
+                if (!includedInMsduA)
+                    dataQueue[cat].push_back(frame);
+            }
+            else
+                dataQueue[cat].push_back(frame);
+        }
         int length = 0;
         for (int i = 0; i < numQueues; i++)
             length += dataQueue[i].size();
+        if (mpduAggregateHandler && !includedInMsduA)
+            mpduAggregateHandler->increaseSize(frame,cat);
+
         emit(dataQueueLenSignal, length);
         return nullptr;
     }
@@ -240,10 +284,41 @@ cMessage *Ieee80211MgmtBase::enqueue(cMessage *msg, const int &cat)
         return msg;
     }
     else {
-        dataQueue[cat].push_back(frame);
+        bool includedInMsduA = false;
+        // if broadcast and musticast frames must be transmit before
+        if ((frame->getReceiverAddress().isBroadcast() || frame->getReceiverAddress().isMulticast()))
+        {
+            if (!dataQueue[cat].empty() && !dataQueue[cat].back()->getReceiverAddress().isBroadcast() && !dataQueue[cat].back()->getReceiverAddress().isMulticast())
+            {
+                // search for the first non multicast frame
+                auto it = dataQueue[cat].begin();
+                for (;it != dataQueue[cat].end();++it)
+                {
+                    if (!(*it)->getReceiverAddress().isBroadcast() && !(*it)->getReceiverAddress().isMulticast())
+                        break;
+                }
+                dataQueue[cat].insert(it,frame);
+            }
+            else
+                dataQueue[cat].push_back(frame);
+        }
+        else
+        {
+            if (mpduAggregateHandler)
+            {
+                includedInMsduA = mpduAggregateHandler->setMsduA((Ieee80211DataFrame *)frame,cat); // it is safe, the frame must be Ieee80211DataFrame if the core arrive here, return true if the frame is included in a msdu-A frame.
+                if (!includedInMsduA)
+                    dataQueue[cat].push_back(frame);
+            }
+            else
+                dataQueue[cat].push_back(frame);
+        }
         int length = 0;
         for (int i = 0; i < numQueues; i++)
             length += dataQueue[i].size();
+        if (mpduAggregateHandler && !includedInMsduA)
+            mpduAggregateHandler->increaseSize(frame,cat);
+
         emit(dataQueueLenSignal, length);
         return nullptr;
     }
@@ -275,18 +350,55 @@ cMessage *Ieee80211MgmtBase::dequeue()
         for (int i = 0; i < numQueues; i++)
             length += dataQueue[i].size();
         emit(dataQueueLenSignal, length);
+        if (mpduAggregateHandler)
+            mpduAggregateHandler->decreaseSize(pk,0);
+
+
     }
-    if (mpduAggregateHandler)
+    if (mpduAggregateHandler && pk != nullptr)
+    {
         mpduAggregateHandler->checkState(pk);
-
-
+    }
     return pk;
 }
+
+void Ieee80211MgmtBase::requestPacket()
+{
+    Enter_Method("requestPacket(int)");
+
+    bool dataFrame = mgmtQueue.empty();
+    cMessage *msg = dequeue();
+    if (msg == nullptr) {
+        packetRequested++;
+    }
+    else {
+        emit(dequeuePkSignal, msg);
+        emit(queueingTimeSignal, simTime() - msg->getArrivalTime());
+        if (mpduAggregateHandler && dataFrame)
+        {
+            Ieee80211DataFrame * frame = dynamic_cast<Ieee80211DataFrame*>(msg);
+            if (frame)
+            {
+                if (mpduAggregateHandler->isAllowAddress(frame->getReceiverAddress()))
+                {
+                    cMessage * aux = mpduAggregateHandler->getBlock(frame,64,-1,0,minMpduASize);
+                    if (aux)
+                        msg = aux;
+                }
+
+            }
+        }
+        msg->setKind(0);
+        sendOut(msg);
+    }
+}
+
 
 void Ieee80211MgmtBase::requestPacket(const int &cat)
 {
     Enter_Method("requestPacket(int)");
 
+    bool dataFrame = mgmtQueue.empty();
     cMessage *msg = dequeue(cat);
     if (msg == nullptr) {
         if (cat == 0)
@@ -297,9 +409,47 @@ void Ieee80211MgmtBase::requestPacket(const int &cat)
     else {
         emit(dequeuePkSignal, msg);
         emit(queueingTimeSignal, simTime() - msg->getArrivalTime());
+        if (mpduAggregateHandler && dataFrame)
+        {
+            Ieee80211DataFrame * frame = dynamic_cast<Ieee80211DataFrame*>(msg);
+            if (frame)
+            {
+                if (mpduAggregateHandler->isAllowAddress(frame->getReceiverAddress()))
+                {
+                    cMessage * aux = mpduAggregateHandler->getBlock(frame,64,-1,cat,minMpduASize);
+                    if (aux)
+                        msg = aux;
+                }
+
+            }
+        }
         msg->setKind(cat);
         sendOut(msg);
     }
+}
+
+cMessage *Ieee80211MgmtBase::requestMpuA(const MACAddress &addr, const int &size, const int64_t &remanent, const int &cat)
+{
+    if (mpduAggregateHandler)
+    {
+
+        MpduAggregateHandler::ADDBAInfo *infoAdda;
+        if (mpduAggregateHandler->isAllowAddress(addr, infoAdda))
+        {
+            int64_t maxByteSize = 65535;
+            if (infoAdda)
+                maxByteSize = exp2(13+infoAdda->exponent)-1;
+            maxByteSize -= remanent;
+            cMessage * msg = mpduAggregateHandler->getBlock(addr,size,maxByteSize,cat,-1);
+            if (msg)
+            {
+                if (msg->getOwner() == this)
+                    drop(msg);
+                return msg;
+            }
+        }
+    }
+    return nullptr;
 }
 
 cMessage *Ieee80211MgmtBase::dequeue(const int & cat)
@@ -319,6 +469,14 @@ cMessage *Ieee80211MgmtBase::dequeue(const int & cat)
         int length = 0;
         for (int i = 0; i < numQueues; i++)
             length += dataQueue[i].size();
+        if (mpduAggregateHandler)
+        {
+            Ieee80211DataOrMgmtFrame *frame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(pk);
+            if (frame)
+                mpduAggregateHandler->decreaseSize(frame,cat);
+        }
+
+
         emit(dataQueueLenSignal, length);
     }
     return pk;
@@ -345,6 +503,11 @@ void Ieee80211MgmtBase::sendUp(cMessage *msg)
 
 void Ieee80211MgmtBase::processFrame(Ieee80211DataOrMgmtFrame *frame)
 {
+    if (mpduAggregateHandler && frame != nullptr)
+    {
+        if (mpduAggregateHandler->handleFrames(frame))
+            return;
+    }
     switch (frame->getType()) {
         case ST_DATA:
             numDataFramesReceived++;
@@ -434,7 +597,7 @@ void Ieee80211MgmtBase::start()
 void Ieee80211MgmtBase::clear()
 {
     cMessage *msg;
-    for (int i = 0 ; i < numQueues; i++)
+    for (unsigned int i = 0 ; i < dataQueue.size(); i++)
     {
         while (nullptr != (msg = dequeue(i)))
             delete msg;
@@ -500,6 +663,12 @@ unsigned int Ieee80211MgmtBase::getManagementSize() const
 cMessage * Ieee80211MgmtBase::pop(const int& cat) {
     cMessage *msg = dataQueue[cat].front();
     dataQueue[cat].pop_front();
+    if (mpduAggregateHandler)
+    {
+        Ieee80211DataOrMgmtFrame *frame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg);
+        if (frame != nullptr)
+            mpduAggregateHandler->decreaseSize(frame,cat);
+    }
     return msg;
 }
 

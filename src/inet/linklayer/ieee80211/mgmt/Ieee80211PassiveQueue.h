@@ -38,7 +38,12 @@ class INET_API Ieee80211PassiveQueue : public PassiveQueueBase
         virtual bool isEmpty(const int&) = 0;
         virtual void clear(const int&) = 0;
         virtual cMessage *pop(const int&) = 0;
-        virtual void requestPacket() {PassiveQueueBase::requestPacket();}
+
+        virtual cMessage *dequeue(const int&) = 0;
+        virtual cMessage *enqueue(cMessage *, const int &) = 0;
+
+        virtual cMessage *requestMpuA(const MACAddress &, const int &, const int64_t &,const int & = 0) = 0;
+        virtual void requestPacket() override {PassiveQueueBase::requestPacket();}
 
 
         virtual Ieee80211DataOrMgmtFrame *getQueueElement(const int &, const int &) const = 0;

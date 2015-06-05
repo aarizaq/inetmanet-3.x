@@ -29,6 +29,7 @@ simple SecurityIeee80211MgmtAdhoc like IIeee80211Mgmt
         bool EDCA = default(false); // enable Enhanced Distributed Channel Access (802.11e)
         // parameters for EDCA = true
         string classifier = default("Ieee80211eClassifier");
+        bool aggregateHandler = default(false);
                 
         string meshReactiveRoutingProtocol = default("inet.networklayer.manetrouting.DYMOUM");
         int frameCapacity = default(100);

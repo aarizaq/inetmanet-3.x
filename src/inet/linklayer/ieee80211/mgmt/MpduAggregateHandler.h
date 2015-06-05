@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2011 Alfonso Ariza, Universidad de Malaga
+// Copyright (C) 2015 Alfonso Ariza, Universidad de Malaga
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
@@ -25,7 +25,7 @@
 #include <utility>
 #include "inet/linklayer/ieee80211/mac/IQoSClassifier.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
-
+#include "inet/linklayer/ieee80211/mac/Ieee80211MpduA.h"
 
 namespace inet {
 
@@ -78,6 +78,7 @@ class INET_API MpduAggregateHandler : public cOwnedObject
         class ADDBAInfo
         {
             public:
+                uint8_t exponent = 3;
                 State state = DEFAULT;
                 simtime_t startBlockAck;
                 uint64_t bytesSend;
@@ -107,23 +108,21 @@ class INET_API MpduAggregateHandler : public cOwnedObject
         std::map<MACAddress,ADDBAInfo *> listAllowAddress;
         MACAddress neighAddress;
 
-        bool allAddress;
-        bool resetAfterSend;
-        int automaticMimimumAddress; // if the number of "free" address is bigger than this value the MpduAggregateHandler changes to automatically the handle Ack mode, 0 or lower disabled
+        bool allAddress = false;
+        bool perpetual = true;
+        bool resetAfterSend = false;
+        bool requestProcedure = true;
+        int automaticMimimumAddress = -1; // if the number of "free" address is bigger than this value the MpduAggregateHandler changes to automatically the handle Ack mode, 0 or lower disabled
 
         std::vector<CategotyInfo> categories;
-        virtual void increaseSize(Ieee80211DataOrMgmtFrame* val, int cat);
-        virtual void decreaseSize(Ieee80211DataOrMgmtFrame* val, int cat);
-
 
         virtual int findAddress(const MACAddress  &,int = -1);
         virtual int findAddressFree(const MACAddress &addr,int = -1);
+
         virtual void createBlocks(const MACAddress &, int = -1);
         virtual void removeBlock(const MACAddress &, int = -1);
 
-        //
-        virtual void setMacAcceptMpdu(const MACAddress &);
-        virtual void setMacDiscardMpdu(const MACAddress &);
+
 
         // management of frame control
         virtual void prepareADDBA(const MACAddress &);
@@ -135,6 +134,11 @@ class INET_API MpduAggregateHandler : public cOwnedObject
              //  ADDBAInfo management
 
     public:
+
+        virtual void increaseSize(Ieee80211DataOrMgmtFrame* val, int cat);
+        virtual void decreaseSize(Ieee80211DataOrMgmtFrame* val, int cat);
+
+
         MpduAggregateHandler();
         virtual ~MpduAggregateHandler();
         virtual void setNumQueues(int num){categories.resize(num);}
@@ -144,10 +148,14 @@ class INET_API MpduAggregateHandler : public cOwnedObject
         virtual bool checkState(const Ieee80211DataOrMgmtFrame *);
         virtual bool handleFrames(Ieee80211DataOrMgmtFrame *pkt);
 
+        virtual Ieee80211MpduA* getBlock(const MACAddress &, int, int64_t, int , int );
+        virtual Ieee80211MpduA* getBlock(Ieee80211DataFrame *, int , int64_t, int , int );
+
         virtual void setAllAddress(const bool &p) {allAddress = p;}
         virtual void setResetAfterSend(const bool &p) {resetAfterSend = p;}
         virtual void setADDBAInfo(const MACAddress &addr, ADDBAInfo *);
         virtual bool isAllowAddress(const MACAddress &add, ADDBAInfo *&iaddai);
+        virtual void setPerpetual(const bool &p){perpetual = p;}
 
         //
         virtual void setAutomaticMimimumAddress(const int & p) {automaticMimimumAddress = p;} // if the number of "free" address is bigger than this value the MpduAggregateHandler changes to automatically the handle Ack mode, 0 or lower disabled
@@ -156,6 +164,16 @@ class INET_API MpduAggregateHandler : public cOwnedObject
         virtual bool getAllAddress() const {return allAddress;}
         virtual bool getResetAfterSend() const {return resetAfterSend;}
         virtual bool isAllowAddress(const MACAddress &add);
+        virtual void setRequestProcedure(const bool &p) {requestProcedure = p;}
+        virtual bool getRequestProcedure() const {return requestProcedure;}
+
+        // Include an address in the list of allowed address
+        virtual void setMacAcceptMpdu(const MACAddress &);
+        // remove an address in the list of allowed address
+        virtual void setMacDiscardMpdu(const MACAddress &);
+
+        virtual bool setMsduA(Ieee80211DataFrame *,const int &);
+
 
 };
 

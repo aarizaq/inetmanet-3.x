@@ -142,6 +142,8 @@ packet Ieee80211DataOrMgmtFrame extends Ieee80211TwoAddressFrame
     MACAddress address3;
     short fragmentNumber;
     uint16 sequenceNumber;
+    bool lastMpdu = true; // convenience parameter for A-MPDU transmission/reception frames.
+    bool isMpduA = false;
 }
 
 //
@@ -208,7 +210,6 @@ packet Ieee80211MeshFrame extends Ieee80211DataFrame
 
 packet Ieee80211BlockAckFrameReq extends Ieee80211TwoAddressFrame
 {
-    @customize(true);
     type = ST_BLOCKACK_REQ;
     byteLength = 24;
     bool barAckPolicy;
@@ -221,12 +222,41 @@ packet Ieee80211BlockAckFrameReq extends Ieee80211TwoAddressFrame
 
 packet Ieee80211BlockAckFrame extends Ieee80211TwoAddressFrame
 {
-    @customize(true);
     type = ST_BLOCKACK;
     byteLength = 152;
-    bool baAckPolicy;
+    bool barAckPolicy;
     bool multiTid;
     bool compressed;
     unsigned short tidInfo;
     unsigned short startingSequence;
+    unsigned short sequences[]; // conveinience, instead of to use the bit map we use this
+}
+
+packet Ieee80211MpduDelimiter
+{
+    byteLength = 4;
+}
+
+packet Ieee80211MsduASubframe extends Ieee80211TwoAddressFrame
+{
+    byteLength = 14;
+    type = ST_DATA;
+}
+
+packet Ieee80211MsduAMeshSubframe extends Ieee80211MsduASubframe
+{
+    byteLength = 20;
+    // mesh control fields
+    short TTL = 15; // Is used by experimental 80211 mesh protocol
+    unsigned short subType = 0;
+    long seqNumber;
+    MACAddress finalAddress; //virtual address used by anycast procedure
+                             // contain the initial address and avoid the necessity of search the IP address
+   // used for statistics
+    unsigned int totalHops = 0;
+    unsigned int totalStaticHops = 0;
+    int channels[]; // used to broadcast the used channels
+    // this fiels are used by fragmentation over ethernet, not necesasry, it's possible to use the fields un the Ieee80211 frame 
+    bool isFragment=false;
+    unsigned long realLength=0;
 }
