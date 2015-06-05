@@ -22,6 +22,7 @@
 #include "inet/physicallayer/common/packetlevel/Interference.h"
 #include "inet/linklayer/contract/IMACFrame.h"
 #include "inet/networklayer/contract/IInterfaceTable.h"
+#include "inet/physicallayer/ieee80211/packetlevel/Ieee80211TransmissionBase.h"
 
 namespace inet {
 
@@ -544,6 +545,17 @@ cPacket *RadioMedium::receivePacket(const IRadio *radio, IRadioFrame *radioFrame
     communicationCache->removeCachedDecision(radio, transmission);
     cPacket *macFrame = decision->getMacFrame()->dup();
     macFrame->setControlInfo(const_cast<ReceptionIndication *>(decision->getIndication()));
+
+    // add information for the upper layers here
+    Ieee80211TransmissionBase * ieee80211TransmissionBase = dynamic_cast<Ieee80211TransmissionBase*>((IPrintableObject *)transmission);
+
+    if (ieee80211TransmissionBase)
+    {
+        bps bps = ieee80211TransmissionBase->getMode()->getDataMode()->getNetBitrate();
+        ReceptionIndication *cinfo = static_cast<ReceptionIndication *> (macFrame->getControlInfo());
+        cinfo->setBitrate(bps);
+    }
+
     if (mediumVisualizer != nullptr)
         mediumVisualizer->receivePacket(decision);
     delete decision;
