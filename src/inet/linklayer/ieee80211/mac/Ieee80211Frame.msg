@@ -237,26 +237,12 @@ packet Ieee80211MpduDelimiter
     byteLength = 4;
 }
 
-packet Ieee80211MsduASubframe extends Ieee80211TwoAddressFrame
+packet Ieee80211MsduASubframe extends Ieee80211DataFrame
 {
     byteLength = 14;
-    type = ST_DATA;
 }
 
-packet Ieee80211MsduAMeshSubframe extends Ieee80211MsduASubframe
+packet Ieee80211MsduAMeshSubframe extends Ieee80211MeshFrame
 {
     byteLength = 20;
-    // mesh control fields
-    short TTL = 15; // Is used by experimental 80211 mesh protocol
-    unsigned short subType = 0;
-    long seqNumber;
-    MACAddress finalAddress; //virtual address used by anycast procedure
-                             // contain the initial address and avoid the necessity of search the IP address
-   // used for statistics
-    unsigned int totalHops = 0;
-    unsigned int totalStaticHops = 0;
-    int channels[]; // used to broadcast the used channels
-    // this fiels are used by fragmentation over ethernet, not necesasry, it's possible to use the fields un the Ieee80211 frame 
-    bool isFragment=false;
-    unsigned long realLength=0;
 }

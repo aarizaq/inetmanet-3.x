@@ -755,12 +755,29 @@ bool MpduAggregateHandler::setMsduA(Ieee80211DataFrame * frame, const int &cat)
         MACAddress addr3Aux = frameMsda->getAddress3();
         MACAddress addr4Aux = frameMsda->getAddress4();
         // Compare addresses
-        if (destAux.compareTo(dest) != 0 || addr3Aux.compareTo(addr3) != 0 || addr4Aux.compareTo(addr4) != 0 )
+        if (destAux.compareTo(dest) != 0)
         {
             ++it;
             continue;
         }
         // add to the msdu-a
+        // decapsulate and recapsulate
+        // it is necessary to include padding bytes in the latest frame
+        cPacket *pkt = frame->decapsulate();
+        if (dynamic_cast<Ieee80211MeshFrame *>(frame))
+        {
+            Ieee80211MsduAMeshSubframe * header = new Ieee80211MsduAMeshSubframe();
+            Ieee80211DataFrame *aux = header;
+            *aux = (*frame);
+
+        }
+        else
+        {
+            Ieee80211MsduASubframe * header = new Ieee80211MsduASubframe();
+            Ieee80211DataFrame *aux = header;
+            *aux = (*frame);
+        }
+
 
         return true;
     }
