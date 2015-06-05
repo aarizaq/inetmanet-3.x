@@ -19,25 +19,10 @@
 namespace inet {
 namespace ieee80211 {
 
-/*void Ieee802MacBaseFsm::setNumStates(int numStates)
+Ieee802MacBaseFsm::Ieee802MacBaseFsm()
 {
     // TODO Auto-generated constructor stub
     mac = dynamic_cast<Ieee80211Mac*>(this->getOwner());
-    vectorStates.resize(numStates);
-    vectorInfo.resize(numStates);
-    for (unsigned int i = 0; i < vectorStates.size(); i++)
-        vectorStates[i] = nullptr;
-}
-*/
-
-Ieee802MacBaseFsm::Ieee802MacBaseFsm(int numStates)
-{
-    // TODO Auto-generated constructor stub
-    mac = dynamic_cast<Ieee80211Mac*>(this->getOwner());
-    vectorStates.resize(numStates);
-    vectorInfo.resize(numStates);
-    for (unsigned int i = 0; i < vectorStates.size(); i++)
-        vectorStates[i] = nullptr;
 }
 
 Ieee802MacBaseFsm::~Ieee802MacBaseFsm()
@@ -45,60 +30,17 @@ Ieee802MacBaseFsm::~Ieee802MacBaseFsm()
     // TODO Auto-generated destructor stub
 }
 
-bool Ieee802MacBaseFsm::isCondition()
-{
-    if (!event())
-    {
-        if (!condition())
-        {
-            condition() = true;
-        }
-        else
-            throw cRuntimeError("FSMIEEE80211_Enter() must precede all FSMA_*_Transition()'s in the code"); \
-        return true;
-    }
-    return false;
-}
-
-bool Ieee802MacBaseFsm::isEvent()
-{
-    if (event())
-    {
-        event() = false;
-        return true;
-    }
-    return false;
-}
 
 void Ieee802MacBaseFsm::execute(cMessage *msg)
 {
-
-    condition() = false;
-    event()  = true;
+    isImmediate = false;
     do
     {
-        exit() = true;
-        EV_DEBUG << "Processing Ieee80211 FSM, state" <<  vectorInfo[getState()] << endl;
-        int oldState = getState();
-        Ieee80211MacStateMethod method = vectorStates[getState()];
-        (mac->*method)(this, msg);
-        if (oldState != getState())
-        {
-            // continue
-            exit() = false;
-            condition() = false;
-        }
-    } while(!exit());
-    EV_DEBUG << "End Ieee80211 FSM, state" <<  vectorInfo[getState()] << endl;
+        StateMethod method = vectorStates[getState()];
+        (mac->*method)(*this, msg);
+    } while(isImmediate);
 }
 
-void Ieee802MacBaseFsm::Ieee802MacBaseFsm::setStateMethod(int state, Ieee80211MacStateMethod p, const char *msg)
-{
-    if (state < 0 || state >= (int)vectorStates.size())
-        throw cRuntimeError("Invalid stae: '%d'", state);
-    vectorStates[state] = p;
-    vectorInfo[state] = msg;
-}
 
 } /* namespace ieee80211 */
 } /* namespace inet */

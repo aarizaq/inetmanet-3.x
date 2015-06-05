@@ -102,7 +102,6 @@ class INET_API Ieee80211DsssMode : public IIeee80211Mode
     virtual inline Hz getBandwidth() const { return MHz(22); }
 
     virtual inline const simtime_t getDuration(int dataBitLength) const override { return preambleMode->getDuration() + headerMode->getDuration() + dataMode->getDuration(dataBitLength); }
-    virtual inline const simtime_t getPayloadDuration(int dataBitLength) const override { return dataMode->getDuration(dataBitLength); }
 
     // Table 19-8—ERP characteristics
     virtual inline const simtime_t getSlotTime() const override { return 20E-6; }

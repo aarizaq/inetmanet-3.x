@@ -40,7 +40,6 @@ simple Ieee80211MgmtAdhocWithRouting like IIeee80211Mgmt
         bool EDCA = default(false); // enable Enhanced Distributed Channel Access (802.11e)
         // parameters for EDCA = true
         string classifier = default("Ieee80211eClassifier");
-        bool aggregateHandler = default(false);
         string macModule;               // The path to the MAC module
         @macRouting;  // Mac layer with routing protocol working in the level 2
         @display("i=block/cogwheel");

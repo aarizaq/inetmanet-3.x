@@ -31,7 +31,6 @@ moduleinterface IIeee80211Mgmt
         // parameters for EDCA = true
         string classifier;
         string macModule;               // The path to the MAC module
-        bool aggregateHandler;
     gates:
         input upperLayerIn;
         output upperLayerOut;

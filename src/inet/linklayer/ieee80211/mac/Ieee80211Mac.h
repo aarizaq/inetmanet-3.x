@@ -24,7 +24,7 @@
 
 // un-comment this if you do not want to log state machine transitions
 //#define FSM_DEBUG
-#include <deque>
+
 #include "inet/common/INETDefs.h"
 #include "inet/common/FSMA.h"
 #include "inet/common/INETMath.h"
@@ -36,10 +36,7 @@
 #include "inet/linklayer/base/MACProtocolBase.h"
 
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
-#include "inet/linklayer/ieee80211/mac/Ieee80211MpduA.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Consts.h"
-#include "inet/linklayer/ieee80211/mac/Ieee802MacBaseFsm.h"
-
 
 
 namespace inet {
@@ -112,7 +109,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
         }
     };
 
-    bool registerErrors = false;
+    bool registerErrors;
     typedef std::map<MACAddress, std::vector<Ieee80211PacketErrorInfo> > Ieee80211ErrorInfo;
     Ieee80211ErrorInfo errorInfo;
 
@@ -131,6 +128,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     bool prioritizeMulticast = false;
 
   protected:
+    bool isInHandleWithFSM = false;
     IRadio::TransmissionState transmissionState = IRadio::TRANSMISSION_STATE_UNDEFINED;
     /**
      * @name Configuration parameters
@@ -203,15 +201,6 @@ class INET_API Ieee80211Mac : public MACProtocolBase
      */
     int transmissionLimit = 0;
 
-    /* The source STA shall maintain a transmit MSDU timer for each MSDU being transmitted. The attribute
-     * dot11MaxTransmitMSDULifetime specifies the maximum amount of time allowed to transmit an MSDU. The
-     * timer starts on the initial attempt to transmit the first fragment of the MSDU. If the timer exceeds
-     * dot11MaxTransmitMSDULifetime, then all remaining fragments are discarded by the source STA and no
-     * attempt is made to complete transmission of the MSDU.
-     */
-
-    int dot11MaxTransmitMSDULifetime = 512;
-
     /** Default access catagory */
     int defaultAC = 0;
 
@@ -253,73 +242,9 @@ class INET_API Ieee80211Mac : public MACProtocolBase
         WAITSIFS,
         RECEIVE,
         WAITBLOCKACK,
-        SENDMPDUA,
     };
   protected:
-
-    //cFSM fsm;
-      Ieee802MacBaseFsm *fsm;
-
-    // MPDU information variables
-      bool MpduModeTranssmision = false; // used to avoid that the radio could out from transmission mode if
-      bool MpduModeReception = false;
-      bool sendBlockAckEndMpduA = false; // if true the node sends a request block ack after mpdu-a transmission
-      simtime_t mpudRetTimeOut;
-
-      int indexMpduTransmission = 0; // index of the frame in the mdpu that must be transmitted.
-      bool interSpaceMpdu = false; // determine if it is necessary to send a inter space mudp-a delimiter or the next frame
-      Ieee80211MpduA *mpduInTransmission = nullptr; // the mpdu-a that is been transmitted.
-      int mpduAClass = 0;
-      int numBlockAckReqRetries = 0;
-      bool reqBlockAck = false;
-
-
-      typedef std::deque<Ieee80211DataFrame *> MpduAInReception;
-      typedef std::vector<int> Confirmed;
-      class MpduAInProc : public cObject
-      {
-          public:
-              simtime_t time;
-              MpduAInReception inReception;
-              Confirmed confirmed;
-              cMessage timeOut;
-              ~MpduAInProc()
-              {
-                  if (timeOut.isScheduled())
-                  {
-                      simulation.msgQueue.remove(&timeOut);
-                      EVCB.messageCancelled(&timeOut);
-                      timeOut.setPreviousEventNumber(simulation.getEventNumber());
-                  }
-                  while(!inReception.empty())
-                  {
-                      delete inReception.back();
-                      inReception.pop_back();
-                  }
-              }
-      };
-      /*
-      class MpduAKey
-      {
-          public:
-              MACAddress addr;
-              unsigned long seq;
-              bool operator<(const MpduAKey& other) const;
-              bool operator>(const MpduAKey& other) const { return other < *this; };
-              bool operator==(const MpduAKey& other) const;
-              bool operator!=(const MpduAKey& other) const;
-
-      };
-      */
-
-      std::map<MACAddress, MpduAInProc> processingMpdu;
-
-      int retryMpduAConfirmation = 0;
-      int retryMpduA = 0;
-      int numConsecutiveMpduA = 0;
-      int maxConsecutiveMpduA = 4;
-
-
+    cFSM fsm;
 
     struct Edca
     {
@@ -585,20 +510,6 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     //@}
     virtual bool  initFsm(cMessage *msg, bool &, Ieee80211Frame *&);
     virtual void  endFsm(cMessage *msg);
-
-    virtual void stateIdle(Ieee802MacBaseFsm * , cMessage *);
-    virtual void stateDefer(Ieee802MacBaseFsm * , cMessage *);
-    virtual void stateWaitAifs(Ieee802MacBaseFsm * , cMessage *);
-    virtual void stateBackoff(Ieee802MacBaseFsm * , cMessage *);
-    virtual void stateWaitAck(Ieee802MacBaseFsm * , cMessage *);
-    virtual void stateSendMpuA(Ieee802MacBaseFsm * , cMessage *);
-    virtual void stateWaitBlockAck(Ieee802MacBaseFsm * , cMessage *);
-    virtual void stateWaitMulticast(Ieee802MacBaseFsm * ,cMessage *);
-    virtual void stateWaitCts(Ieee802MacBaseFsm * , cMessage *);
-    virtual void stateWaitSift(Ieee802MacBaseFsm * , cMessage *);
-    virtual void stateReceive(Ieee802MacBaseFsm * , cMessage *);
-
-
   protected:
     /**
      * @name Timing functions
@@ -664,21 +575,8 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     virtual void sendDataFrame(Ieee80211DataOrMgmtFrame *frameToSend);
     virtual void sendMulticastFrame(Ieee80211DataOrMgmtFrame *frameToSend);
 
-    // handle MPDU-A
-    virtual void setBlockAckTimeOut();
-    virtual void retryCurrentMpduA();
-
-    virtual void sendMpuAPending(const MACAddress &addr);
-    virtual void sendNextFrameMpduA(cMessage *msg);
-
-    virtual void retryBlockAckReq();
-
-    virtual bool processMpduA(Ieee80211DataFrame *frame);
-    virtual void sendBLOCKACKFrameOnEndSIFS();
+    virtual void processMpduA(Ieee80211Frame *frame);
     virtual bool isMpduA(Ieee80211Frame *frame);
-    virtual Ieee80211MpduDelimiter* buildMpduDataFrame(Ieee80211Frame *frameToSend, const int &retry, const bool &);
-    virtual void sendBlockAckFrame(const MACAddress &);
-    virtual void processBlockAckFrame(Ieee80211Frame *frame);
 
     //@}
 
@@ -768,9 +666,6 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     virtual double computeFrameDuration(Ieee80211Frame *msg);
     virtual double computeFrameDuration(int bits, double bitrate);
 
-    virtual double computeMpduADuration(Ieee80211MpduA *);
-
-
     /** @brief Logs all state information */
     virtual void logState();
 
@@ -842,7 +737,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
   public:
     virtual void setQueueModeTrue() {queueMode = true;}
     virtual void setQueueModeFalse() {queueMode = false;}
-    virtual State getState() {return static_cast<State>(fsm->getState());}
+    virtual State getState() {return static_cast<State>(fsm.getState());}
     virtual unsigned int getQueueSize() {return transmissionQueueSize();}
     virtual int getQueueSizeAddress(const MACAddress &addr);
 };

@@ -18,20 +18,13 @@
 //
 
 package inet.linklayer.ieee80211mesh.mgmt;
-import inet.linklayer.ieee80211.mgmt.IIeee80211Mgmt;
 
 //simple Ieee80211Mesh like IIeee80211Mgmt
-simple SecurityIeee80211Mesh like IIeee80211Mgmt
+simple SecurityIeee80211Mesh
 {
     parameters:
         @class(Ieee80211Mesh);
         @macRouting;  // Mac layer with routing protocol working in the level 2
-        
-        bool EDCA = default(false); // enable Enhanced Distributed Channel Access (802.11e)
-        // parameters for EDCA = true
-        string classifier = default("Ieee80211eClassifier");
-        bool aggregateHandler = default(false);
-        
         string meshReactiveRoutingProtocol = default("inet.networklayer.manetrouting.DYMOUM");
         int frameCapacity = default(100);
         bool useHwmp = default(false); // If active automatically deactivate useProactive and useReactive and activate ETXEstimate
@@ -64,9 +57,6 @@ simple SecurityIeee80211Mesh like IIeee80211Mgmt
         double lifeTimeForInterface @unit(s) = default(5s);
         string selectionCriteria @enum("Etx","MinQueue","LastUsed","MinQueueLastUsed","LastUsedMinQueue") = default("MinQueue");// if ETX active the ETX proc
         bool inteligentBroadcastRouting = default(false);
-        
-        string macModule;               // The path to the MAC module
-        
         @signal[enqueuePk](type=cMessage);
         @signal[dequeuePk](type=cMessage);
         @signal[dropPkByQueue](type=cMessage);
@@ -91,10 +81,8 @@ simple SecurityIeee80211Mesh like IIeee80211Mgmt
         output upperLayerOut @labels(Ieee802Ctrl/up);
         input fromEthernet @labels(Ieee80211Frame);
         output toEthernet @labels(Ieee80211Frame);
-        input  macIn @loose;
-        output macOut @loose;
-        input  macInMulti[] @loose;
-        output macOutMulti[] @loose;
+        input macIn[];
+        output macOut[];
         input agentIn @loose;   // optional gates used for the agent in stations
         output agentOut @loose; // optional gates used for the agent in stations
         input locatorIn @loose;
