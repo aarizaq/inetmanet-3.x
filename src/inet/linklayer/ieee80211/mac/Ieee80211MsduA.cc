@@ -15,7 +15,7 @@
 
 #include "inet/linklayer/ieee80211/mac/Ieee80211MsduA.h"
 
-#define SHAREDBLOCK
+//#define SHAREDBLOCK
 
 
 // Another default rule (prevents compiler from choosing base class' doPacking())
@@ -51,7 +51,7 @@ Ieee80211MsduA::~Ieee80211MsduA()
     _deleteEncapVector();
 }
 
-
+Register_Class(Ieee80211MsduA);
 
 Ieee80211MsduA::Ieee80211MsduA(const char *name, int kind) :
         Ieee80211MeshFrame(name, kind)
@@ -59,7 +59,7 @@ Ieee80211MsduA::Ieee80211MsduA(const char *name, int kind) :
     encapsulateVector.clear();
 }
 
-Ieee80211MsduA::Ieee80211MsduA(Ieee80211MsduA &other) :
+Ieee80211MsduA::Ieee80211MsduA(const Ieee80211MsduA &other) :
         Ieee80211MeshFrame()
 {
     encapsulateVector.clear();
@@ -103,8 +103,9 @@ void Ieee80211MsduA::_deleteEncapVector()
         }
         else
         {
-            if (encapsulateVector.back()->pkt->getOwner()!=this)
+            /*if (encapsulateVector.back()->pkt->getOwner()!=this)
             take (encapsulateVector.back()->pkt);
+            drop (encapsulateVector.back()->pkt);*/
             delete encapsulateVector.back()->pkt;
             delete encapsulateVector.back();
         }
@@ -197,8 +198,8 @@ void Ieee80211MsduA::pushBack(Ieee80211DataFrame *pkt)
         {
             size++;
             while (size % 4) size++;
-            setBitLength(getBitLength() - pktAux->getByteLength() + size);
-            pktAux->setBitLength(size);
+            setByteLength(getByteLength() - pktAux->getByteLength() + size);
+            pktAux->setByteLength(size);
         }
     }
 
@@ -207,7 +208,9 @@ void Ieee80211MsduA::pushBack(Ieee80211DataFrame *pkt)
     if (pkt->getOwner() != simulation.getContextSimpleModule())
         throw cRuntimeError(this, "pushBack(): not owner of message (%s)%s, owner is (%s)%s", pkt->getClassName(),
                 pkt->getFullName(), pkt->getOwner()->getClassName(), pkt->getOwner()->getFullPath().c_str());
-    take(shareStructPtr->pkt = pkt);
+    take(pkt);
+    //drop(pkt);
+    shareStructPtr->pkt = pkt;
     encapsulateVector.push_back(shareStructPtr);
 }
 
@@ -229,7 +232,9 @@ void Ieee80211MsduA::pushFrom(Ieee80211DataFrame *pkt)
     if (pkt->getOwner() != simulation.getContextSimpleModule())
         throw cRuntimeError(this, "pushFrom(): not owner of message (%s)%s, owner is (%s)%s", pkt->getClassName(),
                 pkt->getFullName(), pkt->getOwner()->getClassName(), pkt->getOwner()->getFullPath().c_str());
-    take(shareStructPtr->pkt = pkt);
+    take(pkt);
+    //drop(pkt);
+    shareStructPtr->pkt = pkt;
     encapsulateVector.insert(encapsulateVector.begin(), shareStructPtr);
 }
 
@@ -307,13 +312,14 @@ Ieee80211MsduA& Ieee80211MsduA::operator=(const Ieee80211MsduA& msg)
         for (unsigned int i = 0; i < msg.encapsulateVector.size(); i++)
         {
             ShareStruct * shareStructPtr = new ShareStruct();
-            shareStructPtr->pkt = encapsulateVector[i]->pkt->dup();
+            shareStructPtr->pkt = msg.encapsulateVector[i]->pkt->dup();
             encapsulateVector.push_back(shareStructPtr);
         }
 #endif
     }
     return *this;
 }
+
 
 }
 

@@ -61,7 +61,7 @@ Ieee80211MpduA::Ieee80211MpduA(const char *name, int kind) :
     encapsulateVector.clear();
 }
 
-Ieee80211MpduA::Ieee80211MpduA(Ieee80211MpduA &other) :
+Ieee80211MpduA::Ieee80211MpduA(const Ieee80211MpduA &other) :
         Ieee80211DataFrame()
 {
     encapsulateVector.clear();
@@ -199,7 +199,7 @@ void Ieee80211MpduA::pushFront(Ieee80211DataFrame *pkt, int retries)
 }
 
 
-Ieee80211DataFrame *Ieee80211MpduA::getPacket(unsigned int i) const
+Ieee80211DataFrame *Ieee80211MpduA::getPacket(unsigned int i)
 {
 
     if (i >= encapsulateVector.size())

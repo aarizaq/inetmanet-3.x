@@ -17,7 +17,7 @@
 
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtSTASimplified.h"
 #include "inet/linklayer/common/Ieee802Ctrl.h"
-#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA_m.h"
 
 namespace inet {
 

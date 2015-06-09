@@ -188,7 +188,7 @@ enum MeshType
     ROUTING = 0x2;
 }
 
-packet Ieee80211MeshFrame extends Ieee80211DataFrame
+packet Ieee80211MeshFrame extends Ieee80211DataFrameWithSNAP
 {
     type = ST_DATA;
 
@@ -237,7 +237,7 @@ packet Ieee80211MpduDelimiter
     byteLength = 4;
 }
 
-packet Ieee80211MsduASubframe extends Ieee80211DataFrame
+packet Ieee80211MsduASubframe extends Ieee80211DataFrameWithSNAP
 {
     byteLength = 14;
 }
@@ -245,4 +245,12 @@ packet Ieee80211MsduASubframe extends Ieee80211DataFrame
 packet Ieee80211MsduAMeshSubframe extends Ieee80211MeshFrame
 {
     byteLength = 20;
+}
+
+packet Ieee80211MsduAFrame extends Ieee80211DataFrameWithSNAP
+{
+}
+
+packet Ieee80211MsduAMeshFrame extends Ieee80211MeshFrame
+{
 }

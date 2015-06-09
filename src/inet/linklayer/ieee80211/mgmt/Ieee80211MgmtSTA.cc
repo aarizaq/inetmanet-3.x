@@ -24,7 +24,7 @@
 #include "inet/common/NotifierConsts.h"
 #include "inet/physicallayer/contract/packetlevel/RadioControlInfo_m.h"
 #include "inet/physicallayer/ieee80211/packetlevel/Ieee80211ControlInfo_m.h"
-#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA_m.h"
 #include "inet/common/INETUtils.h"
 
 namespace inet {

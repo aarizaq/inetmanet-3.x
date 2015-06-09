@@ -37,10 +37,14 @@ private:
     void _deleteEncapVector();
     bool _checkIfShare();
     void _detachShareVector(unsigned int i);
+protected:
+  // protected and unimplemented operator==(), to prevent accidental usage
+  bool operator==(const Ieee80211MeshFrame&);
+
 public:
     Ieee80211MsduA(const char *name=nullptr, int kind=0);
-    Ieee80211MsduA(Ieee80211MsduA &);
-    virtual Ieee80211MsduA * dup(){return new Ieee80211MsduA(*this);}
+    Ieee80211MsduA(const Ieee80211MsduA &);
+    virtual Ieee80211MsduA * dup() const {return new Ieee80211MsduA(*this);}
     virtual ~Ieee80211MsduA();
     Ieee80211MsduA& operator=(const Ieee80211MsduA& msg);
     virtual Ieee80211DataFrame *getPacket(unsigned int i) const;
@@ -52,7 +56,7 @@ public:
             return encapsulateVector[i]->pkt->getBitLength();
         return 0;
     }
-    cPacket *decapsulatePacket(unsigned int i);
+    cPacket *decapsulatePacket(unsigned int i) ;
     virtual unsigned int getEncapSize() {return encapsulateVector.size();}
 
     virtual void pushFrom(Ieee80211DataFrame *);
@@ -62,17 +66,17 @@ public:
     virtual bool haveBlock(){return !encapsulateVector.empty();}
     virtual void forEachChild(cVisitor *v);
 
-    virtual void parsimPack(cCommBuffer *b);
-    virtual void parsimUnpack(cCommBuffer *b);
+    virtual void parsimPack(cCommBuffer *b) override;
+    virtual void parsimUnpack(cCommBuffer *b) override;
 
 
-    virtual void encapsulate(cPacket *packet)
+    virtual void encapsulate(cPacket *packet) override
     {
         opp_error("operation not supported");
     }
 
 
-    virtual cPacket *decapsulate()
+    virtual cPacket *decapsulate() override
     {
         opp_error("operation not supported");
         return nullptr;
@@ -85,7 +89,7 @@ public:
      * IMPORTANT: see notes at encapsulate() about reference counting
      * of encapsulated packets.
      */
-    virtual cPacket *getEncapsulatedPacket() const
+    virtual cPacket *getEncapsulatedPacket() const override
     {
         opp_error("operation not supported");
         return nullptr;
@@ -98,7 +102,7 @@ public:
      * <tt>getEncapsulatedPacket()!=nullptr</tt>, because it does not need to
      * unshare a shared encapsulated packet (see note at encapsulate()).
      */
-    virtual bool hasEncapsulatedPacket() const
+    virtual bool hasEncapsulatedPacket() const override
     {
         opp_error("operation not supported");
         return false;

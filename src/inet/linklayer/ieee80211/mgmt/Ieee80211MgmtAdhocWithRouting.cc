@@ -19,7 +19,7 @@
 #include "inet/linklayer/common/Ieee802Ctrl.h"
 #include "Ieee80211MgmtAdhocWithRouting.h"
 #include "inet/routing/extras/base/ControlManetRouting_m.h"
-#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA_m.h"
 
 namespace inet {
 
@@ -271,7 +271,6 @@ void Ieee80211MgmtAdhocWithRouting::handleDataFrame(Ieee80211DataFrame *frame)
     }
 
     bool upperPacket = (frame2 && (frame2->getSubType() == UPPERMESSAGE));
-    bool isRouting = (frame2 && (frame2->getSubType() == ROUTING));
 
     if (upperPacket)// Normal frame test if upper layer frame in other case delete
     {
@@ -484,6 +483,7 @@ Ieee80211DataFrame *Ieee80211MgmtAdhocWithRouting::encapsulate(cPacket *msg)
     Ieee802Ctrl *ctrl = check_and_cast<Ieee802Ctrl *>(msg->removeControlInfo());
     dest = ctrl->getDest();
     next = ctrl->getDest();
+    frame->setEtherType(ctrl->getEtherType());
     delete ctrl;
     frame->setAddress3(myAddress);
     frame->setFinalAddress(dest);

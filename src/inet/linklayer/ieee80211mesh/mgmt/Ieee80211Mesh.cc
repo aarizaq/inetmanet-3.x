@@ -29,7 +29,7 @@
 #include "inet/linklayer/ethernet//EtherFrame_m.h"
 #include "inet/routing/extras/olsr/OLSR.h"
 #include "inet/common/lifecycle/NodeStatus.h"
-#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA_m.h"
 
 //#define LIMITBROADCAST
 
@@ -820,6 +820,7 @@ Ieee80211DataFrame *Ieee80211Mesh::encapsulate(cPacket *msg)
         Ieee802Ctrl *ctrl = check_and_cast<Ieee802Ctrl *>(msg->removeControlInfo());
         dest = ctrl->getDest();
         next = ctrl->getDest();
+        frame->setEtherType(ctrl->getEtherType());
         delete ctrl;
         frame->setAddress3(myAddress);
         frame->setFinalAddress(dest);

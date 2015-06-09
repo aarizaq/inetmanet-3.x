@@ -40,12 +40,12 @@ private:
     void _deleteEncapVector();
 public:
     Ieee80211MpduA(const char *name=nullptr, int kind=0);
-    Ieee80211MpduA(Ieee80211MpduA &);
+    Ieee80211MpduA(const Ieee80211MpduA &);
     Ieee80211MpduA(Ieee80211DataFrame *);
-    virtual Ieee80211MpduA * dup(){return new Ieee80211MpduA(*this);}
+    virtual Ieee80211MpduA * dup() const {return new Ieee80211MpduA(*this);}
     virtual ~Ieee80211MpduA();
     Ieee80211MpduA& operator=(const Ieee80211MpduA& msg);
-    virtual Ieee80211DataFrame *getPacket(unsigned int i) const;
+    virtual Ieee80211DataFrame *getPacket(unsigned int i);
     virtual int getNumRetries(const unsigned int &i) const;
     virtual void setNumRetries(const unsigned int &i,const int &val);
 
@@ -57,6 +57,8 @@ public:
             return encapsulateVector[i]->pkt->getBitLength();
         return 0;
     }
+
+    virtual void setPacket(unsigned int i, Ieee80211DataFrame *frame) {if (i<encapsulateVector.size()) encapsulateVector[i]->pkt = frame;}
 
     Ieee80211DataFrame *decapsulatePacket(unsigned int i);
     virtual unsigned int getEncapSize() {return encapsulateVector.size();}

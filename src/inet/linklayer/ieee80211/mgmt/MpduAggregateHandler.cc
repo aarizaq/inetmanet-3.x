@@ -15,7 +15,7 @@
 
 #include "inet/linklayer/ieee80211/mgmt/MpduAggregateHandler.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211MpduA.h"
-#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA_m.h"
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtFrames_m.h"
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtBase.h"
 
@@ -750,7 +750,11 @@ bool MpduAggregateHandler::setMsduA(Ieee80211DataFrame * frame, const int &cat)
             ++it;
             continue;
         }
-
+        if (frameMsda->getToDS() != frame->getToDS())
+        {
+            ++it;
+            continue;
+        }
         if (frameMsda->getByteLength() + frame->getByteLength() >= maxSize)
         {
             ++it;
@@ -789,17 +793,20 @@ bool MpduAggregateHandler::setMsduA(Ieee80211DataFrame * frame, const int &cat)
             Ieee80211MeshFrame *aux = header;
             *aux = (*meshFrame);
             delete frame;
-            header->setByteLength(20);
+            aux->setByteLength(20);
             aux->encapsulate(pkt);
             frame = aux;
         }
         else
         {
             Ieee80211MsduASubframe * header = new Ieee80211MsduASubframe();
+            if (dynamic_cast<Ieee80211DataFrameWithSNAP *>(frame))
+                *((Ieee80211DataFrameWithSNAP *) header) = *((Ieee80211DataFrameWithSNAP*)frame);
+            else
+                *((Ieee80211DataFrame *) header) = *((Ieee80211DataFrame*)frame);
             Ieee80211DataFrame *aux = header;
-            *aux = (*frame);
             delete frame;
-            header->setByteLength(14);
+            aux->setByteLength(14);
             aux->encapsulate(pkt);
             frame = aux;
         }
@@ -817,7 +824,15 @@ bool MpduAggregateHandler::setMsduA(Ieee80211DataFrame * frame, const int &cat)
             ++it;
             continue;
         }
+
+
         Ieee80211DataFrame * frameAux = (Ieee80211DataFrame *)(*it);
+        if (frameAux->getToDS() != frame->getToDS())
+        {
+            ++it;
+            continue;
+        }
+
         MACAddress destAux = frameAux->getReceiverAddress();
         MACAddress addr3Aux = frameAux->getAddress3();
         MACAddress addr4Aux = frameAux->getAddress4();
@@ -840,22 +855,34 @@ bool MpduAggregateHandler::setMsduA(Ieee80211DataFrame * frame, const int &cat)
             continue;
         }
         frameMsda = new Ieee80211MsduA();
+
+        cPacket *pkt = frameAux->decapsulate();
+
         if (meshFrame == nullptr)
         {
             // set byte length
+            if (dynamic_cast<Ieee80211DataFrameWithSNAP *>(frameAux))
+                *((Ieee80211DataFrameWithSNAP *) frameMsda) = *((Ieee80211DataFrameWithSNAP*)frameAux);
+            else
+                *((Ieee80211DataFrame *) frameMsda) = *((Ieee80211DataFrame*)frameAux);
             frameMsda->setByteLength(DATAFRAME_HEADER_MINLENGTH / 8 + SNAP_HEADER_BYTES);
+        }
+        else
+        {
+            *((Ieee80211MeshFrame *) frameMsda) = *frameAuxMesh;
+            frameMsda->setByteLength(38);
         }
         frameMsda->setReceiverAddress(destAux);
         frameMsda->setAddress3(addr3Aux);
         frameMsda->setAddress4(addr4Aux);
-        cPacket *pkt = frameAux->decapsulate();
+
 
         if (frameAuxMesh)
         {
             Ieee80211MsduAMeshSubframe * header = new Ieee80211MsduAMeshSubframe();
             Ieee80211MeshFrame *aux = header;
             *aux = (*frameAuxMesh);
-            header->setByteLength(20);
+            aux->setByteLength(20);
             delete frameAux;
             aux->encapsulate(pkt);
             frameAux = aux;
@@ -863,9 +890,12 @@ bool MpduAggregateHandler::setMsduA(Ieee80211DataFrame * frame, const int &cat)
         else
         {
             Ieee80211MsduASubframe * header = new Ieee80211MsduASubframe();
+            if (dynamic_cast<Ieee80211DataFrameWithSNAP *>(frameAux))
+                *((Ieee80211DataFrameWithSNAP *) header) = *((Ieee80211DataFrameWithSNAP*)frameAux);
+            else
+                *((Ieee80211DataFrame *) header) = *((Ieee80211DataFrame*)frameAux);
             Ieee80211DataFrame *aux = header;
-            *aux = (*frameAux);
-            header->setByteLength(14);
+            aux->setByteLength(14);
             delete frameAux;
             aux->encapsulate(pkt);
             frameAux = aux;
@@ -878,7 +908,7 @@ bool MpduAggregateHandler::setMsduA(Ieee80211DataFrame * frame, const int &cat)
             Ieee80211MeshFrame *aux = header;
             *aux = (*meshFrame);
             delete frame;
-            header->setByteLength(20);
+            aux->setByteLength(20);
             frameMsda->setSubType(header->getSubType());
             aux->encapsulate(pkt);
             frame = aux;
@@ -886,16 +916,20 @@ bool MpduAggregateHandler::setMsduA(Ieee80211DataFrame * frame, const int &cat)
         else
         {
             Ieee80211MsduASubframe * header = new Ieee80211MsduASubframe();
+            if (dynamic_cast<Ieee80211DataFrameWithSNAP *>(frame))
+                *((Ieee80211DataFrameWithSNAP *) header) = *((Ieee80211DataFrameWithSNAP*)frame);
+            else
+                *((Ieee80211DataFrame *) header) = *((Ieee80211DataFrame*)frame);
             Ieee80211DataFrame *aux = header;
-            *aux = (*frame);
             delete frame;
-            header->setByteLength(14);
+            aux->setByteLength(14);
             aux->encapsulate(pkt);
             frame = aux;
         }
         // change size
         frameMsda->pushBack(frameAux);
         frameMsda->pushBack(frame);
+        take(frameMsda);
         drop(frameMsda);
         *it = frameMsda;
         return true;

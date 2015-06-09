@@ -18,7 +18,7 @@
 
 #include "inet/linklayer/ieee80211/mgmt/wpa2/SecurityIeee80211MgmtAdhoc.h"
 #include "inet/linklayer/common/Ieee802Ctrl.h"
-#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA_m.h"
 #include "stdlib.h"
 //#include "Security.h"
 
