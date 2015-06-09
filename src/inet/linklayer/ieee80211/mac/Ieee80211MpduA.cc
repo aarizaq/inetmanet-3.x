@@ -163,23 +163,6 @@ void Ieee80211MpduA::pushBack(Ieee80211DataFrame *pkt, int retries)
                     pkt->getOwner()->getFullPath().c_str());
 
     }
-    // the previous must be
-    // 8.3.2.2 A-MSDU format Each A-MSDU subframe (except the last) is padded so that its length is a multiple of 4 octets
-    // padding the last
-    if (!encapsulateVector.empty())
-    {
-        cPacket * pktAux = encapsulateVector.back()->pkt;
-        uint64_t size = pktAux->getByteLength();
-
-        if (size % 4)
-        {
-            size++;
-            while (size % 4) size++;
-            setBitLength(getBitLength() - pktAux->getByteLength() + size);
-            pktAux->setBitLength(size);
-        }
-    }
-
     setBitLength(getBitLength() + pkt->getBitLength());
     PacketStruct * shareStructPtr = new PacketStruct();
     if (pkt->getOwner() != simulation.getContextSimpleModule())
@@ -247,9 +230,10 @@ Ieee80211DataFrame *Ieee80211MpduA::decapsulatePacket(unsigned int i)
         return nullptr;
     Ieee80211DataFrame * pkt = encapsulateVector[i]->pkt;
     if (getBitLength() > 0)
-        setBitLength(getBitLength() - encapsulateVector.front()->pkt->getBitLength());
+        setBitLength(getBitLength() - pkt->getBitLength());
     if (pkt->getOwner() != this)
         take(pkt);
+    delete encapsulateVector[i];
     encapsulateVector.erase(encapsulateVector.begin() + i);
     if (pkt)
         drop(pkt);

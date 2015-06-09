@@ -26,6 +26,7 @@
 #include "inet/common/ModuleAccess.h"
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtBase.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211MpduA.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA.h"
 
 // TODO: MSDU-A Handle MSDU-A frames.
 // TODO: MDPU-A check sates, verify the backoff procedure is correct
@@ -628,9 +629,10 @@ void Ieee80211Mac::handleUpperPacket(cPacket *msg)
     // must be a Ieee80211DataOrMgmtFrame, within the max size because we don't support fragmentation
     Ieee80211DataOrMgmtFrame *frame = check_and_cast<Ieee80211DataOrMgmtFrame *>(msg);
     Ieee80211MpduA *mpdu = dynamic_cast<Ieee80211MpduA *>(msg);
+    Ieee80211MsduA *msdu = dynamic_cast<Ieee80211MsduA *>(msg);
 
 
-    if (mpdu == nullptr)
+    if (mpdu == nullptr && msdu == nullptr)
     {
         if (frame->getByteLength() > fragmentationThreshold)
             throw cRuntimeError("message from higher layer (%s)%s is too long for 802.11b, %d bytes (fragmentation is not supported yet)",

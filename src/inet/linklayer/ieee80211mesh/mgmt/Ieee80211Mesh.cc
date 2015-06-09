@@ -29,6 +29,7 @@
 #include "inet/linklayer/ethernet//EtherFrame_m.h"
 #include "inet/routing/extras/olsr/OLSR.h"
 #include "inet/common/lifecycle/NodeStatus.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA.h"
 
 //#define LIMITBROADCAST
 
@@ -1219,6 +1220,56 @@ void Ieee80211Mesh::handleDataFrame(Ieee80211DataFrame *frame)
         EV<<"totalHops"<<totalHops<<endl;
         EV<<"totalFixHops"<< totalFixHops<<endl;
 
+    }
+
+    Ieee80211MsduA *msdu = dynamic_cast<Ieee80211MsduA *>(frame);
+    if (msdu)
+    {
+        Ieee802Ctrl *ctrl = new Ieee802Ctrl();
+        ctrl->setSrc(frame->getTransmitterAddress());
+        ctrl->setDest(frame->getReceiverAddress());
+        Ieee80211DataFrameWithSNAP *frameWithSNAP = dynamic_cast<Ieee80211DataFrameWithSNAP *>(frame);
+        if (frameWithSNAP)
+            ctrl->setEtherType(frameWithSNAP->getEtherType());
+        for (int i = 0; i < (int)msdu->getNumEncap();i++)
+        {
+            cPacket *msg = msdu->getPacket(i)->decapsulate();
+            msg->setKind(0);
+            msg->setControlInfo(ctrl->dup());
+            if (hasRelayUnit)
+            {
+                EthernetIIFrame *ethframe = new EthernetIIFrame(msg->getName()); //TODO option to use EtherFrameWithSNAP instead
+                ethframe->setDest(destination);
+                ethframe->setSrc(origin);
+                ethframe->setEtherType(0);
+                ethframe->encapsulate(msg);
+                if (ethframe->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+                    ethframe->setByteLength(MIN_ETHERNET_FRAME_BYTES);
+                sendUp(ethframe);
+            }
+            else
+            {
+                if (totalHops >= 0)
+                {
+                    std::deque<MACAddress> path;
+                    int patSize = 0;
+                    if (getOtpimunRoute)
+                    {
+                        if (getOtpimunRoute->findRoute(120,origin,path))
+                        {
+                            patSize = path.size();
+                            emit(numHopsSignal,totalHops - patSize);
+                        }
+                    }
+                    if(totalHops)
+                        emit(numFixHopsSignal,totalFixHops/totalHops);
+                }
+                sendUp(msg);
+            }
+        }
+        delete frame;
+        delete ctrl;
+        return;
     }
 
     cPacket *msg = decapsulate(frame);

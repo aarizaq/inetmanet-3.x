@@ -19,6 +19,7 @@
 #include "inet/linklayer/common/Ieee802Ctrl.h"
 #include "Ieee80211MgmtAdhocWithRouting.h"
 #include "inet/routing/extras/base/ControlManetRouting_m.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA.h"
 
 namespace inet {
 
@@ -242,15 +243,60 @@ void Ieee80211MgmtAdhocWithRouting::handleDataFrame(Ieee80211DataFrame *frame)
 
     MACAddress finalAddress;
     Ieee80211MeshFrame *frame2  = dynamic_cast<Ieee80211MeshFrame *>(frame);
-    if (!frame2)
+    Ieee80211MsduA *msdu = dynamic_cast<Ieee80211MsduA *>(frame);
+
+    if (!frame2 && msdu == nullptr)
     {
         sendUp(decapsulate(frame));
+        return;
+    }
+
+    if (msdu != nullptr && dynamic_cast<Ieee80211MsduAMeshSubframe *>(msdu->getPacket(0)) == nullptr)
+    {
+        Ieee802Ctrl *ctrl = new Ieee802Ctrl();
+        ctrl->setSrc(frame->getTransmitterAddress());
+        ctrl->setDest(frame->getReceiverAddress());
+        Ieee80211DataFrameWithSNAP *frameWithSNAP = dynamic_cast<Ieee80211DataFrameWithSNAP *>(frame);
+        if (frameWithSNAP)
+            ctrl->setEtherType(frameWithSNAP->getEtherType());
+        for (int i = 0; i < (int)msdu->getNumEncap();i++)
+        {
+            cPacket *payload = msdu->getPacket(i)->decapsulate();
+            payload->setControlInfo(ctrl->dup());
+            sendUp(payload);
+        }
+        delete frame;
+        delete ctrl;
         return;
     }
 
     bool upperPacket = (frame2 && (frame2->getSubType() == UPPERMESSAGE));
     bool isRouting = (frame2 && (frame2->getSubType() == ROUTING));
 
+    if (upperPacket)// Normal frame test if upper layer frame in other case delete
+    {
+        if (msdu == nullptr)
+            sendUp(decapsulate(frame));
+        else if (msdu != nullptr)
+        {
+            Ieee802Ctrl *ctrl = new Ieee802Ctrl();
+            ctrl->setSrc(frame->getTransmitterAddress());
+            ctrl->setDest(frame->getReceiverAddress());
+            Ieee80211DataFrameWithSNAP *frameWithSNAP = dynamic_cast<Ieee80211DataFrameWithSNAP *>(frame);
+            if (frameWithSNAP)
+                ctrl->setEtherType(frameWithSNAP->getEtherType());
+            for (int i = 0; i < (int)msdu->getNumEncap();i++)
+            {
+                cPacket *payload = msdu->getPacket(i)->decapsulate();
+                payload->setKind(0);
+                payload->setControlInfo(ctrl->dup());
+                sendUp(payload);
+            }
+            delete frame;
+            delete ctrl;
+        }
+        return;
+    }
     cPacket *msg = decapsulate(frame);
     //cGate * msggate = msg->getArrivalGate();
     //int baseId = gateBaseId("macIn");
@@ -260,14 +306,6 @@ void Ieee80211MgmtAdhocWithRouting::handleDataFrame(Ieee80211DataFrame *frame)
     {
         //sendDirect(msg,0, routingModule, "from_ip");
         send(msg,"routingOut");
-    }
-    else if (isRouting)
-    {
-        delete msg;
-    }
-    else if (upperPacket)// Normal frame test if upper layer frame in other case delete
-    {
-        sendUp(msg);
     }
     else
         delete msg;

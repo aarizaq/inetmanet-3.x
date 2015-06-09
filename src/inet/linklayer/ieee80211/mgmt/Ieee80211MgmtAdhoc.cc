@@ -17,6 +17,7 @@
 
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtAdhoc.h"
 #include "inet/linklayer/common/Ieee802Ctrl.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA.h"
 
 namespace inet {
 
@@ -82,7 +83,28 @@ void Ieee80211MgmtAdhoc::receiveSignal(cComponent *source, simsignal_t signalID,
 
 void Ieee80211MgmtAdhoc::handleDataFrame(Ieee80211DataFrame *frame)
 {
-    sendUp(decapsulate(frame));
+    Ieee80211MsduA *msdu = dynamic_cast<Ieee80211MsduA *>(frame);
+    if (msdu == nullptr)
+        sendUp(decapsulate(frame));
+    else
+    {
+        Ieee802Ctrl *ctrl = new Ieee802Ctrl();
+        ctrl->setSrc(frame->getTransmitterAddress());
+        ctrl->setDest(frame->getReceiverAddress());
+        Ieee80211DataFrameWithSNAP *frameWithSNAP = dynamic_cast<Ieee80211DataFrameWithSNAP *>(frame);
+        if (frameWithSNAP)
+            ctrl->setEtherType(frameWithSNAP->getEtherType());
+
+        for (int i = 0; i < (int)msdu->getNumEncap();i++)
+        {
+            cPacket *payload = msdu->getPacket(i)->decapsulate();
+            payload->setControlInfo(ctrl->dup());
+            sendUp(payload);
+
+        }
+        delete frame;
+        delete ctrl;
+    }
 }
 
 void Ieee80211MgmtAdhoc::handleAuthenticationFrame(Ieee80211AuthenticationFrame *frame)

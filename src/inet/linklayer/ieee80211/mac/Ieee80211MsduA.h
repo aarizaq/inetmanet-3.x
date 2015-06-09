@@ -22,15 +22,15 @@ namespace inet {
 namespace ieee80211 {
 
 
-class Ieee80211MsduA : public Ieee80211DataFrame
+class Ieee80211MsduA : public Ieee80211MeshFrame
 {
 private:
     struct ShareStruct{
-        Ieee80211MsduASubframe * pkt;
+        Ieee80211DataFrame * pkt;
         unsigned int shareCount;
         ShareStruct(){
-            pkt=nullptr;
-            shareCount =0;
+            pkt = nullptr;
+            shareCount = 0;
         }
     };
     std::vector<ShareStruct*> encapsulateVector;
@@ -43,7 +43,7 @@ public:
     virtual Ieee80211MsduA * dup(){return new Ieee80211MsduA(*this);}
     virtual ~Ieee80211MsduA();
     Ieee80211MsduA& operator=(const Ieee80211MsduA& msg);
-    virtual Ieee80211MsduASubframe *getPacket(unsigned int i) const;
+    virtual Ieee80211DataFrame *getPacket(unsigned int i) const;
     virtual void setPacketKind(unsigned int i,int kind);
     virtual unsigned int getNumEncap() const {return encapsulateVector.size();}
     uint64_t getPktLength(unsigned int i) const
@@ -55,10 +55,10 @@ public:
     cPacket *decapsulatePacket(unsigned int i);
     virtual unsigned int getEncapSize() {return encapsulateVector.size();}
 
-    virtual void pushFrom(Ieee80211MsduASubframe *);
-    virtual void pushBack(Ieee80211MsduASubframe *);
-    virtual Ieee80211MsduASubframe *popFrom();
-    virtual Ieee80211MsduASubframe *popBack();
+    virtual void pushFrom(Ieee80211DataFrame *);
+    virtual void pushBack(Ieee80211DataFrame *);
+    virtual Ieee80211DataFrame *popFrom();
+    virtual Ieee80211DataFrame *popBack();
     virtual bool haveBlock(){return !encapsulateVector.empty();}
     virtual void forEachChild(cVisitor *v);
 

@@ -713,7 +713,9 @@ void MpduAggregateHandler::setMacDiscardMpdu(const MACAddress &addr)
 bool MpduAggregateHandler::setMsduA(Ieee80211DataFrame * frame, const int &cat)
 {
 
-    return false;
+    if (frame->getReceiverAddress().isBroadcast() || frame->getAddress3().isBroadcast() || frame->getAddress4().isBroadcast() ||
+            frame->getReceiverAddress().isMulticast() || frame->getAddress3().isMulticast() || frame->getAddress4().isMulticast())
+        return false;
 
     // check if other frames with the same destination are available.
     auto itDest = categories[cat].numFramesDestination.find(frame->getReceiverAddress());
@@ -725,10 +727,14 @@ bool MpduAggregateHandler::setMsduA(Ieee80211DataFrame * frame, const int &cat)
         categories[cat].numFramesDestination.erase(itDest);
         return false; // no frames
     }
+
     MACAddress dest = frame->getReceiverAddress();
     MACAddress addr3 = frame->getAddress3();
     MACAddress addr4 = frame->getAddress4();
 
+    Ieee80211MeshFrame *meshFrame = dynamic_cast<Ieee80211MeshFrame *>(frame);
+    if (meshFrame && meshFrame->getSubType() != UPPERMESSAGE)
+        return false;
 
     // if frames search for frames of the same type,
     // search frames to the same destination and characteristics
@@ -738,7 +744,7 @@ bool MpduAggregateHandler::setMsduA(Ieee80211DataFrame * frame, const int &cat)
     // search for msda-a in the queues
     for (auto it = categories[cat].queue->begin() ;it != categories[cat].queue->end();)
     {
-        Ieee80211MsduA *frameMsda = dynamic_cast<Ieee80211MsduA*>(*it); // check if msdu-a
+        Ieee80211MsduA *frameMsda = dynamic_cast<Ieee80211MsduA*>(*it); // check if msdu-a is present
         if (frameMsda == nullptr)
         {
             ++it;
@@ -755,7 +761,20 @@ bool MpduAggregateHandler::setMsduA(Ieee80211DataFrame * frame, const int &cat)
         MACAddress addr3Aux = frameMsda->getAddress3();
         MACAddress addr4Aux = frameMsda->getAddress4();
         // Compare addresses
-        if (destAux.compareTo(dest) != 0)
+
+        if (destAux.compareTo(dest) != 0 && addr3Aux.compareTo(addr3) != 0 && addr4Aux.compareTo(addr4) != 0)
+        {
+            ++it;
+            continue;
+        }
+        // check type
+        Ieee80211MsduAMeshSubframe* msduMesh = dynamic_cast<Ieee80211MsduAMeshSubframe *>(frameMsda->getPacket(0));
+        if ((meshFrame == nullptr) !=  (msduMesh == nullptr))
+        {
+            ++it;
+            continue;
+        }
+        if (meshFrame && meshFrame->getSubType() != frameMsda->getSubType())
         {
             ++it;
             continue;
@@ -764,21 +783,28 @@ bool MpduAggregateHandler::setMsduA(Ieee80211DataFrame * frame, const int &cat)
         // decapsulate and recapsulate
         // it is necessary to include padding bytes in the latest frame
         cPacket *pkt = frame->decapsulate();
-        if (dynamic_cast<Ieee80211MeshFrame *>(frame))
+        if (meshFrame)
         {
             Ieee80211MsduAMeshSubframe * header = new Ieee80211MsduAMeshSubframe();
-            Ieee80211DataFrame *aux = header;
-            *aux = (*frame);
-
+            Ieee80211MeshFrame *aux = header;
+            *aux = (*meshFrame);
+            delete frame;
+            header->setByteLength(20);
+            aux->encapsulate(pkt);
+            frame = aux;
         }
         else
         {
             Ieee80211MsduASubframe * header = new Ieee80211MsduASubframe();
             Ieee80211DataFrame *aux = header;
             *aux = (*frame);
+            delete frame;
+            header->setByteLength(14);
+            aux->encapsulate(pkt);
+            frame = aux;
         }
 
-
+        frameMsda->pushBack(frame);
         return true;
     }
 
@@ -801,16 +827,79 @@ bool MpduAggregateHandler::setMsduA(Ieee80211DataFrame * frame, const int &cat)
             ++it;
             continue;
         }
-
+// check type
+        Ieee80211MeshFrame * frameAuxMesh = dynamic_cast<Ieee80211MeshFrame *>(frameAux);
+        if ((meshFrame == nullptr) != (frameAuxMesh == nullptr))
+        {
+            ++it;
+            continue;
+        }
+        if (meshFrame && meshFrame->getSubType() != frameAuxMesh->getSubType())
+        {
+            ++it;
+            continue;
+        }
         frameMsda = new Ieee80211MsduA();
+        if (meshFrame == nullptr)
+        {
+            // set byte length
+            frameMsda->setByteLength(DATAFRAME_HEADER_MINLENGTH / 8 + SNAP_HEADER_BYTES);
+        }
         frameMsda->setReceiverAddress(destAux);
         frameMsda->setAddress3(addr3Aux);
         frameMsda->setAddress4(addr4Aux);
+        cPacket *pkt = frameAux->decapsulate();
+
+        if (frameAuxMesh)
+        {
+            Ieee80211MsduAMeshSubframe * header = new Ieee80211MsduAMeshSubframe();
+            Ieee80211MeshFrame *aux = header;
+            *aux = (*frameAuxMesh);
+            header->setByteLength(20);
+            delete frameAux;
+            aux->encapsulate(pkt);
+            frameAux = aux;
+        }
+        else
+        {
+            Ieee80211MsduASubframe * header = new Ieee80211MsduASubframe();
+            Ieee80211DataFrame *aux = header;
+            *aux = (*frameAux);
+            header->setByteLength(14);
+            delete frameAux;
+            aux->encapsulate(pkt);
+            frameAux = aux;
+        }
+
+        pkt = frame->decapsulate();
+        if (meshFrame)
+        {
+            Ieee80211MsduAMeshSubframe * header = new Ieee80211MsduAMeshSubframe();
+            Ieee80211MeshFrame *aux = header;
+            *aux = (*meshFrame);
+            delete frame;
+            header->setByteLength(20);
+            frameMsda->setSubType(header->getSubType());
+            aux->encapsulate(pkt);
+            frame = aux;
+        }
+        else
+        {
+            Ieee80211MsduASubframe * header = new Ieee80211MsduASubframe();
+            Ieee80211DataFrame *aux = header;
+            *aux = (*frame);
+            delete frame;
+            header->setByteLength(14);
+            aux->encapsulate(pkt);
+            frame = aux;
+        }
+        // change size
+        frameMsda->pushBack(frameAux);
+        frameMsda->pushBack(frame);
         drop(frameMsda);
+        *it = frameMsda;
         return true;
     }
-
-
     return false;
 }
 

@@ -24,6 +24,7 @@
 #include "inet/common/NotifierConsts.h"
 #include "inet/physicallayer/contract/packetlevel/RadioControlInfo_m.h"
 #include "inet/physicallayer/ieee80211/packetlevel/Ieee80211ControlInfo_m.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA.h"
 #include "inet/common/INETUtils.h"
 
 namespace inet {
@@ -594,7 +595,30 @@ void Ieee80211MgmtSTA::handleDataFrame(Ieee80211DataFrame *frame)
     // Only send the Data frame up to the higher layer if the STA is associated with an AP,
     // else delete the frame
     if (isAssociated)
-        sendUp(decapsulate(frame));
+    {
+        Ieee80211MsduA *msdu = dynamic_cast<Ieee80211MsduA *>(frame);
+        if (msdu == nullptr)
+            sendUp(decapsulate(frame));
+        else
+        {
+            Ieee802Ctrl *ctrl = new Ieee802Ctrl();
+            ctrl->setSrc(frame->getTransmitterAddress());
+            ctrl->setDest(frame->getReceiverAddress());
+            Ieee80211DataFrameWithSNAP *frameWithSNAP = dynamic_cast<Ieee80211DataFrameWithSNAP *>(frame);
+            if (frameWithSNAP)
+                ctrl->setEtherType(frameWithSNAP->getEtherType());
+
+            for (int i = 0; i < (int)msdu->getNumEncap();i++)
+            {
+                cPacket *payload = msdu->getPacket(i)->decapsulate();
+                payload->setControlInfo(ctrl->dup());
+                sendUp(payload);
+
+            }
+            delete frame;
+            delete ctrl;
+        }
+    }
     else {
         EV << "Rejecting data frame as STA is not associated with an AP" << endl;
         delete frame;

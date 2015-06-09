@@ -15,7 +15,7 @@
 
 #include "inet/linklayer/ieee80211/mac/Ieee80211MsduA.h"
 
-//#define SHAREDBLOCK
+#define SHAREDBLOCK
 
 
 // Another default rule (prevents compiler from choosing base class' doPacking())
@@ -54,13 +54,13 @@ Ieee80211MsduA::~Ieee80211MsduA()
 
 
 Ieee80211MsduA::Ieee80211MsduA(const char *name, int kind) :
-        Ieee80211DataFrame(name, kind)
+        Ieee80211MeshFrame(name, kind)
 {
     encapsulateVector.clear();
 }
 
 Ieee80211MsduA::Ieee80211MsduA(Ieee80211MsduA &other) :
-        Ieee80211DataFrame()
+        Ieee80211MeshFrame()
 {
     encapsulateVector.clear();
     setName(other.getName());
@@ -106,15 +106,17 @@ void Ieee80211MsduA::_deleteEncapVector()
             if (encapsulateVector.back()->pkt->getOwner()!=this)
             take (encapsulateVector.back()->pkt);
             delete encapsulateVector.back()->pkt;
+            delete encapsulateVector.back();
         }
 #else
         delete encapsulateVector.back()->pkt;
+        delete encapsulateVector.back();
 #endif
         encapsulateVector.pop_back();
     }
 }
 
-Ieee80211MsduASubframe *Ieee80211MsduA::popBack()
+Ieee80211DataFrame *Ieee80211MsduA::popBack()
 {
     if (encapsulateVector.empty())
         return nullptr;
@@ -128,19 +130,20 @@ Ieee80211MsduASubframe *Ieee80211MsduA::popBack()
     if (encapsulateVector.back()->shareCount>0)
     {
         encapsulateVector.back()->shareCount--;
-        cPacket * msg = encapsulateVector.front()->pkt->dup();
+        Ieee80211DataFrame * msg = encapsulateVector.front()->pkt->dup();
         encapsulateVector.pop_back();
         return msg;
     }
 #endif
-    Ieee80211MsduASubframe *msg = encapsulateVector.back()->pkt;
+    Ieee80211DataFrame *msg = encapsulateVector.back()->pkt;
+    delete encapsulateVector.back();
     encapsulateVector.pop_back();
     if (msg)
         drop(msg);
     return msg;
 }
 
-Ieee80211MsduASubframe *Ieee80211MsduA::popFrom()
+Ieee80211DataFrame *Ieee80211MsduA::popFrom()
 {
     if (encapsulateVector.empty())
         return nullptr;
@@ -154,20 +157,21 @@ Ieee80211MsduASubframe *Ieee80211MsduA::popFrom()
     if (encapsulateVector.front()->shareCount>0)
     {
         encapsulateVector.front()->shareCount--;
-        cPacket *msg = encapsulateVector.front()->pkt->dup();
+        Ieee80211DataFrame *msg = encapsulateVector.front()->pkt->dup();
         encapsulateVector.erase (encapsulateVector.begin());
         if (msg) drop(msg);
         return msg;
     }
 #endif
-    Ieee80211MsduASubframe *msg = encapsulateVector.front()->pkt;
+    Ieee80211DataFrame *msg = encapsulateVector.front()->pkt;
+    delete encapsulateVector.front();
     encapsulateVector.erase(encapsulateVector.begin());
     if (msg)
         drop(msg);
     return msg;
 }
 
-void Ieee80211MsduA::pushBack(Ieee80211MsduASubframe *pkt)
+void Ieee80211MsduA::pushBack(Ieee80211DataFrame *pkt)
 {
     if (pkt == nullptr)
         return;
@@ -207,7 +211,7 @@ void Ieee80211MsduA::pushBack(Ieee80211MsduASubframe *pkt)
     encapsulateVector.push_back(shareStructPtr);
 }
 
-void Ieee80211MsduA::pushFrom(Ieee80211MsduASubframe *pkt)
+void Ieee80211MsduA::pushFrom(Ieee80211DataFrame *pkt)
 {
     if (pkt == nullptr)
         return;
@@ -239,16 +243,15 @@ void Ieee80211MsduA::_detachShareVector(unsigned int i)
             ShareStruct *share = new ShareStruct;
             if (encapsulateVector.front()->pkt->getOwner()!=this)
             take (encapsulateVector[i]->pkt);
-            share->shareCount=0;
             take (share->pkt=encapsulateVector[i]->pkt->dup());
             encapsulateVector[i]->shareCount--;
-            encapsulateVector[i]=share;
+            encapsulateVector[i] = share;
         }
 #endif
     }
 }
 
-Ieee80211MsduASubframe *Ieee80211MsduA::getPacket(unsigned int i) const
+Ieee80211DataFrame *Ieee80211MsduA::getPacket(unsigned int i) const
 {
 
     if (i >= encapsulateVector.size())
@@ -265,19 +268,10 @@ cPacket *Ieee80211MsduA::decapsulatePacket(unsigned int i)
     const_cast<Ieee80211MsduA*>(this)->_detachShareVector(i);
     cPacket * pkt = encapsulateVector[i]->pkt;
     if (getBitLength() > 0)
-        setBitLength(getBitLength() - encapsulateVector.front()->pkt->getBitLength());
+        setBitLength(getBitLength() - pkt->getBitLength());
     if (pkt->getOwner() != this)
         take(pkt);
-#ifdef SHAREDBLOCK
-    if (pkt->shareCount>0)
-    {
-        pkt->shareCount--;
-        cPacket *msg = encapsulateVector.front()->pkt->dup();
-        encapsulateVector.erase (encapsulateVector.begin()+i);
-        if (msg) drop(msg);
-        return msg;
-    }
-#endif
+    delete encapsulateVector[i];
     encapsulateVector.erase(encapsulateVector.begin() + i);
     if (pkt)
         drop(pkt);
