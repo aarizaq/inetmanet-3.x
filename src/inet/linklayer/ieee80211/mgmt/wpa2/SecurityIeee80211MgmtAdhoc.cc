@@ -19,6 +19,7 @@
 #include "inet/linklayer/ieee80211/mgmt/wpa2/SecurityIeee80211MgmtAdhoc.h"
 #include "inet/linklayer/common/Ieee802Ctrl.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211MsduA_m.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MpduA.h"
 #include "stdlib.h"
 //#include "Security.h"
 
@@ -116,17 +117,15 @@ void SecurityIeee80211MgmtAdhoc::receiveChangeNotification(int category, const c
 
 void SecurityIeee80211MgmtAdhoc::handleDataFrame(Ieee80211DataFrame *frame)
 {
-    Ieee80211MsduA *msdu = dynamic_cast<Ieee80211MsduA *>(frame);
+    Ieee80211MsduA *msdu = dynamic_cast<Ieee80211MsduA *>(fromMsduAFrameToMsduA(frame));
     if (msdu == nullptr)
         sendUp(decapsulate(frame));
     else
     {
         Ieee802Ctrl *ctrl = new Ieee802Ctrl();
-        ctrl->setSrc(frame->getTransmitterAddress());
-        ctrl->setDest(frame->getReceiverAddress());
-        Ieee80211DataFrameWithSNAP *frameWithSNAP = dynamic_cast<Ieee80211DataFrameWithSNAP *>(frame);
-        if (frameWithSNAP)
-            ctrl->setEtherType(frameWithSNAP->getEtherType());
+        ctrl->setSrc(msdu->getTransmitterAddress());
+        ctrl->setDest(msdu->getReceiverAddress());
+        ctrl->setEtherType(msdu->getEtherType());
 
         for (int i = 0; i < (int)msdu->getNumEncap();i++)
         {
@@ -135,7 +134,7 @@ void SecurityIeee80211MgmtAdhoc::handleDataFrame(Ieee80211DataFrame *frame)
             sendUp(payload);
 
         }
-        delete frame;
+        delete msdu;
         delete ctrl;
     }
 }
@@ -217,9 +216,28 @@ void SecurityIeee80211MgmtAdhoc::handleCCMPFrame(CCMPFrame *frame)
 void SecurityIeee80211MgmtAdhoc::sendOut(cMessage *msg)
 {
     EV << "SecurityIeee80211MgmtAdhoc:: sendOut"<<endl;
-    msg->setKind(0);
-   hasSecurity = 1;
-
+    hasSecurity = 1;
+    Ieee80211MpduA * mpdu = dynamic_cast<Ieee80211MpduA *>(msg);
+    if (mpdu)
+    {
+        // search from Msdu and convert it
+        for (unsigned int i = 0; i < mpdu->getNumEncap(); i++)
+        {
+            if (dynamic_cast<Ieee80211MsduA *>(mpdu->getPacket(i)))
+            {
+                Ieee80211DataFrame *frameAux = fromMsduAToMsduAFrame(mpdu->getPacket(i));
+                delete mpdu->getPacket(i);
+                mpdu->setPacket(i, frameAux);
+            }
+        }
+    }
+    else if (dynamic_cast<Ieee80211MsduA *>(msg))
+    {
+        Ieee80211DataOrMgmtFrame *frameAux = fromMsduAToMsduAFrame((Ieee80211DataOrMgmtFrame *)msg);
+        frameAux->setKind(msg->getKind());
+        delete msg;
+        msg = frameAux;
+    }
     //mhn
     if(hasSecurity)
     {

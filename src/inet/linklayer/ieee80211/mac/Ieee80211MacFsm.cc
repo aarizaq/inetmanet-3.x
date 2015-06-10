@@ -56,12 +56,6 @@ void Ieee80211Mac::retryCurrentMpduA()
             while (mpdua->getNumEncap() > 0)
             {
                 Ieee80211DataFrame * frame = mpdua->popFront();
-                if (dynamic_cast<Ieee80211MsduA *>(frame))
-                {
-                    Ieee80211DataFrame *frameAux = (Ieee80211DataFrame *)fromMsduAToMsduAFrame(frame);
-                    delete frame;
-                    frame = frameAux;
-                }
                 frame->setMACArrive(simTime());
                 mpduInTransmission->pushBack(frame);
             }

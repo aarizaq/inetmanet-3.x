@@ -75,6 +75,10 @@ class INET_API Ieee80211MgmtBase : public Ieee80211PassiveQueue, public ILifecyc
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
     virtual void initialize(int) override;
 
+    // used to support MsduA frames.
+    virtual Ieee80211DataFrame *fromMsduAToMsduAFrame(Ieee80211DataOrMgmtFrame *frameToSend);
+    virtual Ieee80211DataOrMgmtFrame *fromMsduAFrameToMsduA(Ieee80211DataOrMgmtFrame *frameToSend);
+
     /** Dispatches incoming messages to handleTimer(), handleUpperMessage() or processFrame(). */
     virtual void handleMessage(cMessage *msg) override;
 

@@ -736,6 +736,10 @@ bool MpduAggregateHandler::setMsduA(Ieee80211DataFrame * frame, const int &cat)
     if (meshFrame && meshFrame->getSubType() != UPPERMESSAGE)
         return false;
 
+    // check if it it is MsduA frame
+    if (dynamic_cast<Ieee80211MsduAMeshFrame *>(frame) || dynamic_cast<Ieee80211MsduAFrame *>(frame))
+        return false;
+
     // if frames search for frames of the same type,
     // search frames to the same destination and characteristics
 
@@ -818,13 +822,18 @@ bool MpduAggregateHandler::setMsduA(Ieee80211DataFrame * frame, const int &cat)
     // search for other frame and create an Msdu-a
     for (auto it = categories[cat].queue->begin() ;it != categories[cat].queue->end();)
     {
-        Ieee80211MsduA *frameMsda= dynamic_cast<Ieee80211MsduA*>(*it); // check if msdu-a
-        if (frameMsda != nullptr)
+        // check if is a Msdu-A container
+        if (dynamic_cast<Ieee80211MsduA*>(*it))
         {
             ++it;
             continue;
         }
-
+        // check if it is a MsduAframe
+        if (dynamic_cast<Ieee80211MsduAMeshFrame *>(*it) || dynamic_cast<Ieee80211MsduAFrame *>(*it))
+        {
+            ++it;
+            continue;
+        }
 
         Ieee80211DataFrame * frameAux = (Ieee80211DataFrame *)(*it);
         if (frameAux->getToDS() != frame->getToDS())
@@ -854,7 +863,8 @@ bool MpduAggregateHandler::setMsduA(Ieee80211DataFrame * frame, const int &cat)
             ++it;
             continue;
         }
-        frameMsda = new Ieee80211MsduA();
+        // New Msdu-A container
+        Ieee80211MsduA *msdaContainer = new Ieee80211MsduA();
 
         cPacket *pkt = frameAux->decapsulate();
 
@@ -862,21 +872,19 @@ bool MpduAggregateHandler::setMsduA(Ieee80211DataFrame * frame, const int &cat)
         {
             // set byte length
             if (dynamic_cast<Ieee80211DataFrameWithSNAP *>(frameAux))
-                *((Ieee80211DataFrameWithSNAP *) frameMsda) = *((Ieee80211DataFrameWithSNAP*)frameAux);
+                *((Ieee80211DataFrameWithSNAP *) msdaContainer) = *((Ieee80211DataFrameWithSNAP*)frameAux);
             else
-                *((Ieee80211DataFrame *) frameMsda) = *((Ieee80211DataFrame*)frameAux);
-            frameMsda->setByteLength(DATAFRAME_HEADER_MINLENGTH / 8 + SNAP_HEADER_BYTES);
+                *((Ieee80211DataFrame *) msdaContainer) = *((Ieee80211DataFrame*)frameAux);
+            msdaContainer->setByteLength(DATAFRAME_HEADER_MINLENGTH / 8 + SNAP_HEADER_BYTES);
         }
         else
         {
-            *((Ieee80211MeshFrame *) frameMsda) = *frameAuxMesh;
-            frameMsda->setByteLength(38);
+            *((Ieee80211MeshFrame *) msdaContainer) = *frameAuxMesh;
+            msdaContainer->setByteLength(38);
         }
-        frameMsda->setReceiverAddress(destAux);
-        frameMsda->setAddress3(addr3Aux);
-        frameMsda->setAddress4(addr4Aux);
-
-
+        msdaContainer->setReceiverAddress(destAux);
+        msdaContainer->setAddress3(addr3Aux);
+        msdaContainer->setAddress4(addr4Aux);
         if (frameAuxMesh)
         {
             Ieee80211MsduAMeshSubframe * header = new Ieee80211MsduAMeshSubframe();
@@ -909,7 +917,7 @@ bool MpduAggregateHandler::setMsduA(Ieee80211DataFrame * frame, const int &cat)
             *aux = (*meshFrame);
             delete frame;
             aux->setByteLength(20);
-            frameMsda->setSubType(header->getSubType());
+            msdaContainer->setSubType(header->getSubType());
             aux->encapsulate(pkt);
             frame = aux;
         }
@@ -927,11 +935,11 @@ bool MpduAggregateHandler::setMsduA(Ieee80211DataFrame * frame, const int &cat)
             frame = aux;
         }
         // change size
-        frameMsda->pushBack(frameAux);
-        frameMsda->pushBack(frame);
-        take(frameMsda);
-        drop(frameMsda);
-        *it = frameMsda;
+        msdaContainer->pushBack(frameAux);
+        msdaContainer->pushBack(frame);
+        take(msdaContainer);
+        drop(msdaContainer);
+        *it = msdaContainer;
         return true;
     }
     return false;

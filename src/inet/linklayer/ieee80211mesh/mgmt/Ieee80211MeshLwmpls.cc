@@ -46,7 +46,9 @@
 
 #define WLAN_MPLS_TIME_REFRESH 3
 
-
+//
+// TODO: Support of MSDU-A to lwmpls
+//
 
 #if !defined (UINT32_MAX)
 #   define UINT32_MAX  4294967295UL
@@ -443,6 +445,7 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
         {
             mplsSendAck(label_in);
             mplsData->registerRoute(mpls_pk_ptr->getSource().getInt(), label_in);
+
             sendUp(decapsulateMpls(mpls_pk_ptr));
             // Register route
             return;

@@ -23,6 +23,7 @@
 #include "inet/common/lifecycle/NodeStatus.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211eClassifier.h"
 #include "inet/linklayer/ieee80211/mgmt/MpduAggregateHandler.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA.h"
 
 #include <string>
 
@@ -109,6 +110,114 @@ void Ieee80211MgmtBase::initialize(int stage)
         myAddress.setAddress(mac->par("address").stringValue());
     }
 }
+
+Ieee80211DataOrMgmtFrame *Ieee80211MgmtBase::fromMsduAFrameToMsduA(Ieee80211DataOrMgmtFrame *frameToProc)
+{
+    // check first encapsulate packet
+
+    if (!frameToProc)
+        return nullptr;
+    if (dynamic_cast<Ieee80211MsduAFrame *>(frameToProc) == nullptr && dynamic_cast<Ieee80211MsduAMeshFrame *>(frameToProc) == nullptr)
+        return nullptr;
+
+    std::vector<cPacket *> stack;
+    std::vector<cPacket *> stackAux;
+
+    cPacket *pkt = frameToProc->decapsulate();
+    while (pkt)
+    {
+        cPacket *pktAux =  pkt->decapsulate();
+        stack.push_back(pkt);
+        pkt =  pktAux;
+    }
+
+    while (!stack.empty())
+    {
+        cPacket *pktAux =  stack.back();
+        stack.pop_back();
+        if (dynamic_cast<Ieee80211MsduAMeshSubframe *>(pktAux) == nullptr && dynamic_cast<Ieee80211MsduASubframe *>(pktAux) == nullptr)
+        {
+            stack.back()->encapsulate(pktAux);
+        }
+        else
+            stackAux.push_back(pktAux);
+    }
+
+    Ieee80211MsduA *mpduA = new Ieee80211MsduA();
+    bool isMesh = dynamic_cast<Ieee80211MeshFrame *>(frameToProc) != nullptr;
+
+     if (isMesh)
+        *((Ieee80211MeshFrame*)mpduA) = *((Ieee80211MeshFrame*)frameToProc);
+    else
+        *((Ieee80211DataFrameWithSNAP*)mpduA) = *((Ieee80211DataFrameWithSNAP*)frameToProc);
+    while (!stackAux.empty())
+    {
+        mpduA->pushBack((Ieee80211DataFrame *)stackAux.back());
+        stackAux.pop_back();
+    }
+    delete frameToProc;
+    return mpduA;
+}
+
+Ieee80211DataFrame *Ieee80211MgmtBase::fromMsduAToMsduAFrame(Ieee80211DataOrMgmtFrame *frameToSend)
+{
+    Ieee80211MsduA *msduA = dynamic_cast<Ieee80211MsduA *>(frameToSend);
+    if (msduA == nullptr)
+    {
+        return nullptr;
+    }
+
+    std::vector<cPacket *> stack;
+    std::vector<cPacket *> stackAux;
+    bool isMesh = dynamic_cast<Ieee80211MsduASubframe *>(msduA->getPacket(0)) == nullptr;
+
+    while (msduA->getNumEncap() > 0)
+        stackAux.push_back(msduA->popBack());
+
+    cPacket *pkt;
+    while (!stackAux.empty())
+    {
+        pkt = stackAux.back();
+        stackAux.pop_back();
+        do{
+            cPacket *pktAux =  pkt->decapsulate();
+            stack.push_back(pkt);
+            pkt =  pktAux;
+        } while (pkt != nullptr);
+    }
+    // recapsulate
+
+    while(!stack.empty())
+    {
+        pkt = stack.back();
+        stack.pop_back();
+        if (!stack.empty())
+            stack.back()->encapsulate(pkt);
+    }
+
+    Ieee80211DataFrame *frame = nullptr;
+    if (!isMesh)
+    {
+        // normal data
+        Ieee80211MsduAFrame *frameAux = new Ieee80211MsduAFrame();
+        uint64_t l = frameAux->getByteLength();
+        *frameAux = *(Ieee80211MsduAFrame *)msduA;
+        frameAux->setByteLength(l);
+        frame = frameAux;
+    }
+    else
+    {
+        Ieee80211MsduAMeshFrame *frameAux = new Ieee80211MsduAMeshFrame();
+        uint64_t l = frameAux->getByteLength();
+        *frameAux = *(Ieee80211MsduAMeshFrame *)msduA;
+        frameAux->setByteLength(l);
+        frame = frameAux;
+        // mesh data
+    }
+    frame->encapsulate(pkt);
+    return frame;
+}
+
 
 void Ieee80211MgmtBase::handleMessage(cMessage *msg)
 {
@@ -485,6 +594,25 @@ cMessage *Ieee80211MgmtBase::dequeue(const int & cat)
 void Ieee80211MgmtBase::sendOut(cMessage *msg)
 {
     ASSERT(isOperational);
+    // check if MsduA
+    Ieee80211MpduA * mpdu = dynamic_cast<Ieee80211MpduA *>(msg);
+    if (mpdu)
+    {
+        // search from Msdu and convert it
+        for (unsigned int i = 0; i < mpdu->getNumEncap(); i++)
+        {
+            Ieee80211MsduA *msduAContainer = dynamic_cast<Ieee80211MsduA *>(mpdu->getPacket(i));
+            if (msduAContainer)
+                mpdu->replacePacket(i,fromMsduAToMsduAFrame(msduAContainer));
+        }
+    }
+    else if (dynamic_cast<Ieee80211MsduA *>(msg))
+    {
+        Ieee80211DataOrMgmtFrame *frameAux = fromMsduAToMsduAFrame((Ieee80211DataOrMgmtFrame *)msg);
+        frameAux->setKind(msg->getKind());
+        delete msg;
+        msg = frameAux;
+    }
     send(msg, "macOut");
 }
 

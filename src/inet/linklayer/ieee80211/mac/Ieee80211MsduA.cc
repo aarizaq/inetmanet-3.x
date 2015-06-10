@@ -110,7 +110,11 @@ void Ieee80211MsduA::_deleteEncapVector()
             delete encapsulateVector.back();
         }
 #else
-        delete encapsulateVector.back()->pkt;
+        if (encapsulateVector.back()->pkt)
+        {
+            drop(encapsulateVector.back()->pkt);
+            delete encapsulateVector.back()->pkt;
+        }
         delete encapsulateVector.back();
 #endif
         encapsulateVector.pop_back();

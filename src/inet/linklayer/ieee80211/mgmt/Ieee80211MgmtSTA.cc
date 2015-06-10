@@ -596,17 +596,15 @@ void Ieee80211MgmtSTA::handleDataFrame(Ieee80211DataFrame *frame)
     // else delete the frame
     if (isAssociated)
     {
-        Ieee80211MsduA *msdu = dynamic_cast<Ieee80211MsduA *>(frame);
+        Ieee80211MsduA *msdu = dynamic_cast<Ieee80211MsduA *>(fromMsduAFrameToMsduA(frame));
         if (msdu == nullptr)
             sendUp(decapsulate(frame));
         else
         {
             Ieee802Ctrl *ctrl = new Ieee802Ctrl();
-            ctrl->setSrc(frame->getTransmitterAddress());
-            ctrl->setDest(frame->getReceiverAddress());
-            Ieee80211DataFrameWithSNAP *frameWithSNAP = dynamic_cast<Ieee80211DataFrameWithSNAP *>(frame);
-            if (frameWithSNAP)
-                ctrl->setEtherType(frameWithSNAP->getEtherType());
+            ctrl->setSrc(msdu->getTransmitterAddress());
+            ctrl->setDest(msdu->getReceiverAddress());
+            ctrl->setEtherType(msdu->getEtherType());
 
             for (int i = 0; i < (int)msdu->getNumEncap();i++)
             {
@@ -615,7 +613,7 @@ void Ieee80211MgmtSTA::handleDataFrame(Ieee80211DataFrame *frame)
                 sendUp(payload);
 
             }
-            delete frame;
+            delete msdu;
             delete ctrl;
         }
     }

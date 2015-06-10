@@ -1223,7 +1223,8 @@ void Ieee80211Mesh::handleDataFrame(Ieee80211DataFrame *frame)
 
     }
 
-    Ieee80211MsduA *msdu = dynamic_cast<Ieee80211MsduA *>(frame);
+
+    Ieee80211MsduA *msdu = dynamic_cast<Ieee80211MsduA *>(fromMsduAFrameToMsduA(frame));
     if (msdu)
     {
         Ieee802Ctrl *ctrl = new Ieee802Ctrl();
@@ -1268,7 +1269,7 @@ void Ieee80211Mesh::handleDataFrame(Ieee80211DataFrame *frame)
                 sendUp(msg);
             }
         }
-        delete frame;
+        delete msdu;
         delete ctrl;
         return;
     }
@@ -2394,46 +2395,78 @@ void Ieee80211Mesh::handleWateGayDataReceive(cPacket *pkt)
             int totalFixHops = frame2->getTotalStaticHops();
             MACAddress origin = frame2->getAddress3();
 
-            cPacket *msg = decapsulate(frame2);
-            if (dynamic_cast<ETXBasePacket*>(msg))
+            Ieee80211MsduA *msdu = nullptr;
+            if (isUpper)
+                msdu = dynamic_cast<Ieee80211MsduA *> (fromMsduAFrameToMsduA(frame2));
+            if (msdu)
             {
-                if (ETXProcess)
-                {
-                    if (msg->getControlInfo())
-                        delete msg->removeControlInfo();
-                    send(msg,"ETXProcOut");
-                }
-                else
-                    delete msg;
-                return;
-            }
-            else if (dynamic_cast<LWMPLSPacket*> (msg))
-            {
-                LWMPLSPacket *lwmplspk = dynamic_cast<LWMPLSPacket*> (msg);
-                encapPkt = decapsulateMpls(lwmplspk);
-            }
-            else if (dynamic_cast<LocatorPkt *>(msg) != nullptr && hasLocator)
-                send(msg, "locatorOut");
-            else
-                encapPkt = msg;
+                Ieee802Ctrl *ctrl = new Ieee802Ctrl();
+                ctrl->setSrc(msdu->getTransmitterAddress());
+                ctrl->setDest(msdu->getReceiverAddress());
+                ctrl->setEtherType(msdu->getEtherType());
 
-            if (encapPkt && isUpper)
-            {
-                sendUp(encapPkt);
-                std::deque<MACAddress> path;
-                int patSize = 0;
-                if (getOtpimunRoute)
+                for (int i = 0; i < (int)msdu->getNumEncap();i++)
                 {
-                    if (getOtpimunRoute->findRoute(120,origin,path))
+                    cPacket *payload = msdu->getPacket(i)->decapsulate();
+                    payload->setControlInfo(ctrl->dup());
+                    sendUp(payload);
+                    std::deque<MACAddress> path;
+                    int patSize = 0;
+                    if (getOtpimunRoute)
                     {
-                        getOtpimunRoute->findRoute(120,origin,path);
-                        patSize = path.size();
-                        emit(numHopsSignal,totalHops - patSize);
+                        if (getOtpimunRoute->findRoute(120,origin,path))
+                        {
+                            getOtpimunRoute->findRoute(120,origin,path);
+                            patSize = path.size();
+                            emit(numHopsSignal,totalHops - patSize);
+                        }
                     }
+                    emit(numFixHopsSignal,totalFixHops/totalHops);
+
                 }
-
-
-                emit(numFixHopsSignal,totalFixHops/totalHops);
+                delete msdu;
+                delete ctrl;
+            }
+            else
+            {
+                cPacket *msg = decapsulate(frame2);
+                if (dynamic_cast<ETXBasePacket*>(msg))
+                {
+                    if (ETXProcess)
+                    {
+                        if (msg->getControlInfo())
+                            delete msg->removeControlInfo();
+                        send(msg,"ETXProcOut");
+                    }
+                    else
+                        delete msg;
+                    return;
+                }
+                else if (dynamic_cast<LWMPLSPacket*> (msg))
+                {
+                    LWMPLSPacket *lwmplspk = dynamic_cast<LWMPLSPacket*> (msg);
+                    encapPkt = decapsulateMpls(lwmplspk);
+                }
+                else if (dynamic_cast<LocatorPkt *>(msg) != nullptr && hasLocator)
+                    send(msg, "locatorOut");
+                else
+                    encapPkt = msg;
+                if (encapPkt && isUpper)
+                {
+                    sendUp(encapPkt);
+                    std::deque<MACAddress> path;
+                    int patSize = 0;
+                    if (getOtpimunRoute)
+                    {
+                        if (getOtpimunRoute->findRoute(120,origin,path))
+                        {
+                            getOtpimunRoute->findRoute(120,origin,path);
+                            patSize = path.size();
+                            emit(numHopsSignal,totalHops - patSize);
+                        }
+                    }
+                    emit(numFixHopsSignal,totalFixHops/totalHops);
+                }
             }
         }
         else if (!frame2->getFinalAddress().isUnspecified())

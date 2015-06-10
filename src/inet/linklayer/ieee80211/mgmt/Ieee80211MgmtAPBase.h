@@ -80,6 +80,8 @@ class INET_API Ieee80211MgmtAPBase : public Ieee80211MgmtBase
      * MACRelayUnit deals with EtherFrames.
      */
     virtual void sendToUpperLayer(Ieee80211DataFrame *frame);
+
+    void sendMsdu(Ieee80211DataOrMgmtFrame *msduAux);
 };
 
 } // namespace ieee80211

@@ -687,8 +687,6 @@ class INET_API Ieee80211Mac : public MACProtocolBase
      * @name Frame builder functions
      */
     //@{
-    virtual Ieee80211DataOrMgmtFrame *fromMsduAToMsduAFrame(Ieee80211DataOrMgmtFrame *frameToSend);
-    virtual Ieee80211DataOrMgmtFrame *fromMsduAFrameToMsduA(Ieee80211DataOrMgmtFrame *frameToSend);
     virtual Ieee80211DataOrMgmtFrame *buildDataFrame(Ieee80211DataOrMgmtFrame *frameToSend);
     virtual Ieee80211ACKFrame *buildACKFrame(Ieee80211DataOrMgmtFrame *frameToACK);
     virtual Ieee80211RTSFrame *buildRTSFrame(Ieee80211DataOrMgmtFrame *frameToSend);

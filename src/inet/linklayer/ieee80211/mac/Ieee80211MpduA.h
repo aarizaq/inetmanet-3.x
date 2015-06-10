@@ -59,6 +59,7 @@ public:
     }
 
     virtual void setPacket(unsigned int i, Ieee80211DataFrame *frame) {if (i<encapsulateVector.size()) encapsulateVector[i]->pkt = frame;}
+    virtual void replacePacket(unsigned int i, Ieee80211DataFrame *frame) {if (i<encapsulateVector.size()){drop(encapsulateVector[i]->pkt); delete encapsulateVector[i]->pkt; encapsulateVector[i]->pkt = frame;}}
 
     Ieee80211DataFrame *decapsulatePacket(unsigned int i);
     virtual unsigned int getEncapSize() {return encapsulateVector.size();}

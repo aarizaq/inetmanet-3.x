@@ -629,35 +629,16 @@ void Ieee80211Mac::handleUpperPacket(cPacket *msg)
     // must be a Ieee80211DataOrMgmtFrame, within the max size because we don't support fragmentation
     Ieee80211DataOrMgmtFrame *frame = check_and_cast<Ieee80211DataOrMgmtFrame *>(msg);
     Ieee80211MpduA *mpdu = dynamic_cast<Ieee80211MpduA *>(msg);
-    Ieee80211MsduA *msdu = dynamic_cast<Ieee80211MsduA *>(msg);
+    Ieee80211MsduAMeshFrame *msduMesh = dynamic_cast<Ieee80211MsduAMeshFrame *>(msg);
+    Ieee80211MsduAFrame *msdu = dynamic_cast<Ieee80211MsduAFrame *>(msg);
 
 
-    if (mpdu == nullptr && msdu == nullptr)
+    if (mpdu == nullptr && msdu == nullptr && msduMesh == nullptr)
     {
         if (frame->getByteLength() > fragmentationThreshold)
             throw cRuntimeError("message from higher layer (%s)%s is too long for 802.11b, %d bytes (fragmentation is not supported yet)",
                     msg->getClassName(), msg->getName(), (int)(msg->getByteLength()));
     }
-    // convert msduA containers in MsdaA frames
-    if (msdu)
-    {
-        frame = fromMsduAToMsduAFrame(msdu);
-        delete msg;
-    }
-    else if (mpdu)
-    {
-        // check if there are msdu-A containers
-        for (unsigned int i = 0; i < mpdu->getNumEncap(); i++)
-        {
-            if (dynamic_cast<Ieee80211MsduA *>(mpdu->getPacket(i)))
-            {
-                Ieee80211DataFrame *frameAux = (Ieee80211DataFrame *)fromMsduAToMsduAFrame(mpdu->getPacket(i));
-                delete mpdu->getPacket(i);
-                mpdu->setPacket(i,frameAux);
-            }
-        }
-    }
-
 
     EV_DEBUG << "frame " << frame << " received from higher layer, receiver = " << frame->getReceiverAddress() << endl;
 
@@ -1369,106 +1350,6 @@ void Ieee80211Mac::sendCTSFrame(Ieee80211RTSFrame *rtsFrame)
  * Frame builder functions.
  */
 
-
-Ieee80211DataOrMgmtFrame *Ieee80211Mac::fromMsduAFrameToMsduA(Ieee80211DataOrMgmtFrame *frameToProc)
-{
-    // check first encapsulate packet
-
-    if (dynamic_cast<Ieee80211MsduAFrame *>(frameToProc) == nullptr && dynamic_cast<Ieee80211MsduAMeshFrame *>(frameToProc) == nullptr)
-        return nullptr;
-
-    std::vector<cPacket *> stack;
-    std::vector<cPacket *> stackAux;
-
-    cPacket *pkt = frameToProc->decapsulate();
-    while (pkt->getEncapsulatedPacket())
-    {
-        cPacket *pktAux =  pkt->decapsulate();
-        stack.push_back(pkt);
-        pkt =  pktAux;
-    }
-
-    while (!stack.empty())
-    {
-        cPacket *pktAux =  stack.back();
-        stack.pop_back();
-        if (dynamic_cast<Ieee80211MsduAMeshSubframe *>(pktAux) == nullptr && dynamic_cast<Ieee80211MsduASubframe *>(pktAux) == nullptr)
-        {
-            stack.back()->encapsulate(pktAux);
-        }
-        else
-            stackAux.push_back(pktAux);
-    }
-
-    Ieee80211MsduA *mpduA = new Ieee80211MsduA();
-    bool isMesh = dynamic_cast<Ieee80211MeshFrame *>(frameToProc) != nullptr;
-
-     if (isMesh)
-        *((Ieee80211MeshFrame*)mpduA) = *((Ieee80211MeshFrame*)frameToProc);
-    else
-        *((Ieee80211DataFrameWithSNAP*)mpduA) = *((Ieee80211DataFrameWithSNAP*)frameToProc);
-    while (!stackAux.empty())
-    {
-        mpduA->pushBack((Ieee80211DataFrame *)stackAux.back());
-        stackAux.pop_back();
-    }
-    delete frameToProc;
-    return mpduA;
-}
-
-Ieee80211DataOrMgmtFrame *Ieee80211Mac::fromMsduAToMsduAFrame(Ieee80211DataOrMgmtFrame *frameToSend)
-{
-    Ieee80211MsduA *mpduA = dynamic_cast<Ieee80211MsduA *>(frameToSend);
-    if (mpduA == nullptr)
-    {
-        return nullptr;
-    }
-
-    std::vector<cPacket *> stack;
-    bool isMesh = dynamic_cast<Ieee80211MsduASubframe *>(mpduA->getPacket(0)) == nullptr;
-
-    for (int i = 0; i < (int)mpduA->getNumEncap(); i++)
-    {
-        cPacket *pkt = mpduA->getPacket(i)->dup();
-        while (pkt->getEncapsulatedPacket())
-        {
-            cPacket *pktAux =  pkt->decapsulate();
-            stack.push_back(pkt);
-            pkt =  pktAux;
-        }
-    }
-    // recapsulate
-    cPacket *pkt;
-    while(!stack.empty())
-    {
-        pkt = stack.back();
-        stack.pop_back();
-        if (!stack.empty())
-            stack.back()->encapsulate(pkt);
-    }
-
-    Ieee80211DataOrMgmtFrame *frame = nullptr;
-    if (!isMesh)
-    {
-        // normal data
-        Ieee80211DataFrameWithSNAP *frameAux = new Ieee80211DataFrameWithSNAP();
-        uint64_t l = frameAux->getByteLength();
-        *frameAux = *(Ieee80211DataFrameWithSNAP *)mpduA;
-        frameAux->setByteLength(l);
-        frame = frameAux;
-    }
-    else
-    {
-        Ieee80211MeshFrame *frameAux = new Ieee80211MeshFrame();
-        uint64_t l = frameAux->getByteLength();
-        *frameAux = *(Ieee80211MeshFrame *)mpduA;
-        frameAux->setByteLength(l);
-        frame = frameAux;
-        // mesh data
-    }
-    frame->encapsulate(pkt);
-    return frame;
-}
 
 Ieee80211DataOrMgmtFrame *Ieee80211Mac::buildDataFrame(Ieee80211DataOrMgmtFrame *frameToSend)
 {
@@ -2366,11 +2247,7 @@ void Ieee80211Mac::sendUp(cMessage *msg)
         EV_INFO << "Sending up " << msg << "\n";
         if (msg->isPacket())
             emit(packetSentToUpperSignal, msg);
-        Ieee80211DataOrMgmtFrame *frameAux = fromMsduAFrameToMsduA(dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg));
-        if (frameAux)
-            send(frameAux, upperLayerOutGateId);
-        else
-            send(msg, upperLayerOutGateId);
+        send(msg, upperLayerOutGateId);
     }
 }
 

@@ -17,6 +17,7 @@
 
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtAPBase.h"
 #include "inet/linklayer/common/Ieee802Ctrl.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA.h"
 #include <string.h>
 
 #ifdef WITH_ETHERNET
@@ -69,39 +70,109 @@ void Ieee80211MgmtAPBase::sendToUpperLayer(Ieee80211DataFrame *frame)
         delete frame;
         return;
     }
-    cPacket *outFrame = nullptr;
-    switch (encapDecap) {
-        case ENCAP_DECAP_ETH:
+    Ieee80211DataOrMgmtFrame *msduAux = fromMsduAFrameToMsduA(frame);
+    if (!msduAux)
+    {
+        cPacket *outFrame = nullptr;
+        switch (encapDecap) {
+            case ENCAP_DECAP_ETH:
 #ifdef WITH_ETHERNET
-            outFrame = convertToEtherFrame(frame);
+                outFrame = convertToEtherFrame(frame);
 #else // ifdef WITH_ETHERNET
-            throw cRuntimeError("INET compiled without ETHERNET feature, but the 'encapDecap' parameter is set to 'eth'!");
+                throw cRuntimeError("INET compiled without ETHERNET feature, but the 'encapDecap' parameter is set to 'eth'!");
 #endif // ifdef WITH_ETHERNET
+                break;
+
+            case ENCAP_DECAP_TRUE: {
+                cPacket *payload = frame->decapsulate();
+                Ieee802Ctrl *ctrl = new Ieee802Ctrl();
+                ctrl->setSrc(frame->getTransmitterAddress());
+                ctrl->setDest(frame->getAddress3());
+                Ieee80211DataFrameWithSNAP *frameWithSNAP = dynamic_cast<Ieee80211DataFrameWithSNAP *>(frame);
+                if (frameWithSNAP)
+                    ctrl->setEtherType(frameWithSNAP->getEtherType());
+                payload->setControlInfo(ctrl);
+                delete frame;
+                outFrame = payload;
+            }
             break;
 
-        case ENCAP_DECAP_TRUE: {
-            cPacket *payload = frame->decapsulate();
-            Ieee802Ctrl *ctrl = new Ieee802Ctrl();
-            ctrl->setSrc(frame->getTransmitterAddress());
-            ctrl->setDest(frame->getAddress3());
-            Ieee80211DataFrameWithSNAP *frameWithSNAP = dynamic_cast<Ieee80211DataFrameWithSNAP *>(frame);
-            if (frameWithSNAP)
-                ctrl->setEtherType(frameWithSNAP->getEtherType());
-            payload->setControlInfo(ctrl);
-            delete frame;
-            outFrame = payload;
+            case ENCAP_DECAP_FALSE:
+                outFrame = frame;
+                break;
+
+            default:
+                throw cRuntimeError("Unknown encapDecap value: %d", encapDecap);
+                break;
         }
-        break;
-
-        case ENCAP_DECAP_FALSE:
-            outFrame = frame;
-            break;
-
-        default:
-            throw cRuntimeError("Unknown encapDecap value: %d", encapDecap);
-            break;
+        send(outFrame, "upperLayerOut");
     }
-    send(outFrame, "upperLayerOut");
+    else
+    {
+        sendMsdu(msduAux);
+    }
+
+}
+
+void Ieee80211MgmtAPBase::sendMsdu(Ieee80211DataOrMgmtFrame *msduAux)
+{
+    Ieee80211MsduA *msdu = dynamic_cast<Ieee80211MsduA *> (msduAux);
+    if (msdu == nullptr)
+        throw cRuntimeError("Frame is not a Msdu-A");
+    for (unsigned int i = 0; i < msdu->getNumEncap(); i++)
+    {
+        cPacket *outFrame = nullptr;
+        cPacket *payload =  msdu->getPacket(i)->decapsulate();
+        switch (encapDecap) {
+            case ENCAP_DECAP_ETH: {
+#ifdef WITH_ETHERNET
+
+                // create a matching ethernet frame
+                EthernetIIFrame *ethframe = new EthernetIIFrame(payload->getName());    //TODO option to use EtherFrameWithSNAP instead
+                ethframe->setDest(msdu->getAddress3());
+                ethframe->setSrc(msdu->getTransmitterAddress());
+                ethframe->setEtherType(msdu->getEtherType());
+                ethframe->setByteLength(ETHER_MAC_FRAME_BYTES);
+                // encapsulate the payload in there
+                ASSERT(payload != nullptr);
+                ethframe->encapsulate(payload);
+                if (ethframe->getByteLength() < MIN_ETHERNET_FRAME_BYTES)
+                    ethframe->setByteLength(MIN_ETHERNET_FRAME_BYTES);
+                // done
+                outFrame = ethframe;
+#else // ifdef WITH_ETHERNET
+                throw cRuntimeError("INET compiled without ETHERNET feature, but the 'encapDecap' parameter is set to 'eth'!");
+#endif // ifdef WITH_ETHERNET
+            }
+            break;
+
+            case ENCAP_DECAP_TRUE: {
+                Ieee802Ctrl *ctrl = new Ieee802Ctrl();
+                ctrl->setSrc(msdu->getTransmitterAddress());
+                ctrl->setDest(msdu->getAddress3());
+                ctrl->setEtherType(msdu->getEtherType());
+                payload->setControlInfo(ctrl);
+                outFrame = payload;
+            }
+            break;
+
+            case ENCAP_DECAP_FALSE:
+            {
+                Ieee80211DataFrameWithSNAP *frame = new  Ieee80211DataFrameWithSNAP(payload->getName());
+                uint64_t len = frame->getByteLength();
+                *frame = *((Ieee80211DataFrameWithSNAP*) msduAux);
+                frame->setByteLength(len);
+                frame->encapsulate(payload);
+                outFrame = frame;
+                break;
+            }
+            default:
+                throw cRuntimeError("Unknown encapDecap value: %d", encapDecap);
+                break;
+        }
+        send(outFrame, "upperLayerOut");
+    }
+    delete msdu;
 }
 
 EtherFrame *Ieee80211MgmtAPBase::convertToEtherFrame(Ieee80211DataFrame *frame_)

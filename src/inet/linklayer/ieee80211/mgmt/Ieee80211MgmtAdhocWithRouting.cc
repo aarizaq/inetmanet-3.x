@@ -242,8 +242,12 @@ void Ieee80211MgmtAdhocWithRouting::handleDataFrame(Ieee80211DataFrame *frame)
         return;
 
     MACAddress finalAddress;
-    Ieee80211MeshFrame *frame2  = dynamic_cast<Ieee80211MeshFrame *>(frame);
-    Ieee80211MsduA *msdu = dynamic_cast<Ieee80211MsduA *>(frame);
+    Ieee80211MsduA *msdu = dynamic_cast<Ieee80211MsduA *>(fromMsduAFrameToMsduA(frame));
+    Ieee80211MeshFrame *frame2  = nullptr;
+    if (msdu)
+        frame2  = msdu;
+    else
+        frame2  = dynamic_cast<Ieee80211MeshFrame *>(frame);
 
     if (!frame2 && msdu == nullptr)
     {
@@ -254,18 +258,16 @@ void Ieee80211MgmtAdhocWithRouting::handleDataFrame(Ieee80211DataFrame *frame)
     if (msdu != nullptr && dynamic_cast<Ieee80211MsduAMeshSubframe *>(msdu->getPacket(0)) == nullptr)
     {
         Ieee802Ctrl *ctrl = new Ieee802Ctrl();
-        ctrl->setSrc(frame->getTransmitterAddress());
-        ctrl->setDest(frame->getReceiverAddress());
-        Ieee80211DataFrameWithSNAP *frameWithSNAP = dynamic_cast<Ieee80211DataFrameWithSNAP *>(frame);
-        if (frameWithSNAP)
-            ctrl->setEtherType(frameWithSNAP->getEtherType());
+        ctrl->setSrc(msdu->getTransmitterAddress());
+        ctrl->setDest(msdu->getReceiverAddress());
+        ctrl->setEtherType(msdu->getEtherType());
         for (int i = 0; i < (int)msdu->getNumEncap();i++)
         {
             cPacket *payload = msdu->getPacket(i)->decapsulate();
             payload->setControlInfo(ctrl->dup());
             sendUp(payload);
         }
-        delete frame;
+        delete msdu;
         delete ctrl;
         return;
     }
@@ -279,11 +281,9 @@ void Ieee80211MgmtAdhocWithRouting::handleDataFrame(Ieee80211DataFrame *frame)
         else if (msdu != nullptr)
         {
             Ieee802Ctrl *ctrl = new Ieee802Ctrl();
-            ctrl->setSrc(frame->getTransmitterAddress());
-            ctrl->setDest(frame->getReceiverAddress());
-            Ieee80211DataFrameWithSNAP *frameWithSNAP = dynamic_cast<Ieee80211DataFrameWithSNAP *>(frame);
-            if (frameWithSNAP)
-                ctrl->setEtherType(frameWithSNAP->getEtherType());
+            ctrl->setSrc(msdu->getTransmitterAddress());
+            ctrl->setDest(msdu->getReceiverAddress());
+            ctrl->setEtherType(msdu->getEtherType());
             for (int i = 0; i < (int)msdu->getNumEncap();i++)
             {
                 cPacket *payload = msdu->getPacket(i)->decapsulate();
@@ -291,7 +291,7 @@ void Ieee80211MgmtAdhocWithRouting::handleDataFrame(Ieee80211DataFrame *frame)
                 payload->setControlInfo(ctrl->dup());
                 sendUp(payload);
             }
-            delete frame;
+            delete msdu;
             delete ctrl;
         }
         return;
