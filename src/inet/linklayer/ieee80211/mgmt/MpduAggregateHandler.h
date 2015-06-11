@@ -25,7 +25,7 @@
 #include <utility>
 #include "inet/linklayer/ieee80211/mac/IQoSClassifier.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
-#include "inet/linklayer/ieee80211/mac/Ieee80211MpduA.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MpduAContainer.h"
 
 namespace inet {
 
@@ -148,8 +148,8 @@ class INET_API MpduAggregateHandler : public cOwnedObject
         virtual bool checkState(const Ieee80211DataOrMgmtFrame *);
         virtual bool handleFrames(Ieee80211DataOrMgmtFrame *pkt);
 
-        virtual Ieee80211MpduA* getBlock(const MACAddress &, int, int64_t, int , int );
-        virtual Ieee80211MpduA* getBlock(Ieee80211DataFrame *, int , int64_t, int , int );
+        virtual Ieee80211MpduAContainer* getBlock(const MACAddress &, int, int64_t, int , int );
+        virtual Ieee80211MpduAContainer* getBlock(Ieee80211DataFrame *, int , int64_t, int , int );
 
         virtual void setAllAddress(const bool &p) {allAddress = p;}
         virtual void setResetAfterSend(const bool &p) {resetAfterSend = p;}

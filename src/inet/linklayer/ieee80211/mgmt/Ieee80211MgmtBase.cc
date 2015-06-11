@@ -23,7 +23,7 @@
 #include "inet/common/lifecycle/NodeStatus.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211eClassifier.h"
 #include "inet/linklayer/ieee80211/mgmt/MpduAggregateHandler.h"
-#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MsduAContainer.h"
 
 #include <string>
 
@@ -143,7 +143,7 @@ Ieee80211DataOrMgmtFrame *Ieee80211MgmtBase::fromMsduAFrameToMsduA(Ieee80211Data
             stackAux.push_back(pktAux);
     }
 
-    Ieee80211MsduA *mpduA = new Ieee80211MsduA();
+    Ieee80211MsduAContainer *mpduA = new Ieee80211MsduAContainer();
     bool isMesh = dynamic_cast<Ieee80211MeshFrame *>(frameToProc) != nullptr;
 
      if (isMesh)
@@ -161,7 +161,7 @@ Ieee80211DataOrMgmtFrame *Ieee80211MgmtBase::fromMsduAFrameToMsduA(Ieee80211Data
 
 Ieee80211DataFrame *Ieee80211MgmtBase::fromMsduAToMsduAFrame(Ieee80211DataOrMgmtFrame *frameToSend)
 {
-    Ieee80211MsduA *msduA = dynamic_cast<Ieee80211MsduA *>(frameToSend);
+    Ieee80211MsduAContainer *msduA = dynamic_cast<Ieee80211MsduAContainer *>(frameToSend);
     if (msduA == nullptr)
     {
         return nullptr;
@@ -595,18 +595,18 @@ void Ieee80211MgmtBase::sendOut(cMessage *msg)
 {
     ASSERT(isOperational);
     // check if MsduA
-    Ieee80211MpduA * mpdu = dynamic_cast<Ieee80211MpduA *>(msg);
+    Ieee80211MpduAContainer * mpdu = dynamic_cast<Ieee80211MpduAContainer *>(msg);
     if (mpdu)
     {
         // search from Msdu and convert it
         for (unsigned int i = 0; i < mpdu->getNumEncap(); i++)
         {
-            Ieee80211MsduA *msduAContainer = dynamic_cast<Ieee80211MsduA *>(mpdu->getPacket(i));
+            Ieee80211MsduAContainer *msduAContainer = dynamic_cast<Ieee80211MsduAContainer *>(mpdu->getPacket(i));
             if (msduAContainer)
                 mpdu->replacePacket(i,fromMsduAToMsduAFrame(msduAContainer));
         }
     }
-    else if (dynamic_cast<Ieee80211MsduA *>(msg))
+    else if (dynamic_cast<Ieee80211MsduAContainer *>(msg))
     {
         Ieee80211DataOrMgmtFrame *frameAux = fromMsduAToMsduAFrame((Ieee80211DataOrMgmtFrame *)msg);
         frameAux->setKind(msg->getKind());

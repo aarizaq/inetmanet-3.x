@@ -22,7 +22,7 @@ namespace inet {
 namespace ieee80211 {
 
 
-class Ieee80211MsduA : public Ieee80211MeshFrame
+class Ieee80211MsduAContainer : public Ieee80211MeshFrame
 {
 private:
     struct ShareStruct{
@@ -42,11 +42,11 @@ protected:
   bool operator==(const Ieee80211MeshFrame&);
 
 public:
-    Ieee80211MsduA(const char *name=nullptr, int kind=0);
-    Ieee80211MsduA(const Ieee80211MsduA &);
-    virtual Ieee80211MsduA * dup() const {return new Ieee80211MsduA(*this);}
-    virtual ~Ieee80211MsduA();
-    Ieee80211MsduA& operator=(const Ieee80211MsduA& msg);
+    Ieee80211MsduAContainer(const char *name=nullptr, int kind=0);
+    Ieee80211MsduAContainer(const Ieee80211MsduAContainer &);
+    virtual Ieee80211MsduAContainer * dup() const {return new Ieee80211MsduAContainer(*this);}
+    virtual ~Ieee80211MsduAContainer();
+    Ieee80211MsduAContainer& operator=(const Ieee80211MsduAContainer& msg);
     virtual Ieee80211DataFrame *getPacket(unsigned int i) const;
     virtual void setPacketKind(unsigned int i,int kind);
     virtual unsigned int getNumEncap() const {return encapsulateVector.size();}
@@ -111,8 +111,8 @@ public:
 
 
 
-inline void doPacking(cCommBuffer *b, Ieee80211MsduA& obj) {obj.parsimPack(b);}
-inline void doUnpacking(cCommBuffer *b, Ieee80211MsduA& obj) {obj.parsimUnpack(b);}
+inline void doPacking(cCommBuffer *b, Ieee80211MsduAContainer& obj) {obj.parsimPack(b);}
+inline void doUnpacking(cCommBuffer *b, Ieee80211MsduAContainer& obj) {obj.parsimUnpack(b);}
 
 }
 }

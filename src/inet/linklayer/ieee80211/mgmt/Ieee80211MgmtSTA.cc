@@ -24,8 +24,8 @@
 #include "inet/common/NotifierConsts.h"
 #include "inet/physicallayer/contract/packetlevel/RadioControlInfo_m.h"
 #include "inet/physicallayer/ieee80211/packetlevel/Ieee80211ControlInfo_m.h"
-#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA_m.h"
 #include "inet/common/INETUtils.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MsduAContainer.h"
 
 namespace inet {
 
@@ -596,7 +596,7 @@ void Ieee80211MgmtSTA::handleDataFrame(Ieee80211DataFrame *frame)
     // else delete the frame
     if (isAssociated)
     {
-        Ieee80211MsduA *msdu = dynamic_cast<Ieee80211MsduA *>(fromMsduAFrameToMsduA(frame));
+        Ieee80211MsduAContainer *msdu = dynamic_cast<Ieee80211MsduAContainer *>(fromMsduAFrameToMsduA(frame));
         if (msdu == nullptr)
             sendUp(decapsulate(frame));
         else

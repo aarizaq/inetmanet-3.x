@@ -17,7 +17,7 @@
 
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtSTASimplified.h"
 #include "inet/linklayer/common/Ieee802Ctrl.h"
-#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA_m.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MsduAContainer.h"
 
 namespace inet {
 
@@ -100,7 +100,7 @@ void Ieee80211MgmtSTASimplified::receiveSignal(cComponent *source, simsignal_t s
 
 void Ieee80211MgmtSTASimplified::handleDataFrame(Ieee80211DataFrame *frame)
 {
-    Ieee80211MsduA *msdu = dynamic_cast<Ieee80211MsduA *>(fromMsduAFrameToMsduA(frame));
+    Ieee80211MsduAContainer *msdu = dynamic_cast<Ieee80211MsduAContainer *>(fromMsduAFrameToMsduA(frame));
     if (msdu == nullptr)
         sendUp(decapsulate(frame));
     else

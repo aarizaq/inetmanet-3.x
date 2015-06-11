@@ -17,7 +17,7 @@
 
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtAPBase.h"
 #include "inet/linklayer/common/Ieee802Ctrl.h"
-#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MsduAContainer.h"
 #include <string.h>
 
 #ifdef WITH_ETHERNET
@@ -116,7 +116,7 @@ void Ieee80211MgmtAPBase::sendToUpperLayer(Ieee80211DataFrame *frame)
 
 void Ieee80211MgmtAPBase::sendMsdu(Ieee80211DataOrMgmtFrame *msduAux)
 {
-    Ieee80211MsduA *msdu = dynamic_cast<Ieee80211MsduA *> (msduAux);
+    Ieee80211MsduAContainer *msdu = dynamic_cast<Ieee80211MsduAContainer *> (msduAux);
     if (msdu == nullptr)
         throw cRuntimeError("Frame is not a Msdu-A");
     for (unsigned int i = 0; i < msdu->getNumEncap(); i++)

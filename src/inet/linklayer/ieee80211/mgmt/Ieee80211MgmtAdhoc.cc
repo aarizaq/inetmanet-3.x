@@ -17,7 +17,7 @@
 
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtAdhoc.h"
 #include "inet/linklayer/common/Ieee802Ctrl.h"
-#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MsduAContainer.h"
 
 namespace inet {
 
@@ -88,7 +88,7 @@ void Ieee80211MgmtAdhoc::handleDataFrame(Ieee80211DataFrame *frame)
         sendUp(decapsulate(frame));
     else
     {
-        Ieee80211MsduA *msdu = (Ieee80211MsduA *)msduAux;
+        Ieee80211MsduAContainer *msdu = (Ieee80211MsduAContainer *)msduAux;
         Ieee802Ctrl *ctrl = new Ieee802Ctrl();
         ctrl->setSrc(msdu->getTransmitterAddress());
         ctrl->setDest(msdu->getReceiverAddress());

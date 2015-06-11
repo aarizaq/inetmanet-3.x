@@ -1,7 +1,6 @@
 
 #include "inet/linklayer/ieee80211/mac/Ieee80211Mac.h"
-#include "inet/linklayer/ieee80211/mac/Ieee80211MpduA.h"
-#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MsduAContainer.h"
 
 
 namespace inet {
@@ -52,7 +51,7 @@ void Ieee80211Mac::retryCurrentMpduA()
         if (msg != nullptr)
         {
             take(msg);
-            Ieee80211MpduA  *mpdua = check_and_cast<Ieee80211MpduA*>(msg);
+            Ieee80211MpduAContainer  *mpdua = check_and_cast<Ieee80211MpduAContainer*>(msg);
             while (mpdua->getNumEncap() > 0)
             {
                 Ieee80211DataFrame * frame = mpdua->popFront();
@@ -331,7 +330,7 @@ bool Ieee80211Mac::processMpduA(Ieee80211DataFrame *frame)
 
 bool Ieee80211Mac::isMpduA(Ieee80211Frame *frame)
 {
-    if (dynamic_cast<Ieee80211MpduA*>(frame))
+    if (dynamic_cast<Ieee80211MpduAContainer*>(frame))
         return true;
     return false;
 }
@@ -481,7 +480,7 @@ void Ieee80211Mac::processBlockAckFrame(Ieee80211Frame *frameToSend)
             if (msg != nullptr)
             {
                 take(msg);
-                Ieee80211MpduA  *mpdua = check_and_cast<Ieee80211MpduA*>(msg);
+                Ieee80211MpduAContainer  *mpdua = check_and_cast<Ieee80211MpduAContainer*>(msg);
                 while (mpdua->getNumEncap() > 0)
                 {
                     Ieee80211DataFrame * dataFrame = mpdua->popFront();
@@ -1178,7 +1177,7 @@ void Ieee80211Mac::stateWaitBlockAck(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
 
 void Ieee80211Mac::stateSendMpuA(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
 {
-    Ieee80211MpduA *frame;
+    Ieee80211MpduAContainer *frame;
     FSMIEEE80211_Enter(fsmLocal)
     {
         if (endSIFS == msg)
@@ -1188,11 +1187,11 @@ void Ieee80211Mac::stateSendMpuA(Ieee802MacBaseFsm * fsmLocal,cMessage *msg)
             endSIFS->setContextPointer(nullptr);
             Ieee80211Frame *frameAux = getCurrentTransmission();
             ASSERT(frameAux != nullptr);
-            frame = check_and_cast<Ieee80211MpduA *>(frameAux);
+            frame = check_and_cast<Ieee80211MpduAContainer *>(frameAux);
         }
         else
         {
-            frame = check_and_cast<Ieee80211MpduA *>(msg);
+            frame = check_and_cast<Ieee80211MpduAContainer *>(msg);
         }
         //scheduleDataTimeoutPeriod(frame); // TODO: compute Schedule MPUA with immediate block ACK
         MpduModeTranssmision = true;

@@ -14,8 +14,8 @@
 // 
 
 #include "inet/linklayer/ieee80211/mgmt/MpduAggregateHandler.h"
-#include "inet/linklayer/ieee80211/mac/Ieee80211MpduA.h"
-#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA_m.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MpduAContainer.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MsduAContainer.h"
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtFrames_m.h"
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtBase.h"
 
@@ -252,7 +252,7 @@ bool MpduAggregateHandler::checkState(const MACAddress &addr)
 
 void MpduAggregateHandler::increaseSize(Ieee80211DataOrMgmtFrame* val, int cat)
 {
-    Ieee80211MpduA * block = dynamic_cast<Ieee80211MpduA *>(val);
+    Ieee80211MpduAContainer * block = dynamic_cast<Ieee80211MpduAContainer *>(val);
     auto it = categories[cat].numFramesDestination.find(val->getReceiverAddress());
     if (it == categories[cat].numFramesDestination.end())
     {
@@ -280,7 +280,7 @@ void MpduAggregateHandler::increaseSize(Ieee80211DataOrMgmtFrame* val, int cat)
 
 void MpduAggregateHandler::decreaseSize(Ieee80211DataOrMgmtFrame* val, int cat)
 {
-    Ieee80211MpduA * block = dynamic_cast<Ieee80211MpduA *>(val);
+    Ieee80211MpduAContainer * block = dynamic_cast<Ieee80211MpduAContainer *>(val);
     auto it = categories[cat].numFramesDestination.find(val->getReceiverAddress());
     if (it == categories[cat].numFramesDestination.end())
         throw cRuntimeError("Multi queue error address not found");
@@ -339,7 +339,7 @@ int MpduAggregateHandler::findAddressFree(const MACAddress &addr ,int cat)
     return 0;
 }
 
-Ieee80211MpduA* MpduAggregateHandler::getBlock(Ieee80211DataFrame *frame,int maxPkSize, int64_t maxByteSize, int cat, int minSize)
+Ieee80211MpduAContainer* MpduAggregateHandler::getBlock(Ieee80211DataFrame *frame,int maxPkSize, int64_t maxByteSize, int cat, int minSize)
 {
 
     if (maxByteSize == -1)
@@ -351,7 +351,7 @@ Ieee80211MpduA* MpduAggregateHandler::getBlock(Ieee80211DataFrame *frame,int max
             maxByteSize = exp2(13+infoAdda->exponent)-1;
     }
 
-    Ieee80211MpduA* block = getBlock(frame->getReceiverAddress(),maxPkSize-1, maxByteSize - frame->getByteLength(),cat , minSize);
+    Ieee80211MpduAContainer* block = getBlock(frame->getReceiverAddress(),maxPkSize-1, maxByteSize - frame->getByteLength(),cat , minSize);
     if (block)
     {
         block->pushFront(frame);
@@ -360,7 +360,7 @@ Ieee80211MpduA* MpduAggregateHandler::getBlock(Ieee80211DataFrame *frame,int max
     return nullptr;
 }
 
-Ieee80211MpduA* MpduAggregateHandler::getBlock(const MACAddress &addr,int maxPkSize,int64_t maxByteSize, int cat, int minSize)
+Ieee80211MpduAContainer* MpduAggregateHandler::getBlock(const MACAddress &addr,int maxPkSize,int64_t maxByteSize, int cat, int minSize)
 {
     if (cat >= (int) categories.size())
          throw cRuntimeError("MultiQueue::size Queue doesn't exist");
@@ -397,7 +397,7 @@ Ieee80211MpduA* MpduAggregateHandler::getBlock(const MACAddress &addr,int maxPkS
     if (minSize >= 0 && itDest2->second < minSize)
         return nullptr; // not enough free
 
-    Ieee80211MpduA *block = nullptr;
+    Ieee80211MpduAContainer *block = nullptr;
 
     for (auto it = categories[cat].queue->begin() ;it != categories[cat].queue->end();)
     {
@@ -410,7 +410,7 @@ Ieee80211MpduA* MpduAggregateHandler::getBlock(const MACAddress &addr,int maxPkS
 
         if (!block)
         {
-            block = new Ieee80211MpduA();
+            block = new Ieee80211MpduAContainer();
             block->setReceiverAddress(addr);
             if (block->getOwner() == this)
                     drop(block);
@@ -453,7 +453,7 @@ void MpduAggregateHandler::createBlocks(const MACAddress &addr, int cat)
     if (categories[cat].queue->empty())
         return;
 
-    Ieee80211MpduA *block = nullptr;
+    Ieee80211MpduAContainer *block = nullptr;
 
     auto itDest2 = categories[cat].numFramesDestinationFree.find(addr);
     if (itDest2 == categories[cat].numFramesDestinationFree.end())
@@ -478,7 +478,7 @@ void MpduAggregateHandler::createBlocks(const MACAddress &addr, int cat)
 
         if (!block)
         {
-            block = new Ieee80211MpduA();
+            block = new Ieee80211MpduAContainer();
             block->setReceiverAddress(addr);
             if (itAux == categories[cat].queue->end())
                 *it = block;
@@ -546,7 +546,7 @@ void MpduAggregateHandler::removeBlock(const MACAddress &addr, int cat)
     // search in the queue
     for (auto it = categories[cat].queue->begin() ;it != categories[cat].queue->end();++it)
     {
-        Ieee80211MpduA *frame = dynamic_cast<Ieee80211MpduA*>(*it);
+        Ieee80211MpduAContainer *frame = dynamic_cast<Ieee80211MpduAContainer*>(*it);
         if (frame == nullptr || frame->getReceiverAddress().compareTo(addr) != 0)
         {
             ++it;
@@ -748,7 +748,7 @@ bool MpduAggregateHandler::setMsduA(Ieee80211DataFrame * frame, const int &cat)
     // search for msda-a in the queues
     for (auto it = categories[cat].queue->begin() ;it != categories[cat].queue->end();)
     {
-        Ieee80211MsduA *frameMsda = dynamic_cast<Ieee80211MsduA*>(*it); // check if msdu-a is present
+        Ieee80211MsduAContainer *frameMsda = dynamic_cast<Ieee80211MsduAContainer*>(*it); // check if msdu-a is present
         if (frameMsda == nullptr)
         {
             ++it;
@@ -823,7 +823,7 @@ bool MpduAggregateHandler::setMsduA(Ieee80211DataFrame * frame, const int &cat)
     for (auto it = categories[cat].queue->begin() ;it != categories[cat].queue->end();)
     {
         // check if is a Msdu-A container
-        if (dynamic_cast<Ieee80211MsduA*>(*it))
+        if (dynamic_cast<Ieee80211MsduAContainer*>(*it))
         {
             ++it;
             continue;
@@ -864,7 +864,7 @@ bool MpduAggregateHandler::setMsduA(Ieee80211DataFrame * frame, const int &cat)
             continue;
         }
         // New Msdu-A container
-        Ieee80211MsduA *msdaContainer = new Ieee80211MsduA();
+        Ieee80211MsduAContainer *msdaContainer = new Ieee80211MsduAContainer();
 
         cPacket *pkt = frameAux->decapsulate();
 

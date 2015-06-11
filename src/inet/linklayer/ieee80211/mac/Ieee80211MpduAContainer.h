@@ -23,7 +23,7 @@ namespace inet {
 namespace ieee80211 {
 
 
-class Ieee80211MpduA : public Ieee80211DataFrame
+class Ieee80211MpduAContainer : public Ieee80211DataFrame
 {
 private:
     struct PacketStruct{
@@ -39,12 +39,12 @@ private:
     std::deque<PacketStruct*> encapsulateVector;
     void _deleteEncapVector();
 public:
-    Ieee80211MpduA(const char *name=nullptr, int kind=0);
-    Ieee80211MpduA(const Ieee80211MpduA &);
-    Ieee80211MpduA(Ieee80211DataFrame *);
-    virtual Ieee80211MpduA * dup() const {return new Ieee80211MpduA(*this);}
-    virtual ~Ieee80211MpduA();
-    Ieee80211MpduA& operator=(const Ieee80211MpduA& msg);
+    Ieee80211MpduAContainer(const char *name=nullptr, int kind=0);
+    Ieee80211MpduAContainer(const Ieee80211MpduAContainer &);
+    Ieee80211MpduAContainer(Ieee80211DataFrame *);
+    virtual Ieee80211MpduAContainer * dup() const {return new Ieee80211MpduAContainer(*this);}
+    virtual ~Ieee80211MpduAContainer();
+    Ieee80211MpduAContainer& operator=(const Ieee80211MpduAContainer& msg);
     virtual Ieee80211DataFrame *getPacket(unsigned int i);
     virtual int getNumRetries(const unsigned int &i) const;
     virtual void setNumRetries(const unsigned int &i,const int &val);
@@ -120,8 +120,8 @@ public:
 
 
 
-inline void doPacking(cCommBuffer *b, Ieee80211MpduA& obj) {obj.parsimPack(b);}
-inline void doUnpacking(cCommBuffer *b, Ieee80211MpduA& obj) {obj.parsimUnpack(b);}
+inline void doPacking(cCommBuffer *b, Ieee80211MpduAContainer& obj) {obj.parsimPack(b);}
+inline void doUnpacking(cCommBuffer *b, Ieee80211MpduAContainer& obj) {obj.parsimUnpack(b);}
 
 }
 }

@@ -13,7 +13,7 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MsduAContainer.h"
 
 //#define SHAREDBLOCK
 
@@ -45,21 +45,21 @@ std::ostream& operator<<(std::ostream& out, const T&)
     return out;
 }
 
-Ieee80211MsduA::~Ieee80211MsduA()
+Ieee80211MsduAContainer::~Ieee80211MsduAContainer()
 {
     // TODO Auto-generated destructor stub
     _deleteEncapVector();
 }
 
-Register_Class(Ieee80211MsduA);
+Register_Class(Ieee80211MsduAContainer);
 
-Ieee80211MsduA::Ieee80211MsduA(const char *name, int kind) :
+Ieee80211MsduAContainer::Ieee80211MsduAContainer(const char *name, int kind) :
         Ieee80211MeshFrame(name, kind)
 {
     encapsulateVector.clear();
 }
 
-Ieee80211MsduA::Ieee80211MsduA(const Ieee80211MsduA &other) :
+Ieee80211MsduAContainer::Ieee80211MsduAContainer(const Ieee80211MsduAContainer &other) :
         Ieee80211MeshFrame()
 {
     encapsulateVector.clear();
@@ -67,7 +67,7 @@ Ieee80211MsduA::Ieee80211MsduA(const Ieee80211MsduA &other) :
     operator=(other);
 }
 
-void Ieee80211MsduA::forEachChild(cVisitor *v)
+void Ieee80211MsduAContainer::forEachChild(cVisitor *v)
 {
     cPacket::forEachChild(v);
     if (!encapsulateVector.empty())
@@ -80,19 +80,19 @@ void Ieee80211MsduA::forEachChild(cVisitor *v)
     }
 }
 
-void Ieee80211MsduA::parsimPack(cCommBuffer *buffer)
+void Ieee80211MsduAContainer::parsimPack(cCommBuffer *buffer)
 {
     cPacket::parsimPack(buffer);
     doPacking(buffer, this->encapsulateVector);
 }
 
-void Ieee80211MsduA::parsimUnpack(cCommBuffer *buffer)
+void Ieee80211MsduAContainer::parsimUnpack(cCommBuffer *buffer)
 {
     cPacket::parsimUnpack(buffer);
     doUnpacking(buffer, this->encapsulateVector);
 }
 
-void Ieee80211MsduA::_deleteEncapVector()
+void Ieee80211MsduAContainer::_deleteEncapVector()
 {
     while (!encapsulateVector.empty())
     {
@@ -121,7 +121,7 @@ void Ieee80211MsduA::_deleteEncapVector()
     }
 }
 
-Ieee80211DataFrame *Ieee80211MsduA::popBack()
+Ieee80211DataFrame *Ieee80211MsduAContainer::popBack()
 {
     if (encapsulateVector.empty())
         return nullptr;
@@ -148,7 +148,7 @@ Ieee80211DataFrame *Ieee80211MsduA::popBack()
     return msg;
 }
 
-Ieee80211DataFrame *Ieee80211MsduA::popFrom()
+Ieee80211DataFrame *Ieee80211MsduAContainer::popFrom()
 {
     if (encapsulateVector.empty())
         return nullptr;
@@ -176,7 +176,7 @@ Ieee80211DataFrame *Ieee80211MsduA::popFrom()
     return msg;
 }
 
-void Ieee80211MsduA::pushBack(Ieee80211DataFrame *pkt)
+void Ieee80211MsduAContainer::pushBack(Ieee80211DataFrame *pkt)
 {
     if (pkt == nullptr)
         return;
@@ -218,7 +218,7 @@ void Ieee80211MsduA::pushBack(Ieee80211DataFrame *pkt)
     encapsulateVector.push_back(shareStructPtr);
 }
 
-void Ieee80211MsduA::pushFrom(Ieee80211DataFrame *pkt)
+void Ieee80211MsduAContainer::pushFrom(Ieee80211DataFrame *pkt)
 {
     if (pkt == nullptr)
         return;
@@ -242,7 +242,7 @@ void Ieee80211MsduA::pushFrom(Ieee80211DataFrame *pkt)
     encapsulateVector.insert(encapsulateVector.begin(), shareStructPtr);
 }
 
-void Ieee80211MsduA::_detachShareVector(unsigned int i)
+void Ieee80211MsduAContainer::_detachShareVector(unsigned int i)
 {
     if (i < encapsulateVector.size())
     {
@@ -260,21 +260,21 @@ void Ieee80211MsduA::_detachShareVector(unsigned int i)
     }
 }
 
-Ieee80211DataFrame *Ieee80211MsduA::getPacket(unsigned int i) const
+Ieee80211DataFrame *Ieee80211MsduAContainer::getPacket(unsigned int i) const
 {
 
     if (i >= encapsulateVector.size())
         return nullptr;
-    const_cast<Ieee80211MsduA*>(this)->_detachShareVector(i);
+    const_cast<Ieee80211MsduAContainer*>(this)->_detachShareVector(i);
     return encapsulateVector[i]->pkt;
 }
 
-cPacket *Ieee80211MsduA::decapsulatePacket(unsigned int i)
+cPacket *Ieee80211MsduAContainer::decapsulatePacket(unsigned int i)
 {
 
     if (i >= encapsulateVector.size())
         return nullptr;
-    const_cast<Ieee80211MsduA*>(this)->_detachShareVector(i);
+    const_cast<Ieee80211MsduAContainer*>(this)->_detachShareVector(i);
     cPacket * pkt = encapsulateVector[i]->pkt;
     if (getBitLength() > 0)
         setBitLength(getBitLength() - pkt->getBitLength());
@@ -287,7 +287,7 @@ cPacket *Ieee80211MsduA::decapsulatePacket(unsigned int i)
     return pkt;
 }
 
-void Ieee80211MsduA::setPacketKind(unsigned int i, int kind)
+void Ieee80211MsduAContainer::setPacketKind(unsigned int i, int kind)
 {
     if (i >= encapsulateVector.size())
         return;
@@ -295,7 +295,7 @@ void Ieee80211MsduA::setPacketKind(unsigned int i, int kind)
     encapsulateVector[i]->pkt->setKind(kind);
 }
 
-Ieee80211MsduA& Ieee80211MsduA::operator=(const Ieee80211MsduA& msg)
+Ieee80211MsduAContainer& Ieee80211MsduAContainer::operator=(const Ieee80211MsduAContainer& msg)
 {
     if (this == &msg)
         return *this;

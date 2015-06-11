@@ -13,7 +13,7 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-#include "inet/linklayer/ieee80211/mac/Ieee80211MpduA.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MpduAContainer.h"
 
 // Another default rule (prevents compiler from choosing base class' doPacking())
 template<typename T>
@@ -42,26 +42,26 @@ std::ostream& operator<<(std::ostream& out, const T&)
     return out;
 }
 
-Ieee80211MpduA::~Ieee80211MpduA()
+Ieee80211MpduAContainer::~Ieee80211MpduAContainer()
 {
     // TODO Auto-generated destructor stub
     _deleteEncapVector();
 }
 
-Ieee80211MpduA::Ieee80211MpduA(Ieee80211DataFrame *frame) :
+Ieee80211MpduAContainer::Ieee80211MpduAContainer(Ieee80211DataFrame *frame) :
         Ieee80211DataFrame(*frame)
 {
     encapsulateVector.clear();
     pushBack(frame);
 }
 
-Ieee80211MpduA::Ieee80211MpduA(const char *name, int kind) :
+Ieee80211MpduAContainer::Ieee80211MpduAContainer(const char *name, int kind) :
         Ieee80211DataFrame(name, kind)
 {
     encapsulateVector.clear();
 }
 
-Ieee80211MpduA::Ieee80211MpduA(const Ieee80211MpduA &other) :
+Ieee80211MpduAContainer::Ieee80211MpduAContainer(const Ieee80211MpduAContainer &other) :
         Ieee80211DataFrame()
 {
     encapsulateVector.clear();
@@ -69,7 +69,7 @@ Ieee80211MpduA::Ieee80211MpduA(const Ieee80211MpduA &other) :
     operator=(other);
 }
 
-void Ieee80211MpduA::forEachChild(cVisitor *v)
+void Ieee80211MpduAContainer::forEachChild(cVisitor *v)
 {
     cPacket::forEachChild(v);
     if (!encapsulateVector.empty())
@@ -79,19 +79,19 @@ void Ieee80211MpduA::forEachChild(cVisitor *v)
     }
 }
 
-void Ieee80211MpduA::parsimPack(cCommBuffer *buffer)
+void Ieee80211MpduAContainer::parsimPack(cCommBuffer *buffer)
 {
     cPacket::parsimPack(buffer);
     doPacking(buffer, this->encapsulateVector);
 }
 
-void Ieee80211MpduA::parsimUnpack(cCommBuffer *buffer)
+void Ieee80211MpduAContainer::parsimUnpack(cCommBuffer *buffer)
 {
     cPacket::parsimUnpack(buffer);
     doUnpacking(buffer, this->encapsulateVector);
 }
 
-void Ieee80211MpduA::_deleteEncapVector()
+void Ieee80211MpduAContainer::_deleteEncapVector()
 {
     while (!encapsulateVector.empty())
     {
@@ -103,7 +103,7 @@ void Ieee80211MpduA::_deleteEncapVector()
     }
 }
 
-Ieee80211DataFrame *Ieee80211MpduA::popBack()
+Ieee80211DataFrame *Ieee80211MpduAContainer::popBack()
 {
     if (encapsulateVector.empty())
         return nullptr;
@@ -120,7 +120,7 @@ Ieee80211DataFrame *Ieee80211MpduA::popBack()
     return msg;
 }
 
-Ieee80211DataFrame *Ieee80211MpduA::popFront()
+Ieee80211DataFrame *Ieee80211MpduAContainer::popFront()
 {
     if (encapsulateVector.empty())
         return nullptr;
@@ -137,19 +137,19 @@ Ieee80211DataFrame *Ieee80211MpduA::popFront()
     return msg;
 }
 
-void Ieee80211MpduA::pushBack(Ieee80211DataFrame *pkt)
+void Ieee80211MpduAContainer::pushBack(Ieee80211DataFrame *pkt)
 {
     pushBack(pkt, 0);
 }
 
-void Ieee80211MpduA::pushFront(Ieee80211DataFrame *pkt)
+void Ieee80211MpduAContainer::pushFront(Ieee80211DataFrame *pkt)
 {
     pushFront(pkt, 0);
 }
 
 
 
-void Ieee80211MpduA::pushBack(Ieee80211DataFrame *pkt, int retries)
+void Ieee80211MpduAContainer::pushBack(Ieee80211DataFrame *pkt, int retries)
 {
     if (pkt == nullptr)
         return;
@@ -174,7 +174,7 @@ void Ieee80211MpduA::pushBack(Ieee80211DataFrame *pkt, int retries)
     encapsulateVector.push_back(shareStructPtr);
 }
 
-void Ieee80211MpduA::pushFront(Ieee80211DataFrame *pkt, int retries)
+void Ieee80211MpduAContainer::pushFront(Ieee80211DataFrame *pkt, int retries)
 {
     if (pkt == nullptr)
         return;
@@ -199,7 +199,7 @@ void Ieee80211MpduA::pushFront(Ieee80211DataFrame *pkt, int retries)
 }
 
 
-Ieee80211DataFrame *Ieee80211MpduA::getPacket(unsigned int i)
+Ieee80211DataFrame *Ieee80211MpduAContainer::getPacket(unsigned int i)
 {
 
     if (i >= encapsulateVector.size())
@@ -207,7 +207,7 @@ Ieee80211DataFrame *Ieee80211MpduA::getPacket(unsigned int i)
     return encapsulateVector[i]->pkt;
 }
 
-int Ieee80211MpduA::getNumRetries(const unsigned int &i) const
+int Ieee80211MpduAContainer::getNumRetries(const unsigned int &i) const
 {
 
     if (i >= encapsulateVector.size())
@@ -215,7 +215,7 @@ int Ieee80211MpduA::getNumRetries(const unsigned int &i) const
     return encapsulateVector[i]->numRetries;
 }
 
-void Ieee80211MpduA::setNumRetries(const unsigned int &i, const int &val)
+void Ieee80211MpduAContainer::setNumRetries(const unsigned int &i, const int &val)
 {
 
     if (i >= encapsulateVector.size())
@@ -223,7 +223,7 @@ void Ieee80211MpduA::setNumRetries(const unsigned int &i, const int &val)
     encapsulateVector[i]->numRetries = val;
 }
 
-Ieee80211DataFrame *Ieee80211MpduA::decapsulatePacket(unsigned int i)
+Ieee80211DataFrame *Ieee80211MpduAContainer::decapsulatePacket(unsigned int i)
 {
 
     if (i >= encapsulateVector.size())
@@ -240,14 +240,14 @@ Ieee80211DataFrame *Ieee80211MpduA::decapsulatePacket(unsigned int i)
     return pkt;
 }
 
-void Ieee80211MpduA::setPacketKind(unsigned int i, int kind)
+void Ieee80211MpduAContainer::setPacketKind(unsigned int i, int kind)
 {
     if (i >= encapsulateVector.size())
         return;
     encapsulateVector[i]->pkt->setKind(kind);
 }
 
-Ieee80211MpduA& Ieee80211MpduA::operator=(const Ieee80211MpduA& msg)
+Ieee80211MpduAContainer& Ieee80211MpduAContainer::operator=(const Ieee80211MpduAContainer& msg)
 {
     if (this == &msg)
         return *this;

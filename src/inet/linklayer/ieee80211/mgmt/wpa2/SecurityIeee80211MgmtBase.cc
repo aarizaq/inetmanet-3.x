@@ -22,8 +22,8 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>
-#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA_m.h"
-#include "inet/linklayer/ieee80211/mac/Ieee80211MpduA.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MsduAContainer.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MpduAContainer.h"
 
 namespace inet {
 
@@ -147,13 +147,13 @@ void SecurityIeee80211MgmtBase::handleBeaconFrame(Ieee80211BeaconFrame *frame)
 void SecurityIeee80211MgmtBase::sendOut(cMessage *msg)
 {
     EV << "SecurityIeee80211MgmtBase:: sendOut" <<endl;
-    Ieee80211MpduA * mpdu = dynamic_cast<Ieee80211MpduA *>(msg);
+    Ieee80211MpduAContainer * mpdu = dynamic_cast<Ieee80211MpduAContainer *>(msg);
     if (mpdu)
     {
         // search from Msdu and convert it
         for (unsigned int i = 0; i < mpdu->getNumEncap(); i++)
         {
-            if (dynamic_cast<Ieee80211MsduA *>(mpdu->getPacket(i)))
+            if (dynamic_cast<Ieee80211MsduAContainer *>(mpdu->getPacket(i)))
             {
                 Ieee80211DataFrame *frameAux = fromMsduAToMsduAFrame(mpdu->getPacket(i));
                 delete mpdu->getPacket(i);
@@ -161,7 +161,7 @@ void SecurityIeee80211MgmtBase::sendOut(cMessage *msg)
             }
         }
     }
-    else if (dynamic_cast<Ieee80211MsduA *>(msg))
+    else if (dynamic_cast<Ieee80211MsduAContainer *>(msg))
     {
         Ieee80211DataOrMgmtFrame *frameAux = fromMsduAToMsduAFrame((Ieee80211DataOrMgmtFrame *)msg);
         frameAux->setKind(msg->getKind());

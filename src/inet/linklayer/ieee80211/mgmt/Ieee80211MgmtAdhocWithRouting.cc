@@ -19,7 +19,7 @@
 #include "inet/linklayer/common/Ieee802Ctrl.h"
 #include "Ieee80211MgmtAdhocWithRouting.h"
 #include "inet/routing/extras/base/ControlManetRouting_m.h"
-#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA_m.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MsduAContainer.h"
 
 namespace inet {
 
@@ -242,7 +242,7 @@ void Ieee80211MgmtAdhocWithRouting::handleDataFrame(Ieee80211DataFrame *frame)
         return;
 
     MACAddress finalAddress;
-    Ieee80211MsduA *msdu = dynamic_cast<Ieee80211MsduA *>(fromMsduAFrameToMsduA(frame));
+    Ieee80211MsduAContainer *msdu = dynamic_cast<Ieee80211MsduAContainer *>(fromMsduAFrameToMsduA(frame));
     Ieee80211MeshFrame *frame2  = nullptr;
     if (msdu)
         frame2  = msdu;

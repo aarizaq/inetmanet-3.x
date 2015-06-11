@@ -25,10 +25,8 @@
 #include "inet/common/INETUtils.h"
 #include "inet/common/ModuleAccess.h"
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtBase.h"
-#include "inet/linklayer/ieee80211/mac/Ieee80211MpduA.h"
-#include "inet/linklayer/ieee80211/mac/Ieee80211MsduA_m.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MpduAContainer.h"
 
-// TODO: MSDU-A Handle MSDU-A frames.
 // TODO: MDPU-A check sates, verify the backoff procedure is correct
 
 namespace inet {
@@ -628,7 +626,7 @@ void Ieee80211Mac::handleUpperPacket(cPacket *msg)
 
     // must be a Ieee80211DataOrMgmtFrame, within the max size because we don't support fragmentation
     Ieee80211DataOrMgmtFrame *frame = check_and_cast<Ieee80211DataOrMgmtFrame *>(msg);
-    Ieee80211MpduA *mpdu = dynamic_cast<Ieee80211MpduA *>(msg);
+    Ieee80211MpduAContainer *mpdu = dynamic_cast<Ieee80211MpduAContainer *>(msg);
     Ieee80211MsduAMeshFrame *msduMesh = dynamic_cast<Ieee80211MsduAMeshFrame *>(msg);
     Ieee80211MsduAFrame *msdu = dynamic_cast<Ieee80211MsduAFrame *>(msg);
 
@@ -1123,7 +1121,7 @@ void Ieee80211Mac::scheduleDataTimeoutPeriod(Ieee80211DataOrMgmtFrame *frameToSe
     if (!endTimeout->isScheduled()) {
         EV_DEBUG << "scheduling data timeout period\n";
         bool isNotMpu = true;
-        if (dynamic_cast<Ieee80211MpduA *>(frameToSend) != nullptr)
+        if (dynamic_cast<Ieee80211MpduAContainer *>(frameToSend) != nullptr)
             isNotMpu = false;
         if (useModulationParameters) {
             const IIeee80211Mode *modType = modeSet->getMode(bps(bitRate));
@@ -1414,7 +1412,7 @@ Ieee80211RTSFrame *Ieee80211Mac::buildRTSFrame(Ieee80211DataOrMgmtFrame *frameTo
     Ieee80211RTSFrame *frame = new Ieee80211RTSFrame("wlan-rts");
     frame->setTransmitterAddress(address);
     frame->setReceiverAddress(frameToSend->getReceiverAddress());
-    Ieee80211MpduA *mpdu = dynamic_cast<Ieee80211MpduA*>(frameToSend);
+    Ieee80211MpduAContainer *mpdu = dynamic_cast<Ieee80211MpduAContainer*>(frameToSend);
     if (mpdu == nullptr)
     {
         frame->setDuration(3 * getSIFS() + controlFrameTxTime(LENGTH_CTS)
@@ -1512,7 +1510,7 @@ void Ieee80211Mac::finishCurrentTransmission()
 void Ieee80211Mac::giveUpCurrentTransmission()
 {
     Ieee80211DataOrMgmtFrame *temp = (Ieee80211DataOrMgmtFrame *)transmissionQueue()->front();
-    Ieee80211MpduA *aux = dynamic_cast<Ieee80211MpduA *>(temp);
+    Ieee80211MpduAContainer *aux = dynamic_cast<Ieee80211MpduAContainer *>(temp);
     if (aux == nullptr)
     {
         sendNotification(NF_LINK_BREAK, temp);
@@ -1689,7 +1687,7 @@ double Ieee80211Mac::computeFrameDuration(Ieee80211Frame *msg)
 }
 
 
-double Ieee80211Mac::computeMpduADuration(Ieee80211MpduA *frame)
+double Ieee80211Mac::computeMpduADuration(Ieee80211MpduAContainer *frame)
 {
     uint64_t totalSize = 0;
     double bitrate = getBitrate();

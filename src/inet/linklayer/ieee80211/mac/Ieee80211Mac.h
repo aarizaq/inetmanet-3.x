@@ -36,7 +36,7 @@
 #include "inet/linklayer/base/MACProtocolBase.h"
 
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
-#include "inet/linklayer/ieee80211/mac/Ieee80211MpduA.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MpduAContainer.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Consts.h"
 #include "inet/linklayer/ieee80211/mac/Ieee802MacBaseFsm.h"
 
@@ -268,7 +268,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
 
       int indexMpduTransmission = 0; // index of the frame in the mdpu that must be transmitted.
       bool interSpaceMpdu = false; // determine if it is necessary to send a inter space mudp-a delimiter or the next frame
-      Ieee80211MpduA *mpduInTransmission = nullptr; // the mpdu-a that is been transmitted.
+      Ieee80211MpduAContainer *mpduInTransmission = nullptr; // the mpdu-a that is been transmitted.
       int mpduAClass = 0;
       int numBlockAckReqRetries = 0;
       bool reqBlockAck = false;
@@ -768,7 +768,7 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     virtual double computeFrameDuration(Ieee80211Frame *msg);
     virtual double computeFrameDuration(int bits, double bitrate);
 
-    virtual double computeMpduADuration(Ieee80211MpduA *);
+    virtual double computeMpduADuration(Ieee80211MpduAContainer *);
 
 
     /** @brief Logs all state information */
