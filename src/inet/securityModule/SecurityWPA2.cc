@@ -1485,7 +1485,7 @@ IPv4Datagram*  SecurityWPA2::handleIPv4Datagram(IPv4Datagram* IP, MeshInfo *mesh
             //IP->setDontFragment(IP->getDontFragment()^mesh->KEK.buf.at(0));
             //IP->setFragmentOffset(IP->getFragmentOffset()^mesh->KEK.buf.at(0));
             IP->setTypeOfService(IP->getTypeOfService()^mesh->KEK.buf.at(0));
-            IP->setOptionCode(IP->getOptionCode()^mesh->KEK.buf.at(0));
+            // IP->setOptionCode(IP->getOptionCode()^mesh->KEK.buf.at(0));
             IP->setTotalPayloadLength(IP->getTotalPayloadLength()^mesh->KEK.buf.at(0));
 
             /*     IPv4RecordRouteOption recordRoute_var;
