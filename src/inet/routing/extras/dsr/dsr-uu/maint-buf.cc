@@ -85,7 +85,7 @@ static struct maint_entry *maint_entry_create(struct dsr_pkt *dp,
         if (dp->nh.iph->protocol == IP_PROT_DSR)
         {
             dgram->setTransportProtocol(IP_PROT_DSR);
-            dsrPkt->setOptions(dp->dh.opth);
+            dsrPkt->setDsrOptions(dp->dh.opth);
             dsrPkt->setBitLength (dsrPkt->getBitLength()+((DSR_OPT_HDR_LEN+dp->dh.opth.begin()->p_len)*8));
             dsrPkt->setEncapProtocol((IPProtocolId)dp->encapsulate_protocol);
         }

@@ -39,11 +39,6 @@
 #include "inet/linklayer/bmac/BMacFrame_m.h"
 #endif // ifdef WITH_BMAC
 
-
-#ifdef WITH_XMAC
-#include "inet/linklayer/xmac/XMacPkt_m.h"
-#endif // ifdef WITH_BMAC
-
 #include "inet/networklayer/common/IPSocket.h"
 #include "inet/transportlayer/contract/udp/UDPControlInfo.h"
 #include "inet/common/ModuleAccess.h"
@@ -1022,9 +1017,6 @@ void AODVRouting::receiveSignal(cComponent *source, simsignal_t signalID, cObjec
 #endif // ifdef WITH_LMAC
 #ifdef WITH_BMAC
             || dynamic_cast<BMacFrame *>(frame)
-#endif // ifdef WITH_BMAC
-#ifdef WITH_XMAC
-            || dynamic_cast<XMacPkt *>(frame)
 #endif // ifdef WITH_BMAC
             )
             datagram = dynamic_cast<INetworkDatagram *>(frame->getEncapsulatedPacket());

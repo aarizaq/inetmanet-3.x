@@ -55,7 +55,7 @@ module BasicNetLayer
 module BasicMobileManetMesh
 {
     parameters:
-        @node();
+        @networkNode();
         @display("i=device/pocketpc_s");
         string mobilityType = default("StationaryMobility");
         int meshChannels = default(1);

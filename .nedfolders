@@ -4,11 +4,11 @@ src
 -inet.applications.voiptool
 -inet.transportlayer.tcp_nsc
 -inet.examples.emulation
+-inet.applications.voipstream
 -inet.transport.tcp_lwip
 -inet.transport.tcp_nsc
 -inet.examples.voiptool
 -inet.examples.hip
 -inet.linklayer.ext
 -inet.examples.voipstream
--inet.applications.voipstream
 -inet.underTest.hip

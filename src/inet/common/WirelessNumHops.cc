@@ -41,12 +41,12 @@ void WirelessNumHops::reStart()
     // TODO Auto-generated constructor stub
     // fill in routing tables with static routes
     cTopology topo("topo");
-    topo.extractByProperty("node");
+    topo.extractByProperty("networkNode");
     cModule *mod = dynamic_cast<cModule*> (getOwner());
     for (mod = dynamic_cast<cModule*> (getOwner())->getParentModule(); mod != 0; mod = mod->getParentModule())
     {
             cProperties *properties = mod->getProperties();
-            if (properties && properties->getAsBool("node"))
+            if (properties && properties->getAsBool("networkNode"))
                 break;
     }
     vectorList.clear();

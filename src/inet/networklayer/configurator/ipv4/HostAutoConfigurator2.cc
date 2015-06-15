@@ -426,7 +426,7 @@ void HostAutoConfigurator2::fillRoutingTables()
 {
     // fill in routing tables with static routes
 	cTopology topo("topo");
-	topo.extractByProperty("node");
+	topo.extractByProperty("networkNode");
 
     cModule* host = getParentModule();
     // get our routing table

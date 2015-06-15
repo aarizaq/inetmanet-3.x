@@ -63,7 +63,7 @@ module HostMeshApp
 {
     parameters:
         @display("bgb=611,448");
-        @node;
+        @networkNode;
         @labels(node,ethernet-node,wireless-node);
         int numTcpApps = default(0);  // no of TCP apps. Specify the app types in INI file with tcpApp[0..1].typename="TCPEchoApp" syntax
         int numUdpApps = default(0);  // no of UDP apps. Specify the app types in INI file with udpApp[0..1].typename="UDPVideoStreamCli" syntax
