@@ -74,7 +74,7 @@ module ApMeshRelay
 {
     parameters:
         @display("bgb=611,448");
-        @node;
+        @networkNode;
         @labels(node,ethernet-node,wireless-node);
         int numExtInterfaces = default(0);
         int numRadios = default(1);               // the number of radios in the router. by default no wireless     

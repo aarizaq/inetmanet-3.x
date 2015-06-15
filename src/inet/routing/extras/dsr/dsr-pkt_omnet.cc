@@ -35,15 +35,15 @@ DSRPkt::~DSRPkt()
 
 void DSRPkt::clean()
 {
-    options.clear();
+    dsrOptions.clear();
     costVector.clear();
-    options.clear();
+
 }
 
 DSRPkt::DSRPkt(const DSRPkt& m) : IPv4Datagram(m)
 {
     costVector.clear();
-    options.clear();
+    dsrOptions.clear();
     copy(m);
 }
 
@@ -61,14 +61,14 @@ void DSRPkt::copy(const DSRPkt& m)
     encap_protocol = m.encap_protocol;
     previous = m.previous;
     next = m.next;
-    options = m.options;
+    dsrOptions = m.dsrOptions;
     costVector = m.costVector;
 }
 // Constructor
 DSRPkt::DSRPkt(struct dsr_pkt *dp, int interface_id) : IPv4Datagram()
 {
     costVector.clear();
-    options.clear();
+    dsrOptions.clear();
 
     setEncapProtocol((IPProtocolId)0);
 
@@ -91,9 +91,9 @@ DSRPkt::DSRPkt(struct dsr_pkt *dp, int interface_id) : IPv4Datagram()
         // dp->mac.raw = p->access(hdr_mac::offset_);
 
 
-        options = dp->dh.opth;
+        dsrOptions = dp->dh.opth;
         //int dsr_opts_len = opth->p_len + DSR_OPT_HDR_LEN;
-        setBitLength(getBitLength()+((DSR_OPT_HDR_LEN+options.begin()->p_len)*8));
+        setBitLength(getBitLength()+((DSR_OPT_HDR_LEN+dsrOptions.begin()->p_len)*8));
         setHeaderLength(getByteLength());
 #ifdef NEWFRAGMENT
         setTotalPayloadLength(dp->totalPayloadLength);
@@ -124,7 +124,7 @@ DSRPkt::DSRPkt(struct dsr_pkt *dp, int interface_id) : IPv4Datagram()
     }
 }
 
-void DSRPkt::ModOptions(struct dsr_pkt *dp, int interface_id)
+void DSRPkt::modDsrOptions(struct dsr_pkt *dp, int interface_id)
 {
     setEncapProtocol((IPProtocolId)0);
     if (dp)
@@ -145,11 +145,11 @@ void DSRPkt::ModOptions(struct dsr_pkt *dp, int interface_id)
 
         setTimeToLive(dp->nh.iph->ttl); // TTL
         setTransportProtocol(IP_PROT_DSR); // Transport protocol
-        options.clear();
+        dsrOptions.clear();
 
-        options = dp->dh.opth;
+        dsrOptions = dp->dh.opth;
 
-        setBitLength((DSR_OPT_HDR_LEN+IP_HDR_LEN+options.front().p_len)*8);
+        setBitLength((DSR_OPT_HDR_LEN+IP_HDR_LEN+dsrOptions.front().p_len)*8);
 
         if (dp->payload)
         {
@@ -195,11 +195,11 @@ std::string DSRPkt::detailedInfo() const
     int l = DSR_OPT_HDR_LEN;
     out << " DSR Options "  << "\n"; // Khmm...
 
-    for (unsigned int i = 0; i < options.size(); i++)
+    for (unsigned int i = 0; i < dsrOptions.size(); i++)
     {
-        for (unsigned int j = 0; j < options[i].option.size(); j++)
+        for (unsigned int j = 0; j < dsrOptions[i].option.size(); j++)
         {
-            dopt = options[i].option[j];
+            dopt = dsrOptions[i].option[j];
             //DEBUG("dsr_len=%d l=%d\n", dsr_len, l);
             switch (dopt->type)
             {

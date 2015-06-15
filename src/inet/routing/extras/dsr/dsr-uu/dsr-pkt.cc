@@ -309,8 +309,8 @@ dsr_pkt * dsr_pkt_alloc(cPacket  * p)
             {
                 DSRPkt * dsrpkt = dynamic_cast<DSRPkt*> (p);
 
-                dp->dh.opth = dsrpkt->getOptions();
-                dsrpkt->clearOptions();
+                dp->dh.opth = dsrpkt->getDsrOptions();
+                dsrpkt->clearDsrOptions();
                 // dsr_opts_len = dp->dh.opth.begin()->p_len + DSR_OPT_HDR_LEN;
 
                 if (dp->payload)
@@ -413,10 +413,10 @@ dsr_pkt * dsr_pkt_alloc2(cPacket  * p, cObject *ctrl)
             if (dynamic_cast<DSRPkt*> (p))
             {
                 DSRPkt * dsrpkt = dynamic_cast<DSRPkt*> (p);
-                dp->dh.opth = dsrpkt->getOptions();
-                dsrpkt->clearOptions();
+                dp->dh.opth = dsrpkt->getDsrOptions();
+                dsrpkt->clearDsrOptions();
                 // dsr_opts_len = dp->dh.opth.begin()->p_len + DSR_OPT_HDR_LEN;
-                dp->dh.opth = dsrpkt->getOptions();
+                dp->dh.opth = dsrpkt->getDsrOptions();
 
                 if (dp->payload)
                     dp->encapsulate_protocol=dsrpkt->getEncapProtocol();

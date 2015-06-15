@@ -1373,7 +1373,7 @@ void UDPBasicP2P::WirelessNumNeig()
         return;
 
     cTopology topo("topo");
-    topo.extractByProperty("node");
+    topo.extractByProperty("networkNode");
     for (int i = 0; i < topo.getNumNodes(); i++)
     {
         cTopology::Node *destNode = topo.getNode(i);

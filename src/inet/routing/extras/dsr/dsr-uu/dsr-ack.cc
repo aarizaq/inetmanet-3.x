@@ -177,7 +177,7 @@ int NSCLASS dsr_ack_req_send(struct dsr_pkt *dp)
         if (dp->nh.iph->protocol == IP_PROT_DSR)
         {
             dgram->setTransportProtocol(IP_PROT_DSR);
-            p->setOptions(dp->dh.opth);
+            p->setDsrOptions(dp->dh.opth);
             int dsr_opts_len = dp->dh.opth.begin()->p_len + DSR_OPT_HDR_LEN;
             p->setBitLength (p->getBitLength()+((dsr_opts_len)*8));
             p->setEncapProtocol((IPProtocolId)dp->encapsulate_protocol);

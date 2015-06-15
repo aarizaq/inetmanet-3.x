@@ -18,7 +18,7 @@
 
 
 #ifdef MobilityFramework
-#include <NetwPkt_m.h>
+#include "NetwPkt_m.h"
 #ifndef IPv4Address
 #define IPv4Address int
 #endif
@@ -59,8 +59,8 @@ class DSRPkt : public IPv4Datagram
 {
 
   protected:
-    std::vector<struct dsr_opt_hdr>options;
-    IPProtocolId encap_protocol;
+    std::vector<struct dsr_opt_hdr> dsrOptions;
+    IPProtocolId encap_protocol = (IPProtocolId)0;
     IPv4Address previous;
     IPv4Address next;
     std::vector <EtxCost>  costVector;
@@ -71,19 +71,19 @@ class DSRPkt : public IPv4Datagram
     void clean();
 
   public:
-    explicit DSRPkt(const char *name=nullptr) : IPv4Datagram(name) {costVector.clear(); options.clear(); dsr_ttl=0;}
+    explicit DSRPkt(const char *name=nullptr) : IPv4Datagram(name) {costVector.clear(); dsrOptions.clear(); dsr_ttl=0;}
     ~DSRPkt ();
     DSRPkt (const DSRPkt  &m);
     DSRPkt (struct dsr_pkt *dp,int interface_id);
     DSRPkt &    operator= (const DSRPkt &m);
-    virtual DSRPkt *dup() const {return new DSRPkt(*this);}
+    virtual DSRPkt *dup() const override {return new DSRPkt(*this);}
     //void addOption();
     //readOption();
 #ifdef MobilityFramework
     void setTimeToLive (int ttl) {setTtl(ttl);}
     int getTimeToLive() {return getTtl();}
 #endif
-    void    ModOptions (struct dsr_pkt *p,int);
+    void modDsrOptions (struct dsr_pkt *p,int);
     void setEncapProtocol(IPProtocolId procotol) {encap_protocol = procotol;}
     IPProtocolId getEncapProtocol() {return encap_protocol;}
 #ifdef MobilityFramework
@@ -97,10 +97,10 @@ class DSRPkt : public IPv4Datagram
     const IPv4Address nextAddress() const {return next;}
     void setNextAddress(const IPv4Address address_var) {next = address_var;}
 #endif
-    std::vector<struct dsr_opt_hdr> &getOptions() {return options;}
-    void  setOptions(const std::vector<struct dsr_opt_hdr> &op) {options.clear(); options=op;}
-    void clearOptions(){options.clear();}
-    virtual std::string detailedInfo() const;
+    std::vector<struct dsr_opt_hdr> &getDsrOptions() {return dsrOptions;}
+    void  setDsrOptions(const std::vector<struct dsr_opt_hdr> &op) {dsrOptions.clear(); dsrOptions=op;}
+    void clearDsrOptions(){dsrOptions.clear();}
+    virtual std::string detailedInfo() const override;
 
     void resetCostVector();
     virtual void getCostVector(std::vector<EtxCost> &cost); // Copy
@@ -141,7 +141,7 @@ class DSRPktExt: public IPv4Datagram
     EtxList * delExtension(int len);
     EtxList * getExtension() {return extension;}
     int getSizeExtension () {return size;}
-    virtual DSRPktExt *dup() const {return new DSRPktExt(*this);}
+    virtual DSRPktExt *dup() const override {return new DSRPktExt(*this);}
 
 };
 
