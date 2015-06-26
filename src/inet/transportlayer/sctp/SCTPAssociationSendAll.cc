@@ -125,7 +125,7 @@ std::vector<SCTPPathVariables *> SCTPAssociation::getSortedPathMap()
         sortedPaths.insert(sortedPaths.end(), path);
     }
     if (state->cmtSendAllComparisonFunction != nullptr) {
-        std::sort(sortedPaths.begin(), sortedPaths.end(), state->cmtSendAllComparisonFunction);
+        std::stable_sort(sortedPaths.begin(), sortedPaths.end(), state->cmtSendAllComparisonFunction);
     }
 
     EV << "SORTED PATH MAP:" << endl;
@@ -794,7 +794,7 @@ void SCTPAssociation::sendOnPath(SCTPPathVariables *pathId, bool firstPass)
             chunksAdded = 0;
         }
 
-        if (sackWithData || sackOnly) {
+        if (!sackAdded && (sackWithData || sackOnly)) {
             // SACK can be sent
             assert(headerCreated == true);
             sackChunk = createSack();
@@ -820,9 +820,6 @@ void SCTPAssociation::sendOnPath(SCTPPathVariables *pathId, bool firstPass)
                 path->packetsInBurst++;
                 state->lastTransmission = simTime();
                 state->packetsInTotalBurst++;
-                if (dataChunksAdded > 0) {
-                    state->ssNextStream = true;
-                }
                 state->ackState = 0;
                 // Stop SACK timer if it is running...
                 stopTimer(SackTimer);
@@ -1393,15 +1390,15 @@ void SCTPAssociation::sendOnPath(SCTPPathVariables *pathId, bool firstPass)
                             pkt->setIBit(sctpMain->sackNow);
                             sctpMsg->replaceChunk(pkt, sctpMsg->getChunksArraySize() - 1);
                         }
+
                         // Set I-bit when this is the final packet for this path!
-                        if (state->strictCwndBooking) {
-                            const int32 a = (int32)path->cwnd - (int32)path->outstandingBytes;
-                            if (((a > 0) && (nextChunkFitsIntoPacket(path, a) == false)) || (!firstPass)) {
-                                SCTPDataChunk *pkt = check_and_cast<SCTPDataChunk *>(sctpMsg->getChunks(sctpMsg->getChunksArraySize() - 1));
-                                pkt->setIBit(sctpMain->sackNow);
-                                sctpMsg->replaceChunk(pkt, sctpMsg->getChunksArraySize() - 1);
-                            }
+                        const int32 a = (int32)path->cwnd - (int32)path->outstandingBytes;
+                        if ((((a > 0) && (nextChunkFitsIntoPacket(path, a) == false)) || (!firstPass)) && !forwardPresent) {
+                           SCTPDataChunk *pkt = check_and_cast<SCTPDataChunk *>(sctpMsg->getChunks(sctpMsg->getChunksArraySize() - 1));
+                           pkt->setIBit(sctpMain->sackNow);
+                           sctpMsg->replaceChunk(pkt, sctpMsg->getChunksArraySize() - 1);
                         }
+
                         if (dataChunksAdded > 0) {
                             state->ssNextStream = true;
                         }

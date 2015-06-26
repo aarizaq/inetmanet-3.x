@@ -2595,7 +2595,7 @@ bool Ieee80211Mesh::setSeqNum(const L3Address &addr, const uint64_t &sqnum, cons
         SeqNumberData sinfo(sqnum,numTimes);
         SeqNumberVector v;
         it->second.push_back(sinfo);
-        std::sort(it->second.begin(),it->second.end());
+        std::stable_sort(it->second.begin(),it->second.end());
         if ((int)it->second.size() > MaxSeqNum)
             it->second.pop_front();
         return true;
