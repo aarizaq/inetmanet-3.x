@@ -349,7 +349,7 @@ void SCTPAssociation::sendToIP(SCTPMessage *sctpmsg,
         //controlInfo->setSourceAddress();
         controlInfo->setDestinationAddress(dest);
         sctpmsg->setControlInfo(check_and_cast<cObject *>(controlInfo));
-        sctpMain->send(sctpmsg, "to_ip");
+        sctpMain->send_to_ip(sctpmsg);
 
         if (chunkType == HEARTBEAT) {
             SCTPPathVariables *path = getPath(dest);
@@ -381,7 +381,9 @@ void SCTPAssociation::sendIndicationToApp(const int32 code, const int32 value)
     SCTPCommand *indication = new SCTPCommand(indicationName(code));
     indication->setAssocId(assocId);
     indication->setLocalAddr(localAddr);
+    indication->setLocalPort(localPort);
     indication->setRemoteAddr(remoteAddr);
+    indication->setRemotePort(remotePort);
     msg->setControlInfo(indication);
     sctpMain->send(msg, "to_appl", appGateIndex);
 }
@@ -811,7 +813,7 @@ void SCTPAssociation::sendInitAck(SCTPInitChunk *initChunk)
         }
         initAckChunk->setHmacTypesArraySize(1);
         initAckChunk->setHmacTypes(0, 1);
-        length += initAckChunk->getChunkTypesArraySize() + 50;
+        length += initAckChunk->getChunkTypesArraySize() + 48;
     }
     uint32 unknownLen = initChunk->getUnrecognizedParametersArraySize();
     if (unknownLen > 0) {
@@ -2311,11 +2313,11 @@ SCTPDataMsg *SCTPAssociation::dequeueOutboundDataMsg(SCTPPathVariables *path,
             SCTPSendStream *stream = iter->second;
             streamQ = nullptr;
 
-            if (!stream->getUnorderedStreamQ()->empty()) {
+            if (!stream->getUnorderedStreamQ()->isEmpty()) {
                 streamQ = stream->getUnorderedStreamQ();
                 EV_DETAIL << "DequeueOutboundDataMsg() found chunks in stream " << iter->first << " unordered queue, queue size=" << stream->getUnorderedStreamQ()->getLength() << "\n";
             }
-            else if (!stream->getStreamQ()->empty()) {
+            else if (!stream->getStreamQ()->isEmpty()) {
                 streamQ = stream->getStreamQ();
                 EV_DETAIL << "DequeueOutboundDataMsg() found chunks in stream " << iter->first << " ordered queue, queue size=" << stream->getStreamQ()->getLength() << "\n";
             }
@@ -2392,7 +2394,7 @@ SCTPDataMsg *SCTPAssociation::dequeueOutboundDataMsg(SCTPPathVariables *path,
                         datMsgFragment->encapsulate(datMsgFragmentEncMsg);
 
                         /* insert fragment into queue */
-                        if (!streamQ->empty()) {
+                        if (!streamQ->isEmpty()) {
                             if (!datMsgLastFragment) {
                                 /* insert first fragment at the begining of the queue*/
                                 streamQ->insertBefore((SCTPDataMsg *)streamQ->front(), datMsgFragment);
@@ -2485,9 +2487,9 @@ bool SCTPAssociation::nextChunkFitsIntoPacket(SCTPPathVariables *path, int32 byt
     if (stream) {
         cPacketQueue *streamQ = nullptr;
 
-        if (!stream->getUnorderedStreamQ()->empty())
+        if (!stream->getUnorderedStreamQ()->isEmpty())
             streamQ = stream->getUnorderedStreamQ();
-        else if (!stream->getStreamQ()->empty())
+        else if (!stream->getStreamQ()->isEmpty())
             streamQ = stream->getStreamQ();
 
         if (streamQ) {
