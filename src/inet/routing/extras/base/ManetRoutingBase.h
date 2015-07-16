@@ -102,8 +102,6 @@ class INET_API ManetRoutingBase : public cSimpleModule, public cListener, public
     cModule *hostModule = nullptr;
     ICMP *icmpModule = nullptr;
     bool mac_layer_ = false;
-    L3Address    hostAddress;
-    L3Address    routerId;
     Coord curPosition;
     Coord curSpeed;
     simtime_t posTimer;
@@ -269,9 +267,9 @@ class INET_API ManetRoutingBase : public cSimpleModule, public cListener, public
     virtual int gettimeofday(struct timeval *, struct timezone *);
 
     /// Get the address of the first wlan interface
-    virtual L3Address getAddress() const {return hostAddress;}
+    virtual L3Address getAddress() const;
 
-    virtual L3Address getRouterId() const {return routerId;}
+    virtual L3Address getRouterId() const;
 
     /// Return true if the routing protocols is execute in the mac layer
     virtual bool isInMacLayer() const {return mac_layer_;}

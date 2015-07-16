@@ -411,10 +411,6 @@ class OLSR : public ManetRoutingBase
     int  use_mac_ = false;
     bool useIndex = false;
 
-
-    /// Address of the routing agent.
-    nsaddr_t ra_addr_;
-
     bool optimizedMid = false;
 
   protected:
@@ -448,7 +444,7 @@ class OLSR : public ManetRoutingBase
         return msg_seq_;
     }
 
-    inline nsaddr_t    ra_addr()   { return ra_addr_;}
+    inline nsaddr_t    ra_addr()   { return getAddress();}
 
     inline double     hello_ival()    { return hello_ival_->doubleValue();}
     inline double     tc_ival()   { return tc_ival_->doubleValue();}

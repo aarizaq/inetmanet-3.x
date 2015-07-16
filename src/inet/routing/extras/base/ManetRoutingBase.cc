@@ -120,6 +120,18 @@ bool ManetTimer::isScheduled()
     return false;
 }
 
+L3Address ManetRoutingBase::getAddress() const {
+    if (mac_layer_)
+        return L3Address(interfaceVector->front().interfacePtr->getMacAddress());
+    return L3Address(interfaceVector->front().interfacePtr->ipv4Data()->getIPAddress());
+}
+
+L3Address ManetRoutingBase::getRouterId() const {
+    if (inet_rt)
+        return L3Address(inet_rt->getRouterId());
+    return L3Address();
+}
+
 ManetRoutingBase::ManetRoutingBase()
 {
     locator = nullptr;
@@ -271,15 +283,10 @@ void ManetRoutingBase::registerRoutingModule()
         }
     }
 
-    if (inet_rt)
-        routerId = L3Address(inet_rt->getRouterId());
 
     if (interfaceVector->size()==0)
         throw cRuntimeError("Manet routing protocol has found no interfaces that can be used for routing.");
-    if (mac_layer_)
-        hostAddress = L3Address(interfaceVector->front().interfacePtr->getMacAddress());
-    else
-        hostAddress = L3Address(interfaceVector->front().interfacePtr->ipv4Data()->getIPAddress());
+
     // One enabled network interface (in total)
     // clear routing entries related to wlan interfaces and autoassign ip adresses
     bool manetPurgeRoutingTables = (bool) par("manetPurgeRoutingTables");
@@ -566,7 +573,7 @@ void ManetRoutingBase::sendToIpOnIface(cPacket *msg, int srcPort, const L3Addres
         if (ie)
             srcadd = ie->ipv4Data()->getIPAddress();
         else
-            srcadd = hostAddress.toIPv4();
+            srcadd = getAddress().toIPv4();
 
         EV_INFO << "Sending app packet " << msg->getName() << " over IPv4." << " from " <<
         srcadd.str() << " to " << add.str() << "\n";
@@ -613,7 +620,7 @@ void ManetRoutingBase::sendToIpOnIface(cPacket *msg, int srcPort, const L3Addres
         INetworkProtocolControlInfo *ipControlInfo = IPv6AddressType::INSTANCE.createNetworkProtocolControlInfo();
         // ipControlInfo->setProtocol(IP_PROT_UDP);
         ipControlInfo->setTransportProtocol(IP_PROT_MANET);
-        ipControlInfo->setSourceAddress(hostAddress);
+        ipControlInfo->setSourceAddress(getAddress());
         ipControlInfo->setDestinationAddress(destAddr);
         ipControlInfo->setHopLimit(ttl);
         //ipControlInfo->setInterfaceId(udpCtrl->getInterfaceId()); FIXME extend IPv6 with this!!!
