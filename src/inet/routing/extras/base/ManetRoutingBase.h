@@ -257,6 +257,8 @@ class INET_API ManetRoutingBase : public cSimpleModule, public cListener, public
     virtual void processFullPromiscuous(const cObject *details);
     virtual void processLocatorAssoc(const cObject *details);
     virtual void processLocatorDisAssoc(const cObject *details);
+    virtual void processChangeInterface(simsignal_t signalID,const cObject *details);
+
     //@}
 
     /**

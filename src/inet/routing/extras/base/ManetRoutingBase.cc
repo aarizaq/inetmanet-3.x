@@ -328,6 +328,9 @@ void ManetRoutingBase::registerRoutingModule()
             elem.interfacePtr->ipv4Data()->joinMulticastGroup(IPv4Address::LL_MANET_ROUTERS);
         }
         arp = getModuleFromPar<IARP>(par("arpModule"), this);
+        hostModule->subscribe(NF_INTERFACE_CONFIG_CHANGED, this);
+        hostModule->subscribe(NF_INTERFACE_IPv4CONFIG_CHANGED, this);
+        hostModule->subscribe(NF_INTERFACE_IPv6CONFIG_CHANGED, this);
     }
     hostModule->subscribe(NF_L2_AP_DISASSOCIATED, this);
     hostModule->subscribe(NF_L2_AP_ASSOCIATED, this);
@@ -501,6 +504,24 @@ void ManetRoutingBase::processPromiscuous(const cObject *details) {return;}
 void ManetRoutingBase::processFullPromiscuous(const cObject *details) {return;}
 void ManetRoutingBase::processLocatorAssoc(const cObject *details) {return;}
 void ManetRoutingBase::processLocatorDisAssoc(const cObject *details) {return;}
+
+void ManetRoutingBase::processChangeInterface(simsignal_t signalID,const cObject *details)
+{
+    IPv4Route *entry;
+    // clean the route table wlan interface entry
+    for (int i=inet_rt->getNumRoutes()-1; i>=0; i--)
+    {
+        entry = inet_rt->getRoute(i);
+        const InterfaceEntry *ie = entry->getInterface();
+        if (strstr(ie->getName(), "wlan")!=nullptr)
+        {
+            inet_rt->deleteRoute(entry);
+        }
+    }
+    handleNodeShutdown(nullptr);
+    handleNodeStart(nullptr);
+}
+
 
 
 void ManetRoutingBase::sendToIpOnIface(cPacket *msg, int srcPort, const L3Address& destAddr, int destPort, int ttl, double delay, InterfaceEntry  *ie)
@@ -1014,7 +1035,13 @@ void ManetRoutingBase::receiveSignal(cComponent *source, simsignal_t signalID, c
     Enter_Method("Manet llf");
     if (!isRegistered)
         throw cRuntimeError("Manet routing protocol is not register");
-    if (signalID == NF_LINK_BREAK)
+    if (signalID == NF_INTERFACE_CONFIG_CHANGED || signalID == NF_INTERFACE_IPv6CONFIG_CHANGED || signalID == NF_INTERFACE_CONFIG_CHANGED)
+    {
+        if (simTime() > 0)
+            processChangeInterface(signalID,obj);
+
+    }
+    else if (signalID == NF_LINK_BREAK)
     {
         if (obj == nullptr)
             return;
