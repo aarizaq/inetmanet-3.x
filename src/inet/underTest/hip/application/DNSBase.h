@@ -32,7 +32,7 @@
 #define __DNSBASE_H__
 
 #include <vector>
-#include <omnetpp.h>
+#include "inet/common/INETDefs.h"
 #include "inet/underTest/hip/application/DNSBaseMsg_m.h"
 #include "inet/underTest/hip/application/DNSRegRvsMsg_m.h"
 #include "inet/networklayer/common/L3Address.h"

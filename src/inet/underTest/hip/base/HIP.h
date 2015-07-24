@@ -27,7 +27,7 @@
 #ifndef __HIP_H__
 #define __HIP_H__
 
-#include <omnetpp.h>
+#include "inet/common/INETDefs.h"
 #include "inet/networklayer/contract/ipv6/IPv6Address.h"
 #include "inet/underTest/hip/base/HipMessages_m.h"
 #include "inet/networklayer/common/InterfaceEntry.h"

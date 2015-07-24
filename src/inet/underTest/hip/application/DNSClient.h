@@ -29,7 +29,7 @@
 #ifndef __DNSCLIENT_H__
 #define __DNSCLIENT_H__
 
-#include <omnetpp.h>
+#include "inet/common/INETDefs.h"
 #include "inet/transportlayer/contract/udp/UDPSocket.h"
 
 /**

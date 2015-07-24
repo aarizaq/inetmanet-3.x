@@ -206,7 +206,7 @@ void DNSBase::handleMessage(cMessage *msg)
 //loads the xml and builds the vector conataining dns data
 bool DNSBase::LoadDataFromXML(const char * filename)
 {
-    cXMLElement* dnsData = ev.getXMLDocument(filename);
+    cXMLElement* dnsData = getEnvir()->getXMLDocument(filename);
     if (dnsData == nullptr)
     {
         error("Cannot read DNS data from file: %s", filename);
