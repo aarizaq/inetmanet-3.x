@@ -150,7 +150,6 @@ OLSR_ETX::initialize(int stage)
         ansn_ = OLSR_MAX_SEQ_NUM;
 
         registerRoutingModule();
-        ra_addr_ = getAddress();
 
         timerMessage = new cMessage();
         timerQueuePtr = new TimerQueue;

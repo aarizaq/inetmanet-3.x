@@ -287,9 +287,8 @@ class INET_API Ieee80211Mac : public MACProtocolBase
               {
                   if (timeOut.isScheduled())
                   {
-                      simulation.msgQueue.remove(&timeOut);
+                      cSimulation::getActiveSimulation()->getFES()->remove(&timeOut);
                       EVCB.messageCancelled(&timeOut);
-                      timeOut.setPreviousEventNumber(simulation.getEventNumber());
                   }
                   while(!inReception.empty())
                   {

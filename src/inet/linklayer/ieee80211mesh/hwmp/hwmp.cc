@@ -75,7 +75,7 @@ void ProactivePreqTimer::expire()
     EV << "expire " << endl;
     HwmpProtocol* hwmpProtocol = dynamic_cast<HwmpProtocol*>(agent_);
     if (hwmpProtocol == nullptr)
-        opp_error("agent not valid");
+        throw cRuntimeError("agent not valid");
     hwmpProtocol->sendPreqProactive();
 }
 
@@ -84,7 +84,7 @@ void PreqTimeout::expire()
     EV << "expire2 " << endl;
     HwmpProtocol* hwmpProtocol = dynamic_cast<HwmpProtocol*>(agent_);
     if (hwmpProtocol == nullptr)
-        opp_error("agent not valid");
+        throw cRuntimeError("agent not valid");
     hwmpProtocol->retryPathDiscovery(dest);
 }
 
@@ -105,7 +105,7 @@ void PreqTimer::expire()
     EV << "expire3 " << endl;
     HwmpProtocol* hwmpProtocol = dynamic_cast<HwmpProtocol*>(agent_);
     if (hwmpProtocol == nullptr)
-        opp_error("agent not valid");
+        throw cRuntimeError("agent not valid");
     hwmpProtocol->sendMyPreq();
 }
 
@@ -114,7 +114,7 @@ void PerrTimer::expire()
     EV << "expire4 " << endl;
     HwmpProtocol* hwmpProtocol = dynamic_cast<HwmpProtocol*>(agent_);
     if (hwmpProtocol == nullptr)
-        opp_error("agent not valid");
+        throw cRuntimeError("agent not valid");
     hwmpProtocol->sendMyPerr();
 }
 
@@ -123,7 +123,7 @@ void GannTimer::expire()
     EV << "expire5 " << endl;
     HwmpProtocol* hwmpProtocol = dynamic_cast<HwmpProtocol*>(agent_);
     if (hwmpProtocol == nullptr)
-        opp_error("agent not valid");
+        throw cRuntimeError("agent not valid");
     hwmpProtocol->sendGann();
 }
 
@@ -371,7 +371,7 @@ void HwmpProtocol::processData(cMessage *msg)
             processGann(msg);
             break;
         default:
-            opp_error("");
+            throw cRuntimeError("");
             break;
     }
 
@@ -1531,9 +1531,9 @@ void HwmpProtocol::receivePerr(std::vector<HwmpFailedDestination> destinations, 
     }
     forwardPathError (makePathError(retval));}
 
-void HwmpProtocol::processLinkBreak(const cPolymorphic *details)
+void HwmpProtocol::processLinkBreak(const cObject *details)
 {
-    Ieee80211TwoAddressFrame *frame = dynamic_cast<Ieee80211TwoAddressFrame *>(const_cast<cPolymorphic*>(details));
+    Ieee80211TwoAddressFrame *frame = dynamic_cast<Ieee80211TwoAddressFrame *>(const_cast<cObject*>(details));
     if (frame)
     {
         auto it = neighborMap.find(frame->getReceiverAddress());
@@ -1545,14 +1545,14 @@ void HwmpProtocol::processLinkBreak(const cPolymorphic *details)
                 return;
             neighborMap.erase(it);
         }
-        Ieee80211TwoAddressFrame *frame = dynamic_cast<Ieee80211TwoAddressFrame *>(const_cast<cPolymorphic*>(details));
+        Ieee80211TwoAddressFrame *frame = dynamic_cast<Ieee80211TwoAddressFrame *>(const_cast<cObject*>(details));
         packetFailedMac(frame);
     }
 }
 
-void HwmpProtocol::processLinkBreakManagement(const cPolymorphic *details)
+void HwmpProtocol::processLinkBreakManagement(const cObject *details)
 {
-    Ieee80211ActionPREPFrame *frame = dynamic_cast<Ieee80211ActionPREPFrame *>(const_cast<cPolymorphic*>(details));
+    Ieee80211ActionPREPFrame *frame = dynamic_cast<Ieee80211ActionPREPFrame *>(const_cast<cObject*>(details));
     if (frame)
     {
         auto it = neighborMap.find(frame->getReceiverAddress());
@@ -2168,12 +2168,12 @@ void HwmpProtocol::setRefreshRoute(const L3Address &destination, const L3Address
      */
 }
 
-void HwmpProtocol::processFullPromiscuous(const cPolymorphic *details)
+void HwmpProtocol::processFullPromiscuous(const cObject *details)
 {
     Enter_Method("HwmpProtocol Promiscuous");
     if (details == nullptr)
         return;
-    Ieee80211TwoAddressFrame *frame = dynamic_cast<Ieee80211TwoAddressFrame *>(const_cast<cPolymorphic*>(details));
+    Ieee80211TwoAddressFrame *frame = dynamic_cast<Ieee80211TwoAddressFrame *>(const_cast<cObject*>(details));
     if (frame == nullptr)
         return;
 

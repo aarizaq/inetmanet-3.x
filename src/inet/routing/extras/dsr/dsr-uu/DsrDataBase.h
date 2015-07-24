@@ -12,7 +12,7 @@
 
 #include <map>
 #include <deque>
-#include <omnetpp.h>
+#include "inet/common/INETDefs.h"
 #include "inet/networklayer/common/L3Address.h"
 
 namespace inet {

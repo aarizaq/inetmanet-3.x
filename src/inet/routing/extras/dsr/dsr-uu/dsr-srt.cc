@@ -125,7 +125,7 @@ struct dsr_srt *dsr_srt_new(struct in_addr src, struct in_addr dst,
                         addrs1 = cost[cost.size()-1-i].address.getInt();
                     addrs2 = sr->addrs[i].s_addr;
                     if (addrs2 != addrs1)
-                        opp_error("Dsr error, Etx address and dsr are different");
+                        throw cRuntimeError("Dsr error, Etx address and dsr are different");
                 }
             }
         }
@@ -143,7 +143,7 @@ struct dsr_srt *dsr_srt_new(struct in_addr src, struct in_addr dst,
                 }
             }
             if (j==-1)
-                opp_error("Dsr error, Etx address and dsr are different");
+                throw cRuntimeError("Dsr error, Etx address and dsr are different");
             else
             {
                 testInverse=false;
@@ -177,7 +177,7 @@ struct dsr_srt *dsr_srt_new(struct in_addr src, struct in_addr dst,
                         addrs1 = cost[j+1+i].address.getInt();
                         addrs2 = sr->addrs[i].s_addr;
                         if (addrs2 != addrs1)
-                            opp_error("Dsr error, Etx address and dsr are different");
+                            throw cRuntimeError("Dsr error, Etx address and dsr are different");
                     }
                     for (int i=0; i<sizeAdd+1; i++)
                         sr->cost[i]= (unsigned int) cost[j+1+i].cost;
@@ -206,7 +206,7 @@ void dsr_srt_split_both(struct dsr_srt *srt, struct in_addr addr, struct in_addr
     n = srt->laddrs / SIZE_ADDRESS;
 
     if (n != (int)srt->addrs.size())
-        opp_error("size mismatch ");
+        throw cRuntimeError("size mismatch ");
 
     if (n == 0)
         return;
@@ -400,7 +400,7 @@ struct dsr_srt *dsr_srt_new_rev(struct dsr_srt *srt)
     n = srt->laddrs / SIZE_ADDRESS;
 
     if (n != (int)srt->addrs.size())
-        opp_error("size mismatch ");
+        throw cRuntimeError("size mismatch ");
 
     for (i = 0; i < n; i++)
         srt_rev->addrs.push_back(srt->addrs[n - 1 - i]);
@@ -426,7 +426,7 @@ struct dsr_srt *dsr_srt_new_split(struct dsr_srt *srt, struct in_addr addr)
     n = srt->laddrs / SIZE_ADDRESS;
 
     if (n != (int)srt->addrs.size())
-        opp_error("size mismatch ");
+        throw cRuntimeError("size mismatch ");
 
     if (n == 0)
         return nullptr;
@@ -491,7 +491,7 @@ struct dsr_srt *dsr_srt_shortcut(struct dsr_srt *srt, struct in_addr a1,
     n = srt->laddrs / SIZE_ADDRESS;
 
     if (n != (int)srt->addrs.size())
-        opp_error("size mismatch ");
+        throw cRuntimeError("size mismatch ");
 
     if (srt->src.s_addr == a1.s_addr)
         a1_num = 0;
@@ -533,7 +533,7 @@ struct dsr_srt *dsr_srt_shortcut(struct dsr_srt *srt, struct in_addr a1,
         srt_cut->addrs.push_back(srt->addrs[i]);
     }
     if ((int)srt_cut->addrs.size() != n_cut)
-        opp_error("DSR src cut error ");
+        throw cRuntimeError("DSR src cut error ");
 #ifdef OMNETPP
     if (!srt->cost.empty())
     {
@@ -558,10 +558,10 @@ struct dsr_srt *dsr_srt_concatenate(struct dsr_srt *srt1, struct dsr_srt *srt2)
 
     n1 = srt1->laddrs / SIZE_ADDRESS;
     if (n1 != (int)srt1->addrs.size())
-        opp_error("size mismatch ");
+        throw cRuntimeError("size mismatch ");
     n2 = srt2->laddrs / SIZE_ADDRESS;
     if (n2 != (int)srt2->addrs.size())
-        opp_error("size mismatch ");
+        throw cRuntimeError("size mismatch ");
 
     /* We assume that the end node of the first srt is the same as the start
      * of the second. We therefore only count that node once. */
@@ -588,7 +588,7 @@ struct dsr_srt *dsr_srt_concatenate(struct dsr_srt *srt1, struct dsr_srt *srt2)
         srt_cat->addrs.push_back(srt2->addrs[i]);
 
     if (n != (int)srt_cat->addrs.size())
-        opp_error("size mismatch ");
+        throw cRuntimeError("size mismatch ");
 #ifdef OMNETPP
     if (size_cost>0)
     {

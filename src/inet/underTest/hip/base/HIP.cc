@@ -193,7 +193,7 @@ void HIP::handleRvsRegistration(cMessage *msg)
                 tempIfId = getTempId();
                 if (tempIfId == -1)
                     tempIfId = currentIfId;
-                //opp_error("currentIfId == -1");
+                //throw cRuntimeError("currentIfId == -1");
             }
 #if 0
             //UDP controlinfo
@@ -426,7 +426,7 @@ void HIP::handleMsgFromTransport(cMessage *msg)
         if (currentIfId == -1)
         {
             tempId = getTempId();
-            //opp_error("currentIfId == -1");
+            //throw cRuntimeError("currentIfId == -1");
         }
 #if 0
         //UDP controlinfo
@@ -604,7 +604,7 @@ cModule* HIP::createStateMachine(IPv6Address ipAddress, IPv6Address &HIT)
 // Returns a pointer to the FSM with the specified ID
 cModule* HIP::findStateMachine(int fsmID)
 {
-    cModule *fsm = simulation.getModule(fsmID);
+    cModule *fsm = getSimulation()->getModule(fsmID);
     return fsm;
 }
 

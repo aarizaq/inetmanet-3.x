@@ -30,6 +30,7 @@
 #include "inet/networklayer/ipv4/ICMPMessage.h"
 #include "inet/networklayer/ipv4/IPv4Datagram.h"
 
+#include "inet/routing/extras/base/ManetAddress.h"
 #include "inet/routing/extras/base/ManetRoutingBase.h"
 
 #include "inet/routing/extras/dymo_fau/DYMO_Packet_m.h"
@@ -106,7 +107,7 @@ class DYMOFau : public ManetRoutingBase
     cModule* getRouterByAddress(IPv4Address address);
 
 
-  private:
+  protected:
     friend class DYMO_RoutingTable;
 
     void processPacket(const IPv4Datagram* datagram);

@@ -80,7 +80,7 @@ void GlobalWirelessLinkInspector::initialize()
     }
     else
     {
-        opp_error("more that an instance of GlobalWirelessWirelessLinkInspector exist");
+        throw cRuntimeError("more that an instance of GlobalWirelessWirelessLinkInspector exist");
     }
 
     if (globalRouteMap == nullptr)
@@ -89,7 +89,7 @@ void GlobalWirelessLinkInspector::initialize()
     }
     else
     {
-        opp_error("more that an instance of GlobalWirelessWirelessLinkInspector exist");
+        throw cRuntimeError("more that an instance of GlobalWirelessWirelessLinkInspector exist");
     }
     if (globalLocatorMap == nullptr)
     {
@@ -97,7 +97,7 @@ void GlobalWirelessLinkInspector::initialize()
     }
     else
     {
-        opp_error("more that an instance of GlobalWirelessWirelessLinkInspector exist");
+        throw cRuntimeError("more that an instance of GlobalWirelessWirelessLinkInspector exist");
     }
     if (queueSize == nullptr)
     {
@@ -105,13 +105,13 @@ void GlobalWirelessLinkInspector::initialize()
     }
     else
     {
-        opp_error("more that an instance of GlobalWirelessWirelessLinkInspector exist");
+        throw cRuntimeError("more that an instance of GlobalWirelessWirelessLinkInspector exist");
     }
 }
 
 void GlobalWirelessLinkInspector::handleMessage(cMessage *msg)
 {
-    opp_error ("GlobalWirelessWirelessLinkInspector has received a packet");
+    throw cRuntimeError ("GlobalWirelessWirelessLinkInspector has received a packet");
 }
 
 void GlobalWirelessLinkInspector::setLinkCost(const L3Address& org,const L3Address& dest,const Link &link)

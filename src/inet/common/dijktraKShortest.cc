@@ -275,7 +275,7 @@ void DijkstraKshortest::run()
 
     auto it = linkArray.find(rootNode);
     if (it==linkArray.end())
-        opp_error("Node not found");
+        throw cRuntimeError("Node not found");
     for (int i=0;i<K_LIMITE;i++)
     {
         State state(minimumCost);
@@ -293,7 +293,7 @@ void DijkstraKshortest::run()
         heap.erase(heap.begin());
         auto  it = routeMap.find(elem.iD);
         if (it==routeMap.end())
-            opp_error("node not found in routeMap");
+            throw cRuntimeError("node not found in routeMap");
 
         if (elem.iD != rootNode)
         {
@@ -336,9 +336,9 @@ void DijkstraKshortest::run()
             prevIdx = itAux->second[prevIdx].idPrevIdx;
             itAux = routeMap.find(currentNode);
             if (itAux == routeMap.end())
-                opp_error("error in data");
+                throw cRuntimeError("error in data");
             if (prevIdx >= (int) itAux->second.size())
-                opp_error("error in data");
+                throw cRuntimeError("error in data");
         }
 
         bool routeExist = false;
@@ -381,7 +381,7 @@ void DijkstraKshortest::run()
         // next hop
         auto linkIt=linkArray.find(elem.iD);
         if (linkIt == linkArray.end())
-            opp_error("Error link not found in linkArray");
+            throw cRuntimeError("Error link not found in linkArray");
 
         for (unsigned int i=0;i<linkIt->second.size();i++)
         {
@@ -453,7 +453,7 @@ void DijkstraKshortest::runUntil (const NodeId &target)
 
     auto it = linkArray.find(rootNode);
     if (it==linkArray.end())
-        opp_error("Node not found");
+        throw cRuntimeError("Node not found");
     for (int i=0;i<K_LIMITE;i++)
     {
         State state(minimumCost);
@@ -471,7 +471,7 @@ void DijkstraKshortest::runUntil (const NodeId &target)
         heap.erase(heap.begin());
         auto it = routeMap.find(elem.iD);
         if (it==routeMap.end())
-            opp_error("node not found in routeMap");
+            throw cRuntimeError("node not found in routeMap");
 
         if (elem.iD != rootNode)
         {
@@ -505,7 +505,7 @@ void DijkstraKshortest::runUntil (const NodeId &target)
             return;
         auto linkIt=linkArray.find(elem.iD);
         if (linkIt == linkArray.end())
-            opp_error("Error link not found in linkArray");
+            throw cRuntimeError("Error link not found in linkArray");
         for (unsigned int i=0;i<linkIt->second.size();i++)
         {
             Edge* current_edge= (linkIt->second)[i];
@@ -587,9 +587,9 @@ bool DijkstraKshortest::getRoute(const NodeId &nodeId,std::vector<NodeId> &pathN
         idx=it->second[idx].idPrevIdx;
         it = routeMap.find(currentNode);
         if (it==routeMap.end())
-            opp_error("error in data");
+            throw cRuntimeError("error in data");
         if (idx>=(int)it->second.size())
-            opp_error("error in data");
+            throw cRuntimeError("error in data");
     }
     pathNode.clear();
     while (!path.empty())
@@ -634,9 +634,9 @@ void DijkstraKshortest::setRouteMapK()
                 idx=it->second[idx].idPrevIdx;
                 it = routeMap.find(currentNode);
                 if (it==routeMap.end())
-                    opp_error("error in data");
+                    throw cRuntimeError("error in data");
                 if (idx>=(int)it->second.size())
-                    opp_error("error in data");
+                    throw cRuntimeError("error in data");
             }
             pathNode.clear();
             while (!path.empty())

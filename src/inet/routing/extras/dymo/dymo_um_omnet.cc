@@ -1780,7 +1780,7 @@ int DYMOUM::re_info_type(struct re_block *b, rtable_entry_t *e, u_int8_t is_rreq
 void DYMOUM::processLocatorAssoc(const cObject *details)
 {
 #ifdef WITH_80211MESH
-    LocatorNotificationInfo *infoLoc = check_and_cast<LocatorNotificationInfo*>(details);
+    LocatorNotificationInfo *infoLoc = check_and_cast<LocatorNotificationInfo*>(const_cast<cObject *>(details));
     L3Address destAddr;
     L3Address apAddr;
     if (isInMacLayer())
@@ -1824,7 +1824,7 @@ void DYMOUM::processLocatorAssoc(const cObject *details)
 void DYMOUM::processLocatorDisAssoc(const cObject *details)
 {
 #ifdef WITH_80211MESH
-    LocatorNotificationInfo *infoLoc = check_and_cast<LocatorNotificationInfo*>(details);
+    LocatorNotificationInfo *infoLoc = check_and_cast<LocatorNotificationInfo*>(const_cast<cObject *>(details));
     L3Address destAddr;
     if (isInMacLayer())
          destAddr = L3Address(infoLoc->getMacAddr());

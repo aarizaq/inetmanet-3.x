@@ -184,7 +184,7 @@ protected:
         return false;
     }
     ;
-    virtual void processLinkBreak(const cPolymorphic *details);
+    virtual void processLinkBreak(const cObject *details);
     //  ManetRoutingBase abstract Function END
 
     /**

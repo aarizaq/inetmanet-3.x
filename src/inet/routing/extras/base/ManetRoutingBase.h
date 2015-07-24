@@ -102,8 +102,6 @@ class INET_API ManetRoutingBase : public cSimpleModule, public cListener, public
     cModule *hostModule = nullptr;
     ICMP *icmpModule = nullptr;
     bool mac_layer_ = false;
-    L3Address    hostAddress;
-    L3Address    routerId;
     Coord curPosition;
     Coord curSpeed;
     simtime_t posTimer;
@@ -259,6 +257,8 @@ class INET_API ManetRoutingBase : public cSimpleModule, public cListener, public
     virtual void processFullPromiscuous(const cObject *details);
     virtual void processLocatorAssoc(const cObject *details);
     virtual void processLocatorDisAssoc(const cObject *details);
+    virtual void processChangeInterface(simsignal_t signalID,const cObject *details);
+
     //@}
 
     /**
@@ -269,9 +269,9 @@ class INET_API ManetRoutingBase : public cSimpleModule, public cListener, public
     virtual int gettimeofday(struct timeval *, struct timezone *);
 
     /// Get the address of the first wlan interface
-    virtual L3Address getAddress() const {return hostAddress;}
+    virtual L3Address getAddress() const;
 
-    virtual L3Address getRouterId() const {return routerId;}
+    virtual L3Address getRouterId() const;
 
     /// Return true if the routing protocols is execute in the mac layer
     virtual bool isInMacLayer() const {return mac_layer_;}
@@ -420,7 +420,7 @@ class INET_API ManetRoutingBase : public cSimpleModule, public cListener, public
     virtual bool getAddressGroup(std::vector<L3Address> &, int group = 0);
 
     virtual int  getRouteGroup(const AddressGroup &gr, std::vector<L3Address> &) { throw cRuntimeError("getRouteGroup, method is not implemented"); return 0;}
-    virtual int  getRouteGroup(const L3Address&, std::vector<L3Address> &, L3Address&, bool &, int group = 0) {opp_error("getRouteGroup, method is not implemented"); return 0;}
+    virtual int  getRouteGroup(const L3Address&, std::vector<L3Address> &, L3Address&, bool &, int group = 0) {throw cRuntimeError("getRouteGroup, method is not implemented"); return 0;}
 
     virtual bool getNextHopGroup(const AddressGroup &gr, L3Address &add, int &iface, L3Address&) { throw cRuntimeError("getNextHopGroup, method is not implemented"); return false;}
     virtual bool getNextHopGroup(const L3Address&, L3Address &add, int &iface, L3Address&, bool &, int group = 0) { throw cRuntimeError("getNextHopGroup, method is not implemented"); return false;}

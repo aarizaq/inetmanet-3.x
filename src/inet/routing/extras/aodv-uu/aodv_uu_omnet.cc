@@ -532,7 +532,7 @@ void NS_CLASS handleMessage (cMessage *msg)
     }
 
     if (is_init==false)
-        opp_error ("Aodv has not been initialized ");
+        throw cRuntimeError ("Aodv has not been initialized ");
 
     if (msg->isSelfMessage() && dynamic_cast<AODV_msg*> (msg))
     {
@@ -638,7 +638,7 @@ void NS_CLASS handleMessage (cMessage *msg)
             else
             {
                 ipDgram = (IPv4Datagram*) control->decapsulate();
-                cPolymorphic * ctrl = ipDgram->removeControlInfo();
+                cObject * ctrl = ipDgram->removeControlInfo();
                 unsigned int ifindex = NS_IFINDEX;  /* Always use ns interface */
                 if (ctrl)
                 {
@@ -1298,20 +1298,20 @@ int NS_CLASS ifindex2devindex(unsigned int ifindex)
 }
 
 
-void NS_CLASS processLinkBreak(const cPolymorphic *details)
+void NS_CLASS processLinkBreak(const cObject *details)
 {
     IPv4Datagram  *dgram=nullptr;
     if (llfeedback)
     {
-        if (dynamic_cast<IPv4Datagram *>(const_cast<cPolymorphic*> (details)))
+        if (dynamic_cast<IPv4Datagram *>(const_cast<cObject*> (details)))
         {
             dgram = const_cast<IPv4Datagram *>(check_and_cast<const IPv4Datagram *>(details));
             packetFailed(dgram);
             return;
         }
-        else if (dynamic_cast<Ieee80211DataFrame *>(const_cast<cPolymorphic*> (details)))
+        else if (dynamic_cast<Ieee80211DataFrame *>(const_cast<cObject*> (details)))
         {
-            Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame *>(const_cast<cPolymorphic*>(details));
+            Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame *>(const_cast<cObject*>(details));
             packetFailedMac(frame);
         }
     }
@@ -1320,7 +1320,7 @@ void NS_CLASS processLinkBreak(const cPolymorphic *details)
 
 void NS_CLASS processFullPromiscuous(const cObject *details)
 {
-    if (dynamic_cast<Ieee80211TwoAddressFrame *>(const_cast<cPolymorphic*> (details)))
+    if (dynamic_cast<Ieee80211TwoAddressFrame *>(const_cast<cObject*> (details)))
     {
         Ieee80211TwoAddressFrame *frame = dynamic_cast<Ieee80211TwoAddressFrame *>(const_cast<cObject*>(details));
         L3Address sender(frame->getTransmitterAddress());
@@ -1337,7 +1337,7 @@ void NS_CLASS processFullPromiscuous(const cObject *details)
 void NS_CLASS processPromiscuous(const cObject *details)
 {
 
-    if (dynamic_cast<Ieee80211DataFrame *>(const_cast<cPolymorphic*> (details)))
+    if (dynamic_cast<Ieee80211DataFrame *>(const_cast<cObject*> (details)))
     {
         Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame *>(const_cast<cObject*>(details));
         cPacket * pktAux = frame->getEncapsulatedPacket();
@@ -1873,7 +1873,7 @@ void NS_CLASS actualizeTablesWithCollaborative(const L3Address &dest)
         destination.s_addr = dest;
         auto it =  mapSeqNum.find(dest);
         if (it == mapSeqNum.end())
-            opp_error("node not found in mapSeqNum");
+            throw cRuntimeError("node not found in mapSeqNum");
         uint32_t sqnum = *(it->second);
         uint32_t life = PATH_DISCOVERY_TIME - 2 * hops * NODE_TRAVERSAL_TIME;
         int ifindex = -1;
@@ -1890,7 +1890,7 @@ void NS_CLASS actualizeTablesWithCollaborative(const L3Address &dest)
         }
 
         if (ifindex == -1)
-            opp_error("interface not found");
+            throw cRuntimeError("interface not found");
 
         if (fwd_rt)
             fwd_rt = rt_table_update(fwd_rt, next_hop, hops, sqnum, life, VALID, fwd_rt->flags,ifindex, cost, cost+1);
@@ -1901,7 +1901,7 @@ void NS_CLASS actualizeTablesWithCollaborative(const L3Address &dest)
         rt_table_t * fwd_rtAux = rt_table_find(next_hop);
         it =  mapSeqNum.find(next_hop.s_addr);
         if (it == mapSeqNum.end())
-            opp_error("node not found in mapSeqNum");
+            throw cRuntimeError("node not found in mapSeqNum");
         sqnum = *(it->second);
         life = PATH_DISCOVERY_TIME - 2 * (int)hops * NODE_TRAVERSAL_TIME;
         if (fwd_rtAux)

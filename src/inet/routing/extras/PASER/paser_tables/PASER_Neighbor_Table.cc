@@ -84,7 +84,7 @@ PASER_Neighbor_Entry *PASER_Neighbor_Table::update(PASER_Neighbor_Entry *entry,
             if ((*it).second == entry) {
                 neighbor_table_map.erase(it);
             } else
-                opp_error("Error in PASER routing table");
+                throw cRuntimeError("Error in PASER routing table");
         }
         delete entry;
     }
@@ -117,7 +117,7 @@ void PASER_Neighbor_Table::delete_entry(PASER_Neighbor_Entry *entry) {
             if ((*it).second == entry) {
                 neighbor_table_map.erase(it);
             } else
-                opp_error("Error in PASER routing table");
+                throw cRuntimeError("Error in PASER routing table");
         }
     }
 }

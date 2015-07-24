@@ -1052,8 +1052,8 @@ void SecurityWPA2::handleAuthenticationFrame(Ieee80211AuthenticationFrame *frame
             //Pick Random GTK(128)
             if(GTK.buf.empty())
             {
-                GTK.buf.push_back(genk_intrand(1,1073741823));
-                GTK.buf.push_back(genk_intrand(1,1073741823));
+                GTK.buf.push_back(getRNG(1)->intRand(1073741823));
+                GTK.buf.push_back(getRNG(1)->intRand(1073741823));
                 GTK.len=128;
             }
             EV<< "GTK vor decrypt:" << endl;EV<< GTK.buf.at(0) << " ";EV<< GTK.buf.at(1) <<  endl;
@@ -1265,8 +1265,8 @@ void SecurityWPA2::sendGroupHandshakeMsg(MeshInfo *mesh,  simtime_t timeout)
     SecurityPkt *msg = new SecurityPkt();
     //Pick Random GTK(128)
     clearKey128(GTK);
-    GTK.buf.push_back(genk_intrand(1,1073741823));
-    GTK.buf.push_back(genk_intrand(1,1073741823));
+    GTK.buf.push_back(getRNG(1)->intRand(1073741823));
+    GTK.buf.push_back(getRNG(1)->intRand(1073741823));
     GTK.len=128;
     //Encrypt GTK with KEK
     EV << "Encrypted GTK: " << endl;
@@ -1716,7 +1716,7 @@ void SecurityWPA2::handleIeee80211MeshFrame(cMessage *msg)
                 {
                     char name[50];
                     strcpy(name,msg->getName());
-                    opp_error ("Ieee80211Mesh::encapsulate Bad Address");
+                    throw cRuntimeError ("Ieee80211Mesh::encapsulate Bad Address");
                 }
                 if (frame->getReceiverAddress().isBroadcast())
                     frame->setTTL(1);
@@ -1910,7 +1910,7 @@ else
                 {
                     char name[50];
                     strcpy(name,msg->getName());
-                    opp_error ("Ieee80211Mesh::encapsulate Bad Address");
+                    throw cRuntimeError ("Ieee80211Mesh::encapsulate Bad Address");
                 }
                 if (frame->getReceiverAddress().isBroadcast())
 
@@ -2100,10 +2100,10 @@ SecurityWPA2::nonce SecurityWPA2::generateNonce() {
 
     nonce Nonce;
     Nonce.len=256;
-    Nonce.buf.push_back( genk_intrand(1,1073741823));
-    Nonce.buf.push_back( genk_intrand(1,1073741823));
-    Nonce.buf.push_back( genk_intrand(1,1073741823));
-    Nonce.buf.push_back( genk_intrand(1,1073741823));
+    Nonce.buf.push_back( getRNG(1)->intRand(1073741823));
+    Nonce.buf.push_back( getRNG(1)->intRand(1073741823));
+    Nonce.buf.push_back( getRNG(1)->intRand(1073741823));
+    Nonce.buf.push_back( getRNG(1)->intRand(1073741823));
 
     Nonce.len=256;
     return Nonce;

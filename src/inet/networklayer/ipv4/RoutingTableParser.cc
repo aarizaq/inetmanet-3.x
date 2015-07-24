@@ -401,7 +401,7 @@ void RoutingTableParser::parseRules(char *rulesFile)
         skipBlanks(rulesFile, pos);
         if (!strcmp(str, "iptables"))
         {
-             opp_error("Syntax error in routing file: `%s' on 1st column should be `DROP' now is the only rule accepted", str);
+             throw cRuntimeError("Syntax error in routing file: `%s' on 1st column should be `DROP' now is the only rule accepted", str);
         }
         int position=-1;
         IPv4RouteRule *e = new IPv4RouteRule();
@@ -420,7 +420,7 @@ void RoutingTableParser::parseRules(char *rulesFile)
                    else if (!strcmp(str, "FORWARD"))
                        position = 3;
                    else
-                       opp_error("Syntax error in routing file: `%s' should be INPUT or OUTPUT", str);
+                       throw cRuntimeError("Syntax error in routing file: `%s' should be INPUT or OUTPUT", str);
                    continue;
               }
               if (!strcmp(str, "-s"))
@@ -446,7 +446,7 @@ void RoutingTableParser::parseRules(char *rulesFile)
                    }
 
                    if (!IPv4Address::isWellFormed(str))
-                       opp_error("Syntax error in routing file: `%s' should be a valid IPv4 address", str);
+                       throw cRuntimeError("Syntax error in routing file: `%s' should be a valid IPv4 address", str);
                    e->setSrcAddress(IPv4Address(str));
                    e->setSrcNetmask(mask);
                    continue;
@@ -472,7 +472,7 @@ void RoutingTableParser::parseRules(char *rulesFile)
                        *p = '\0';
                    }
                    if (!IPv4Address::isWellFormed(str))
-                       opp_error("Syntax error in routing file: `%s' should be a valid IPv4 address", str);
+                       throw cRuntimeError("Syntax error in routing file: `%s' should be a valid IPv4 address", str);
                    e->setDestAddress(IPv4Address(str));
                    e->setDestNetmask(mask);
                    continue;
@@ -486,7 +486,7 @@ void RoutingTableParser::parseRules(char *rulesFile)
                    else if (!strcmp(str, "udp"))
                        e->setProtocol(IP_PROT_UDP);
                    else
-                       opp_error("Syntax error in routing file: `%s' should be tcp or udp", str);
+                       throw cRuntimeError("Syntax error in routing file: `%s' should be tcp or udp", str);
                    continue;
               }
               if (!strcmp(str, "-j"))
@@ -498,7 +498,7 @@ void RoutingTableParser::parseRules(char *rulesFile)
                    else if (!strcmp(str, "ACCEPT"))
                        e->setRule(IPv4RouteRule::ACCEPT);
                    else
-                       opp_error("Syntax error in routing file: `%s' should be DROP or ACCEPT", str);
+                       throw cRuntimeError("Syntax error in routing file: `%s' should be DROP or ACCEPT", str);
                    continue;
               }
               if (!strcmp(str, "-sport"))
@@ -523,7 +523,7 @@ void RoutingTableParser::parseRules(char *rulesFile)
                   skipBlanks(rulesFile, pos);
                   InterfaceEntry *ie = ift->getInterfaceByName(str);
                   if (ie==nullptr)
-                       opp_error("Syntax error in routing file: `%s' should be a valid interface name", str);
+                       throw cRuntimeError("Syntax error in routing file: `%s' should be a valid interface name", str);
                   else
                        e->setInterface(ie);
                   continue;
@@ -537,9 +537,9 @@ void RoutingTableParser::parseRules(char *rulesFile)
                   else if (position == 3 && e->getRule() == IPv4RouteRule::ACCEPT && e->getInterface())
                       rt->addRule(false, e);
                   else
-                     opp_error("table rule not valid, must indicate input or output or \"FORWARD with accept\" ");
+                     throw cRuntimeError("table rule not valid, must indicate input or output or \"FORWARD with accept\" ");
                   if (e->getRule()!=IPv4RouteRule::DROP && e->getRule()!=IPv4RouteRule::ACCEPT)
-                     opp_error("table rule not valid ");
+                     throw cRuntimeError("table rule not valid ");
 
                   position = -1;
                   e = new IPv4RouteRule();
@@ -553,9 +553,9 @@ void RoutingTableParser::parseRules(char *rulesFile)
          else if (position==3 && e->getRule()==IPv4RouteRule::ACCEPT && e->getInterface())
              rt->addRule(false, e);
          else
-             opp_error("table rule not valid, must indicate input or output");
+             throw cRuntimeError("table rule not valid, must indicate input or output");
          if (e->getRule()!=IPv4RouteRule::DROP && e->getRule()!=IPv4RouteRule::ACCEPT)
-             opp_error("table rule not valid ");
+             throw cRuntimeError("table rule not valid ");
     }
 }
 

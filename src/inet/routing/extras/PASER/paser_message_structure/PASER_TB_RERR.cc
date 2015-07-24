@@ -417,7 +417,7 @@ u_int8_t * PASER_TB_RERR::getCompleteByteArray(int *l) {
 //for (int n = 0; n < len; n++)
 //    printf("%02x", data[n]);
 //putchar('\n');
-//opp_error("rrrwrwrwr");
+//throw cRuntimeError("rrrwrwrwr");
 
     *l = len;
     EV << "len = " << len << "\n";

@@ -110,11 +110,11 @@ class HwmpProtocol : public ManetRoutingBase
         }
         virtual void handleMessage(cMessage *msg);
         // Detect a transmission fault
-        virtual void processLinkBreak(const cPolymorphic *details);
-        virtual void processLinkBreakManagement(const cPolymorphic *details);
+        virtual void processLinkBreak(const cObject *details);
+        virtual void processLinkBreakManagement(const cObject *details);
         virtual void packetFailedMac(Ieee80211TwoAddressFrame *frame);
         // promiscuous frame process.
-        virtual void processFullPromiscuous(const cPolymorphic *details);
+        virtual void processFullPromiscuous(const cObject *details);
         ///\brief This callback is used to obtain active neighbours on a given interface
         ///\param cb is a callback, which returns a list of addresses on given interface (uint32_t)
         ///\name Proactive PREQ mechanism:

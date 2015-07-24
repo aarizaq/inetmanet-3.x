@@ -69,9 +69,9 @@ void Ieee80211Etx::initialize(int stage)
         {
             // integrity check
             if (etxSize <0  || etxInterval < 0)
-                opp_error("ETT need ETX");
+                throw cRuntimeError("ETT need ETX");
             if (ettInterval/etxInterval < 2)
-                opp_error("ETT interval must be at least 2 times the ETX interval");
+                throw cRuntimeError("ETT interval must be at least 2 times the ETX interval");
             scheduleAt(simTime()+par("startEtt"), ettTimer);
         }
     }

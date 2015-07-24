@@ -141,7 +141,7 @@ PASER_Routing_Entry *PASER_Routing_Table::update(PASER_Routing_Entry *entry,
 //                }
                 route_table.erase(it);
             } else
-                opp_error("Error in PASER routing table");
+                throw cRuntimeError("Error in PASER routing table");
 
         }
         delete entry;
@@ -188,7 +188,7 @@ void PASER_Routing_Table::delete_entry(PASER_Routing_Entry *entry) {
 //            }
             route_table.erase(it);
         } else
-            opp_error("Error in PASER routing table");
+            throw cRuntimeError("Error in PASER routing table");
     }
 }
 

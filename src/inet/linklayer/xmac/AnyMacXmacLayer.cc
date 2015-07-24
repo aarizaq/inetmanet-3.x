@@ -1120,7 +1120,7 @@ void AnyMacXmacLayer::handleSelfMessage(cMessage *msg)
 		}
 		break;
 	}
-	opp_error("Undefined event of type %d in MAC stat %i", msg->getKind(), macState);
+	throw cRuntimeError("Undefined event of type %d in MAC stat %i", msg->getKind(), macState);
 }
 
 

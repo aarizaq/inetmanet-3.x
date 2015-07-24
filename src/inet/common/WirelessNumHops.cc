@@ -62,7 +62,7 @@ void WirelessNumHops::reStart()
         cModule *host = destNode->getModule();
         mod = check_and_cast<IMobility *>(host->getSubmodule("mobility"));
         if (mod == nullptr)
-            opp_error("node or mobility module not found");
+            throw cRuntimeError("node or mobility module not found");
         nodeInfo info;
         info.mob = mod;
         info.itable = L3AddressResolver().findInterfaceTableOf(destNode->getModule());
@@ -368,7 +368,7 @@ int WirelessNumHops::getIdNode(const MACAddress &add)
     auto it = related.find(add);
     if (it != related.end())
         return it->second;
-    opp_error("Node not found with MAC Address %s",add.str().c_str());
+    throw cRuntimeError("Node not found with MAC Address %s",add.str().c_str());
     return -1;
 }
 
@@ -377,7 +377,7 @@ int WirelessNumHops::getIdNode(const IPv4Address &add)
     auto it = relatedIp.find(add);
     if (it != relatedIp.end())
         return it->second;
-    opp_error("Node not found with IP Address %s", add.str().c_str());
+    throw cRuntimeError("Node not found with IP Address %s", add.str().c_str());
     return -1;
 }
 
@@ -396,7 +396,7 @@ void WirelessNumHops::run()
 
     auto it = linkArray.find(rootNode);
     if (it==linkArray.end())
-        opp_error("Node root not found %i",rootNode);
+        throw cRuntimeError("Node root not found %i",rootNode);
     WirelessNumHops::DijkstraShortest::State state(0);
     state.label = tent;
     routeMap[rootNode] = state;
@@ -428,7 +428,7 @@ void WirelessNumHops::run()
             itHeap = itHeap3;
         }
         int numeq = equal.size()-1;
-        int val = numeq > 0?intuniform(0,numeq):0;
+        int val = numeq > 0?getEnvir()->getRNG(0)->intRand(numeq):0;
         itHeap = equal[val];
         equal.clear();
 
@@ -438,7 +438,7 @@ void WirelessNumHops::run()
 
         auto it = routeMap.find(elem.iD);
         if (it==routeMap.end())
-            opp_error("node not found in routeMap %i",elem.iD);
+            throw cRuntimeError("node not found in routeMap %i",elem.iD);
         if ((it->second).label == perm)
             continue;
 
@@ -507,7 +507,7 @@ void WirelessNumHops::runUntil (const int &target)
 
     auto it = linkArray.find(rootNode);
     if (it==linkArray.end())
-        opp_error("Root node not found %i",rootNode);
+        throw cRuntimeError("Root node not found %i",rootNode);
     WirelessNumHops::DijkstraShortest::State state(0);
     state.label = tent;
     routeMap[rootNode] = state;
@@ -538,7 +538,7 @@ void WirelessNumHops::runUntil (const int &target)
             itHeap = itHeap3;
         }
         int numeq = equal.size()-1;
-        int val = numeq > 0?intuniform(0,numeq):0;
+        int val = numeq > 0?getEnvir()->getRNG(0)->intRand(numeq):0;
         itHeap = equal[val];
         equal.clear();
 
@@ -551,7 +551,7 @@ void WirelessNumHops::runUntil (const int &target)
 
         auto it = routeMap.find(elem.iD);
         if (it==routeMap.end())
-            opp_error("node not found in routeMap %i",elem.iD);
+            throw cRuntimeError("node not found in routeMap %i",elem.iD);
         if ((it->second).label == perm)
             continue;
         (it->second).label = perm;
@@ -622,7 +622,7 @@ bool WirelessNumHops::getRoute(const int &nodeId,std::deque<int> &pathNode)
         currentNode = it->second.idPrev;
         it = routeMap.find(currentNode);
         if (it==routeMap.end())
-            opp_error("error in data routeMap");
+            throw cRuntimeError("error in data routeMap");
     }
     return true;
 }
@@ -644,7 +644,7 @@ bool WirelessNumHops::getRouteCost(const int &nodeId,std::deque<int> &pathNode,d
         currentNode = it->second.idPrev;
         it = routeMap.find(currentNode);
         if (it==routeMap.end())
-            opp_error("error in data routeMap");
+            throw cRuntimeError("error in data routeMap");
     }
     return true;
 }
@@ -707,7 +707,7 @@ bool WirelessNumHops::findRouteWithCost(const double &coverageArea, const MACAdd
         }
         if (path.size() != route.size())
         {
-            opp_error("node id not found");
+            throw cRuntimeError("node id not found");
         }
         pathNode = path;
         // include path in the cache
@@ -747,7 +747,7 @@ bool WirelessNumHops::findRouteWithCost(const double &coverageArea, const IPv4Ad
         }
         if (path.size() != route.size())
         {
-            opp_error("node id not found");
+            throw cRuntimeError("node id not found");
         }
         // include path in the cache
         pathNode = path;
@@ -822,7 +822,7 @@ std::deque<int> WirelessNumHops::getRoute(int index)
         currentNode = it->second.idPrev;
         it = routeMap.find(currentNode);
         if (it==routeMap.end())
-            opp_error("error in data routeMap");
+            throw cRuntimeError("error in data routeMap");
     }
     return route;
 }
@@ -838,7 +838,7 @@ void WirelessNumHops::getRoute(int i, std::deque<IPv4Address> &pathNode)
     }
     if (pathNode.size() != route.size())
     {
-        opp_error("node id not found");
+        throw cRuntimeError("node id not found");
     }
 }
 
@@ -852,7 +852,7 @@ void WirelessNumHops::getRoute(int i,std::deque<MACAddress> &pathNode)
     }
     if (pathNode.size() != route.size())
     {
-        opp_error("node id not found");
+        throw cRuntimeError("node id not found");
     }
 }
 

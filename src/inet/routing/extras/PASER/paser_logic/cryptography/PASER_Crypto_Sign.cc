@@ -173,7 +173,7 @@ int PASER_Crypto_Sign::signUBRREQ(PASER_UB_RREQ * message) {
     if (err != 1) {
         ERR_print_errors_fp(stderr);
 #ifdef findCertError
-        opp_error("signUBRREQ");
+        throw cRuntimeError("signUBRREQ");
 #endif
         return 0;
     }
@@ -228,7 +228,7 @@ int PASER_Crypto_Sign::checkSignUBRREQ(PASER_UB_RREQ * message) {
         EV << "EVP_VerifyFinal error\n";
         ERR_print_errors_fp (stderr);
 #ifdef findCertError
-        opp_error("checkSignUBRREQ");
+        throw cRuntimeError("checkSignUBRREQ");
 #endif
         return 0;
     }
@@ -254,7 +254,7 @@ int PASER_Crypto_Sign::signUURREP(PASER_UU_RREP * message) {
     if (err != 1) {
         ERR_print_errors_fp(stderr);
 #ifdef findCertError
-        opp_error("signUURREP");
+        throw cRuntimeError("signUURREP");
 #endif
         return 0;
     }
@@ -347,7 +347,7 @@ int PASER_Crypto_Sign::checkSignUURREP(PASER_UU_RREP * message) {
         EV << "EVP_VerifyFinal error\n";
         ERR_print_errors_fp (stderr);
 #ifdef findCertError
-        opp_error("checkSignUURREP");
+        throw cRuntimeError("checkSignUURREP");
 #endif
         return 0;
     }
@@ -370,7 +370,7 @@ int PASER_Crypto_Sign::signB_ROOT(PASER_UB_Root_Refresh * message) {
     if (err != 1) {
         ERR_print_errors_fp(stderr);
 #ifdef findCertError
-        opp_error("signB_ROOT");
+        throw cRuntimeError("signB_ROOT");
 #endif
         return 0;
     }
@@ -422,7 +422,7 @@ int PASER_Crypto_Sign::checkSignB_ROOT(PASER_UB_Root_Refresh * message) {
         EV << "EVP_VerifyFinal error\n";
         ERR_print_errors_fp (stderr);
 #ifdef findCertError
-        opp_error("checkSignB_ROOT");
+        throw cRuntimeError("checkSignB_ROOT");
 #endif
         return 0;
     }
@@ -445,7 +445,7 @@ int PASER_Crypto_Sign::checkSignB_ROOT(PASER_UB_Root_Refresh * message) {
 //    if (err != 1) {
 //        ERR_print_errors_fp(stderr);
 //#ifdef findCertError
-//        opp_error("signB_ROOT");
+//        throw cRuntimeError("signB_ROOT");
 //#endif
 //        return 0;
 //    }
@@ -501,7 +501,7 @@ int PASER_Crypto_Sign::checkSignRESET(PASER_UB_Key_Refresh * message) {
         EV << "EVP_VerifyFinal error\n";
         ERR_print_errors_fp (stderr);
 #ifdef findCertError
-        opp_error("checkSignB_ROOT");
+        throw cRuntimeError("checkSignB_ROOT");
 #endif
         return 0;
     }
@@ -633,7 +633,7 @@ int PASER_Crypto_Sign::checkSignKDC(kdc_block data) {
         EV << "checkKDC: EVP_VerifyFinal error\n";
         ERR_print_errors_fp (stderr);
 #ifdef findCertError
-        opp_error("checkSignUBRREQ");
+        throw cRuntimeError("checkSignUBRREQ");
 #endif
         return 0;
     }

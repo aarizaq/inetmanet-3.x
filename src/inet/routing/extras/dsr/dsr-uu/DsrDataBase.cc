@@ -650,7 +650,7 @@ void DsrDataBase::run(const L3Address &target)
             itHeap = itHeap3;
         }
         int numeq = equal.size()-1;
-        int val = numeq > 0?intuniform(0,numeq):0;
+        int val = numeq > 0?getEnvir()->getRNG(0)->intRand(numeq):0;
         itHeap = equal[val];
         equal.clear();
 
@@ -660,7 +660,7 @@ void DsrDataBase::run(const L3Address &target)
 
         auto it = routeMap.find(elem.iD);
         if (it==routeMap.end())
-            opp_error("node not found in routeMap %s",elem.iD.toIPv4().str().c_str());
+            throw cRuntimeError("node not found in routeMap %s",elem.iD.toIPv4().str().c_str());
 
         if ((it->second).label == perm)
             continue;
@@ -749,7 +749,7 @@ bool DsrDataBase::getRoute(const L3Address &nodeId,PathCacheRoute &pathNode, uns
             it->second.edge->expires = now + ((double)exp/1000000.0);
         it = routeMap.find(currentNode);
         if (it==routeMap.end())
-            opp_error("error in data routeMap");
+            throw cRuntimeError("error in data routeMap");
     }
     for (unsigned int i = path.size()-1 ; i > 0 ; i--)
         pathNode.push_back(path[i]);
@@ -786,7 +786,7 @@ bool DsrDataBase::getRouteCost(const L3Address &nodeId, PathCacheRoute &pathNode
             it->second.edge->expires = now + ((double)exp/1000000.0);
         it = routeMap.find(currentNode);
         if (it==routeMap.end())
-            opp_error("error in data routeMap");
+            throw cRuntimeError("error in data routeMap");
     }
     for (unsigned int i = 0 ; i < path.size(); i++)
         pathNode.push_back(path[i]);

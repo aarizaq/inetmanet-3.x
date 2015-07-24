@@ -17,6 +17,8 @@ cplusplus {{
 #include "LinkFailureManager.h"
 }}
 
+namespace inet;
+
 class noncobject LinkState;
 
 message LinkFailureMessage {

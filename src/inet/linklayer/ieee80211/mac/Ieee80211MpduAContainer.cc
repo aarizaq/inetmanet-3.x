@@ -15,23 +15,6 @@
 
 #include "inet/linklayer/ieee80211/mac/Ieee80211MpduAContainer.h"
 
-// Another default rule (prevents compiler from choosing base class' doPacking())
-template<typename T>
-void doPacking(cCommBuffer *, T& t)
-{
-    throw cRuntimeError(
-            "Parsim error: no doPacking() function for type %s or its base class (check .msg and _m.cc/h files!)",
-            opp_typename(typeid(t)));
-}
-
-template<typename T>
-void doUnpacking(cCommBuffer *, T& t)
-{
-    throw cRuntimeError(
-            "Parsim error: no doUnpacking() function for type %s or its base class (check .msg and _m.cc/h files!)",
-            opp_typename(typeid(t)));
-}
-
 namespace inet {
 namespace ieee80211 {
 
@@ -77,18 +60,6 @@ void Ieee80211MpduAContainer::forEachChild(cVisitor *v)
         for (unsigned int i = 0; i < encapsulateVector.size(); i++)
             v->visit(encapsulateVector[i]->pkt);
     }
-}
-
-void Ieee80211MpduAContainer::parsimPack(cCommBuffer *buffer)
-{
-    cPacket::parsimPack(buffer);
-    doPacking(buffer, this->encapsulateVector);
-}
-
-void Ieee80211MpduAContainer::parsimUnpack(cCommBuffer *buffer)
-{
-    cPacket::parsimUnpack(buffer);
-    doUnpacking(buffer, this->encapsulateVector);
 }
 
 void Ieee80211MpduAContainer::_deleteEncapVector()
@@ -165,7 +136,7 @@ void Ieee80211MpduAContainer::pushBack(Ieee80211DataFrame *pkt, int retries)
     }
     setBitLength(getBitLength() + pkt->getBitLength());
     PacketStruct * shareStructPtr = new PacketStruct();
-    if (pkt->getOwner() != simulation.getContextSimpleModule())
+    if (pkt->getOwner() != getSimulation()->getContextSimpleModule())
         throw cRuntimeError(this, "pushBack(): not owner of message (%s)%s, owner is (%s)%s", pkt->getClassName(),
                 pkt->getFullName(), pkt->getOwner()->getClassName(), pkt->getOwner()->getFullPath().c_str());
     take(pkt);
@@ -189,7 +160,7 @@ void Ieee80211MpduAContainer::pushFront(Ieee80211DataFrame *pkt, int retries)
     }
     setBitLength(getBitLength() + pkt->getBitLength());
     PacketStruct * shareStructPtr = new PacketStruct();
-    if (pkt->getOwner() != simulation.getContextSimpleModule())
+    if (pkt->getOwner() != getSimulation()->getContextSimpleModule())
         throw cRuntimeError(this, "pushFrom(): not owner of message (%s)%s, owner is (%s)%s", pkt->getClassName(),
                 pkt->getFullName(), pkt->getOwner()->getClassName(), pkt->getOwner()->getFullPath().c_str());
     take(shareStructPtr->pkt = pkt);

@@ -17,7 +17,10 @@
 #ifndef __LINKFAILUREMANAGER_H__
 #define __LINKFAILUREMANAGER_H__
 
-#include <omnetpp.h>
+#include "inet/common/INETDefs.h"
+
+namespace inet {
+
 
 enum LinkState
 {
@@ -36,5 +39,7 @@ class LinkFailureManager : public cSimpleModule
     virtual void initialize();
     virtual void handleMessage(cMessage *msg);
 };
+
+}
 
 #endif

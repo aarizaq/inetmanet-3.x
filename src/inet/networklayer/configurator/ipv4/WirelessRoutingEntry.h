@@ -15,7 +15,8 @@
 
 #ifndef WIRELESSROUTINGENTRY_H_
 #define WIRELESSROUTINGENTRY_H_
-#include <omnetpp.h>
+#include "inet/common/INETDefs.h"
+
 
 namespace inet {
 

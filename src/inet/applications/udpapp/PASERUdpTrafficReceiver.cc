@@ -199,7 +199,7 @@ void PASERUdpTrafficReceiver::handleExtMessage(cMessage *extMsg)
 		//handle trafficMsg
 		handleTrafficMsg(trafficMsg);
 		numReceived++;
-	    if (ev.isGUI())
+	    if (hasGUI())
 	    {
 	        char buf[40];
 	        sprintf(buf, "rcvdTotal: %d pks", numReceived);

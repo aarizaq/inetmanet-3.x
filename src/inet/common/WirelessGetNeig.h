@@ -19,7 +19,6 @@
 #ifndef WIRELESSGETNEIG_H_
 #define WIRELESSGETNEIG_H_
 
-#include <cownedobject.h>
 #include <vector>
 #include <map>
 #include "inet/common/geometry/common/Coord.h"

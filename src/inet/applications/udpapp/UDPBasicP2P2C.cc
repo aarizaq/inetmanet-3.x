@@ -287,7 +287,7 @@ void UDPBasicP2P2C::initialize(int stage)
                 std::string name(token);
                 outfile = new std::ofstream(name.c_str(),
                         std::ios_base::out | std::ios_base::trunc | std::ios_base::app);
-                *outfile << simulation.getActiveSimulation()->getEnvir()->getConfigEx()->getVariable(CFGVAR_SEEDSET)
+                *outfile << getSimulation()->getActiveSimulation()->getEnvir()->getConfigEx()->getVariable(CFGVAR_SEEDSET)
                         << endl;
             }
         }

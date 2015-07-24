@@ -42,7 +42,7 @@ message_rreq_entry* PASER_RREQ_List::pending_add(struct in_addr dest_addr) {
     entry = new message_rreq_entry();
 
     if (entry == nullptr) {
-        opp_error("failed malloc()");
+        throw cRuntimeError("failed malloc()");
         exit(EXIT_FAILURE);
     }
 
@@ -74,7 +74,7 @@ int PASER_RREQ_List::pending_remove(message_rreq_entry *entry) {
         if ((*it).second == entry) {
             rreq_list.erase(it);
         } else
-            opp_error("Error in PASERPendingRreq table");
+            throw cRuntimeError("Error in PASERPendingRreq table");
 
     }
     return 1;
@@ -95,7 +95,7 @@ message_rreq_entry* PASER_RREQ_List::pending_find(struct in_addr dest_addr) {
         if (entry->dest_addr.s_addr == dest_addr.s_addr)
             return entry;
         else
-            opp_error("Error in rreq_list table");
+            throw cRuntimeError("Error in rreq_list table");
     }
     return nullptr;
 }
@@ -118,7 +118,7 @@ message_rreq_entry* PASER_RREQ_List::pending_find_addr_with_mask(
 //        if (entry->dest_addr.s_addr == dest_addr.s_addr)
 //            return entry;
 //        else
-//            opp_error("Error in rreq_list table");
+//            throw cRuntimeError("Error in rreq_list table");
 //    }
 //    return nullptr;
 }

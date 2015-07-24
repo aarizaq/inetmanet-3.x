@@ -79,7 +79,7 @@ void NSCLASS rreq_tbl_timeout(unsigned long data)
     if (it != dsrRreqTbl.end())
     {
         if (it->second != e)
-            opp_error("dsrRreqTbl");
+            throw cRuntimeError("dsrRreqTbl");
     }
 
 
@@ -173,7 +173,7 @@ NSCLASS rreq_tbl_entry * NSCLASS __rreq_tbl_add(struct in_addr node_addr)
     auto it = dsrRreqTbl.find(addr);
     if (it != dsrRreqTbl.end())
     {
-        opp_error("dsrRreqTbl entry already in the table");
+        throw cRuntimeError("dsrRreqTbl entry already in the table");
     }
     dsrRreqTbl.insert(std::make_pair(addr,e));
     return e;

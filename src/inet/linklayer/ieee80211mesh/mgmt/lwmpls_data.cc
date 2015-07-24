@@ -106,7 +106,7 @@ LWmpls_Forwarding_Structure * LWMPLSDataStructure::lwmpls_forwarding_data(int la
                     if ((data_f_ptr->input_label!=label_input) && (data_f_ptr->return_label_input!=label_input))
                     {
                         printf("\n %d %d %d", label_input, data_f_ptr->input_label, data_f_ptr->return_label_input);
-                        opp_error("lwmpls_forwarding_data Error in label database, label in use but struct not correct");
+                        throw cRuntimeError("lwmpls_forwarding_data Error in label database, label in use but struct not correct");
                     }
                 }
             }
@@ -115,7 +115,7 @@ LWmpls_Forwarding_Structure * LWMPLSDataStructure::lwmpls_forwarding_data(int la
         }
         else if (!label_list[label_input-1].in_use && label_list[label_input-1].data_f_ptr!=nullptr)
         {
-            opp_error("lwmpls_forwarding_data label no usada pero existe estructura");
+            throw cRuntimeError("lwmpls_forwarding_data label no usada pero existe estructura");
         }
     }
     else if (label_output>0)
@@ -322,7 +322,7 @@ bool LWMPLSDataStructure::lwmpls_label_in_use(int label)
                 if ((label_list[label-1].data_f_ptr->input_label!=label) && (label_list[label-1].data_f_ptr->return_label_input!=label))
                 {
                     printf("\n %d %d %d", label, label_list[label-1].data_f_ptr->input_label, label_list[label-1].data_f_ptr->return_label_input);
-                    opp_error("lwmpls_label_in_use Error in label database, label in use but struct not correct");
+                    throw cRuntimeError("lwmpls_label_in_use Error in label database, label in use but struct not correct");
                 }
             }
         }
@@ -356,7 +356,7 @@ void LWMPLSDataStructure::delLWMPLSLabel(int label)
         {
             data_f_ptr = label_list[label-1].data_f_ptr;
             if ((data_f_ptr->input_label != label) && (data_f_ptr->return_label_input!=label))
-                opp_error("delLWMPLSLabel error in label data");
+                throw cRuntimeError("delLWMPLSLabel error in label data");
 
             LWmplsInterfaceMap::iterator  macIterator;
             if (data_f_ptr->input_label == label)
@@ -381,7 +381,7 @@ void LWMPLSDataStructure::delLWMPLSLabel(int label)
 
         }
         if (num_label_in_use<0)
-            opp_error("LWMPLS label number in use less than 0");
+            throw cRuntimeError("LWMPLS label number in use less than 0");
     }
     label_list[label-1].data_f_ptr = nullptr;
     label_list[label-1].in_use = false;
@@ -404,7 +404,7 @@ void LWMPLSDataStructure::lwmpls_init_interface(LWmpls_Interface_Structure** int
 
     init = false;
     if (*interface_str_ptr_ptr!=nullptr && interface_str_ptr!=nullptr && *interface_str_ptr_ptr!=interface_str_ptr)
-        opp_error(" ERROR INTERFACE 1");
+        throw cRuntimeError(" ERROR INTERFACE 1");
     else if (interface_str_ptr!=nullptr && *interface_str_ptr_ptr == nullptr)
         *interface_str_ptr_ptr = interface_str_ptr;
 
@@ -419,7 +419,7 @@ void LWMPLSDataStructure::lwmpls_init_interface(LWmpls_Interface_Structure** int
     {
         if (interface_str_ptr->mac_address!=mac_addr)
         {
-            opp_error("lwmpls_init_interface initial data different 2");
+            throw cRuntimeError("lwmpls_init_interface initial data different 2");
         }
     }
 
@@ -428,7 +428,7 @@ void LWMPLSDataStructure::lwmpls_init_interface(LWmpls_Interface_Structure** int
     if (*interface_str_ptr_ptr!=interface_str_ptr)
     {
         printf(" ERROR INTERFACE 3");
-        opp_error("lwmpls_initialize_interface ");
+        throw cRuntimeError("lwmpls_initialize_interface ");
     }
 
     if (type!=-1)
@@ -449,13 +449,13 @@ void LWMPLSDataStructure::lwmpls_forwarding_input_data_add(int label, LWmpls_For
 {
 
     if (label<=0)
-        opp_error("lwmpls_forwarding_input_data_add Error in label label <=0 ");
+        throw cRuntimeError("lwmpls_forwarding_input_data_add Error in label label <=0 ");
     if ((unsigned int)label > label_list.size())
-        opp_error("lwmpls_forwarding_input_data_add Error in label label label > LWMPLS_MAX_LABEL");
+        throw cRuntimeError("lwmpls_forwarding_input_data_add Error in label label label > LWMPLS_MAX_LABEL");
 
 
     if ((data_f_ptr->input_label!=label) && (data_f_ptr->return_label_input!=label))
-        opp_error("lwmpls_forwarding_input_data_add Error in label database, label exist but struct not correct %d %d %d", label, data_f_ptr->input_label, data_f_ptr->return_label_input);
+        throw cRuntimeError("lwmpls_forwarding_input_data_add Error in label database, label exist but struct not correct %d %d %d", label, data_f_ptr->input_label, data_f_ptr->return_label_input);
 
     if (label_list[label-1].in_use==true)
     {
@@ -463,7 +463,7 @@ void LWMPLSDataStructure::lwmpls_forwarding_input_data_add(int label, LWmpls_For
             label_list[label-1].data_f_ptr = data_f_ptr;
         else
         {
-            opp_error("lwmpls_forwarding_input_data_add Error in label database, data not nullptr  %d %d %d", label, data_f_ptr->input_label, data_f_ptr->return_label_input);
+            throw cRuntimeError("lwmpls_forwarding_input_data_add Error in label database, data not nullptr  %d %d %d", label, data_f_ptr->input_label, data_f_ptr->return_label_input);
         }
     }
     else
@@ -481,7 +481,7 @@ bool LWMPLSDataStructure::lwmpls_forwarding_output_data_add(int label, uint64_t 
     LWMPLSKey key;
 
     if (mac_addr==(uint64_t)0)
-        opp_error("Error mac not exist");
+        throw cRuntimeError("Error mac not exist");
 
     key.label = label;
     key.mac_addr = mac_addr;
@@ -545,7 +545,7 @@ LWmpls_Forwarding_Structure * LWMPLSDataStructure::lwmpls_interface_delete_label
     if (!label_list[label-1].in_use)
     {
         if (label_list[label-1].data_f_ptr!=nullptr)
-            opp_error("lwmpls_interface_delete_label label not used but struct not nullptr");
+            throw cRuntimeError("lwmpls_interface_delete_label label not used but struct not nullptr");
         return nullptr;
     }
     else
@@ -555,7 +555,7 @@ LWmpls_Forwarding_Structure * LWMPLSDataStructure::lwmpls_interface_delete_label
     {
         /* clean mac struct data  */
         if ((data_f_ptr->input_label != label) && (data_f_ptr->return_label_input!=label))
-            opp_error("lwmpls_interface_delete_label error in label data");
+            throw cRuntimeError("lwmpls_interface_delete_label error in label data");
 
         delLWMPLSLabel(label);
         delLWMPLSLabel(data_f_ptr->return_label_input);
@@ -568,7 +568,7 @@ LWmpls_Forwarding_Structure * LWMPLSDataStructure::lwmpls_interface_delete_label
             data_aux_ptr = it2->second;
             forwardingTableOutput->erase(it2);
             if (data_aux_ptr!=data_f_ptr)
-                opp_error("lwmpls_interface_delete_label error in label data 2");
+                throw cRuntimeError("lwmpls_interface_delete_label error in label data 2");
         }
 
         it2 = forwardingTableOutput->find(data_f_ptr->return_key_output);
@@ -577,7 +577,7 @@ LWmpls_Forwarding_Structure * LWMPLSDataStructure::lwmpls_interface_delete_label
             data_aux_ptr = it2->second;
             forwardingTableOutput->erase(it2);
             if (data_aux_ptr!=data_f_ptr)
-                opp_error("lwmpls_interface_delete_label error in label data 2");
+                throw cRuntimeError("lwmpls_interface_delete_label error in label data 2");
 
         }
         if (data_f_ptr->mac_address!=0)
@@ -617,7 +617,7 @@ LWmpls_Forwarding_Structure * LWMPLSDataStructure::lwmpls_interface_delete_label
         }
 
         if (num_label_in_use<0)
-            opp_error("LWMPLS label number in use less than 0");
+            throw cRuntimeError("LWMPLS label number in use less than 0");
 
 
     }
@@ -810,7 +810,7 @@ void LWMPLSDataStructure::lwmpls_check_label(int label, const char * message)
         if ((data_f_ptr->input_label!=label) && (data_f_ptr->return_label_input!=label))
         {
             printf("\n %s %d %d %d %p", message, label, data_f_ptr->input_label, data_f_ptr->return_label_input, data_f_ptr);
-            opp_error("lwmpls_check_label Error in label database, label exist but struct not correct");
+            throw cRuntimeError("lwmpls_check_label Error in label database, label exist but struct not correct");
         }
     }
     return;

@@ -34,7 +34,7 @@ void Ieee80211MgmtAdhocWithRouting::startRouting()
     cModule *module;
     moduleType = cModuleType::find(par("routingProtocol").stringValue());
     if (moduleType == nullptr)
-        opp_error("Ieee80211MgmtAdhocWithRouting:: Routing protocol not found %s",par("routingProtocol").stringValue());
+        throw cRuntimeError("Ieee80211MgmtAdhocWithRouting:: Routing protocol not found %s",par("routingProtocol").stringValue());
     module = moduleType->create("ManetRoutingProtocol", this);
     routingModule = dynamic_cast <inetmanet::ManetRoutingBase*> (module);
     routingModule->gate("to_ip")->connectTo(gate("routingIn"));
@@ -212,7 +212,7 @@ void Ieee80211MgmtAdhocWithRouting::handleMessage(cMessage *msg)
         // process command from agent
         EV << "Command arrived from agent: " << msg << "\n";
         int msgkind = msg->getKind();
-        cPolymorphic *ctrl = msg->removeControlInfo();
+        cObject *ctrl = msg->removeControlInfo();
         delete msg;
         handleCommand(msgkind, ctrl);
     }
@@ -344,7 +344,7 @@ bool Ieee80211MgmtAdhocWithRouting::macLabelBasedSend(Ieee80211DataFrame *frame)
         if (!frameMesh)
             return false;
         if (frame->getAddress3().isUnspecified())
-            opp_error("frame Address3 Unspecified");
+            throw cRuntimeError("frame Address3 Unspecified");
 
         auto it = mySeqNumberInfo.find(frame->getAddress3().getInt());
         if (it == mySeqNumberInfo.end())
@@ -552,7 +552,7 @@ Ieee80211DataFrame *Ieee80211MgmtAdhocWithRouting::encapsulate(cPacket *msg,MACA
     {
         char name[50];
         strcpy(name,msg->getName());
-        opp_error ("Ieee80211Mesh::encapsulate Bad Address");
+        throw cRuntimeError ("Ieee80211Mesh::encapsulate Bad Address");
     }
     if (frame->getReceiverAddress().isBroadcast())
         frame->setTTL(1);

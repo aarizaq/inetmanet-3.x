@@ -36,7 +36,6 @@ private:
     std::vector<ShareStruct*> encapsulateVector;
     void _deleteEncapVector();
     bool _checkIfShare();
-    void _detachShareVector(unsigned int i);
 protected:
   // protected and unimplemented operator==(), to prevent accidental usage
   bool operator==(const Ieee80211MeshFrame&);
@@ -66,19 +65,15 @@ public:
     virtual bool haveBlock(){return !encapsulateVector.empty();}
     virtual void forEachChild(cVisitor *v);
 
-    virtual void parsimPack(cCommBuffer *b) override;
-    virtual void parsimUnpack(cCommBuffer *b) override;
-
-
     virtual void encapsulate(cPacket *packet) override
     {
-        opp_error("operation not supported");
+        throw cRuntimeError("operation not supported");
     }
 
 
     virtual cPacket *decapsulate() override
     {
-        opp_error("operation not supported");
+        throw cRuntimeError("operation not supported");
         return nullptr;
     }
 
@@ -91,7 +86,7 @@ public:
      */
     virtual cPacket *getEncapsulatedPacket() const override
     {
-        opp_error("operation not supported");
+        throw cRuntimeError("operation not supported");
         return nullptr;
     }
 
@@ -104,15 +99,11 @@ public:
      */
     virtual bool hasEncapsulatedPacket() const override
     {
-        opp_error("operation not supported");
+        throw cRuntimeError("operation not supported");
         return false;
     }
 };
 
-
-
-inline void doPacking(cCommBuffer *b, Ieee80211MsduAContainer& obj) {obj.parsimPack(b);}
-inline void doUnpacking(cCommBuffer *b, Ieee80211MsduAContainer& obj) {obj.parsimUnpack(b);}
 
 }
 }

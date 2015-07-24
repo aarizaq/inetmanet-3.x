@@ -16,7 +16,6 @@
 #ifndef LOCATORMODULECLIENT_H_
 #define LOCATORMODULECLIENT_H_
 
-#include <csimplemodule.h>
 #include <map>
 #include <set>
 #include "inet/transportlayer/contract/udp/UDPSocket.h"

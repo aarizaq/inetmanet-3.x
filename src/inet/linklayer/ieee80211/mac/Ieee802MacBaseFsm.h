@@ -16,9 +16,9 @@
 #ifndef IEEE802MACBASEFSM_H_
 #define IEEE802MACBASEFSM_H_
 
-#include <omnetpp.h>
 #include <vector>
 #include <string>
+#include "inet/common/INETDefs.h"
 
 
 

@@ -24,7 +24,7 @@
 #define __INETMANET_PASERUDPTRAFFICSENDER_H_
 
 #include <omnetpp.h>
-#include "csimplemodule.h"
+#include "inet/common/INETDefs.h"
 #include "inet/transportlayer/contract/udp/UDPSocket.h"
 #include "PaserTrafficDataMsg_m.h"
 #include "inet/networklayer/contract/IInterfaceTable.h"
