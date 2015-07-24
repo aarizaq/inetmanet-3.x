@@ -50,7 +50,7 @@ void SAORSBase_CarrierSelection::clearCSList() {
 		iter = RREP_list.begin();
 	}
 
-	ev << "Carrier selection list cleared" << endl;
+	EV << "Carrier selection list cleared" << endl;
 }
 
 
@@ -95,7 +95,7 @@ void SAORSBase_CarrierSelection::addRREPtoList(SAORS_RREP *rrep) {
 			delete rrep;
 	}
 
-	ev << "RREP added to carrier selection list" << endl;
+	EV << "RREP added to carrier selection list" << endl;
 }
 
 

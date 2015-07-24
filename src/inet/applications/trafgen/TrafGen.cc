@@ -302,7 +302,7 @@ std::string TrafGen::calculateDestination()
         std::string s = mDestination;
         int index = s.find_first_of('*');
         s.replace(index, 1, "0");
-        int size = simulation.getModuleByPath(s.c_str())->size();
+        int size = getSimulation()->getModuleByPath(s.c_str())->size();
         s = s.substr(0, index - 1);
         size = intuniform(0, size - 1);
         std::string dest(s);

@@ -420,7 +420,7 @@ class INET_API ManetRoutingBase : public cSimpleModule, public cListener, public
     virtual bool getAddressGroup(std::vector<L3Address> &, int group = 0);
 
     virtual int  getRouteGroup(const AddressGroup &gr, std::vector<L3Address> &) { throw cRuntimeError("getRouteGroup, method is not implemented"); return 0;}
-    virtual int  getRouteGroup(const L3Address&, std::vector<L3Address> &, L3Address&, bool &, int group = 0) {opp_error("getRouteGroup, method is not implemented"); return 0;}
+    virtual int  getRouteGroup(const L3Address&, std::vector<L3Address> &, L3Address&, bool &, int group = 0) {throw cRuntimeError("getRouteGroup, method is not implemented"); return 0;}
 
     virtual bool getNextHopGroup(const AddressGroup &gr, L3Address &add, int &iface, L3Address&) { throw cRuntimeError("getNextHopGroup, method is not implemented"); return false;}
     virtual bool getNextHopGroup(const L3Address&, L3Address &add, int &iface, L3Address&, bool &, int group = 0) { throw cRuntimeError("getNextHopGroup, method is not implemented"); return false;}

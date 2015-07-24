@@ -196,12 +196,12 @@ void SAMPhO_RoutingTable::findNeighbors() {
 
 	//---------- Construct the ego adjacency matrix file ----------
 	//Get the base IP Address
-	/*uint base_IP = IPAddress(simulation.getModuleByPath("flatNetworkConfigurator")->par("networkAddress").stringValue()).getInt();
+	/*uint base_IP = IPAddress(getSimulation()->getModuleByPath("flatNetworkConfigurator")->par("networkAddress").stringValue()).getInt();
 
 	//If the delay-tolerant routing table has enough entries
 	if(dtrouteVector.size()>MIN_RT_SIZE && dtrouteVector.size()>numOfFriends) {
 		//Initialize the adjacency line and the ID of this node
-		int adjLine[int(simulation.getSystemModule()->par("numHosts"))];
+		int adjLine[int(getSimulation()->getSystemModule()->par("numHosts"))];
 		for(uint i=0;i<sizeof(adjLine)/sizeof(int);i++)
 			adjLine[i]=0;
 		int myID = dynamic_cast <SAMPhO*> (dymoProcess)->myAddr - base_IP;
@@ -227,7 +227,7 @@ void SAMPhO_RoutingTable::findNeighbors() {
 			int nodeID=egoInfo.getBeaconEntry(i) - base_IP;
 
 			//Sanity Check
-			if( nodeID<0 || nodeID>int(simulation.getSystemModule()->par("numHosts")) )
+			if( nodeID<0 || nodeID>int(getSimulation()->getSystemModule()->par("numHosts")) )
 				throw std::runtime_error("Node ID in social network generation not recognized!!!");
 
 			adjLine[nodeID]=1;
@@ -242,7 +242,7 @@ void SAMPhO_RoutingTable::findNeighbors() {
 	}
 	//Else wait until the host makes more contacts
 	else {
-		ev << "The routing table is too small to provide clear social information!" << endl;
+		EV << "The routing table is too small to provide clear social information!" << endl;
 	}*/
 	//------------------------------------------------------
 }
@@ -420,7 +420,7 @@ void SAMPhO_RoutingTable::updateBeaconCounter(uint32_t Address, VectorOfSAORSBea
             entry->meetings=1;
     }
     else {
-        ev << "Unknown routing entry requested to updated beacon info of delay tolerant routing table..." << endl;
+        EV << "Unknown routing entry requested to updated beacon info of delay tolerant routing table..." << endl;
     }
 }
 
@@ -441,7 +441,7 @@ void SAMPhO_RoutingTable::updateSimilarity(uint32_t Address, VectorOfSAORSBeacon
         entry->similarity=getSimilarityScore(entryVector);
     }
     else {
-        ev << "Unknown routing entry requested to updated beacon info of delay tolerant routing table..." << endl;
+        EV << "Unknown routing entry requested to updated beacon info of delay tolerant routing table..." << endl;
     }
 }
 

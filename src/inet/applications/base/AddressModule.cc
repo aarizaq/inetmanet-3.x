@@ -38,8 +38,8 @@ AddressModule::~AddressModule()
     {
         cSimpleModule * owner = check_and_cast<cSimpleModule*> (getOwner());
         owner->emit(changeAddressSignalDelete,this);
-        simulation.getSystemModule()->unsubscribe(changeAddressSignalDelete, this);
-        simulation.getSystemModule()->unsubscribe(changeAddressSignalInit, this);
+        getSimulation()->getSystemModule()->unsubscribe(changeAddressSignalDelete, this);
+        getSimulation()->getSystemModule()->unsubscribe(changeAddressSignalInit, this);
     }
 }
 
@@ -86,8 +86,8 @@ void AddressModule::initModule(bool mode)
     {
         changeAddressSignalInit = owner->registerSignal("changeAddressSignalInit");
         changeAddressSignalDelete = owner->registerSignal("changeAddressSignalDelete");
-        simulation.getSystemModule()->subscribe(changeAddressSignalInit, this);
-        simulation.getSystemModule()->subscribe(changeAddressSignalDelete, this);
+        getSimulation()->getSystemModule()->subscribe(changeAddressSignalInit, this);
+        getSimulation()->getSystemModule()->subscribe(changeAddressSignalDelete, this);
         if (simTime() > 0)
             owner->emit(changeAddressSignalInit, this);
 
@@ -121,7 +121,7 @@ L3Address AddressModule::choseNewAddress()
     }
     else
     {
-        int k = intrand((long)destAddresses.size());
+        int k = getEnvir()->getRNG(0)->intRand((long)destAddresses.size());
         chosedAddresses = destAddresses[k];
         index = k;
     }

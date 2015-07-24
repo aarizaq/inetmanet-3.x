@@ -265,7 +265,7 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase, public cListener
         virtual void handleUpperMessage(cPacket *msg);
 
         /** Implements abstract Ieee80211MgmtBase method -- throws an error (no commands supported) */
-        virtual void handleCommand(int msgkind, cPolymorphic *ctrl);
+        virtual void handleCommand(int msgkind, cObject *ctrl);
 
         /** Utility function for handleUpperMessage() */
         virtual Ieee80211DataFrame *encapsulate(cPacket *msg);

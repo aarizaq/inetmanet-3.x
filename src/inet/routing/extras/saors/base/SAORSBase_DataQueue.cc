@@ -169,7 +169,7 @@ int SAORSBase_DataQueue::queuePacket(DT_MSG* dtmsg, int prefix) {
 	IPv4ControlInfo *controlInfo = check_and_cast<IPv4ControlInfo*>(dtmsg->getControlInfo());
 	IPv4Address destAddr = dtmsg->getDstAddress();
 
-	ev << "Queuing delayed data packet to " << destAddr << endl;
+	EV << "Queuing delayed data packet to " << destAddr << endl;
 
 	// Check address in control info and DT-MSG field agree then it's for us
 	if( destAddr ==  controlInfo->getDestAddr() ) {
@@ -225,7 +225,7 @@ int SAORSBase_DataQueue::queuePacket(DT_MSG* dtmsg, int prefix) {
 		iter->datagram_list.pop_front();
 		delete tempdtmsg;
 
-		ev << "Forced dropping of delayed data packet to " << destAddr << endl;
+		EV << "Forced dropping of delayed data packet to " << destAddr << endl;
 	}
 
 	return(0);
@@ -294,7 +294,7 @@ int SAORSBase_DataQueue::reinjectDatagramsTo(IPv4Address destAddr, int prefix, I
                     if(intermAddr.isUnspecified()) tempAddr = destAddr;
                     else tempAddr = intermAddr;
 
-                    ev << "Dequeuing delayed data packet for " << iter->destAddr << " to " << tempAddr << endl;
+                    EV << "Dequeuing delayed data packet for " << iter->destAddr << " to " << tempAddr << endl;
 
 					//Find out the node carried this message in the past
                     bool pastCarrier = wasPastCarrier(tempAddr, std::string(dtmsg->getFullName()));
@@ -331,7 +331,7 @@ int SAORSBase_DataQueue::reinjectDatagramsTo(IPv4Address destAddr, int prefix, I
                     }
                     else tempAddr = intermAddr;
 
-                    ev << "Coping delayed data packet for " << iter->destAddr << " to " << tempAddr << endl;
+                    EV << "Coping delayed data packet for " << iter->destAddr << " to " << tempAddr << endl;
 
                     //Create a copy for the found DT Message
 				    if(sendCopy(dtmsg, tempAddr, delay+previousPkts*ARP_DELAY)){
@@ -393,7 +393,7 @@ int SAORSBase_DataQueue::spreadPacketsTo(IPv4Address destAddr, int prefix, IPv4A
     int numOfPkts = 0;
     std::list<DT_MSG*> datagrams;
 
-    ev << "Trying to spread packets by using multiple copies for the address:  " <<destAddr << endl;
+    EV << "Trying to spread packets by using multiple copies for the address:  " <<destAddr << endl;
 
     numOfPkts = reinjectDatagramsTo(destAddr, prefix, intermAddr, SPREAD_P, &datagrams, previousPkts);
 
@@ -517,7 +517,7 @@ bool SAORSBase_DataQueue::updateCopiedCarriers(IPv4Address carrierAddress, std::
             ccIter->second.push_back(MsgName);
         //Otherwise something went wrong
         else {
-            ev << "The node contacted bas also been copied in the past!" << endl;
+            EV << "The node contacted bas also been copied in the past!" << endl;
             return false;
         }
     }
@@ -548,7 +548,7 @@ bool SAORSBase_DataQueue::updatePastCarriers(IPv4Address carrierAddress, std::st
             pcIter->second.push_back(MsgName);
         //Else return that it was found
         else {
-            ev << "The DT message received, has been sent in the past as well!" << endl;
+            EV << "The DT message received, has been sent in the past as well!" << endl;
             return false;
         }
     }

@@ -21,6 +21,7 @@
 
 #include "LinkFailureManager.h"
 
+namespace inet {
 class ProgramedFailureDataRateChannel : public cDatarateChannel
 {
   private:
@@ -58,5 +59,6 @@ class ProgramedFailureChannel : public cDelayChannel
 
 };
 
+}
 
 #endif /* PROGRAMEDFAILURECHANNEL_H_ */

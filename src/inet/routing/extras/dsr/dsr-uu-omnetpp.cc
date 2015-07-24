@@ -594,7 +594,7 @@ void DSRUU::handleMessage(cMessage* msg)
     }
 
     if (is_init==false)
-        opp_error("Dsr has not been initialized ");
+        throw cRuntimeError("Dsr has not been initialized ");
 
     //current_time =simTime();
     if (msg->isSelfMessage())

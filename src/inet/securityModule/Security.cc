@@ -748,8 +748,8 @@ void Security::startSAE(MeshInfo *mesh, simtime_t timeout)
     EV << "PWE" << mesh->PWE<<endl;
     // msg = csA || ceA
     SAEMsg *msg = new SAEMsg();
-    mesh->csA = (int)genk_intrand(1,1073741823);
-    mesh->ceA = (int)genk_intrand(1,1073741823);
+    mesh->csA = (int)getRNG(1)->intRand(1073741823);
+    mesh->ceA = (int)getRNG(1)->intRand(1073741823);
     msg->setSAE_commitScalar(mesh->csA);
     msg->setSAE_commitElement(mesh->ceA);
 
@@ -911,8 +911,8 @@ void Security::handleSAE(Ieee80211AuthenticationFrame *frame)
 
             mesh->PWE = computePWE(PSK,ssid);
 
-            mesh->csB = (int)genk_intrand(1,1073741823);
-            mesh->ceB = (int)genk_intrand(1,1073741823);
+            mesh->csB = (int)getRNG(1)->intRand(1073741823);
+            mesh->ceB = (int)getRNG(1)->intRand(1073741823);
 
             msg->setSAE_commitScalar(mesh->csB);
             msg->setSAE_commitElement(mesh->ceB);
@@ -1124,8 +1124,8 @@ void Security::startAMPE(const MACAddress& address, int side)
             if(MGTK_self.buf.empty())
             {
                 EV <<"Pick Random MGTK(128)"<<endl;
-                MGTK.buf.push_back(genk_intrand(1,1073741823));
-                MGTK.buf.push_back(genk_intrand(1,1073741823));
+                MGTK.buf.push_back(getRNG(1)->intRand(1073741823));
+                MGTK.buf.push_back(getRNG(1)->intRand(1073741823));
                 MGTK.len=128;
                 MGTK_self=MGTK;
             }
@@ -1310,8 +1310,8 @@ void Security::sendGroupHandshakeMsg(MeshInfo *mesh,  simtime_t timeout)
                if(MGTK_self.buf.empty())
                {
                    EV <<"Pick Random MGTK(128)"<<endl;
-                   MGTK.buf.push_back(genk_intrand(1,1073741823));
-                   MGTK.buf.push_back(genk_intrand(1,1073741823));
+                   MGTK.buf.push_back(getRNG(1)->intRand(1073741823));
+                   MGTK.buf.push_back(getRNG(1)->intRand(1073741823));
                    MGTK.len=128;
                    MGTK_self=MGTK;
                }
@@ -1659,7 +1659,7 @@ void Security::handleIeee80211MeshFrame(cMessage *msg)
                             {
                                 char name[50];
                                 strcpy(name,frame->getName());
-                                opp_error ("Ieee80211Mesh::encapsulate Bad Address");
+                                throw cRuntimeError ("Ieee80211Mesh::encapsulate Bad Address");
                             }
                             if (frame2->getReceiverAddress().isBroadcast())
                                 frame2->setTTL(1);
@@ -1732,7 +1732,7 @@ void Security::handleIeee80211MeshFrame(cMessage *msg)
             {
                 char name[50];
                 strcpy(name,msg->getName());
-                opp_error ("Ieee80211Mesh::encapsulate Bad Address");
+                throw cRuntimeError ("Ieee80211Mesh::encapsulate Bad Address");
             }
             if (frame->getReceiverAddress().isBroadcast())
                 frame->setTTL(1);
@@ -1934,7 +1934,7 @@ void Security::handleIeee80211DataFrameWithSNAP(cMessage *msg)
                 {
                     char name[50];
                     strcpy(name,msg->getName());
-                    opp_error ("Ieee80211Mesh::encapsulate Bad Address");
+                    throw cRuntimeError ("Ieee80211Mesh::encapsulate Bad Address");
                 }
                 if (frame->getReceiverAddress().isBroadcast())
 
@@ -2151,10 +2151,10 @@ Security::nonce Security::generateNonce() {
 
     nonce Nonce;
     Nonce.len=256;
-    Nonce.buf.push_back( genk_intrand(1,1073741823));
-    Nonce.buf.push_back( genk_intrand(1,1073741823));
-    Nonce.buf.push_back( genk_intrand(1,1073741823));
-    Nonce.buf.push_back( genk_intrand(1,1073741823));
+    Nonce.buf.push_back( getRNG(1)->intRand(1073741823));
+    Nonce.buf.push_back( getRNG(1)->intRand(1073741823));
+    Nonce.buf.push_back( getRNG(1)->intRand(1073741823));
+    Nonce.buf.push_back( getRNG(1)->intRand(1073741823));
 
     Nonce.len=256;
     return Nonce;

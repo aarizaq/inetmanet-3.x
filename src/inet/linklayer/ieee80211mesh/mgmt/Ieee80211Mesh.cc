@@ -239,7 +239,7 @@ void Ieee80211Mesh::initialize(int stage)
         else if (gate("macOutMulti",0)->getPathEndGate()->isConnected())
             isMultiMac = true;
         else
-            opp_error("mac not connected");
+            throw cRuntimeError("mac not connected");
 
 
         if (gate("securityOut")->getPathEndGate()->isConnected() &&
@@ -466,7 +466,7 @@ void Ieee80211Mesh::startGateWay()
         }
     }
     if (ethAddr.isUnspecified())
-        opp_error("Mesh gateway not initialized, Ethernet interface not found");
+        throw cRuntimeError("Mesh gateway not initialized, Ethernet interface not found");
     GateWayData data;
     data.idAddress=myAddress;
     data.ethAddress=ethAddr;
@@ -596,7 +596,7 @@ void Ieee80211Mesh::handleMessage(cMessage *msg)
         // process command from agent
         EV << "Command arrived from agent: " << msg << "\n";
         int msgkind = msg->getKind();
-        cPolymorphic *ctrl = msg->removeControlInfo();
+        cObject *ctrl = msg->removeControlInfo();
         delete msg;
         handleCommand(msgkind, ctrl);
     }
@@ -701,7 +701,7 @@ void Ieee80211Mesh::handleTimer(cMessage *msg)
         sendOrEnqueue(PK(msg));
     }
     else
-        opp_error("message timer error");
+        throw cRuntimeError("message timer error");
 }
 
 
@@ -769,7 +769,7 @@ void Ieee80211Mesh::handleUpperMessage(cPacket *msg)
     }
 }
 
-void Ieee80211Mesh::handleCommand(int msgkind, cPolymorphic *ctrl)
+void Ieee80211Mesh::handleCommand(int msgkind, cObject *ctrl)
 {
     error("handleCommand(): no commands supported");
 }
@@ -902,7 +902,7 @@ Ieee80211DataFrame *Ieee80211Mesh::encapsulate(cPacket *msg)
                 }
                 else
                 {
-                    opp_error("lwmpls data base error");
+                    throw cRuntimeError("lwmpls data base error");
                 }
             }
             else
@@ -934,7 +934,7 @@ Ieee80211DataFrame *Ieee80211Mesh::encapsulate(cPacket *msg)
             }
             else
             {
-                opp_error("lwmpls data base error");
+                throw cRuntimeError("lwmpls data base error");
             }
         }
         forwarding_ptr->last_use=simTime();
@@ -1159,7 +1159,7 @@ Ieee80211DataFrame *Ieee80211Mesh::encapsulate(cPacket *msg,MACAddress dest)
     {
         char name[50];
         strcpy(name,msg->getName());
-        opp_error ("Ieee80211Mesh::encapsulate Bad Address");
+        throw cRuntimeError ("Ieee80211Mesh::encapsulate Bad Address");
     }
     if (frame->getReceiverAddress().isBroadcast())
         frame->setTTL(1);
@@ -2275,13 +2275,13 @@ void Ieee80211Mesh::handleWateGayDataReceive(cPacket *pkt)
         Ieee802Ctrl *ctrlAux = controlInfo;
         *ctrlAux=*ctrl;
         if (frame2->getReceiverAddress().isUnspecified())
-            opp_error("transmitter address is unspecified");
+            throw cRuntimeError("transmitter address is unspecified");
         else if (frame2->getReceiverAddress() != myAddress && !frame2->getReceiverAddress().isBroadcast())
-            opp_error("bad address");
+            throw cRuntimeError("bad address");
         else
             controlInfo->setDest(frame2->getReceiverAddress());
         if (getGateWayDataMap()==nullptr)
-            opp_error("error GateWayMap not found");
+            throw cRuntimeError("error GateWayMap not found");
         for (auto it=getGateWayDataMap()->begin();it!=getGateWayDataMap()->end();it++)
         {
             if (ctrl->getSrc()==it->second.ethAddress)
@@ -2301,13 +2301,13 @@ void Ieee80211Mesh::handleWateGayDataReceive(cPacket *pkt)
         Ieee802Ctrl *ctrlAux = controlInfo;
         *ctrlAux=*ctrl;
         if (frame2->getReceiverAddress().isUnspecified())
-            opp_error("transmitter address is unspecified");
+            throw cRuntimeError("transmitter address is unspecified");
         else if (frame2->getReceiverAddress() != myAddress && !frame2->getReceiverAddress().isBroadcast())
-            opp_error("bad address");
+            throw cRuntimeError("bad address");
         else
             controlInfo->setDest(frame2->getReceiverAddress());
         if (getGateWayDataMap()==nullptr)
-            opp_error("error GateWayMap not found");
+            throw cRuntimeError("error GateWayMap not found");
 
         for (auto it=getGateWayDataMap()->begin();it!=getGateWayDataMap()->end();it++)
         {
@@ -2573,7 +2573,7 @@ bool Ieee80211Mesh::getNextInPath(const L3Address &addr, const std::vector<L3Add
                 position2.push_back(i);
         }
         if (position2.empty())
-            opp_error("!!!!!!");
+            throw cRuntimeError("!!!!!!");
         if (position2.size() > 1)
         {
             // check if the node has been visited previously

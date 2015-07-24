@@ -67,7 +67,7 @@ void LaptopModelManager::Timer::resched(double time)
 {
     removeQueueTimer();
     if (simTime()+time<=simTime())
-        opp_error("LaptopModelManager::resched message timer in the past");
+        throw cRuntimeError("LaptopModelManager::resched message timer in the past");
     module->timerMultimMap.insert(std::pair<simtime_t, Timer *>(simTime()+time, this));
 }
 
@@ -75,7 +75,7 @@ void LaptopModelManager::Timer::resched(simtime_t time)
 {
     removeQueueTimer();
     if (time<=simTime())
-        opp_error("LaptopModelManager::resched message timer in the past");
+        throw cRuntimeError("LaptopModelManager::resched message timer in the past");
     module->timerMultimMap.insert(std::pair<simtime_t, Timer *>(time, this));
 }
 
@@ -205,7 +205,7 @@ void LaptopModelManager::scheduleEvent()
             cancelEvent(timerMessagePtr);
             scheduleAt(e->first,timerMessagePtr);
             EV << "timer Queue problem";
-            // opp_error("timer Queue problem");
+            // throw cRuntimeError("timer Queue problem");
         }
     }
     else
@@ -225,7 +225,7 @@ bool LaptopModelManager::checkTimer(cMessage *msg)
     {
         Timer * timer = it->second;
         if (timer == nullptr)
-            opp_error ("timer owner is bad");
+            throw cRuntimeError ("timer owner is bad");
         timerMultimMap.erase(it);
         timer->expire();
         if (timerMultimMap.empty())

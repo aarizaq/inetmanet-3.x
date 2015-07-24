@@ -24,9 +24,8 @@
 #ifndef __INETMANET_PASERUDPTRAFFICRECEIVER_H_
 #define __INETMANET_PASERUDPTRAFFICRECEIVER_H_
 
-#include <omnetpp.h>
+#include "inet/common/INETDefs.h"
 #include "PaserTrafficDataMsg_m.h"
-#include "csimplemodule.h"
 #include "inet/transportlayer/contract/udp/UDPSocket.h"
 #include "inet/mobility/single/RandomWPMobility.h"
 

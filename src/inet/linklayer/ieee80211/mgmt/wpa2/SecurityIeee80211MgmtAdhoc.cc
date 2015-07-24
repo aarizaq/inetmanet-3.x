@@ -43,11 +43,11 @@ void SecurityIeee80211MgmtAdhoc::handleUpperMessage(cPacket *msg)
 
     //KATZE check classes and look for further
 //    ASSERT(dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg)!=nullptr);
-    ev << msg->getClassName() << endl;
+    EV << msg->getClassName() << endl;
     cPacket *msg2 = (cPacket *)msg->getEncapsulatedPacket();
-    ev << msg2->getClassName() << endl;
+    EV << msg2->getClassName() << endl;
     cPacket *msg3 = (cPacket *)msg2->getEncapsulatedPacket();
-    ev << msg3->getClassName() << endl;
+    EV << msg3->getClassName() << endl;
     Ieee80211DataFrame *frame = nullptr;
 //    Ieee80211ManagementFrame *mframe = nullptr;
 //     bool isOLSRFrame = check_and_cast<OLSR_pkt *>(msg3)!=nullptr;
@@ -55,27 +55,27 @@ void SecurityIeee80211MgmtAdhoc::handleUpperMessage(cPacket *msg)
         if(strcmp(msg3->getClassName(), "OLSR_pkt") == 0)
         {            // management frames are inserted into mgmtQueue
 //            mgmtQueue.insert(msg);
-            ev << "OLSRKATZE" << endl;
+            EV << "OLSRKATZE" << endl;
             frame = encapsulate(msg);
             if(frame != nullptr)
                    sendOrEnqueue(frame);
         }
         else{
-            ev << "OLSRMIMI" << endl;
+            EV << "OLSRMIMI" << endl;
             frame = encapsulate(msg);
             if(frame != nullptr)
                    sendOrEnqueue(frame);
         }
 
 //    Ieee80211ManagementFrame *frame = encapsulateMgmt(msg);
-    ev << "KRAULBARS" << endl;
+    EV << "KRAULBARS" << endl;
 //    if(frame != nullptr)
 //        sendOrEnqueue(frame);
 }
 
 void SecurityIeee80211MgmtAdhoc::handleCommand(int msgkind, cObject *ctrl)
 {
-    error("handleCommand(): no commands supported");
+    throw cRuntimeError("handleCommand(): no commands supported");
 }
 
 Ieee80211DataFrame *SecurityIeee80211MgmtAdhoc::encapsulate(cPacket *msg)
@@ -94,15 +94,15 @@ Ieee80211DataFrame *SecurityIeee80211MgmtAdhoc::encapsulate(cPacket *msg)
 
 Ieee80211ManagementFrame *SecurityIeee80211MgmtAdhoc::encapsulateMgmt(cPacket *msg)
 {
-    ev << "ENCAPMGMT 1" << endl;
+    EV << "ENCAPMGMT 1" << endl;
     Ieee80211ManagementFrame *frame = new Ieee80211ManagementFrame(msg->getName());
-    ev << "ENCAPMGMT 2" << endl;
+    EV << "ENCAPMGMT 2" << endl;
     // copy receiver address from the control info (sender address will be set in MAC)
     Ieee802Ctrl *ctrl = check_and_cast<Ieee802Ctrl *>(msg->removeControlInfo());
     frame->setReceiverAddress(ctrl->getDest());
 //    frame->setEtherType(ctrl->getEtherType());
     delete ctrl;
-    ev << "ENCAPMGMT 3" << endl;
+    EV << "ENCAPMGMT 3" << endl;
     frame->encapsulate(msg);
     return frame;
 }

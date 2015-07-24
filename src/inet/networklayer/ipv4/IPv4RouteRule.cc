@@ -30,7 +30,7 @@ namespace inet {
 void IPv4RouteRule::setRule(Rule rule)
 {
     if (DROP != rule && NONE != rule)
-        opp_error("Rule not supported yet");
+        throw cRuntimeError("Rule not supported yet");
 
     this->rule = rule;
 }

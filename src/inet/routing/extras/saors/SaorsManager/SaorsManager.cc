@@ -69,7 +69,7 @@ void SaorsManager::initialize(int stage)
             {
                 IPv4Address AUTOASSIGN_ADDRESS_BASE(par("AUTOASSIGN_ADDRESS_BASE").stringValue());
                 if (AUTOASSIGN_ADDRESS_BASE.getInt() == 0)
-                    opp_error("SaorsManager needs AUTOASSIGN_ADDRESS_BASE to be set to 0.0.0.0");
+                    throw cRuntimeError("SaorsManager needs AUTOASSIGN_ADDRESS_BASE to be set to 0.0.0.0");
                 IInterfaceTable *ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
                 IPv4Address myAddr (AUTOASSIGN_ADDRESS_BASE.getInt() + uint32(getParentModule()->getId()));
                 for (int k=0; k<ift->getNumInterfaces(); k++)
@@ -160,7 +160,7 @@ void SaorsManager::initialize(int stage)
         else if (strcmp("SimBetTS", routingProtocol)==0)
             routing_protocol = SIMBETTS;
 
-        ev << "active Ad-hoc routing protocol : " << routingProtocol << "  dynamic : " << dynamicLoad << " \n";
+        EV << "active Ad-hoc routing protocol : " << routingProtocol << "  dynamic : " << dynamicLoad << " \n";
     }
 }
 

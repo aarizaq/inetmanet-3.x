@@ -65,8 +65,8 @@
 #define TRAFFIC_GENERATOR_H
 
 // SYSTEM INCLUDES
-#include <omnetpp.h>
 #include <string>
+#include "inet/common/INETDefs.h"
 
 namespace inet {
 

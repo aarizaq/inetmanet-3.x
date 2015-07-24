@@ -16,7 +16,6 @@
 #ifndef LOCATORMODULE_H_
 #define LOCATORMODULE_H_
 
-#include <csimplemodule.h>
 #include <map>
 #include <set>
 #include "inet/linklayer/ieee80211mesh/locator/ILocator.h"

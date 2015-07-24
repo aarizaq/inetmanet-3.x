@@ -1603,7 +1603,7 @@ void PASER_Message_Processing::handleB_RESET(cPacket * msg, u_int32_t ifIndex) {
         if (!crypto_sign->getCert(&cert)) {
             EV << "cert ERROR\n";
             delete b_reset_msg;
-            opp_error("RESET FEHLER! KEIN ZERTIFIKAT!");
+            throw cRuntimeError("RESET FEHLER! KEIN ZERTIFIKAT!");
             return;
         }
         paser_global->generateGwSearchNonce();

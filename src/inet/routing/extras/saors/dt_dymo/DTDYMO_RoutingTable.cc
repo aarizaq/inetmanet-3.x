@@ -90,7 +90,7 @@ bool DTDYMO_RoutingTable::age_Probability(SAORSBase_RoutingEntry *entry) {
 		return false;
 	}
 	else {
-		ev << "Unknown routing entry requested to be updated from delay tolerant routing table..." << endl;
+		EV << "Unknown routing entry requested to be updated from delay tolerant routing table..." << endl;
 		return false;
 	}
 }
@@ -110,7 +110,7 @@ void DTDYMO_RoutingTable::adjust_Probabilities(uint32_t Address, VectorOfSAORSBe
 		// First age the Beacon sender's specific probability
 		bool age=age_Probability(entry);
 
-		ev << "Probability being updated from : " << entry->deliveryProb << endl;
+		EV << "Probability being updated from : " << entry->deliveryProb << endl;
 
 		//Check if delivery probability was just initialized
 		if(age!=false && entry->deliveryProb!=INIT_DEV_PROB) {
@@ -123,7 +123,7 @@ void DTDYMO_RoutingTable::adjust_Probabilities(uint32_t Address, VectorOfSAORSBe
 				entry->deliveryProb=0;
 		}
 
-		ev << "Probability updated to: " << entry->deliveryProb << endl;
+		EV << "Probability updated to: " << entry->deliveryProb << endl;
 
 		//Then age the beacon entries probabilities
 		if(!entryVector.empty()) {
@@ -141,7 +141,7 @@ void DTDYMO_RoutingTable::adjust_Probabilities(uint32_t Address, VectorOfSAORSBe
 				    //First age probability for vector entry
                     age_Probability(dtentry);
 
-					ev << "Probability being updated from : " << dtentry->deliveryProb << endl;
+					EV << "Probability being updated from : " << dtentry->deliveryProb << endl;
 
 					dtentry->deliveryProb = dtentry->deliveryProb + ( (1 - dtentry->deliveryProb) * entry->deliveryProb * bcn_entry.getProbability() * BETA );
 
@@ -151,13 +151,13 @@ void DTDYMO_RoutingTable::adjust_Probabilities(uint32_t Address, VectorOfSAORSBe
 					if(dtentry->deliveryProb<0)
 						dtentry->deliveryProb=0;
 
-					ev << "Probability updated to: " << dtentry->deliveryProb << endl;
+					EV << "Probability updated to: " << dtentry->deliveryProb << endl;
 				}
 			}
 		}
 	}
 	else {
-		ev << "Unknown routing entry requested to be updated from delay tolerant routing table..." << endl;
+		EV << "Unknown routing entry requested to be updated from delay tolerant routing table..." << endl;
 	}
 }
 

@@ -64,7 +64,7 @@ void DTDYMO::sendBeacon() {
 
 	// do not transmit DYMO messages when we lost our sequence number
 	if (ownSeqNumLossTimeout->isRunning()) {
-		ev << "node has lost sequence number -> not transmitting Beacon" << endl;
+		EV << "node has lost sequence number -> not transmitting Beacon" << endl;
 		delete bcn;
 		return;
 	}
@@ -106,14 +106,14 @@ void DTDYMO::handleBeacon(SAORS_BEACON* my_beacon) {
 
 	bool flag=false;
 
-	ev << "received message is a Beacon message" << endl;
+	EV << "received message is a Beacon message" << endl;
 
 	// Increase the network density recording
 	beaconsReceived++;
 
 	/** Routing message pre-processing and updating routes from routing blocks **/
 	if(updateRoutes(dynamic_cast<DYMO_RM*>(my_beacon)) == NULL)
-		ev << "Updating routes from Beacon failed" << endl;
+		EV << "Updating routes from Beacon failed" << endl;
 
 	// Update contact probabilities
 	if(!my_beacon->getBeaconEntries().empty())
@@ -123,7 +123,7 @@ void DTDYMO::handleBeacon(SAORS_BEACON* my_beacon) {
 	SAORSBase_RoutingEntry* entry = dymo_routingTable->getForAddress(IPv4Address(my_beacon->getOrigNode().getAddress()));
 	if(entry && (!entry->routeBroken) && dtqueuedDataPackets->pktsexist(entry->routeAddress, entry->routePrefix)) {
 		/** An entry was found in the routing table -> get control data from the table **/
-		ev << "Beacon received and we DO have a route" << endl;
+		EV << "Beacon received and we DO have a route" << endl;
 
 		//Dequeue packets and send them to IP
 		dymo_routingTable->maintainAssociatedRoutingTable();
@@ -184,7 +184,7 @@ void DTDYMO::handleBeacon(SAORS_BEACON* my_beacon) {
 
 	// No proper destination found
 	if(flag==false)
-		ev << "Beacon was received but NO route or NO better carrier!" << endl;
+		EV << "Beacon was received but NO route or NO better carrier!" << endl;
 
 	delete my_beacon;
 }

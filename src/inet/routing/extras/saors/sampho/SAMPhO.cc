@@ -92,7 +92,7 @@ void SAMPhO::sendBeacon() {
 
 	// do not transmit DYMO messages when we lost our sequence number
 	if (ownSeqNumLossTimeout->stopWhenExpired()) {
-		ev << "node has lost sequence number -> not transmitting Beacon" << endl;
+		EV << "node has lost sequence number -> not transmitting Beacon" << endl;
 		delete bcn;
 		return;
 	}
@@ -159,14 +159,14 @@ void SAMPhO::handleBeacon(SAORS_BEACON* my_beacon) {
 	//Flag, in case packets were transmitted
 	bool flag=false;
 
-	ev << "received message is a Beacon message" << endl;
+	EV << "received message is a Beacon message" << endl;
 
 	// Increase the network density recording
 	beaconsReceived++;
 
 	// Routing message pre-processing and updating routes from routing blocks
 	if(updateRoutes(dynamic_cast<DYMO_RM*>(my_beacon)) == NULL)
-		ev << "Updating routes from Beacon failed" << endl;
+		EV << "Updating routes from Beacon failed" << endl;
 
 	// Update contact probabilities - no need to update PROPHET
 	//SAMPhO_ref->adjust_Probabilities(my_beacon->getOrigNode().getAddress(), my_beacon->getBeaconEntries());
@@ -179,14 +179,14 @@ void SAMPhO::handleBeacon(SAORS_BEACON* my_beacon) {
 	dst_entry = SAMPhO_ref->getByAddress(IPv4Address(my_beacon->getOrigNode().getAddress()));
 	//Sanity check -- That there is a routing table entry
 	if(!dst_entry) {
-	    ev << "ERROR: The node that just sent a beacon cannot be found in the routing table!!!" << endl;
+	    EV << "ERROR: The node that just sent a beacon cannot be found in the routing table!!!" << endl;
 	    return;
 	}
 
 	//If there is a route to the beacon node
 	if( (!dst_entry->routeBroken) && dtqueuedDataPackets->pktsexist(dst_entry->routeAddress, dst_entry->routePrefix)) {
 		// An entry was found in the routing table -> get control data from the table
-		ev << "Beacon received and we DO have a route" << endl;
+		EV << "Beacon received and we DO have a route" << endl;
 
 		//Dequeue packets and send them to IP
 		SAMPhO_ref->maintainAssociatedRoutingTable();
@@ -380,7 +380,7 @@ void SAMPhO::handleBeacon(SAORS_BEACON* my_beacon) {
 
 	// No proper destination found
 	if(flag==false)
-		ev << "Beacon was received but NO route or NO better carrier!" << endl;
+		EV << "Beacon was received but NO route or NO better carrier!" << endl;
 
 	delete my_beacon;
 }

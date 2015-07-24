@@ -20,7 +20,7 @@
 #ifndef SAORSBASE_CARRIER_SELECTION_H_
 #define SAORSBASE_CARRIER_SELECTION_H_
 
-
+#include "inet/common/INETDefs.h"
 #include "SAORS_RREP_m.h"
 
 namespace inet {

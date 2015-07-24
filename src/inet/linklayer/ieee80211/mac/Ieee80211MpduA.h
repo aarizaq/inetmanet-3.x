@@ -63,19 +63,15 @@ public:
     virtual bool haveBlock(){return !encapsulateVector.empty();}
     virtual void forEachChild(cVisitor *v);
 
-    virtual void parsimPack(cCommBuffer *b);
-    virtual void parsimUnpack(cCommBuffer *b);
-
-
     virtual void encapsulate(cPacket *packet)
     {
-        opp_error("operation not supported");
+        throw cRuntimeError("operation not supported");
     }
 
 
     virtual cPacket *decapsulate()
     {
-        opp_error("operation not supported");
+        throw cRuntimeError("operation not supported");
         return nullptr;
     }
 
@@ -88,7 +84,7 @@ public:
      */
     virtual cPacket *getEncapsulatedPacket() const
     {
-        opp_error("operation not supported");
+        throw cRuntimeError("operation not supported");
         return nullptr;
     }
 
@@ -101,15 +97,10 @@ public:
      */
     virtual bool hasEncapsulatedPacket() const
     {
-        opp_error("operation not supported");
+        throw cRuntimeError("operation not supported");
         return false;
     }
 };
-
-
-
-inline void doPacking(cCommBuffer *b, Ieee80211MpduA& obj) {obj.parsimPack(b);}
-inline void doUnpacking(cCommBuffer *b, Ieee80211MpduA& obj) {obj.parsimUnpack(b);}
 
 }
 }

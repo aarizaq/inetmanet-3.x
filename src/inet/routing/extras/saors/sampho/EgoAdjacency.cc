@@ -160,7 +160,7 @@ void EgoAdjacency::removeBeaconInfo(uint32_t address) {
 	}
 	//Else do nothing
 	else {
-		ev << "Tried to remove non existing beacon information from the Ego-Adjacency matrix!" << endl;
+		EV << "Tried to remove non existing beacon information from the Ego-Adjacency matrix!" << endl;
 	}
 }
 

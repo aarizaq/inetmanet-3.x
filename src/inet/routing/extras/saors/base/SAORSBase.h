@@ -20,7 +20,7 @@
 #ifndef _SAORSBASE_H_
 #define _SAORSBASE_H_
 
-#include <omnetpp.h>
+#include "inet/common/INETDefs.h"
 #include "inet/routing/extras/dymo_fau/DYMOFau.h"
 #include "SAORS_RREQ_m.h"
 #include "SAORS_RREP_m.h"
@@ -125,7 +125,7 @@ class SAORSBase : public DYMOFau {
 		virtual void carrierSelection(SAORSBase_OutstandingRREQ& outstandingRREQ);
 
 		/** @brief called for packets whose delivery fails at the link layer */
-		virtual void processLinkBreak(const cPolymorphic *details);
+		virtual void processLinkBreak(const cObject *details);
 
 		/** @brief called by processLinkBreak to inform on the packets failed to be delivered */
 		virtual void packetFailed(IPv4Datagram *dgram);

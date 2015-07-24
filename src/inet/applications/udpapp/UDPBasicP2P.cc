@@ -159,7 +159,7 @@ void UDPBasicP2P::initialize(int stage)
     modo = (modoP2P)p2pMode;
 
     if (!GlobalWirelessLinkInspector::isActive())
-        opp_error("GlobalWirelessLinkInspector not found");
+        throw cRuntimeError("GlobalWirelessLinkInspector not found");
 
     if (par("fuzzy"))
     {
@@ -188,9 +188,9 @@ void UDPBasicP2P::initialize(int stage)
         }
     }
     if (myAddr.toIPv4() == IPv4Address::UNSPECIFIED_ADDRESS)
-        opp_error("addr invalid");
+        throw cRuntimeError("addr invalid");
     if (myAddress == L3Address())
-        opp_error("MACAddress addr invalid");
+        throw cRuntimeError("MACAddress addr invalid");
     inverseAddress[myAddress.toMAC().getInt()] = myAddr.toIPv4();
     directAddress[myAddr.toIPv4()] = myAddress.toMAC().getInt();
 
@@ -304,7 +304,7 @@ void UDPBasicP2P::initialize(int stage)
             writeData = true;
             std::string name(token);
             outfile = new std::ofstream(name.c_str(), std::ios_base::out | std::ios_base::trunc | std::ios_base::app);
-            *outfile << simulation.getActiveSimulation()->getEnvir()->getConfigEx()->getVariable(CFGVAR_SEEDSET) << endl;
+            *outfile << getSimulation()->getActiveSimulation()->getEnvir()->getConfigEx()->getVariable(CFGVAR_SEEDSET) << endl;
         }
     }
 }
@@ -571,7 +571,7 @@ uint64_t UDPBasicP2P::selectBest(const std::vector<uint64_t> &address)
                     route.push_back(L3Address(pathNode[i]));
             }
             else
-                opp_error("route not found");
+                throw cRuntimeError("route not found");
         }
         else if (GlobalWirelessLinkInspector::getRouteWithLocator(myAdd, aux, route))
         {
@@ -780,7 +780,7 @@ void UDPBasicP2P::handleMessage(cMessage *msg)
 
     if (!timeQueue.empty() && !queueTimer->isScheduled())
     {
-        opp_error("Queue not empty and timer not scheduled");
+        throw cRuntimeError("Queue not empty and timer not scheduled");
     }
 
     if (mySegmentList.size()<totalSegments && !myTimer->isScheduled())
@@ -915,7 +915,7 @@ bool UDPBasicP2P::processPacket(cPacket *pk)
                 {
                     uint64_t numSubSegments = ceil((double)pkt->getTotalSize()/(double)maxPacketSize);
                     if (pkt->getNodeId() == L3Address())
-                        opp_error("id invalid");
+                        throw cRuntimeError("id invalid");
                     ConnectInTransit info(pkt->getNodeId(),pkt->getSegmentId(),numSubSegments,this);
 
                     parallelConnection.push_back(info);
@@ -983,7 +983,7 @@ void UDPBasicP2P::generateRequestSub()
 
             uint32_t segmentId = itPar->segmentId;
             if (itPar->segmentInTransit.empty())
-                opp_error("");
+                throw cRuntimeError("");
 
             uint64_t node = itPar->nodeId.toMAC().getInt();
 
@@ -1179,12 +1179,12 @@ uint64_t UDPBasicP2P::searchBestSegment(const uint64_t & address)
 
     auto it = segmentMap.find(address);
     if (it == segmentMap.end())
-        opp_error("Node not found in segmentMap");
+        throw cRuntimeError("Node not found in segmentMap");
     SegmentList * nodeSegmentList = it->second;
     SegmentList result;
     std::set_difference(mySegmentList.begin(),mySegmentList.end(),nodeSegmentList->begin(),nodeSegmentList->end(),std::inserter(result, result.end()));
     if (result.empty())
-        opp_error("request error");
+        throw cRuntimeError("request error");
     uint16_t min = 64000;
     uint64_t seg = UINT64_MAX;
     for (auto it2 = result.begin(); it2 != result.end(); ++it2)
@@ -1192,7 +1192,7 @@ uint64_t UDPBasicP2P::searchBestSegment(const uint64_t & address)
         auto it3 =  mySegmentList.find(*it2);
         if (it3 == mySegmentList.end())
         {
-            opp_error("request error segment not found in my list");
+            throw cRuntimeError("request error segment not found in my list");
             continue;
         }
         if (request[*it2]<min)
@@ -1202,7 +1202,7 @@ uint64_t UDPBasicP2P::searchBestSegment(const uint64_t & address)
         }
     }
     if (seg == UINT64_MAX)
-        opp_error("request error segment not found");
+        throw cRuntimeError("request error segment not found");
 
     request[seg]++;
     return seg;
@@ -1332,7 +1332,7 @@ void UDPBasicP2P::sendRateLimit(UDPBasicPacketP2P *pkt, const uint64_t &addr, do
         if (!queueTimer->isScheduled()) //
         {
             if (timeQueue.size() != 1)
-                opp_error("Error in timer");
+                throw cRuntimeError("Error in timer");
             double dif =  SIMTIME_DBL(simTime() - lastServer);
             scheduleAt(simTime()+ (serverTimer - dif),queueTimer);
         }
@@ -1408,7 +1408,7 @@ void UDPBasicP2P::WirelessNumNeig()
         cModule *host = getContainingNode(this);
         mod = check_and_cast<IMobility *>(host->getSubmodule("mobility"));
         if (mod == nullptr)
-            opp_error("node or mobility module not found");
+            throw cRuntimeError("node or mobility module not found");
 
         vectorList[add] = mod;
     }
@@ -1418,7 +1418,7 @@ int UDPBasicP2P::getNumNeighNodes(uint64_t add,double dist)
 {
     auto it = vectorList.find(add);
     if (it == vectorList.end())
-        opp_error("Node not found");
+        throw cRuntimeError("Node not found");
     int cont = 0;
     Coord ci = it->second->getCurrentPosition();
     for (auto it2 = vectorList.begin();it2 != vectorList.end();++it2)
@@ -1483,7 +1483,7 @@ L3Address UDPBasicP2P::chooseDestAddrBurst()
     if (destAddresses.size() == 1)
         return destAddresses[0];
 
-    int k = genk_intrand(destAddrRNG, destAddresses.size());
+    int k = getRNG(destAddrRNG)->intRand(destAddresses.size());
     return destAddresses[k];
 }
 

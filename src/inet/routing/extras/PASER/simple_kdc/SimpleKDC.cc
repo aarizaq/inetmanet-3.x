@@ -208,7 +208,7 @@ void SimpleKDC::handleMessage(cMessage *msg) {
             EVP_MD_CTX_destroy(md_ctx);
             if (err != 1) {
                 ERR_print_errors_fp(stderr);
-                opp_error("signRESET");
+                throw cRuntimeError("signRESET");
             }
             message->sign.buf = sign;
             message->sign.len = sig_len;
@@ -327,7 +327,7 @@ void SimpleKDC::handleMessage(cMessage *msg) {
         if (err != 1) {
             ERR_print_errors_fp(stderr);
 #ifdef findCertError
-            opp_error("signKDC");
+            throw cRuntimeError("signKDC");
 #endif
             delete message;
             return;
@@ -362,7 +362,7 @@ void SimpleKDC::handleMessage(cMessage *msg) {
         if (err_key != 1) {
             ERR_print_errors_fp(stderr);
 #ifdef findCertError
-            opp_error("signUURREP");
+            throw cRuntimeError("signUURREP");
 #endif
             delete message;
             return;

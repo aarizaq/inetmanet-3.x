@@ -78,9 +78,9 @@
 #define APPLICATIONS_TRAFGEN_TRAFGEN_H
 
 // SYSTEM INCLUDES
-#include <cdynamicexpression.h>
-#include <omnetpp.h>
 #include <string>
+#include <string>
+#include "inet/common/INETDefs.h"
 
 namespace inet {
 

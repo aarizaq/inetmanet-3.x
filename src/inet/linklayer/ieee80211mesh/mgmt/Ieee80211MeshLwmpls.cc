@@ -69,7 +69,7 @@ cPacket *Ieee80211Mesh::decapsulateMpls(LWMPLSPacket *frame)
 void Ieee80211Mesh::mplsSendAck(int label)
 {
     if (label >= LWMPLS_MAX_LABEL || label <= 0)
-        opp_error("mplsSendAck error in label %i", label);
+        throw cRuntimeError("mplsSendAck error in label %i", label);
     LWMPLSPacket *mpls_pk_aux_ptr = new LWMPLSPacket();
     mpls_pk_aux_ptr->setLabelReturn(label);
     LWmpls_Forwarding_Structure * forwarding_ptr = mplsData->lwmpls_forwarding_data(label, 0, 0);
@@ -143,7 +143,7 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
             nextMacAddress = MACAddress(forwarding_ptr->input_mac_address);
         }
         else
-            opp_error("mplsCreateNewPath mac address incorrect");
+            throw cRuntimeError("mplsCreateNewPath mac address incorrect");
         label_in = usedIntLabel;
 
         if (usedOutLabel>0)
@@ -164,7 +164,7 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
             frame->setTTL(mpls_pk_ptr->getTTL());
             frame->setTimestamp(mpls_pk_ptr->getCreationTime());
             if (usedOutLabel<=0 || usedIntLabel<=0)
-                opp_error("mplsCreateNewPath Error in label");
+                throw cRuntimeError("mplsCreateNewPath Error in label");
 
             mpls_pk_ptr->setLabel(usedOutLabel);
             frame->setReceiverAddress(nextMacAddress);
@@ -385,7 +385,7 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
             }
 
             if (forwarding_ptr->return_label_input<=0)
-                opp_error("Error in label");
+                throw cRuntimeError("Error in label");
 
             mpls_pk_ptr->setLabel(forwarding_ptr->return_label_input);
             mpls_pk_ptr->setLabelReturn(0);
@@ -1402,7 +1402,7 @@ bool Ieee80211Mesh::mplsForwardBroadcast(const MACAddress &addr)
 
     OLSR *olsr = dynamic_cast<OLSR*>(routingModuleProactive);
     if (olsr == nullptr)
-        opp_error("inteligentForward OLSR not found");
+        throw cRuntimeError("inteligentForward OLSR not found");
     if (!olsr->isNodeCandidate(L3Address(addr)))
         return false;
     return true;

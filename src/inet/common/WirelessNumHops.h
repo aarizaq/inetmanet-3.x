@@ -19,7 +19,6 @@
 #ifndef WIRELESSNUMHOPS_H_
 #define WIRELESSNUMHOPS_H_
 
-#include <cownedobject.h>
 #include <vector>
 #include <map>
 #include <deque>

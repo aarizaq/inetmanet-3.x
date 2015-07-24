@@ -78,12 +78,12 @@ void HostAutoConfigurator2::initialize(int stage)
         if (par("isDefaultRoute"))
         {
             if (!defaultAddr.isUnspecified())
-                opp_error("default router is defined yet");
+                throw cRuntimeError("default router is defined yet");
             cModule* host = getParentModule();
             IInterfaceTable *ift = L3AddressResolver().interfaceTableOf(host);
             InterfaceEntry* ie = ift->getInterfaceByName(par("defaultAddressInterface"));
             if (ie==nullptr)
-                opp_error("default ID interface doesn't exist");
+                throw cRuntimeError("default ID interface doesn't exist");
             defaultAddr=ie->ipv4Data()->getIPAddress();
         }
     }
@@ -264,10 +264,10 @@ void HostAutoConfigurator2::setupNetworkLayer()
     }
 
     if ((vectorInterfaceToken.size() > 1) && (vectorAddressToken.size()!=vectorInterfaceToken.size()))
-    	opp_error("interfaces and addressBaseList has different sizes");
+    	throw cRuntimeError("interfaces and addressBaseList has different sizes");
 
     if (vectorAddressToken.size()!=vectorMaskToken.size())
-    	opp_error("addressMask and addressBaseList has different sizes");
+    	throw cRuntimeError("addressMask and addressBaseList has different sizes");
 
 
     bool interfaceFound = false;
@@ -369,10 +369,10 @@ void HostAutoConfigurator2::setupRoutingTable()
     }
 
     if (vectorAddressToken.size()>1 && (vectorAddressToken.size()!=vectorInterfaceToken.size()))
-    	opp_error("interfaces and addressBaseList has different sizes");
+    	throw cRuntimeError("interfaces and addressBaseList has different sizes");
 
     if (vectorAddressToken.size()!=vectorMaskToken.size())
-    	opp_error("addressMask and addressBaseList has different sizes");
+    	throw cRuntimeError("addressMask and addressBaseList has different sizes");
 
 
     if (vectorAddressToken.size()==1)
@@ -408,7 +408,7 @@ void HostAutoConfigurator2::setupRoutingTable()
     {
     	InterfaceEntry* ie = ift->getInterfaceByName(par("defaultInterface"));
         if (ie==nullptr)
-            opp_error("default ID interface doesn't exist");
+            throw cRuntimeError("default ID interface doesn't exist");
         IPv4Route *e = new IPv4Route();
         e->setDestination(IPv4Address());
         e->setNetmask(IPv4Address());

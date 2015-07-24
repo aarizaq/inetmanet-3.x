@@ -104,7 +104,7 @@ void SAORSBase::initialize(int stage)
 		//Register Received DT Messages signal
 		RcvdDTMesgs = registerSignal("RcvdDTMsgs");
 
-		ev << "Scheduling beacons" << endl;
+		EV << "Scheduling beacons" << endl;
         rescheduleTimer();
 	}
 }
@@ -282,7 +282,7 @@ void SAORSBase::processPacket (const IPv4Datagram* datagram)
 
 			//Update routes to destination
 			//Send queued packets
-			opp_error("SAORS has a valid entry route but ip doesn't have a entry route");
+			throw cRuntimeError("SAORS has a valid entry route but ip doesn't have a entry route");
 			delete datagram;
 			return;
 		}
@@ -335,7 +335,7 @@ void SAORSBase::handleLowerMsg(cPacket* apMsg) {
 	else if(dynamic_cast<DYMO_RM*>(apMsg)) handleLowerRM(dynamic_cast<DYMO_RM*>(apMsg));
 	else if(dynamic_cast<DYMO_RERR*>(apMsg)) handleLowerRERR(dynamic_cast<DYMO_RERR*>(apMsg));
 	else if(dynamic_cast<DYMO_UERR*>(apMsg))  handleLowerUERR(dynamic_cast<DYMO_UERR*>(apMsg));
-	else if (apMsg->getKind() == UDP_I_ERROR) { ev << "discarded UDP error message" << endl; }
+	else if (apMsg->getKind() == UDP_I_ERROR) { EV << "discarded UDP error message" << endl; }
 	else error("message is no SAORS Packet");
 }
 
@@ -346,12 +346,12 @@ void SAORSBase::handleLowerMsg(cPacket* apMsg) {
  ********************************************************************************************/
 void SAORSBase::handleLowerRM(DYMO_RM *routingMsg) {
 	//Message is a routing message
-	ev << "received message is a routing message" << endl;
+	EV << "received message is a routing message" << endl;
 	statsDYMORcvd++;
 
 	//Routing message  preprocessing and updating routes from routing blocks
 	if(updateRoutes(routingMsg) == NULL) {
-		ev << "dropping received message" << endl;
+		EV << "dropping received message" << endl;
 		delete routingMsg;
 		return;
 	}
@@ -455,7 +455,7 @@ void SAORSBase::handleLowerRMForMe(DYMO_RM *routingMsg) {
 					o->RREPgather_time->start(DLT_OUTSTANDINGRREQ_TIMEOUT);
 			}
 			else {
-				ev << "SAORSBase_OutstandingRREQ not found, dropping message" << endl;
+				EV << "SAORSBase_OutstandingRREQ not found, dropping message" << endl;
 				delete routingMsg;
 			}
 		}
@@ -470,7 +470,7 @@ void SAORSBase::handleLowerRMForMe(DYMO_RM *routingMsg) {
 void SAORSBase::handleLowerRMForRelay(DYMO_RM *routingMsg) {
 
 	//Current node is not the message destination -> find route to destination
-	ev << "current node is not the message destination -> find route to destination " <<  routingMsg->getTargetNode().getAddress() << endl;
+	EV << "current node is not the message destination -> find route to destination " <<  routingMsg->getTargetNode().getAddress() << endl;
 
 	unsigned int targetAddr = routingMsg->getTargetNode().getAddress();
 	unsigned int targetSeqNum = 0;
@@ -500,7 +500,7 @@ void SAORSBase::handleLowerRMForRelay(DYMO_RM *routingMsg) {
 	//Received routing message is an RREP and no routing entry was found
 	if(dynamic_cast<SAORS_RREP*>(routingMsg) && (!entry)) {
 		/* do nothing, just drop the RREP */
-		ev << "no route to destination of RREP was found. Sending RERR and dropping message." << endl;
+		EV << "no route to destination of RREP was found. Sending RERR and dropping message." << endl;
 		sendRERR(targetAddr, targetSeqNum);
 		delete routingMsg;
 		return;
@@ -509,7 +509,7 @@ void SAORSBase::handleLowerRMForRelay(DYMO_RM *routingMsg) {
 	//Check if received message is a RREQ and a routing entry was found
 	if (dynamic_cast<SAORS_RREQ*>(routingMsg) && (entry) && (routingMsg->getTargetNode().hasSeqNum()) && (!seqNumIsFresher(routingMsg->getTargetNode().getSeqNum(), entry->routeSeqNum))) {
 		//yes, we can. Do intermediate DYMO router RREP creation
-		ev << "route to destination of RREQ was found. Sending intermediate SAORS router RREP" << endl;
+		EV << "route to destination of RREQ was found. Sending intermediate SAORS router RREP" << endl;
 		sendReplyAsIntermediateRouter(routingMsg->getOrigNode(), routingMsg->getTargetNode(), entry);
 		statsRREQRcvd++;
 		delete routingMsg;
@@ -523,28 +523,28 @@ void SAORSBase::handleLowerRMForRelay(DYMO_RM *routingMsg) {
 		//if the probability of encountering this node is higher than the sender
 		//if( dynamic_cast<SAORS_RREQ*>(routingMsg)->getMinDeliveryProb() < (dtentry->deliveryProb*HANDOVER_THESHOLD) ) {
 		if( sendEncounterProb( dynamic_cast<SAORS_RREQ*>(routingMsg), dtentry) ) {
-			ev << "Possibility of encountering destination is higher in this node. Sending intermediate SAORS router RREP" << endl;
+			EV << "Possibility of encountering destination is higher in this node. Sending intermediate SAORS router RREP" << endl;
 			sendReplyAsIntermediateRouter(routingMsg->getOrigNode(), routingMsg->getTargetNode(), dtentry);
 			statsRREQRcvd++;
 		}
 	}
 
 	//Check whether a RREQ was sent to discover route to destination
-	ev << "received message is a RREQ or a RREP to be forwarded" << endl;
-	ev << "trying to discover route to node " << targetAddr << endl;
+	EV << "received message is a RREQ or a RREP to be forwarded" << endl;
+	EV << "trying to discover route to node " << targetAddr << endl;
 
 	//Increment distance metric of existing AddressBlocks
 	std::vector<DYMO_AddressBlock> additional_nodes = routingMsg->getAdditionalNodes();
 	std::vector<DYMO_AddressBlock> additional_nodes_to_relay;
 	if (routingMsg->getOrigNode().hasDist() && (routingMsg->getOrigNode().getDist() >= 0xFF - 1)) {
-		ev << "passing on this message would overflow OrigNode.Dist -> dropping message" << endl;
+		EV << "passing on this message would overflow OrigNode.Dist -> dropping message" << endl;
 		delete routingMsg;
 		return;
 	}
 	routingMsg->getOrigNode().incrementDistIfAvailable();
 	for (unsigned int i = 0; i < additional_nodes.size(); i++) {
 		if (additional_nodes[i].hasDist() && (additional_nodes[i].getDist() >= 0xFF - 1)) {
-			ev << "passing on additionalNode would overflow OrigNode.Dist -> dropping additionalNode" << endl;
+			EV << "passing on additionalNode would overflow OrigNode.Dist -> dropping additionalNode" << endl;
 			continue;
 		}
 		additional_nodes[i].incrementDistIfAvailable();
@@ -557,7 +557,7 @@ void SAORSBase::handleLowerRMForRelay(DYMO_RM *routingMsg) {
 	additional_node.setAddress(myAddr);
 	if (RESPONSIBLE_ADDRESSES_PREFIX != -1) additional_node.setPrefix(RESPONSIBLE_ADDRESSES_PREFIX);
 	incSeqNum();
-	ev << "Setting sequence to additional node: " << ownSeqNum << endl;
+	EV << "Setting sequence to additional node: " << ownSeqNum << endl;
 	additional_node.setSeqNum(ownSeqNum);
 	additional_nodes_to_relay.push_back(additional_node);
 
@@ -566,27 +566,27 @@ void SAORSBase::handleLowerRMForRelay(DYMO_RM *routingMsg) {
 
 	//Check hop limit
 	if (routingMsg->getMsgHdrHopLimit() < 1) {
-		ev << "received message has reached hop limit -> delete message" << endl;
+		EV << "received message has reached hop limit -> delete message" << endl;
 		delete routingMsg;
 		return;
 	}
 
 	//Do not transmit DYMO messages when we lost our sequence number
 	if (ownSeqNumLossTimeout->stopWhenExpired()) {
-		ev << "node has lost sequence number -> not transmitting anything" << endl;
+		EV << "node has lost sequence number -> not transmitting anything" << endl;
 		delete routingMsg;
 		return;
 	}
 
 	//Do rate limiting
 	if ((dynamic_cast<SAORS_RREQ*>(routingMsg)) && (!rateLimiterRREQ->consumeTokens(1, simTime()))) {
-		ev << "RREQ send rate exceeded maximum -> not transmitting RREQ" << endl;
+		EV << "RREQ send rate exceeded maximum -> not transmitting RREQ" << endl;
 		delete routingMsg;
 		return;
 	}
 
 	if (dynamic_cast<SAORS_RREP*>(routingMsg))
-		ev << "Next hop address is " << entry->routeNextHopAddress << endl;
+		EV << "Next hop address is " << entry->routeNextHopAddress << endl;
 
 	//Transmit message -- RREP via unicast, RREQ via DYMOcast
 	sendDown(routingMsg, dynamic_cast<SAORS_RREP*>(routingMsg) ? (entry->routeNextHopAddress).getInt() : IPv4Address::LL_MANET_ROUTERS.getInt());
@@ -615,7 +615,7 @@ void SAORSBase::handleLowerRERR(DYMO_RERR *my_rerr) {
 	//Get RERR's SourceInterface
 	InterfaceEntry* sourceInterface = getNextHopInterface(my_rerr);
 
-	ev << "Received RERR from " << sourceAddr << endl;
+	EV << "Received RERR from " << sourceAddr << endl;
 
 	//Iterate over all unreachableNode entries
 	std::vector<DYMO_AddressBlock> unreachableNodes = my_rerr->getUnreachableNodes();
@@ -643,7 +643,7 @@ void SAORSBase::handleLowerRERR(DYMO_RERR *my_rerr) {
 			//Skip if route entry is fresher
 			if (!((entry->routeSeqNum == 0) || (!unreachableNode.hasSeqNum()) || (!seqNumIsFresher(entry->routeSeqNum, unreachableNode.getSeqNum())))) continue;
 
-			ev << "RERR invalidates route to " << entry->routeAddress << " via " << entry->routeNextHopAddress << endl;
+			EV << "RERR invalidates route to " << entry->routeAddress << " via " << entry->routeNextHopAddress << endl;
 
 			//Mark as broken and delete associated forwarding route
 			entry->routeBroken = true;
@@ -690,7 +690,7 @@ void SAORSBase::handleLowerRERR(DYMO_RERR *my_rerr) {
 	my_rerr->setUnreachableNodes(unreachableNodesToForward);
 	my_rerr->setMsgHdrHopLimit(my_rerr->getMsgHdrHopLimit() - 1);
 
-	ev << "send down RERR" << endl;
+	EV << "send down RERR" << endl;
 	sendDown(my_rerr, IPv4Address::LL_MANET_ROUTERS.getInt());
 
 	statsRERRFwd++;
@@ -704,7 +704,7 @@ void SAORSBase::handleLowerUERR(DYMO_UERR *my_uerr) {
 	//Message is a UERR
 	statsDYMORcvd++;
 
-	ev << "Received unsupported UERR message" << endl;
+	EV << "Received unsupported UERR message" << endl;
 	//To be finished
 	delete my_uerr;
 }
@@ -714,7 +714,7 @@ void SAORSBase::handleLowerUERR(DYMO_UERR *my_uerr) {
  * Handle self messages such as timer...
  ********************************************************************************************/
 void SAORSBase::handleSelfMsg(cMessage* apMsg) {
-	ev << "handle self message" << endl;
+	EV << "handle self message" << endl;
 	if(apMsg == timerMsg) {
 	    bool hasActive = false;
 
@@ -878,7 +878,7 @@ void SAORSBase::sendDown(cPacket* apMsg, int destAddr) {
  ********************************************************************************************/
 void SAORSBase::sendRREQ(unsigned int destAddr, int msgHdrHopLimit, unsigned int targetSeqNum, unsigned int targetDist, double min_prob) {
 	//Generate a new RREQ with the given pararmeter
-	ev << "send a RREQ to discover route to destination node " << destAddr << endl;
+	EV << "send a RREQ to discover route to destination node " << destAddr << endl;
 
 	SAORS_RREQ *my_rreq = new SAORS_RREQ("RREQ");
 	my_rreq->setMsgHdrHopLimit(msgHdrHopLimit);
@@ -895,14 +895,14 @@ void SAORSBase::sendRREQ(unsigned int destAddr, int msgHdrHopLimit, unsigned int
 
 	//Do not transmit DYMO messages when we lost our sequence number
 	if (ownSeqNumLossTimeout->stopWhenExpired()) {
-		ev << "node has lost sequence number -> not transmitting RREQ" << endl;
+		EV << "node has lost sequence number -> not transmitting RREQ" << endl;
 		delete my_rreq;
 		return;
 	}
 
 	//Do rate limiting
 	if (!rateLimiterRREQ->consumeTokens(1, simTime())) {
-		ev << "RREQ send rate exceeded maximum -> not transmitting RREQ" << endl;
+		EV << "RREQ send rate exceeded maximum -> not transmitting RREQ" << endl;
 		delete my_rreq;
 		//nb->fireChangeNotification()
 		return;
@@ -918,7 +918,7 @@ void SAORSBase::sendRREQ(unsigned int destAddr, int msgHdrHopLimit, unsigned int
  ********************************************************************************************/
 void SAORSBase::sendReply(unsigned int destAddr, unsigned int tSeqNum) {
 	//Create a new RREP and send it to given destination
-	ev << "send a reply to destination node " << destAddr << endl;
+	EV << "send a reply to destination node " << destAddr << endl;
 
 	DYMO_RM* rrep = new SAORS_RREP("RREP");
 	SAORSBase_RoutingEntry *entry = dymo_routingTable->getForAddress(IPv4Address(destAddr));
@@ -944,7 +944,7 @@ void SAORSBase::sendReply(unsigned int destAddr, unsigned int tSeqNum) {
 
 	//Do not transmit DYMO messages when we lost our sequence number
 	if (ownSeqNumLossTimeout->stopWhenExpired()) {
-		ev << "node has lost sequence number -> not transmitting anything" << endl;
+		EV << "node has lost sequence number -> not transmitting anything" << endl;
 		return;
 	}
 
@@ -962,7 +962,7 @@ void SAORSBase::sendReplyAsIntermediateRouter(const DYMO_AddressBlock& origNode,
 	bool dt_routing=false;
 
 	//Create a new RREP and send it to given destination
-	ev << "sending a reply to OrigNode " << origNode.getAddress() << endl;
+	EV << "sending a reply to OrigNode " << origNode.getAddress() << endl;
 
 	SAORSBase_RoutingEntry* routeToOrigNode = dymo_routingTable->getForAddress(IPv4Address(origNode.getAddress()));
 	SAORSBase_RoutingEntry* dtrouteToTargetNode = dymo_routingTable->getDTByAddress(IPv4Address(targetNode.getAddress()));
@@ -1007,13 +1007,13 @@ void SAORSBase::sendReplyAsIntermediateRouter(const DYMO_AddressBlock& origNode,
 		if (RESPONSIBLE_ADDRESSES_PREFIX != -1) rrepToOrigNode->getOrigNode().setPrefix(RESPONSIBLE_ADDRESSES_PREFIX);
 		if (test->routeSeqNum != 0)rrepToOrigNode->getOrigNode().setSeqNum(test->routeSeqNum);
 		if (test->routeDist != 0) rrepToOrigNode->getOrigNode().setDist(test->routeDist);
-		ev << "Target Sequence number: " << test->routeSeqNum << " and distance: " << test->routeDist;
+		EV << "Target Sequence number: " << test->routeSeqNum << " and distance: " << test->routeDist;
 
 		//Set me as the additional node to create the correct path //rrepToOrigNode->getOrigNode()
 		DYMO_AddressBlock additionalNode;
 		additionalNode.setAddress(myAddr);
 		additionalNode.setSeqNum(ownSeqNum);
-		ev << " Own Sequence number: " << ownSeqNum << endl;
+		EV << " Own Sequence number: " << ownSeqNum << endl;
 		additionalNode.setDist(0);
 		rrepToOrigNode->getAdditionalNodes().push_back(additionalNode);
 	}
@@ -1060,7 +1060,7 @@ void SAORSBase::sendReplyAsIntermediateRouter(const DYMO_AddressBlock& origNode,
 
 	//Do not transmit DYMO messages when we lost our sequence number
 	if (ownSeqNumLossTimeout->stopWhenExpired()) {
-		ev << "node has lost sequence number -> not transmitting anything" << endl;
+		EV << "node has lost sequence number -> not transmitting anything" << endl;
 		return;
 	}
 
@@ -1112,7 +1112,7 @@ void SAORSBase::sendRERR(unsigned int targetAddr, unsigned int targetSeqNum) {
 			SAORSBase_RoutingEntry* entry = RouteVector[i];
 			if ((entry->routeNextHopAddress != brokenEntry->routeNextHopAddress) || (entry->routeNextHopInterface != brokenEntry->routeNextHopInterface)) continue;
 
-			ev << "Including in RERR route to " << entry->routeAddress << " via " << entry->routeNextHopAddress << endl;
+			EV << "Including in RERR route to " << entry->routeAddress << " via " << entry->routeNextHopAddress << endl;
 
 			DYMO_AddressBlock unode;
 			unode.setAddress(entry->routeAddress.getInt());
@@ -1145,7 +1145,7 @@ void SAORSBase::updateRouteLifetimes(unsigned int targetAddr) {
 	rescheduleTimer();
 
 	dymo_routingTable->maintainAssociatedRoutingTable();
-	ev << "lifetimes of route to destination node " << targetAddr << " are up to date "  << endl;
+	EV << "lifetimes of route to destination node " << targetAddr << " are up to date "  << endl;
 
 	checkAndSendQueuedPkts(entry->routeAddress.getInt(), entry->routePrefix, (entry->routeNextHopAddress).getInt());
 }
@@ -1172,7 +1172,7 @@ bool SAORSBase::isRBlockBetter(SAORSBase_RoutingEntry * entry, DYMO_AddressBlock
 		if (nodeDist == 0) return false;
 		if (routeDist == 0) return false;
 		if (nodeDist > routeDist + 1) return false;
-		ev << "Route Distances are " << routeDist << " against the new " << nodeDist << endl;
+		EV << "Route Distances are " << routeDist << " against the new " << nodeDist << endl;
 
 		//Inferior?
 		if ( (nodeDist > routeDist) && (!entry->routeBroken) ) return false;
@@ -1190,20 +1190,20 @@ bool SAORSBase::isRBlockBetter(SAORSBase_RoutingEntry * entry, DYMO_AddressBlock
  * ICMP message to upper layer.
  ********************************************************************************************/
 void SAORSBase::handleRREQTimeout(SAORSBase_OutstandingRREQ& outstandingRREQ) {
-	ev << "Handling RREQ Timeouts for RREQ to " << outstandingRREQ.destAddr << endl;
+	EV << "Handling RREQ Timeouts for RREQ to " << outstandingRREQ.destAddr << endl;
 
 	if(outstandingRREQ.tries < RREQ_TRIES) {
 		SAORSBase_RoutingEntry* entry = dymo_routingTable->getForAddress(IPv4Address(outstandingRREQ.destAddr));
 		if(entry && (!entry->routeBroken)) {
 			//An entry was found in the routing table -> get control data from the table, encapsulate message
-			ev << "RREQ timed out and we DO have a route" << endl;
+			EV << "RREQ timed out and we DO have a route" << endl;
 
 			checkAndSendQueuedPkts(entry->routeAddress.getInt(), entry->routePrefix, entry->routeNextHopAddress.getInt());
 
 			return;
 		}
 		else {
-			ev << "RREQ timed out and we do not have a route yet" << endl;
+			EV << "RREQ timed out and we do not have a route yet" << endl;
 			//Number of tries is less than RREQ_TRIES -> backoff and send the rreq
 			outstandingRREQ.tries = outstandingRREQ.tries + 1;
 			outstandingRREQ.wait_time->start(computeBackoff(outstandingRREQ.wait_time->getInterval()));
@@ -1261,11 +1261,11 @@ bool SAORSBase::updateRoutesFromAddressBlock(const DYMO_AddressBlock& ab, bool i
 	if (entry && !isRBlockBetter(entry, ab, isRREQ)) return false;
 
 	if (!entry) {
-		ev << "adding routing entry for " << IPv4Address(ab.getAddress()) << endl;
+		EV << "adding routing entry for " << IPv4Address(ab.getAddress()) << endl;
 		entry = new SAORSBase_RoutingEntry(dynamic_cast<SAORSBase*>(this));
 		dymo_routingTable->addRoute(entry);
 	} else {
-		ev << "updating routing entry for " << IPv4Address(ab.getAddress()) << endl;
+		EV << "updating routing entry for " << IPv4Address(ab.getAddress()) << endl;
 	}
 
 	entry->routeAddress = IPv4Address(ab.getAddress());
@@ -1296,7 +1296,7 @@ bool SAORSBase::updateRoutesFromAddressBlock(const DYMO_AddressBlock& ab, bool i
  * Function updates the routing entries from received AdditionalNodes. @see draft 4.2.1.
  ********************************************************************************************/
 DYMO_RM* SAORSBase::updateRoutes(DYMO_RM * pkt) {
-	ev << "starting update routes from routing blocks in the received message" << endl;
+	EV << "starting update routes from routing blocks in the received message" << endl;
 	std::vector<DYMO_AddressBlock> additional_nodes = pkt->getAdditionalNodes();
 	std::vector<DYMO_AddressBlock> new_additional_nodes;
 
@@ -1305,24 +1305,24 @@ DYMO_RM* SAORSBase::updateRoutes(DYMO_RM * pkt) {
 	InterfaceEntry* nextHopInterface = getNextHopInterface(pkt);
 
 	if(pkt->getOrigNode().getAddress()==myAddr) return NULL;
-	ev << "Updating entry for " << pkt->getOrigNode().getAddress() << " with sequence number " <<  pkt->getOrigNode().getSeqNum() << endl;
+	EV << "Updating entry for " << pkt->getOrigNode().getAddress() << " with sequence number " <<  pkt->getOrigNode().getSeqNum() << endl;
 	bool origNodeEntryWasSuperior = updateRoutesFromAddressBlock(pkt->getOrigNode(), isRREQ, nextHopAddress, nextHopInterface);
 
 	for(unsigned int i = 0; i < additional_nodes.size(); i++) {
 
 		//TODO: not specified in draft, but seems to make sense
 		if(additional_nodes[i].getAddress()==myAddr) return NULL;
-		ev << "Updating entry for " << additional_nodes[i].getAddress() << " with sequence number " <<  additional_nodes[i].getSeqNum() << endl;
+		EV << "Updating entry for " << additional_nodes[i].getAddress() << " with sequence number " <<  additional_nodes[i].getSeqNum() << endl;
 		if (updateRoutesFromAddressBlock(additional_nodes[i], isRREQ, nextHopAddress, nextHopInterface)) {
 			/** read routing block is valid -> save block to the routing message **/
 			new_additional_nodes.push_back(additional_nodes[i]);
 		} else {
-			ev << "AdditionalNode AddressBlock has no valid information  -> dropping block from routing message" << endl;
+			EV << "AdditionalNode AddressBlock has no valid information  -> dropping block from routing message" << endl;
 		}
 	}
 
 	if (!origNodeEntryWasSuperior) {
-		ev << "OrigNode AddressBlock had no valid information -> deleting received routing message" << endl;
+		EV << "OrigNode AddressBlock had no valid information -> deleting received routing message" << endl;
 		return NULL;
 	}
 
@@ -1357,7 +1357,7 @@ SAORSBase_RoutingTable* SAORSBase::getDYMORoutingTable() {
  * Guesses which router the given address belongs to, might return 0
 ********************************************************************************************/
 cModule* SAORSBase::getRouterByAddress(IPv4Address address) {
-	return dynamic_cast<cModule*>(simulation.getModule(address.getInt() - AUTOASSIGN_ADDRESS_BASE.getInt()));
+	return dynamic_cast<cModule*>(getSimulation()->getModule(address.getInt() - AUTOASSIGN_ADDRESS_BASE.getInt()));
 }
 
 
@@ -1393,11 +1393,11 @@ void SAORSBase::packetFailed(IPv4Datagram *dgram)
 /********************************************************************************************
  * Called by processLinkBreak to inform on the packets failed to be delivered.
  ********************************************************************************************/
-void SAORSBase::processLinkBreak (const cPolymorphic *details)
+void SAORSBase::processLinkBreak (const cObject *details)
 {
 	IPv4Datagram	*dgram=NULL;
-	if (dynamic_cast<IPv4Datagram *>(const_cast<cPolymorphic*> (details)))
-		dgram = check_and_cast<IPv4Datagram *>(details);
+	if (dynamic_cast<IPv4Datagram *>(const_cast<cObject*> (details)))
+		dgram = check_and_cast<IPv4Datagram *>(const_cast<cObject*>(details));
 	else
 		return;
     packetFailed(dgram);
@@ -1414,7 +1414,7 @@ void SAORSBase::carrierSelection(SAORSBase_OutstandingRREQ& outstandingRREQ) {
 	//Move kept Datagrams to the "datagram" variable, to send the to the best carrier
 	queuedDataPackets->dropPacketsTo(IPv4Address(outstandingRREQ.destAddr), 32, &datagrams);
 
-	ev << "Selecting best carrier: ";
+	EV << "Selecting best carrier: ";
 
 	while (!datagrams.empty())
 	{
@@ -1432,11 +1432,11 @@ void SAORSBase::carrierSelection(SAORSBase_OutstandingRREQ& outstandingRREQ) {
 
 	//If no reply found to be adequate
 	if(!best_rrep) {
-		ev << "ERROR: No best carrier found... Dropping transmission to intermediate node" << endl;
+		EV << "ERROR: No best carrier found... Dropping transmission to intermediate node" << endl;
 		return;
 	}
 
-	ev << "Node with address " << best_rrep->getOrigNode().getAddress() << endl;
+	EV << "Node with address " << best_rrep->getOrigNode().getAddress() << endl;
 
 	//Find the routing table entry
 	SAORSBase_RoutingEntry* entry=dymo_routingTable->getByAddress( IPv4Address(best_rrep->getOrigNode().getAddress()) );
@@ -1449,7 +1449,7 @@ void SAORSBase::carrierSelection(SAORSBase_OutstandingRREQ& outstandingRREQ) {
 
 	//Check if probability of encountering the destination is greater in the intermediate node
 	if ( compareEncounterProb(dtentry, best_rrep) ) {
-		ev << "Dequeuing packet to better carrier: " <<  dtentry->routeAddress << endl;
+		EV << "Dequeuing packet to better carrier: " <<  dtentry->routeAddress << endl;
 		int numOfPkts = dtqueuedDataPackets->dequeuePacketsTo( dtentry->routeAddress,  dtentry->routePrefix, entry->routeAddress );
 
 		//Count this as a DT Message

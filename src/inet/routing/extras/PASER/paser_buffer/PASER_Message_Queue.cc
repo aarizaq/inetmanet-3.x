@@ -98,7 +98,7 @@ void PASER_Message_Queue::send_queued_messages(struct in_addr dest_addr) {
         struct message_queue_entry temp = (message_queue_entry) *it;
 //        paser_modul->send(temp.p, "to_ip");
         if (temp.p->isScheduled()) {
-            opp_error(
+            throw cRuntimeError(
                     "the message that you want to send is scheduled. It is unpossible.");
         } else {
             paser_modul->sendDelayed(temp.p,

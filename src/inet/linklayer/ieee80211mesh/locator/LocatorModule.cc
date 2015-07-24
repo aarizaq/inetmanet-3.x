@@ -148,9 +148,9 @@ void LocatorModule::handleMessage(cMessage *msg)
         }
 
         if (staIpaddr.isUnspecified() && staAddr.isUnspecified())
-            opp_error("error in tables sta mac and sta ip address unknown ");
+            throw cRuntimeError("error in tables sta mac and sta ip address unknown ");
         if (apAddr.isUnspecified() && apIpaddr.isUnspecified())
-            opp_error("error in tables ap mac and ap ip address unknown ");
+            throw cRuntimeError("error in tables ap mac and ap ip address unknown ");
 
 
         if (staIpaddr.isUnspecified())
@@ -199,7 +199,7 @@ void LocatorModule::processReply(cPacket* msg)
         // is ap?
         ApSetIterator it = globalApSet.find(destAddr);
         if (it == globalApSet.end())
-            opp_error("error in tables \n");
+            throw cRuntimeError("error in tables \n");
 
         for (MapMacIterator itMac = globalLocatorMapMac.begin(); itMac != globalLocatorMapMac.end(); itMac++)
         {
@@ -236,7 +236,7 @@ void LocatorModule::processReply(cPacket* msg)
         // is ap?
         ApSetIterator it = globalApSet.find(destAddr);
         if (it == globalApSet.end())
-            opp_error("error in tables \n");
+            throw cRuntimeError("error in tables \n");
 
         for (MapMacIterator itMac = globalLocatorMapMac.begin(); itMac != globalLocatorMapMac.end(); itMac++)
             if (itMac->second.apMacAddr == destAddr)
@@ -350,7 +350,7 @@ void LocatorModule::initialize(int stage)
     }
     else
     {
-        opp_error("iface not found");
+        throw cRuntimeError("iface not found");
     }
 
     for (int i = 0; i < itable->getNumInterfaces(); i++)

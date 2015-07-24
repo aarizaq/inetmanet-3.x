@@ -24,9 +24,9 @@ cplusplus {{
 
 class noncobject IPv4Address;
 
-namespace inet::inetmanet;
-
 enum IPProtocolId;
+
+namespace inet::inetmanet;
 
 //
 // <b> The Delay Tolerant Message </b>

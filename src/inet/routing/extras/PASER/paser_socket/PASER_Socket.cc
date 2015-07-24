@@ -683,7 +683,7 @@ void PASER_Socket::send_message(cPacket * msg, struct in_addr dest_addr,
             break;
         }
 //        if(paser_msg->type == 5){
-//            opp_error("aaaaa");
+//            throw cRuntimeError("aaaaa");
 //        }
         msg->setByteLength(addPaketLaengeZuStat(msg));
 //        msg->setByteLength(64);
@@ -780,10 +780,10 @@ int PASER_Socket::getIfIdFromIfIndex(int ifIndex) {
     return -1;
 }
 
-void PASER_Socket::processLinkBreak(const cPolymorphic *details) {
+void PASER_Socket::processLinkBreak(const cObject *details) {
     IPv4Datagram *dgram = nullptr;
     if (paser_configuration->isSetLinkLayerFeeback()) {
-        if (dynamic_cast<IPv4Datagram *>(const_cast<cPolymorphic*>(details))) {
+        if (dynamic_cast<IPv4Datagram *>(const_cast<cObject*>(details))) {
             dgram = check_and_cast<IPv4Datagram *>(details);
             struct in_addr dest_addr, src_addr;
             src_addr.s_addr.set(dgram->getSrcAddress());
@@ -811,9 +811,9 @@ void PASER_Socket::processLinkBreak(const cPolymorphic *details) {
             scheduleNextEvent();
             return;
         }
-//        else if (dynamic_cast<Ieee80211DataFrame *>(const_cast<cPolymorphic*> (details)))
+//        else if (dynamic_cast<Ieee80211DataFrame *>(const_cast<cObject*> (details)))
 //        {
-//            Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame *>(const_cast<cPolymorphic*>(details));
+//            Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame *>(const_cast<cObject*>(details));
 //            messageFailedMac(frame);
 //        }
     }
@@ -860,10 +860,10 @@ void PASER_Socket::MY_omnet_chg_rte(const L3Address &destination, const L3Addres
 
 
     if (!getIsRegistered())
-         opp_error("Manet routing protocol is not register");
+         throw cRuntimeError("Manet routing protocol is not register");
 
     if (getIsMacLayer())
-        opp_error("PASER can not work in the MAC layer");
+        throw cRuntimeError("PASER can not work in the MAC layer");
      /* Add route to kernel routing table ... */
      IPv4Address desAddress(destination.getIPv4());
      EV<<"destination is"<<destination.getIPv4()<<endl;
@@ -887,7 +887,7 @@ void PASER_Socket::MY_omnet_chg_rte(const L3Address &destination, const L3Addres
              if (del_entry && !found)    // FIXME The 'found' never set to true when 'del_entry' is true
              {
                  if (!getInetRoutingTable()->deleteRoute(e))
-                     opp_error("ManetRoutingBase::setRoute can't delete route entry");
+                     throw cRuntimeError("ManetRoutingBase::setRoute can't delete route entry");
              }
              else
              {
