@@ -36,7 +36,6 @@ private:
     std::vector<ShareStruct*> encapsulateVector;
     void _deleteEncapVector();
     bool _checkIfShare();
-    void _detachShareVector(unsigned int i);
 public:
     Ieee80211MpduA(const char *name=nullptr, int kind=0);
     Ieee80211MpduA(Ieee80211MpduA &);

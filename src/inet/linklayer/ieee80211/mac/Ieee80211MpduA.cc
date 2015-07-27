@@ -79,7 +79,6 @@ void Ieee80211MpduA::forEachChild(cVisitor *v)
     {
         for (unsigned int i = 0; i < encapsulateVector.size(); i++)
         {
-            _detachShareVector(i); // see method comment why this is needed
             v->visit(encapsulateVector[i]->pkt);
         }
     }
@@ -197,7 +196,6 @@ Ieee80211DataOrMgmtFrame *Ieee80211MpduA::getPacket(unsigned int i) const
 
     if (i >= encapsulateVector.size())
         return nullptr;
-    const_cast<Ieee80211MpduA*>(this)->_detachShareVector(i);
     return encapsulateVector[i]->pkt;
 }
 
@@ -206,7 +204,6 @@ cPacket *Ieee80211MpduA::decapsulatePacket(unsigned int i)
 
     if (i >= encapsulateVector.size())
         return nullptr;
-    const_cast<Ieee80211MpduA*>(this)->_detachShareVector(i);
     cPacket * pkt = encapsulateVector[i]->pkt;
     if (getBitLength() > 0)
         setBitLength(getBitLength() - encapsulateVector.front()->pkt->getBitLength());
@@ -222,7 +219,6 @@ void Ieee80211MpduA::setPacketKind(unsigned int i, int kind)
 {
     if (i >= encapsulateVector.size())
         return;
-    this->_detachShareVector(i);
     encapsulateVector[i]->pkt->setKind(kind);
 }
 
