@@ -28,7 +28,7 @@
 #ifndef __HIPFSMBASE_H__
 #define __HIPFSMBASE_H__
 
-#include <omnetpp.h>
+#include "inet/common/INETDefs.h"
 #include "inet/networklayer/contract/ipv6/IPv6ControlInfo.h"
 #include "HipMessages_m.h"
 //#include "IPv6Datagram.h"

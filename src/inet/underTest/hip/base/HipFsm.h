@@ -27,7 +27,7 @@
 #ifndef __HIPFSM_H__
 #define __HIPFSM_H__
 
-#include <omnetpp.h>
+#include "inet/common/INETDefs.h"
 #include "HipFsmBase.h"
 #include "HIP.h"
 #include "inet/networklayer/contract/ipv6/IPv6Address.h"

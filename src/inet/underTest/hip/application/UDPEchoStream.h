@@ -29,7 +29,7 @@
 #define __UDPECHOSTREAM_H__
 
 #include <vector>
-#include <omnetpp.h>
+#include "inet/common/INETDefs.h"
 #include "inet/transportlayer/contract/udp/UDPSocket.h"
 #include "inet/networklayer/common/L3Address.h"
 
