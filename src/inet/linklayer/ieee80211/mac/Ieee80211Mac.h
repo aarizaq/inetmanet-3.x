@@ -287,7 +287,11 @@ class INET_API Ieee80211Mac : public MACProtocolBase
               {
                   if (timeOut.isScheduled())
                   {
+#if OMNETPP_VERSION >= 0x0500
                       cSimulation::getActiveSimulation()->getFES()->remove(&timeOut);
+#else
+                      simulation.msgQueue.remove(&timeOut);
+#endif
                       EVCB.messageCancelled(&timeOut);
                   }
                   while(!inReception.empty())
