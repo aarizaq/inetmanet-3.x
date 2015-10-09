@@ -112,7 +112,7 @@ module NodeBase like INetworkNode
         }
         eth[sizeof(ethg)]: <default("EthernetInterface")> like IWiredNic {
             parameters:
-                @display("p=400,398,row,60;q=txQueue");
+                @display("p=368,406,row,60;q=txQueue");
         }
         ppp[sizeof(pppg)]: <default("PPPInterface")> like IWiredNic {
             parameters:
@@ -124,7 +124,7 @@ module NodeBase like INetworkNode
         }
         tun[numTunInterfaces]: <default("TunInterface")> like ITunNic {
             parameters:
-                @display("p=302,398,row,10;q=txQueue;i=block/ifcard");
+                @display("p=213,406,row,10;q=txQueue;i=block/ifcard");
         }
 
     connections allowunconnected:
