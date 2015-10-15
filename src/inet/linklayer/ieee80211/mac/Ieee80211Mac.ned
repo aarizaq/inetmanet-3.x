@@ -20,7 +20,7 @@
 package inet.linklayer.ieee80211.mac;
 
 import inet.linklayer.base.MACProtocolBase;
-import inet.linklayer.contract.IMACProtocol;
+import inet.linklayer.ieee80211.IIeee80211Mac;
 
 
 //
@@ -56,14 +56,14 @@ import inet.linklayer.contract.IMACProtocol;
 // listen interval which is related to power management, capability information
 // which is related to PCF and other non-modelled features).
 //
-simple Ieee80211Mac extends MACProtocolBase like IMACProtocol
+simple Ieee80211Mac extends MACProtocolBase like IIeee80211Mac
 {
     parameters:
         string address = default("auto"); // MAC address as hex string (12 hex digits), or
                                           // "auto". "auto" values will be replaced by
                                           // a generated MAC address in init stage 0.
         string queueModule = default(""); // name of optional external queue module
-        int maxQueueSize = default(50);   // max queue length in frames; only used if queueModule==""
+        int maxQueueSize = default(50);   // max queue length in frames (for EDCA this is a per AC queue limit)
 
         bool EDCA = default(false); // enable Enhanced Distributed Channel Access (802.11e)
         // parameters for EDCA = true
@@ -78,21 +78,21 @@ simple Ieee80211Mac extends MACProtocolBase like IMACProtocol
         double TXOP2 @unit(s) = default(3.008ms);
         double TXOP3 @unit(s) = default(1.504ms);
         // parameters for EDCA = false
-        int AIFSN = default(2); // if there is only one AC (EDCA = false) it is used to compute Difs value always
+        int AIFSN = default(2); // if there is only one AC (EDCA = false)
 
         bool useModulationParameters = default(false); // if true, slot time, DIFS, and ACK timeout (aPHY-RX-START-Delay) are function of modulation time (2007 standard)
         bool prioritizeMulticast = default(false); // if true, prioritize multicast frames (9.3.2.1 Fundamental access)
 
         double bitrate @unit("bps");
-        string opMode @enum("a", "b", "g", "n", "p") = default("g");
+        string opMode @enum("a","b","g","n","p") = default("g");
 
-		// TODO: These bitrates are not a real degrees of freedom
-		// with OFDM modulation the basic bitrate is 6Mbps
+        // TODO: These bitrates are not a real degrees of freedom
+        // with OFDM modulation the basic bitrate is 6Mbps
         double basicBitrate @unit("bps") = default(1e6bps); // used for broadcast frames
         double controlBitrate @unit("bps") = default(1e6bps); // used for control frames
 
         int mtu @unit("B") = default(2304B);
-        double slotTime @unit("s") = default(9us);
+        double slotTime @unit("s") = default(-1s); // slot time, -1 means default (mode dependent)
         int rtsThresholdBytes @unit("B") = default(2346B); // longer messages will be sent using RTS/CTS
         int retryLimit = default(-1); // maximum number of retries per message, -1 means default
         int cwMinData = default(-1); // contention window for normal data frames, -1 means default

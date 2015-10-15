@@ -135,14 +135,14 @@ void UDPBasicBurst::initialConfiguration()
     IInterfaceTable *ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
 
     while ((token = tokenizer.nextToken()) != nullptr) {
-         if (strstr(token, "Broadcast") != nullptr)
-             destAddresses.push_back(IPv4Address::ALLONES_ADDRESS);
-         else {
-             L3Address addr = L3AddressResolver().resolve(token);
-             if (excludeLocalDestAddresses && ift && ift->isLocalAddress(addr))
-                 continue;
-             destAddresses.push_back(addr);
-         }
+        if (strstr(token, "Broadcast") != nullptr)
+            destAddresses.push_back(IPv4Address::ALLONES_ADDRESS);
+        else {
+            L3Address addr = L3AddressResolver().resolve(token);
+            if (excludeLocalDestAddresses && ift && ift->isLocalAddress(addr))
+                continue;
+            destAddresses.push_back(addr);
+        }
     }
 
     if (strcmp(par("outputInterface").stringValue(),"") != 0)

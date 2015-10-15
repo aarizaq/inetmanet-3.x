@@ -135,6 +135,12 @@ const simtime_t Ieee80211OFDMMode::getPhyRxStartDelay() const
         throw cRuntimeError("Unknown channel spacing = %f", channelSpacing.get());
 }
 
+const simtime_t Ieee80211OFDMMode::getRifsTime() const
+{
+    throw cRuntimeError("Undefined physical layer parameter");
+    return SIMTIME_ZERO;
+}
+
 const simtime_t Ieee80211OFDMMode::getRxTxTurnaroundTime() const
 {
     throw cRuntimeError("< 2");
@@ -285,6 +291,22 @@ const Ieee80211OFDMMode& Ieee80211OFDMCompliantModes::getCompliantMode(unsigned 
         throw cRuntimeError("Channel spacing = %f must be 5, 10 or 20 MHz", channelSpacing.get());
 }
 
+const simtime_t Ieee80211OFDMMode::getTxopLimit(AccessCategory ac) const
+{
+    switch (ac)
+    {
+        case AC_BK: return 0;
+        case AC_BE: return 0;
+        case AC_VI: return ms(3.008).get();
+        case AC_VO: return ms(1.504).get();
+        case AC_LEGACY: return 0;
+        case AC_NUMCATEGORIES: break;
+    }
+    throw cRuntimeError("Unknown access category = %d", ac);
+    return 0;
+}
+
+
 // Preamble modes
 const Ieee80211OFDMPreambleMode Ieee80211OFDMCompliantModes::ofdmPreambleModeCS5MHz(MHz(5));
 const Ieee80211OFDMPreambleMode Ieee80211OFDMCompliantModes::ofdmPreambleModeCS10MHz(MHz(10));
@@ -373,4 +395,3 @@ const Ieee80211OFDMMode Ieee80211OFDMCompliantModes::ofdmMode54Mbps(&Ieee80211OF
 } // namespace physicallayer
 
 } // namespace inet
-

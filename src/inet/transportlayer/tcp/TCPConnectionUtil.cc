@@ -356,7 +356,7 @@ void TCPConnection::configureStateVariables()
 {
     long advertisedWindowPar = tcpMain->par("advertisedWindow").longValue();
     state->ws_support = tcpMain->par("windowScalingSupport");    // if set, this means that current host supports WS (RFC 1323)
-
+    state->ws_manual_scale = tcpMain->par("windowScalingFactor"); // scaling factor (set manually) to help for TCP validation
     if (!state->ws_support && (advertisedWindowPar > TCP_MAX_WIN || advertisedWindowPar <= 0))
         throw cRuntimeError("Invalid advertisedWindow parameter: %ld", advertisedWindowPar);
 
@@ -1083,13 +1083,16 @@ TCPSegment TCPConnection::writeHeaderOptions(TCPSegment *tcpseg)
             tcpseg->addHeaderOption(new TCPOptionNop());    // NOP
 
             // Update WS variables
-            //ulong scaled_rcv_wnd = receiveQueue->getAmountOfFreeBytes(state->maxRcvBuffer);
-            ulong scaled_rcv_wnd = receiveQueue->getFirstSeqNo() + state->maxRcvBuffer - state->rcv_nxt;
-            state->rcv_wnd_scale = 0;
+            if (state->ws_manual_scale > -1) {
+                state->rcv_wnd_scale = state->ws_manual_scale;
+            } else {
+                ulong scaled_rcv_wnd = receiveQueue->getFirstSeqNo() + state->maxRcvBuffer - state->rcv_nxt;
+                state->rcv_wnd_scale = 0;
 
-            while (scaled_rcv_wnd > TCP_MAX_WIN && state->rcv_wnd_scale < 14) {    // RFC 1323, page 11: "the shift count must be limited to 14"
-                scaled_rcv_wnd = scaled_rcv_wnd >> 1;
-                state->rcv_wnd_scale++;
+                while (scaled_rcv_wnd > TCP_MAX_WIN && state->rcv_wnd_scale < 14) {    // RFC 1323, page 11: "the shift count must be limited to 14"
+                    scaled_rcv_wnd = scaled_rcv_wnd >> 1;
+                    state->rcv_wnd_scale++;
+                }
             }
 
             TCPOptionWindowScale *option = new TCPOptionWindowScale();
