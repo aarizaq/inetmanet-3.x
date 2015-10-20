@@ -620,7 +620,16 @@ void Radio::handleLowerMsgStart(AirFrame* airframe)
 
     double rcvdPower = receptionModel->calculateReceivedPower(airframe->getPSend(), frequency, distance);
     if (obstacles && distance > MIN_DISTANCE)
-        rcvdPower = obstacles->calculateReceivedPower(rcvdPower, carrierFrequency, framePos, 0, getRadioPosition(), 0);
+    {
+        double rcvdPowerAux = obstacles->calculateReceivedPower(rcvdPower, carrierFrequency, framePos, 0, getRadioPosition(), 0);
+        if (rcvdPowerAux>=0)
+            rcvdPower = rcvdPowerAux;
+        else
+        {
+            // mark with error the packet
+            airframe->setBitError(true);
+        }
+    }
     airframe->setPowRec(rcvdPower);
     // store the receive power in the recvBuff
     recvBuff[airframe] = rcvdPower;
@@ -716,7 +725,12 @@ void Radio::handleLowerMsgEnd(AirFrame * airframe)
         //    sendUp(airframe);
         //else
         //    delete airframe;
-        PhyIndication frameState = radioModel->isReceivedCorrectly(airframe, list);
+        PhyIndication frameState;
+        if (airframe->hasBitError())
+            frameState =  BITERROR;
+        else
+            frameState = radioModel->isReceivedCorrectly(airframe, list);
+
         if (frameState != FRAMEOK)
         {
             airframe->getEncapsulatedPacket()->setKind(frameState);

@@ -252,12 +252,12 @@ double Obstacle::calculateReceivedPower(double pSend, double carrierFrequency, c
     {
         saveCache = false;
         if (mean >= 1)
-            return 0;
+            return -1;
         if (mean <= 0)
             return pSend;
         double prob = uniform(0,1);
         if (prob < mean)
-            return 0;
+            return -1;
         return pSend;
     }
 
