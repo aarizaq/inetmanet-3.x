@@ -202,7 +202,6 @@ void Ieee80211Mesh::initializeBase(int stage)
                     radio = getParentModule()->getSubmodule("radio",i);
                     macInterfaces.push_back(dynamic_cast<Ieee80211Mac*>(mac));
                     // radioInterfaces.push_back(dynamic_cast<Radio*>(radio));
-                    macInterfaces[i]->setQueueModeTrue();
                 }
             }
         }
@@ -614,7 +613,7 @@ void Ieee80211Mesh::handleMessage(cMessage *msg)
     {
         handleWateGayDataReceive(PK(msg));
     }
-    else if(strstr(msg->getName() ,"Beacon")!=nullptr ){sendOrEnqueue(PK(msg));}
+    else if(strstr(msg->getName() ,"Beacon")!=nullptr ){sendFrameDown(PK(msg));}
     else if(   strstr(msg->getName() ,"Beacon")!=nullptr
             || strstr(msg->getName() ,"Open Authentication Request")!=nullptr || strstr(msg->getName() ,"Open Authentication Response")!=nullptr
             || strstr(msg->getName() ,"Auth")!=nullptr || strstr(msg->getName() ,"Auth-OK")!=nullptr || strstr(msg->getName() ,"Auth-ERROR")!=nullptr
@@ -625,14 +624,14 @@ void Ieee80211Mesh::handleMessage(cMessage *msg)
             || strstr(msg->getName() ,"AMPE msg 1/4")!=nullptr || strstr(msg->getName() ,"AMPE msg 2/4")!=nullptr
             || strstr(msg->getName() ,"AMPE msg 3/4")!=nullptr || strstr(msg->getName() ,"AMPE msg 4/4")!=nullptr )
     {
-        sendOrEnqueue(PK(msg));
+        sendFrameDown(PK(msg));
     }
     else if (strstr(gateName,"securityIn")!=nullptr && hasSecurity)
     {
         if(strstr(msg->getName() ,"CCMPFrame")!=nullptr)
         {
             EV << "CCMPFrame Frame arrived from Security, send it to Mac_" <<endl;
-            sendOrEnqueue(PK(msg));
+            sendFrameDown(PK(msg));
 
         }
         else if(strstr(msg->getName() ,"DecCCMP")!=nullptr)
@@ -660,7 +659,7 @@ void Ieee80211Mesh::handleMessage(cMessage *msg)
 
         else{
 
-            sendOrEnqueue(PK(msg));
+            sendFrameDown(PK(msg));
         }
     }
 
@@ -698,7 +697,7 @@ void Ieee80211Mesh::handleTimer(cMessage *msg)
                 }
             }
         }
-        sendOrEnqueue(PK(msg));
+        sendFrameDown(PK(msg));
     }
     else
         throw cRuntimeError("message timer error");
@@ -723,7 +722,7 @@ void Ieee80211Mesh::handleRoutingMessage(cPacket *msg)
         else
             msg->par("indexGate") = ctrl->getInterfaceId();
         delete ctrl;
-        sendOrEnqueue(msg);
+        sendFrameDown(msg);
     }
     else
     {
@@ -737,7 +736,7 @@ void Ieee80211Mesh::handleRoutingMessage(cPacket *msg)
          else
              frame->par("indexGate") = ctrl->getInterfaceId();
         delete ctrl;
-        sendOrEnqueue(frame);
+        sendFrameDown(frame);
     }
 }
 
@@ -748,7 +747,7 @@ void Ieee80211Mesh::handleUpperMessage(cPacket *msg)
     if (frame)
     {
         if (!isGateWay)
-            sendOrEnqueue(frame);
+            sendFrameDown(frame);
         else
         {
             MACAddress gw;
@@ -759,7 +758,7 @@ void Ieee80211Mesh::handleUpperMessage(cPacket *msg)
                     if (gw != myAddress)
                     {
                         frame->setReceiverAddress(gw);
-                        sendOrEnqueue(frame);
+                        sendFrameDown(frame);
                         return;
                     }
                 }
@@ -1452,13 +1451,11 @@ void Ieee80211Mesh::sendOut(cMessage *msg)
         }
         else
         {
-            packetRequested++;
             send(msg, "securityOut");
         }
     }
     else
     {
-        packetRequested++;
         if (isMultiMac)
             send(msg, "macOutMulti",macOut);
         else
@@ -1526,7 +1523,7 @@ bool Ieee80211Mesh::macLabelBasedSend(Ieee80211DataFrame *frame)
             frame2->setTransmitterAddress(myAddress);
             if (!frame2->getReceiverAddress().isBroadcast())
                 frame2->setReceiverAddress(frame->getAddress4());
-            sendOrEnqueue(frame2);
+            sendFrameDown(frame2);
             return true;
         }
     }
@@ -1659,7 +1656,7 @@ bool Ieee80211Mesh::macLabelBasedSend(Ieee80211DataFrame *frame)
     }
     //send(msg, macBaseGateId + ie->getNetworkLayerGateIndex());
     if (frame)
-        sendOrEnqueue(frame);
+        sendFrameDown(frame);
     return true;
 }
 
@@ -1724,7 +1721,7 @@ void Ieee80211Mesh::actualizeReactive(cPacket *pkt,bool out)
 }
 
 
-void Ieee80211Mesh::sendOrEnqueue(cPacket *frame)
+void Ieee80211Mesh::sendFrameDown(cPacket *frame)
 {
     Ieee80211MeshFrame * frameAux = dynamic_cast<Ieee80211MeshFrame*>(frame);
     Ieee80211DataOrMgmtFrame *frameDataorMgm = dynamic_cast <Ieee80211DataOrMgmtFrame*> (frame);
@@ -1742,7 +1739,7 @@ void Ieee80211Mesh::sendOrEnqueue(cPacket *frame)
     if (frameDataorMgm->getReceiverAddress().isBroadcast())
     {
         if (dynamic_cast<ETXBasePacket*>(frame->getEncapsulatedPacket()) && numMac > 1)
-            Ieee80211MgmtBase::sendOrEnqueue(frame);
+            sendDown(frame);
         else
         {
             if (numMac > 1)
@@ -1755,7 +1752,7 @@ void Ieee80211Mesh::sendOrEnqueue(cPacket *frame)
                      else
                          pkt->par("indexGate") = i;
 
-                    Ieee80211MgmtBase::sendOrEnqueue(pkt);
+                    sendDown(pkt);
                 }
                 /*
                 if (inteligentBroadcastRouting && (frameAux && frameAux->getSubType() == ROUTING))
@@ -1779,7 +1776,7 @@ void Ieee80211Mesh::sendOrEnqueue(cPacket *frame)
                     }
                 }*/
             }
-            PassiveQueueBase::handleMessage(frame);
+            sendDown(frame);
         }
     }
     else
@@ -1788,7 +1785,7 @@ void Ieee80211Mesh::sendOrEnqueue(cPacket *frame)
             frame->addPar("indexGate") = getBestInterface(frameDataorMgm);
         else
             frame->par("indexGate") = getBestInterface(frameDataorMgm);
-        Ieee80211MgmtBase::sendOrEnqueue(frame);
+        sendDown(frame);
     }
 }
 
@@ -2084,7 +2081,7 @@ void Ieee80211Mesh::handleEtxMessage(cPacket *pk)
         else
             frame->par("indexGate") = etxMsg->par("indexGate");
         if (frame)
-            sendOrEnqueue(frame);
+            sendFrameDown(frame);
     }
     else
         delete pk;
@@ -2134,7 +2131,7 @@ void Ieee80211Mesh::publishGateWayIdentity()
     double delay=this->getGateWayDataMap()->size()*par("GateWayAnnounceInterval").doubleValue ();
     scheduleAt(simTime()+delay+uniform(0,2),gateWayTimeOut);
     if (frame)
-        sendOrEnqueue(frame);
+        sendFrameDown(frame);
 }
 
 
@@ -2617,7 +2614,7 @@ void Ieee80211Mesh::processDistributionPacket(Ieee80211MeshFrame *frame)
             {
                 Ieee80211MeshFrame *frameAux = frame->dup();
                 frameAux->setReceiverAddress(next.back().toMAC());
-                sendOrEnqueue(frameAux);
+                sendFrameDown(frameAux);
                 next.pop_back();
             }
         }

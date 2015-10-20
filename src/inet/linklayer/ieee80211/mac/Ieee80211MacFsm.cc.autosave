@@ -101,7 +101,7 @@ void Ieee80211Mac::handleWithFSM(cMessage *msg)
                );
                FSMA_No_Event_Transition(Immediate-Data-Ready,
                                      //!transmissionQueue.empty(),
-                !transmissionQueuesEmpty(),
+                !transmissionQueueEmpty(),
                                      DEFER,
                //  invalidateBackoffPeriod();
                 ASSERT(backoff[currentAC]);
@@ -150,6 +150,22 @@ void Ieee80211Mac::handleWithFSM(cMessage *msg)
                     WAITAIFS,
                     ASSERT(0 == 1);
                     ;
+                    );
+            FSMA_Event_Transition(Immediate - Transmit - RTS,
+                    isMsgAIFS(msg) && !transmissionQueue()->empty() && !isMulticast(getCurrentTransmission())
+                    && dynamic_cast<Ieee80211MpduA*>(getCurrentTransmission())  && !backoff() && useRtsMpduA,
+                    WAITCTS,
+                    sendRTSFrame(getCurrentTransmission());
+                    oldcurrentAC = currentAC;
+                    cancelAIFSPeriod();
+                    );
+            FSMA_Event_Transition(Immediate - Transmit - MPDU,
+                    isMsgAIFS(msg) && !transmissionQueue()->empty() && !isMulticast(getCurrentTransmission())
+                    && isMpduA(getCurrentTransmission())  && !backoff() && !useRtsMpduA,
+                    WAITBLOCKACK,
+                    sendRTSFrame(getCurrentTransmission());
+                    oldcurrentAC = currentAC;
+                    cancelAIFSPeriod();
                     );
             FSMA_Event_Transition(Immediate - Transmit - RTS,
                     isMsgAIFS(msg) && !transmissionQueue()->empty() && !isMulticast(getCurrentTransmission())
@@ -464,6 +480,10 @@ void Ieee80211Mac::handleWithFSM(cMessage *msg)
                                  );
         }
 
+        FSMA_State(WAITBLOCKACK)
+        {
+
+        }
         // wait until multicast is sent
         FSMA_State(WAITMULTICAST)
         {
@@ -544,6 +564,12 @@ void Ieee80211Mac::handleWithFSM(cMessage *msg)
                     finishReception();
                     );
             FSMA_Event_Transition(Transmit-DATA,
+                    msg == endSIFS && getFrameReceivedBeforeSIFS()->getType() == ST_CTS && isMpduA(getCurrentTransmission()),
+                    WAITBLOCKACK,
+                    sendDataFrameOnEndSIFS(getCurrentTransmission());
+                    oldcurrentAC = currentAC;
+            );
+            FSMA_Event_Transition(Transmit-DATA,
                     msg == endSIFS && getFrameReceivedBeforeSIFS()->getType() == ST_CTS,
                     WAITACK,
                     sendDataFrameOnEndSIFS(getCurrentTransmission());
@@ -560,6 +586,12 @@ void Ieee80211Mac::handleWithFSM(cMessage *msg)
         // this is not a real state
         FSMA_State(RECEIVE)
         {
+            FSMA_No_Event_Transition(Immediate-Receive-MPDUA,
+                    isLowerMessage(msg)  && isForUs(frame) && isMpduA(frame),
+                    WAITSIFS,
+                    processMpduA(frame);
+                    finishReception();
+                    );
             FSMA_No_Event_Transition(Immediate-Receive-Error,
                     isLowerMessage(msg) && receptionError,
                     IDLE,

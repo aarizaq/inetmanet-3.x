@@ -34,21 +34,10 @@ package inet.linklayer.ieee80211.mgmt;
 simple Ieee80211MgmtSTASimplified like IIeee80211Mgmt
 {
     parameters:
-        bool EDCA = default(false); // enable Enhanced Distributed Channel Access (802.11e)
-        // parameters for EDCA = true
-        string classifier = default("Ieee80211eClassifier");        
         string accessPointAddress; // MAC address of associate AP
         int frameCapacity = default(100);
         string macModule;               // The path to the MAC module
         @display("i=block/cogwheel");
-        @signal[enqueuePk](type=cPacket);
-        @signal[dequeuePk](type=cPacket);
-        @signal[dropPkByQueue](type=cPacket);
-        @signal[queueingTime](type=simtime_t; unit=s);
-        @signal[dataQueueLen](type=long);  // number of stored packets
-        @signal[rcvdPk](type=cPacket);
-        @statistic[dataQueueLen](title="data queue length"; record=max,timeavg,vector; interpolationmode=sample-hold);
-        @statistic[dropPkByQueue](title="packets dropped by queue"; source=dropPkByQueue; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
     gates:
         input upperLayerIn;
         output upperLayerOut;

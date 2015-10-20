@@ -268,13 +268,14 @@ class Ieee80211ActionFrameBody extends Ieee80211FrameBody
     bodyLength = 1;
 }
 
-class Ieee80211ActionMeshFrameBody extends Ieee80211ActionFrameBody
+class Ieee80211ActionHWMPFrameBody extends Ieee80211ActionFrameBody
 {
-    int id @enum(Ieee80211HWMPCode);
-    //unsigned char length;
-    unsigned char flags = 0;
-    unsigned char hopsCount = 0;
-    unsigned char TTL = 32;
+     //FIXME bodyLength?
+     int id @enum(Ieee80211HWMPCode);
+     //unsigned char length;
+     unsigned char flags = 0;
+     unsigned char hopsCount = 0;
+     unsigned char TTL = 32;
  }
 
 
@@ -297,7 +298,7 @@ struct PERRElem
 }
 
 
-class Ieee80211ActionRANNFrameBody extends Ieee80211ActionMeshFrameBody
+class Ieee80211ActionRANNFrameBody extends Ieee80211ActionHWMPFrameBody
 {
      bodyLength = 23 + 1;//  specific size
      id = IE11S_RANN;
@@ -307,7 +308,7 @@ class Ieee80211ActionRANNFrameBody extends Ieee80211ActionMeshFrameBody
      unsigned int metric = 0;
 }
 
-class  Ieee80211ActionPREQFrameBody extends Ieee80211ActionMeshFrameBody
+class  Ieee80211ActionPREQFrameBody extends Ieee80211ActionHWMPFrameBody
 {
      bodyLength = 26 + 1;// specific size
      id = IE11S_PREQ;
@@ -321,7 +322,7 @@ class  Ieee80211ActionPREQFrameBody extends Ieee80211ActionMeshFrameBody
      PREQElem preqElem[];
 }
 
-class  Ieee80211ActionPREPFrameBody extends Ieee80211ActionMeshFrameBody
+class  Ieee80211ActionPREPFrameBody extends Ieee80211ActionHWMPFrameBody
 {
      bodyLength = 37 + 1;//  specific size
      id = IE11S_PREP;
@@ -334,7 +335,7 @@ class  Ieee80211ActionPREPFrameBody extends Ieee80211ActionMeshFrameBody
      unsigned int originatorSeqNumber;
 }
 
-class  Ieee80211ActionPERRFrameBody extends Ieee80211ActionMeshFrameBody
+class  Ieee80211ActionPERRFrameBody extends Ieee80211ActionHWMPFrameBody
 {
      bodyLength = 2 + 1; //  specific size
      id = IE11S_PERR;
@@ -342,7 +343,7 @@ class  Ieee80211ActionPERRFrameBody extends Ieee80211ActionMeshFrameBody
      PERRElem perrElem[];
 }
 
-class  Ieee80211ActionGANNFrameBody extends Ieee80211ActionMeshFrameBody
+class  Ieee80211ActionGANNFrameBody extends Ieee80211ActionHWMPFrameBody
 {
     bodyLength = 15 +1;// specific size
     id = IE11S_GANN;
@@ -359,7 +360,7 @@ class  Ieee80211ActionGANNFrameBody extends Ieee80211ActionMeshFrameBody
 packet Ieee80211AuthenticationFrame extends Ieee80211ManagementFrame
 {
     type = ST_AUTHENTICATION;
-    byteLength = 28+getBody().getBodyLength();
+    byteLength = 28+getBody().getBodyLength();   //FIXME variable bodyLength
     Ieee80211AuthenticationFrameBody body;
 }
 
@@ -369,7 +370,7 @@ packet Ieee80211AuthenticationFrame extends Ieee80211ManagementFrame
 packet Ieee80211DeauthenticationFrame extends Ieee80211ManagementFrame
 {
     type = ST_DEAUTHENTICATION;
-    byteLength = 28+getBody().getBodyLength();
+    byteLength = 28+getBody().getBodyLength();   //FIXME variable bodyLength
     Ieee80211DeauthenticationFrameBody body;
 }
 
@@ -379,7 +380,7 @@ packet Ieee80211DeauthenticationFrame extends Ieee80211ManagementFrame
 packet Ieee80211DisassociationFrame extends Ieee80211ManagementFrame
 {
     type = ST_DISASSOCIATION;
-    byteLength = 28+getBody().getBodyLength();
+    byteLength = 28+getBody().getBodyLength();   //FIXME variable bodyLength
     Ieee80211DisassociationFrameBody body;
 }
 
@@ -389,7 +390,7 @@ packet Ieee80211DisassociationFrame extends Ieee80211ManagementFrame
 packet Ieee80211ProbeRequestFrame extends Ieee80211ManagementFrame
 {
     type = ST_PROBEREQUEST;
-    byteLength = 28+getBody().getBodyLength();
+    byteLength = 28+getBody().getBodyLength();   //FIXME variable bodyLength
     Ieee80211ProbeRequestFrameBody body;
 }
 
@@ -399,7 +400,7 @@ packet Ieee80211ProbeRequestFrame extends Ieee80211ManagementFrame
 packet Ieee80211AssociationRequestFrame extends Ieee80211ManagementFrame
 {
     type = ST_ASSOCIATIONREQUEST;
-    byteLength = 28+getBody().getBodyLength();
+    byteLength = 28+getBody().getBodyLength();   //FIXME variable bodyLength
     Ieee80211AssociationRequestFrameBody body;
 }
 
@@ -409,7 +410,7 @@ packet Ieee80211AssociationRequestFrame extends Ieee80211ManagementFrame
 packet Ieee80211ReassociationRequestFrame extends Ieee80211ManagementFrame
 {
     type = ST_REASSOCIATIONREQUEST;
-    byteLength = 28+getBody().getBodyLength();
+    byteLength = 28+getBody().getBodyLength();   //FIXME variable bodyLength
     Ieee80211ReassociationRequestFrameBody body;
 }
 
@@ -419,7 +420,7 @@ packet Ieee80211ReassociationRequestFrame extends Ieee80211ManagementFrame
 packet Ieee80211AssociationResponseFrame extends Ieee80211ManagementFrame
 {
     type = ST_ASSOCIATIONRESPONSE;
-    byteLength = 28+getBody().getBodyLength();
+    byteLength = 28+getBody().getBodyLength();   //FIXME variable bodyLength
     Ieee80211AssociationResponseFrameBody body;
 }
 
@@ -429,7 +430,7 @@ packet Ieee80211AssociationResponseFrame extends Ieee80211ManagementFrame
 packet Ieee80211ReassociationResponseFrame extends Ieee80211ManagementFrame
 {
     type = ST_REASSOCIATIONRESPONSE;
-    byteLength = 28+getBody().getBodyLength();
+    byteLength = 28+getBody().getBodyLength();   //FIXME variable bodyLength
     Ieee80211ReassociationResponseFrameBody body;
 }
 
@@ -439,7 +440,7 @@ packet Ieee80211ReassociationResponseFrame extends Ieee80211ManagementFrame
 packet Ieee80211BeaconFrame extends Ieee80211ManagementFrame
 {
     type = ST_BEACON;
-    byteLength = 28+getBody().getBodyLength();
+    byteLength = 28+getBody().getBodyLength();   //FIXME variable bodyLength
     Ieee80211BeaconFrameBody body;
 }
 
@@ -449,7 +450,7 @@ packet Ieee80211BeaconFrame extends Ieee80211ManagementFrame
 packet Ieee80211ProbeResponseFrame extends Ieee80211ManagementFrame
 {
     type = ST_PROBERESPONSE;
-    byteLength = 28+getBody().getBodyLength();
+    byteLength = 28+getBody().getBodyLength();   //FIXME variable bodyLength
     Ieee80211ProbeResponseFrameBody body;
 }
 
@@ -476,7 +477,7 @@ packet Ieee80211ActionMeshFrame extends Ieee80211ActionFrame
         // this fiels are used by fragmentation over ethernet, not necesasry, it's possible to use the fields un the Ieee80211 frame
     bool isFragment=false;
     unsigned long realLength=0;    
-    Ieee80211ActionMeshFrameBody body;
+    Ieee80211ActionHWMPFrameBody body;
 }
 
 

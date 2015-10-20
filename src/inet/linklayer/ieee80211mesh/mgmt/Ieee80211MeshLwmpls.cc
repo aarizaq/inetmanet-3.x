@@ -90,8 +90,8 @@ void Ieee80211Mesh::mplsSendAck(int label)
     mpls_pk_aux_ptr->setLabel(return_label);
     mpls_pk_aux_ptr->setDest(sta_addr);
     mpls_pk_aux_ptr->setSource(myAddress);
-//  sendOrEnqueue(encapsulate (mpls_pk_aux_ptr, sta_addr));
-    sendOrEnqueue(encapsulate(mpls_pk_aux_ptr, MACAddress::BROADCAST_ADDRESS));
+//  sendFrameDown(encapsulate (mpls_pk_aux_ptr, sta_addr));
+    sendFrameDown(encapsulate(mpls_pk_aux_ptr, MACAddress::BROADCAST_ADDRESS));
     /* initialize the mac timer */
     mplsInitializeCheckMac();
 }
@@ -179,7 +179,7 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
             frame->encapsulate(mpls_pk_ptr);
             if (frame->getReceiverAddress().isUnspecified())
                 ASSERT(!frame->getReceiverAddress().isUnspecified());
-            sendOrEnqueue(frame);
+            sendFrameDown(frame);
         }
         else
         {
@@ -403,7 +403,7 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
             frame->encapsulate(mpls_pk_ptr);
             if (frame->getReceiverAddress().isUnspecified())
                 ASSERT(!frame->getReceiverAddress().isUnspecified());
-            sendOrEnqueue(frame);
+            sendFrameDown(frame);
         }
     }
     else
@@ -586,7 +586,7 @@ void Ieee80211Mesh::mplsCreateNewPath(int label, LWMPLSPacket *mpls_pk_ptr, MACA
         frame->encapsulate(mpls_pk_ptr);
         if (frame->getReceiverAddress().isUnspecified())
             ASSERT(!frame->getReceiverAddress().isUnspecified());
-        sendOrEnqueue(frame);
+        sendFrameDown(frame);
     }
     mplsSendAck(label_in);
 }
@@ -662,7 +662,7 @@ void Ieee80211Mesh::mplsBasicSend(LWMPLSPacket *mpls_pk_ptr, MACAddress sta_addr
         frame->encapsulate(mpls_pk_ptr);
         if (frame->getReceiverAddress().isUnspecified())
             ASSERT(!frame->getReceiverAddress().isUnspecified());
-        sendOrEnqueue(frame);
+        sendFrameDown(frame);
     }
 }
 
@@ -708,7 +708,7 @@ void Ieee80211Mesh::mplsBreakPath(int label, LWMPLSPacket *mpls_pk_ptr, MACAddre
         frame->encapsulate(mpls_pk_ptr);
         if (frame->getReceiverAddress().isUnspecified())
             ASSERT(!frame->getReceiverAddress().isUnspecified());
-        sendOrEnqueue(frame);
+        sendFrameDown(frame);
     }
     else
     {
@@ -757,7 +757,7 @@ void Ieee80211Mesh::mplsNotFoundPath(int label, LWMPLSPacket *mpls_pk_ptr, MACAd
             frame->encapsulate(mpls_pk_ptr);
             if (frame->getReceiverAddress().isUnspecified())
                 ASSERT(!frame->getReceiverAddress().isUnspecified());
-            sendOrEnqueue(frame);
+            sendFrameDown(frame);
         }
         else
         {
@@ -808,7 +808,7 @@ void Ieee80211Mesh::mplsForwardData(int label, LWMPLSPacket *mpls_pk_ptr, MACAdd
         // polling = wlan_poll_list_member_find (send_mac_addr);
         // wlan_hlpk_enqueue (mpls_pk_ptr, send_mac_addr, polling,false);
 
-        sendOrEnqueue(encapsulate(mpls_pk_ptr, send_mac_addr));
+        sendFrameDown(encapsulate(mpls_pk_ptr, send_mac_addr));
         return;
     }
     else if (forwarding_ptr->order==LWMPLS_EXTRACT)
@@ -839,7 +839,7 @@ void Ieee80211Mesh::mplsForwardData(int label, LWMPLSPacket *mpls_pk_ptr, MACAdd
             {
                 forwarding_ptr->order = LWMPLS_CHANGE;
                 mpls_pk_ptr->setLabel(output_label);
-                sendOrEnqueue(encapsulate(mpls_pk_ptr, send_mac_addr));
+                sendFrameDown(encapsulate(mpls_pk_ptr, send_mac_addr));
             }
             else
             {
@@ -855,7 +855,7 @@ void Ieee80211Mesh::mplsForwardData(int label, LWMPLSPacket *mpls_pk_ptr, MACAdd
                 else
                     mpls_pk_ptr->setType(WMPLS_BEGIN);
 
-                sendOrEnqueue(encapsulate(mpls_pk_ptr, send_mac_addr));
+                sendFrameDown(encapsulate(mpls_pk_ptr, send_mac_addr));
             }
         }
         else
@@ -1004,7 +1004,7 @@ void Ieee80211Mesh::mplsDataProcess(LWMPLSPacket * mpls_pk_ptr, MACAddress sta_a
             // Enviar el mensaje al mac
             //polling = wlan_poll_list_member_find (sta_addr);
             // wlan_hlpk_enqueue (mpls_pk_ptr, sta_addr, polling,true);
-            sendOrEnqueue(encapsulate(mpls_pk_ptr, sta_addr));
+            sendFrameDown(encapsulate(mpls_pk_ptr, sta_addr));
             return;
         }
     }
@@ -1029,7 +1029,7 @@ void Ieee80211Mesh::mplsDataProcess(LWMPLSPacket * mpls_pk_ptr, MACAddress sta_a
             if (!(MACAddress(forwarding_ptr->mac_address).isUnspecified()))
             {
                 mpls_pk_ptr->setLabel(forwarding_ptr->output_label);
-                sendOrEnqueue(encapsulate(mpls_pk_ptr, MACAddress(forwarding_ptr->mac_address)));
+                sendFrameDown(encapsulate(mpls_pk_ptr, MACAddress(forwarding_ptr->mac_address)));
             }
             else
                 delete mpls_pk_ptr;
@@ -1121,7 +1121,7 @@ void Ieee80211Mesh::mplsDataProcess(LWMPLSPacket * mpls_pk_ptr, MACAddress sta_a
         }
         else
             processControlPacket(dynamic_cast<LWMPLSControl*>(mpls_pk_ptr));
-//        sendOrEnqueue(encapsulate(mpls_pk_ptr,MACAddress::BROADCAST_ADDRESS));
+//        sendFrameDown(encapsulate(mpls_pk_ptr,MACAddress::BROADCAST_ADDRESS));
 //       small random delay. Avoid the collision
         Ieee80211DataFrame *meshFrame = encapsulate(mpls_pk_ptr, MACAddress::BROADCAST_ADDRESS);
         if (floodingConfirmation)
@@ -1197,7 +1197,7 @@ void Ieee80211Mesh::mplsBreakMacLink(MACAddress macAddress)
                     LWMPLSPacket *lwmplspk = new LWMPLSPacket;
                     lwmplspk->setType(WMPLS_BREAK);
                     lwmplspk->setLabel(out_label);
-                    sendOrEnqueue(encapsulate(lwmplspk, MACAddress(des_add)));
+                    sendFrameDown(encapsulate(lwmplspk, MACAddress(des_add)));
                 }
                 mplsData->deleteForwarding(forwarding_ptr);
                 forwarding_ptr = nullptr;
@@ -1255,7 +1255,7 @@ void Ieee80211Mesh::mplsCheckRouteTime()
                     LWMPLSPacket *lwmplspk = new LWMPLSPacket;
                     lwmplspk->setType(WMPLS_BREAK);
                     lwmplspk->setLabel(out_label);
-                    sendOrEnqueue(encapsulate(lwmplspk, MACAddress(des_add)));
+                    sendFrameDown(encapsulate(lwmplspk, MACAddress(des_add)));
                 }
                 mplsData->deleteForwarding(forwarding_ptr);
             }
@@ -1307,72 +1307,7 @@ void Ieee80211Mesh::mplsPurge(LWmpls_Forwarding_Structure *forwarding_ptr, bool 
     if (forwarding_ptr==nullptr)
         return;
 
-    for (int i = 0; i < getNumQueues(); i++)
-    {
-
-
-        for (auto iter = dataQueue[i].begin(); iter != dataQueue[i].begin();)
-        {
-            cMessage *msg = (cMessage *) *iter;
-            purge = false;
-            Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame*>(msg);
-            if (frame == nullptr)
-            {
-                iter++;
-                continue;
-            }
-            LWMPLSPacket* mplsmsg = dynamic_cast<LWMPLSPacket*>(frame->getEncapsulatedPacket());
-            if (mplsmsg != nullptr)
-            {
-                int label = mplsmsg->getLabel();
-                int code = mplsmsg->getType();
-                if (label == 0)
-                {
-                    iter++;
-                    continue;
-                }
-                if (code == WMPLS_NORMAL)
-                {
-                    if ((forwarding_ptr->output_label == label
-                            && frame->getReceiverAddress() == MACAddress(forwarding_ptr->mac_address))
-                            || (forwarding_ptr->return_label_output == label
-                                    && frame->getReceiverAddress() == MACAddress(forwarding_ptr->input_mac_address)))
-                        purge = true;
-                }
-                else if ((code == WMPLS_BEGIN) && (purge_break == true))
-                {
-                    if (forwarding_ptr->return_label_input == label
-                            && frame->getReceiverAddress() == MACAddress(forwarding_ptr->mac_address))
-                        purge = true;
-                }
-                else if ((code == WMPLS_BEGIN) && (purge_break == false))
-                {
-                    if (forwarding_ptr->output_label > 0)
-                        if (forwarding_ptr->return_label_input == label
-                                && frame->getReceiverAddress() == MACAddress(forwarding_ptr->mac_address))
-                            purge = true;
-                }
-                if (purge == true)
-                {
-                    iter = dataQueue[i].erase(iter);
-                    mplsmsg = dynamic_cast<LWMPLSPacket*>(decapsulate(frame));
-                    delete msg;
-                    if (mplsmsg)
-                    {
-                        MACAddress prev;
-                        mplsBasicSend(mplsmsg, prev);
-                    }
-                    else
-                        delete mplsmsg;
-                    continue;
-                }
-                else
-                    iter++;
-            }
-            else
-                iter++;
-        }
-    }
+    return;
 }
 
 bool Ieee80211Mesh::mplsIsBroadcastProcessed(const MACAddress &src, const uint32 &newCounter)

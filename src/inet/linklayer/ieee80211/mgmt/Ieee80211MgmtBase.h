@@ -21,13 +21,9 @@
 #include "inet/common/INETDefs.h"
 
 #include "inet/linklayer/common/MACAddress.h"
-#include "inet/common/queue/PassiveQueueBase.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtFrames_m.h"
 #include "inet/common/lifecycle/ILifecycle.h"
-#include "inet/linklayer/ieee80211/mac/IQoSClassifier.h"
-#include "inet/linklayer/ieee80211/mgmt/Ieee80211PassiveQueue.h"
-#include <deque>
 
 namespace inet {
 
@@ -35,39 +31,20 @@ namespace ieee80211 {
 
 /**
  * Abstract base class for 802.11 infrastructure mode management components.
- * Performs queueing for MAC, and dispatching incoming frames by frame type.
- * Also keeps some simple statistics (frame counts).
  *
  * @author Andras Varga
  */
-class MpduAggregateHandler;
-
-class INET_API Ieee80211MgmtBase : public Ieee80211PassiveQueue, public ILifecycle
+class INET_API Ieee80211MgmtBase : public cSimpleModule, public ILifecycle
 {
   protected:
-    friend class MpduAggregateHandler;
     // configuration
-    int frameCapacity;
     MACAddress myAddress;
     bool isOperational;    // for lifecycle
-
-    // state
-    typedef std::deque<Ieee80211DataOrMgmtFrame *> DataQueue;
-    std::vector <int> packetRequestedCat;
-    std::vector<DataQueue> dataQueue;    // queue for data frames
-    DataQueue mgmtQueue;    // queue for management frames (higher priority than data frames)
 
     // statistics
     long numDataFramesReceived;
     long numMgmtFramesReceived;
     long numMgmtFramesDropped;
-
-    // queue statistics
-    static simsignal_t dataQueueLenSignal;
-
-    IQoSClassifier * classifier;
-    int numQueues;
-    MpduAggregateHandler *mpduAggregateHandler = nullptr;
 
   protected:
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
@@ -85,14 +62,8 @@ class INET_API Ieee80211MgmtBase : public Ieee80211PassiveQueue, public ILifecyc
     /** Should be redefined to handle commands from the "agent" (if present) */
     virtual void handleCommand(int msgkind, cObject *ctrl) = 0;
 
-    /** Utility method for implementing handleUpperMessage(): gives the message to PassiveQueueBase */
-    virtual void sendOrEnqueue(cPacket *frame);
-
-    /** utility method handle requested multi queue packets **/
-    virtual void sendOrEnqueue(cPacket *frame, const int &);
-
-    /** Redefined from PassiveQueueBase: send message to MAC */
-    virtual void sendOut(cMessage *msg) override;
+    /** Utility method for implementing handleUpperMessage(): send message to MAC */
+    virtual void sendDown(cPacket *frame);
 
     /** Utility method to dispose of an unhandled frame */
     virtual void dropManagementFrame(Ieee80211ManagementFrame *frame);
@@ -125,36 +96,9 @@ class INET_API Ieee80211MgmtBase : public Ieee80211PassiveQueue, public ILifecyc
     virtual void start();
     virtual void stop();
 
-    virtual void clear();
-    virtual void clear(const int &);
-
   public:
     virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback) override;
     //@}
-  public:
-    // access queue information
-    /** Redefined from PassiveQueueBase. */
-    virtual cMessage *enqueue(cMessage *msg) override;
-
-    /** Redefined from PassiveQueueBase. */
-    virtual cMessage *dequeue() override;
-
-    /** Redefined from IPassiveQueue. */
-    virtual bool isEmpty() override;
-    virtual bool isEmpty(const int&) {return dataQueue.empty();}
-
-
-    // * multi queue methods
-    virtual int getNumQueues() {return numQueues;}
-    virtual int getNumPendingRequests(const int& cat) {return packetRequestedCat[cat];}
-    virtual void requestPacket(const int&);
-    virtual cMessage *dequeue(const int&);
-    virtual cMessage *enqueue(cMessage *, const int &);
-    virtual cMessage *pop(const int&);
-
-    virtual Ieee80211DataOrMgmtFrame *getQueueElement(const int &, const int &) const;
-    virtual unsigned int getDataSize(const int &cat) const;
-    virtual unsigned int getManagementSize() const;
 };
 
 } // namespace ieee80211

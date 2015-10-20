@@ -21,7 +21,7 @@ package inet.linklayer.ieee80211mesh;
 
 import inet.common.IHook;
 import inet.linklayer.contract.IWirelessNic;
-import inet.linklayer.ieee80211.mac.Ieee80211Mac;
+import inet.linklayer.ieee80211.IIeee80211Mac;
 import inet.linklayer.ieee80211.mgmt.IIeee80211Mgmt;
 import inet.linklayer.ieee80211.mgmt.Ieee80211AgentSTA;
 import inet.physicallayer.contract.packetlevel.IRadio;
@@ -29,6 +29,7 @@ import inet.physicallayer.contract.packetlevel.IRadio;
 import inet.linklayer.ieee80211mesh.mgmt.Ieee80211Mesh;
 import inet.linklayer.contract.IWirelessNic;
 import inet.linklayer.ieee80211mesh.locator.ILocator;
+import inet.linklayer.common.IIeee8021dQoSClassifier;
 
 
 //
@@ -43,8 +44,7 @@ module Ieee80211NicMesh like IWirelessNic
         string mgmtType = default("Ieee80211Mesh"); // name of the management module type (implements IIeee80211Mgmt)
         string radioType = default("Ieee80211Radio");
         string opMode @enum("b","g","a","p") = default("g");
-        int numOutputHooks = default(0);
-        int numInputHooks = default(0);
+        string macType = default("Ieee80211Mac");   // choose from Ieee80211Mac, Ieee80211NewMac, Ieee80211CompatibleNewMac
         double bitrate @unit("bps") = default(opMode == "b" ? 11Mbps : opMode == "p" ? 27Mbps : 54Mbps);
         bool _agentNeeded = false;   // internal par. do not use, shows if optional agent module is needed        
         bool hasLocator = default(false);
@@ -58,8 +58,9 @@ module Ieee80211NicMesh like IWirelessNic
         output toEthernet @labels(Ieee80211Frame); // to Ethernet MAC
         input radioIn @labels(AirFrame); // to receive AirFrames
     submodules:
-        outputHook[numOutputHooks]: <default("Nop")> like IHook if numOutputHooks>0;
-        inputHook[numInputHooks]: <default("Nop")> like IHook if numInputHooks>0;
+        classifier: <classifierType> like IIeee8021dQoSClassifier if classifierType != "" {
+            @display("p=110,59;i=block/classifier");
+        }
         locator: <default("Locator")> like ILocator if hasLocator {
             @display("i=abstract/people;p=164,182");
         }
@@ -77,12 +78,9 @@ module Ieee80211NicMesh like IWirelessNic
                 macIn;
                 macOut;                
         }
-        mac: Ieee80211Mac {
+        mac: <macType> like IIeee80211Mac {
             parameters:
-                opMode = opMode;
-                queueModule = "mgmt";
-                bitrate = bitrate;
-                @display("p=96,222");
+                @display("p=157,217");
         }
         radio: <radioType> like IRadio {
             parameters:
@@ -102,19 +100,12 @@ module Ieee80211NicMesh like IWirelessNic
         mgmt.toEthernet --> toEthernet;
         mgmt.fromEthernet <-- fromEthernet;
 
-        mgmt.upperLayerOut --> upperLayerOut if numInputHooks == 0;
-        mgmt.upperLayerIn <-- upperLayerIn if numOutputHooks == 0;
 
-        mgmt.upperLayerOut --> inputHook[0].in if numInputHooks > 0;
-        for i=0..numInputHooks-2 {
-            inputHook[i].out --> inputHook[i+1].in;
-        }
-        inputHook[numInputHooks-1].out --> upperLayerOut if numInputHooks > 0;
-        outputHook[0].in <-- upperLayerIn if numOutputHooks > 0;
-        for i=0..numOutputHooks-2 {
-            outputHook[i].out --> outputHook[i+1].in;
-        }
-        mgmt.upperLayerIn <-- outputHook[numOutputHooks-1].out if numOutputHooks > 0;
+        mgmt.upperLayerOut --> { @display("m=n"); } --> upperLayerOut;
+        mgmt.upperLayerIn <-- { @display("m=n"); } <-- upperLayerIn if classifierType == "";
+        mgmt.upperLayerIn <-- { @display("m=n"); } <-- classifier.out if classifierType != "";
+        classifier.in <-- { @display("m=n"); } <-- upperLayerIn if classifierType != "";
+
         mgmt.locatorIn <-- locator.outGate if hasLocator;
         mgmt.locatorOut --> locator.inGate if hasLocator;
 }

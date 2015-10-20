@@ -28,7 +28,6 @@
 #include "inet/common/INETDefs.h"
 #include "inet/common/FSMA.h"
 #include "inet/common/INETMath.h"
-#include "inet/linklayer/ieee80211/mgmt/Ieee80211PassiveQueue.h"
 #include "inet/common/lifecycle/ILifecycle.h"
 #include "inet/physicallayer/contract/packetlevel/IRadio.h"
 #include "inet/physicallayer/ieee80211/mode/IIeee80211Mode.h"
@@ -37,7 +36,7 @@
 
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Consts.h"
-
+#include "inet/linklayer/ieee80211/mac/IQoSClassifier.h"
 
 namespace inet {
 
@@ -178,15 +177,12 @@ class INET_API Ieee80211Mac : public MACProtocolBase
 
     /** Maximum number of frames in the queue; should be set in the omnetpp.ini */
     int maxQueueSize = 0;
-    int maxCategorieQueueSize = 0;
 
     /**
      * The minimum length of MPDU to use RTS/CTS mechanism. 0 means always, extremely
      * large value means never. See spec 9.2.6 and 361.
      */
     int rtsThreshold = 0;
-
-    bool useRtsMpduA = false;
 
     /**
      * Maximum number of transmissions for a message.
@@ -241,7 +237,6 @@ class INET_API Ieee80211Mac : public MACProtocolBase
         WAITCTS,
         WAITSIFS,
         RECEIVE,
-        WAITBLOCKACK,
     };
   protected:
     cFSM fsm;
@@ -270,7 +265,6 @@ class INET_API Ieee80211Mac : public MACProtocolBase
         long bits;
         simtime_t minjitter;
         simtime_t maxjitter;
-        unsigned int saveSize;
     };
 
     struct EdcaOutVector
@@ -341,6 +335,9 @@ class INET_API Ieee80211Mac : public MACProtocolBase
      * SLRC and SSRC, see 9.2.4 in the spec
      */
     //int retryCounter[4];
+
+    IQoSClassifier *classifier = nullptr;
+
   public:
     /** 80211 MAC operation modes */
     enum Mode {
@@ -349,9 +346,6 @@ class INET_API Ieee80211Mac : public MACProtocolBase
         EDCA,
     };
   protected:
-    // if true MAC sublayer store the frames instead of the management sublayer
-    bool queueMode = false;
-
     Mode mode = (Mode)-1;
 
     /** Sequence number to be assigned to the next frame */
@@ -392,9 +386,6 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     simtime_t duplicateTimeOut;
     simtime_t lastTimeDelete;
     Ieee80211ASFTupleList asfTuplesList;
-
-    /** Passive queue module to request messages from */
-    Ieee80211PassiveQueue *queueModule = nullptr;
 
     /**
      * The last change channel message received and not yet sent to the physical layer, or nullptr.
@@ -477,7 +468,6 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     virtual void initializeCategories();
     virtual void initialize(int) override;
     virtual InterfaceEntry *createInterfaceEntry() override;
-    virtual void initializeQueueModule();
     virtual void finish() override;
     virtual void configureAutoBitRate();
     virtual void initWatches();
@@ -574,10 +564,6 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     virtual void sendDataFrameOnEndSIFS(Ieee80211DataOrMgmtFrame *frameToSend);
     virtual void sendDataFrame(Ieee80211DataOrMgmtFrame *frameToSend);
     virtual void sendMulticastFrame(Ieee80211DataOrMgmtFrame *frameToSend);
-
-    virtual void processMpduA(Ieee80211Frame *frame);
-    virtual bool isMpduA(Ieee80211Frame *frame);
-
     //@}
 
   protected:
@@ -607,8 +593,8 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     virtual void finishCurrentTransmission();
     virtual void giveUpCurrentTransmission();
     virtual void retryCurrentTransmission();
-    virtual bool transmissionQueueEmpty();
-    virtual unsigned int transmissionQueueSize();
+    virtual bool transmissionQueuesEmpty();
+    virtual unsigned int getTotalQueueLength();
     virtual void flushQueue();
     virtual void clearQueue();
 
@@ -735,11 +721,8 @@ class INET_API Ieee80211Mac : public MACProtocolBase
     virtual void configureRadioMode(IRadio::RadioMode radioMode);
 
   public:
-    virtual void setQueueModeTrue() {queueMode = true;}
-    virtual void setQueueModeFalse() {queueMode = false;}
-    virtual State getState() {return static_cast<State>(fsm.getState());}
-    virtual unsigned int getQueueSize() {return transmissionQueueSize();}
-    virtual int getQueueSizeAddress(const MACAddress &addr);
+    virtual State getState() { return static_cast<State>(fsm.getState()); }
+    virtual unsigned int getQueueSize() { return getTotalQueueLength(); }
 };
 
 } // namespace ieee80211

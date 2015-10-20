@@ -103,7 +103,7 @@ void Ieee80211MgmtAdhocWithEtx::handleEtxMessage(cPacket *pk)
         frame->setReceiverAddress(etxMsg->getDest());
         //TODO frame->setEtherType(...);
         frame->encapsulate(etxMsg);
-        sendOrEnqueue(frame);
+        sendDown(frame);
     }
     else
         delete pk;

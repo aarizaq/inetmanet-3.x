@@ -88,7 +88,7 @@ void SecurityIeee80211MgmtBase::handleMessage(cMessage *msg)
                 strstr(msg->getName() ,"Auth msg 1/4")!=nullptr || strstr(msg->getName() ,"Auth msg 2/4")!=nullptr ||strstr(msg->getName() ,"Auth msg 3/4")!=nullptr ||
                 strstr(msg->getName() ,"Auth msg 4/4")!=nullptr || strstr(msg->getName() , "Group msg 1/2")!=nullptr || strstr(msg->getName() ,"Group msg 2/2")!=nullptr )
         {
-            sendOrEnqueue(PK(msg));
+            sendDown(PK(msg));
         }
 
     // else if (strstr(gateName,"securityIn")!=nullptr && hasSecurity)
@@ -97,7 +97,7 @@ void SecurityIeee80211MgmtBase::handleMessage(cMessage *msg)
         if(strstr(msg->getName() ,"CCMPFrame")!=nullptr)
         {
             EV << "CCMPFrame Frame arrived from Security, send it to Mac_" <<endl;
-            sendOrEnqueue(PK(msg));
+            sendDown(PK(msg));
         }
         else if(strstr(msg->getName() ,"DecCCMP")!=nullptr)
         {
@@ -107,7 +107,7 @@ void SecurityIeee80211MgmtBase::handleMessage(cMessage *msg)
         }
         else
         {
-            sendOrEnqueue(PK(msg));
+            sendDown(PK(msg));
         }
     }
 
@@ -161,13 +161,11 @@ void SecurityIeee80211MgmtBase::sendOut(cMessage *msg)
         }
         else
         {
-            packetRequested++;
             send(msg, "securityOut");
         }
     }
     else
     {
-        packetRequested++;
         send(msg, "macOut");
     }
 }

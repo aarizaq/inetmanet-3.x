@@ -63,7 +63,7 @@ void Ieee80211MgmtAdhocWithRouting::handleTimer(cMessage *msg)
 void Ieee80211MgmtAdhocWithRouting::handleUpperMessage(cPacket *msg)
 {
     Ieee80211DataFrame *frame = encapsulate(msg);
-    sendOrEnqueue(frame);
+    sendDown(frame);
 }
 
 void Ieee80211MgmtAdhocWithRouting::handleCommand(int msgkind, cObject *ctrl)
@@ -329,7 +329,7 @@ bool Ieee80211MgmtAdhocWithRouting::macLabelBasedSend(Ieee80211DataFrame *frame)
                 it->second.pop_front();
         }
         frame->setKind(0);
-        sendOrEnqueue(frame->dup());
+        sendDown(frame->dup());
         sendUp(decapsulate(frame));
         return true;
     }
@@ -379,7 +379,7 @@ bool Ieee80211MgmtAdhocWithRouting::macLabelBasedSend(Ieee80211DataFrame *frame)
     if (frame)
     {
         frame->setKind(0);
-        sendOrEnqueue(frame);
+        sendDown(frame);
     }
     return true;
 }
@@ -400,7 +400,7 @@ void Ieee80211MgmtAdhocWithRouting::handleRoutingMessage(cPacket *msg)
     {
         msg->setKind(ctrl->getInterfaceId());
         delete ctrl;
-        sendOrEnqueue(msg);
+        sendDown(msg);
     }
     else
     {
@@ -411,7 +411,7 @@ void Ieee80211MgmtAdhocWithRouting::handleRoutingMessage(cPacket *msg)
 
         frame->setKind(ctrl->getInterfaceId());
         delete ctrl;
-        sendOrEnqueue(frame);
+        sendDown(frame);
     }
 }
 

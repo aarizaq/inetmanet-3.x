@@ -19,7 +19,7 @@
 
 package inet.linklayer.ieee80211;
 
-import inet.common.IHook;;
+import inet.linklayer.common.IIeee8021dQoSClassifier;
 import inet.linklayer.contract.IWirelessNic;
 import inet.linklayer.ieee80211.mac.Ieee80211Mac;
 import inet.linklayer.ieee80211.mgmt.Ieee80211AgentSTA;
@@ -54,9 +54,9 @@ module SecurityIeee80211Nic like IWirelessNic
       
         input radioIn @labels(AirFrame); // to receive AirFrames
     submodules:
-        outputHook[numOutputHooks]: <default("Nop")> like IHook if numOutputHooks>0;
-        inputHook[numInputHooks]: <default("Nop")> like IHook if numInputHooks>0;
-       
+        classifier: <classifierType> like IIeee8021dQoSClassifier if classifierType != "" {
+            @display("p=110,59;i=block/classifier");
+        }
         // optional agent module (can be either 0 or 1 sized vector)
         agent: Ieee80211AgentSTA if _agentNeeded {
             parameters:
@@ -80,7 +80,6 @@ module SecurityIeee80211Nic like IWirelessNic
         mac: Ieee80211Mac {
             parameters:
                 opMode = opMode;
-                queueModule = "mgmt";
                 bitrate = bitrate;
                 @display("p=96,222");
         }
@@ -107,16 +106,10 @@ module SecurityIeee80211Nic like IWirelessNic
         mgmt.upperLayerOut --> upperLayerOut if numInputHooks == 0;
         mgmt.upperLayerIn <-- upperLayerIn if numOutputHooks == 0;
 
-        mgmt.upperLayerOut --> inputHook[0].in if numInputHooks > 0;
-        for i=0..numInputHooks-2 {
-            inputHook[i].out --> inputHook[i+1].in;
-        }
-        inputHook[numInputHooks-1].out --> upperLayerOut if numInputHooks > 0;
-        outputHook[0].in <-- upperLayerIn if numOutputHooks > 0;
-        for i=0..numOutputHooks-2 {
-            outputHook[i].out --> outputHook[i+1].in;
-        }
-        mgmt.upperLayerIn <-- outputHook[numOutputHooks-1].out if numOutputHooks > 0;
+        mgmt.upperLayerOut --> { @display("m=n"); } --> upperLayerOut;
+        mgmt.upperLayerIn <-- { @display("m=n"); } <-- upperLayerIn if classifierType == "";
+        mgmt.upperLayerIn <-- { @display("m=n"); } <-- classifier.out if classifierType != "";
+        classifier.in <-- { @display("m=n"); } <-- upperLayerIn if classifierType != "";
       
 }
 

@@ -58,13 +58,13 @@ void SecurityIeee80211MgmtAdhoc::handleUpperMessage(cPacket *msg)
             EV << "OLSRKATZE" << endl;
             frame = encapsulate(msg);
             if(frame != nullptr)
-                   sendOrEnqueue(frame);
+                   sendDown(frame);
         }
         else{
             EV << "OLSRMIMI" << endl;
             frame = encapsulate(msg);
             if(frame != nullptr)
-                   sendOrEnqueue(frame);
+                sendDown(frame);
         }
 
 //    Ieee80211ManagementFrame *frame = encapsulateMgmt(msg);
@@ -213,13 +213,11 @@ void SecurityIeee80211MgmtAdhoc::sendOut(cMessage *msg)
         }
         else
         {
-            packetRequested++;
             send(msg, "securityOut");
         }
     }
     else
     {
-        packetRequested++;
         send(msg, "macOut");
     }
 }

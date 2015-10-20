@@ -293,7 +293,7 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase, public cListener
         /** Redefined from Ieee80211MgmtBase Utility method: sends the packet to the upper layer */
         //virtual void sendUp(cMessage *msg);
         virtual cPacket * decapsulate(Ieee80211DataFrame *frame);
-        virtual void sendOrEnqueue(cPacket *frame);
+        virtual void sendFrameDown(cPacket *frame);
 
         virtual bool isAddressForUs(const MACAddress &add);
 };

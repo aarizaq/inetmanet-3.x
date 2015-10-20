@@ -22,11 +22,9 @@
 #include "inet/networklayer/contract/IInterfaceTable.h"
 #include "inet/physicallayer/contract/packetlevel/RadioControlInfo_m.h"
 #include "inet/physicallayer/ieee80211/packetlevel/Ieee80211ControlInfo_m.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211eClassifier.h"
 #include "inet/common/INETUtils.h"
 #include "inet/common/ModuleAccess.h"
-#include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtBase.h"
-#include "inet/linklayer/ieee80211/mac/Ieee80211MpduA.h"
-
 
 namespace inet {
 
@@ -47,8 +45,7 @@ Register_Enum(inet::Ieee80211Mac,
          Ieee80211Mac::WAITMULTICAST,
          Ieee80211Mac::WAITCTS,
          Ieee80211Mac::WAITSIFS,
-         Ieee80211Mac::RECEIVE,
-         Ieee80211Mac::WAITBLOCKACK));
+         Ieee80211Mac::RECEIVE));
 
 /****************************************************************
  * Construction functions.
@@ -57,8 +54,11 @@ Register_Enum(inet::Ieee80211Mac,
 void Ieee80211Mac::initializeCategories()
 {
     int numQueues = 1;
-    if (queueModule)
-        numQueues = queueModule->getNumQueues();
+    if (par("EDCA")) {
+        const char *classifierClass = par("classifier");
+        classifier = check_and_cast<IQoSClassifier *>(inet::utils::createOne(classifierClass));
+        numQueues = classifier->getNumQueues();
+    }
 
     for (int i = 0; i < numQueues; i++)
     {
@@ -83,7 +83,6 @@ void Ieee80211Mac::initializeCategories()
         }
         else
             throw cRuntimeError("parameters %s , %s don't exist", strAifs.c_str(), strTxop.c_str());
-        edcCAF[i].saveSize = 100;//par(strSaveSize.c_str());
     }
     if (numCategories() == 1)
         AIFSN(0) = par("AIFSN");
@@ -190,6 +189,7 @@ Ieee80211Mac::~Ieee80211Mac()
     edcCAFOutVector.clear();
     if (pendingRadioConfigMsg)
         delete pendingRadioConfigMsg;
+    delete classifier;
 }
 
 /****************************************************************
@@ -204,8 +204,11 @@ void Ieee80211Mac::initialize(int stage)
     //TODO: revise it: it's too big; should revise stages, too!!!
     if (stage == INITSTAGE_LOCAL)
     {
-
         // initialize parameters
+
+        // initialize category
+        initializeCategories();
+
         modeSet = Ieee80211ModeSet::getModeSet(*par("opMode").stringValue());
 
         PHY_HEADER_LENGTH = par("phyHeaderLength");    //26us
@@ -309,9 +312,6 @@ void Ieee80211Mac::initialize(int stage)
         endReserve = new cMessage("Reserve");
         mediumStateChange = new cMessage("MediumStateChange");
 
-        // obtain pointer to external queue
-        initializeQueueModule();    //FIXME STAGE: this should be in L2 initialization!!!!
-
         // state variables
         fsm.setName("Ieee80211Mac State Machine");
         mode = DCF;
@@ -368,8 +368,6 @@ void Ieee80211Mac::initialize(int stage)
         radio = check_and_cast<IRadio *>(radioModule);
     }
     else if (stage == INITSTAGE_LINK_LAYER) {
-        // initialize category
-        initializeCategories();
 
         if (isOperational)
             radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
@@ -514,32 +512,6 @@ InterfaceEntry *Ieee80211Mac::createInterfaceEntry()
     return e;
 }
 
-void Ieee80211Mac::initializeQueueModule()
-{
-    // use of external queue module is optional -- find it if there's one specified
-    if (par("queueModule").stringValue()[0]) {
-        cModule *module = getModuleFromPar<cModule>(par("queueModule"), this);
-        queueModule = check_and_cast<Ieee80211PassiveQueue *>(module);
-
-        EV_DEBUG << "Requesting first two frames from queue module\n";
-        if (queueModule->getNumQueues() == 1)
-        {
-            queueModule->requestPacket();
-            // needed for backoff: mandatory if next message is already present
-            queueModule->requestPacket();
-        }
-        else
-        {
-            for (int i = 0; i < queueModule->getNumQueues(); i++)
-            {
-                queueModule->requestPacket(i);
-                // needed for backoff: mandatory if next message is already present
-                queueModule->requestPacket(i);
-            }
-        }
-    }
-}
-
 /****************************************************************
  * Message handling functions.
  */
@@ -639,7 +611,7 @@ int Ieee80211Mac::mappingAccessCategory(Ieee80211DataOrMgmtFrame *frame)
         tempAC = frame->getKind();
 
     // check for queue overflow
-    if (isDataFrame && maxQueueSize && (int)transmissionQueueSize() >= maxQueueSize) {
+    if (isDataFrame && maxQueueSize > 0 && (int)transmissionQueue(tempAC)->size() >= maxQueueSize) {
         EV_WARN << "message " << frame << " received from higher layer but AC queue is full, dropping message\n";
         numDropped()++;
         delete frame;
@@ -1214,31 +1186,23 @@ void Ieee80211Mac::sendDataFrame(Ieee80211DataOrMgmtFrame *frameToSend)
 {
     simtime_t t = 0, time = 0;
     int count = 0;
-    Ieee80211DataOrMgmtFrame* frame;
-
-    frame = transmissionQueue()->front();
-    ASSERT(frame == frameToSend);
-
-    int queueSize = (int) queueModule->getDataSize(currentAC) + (int) queueModule->getManagementSize();
-
-    if (!txop && TXOP() > 0 &&  queueSize> 1 )
-    {
+    auto frame = transmissionQueue()->begin();
+    ASSERT(*frame == frameToSend);
+    if (!txop && TXOP() > 0 && transmissionQueue()->size() >= 2) {
         //we start packet burst within TXOP time period
         txop = true;
-        count++;
-        t = computeFrameDuration(frame) + 2 * getSIFS() + controlFrameTxTime(LENGTH_ACK);
-        EV_DEBUG << "t is " << t << endl;
 
-        int pos = 0;
-        while (TXOP() > time+t && pos < queueSize)
-        {
-            time += t;
-            EV_DEBUG << "adding t \n";
-            frame = queueModule->getQueueElement(currentAC,pos);
-            pos++;
+        for (frame = transmissionQueue()->begin(); frame != transmissionQueue()->end(); ++frame) {
             count++;
-            t = computeFrameDuration(frame) + 2 * getSIFS() + controlFrameTxTime(LENGTH_ACK);
+            t = computeFrameDuration(*frame) + 2 * getSIFS() + controlFrameTxTime(LENGTH_ACK);
             EV_DEBUG << "t is " << t << endl;
+            if (TXOP() > time + t) {
+                time += t;
+                EV_DEBUG << "adding t\n";
+            }
+            else {
+                break;
+            }
         }
         //to be sure we get endTXOP earlier then receive ACK and we have to minus SIFS time from first packet
         time -= getSIFS() / 2 + getSIFS();
@@ -1282,19 +1246,6 @@ void Ieee80211Mac::sendCTSFrame(Ieee80211RTSFrame *rtsFrame)
     sendDown(setControlBitrate(buildCTSFrame(rtsFrame)));
 }
 
-
-void Ieee80211Mac::processMpduA(Ieee80211Frame *frame)
-{
-
-}
-
-bool Ieee80211Mac::isMpduA(Ieee80211Frame *frame)
-{
-    if (dynamic_cast<Ieee80211MpduA*>(frame))
-        return true;
-    return false;
-}
-
 /****************************************************************
  * Frame builder functions.
  */
@@ -1317,16 +1268,16 @@ Ieee80211DataOrMgmtFrame *Ieee80211Mac::buildDataFrame(Ieee80211DataOrMgmtFrame 
     }
     if (isMulticast(frameToSend))
         frame->setDuration(0);
-    else if (!frameToSend->getMoreFragments())
-    {
-        int queueSize = (int) queueModule->getDataSize(currentAC) + (int) queueModule->getManagementSize();
-        if (txop && queueSize > 1)
-        {
-            Ieee80211DataOrMgmtFrame* nextframeToSend = queueModule->getQueueElement(currentAC,0);
+    else if (!frameToSend->getMoreFragments()) {
+        if (txop && transmissionQueue()->size() > 1) {
+            // ++ operation is safe because txop is true
+            auto nextframeToSend = transmissionQueue()->begin();
+            nextframeToSend++;
+            ASSERT(transmissionQueue()->end() != nextframeToSend);
             double bitRate = dataFrameMode->getDataMode()->getNetBitrate().get();
-            int size = nextframeToSend->getBitLength();
+            int size = (*nextframeToSend)->getBitLength();
             TransmissionRequest *trRq = dynamic_cast<TransmissionRequest *>(transmissionQueue()->front()->getControlInfo());
-           if (trRq) {
+            if (trRq) {
                 bitRate = trRq->getBitrate().get();
                 if (bitRate == 0)
                     bitRate = dataFrameMode->getDataMode()->getNetBitrate().get();
@@ -1565,20 +1516,6 @@ void Ieee80211Mac::popTransmissionQueue()
     Ieee80211Frame *temp = dynamic_cast<Ieee80211Frame *>(transmissionQueue()->front());
     ASSERT(!transmissionQueue()->empty());
     transmissionQueue()->pop_front();
-    if (queueModule) {
-        if (numCategories() == 1) {
-            // the module are continuously asking for packets
-            EV_DEBUG << "requesting another frame from queue module\n";
-            queueModule->requestPacket();
-        }
-        else if (numCategories()>1)
-        {
-            // Now exist a empty frame space
-            // the module are continuously asking for packets
-            EV_DEBUG << "requesting another frame from queue module\n";
-            queueModule->requestPacket(currentAC);
-        }
-    }
     delete temp;
 }
 
@@ -1658,7 +1595,7 @@ const char *Ieee80211Mac::modeName(int mode)
 #undef CASE
 }
 
-bool Ieee80211Mac::transmissionQueueEmpty()
+bool Ieee80211Mac::transmissionQueuesEmpty()
 {
     for (int i = 0; i < numCategories(); i++)
         if (!transmissionQueue(i)->empty())
@@ -1667,7 +1604,7 @@ bool Ieee80211Mac::transmissionQueueEmpty()
     return true;
 }
 
-unsigned int Ieee80211Mac::transmissionQueueSize()
+unsigned int Ieee80211Mac::getTotalQueueLength()
 {
     unsigned int totalSize = 0;
     for (int i = 0; i < numCategories(); i++)
@@ -1677,18 +1614,6 @@ unsigned int Ieee80211Mac::transmissionQueueSize()
 
 void Ieee80211Mac::flushQueue()
 {
-    if (queueModule) {
-        /*
-        while (!(IPassiveQueue *)queueModule->isEmpty())
-        {
-            cMessage *msg = queueModule->pop();
-            //TODO emit(dropPkIfaceDownSignal, msg); -- 'pkDropped' signals are missing in this module!
-            delete msg;
-        }
-        */
-        ((IPassiveQueue*)queueModule)->clear(); // clear request count
-    }
-
     for (int i = 0; i < numCategories(); i++) {
         while (!transmissionQueue(i)->empty()) {
             cMessage *msg = transmissionQueue(i)->front();
@@ -1701,10 +1626,6 @@ void Ieee80211Mac::flushQueue()
 
 void Ieee80211Mac::clearQueue()
 {
-    if (queueModule) {
-        ((IPassiveQueue*)queueModule)->clear(); // clear request count
-    }
-
     for (int i = 0; i < numCategories(); i++) {
         while (!transmissionQueue(i)->empty()) {
             cMessage *msg = transmissionQueue(i)->front();
@@ -2084,8 +2005,7 @@ const IIeee80211Mode *Ieee80211Mac::getControlAnswerMode(const IIeee80211Mode *r
      * TODO: Note that we're ignoring the last sentence for now, because
      * there is not yet any manipulation here of PHY options.
      */
-    bool found = false;
-    const IIeee80211Mode *bestMode;
+    const IIeee80211Mode *bestMode = nullptr;
     const IIeee80211Mode *mode = modeSet->getSlowestMode();
     while (mode != nullptr) {
         /* If the rate:
@@ -2098,7 +2018,7 @@ const IIeee80211Mode *Ieee80211Mac::getControlAnswerMode(const IIeee80211Mode *r
          * ...then it's our best choice so far.
          */
         if (modeSet->getIsMandatory(mode) &&
-            (!found || mode->getDataMode()->getGrossBitrate() > bestMode->getDataMode()->getGrossBitrate()) &&
+            (!bestMode || mode->getDataMode()->getGrossBitrate() > bestMode->getDataMode()->getGrossBitrate()) &&
             mode->getDataMode()->getGrossBitrate() <= reqMode->getDataMode()->getGrossBitrate() &&
             // TODO: same modulation class
             typeid(*mode) == typeid(*bestMode))
@@ -2108,7 +2028,6 @@ const IIeee80211Mode *Ieee80211Mac::getControlAnswerMode(const IIeee80211Mode *r
             // rate, but we need to continue and consider all the
             // mandatory rates before we can be sure we've got the right
             // one.
-            found = true;
         }
     }
 
@@ -2122,7 +2041,7 @@ const IIeee80211Mode *Ieee80211Mac::getControlAnswerMode(const IIeee80211Mode *r
      * Either way, it is serious - we can either disobey the standard or
      * fail, and I have chosen to do the latter...
      */
-    if (!found) {
+    if (!bestMode) {
         throw cRuntimeError("Can't find response rate for reqMode. Check standard and selected rates match.");
     }
 
@@ -2216,29 +2135,12 @@ void Ieee80211Mac::promiscousFrame(cMessage *msg)
 
 bool Ieee80211Mac::isBackoffPending()
 {
-    for (unsigned int i = 0; i < edcCAF.size(); i++) {
-        if (edcCAF[i].backoff)
+    for (auto & elem : edcCAF) {
+        if (elem.backoff)
             return true;
     }
     return false;
 }
-
-
-int Ieee80211Mac::getQueueSizeAddress(const MACAddress &addr)
-{
-    unsigned int totalSize=0;
-    for (int i=0; i<numCategories(); i++)
-    {
-        std::list<Ieee80211DataOrMgmtFrame*>::iterator nextframeToSend;
-        for (nextframeToSend = transmissionQueue()->begin(); nextframeToSend != transmissionQueue()->end(); ++nextframeToSend)
-        {
-            if ((*nextframeToSend)->getReceiverAddress() == addr)
-                totalSize++;
-        }
-    }
-    return totalSize;
-}
-
 
 double Ieee80211Mac::controlFrameTxTime(int bits)
 {
@@ -2255,10 +2157,9 @@ double Ieee80211Mac::controlFrameTxTime(int bits)
 bool Ieee80211Mac::handleNodeStart(IDoneCallback *doneCallback)
 {
     if (!doneCallback)
-        return true; // do nothing when called from initialize() //FIXME It's a hack, should remove the initializeQueueModule() and setRadioMode() calls from initialize()
+        return true; // do nothing when called from initialize()
 
     bool ret = MACProtocolBase::handleNodeStart(doneCallback);
-    initializeQueueModule();
     radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
     return ret;
 }
