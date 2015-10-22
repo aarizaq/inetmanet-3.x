@@ -1090,9 +1090,21 @@ bool WirelessNumHops::getKshortest(const MACAddress &dest,KroutesMac &routes)
         }
     }
     if (!find)
+    {
+        printf("Ruta 1 : ");
+        for (unsigned int j =0; j <routeMin.size();j++)
+            printf("%i - ",routeMin[j]);
+        printf("\n Rutas k-short \n");
+        for (unsigned int i = 0; i < kroute.size();i++)
+        {
+            printf("Ruta %i : ",i);
+            for (unsigned int j =0; j <kroute[i].size();j++)
+                printf("%i - ",kroute[i][j].getLo());
+            printf("\n");
+        }
         throw cRuntimeError("Discrepancias en la ruta k-shortes");
+    }
 #endif
-
     return true;
 }
 
