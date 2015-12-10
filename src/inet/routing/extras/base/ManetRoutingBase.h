@@ -250,7 +250,7 @@ class INET_API ManetRoutingBase : public cSimpleModule, public cListener, public
      *
      * ManetRoutingBase is subscribed to position changes.
      */
-    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj) override;
+    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj DETAILS_ARG) override;
     virtual void processLinkBreak(const cObject *details);
     virtual void processLinkBreakManagement(const cObject *details);
     virtual void processPromiscuous(const cObject *details);
@@ -457,7 +457,7 @@ class INET_API ManetRoutingBase : public cSimpleModule, public cListener, public
     int getAddressSize() {return addressSizeBytes;}
     void setAddressSize(int p) {addressSizeBytes = p;}
 
-    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback);
+    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback) override;
     virtual bool handleNodeStart(IDoneCallback *doneCallback) = 0;
     virtual bool handleNodeShutdown(IDoneCallback *doneCallback) = 0;
     virtual void handleNodeCrash() = 0;

@@ -59,7 +59,7 @@ void Ieee80211LayeredOFDMTransmitter::initialize(int stage)
         carrierFrequency = Hz(par("carrierFrequency"));
         bandwidth = Hz(par("bandwidth"));
         if (isCompliant && (dataEncoder || signalEncoder || dataModulator || signalModulator
-                            || pulseShaper || digitalAnalogConverter || !isNaN(channelSpacing.get()))) // TODO: check modulations
+                            || pulseShaper || digitalAnalogConverter || !std::isnan(channelSpacing.get()))) // TODO: check modulations
         {
             throw cRuntimeError("In compliant mode it is forbidden to set the following parameters: dataEncoder, signalEncoder, modulator, signalModulator, pulseShaper, digitalAnalogConverter, bandwidth, channelSpacing");
         }
@@ -350,7 +350,7 @@ const ITransmission *Ieee80211LayeredOFDMTransmitter::createTransmission(const I
     const Coord endPosition = mobility->getCurrentPosition();
     const EulerAngles startOrientation = mobility->getCurrentAngularPosition();
     const EulerAngles endOrientation = mobility->getCurrentAngularPosition();
-    return new LayeredTransmission(packetModel, bitModel, symbolModel, sampleModel, analogModel, transmitter, macFrame, startTime, endTime, startPosition, endPosition, startOrientation, endOrientation);
+    return new LayeredTransmission(packetModel, bitModel, symbolModel, sampleModel, analogModel, transmitter, macFrame, startTime, endTime, -1, -1, -1, startPosition, endPosition, startOrientation, endOrientation);
 }
 
 Ieee80211LayeredOFDMTransmitter::~Ieee80211LayeredOFDMTransmitter()

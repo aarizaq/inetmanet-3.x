@@ -19,19 +19,17 @@
 #define __INET_IRECEPTIONDECISION_H
 
 #include "inet/physicallayer/contract/packetlevel/IReception.h"
-#include "inet/physicallayer/contract/packetlevel/RadioControlInfo_m.h"
-#include "inet/physicallayer/contract/bitlevel/ISignalPacketModel.h"
 
 namespace inet {
 
 namespace physicallayer {
 
 /**
- * This interface represents the result of a receiver's reception process.
+ * This interface represents the decisions of a receiver's reception process.
  *
  * This interface is strictly immutable to safely support parallel computation.
  */
-class INET_API IReceptionDecision : public IPrintableObject // TODO: revise name
+class INET_API IReceptionDecision : public IPrintableObject
 {
   public:
     /**
@@ -41,27 +39,9 @@ class INET_API IReceptionDecision : public IPrintableObject // TODO: revise name
     virtual const IReception *getReception() const = 0;
 
     /**
-     * Returns the physical properties of the reception. This function never
-     * returns nullptr.
+     * Returns the signal part of this decision.
      */
-    virtual const ReceptionIndication *getIndication() const = 0;
-
-    /**
-     * Returns whether synchronization was possible according to the physical
-     * properties of the received radio signal.
-     */
-    virtual bool isSynchronizationPossible() const = 0;
-
-    /**
-     * Returns whether the receiver decided to attempt the synchronization or
-     * it decided to ignore it.
-     */
-    virtual bool isSynchronizationAttempted() const = 0;
-
-    /**
-     * Returns whether the synchronization was completely successful or not.
-     */
-    virtual bool isSynchronizationSuccessful() const = 0;
+    virtual IRadioSignal::SignalPart getSignalPart() const = 0;
 
     /**
      * Returns whether reception was possible according to the physical
@@ -79,18 +59,6 @@ class INET_API IReceptionDecision : public IPrintableObject // TODO: revise name
      * Returns whether the reception was completely successful or not.
      */
     virtual bool isReceptionSuccessful() const = 0;
-
-    /**
-     * Returns the PHY frame corresponding to the reception. This function
-     * may return nullptr.
-     */
-    virtual const cPacket *getPhyFrame() const = 0;
-
-    /**
-     * Returns the MAC frame corresponding to this reception. This function
-     * never returns nullptr.
-     */
-    virtual const cPacket *getMacFrame() const = 0;
 };
 
 } // namespace physicallayer

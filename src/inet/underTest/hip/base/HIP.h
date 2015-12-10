@@ -112,7 +112,7 @@ class INET_API HIP : public cSimpleModule, public cListener
 	//bool isAddressSwitched();
 
 	//void receiveChangeNotification(int category, const cObject * details);
-	virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj) override;
+	virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj DETAILS_ARG) override;
 
   protected:
 	virtual int getTempId();

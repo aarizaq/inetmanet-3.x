@@ -95,6 +95,10 @@ void VoIPStreamSender::initialize(int stage)
         pReSampleCtx = nullptr;
         localPort = par("localPort");
         destPort = par("destPort");
+        EV_DEBUG << "libavcodec: " << LIBAVCODEC_VERSION_MAJOR << "." << LIBAVCODEC_VERSION_MINOR << "." << LIBAVCODEC_VERSION_MICRO << endl;
+        EV_DEBUG << "libavformat: " << LIBAVFORMAT_VERSION_MAJOR << "." << LIBAVFORMAT_VERSION_MINOR << "." << LIBAVFORMAT_VERSION_MICRO << endl;
+        EV_DEBUG << "libavutil: " << LIBAVUTIL_VERSION_MAJOR << "." << LIBAVUTIL_VERSION_MINOR << "." << LIBAVUTIL_VERSION_MICRO << endl;
+        EV_DEBUG << "libavresample: " << LIBAVRESAMPLE_VERSION_MAJOR << "." << LIBAVRESAMPLE_VERSION_MINOR << "." << LIBAVRESAMPLE_VERSION_MICRO << endl;
     }
     else if (stage == INITSTAGE_APPLICATION_LAYER) {
         bool isOperational;
@@ -463,48 +467,53 @@ void VoIPStreamSender::readFrame()
             AVFrame *frame = av_frame_alloc();
             int gotFrame;
             int decoded = avcodec_decode_audio4(pCodecCtx, frame, &gotFrame, &avpkt);
-            if (decoded < 0 || !gotFrame)
+            if (decoded < 0)
                 throw cRuntimeError("Error in avcodec_decode_audio4(), err=%d, gotFrame=%d", decoded, gotFrame);
 
             avpkt.data += decoded;
             avpkt.size -= decoded;
 
-            if (!pReSampleCtx) {
-                // copy frame to sampleBuffer
-                int dataSize = av_samples_get_buffer_size(nullptr, pCodecCtx->channels, frame->nb_samples, pCodecCtx->sample_fmt, 1);
-                memcpy(sampleBuffer.writePtr(), frame->data[0], dataSize);
-                sampleBuffer.notifyWrote(dataSize);
-            }
-            else {
-                uint8_t *tmpSamples = new uint8_t[Buffer::BUFSIZE];
+            if (gotFrame) {
+                if (!pReSampleCtx) {
+                    // copy frame to sampleBuffer
+                    int dataSize = av_samples_get_buffer_size(nullptr, pCodecCtx->channels, frame->nb_samples, pCodecCtx->sample_fmt, 1);
+                    memcpy(sampleBuffer.writePtr(), frame->data[0], dataSize);
+                    sampleBuffer.notifyWrote(dataSize);
+                }
+                else {
+                    uint8_t *tmpSamples = new uint8_t[Buffer::BUFSIZE];
 
-                uint8_t **in_data = frame->extended_data;
-                int in_linesize = frame->linesize[0];
-                int in_nb_samples = frame->nb_samples;
+                    uint8_t **in_data = frame->extended_data;
+                    int in_linesize = frame->linesize[0];
+                    int in_nb_samples = frame->nb_samples;
 
-                uint8_t *out_data[AVRESAMPLE_MAX_CHANNELS] = {
-                    nullptr
-                };
-                int maxOutSamples = sampleBuffer.availableSpace() / outBytesPerSample;
-                int out_linesize;
-                int ret;
-                ret = av_samples_fill_arrays(out_data, &out_linesize, tmpSamples,
-                            1, maxOutSamples,
-                            pEncoderCtx->sample_fmt, 0);
-                if (ret < 0)
-                    throw cRuntimeError("failed out_data fill arrays");
+                    uint8_t *out_data[AVRESAMPLE_MAX_CHANNELS] = {
+                        nullptr
+                    };
+                    int maxOutSamples = sampleBuffer.availableSpace() / outBytesPerSample;
+                    int out_linesize;
+                    int ret;
+                    ret = av_samples_fill_arrays(out_data, &out_linesize, tmpSamples,
+                                1, maxOutSamples,
+                                pEncoderCtx->sample_fmt, 0);
+                    if (ret < 0)
+                        throw cRuntimeError("failed out_data fill arrays");
 
-                decoded = avresample_convert(pReSampleCtx, out_data, out_linesize, decoded,
-                            in_data, in_linesize, in_nb_samples);
-                if (!decoded)
-                    throw cRuntimeError("audio_resample() returns error");
-//                if (avresample_get_delay(pReSampleCtx) > 0)
-//                    throw cRuntimeError("%d delay samples not converted\n", avresample_get_delay(pReSampleCtx));
-//                if (avresample_available(pReSampleCtx) > 0)
-//                    throw cRuntimeError("%d samples available for output\n", avresample_available(pReSampleCtx));
-                memcpy(sampleBuffer.writePtr(), out_data[0], decoded * outBytesPerSample);
-                sampleBuffer.notifyWrote(decoded * outBytesPerSample);
-                delete[] tmpSamples;
+                    decoded = avresample_convert(pReSampleCtx, out_data, out_linesize, decoded,
+                                in_data, in_linesize, in_nb_samples);
+                    if (decoded <= 0 && avresample_get_delay(pReSampleCtx) == 0) {
+                        throw cRuntimeError("audio_resample() returns error");
+                    }
+                    // if (avresample_get_delay(pReSampleCtx) > 0)
+                    //     throw cRuntimeError("%d delay samples not converted\n", avresample_get_delay(pReSampleCtx));
+                    // if (avresample_available(pReSampleCtx) > 0)
+                    //     throw cRuntimeError("%d samples available for output\n", avresample_available(pReSampleCtx));
+                    if (decoded > 0) {
+                        memcpy(sampleBuffer.writePtr(), out_data[0], decoded * outBytesPerSample);
+                        sampleBuffer.notifyWrote(decoded * outBytesPerSample);
+                    }
+                    delete[] tmpSamples;
+                }
             }
             av_frame_free(&frame);
 #else // if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(54, 28, 0)

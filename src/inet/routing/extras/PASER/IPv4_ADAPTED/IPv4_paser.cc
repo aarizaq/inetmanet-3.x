@@ -1204,7 +1204,7 @@ void IPv4_paser::sendOnTransportOutGateByProtocolId(cPacket *packet, int protoco
     send(packet, outGate);
 }
 
-void IPv4_paser::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj)
+void IPv4_paser::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj DETAILS_ARG)
 {
     Enter_Method_Silent();
 

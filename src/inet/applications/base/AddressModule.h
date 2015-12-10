@@ -39,7 +39,7 @@ class AddressModule : public cNoncopyableOwnedObject,cListener
         static simsignal_t changeAddressSignalInit;
         static simsignal_t changeAddressSignalDelete;
         L3Address myAddress;
-        virtual void receiveSignal(cComponent *src, simsignal_t id, cObject *obj);
+        virtual void receiveSignal(cComponent *src, simsignal_t id, cObject *obj DETAILS_ARG);
     public:
         virtual void initModule(bool mode); // mode = true, use signals, useIpV6 = true use Ipv6 address
         virtual L3Address getAddress(int val = -1);

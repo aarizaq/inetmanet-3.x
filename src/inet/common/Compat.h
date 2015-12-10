@@ -81,6 +81,29 @@ inline bool hasGUI() {return cSimulation::getActiveEnvir()->isGUI();}
 #define RNGCONTEXT
 #endif
 
+// Around OMNeT++ 5.0 beta 3, signal listeners and result filters/recorders received
+// an extra cObject *details argument.
+#if OMNETPP_BUILDNUM >= 1005
+#define DETAILS_ARG        ,cObject *details
+#define DETAILS_ARG_NAME   ,details
+#else
+#define DETAILS_ARG
+#define DETAILS_ARG_NAME
+#endif
+
+// Around OMNeT++ 5.0 beta 3, fingerprint computation has been changed.
+#if OMNETPP_BUILDNUM >= 1005
+#define FINGERPRINT_ADD_EXTRA_DATA(x)  { if (cFingerprint *fingerprint = getSimulation()->getFingerprint()) fingerprint->addExtraData(x); }
+#define FINGERPRINT_ADD_EXTRA_DATA2(x,y)  { if (cFingerprint *fingerprint = getSimulation()->getFingerprint()) fingerprint->addExtraData(x, y); }
+#else
+#define FINGERPRINT_ADD_EXTRA_DATA(x)  { if (cHasher *hasher = getSimulation()->getHasher()) hasher->add(x); }
+#define FINGERPRINT_ADD_EXTRA_DATA2(x,y)  { if (cHasher *hasher = getSimulation()->getHasher()) hasher->add(x, y); }
+#endif
+
+// Around OMNeT++ 5.0 beta 3, MAXTIME was renamed to SIMTIME_MAX
+#if OMNETPP_BUILDNUM < 1005
+#define SIMTIME_MAX MAXTIME
+#endif
 
 #ifdef _MSC_VER
 // complementary error function, not in MSVC

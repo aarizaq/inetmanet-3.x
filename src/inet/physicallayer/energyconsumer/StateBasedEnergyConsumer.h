@@ -43,10 +43,15 @@ class INET_API StateBasedEnergyConsumer : public cSimpleModule, public IEnergyCo
     W switchingPowerConsumption;
     W receiverIdlePowerConsumption;
     W receiverBusyPowerConsumption;
-    W receiverSynchronizingPowerConsumption;
     W receiverReceivingPowerConsumption;
+    W receiverReceivingPreamblePowerConsumption;
+    W receiverReceivingHeaderPowerConsumption;
+    W receiverReceivingDataPowerConsumption;
     W transmitterIdlePowerConsumption;
     W transmitterTransmittingPowerConsumption;
+    W transmitterTransmittingPreamblePowerConsumption;
+    W transmitterTransmittingHeaderPowerConsumption;
+    W transmitterTransmittingDataPowerConsumption;
 
     // environment
     IRadio *radio;
@@ -60,7 +65,7 @@ class INET_API StateBasedEnergyConsumer : public cSimpleModule, public IEnergyCo
 
     virtual W getPowerConsumption() const override;
 
-    virtual void receiveSignal(cComponent *source, simsignal_t signalID, long value) override;
+    virtual void receiveSignal(cComponent *source, simsignal_t signalID, long value DETAILS_ARG) override;
 
   protected:
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }

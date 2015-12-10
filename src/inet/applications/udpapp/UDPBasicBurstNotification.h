@@ -40,7 +40,7 @@ class INET_API UDPBasicBurstNotification : public UDPBasicBurst, protected cList
     virtual L3Address chooseDestAddr();
     virtual void generateBurst();
     virtual void processStart();
-    virtual void receiveSignal(cComponent *source, simsignal_t signalID, long l);
+    virtual void receiveSignal(cComponent *source, simsignal_t signalID, long l DETAILS_ARG) override;
     virtual void initialConfiguration();
   public:
     UDPBasicBurstNotification();

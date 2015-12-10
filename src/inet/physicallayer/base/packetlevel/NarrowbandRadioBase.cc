@@ -40,10 +40,10 @@ void NarrowbandRadioBase::handleUpperCommand(cMessage *message)
         if (newModulation != nullptr)
             setModulation(newModulation);
         Hz newCarrierFrequency = configureCommand->getCarrierFrequency();
-        if (!isNaN(newCarrierFrequency.get()))
+        if (!std::isnan(newCarrierFrequency.get()))
             setCarrierFrequency(newCarrierFrequency);
         Hz newBandwidth = configureCommand->getBandwidth();
-        if (!isNaN(newBandwidth.get()))
+        if (!std::isnan(newBandwidth.get()))
             setBandwidth(newBandwidth);
     }
     else
@@ -72,7 +72,7 @@ void NarrowbandRadioBase::setBandwidth(Hz newBandwidth)
     narrowbandTransmitter->setBandwidth(newBandwidth);
     NarrowbandReceiverBase *narrowbandReceiver = const_cast<NarrowbandReceiverBase *>(check_and_cast<const NarrowbandReceiverBase *>(receiver));
     narrowbandReceiver->setBandwidth(newBandwidth);
-    endReceptionTimer = nullptr;
+    receptionTimer = nullptr;
 }
 
 } // namespace physicallayer

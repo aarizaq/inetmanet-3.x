@@ -412,7 +412,7 @@ void PhysicalEnvironment::parseObjects(cXMLElement *xml)
                 lineColor.blue = atoi(tok);
             }
             else
-#if OMNETPP_CANVAS_VERSION >= 0x20140908
+#if OMNETPP_VERSION >= 0x500
                 lineColor = cFigure::Color(lineColorAttribute);
 #else
                 lineColor = cFigure::Color::byName(lineColorAttribute);
@@ -437,7 +437,7 @@ void PhysicalEnvironment::parseObjects(cXMLElement *xml)
                 fillColor.blue = atoi(tok);
             }
             else
-#if OMNETPP_CANVAS_VERSION >= 0x20140908
+#if OMNETPP_VERSION >= 0x500
                 fillColor = cFigure::Color(fillColorAttribute);
 #else
                 fillColor = cFigure::Color::byName(fillColorAttribute);
@@ -459,23 +459,23 @@ void PhysicalEnvironment::parseObjects(cXMLElement *xml)
             objectCache->insertObject(object);
         const Coord min = position - size / 2;
         const Coord max = position + size / 2;
-        if ((!isNaN(spaceMin.x) && min.x < spaceMin.x) || (!isNaN(spaceMax.x) && max.x > spaceMax.x) ||
-            (!isNaN(spaceMin.y) && min.y < spaceMin.y) || (!isNaN(spaceMax.y) && max.y > spaceMax.y) ||
-            (!isNaN(spaceMin.z) && min.z < spaceMin.z) || (!isNaN(spaceMax.z) && max.z > spaceMax.z))
+        if ((!std::isnan(spaceMin.x) && min.x < spaceMin.x) || (!std::isnan(spaceMax.x) && max.x > spaceMax.x) ||
+            (!std::isnan(spaceMin.y) && min.y < spaceMin.y) || (!std::isnan(spaceMax.y) && max.y > spaceMax.y) ||
+            (!std::isnan(spaceMin.z) && min.z < spaceMin.z) || (!std::isnan(spaceMax.z) && max.z > spaceMax.z))
             throw cRuntimeError("Object is outside of space limits");
-        if (isNaN(computedSpaceMin.x) || min.x < computedSpaceMin.x) computedSpaceMin.x = min.x;
-        if (isNaN(computedSpaceMin.y) || min.y < computedSpaceMin.y) computedSpaceMin.y = min.y;
-        if (isNaN(computedSpaceMin.z) || min.z < computedSpaceMin.z) computedSpaceMin.z = min.z;
-        if (isNaN(computedSpaceMax.x) || max.x > computedSpaceMax.x) computedSpaceMax.x = max.x;
-        if (isNaN(computedSpaceMax.y) || max.y > computedSpaceMax.y) computedSpaceMax.y = max.y;
-        if (isNaN(computedSpaceMax.z) || max.z > computedSpaceMax.z) computedSpaceMax.z = max.z;
+        if (std::isnan(computedSpaceMin.x) || min.x < computedSpaceMin.x) computedSpaceMin.x = min.x;
+        if (std::isnan(computedSpaceMin.y) || min.y < computedSpaceMin.y) computedSpaceMin.y = min.y;
+        if (std::isnan(computedSpaceMin.z) || min.z < computedSpaceMin.z) computedSpaceMin.z = min.z;
+        if (std::isnan(computedSpaceMax.x) || max.x > computedSpaceMax.x) computedSpaceMax.x = max.x;
+        if (std::isnan(computedSpaceMax.y) || max.y > computedSpaceMax.y) computedSpaceMax.y = max.y;
+        if (std::isnan(computedSpaceMax.z) || max.z > computedSpaceMax.z) computedSpaceMax.z = max.z;
     }
-    if (isNaN(spaceMin.x)) spaceMin.x = computedSpaceMin.x;
-    if (isNaN(spaceMin.y)) spaceMin.y = computedSpaceMin.y;
-    if (isNaN(spaceMin.z)) spaceMin.z = computedSpaceMin.z;
-    if (isNaN(spaceMax.x)) spaceMax.x = computedSpaceMax.x;
-    if (isNaN(spaceMax.y)) spaceMax.y = computedSpaceMax.y;
-    if (isNaN(spaceMax.z)) spaceMax.z = computedSpaceMax.z;
+    if (std::isnan(spaceMin.x)) spaceMin.x = computedSpaceMin.x;
+    if (std::isnan(spaceMin.y)) spaceMin.y = computedSpaceMin.y;
+    if (std::isnan(spaceMin.z)) spaceMin.z = computedSpaceMin.z;
+    if (std::isnan(spaceMax.x)) spaceMax.x = computedSpaceMax.x;
+    if (std::isnan(spaceMax.y)) spaceMax.y = computedSpaceMax.y;
+    if (std::isnan(spaceMax.z)) spaceMax.z = computedSpaceMax.z;
 }
 
 void PhysicalEnvironment::updateCanvas()
@@ -511,7 +511,7 @@ void PhysicalEnvironment::updateCanvas()
             figure->setLineWidth(object->getLineWidth());
             figure->setLineColor(object->getLineColor());
             figure->setFillColor(object->getFillColor());
-#if OMNETPP_CANVAS_VERSION >= 0x20140908
+#if OMNETPP_VERSION >= 0x500
             figure->setLineOpacity(object->getOpacity());
             figure->setFillOpacity(object->getOpacity());
             figure->setScaleLineWidth(false);
@@ -542,7 +542,7 @@ void PhysicalEnvironment::updateCanvas()
         const char *name = object->getName();
         if (name)
         {
-#if OMNETPP_CANVAS_VERSION >= 0x20140908
+#if OMNETPP_VERSION >= 0x500
             cLabelFigure *nameFigure = new cLabelFigure();
             nameFigure->setPosition(computeCanvasPoint(position, viewRotation, viewTranslation));
 #else
@@ -554,7 +554,7 @@ void PhysicalEnvironment::updateCanvas()
             objectsLayer->addFigure(nameFigure);
         }
     }
-    if (!isNaN(axisLength)) {
+    if (!std::isnan(axisLength)) {
         cLineFigure *xAxis = new cLineFigure();
         cLineFigure *yAxis = new cLineFigure();
         cLineFigure *zAxis = new cLineFigure();
@@ -567,7 +567,7 @@ void PhysicalEnvironment::updateCanvas()
         xAxis->setEndArrowHead(cFigure::ARROW_BARBED);
         yAxis->setEndArrowHead(cFigure::ARROW_BARBED);
         zAxis->setEndArrowHead(cFigure::ARROW_BARBED);
-#if OMNETPP_CANVAS_VERSION >= 0x20140908
+#if OMNETPP_VERSION >= 0x500
         xAxis->setScaleLineWidth(false);
         yAxis->setScaleLineWidth(false);
         zAxis->setScaleLineWidth(false);
@@ -581,7 +581,7 @@ void PhysicalEnvironment::updateCanvas()
         objectsLayer->addFigure(xAxis);
         objectsLayer->addFigure(yAxis);
         objectsLayer->addFigure(zAxis);
-#if OMNETPP_CANVAS_VERSION >= 0x20140908
+#if OMNETPP_VERSION >= 0x500
         cLabelFigure *xLabel = new cLabelFigure();
         cLabelFigure *yLabel = new cLabelFigure();
         cLabelFigure *zLabel = new cLabelFigure();
@@ -596,7 +596,7 @@ void PhysicalEnvironment::updateCanvas()
         xLabel->setText("X");
         yLabel->setText("Y");
         zLabel->setText("Z");
-#if OMNETPP_CANVAS_VERSION >= 0x20140908
+#if OMNETPP_VERSION >= 0x500
         xLabel->setPosition(computeCanvasPoint(Coord(axisLength, 0, 0)));
         yLabel->setPosition(computeCanvasPoint(Coord(0, axisLength, 0)));
         zLabel->setPosition(computeCanvasPoint(Coord(0, 0, axisLength)));
@@ -629,7 +629,7 @@ void PhysicalEnvironment::computeFacePoints(const PhysicalObject *object, std::v
         figure->setLineWidth(object->getLineWidth());
         figure->setLineColor(object->getLineColor());
         figure->setFillColor(object->getFillColor());
-#if OMNETPP_CANVAS_VERSION >= 0x20140908
+#if OMNETPP_VERSION >= 0x500
         figure->setLineOpacity(object->getOpacity());
         figure->setFillOpacity(object->getOpacity());
         figure->setScaleLineWidth(false);

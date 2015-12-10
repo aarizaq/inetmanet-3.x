@@ -5,14 +5,14 @@
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="org.omnetpp.cdt.gnu.config.debug.229043752" moduleId="org.eclipse.cdt.core.settings" name="gcc-debug">
 				<externalSettings/>
 				<extensions>
+					<extension id="org.eclipse.cdt.core.MachO64" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.PE" point="org.eclipse.cdt.core.BinaryParser"/>
 					<extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.GASErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
-					<extension id="org.eclipse.cdt.core.MachO64" point="org.eclipse.cdt.core.BinaryParser"/>
-					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
-					<extension id="org.eclipse.cdt.core.PE" point="org.eclipse.cdt.core.BinaryParser"/>
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
@@ -62,6 +62,7 @@
 									<listOptionValue builtIn="false" value="WITH_LMAC"/>
 									<listOptionValue builtIn="false" value="WITH_CSMA"/>
 									<listOptionValue builtIn="false" value="WITH_XMAC"/>
+									<listOptionValue builtIn="false" value="WITH_PACKETDRILL"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.include.paths.1304941279" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="../../src"/>
@@ -104,6 +105,7 @@
 									<listOptionValue builtIn="false" value="WITH_LMAC"/>
 									<listOptionValue builtIn="false" value="WITH_CSMA"/>
 									<listOptionValue builtIn="false" value="WITH_XMAC"/>
+									<listOptionValue builtIn="false" value="WITH_PACKETDRILL"/>
 								</option>
 								<option id="gnu.c.compiler.option.include.paths.552444216" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1458844290" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
@@ -161,6 +163,7 @@
 									<listOptionValue builtIn="false" value="WITH_LMAC"/>
 									<listOptionValue builtIn="false" value="WITH_CSMA"/>
 									<listOptionValue builtIn="false" value="WITH_XMAC"/>
+									<listOptionValue builtIn="false" value="WITH_PACKETDRILL"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1140951817" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -200,6 +203,7 @@
 									<listOptionValue builtIn="false" value="WITH_LMAC"/>
 									<listOptionValue builtIn="false" value="WITH_CSMA"/>
 									<listOptionValue builtIn="false" value="WITH_XMAC"/>
+									<listOptionValue builtIn="false" value="WITH_PACKETDRILL"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.2044170115" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -221,14 +225,14 @@
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="org.omnetpp.cdt.gnu.config.release.1746235823" moduleId="org.eclipse.cdt.core.settings" name="gcc-release">
 				<externalSettings/>
 				<extensions>
+					<extension id="org.eclipse.cdt.core.MachO64" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.PE" point="org.eclipse.cdt.core.BinaryParser"/>
 					<extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.GASErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
-					<extension id="org.eclipse.cdt.core.MachO64" point="org.eclipse.cdt.core.BinaryParser"/>
-					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
-					<extension id="org.eclipse.cdt.core.PE" point="org.eclipse.cdt.core.BinaryParser"/>
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
@@ -274,6 +278,7 @@
 									<listOptionValue builtIn="false" value="WITH_LMAC"/>
 									<listOptionValue builtIn="false" value="WITH_CSMA"/>
 									<listOptionValue builtIn="false" value="WITH_XMAC"/>
+									<listOptionValue builtIn="false" value="WITH_PACKETDRILL"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.include.paths.1086707691" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="../../src"/>
@@ -316,6 +321,7 @@
 									<listOptionValue builtIn="false" value="WITH_LMAC"/>
 									<listOptionValue builtIn="false" value="WITH_CSMA"/>
 									<listOptionValue builtIn="false" value="WITH_XMAC"/>
+									<listOptionValue builtIn="false" value="WITH_PACKETDRILL"/>
 								</option>
 								<option id="gnu.c.compiler.option.include.paths.951413942" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.406690453" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
@@ -373,6 +379,7 @@
 									<listOptionValue builtIn="false" value="WITH_LMAC"/>
 									<listOptionValue builtIn="false" value="WITH_CSMA"/>
 									<listOptionValue builtIn="false" value="WITH_XMAC"/>
+									<listOptionValue builtIn="false" value="WITH_PACKETDRILL"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1964450544" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -412,6 +419,7 @@
 									<listOptionValue builtIn="false" value="WITH_LMAC"/>
 									<listOptionValue builtIn="false" value="WITH_CSMA"/>
 									<listOptionValue builtIn="false" value="WITH_XMAC"/>
+									<listOptionValue builtIn="false" value="WITH_PACKETDRILL"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1488494530" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>

@@ -1,0 +1,5 @@
+# Errors:
+/examples/manetrouting/gpsr/,        -f omnetpp.ini -c MultiIPv4 -r 0,              20s,             111b-7855
+# Failures:
+/examples/manetrouting/dymo/,        -f omnetpp.ini -c IPv4 -r 0,                   10s,             52ab-d6ee
+/examples/manetrouting/dymo/,        -f omnetpp.ini -c Generic -r 0,                10s,             e4dc-d8a1    # unstable fingerprint?

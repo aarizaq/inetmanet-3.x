@@ -37,10 +37,10 @@ void FlatRadioBase::handleUpperCommand(cMessage *message)
         ConfigureRadioCommand *configureCommand = check_and_cast<ConfigureRadioCommand *>(message->getControlInfo());
         NarrowbandRadioBase::handleUpperCommand(message);
         W newPower = configureCommand->getPower();
-        if (!isNaN(newPower.get()))
+        if (!std::isnan(newPower.get()))
             setPower(newPower);
         bps newBitrate = configureCommand->getBitrate();
-        if (!isNaN(newBitrate.get()))
+        if (!std::isnan(newBitrate.get()))
             setBitrate(newBitrate);
     }
     else
@@ -57,7 +57,7 @@ void FlatRadioBase::setBitrate(bps newBitrate)
 {
     FlatTransmitterBase *flatTransmitter = const_cast<FlatTransmitterBase *>(check_and_cast<const FlatTransmitterBase *>(transmitter));
     flatTransmitter->setBitrate(newBitrate);
-    endReceptionTimer = nullptr;
+    receptionTimer = nullptr;
 }
 
 } // namespace physicallayer

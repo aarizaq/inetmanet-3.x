@@ -60,6 +60,7 @@ void Ieee80211NewMac::initialize(int stage)
         radioModule->subscribe(IRadio::radioModeChangedSignal, this);
         radioModule->subscribe(IRadio::receptionStateChangedSignal, this);
         radioModule->subscribe(IRadio::transmissionStateChangedSignal, this);
+        radioModule->subscribe(IRadio::receivedSignalPartChangedSignal, this);
         radio = check_and_cast<IRadio *>(radioModule);
 
         upperMac = check_and_cast<IUpperMac *>(getModuleByPath(par("upperMacModule")));
@@ -166,7 +167,7 @@ void Ieee80211NewMac::handleUpperCommand(cMessage *msg)
             Ieee80211ConfigureRadioCommand *newConfigureCommand = check_and_cast<Ieee80211ConfigureRadioCommand *>(msg->getControlInfo());
             if (newConfigureCommand->getChannelNumber() == -1 && oldConfigureCommand->getChannelNumber() != -1)
                 newConfigureCommand->setChannelNumber(oldConfigureCommand->getChannelNumber());
-            if (isNaN(newConfigureCommand->getBitrate().get()) && !isNaN(oldConfigureCommand->getBitrate().get()))
+            if (std::isnan(newConfigureCommand->getBitrate().get()) && !std::isnan(oldConfigureCommand->getBitrate().get()))
                 newConfigureCommand->setBitrate(oldConfigureCommand->getBitrate());
             delete pendingRadioConfigMsg;
             pendingRadioConfigMsg = nullptr;
@@ -193,7 +194,7 @@ void Ieee80211NewMac::handleUpperCommand(cMessage *msg)
     }
 }
 
-void Ieee80211NewMac::receiveSignal(cComponent *source, simsignal_t signalID, long value)
+void Ieee80211NewMac::receiveSignal(cComponent *source, simsignal_t signalID, long value DETAILS_ARG)
 {
     Enter_Method_Silent("receiveSignal()");
     if (signalID == IRadio::receptionStateChangedSignal) {
@@ -214,6 +215,9 @@ void Ieee80211NewMac::receiveSignal(cComponent *source, simsignal_t signalID, lo
             configureRadioMode(IRadio::RADIO_MODE_RECEIVER);    //FIXME this is in a very wrong place!!! should be done explicitly from UpperMac!
         }
         rx->transmissionStateChanged(transmissionState);
+    }
+    else if (signalID == IRadio::receivedSignalPartChangedSignal) {
+        rx->receivedSignalPartChanged((IRadioSignal::SignalPart)value);
     }
 }
 

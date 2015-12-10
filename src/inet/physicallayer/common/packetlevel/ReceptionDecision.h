@@ -28,33 +28,22 @@ class INET_API ReceptionDecision : public IReceptionDecision, public cObject
 {
   protected:
     const IReception *reception;
-    const ReceptionIndication *indication;
-    const bool isSynchronizationPossible_;
-    const bool isSynchronizationAttempted_;
-    const bool isSynchronizationSuccessful_;
+    IRadioSignal::SignalPart part;
     const bool isReceptionPossible_;
     const bool isReceptionAttempted_;
     const bool isReceptionSuccessful_;
-    const cPacket *macFrame;
 
   public:
-    ReceptionDecision(const IReception *reception, const ReceptionIndication *indication, bool isReceptionPossible, bool isReceptionAttempted, bool isReceptionSuccessful);
-    ~ReceptionDecision();
+    ReceptionDecision(const IReception *reception, IRadioSignal::SignalPart part, bool isReceptionPossible, bool isReceptionAttempted, bool isReceptionSuccessful);
 
     virtual std::ostream& printToStream(std::ostream& stream, int level) const override;
 
     virtual const IReception *getReception() const override { return reception; }
-    virtual const ReceptionIndication *getIndication() const override { return indication; }
+    virtual IRadioSignal::SignalPart getSignalPart() const override { return part; }
 
     virtual bool isReceptionPossible() const override { return isReceptionPossible_; }
     virtual bool isReceptionAttempted() const override { return isReceptionAttempted_; }
     virtual bool isReceptionSuccessful() const override { return isReceptionSuccessful_; }
-    virtual bool isSynchronizationPossible() const override { return isSynchronizationPossible_; }
-    virtual bool isSynchronizationAttempted() const override { return isSynchronizationAttempted_; }
-    virtual bool isSynchronizationSuccessful() const override { return isSynchronizationSuccessful_; }
-
-    virtual const cPacket *getPhyFrame() const override;
-    virtual const cPacket *getMacFrame() const override;
 };
 
 } // namespace physicallayer

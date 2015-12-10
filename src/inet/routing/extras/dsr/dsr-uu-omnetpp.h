@@ -193,7 +193,7 @@ namespace inetmanet {
 #define dsr_rtc_add(srt,t,f) RouteAdd(srt,t,f)
 
 
-class DSRUU:public cSimpleModule, public cListener, public ManetNetfilterHook
+class DSRUU:public cSimpleModule, public cListener, public ManetNetfilterHook, public ILifecycle
 {
 
     private:
@@ -383,7 +383,7 @@ class DSRUU:public cSimpleModule, public cListener, public ManetNetfilterHook
     static int lifo_token;
 
     bool nodeActive;
-    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback);
+    virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback) override;
 
 
   private:
@@ -454,7 +454,7 @@ class DSRUU:public cSimpleModule, public cListener, public ManetNetfilterHook
 
     void drop (cMessage *msg,int code) { delete msg;}
 
-    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj);
+    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj DETAILS_ARG) override;
 
   protected:
     struct in_addr ifaddr;
