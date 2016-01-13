@@ -21,7 +21,7 @@ package inet.linklayer.ieee80211mesh;
 
 import inet.linklayer.common.IIeee8021dQoSClassifier;
 import inet.linklayer.contract.IWirelessNic;
-import inet.linklayer.ieee80211.mac.Ieee80211Mac;
+import inet.linklayer.ieee80211.oldmac.Ieee80211OldMac;
 import inet.linklayer.ieee80211.mgmt.Ieee80211AgentSTA;
 import inet.physicallayer.contract.packetlevel.IRadio;
 import inet.linklayer.ieee80211mesh.locator.ILocator;
@@ -84,7 +84,7 @@ module SecurityIeee80211NicMesh like IWirelessNic
                 macIn[1];
                 macOut[1];
         }
-        mac: Ieee80211Mac {
+        mac: Ieee80211OldMac {
             parameters:
                 opMode = opMode;
                 bitrate = bitrate;

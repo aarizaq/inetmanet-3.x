@@ -17,7 +17,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
-package inet.linklayer.ieee80211.mac;
+package inet.linklayer.ieee80211.oldmac;
 
 import inet.linklayer.base.MACProtocolBase;
 import inet.linklayer.ieee80211.IIeee80211Mac;
@@ -56,7 +56,7 @@ import inet.linklayer.ieee80211.IIeee80211Mac;
 // listen interval which is related to power management, capability information
 // which is related to PCF and other non-modelled features).
 //
-simple Ieee80211Mac extends MACProtocolBase like IIeee80211Mac
+simple Ieee80211OldMac extends MACProtocolBase like IIeee80211Mac
 {
     parameters:
         string address = default("auto"); // MAC address as hex string (12 hex digits), or
@@ -66,8 +66,8 @@ simple Ieee80211Mac extends MACProtocolBase like IIeee80211Mac
 
         bool EDCA = default(false); // enable Enhanced Distributed Channel Access (802.11e)
         // parameters for EDCA = true
-        string classifier = default("Ieee80211eClassifier");
-        int defaultAC = default(0); // the default AC category for frames that cannot be classified
+        string classifier = default("");    // not in use, use the Ieee80211Nic.classifierType parameter instead
+        int defaultAC = default(1); // the default AC category for frames that cannot be classified
         int AIFSN0 = default(7); // AIFSN for background
         int AIFSN1 = default(3); // AIFSN for best effort
         int AIFSN2 = default(2); // AIFSN for video
@@ -117,7 +117,7 @@ simple Ieee80211Mac extends MACProtocolBase like IIeee80211Mac
         double throughputTimePeriod @unit("s") = default(0); // period of time used by throughput measurement statistic
         bool multiMac = default(false); // allows multiples mac interfaces in the same link layer
 
-        @class(Ieee80211Mac);
+        @class(Ieee80211OldMac);
         @display("i=block/layer");
 
         @signal[NF_LINK_FULL_PROMISCUOUS](type=cPacket);

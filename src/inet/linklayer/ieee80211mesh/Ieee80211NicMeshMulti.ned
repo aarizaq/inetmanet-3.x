@@ -20,7 +20,7 @@
 package inet.linklayer.ieee80211mesh;
 
 import inet.linklayer.contract.IWirelessNic;
-import inet.linklayer.ieee80211.mac.Ieee80211Mac;
+import inet.linklayer.ieee80211.IIeee80211Mac;
 import inet.linklayer.ieee80211.mgmt.IIeee80211Mgmt;
 import inet.linklayer.ieee80211.mgmt.Ieee80211AgentSTA;
 import inet.physicallayer.contract.packetlevel.IRadio;;
@@ -29,6 +29,7 @@ import inet.linklayer.ieee80211mesh.mgmt.Ieee80211Mesh;
 import inet.linklayer.contract.IWirelessNic;
 import inet.linklayer.ieee80211mesh.locator.ILocator;
 import inet.linklayer.common.IIeee8021dQoSClassifier;
+import inet.linklayer.contract.IWirelessNic;
 
 //
 // This NIC implements an 802.11g network interface card in ad-hoc mode.
@@ -41,6 +42,8 @@ module Ieee80211NicMeshMulti
         
         string mgmtType = default("Ieee80211Mesh"); // name of the management module type (implements IIeee80211Mgmt)
         string radioType = default("Ieee80211Radio");
+        string macType = default("Ieee80211OldMac");   // choose from Ieee80211OldMac, Ieee80211Mac, Ieee80211CompatibleMac
+        
         // string opMode @enum("b","g","a","p") = default("g");
         int numOutputHooks = default(0);
         int numInputHooks = default(0);
@@ -76,7 +79,7 @@ module Ieee80211NicMeshMulti
                 macInMulti[meshChannels];
                 macOutMulti[meshChannels];
         }
-        mac[meshChannels]: Ieee80211Mac {
+        mac[meshChannels]: <macType> like IIeee80211Mac {
             parameters:
                 @display("p=96,222");
         }
