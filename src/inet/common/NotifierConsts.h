@@ -15,7 +15,6 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-
 #ifndef __INET_NOTIFIERCONSTS_H
 #define __INET_NOTIFIERCONSTS_H
 
@@ -23,12 +22,11 @@
 
 namespace inet {
 
-
 /**
  * signals for NotificationBoard
  */
 // TODO document associated notification detail structs
-extern simsignal_t    // admin
+extern INET_API simsignal_t    // admin
     NF_SUBSCRIBERLIST_CHANGED,
 
 // - host

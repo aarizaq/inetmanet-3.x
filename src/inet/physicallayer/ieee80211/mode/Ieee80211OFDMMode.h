@@ -143,7 +143,7 @@ class INET_API Ieee80211OFDMMode : public Ieee80211ModeBase, public Ieee80211OFD
     virtual int getLegacyCwMax() const override { return 1023; }
 
   public:
-    Ieee80211OFDMMode(const Ieee80211OFDMPreambleMode *preambleMode, const Ieee80211OFDMSignalMode *signalMode, const Ieee80211OFDMDataMode *dataMode, Hz channelSpacing, Hz bandwidth);
+    Ieee80211OFDMMode(const char *name, const Ieee80211OFDMPreambleMode *preambleMode, const Ieee80211OFDMSignalMode *signalMode, const Ieee80211OFDMDataMode *dataMode, Hz channelSpacing, Hz bandwidth);
 
     virtual std::ostream& printToStream(std::ostream& stream, int level) const override;
 
@@ -164,7 +164,6 @@ class INET_API Ieee80211OFDMMode : public Ieee80211ModeBase, public Ieee80211OFD
     virtual inline const simtime_t getPreambleLength() const override { return preambleMode->getDuration(); }
     virtual inline const simtime_t getPlcpHeaderLength() const override { return signalMode->getDuration(); }
     virtual inline int getMpduMaxLength() const override { return 4095; }
-    virtual const simtime_t getTxopLimit(AccessCategory ac) const override;
 };
 
 class INET_API Ieee80211OFDMCompliantModes

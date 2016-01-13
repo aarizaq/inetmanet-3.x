@@ -41,23 +41,8 @@ const simtime_t Ieee80211HrDsssDataMode::getDuration(int bitLength) const
     return (simtime_t)(lrint(ceil(bitLength / bitrate.get() * 1E+6))) / 1E+6;
 }
 
-const simtime_t Ieee80211HrDsssMode::getTxopLimit(AccessCategory ac) const
-{
-    switch (ac)
-    {
-        case AC_BK: return 0;
-        case AC_BE: return 0;
-        case AC_VI: return ms(6.016).get();
-        case AC_VO: return ms(3.264).get();
-        case AC_LEGACY: return 0;
-        case AC_NUMCATEGORIES: break;
-    }
-    throw cRuntimeError("Unknown access category = %d", ac);
-    return 0;
-}
-
-
-Ieee80211HrDsssMode::Ieee80211HrDsssMode(const Ieee80211HrDsssPreambleMode *preambleMode, const Ieee80211HrDsssHeaderMode *headerMode, const Ieee80211HrDsssDataMode *dataMode) :
+Ieee80211HrDsssMode::Ieee80211HrDsssMode(const char *name, const Ieee80211HrDsssPreambleMode *preambleMode, const Ieee80211HrDsssHeaderMode *headerMode, const Ieee80211HrDsssDataMode *dataMode) :
+    Ieee80211ModeBase(name),
     preambleMode(preambleMode),
     headerMode(headerMode),
     dataMode(dataMode)
@@ -85,19 +70,19 @@ const Ieee80211HrDsssDataMode Ieee80211HrDsssCompliantModes::hrDsssDataMode11Mbp
 const Ieee80211HrDsssDataMode Ieee80211HrDsssCompliantModes::hrDsssDataMode11MbpsPbccShortPreamble(Mbps(11));
 
 // modes
-const Ieee80211HrDsssMode Ieee80211HrDsssCompliantModes::hrDsssMode1MbpsLongPreamble(&hrDsssPreambleMode1MbpsLongPreamble, &hrDsssHeaderMode1MbpsLongPreamble, &hrDsssDataMode1MbpsLongPreamble);
+const Ieee80211HrDsssMode Ieee80211HrDsssCompliantModes::hrDsssMode1MbpsLongPreamble("hrDsssMode1MbpsLongPreamble", &hrDsssPreambleMode1MbpsLongPreamble, &hrDsssHeaderMode1MbpsLongPreamble, &hrDsssDataMode1MbpsLongPreamble);
 
-const Ieee80211HrDsssMode Ieee80211HrDsssCompliantModes::hrDsssMode2MbpsLongPreamble(&hrDsssPreambleMode1MbpsLongPreamble, &hrDsssHeaderMode1MbpsLongPreamble, &hrDsssDataMode2MbpsLongPreamble);
-const Ieee80211HrDsssMode Ieee80211HrDsssCompliantModes::hrDsssMode2MbpsShortPreamble(&hrDsssPreambleMode1MbpsShortPreamble, &hrDsssHeaderMode2MbpsShortPreamble, &hrDsssDataMode2MbpsShortPreamble);
+const Ieee80211HrDsssMode Ieee80211HrDsssCompliantModes::hrDsssMode2MbpsLongPreamble("hrDsssMode2MbpsLongPreamble", &hrDsssPreambleMode1MbpsLongPreamble, &hrDsssHeaderMode1MbpsLongPreamble, &hrDsssDataMode2MbpsLongPreamble);
+const Ieee80211HrDsssMode Ieee80211HrDsssCompliantModes::hrDsssMode2MbpsShortPreamble("hrDsssMode2MbpsShortPreamble", &hrDsssPreambleMode1MbpsShortPreamble, &hrDsssHeaderMode2MbpsShortPreamble, &hrDsssDataMode2MbpsShortPreamble);
 
-const Ieee80211HrDsssMode Ieee80211HrDsssCompliantModes::hrDsssMode5_5MbpsCckLongPreamble(&hrDsssPreambleMode1MbpsLongPreamble, &hrDsssHeaderMode1MbpsLongPreamble, &hrDsssDataMode5_5MbpsCckLongPreamble);
-const Ieee80211HrDsssMode Ieee80211HrDsssCompliantModes::hrDsssMode5_5MbpsPbccLongPreamble(&hrDsssPreambleMode1MbpsLongPreamble, &hrDsssHeaderMode1MbpsLongPreamble, &hrDsssDataMode5_5MbpsPbccLongPreamble);
-const Ieee80211HrDsssMode Ieee80211HrDsssCompliantModes::hrDsssMode5_5MbpsCckShortPreamble(&hrDsssPreambleMode1MbpsShortPreamble, &hrDsssHeaderMode2MbpsShortPreamble, &hrDsssDataMode5_5MbpsCckShortPreamble);
+const Ieee80211HrDsssMode Ieee80211HrDsssCompliantModes::hrDsssMode5_5MbpsCckLongPreamble("hrDsssMode5_5MbpsCckLongPreamble", &hrDsssPreambleMode1MbpsLongPreamble, &hrDsssHeaderMode1MbpsLongPreamble, &hrDsssDataMode5_5MbpsCckLongPreamble);
+const Ieee80211HrDsssMode Ieee80211HrDsssCompliantModes::hrDsssMode5_5MbpsPbccLongPreamble("hrDsssMode5_5MbpsPbccLongPreamble", &hrDsssPreambleMode1MbpsLongPreamble, &hrDsssHeaderMode1MbpsLongPreamble, &hrDsssDataMode5_5MbpsPbccLongPreamble);
+const Ieee80211HrDsssMode Ieee80211HrDsssCompliantModes::hrDsssMode5_5MbpsCckShortPreamble("hrDsssMode5_5MbpsCckShortPreamble", &hrDsssPreambleMode1MbpsShortPreamble, &hrDsssHeaderMode2MbpsShortPreamble, &hrDsssDataMode5_5MbpsCckShortPreamble);
 
-const Ieee80211HrDsssMode Ieee80211HrDsssCompliantModes::hrDsssMode11MbpsCckLongPreamble(&hrDsssPreambleMode1MbpsLongPreamble, &hrDsssHeaderMode1MbpsLongPreamble, &hrDsssDataMode11MbpsCckLongPreamble);
-const Ieee80211HrDsssMode Ieee80211HrDsssCompliantModes::hrDsssMode11MbpsPbccLongPreamble(&hrDsssPreambleMode1MbpsLongPreamble, &hrDsssHeaderMode1MbpsLongPreamble, &hrDsssDataMode11MbpsPbccLongPreamble);
-const Ieee80211HrDsssMode Ieee80211HrDsssCompliantModes::hrDsssMode11MbpsCckShortPreamble(&hrDsssPreambleMode1MbpsShortPreamble, &hrDsssHeaderMode2MbpsShortPreamble, &hrDsssDataMode11MbpsCckShortPreamble);
-const Ieee80211HrDsssMode Ieee80211HrDsssCompliantModes::hrDsssMode11MbpsPbccShortPreamble(&hrDsssPreambleMode1MbpsShortPreamble, &hrDsssHeaderMode2MbpsShortPreamble, &hrDsssDataMode11MbpsPbccShortPreamble);
+const Ieee80211HrDsssMode Ieee80211HrDsssCompliantModes::hrDsssMode11MbpsCckLongPreamble("hrDsssMode11MbpsCckLongPreamble", &hrDsssPreambleMode1MbpsLongPreamble, &hrDsssHeaderMode1MbpsLongPreamble, &hrDsssDataMode11MbpsCckLongPreamble);
+const Ieee80211HrDsssMode Ieee80211HrDsssCompliantModes::hrDsssMode11MbpsPbccLongPreamble("hrDsssMode11MbpsPbccLongPreamble", &hrDsssPreambleMode1MbpsLongPreamble, &hrDsssHeaderMode1MbpsLongPreamble, &hrDsssDataMode11MbpsPbccLongPreamble);
+const Ieee80211HrDsssMode Ieee80211HrDsssCompliantModes::hrDsssMode11MbpsCckShortPreamble("hrDsssMode11MbpsCckShortPreamble", &hrDsssPreambleMode1MbpsShortPreamble, &hrDsssHeaderMode2MbpsShortPreamble, &hrDsssDataMode11MbpsCckShortPreamble);
+const Ieee80211HrDsssMode Ieee80211HrDsssCompliantModes::hrDsssMode11MbpsPbccShortPreamble("hrDsssMode11MbpsPbccShortPreamble", &hrDsssPreambleMode1MbpsShortPreamble, &hrDsssHeaderMode2MbpsShortPreamble, &hrDsssDataMode11MbpsPbccShortPreamble);
 
 const simtime_t Ieee80211HrDsssMode::getRifsTime() const
 {

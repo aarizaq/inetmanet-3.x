@@ -1929,6 +1929,11 @@ int Ieee80211Mesh::getBestInterface(Ieee80211DataOrMgmtFrame *frame)
             return it->second;
         }
     }
+    else
+    {
+        return intuniform(0,numMac-1);
+    }
+#if 0 // no funciona con los nuevos interfaces repasar como sacar la informacion
     else if (!timeReceptionInterface.empty())
     {
         std::vector<double> validInterface;
@@ -1996,6 +2001,7 @@ int Ieee80211Mesh::getBestInterface(Ieee80211DataOrMgmtFrame *frame)
             throw cRuntimeError("Invalid selectionCriteria");
 
     }
+#endif
     return 0;
 }
 

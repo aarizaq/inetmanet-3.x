@@ -1,5 +1,11 @@
 ====== inet-3.x ======
 
+2015-12-16  ------ inet-3.2.0 released ------
+
+2015-11-26  Andras Varga
+
+	Made the code compile with OMNeT++ 5.0b3
+
 2015-10-26  ------ inet-3.1.1 released ------
 
 2015-10-15  ------ inet-3.1.0 released ------
@@ -76,14 +82,14 @@
 	lifecycle: Enter_Method_Silent() was missing in some
 	handleOperationStage() functions
 
-2013-04-25  Levente Mészáros
+2013-04-25  Levente Meszaros
 
 	App: Added ILifecycle to the rest of applications.
 
 	All application must either support lifecycle operations properly or
 	throw an error when executing any lifecycle operations.
 
-2013-04-22  Levente Mészáros
+2013-04-22  Levente Meszaros
 
 	App: Changed stopTime to use -1 to run the application forever.
 

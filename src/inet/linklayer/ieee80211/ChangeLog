@@ -1,5 +1,15 @@
 ====== inet-3.x ======
 
+2015-12-16  ------ inet-3.2.0 released ------
+
+2015-12-09  Zoltan Bojthe
+
+	The new, modular 802.11 implementation was made the default one:
+	- Existing "mac" folder was renamed to "oldmac, and "newmac" was
+	  renamed to "mac".
+	- A similar change was applied to the module names too:
+	  Ieee80211Mac -> Ieee80211Mac, Ieee80211NewMac -> Ieee80211Mac.
+
 2015-10-26  ------ inet-3.1.1 released ------
 
 2015-10-15  ------ inet-3.1.0 released ------
@@ -63,7 +73,7 @@
 
 	ethernet: added EtherFrame.h
 
-2013-11-29  Levente Mészáros
+2013-11-29  Levente Meszaros
 
 	Ieee80211: send interface ID in notifications
 

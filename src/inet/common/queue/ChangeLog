@@ -1,5 +1,7 @@
 ====== inet-3.x ======
 
+2015-12-16  ------ inet-3.2.0 released ------
+
 2015-10-26  ------ inet-3.1.1 released ------
 
 2015-10-15  ------ inet-3.1.0 released ------
@@ -73,8 +75,8 @@
 
 2014-10-29  Thomas Dreibholz
 
-    improved REDDropper, in order to provide a functionality similar to the old REDQueue.
-    (allows specifying avearge packet rate that is used for calculation when the queue is empty)
+	improved REDDropper, in order to provide a functionality similar to the old REDQueue.
+	(allows specifying avearge packet rate that is used for calculation when the queue is empty)
 
 2014-06-12  ------ inet-2.4.0 released ------
 

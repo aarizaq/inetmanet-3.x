@@ -1,5 +1,19 @@
 ====== inet-3.x ======
 
+2015-12-16  ------ inet-3.2.0 released ------
+
+2015-12-09  Zoltan Bojthe
+
+	Ieee80211Consts.h: remove unnecesary includes of it
+
+2015-11-12  Levente Meszaros
+
+	Radio: Added support for the simulation of separate signal parts.
+
+	The preamble, header and data parts can be optionally simulated
+	separately. This is results in more accurate simulation, because a
+	reception may be aborted before the data part is received.
+
 2015-10-26  ------ inet-3.1.1 released ------
 
 2015-10-15  ------ inet-3.1.0 released ------
@@ -8,16 +22,16 @@
 
 2015-05-13  ------ inet-2.99.1 released ------
 
-2015-04-03  Levente Mészáros
+2015-04-03  Levente Meszaros
 
-    Added level parameter to printToStream functions.
+	Added level parameter to printToStream functions.
 
 2015-04-02  Benjamin Seregi
 
-    Ieee80211ErrorModelBase, Ieee80211{Nist,Yans}ErrorModel: removed chunk
-    mode abstraction.
+	Ieee80211ErrorModelBase, Ieee80211{Nist,Yans}ErrorModel: removed chunk
+	mode abstraction.
 
-2015-02-24  Levente Mészáros
+2015-02-24  Levente Meszaros
 
 	Removed header success rate calculation from Ieee80211BerTableErrorModel.
 	The returned packet error rate value should already include all possible

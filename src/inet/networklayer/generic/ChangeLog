@@ -1,5 +1,11 @@
 ====== inet-3.x ======
 
+2015-12-16  ------ inet-3.2.0 released ------
+
+2015-11-27  Zoltan Bojthe
+
+	Made the code compile with OMNeT++ 5.0b3
+
 2015-10-26  ------ inet-3.1.1 released ------
 
 2015-10-15  ------ inet-3.1.0 released ------
@@ -10,7 +16,7 @@
 
 2015-04-16  Zoltan Bojthe
 
-    Added nonstandard ETHERTYPE_INET_GENERIC to generic network protocol.
+	Added nonstandard ETHERTYPE_INET_GENERIC to generic network protocol.
 
 2015-01-21  Zoltan Bojthe
 
@@ -24,7 +30,7 @@
 
 	Added printRoutingTable function to GenericRoutingTable.
 
-2014-11-28  Levente Mészáros
+2014-11-28  Levente Meszaros
 
 	Fixed generic network layer configuration and routing.
 

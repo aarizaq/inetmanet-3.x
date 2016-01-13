@@ -1,5 +1,19 @@
 ====== inet-3.x ======
 
+2015-12-16  ------ inet-3.2.0 released ------
+
+2015-10-14  Levente Meszaros
+
+	Mobility: Fixed sign of lastSpeed.
+
+2015-10-14  Levente Meszaros
+
+	Mobility: Fixed call to base class.
+
+2015-09-29  Levente Meszaros
+
+	Mobility: Replace PI with M_PI to avoid conflicts with OSG.
+
 2015-10-26  ------ inet-3.1.1 released ------
 
 2015-10-15  ------ inet-3.1.0 released ------
@@ -70,7 +84,7 @@
 	backport: Mobility: Replaced getParentNode with the more inentional
 	getContainingNode.
 
-2013-04-12  Levente Mészáros
+2013-04-12  Levente Meszaros
 
 	backport: Logging: Refactored mobility logging to be more consistent and
 	less redundant.

@@ -23,6 +23,7 @@ import inet.linklayer.ieee80211.mgmt.IIeee80211Mgmt;
 import inet.linklayer.ieee80211.mgmt.Ieee80211AgentSTA;
 import inet.physicallayer.contract.packetlevel.IRadio;
 
+
 //
 // This NIC implements an 802.11 network interface card.
 // It can be configured via the mgmtType parameter to act
@@ -38,10 +39,10 @@ module Ieee80211Nic like IWirelessNic
     parameters:
         string interfaceTableModule;
         string energySourceModule = default("");
-        string classifierType = default(""); // needed for EDCA, as the classifier assigns User Priority (UP) to packets; UP determines Access Category via TID 
+        string classifierType = default(""); // needed for EDCA, as the classifier assigns User Priority (UP) to packets; UP determines Access Category via TID
         string mgmtType = default("Ieee80211MgmtSTA"); // name of the management module type (implements IIeee80211Mgmt)
         string radioType = default("Ieee80211ScalarRadio");
-        string macType = default("Ieee80211Mac");   // choose from Ieee80211Mac, Ieee80211NewMac, Ieee80211CompatibleNewMac
+        string macType = default("Ieee80211CompatibleMac");   // choose from Ieee80211OldMac, Ieee80211Mac, Ieee80211CompatibleMac
         string opMode @enum("a","b","g","n","p") = default("g");
         double bitrate @unit("bps") = default(opMode == "b" ? 11Mbps : opMode == "p" ? 27Mbps : 54Mbps);
         bool _agentNeeded = (mgmtType == "Ieee80211MgmtSTA");   // internal par. do not use, shows if optional agent module is needed

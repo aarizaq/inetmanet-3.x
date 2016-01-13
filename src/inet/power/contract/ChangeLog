@@ -1,5 +1,7 @@
 ====== inet-3.x ======
 
+2015-12-16  ------ inet-3.2.0 released ------
+
 2015-10-26  ------ inet-3.1.1 released ------
 
 2015-10-15  ------ inet-3.1.0 released ------
@@ -12,9 +14,9 @@
 
 2014-10-31  Levente Meszaros
 
-    Added initial implementation:
-    IEnergyConsumer, IEnergyGenerator, IEnergySink, IEnergySource,
-    IEnergyStorage
+	Added initial implementation:
+	IEnergyConsumer, IEnergyGenerator, IEnergySink, IEnergySource,
+	IEnergyStorage
 
 ====== inet-2.x ======
 

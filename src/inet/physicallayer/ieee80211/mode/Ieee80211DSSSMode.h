@@ -94,7 +94,7 @@ class INET_API Ieee80211DsssMode : public Ieee80211ModeBase
     virtual int getLegacyCwMax() const override { return 1023; }
 
   public:
-    Ieee80211DsssMode(const Ieee80211DsssPreambleMode *preambleMode, const Ieee80211DsssHeaderMode *headerMode, const Ieee80211DsssDataMode *dataMode);
+    Ieee80211DsssMode(const char *name, const Ieee80211DsssPreambleMode *preambleMode, const Ieee80211DsssHeaderMode *headerMode, const Ieee80211DsssDataMode *dataMode);
 
     virtual std::ostream& printToStream(std::ostream& stream, int level) const override { return stream << "Ieee80211DsssMode"; }
 
@@ -118,7 +118,6 @@ class INET_API Ieee80211DsssMode : public Ieee80211ModeBase
     virtual inline const simtime_t getPreambleLength() const override { return preambleMode->getDuration(); }
     virtual inline const simtime_t getPlcpHeaderLength() const override { return headerMode->getDuration(); }
     virtual inline int getMpduMaxLength() const override { return 8191; }
-    virtual const simtime_t getTxopLimit(AccessCategory ac) const override;
 };
 
 /**

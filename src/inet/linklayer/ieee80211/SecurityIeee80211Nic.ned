@@ -41,6 +41,7 @@ module SecurityIeee80211Nic like IWirelessNic
         string opMode @enum("b","g","a","p") = default("g");
         int numOutputHooks = default(0);
         int numInputHooks = default(0);
+        string macType = default("Ieee80211OldMac");   // choose from Ieee80211OldMac, Ieee80211Mac, Ieee80211CompatibleMac
         double bitrate @unit("bps") = default(opMode == "b" ? 11Mbps : opMode == "p" ? 27Mbps : 54Mbps);
         bool _agentNeeded = false;   // internal par. do not use, shows if optional agent module is needed        
         bool securityNeeded = true;
@@ -77,11 +78,9 @@ module SecurityIeee80211Nic like IWirelessNic
                 macIn;
                 macOut;
         }
-        mac: Ieee80211Mac {
+        mac: <macType> like IIeee80211Mac {
             parameters:
-                opMode = opMode;
-                bitrate = bitrate;
-                @display("p=96,222");
+                @display("p=157,217");
         }
         radio: <radioType> like IRadio {
             parameters:

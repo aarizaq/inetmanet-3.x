@@ -1,5 +1,7 @@
 ====== inet-3.x ======
 
+2015-12-16  ------ inet-3.2.0 released ------
+
 2015-10-26  ------ inet-3.1.1 released ------
 
 2015-10-15  ------ inet-3.1.0 released ------
@@ -12,7 +14,7 @@
 
 	Applied C++ source code modernizer.
 
-2014-12-09  Levente Mészáros
+2014-12-09  Levente Meszaros
 
 	Renamed common subdirectory to base.
 	Moved I* module interfaces to contract.

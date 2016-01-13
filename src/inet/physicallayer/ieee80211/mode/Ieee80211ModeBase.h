@@ -25,15 +25,11 @@ namespace physicallayer {
 
 class INET_API Ieee80211ModeBase : public IIeee80211Mode
 {
+    private:
+        std::string name;
     public:
-        virtual int getAifsNumber(AccessCategory ac) const override;
-        virtual const simtime_t getAifsTime(AccessCategory ac) const override;
-        virtual const simtime_t getEifsTime(const IIeee80211Mode *slowestMandatoryMode, AccessCategory ac, int ackLength) const override;
-        virtual const simtime_t getDifsTime() const override;
-        virtual const simtime_t getPifsTime() const override;
-        // TODO: These are the default parameters when dot11OCBActivated is false.
-        virtual int getCwMin(AccessCategory ac) const override;
-        virtual int getCwMax(AccessCategory ac) const override;
+        Ieee80211ModeBase(const char *name) : name(name) {}
+        virtual const char *getName() const override { return name.c_str(); }
 };
 
 } /* namespace physicallayer */

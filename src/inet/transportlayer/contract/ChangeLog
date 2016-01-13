@@ -1,5 +1,7 @@
 ====== inet-3.x ======
 
+2015-12-16  ------ inet-3.2.0 released ------
+
 2015-10-26  ------ inet-3.1.1 released ------
 
 2015-10-15  ------ inet-3.1.0 released ------
@@ -16,7 +18,7 @@
 
 	Fix signatures to correct types.
 
-2014-12-11  Levente Mészáros
+2014-12-11  Levente Meszaros
 
 	TransportLayer: Moved ITCP, IUDP, ISCTP under contract.
 
@@ -27,8 +29,6 @@
 2014-11-14  Zoltan Bojthe
 
 	Added socketDeleted() to TCPSocket::CallbackInterface.
-
------------ lines above this marker have been added from git log -----------
 
 2014-11-07  ------ inet-2.99.0 released ------
 

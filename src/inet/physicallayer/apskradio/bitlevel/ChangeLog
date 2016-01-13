@@ -1,5 +1,15 @@
 ====== inet-3.x ======
 
+2015-12-16  ------ inet-3.2.0 released ------
+
+2015-11-12  Levente Meszaros
+
+	Radio: Added support for the simulation of separate signal parts.
+
+	The preamble, header and data parts can be optionally simulated
+	separately. This is results in more accurate simulation, because a
+	reception may be aborted before the data part is received.
+
 2015-10-26  ------ inet-3.1.1 released ------
 
 2015-10-15  ------ inet-3.1.0 released ------
@@ -8,23 +18,23 @@
 
 2015-05-13  ------ inet-2.99.1 released ------
 
-2015-04-15  Levente Mészáros
+2015-04-15  Levente Meszaros
 
-    Added snir parameter to computeReceptionDecision.
+	Added snir parameter to computeReceptionDecision.
 
-2015-04-03  Levente Mészáros
+2015-04-03  Levente Meszaros
 
-    Added level parameter to printToStream functions.
+	Added level parameter to printToStream functions.
 
 2015-03-04  Zoltan Bojthe
 
-    Renamed APSKSerializer to APSKPhyFrameSerializer and adapted to new API.
+	Renamed APSKSerializer to APSKPhyFrameSerializer and adapted to new API.
 
-2015-03-16  Levente Mészáros
+2015-03-16  Levente Meszaros
 
-    Consistently renamed packet level and bit level implementations into
-    separate subdirectories. Renamed apsk/layered to apskradio/bitlevel. Moved
-    remaining apsk contents to apsk/packetlevel.
+	Consistently renamed packet level and bit level implementations into
+	separate subdirectories. Renamed apsk/layered to apskradio/bitlevel. Moved
+	remaining apsk contents to apsk/packetlevel.
 
 2015-02-25  Levente Meszaros
 

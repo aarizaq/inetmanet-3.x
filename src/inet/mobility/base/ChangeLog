@@ -1,5 +1,11 @@
 ====== inet-3.x ======
 
+2015-12-16  ------ inet-3.2.0 released ------
+
+2015-10-14  Levente Meszaros
+
+	Mobility: Fixed call to base class.
+
 2015-10-26  ------ inet-3.1.1 released ------
 
 2015-10-15  ------ inet-3.1.0 released ------
@@ -8,14 +14,14 @@
 
 2015-05-13  ------ inet-2.99.1 released ------
 
-2015-03-26  Levente Mészáros
+2015-03-26  Levente Meszaros
 
-    Changed movement trail visualization to be based on lastSpeed. Ported
-    floating point position fix from master branch.
+	Changed movement trail visualization to be based on lastSpeed. Ported
+	floating point position fix from master branch.
 
-2015-03-24  Levente Mészáros
+2015-03-24  Levente Meszaros
 
-    Added good colors to movement trails. Added fade out support to TrailFigure.
-    Changed various line widths to unscaled.
+	Added good colors to movement trails. Added fade out support to TrailFigure.
+	Changed various line widths to unscaled.
 
 ====== inet-2.x ======

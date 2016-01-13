@@ -1,5 +1,7 @@
 ====== inet-3.x ======
 
+2015-12-16  ------ inet-3.2.0 released ------
+
 2015-10-26  ------ inet-3.1.1 released ------
 
 2015-10-15  ------ inet-3.1.0 released ------
@@ -8,11 +10,11 @@
 
 2015-05-13  ------ inet-2.99.1 released ------
 
-2015-03-16  Levente Mészáros
+2015-03-16  Levente Meszaros
 
-    Consistently renamed packet level and bit level implementations
-    into separate subdirectories. Renamed base/layered to base/bitlevel. Moved
-    remaining base contents to base/packetlevel.
+	Consistently renamed packet level and bit level implementations
+	into separate subdirectories. Renamed base/layered to base/bitlevel. Moved
+	remaining base contents to base/packetlevel.
 
 2015-02-25  Levente Meszaros
 
