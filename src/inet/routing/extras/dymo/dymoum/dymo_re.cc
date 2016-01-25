@@ -968,7 +968,6 @@ int NS_CLASS re_mustAnswer(RE *re, u_int32_t ifindex)
                             if (entry->rt_hopcnt + cost<= controlInfo->getMaxHopCollaborative())
                                 haveRoute= true;
                         }
-
                     }
                 }
             }

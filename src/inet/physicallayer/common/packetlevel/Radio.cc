@@ -167,7 +167,7 @@ const ITransmission *Radio::getTransmissionInProgress() const
     if (!transmissionTimer->isScheduled())
         return nullptr;
     else
-        return static_cast<RadioFrame *>(transmissionTimer->getControlInfo())->getTransmission();
+        return static_cast<RadioFrame *>(transmissionTimer->getContextPointer())->getTransmission();
 }
 
 const ITransmission *Radio::getReceptionInProgress() const
@@ -337,7 +337,7 @@ void Radio::startTransmission(cPacket *macFrame, IRadioSignal::SignalPart part)
     auto radioFrame = createRadioFrame(macFrame);
     auto transmission = radioFrame->getTransmission();
     transmissionTimer->setKind(part);
-    transmissionTimer->setControlInfo(const_cast<RadioFrame *>(radioFrame));
+    transmissionTimer->setContextPointer(const_cast<RadioFrame *>(radioFrame));
 
 #ifdef NS3_VALIDATION
     auto *df = dynamic_cast<inet::ieee80211::Ieee80211DataFrame *>(macFrame);
@@ -363,14 +363,13 @@ void Radio::startTransmission(cPacket *macFrame, IRadioSignal::SignalPart part)
     EV_INFO << "Transmission started: " << (IRadioFrame *)radioFrame << " " << IRadioSignal::getSignalPartName(part) << " as " << transmission << endl;
     updateTransceiverState();
     updateTransceiverPart();
-    delete macFrame->removeControlInfo();
 }
 
 void Radio::continueTransmission()
 {
     auto previousPart = (IRadioSignal::SignalPart)transmissionTimer->getKind();
     auto nextPart = (IRadioSignal::SignalPart)(previousPart + 1);
-    auto radioFrame = static_cast<RadioFrame *>(transmissionTimer->getControlInfo());
+    auto radioFrame = static_cast<RadioFrame *>(transmissionTimer->getContextPointer());
     auto transmission = radioFrame->getTransmission();
     EV_INFO << "Transmission ended: " << (IRadioFrame *)radioFrame << " " << IRadioSignal::getSignalPartName(previousPart) << " as " << radioFrame->getTransmission() << endl;
     transmissionTimer->setKind(nextPart);
@@ -383,19 +382,24 @@ void Radio::continueTransmission()
 void Radio::endTransmission()
 {
     auto part = (IRadioSignal::SignalPart)transmissionTimer->getKind();
-    auto radioFrame = static_cast<RadioFrame *>(transmissionTimer->removeControlInfo());
+    auto radioFrame = static_cast<RadioFrame *>(transmissionTimer->getContextPointer());
     auto transmission = radioFrame->getTransmission();
+    transmissionTimer->setContextPointer(nullptr);
     EV_INFO << "Transmission ended: " << (IRadioFrame *)radioFrame << " " << IRadioSignal::getSignalPartName(part) << " as " << transmission << endl;
     updateTransceiverState();
     updateTransceiverPart();
-    delete radioFrame;
 }
 
 void Radio::abortTransmission()
 {
+    auto part = (IRadioSignal::SignalPart)transmissionTimer->getKind();
+    auto radioFrame = static_cast<RadioFrame *>(transmissionTimer->getContextPointer());
+    auto transmission = radioFrame->getTransmission();
+    EV_INFO << "Transmission aborted: " << (IRadioFrame *)radioFrame << " " << IRadioSignal::getSignalPartName(part) << " as " << transmission << endl;
     EV_WARN << "Aborting ongoing transmissions is not supported" << endl;
     cancelEvent(transmissionTimer);
-    delete transmissionTimer->removeControlInfo();
+    updateTransceiverState();
+    updateTransceiverPart();
 }
 
 RadioFrame *Radio::createRadioFrame(cPacket *packet) const
@@ -479,9 +483,13 @@ void Radio::endReception(cMessage *timer)
 void Radio::abortReception(cMessage *timer)
 {
     auto radioFrame = static_cast<RadioFrame *>(timer->getControlInfo());
+    auto part = (IRadioSignal::SignalPart)timer->getKind();
     auto reception = radioFrame->getReception();
-    EV_INFO << "Aborting ongoing reception " << reception << endl;
-    receptionTimer = nullptr;
+    EV_INFO << "Reception aborted: for " << (IRadioFrame *)radioFrame << " " << IRadioSignal::getSignalPartName(part) << " as " << reception << endl;
+    if (timer == receptionTimer)
+        receptionTimer = nullptr;
+    updateTransceiverState();
+    updateTransceiverPart();
 }
 
 void Radio::captureReception(cMessage *timer)
@@ -492,7 +500,7 @@ void Radio::captureReception(cMessage *timer)
 
 void Radio::sendUp(cPacket *macFrame)
 {
-    auto indication = check_and_cast<const ReceptionIndication*>(macFrame->getControlInfo());
+    auto indication = check_and_cast<const ReceptionIndication *>(macFrame->getControlInfo());
     emit(minSNIRSignal, indication->getMinSNIR());
     if (!std::isnan(indication->getPacketErrorRate()))
         emit(packetErrorRateSignal, indication->getPacketErrorRate());

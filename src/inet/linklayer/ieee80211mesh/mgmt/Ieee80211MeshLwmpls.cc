@@ -1302,7 +1302,6 @@ void Ieee80211Mesh::mplsInitializeCheckMac()
 void Ieee80211Mesh::mplsPurge(LWmpls_Forwarding_Structure *forwarding_ptr, bool purge_break)
 {
 // �Como? las colas estan en otra parte.
-    bool purge;
 
     if (forwarding_ptr==nullptr)
         return;
