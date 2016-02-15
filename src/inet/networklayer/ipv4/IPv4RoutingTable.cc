@@ -876,16 +876,24 @@ void IPv4RoutingTable::addRule(bool output,IPv4RouteRule *entry)
 
 void IPv4RoutingTable::delRule(IPv4RouteRule *entry)
 {
-    for (unsigned int i;i<outputRules.size();i++)
+    for (auto it = outputRules.begin();it != outputRules.end();)
     {
-       if (outputRules[i]==entry)
-           outputRules.erase(outputRules.begin()+i);
+       if ( *it == entry)
+       {
+           it = outputRules.erase(it);
+       }
+       else
+           ++it;
 
     }
-    for (unsigned int i;i<inputRules.size();i++)
+    for (auto it = inputRules.begin();it != inputRules.end();)
     {
-        if (inputRules[i]==entry)
-            inputRules.erase(inputRules.begin()+i);
+       if ( *it == entry)
+       {
+           it = inputRules.erase(it);
+       }
+       else
+           ++it;
 
     }
 }

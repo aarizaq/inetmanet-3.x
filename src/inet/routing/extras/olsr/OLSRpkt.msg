@@ -296,21 +296,21 @@ public:
 
 
     MsgBody(MsgBody &other){
-            memcpy(&hello_,&other.hello_,sizeof(OLSR_hello));
-            memcpy(&tc_,&other.tc_,sizeof(OLSR_tc));
-            memcpy(&mid_,&other.mid_,sizeof(OLSR_mid));
+            memcpy((void*)&hello_,(void*)&other.hello_,sizeof(OLSR_hello));
+            memcpy((void*)&tc_,(void*)&other.tc_,sizeof(OLSR_tc));
+            memcpy((void*)&mid_,(void*)&other.mid_,sizeof(OLSR_mid));
         }
     MsgBody(){
-            memset(&hello_,0,sizeof(OLSR_hello));
-            memset(&tc_,0,sizeof(OLSR_tc));
-            memset(&mid_,0,sizeof(OLSR_mid));
+            memset((void*)&hello_,0,sizeof(OLSR_hello));
+            memset((void*)&tc_,0,sizeof(OLSR_tc));
+            memset((void*)&mid_,0,sizeof(OLSR_mid));
           }
     ~MsgBody(){}
     MsgBody & operator =  (const MsgBody &other){
             if (this==&other) return *this;
-                            memcpy(&hello_,&other.hello_,sizeof(OLSR_hello));
-                            memcpy(&tc_,&other.tc_,sizeof(OLSR_tc));
-                            memcpy(&mid_,&other.mid_,sizeof(OLSR_mid));
+                            memcpy((void*)&hello_,(void*)&other.hello_,sizeof(OLSR_hello));
+                            memcpy((void*)&tc_,(void*)&other.tc_,sizeof(OLSR_tc));
+                            memcpy((void*)&mid_,(void*)&other.mid_,sizeof(OLSR_mid));
                 return *this;
             }
     OLSR_hello  * hello(){return &hello_;}

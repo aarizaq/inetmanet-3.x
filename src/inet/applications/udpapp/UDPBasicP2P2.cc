@@ -677,7 +677,7 @@ uint64_t UDPBasicP2P2::selectBest(const std::vector<uint64_t> &address)
                 }
                 if (costPath < costMax)
                 {
-                    costMax = costMax;
+                    costMax = costPath;
                     addr = address[i];
                     winners.clear();
                     winners.push_back(addr);
@@ -1269,7 +1269,7 @@ void UDPBasicP2P2::answerRequest(UDPBasicPacketP2P *pkt)
     else
     {
 
-        for (unsigned int i = pkt->getSubSegmentRequestArraySize()-1; i>=0  ; i--)
+        for (int i = (int)pkt->getSubSegmentRequestArraySize()-1; i>=0  ; i--)
             delayM->subSegmentRequest.push_back(pkt->getSubSegmentRequest(i));
 
         delayM->setSegmentId(pkt->getSegmentId());

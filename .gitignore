@@ -13,7 +13,9 @@ src/Makefile.vc
 /examples/*/results/
 /examples/*/*/results/
 /examples/*/*/*/results/
+/examples/*/cache/*
 /tests/*/work/
+/tests/*/*/work/
 /tests/*/results*/
 *.log
 *.sim
@@ -21,6 +23,7 @@ src/Makefile.vc
 *.pcap
 *.sca
 *.vec
+*.vci
 *.anf
 .buildlog*
 # ignore binary files
@@ -36,6 +39,7 @@ out/
 *.pdb
 *.idb
 *.manifest
+.qtenv.ini
 .tkenvrc
 .tkenvlog
 .cmdenv-log
@@ -44,6 +48,8 @@ netanim-trace.txt
 gcc-debug
 
 # ignore backup and temp files
+*.UPDATED
+*.FAILED
 *.bak
 backups
 *~

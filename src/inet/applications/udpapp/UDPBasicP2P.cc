@@ -677,7 +677,7 @@ uint64_t UDPBasicP2P::selectBest(const std::vector<uint64_t> &address)
                 }
                 if (costPath < costMax)
                 {
-                    costMax = costMax;
+                    costMax = costPath;
                     addr = address[i];
                     winners.clear();
                     winners.push_back(addr);

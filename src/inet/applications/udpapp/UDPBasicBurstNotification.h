@@ -37,11 +37,11 @@ class INET_API UDPBasicBurstNotification : public UDPBasicBurst, protected cList
     AddressModule * addressModule;
   protected:
     // chooses random destination address
-    virtual L3Address chooseDestAddr();
-    virtual void generateBurst();
-    virtual void processStart();
+    virtual L3Address chooseDestAddr() override;
+    virtual void generateBurst() override;
+    virtual void processStart() override;
     virtual void receiveSignal(cComponent *source, simsignal_t signalID, long l DETAILS_ARG) override;
-    virtual void initialConfiguration();
+    virtual void initialConfiguration() override;
   public:
     UDPBasicBurstNotification();
     virtual ~UDPBasicBurstNotification();

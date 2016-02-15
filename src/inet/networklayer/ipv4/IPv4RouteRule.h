@@ -97,10 +97,10 @@ class INET_API IPv4RouteRule : public cObject
 
     void setSrcAddress(IPv4Address host)  {this->srcAddress = host;}
     void setSrcNetmask(IPv4Address netmask)  {this->srcNetmask = netmask;}
-    void setSrcPort(int port)  {this->sPort = sPort;}
+    void setSrcPort(int port)  {this->sPort = port;}
     void setDestAddress(IPv4Address host)  {this->destAddress = host;}
     void setDestNetmask(IPv4Address netmask)  {this->destNetmask = netmask;}
-    void setDestPort(int port)  {this->dPort = dPort;}
+    void setDestPort(int port)  {this->dPort = port;}
 
 
     void setInterface(InterfaceEntry *interfacePtr)  {this->interfacePtr = interfacePtr;}

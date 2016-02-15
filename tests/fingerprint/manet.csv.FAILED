@@ -1,9 +1,0 @@
-# Failures:
-/examples/manetrouting/fg80211/,     -f omnetpp.ini -c OLSR -r 0,                   20s,             544b-a746
-/examples/manetrouting/grid_aodv/,   -f omnetpp.ini -c DYMOUM -r 0,                 10s,             4ec6-7bf6
-/examples/manetrouting/grid_aodv/,   -f omnetpp.ini -c DSRUU -r 0,                  10s,             0db1-cfa1
-/examples/manetrouting/grid_aodv/,   -f omnetpp.ini -c OLSR -r 0,                   10s,             2f0d-8fd1
-/examples/manetrouting/manetMultiradio/, -f 3_nodes.ini -c MultiRadio -r 0,         100s,            f8ae-f2a8
-/examples/manetrouting/net80211_aodv/, -f omnetpp.ini -c DYMOUM -r 0,               100s,            6050-dd35
-/examples/manetrouting/net80211_control/, -f omnetpp.ini -c General -r 0,           10s,             bf63-689e
-/examples/manetrouting/net80211_control/, -f omnetpp.ini -c OLSR -r 0,              10s,             bf63-689e

@@ -75,17 +75,19 @@ void Ieee80211Mesh::mplsSendAck(int label)
     LWmpls_Forwarding_Structure * forwarding_ptr = mplsData->lwmpls_forwarding_data(label, 0, 0);
 
     MACAddress sta_addr;
-    int return_label;
-    if (forwarding_ptr->input_label==label)
+    int return_label = -1;
+    if (forwarding_ptr->input_label == label)
     {
         sta_addr = MACAddress(forwarding_ptr->input_mac_address);
         return_label = forwarding_ptr->return_label_output;
     }
-    else if (forwarding_ptr->return_label_input==label)
+    else if (forwarding_ptr->return_label_input == label)
     {
         sta_addr = MACAddress(forwarding_ptr->mac_address);
         return_label = forwarding_ptr->output_label;
     }
+    else
+        throw cRuntimeError("Label error");
     mpls_pk_aux_ptr->setType(WMPLS_ACK);
     mpls_pk_aux_ptr->setLabel(return_label);
     mpls_pk_aux_ptr->setDest(sta_addr);
@@ -993,7 +995,7 @@ void Ieee80211Mesh::mplsDataProcess(LWMPLSPacket * mpls_pk_ptr, MACAddress sta_a
 
         if (!label_found)
         {
-            if ((code == WMPLS_NORMAL))
+            if (code == WMPLS_NORMAL)
                 mplsBasicSend((LWMPLSPacket*)mpls_pk_ptr->dup(), sta_addr);
             if (code != WMPLS_ACK)
                 delete mpls_pk_ptr->decapsulate();
