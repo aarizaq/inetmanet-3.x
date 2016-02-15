@@ -146,7 +146,7 @@ static struct dsr_ack_req_opt *dsr_ack_req_opt_create(struct dsr_opt_hdr *buf, i
 
 int NSCLASS dsr_ack_req_send(struct dsr_pkt *dp)
 {
-    DSRPkt *p=nullptr;
+    DSRPkt *p = nullptr;
 
     /* srt = dsr_rtc_find(my_addr(), dst); */
 
@@ -268,9 +268,9 @@ int NSCLASS dsr_ack_req_send(struct dsr_pkt *dp)
 struct dsr_ack_req_opt *NSCLASS
 dsr_ack_req_opt_add(struct dsr_pkt *dp, unsigned short id)
 {
-    struct dsr_opt *dopt;
+    struct dsr_opt *dopt = nullptr;
     int prot = 0, tot_len = 0, ttl = IPDEFTTL;
-    struct dsr_opt_hdr *buf;
+    struct dsr_opt_hdr *buf = nullptr;
 
     if (!dp)
         return nullptr;
@@ -309,7 +309,7 @@ dsr_ack_req_opt_add(struct dsr_pkt *dp, unsigned short id)
 #endif
     if (dp->dh.opth.empty())
     {
-        struct dsr_opt_hdr *buf;
+
         buf = dsr_pkt_alloc_opts(dp);
         DEBUG("Allocating options for ACK REQ\n");
         if (dp->dh.opth.empty())

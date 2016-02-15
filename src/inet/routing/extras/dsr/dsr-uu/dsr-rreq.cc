@@ -440,7 +440,7 @@ int NSCLASS dsr_rreq_duplicate(struct in_addr initiator, struct in_addr target,
              if (id_e->trg_addr.s_addr == d.target->s_addr &&
                      id_e->id == *(d.id))
              {
-                 for (unsigned int j ; j < id_e->rreq_id_tbl_routes.size();j++)
+                 for (unsigned int j = 0; j < id_e->rreq_id_tbl_routes.size();j++)
                  {
                      struct Id_Entry_Route *id_e_route = id_e->rreq_id_tbl_routes[j];
                      if (id_e_route->length<*(d.length))

@@ -530,7 +530,7 @@ int NSCLASS maint_buf_del_all(struct in_addr nxt_hop)
 /* Remove packets for a next hop with a specific ID */
 int NSCLASS maint_buf_del_all_id(struct in_addr nxt_hop, unsigned short id)
 {
-    int n;
+    int n = 0;
     usecs_t rtt = 0;
 
     if (timer_pending(&ack_timer))
@@ -564,7 +564,7 @@ int NSCLASS maint_buf_del_all_id(struct in_addr nxt_hop, unsigned short id)
 
 int NSCLASS maint_buf_del_addr(struct in_addr nxt_hop)
 {
-    int n;
+    int n = 0;
     usecs_t rtt = 0;
     if (timer_pending(&ack_timer))
         del_timer_sync(&ack_timer);

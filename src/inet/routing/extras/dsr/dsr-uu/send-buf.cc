@@ -148,7 +148,7 @@ int NSCLASS send_buf_init(void)
 
 void NSCLASS send_buf_cleanup(void)
 {
-    int pkts;
+    int pkts = 0;
     if (timer_pending(&send_buf_timer))
         del_timer_sync(&send_buf_timer);
 

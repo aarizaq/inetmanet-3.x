@@ -97,7 +97,7 @@ bool DsrDataBase::getPath(const L3Address &dest, PathCacheRoute &route, double &
         cont++;
         if (itPaths->status == VALID)
         {
-            double costPath;
+            double costPath = 0;
             if (!itPaths->vector_cost.empty())
             {
                 itPaths->vector_cost[0] = cost;
@@ -170,7 +170,7 @@ bool DsrDataBase::getPathCosVect(const L3Address &dest, PathCacheRoute &route, P
         cont++;
         if (itPaths->status == VALID)
         {
-            double costPath;
+            double costPath = 0;
             if (!itPaths->vector_cost.empty())
             {
                 for (unsigned int i = 0; i< itPaths->vector_cost.size(); i++)
@@ -384,7 +384,6 @@ void DsrDataBase::erasePathWithLink(const L3Address &addr1,const L3Address &addr
 
         for (itMap = pathsCache.begin();itMap != pathsCache.end();++itMap)
         {
-            unsigned int size = itMap->second.size();
             int contador = 0;
             for(auto itPaths = itMap->second.begin(); itPaths != itMap->second.end();)
             {
