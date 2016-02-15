@@ -993,7 +993,7 @@ void IPv4_paser::arpResolutionCompleted(IARP::Notification *entry)
         EV << "ARP resolution completed for " << entry->l3Address.toIPv4() << ". Sending " << packetQueue.getLength()
                 << " waiting packets from the queue\n";
 
-        while (!packetQueue.empty())
+        while (!packetQueue.isEmpty())
         {
             cPacket *msg = packetQueue.pop();
             EV << "Sending out queued packet " << msg << "\n";

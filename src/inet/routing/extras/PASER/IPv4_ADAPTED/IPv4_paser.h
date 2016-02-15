@@ -235,15 +235,15 @@ class INET_API IPv4_paser : public QueueBase, public INetfilter, public ILifecyc
     IPv4_paser() { rt = nullptr; ift = nullptr; arp = nullptr; arpOutGate = nullptr; }
 
   protected:
-    virtual int numInitStages() const { return 2; }
-    virtual void initialize(int stage);
-    virtual void handleMessage(cMessage *msg);
+    virtual int numInitStages() const override { return 2; }
+    virtual void initialize(int stage) override;
+    virtual void handleMessage(cMessage *msg) override;
 
     /**
      * Processing of IPv4 datagrams. Called when a datagram reaches the front
      * of the queue.
      */
-    virtual void endService(cPacket *packet);
+    virtual void endService(cPacket *packet) override;
 
     // NetFilter functions:
   protected:
@@ -277,22 +277,22 @@ class INET_API IPv4_paser : public QueueBase, public INetfilter, public ILifecyc
     /**
      * registers a Hook to be executed during datagram processing
      */
-    virtual void registerHook(int priority, IHook* hook);
+    virtual void registerHook(int priority, IHook* hook) override;
 
     /**
      * unregisters a Hook to be executed during datagram processing
      */
-    virtual void unregisterHook(int priority, IHook* hook);
+    virtual void unregisterHook(int priority, IHook* hook) override;
 
     /**
      * drop a previously queued datagram
      */
-    void dropQueuedDatagram(const INetworkDatagram * datagram);
+    void dropQueuedDatagram(const INetworkDatagram * datagram) override;
 
     /**
      * re-injects a previously queued datagram
      */
-    void reinjectQueuedDatagram(const INetworkDatagram * datagram);
+    void reinjectQueuedDatagram(const INetworkDatagram * datagram) override;
 
     /**
      * send packet on transportOut gate specified by protocolId

@@ -475,14 +475,14 @@ class DSRUU:public cSimpleModule, public cListener, public ManetNetfilterHook, p
     bool proccesICMP(cMessage *msg);
 
   public:
-    virtual void handleMessage(cMessage *msg);
-    virtual void finish();
+    virtual void handleMessage(cMessage *msg) override;
+    virtual void finish() override;
 
     DSRUU();
     ~DSRUU();
 
-    virtual int numInitStages() const { return NUM_INIT_STAGES; }
-    virtual void initialize(int stage);
+    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
+    virtual void initialize(int stage) override;
 
     struct iphdr * dsr_build_ip(struct dsr_pkt *dp, struct in_addr src,
                                 struct in_addr dst, int ip_len, int tot_len,

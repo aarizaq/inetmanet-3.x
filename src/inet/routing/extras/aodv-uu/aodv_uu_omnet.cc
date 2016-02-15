@@ -1325,8 +1325,6 @@ void NS_CLASS processFullPromiscuous(const cObject *details)
         Ieee80211TwoAddressFrame *frame = dynamic_cast<Ieee80211TwoAddressFrame *>(const_cast<cObject*>(details));
         L3Address sender(frame->getTransmitterAddress());
         struct in_addr destination;
-        int iface;
-        double cost;
         destination.s_addr = sender;
         rt_table_t * fwd_rt = rt_table_find(destination);
         if (fwd_rt)
