@@ -58,6 +58,9 @@ module BasicMobileManetMesh
         @networkNode();
         @display("i=device/pocketpc_s");
         string mobilityType = default("StationaryMobility");
+        string energyStorageType = default("");
+        *.interfaceTableModule = default(absPath(".interfaceTable"));
+        *.energySourceModule = default(energyStorageType != "" ? absPath(".energyStorage") : "");
         int meshChannels = default(1);
     gates:
         input radioIn[meshChannels] @directIn;

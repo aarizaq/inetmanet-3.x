@@ -89,12 +89,12 @@ module HostMeshApp
 
         string networkLayerType = default("IPv4NetworkLayer");
         string routingTableType = default("IPv4RoutingTable");
-        string powerSourceType = default("");
+        string energyStorageType = default("");
         routingTable.forwarding = forwarding;
         routingTable.multicastForwarding = multicastForwarding;   // for IPv4, IPv6, Generic
         *.interfaceTableModule = default(absPath(".interfaceTable"));
         *.routingTableModule = default(routingTableType != "" ? absPath(".routingTable") : "");
-        *.powerSourceModule = default(powerSourceType != "" ? absPath(".powerSource") : "");
+        *.energySourceModule = default(energyStorageType != "" ? absPath(".energyStorage") : "");
         *.mobilityModule = default(mobilityType != "" ? absPath(".mobility") : "");            
     gates:
         input radioIn[numRadios+1] @directIn;

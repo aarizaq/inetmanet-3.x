@@ -42,8 +42,8 @@ using namespace physicallayer;
 using namespace inetmanet;
 
 EXECUTE_ON_STARTUP(
-    cEnum *e = cEnum::find("inet::SelectionCriteria");
-    if (!e) enums.getInstance()->add(e = new cEnum("inet::SelectionCriteria"));
+    cEnum *e = cEnum::find("inet::ieee80211::SelectionCriteria");
+    if (!e) enums.getInstance()->add(e = new cEnum("inet::ieee80211::SelectionCriteria"));
     e->insert(Ieee80211Mesh::ETX, "Etx");
     e->insert(Ieee80211Mesh::MINQUEUE, "MinQueue");
     e->insert(Ieee80211Mesh::LASTUSED, "LastUsed");
@@ -245,7 +245,7 @@ void Ieee80211Mesh::initialize(int stage)
                         (strcmp(gate("securityOut")->getPathEndGate()->getOwnerModule()->getName(),"security")==0 || par("securityActive").boolValue()))
             hasSecurity = true;
         const char *addrModeStr = par("selectionCriteria").stringValue();
-        selectionCriteria = (SelectionCriteria) cEnum::get("SelectionCriteria")->lookup(addrModeStr);
+        selectionCriteria = (SelectionCriteria) cEnum::get("inet::ieee80211::SelectionCriteria")->lookup(addrModeStr);
     }
     else if (stage == INITSTAGE_PHYSICAL_ENVIRONMENT)
     {
@@ -379,11 +379,16 @@ void Ieee80211Mesh::startProactive()
     //if (isEtx)
     //  moduleType = cModuleType::find("inet.networklayer.manetrouting.OLSR_ETX");
     //else
-    moduleType = cModuleType::find("inet.networklayer.manetrouting.OLSR");
+    moduleType = cModuleType::find("inet.routing.extras.OLSR");
+    if (!moduleType)
+        throw cRuntimeError("Module %s not found",par("meshReactiveRoutingProtocol").stringValue());
     module = moduleType->create("ManetRoutingProtocolProactive", this);
     routingModuleProactive = dynamic_cast <ManetRoutingBase*> (module);
     routingModuleProactive->gate("to_ip")->connectTo(gate("routingInProactive"));
     gate("routingOutProactive")->connectTo(routingModuleProactive->gate("from_ip"));
+    routingModuleProactive->par("interfaceTableModule").setStringValue(par("interfaceTableModule").stringValue());
+    routingModuleProactive->par("routingTableModule").setStringValue("");
+    routingModuleProactive->par("icmpModule").setStringValue("");
     routingModuleProactive->buildInside();
     routingModuleProactive->scheduleStart(simTime());
 }
@@ -394,10 +399,15 @@ void Ieee80211Mesh::startReactive()
     cModuleType *moduleType;
     cModule *module;
     moduleType = cModuleType::find(par("meshReactiveRoutingProtocol").stringValue());
+    if (!moduleType)
+        throw cRuntimeError("Module %s not found",par("meshReactiveRoutingProtocol").stringValue());
     module = moduleType->create("ManetRoutingProtocolReactive", this);
     routingModuleReactive = dynamic_cast <ManetRoutingBase*> (module);
     routingModuleReactive->gate("to_ip")->connectTo(gate("routingInReactive"));
     gate("routingOutReactive")->connectTo(routingModuleReactive->gate("from_ip"));
+    routingModuleReactive->par("interfaceTableModule").setStringValue(par("interfaceTableModule").stringValue());
+    routingModuleReactive->par("routingTableModule").setStringValue("");
+    routingModuleReactive->par("icmpModule").setStringValue("");
     routingModuleReactive->buildInside();
     routingModuleReactive->scheduleStart(simTime());
 }
@@ -407,10 +417,14 @@ void Ieee80211Mesh::startHwmp()
     cModuleType *moduleType;
     cModule *module;
     moduleType = cModuleType::find("inet.linklayer.ieee80211mesh.hwmp.HwmpProtocol");
+    if (!moduleType)
+        throw cRuntimeError("Module %s not found",par("meshReactiveRoutingProtocol").stringValue());
     module = moduleType->create("HwmpProtocol", this);
     routingModuleHwmp = dynamic_cast <ManetRoutingBase*> (module);
     routingModuleHwmp->gate("to_ip")->connectTo(gate("routingInHwmp"));
     gate("routingOutHwmp")->connectTo(routingModuleHwmp->gate("from_ip"));
+    routingModuleHwmp->par("interfaceTableModule").setStringValue(par("interfaceTableModule").stringValue());
+    routingModuleHwmp->par("icmpModule").setStringValue("");
     routingModuleHwmp->buildInside();
     routingModuleHwmp->scheduleStart(simTime());
 }
@@ -420,10 +434,13 @@ void Ieee80211Mesh::startEtx()
     cModuleType *moduleType;
     cModule *module;
     moduleType = cModuleType::find("inet.linklayer.ieee80211.mgmt.Ieee80211Etx");
+    if (!moduleType)
+        throw cRuntimeError("Module %s not found",par("meshReactiveRoutingProtocol").stringValue());
     module = moduleType->create("ETXproc", this);
     ETXProcess = dynamic_cast <Ieee80211Etx*> (module);
     ETXProcess->gate("toMac")->connectTo(gate("ETXProcIn"));
     gate("ETXProcOut")->connectTo(ETXProcess->gate("fromMac"));
+    ETXProcess->par("interfaceTableModule").setStringValue(par("interfaceTableModule").stringValue());
     ETXProcess->buildInside();
     ETXProcess->scheduleStart(simTime());
     ETXProcess->setAddress(myAddress);

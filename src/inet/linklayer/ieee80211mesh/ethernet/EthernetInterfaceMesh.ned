@@ -23,7 +23,7 @@ import inet.linklayer.contract.IWiredNic;
 import inet.linklayer.contract.IEtherMAC;
 import inet.common.IHook;
 import inet.linklayer.ethernet.EtherQoSQueue;
-
+import inet.linklayer.contract.ITrafficConditioner;
 //
 // Ethernet network interface. Complements EtherMAC and EtherEncap
 // with an output queue for QoS and RED support.
@@ -33,12 +33,16 @@ import inet.linklayer.ethernet.EtherQoSQueue;
 module EthernetInterfaceMesh like IWiredNic
 {
     parameters:
+        string interfaceTableModule;
         bool csmacdSupport = default(false);  // by default no CSMA/CD so only only point-to-point duplex links are supported.
         string macType = default(csmacdSupport ? "EtherMAC" : "EtherMACFullDuplex"); // ~EtherMAC or ~EtherMACFullDuplex
         string queueType = default("DropTailQueue"); // ~DropTailQueue, or a Diffserv queue; set to "" for use of an internal queue
         int numOutputHooks = default(0);
         int numInputHooks = default(0);
-        @display("i=block/ifcard;bgb=273,285;bgl=2");
+        string ingressTCType = default(""); // a module type implementing ~ITrafficConditioner for optional traffic conditioning of incoming traffic
+        string egressTCType = default(""); // a module type implementing ~ITrafficConditioner for optional traffic conditioning of outgoing traffic
+        *.interfaceTableModule = default(absPath(interfaceTableModule));
+        @display("i=block/ifcard;bgb=324,285;bgl=2");
     gates:
         input upperLayerIn;
         output upperLayerOut;
@@ -52,6 +56,12 @@ module EthernetInterfaceMesh like IWiredNic
         inputHook[numInputHooks]: <default("Nop")> like IHook if numInputHooks>0 {
             @display("p=43,79");
         }
+        ingressTC: <ingressTCType> like ITrafficConditioner if ingressTCType != "" {
+            @display("p=137,52");
+        }
+        egressTC: <egressTCType> like ITrafficConditioner if egressTCType != "" {
+            @display("p=242,35");
+        }
         queue: EtherQoSQueue if queueType != "" {
             parameters:
                 dataQueueType = queueType;
@@ -59,8 +69,8 @@ module EthernetInterfaceMesh like IWiredNic
         }
         mac: <macType> like IEtherMAC {
             parameters:
-                queueModule = (queueType == "" ? "" : "queue");
-                txQueueLimit = (queueType == "NoQueue" ? 10000 : 1); // queue sends one packet at a time
+                queueModule = (queueType == "" ? "" : "^.queue");
+                txQueueLimit = (queueType == "" ? 10000 : 1); // queue sends one packet at a time
                 @display("p=98,230");
         }
         encap: EtherEncapMesh {
@@ -69,28 +79,80 @@ module EthernetInterfaceMesh like IWiredNic
         }
     connections:
 
-        encap.lowerLayerOut --> queue.in if queueType != "";
-        queue.out --> mac.upperLayerIn if queueType != "";
-        encap.lowerLayerOut --> mac.upperLayerIn if queueType == "";
-        encap.lowerLayerIn <-- mac.upperLayerOut;
+        mac.upperLayerOut --> encap.lowerLayerIn;
         mac.phys <--> { @display("m=s"); } <--> phys;
 
-        upperLayerIn --> { @display("m=n"); } --> encap.upperLayerIn if numOutputHooks == 0;
-        upperLayerOut <-- { @display("m=n"); } <-- encap.upperLayerOut if numInputHooks == 0;
+        if queueType != "" {
+            encap.lowerLayerOut --> queue.in;
+            queue.out --> mac.upperLayerIn;
+        }
 
-        encap.upperLayerOut --> inputHook[0].in if numInputHooks > 0;
+        encap.lowerLayerOut --> mac.upperLayerIn if queueType == "";
+
+        // no input hooks, no ingressTC
+        encap.upperLayerOut --> { @display("m=n"); } --> upperLayerOut if numInputHooks == 0 && ingressTCType == "";
+
+        // no input hooks, there is ingressTC
+        if numInputHooks == 0 && ingressTCType != "" {
+            encap.upperLayerOut --> ingressTC.in;
+            ingressTC.out --> { @display("m=n"); } --> upperLayerOut;
+        }
+
+        // there are input hooks
+        if numInputHooks > 0 {
+            inputHook[numInputHooks-1].out --> { @display("m=n"); } --> upperLayerOut;
+        }
         for i=0..numInputHooks-2 {
             inputHook[i].out --> inputHook[i+1].in;
         }
-        inputHook[numInputHooks-1].out --> { @display("m=n"); } --> upperLayerOut if numInputHooks > 0;
 
-        upperLayerIn --> { @display("m=n"); } --> outputHook[0].in if numOutputHooks > 0;
+        // there are input hooks, no ingressTC
+        if numInputHooks > 0 && ingressTCType == "" {
+            encap.upperLayerOut --> inputHook[0].in;
+        }
+
+        // there are input hooks, there is ingressTC
+        if numInputHooks > 0 && ingressTCType != "" {
+            encap.upperLayerOut --> ingressTC.in;
+            ingressTC.out --> inputHook[0].in;
+        }
+
+        // chain output hooks
         for i=0..numOutputHooks-2 {
             outputHook[i].out --> outputHook[i+1].in;
         }
-        outputHook[numOutputHooks-1].out --> encap.upperLayerIn if numOutputHooks > 0;
+
+        // no output hooks, no egressTC
+        upperLayerIn --> { @display("m=n"); } --> encap.upperLayerIn if numOutputHooks == 0 && egressTCType == "";
+
+        // there are output hooks
+        if numOutputHooks > 0 {
+            upperLayerIn --> { @display("m=n"); } --> outputHook[0].in;
+        }
+
+        // no output hooks, there is egressTC
+        if numOutputHooks == 0 && egressTCType != "" {
+            upperLayerIn --> { @display("m=n"); } --> egressTC.in;
+        }
+
+        // there is egressTC
+        if egressTCType != "" {
+            egressTC.out --> encap.upperLayerIn;
+        }
+
+        // there are output hooks, no egressTC
+        if numOutputHooks > 0 && egressTCType == "" {
+            outputHook[numOutputHooks-1].out --> encap.upperLayerIn;
+        }
+
+        // there are output hooks, there is egressTC
+        if numOutputHooks > 0 && egressTCType != "" {
+            outputHook[numOutputHooks-1].out --> egressTC.in;
+        }
+
 
         wifiMeshIn --> encap.wifiMeshIn;   // from wifi mesh
         wifiMeshOut <-- encap.wifiMeshOut; // to wifi mesh
+
 }
 

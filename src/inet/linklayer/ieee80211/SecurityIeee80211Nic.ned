@@ -48,7 +48,7 @@ module SecurityIeee80211Nic like IWirelessNic
         bool hasSecurity = default(false);
         @display("i=block/ifcard;bgb=259,357");
         *.interfaceTableModule = default(absPath(interfaceTableModule));
-        *.powerSourceModule = default(absPath(powerSourceModule));        
+        *.energySourceModule = default(absPath(energySourceModule));        
     gates:
         input upperLayerIn; // to upper layers
         output upperLayerOut; // from upper layers

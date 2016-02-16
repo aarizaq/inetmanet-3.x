@@ -36,8 +36,8 @@ module SecurityIeee80211NicMesh like IWirelessNic
 {
     parameters:
         string interfaceTableModule;
-        string powerSourceModule;
-        
+        string energySourceModule;
+        string classifierType = default(""); // needed for EDCA, as the classifier assigns User Priority (UP) to packets; UP determines Access Category via TID
         string mgmtType = default("SecurityIeee80211Mesh"); // name of the management module type (implements IIeee80211Mgmt)
         string radioType = default("Ieee80211Radio");
         string opMode @enum("b","g","a","p") = default("g");
@@ -50,7 +50,7 @@ module SecurityIeee80211NicMesh like IWirelessNic
         bool hasSecurity = default(false);        
         @display("i=block/ifcard;bgb=259,357");
         *.interfaceTableModule = default(absPath(interfaceTableModule));
-        *.powerSourceModule = default(absPath(powerSourceModule));
+        *.energySourceModule = default(absPath(energySourceModule));
     gates:
         input upperLayerIn; // to upper layers
         output upperLayerOut; // from upper layers
@@ -61,7 +61,7 @@ module SecurityIeee80211NicMesh like IWirelessNic
         classifier: <classifierType> like IIeee8021dQoSClassifier if classifierType != "" {
             @display("p=110,59;i=block/classifier");
         }
-        locator: <default("Locator")> like ILocator if hasLocator {
+        locator: <default("LocatorModule")> like ILocator if hasLocator {
             @display("i=abstract/people;p=164,182");
         }
         // optional agent module (can be either 0 or 1 sized vector)

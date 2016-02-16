@@ -153,25 +153,28 @@ void LocatorModule::handleMessage(cMessage *msg)
             throw cRuntimeError("error in tables ap mac and ap ip address unknown ");
 
 
-        if (staIpaddr.isUnspecified())
-            staIpaddr = getReverseAddress(staAddr);
-        if (staAddr.isUnspecified())
-            staAddr = geDirectAddress(staIpaddr);
-        if (apIpaddr.isUnspecified())
-            apIpaddr = getReverseAddress(apAddr);
-        if (apAddr.isUnspecified())
-            apAddr = geDirectAddress(apIpaddr);
+        if (arp)
+        {
+            if (staIpaddr.isUnspecified())
+                staIpaddr = getReverseAddress(staAddr);
+            if (staAddr.isUnspecified())
+                staAddr = geDirectAddress(staIpaddr);
+            if (apIpaddr.isUnspecified())
+                apIpaddr = getReverseAddress(apAddr);
+            if (apAddr.isUnspecified())
+                apAddr = geDirectAddress(apIpaddr);
 
-        if (staIpaddr.isUnspecified())
-            sendRequest(staAddr);
+            if (staIpaddr.isUnspecified())
+                sendRequest(staAddr);
 
-        if (apIpaddr.isUnspecified())
-            sendRequest(apAddr);
+            if (apIpaddr.isUnspecified())
+                sendRequest(apAddr);
+        }
 
-        if ( pkt->getOpcode() == LocatorAssoc)
-            setTables(apAddr,staAddr,apIpaddr,staIpaddr,ASSOCIATION,nullptr);
+        if (pkt->getOpcode() == LocatorAssoc)
+            setTables(apAddr, staAddr, apIpaddr, staIpaddr, ASSOCIATION, nullptr);
         else if (pkt->getOpcode() == LocatorDisAssoc)
-            setTables(apAddr,staAddr,apIpaddr,staIpaddr,DISASSOCIATION,nullptr);
+            setTables(apAddr, staAddr, apIpaddr, staIpaddr, DISASSOCIATION, nullptr);
     }
     if (socket)
     {
@@ -303,16 +306,12 @@ void LocatorModule::processRequest(cPacket* msg)
 
 void LocatorModule::initialize(int stage)
 {
-    if (stage!=INITSTAGE_NETWORK_LAYER_3)
+    if (stage != INITSTAGE_TRANSPORT_LAYER)
         return;
 
-    arp =  getModuleFromPar<IARP>(par("arpModule"), this);
-
-    rt = findModuleFromPar<IIPv4RoutingTable>(par("routingTableModule"), this);
     itable = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
-
-
-
+    arp =  findModuleFromPar<IARP>(par("arpModule"), this, false);
+    rt = findModuleFromPar<IIPv4RoutingTable>(par("routingTableModule"), this, false);
 
     InterfaceEntry *ie = nullptr;
     if (dynamic_cast<UDP*>(gate("outGate")->getPathEndGate()->getOwnerModule()))
@@ -357,8 +356,11 @@ void LocatorModule::initialize(int stage)
     {
         InterfaceEntry *ie = itable->getInterface(i);
         IPv4InterfaceData * ipData = ie->ipv4Data();
-        reverseList.insert(std::make_pair(ie->getMacAddress(),L3Address(ipData->getIPAddress())));
-        directList.insert(std::make_pair(L3Address(ipData->getIPAddress()),ie->getMacAddress()));
+        if (ipData)
+        {
+            reverseList.insert(std::make_pair(ie->getMacAddress(),L3Address(ipData->getIPAddress())));
+            directList.insert(std::make_pair(L3Address(ipData->getIPAddress()),ie->getMacAddress()));
+        }
     }
 
     WATCH_MAP(globalLocatorMapIp);
@@ -408,12 +410,12 @@ void  LocatorModule::sendMessage(const MACAddress &apMac,const MACAddress &staMa
     }
 }
 
-void LocatorModule::receiveSignal(cComponent *source, simsignal_t category, cObject *details)
+void LocatorModule::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details)
 {
     Enter_Method_Silent();
-    if(category == NF_L2_AP_DISASSOCIATED || category == NF_L2_AP_ASSOCIATED)
+    if(signalID == NF_L2_AP_DISASSOCIATED || signalID == NF_L2_AP_ASSOCIATED)
     {
-        Ieee80211MgmtAP::NotificationInfoSta * infoSta = dynamic_cast<Ieee80211MgmtAP::NotificationInfoSta *>(const_cast<cObject*> (details));
+        Ieee80211MgmtAP::NotificationInfoSta * infoSta = dynamic_cast<Ieee80211MgmtAP::NotificationInfoSta *>(const_cast<cObject*> (obj));
         if (infoSta)
         {
             IPv4Address staIpAdd;
@@ -447,19 +449,19 @@ void LocatorModule::receiveSignal(cComponent *source, simsignal_t category, cObj
             }
 
 
-            if (category == NF_L2_AP_ASSOCIATED)
+            if (signalID == NF_L2_AP_ASSOCIATED)
             {
                 setTables(myMacAddress,infoSta->getStaAddress(),myIpAddress,staIpAdd,ASSOCIATION,ie);
                 sendMessage(myMacAddress,infoSta->getStaAddress(),myIpAddress,staIpAdd,ASSOCIATION);
             }
-            else if (category == NF_L2_AP_DISASSOCIATED)
+            else if (signalID == NF_L2_AP_DISASSOCIATED)
             {
                 setTables(myMacAddress,infoSta->getStaAddress(),myIpAddress,staIpAdd,DISASSOCIATION,ie);
                 sendMessage(myMacAddress,infoSta->getStaAddress(),myIpAddress,staIpAdd,DISASSOCIATION);
             }
         }
     }
-    else if (category == NF_LINK_FULL_PROMISCUOUS)
+    else if (signalID == NF_LINK_FULL_PROMISCUOUS)
     {
         Ieee80211DataOrMgmtFrame * frame = dynamic_cast<Ieee80211DataOrMgmtFrame*> (const_cast<cObject*>(details));
         if (!frame)
@@ -779,10 +781,10 @@ void LocatorModule::sendRequest(const MACAddress &destination)
 
 void LocatorModule::processARPPacket(cPacket *pkt)
 {
-    ARPPacket *arp = dynamic_cast<ARPPacket *>(pkt);
+    ARPPacket *arpPk = dynamic_cast<ARPPacket *>(pkt);
     // extract input port
-    MACAddress srcMACAddress = arp->getSrcMACAddress();
-    IPv4Address srcIPAddress = arp->getSrcIPAddress();
+    MACAddress srcMACAddress = arpPk->getSrcMACAddress();
+    IPv4Address srcIPAddress = arpPk->getSrcIPAddress();
 
     if (srcMACAddress.isUnspecified())
         return;

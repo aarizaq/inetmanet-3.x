@@ -72,7 +72,7 @@ void HostAutoConfigurator2::initialize(int stage)
     {
         debug = par("debug").boolValue();
     }
-    else if (stage == 2)
+    else if (stage == INITSTAGE_NETWORK_LAYER_2)
     {
         setupNetworkLayer();
         if (par("isDefaultRoute"))
@@ -87,7 +87,7 @@ void HostAutoConfigurator2::initialize(int stage)
             defaultAddr=ie->ipv4Data()->getIPAddress();
         }
     }
-    else if (stage == 4)
+    else if (stage == INITSTAGE_NETWORK_LAYER_3)
     {
         setupRoutingTable();
     }
@@ -146,7 +146,7 @@ void HostAutoConfigurator2::addDefaultRoutes()
     // get our interface table
     // get our host module
     cModule* host = getParentModule();
-    if (!host) throw std::runtime_error("No parent module found");
+    if (!host) throw cRuntimeError("No parent module found");
     IInterfaceTable *ift = L3AddressResolver().interfaceTableOf(host);
     IIPv4RoutingTable* rt = L3AddressResolver().routingTableOf(host);
 
@@ -192,7 +192,7 @@ void HostAutoConfigurator2::addDefaultRoute()
     // get our interface table
     // get our host module
     cModule* host = getParentModule();
-    if (!host) throw std::runtime_error("No parent module found");
+    if (!host) throw cRuntimeError("No parent module found");
     IInterfaceTable *ift = L3AddressResolver().interfaceTableOf(host);
     IRoutingTable* rt = L3AddressResolver().routingTableOf(host);
 
@@ -228,15 +228,15 @@ void HostAutoConfigurator2::setupNetworkLayer()
 
     // get our host module
     cModule* host = getParentModule();
-    if (!host) throw std::runtime_error("No parent module found");
+    if (!host) throw cRuntimeError("No parent module found");
 
     // get our routing table
     IIPv4RoutingTable* routingTable = L3AddressResolver().routingTableOf(host);
-    if (!routingTable) throw std::runtime_error("No routing table found");
+    if (!routingTable) throw cRuntimeError("No routing table found");
 
     // get our interface table
     IInterfaceTable *ift = L3AddressResolver().interfaceTableOf(host);
-    if (!ift) throw std::runtime_error("No interface table found");
+    if (!ift) throw cRuntimeError("No interface table found");
 
     IPv4Address myAddress;
     IPv4Address netmask;
@@ -320,7 +320,7 @@ void HostAutoConfigurator2::setupNetworkLayer()
         EV << "interface " << ifname << " gets " << myAddress.str() << "/" << netmask.str() << std::endl;
     }
     if (!interfaceFound)
-    	throw std::runtime_error("Not interface register");
+    	throw cRuntimeError("Not interface register");
 }
 
 void HostAutoConfigurator2::setupRoutingTable()

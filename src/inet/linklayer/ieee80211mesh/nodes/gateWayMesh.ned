@@ -83,12 +83,12 @@ module gateWayMesh
         
         string networkLayerType = default("IPv4NetworkLayer");
         string routingTableType = default("IPv4RoutingTable");
-        string powerSourceType = default("");
+        string energyStorageType = default("");
         routingTable.forwarding = forwarding;
         routingTable.multicastForwarding = multicastForwarding;   // for IPv4, IPv6, Generic
         *.interfaceTableModule = default(absPath(".interfaceTable"));
         *.routingTableModule = default(routingTableType != "" ? absPath(".routingTable") : "");
-        *.powerSourceModule = default(powerSourceType != "" ? absPath(".powerSource") : "");
+        *.energySourceModule = default(energyStorageType != "" ? absPath(".energyStorage") : "");
         *.mobilityModule = default(mobilityType != "" ? absPath(".mobility") : "");            
     gates:
         input radioIn[numRadios+meshChannels] @directIn;
@@ -127,7 +127,7 @@ module gateWayMesh
             @display("p=53,71");
         }
         // optional mobility module. Required only if wireless cards are present
-        mobility: <mobilityType> like IMobility if numRadios>0 {
+        mobility: <mobilityType> like IMobility  {
             parameters:
                 @display("p=53,121");
         }

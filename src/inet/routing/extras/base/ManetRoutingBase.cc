@@ -242,7 +242,7 @@ void ManetRoutingBase::registerRoutingModule()
     }
     else
     {
-        cModule *mod = getContainingNode(this);
+        cModule *mod = getParentModule()->getParentModule();
         char *interfaceName = new char[strlen(mod->getFullName()) + 1];
         char *d = interfaceName;
         for (const char *s = mod->getFullName(); *s; s++)
@@ -376,7 +376,7 @@ void ManetRoutingBase::registerRoutingModule()
         }
     }
     ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
-    rt = getModuleFromPar<IIPv4RoutingTable>(par("routingTableModule"), this);
+    rt = findModuleFromPar<IIPv4RoutingTable>(par("routingTableModule"), this);
     if (!mac_layer_)
         initHook(this);
     GlobalWirelessLinkInspector::initRoutingTables(this,getAddress(),isProactive());

@@ -80,8 +80,11 @@ module ApMeshRelay
         int numRadios = default(1);               // the number of radios in the router. by default no wireless     
         string mobilityType = default("StationaryMobility");
         string relayUnitType = default("MACRelayUnit");
-        string ralayMacTableType = default("MACAddressTable"); // type of the ~IMACAddressTable
+        string relayMacTableType = default("MACAddressTable"); // type of the ~IMACAddressTable
+        string energyStorageType = default("");
         wlan[*].mgmtType = default("Ieee80211MgmtAP");
+        *.interfaceTableModule = default(absPath(".interfaceTable"));
+        *.energySourceModule = default(energyStorageType != "" ? absPath(".energyStorage") : "");
     gates:
         input radioIn[numRadios+1] @directIn;
     submodules:
@@ -100,7 +103,7 @@ module ApMeshRelay
         relayUnit: simpleNetLayer {
             parameters:
                 relayType = relayUnitType;
-                macTableType = ralayMacTableType;
+                macTableType = relayMacTableType;
                 @display("p=223,298");
             gates:
                 ifIn[numRadios+1];

@@ -28,6 +28,7 @@ import inet.physicallayer.contract.packetlevel.IRadio;;
 import inet.linklayer.ieee80211mesh.mgmt.Ieee80211Mesh;
 import inet.linklayer.contract.IWirelessNic;
 import inet.linklayer.ieee80211mesh.locator.ILocator;
+import inet.linklayer.ieee80211mesh.locator.LocatorModule;
 import inet.linklayer.common.IIeee8021dQoSClassifier;
 import inet.linklayer.contract.IWirelessNic;
 
@@ -38,21 +39,25 @@ module Ieee80211NicMeshMulti
 {
     parameters:
         string interfaceTableModule;
-        string powerSourceModule;
-        
+        string energySourceModule;
+         string classifierType = default(""); // needed for EDCA, as the classifier assigns User Priority (UP) to packets; UP determines Access Category via TID
         string mgmtType = default("Ieee80211Mesh"); // name of the management module type (implements IIeee80211Mgmt)
-        string radioType = default("Ieee80211Radio");
-        string macType = default("Ieee80211OldMac");   // choose from Ieee80211OldMac, Ieee80211Mac, Ieee80211CompatibleMac
+        string radioType = default("Ieee80211ScalarRadio");
+        string macType = default("Ieee80211CompatibleMac");   // choose from Ieee80211OldMac, Ieee80211Mac, Ieee80211CompatibleMac
         
-        // string opMode @enum("b","g","a","p") = default("g");
+        string opMode @enum("b","g","a","p") = default("g");
+        double bitrate @unit("bps") = default(opMode == "b" ? 11Mbps : opMode == "p" ? 27Mbps : 54Mbps);
+        
         int numOutputHooks = default(0);
         int numInputHooks = default(0);
         bool _agentNeeded = false;   // internal par. do not use, shows if optional agent module is needed
         int meshChannels = default(1);
         bool hasLocator = default(false);
+        **.opMode = opMode;
+        **.bitrate = bitrate;       
         @display("i=block/ifcard;bgb=259,357");
         *.interfaceTableModule = default(absPath(interfaceTableModule));
-        *.powerSourceModule = default(absPath(powerSourceModule));        
+        *.energySourceModule = default(absPath(energySourceModule));        
     gates:
         input upperLayerIn; // to upper layers
         output upperLayerOut; // from upper layers
@@ -63,7 +68,7 @@ module Ieee80211NicMeshMulti
         classifier: <classifierType> like IIeee8021dQoSClassifier if classifierType != "" {
             @display("p=110,59;i=block/classifier");
         }
-        locator: <default("Locator")> like ILocator if hasLocator {
+        locator: <default("LocatorModule")> like ILocator if hasLocator {
             @display("i=abstract/people;p=164,182");
         }
         // optional agent module (can be either 0 or 1 sized vector)
@@ -74,6 +79,7 @@ module Ieee80211NicMeshMulti
         mgmt: Ieee80211Mesh {
             parameters:
                 locatorActive = hasLocator;
+                macModule = "^.mac";
                 @display("p=96,136;q=wlanDataQueue;i=block/switch");
              gates:
                 macInMulti[meshChannels];

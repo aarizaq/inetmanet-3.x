@@ -19,16 +19,18 @@ import inet.linklayer.ieee80211mesh.locator.ILocator;
 //
 // TODO auto-generated type
 //
-simple Locator like ILocator
+simple LocatorModule like ILocator
 {
     parameters:
-        string interfaceTableModule;
-        string routingTableModule;
-        string icmpModule = default("^.networkLayer.icmp");
-        string arpModule = default("^.networkLayer.arp");        
+        string interfaceTableModule = default("^.^.interfaceTable");
+        string routingTableModule = default("^.^.routingTable");
+        string icmpModule = default("^.^.networkLayer.icmp");
+        string arpModule = default("^.^.networkLayer.arp");        
         bool useGlobal = default(true);
         string iface = default("");
-        @class(LocatorModule);
+        @class(ieee80211::LocatorModule);
+        @signal[NF_LOCATOR_ASSOC];
+        @signal[NF_LOCATOR_DISASSOC];
     gates:
         input inGate;
         output outGate;

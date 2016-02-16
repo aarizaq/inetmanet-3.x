@@ -30,7 +30,7 @@ simple Ieee80211Mesh like IIeee80211Mgmt
         // parameters for EDCA = true
         string classifier = default("Ieee80211eClassifier");
         string interfaceTableModule;
-        string meshReactiveRoutingProtocol = default("inet.networklayer.manetrouting.DYMOUM");
+        string meshReactiveRoutingProtocol = default("inet.routing.extras.DYMOUM");
         int frameCapacity = default(100);
         bool useHwmp = default(false); // If active automatically deactivate useProactive and useReactive and activate ETXEstimate
         bool useProactive = default(false);
@@ -62,6 +62,7 @@ simple Ieee80211Mesh like IIeee80211Mgmt
         bool inteligentBroadcastRouting = default(false);
 
         string macModule;               // The path to the MAC module
+        @class(ieee80211::Ieee80211Mesh);
 
         @signal[enqueuePk](type=cMessage);
         @signal[dequeuePk](type=cMessage);

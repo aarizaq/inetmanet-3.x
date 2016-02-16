@@ -122,28 +122,25 @@ class LocatorModule : public cSimpleModule, public ILocator, protected cListener
         friend std::ostream& operator<<(std::ostream& os, const LocatorModule::LocEntry& e);
         LocatorModule();
         virtual ~LocatorModule();
-        virtual void initialize(int stage);
-        virtual int numInitStages() const {return NUM_INIT_STAGES;}
-        virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj);
-        virtual void handleMessage(cMessage *);
-        virtual const MACAddress  getLocatorMacToMac(const MACAddress &);
-        virtual const IPv4Address getLocatorMacToIp(const MACAddress &);
-        virtual const IPv4Address getLocatorIpToIp(const IPv4Address &);
-        virtual const MACAddress  getLocatorIpToMac(const IPv4Address &);
-        virtual void getApList(const MACAddress &,std::vector<MACAddress>&);
-        virtual void getApListIp(const IPv4Address &,std::vector<IPv4Address>&);
-        virtual bool isAp(const MACAddress & add);
-        virtual bool isApIp(const IPv4Address &add);
-        virtual bool isThisAp();
-        virtual bool isThisApIp();
+        virtual void initialize(int stage) override;
+        virtual int numInitStages() const override {return NUM_INIT_STAGES;}
+        virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details) override;
+        virtual void handleMessage(cMessage *) override;
+        virtual const MACAddress  getLocatorMacToMac(const MACAddress &) override;
+        virtual const IPv4Address getLocatorMacToIp(const MACAddress &) override;
+        virtual const IPv4Address getLocatorIpToIp(const IPv4Address &) override;
+        virtual const MACAddress  getLocatorIpToMac(const IPv4Address &) override;
+        virtual void getApList(const MACAddress &,std::vector<MACAddress>&) override;
+        virtual void getApListIp(const IPv4Address &,std::vector<IPv4Address>&) override;
+        virtual bool isAp(const MACAddress & add) override;
+        virtual bool isApIp(const IPv4Address &add) override;
+        virtual bool isThisAp() override;
+        virtual bool isThisApIp() override;
 
-
-
-
-        virtual void setIpAddress(const IPv4Address &add) {myIpAddress = add;}
-        virtual void setMacAddress(const MACAddress &add) {myMacAddress = add;}
-        virtual IPv4Address getIpAddress() {return myIpAddress;}
-        virtual MACAddress getMacAddress() {return myMacAddress;}
+        virtual void setIpAddress(const IPv4Address &add)  override {myIpAddress = add;}
+        virtual void setMacAddress(const MACAddress &add) override {myMacAddress = add;}
+        virtual IPv4Address getIpAddress() override {return myIpAddress;}
+        virtual MACAddress getMacAddress() override {return myMacAddress;}
 
 };
 
