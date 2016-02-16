@@ -489,8 +489,6 @@ DsrDataBase::DsrDataBase()
 
 void DsrDataBase::cleanLinkChacheData()
 {
-    // TODO Auto-generated constructor stub
-    // fill in routing tables with static routes
     routeCache.clear();
 }
 
