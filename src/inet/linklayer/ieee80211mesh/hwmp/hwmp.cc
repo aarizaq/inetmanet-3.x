@@ -159,7 +159,7 @@ HwmpProtocol::~HwmpProtocol()
 
 void HwmpProtocol::initialize(int stage)
 {
-    if (stage == 4)
+    if (stage == INITSTAGE_ROUTING_PROTOCOLS)
     {
         createTimerQueue();
         registerRoutingModule();
@@ -394,6 +394,7 @@ void HwmpProtocol::sendPreq(std::vector<PREQElem> preq, bool isProactive)
     if (receivers.size() == 1 && receivers[0] == MACAddress::BROADCAST_ADDRESS)
     {
         Ieee80211ActionPREQFrame* msg = createPReq(preq, false, MACAddress::BROADCAST_ADDRESS, isProactive);
+        msg->setName("Hwmp::PREQ");
         for (int i = 1; i < getNumWlanInterfaces(); i++)
         {
             // It's necessary to duplicate the the control info message and include the information relative to the interface
@@ -461,6 +462,7 @@ void HwmpProtocol::sendPrep(MACAddress src,
 {
     EV << "sendprep" << endl;
     Ieee80211ActionPREPFrame* ieee80211ActionPrepFrame = new Ieee80211ActionPREPFrame();
+    ieee80211ActionPrepFrame->setName("Hwmp::PREP");
     ieee80211ActionPrepFrame->getBody().setHopsCount(hops);
     ieee80211ActionPrepFrame->getBody().setTTL(GetMaxTtl());
 
@@ -523,6 +525,7 @@ void HwmpProtocol::sendGann()
     if (!isGann())
         return;
     Ieee80211ActionGANNFrame * gannFrame = new Ieee80211ActionGANNFrame();
+    gannFrame->setName("Hwmp::GANN");
     gannFrame->getBody().setMeshGateAddress(GetAddress());
     gannFrame->getBody().setMeshGateSeqNumber(GetNextGannSeqno());
     m_gannTimer->resched(m_dot11MeshHWMPGannInterval);
@@ -577,6 +580,7 @@ HwmpProtocol::createPReq(std::vector<PREQElem> preq, bool individual, MACAddress
 {
     EV << "createpreq2 " << endl;
     Ieee80211ActionPREQFrame* ieee80211ActionPreqFrame = new Ieee80211ActionPREQFrame();
+    ieee80211ActionPreqFrame->setName("Hwmp::PREQ");
     if (isRoot())
         ieee80211ActionPreqFrame->getBody().setFlags(ieee80211ActionPreqFrame->getBody().getFlags() | 0x80);
     else
@@ -765,6 +769,7 @@ void HwmpProtocol::sendPerr(std::vector<HwmpFailedDestination> failedDestination
 {
     EV << "sendPerr " << endl;
     Ieee80211ActionPERRFrame * ieee80211ActionPerrFrame = new Ieee80211ActionPERRFrame();
+    ieee80211ActionPerrFrame->setName("Hwmp::PERR");
     ieee80211ActionPerrFrame->getBody().setPerrElemArraySize(failedDestinations.size());
     ieee80211ActionPerrFrame->getBody().setBodyLength(ieee80211ActionPerrFrame->getBody().getBodyLength() + (failedDestinations.size() * PERRElemLen));
     ieee80211ActionPerrFrame->setByteLength(ieee80211ActionPerrFrame->getByteLength() + (failedDestinations.size() * PERRElemLen));

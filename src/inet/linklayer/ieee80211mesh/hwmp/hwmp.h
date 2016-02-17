@@ -103,18 +103,15 @@ class HwmpProtocol : public ManetRoutingBase
     public:
         HwmpProtocol();
         virtual ~HwmpProtocol();
-        void initialize(int);
-        virtual int numInitStages() const
-        {
-            return 5;
-        }
-        virtual void handleMessage(cMessage *msg);
+        void initialize(int) override;
+        virtual int numInitStages() const override { return NUM_INIT_STAGES; }
+        virtual void handleMessage(cMessage *msg) override;
         // Detect a transmission fault
-        virtual void processLinkBreak(const cObject *details);
-        virtual void processLinkBreakManagement(const cObject *details);
+        virtual void processLinkBreak(const cObject *details) override;
+        virtual void processLinkBreakManagement(const cObject *details) override;
         virtual void packetFailedMac(Ieee80211TwoAddressFrame *frame);
         // promiscuous frame process.
-        virtual void processFullPromiscuous(const cObject *details);
+        virtual void processFullPromiscuous(const cObject *details) override;
         ///\brief This callback is used to obtain active neighbours on a given interface
         ///\param cb is a callback, which returns a list of addresses on given interface (uint32_t)
         ///\name Proactive PREQ mechanism:
@@ -123,24 +120,24 @@ class HwmpProtocol : public ManetRoutingBase
         virtual void UnsetRoot();
         ///\}
         ///\brief Statistics:
-        virtual bool isProactive()
+        virtual bool isProactive() override
         {
             return false;
         }
         ;
-        virtual bool supportGetRoute() {return false;}
-        virtual bool isOurType(cPacket *);
-        virtual bool getDestAddress(cPacket *, L3Address &);
-        virtual uint32_t getRoute(const L3Address &, std::vector<L3Address> &);
-        virtual bool getNextHop(const L3Address &dest, L3Address &add, int &iface, double &cost);
+        virtual bool supportGetRoute() override  {return false;}
+        virtual bool isOurType(cPacket *) override;
+        virtual bool getDestAddress(cPacket *, L3Address &) override;
+        virtual uint32_t getRoute(const L3Address &, std::vector<L3Address> &) override;
+        virtual bool getNextHop(const L3Address &dest, L3Address &add, int &iface, double &cost) override;
         virtual bool getNextHopProactive(const L3Address &dest, L3Address &add, int &iface, double &cost);
         virtual bool getNextHopReactive(const L3Address &dest, L3Address &add, int &iface, double &cost);
-        virtual void setRefreshRoute(const L3Address &destination, const L3Address & nextHop, bool isReverse);
+        virtual void setRefreshRoute(const L3Address &destination, const L3Address & nextHop, bool isReverse) override;
 
         virtual bool getBestGan(L3Address &, L3Address &);
-        virtual bool handleNodeStart(IDoneCallback *doneCallback);
-        virtual bool handleNodeShutdown(IDoneCallback *doneCallback);
-        virtual void handleNodeCrash();
+        virtual bool handleNodeStart(IDoneCallback *doneCallback) override;
+        virtual bool handleNodeShutdown(IDoneCallback *doneCallback) override;
+        virtual void handleNodeCrash() override;
 
     private:
         simtime_t timeLimitQueue;

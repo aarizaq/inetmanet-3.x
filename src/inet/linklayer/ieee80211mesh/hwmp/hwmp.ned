@@ -32,7 +32,11 @@ import inet.networklayer.contract.IManetRouting;
 simple HwmpProtocol extends BaseRouting like IManetRouting
 {
     parameters:
-        @class(HwmpProtocol);
+        @class(ieee80211::HwmpProtocol);
+        string interfaceTableModule;   // The path to the InterfaceTable module
+        string routingTableModule = ""; // not used
+        string icmpModule = ""; // not used
+        string arpModule = ""; // not used
         int maxQueueSize = default(255);
         int dot11MeshHWMPmaxPREQretries = default(3);
         double dot11MeshHWMPnetDiameterTraversalTime @unit("s") = default(102400us);
