@@ -294,6 +294,11 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase, public cListener
         //virtual void sendUp(cMessage *msg);
         virtual cPacket * decapsulate(Ieee80211DataFrame *frame);
         virtual void sendFrameDown(cPacket *frame);
+        virtual void sendDownMulti(cPacket *frame, int i)
+        {
+            ASSERT(isOperational);
+            send(frame, "macOutMulti",i);
+        }
 
         virtual bool isAddressForUs(const MACAddress &add);
 };

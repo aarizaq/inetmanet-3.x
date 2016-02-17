@@ -381,7 +381,7 @@ void Ieee80211Mesh::startProactive()
     //else
     moduleType = cModuleType::find("inet.routing.extras.OLSR");
     if (!moduleType)
-        throw cRuntimeError("Module %s not found",par("meshReactiveRoutingProtocol").stringValue());
+        throw cRuntimeError("Module inet.routing.extras.OLSR not found");
     module = moduleType->create("ManetRoutingProtocolProactive", this);
     routingModuleProactive = dynamic_cast <ManetRoutingBase*> (module);
     routingModuleProactive->gate("to_ip")->connectTo(gate("routingInProactive"));
@@ -418,13 +418,12 @@ void Ieee80211Mesh::startHwmp()
     cModule *module;
     moduleType = cModuleType::find("inet.linklayer.ieee80211mesh.hwmp.HwmpProtocol");
     if (!moduleType)
-        throw cRuntimeError("Module %s not found",par("meshReactiveRoutingProtocol").stringValue());
+        throw cRuntimeError("Module inet.linklayer.ieee80211mesh.hwmp.HwmpProtocol not found");
     module = moduleType->create("HwmpProtocol", this);
     routingModuleHwmp = dynamic_cast <ManetRoutingBase*> (module);
     routingModuleHwmp->gate("to_ip")->connectTo(gate("routingInHwmp"));
     gate("routingOutHwmp")->connectTo(routingModuleHwmp->gate("from_ip"));
     routingModuleHwmp->par("interfaceTableModule").setStringValue(par("interfaceTableModule").stringValue());
-    routingModuleHwmp->par("icmpModule").setStringValue("");
     routingModuleHwmp->buildInside();
     routingModuleHwmp->scheduleStart(simTime());
 }
@@ -671,10 +670,9 @@ void Ieee80211Mesh::handleMessage(cMessage *msg)
             else
                // delete msg;
                 processFrame(frame);
-      }
-
-
-        else{
+        }
+        else
+        {
 
             sendFrameDown(PK(msg));
         }
@@ -1755,54 +1753,48 @@ void Ieee80211Mesh::sendFrameDown(cPacket *frame)
         delete frame->removeControlInfo();
     if (frameDataorMgm->getReceiverAddress().isBroadcast())
     {
-        if (dynamic_cast<ETXBasePacket*>(frame->getEncapsulatedPacket()) && numMac > 1)
-            sendDown(frame);
-        else
+        if (isMultiMac)
         {
-            if (numMac > 1)
+            for (unsigned int i = 1; i < numMac; i++)
             {
-                for (unsigned int i = 1; i < numMac; i++)
-                {
-                    cPacket *pkt = frame->dup();
-                    if (!pkt->hasPar("indexGate"))
-                        pkt->addPar("indexGate") = i;
-                     else
-                         pkt->par("indexGate") = i;
-
-                    sendDown(pkt);
-                }
-                /*
-                if (inteligentBroadcastRouting && (frameAux && frameAux->getSubType() == ROUTING))
-                {
-                    frameAux->setChannelsArraySize(numMac);
-                    for (unsigned int i = 0; i < numMac; i++)
-                    {
-                        frameAux->setChannels(i,radioInterfaces[i]->getChannel());
-                    }
-                    ///// CUIDADO : FIXME
-                    if (dynamic_cast<OLSR_pkt*>(frame->getEncapsulatedPacket()) && routingModuleProactive && routingModuleReactive)
-                        frame->setKind(1);
-                }
-                else
-                {
-                    for (unsigned int i = 1; i < numMac; i++)
-                    {
-                        cPacket *pkt = frame->dup();
-                        pkt->setKind(i);
-                        PassiveQueueBase::handleMessage(pkt);
-                    }
-                }*/
+                cPacket *pkt = frame->dup();
+                sendDownMulti(pkt, i);
             }
-            sendDown(frame);
+            sendDownMulti(frame, 0);
+            /*
+             if (inteligentBroadcastRouting && (frameAux && frameAux->getSubType() == ROUTING))
+             {
+             frameAux->setChannelsArraySize(numMac);
+             for (unsigned int i = 0; i < numMac; i++)
+             {
+             frameAux->setChannels(i,radioInterfaces[i]->getChannel());
+             }
+             ///// CUIDADO : FIXME
+             if (dynamic_cast<OLSR_pkt*>(frame->getEncapsulatedPacket()) && routingModuleProactive && routingModuleReactive)
+             frame->setKind(1);
+             }
+             else
+             {
+             for (unsigned int i = 1; i < numMac; i++)
+             {
+             cPacket *pkt = frame->dup();
+             pkt->setKind(i);
+             PassiveQueueBase::handleMessage(pkt);
+             }
+             }*/
         }
+        else
+            sendDown(frame);
     }
     else
     {
-        if (!frame->hasPar("indexGate"))
-            frame->addPar("indexGate") = getBestInterface(frameDataorMgm);
+        if (isMultiMac)
+        {
+            int index =  getBestInterface(frameDataorMgm);
+            sendDownMulti(frame,index);
+        }
         else
-            frame->par("indexGate") = getBestInterface(frameDataorMgm);
-        sendDown(frame);
+            sendDown(frame);
     }
 }
 
@@ -1916,7 +1908,10 @@ int Ieee80211Mesh::getBestInterface(Ieee80211DataOrMgmtFrame *frame)
             it = itaux;
             itaux++;
         }
+
         int iface = frame->par("indexGate");
+        frame->getParList().remove("indexGate");
+
         if (index == 0)
         {
             if (iface != it->second)

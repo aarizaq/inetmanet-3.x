@@ -1114,7 +1114,11 @@ void Ieee80211Mesh::mplsDataProcess(LWMPLSPacket * mpls_pk_ptr, MACAddress sta_a
                 sendUp(ethframe);
             }
             else
-                sendUp(mpls_pk_ptr->getEncapsulatedPacket()->dup());
+            {
+                cPacket *pkt = mpls_pk_ptr->getEncapsulatedPacket()->dup();
+                pkt->setControlInfo(mpls_pk_ptr->removeControlInfo());
+                sendUp(pkt);
+            }
             if (!mplsForwardBroadcast(sta_addr)) // no propagate
             {
                 delete mpls_pk_ptr;
