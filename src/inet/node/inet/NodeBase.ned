@@ -62,7 +62,7 @@ module NodeBase like INetworkNode
         routingTable.multicastForwarding = multicastForwarding;   // for IPv4, IPv6, Generic
         *.interfaceTableModule = default(absPath(".interfaceTable"));
         *.routingTableModule = default(routingTableType != "" ? absPath(".routingTable") : "");
-        *.energySourceModule = default(energyStorageType != "" ? absPath(".energyStorage") : "");
+        
         *.mobilityModule = default(mobilityType != "" ? absPath(".mobility") : "");
     gates:
         input radioIn[numRadios] @directIn;
