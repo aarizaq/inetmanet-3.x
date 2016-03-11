@@ -297,6 +297,8 @@ void DijkstraKshortest::run()
 
         if (elem.iD != rootNode)
         {
+            if (it->second.size() > elem.idx && it->second[elem.idx].label == perm)
+                continue; // set
             if ((int)it->second.size() == K_LIMITE)
             {
                 bool continueLoop = true;
@@ -439,6 +441,14 @@ void DijkstraKshortest::run()
                     newElem.iD=current_edge->last_node();
                     newElem.idx=nextIdx;
                     newElem.cost=cost;
+                    for (auto it = heap.begin(); it != heap.end(); ++it)
+                    {
+                        if (it->iD == newElem.iD && it->idx == newElem.idx && it->cost > newElem.cost)
+                        {
+                            heap.erase(it);
+                            break;
+                        }
+                    }
                     heap.insert(newElem);
                 }
             }
@@ -475,6 +485,8 @@ void DijkstraKshortest::runUntil (const NodeId &target)
 
         if (elem.iD != rootNode)
         {
+            if (it->second.size() > elem.idx && it->second[elem.idx].label == perm)
+                continue; // set
             if ((int)it->second.size() == K_LIMITE)
             {
                 bool continueLoop = true;
@@ -548,13 +560,21 @@ void DijkstraKshortest::runUntil (const NodeId &target)
                 }
                 if (cost<maxCost && !permanent)
                 {
-                    itNext->second[nextIdx].cost=cost;
-                    itNext->second[nextIdx].idPrev=elem.iD;
-                    itNext->second[nextIdx].idPrevIdx=elem.idx;
+                    itNext->second[nextIdx].cost = cost;
+                    itNext->second[nextIdx].idPrev = elem.iD;
+                    itNext->second[nextIdx].idPrevIdx = elem.idx;
                     SetElem newElem;
                     newElem.iD=current_edge->last_node();
                     newElem.idx=nextIdx;
                     newElem.cost=cost;
+                    for (auto it = heap.begin(); it != heap.end(); ++it)
+                    {
+                        if (it->iD == newElem.iD && it->idx == newElem.idx && it->cost > newElem.cost)
+                        {
+                            heap.erase(it);
+                            break;
+                        }
+                    }
                     heap.insert(newElem);
                 }
             }

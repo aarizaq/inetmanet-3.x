@@ -53,37 +53,47 @@ void collectContentionModules(cModule *firstContentionModule, IContention **& co
     contentionTx[count] = nullptr;
 }
 
-void Contention::initialize()
+void Contention::initialize(int stage)
 {
-    mac = check_and_cast<IMacRadioInterface *>(getModuleByPath(par("macModule")));
-    upperMac = check_and_cast<IUpperMac *>(getModuleByPath(par("upperMacModule")));
-    collisionController = dynamic_cast<ICollisionController *>(getModuleByPath(par("collisionControllerModule")));
-    statistics = check_and_cast<IStatistics*>(getModuleByPath(par("statisticsModule")));
-    initialBackoffOptimization = par("initialBackoffOptimization");
+    if (stage == INITSTAGE_LOCAL) {
+        mac = check_and_cast<IMacRadioInterface *>(getModuleByPath(par("macModule")));
+        upperMac = check_and_cast<IUpperMac *>(getModuleByPath(par("upperMacModule")));
+        collisionController = dynamic_cast<ICollisionController *>(getModuleByPath(par("collisionControllerModule")));
+        statistics = check_and_cast<IStatistics*>(getModuleByPath(par("statisticsModule")));
+        backoffOptimization = par("backoffOptimization");
+        lastIdleStartTime = simTime() - SimTime::getMaxTime() / 2;
 
-    txIndex = getIndex();
-    if (txIndex > 0 && !collisionController)
-        throw cRuntimeError("No collision controller module -- one is needed when multiple Contention instances are present");
+        txIndex = getIndex();
+        if (txIndex > 0 && !collisionController)
+            throw cRuntimeError("No collision controller module -- one is needed when multiple Contention instances are present");
 
-    if (!collisionController)
-        startTxEvent = new cMessage("startTx");
+        if (!collisionController)
+            startTxEvent = new cMessage("startTx");
 
-    fsm.setName("fsm");
-    fsm.setState(IDLE, "IDLE");
+        fsm.setName("fsm");
+        fsm.setState(IDLE, "IDLE");
 
-    WATCH(txIndex);
-    WATCH(ifs);
-    WATCH(eifs);
-    WATCH(cwMin);
-    WATCH(cwMax);
-    WATCH(slotTime);
-    WATCH(retryCount);
-    WATCH(endEifsTime);
-    WATCH(backoffSlots);
-    WATCH(scheduledTransmissionTime);
-    WATCH(channelLastBusyTime);
-    WATCH(mediumFree);
-    updateDisplayString();
+        WATCH(txIndex);
+        WATCH(ifs);
+        WATCH(eifs);
+        WATCH(cwMin);
+        WATCH(cwMax);
+        WATCH(slotTime);
+        WATCH(retryCount);
+        WATCH(endEifsTime);
+        WATCH(backoffSlots);
+        WATCH(scheduledTransmissionTime);
+        WATCH(lastChannelBusyTime);
+        WATCH(lastIdleStartTime);
+        WATCH(backoffOptimizationDelta);
+        WATCH(mediumFree);
+        WATCH(backoffOptimization);
+        updateDisplayString();
+    }
+    else if (stage == INITSTAGE_LAST) {
+        if (!par("initialChannelBusy") && simTime() == 0)
+            lastChannelBusyTime = simTime() - SimTime().getMaxTime() / 2;
+    }
 }
 
 Contention::~Contention()
@@ -214,7 +224,7 @@ void Contention::mediumStateChanged(bool mediumFree)
 {
     Enter_Method_Silent(mediumFree ? "medium FREE" : "medium BUSY");
     this->mediumFree = mediumFree;
-    channelLastBusyTime = simTime();
+    lastChannelBusyTime = simTime();
     handleWithFSM(MEDIUM_STATE_CHANGED, nullptr);
 }
 
@@ -272,9 +282,9 @@ void Contention::scheduleTransmissionRequest()
     bool useEifs = endEifsTime > now + ifs;
     simtime_t waitInterval = (useEifs ? eifs : ifs) + backoffSlots * slotTime;
 
-    if (initialBackoffOptimization && fsm.getState() == IDLE) {
+    if (backoffOptimization && fsm.getState() == IDLE) {
         // we can pretend the frame has arrived into the queue a little bit earlier, and may be able to start transmitting immediately
-        simtime_t elapsedFreeChannelTime = now - channelLastBusyTime;
+        simtime_t elapsedFreeChannelTime = now - lastChannelBusyTime;
         simtime_t elapsedIdleTime = now - lastIdleStartTime;
         backoffOptimizationDelta = std::min(waitInterval, std::min(elapsedFreeChannelTime, elapsedIdleTime));
         if (backoffOptimizationDelta > SIMTIME_ZERO)

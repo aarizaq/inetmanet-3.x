@@ -96,7 +96,8 @@ void TCP::initialize(int stage)
         useDataNotification = par("useDataNotification");
     }
     else if (stage == INITSTAGE_TRANSPORT_LAYER) {
-        NodeStatus *nodeStatus = dynamic_cast<NodeStatus *>(findContainingNode(this)->getSubmodule("status"));
+        cModule *host = findContainingNode(this);
+        NodeStatus *nodeStatus = check_and_cast_nullable<NodeStatus *>(host ? host->getSubmodule("status") : nullptr);
         isOperational = (!nodeStatus) || nodeStatus->getState() == NodeStatus::UP;
         IPSocket ipSocket(gate("ipOut"));
         ipSocket.registerProtocol(IP_PROT_TCP);
@@ -211,6 +212,17 @@ void TCP::segmentArrivalWhileClosed(TCPSegment *tcpseg, L3Address srcAddr, L3Add
 
 void TCP::updateDisplayString()
 {
+#if OMNETPP_VERSION < 0x0500
+    if (getEnvir()->isDisabled()) {
+#else
+    if (getEnvir()->isExpressMode()) {
+#endif
+        // in express mode, we don't bother to update the display
+        // (std::map's iteration is not very fast if map is large)
+        getDisplayString().setTagArg("t", 0, "");
+        return;
+    }
+
     //char buf[40];
     //sprintf(buf,"%d conns", tcpAppConnMap.size());
     //getDisplayString().setTagArg("t",0,buf);

@@ -65,14 +65,15 @@ class INET_API Contention : public cSimpleModule, public IContention, protected 
         simtime_t endEifsTime = SIMTIME_ZERO;
         int backoffSlots = 0;
         simtime_t scheduledTransmissionTime = SIMTIME_ZERO;
-        simtime_t channelLastBusyTime = SIMTIME_ZERO;
+        simtime_t lastChannelBusyTime = SIMTIME_ZERO;
         simtime_t lastIdleStartTime = SIMTIME_ZERO;
         simtime_t backoffOptimizationDelta = SIMTIME_ZERO;
         bool mediumFree = false;
-        bool initialBackoffOptimization = true;
+        bool backoffOptimization = true;
 
     protected:
-        virtual void initialize() override;
+        virtual int numInitStages() const override { return NUM_INIT_STAGES; }
+        virtual void initialize(int stage) override;
         virtual void handleMessage(cMessage *msg) override;
         virtual void transmissionGranted(int txIndex) override; // called back from collision controller
         virtual void internalCollision(int txIndex) override; // called back from collision controller
