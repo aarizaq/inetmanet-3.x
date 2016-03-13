@@ -60,7 +60,8 @@ void Ieee80211MgmtAdhocWithRouting::handleTimer(cMessage *msg)
 void Ieee80211MgmtAdhocWithRouting::handleUpperMessage(cPacket *msg)
 {
     Ieee80211DataFrame *frame = encapsulate(msg);
-    sendOrEnqueue(frame);
+    if (frame)
+        sendOrEnqueue(frame);
 }
 
 void Ieee80211MgmtAdhocWithRouting::handleCommand(int msgkind, cObject *ctrl)
