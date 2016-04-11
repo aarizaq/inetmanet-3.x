@@ -141,8 +141,6 @@ public:
 
 inline bool operator < ( const DijkstraKshortest::SetElem& x, const DijkstraKshortest::SetElem& y )
 {
-    if (x.iD==y.iD && x.idx==y.idx)
-        return false;
     for (unsigned int i =0;i<x.cost.size();i++)
     {
         switch(x.cost[i].metric)

@@ -1066,7 +1066,7 @@ bool WirelessNumHops::getKshortest(const MACAddress &dest,KroutesMac &routes)
         }
         routes.push_back(routeAux);
     }
-#if 1
+#if 0
     // check if the route is in the list
     DijkstraKshortest::Route route;
     std::deque<int>routeMin;
