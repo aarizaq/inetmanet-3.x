@@ -40,6 +40,10 @@
 #include "inet/linklayer/bmac/BMacFrame_m.h"
 #endif
 
+#ifdef WITH_LMAC
+#include "inet/linklayer/lmac/LMacFrame_m.h"
+#endif
+
 #ifdef WITH_XMAC
 #include "inet/linklayer/xmac/XMacPkt_m.h"
 #endif // ifdef WITH_BMAC
@@ -707,6 +711,19 @@ void DSRUU::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj
                 return;
             sender = MACAddress(frameB->getSrcAddr());
             receiver = MACAddress(frameB->getDestAddr());
+        }
+#endif
+
+#ifdef WITH_LMAC
+        LMacFrame *frameL = dynamic_cast<LMacFrame *>(obj);
+        if (frameL)
+        {
+            if (dynamic_cast<IPv4Datagram *>(frameL->getEncapsulatedPacket()))
+                dgram = check_and_cast<IPv4Datagram *>(frameL->getEncapsulatedPacket());
+            else
+                return;
+            sender = MACAddress(frameL->getSrcAddr());
+            receiver = MACAddress(frameL->getDestAddr());
         }
 #endif
 
