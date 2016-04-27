@@ -141,9 +141,9 @@ void SCTPSocket::addAddress(L3Address addr)
 void SCTPSocket::bindx(AddressVector lAddresses, int lPort)
 {
     L3Address lAddr;
-    for (auto i = lAddresses.begin(); i != lAddresses.end(); ++i) {
-        EV << "bindx: bind address " << (*i) << "\n";
-        localAddresses.push_back((*i));
+    for (auto & lAddresse : lAddresses) {
+        EV << "bindx: bind address " << (lAddresse) << "\n";
+        localAddresses.push_back((lAddresse));
     }
     localPrt = lPort;
     sockstate = CLOSED;
@@ -362,7 +362,7 @@ void SCTPSocket::processMessage(cMessage *msg)
             EV_INFO << "SCTP_I_DATA\n";
             if (cb) {
                 cb->socketDataArrived(assocId, yourPtr, PK(msg), false);
-                msg = NULL;
+                msg = nullptr;
             }
             break;
 
@@ -480,7 +480,7 @@ void SCTPSocket::processMessage(cMessage *msg)
             throw cRuntimeError("SCTPSocket::processMessage(): invalid msg kind %d, one of the SCTP_I_xxx constants expected", msg->getKind());
     }
 
-    if (msg != NULL) {
+    if (msg != nullptr) {
         delete msg;
     }
 }

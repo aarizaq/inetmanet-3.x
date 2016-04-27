@@ -430,7 +430,7 @@ SCTPStateVariables::SCTPStateVariables()
     initialWindow = 0;
     allowCMT = false;
     cmtSendAllComparisonFunction = nullptr;
-    cmtRetransmissionVariant = 0;
+    cmtRetransmissionVariant = nullptr;
     cmtCUCVariant = SCTPStateVariables::CUCV_Normal;
     cmtBufferSplitVariant = SCTPStateVariables::CBSV_None;
     cmtBufferSplittingUsesOSB = false;
@@ -880,8 +880,8 @@ bool SCTPAssociation::processSCTPMessage(SCTPMessage *sctpmsg,
 
     if (fsm->getState() == SCTP_S_ESTABLISHED) {
         bool found = false;
-        for (auto k = state->localAddresses.begin(); k != state->localAddresses.end(); ++k) {
-            if ((*k) == msgDestAddr) {
+        for (auto & elem : state->localAddresses) {
+            if ((elem) == msgDestAddr) {
                 found = true;
                 break;
             }

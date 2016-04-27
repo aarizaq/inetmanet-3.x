@@ -34,6 +34,10 @@ network MultiRadio
             @display("p=83,15");
         }
         configurator: IPv4NetworkConfigurator {
+            config=xml("<config><interface hosts='*' address='10.0.0.x' netmask='255.255.255.0'/></config>");
+            addStaticRoutes = false;
+            addDefaultRoutes = false;
+            addSubnetRoutes = false;
             @display("p=253,15");
         }
         mobileHost[numHosts]: AdhocHost {

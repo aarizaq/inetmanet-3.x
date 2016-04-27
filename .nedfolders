@@ -1,16 +1,3 @@
 examples
 src
 tutorials
--inet.applications.packetdrill
--inet.applications.voipstream
--inet.applications.voiptool
--inet.examples.emulation
--inet.examples.hip
--inet.examples.voipstream
--inet.examples.voiptool
--inet.linklayer.ext
--inet.node.packetdrill
--inet.transport.tcp_lwip
--inet.transport.tcp_nsc
--inet.transportlayer.tcp_lwip
--inet.transportlayer.tcp_nsc

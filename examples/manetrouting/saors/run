@@ -1,4 +1,2 @@
 #!/bin/sh
-cd `dirname $0`
-../src/saors -n .:../src $*
-# for shared lib, use: opp_run -l ../src/saors -n .:../src $*
+../../../src/run_inet "$@"
