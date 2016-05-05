@@ -20,17 +20,15 @@ package inet.physicallayer.obstacleloss;
 import inet.physicallayer.contract.packetlevel.IObstacleLoss;
 
 //
-// This obstacle loss model determines the power loss by computing the accurate
-// dielectric and reflection loss along the straight path considering the shape,
-// the position, the orientation, and the material of obstructing physical
-// objects.
+// This obstacle loss model determines power loss by checking if there is any
+// obstructing physical object along the straight propagation path. The result
+// is either total power loss if there was such an object or no loss at all if
+// there wasn't.
 //
-module TracingObstacleLoss like IObstacleLoss
+module IdealObstacleLoss like IObstacleLoss
 {
     parameters:
         string environmentModule = default("environment"); // the path of the environment model relative to the network
-        bool leaveIntersectionTrail = default(false); // true means the instersections of transmissions and physical objects will be displayed on the canvas of the radio medium
-        bool leaveFaceNormalVectorTrail = default(false); // true means the face normal vectors of instersections will be displayed on the canvas of the radio medium
         @display("i=block/control");
-        @class(TracingObstacleLoss);
+        @class(IdealObstacleLoss);
 }
