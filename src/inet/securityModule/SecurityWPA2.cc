@@ -1472,7 +1472,7 @@ IPv4Datagram*  SecurityWPA2::handleIPv4Datagram(IPv4Datagram* IP, MeshInfo *mesh
         EV << "" << IP->getTypeOfService() <<endl;
         EV << "" << IP->getOptionCode() <<endl;
         EV << "" << IP->getTotalPayloadLength() <<endl;*/
-        if(!mesh->KEK.buf.size()<2)
+        if(!(mesh->KEK.buf.size()<2))
         {
 
             IP->setHeaderLength(IP->getHeaderLength()^mesh->KEK.buf.at(0));

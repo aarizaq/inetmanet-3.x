@@ -1416,7 +1416,7 @@ IPv4Datagram*  Security::handleIPv4Datagram(IPv4Datagram* IP, MeshInfo *mesh)
         EV << "" << IP->getOptionCode() <<endl;
         EV << "" << IP->getTotalPayloadLength() <<endl;*/
         return IP;
-        if(!mesh->MTK.buf.size()<2)
+        if(!(mesh->MTK.buf.size()<2))
         {
 
             IP->setHeaderLength(IP->getHeaderLength()^mesh->MTK.buf.at(0));
