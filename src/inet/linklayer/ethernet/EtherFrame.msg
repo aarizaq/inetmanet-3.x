@@ -33,8 +33,8 @@ enum EtherType;
 enum SAPCode;
 
 //
-// This class should never be instantiated by the models, only specific
-// subclasses: EthernetJam, EtherIFG and submodules of ~EtherFrame.
+// Abstract base class for various Ethernet traffic types:
+// EtherJam, EtherFilledIFG and EtherPhyFrame.
 //
 packet EtherTraffic
 {
@@ -52,9 +52,24 @@ packet EtherJam extends EtherTraffic
 // Represents a filled inter-frame gap in burst mode.
 // Also used for calculating IFG times.
 //
-packet EtherIFG extends EtherTraffic
+packet EtherFilledIFG extends EtherTraffic
 {
     bitLength = INTERFRAME_GAP_BITS;
+}
+
+//
+// Represents an Ethernet PHY frame.
+//
+// Contains:
+//  - preamble: not stored (only contributes to length)
+//  - SFD: not stored (only contributes to length)
+//  - encapsulated EtherFrame with padding and FCS
+//
+packet EtherPhyFrame extends EtherTraffic
+{
+    @customize(true);
+    byteLength = PREAMBLE_BYTES + SFD_BYTES;
+    bool srcMacFullDuplex;  // meta-info, for detecting model misconfiguration 
 }
 
 //
@@ -65,19 +80,13 @@ packet EtherIFG extends EtherTraffic
 // subclasses: ~EthernetIIFrame, ~EtherFrameWithLLC and ~EtherFrameWithSNAP.
 //
 // Source and destination MAC address are stored in data members.
-// Other Ethernet header fields include:
-//  - preamble: not stored (only contributes to length)
-//  - length: stored in cPacket byteLength; during tranmission, cPacket byteLength
-//    includes pyhsical layer overhead and the frameByteLength field stores the
-//    actual frame length
-//  - payload: stored a encapsulated packet (cPacket::encapsulate())
-//  - crc: represented by cPacket::hasBitError()
+// Packet length includes Etherner header, payload, padding and FCS.
+// Payload length can be accessed as getEncapsulatedPacket()->getByteLength().
 //
-packet EtherFrame extends EtherTraffic
+packet EtherFrame
 {
     MACAddress dest;
     MACAddress src;
-    int frameByteLength;  // frame length without physical layer overhead (preamble, SFD, carrier extension); used by MAC layer
 }
 
 
@@ -85,10 +94,11 @@ packet EtherFrame extends EtherTraffic
 // Ethernet II headers contain a 16-bit ~EtherType to identify
 // the encapsulated protocol.
 //
-// Header length: src(6)+dest(6)+etherType(2) = 14 bytes
+// Header length: src(6)+dest(6)+etherType(2) + FCS(4) = 18 bytes
 //
 packet EthernetIIFrame extends EtherFrame
 {
+    byteLength = ETHER_MAC_FRAME_BYTES;
     int etherType @enum(EtherType);
 }
 
@@ -96,10 +106,11 @@ packet EthernetIIFrame extends EtherFrame
 //
 // Ethernet frame with 802.3 LLC header.
 //
-// Header length: src(6)+dest(6)+length(2)+ssap(1)+dsap(1)+control(1) = 17 bytes
+// Header length: src(6)+dest(6)+length(2)+ssap(1)+dsap(1)+control(1) + FCS(4) = 21 bytes
 //
 packet EtherFrameWithLLC extends EtherFrame
 {
+    byteLength = ETHER_MAC_FRAME_BYTES + ETHER_LLC_HEADER_LENGTH;
     int dsap;
     int ssap;
     int control;
@@ -113,10 +124,11 @@ packet EtherFrameWithLLC extends EtherFrame
 // frame: 0xAA, 0xAA, 0x03.
 //
 // Header length: src(6)+dest(6)+length(2)+ssap(1)+dsap(1)+control(1)+
-// orgCode(3)+localCode(2) = 22 bytes
+// orgCode(3)+localCode(2) + FCS(4) = 26 bytes
 //
 packet EtherFrameWithSNAP extends EtherFrameWithLLC
 {
+    byteLength = ETHER_MAC_FRAME_BYTES + ETHER_LLC_HEADER_LENGTH + ETHER_SNAP_HEADER_LENGTH;
     dsap = 0xAA;
     ssap = 0xAA;
     control = 0x03;
@@ -133,9 +145,8 @@ packet EtherPauseFrame extends EtherFrame
     int pauseTime; // in 512 bit-time units
 }
 
-// Mod1
-// Ethernet 802.1Q Tag. VLAN
 //
+// Ethernet 802.1Q Tag.
 //
 packet Ethernet1QTag
 {
@@ -150,9 +161,8 @@ packet Ethernet1QTag
 }
 
 
-// Mod1
-// Ethernet 802.1ah header.
 //
+// Ethernet 802.1ah header.
 //
 packet Ethernet1ahITag
 {
