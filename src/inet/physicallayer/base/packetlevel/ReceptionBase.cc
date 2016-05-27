@@ -42,7 +42,7 @@ ReceptionBase::ReceptionBase(const IRadio *receiver, const ITransmission *transm
     transmissionStartDirection.z = 0;
     double heading = atan2(transmissionStartDirection.y, transmissionStartDirection.x);
     double elevation = atan2(z, transmissionStartDirection.length());
-    EulerAngles direction = EulerAngles(heading, elevation, 0);
+    direction = EulerAngles(heading, elevation, 0);
 }
 
 std::ostream& ReceptionBase::printToStream(std::ostream& stream, int level) const
