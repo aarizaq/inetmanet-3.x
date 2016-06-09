@@ -824,7 +824,7 @@
                       "
         extraSourceFolders = ""
         compileFlags = "-DWITH_VISUALIZERS"
-        linkerFlags = "-losg -losgEarth -losgText -losgDB"
+        linkerFlags = ""
         />
     <feature
         id="VoIPStream"
