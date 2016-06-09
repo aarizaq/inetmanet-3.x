@@ -20,8 +20,8 @@
 //
 
 
-#include "UDPBasicBurstNotification.h"
-
+#include "inet/applications/udpapp/UDPBasicBurstNotification.h"
+#include "inet/applications/base/ApplicationPacket_m.h"
 #include "inet/transportlayer/contract/udp/UDPControlInfo_m.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
 #include "inet/networklayer/common/InterfaceTable.h"

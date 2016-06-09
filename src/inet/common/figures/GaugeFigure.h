@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2013 OpenSim Ltd
+// Copyright (C) 2015 OpenSim Ltd
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -19,46 +19,39 @@
 #define __INET_GAUGEFIGURE_H
 
 #include "inet/common/INETDefs.h"
+#include "inet/common/INETMath.h"
+#include "inet/common/figures/IMeterFigure.h"
 
 // for the moment commented out as omnet cannot instatiate it from a namespace
 //namespace inet {
 
 #if OMNETPP_VERSION >= 0x500
 
-class INET_API GaugeFigure : public cOvalFigure, protected cListener, protected cISimulationLifecycleListener
+class INET_API GaugeFigure : public cOvalFigure, public inet::IMeterFigure
 {
     cPathFigure *needle;
     cTextFigure *valueFigure;
     cTextFigure *labelFigure;
-    const char *signalName;
-    const char *moduleName;
     const char *label;
     const char *colorStrip;
     double minValue = 0;
     double maxValue = 100;
     double tickSize = 10;
-    double value = minValue;
+    double value = NaN;
+
+  protected:
+    virtual void parse(cProperty *property) override;
+    virtual bool isAllowedPropertyKey(const char *key) const override;
+    void addChildren();
+    void addColorCurve(const cFigure::Color& curveColor, double startAngle, double endAngle);
+    void refresh();
 
   public:
     GaugeFigure(const char *name = nullptr);
     virtual ~GaugeFigure() {};
 
-    virtual void parse(cProperty *property) override;
-    virtual bool isAllowedPropertyKey(const char *key) const override;
-
-    void addChildren();
-    void addColorCurve(const cFigure::Color &curveColor, double startAngle, double endAngle);
-
-    void setValue(double newValue);
-    void setLabel(const char *newValue);
-    virtual const char *getClassNameForRenderer() const;
-
-    virtual void receiveSignal(cComponent *source, simsignal_t signalID, long l DETAILS_ARG) override;
-    virtual void receiveSignal(cComponent *source, simsignal_t signalID, unsigned long l DETAILS_ARG) override;
-    virtual void receiveSignal(cComponent *source, simsignal_t signalID, double d DETAILS_ARG) override;
-    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj DETAILS_ARG) override;
-
-    virtual void lifecycleEvent(SimulationLifecycleEventType eventType, cObject *details) override;
+    virtual void setLabel(const char *label);
+    virtual void setValue(int series, simtime_t timestamp, double value) override;
 };
 
 #else
