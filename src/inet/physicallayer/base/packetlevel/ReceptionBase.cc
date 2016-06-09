@@ -34,7 +34,6 @@ ReceptionBase::ReceptionBase(const IRadio *receiver, const ITransmission *transm
     startOrientation(startOrientation),
     endOrientation(endOrientation)
 {
-
     const Coord transmissionStartPosition = transmission->getStartPosition();
     const Coord arrivalStartPosition = startPosition;
     Coord transmissionStartDirection = arrivalStartPosition - transmissionStartPosition;
@@ -48,9 +47,9 @@ ReceptionBase::ReceptionBase(const IRadio *receiver, const ITransmission *transm
 
 std::ostream& ReceptionBase::printToStream(std::ostream& stream, int level) const
 {
-    if (level >= PRINT_LEVEL_DETAIL)
+    if (level <= PRINT_LEVEL_DETAIL)
         stream << ", transmissionId = " << transmission->getId();
-    if (level >= PRINT_LEVEL_TRACE)
+    if (level <= PRINT_LEVEL_TRACE)
         stream << ", receiverId = " << receiver->getId()
                << ", startTime = " << startTime
                << ", endTime = " << endTime

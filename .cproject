@@ -63,6 +63,8 @@
 									<listOptionValue builtIn="false" value="WITH_CSMA"/>
 									<listOptionValue builtIn="false" value="WITH_XMAC"/>
 									<listOptionValue builtIn="false" value="WITH_PACKETDRILL"/>
+									<listOptionValue builtIn="false" value="WITH_CSMACA"/>
+									<listOptionValue builtIn="false" value="WITH_HIP"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.include.paths.1304941279" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="../../src"/>
@@ -106,6 +108,8 @@
 									<listOptionValue builtIn="false" value="WITH_CSMA"/>
 									<listOptionValue builtIn="false" value="WITH_XMAC"/>
 									<listOptionValue builtIn="false" value="WITH_PACKETDRILL"/>
+									<listOptionValue builtIn="false" value="WITH_CSMACA"/>
+									<listOptionValue builtIn="false" value="WITH_HIP"/>
 								</option>
 								<option id="gnu.c.compiler.option.include.paths.552444216" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1458844290" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
@@ -164,6 +168,8 @@
 									<listOptionValue builtIn="false" value="WITH_CSMA"/>
 									<listOptionValue builtIn="false" value="WITH_XMAC"/>
 									<listOptionValue builtIn="false" value="WITH_PACKETDRILL"/>
+									<listOptionValue builtIn="false" value="WITH_CSMACA"/>
+									<listOptionValue builtIn="false" value="WITH_HIP"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1140951817" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -204,6 +210,8 @@
 									<listOptionValue builtIn="false" value="WITH_CSMA"/>
 									<listOptionValue builtIn="false" value="WITH_XMAC"/>
 									<listOptionValue builtIn="false" value="WITH_PACKETDRILL"/>
+									<listOptionValue builtIn="false" value="WITH_CSMACA"/>
+									<listOptionValue builtIn="false" value="WITH_HIP"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.2044170115" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -215,7 +223,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="inet/underTest/hip|inet/linklayer/ext|inet/applications/voipstream|inet/transportlayer/tcp_lwip|inet/transportlayer/tcp_nsc|transport/tcp_nsc|transport/tcp_lwip" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="inet/visualizer|inet/linklayer/ext|inet/applications/voipstream|inet/transportlayer/tcp_lwip|inet/transportlayer/tcp_nsc|transport/tcp_nsc|transport/tcp_lwip" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -279,6 +287,8 @@
 									<listOptionValue builtIn="false" value="WITH_CSMA"/>
 									<listOptionValue builtIn="false" value="WITH_XMAC"/>
 									<listOptionValue builtIn="false" value="WITH_PACKETDRILL"/>
+									<listOptionValue builtIn="false" value="WITH_CSMACA"/>
+									<listOptionValue builtIn="false" value="WITH_HIP"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.include.paths.1086707691" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="../../src"/>
@@ -322,6 +332,8 @@
 									<listOptionValue builtIn="false" value="WITH_CSMA"/>
 									<listOptionValue builtIn="false" value="WITH_XMAC"/>
 									<listOptionValue builtIn="false" value="WITH_PACKETDRILL"/>
+									<listOptionValue builtIn="false" value="WITH_CSMACA"/>
+									<listOptionValue builtIn="false" value="WITH_HIP"/>
 								</option>
 								<option id="gnu.c.compiler.option.include.paths.951413942" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.406690453" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
@@ -380,6 +392,8 @@
 									<listOptionValue builtIn="false" value="WITH_CSMA"/>
 									<listOptionValue builtIn="false" value="WITH_XMAC"/>
 									<listOptionValue builtIn="false" value="WITH_PACKETDRILL"/>
+									<listOptionValue builtIn="false" value="WITH_CSMACA"/>
+									<listOptionValue builtIn="false" value="WITH_HIP"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1964450544" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -420,6 +434,8 @@
 									<listOptionValue builtIn="false" value="WITH_CSMA"/>
 									<listOptionValue builtIn="false" value="WITH_XMAC"/>
 									<listOptionValue builtIn="false" value="WITH_PACKETDRILL"/>
+									<listOptionValue builtIn="false" value="WITH_CSMACA"/>
+									<listOptionValue builtIn="false" value="WITH_HIP"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1488494530" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -431,7 +447,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="inet/underTest/hip|inet/linklayer/ext|inet/applications/voipstream|inet/transportlayer/tcp_lwip|inet/transportlayer/tcp_nsc|transport/tcp_nsc|transport/tcp_lwip" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="src"/>
+						<entry excluding="inet/visualizer|inet/linklayer/ext|inet/applications/voipstream|inet/transportlayer/tcp_lwip|inet/transportlayer/tcp_nsc|transport/tcp_nsc|transport/tcp_lwip" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
