@@ -21,17 +21,6 @@ namespace inet {
 
 namespace physicallayer {
 
-simsignal_t TracingObstacleLossBase::obstaclePenetratedSignal = registerSignal("obstaclePenetrated");
-
-TracingObstacleLossBase::ObstaclePenetratedEvent::ObstaclePenetratedEvent(const IPhysicalObject *object, Coord intersection1, Coord intersection2, Coord normal1, Coord normal2) :
-    object(object),
-    intersection1(intersection1),
-    intersection2(intersection2),
-    normal1(normal1),
-    normal2(normal2)
-{
-}
-
 } // namespace physicallayer
 
 } // namespace inet

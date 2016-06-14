@@ -18,16 +18,16 @@
 #ifndef __INET_PROGRESSMETERFIGURE_H
 #define __INET_PROGRESSMETERFIGURE_H
 
+#include "IIndicatorFigure.h"
 #include "inet/common/INETDefs.h"
 #include "inet/common/INETMath.h"
-#include "inet/common/figures/IMeterFigure.h"
 
 // for the moment commented out as omnet cannot instatiate it from a namespace
 //namespace inet {
 
 #if OMNETPP_VERSION >= 0x500
 
-class INET_API ProgressMeterFigure : public cGroupFigure, public inet::IMeterFigure
+class INET_API ProgressMeterFigure : public cGroupFigure, public inet::IIndicatorFigure
 {
     cRectangleFigure *borderFigure;
     cRectangleFigure *stripFigure;

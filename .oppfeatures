@@ -668,6 +668,7 @@
         labels = ""
         nedPackages = "
                        inet.environment.common
+                       inet.environment.ground
                        inet.environment.objectcache
                       "
         extraSourceFolders = ""
@@ -996,7 +997,7 @@
                        inet.linklayer.ieee8021d
                       "
         extraSourceFolders = ""
-        compileFlags = ""
+        compileFlags = "-DWITH_IEEE8021D"
         linkerFlags = ""
         />
     <feature
@@ -1086,6 +1087,21 @@
         linkerFlags = ""
         />
 <feature
+        id="CsmaCaMac"
+        name="CSMA/CA"
+        description = "A CSMA/CA (Carrier Sense Multiple Access / Collision Avoidance) MAC protocol, similar to 802.11b"
+        initiallyEnabled = "true"
+        requires = ""
+        labels = ""
+        nedPackages = "
+                       inet.linklayer.csmaca
+                      "
+        extraSourceFolders = ""
+        compileFlags = "-DWITH_CSMACA"
+        linkerFlags = ""
+        />
+
+    <feature
         id="CsmaCaMac"
         name="CSMA/CA"
         description = "A CSMA/CA (Carrier Sense Multiple Access / Collision Avoidance) MAC protocol, similar to 802.11b"

@@ -40,7 +40,6 @@ class INET_API ReceptionBase : public virtual IReception, public virtual IRecept
     const Coord endPosition;
     const EulerAngles startOrientation;
     const EulerAngles endOrientation;
-    const EulerAngles direction;
 
   public:
     ReceptionBase(const IRadio *receiver, const ITransmission *transmission, const simtime_t startTime, const simtime_t endTime, const Coord startPosition, const Coord endPosition, const EulerAngles startOrientation, const EulerAngles endOrientation);
@@ -74,7 +73,6 @@ class INET_API ReceptionBase : public virtual IReception, public virtual IRecept
 
     virtual const EulerAngles getStartOrientation() const override { return startOrientation; }
     virtual const EulerAngles getEndOrientation() const override { return endOrientation; }
-    virtual const EulerAngles getDirection() const override { return direction; }
 
     virtual const IReceptionAnalogModel *getAnalogModel() const override { return check_and_cast<const IReceptionAnalogModel *>(this); }
 };
