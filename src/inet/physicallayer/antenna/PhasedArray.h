@@ -57,6 +57,7 @@ virtual std::ostream& printToStream(std::ostream& stream, int level) const overr
      }
 
    virtual void receiveSignal(cComponent *source, simsignal_t signalID, double d, cObject *details) override;
+   virtual void receiveSignal(cComponent *source, simsignal_t signalID, long d, cObject *details) override;
 
    virtual double getAngolo(Coord p1, Coord p2)const;
    virtual double computeGain(EulerAngles direction)const override;

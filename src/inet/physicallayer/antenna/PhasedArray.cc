@@ -181,8 +181,11 @@ void PhasedArray::receiveSignal(cComponent *source, simsignal_t signalID, double
         else if (val == 360)
             phiz = 360;
     }
-    else
-    {
+}
+
+void PhasedArray::receiveSignal(cComponent *source, simsignal_t signalID, long val, cObject *details)
+{
+    if (signalID != phaseArrayConfigureChange)
         // Radio signals
         if (pendingConfiguration)
         {
@@ -195,8 +198,8 @@ void PhasedArray::receiveSignal(cComponent *source, simsignal_t signalID, double
                     phiz = 360;
             }
         }
-    }
 }
+
 
 } // namespace physicallayer
 
