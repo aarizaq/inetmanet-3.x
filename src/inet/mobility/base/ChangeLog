@@ -1,5 +1,7 @@
 ====== inet-3.x ======
 
+2016-06-15  ------ inet-3.4.0 released ------
+
 2016-05-31  Levente Meszaros
 
 	Mobility: Use initialZ parameter even if initialized from display string.
@@ -14,8 +16,10 @@
 
 2015-10-14  Levente Meszaros
 
-	Mobility: Added facing towards movement: added getCurrentAngularPosition()
-        to MovingMobilityBase.
+	Mobility: Added facing towards movement: added getCurrentAngular-
+	Position() to MovingMobilityBase. Now all mobile nodes face (i.e.
+	set the  orientation to) the direction of movement. This affects
+	radio reception when direction antenna is used.
 
 2016-05-04  Levente Meszaros
 

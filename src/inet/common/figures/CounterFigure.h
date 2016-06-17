@@ -29,14 +29,19 @@
 
 class INET_API CounterFigure : public cGroupFigure, public inet::IIndicatorFigure
 {
+    struct Digit
+    {
+        cRectangleFigure *bounds;
+        cTextFigure *text;
+
+        Digit(cRectangleFigure *bounds, cTextFigure *text) : bounds(bounds), text(text) {}
+    };
+
     cRectangleFigure *backgroundFigure;
-    std::vector<cRectangleFigure *> digitRectFigures;
-    std::vector<cTextFigure *> digitTextFigures;
+    std::vector<Digit> digits;
     cTextFigure *labelFigure;
 
-    int value = NaN;
-    int decimalNumber = 1;
-    int prevDecimalNumber = 1;
+    double value = NaN;
     Anchor anchor = ANCHOR_NW;
 
   protected:
