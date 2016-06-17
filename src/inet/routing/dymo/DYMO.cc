@@ -148,6 +148,7 @@ void DYMO::initialize(int stage)
         networkProtocol->registerHook(0, this);
         if (isNodeUp())
             configureInterfaces();
+        multicastRouteSet.setSelftAddress(getSelfAddress());
     }
 }
 
@@ -500,6 +501,8 @@ bool DYMO::permissibleRteMsg(RteMsg *rteMsg)
     //    Cost(L)), where 'L' is the incoming link, the RteMsg is
     //    disregarded.
     // TODO: implement
+    if (multicastRouteSet.check(rteMsg))
+        return false;
     return true;
 }
 
@@ -508,6 +511,7 @@ void DYMO::processRteMsg(RteMsg *rteMsg)
     // 7.5. Handling a Received RteMsg
     // 1. HandlingRtr MUST process the routing information contained in the
     //    RteMsg as speciied in Section 6.1.
+    updateCost(rteMsg);
     if (dynamic_cast<RREQ *>(rteMsg))
         updateRoutes(rteMsg, rteMsg->getOriginatorNode());
     else if (dynamic_cast<RREP *>(rteMsg))
@@ -1170,6 +1174,27 @@ void DYMO::updateRoute(RteMsg *rteMsg, AddressBlock& addressBlock, IRoute *route
         routeData->setExpirationTime(SimTime::getMaxTime());
     scheduleExpungeTimer();
 }
+
+void DYMO::updateCost(RteMsg *rteMsg) {
+    RREQ * rreq = dynamic_cast<RREQ *>(rteMsg);
+    if (rreq != nullptr) {
+        AddressBlock& originatorNode = rreq->getOriginatorNode();
+        if (originatorNode.getHasMetric()
+                && (originatorNode.getMetricType() == DYMOMetricType::HOP_COUNT)) {
+            originatorNode.setMetric(originatorNode.getMetric() + 1);
+        }
+
+        int count = rreq->getAddedNodeArraySize();
+        for (int i = 0; i < count; i++) {
+            AddressBlock& addrBl = rreq->getAddedNode(i);
+            if (addrBl.getHasMetric()
+                    && (addrBl.getMetricType() == DYMOMetricType::HOP_COUNT)) {
+                addrBl.setMetric(addrBl.getMetric() + 1);
+            }
+        }
+    }
+}
+
 
 // TODO: use
 int DYMO::getLinkCost(const InterfaceEntry *interfaceEntry, DYMOMetricType metricType)
