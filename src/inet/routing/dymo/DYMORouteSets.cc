@@ -18,25 +18,38 @@
 //
 
 #include "inet/routing/dymo/DYMO_m.h"
-#include "inet/routing/dymo/DYMOMulticastRouteSet.h"
+#include "inet/routing/dymo/DYMORouteSets.h"
 
 namespace inet {
 
 namespace dymo {
 
-DYMOMulticastRouteSet::DYMOMulticastRouteSet()
+DYMORouteSet::DYMORouteSet()
 {
 }
 
-bool DYMOMulticastRouteSet::check(RteMsg *rteMsg) {
+bool DYMORouteSet::check(RteMsg *rteMsg) {
     if (!active)
         return false;
 
     // Only check RREQ
     RREQ * rreq = dynamic_cast<RREQ *>(rteMsg);
-    if (rreq == nullptr)
+    if (rreq != nullptr)
+        return checkRREQ(rreq);
+
+    RERR * rerr = dynamic_cast<RERR *>(rteMsg);
+    if (rerr != nullptr)
+        return checkRERR(rerr);
+
+    return false;
+}
+
+
+bool DYMORouteSet::checkRREQ(RREQ *rreq) {
+    if (!active)
         return false;
 
+    // Only check RREQ
     AddressBlock& originatorNode = rreq->getOriginatorNode();
     AddressBlock& targetNode = rreq->getTargetNode();
 
@@ -120,6 +133,35 @@ bool DYMOMulticastRouteSet::check(RteMsg *rteMsg) {
         return false;
     }
 }
+
+bool DYMORouteSet::checkRERR(RERR *rerr) {
+
+    if (!active)
+        return false;
+
+    ErrorRouteInfo info;
+    info.source = rerr->getPktSource();
+    std::vector<AddressBlock> remove;
+    for (unsigned int i = 0; i < rerr->getUnreachableNodeArraySize(); i++)
+    {
+        AddressBlock& addressBlock = rerr->getUnreachableNode(i);
+        info.unreachableAddress = addressBlock.getAddress();
+        auto it = errorRouteSet.find(info);
+        if (it == errorRouteSet.end() || it->timeout < simTime())
+        {
+            info.timeout = simTime() + rerrTimeout;
+            errorRouteSet.insert(info);
+        }
+        else
+        {
+            remove.push_back(addressBlock);
+        }
+    }
+    if (remove.size() == rerr->getUnreachableNodeArraySize())
+        return true;
+    return false;
+}
+
 
 } // namespace dymo
 

@@ -839,6 +839,7 @@ int DYMO::computeRREPBitLength(RREP *rrep)
 RERR *DYMO::createRERR(std::vector<L3Address>& unreachableAddresses)
 {
     RERR *rerr = new RERR("RERR");
+    rerr->setPktSource(getSelfAddress());
     for (auto & unreachableAddresse : unreachableAddresses) {
         const L3Address& unreachableAddress = unreachableAddresse;
         AddressBlock *addressBlock = new AddressBlock();

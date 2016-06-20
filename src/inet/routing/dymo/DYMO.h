@@ -32,7 +32,7 @@
 #include "inet/routing/dymo/DYMOdefs.h"
 #include "inet/routing/dymo/DYMORouteData.h"
 #include "inet/routing/dymo/DYMO_m.h"
-#include "inet/routing/dymo/DYMOMulticastRouteSet.h"
+#include "inet/routing/dymo/DYMORouteSets.h"
 
 namespace inet {
 
@@ -93,7 +93,7 @@ class INET_API DYMO : public cSimpleModule, public ILifecycle, public cListener,
     std::map<L3Address, RREQTimer *> targetAddressToRREQTimer;
     std::multimap<L3Address, INetworkDatagram *> targetAddressToDelayedPackets;
     std::vector<std::pair<L3Address, int> > clientAddressAndPrefixLengthPairs;    // 5.3.  Router Clients and Client Networks
-    DYMOMulticastRouteSet multicastRouteSet;
+    DYMORouteSet multicastRouteSet;
 
   public:
     DYMO();
