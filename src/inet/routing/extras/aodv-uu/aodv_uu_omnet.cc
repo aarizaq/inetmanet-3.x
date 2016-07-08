@@ -1951,6 +1951,7 @@ bool NS_CLASS handleNodeShutdown(IDoneCallback *doneCallback)
         delete (seekhead.begin()->second);
         seekhead.erase(seekhead.begin());
     }
+    aodvTimerMap.clear();
     packet_queue_destroy();
     cancelEvent(sendMessageEvent);
     log_cleanup();
@@ -1980,6 +1981,7 @@ void NS_CLASS handleNodeCrash()
         delete (seekhead.begin()->second);
         seekhead.erase(seekhead.begin());
     }
+    aodvTimerMap.clear();
     packet_queue_destroy();
     cancelEvent(sendMessageEvent);
     log_cleanup();

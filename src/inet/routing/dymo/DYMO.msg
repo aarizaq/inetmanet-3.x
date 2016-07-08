@@ -103,5 +103,6 @@ packet RREP_ACK extends DYMOPacket {
 // DYMO RERR packet
 //
 packet RERR extends DYMOPacket {
+    L3Address PktSource; 
     AddressBlock unreachableNode[];
 }

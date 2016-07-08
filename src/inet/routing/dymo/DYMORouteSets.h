@@ -28,7 +28,7 @@ namespace inet {
 
 namespace dymo {
 
-class INET_API DYMOMulticastRouteSet : public cObject
+class INET_API DYMORouteSet : public cObject
 {
   private:
     struct OriginatorAddressPair {
@@ -61,24 +61,52 @@ class INET_API DYMOMulticastRouteSet : public cObject
         simtime_t removeTime;
     };
 
+    struct ErrorRouteInfo{
+        L3Address source;
+        L3Address unreachableAddress;
+        simtime_t timeout;
+        bool operator<(const ErrorRouteInfo& other) const {
+            if (source < other.source)
+                return true;
+            else
+                return unreachableAddress < other.unreachableAddress;
+        };
+        bool operator>(const ErrorRouteInfo& other) const { return other < *this; };
+        bool operator==(const ErrorRouteInfo& other) const
+        {
+            return ((source == other.source) && (unreachableAddress == other.unreachableAddress));
+        };
+        bool operator!=(const ErrorRouteInfo& other) const {
+            return ((source != other.source) || (unreachableAddress != other.unreachableAddress));
+        }
+    };
+
     bool active = true;
 
     simtime_t lifetime = 300;
+    simtime_t rerrTimeout = 3;
     // Is it necessary? it shouldn't be more than 1 element in this vector
     typedef std::vector <MulticastRouteInfo> MulticastRouteVect;
     typedef std::map<OriginatorAddressPair,MulticastRouteVect> MulticastRouteSet;
+    typedef std::set<ErrorRouteInfo> ErrorRouteSet;
 
     MulticastRouteSet multicastRouteSet;
-
+    ErrorRouteSet errorRouteSet;
     L3Address selfAddress;
 
 
+    bool checkRREQ(RREQ *);
+    bool checkRERR(RERR *);
+
   public:
-    DYMOMulticastRouteSet();
-    virtual ~DYMOMulticastRouteSet() {multicastRouteSet.clear();}
+    DYMORouteSet();
+    virtual ~DYMORouteSet() {multicastRouteSet.clear();}
 
     virtual void setLifeTime(const simtime_t &v) {lifetime = v;}
     virtual simtime_t getLifeTime() {return lifetime;}
+
+    virtual void setRerrTimeout(const simtime_t &v) {rerrTimeout = v;}
+    virtual simtime_t getRerrTimeout() {return rerrTimeout;}
 
     virtual void setSelftAddress(const L3Address & add){selfAddress = add;}
     virtual L3Address getSlftAddress() {return selfAddress;}

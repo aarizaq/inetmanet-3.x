@@ -295,14 +295,14 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
     /* Ignore already processed RREQs. */
     if (rreq_record_find(rreq_orig, rreq_id))
     {
+
+        life = PATH_DISCOVERY_TIME - 2 * rreq_new_hcnt * NODE_TRAVERSAL_TIME;
 #ifdef OMNETPP
         if (isBroadcast(rreq_dest.s_addr))
         {
 
            if (par("proactiveLifeTime").longValue() > 0 )
                life = par("proactiveLifeTime").longValue() ;
-           else
-               life = PATH_DISCOVERY_TIME - 2 * rreq_new_hcnt * NODE_TRAVERSAL_TIME;
            rev_rt = rt_table_find(rreq_orig);
            if (rev_rt == nullptr)
            {
@@ -324,7 +324,6 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
         else
 #endif
         {
-            life = PATH_DISCOVERY_TIME - 2 * rreq_new_hcnt * NODE_TRAVERSAL_TIME;
             rev_rt = rt_table_find(rreq_orig);
             if (rev_rt == nullptr)
             {
@@ -336,7 +335,6 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
                     (rreq_orig_seqno == rev_rt->dest_seqno &&
                      (rev_rt->state == INVALID || cost < rev_rt->cost))))
             {
-                life = PATH_DISCOVERY_TIME - 2 * rreq_new_hcnt * NODE_TRAVERSAL_TIME;
                 rev_rt = rt_table_update(rev_rt, ip_src, rreq_new_hcnt,
                                          rreq_orig_seqno, life, VALID,
                                          rev_rt->flags,ifindex,cost,hopfix);
