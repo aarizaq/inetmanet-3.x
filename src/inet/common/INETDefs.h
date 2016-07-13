@@ -18,6 +18,12 @@
 #ifndef __INET_INETDEFS_H
 #define __INET_INETDEFS_H
 
+// precompiled headers must be included first
+#include "inet/common/precompiled.h"
+
+// important WITH_* macros defined by OMNET
+#include "inet/opp_defines.h"
+
 // feature defines generated based on the actual feature enablement
 #include "inet/features.h"
 
@@ -25,7 +31,6 @@
 // General definitions.
 //
 
-#include <omnetpp.h>
 #include "inet/common/Compat.h"
 
 using namespace omnetpp;
