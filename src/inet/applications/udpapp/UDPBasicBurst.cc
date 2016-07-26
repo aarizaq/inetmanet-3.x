@@ -45,6 +45,10 @@ simsignal_t UDPBasicBurst::rcvdPkSignal = registerSignal("rcvdPk");
 simsignal_t UDPBasicBurst::outOfOrderPkSignal = registerSignal("outOfOrderPk");
 simsignal_t UDPBasicBurst::dropPkSignal = registerSignal("dropPk");
 
+uint64_t UDPBasicBurst::totalPkSend = 0;
+uint64_t UDPBasicBurst::totalPkRec = 0;
+
+
 UDPBasicBurst::~UDPBasicBurst()
 {
     cancelAndDelete(timerNext);
@@ -303,6 +307,7 @@ void UDPBasicBurst::processPacket(cPacket *pk)
     EV_INFO << "Received packet: " << UDPSocket::getReceivedPacketInfo(pk) << endl;
     emit(rcvdPkSignal, pk);
     numReceived++;
+    totalPkRec++;
     delete pk;
 }
 
@@ -352,6 +357,7 @@ void UDPBasicBurst::generateBurst()
     }
 
     numSent++;
+    totalPkSend++;
 
     // Next timer
     if (activeBurst && nextPkt >= nextSleep)
@@ -369,6 +375,16 @@ void UDPBasicBurst::finish()
     recordScalar("Total sent", numSent);
     recordScalar("Total received", numReceived);
     recordScalar("Total deleted", numDeleted);
+    if (totalPkSend != 0)
+    {
+        double pdr = (double) totalPkRec/(double)totalPkSend;
+
+        recordScalar("Total UDPBasicBurst sent", totalPkSend);
+        recordScalar("Total UDPBasicBurst received", totalPkRec);
+        recordScalar("Total PDR", pdr);
+        totalPkSend = 0;
+        totalPkSend = 0;
+    }
     ApplicationBase::finish();
 }
 
