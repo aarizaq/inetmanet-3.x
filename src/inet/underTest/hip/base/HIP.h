@@ -116,14 +116,14 @@ class INET_API HIP : public cSimpleModule, public cListener
 
   protected:
 	virtual int getTempId();
-    virtual int numInitStages() const
+    virtual int numInitStages() const override
     {
         return NUM_INIT_STAGES;
     }
-    virtual void initialize(int);
+    virtual void initialize(int) override;
     virtual void specInitialize();
-    virtual void handleMessage(cMessage *msg);
-    virtual void finish();
+    virtual void handleMessage(cMessage *msg) override;
+    virtual void finish() override;
 
     virtual void handleMsgFromTransport(cMessage *msg);
     virtual void handleMsgFromNetwork(cMessage *msg);
