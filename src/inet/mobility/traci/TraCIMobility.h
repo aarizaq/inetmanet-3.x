@@ -160,7 +160,7 @@ class TraCIMobility : public LineSegmentsMobilityBase
 		mutable TraCICommandInterface::Vehicle* vehicleCommandInterface;
 		double last_speed;
 
-		const static simsignal_t parkingStateChangedSignal;
+		static simsignal_t parkingStateChangedSignal;
 
 		bool isParking;
 
