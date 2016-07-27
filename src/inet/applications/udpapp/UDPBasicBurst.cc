@@ -20,6 +20,7 @@
 
 #include "inet/applications/udpapp/UDPBasicBurst.h"
 
+#include "inet/applications/base/ApplicationPacket_m.h"
 #include "inet/transportlayer/contract/udp/UDPControlInfo_m.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
 #include "inet/common/ModuleAccess.h"
@@ -43,6 +44,10 @@ simsignal_t UDPBasicBurst::sentPkSignal = registerSignal("sentPk");
 simsignal_t UDPBasicBurst::rcvdPkSignal = registerSignal("rcvdPk");
 simsignal_t UDPBasicBurst::outOfOrderPkSignal = registerSignal("outOfOrderPk");
 simsignal_t UDPBasicBurst::dropPkSignal = registerSignal("dropPk");
+
+uint64_t UDPBasicBurst::totalPkSend = 0;
+uint64_t UDPBasicBurst::totalPkRec = 0;
+
 
 UDPBasicBurst::~UDPBasicBurst()
 {
@@ -112,8 +117,9 @@ cPacket *UDPBasicBurst::createPacket()
     char msgName[32];
     sprintf(msgName, "UDPBasicAppData-%d", counter++);
     long msgByteLength = messageLengthPar->longValue();
-    cPacket *payload = new cPacket(msgName);
+    ApplicationPacket *payload = new ApplicationPacket(msgName);
     payload->setByteLength(msgByteLength);
+    payload->setSequenceNumber(numSent);
     payload->addPar("sourceId") = getId();
     payload->addPar("msgId") = numSent;
 
@@ -301,6 +307,7 @@ void UDPBasicBurst::processPacket(cPacket *pk)
     EV_INFO << "Received packet: " << UDPSocket::getReceivedPacketInfo(pk) << endl;
     emit(rcvdPkSignal, pk);
     numReceived++;
+    totalPkRec++;
     delete pk;
 }
 
@@ -350,6 +357,7 @@ void UDPBasicBurst::generateBurst()
     }
 
     numSent++;
+    totalPkSend++;
 
     // Next timer
     if (activeBurst && nextPkt >= nextSleep)
@@ -367,6 +375,16 @@ void UDPBasicBurst::finish()
     recordScalar("Total sent", numSent);
     recordScalar("Total received", numReceived);
     recordScalar("Total deleted", numDeleted);
+    if (totalPkSend != 0)
+    {
+        double pdr = (double) totalPkRec/(double)totalPkSend;
+
+        recordScalar("Total UDPBasicBurst sent", totalPkSend);
+        recordScalar("Total UDPBasicBurst received", totalPkRec);
+        recordScalar("Total PDR", pdr);
+        totalPkSend = 0;
+        totalPkSend = 0;
+    }
     ApplicationBase::finish();
 }
 

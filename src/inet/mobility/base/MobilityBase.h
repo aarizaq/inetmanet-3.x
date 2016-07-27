@@ -22,10 +22,10 @@
 #ifndef __INET_MOBILITYBASE_H
 #define __INET_MOBILITYBASE_H
 
-#include "inet/common/INETDefs.h"
 #include "inet/common/ModuleAccess.h"
 #include "inet/common/geometry/common/Coord.h"
 #include "inet/common/geometry/common/EulerAngles.h"
+#include "inet/common/geometry/common/CanvasProjection.h"
 #include "inet/mobility/contract/IMobility.h"
 
 namespace inet {
@@ -63,13 +63,13 @@ class INET_API MobilityBase : public cSimpleModule, public IMobility
         PLACERANDOMLY,    ///< placed at a randomly chosen position within the constraint area
         RAISEERROR    ///< stop the simulation with error
     };
-    static Coord getMinimTopLeft() {return mininumArea;}
-    static Coord getMaximumRightBotton() {return maximumArea;}
 
   protected:
-
     /** @brief Pointer to visual representation module, to speed up repeated access. */
     cModule *visualRepresentation;
+
+    /** @brief The 2D projection used on the canvas. */
+    const CanvasProjection *canvasProjection;
 
     /** @brief 3 dimensional position and size of the constraint area (in meters). */
     Coord constraintAreaMin, constraintAreaMax;
@@ -81,11 +81,6 @@ class INET_API MobilityBase : public cSimpleModule, public IMobility
     EulerAngles lastOrientation;
 
   protected:
-    static Coord mininumArea;
-    static Coord maximumArea;
-    static bool  areaInitalized;
-    void updateDisplayString();
-
     MobilityBase();
 
     /** @brief Returns the required number of initialize stages. */
@@ -122,7 +117,7 @@ class INET_API MobilityBase : public cSimpleModule, public IMobility
     virtual Coord getRandomPosition();
 
     /** @brief Returns the module that represents the object moved by this mobility module. */
-    virtual cModule *findVisualRepresentation() { return getContainingNode(this); }
+    virtual cModule *findVisualRepresentation() { return getModuleFromPar<cModule>(par("visualRepresentation"), this); }
 
     /** @brief Returns true if the mobility is outside of the constraint area. */
     virtual bool isOutside();

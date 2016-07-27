@@ -20,16 +20,14 @@
  * part of:     framework implementation developed by tkn
  **************************************************************************/
 
+#include "inet/common/geometry/common/CoordinateSystem.h"
 #include "inet/common/INETMath.h"
-#include "inet/environment/contract/IPhysicalEnvironment.h"
 #include "inet/mobility/base/MobilityBase.h"
+#ifdef WITH_VISUALIZERS
+#include "inet/visualizer/mobility/MobilityCanvasVisualizer.h"
+#endif
 
 namespace inet {
-Coord MobilityBase::mininumArea;
-Coord MobilityBase::maximumArea;
-bool  MobilityBase::areaInitalized=false;
-
-using namespace inet::physicalenvironment;
 
 Register_Abstract_Class(MobilityBase);
 
@@ -61,23 +59,6 @@ MobilityBase::MobilityBase() :
 {
 }
 
-/**
-* Sets up background size by adding the following tags:
-* "p=0,0;b=$playgroundSizeX,$playgroundSizeY"
-*/
-void MobilityBase::updateDisplayString()
-{
-	cModule *playgroundMod = this->getParentModule();
-	while (playgroundMod->getParentModule())
-	    playgroundMod = playgroundMod->getParentModule();
-     cDisplayString& d = playgroundMod->getDisplayString();
-
-     if (isFiniteNumber(mininumArea.x)) d.setTagArg("bgp", 0, (long)mininumArea.x);
-     if (isFiniteNumber(mininumArea.y)) d.setTagArg("bgp", 1, (long)mininumArea.y);
-     if (isFiniteNumber(maximumArea.x)) d.setTagArg("bgb", 0, (long) maximumArea.x);
-     if (isFiniteNumber(maximumArea.y)) d.setTagArg("bgb", 1, (long) maximumArea.y);
-}
-
 void MobilityBase::initialize(int stage)
 {
     cSimpleModule::initialize(stage);
@@ -89,76 +70,20 @@ void MobilityBase::initialize(int stage)
         constraintAreaMax.x = par("constraintAreaMaxX");
         constraintAreaMax.y = par("constraintAreaMaxY");
         constraintAreaMax.z = par("constraintAreaMaxZ");
-        visualRepresentation = findVisualRepresentation();
-        if (visualRepresentation) {
-            const char *s = visualRepresentation->getDisplayString().getTagArg("p", 2);
-            if (s && *s)
-                throw cRuntimeError("The coordinates of '%s' are invalid. Please remove automatic arrangement"
-                                    " (3rd argument of 'p' tag) from '@display' attribute.", visualRepresentation->getFullPath().c_str());
-        }
+        bool visualizeMobility = par("visualizeMobility");
+        if (visualizeMobility)
+            visualRepresentation = findVisualRepresentation();
         WATCH(constraintAreaMin);
         WATCH(constraintAreaMax);
         WATCH(lastPosition);
     }
     else if (stage == INITSTAGE_PHYSICAL_ENVIRONMENT_2) {
+        if (visualRepresentation != nullptr) {
+            auto visualizationTarget = visualRepresentation->getParentModule();
+            canvasProjection = CanvasProjection::getCanvasProjection(visualizationTarget->getCanvas());
+        }
         initializeOrientation();
         initializePosition();
-        if (!isFiniteNumber(lastPosition.x) || !isFiniteNumber(lastPosition.y) || !isFiniteNumber(lastPosition.z))
-            throw cRuntimeError("Mobility position is not a finite number after initialize (x=%g,y=%g,z=%g)", lastPosition.x, lastPosition.y, lastPosition.z);
-        if (isOutside())
-            throw cRuntimeError("Mobility position (x=%g,y=%g,z=%g) is outside the constraint area (%g,%g,%g - %g,%g,%g)",
-                  lastPosition.x, lastPosition.y, lastPosition.z,
-                  constraintAreaMin.x, constraintAreaMin.y, constraintAreaMin.z,
-                  constraintAreaMax.x, constraintAreaMax.y, constraintAreaMax.z);
-        EV << "initial position. x = " << lastPosition.x << " y = " << lastPosition.y << " z = " << lastPosition.z << endl;
-        emitMobilityStateChangedSignal();
-        updateVisualRepresentation();
-
-        if (!areaInitalized)
-        {
-        	mininumArea=constraintAreaMin;
-        	maximumArea = constraintAreaMax;
-            updateDisplayString();
-            areaInitalized=true;
-        }
-        else
-        {
-
-            bool change=false;
-            if (isFiniteNumber(mininumArea.x) && mininumArea.x>constraintAreaMin.x)
-            {
-                mininumArea.x=constraintAreaMin.x;
-                change=true;
-            }
-            if (isFiniteNumber(mininumArea.y) && mininumArea.y>constraintAreaMin.y)
-            {
-            	mininumArea.y=constraintAreaMin.y;
-            	change=true;
-            }
-            if (isFiniteNumber(mininumArea.z) && mininumArea.z>constraintAreaMin.z)
-            {
-            	mininumArea.z=constraintAreaMin.z;
-                change=true;
-            }
-            if (isFiniteNumber(maximumArea.x) && maximumArea.x<constraintAreaMax.x)
-            {
-            	maximumArea.x=constraintAreaMax.x;
-                change=true;
-            }
-            if (isFiniteNumber(maximumArea.y) && maximumArea.y<constraintAreaMax.y)
-            {
-            	maximumArea.y=constraintAreaMax.y;
-                change=true;
-            }
-            if (isFiniteNumber(maximumArea.z) && maximumArea.z<constraintAreaMax.z)
-            {
-            	maximumArea.z=constraintAreaMax.z;
-                change=true;
-            }
-            if (change)
-                updateDisplayString();
-        }
-
     }
 }
 
@@ -174,18 +99,26 @@ void MobilityBase::setInitialPosition()
 {
     // reading the coordinates from omnetpp.ini makes predefined scenarios a lot easier
     bool filled = false;
+    auto coordinateSystem = getModuleFromPar<IGeographicCoordinateSystem>(par("coordinateSystemModule"), this, false);
     if (hasPar("initFromDisplayString") && par("initFromDisplayString").boolValue() && visualRepresentation) {
-        filled = parseIntTo(visualRepresentation->getDisplayString().getTagArg("p", 0), lastPosition.x)
-            && parseIntTo(visualRepresentation->getDisplayString().getTagArg("p", 1), lastPosition.y);
+        const char *s = visualRepresentation->getDisplayString().getTagArg("p", 2);
+        if (s && *s)
+            throw cRuntimeError("The coordinates of '%s' are invalid. Please remove automatic arrangement"
+                                " (3rd argument of 'p' tag) from '@display' attribute.", visualRepresentation->getFullPath().c_str());
+        filled = parseIntTo(visualRepresentation->getDisplayString().getTagArg("p", 0), lastPosition.x) &&
+                 parseIntTo(visualRepresentation->getDisplayString().getTagArg("p", 1), lastPosition.y);
         if (filled)
-            lastPosition.z = 0;
-
+            lastPosition.z = hasPar("initialZ") ? par("initialZ").doubleValue() : 0.0;
     }
     // not all mobility models have "initialX", "initialY" and "initialZ" parameters
-    else if (hasPar("initialX") && hasPar("initialY") && hasPar("initialZ")) {
+    else if (coordinateSystem == nullptr && hasPar("initialX") && hasPar("initialY") && hasPar("initialZ")) {
         lastPosition.x = par("initialX");
         lastPosition.y = par("initialY");
         lastPosition.z = par("initialZ");
+        filled = true;
+    }
+    else if (coordinateSystem != nullptr && hasPar("initialLatitude") && hasPar("initialLongitude") && hasPar("initialAltitude")) {
+        lastPosition = coordinateSystem->computePlaygroundCoordinate(GeoCoord(par("initialLatitude"), par("initialLongitude"), par("initialAltitude")));
         filled = true;
     }
     if (!filled)
@@ -223,16 +156,11 @@ void MobilityBase::handleMessage(cMessage *message)
 void MobilityBase::updateVisualRepresentation()
 {
     EV_DEBUG << "current position = " << lastPosition << endl;
-    if (hasGUI() && visualRepresentation) {
-        cFigure::Point point = IPhysicalEnvironment::computeCanvasPoint(lastPosition);
-        char buf[32];
-        snprintf(buf, sizeof(buf), "%lf", point.x);
-        buf[sizeof(buf) - 1] = 0;
-        visualRepresentation->getDisplayString().setTagArg("p", 0, buf);
-        snprintf(buf, sizeof(buf), "%lf", point.y);
-        buf[sizeof(buf) - 1] = 0;
-        visualRepresentation->getDisplayString().setTagArg("p", 1, buf);
+#ifdef WITH_VISUALIZERS
+    if (hasGUI() && visualRepresentation != nullptr) {
+        inet::visualizer::MobilityCanvasVisualizer::setPosition(visualRepresentation, canvasProjection->computeCanvasPoint(lastPosition));
     }
+#endif
 }
 
 void MobilityBase::emitMobilityStateChangedSignal()
@@ -352,7 +280,5 @@ void MobilityBase::handleIfOutside(BorderPolicy policy, Coord& targetPosition, C
     }
 }
 
-
 } // namespace inet
-
 

@@ -89,6 +89,9 @@ class INET_API UDPBasicBurst : public ApplicationBase
     static simsignal_t outOfOrderPkSignal;
     static simsignal_t dropPkSignal;
 
+    static uint64_t totalPkSend;
+    static uint64_t totalPkRec;
+
   protected:
     // chooses random destination address
     virtual L3Address chooseDestAddr();
