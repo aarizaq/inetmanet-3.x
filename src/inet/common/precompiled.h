@@ -16,7 +16,7 @@
 #ifndef __INET_PRECOMPILED_H
 #define __INET_PRECOMPILED_H
 
-//#include <platdep/sockets.h>
+#include <platdep/sockets.h>
 #include <omnetpp.h>
 
 #endif // ifndef __INET_PRECOMPILED_H

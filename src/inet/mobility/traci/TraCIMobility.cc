@@ -34,7 +34,7 @@ namespace inet {
 
 Define_Module(TraCIMobility);
 
-const simsignal_t TraCIMobility::parkingStateChangedSignal = simsignal_t(TRACI_SIGNAL_PARKING_CHANGE_NAME);
+simsignal_t TraCIMobility::parkingStateChangedSignal = registerSignal(TRACI_SIGNAL_PARKING_CHANGE_NAME);
 
 void TraCIMobility::Statistics::initialize()
 {

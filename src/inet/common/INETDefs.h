@@ -19,7 +19,11 @@
 #define __INET_INETDEFS_H
 
 // precompiled headers must be included first
+#if !defined(_WIN32) && !defined(__WIN32__) && !defined(WIN32) && !defined(__CYGWIN__) && !defined(_WIN64)
 #include "inet/common/precompiled.h"
+#else
+#include <omnetpp.h>
+#endif
 
 // important WITH_* macros defined by OMNET
 #include "inet/opp_defines.h"
@@ -30,7 +34,6 @@
 //
 // General definitions.
 //
-
 #include "inet/common/Compat.h"
 
 using namespace omnetpp;
