@@ -766,7 +766,7 @@
         id="apskradio"
         name="APSK radio"
         description = "Provides a hypothetical generic radio for APSK modulations"
-        requires = "mobility radio"
+        requires = "mobility radio Ieee80211"
         labels = ""
         nedPackages = "
                        inet.physicallayer.apskradio
