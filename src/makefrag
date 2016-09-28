@@ -57,9 +57,11 @@ endif
 # disable anoying "... hides overloaded virtual function" warning
 CFLAGS += -Wno-overloaded-virtual
 
-ifneq ($(OS),Windows_NT)
+
 #########################################################################
 # precompiled header support for GCC and CLANG
+
+ifneq ($(OS),Windows_NT)
 
 ifeq ($(TOOLCHAIN_NAME),gcc)
 PRECOMPILED_EXT=gch
@@ -73,6 +75,17 @@ PRECOMPILED_HEADER=inet/common/precompiled.h
 PRECOMPILED_HEADER_PCH=$(PRECOMPILED_HEADER).$(PRECOMPILED_EXT)
 PRECOMPILED_HEADER_D=$(PRECOMPILED_HEADER_PCH:%.$(PRECOMPILED_EXT)=%.d)
 CFLAGS += -include $(PRECOMPILED_HEADER)
+
+else
+
+PRECOMPILED_EXT=
+PRECOMPILED_HEADER=
+PRECOMPILED_HEADER_PCH=$(PRECOMPILED_HEADER).$(PRECOMPILED_EXT)
+PRECOMPILED_HEADER_D=$(PRECOMPILED_HEADER_PCH:%.$(PRECOMPILED_EXT)=%.d)
+
+endif
+
+
 
 # Main target
 all-pch: | pch msgheaders all
@@ -91,6 +104,7 @@ clean: clean-pch clean-defines
 
 clean-pch:
 	$(Q)-rm -f $(PRECOMPILED_HEADER_D) $(PRECOMPILED_HEADER).pch $(PRECOMPILED_HEADER).gch
+
 
 -include $(PRECOMPILED_HEADER_D)
 
@@ -120,4 +134,3 @@ $(info $(SHLIB_LD) $(WHOLE_ARCHIVE_ON) $(LIBS) $(WHOLE_ARCHIVE_OFF) $(OMNETPP_LI
 $(info Compiling...)
 endif
 
-endif
