@@ -42,7 +42,9 @@ namespace inet;
 
 cplusplus {{
 //the IPv6 no next header value
+#ifndef IPPROTO_NONE
 const int IPPROTO_NONE = 59;
+#endif
 //maximum length of the HIP Parameters field is (255*8)-32 = 2008 bytes
 const int HIP_MAX_HEADER_BYTES = 2008;
 
