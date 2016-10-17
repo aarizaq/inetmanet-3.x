@@ -19,11 +19,7 @@
 #define __INET_INETDEFS_H
 
 // precompiled headers must be included first
-#if !defined(_WIN32) && !defined(__WIN32__) && !defined(WIN32) && !defined(__CYGWIN__) && !defined(_WIN64)
 #include "inet/common/precompiled.h"
-#else
-#include <omnetpp.h>
-#endif
 
 // important WITH_* macros defined by OMNET
 #include "inet/opp_defines.h"
@@ -34,6 +30,7 @@
 //
 // General definitions.
 //
+
 #include "inet/common/Compat.h"
 
 using namespace omnetpp;
@@ -41,16 +38,6 @@ using namespace omnetpp;
 #if OMNETPP_VERSION < 0x0500
 #  error At least OMNeT++/OMNEST version 5.0 required
 #endif // if OMNETPP_VERSION < 0x0500
-
-// OMNETPP_BUILDNUM was introduced around OMNeT++ 5.0beta2, with the initial value of 1001.
-// The following lines fake a build number for earlier versions.
-#ifndef OMNETPP_BUILDNUM
-#  if OMNETPP_VERSION < 0x0500
-#    define OMNETPP_BUILDNUM 0
-#  else
-#    define OMNETPP_BUILDNUM 1000
-#  endif
-#endif
 
 #define INET_VERSION  0x0304
 #define INET_PATCH_LEVEL 0x00
@@ -64,18 +51,6 @@ using namespace omnetpp;
 #endif // if defined(INET_EXPORT)
 
 #include "inet/common/InitStages.h"
-
-// cObject::parsimPack() became const around build #1001
-#if OMNETPP_BUILDNUM >= 1001
-#define PARSIMPACK_CONST const
-#else
-#define PARSIMPACK_CONST
-#endif
-
-#if OMNETPP_BUILDNUM <= 1002
-#define doParsimPacking doPacking
-#define doParsimUnpacking doUnpacking
-#endif
 
 // main namespace of INET framework
 namespace inet {

@@ -57,11 +57,8 @@ endif
 # disable anoying "... hides overloaded virtual function" warning
 CFLAGS += -Wno-overloaded-virtual
 
-
 #########################################################################
 # precompiled header support for GCC and CLANG
-
-ifneq ($(OS),Windows_NT)
 
 ifeq ($(TOOLCHAIN_NAME),gcc)
 PRECOMPILED_EXT=gch
@@ -75,17 +72,6 @@ PRECOMPILED_HEADER=inet/common/precompiled.h
 PRECOMPILED_HEADER_PCH=$(PRECOMPILED_HEADER).$(PRECOMPILED_EXT)
 PRECOMPILED_HEADER_D=$(PRECOMPILED_HEADER_PCH:%.$(PRECOMPILED_EXT)=%.d)
 CFLAGS += -include $(PRECOMPILED_HEADER)
-
-else
-
-PRECOMPILED_EXT=
-PRECOMPILED_HEADER=
-PRECOMPILED_HEADER_PCH=$(PRECOMPILED_HEADER).$(PRECOMPILED_EXT)
-PRECOMPILED_HEADER_D=$(PRECOMPILED_HEADER_PCH:%.$(PRECOMPILED_EXT)=%.d)
-
-endif
-
-
 
 # Main target
 all-pch: | pch msgheaders all
@@ -105,7 +91,6 @@ clean: clean-pch clean-defines
 clean-pch:
 	$(Q)-rm -f $(PRECOMPILED_HEADER_D) $(PRECOMPILED_HEADER).pch $(PRECOMPILED_HEADER).gch
 
-
 -include $(PRECOMPILED_HEADER_D)
 
 # Create opp_defines.h so important WITH_* macros from OMNeT++ can be included as macros from a header file
@@ -124,6 +109,11 @@ ifeq ($(WITH_OSG),yes)
 	@echo "#define WITH_OSG" >>$(DEFINES_FILE)
 	@echo "#endif" >>$(DEFINES_FILE)
 endif
+ifeq ($(WITH_OSGEARTH),yes)
+	@echo "#ifndef WITH_OSGEARTH" >>$(DEFINES_FILE)
+	@echo "#define WITH_OSGEARTH" >>$(DEFINES_FILE)
+	@echo "#endif" >>$(DEFINES_FILE)
+endif
 
 # dump out the actual compiler and linker command line for easier debugging
 ifneq ($(MAKECMDGOALS),clean)
@@ -133,4 +123,3 @@ $(info *** LINKING with:)
 $(info $(SHLIB_LD) $(WHOLE_ARCHIVE_ON) $(LIBS) $(WHOLE_ARCHIVE_OFF) $(OMNETPP_LIBS) $(LDFLAGS))
 $(info Compiling...)
 endif
-
