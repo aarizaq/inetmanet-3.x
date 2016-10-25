@@ -109,7 +109,7 @@ void IPv4::initialize(int stage)
     }
 }
 
-void IPv4::updateDisplayString()
+void IPv4::refreshDisplay() const
 {
     char buf[80] = "";
     if (numForwarded > 0)
@@ -172,9 +172,6 @@ void IPv4::endService(cPacket *packet)
         else
             throw cRuntimeError(packet, "Unexpected packet type");
     }
-
-    if (hasGUI())
-        updateDisplayString();
 }
 
 const InterfaceEntry *IPv4::getSourceInterfaceFrom(cPacket *packet)
@@ -1226,7 +1223,7 @@ void IPv4::sendOnTransportOutGateByProtocolId(cPacket *packet, int protocolId)
     emit(LayeredProtocolBase::packetSentToUpperSignal, packet);
 }
 
-void IPv4::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj DETAILS_ARG)
+void IPv4::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details)
 {
     Enter_Method_Silent();
 

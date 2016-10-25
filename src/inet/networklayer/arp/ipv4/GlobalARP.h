@@ -84,7 +84,7 @@ class INET_API GlobalARP : public cSimpleModule, public IARP, public ILifecycle,
     /// @}
 
     // cListener
-    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj DETAILS_ARG) override;
+    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details) override;
 
     virtual bool deletePacket(const L3Address& address) override {return true;}
 
@@ -102,8 +102,6 @@ class INET_API GlobalARP : public cSimpleModule, public IARP, public ILifecycle,
     virtual void start();
 
     virtual void processARPPacket(ARPPacket *arp);
-
-    virtual void updateDisplayString();
 };
 
 } // namespace inet

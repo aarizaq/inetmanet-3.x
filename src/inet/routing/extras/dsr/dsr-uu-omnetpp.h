@@ -454,7 +454,7 @@ class DSRUU:public cSimpleModule, public cListener, public ManetNetfilterHook, p
 
     void drop (cMessage *msg,int code) { delete msg;}
 
-    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj DETAILS_ARG) override;
+    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details) override;
 
   protected:
     struct in_addr ifaddr;

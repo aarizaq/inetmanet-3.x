@@ -110,7 +110,7 @@ void HIP::specInitialize()
 
 // Changes in interface states and addresses handled here with the help of the NotificationBoard object
 //void HIP::receiveChangeNotification(int category, const cObject * details)
-void HIP::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj DETAILS_ARG)
+void HIP::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details)
 {
     Enter_Method_Silent();
 

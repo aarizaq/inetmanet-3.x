@@ -191,7 +191,7 @@ void UDPBasicBurstNotification::generateBurst()
     scheduleAt(nextPkt, timerNext);
 }
 
-void UDPBasicBurstNotification::receiveSignal(cComponent *source, simsignal_t signalID, long l DETAILS_ARG)
+void UDPBasicBurstNotification::receiveSignal(cComponent *source, simsignal_t signalID, long l, cObject *details)
 {
     Enter_Method_Silent();
     if (signalID == NF_INTERFACE_IPv4CONFIG_CHANGED || signalID == NF_INTERFACE_IPv6CONFIG_CHANGED)

@@ -103,6 +103,7 @@ class INET_API UDPBasicBurst : public ApplicationBase
     virtual void initialize(int stage) override;
     virtual void handleMessageWhenUp(cMessage *msg) override;
     virtual void finish() override;
+    virtual void refreshDisplay() const override;
     virtual bool sendBroadcast(const L3Address &dest, cPacket *pkt);
     virtual void initialConfiguration();
 

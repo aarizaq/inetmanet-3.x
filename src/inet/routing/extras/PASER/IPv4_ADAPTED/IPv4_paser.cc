@@ -104,7 +104,7 @@ void IPv4_paser::initialize(int stage)
     }
 }
 
-void IPv4_paser::updateDisplayString()
+void IPv4_paser::refreshDisplay() const
 {
     char buf[80] = "";
     if (numForwarded > 0)
@@ -168,8 +168,6 @@ void IPv4_paser::endService(cPacket *packet)
             throw cRuntimeError(packet, "Unexpected packet type");
     }
 
-    if (hasGUI())
-        updateDisplayString();
 }
 
 const InterfaceEntry *IPv4_paser::getSourceInterfaceFrom(cPacket *packet)
@@ -1204,7 +1202,7 @@ void IPv4_paser::sendOnTransportOutGateByProtocolId(cPacket *packet, int protoco
     send(packet, outGate);
 }
 
-void IPv4_paser::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj DETAILS_ARG)
+void IPv4_paser::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details)
 {
     Enter_Method_Silent();
 

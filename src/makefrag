@@ -47,7 +47,7 @@ endif
 WITH_VISUALIZERS := $(shell (cd .. && ./inet_featuretool -q isenabled visualization && echo enabled) )
 ifeq ($(WITH_VISUALIZERS), enabled)
   ifeq ($(WITH_OSG), yes)
-      LIBS += -lOpenThreads -losg -losgText -losgDB -losgEarth -losgEarthUtil
+      OMNETPP_LIBS += -lOpenThreads -losg -losgText -losgDB -losgEarth -losgEarthUtil
   endif
 endif
 
@@ -57,7 +57,6 @@ endif
 # disable anoying "... hides overloaded virtual function" warning
 CFLAGS += -Wno-overloaded-virtual
 
-ifneq ($(OS),Windows_NT)
 #########################################################################
 # precompiled header support for GCC and CLANG
 
@@ -110,14 +109,17 @@ ifeq ($(WITH_OSG),yes)
 	@echo "#define WITH_OSG" >>$(DEFINES_FILE)
 	@echo "#endif" >>$(DEFINES_FILE)
 endif
+ifeq ($(WITH_OSGEARTH),yes)
+	@echo "#ifndef WITH_OSGEARTH" >>$(DEFINES_FILE)
+	@echo "#define WITH_OSGEARTH" >>$(DEFINES_FILE)
+	@echo "#endif" >>$(DEFINES_FILE)
+endif
 
 # dump out the actual compiler and linker command line for easier debugging
 ifneq ($(MAKECMDGOALS),clean)
 $(info *** COMPILING with:)
 $(info $(CXX) -c $(CXXFLAGS) $(COPTS))
 $(info *** LINKING with:)
-$(info $(SHLIB_LD) $(WHOLE_ARCHIVE_ON) $(LIBS) $(WHOLE_ARCHIVE_OFF) $(OMNETPP_LIBS) $(LDFLAGS))
+$(info $(SHLIB_LD) -o $O/$(TARGET) $(AS_NEEDED_OFF) $(WHOLE_ARCHIVE_ON) $(LIBS) $(WHOLE_ARCHIVE_OFF) $(OMNETPP_LIBS) $(LDFLAGS))
 $(info Compiling...)
-endif
-
 endif

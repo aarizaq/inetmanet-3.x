@@ -140,7 +140,7 @@ void TraCIScenarioManager::parseModuleTypes() {
 
 	moduleType = parseMappings(moduleTypes, "moduleType", false);
 	moduleName = parseMappings(moduleNames, "moduleName", false);
-	moduleDisplayString = parseMappings(moduleDisplayStrings, "moduleDisplayString", true);
+	//moduleDisplayString = parseMappings(moduleDisplayStrings, "moduleDisplayString", true);
 
 	//perform consistency check. for each vehicle type in moduleType there must be a vehicle type
 	//in moduleName (and in moduleDisplayString if moduleDisplayString is not empty)
@@ -422,7 +422,8 @@ void TraCIScenarioManager::addModule(std::string nodeId, std::string type, std::
 	//TODO: this trashes the vectsize member of the cModule, although nobody seems to use it
 	cModule* mod = nodeType->create(name.c_str(), parentmod, nodeVectorIndex, nodeVectorIndex);
 	mod->finalizeParameters();
-	mod->getDisplayString().parse(displayString.c_str());
+	mod->getDisplayString().parse(par("moduleDisplayString").stringValue());
+	//mod->getDisplayString().parse(displayString.c_str());
 	mod->buildInside();
 	mod->scheduleStart(simTime() + updateInterval);
 

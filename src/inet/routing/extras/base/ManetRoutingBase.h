@@ -250,7 +250,7 @@ class INET_API ManetRoutingBase : public cSimpleModule, public cListener, public
      *
      * ManetRoutingBase is subscribed to position changes.
      */
-    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj DETAILS_ARG) override;
+    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details) override;
     virtual void processLinkBreak(const cObject *details);
     virtual void processLinkBreakManagement(const cObject *details);
     virtual void processPromiscuous(const cObject *details);

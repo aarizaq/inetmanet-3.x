@@ -127,7 +127,7 @@ class INET_API IPv4RoutingTable : public cSimpleModule, public IIPv4RoutingTable
     virtual IPv4Route *createNewRoute();
 
     // displays summary above the icon
-    virtual void updateDisplayString();
+    virtual void refreshDisplay() const override;
 
     // delete routes for the given interface
     virtual void deleteInterfaceRoutes(const InterfaceEntry *entry);
@@ -171,7 +171,7 @@ class INET_API IPv4RoutingTable : public cSimpleModule, public IIPv4RoutingTable
      * Called by the signal handler whenever a change of a category
      * occurs to which this client has subscribed.
      */
-    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj DETAILS_ARG) override;
+    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details) override;
 
   public:
     /**

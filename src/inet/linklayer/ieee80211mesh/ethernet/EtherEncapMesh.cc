@@ -64,12 +64,9 @@ void EtherEncapMesh::handleMessage(cMessage *msg)
               error("received message `%s' with unknown message kind %d", msg->getName(), msg->getKind());
         }
     }
-
-    if (hasGUI())
-        updateDisplayString();
 }
 
-void EtherEncapMesh::updateDisplayString()
+void EtherEncapMesh::refreshDisplay() const
 {
     char buf[80];
     sprintf(buf, "passed up: %ld\nsent: %ld \ntotal rec: %ld\ntotal from wifi: %ld", totalFromMAC, totalFromHigherLayer,totalFromMAC+totalToWifi,totalFromWifi);
