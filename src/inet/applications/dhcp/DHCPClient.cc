@@ -184,7 +184,7 @@ const char *DHCPClient::getAndCheckMessageTypeName(DHCPMessageType type)
     }
 }
 
-void DHCPClient::updateDisplayString()
+void DHCPClient::refreshDisplay() const
 {
     getDisplayString().setTagArg("t", 0, getStateName(clientState));
 }
@@ -207,9 +207,8 @@ void DHCPClient::handleMessage(cMessage *msg)
         handleDHCPMessage(dhcpPacket);
         delete msg;
     }
-
-    if (hasGUI())
-        updateDisplayString();
+    else
+        throw cRuntimeError("Unknown incoming gate: '%s'", msg->getArrivalGate()->getFullName());
 }
 
 void DHCPClient::handleTimer(cMessage *msg)
@@ -495,7 +494,7 @@ void DHCPClient::handleDHCPMessage(DHCPMessage *msg)
     }
 }
 
-void DHCPClient::receiveSignal(cComponent *source, int signalID, cObject *obj DETAILS_ARG)
+void DHCPClient::receiveSignal(cComponent *source, int signalID, cObject *obj, cObject *details)
 {
     Enter_Method_Silent();
     printNotificationBanner(signalID, obj);

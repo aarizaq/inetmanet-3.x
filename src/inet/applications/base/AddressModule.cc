@@ -136,7 +136,7 @@ int AddressModule::choseNewModule()
     return index;
 }
 
-void AddressModule::receiveSignal(cComponent *src, simsignal_t id, cObject *obj DETAILS_ARG)
+void AddressModule::receiveSignal(cComponent *src, simsignal_t id, cObject *obj, cObject *details)
 {
     if (id != changeAddressSignalInit &&  id != changeAddressSignalDelete)
         return;

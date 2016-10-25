@@ -139,7 +139,7 @@ void LaptopModelManager::newNode(const char * name, const char * type,bool setCo
     {
         MobilityBase* mm = nullptr;
         for (cModule::SubmoduleIterator iter(mod); !iter.end(); iter++) {
-            cModule* submod = iter();
+            cModule* submod = *iter;
             mm = dynamic_cast<MobilityBase*>(submod);
             if (!mm)
                 continue;

@@ -141,7 +141,6 @@ void DYMO_RoutingTable::deleteRoute(DYMO_RoutingEntry *entry)
             routeVector.erase(iter);
             L3Address dest(entry->routeAddress);
             dymoProcess->omnet_chg_rte(dest, dest, dest, 0, true);
-            //updateDisplayString();
             delete entry;
             return;
         }

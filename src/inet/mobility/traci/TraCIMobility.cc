@@ -228,7 +228,6 @@ void TraCIMobility::setTargetPosition()
 	lastSpeed = (Coord(cos(angle)*speed, -sin(angle)*speed));
 	lastOrientation = EulerAngles(angle);
 
-	if (hasGUI()) updateDisplayString();
 	fixIfHostGetsOutside();
 	moveAndUpdate();
 }
@@ -238,7 +237,7 @@ void TraCIMobility::changeParkingState(bool newState) {
 	emit(parkingStateChangedSignal, this);
 }
 
-void TraCIMobility::updateDisplayString() {
+void TraCIMobility::refreshDisplay() const {
 	ASSERT(-M_PI <= angle);
 	ASSERT(angle < M_PI);
 
