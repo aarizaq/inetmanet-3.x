@@ -25,5 +25,7 @@ package inet.linklayer.ieee80211.mac;
 simple BasicStatistics like IStatistics
 {
     parameters:
+        @signal[statMinSNIR];
+        @statistic[statMinSNIR](title="Min SNIR"; source=statMinSNIR; record=vector);
         @display("i=block/control");
 }

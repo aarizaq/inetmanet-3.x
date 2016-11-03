@@ -25,6 +25,8 @@ namespace ieee80211 {
 
 Define_Module(BasicStatistics);
 
+simsignal_t BasicStatistics::statMinSNIRSignal = cComponent::registerSignal("statMinSNIR");
+
 void BasicStatistics::initialize()
 {
     resetStatistics();
@@ -41,6 +43,8 @@ void BasicStatistics::initialize()
     WATCH(numReceivedMulticast);
     WATCH(numReceivedNotForUs);
     WATCH(numReceivedErroneous);
+    snirTimer = new cMessage();
+    scheduleAt(simTime()+snitTimerValue,snirTimer);
 }
 
 void BasicStatistics::resetStatistics()
@@ -105,6 +109,19 @@ void BasicStatistics::finish()
     recordScalar("numReceivedErroneous", numReceivedErroneous);
 }
 
+void BasicStatistics::handleMessage(cMessage *msg)
+{
+
+    if (snirTimer != msg)
+        throw cRuntimeError("BasicStatistics has received invalid msg %s",msg->getFullName());
+
+    snir /= contSnir;
+    emit(statMinSNIRSignal,snir);
+    contSnir = 0;
+    snir = 0;
+    scheduleAt(simTime()+snitTimerValue,snirTimer);
+}
+
 void BasicStatistics::setMacUtils(MacUtils *utils)
 {
     this->utils = utils;
@@ -140,6 +157,11 @@ void BasicStatistics::frameTransmissionGivenUp(Ieee80211DataOrMgmtFrame *frame)
 void BasicStatistics::frameReceived(Ieee80211Frame *frame)
 {
     if (dynamic_cast<Ieee80211DataOrMgmtFrame *>(frame)) {
+
+        auto receptionIndication = check_and_cast<Ieee80211ReceptionIndication*>(frame->getControlInfo());
+        snir += receptionIndication->getMinSNIR();
+        contSnir++;
+
         if (!utils->isForUs(frame))
             numReceivedNotForUs++;
         else if (utils->isBroadcast(frame))

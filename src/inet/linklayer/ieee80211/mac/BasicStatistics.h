@@ -28,6 +28,8 @@ namespace ieee80211 {
  */
 class INET_API BasicStatistics : public IStatistics, public cSimpleModule
 {
+    public:
+        static simsignal_t statMinSNIRSignal;
     private:
         MacUtils *utils = nullptr;
         IRateControl *rateControl = nullptr; //TODO maybe there should be a listener list instead of a direct pointer here
@@ -45,10 +47,17 @@ class INET_API BasicStatistics : public IStatistics, public cSimpleModule
         long numReceivedNotForUs;
         long numReceivedErroneous;
 
+        double snir = 0;
+        long contSnir = 0;
+        cMessage *snirTimer = nullptr;
+        double snitTimerValue = 1.0;
+
     protected:
         virtual void initialize() override;
         virtual void finish() override;
         virtual void resetStatistics();
+        virtual void handleMessage(cMessage *msg) override;
+        ~BasicStatistics() {cancelAndDelete(snirTimer);}
 
     public:
         virtual void setMacUtils(MacUtils *utils) override;
