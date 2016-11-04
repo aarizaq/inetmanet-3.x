@@ -142,7 +142,7 @@ void BasicStatistics::finish()
         myfile << MACAddress(elem.first).str() << ";";
         for (auto elem2 : elem.second)
         {
-            myfile << elem2.time.str()  <<";" << elem2.snir;
+            myfile << elem2.time.str()  <<"-" << elem2.snir <<";";
         }
         myfile << endl;
     }
