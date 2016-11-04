@@ -19,6 +19,11 @@
 #include "MacUtils.h"
 #include "IRateControl.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
+#include "inet/common/ModuleAccess.h"
+#include <iostream>
+#include <fstream>
+
+#define PRINTSNIR
 
 namespace inet {
 namespace ieee80211 {
@@ -107,14 +112,64 @@ void BasicStatistics::finish()
     recordScalar("numReceivedMulticast", numReceivedMulticast);
     recordScalar("numReceivedNotForUs", numReceivedNotForUs);
     recordScalar("numReceivedErroneous", numReceivedErroneous);
+
+
+    for (auto elem : temporalSnir)
+    {
+        Values val;
+        val.snir = elem.second.snir /(double)elem.second.counts;
+        val.time = simTime();
+        auto iter = snirEvolution.find(elem.first);
+        if (iter == snirEvolution.end())
+        {
+            // new sequence
+            ValuesVect vect;
+            vect.push_back(val);
+            snirEvolution.insert(std::make_pair(elem.first,vect));
+        }
+        else
+            iter->second.push_back(val);
+    }
+#ifdef PRINTSNIR
+    std::ofstream myfile;
+    myfile.open ("resultsSnir.txt");
+
+    cModule * mod = getContainingNode(this);
+    myfile << mod-> getFullName() << endl;
+
+    for (auto elem : snirEvolution)
+    {
+        myfile << MACAddress(elem.first).str() << ";";
+        for (auto elem2 : elem.second)
+        {
+            myfile << elem2.time.str()  <<";" << elem2.snir;
+        }
+        myfile << endl;
+    }
+#endif
 }
 
 void BasicStatistics::handleMessage(cMessage *msg)
 {
-
     if (snirTimer != msg)
         throw cRuntimeError("BasicStatistics has received invalid msg %s",msg->getFullName());
-
+    for (auto elem : temporalSnir)
+    {
+        Values val;
+        val.snir = elem.second.snir /(double)elem.second.counts;
+        val.time = simTime();
+        auto iter = snirEvolution.find(elem.first);
+        if (iter == snirEvolution.end())
+        {
+            // new sequence
+            ValuesVect vect;
+            vect.push_back(val);
+            snirEvolution.insert(std::make_pair(elem.first,vect));
+        }
+        else
+            iter->second.push_back(val);
+    }
+    temporalSnir.clear();
     snir /= contSnir;
     emit(statMinSNIRSignal,snir);
     contSnir = 0;
@@ -156,11 +211,27 @@ void BasicStatistics::frameTransmissionGivenUp(Ieee80211DataOrMgmtFrame *frame)
 
 void BasicStatistics::frameReceived(Ieee80211Frame *frame)
 {
-    if (dynamic_cast<Ieee80211DataOrMgmtFrame *>(frame)) {
+    Ieee80211DataOrMgmtFrame *dataOrMgmt = dynamic_cast<Ieee80211DataOrMgmtFrame *>(frame);
+    if (dataOrMgmt) {
 
         auto receptionIndication = check_and_cast<Ieee80211ReceptionIndication*>(frame->getControlInfo());
         snir += receptionIndication->getMinSNIR();
         contSnir++;
+        uint64_t addr = dataOrMgmt->getTransmitterAddress().getInt();
+
+        auto iter = temporalSnir.find(addr);
+        if (iter == temporalSnir.end())
+        {
+            TemporalValues val;
+            val.snir += receptionIndication->getMinSNIR();
+            val.counts++;
+            temporalSnir.insert(std::make_pair(addr,val));
+        }
+        else
+        {
+            iter->second.snir += receptionIndication->getMinSNIR();
+            iter->second.counts++;
+        }
 
         if (!utils->isForUs(frame))
             numReceivedNotForUs++;

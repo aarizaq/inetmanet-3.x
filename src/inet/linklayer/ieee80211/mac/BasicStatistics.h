@@ -47,6 +47,18 @@ class INET_API BasicStatistics : public IStatistics, public cSimpleModule
         long numReceivedNotForUs;
         long numReceivedErroneous;
 
+        struct TemporalValues{
+            double snir = 0;
+            long counts = 0;
+        };
+        struct Values{
+             double snir = 0;
+             simtime_t time;
+         };
+        std::map<uint64_t,TemporalValues> temporalSnir;
+        typedef std::vector<Values> ValuesVect;
+        std::map<uint64_t,ValuesVect> snirEvolution;
+
         double snir = 0;
         long contSnir = 0;
         cMessage *snirTimer = nullptr;
