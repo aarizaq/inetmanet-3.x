@@ -45,6 +45,9 @@ class INET_API BasicStatistics : public IStatistics, public cSimpleModule
         long numReceivedNotForUs;
         long numReceivedErroneous;
 
+        long numUnicastUpperFrames;
+        long numBroadcastUpperFrames;
+
     protected:
         virtual void initialize() override;
         virtual void finish() override;
@@ -59,6 +62,7 @@ class INET_API BasicStatistics : public IStatistics, public cSimpleModule
         virtual void frameTransmissionGivenUp(Ieee80211DataOrMgmtFrame *frame) override;
         virtual void frameReceived(Ieee80211Frame *frame) override;
         virtual void erroneousFrameReceived() override;
+        virtual void upperFrameReceived(Ieee80211DataOrMgmtFrame *frame) override;
 };
 
 }  // namespace ieee80211

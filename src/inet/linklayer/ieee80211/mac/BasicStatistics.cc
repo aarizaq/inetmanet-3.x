@@ -41,6 +41,11 @@ void BasicStatistics::initialize()
     WATCH(numReceivedMulticast);
     WATCH(numReceivedNotForUs);
     WATCH(numReceivedErroneous);
+
+    WATCH(numUnicastUpperFrames);
+    WATCH(numBroadcastUpperFrames);
+
+
 }
 
 void BasicStatistics::resetStatistics()
@@ -57,6 +62,10 @@ void BasicStatistics::resetStatistics()
     numReceivedBroadcast = 0;
     numReceivedNotForUs = 0;
     numReceivedErroneous = 0;
+
+    numUnicastUpperFrames = 0;
+    numBroadcastUpperFrames = 0;
+
 }
 
 void BasicStatistics::finish()
@@ -97,6 +106,12 @@ void BasicStatistics::finish()
 //        recordScalar(th.c_str(), numDropped(i));
 //    }
 
+    recordScalar("numSent", numSent);
+    recordScalar("numGivenUp", numGivenUp);
+    recordScalar("numUnicastUpperFrames", numUnicastUpperFrames);
+    recordScalar("numBroadcastUpperFrames", numBroadcastUpperFrames);
+    recordScalar("numSentBroadcast", numSentBroadcast);
+
     // receive statistics
     recordScalar("numReceivedUnicast", numReceivedUnicast);
     recordScalar("numReceivedBroadcast", numReceivedBroadcast);
@@ -117,6 +132,13 @@ void BasicStatistics::setRateControl(IRateControl *rateControl)
 
 void BasicStatistics::frameTransmissionSuccessful(Ieee80211DataOrMgmtFrame *frame, int retryCount)
 {
+    if (utils->isBroadcast(frame) || utils->isBroadcastOrMulticast(frame))
+        numSentBroadcast++;
+    else {
+        if (retryCount == 0)
+            numSentWithoutRetry++;
+        numSent++;
+    }
     if (rateControl)
         rateControl->frameTransmitted(frame, utils->getFrameMode(frame), retryCount, true, false);
 }
@@ -129,6 +151,7 @@ void BasicStatistics::frameTransmissionUnsuccessful(Ieee80211DataOrMgmtFrame *fr
 
 void BasicStatistics::frameTransmissionUnsuccessfulGivingUp(Ieee80211DataOrMgmtFrame *frame, int retryCount)
 {
+    numGivenUp++;
     if (rateControl)
         rateControl->frameTransmitted(frame, utils->getFrameMode(frame), retryCount, false, true); //TODO for the last frame, both Unsuccessful() and GivenUp() will be called -- duplicate call!
 }
@@ -159,6 +182,17 @@ void BasicStatistics::frameReceived(Ieee80211Frame *frame)
 void BasicStatistics::erroneousFrameReceived()
 {
     numReceivedErroneous++;
+}
+
+
+void BasicStatistics::upperFrameReceived(Ieee80211DataOrMgmtFrame *frame)
+{
+    if (utils->isBroadcast(frame))
+        numBroadcastUpperFrames++;
+    else if (utils->isBroadcastOrMulticast(frame))
+        numBroadcastUpperFrames++;
+    else
+        numUnicastUpperFrames++;
 }
 
 }  // namespace ieee80211
