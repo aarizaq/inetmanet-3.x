@@ -105,9 +105,9 @@ simple DMAMAC extends MACProtocolBase like IMACProtocol
         // New parameters
         string radioModule = default("^.radio");   // The path to the Radio module  //FIXME remove default value
         
-        int initialSeed = default(12345);
+        int initialSeed = default(-1);
         bool sendUppperLayer = default(false); // if false the module deletes the packet, other case, it sends the packet to the upper layer.
-        int initialChannel @enum(11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26) = default(11);
+        int initialChannel @enum(11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26) = default(11); // if the random seed is different than -1 it uses this value, in other case it uses the random sequence.
         
     	@class("DMAMAC");
 }

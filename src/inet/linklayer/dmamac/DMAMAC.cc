@@ -189,9 +189,6 @@ void DMAMAC::initialize(int stage)
 
         /* @brief copies all xml data for slots in steady and transient and neighbor data */
         slotInitialize();
-
-        // initialize the random generator.
-        randomGenerator = new CRandomMother(par("initialSeed").longValue());
     }
     else if(stage == INITSTAGE_LINK_LAYER) {
 
@@ -249,7 +246,18 @@ void DMAMAC::initialize(int stage)
 
 
         sendUppperLayer = par("sendUppperLayer"); // if false the module deletes the packet, other case, it sends the packet to the upper layer.
-        setChannel(par("initialChannel"));
+
+        // initialize the random generator.
+        if (par("initialSeed").longValue() != -1)
+        {
+            randomGenerator = new CRandomMother(par("initialSeed").longValue());
+            setNextSequenceChannel();
+        }
+        else
+        {
+            setChannel(par("initialChannel"));
+            randomGenerator = nullptr;
+        }
     }
 }
 
@@ -335,9 +343,13 @@ void DMAMAC::handleUpperPacket(cPacket* msg){
          * @brief Casting upper layer message to mac packet format
          * */
         DMAMACPkt *mac = static_cast<DMAMACPkt *>(encapsMsg(static_cast<cPacket*>(msg)));
+        destAddr = mac->getDestAddr();
         // @brief Sensor data goes to sink and is of type DMAMAC_DATA, setting it here 20 May
-        // destAddr = MACAddress(sinkAddress);
-        // mac->setDestAddr(destAddr);
+        if (mac->getDestAddr() != sinkAddress)
+        {
+            throw cRuntimeError("Destination address is not sink address Dest: %s, Sink Addr %s", mac->getDestAddr().str().c_str(), sinkAddress.str().c_str());
+        }
+
 
         mac->setKind(DMAMAC_DATA);
         mac->setMySlot(mySlot);
@@ -403,6 +415,7 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
     if (currentSlot == 0)
     {
        EV << "¤¤¤¤¤¤¤¤New Superframe is starting¤¤¤¤¤¤¤¤" << endl;
+       setNextSequenceChannel();
        macPeriod = DATA;
        /* @Statistics */
        if (currentMacMode == TRANSIENT)
@@ -955,7 +968,12 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
 
     if(currentMacState == WAIT_DATA)
     {
-        DMAMACPkt *const mac  = static_cast<DMAMACPkt *>(msg);
+        DMAMACPkt *mac  = dynamic_cast<DMAMACPkt *>(msg);
+        if (mac == nullptr)
+        {
+            delete msg;
+            return;
+        }
         const MACAddress& dest = mac->getDestAddr();
 
         EV << " DATA Packet received with length :" << mac->getByteLength() << " destined for: " << mac->getDestAddr() << endl;
@@ -985,22 +1003,24 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
         if(dest == myMacAddr || dest == sinkAddress || forChildNode)
         {
             lastDataPktSrcAddr = mac->getSrcAddr();
-
-            if (macPktQueue.size() < queueLength)
-            {
-                macPktQueue.push_back(mac);
-                EV << " DATA packet from child node put in queue : " << macPktQueue.size() << endl;
-            }
-            else
-            {
-                EV << " No space for forwarding packets queue size :"  <<  macPktQueue.size() << endl;
-                delete mac;
-            }
             /* @brief not sending forwarding packets up to application layer */
-            if (sendUppperLayer)
+            if (dest == myMacAddr && sendUppperLayer)
                 sendUp(decapsMsg(mac));
-            else
-                delete mac;
+            else {
+
+                if (macPktQueue.size() < queueLength) {
+                    macPktQueue.push_back(mac);
+                    EV << " DATA packet from child node put in queue : "
+                              << macPktQueue.size() << endl;
+                }
+                else
+                {
+                    EV << " No space for forwarding packets queue size :"
+                              << macPktQueue.size() << endl;
+                    delete mac;
+                }
+            }
+
 
             /* @brief Packet received for myself thus sending an ACK */
             scheduleAt(simTime(), sendAck);
@@ -1023,7 +1043,12 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
     }
     else if (currentMacState == WAIT_ACK)
     {
-        DMAMACPkt *const mac  = static_cast<DMAMACPkt *>(msg);
+        DMAMACPkt *mac  = dynamic_cast<DMAMACPkt *>(msg);
+        if (mac == nullptr)
+        {
+            delete msg;
+            return;
+        }
 
         EV << "ACK Packet received with length : " << mac->getByteLength() << ", DATA Transmission successful"  << endl;
 
@@ -1040,7 +1065,12 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
     }
     else if (currentMacState == WAIT_NOTIFICATION)
     {
-        DMAMACSinkPkt *const notification  = static_cast<DMAMACSinkPkt *>(msg);
+        DMAMACSinkPkt *notification  = dynamic_cast<DMAMACSinkPkt *>(msg);
+        if (notification == nullptr)
+        {
+            delete msg;
+            return;
+        }
 
         changeMacMode = notification->getChangeMacMode();
         EV << " NOTIFICATION packet received with length : " << notification->getByteLength() << " and changeMacMode = " << changeMacMode << endl;
@@ -1095,7 +1125,13 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
     }
     else if (currentMacState == WAIT_ALERT)
     {
-        AlertPkt *const alert  = static_cast<AlertPkt *>(msg);
+        AlertPkt *alert  = dynamic_cast<AlertPkt *>(msg);
+        if (alert == nullptr)
+        {
+            delete msg;
+            return;
+        }
+
 
         EV << "I have received an Alert packet from fellow sensor " << endl;
         EV << "Alert Packet length is : " << alert->getByteLength() << " detailed info " << alert->detailedInfo() << endl;
@@ -1529,6 +1565,8 @@ void DMAMAC::setChannel(const int &channel) {
         return;
     if (actualChannel == channel)
         return;
+
+    EV << "Hop to channel :" << channel << endl;
 
     actualChannel = channel;
     ConfigureRadioCommand *configureCommand = new ConfigureRadioCommand();

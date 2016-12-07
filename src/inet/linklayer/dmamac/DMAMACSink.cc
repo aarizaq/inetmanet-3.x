@@ -117,6 +117,7 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
     if (currentSlot == 0)
     {
         EV << "New Superframe is starting " << endl;
+        setNextSequenceChannel();
         macPeriod = DATA;
         /* @Statistics DMAMACSink */
         if (currentMacMode == TRANSIENT)
