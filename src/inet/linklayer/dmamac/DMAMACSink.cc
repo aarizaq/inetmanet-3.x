@@ -117,7 +117,7 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
     if (currentSlot == 0)
     {
         EV << "New Superframe is starting " << endl;
-        setNextSequenceChannel();
+        //setNextSequenceChannel();
         macPeriod = DATA;
         /* @Statistics DMAMACSink */
         if (currentMacMode == TRANSIENT)
@@ -483,6 +483,10 @@ void DMAMACSink::handleRadioSwitchedToTX() {
             EV << "Creating and sending Notification packet down " << endl;
             /* @brief Create SINK notification packet */
             DMAMACSinkPkt* notification = new DMAMACSinkPkt();
+            if (randomGenerator != nullptr) {
+                int c = randomGenerator->iRandom(11,26);
+                notification->setChannel(c);
+            }
             lastDataPktSrcAddr = MACAddress::BROADCAST_ADDRESS;
             notification->setDestAddr(lastDataPktSrcAddr);
             notification->setSrcAddr(myMacAddr);
@@ -503,6 +507,8 @@ void DMAMACSink::handleRadioSwitchedToTX() {
             /* @brief The sensor nodes will be notified either because of stateProbability or because of previous alert */
             notification->setChangeMacMode(changeMacMode);
             sendDown(notification);
+            if (notification->getChannel() != -1)
+                setChannel(notification->getChannel());
 
             /* @Statistics */
             nbTxNotifications++;

@@ -415,7 +415,7 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
     if (currentSlot == 0)
     {
        EV << "¤¤¤¤¤¤¤¤New Superframe is starting¤¤¤¤¤¤¤¤" << endl;
-       setNextSequenceChannel();
+       //setNextSequenceChannel();
        macPeriod = DATA;
        /* @Statistics */
        if (currentMacMode == TRANSIENT)
@@ -1068,6 +1068,7 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
         DMAMACSinkPkt *notification  = dynamic_cast<DMAMACSinkPkt *>(msg);
         if (notification == nullptr)
         {
+            throw cRuntimeError(" msg is not a notification message");
             delete msg;
             return;
         }
@@ -1117,6 +1118,8 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
 
         /* @Statistics */
         nbRxNotifications++;
+        if (notification->getChannel() != -1)
+            setChannel(notification->getChannel());
         delete notification;
 
         /* @brief Notification received hence sleeping briefly until next work */
@@ -1567,6 +1570,7 @@ void DMAMAC::setChannel(const int &channel) {
         return;
 
     EV << "Hop to channel :" << channel << endl;
+    bubble("Changing channel");
 
     actualChannel = channel;
     ConfigureRadioCommand *configureCommand = new ConfigureRadioCommand();
@@ -1594,7 +1598,7 @@ void DMAMAC::setNextSequenceChannel()
 {
     if (randomGenerator == nullptr)
         return;
-    int c = randomGenerator->iRandom(11,16);
+    int c = randomGenerator->iRandom(11,26);
     setChannel(c);
 }
 
@@ -1602,7 +1606,7 @@ void DMAMAC::setChannelWithSeq(const uint32_t *v)
 {
     if (randomGenerator == nullptr)
         return;
-    int c = randomGenerator->iRandom(11,16,v);
+    int c = randomGenerator->iRandom(11,26,v);
     setChannel(c);
 }
 
