@@ -9,7 +9,7 @@ import inet.wpan.applications.Ieee802154TestApp.Ieee802154TestApp;
 import inet.mobility.contract.IMobility;
 import inet.base.NotificationBoard;
 import inet.wpan.Isabel.Base.Display;
-
+import inet.networklayer.common.InterfaceTable;
 //
 // This module implements simple ZigBee nodes with IEEE 802.15.4 MAC and PHY layer, plus a simple test app layer
 //
@@ -38,8 +38,13 @@ module Ieee802154Node
                 @display("p=65,230;i=block/app2");
 
         }
+                // linklayer
+        interfaceTable: InterfaceTable {
+            parameters:
+                @display("p=120,150;is=s");
+        }
         // battery module
-        battery: InetSimpleBattery{
+        battery: InetSimpleBattery {
             parameters:
                 @display("p=65,310;i=block/plug");
 
