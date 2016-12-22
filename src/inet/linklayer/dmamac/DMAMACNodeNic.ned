@@ -34,8 +34,10 @@ module DMAMACNic like IWirelessNic
 {
     parameters:
         string interfaceTableModule;
+        string energySourceModule = default("");
         string radioType = default("Ieee802154NarrowbandScalarRadio");
         *.interfaceTableModule = default(absPath(interfaceTableModule));
+        *.energySourceModule = default(absPath(energySourceModule));
         @display("i=block/ifcard");
     gates:
         input upperLayerIn;

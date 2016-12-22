@@ -70,12 +70,7 @@ module DMAMACSinkNode
           status: NodeStatus if hasStatus {
             @display("p=50,50;is=s");
         }
-        
-        app[numApps]: <> like IIPvXTrafficGenerator {
-            parameters:
-                @display("p=147,54,row,60");
-        }
-        
+               
         energyStorage: <energyStorageType> like IEnergyStorage if energyStorageType != "" {
             parameters:
                 @display("p=50,100;i=block/plug;is=s");
@@ -83,6 +78,10 @@ module DMAMACSinkNode
         energyGenerator: <energyGeneratorType> like IEnergyGenerator if energyGeneratorType != "" {
             parameters:
                 @display("p=50,150;i=block/plug;is=s");
+        }
+        app[numApps]: <> like IIPvXTrafficGenerator {
+            parameters:
+                @display("p=147,54,row,60");
         }
         // optional mobility module. Required only if wireless cards are present
         mobility: <mobilityType> like IMobility if mobilityType != "" {
