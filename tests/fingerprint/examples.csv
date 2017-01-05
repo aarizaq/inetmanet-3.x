@@ -35,6 +35,7 @@
 
 /examples/dhcp/,                     -f omnetpp.ini -c WiredDHCP -r 0,              5000s,           fd0f-6c4c/tplx
 /examples/dhcp/,                     -f omnetpp.ini -c WirelessDHCP -r 0,           500s,            5db5-ee70/tplx
+/examples/dhcp/,                     -f omnetpp.ini -c Wireless2DHCP -r 0,          500s,            00bb-3a7f/tplx
 /examples/dhcp/,                     -f omnetpp.ini -c RebootingDHCP -r 0,          500s,            baea-6c2a/tplx
 
 /examples/diffserv/onedomain,        -f omnetpp.ini -c Exp11 -r 0,                  10s,             6f98-b9d9/tplx
@@ -65,9 +66,9 @@
 
 /examples/geometry/,                 -f omnetpp.ini -c General -r 0,                100s,            5b8f-14e1/tplx
 
-/examples/httptools/direct/flashdirect/, -f omnetpp.ini -c General -r 0,                500000s,     e0bb-aec6/tplx
-/examples/httptools/direct/pairdirect/, -f omnetpp.ini -c random -r 0,                 500000s,      c34e-8a81/tplx
-/examples/httptools/direct/pairdirect/, -f omnetpp.ini -c scripted -r 0,               500000s,      8ba9-0afc/tplx
+/examples/httptools/direct/flashdirect/, -f omnetpp.ini -c General -r 0,                500000s,     33b7-ed9b/tplx
+/examples/httptools/direct/pairdirect/, -f omnetpp.ini -c random -r 0,                 500000s,      b012-af31/tplx
+/examples/httptools/direct/pairdirect/, -f omnetpp.ini -c scripted -r 0,               500000s,      ddd3-2194/tplx
 /examples/httptools/socket/pairsocket/, -f omnetpp.ini -c random -r 0,                 500000s,      f43c-c122/tplx
 /examples/httptools/socket/pairsocket/, -f omnetpp.ini -c scripted -r 0,               500000s,      7930-7cc0/tplx
 /examples/httptools/socket/simpleddos/, -f omnetpp.ini -c General -r 0,                500000s,      1e88-b1c5/tplx
@@ -146,7 +147,7 @@
 /examples/inet/nclients/,            -f video.ini -c General -r 0,                  50s,             dbcf-43c2/tplx
 
 /examples/inet/netperfmeter/,        -f omnetpp.ini -c TraceFile -r 0,              100s,          458d-5335/tplx
-/examples/inet/netperfmeter/,        -f omnetpp.ini -c SCTP-with-OLIA -r 0,         100s,          0958-258f/tplx
+/examples/inet/netperfmeter/,        -f omnetpp.ini -c SCTP-with-OLIA -r 0,         100s,          8aec-4a8d/tplx
 
 /examples/inet/pcaprecorder/,        -f omnetpp.ini -c General -r 0,                5000s,           f042-928b/tplx
 
@@ -351,7 +352,7 @@
 # /examples/rtp/unicast1/,             -f omnetpp.ini -c General -r 0,                1000s,           0000-0000    # unstable fingerprint
 # /examples/rtp/unicast2/,             -f omnetpp.ini -c General -r 0,                500s,            0000-0000    # unstable fingerprint
 
-/examples/sctp/cmttest/,             -f omnetpp.ini -c General -r 0,                100s,             93e9-5083/tplx
+/examples/sctp/cmttest/,             -f omnetpp.ini -c General -r 0,                100s,             d8a5-9857/tplx
 /examples/sctp/multihomed/,          -f omnetpp.ini -c General -r 0,                500s,             7fd4-8fbe/tplx
 /examples/sctp/nclients/,            -f omnetpp.ini -c General -r 0,                500s,             96c9-198d/tplx
 

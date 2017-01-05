@@ -184,6 +184,7 @@ void IPv4::handleIncomingDatagram(IPv4Datagram *datagram, const InterfaceEntry *
 {
     ASSERT(datagram);
     ASSERT(fromIE);
+    emit(LayeredProtocolBase::packetReceivedFromLowerSignal, datagram);
 
     //
     // "Prerouting"
@@ -319,6 +320,7 @@ void IPv4::handleIncomingICMP(ICMPMessage *packet)
             emit(LayeredProtocolBase::packetSentToUpperSignal, packet);
             break;
         }
+
         default: {
             // all others are delivered to ICMP: ICMP_ECHO_REQUEST, ICMP_ECHO_REPLY,
             // ICMP_TIMESTAMP_REQUEST, ICMP_TIMESTAMP_REPLY, etc.
@@ -460,7 +462,6 @@ const InterfaceEntry *IPv4::determineOutgoingInterfaceForMulticastDatagram(IPv4D
     }
     return ie;
 }
-
 
 void IPv4::routeUnicastPacket(IPv4Datagram *datagram, const InterfaceEntry *fromIE, const InterfaceEntry *destIE, IPv4Address requestedNextHopAddress)
 {
@@ -1003,18 +1004,23 @@ void IPv4::reinjectQueuedDatagram(const INetworkDatagram *datagram)
                 case INetfilter::IHook::LOCALOUT:
                     datagramLocalOut(datagram, iter->outIE, iter->nextHopAddr);
                     break;
+
                 case INetfilter::IHook::PREROUTING:
                     preroutingFinish(datagram, iter->inIE, iter->outIE, iter->nextHopAddr);
                     break;
+
                 case INetfilter::IHook::POSTROUTING:
                     fragmentAndSend(datagram, iter->outIE, iter->nextHopAddr);
                     break;
+
                 case INetfilter::IHook::LOCALIN:
                     reassembleAndDeliverFinish(datagram);
                     break;
+
                 case INetfilter::IHook::FORWARD:
                     routeUnicastPacketFinish(datagram, iter->inIE, iter->outIE, iter->nextHopAddr);
                     break;
+
                 default:
                     throw cRuntimeError("Unknown hook ID: %d", (int)(iter->hookType));
                     break;
@@ -1136,12 +1142,12 @@ void IPv4::stop()
 void IPv4::flush()
 {
     delete cancelService();
-    EV_DEBUG << "IPv4::flush(): packets in queue: " << queue.info() << endl;
+    EV_DEBUG << "IPv4::flush(): packets in queue: " << queue.STR_COMPAT() << endl;
     queue.clear();
 
     EV_DEBUG << "IPv4::flush(): pending packets:\n";
     for (auto & elem : pendingPackets) {
-        EV_DEBUG << "IPv4::flush():    " << elem.first << ": " << elem.second.info() << endl;
+        EV_DEBUG << "IPv4::flush():    " << elem.first << ": " << elem.second.STR_COMPAT() << endl;
         elem.second.clear();
     }
     pendingPackets.clear();
