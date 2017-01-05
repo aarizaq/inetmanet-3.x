@@ -33,12 +33,10 @@
 #include "inet/networklayer/ipv4/IPv4RouteRule.h"
 namespace inet {
 
-
 class ARPPacket;
 class ICMPMessage;
 class IInterfaceTable;
 class IIPv4RoutingTable;
-
 
 /**
  * Implements the IPv4 protocol.
@@ -248,6 +246,7 @@ class INET_API IPv4 : public QueueBase, public INetfilter, public ILifecycle, pu
     virtual void endService(cPacket *packet) override;
 
     // NetFilter functions:
+
   protected:
     /**
      * called before a packet arriving from the network is routed

@@ -38,7 +38,7 @@ class INET_API EtherEncapMesh : public EtherEncap
   protected:
     long totalFromWifi;
     long totalToWifi;
-    virtual void initialize() override;
+    virtual void initialize(int stage) override;
     virtual void refreshDisplay() const override;
     virtual void handleMessage(cMessage *msg) override;
     virtual void processFrameFromMAC(EtherFrame *msg) override;
