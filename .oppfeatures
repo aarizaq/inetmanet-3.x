@@ -1157,4 +1157,32 @@
         compileFlags = "-DWITH_80211MESH"
         linkerFlags = ""
         />
+    <feature
+        id="dmamac"
+        name="DMAMAC protocol"
+        description = "DMA-MAC protocol implementation"
+        initiallyEnabled = "true"
+        requires = "mobility radio"
+        labels = "nic wireless"
+        nedPackages = "
+                       inet.linklayer.dmamac
+                      "
+        extraSourceFolders = ""
+        compileFlags = "-DWITH_DMAMAC"
+        linkerFlags = ""
+        /> 
+    <feature
+        id="dmamacExample"
+        name="DMAMAC protocol"
+        description = "DMA-MAC protocol implementation example"
+        initiallyEnabled = "true"
+        requires = "dmamac"
+        labels = ""
+        nedPackages = "
+                       inet.examples.dmamac
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
 </features>
