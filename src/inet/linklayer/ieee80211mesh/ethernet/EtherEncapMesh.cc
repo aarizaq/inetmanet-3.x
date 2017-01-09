@@ -28,11 +28,13 @@ using namespace ieee80211;
 
 Define_Module(EtherEncapMesh);
 
-void EtherEncapMesh::initialize()
+void EtherEncapMesh::initialize(int stage)
 {
-    EtherEncap::initialize();
-    totalFromWifi =totalToWifi=0;
-    WATCH(totalFromWifi);
+    EtherEncap::initialize(stage);
+    if (stage == INITSTAGE_LOCAL) {
+        totalFromWifi =totalToWifi=0;
+        WATCH(totalFromWifi);
+    }
 }
 
 void EtherEncapMesh::handleMessage(cMessage *msg)

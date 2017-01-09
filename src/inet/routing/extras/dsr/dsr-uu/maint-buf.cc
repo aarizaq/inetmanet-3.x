@@ -316,7 +316,7 @@ int NSCLASS maint_buf_salvage(struct dsr_pkt *dp)
 }
 
 
-void NSCLASS maint_buf_timeout(unsigned long data)
+void NSCLASS maint_buf_timeout(void *data)
 {
     struct maint_entry *m, *m2;
 

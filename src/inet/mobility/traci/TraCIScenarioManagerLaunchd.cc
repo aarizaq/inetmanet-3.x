@@ -90,8 +90,11 @@ void TraCIScenarioManagerLaunchd::init_traci() {
 			error("TraCI server \"%s\" reports API version %d, which is unsupported. We recommend using the version of sumo-launchd that ships with Veins.", serverVersion.c_str(), apiVersion);
 		}
 	}
-
+#ifdef OMNETPP_VERSION > 500
+	std::string contents = launchConfig->getXML();
+#else
 	std::string contents = launchConfig->tostr(0);
+#endif
 
 	TraCIBuffer buf;
 	buf << std::string("sumo-launchd.launch.xml") << contents;

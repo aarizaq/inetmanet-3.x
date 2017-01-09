@@ -171,6 +171,7 @@ void EdcaUpperMac::upperFrameReceived(Ieee80211DataOrMgmtFrame *frame)
 
 void EdcaUpperMac::enqueue(Ieee80211DataOrMgmtFrame *frame, AccessCategory ac)
 {
+    statistics->upperFrameReceived(frame);
     if (acData[ac].frameExchange)
         acData[ac].transmissionQueue.insert(frame);
     else {

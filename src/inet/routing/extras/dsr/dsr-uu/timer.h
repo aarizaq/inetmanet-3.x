@@ -130,7 +130,7 @@ tv->tv_usec = (now % HZ) * 1000000l / HZ;
 
 class DSRUU;
 
-typedef void (DSRUU::*fct_t) (unsigned long data);
+typedef void (DSRUU::*fct_t) (void *data);
 class DSRUUTimer:public cOwnedObject
 {
   protected:
@@ -141,7 +141,7 @@ class DSRUUTimer:public cOwnedObject
   public:
     simtime_t expires;
     fct_t function;
-    unsigned long data;
+    void *data;
 
 
     DSRUUTimer(DSRUU * a):cOwnedObject()
@@ -152,7 +152,7 @@ class DSRUUTimer:public cOwnedObject
 
     DSRUUTimer():cOwnedObject()
     {
-        a_ = (DSRUU*) getOwner   ();
+        a_ = (DSRUU*) getOwner();
         expires = 0;
     }
 
@@ -166,13 +166,13 @@ class DSRUUTimer:public cOwnedObject
     {
         a_ = a;
     }
-    void init(simtime_t expires_, fct_t fct_, unsigned long data_)
+    void init(simtime_t expires_, fct_t fct_, void *data_)
     {
         expires = expires_;
         data = data_;
         function = fct_;
     }
-    void init(fct_t fct_, unsigned long data_)
+    void init(fct_t fct_, void *data_)
     {
         expires = 0;
         data = data_;

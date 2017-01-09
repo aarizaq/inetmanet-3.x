@@ -7,8 +7,12 @@ ifeq ($(WITH_TCP_NSC), enabled)
   NSC_VERSION= $(shell ls -d ../3rdparty/nsc* 2>/dev/null | sed 's/^.*-//')
   ifneq ($(NSC_VERSION),)
     CFLAGS += -I../3rdparty/nsc-$(NSC_VERSION)/sim -DHAVE_NSC
-    LIBS += -Wl,-rpath,`abspath ../3rdparty/nsc-$(NSC_VERSION)`
+    LIBS += -Wl,-rpath,$(abspath ../3rdparty/nsc-$(NSC_VERSION))
   endif
+endif
+
+ifeq ($(OS),Windows_NT)
+    LIBS += -lws2_32
 endif
 
 #
@@ -60,9 +64,9 @@ CFLAGS += -Wno-overloaded-virtual
 #########################################################################
 # precompiled header support for GCC and CLANG
 
-ifeq ($(TOOLCHAIN_NAME),gcc)
+ifeq ($(CC),gcc)
 PRECOMPILED_EXT=gch
-else ifeq ($(TOOLCHAIN_NAME),clang)
+else ifeq ($(CC),clang)
 PRECOMPILED_EXT=pch
 else
 PRECOMPILED_EXT=
@@ -82,8 +86,8 @@ pch : $(PRECOMPILED_HEADER_PCH)
 
 $(PRECOMPILED_HEADER_PCH): $(PRECOMPILED_HEADER)
 ifneq ("$(PRECOMPILED_EXT)","")
-	@echo Creating precompiled header for $(TOOLCHAIN_NAME)...
-	$(Q)$(CXX) -x c++-header $(CXXFLAGS) $(COPTS) -o $@ $<
+	@echo Creating precompiled header for $(CC)...
+	$(Q)$(CXX) -x c++-header $(CXXFLAGS) $(filter-out -MMD -include $(PRECOMPILED_HEADER),$(COPTS)) -MD -o $@ $<
 endif
 
 clean: clean-pch clean-defines

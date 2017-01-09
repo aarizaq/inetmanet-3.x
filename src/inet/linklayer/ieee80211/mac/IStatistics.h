@@ -51,6 +51,7 @@ class INET_API IStatistics
         virtual void frameTransmissionGivenUp(Ieee80211DataOrMgmtFrame *frame) = 0;
         virtual void frameReceived(Ieee80211Frame *frame) = 0;
         virtual void erroneousFrameReceived() = 0;
+        virtual void upperFrameReceived(Ieee80211DataOrMgmtFrame *frame) = 0;
 };
 
 }  // namespace ieee80211

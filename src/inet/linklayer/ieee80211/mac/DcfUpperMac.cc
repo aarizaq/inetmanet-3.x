@@ -151,6 +151,7 @@ void DcfUpperMac::upperFrameReceived(Ieee80211DataOrMgmtFrame *frame)
 
 void DcfUpperMac::enqueue(Ieee80211DataOrMgmtFrame *frame)
 {
+    statistics->upperFrameReceived(frame);
     if (frameExchange)
         transmissionQueue.insert(frame);
     else
