@@ -425,7 +425,7 @@ void DSRUU::initialize(int stage)
             etxNumRetry = par("ETXRetryBeforeFail");
             etxWindowSize = etxTime*(unsigned int)par("ETXWindowNumHello");
             etxJitter = 0.1;
-            etx_timer.init(&DSRUU::EtxMsgSend, 0);
+            etx_timer.init(&DSRUU::EtxMsgSend, nullptr);
             set_timer(&etx_timer, 0.0);
             //set_timer(&etx_timer, etxTime);
             etxWindow = 0;
@@ -961,7 +961,7 @@ int DSRUU::RouteAdd(struct dsr_srt *srt, unsigned long timeout, unsigned short f
     }
 }
 
-void DSRUU::EtxMsgSend(unsigned long data)
+void DSRUU::EtxMsgSend(void *data)
 {
     EtxList neigh[15];
     DSRPktExt* msg = new DSRPktExt();

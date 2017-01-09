@@ -225,7 +225,7 @@ class DSRUU:public cSimpleModule, public cListener, public ManetNetfilterHook, p
         int send_buf_set_verdict(int verdict, struct in_addr dst);
         int send_buf_init(void);
         void send_buf_cleanup(void);
-        void send_buf_timeout(unsigned long data);
+        void send_buf_timeout(void *data);
 /////////////////
         // maintenance routines
 ////////////////
@@ -258,7 +258,7 @@ class DSRUU:public cSimpleModule, public cListener, public ManetNetfilterHook, p
         int maint_buf_del_all_id(struct in_addr nxt_hop, unsigned short id);
         int maint_buf_del_addr(struct in_addr nxt_hop);
         void maint_buf_set_timeout(void);
-        void maint_buf_timeout(unsigned long data);
+        void maint_buf_timeout(void *data);
         int maint_buf_salvage(struct dsr_pkt *dp);
         void maint_insert(struct maint_entry *m);
 
@@ -428,7 +428,7 @@ class DSRUU:public cSimpleModule, public cListener, public ManetNetfilterHook, p
     };
 // In dsr-uu-omnet.cc used for ETX
     ETXNeighborTable etxNeighborTable;
-    void EtxMsgSend(unsigned long data);
+    void EtxMsgSend(void *data);
     void EtxMsgProc(cMessage *msg);
     double getCost(IPv4Address add);
     void AddCost(struct dsr_pkt *,struct dsr_srt *);
