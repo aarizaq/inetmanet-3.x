@@ -1,4 +1,12 @@
 #
+# on windows we have to link with the winsock library as it is no longer added 
+# to the oomnetpp system libraries by default
+#
+ifeq ($(PLATFORM),win32.x86_64)
+  LIBS += -lwsock32
+endif
+
+#
 # TCP implementaion using the Network Simulation Cradle (TCP_NSC feature)
 #
 
@@ -9,10 +17,6 @@ ifeq ($(WITH_TCP_NSC), enabled)
     CFLAGS += -I../3rdparty/nsc-$(NSC_VERSION)/sim -DHAVE_NSC
     LIBS += -Wl,-rpath,$(abspath ../3rdparty/nsc-$(NSC_VERSION))
   endif
-endif
-
-ifeq ($(OS),Windows_NT)
-    LIBS += -lws2_32
 endif
 
 #
