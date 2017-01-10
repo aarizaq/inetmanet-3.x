@@ -707,7 +707,7 @@ void UDPBasicP2P::handleMessage(cMessage *msg)
 
         if (msg == &periodicTimer)
         {
-            emit(queueLengthSignal, timeQueue.size());
+            emit(queueLengthSignal, (unsigned long)timeQueue.size());
             scheduleAt(simTime()+par("periodicTimer"), &periodicTimer);
             return;
         }
