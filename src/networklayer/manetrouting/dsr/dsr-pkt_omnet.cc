@@ -23,43 +23,6 @@
 #include "dsr-pkt_omnet.h"
 #include "IPv4ControlInfo.h"
 
-
-
-#define DSR_RREQ_HDR_LEN sizeof(struct dsr_rreq_opt)
-#define DSR_RREQ_OPT_LEN (DSR_RREQ_HDR_LEN - 2)
-#define DSR_RREQ_TOT_LEN IP_HDR_LEN + sizeof(struct dsr_opt_hdr) + sizeof(struct dsr_rreq_opt)
-#define DSR_RREQ_ADDRS_LEN(rreq_opt) (rreq_opt->length - 6)
-
-struct dsr_rreq_opt
-{
-    u_int8_t type;
-    u_int8_t length;
-    u_int16_t id;
-    u_int32_t target;
-    u_int32_t addrs[0];
-};
-
-struct dsr_srt_opt
-{
-    u_int8_t type;
-    u_int8_t length;
-#if defined(__LITTLE_ENDIAN_BITFIELD)
-    /* TODO: Fix bit/byte order */
-    u_int16_t f:1;
-    u_int16_t l:1;
-    u_int16_t res:4;
-    u_int16_t salv:4;
-    u_int16_t sleft:6;
-#elif defined (__BIG_ENDIAN_BITFIELD)
-    u_int16_t f:1;
-    u_int16_t l:1;
-    u_int16_t res:4;
-    u_int16_t salv:4;
-    u_int16_t sleft:6;
-#endif
-    u_int32_t addrs[0];
-};
-
 #define SIZE_COST_BITS 16
 DSRPkt::~DSRPkt()
 {
@@ -68,20 +31,15 @@ DSRPkt::~DSRPkt()
 
 void DSRPkt::clean()
 {
-    if (this->options)
-        delete [] this->options;
-    if (costVectorSize>0)
-        delete [] costVector;
-    this->options = NULL;
-    this->costVectorSize = 0;
+    options.clear();
+    costVector.clear();
+    options.clear();
 }
 
 DSRPkt::DSRPkt(const DSRPkt& m) : IPv4Datagram(m)
 {
-
-    costVector = NULL;
-    options = NULL;
-    costVectorSize = 0;
+    costVector.clear();
+    options.clear();
     copy(m);
 }
 
@@ -99,31 +57,14 @@ void DSRPkt::copy(const DSRPkt& m)
     encap_protocol = m.encap_protocol;
     previous = m.previous;
     next = m.next;
-
-    struct dsr_opt_hdr *opth;
-
-    opth = m.options;
-
-    int dsr_opts_len = opth->p_len + DSR_OPT_HDR_LEN;
-
-    options = (struct dsr_opt_hdr *) new char[dsr_opts_len];
-
-    memcpy((char*)options, (char*)m.options, dsr_opts_len);
-
-    costVectorSize = m.costVectorSize;
-    if (m.costVectorSize>0)
-    {
-        costVector = new EtxCost[m.costVectorSize];
-        memcpy((char*)costVector, (char*)m.costVector, m.costVectorSize*sizeof(EtxCost));
-    }
+    options = m.options;
+    costVector = m.costVector;
 }
 // Constructor
 DSRPkt::DSRPkt(struct dsr_pkt *dp, int interface_id) : IPv4Datagram()
 {
-    costVectorSize = 0;
-    costVector = NULL;
-    options = NULL;
-
+    costVector.clear();
+    options.clear();
 
     setEncapProtocol((IPProtocolId)0);
 
@@ -145,14 +86,10 @@ DSRPkt::DSRPkt(struct dsr_pkt *dp, int interface_id) : IPv4Datagram()
         // ¿como gestionar el MAC
         // dp->mac.raw = p->access(hdr_mac::offset_);
 
-        struct dsr_opt_hdr *opth;
-        opth = dp->dh.opth;
-        int dsr_opts_len = opth->p_len + DSR_OPT_HDR_LEN;
 
-        options = (dsr_opt_hdr *)new char[dsr_opts_len];
-
-        memcpy((char*)options, (char*)opth, dsr_pkt_opts_len(dp));
-        setBitLength(getBitLength()+((DSR_OPT_HDR_LEN+options->p_len)*8));
+        options = dp->dh.opth;
+        //int dsr_opts_len = opth->p_len + DSR_OPT_HDR_LEN;
+        setBitLength(getBitLength()+((DSR_OPT_HDR_LEN+options.begin()->p_len)*8));
         setHeaderLength(getByteLength());
 #ifdef NEWFRAGMENT
         setTotalPayloadLength(dp->totalPayloadLength);
@@ -175,11 +112,10 @@ DSRPkt::DSRPkt(struct dsr_pkt *dp, int interface_id) : IPv4Datagram()
             ipControlInfo->setTimeToLive(dp->nh.iph->ttl);
             setControlInfo(ipControlInfo);
         }
-        if (dp->costVectorSize>0)
+        if (dp->costVector.size()>0)
         {
-            setCostVector(dp->costVector, dp->costVectorSize);
-            dp->costVector = NULL;
-            dp->costVectorSize = 0;
+            setCostVector(dp->costVector);
+            dp->costVector.clear();
         }
     }
 }
@@ -205,17 +141,11 @@ void DSRPkt::ModOptions(struct dsr_pkt *dp, int interface_id)
 
         setTimeToLive(dp->nh.iph->ttl); // TTL
         setTransportProtocol(IP_PROT_DSR); // Transport protocol
-        struct dsr_opt_hdr *opth;
-        opth = dp->dh.opth;
-        int dsr_opts_len = opth->p_len + DSR_OPT_HDR_LEN;
+        options.clear();
 
-        if (options != NULL)
-            delete [] options;
+        options = dp->dh.opth;
 
-        options = (dsr_opt_hdr *)new char[dsr_opts_len];
-        memcpy((char*)options, (char*)opth, dsr_pkt_opts_len(dp));
-
-        setBitLength((DSR_OPT_HDR_LEN+IP_HDR_LEN+options->p_len)*8);
+        setBitLength((DSR_OPT_HDR_LEN+IP_HDR_LEN+options.front().p_len)*8);
 
         if (dp->payload)
         {
@@ -241,16 +171,12 @@ void DSRPkt::ModOptions(struct dsr_pkt *dp, int interface_id)
             ipControlInfo->setTimeToLive(dp->nh.iph->ttl);
             setControlInfo(ipControlInfo);
         }
-        if (costVectorSize>0)
-            delete [] costVector;
-        costVectorSize = 0;
-        costVector = NULL;
+        costVector.clear();
 
-        if (dp->costVectorSize>0)
+        if (dp->costVector.size() > 0)
         {
-            setCostVector(dp->costVector, dp->costVectorSize);
-            dp->costVector = NULL;
-            dp->costVectorSize = 0;
+            setCostVector(dp->costVector);
+            dp->costVector.clear();
         }
 
     }
@@ -262,79 +188,85 @@ std::string DSRPkt::detailedInfo() const
 {
     std::stringstream out;
     struct dsr_opt *dopt;
-    int dsr_len = options->p_len + DSR_OPT_HDR_LEN;
     int l = DSR_OPT_HDR_LEN;
     out << " DSR Options "  << "\n"; // Khmm...
-    dopt = (struct dsr_opt *)(((char *)options) + DSR_OPT_HDR_LEN);
-    while (l < dsr_len && (dsr_len - l) > 2)
+
+    for (unsigned int i = 0; i < options.size(); i++)
     {
-        //DEBUG("dsr_len=%d l=%d\n", dsr_len, l);
-        switch (dopt->type)
+        for (unsigned int j = 0; j < options[i].option.size(); j++)
         {
-        case DSR_OPT_PADN:
-            out << " DSR_OPT_PADN "  << "\n"; // Khmm...
-            break;
-        case DSR_OPT_RREQ:
-        {
-            out << " DSR_OPT_RREQ "  << "\n"; // Khmm...
-            dsr_rreq_opt *rreq_opt = (dsr_rreq_opt*)dopt;
-            IPv4Address add(rreq_opt->target);
-            out <<" Target :"<< add << "\n"; // Khmm
-            int j = 0;
-            for (int m=0; m<DSR_RREQ_ADDRS_LEN(rreq_opt); m += sizeof(u_int32_t))
+            dopt = options[i].option[j];
+            //DEBUG("dsr_len=%d l=%d\n", dsr_len, l);
+            switch (dopt->type)
             {
-                IPv4Address add(rreq_opt->addrs[j]);
-                out << add << "\n"; // Khmm
-                j++;
+                case DSR_OPT_PADN:
+                    out << " DSR_OPT_PADN " << "\n"; // Khmm...
+                    break;
+                case DSR_OPT_RREQ:
+                {
+                    out << " DSR_OPT_RREQ " << "\n"; // Khmm...
+                    dsr_rreq_opt *rreq_opt = check_and_cast<dsr_rreq_opt*>(dopt);
+                    IPv4Address add(rreq_opt->target);
+                    out << " Target :" << add << "\n"; // Khmm
+                    for (unsigned int m = 0; m < rreq_opt->addrs.size(); m++)
+                    {
+                        IPv4Address add(rreq_opt->addrs[m]);
+                        out << add << "\n"; // Khmm
+                    }
+                }
+                    break;
+                case DSR_OPT_RREP:
+                {
+                    out << " DSR_OPT_RREP " << "\n"; // Khmm...Q
+                    dsr_rrep_opt *rrep_opt = check_and_cast<dsr_rrep_opt*>(dopt);
+                    for (unsigned int m = 0; m < rrep_opt->addrs.size(); m++)
+                    {
+                        IPv4Address add(rrep_opt->addrs[m]);
+                        out << add << "\n"; // Khmm
+                    }
+
+                }
+                    break;
+                case DSR_OPT_RERR:
+                    out << " DSR_OPT_RERR " << "\n"; // Khmm...
+
+                    break;
+                case DSR_OPT_PREV_HOP:
+                    out << " DSR_OPT_PREV_HOP " << "\n"; // Khmm...
+                    break;
+                case DSR_OPT_ACK:
+                    out << " DSR_OPT_ACK " << "\n"; // Khmm...
+                    break;
+                case DSR_OPT_SRT:
+                {
+                    out << " DSR_OPT_SRT " << "\n"; // Khmm...
+                    dsr_srt_opt *srt_opt = check_and_cast<dsr_srt_opt*>(dopt);
+                    out << "next hop : " << next << "  previous : " << previous << "\n Route \n";
+                    for (unsigned int j = 0; j < srt_opt->addrs.size(); j++)
+                    {
+                        IPv4Address add(srt_opt->addrs[j]);
+                        out << add << "\n"; // Khmm
+                    }
+                }
+                    break;
+                case DSR_OPT_TIMEOUT:
+                    out << " DSR_OPT_TIMEOUT " << "\n"; // Khmm...
+                    break;
+                case DSR_OPT_FLOWID:
+                    out << " DSR_OPT_FLOWID " << "\n"; // Khmm...
+                    break;
+                case DSR_OPT_ACK_REQ:
+                    out << " DSR_OPT_ACK_REQ " << "\n"; // Khmm...
+                    break;
+                case DSR_OPT_PAD1:
+                    out << " DSR_OPT_PAD1 " << "\n"; // Khmm...
+                    l++;
+                    dopt++;
+                    continue;
+                default:
+                    out << " Unknown DSR option type " << "\n"; // Khmm...
             }
         }
-        break;
-        case DSR_OPT_RREP:
-            out << " DSR_OPT_RREP "  << "\n"; // Khmm...Q
-
-            break;
-        case DSR_OPT_RERR:
-            out << " DSR_OPT_RERR "  << "\n"; // Khmm...
-
-            break;
-        case DSR_OPT_PREV_HOP:
-            out << " DSR_OPT_PREV_HOP "  << "\n"; // Khmm...
-            break;
-        case DSR_OPT_ACK:
-            out << " DSR_OPT_ACK "  << "\n"; // Khmm...
-            break;
-        case DSR_OPT_SRT:
-        {
-            out << " DSR_OPT_SRT "  << "\n"; // Khmm...
-            dsr_srt_opt *srt_opt = (dsr_srt_opt *)dopt;
-            out << "next hop : "<< next << "  previous : "<< previous << "\n Route \n";
-            int length = srt_opt->length/sizeof(u_int32_t);
-            for (int j=0; j<length; j++)
-            {
-                IPv4Address add(srt_opt->addrs[j]);
-                out << add << "\n"; // Khmm
-            }
-        }
-        break;
-        case DSR_OPT_TIMEOUT:
-            out << " DSR_OPT_TIMEOUT "  << "\n"; // Khmm...
-            break;
-        case DSR_OPT_FLOWID:
-            out << " DSR_OPT_FLOWID "  << "\n"; // Khmm...
-            break;
-        case DSR_OPT_ACK_REQ:
-            out << " DSR_OPT_ACK_REQ "  << "\n"; // Khmm...
-            break;
-        case DSR_OPT_PAD1:
-            out << " DSR_OPT_PAD1 "  << "\n"; // Khmm...
-            l++;
-            dopt++;
-            continue;
-        default:
-            out << " Unknown DSR option type "  << "\n"; // Khmm...
-        }
-        l += dopt->length + 2;
-        dopt = DSR_GET_NEXT_OPT(dopt);
     }
     return out.str();
 }
@@ -343,117 +275,28 @@ std::string DSRPkt::detailedInfo() const
 
 
 
-void DSRPkt::getCostVector(EtxCost &cost, int &size) // Copy
+void DSRPkt::getCostVector(std::vector<EtxCost> &cost) // Copy
 {
-    if (size<=0 || costVectorSize==0)
-    {
-        size = 0;
-        return;
-    }
-
-    if ((unsigned int) size>costVectorSize)
-    {
-        memcpy(&cost, costVector, sizeof(EtxCost)*costVectorSize);
-        size = costVectorSize;
-    }
-    else
-    {
-        memcpy(&cost, costVector, sizeof(EtxCost)*size);
-    }
+    cost = costVector;
 }
-
-// Copy the information of cost in the packet
-void DSRPkt::setCostVector(EtxCost &cost, int size)
-{
-    if (costVectorSize>0)
-    {
-        setBitLength(getBitLength()-(costVectorSize*SIZE_COST_BITS));
-        delete [] costVector;
-        costVector = NULL;
-        costVectorSize = 0;
-    }
-
-    if (size>0)
-    {
-        costVector = new EtxCost[size];
-        costVectorSize = size;
-        memcpy(costVector, &cost, sizeof(EtxCost)*size);
-        setBitLength(getBitLength()+(costVectorSize*SIZE_COST_BITS));
-    }
-}
-
 
 // The pointer *cost is the new pointer
-void DSRPkt::setCostVector(EtxCost *cost, int size)
+void DSRPkt::setCostVector(std::vector<EtxCost> &cost)
 {
-    if (costVectorSize>0)
+    if (costVector.size() > 0)
     {
-        setBitLength(getBitLength()-(costVectorSize*SIZE_COST_BITS));
-        delete [] costVector;
+        setBitLength(getBitLength()-(costVector.size() * SIZE_COST_BITS));
+        costVector.clear();
     }
-
-    costVector = NULL;
-    costVectorSize = 0;
-
-    if (size>0)
-    {
-        costVector = cost;
-        costVectorSize = size;
-        setBitLength(getBitLength()+(costVectorSize*SIZE_COST_BITS));
-    }
+    costVector = cost;
+    setBitLength(getBitLength()+(costVector.size()*SIZE_COST_BITS));
 }
 
-
-void DSRPkt::setCostVectorSize(unsigned n)
-{
-    if (n>0)
-    {
-        setBitLength(getBitLength()-(costVectorSize*SIZE_COST_BITS));
-        EtxCost *cost = new EtxCost[n];
-        memset(cost, 0, sizeof(EtxCost)*n);
-        if (costVectorSize>0)
-        {
-            if (n>costVectorSize)
-            {
-                memcpy(&cost, costVector, sizeof(EtxCost)*costVectorSize);
-            }
-            else
-            {
-                memcpy(&cost, costVector, sizeof(EtxCost)*n);
-
-            }
-            delete [] costVector;
-
-        }
-        costVectorSize = n;
-        setBitLength(getBitLength()+(costVectorSize*SIZE_COST_BITS));
-        costVector = cost;
-    }
-    else
-    {
-        setBitLength(getBitLength()-(costVectorSize*SIZE_COST_BITS));
-        delete [] costVector;
-        costVector = NULL;
-        costVectorSize = 0;
-        return;
-    }
-
-}
 
 void DSRPkt::setCostVectorSize(EtxCost newLinkCost)
 {
     setBitLength(getBitLength()+SIZE_COST_BITS);
-    EtxCost *cost = new EtxCost[costVectorSize+1];
-    if (costVectorSize>0)
-    {
-        memcpy(cost, costVector, sizeof(EtxCost)*costVectorSize);
-        delete [] costVector;
-    }
-    cost[costVectorSize].address = newLinkCost.address;
-    cost[costVectorSize].cost = newLinkCost.cost;
-    costVector = cost;
-    costVectorSize++;
-    setBitLength(getBitLength()+SIZE_COST_BITS);
+    costVector.push_back(newLinkCost);
 }
 
 void DSRPkt::setCostVectorSize(u_int32_t addr, double cost)
@@ -467,9 +310,8 @@ void DSRPkt::setCostVectorSize(u_int32_t addr, double cost)
 
 void DSRPkt::resetCostVector()
 {
-    costVector = NULL;
-    setBitLength(getBitLength()-(costVectorSize*SIZE_COST_BITS));
-    costVectorSize = 0;
+    setBitLength(getBitLength()-(costVector.size()*SIZE_COST_BITS));
+    costVector.clear();
 }
 
 DSRPktExt::DSRPktExt(const DSRPktExt& m) : IPv4Datagram(m)

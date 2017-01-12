@@ -10,30 +10,14 @@
 
 #include "dsr.h"
 #include "dsr-srt.h"
+#include "dsr-opt.h"
 
 #ifndef NO_GLOBALS
 
-struct dsr_rrep_opt
-{
-    u_int8_t type;
-    u_int8_t length;
-#if defined(__LITTLE_ENDIAN_BITFIELD)
-    u_int8_t res:7;
-    u_int8_t l:1;
-#elif defined (__BIG_ENDIAN_BITFIELD)
-    u_int8_t l:1;
-    u_int8_t res:7;
-#else
-#error  "Please fix <asm/byteorder.h>"
-#endif
-    u_int32_t addrs[0];
-};
-
-#define DSR_RREP_HDR_LEN sizeof(struct dsr_rrep_opt)
-#define DSR_RREP_OPT_LEN(srt) (DSR_RREP_HDR_LEN + srt->laddrs + sizeof(struct in_addr))
+#define DSR_RREP_OPT_LEN(srt) (DSR_RREP_HDR_LEN + (srt->addrs.size()*DSR_ADDRESS_SIZE) + DSR_ADDRESS_SIZE)
 /* Length of source route is length of option, minus reserved/flags field minus
  * the last source route hop (which is the destination) */
-#define DSR_RREP_ADDRS_LEN(rrep_opt) (rrep_opt->length - 1 - sizeof(struct in_addr))
+#define DSR_RREP_ADDRS_LEN(rrep_opt) ((dynamic_cast<dsr_rrep_opt*>(rrep_opt)->addrs.size()-1)*DSR_ADDRESS_SIZE)
 
 #endif              /* NO_GLOBALS */
 
