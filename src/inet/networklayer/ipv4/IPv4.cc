@@ -165,10 +165,10 @@ void IPv4::endService(cPacket *packet)
     else {    // from network
         EV_INFO << "Received " << packet << " from network.\n";
         const InterfaceEntry *fromIE = getSourceInterfaceFrom(packet);
-        if (dynamic_cast<ARPPacket *>(packet))
-            handleIncomingARPPacket((ARPPacket *)packet, fromIE);
-        else if (dynamic_cast<IPv4Datagram *>(packet))
-            handleIncomingDatagram((IPv4Datagram *)packet, fromIE);
+        if (auto arpPacket = dynamic_cast<ARPPacket *>(packet))
+            handleIncomingARPPacket(arpPacket, fromIE);
+        else if (auto dgram = dynamic_cast<IPv4Datagram *>(packet))
+            handleIncomingDatagram(dgram, fromIE);
         else
             throw cRuntimeError(packet, "Unexpected packet type");
     }
@@ -201,6 +201,10 @@ void IPv4::handleIncomingDatagram(IPv4Datagram *datagram, const InterfaceEntry *
             return;
         }
     }
+
+    // hop counter decrement
+    datagram->setTimeToLive(datagram->getTimeToLive() - 1);
+
 // check input drop rules
     const IPv4RouteRule *rule=checkInputRule(datagram);
     if (rule && rule->getRule()==IPv4RouteRule::DROP)
@@ -215,8 +219,6 @@ void IPv4::handleIncomingDatagram(IPv4Datagram *datagram, const InterfaceEntry *
     {
         InterfaceEntry *destIE = rule->getInterface();
         EV << "Received datagram `" << datagram->getName() << "' with dest=" << datagram->getDestAddress()  << " processing by rule accept \n";
-        // hop counter decrement; FIXME but not if it will be locally delivered
-        datagram->setTimeToLive(datagram->getTimeToLive()-1);
         if (!datagram->getDestAddress().isMulticast())
             preroutingFinish(datagram, fromIE, destIE, IPv4Address::UNSPECIFIED_ADDRESS);
         else
@@ -728,12 +730,8 @@ void IPv4::fragmentAndSend(IPv4Datagram *datagram, const InterfaceEntry *ie, IPv
     if (datagram->getSrcAddress().isUnspecified())
         datagram->setSrcAddress(ie->ipv4Data()->getIPAddress());
 
-    // hop counter decrement; but not if it will be locally delivered
-    if (!ie->isLoopback())
-        datagram->setTimeToLive(datagram->getTimeToLive() - 1);
-
     // hop counter check
-    if (datagram->getTimeToLive() < 0) {
+    if (datagram->getTimeToLive() <= 0) {
         // drop datagram, destruction responsibility in ICMP
         EV_WARN << "datagram TTL reached zero, sending ICMP_TIME_EXCEEDED\n";
         icmp->sendErrorMessage(datagram, -1    /*TODO*/, ICMP_TIME_EXCEEDED, 0);
@@ -1249,12 +1247,8 @@ void IPv4::fragmentAndSend(IPv4Datagram *datagram, const InterfaceEntry *ie, IPv
     if (datagram->getSrcAddress().isUnspecified())
         datagram->setSrcAddress(ie->ipv4Data()->getIPAddress());
 
-    // hop counter decrement; but not if it will be locally delivered
-    if (!ie->isLoopback())
-        datagram->setTimeToLive(datagram->getTimeToLive()-1);
-
     // hop counter check
-    if (datagram->getTimeToLive() < 0)
+    if (datagram->getTimeToLive() <= 0)
     {
         // drop datagram, destruction responsibility in ICMP
         EV_WARN << "datagram TTL reached zero, sending ICMP_TIME_EXCEEDED\n";
