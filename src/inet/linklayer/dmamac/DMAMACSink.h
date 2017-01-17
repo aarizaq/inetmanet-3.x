@@ -104,7 +104,7 @@ protected:
     virtual void findDistantNextSlot() override;
 
     /* @brief Finds the immediate next slot after the current slot #GinMAC  */
-    virtual void findImmediateNextSlot(int currentSlotLocal,double nextSlot) override;
+    virtual void findImmediateNextSlot(int currentSlotLocal,simtime_t nextSlot) override;
 
     /* @brief Initialization part for sink only */
     void sinkInitialize();

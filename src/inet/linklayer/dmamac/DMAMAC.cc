@@ -189,6 +189,12 @@ void DMAMAC::initialize(int stage)
 
         /* @brief copies all xml data for slots in steady and transient and neighbor data */
         slotInitialize();
+
+        frequentHopping = par("frequentHopping");
+        if (frequentHopping) {
+            hoppingTimer = new cMessage("DMAMAC_HOPPING_TIMEOUT");
+            hoppingTimer->setKind(DMAMAC_HOPPING_TIMEOUT);
+        }
     }
     else if(stage == INITSTAGE_LINK_LAYER) {
 
@@ -242,7 +248,7 @@ void DMAMAC::initialize(int stage)
         mySlot = myId;
 
         /* @brief Schedule a self-message to start superFrame  */
-        scheduleAt(0.0, startup);
+        scheduleAt(par("initTime").doubleValue(), startup);
 
 
         sendUppperLayer = par("sendUppperLayer"); // if false the module deletes the packet, other case, it sends the packet to the upper layer.
@@ -283,6 +289,8 @@ DMAMAC::~DMAMAC() {
     cancelAndDelete(ackTimeout);
     cancelAndDelete(dataTimeout);
     cancelAndDelete(alertTimeout); 
+    if (hoppingTimer)
+        cancelAndDelete(hoppingTimer);
     /*@}*/
 
     MacPktQueue::iterator it1;
@@ -374,6 +382,18 @@ void DMAMAC::handleUpperPacket(cPacket* msg){
 /*  @brief Handles the messages sent to self (mainly slotting messages)  */
 void DMAMAC::handleSelfMessage(cMessage* msg)
 {
+    if (hoppingTimer && msg == hoppingTimer && isSincronized) {
+        scheduleAt(simTime()+slotDuration, hoppingTimer);
+        // change channel
+        setRandSeq(simTime().raw());
+        setNextSequenceChannel();
+        return;
+    }
+    else if (hoppingTimer && msg == hoppingTimer && !isSincronized) {
+        throw cRuntimeError("It is necessary to implement search sink");
+    }
+
+
     EV << "Self-Message Arrived with type : " << msg->getKind() << "Current mode of operation is :" << currentMacMode << endl;
 
     /* @brief To check if collision(alert packet dropped) has resulted in a switch failure */
@@ -1072,6 +1092,13 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
             delete msg;
             return;
         }
+        if (frequentHopping) {
+            timeRef = notification->getTimeRef();
+            if (hoppingTimer->isScheduled())
+                cancelEvent(hoppingTimer);
+            scheduleAt(timeRef+slotDuration,hoppingTimer);
+            isSincronized = true;
+        }
 
         changeMacMode = notification->getChangeMacMode();
         EV << " NOTIFICATION packet received with length : " << notification->getByteLength() << " and changeMacMode = " << changeMacMode << endl;
@@ -1137,7 +1164,7 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
 
 
         EV << "I have received an Alert packet from fellow sensor " << endl;
-        EV << "Alert Packet length is : " << alert->getByteLength() << " detailed info " << alert->detailedInfo() << endl;
+        EV << "Alert Packet length is : " << alert->getByteLength() << " detailed info " << alert->str() << endl;
 
         EV << " Alert message sent to : " << alert->getDestAddr() << " my address is " << myMacAddr << endl;
 
@@ -1267,7 +1294,7 @@ void DMAMAC::findDistantNextSlot()
 }
 
 /* @brief Finding immediate next Slot */
-void DMAMAC::findImmediateNextSlot(int currentSlotLocal,double nextSlot)
+void DMAMAC::findImmediateNextSlot(int currentSlotLocal,simtime_t nextSlot)
 {
     EV << "Finding immediate next slot" << endl;
     if (transmitSlot[(currentSlotLocal + 1) % numSlots] == mySlot)
@@ -1545,6 +1572,50 @@ void DMAMAC::slotInitialize()
 }
 
 
+bool DMAMAC::handleNodeShutdown(IDoneCallback *doneCallback)
+{
+    cancelEvent(startup);
+    cancelEvent(setSleep);
+    cancelEvent(waitData);
+    cancelEvent(waitAck);
+    cancelEvent(waitAlert);
+    cancelEvent(waitNotification);
+    cancelEvent(sendData);
+    cancelEvent(sendAck);
+    cancelEvent(scheduleAlert);
+    cancelEvent(sendAlert);
+    cancelEvent(sendNotification);
+    cancelEvent(ackReceived);
+    cancelEvent(ackTimeout);
+    cancelEvent(dataTimeout);
+    cancelEvent(alertTimeout);
+    if (hoppingTimer)
+        cancelEvent(hoppingTimer);
+    return true;
+}
+
+void DMAMAC::handleNodeCrash()
+{
+    cancelEvent(startup);
+    cancelEvent(setSleep);
+    cancelEvent(waitData);
+    cancelEvent(waitAck);
+    cancelEvent(waitAlert);
+    cancelEvent(waitNotification);
+    cancelEvent(sendData);
+    cancelEvent(sendAck);
+    cancelEvent(scheduleAlert);
+    cancelEvent(sendAlert);
+    cancelEvent(sendNotification);
+    cancelEvent(ackReceived);
+    cancelEvent(ackTimeout);
+    cancelEvent(dataTimeout);
+    cancelEvent(alertTimeout);
+    if (hoppingTimer)
+        cancelEvent(hoppingTimer);
+}
+
+
 cPacket *DMAMAC::decapsMsg(MACFrameBase *macPkt)
 {
     cPacket *msg = macPkt->decapsulate();
@@ -1608,6 +1679,13 @@ void DMAMAC::setChannelWithSeq(const uint32_t *v)
         return;
     int c = randomGenerator->iRandom(11,26,v);
     setChannel(c);
+}
+
+void DMAMAC::setRandSeq(const uint64_t &v)
+{
+    if (randomGenerator == nullptr)
+        return;
+    randomGenerator->setRandSeq(v);
 }
 
 // Output random bits
@@ -1707,4 +1785,13 @@ void DMAMAC::CRandomMother::setRandSeq(const uint32_t *v) {
         x[i] = v[i];
 }
 
+void DMAMAC::CRandomMother::setRandSeq(const uint64_t &v) {
+
+    for (int i = 0 ; i < 5; i++)
+            x[i] = 0;
+    x[0] = v & 0xFFFFFFFF;
+    x[1] = (v >>32) & 0xFFFFFFFF;
+    // randomize some more
+    for (int i=0; i<19; i++) bRandom();
+  }
 }

@@ -54,6 +54,7 @@ void DMAMACSink::initialize(int stage)
 
         /* @brief Initializing the actuator sending part. */
         sinkInitialize();
+        isSincronized = true;
     }
     else if (stage == INITSTAGE_LINK_LAYER)
     {    }
@@ -62,6 +63,14 @@ void DMAMACSink::initialize(int stage)
 /* @brief Handles the messages sent to self, mainly timers to specify slots */
 void DMAMACSink::handleSelfMessage(cMessage* msg)
 {
+    if (hoppingTimer && msg == hoppingTimer) {
+        scheduleAt(simTime()+slotDuration, hoppingTimer);
+        // change channel
+        setRandSeq(simTime().raw());
+        setNextSequenceChannel();
+        return;
+    }
+
     EV << "Self-Message Arrived with type : " << msg->getKind() << "Current mode of operation is :" << currentMacMode << endl;
 
     /* @brief To check if collision has resulted in a switch failure */
@@ -74,6 +83,8 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
     /* @brief To set checkForSuperframeChange as false when superframe actually changes */
     if(checkForSuperframeChange && changeMacMode && currentSlot == 0)
         checkForSuperframeChange = false;
+
+
 
 
     /* @brief To change superframe when currentSlot == 0, Transient to steady, 
@@ -158,6 +169,8 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
 
                 /* @brief We start with sending notification message from the sink */
                 scheduleAt(simTime(), sendNotification);
+                if (hoppingTimer)
+                    scheduleAt(simTime()+slotDuration, hoppingTimer);
                 break;
 
         /* @brief Sleep state definition */
@@ -483,7 +496,9 @@ void DMAMACSink::handleRadioSwitchedToTX() {
             EV << "Creating and sending Notification packet down " << endl;
             /* @brief Create SINK notification packet */
             DMAMACSinkPkt* notification = new DMAMACSinkPkt();
+            timeRef = simTime();
             if (randomGenerator != nullptr) {
+                randomGenerator->setRandSeq(simTime().raw());
                 int c = randomGenerator->iRandom(11,26);
                 notification->setChannel(c);
             }
@@ -491,7 +506,9 @@ void DMAMACSink::handleRadioSwitchedToTX() {
             notification->setDestAddr(lastDataPktSrcAddr);
             notification->setSrcAddr(myMacAddr);
             notification->setKind(DMAMAC_NOTIFICATION);
+            notification->setTimeRef(timeRef);
             notification->setByteLength(11);
+
             attachSignal(notification);
             /* @brief if transient, check for stateProbability otherwise state-switch will be initiated by sensor nodes. */
             if(currentMacMode == TRANSIENT)
@@ -685,7 +702,7 @@ void DMAMACSink::findDistantNextSlot()
 /*
  * Finding immediate next Slot
  */
-void DMAMACSink::findImmediateNextSlot(int currentSlotLocal,double nextSlot)
+void DMAMACSink::findImmediateNextSlot(int currentSlotLocal,simtime_t nextSlot)
 {
     EV << "Finding immediate next slot" << endl;
 

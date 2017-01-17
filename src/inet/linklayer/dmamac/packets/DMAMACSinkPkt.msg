@@ -38,6 +38,9 @@ class MACFrameBase;
 packet DMAMACSinkPkt extends MACFrameBase
 {
 	bool changeMacMode;   // Multi-hop facilty, next hop towards sink
-	int channel = -1;
+	int channel = -1;	
+    double timeSlot;
+    int numSlots;
+    simtime_t timeRef;
 }
 

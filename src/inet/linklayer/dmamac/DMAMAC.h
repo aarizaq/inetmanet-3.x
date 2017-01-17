@@ -127,6 +127,12 @@ class INET_API DMAMAC : public MACProtocolBase, public IMACProtocol
     /** @brief Handle control messages from lower layer */
     virtual void receiveSignal(cComponent *source, simsignal_t signalID, long value, cObject *details) override;
 
+    // handle shutdown and crash events.
+
+    virtual bool handleNodeShutdown(IDoneCallback *doneCallback) override;
+
+    virtual void UDPBasicApp::handleNodeCrash() override;
+
     /* @brief
      * Encapsulates the packet from the upper layer and
      * creates and attaches the signal to it.
@@ -262,6 +268,7 @@ protected:
             DMAMAC_ACK_TIMEOUT,			// Maximum time allocated to wait for ACK.
             DMAMAC_DATA_TIMEOUT,        // Not staying in RX for the entire slot if no data transmission is detected.
             DMAMAC_ALERT_TIMEOUT,       // For alert timeout in DMAMAC-TMDA for Hybrid not time-outs.
+            DMAMAC_HOPPING_TIMEOUT,
     };
 
 
@@ -299,9 +306,9 @@ protected:
     /* @brief All variables involing slots. And also
      * Slot indicator arrays, one main array, two specific arrays for states steady and transient */
     /*@{*/
-    double slotDuration;
-    double controlDuration;         // Unused currently, used for calculating time required for control operations
-    double maxRadioSwitchDelay;     // Radio switching delay between radio states (Not to interfere in between) 
+    simtime_t slotDuration;
+    simtime_t controlDuration;         // Unused currently, used for calculating time required for control operations
+    simtime_t maxRadioSwitchDelay;     // Radio switching delay between radio states (Not to interfere in between)
 
     int mySlot;                     // The slot in which the node can transmit
     int maxNumSlots;                // Maximum number of slots (specifically in steady superframe
@@ -319,6 +326,12 @@ protected:
     int maxNodes;                   // To know how much nodes in the network required for initializing slots from XML
     int maxChildren;
     /*@}*/
+
+    // variables used to frequent hopping
+    simtime_t timeRef; // reference time synchronized with the sink
+    bool isSincronized = false; // If the node is synchronized
+    bool frequentHopping = false;
+    cMessage *hoppingTimer = nullptr;
 
     /* @brief Self messages for TDMA slot timer callbacks */
     /*@{*/
@@ -356,7 +369,7 @@ protected:
 
     // DroppedPacket droppedPacket;
     double txPower;             //Transmission power of the node
-    double nextEvent;           // Time to next event to be used in event scheduler calls
+    simtime_t nextEvent;           // Time to next event to be used in event scheduler calls
     double ackTimeoutValue;     // Time to wait for ACK
     double dataTimeoutValue;    // Time to wait for data before going to sleep !aaks Nov 27
     double alertTimeoutValue;         // Time to wait for alert in the TDMA setting.
@@ -431,7 +444,7 @@ protected:
     virtual void findDistantNextSlot();
 
     /* @brief Finds the immediate next slot after the current slot */
-    virtual void findImmediateNextSlot(int currentSlotLocal,double nextSlot);
+    virtual void findImmediateNextSlot(int currentSlotLocal,simtime_t nextSlot);
 
     /* @brief Internal function to attach a signal to the packet (essential function) */
     virtual void attachSignal(MACFrameBase* macPkt);
@@ -468,6 +481,7 @@ protected:
           randomInit(seed);}
        void getRandSeq(uint32_t *v);
        void setRandSeq(const uint32_t *v);
+       void setRandSeq(const uint64_t &v);
        void getPrevSeq(uint32_t *v);
        virtual int iRandom(int min, int max, const uint32_t *v);      // Get integer random number in desired interval
     protected:
@@ -483,6 +497,7 @@ public:
     virtual double getBandwithChannel(const int &channel);
     virtual void setNextSequenceChannel();
     virtual void setChannelWithSeq(const uint32_t *v);
+    virtual void setRandSeq(const uint64_t &v);
 };
 
 }
