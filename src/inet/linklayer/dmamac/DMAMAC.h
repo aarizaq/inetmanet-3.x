@@ -131,7 +131,7 @@ class INET_API DMAMAC : public MACProtocolBase, public IMACProtocol
 
     virtual bool handleNodeShutdown(IDoneCallback *doneCallback) override;
 
-    virtual void UDPBasicApp::handleNodeCrash() override;
+    virtual void handleNodeCrash() override;
 
     /* @brief
      * Encapsulates the packet from the upper layer and
