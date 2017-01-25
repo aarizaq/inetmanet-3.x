@@ -77,7 +77,7 @@ simple OLSR_ETX extends BaseRouting like IManetRouting
         bool optimizedMid = default(false);// only nodes with more that a interface sends mid messages
         bool DelOnlyRtEntriesInrtable_ = default(false); // delete only ip entries that are in the interal routing table
     gates:
-        input from_ip;
-        output to_ip;
+        input ipIn;
+        output ipOut;
 }
 

@@ -43,6 +43,7 @@ import inet.applications.contract.IUDPApp;
 import inet.transportlayer.contract.IUDP;
 import inet.transportlayer.contract.ITCP;
 import inet.transportlayer.contract.ISCTP;
+import inet.node.inet.INetworkNode;
 
 //
 // BaseHost contains the common lower layers (linklayer and networklayer)

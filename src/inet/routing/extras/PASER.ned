@@ -72,8 +72,8 @@ simple PASER extends BaseRouting like IManetRouting
         volatile double broadCastDelay @unit("s") = default(uniform(0s,0.005s));  // the delay added to broadcast operations if EqualDelay is set (used to model processing time) 
         bool PublicRoutingTables = default(false);
     gates:
-        input from_ip;
-        output to_ip;
+        input ipIn;
+        output ipOut;
 }
 
 

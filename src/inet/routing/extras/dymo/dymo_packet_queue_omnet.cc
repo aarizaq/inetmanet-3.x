@@ -185,8 +185,8 @@ int NS_CLASS packet_queue_set_verdict(struct in_addr dest_addr, int verdict)
                         * sends. */
                     qp->p = pkt_encapsulate(dynamic_cast <IPv4Datagram *> (qp->p), *gateWayAddress);
                     // now Ip layer decremented again
-                    // sendDelayed(qp->p, delay, "to_ip_from_network");
-                    sendDelayed(qp->p, delay, "to_ip");
+                    // sendDelayed(qp->p, delay, "ipOut_from_network");
+                    sendDelayed(qp->p, delay, "ipOut");
                     delay += ARP_DELAY;
                 }
                 else
@@ -221,7 +221,7 @@ int NS_CLASS packet_queue_set_verdict(struct in_addr dest_addr, int verdict)
                         //TODO ctrl->setEtherType(...);
                         qp->p->setControlInfo(ctrl);
                     }
-                    sendDelayed(qp->p, delay, "to_ip");
+                    sendDelayed(qp->p, delay, "ipOut");
                     delay += ARP_DELAY;
                 }
                 break;
@@ -417,8 +417,8 @@ int NS_CLASS packet_queue_set_verdict(struct in_addr dest_addr, int verdict)
                              * sends. */
                             qp->p = pkt_encapsulate(dynamic_cast <IPv4Datagram *> (qp->p), *gateWayAddress);
                             // now Ip layer decremented again
-                            // sendDelayed(qp->p, delay, "to_ip_from_network");
-                            sendDelayed(qp->p, delay, "to_ip");
+                            // sendDelayed(qp->p, delay, "ipOut_from_network");
+                            sendDelayed(qp->p, delay, "ipOut");
                             delay += ARP_DELAY;
                         }
                         else
@@ -453,7 +453,7 @@ int NS_CLASS packet_queue_set_verdict(struct in_addr dest_addr, int verdict)
                                 //TODO ctrl->setEtherType(...);
                                 qp->p->setControlInfo(ctrl);
                             }
-                            sendDelayed(qp->p, delay, "to_ip");
+                            sendDelayed(qp->p, delay, "ipOut");
                             delay += ARP_DELAY;
                         }
                         break;

@@ -51,6 +51,6 @@ module HostMesh extends WirelessHost
         }
         
     connections:
-        networkLayer.transportOut++ --> manetrouting.from_ip if routingProtocol != "";
-        networkLayer.transportIn++ <-- manetrouting.to_ip if routingProtocol != "";
+        networkLayer.transportOut++ --> manetrouting.ipIn if routingProtocol != "";
+        networkLayer.transportIn++ <-- manetrouting.ipOut if routingProtocol != "";
 }

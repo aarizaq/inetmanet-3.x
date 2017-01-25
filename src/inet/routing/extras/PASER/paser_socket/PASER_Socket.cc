@@ -1052,7 +1052,7 @@ void PASER_Socket::sendUDPToIp(cPacket *msg, int srcPort, const Address& destAdd
             ipControlInfo->setInterfaceId(ie->getInterfaceId());
 
         ipControlInfo->setSrcAddr(srcadd);
-        sendDelayed(udpPacket, delay, "to_ip");
+        sendDelayed(udpPacket, delay, "ipOut");
     }
 
     // totalSend++;
