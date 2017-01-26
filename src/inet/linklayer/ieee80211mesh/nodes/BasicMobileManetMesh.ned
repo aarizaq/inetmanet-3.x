@@ -61,11 +61,18 @@ module BasicMobileManetMesh
         string energyStorageType = default("");
         *.interfaceTableModule = default(absPath(".interfaceTable"));
         *.energySourceModule = default(energyStorageType != "" ? absPath(".energyStorage") : "");
+        *.mobilityModule = default(mobilityType != "" ? absPath(".mobility") : "");
         int meshChannels = default(1);
     gates:
         input radioIn[meshChannels] @directIn;
 
     submodules:
+        // optional mobility module. Required only if wireless cards are present
+        mobility: <mobilityType> like IMobility if mobilityType != "" && meshChannels > 0 {
+            parameters:
+                @display("p=30,62");
+        }
+        
         interfaceTable: InterfaceTable {
             parameters:
                 @display("p=159,62");
@@ -79,11 +86,7 @@ module BasicMobileManetMesh
                 meshChannels = meshChannels;
                 @display("p=159,386;q=queue");
         }
-        // optional mobility module. Required only if wireless cards are present
-        mobility: <mobilityType> like IMobility if mobilityType != "" && meshChannels > 0 {
-            parameters:
-                @display("p=30,62");
-        }
+
 
     connections allowunconnected:
 

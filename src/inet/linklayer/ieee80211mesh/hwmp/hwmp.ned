@@ -68,8 +68,8 @@ simple HwmpProtocol extends BaseRouting like IManetRouting
         bool PublicRoutingTables = default(false);
         bool propagateProactive = default(true);
     gates:
-        input from_ip;
-        output to_ip;
+        input ipIn;
+        output ipOut;
 }
 
  

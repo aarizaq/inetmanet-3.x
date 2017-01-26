@@ -19,6 +19,6 @@ moduleinterface IManetRouting
 {
     @display("i=block/routing");
     gates:
-        input from_ip;
-        output to_ip;
+        input ipIn;
+        output ipOut;
 }

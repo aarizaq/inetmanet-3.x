@@ -39,6 +39,7 @@ package inet.linklayer.ieee80211mesh.ethernet;
 simple EtherEncapMesh
 {
     parameters:
+        string interfaceTableModule;   // The path to the InterfaceTable module
         bool useSNAP = default(false);  // create EtherFrameWithSNAP frames instead of EthernetIIFrame
         @display("i=block/square");
         @signal[encapPk](type=cPacket);

@@ -48,6 +48,6 @@ simple DSDV_2 like IManetRouting
         bool manetPurgeRoutingTables = default(true);
         volatile double broadcastDelay @unit("s") = default(uniform(0s,0.01s));
     gates:
-        input from_ip;
-        output to_ip;
+        input ipIn;
+        output ipOut;
 }

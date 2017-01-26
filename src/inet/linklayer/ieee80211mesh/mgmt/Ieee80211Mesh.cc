@@ -384,8 +384,8 @@ void Ieee80211Mesh::startProactive()
         throw cRuntimeError("Module inet.routing.extras.OLSR not found");
     module = moduleType->create("ManetRoutingProtocolProactive", this);
     routingModuleProactive = dynamic_cast <ManetRoutingBase*> (module);
-    routingModuleProactive->gate("to_ip")->connectTo(gate("routingInProactive"));
-    gate("routingOutProactive")->connectTo(routingModuleProactive->gate("from_ip"));
+    routingModuleProactive->gate("ipOut")->connectTo(gate("routingInProactive"));
+    gate("routingOutProactive")->connectTo(routingModuleProactive->gate("ipIn"));
     routingModuleProactive->par("interfaceTableModule").setStringValue(par("interfaceTableModule").stringValue());
     routingModuleProactive->par("routingTableModule").setStringValue("");
     routingModuleProactive->par("icmpModule").setStringValue("");
@@ -403,8 +403,8 @@ void Ieee80211Mesh::startReactive()
         throw cRuntimeError("Module %s not found",par("meshReactiveRoutingProtocol").stringValue());
     module = moduleType->create("ManetRoutingProtocolReactive", this);
     routingModuleReactive = dynamic_cast <ManetRoutingBase*> (module);
-    routingModuleReactive->gate("to_ip")->connectTo(gate("routingInReactive"));
-    gate("routingOutReactive")->connectTo(routingModuleReactive->gate("from_ip"));
+    routingModuleReactive->gate("ipOut")->connectTo(gate("routingInReactive"));
+    gate("routingOutReactive")->connectTo(routingModuleReactive->gate("ipIn"));
     routingModuleReactive->par("interfaceTableModule").setStringValue(par("interfaceTableModule").stringValue());
     routingModuleReactive->par("routingTableModule").setStringValue("");
     routingModuleReactive->par("icmpModule").setStringValue("");
@@ -421,8 +421,8 @@ void Ieee80211Mesh::startHwmp()
         throw cRuntimeError("Module inet.linklayer.ieee80211mesh.hwmp.HwmpProtocol not found");
     module = moduleType->create("HwmpProtocol", this);
     routingModuleHwmp = dynamic_cast <ManetRoutingBase*> (module);
-    routingModuleHwmp->gate("to_ip")->connectTo(gate("routingInHwmp"));
-    gate("routingOutHwmp")->connectTo(routingModuleHwmp->gate("from_ip"));
+    routingModuleHwmp->gate("ipOut")->connectTo(gate("routingInHwmp"));
+    gate("routingOutHwmp")->connectTo(routingModuleHwmp->gate("ipIn"));
     routingModuleHwmp->par("interfaceTableModule").setStringValue(par("interfaceTableModule").stringValue());
     routingModuleHwmp->buildInside();
     routingModuleHwmp->scheduleStart(simTime());
@@ -1275,7 +1275,7 @@ void Ieee80211Mesh::handleDataFrame(Ieee80211DataFrame *frame)
         //int index = baseId - msggate->getId();
         if ((routingModuleProactive != nullptr) && (routingModuleProactive->isOurType(msg)))
         {
-            //sendDirect(msg,0, routingModule, "from_ip");
+            //sendDirect(msg,0, routingModule, "ipIn");
             send(msg,"routingOutProactive");
         }
         // else if (dynamic_cast<AODV_msg  *>(msg) || dynamic_cast<DYMO_element  *>(msg))
@@ -2283,7 +2283,7 @@ void Ieee80211Mesh::handleWateGayDataReceive(cPacket *pkt)
     encapPkt = pkt->getEncapsulatedPacket();
     if ((routingModuleProactive != nullptr) && (routingModuleProactive->isOurType(encapPkt)))
     {
-        //sendDirect(msg,0, routingModule, "from_ip");
+        //sendDirect(msg,0, routingModule, "ipIn");
         Ieee802Ctrl *ctrl = check_and_cast<Ieee802Ctrl*>(pkt->removeControlInfo());
         encapPkt = pkt->decapsulate();
         MeshControlInfo *controlInfo = new MeshControlInfo;

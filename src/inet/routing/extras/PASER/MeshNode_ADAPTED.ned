@@ -222,10 +222,10 @@ module meshnode
             networkLayer.pingIn++ <-- pingApp[i].pingOut;
         }
 
-        //        networkLayer.MANETOut --> manetrouting.from_ip;
-        //        networkLayer.MANETIn <-- manetrouting.to_ip;
-        networkLayer.manetOut --> manetrouting.from_ip if routingProtocol != "";
-        networkLayer.manetIn <-- manetrouting.to_ip if routingProtocol != "";
+        //        networkLayer.MANETOut --> manetrouting.ipIn;
+        //        networkLayer.MANETIn <-- manetrouting.ipOut;
+        networkLayer.manetOut --> manetrouting.ipIn if routingProtocol != "";
+        networkLayer.manetIn <-- manetrouting.ipOut if routingProtocol != "";
 
         //        for i=0..sizeof(ethg)-1 {
         //            ethg[i] <--> eth[i].phys;

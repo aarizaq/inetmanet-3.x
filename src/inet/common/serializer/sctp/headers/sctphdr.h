@@ -412,7 +412,7 @@ struct heartbeat_info
     uint16_t length;
     union
     {
-        uint8_t info[];
+        uint8_t info[0];
         struct
         {
             union

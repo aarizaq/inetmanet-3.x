@@ -26,10 +26,6 @@ network TestingGround
         int numHosts;
         @display("bgl=2;bgb=500,500;bgg=333;bgi=,f");
     submodules:
-        host[numHosts]: MobileDTRoutingHost {
-            parameters:
-            	@display("p=252,250,r=200");
-        }
         radioMedium: Ieee80211ScalarRadioMedium {
             parameters:
                 @display("p=60,50;i=misc/sun");
@@ -37,5 +33,10 @@ network TestingGround
         configurator: IPv4NetworkConfigurator {
             config=xml("<config><interface hosts='*' address='192.168.x.x' netmask='255.255.0.0'/></config>");
             @display("p=200,48;is=s");
+        }        
+        host[numHosts]: MobileDTRoutingHost {
+            parameters:
+            	@display("p=252,250,r=200");
         }
+
 }

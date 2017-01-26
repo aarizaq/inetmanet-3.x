@@ -248,7 +248,7 @@ void SAORSBase_DataQueue::sendtoHL(DT_MSG* dtmsg) {
 	// attach new control info
 	packet->setControlInfo(controlInfo);
 
-	moduleOwner->send(packet, "to_ip");
+	moduleOwner->send(packet, "ipOut");
 
 	delete dtmsg;
 	return;
@@ -316,7 +316,7 @@ int SAORSBase_DataQueue::reinjectDatagramsTo(IPv4Address destAddr, int prefix, I
                         //Count the re-injected packets
                         reinjectedPkts++;
 
-                        moduleOwner->sendDelayed(dtmsg, delay+previousPkts*ARP_DELAY, "to_ip");
+                        moduleOwner->sendDelayed(dtmsg, delay+previousPkts*ARP_DELAY, "ipOut");
                         delay += ARP_DELAY;
 					}
 				}
@@ -616,7 +616,7 @@ bool SAORSBase_DataQueue::sendCopy(DT_MSG* dtmsg, IPv4Address destAddr, double d
         dtMsgCopy->setIsCopy(true);
 
         //Send packet down to IP
-        moduleOwner->sendDelayed(dtMsgCopy, delay_var, "to_ip");
+        moduleOwner->sendDelayed(dtMsgCopy, delay_var, "ipOut");
 
         //Update the copied carriers list
         updateCopiedCarriers(destAddr, std::string(dtMsgCopy->getFullName()));
