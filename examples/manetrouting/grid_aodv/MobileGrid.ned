@@ -29,11 +29,6 @@ network MobileGrid
     parameters:
         int numHosts;
     submodules:
-        host[numHosts]: AdhocHost {
-            parameters:
-                //  nodeId = index;
-                @display("i=device/pocketpc_s;r=,,#707070");
-        }
         radioMedium: Ieee80211ScalarRadioMedium {
             parameters:
                 @display("p=60,50;i=misc/sun");
@@ -42,7 +37,14 @@ network MobileGrid
             parameters:
                 config = xml("<config><interface hosts='*' address='145.236.x.x' netmask='255.255.0.0'/></config>");
                 @display("p=140,50;i=block/cogwheel_s");
+        }        
+        host[numHosts]: AdhocHost {
+            parameters:
+                //  nodeId = index;
+                @display("i=device/pocketpc_s;r=,,#707070");
         }
+
+
     connections allowunconnected:
 }
 

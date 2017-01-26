@@ -95,8 +95,7 @@ module ApMeshRelay
                 @display("p=61,192");
         }
         
-        // linklayer
-        
+        // linklayer        
         interfaceTable: InterfaceTable {
             parameters:
                 @display("p=53,386");
