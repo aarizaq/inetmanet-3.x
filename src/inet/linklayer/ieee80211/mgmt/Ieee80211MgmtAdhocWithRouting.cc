@@ -36,8 +36,8 @@ void Ieee80211MgmtAdhocWithRouting::startRouting()
         throw cRuntimeError("Ieee80211MgmtAdhocWithRouting:: Routing protocol not found %s",par("routingProtocol").stringValue());
     module = moduleType->create("ManetRoutingProtocol", this);
     routingModule = dynamic_cast <inetmanet::ManetRoutingBase*> (module);
-    routingModule->gate("to_ip")->connectTo(gate("routingIn"));
-    gate("routingOut")->connectTo(routingModule->gate("from_ip"));
+    routingModule->gate("ipOut")->connectTo(gate("routingIn"));
+    gate("routingOut")->connectTo(routingModule->gate("ipIn"));
     routingModule->buildInside();
     routingModule->scheduleStart(simTime());
 }
@@ -258,7 +258,7 @@ void Ieee80211MgmtAdhocWithRouting::handleDataFrame(Ieee80211DataFrame *frame)
     msg->setKind(0);
     if ((routingModule != nullptr) && (routingModule->isOurType(msg)))
     {
-        //sendDirect(msg,0, routingModule, "from_ip");
+        //sendDirect(msg,0, routingModule, "ipIn");
         send(msg,"routingOut");
     }
     else if (isRouting)

@@ -58,7 +58,7 @@ simple Batman extends BaseRouting like IManetRouting
         bool PublicRoutingTables = default(false);
         string announcedNetworks = default("");     // space separated list of announced network/netmask pairs
     gates:
-        input from_ip;
-        output to_ip;
+        input ipIn;
+        output ipOut;
 }
 

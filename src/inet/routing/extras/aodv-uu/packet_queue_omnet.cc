@@ -204,7 +204,7 @@ int NS_CLASS packet_queue_set_verdict(struct in_addr dest_addr, int verdict)
                         /* Apparently, the link layer implementation can't handle
                          a burst of packets. So to keep ARP happy, buffered              *                   *
                          packets are sent with ARP_DELAY seconds between sends. */
-                        sendDelayed(qp->p, delay, "to_ip");
+                        sendDelayed(qp->p, delay, "ipOut");
                         delay += ARP_DELAY;
                     }
                     else
@@ -221,7 +221,7 @@ int NS_CLASS packet_queue_set_verdict(struct in_addr dest_addr, int verdict)
                      * packets are sent with ARP_DELAY seconds between
                      * sends. */
                     // now Ip layer decremented again
-                    sendDelayed(qp->p, delay, "to_ip");
+                    sendDelayed(qp->p, delay, "ipOut");
                     delay += ARP_DELAY;
                     break;
                     case PQ_DROP:
@@ -417,7 +417,7 @@ int NS_CLASS packet_queue_set_verdict(struct in_addr dest_addr, int verdict)
                             // now Ip layer decremented again
                             /* Apparently, the link layer implementation can't handle a burst of packets. So to keep ARP happy, buffered
                              * packets are sent with ARP_DELAY seconds between sends. */
-                            sendDelayed(qp->p, delay, "to_ip");
+                            sendDelayed(qp->p, delay, "ipOut");
                             delay += ARP_DELAY;
                         }
                         else
@@ -445,7 +445,7 @@ int NS_CLASS packet_queue_set_verdict(struct in_addr dest_addr, int verdict)
                          * packets are sent with ARP_DELAY seconds between
                          * sends. */
                          // now Ip layer decremented again
-                        sendDelayed(qp->p, delay, "to_ip");
+                        sendDelayed(qp->p, delay, "ipOut");
                         delay += ARP_DELAY;
                     break;
                     case PQ_DROP:

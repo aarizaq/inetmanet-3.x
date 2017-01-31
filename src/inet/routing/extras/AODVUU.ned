@@ -76,7 +76,7 @@ simple AODVUU extends BaseRouting like IManetRouting
         bool avoidDupRREP  = default(false);// only if promiscous is active, check if rrep has been sent by other node
         bool RRERFoceDiscover = default(false); // if true, if the node has num of precursors equal to 0 and the RRER has N flag to '1' and the message has arrive from next hop the node will launch a new discovering process 
     gates:
-        input from_ip;
-        output to_ip;
+        input ipIn;
+        output ipOut;
 }
 

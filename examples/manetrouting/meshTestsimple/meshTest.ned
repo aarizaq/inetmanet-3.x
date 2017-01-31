@@ -41,7 +41,11 @@ network meshTest
         int numMeshHost = default(0);
         double nodeSeparation @unit(m) = default(240m);
     submodules:
-
+        radioMedium: Ieee80211ScalarRadioMedium {
+            parameters:
+                @display("p=50,50");
+        }
+     
 
         fixhost[6]: HostMesh {
             parameters:
@@ -52,11 +56,7 @@ network meshTest
                 wlanMesh.hasLocator = true;
                 @display("i=device/accesspoint;r=,,#707070");
         }
-        radioMedium: Ieee80211ScalarRadioMedium {
-            parameters:
-                @display("p=50,50");
-        }
-     
+
     connections allowunconnected:
 }
 

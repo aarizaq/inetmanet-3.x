@@ -32,6 +32,7 @@ import inet.linklayer.ieee80211mesh.Ieee80211NicMesh;
 import inet.linklayer.ieee80211mesh.Ieee80211NicMeshMulti;
 import inet.networklayer.configurator.ipv4.HostAutoConfigurator2;
 import inet.linklayer.loopback.LoopbackInterface;
+import inet.node.inet.INetworkNode;
 
 //
 // BaseHost contains the common lower layers (linklayer and networklayer)

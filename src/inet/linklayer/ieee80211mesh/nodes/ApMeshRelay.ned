@@ -85,21 +85,22 @@ module ApMeshRelay
         wlan[*].mgmtType = default("Ieee80211MgmtAP");
         *.interfaceTableModule = default(absPath(".interfaceTable"));
         *.energySourceModule = default(energyStorageType != "" ? absPath(".energyStorage") : "");
+        *.mobilityModule = default(mobilityType != "" ? absPath(".mobility") : "");
     gates:
         input radioIn[numRadios+1] @directIn;
     submodules:
-        // linklayer
-        interfaceTable: InterfaceTable {
-            parameters:
-                @display("p=53,386");
-        }
-
         // optional mobility module. Required only if wireless cards are present
-        mobility: <mobilityType> like IMobility if numRadios>0 {
+        mobility: <mobilityType> like IMobility {
             parameters:
                 @display("p=61,192");
         }
         
+        // linklayer        
+        interfaceTable: InterfaceTable {
+            parameters:
+                @display("p=53,386");
+        }
+       
         relayUnit: simpleNetLayer {
             parameters:
                 relayType = relayUnitType;

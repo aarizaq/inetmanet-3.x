@@ -256,11 +256,11 @@ int NSCLASS dsr_ack_req_send(struct dsr_pkt *dp)
     IPv4Address prev((uint32_t)myaddr_.s_addr);
     p->setPrevAddress(prev);
     if (jitter)
-        sendDelayed(p, jitter, "to_ip");
+        sendDelayed(p, jitter, "ipOut");
     else if (dp->dst.s_addr != DSR_BROADCAST)
-        sendDelayed(p, par("unicastDelay"), "to_ip");
+        sendDelayed(p, par("unicastDelay"), "ipOut");
     else
-        sendDelayed(p, par ("broadcastDelay"), "to_ip");
+        sendDelayed(p, par ("broadcastDelay"), "ipOut");
     return 1;
 }
 

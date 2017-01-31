@@ -50,7 +50,7 @@ module MobileDTRoutingHost extends WirelessHost
                 @display("p=204,287");
         }
     connections:
-        networkLayer.transportOut++ --> dtrouting.from_ip;
-        networkLayer.transportIn++ <-- dtrouting.to_ip;
+        networkLayer.transportOut++ --> dtrouting.ipIn;
+        networkLayer.transportIn++ <-- dtrouting.ipOut;
 }
 

@@ -46,6 +46,10 @@ network meshTest
         int numMeshHost = default(0);
         double nodeSeparation @unit(m) = default(120m);
     submodules:
+        radioMedium: Ieee80211ScalarRadioMedium {
+            parameters:
+                @display("p=50,50");
+        }
         staHost[numSta]: HostSta {
             @display("p=208,59");
         }
@@ -123,10 +127,7 @@ network meshTest
                 mobility.initialX = nodeSeparation/2.0+nodeSeparation;
                 @display("i=block/wrxtx;r=,,#707070");
         }
-        radioMedium: Ieee80211ScalarRadioMedium {
-            parameters:
-                @display("p=50,50");
-        }
+
         SW: EtherSwitch {
             @display("p=551,304");
 

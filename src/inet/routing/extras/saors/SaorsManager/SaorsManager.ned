@@ -44,8 +44,8 @@ simple SaorsManager
         bool AUTOASSIGN_ADDRESS = default (false);
         string AUTOASSIGN_ADDRESS_BASE = default("10.0.0.0");
     gates:
-        input from_ip;
-        output to_ip;
+        input ipIn;
+        output ipOut;
         input from_dtdymo;
         output to_dtdymo;
         input from_sampho;

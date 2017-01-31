@@ -71,8 +71,8 @@ simple DYMOUM extends BaseRouting like IManetRouting
         bool checkNextHop = default(false);
         bool PublicRoutingTables = default(false);
     gates:
-        input from_ip;
-        output to_ip;
+        input ipIn;
+        output ipOut;
 }
 
 
