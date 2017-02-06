@@ -20,11 +20,9 @@ using namespace inet::power;
 
 class INET_API PhasedArray : public AntennaBase, IEnergyConsumer, protected cListener
 {
-
-
-  protected:
+  public:
     static simsignal_t phaseArrayConfigureChange;
-
+  protected:
     m length;
     double freq;
     double distance;

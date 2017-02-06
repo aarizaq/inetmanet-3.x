@@ -35,6 +35,7 @@
 #include "inet/common/ModuleAccess.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
 #include "inet/physicallayer/ieee80211/mode/Ieee80211ModeSet.h"
+#include "inet/physicallayer/antenna/PhasedArray.h"
 
 namespace inet {
 namespace ieee80211 {
@@ -285,6 +286,11 @@ void DcfUpperMac::sendCts(Ieee80211RTSFrame *frame)
 {
     Ieee80211CTSFrame *ctsFrame = utils->buildCtsFrame(frame);
     tx->transmitFrame(ctsFrame, params->getSifsTime(), nullptr);
+}
+
+void DcfUpperMac::configureAntenna(const double &angle)
+{
+    emit(PhasedArray::phaseArrayConfigureChange,angle);
 }
 
 } // namespace ieee80211

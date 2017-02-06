@@ -86,6 +86,7 @@ class INET_API DcfUpperMac : public cSimpleModule, public IUpperMac, protected I
 
         void sendAck(Ieee80211DataOrMgmtFrame *frame);
         void sendCts(Ieee80211RTSFrame *frame);
+        virtual void configureAntenna(const double &);
 
     public:
         DcfUpperMac();
