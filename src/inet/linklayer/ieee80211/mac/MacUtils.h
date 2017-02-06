@@ -24,6 +24,7 @@
 #include "inet/physicallayer/ieee80211/mode/IIeee80211Mode.h"
 #include "inet/linklayer/common/MACAddress.h"
 #include "inet/linklayer/ieee80211/mac/AccessCategory.h"
+#include "inet/common/geometry/common/EulerAngles.h"
 
 using namespace inet::physicallayer;
 
@@ -46,6 +47,11 @@ class INET_API MacUtils
     private:
         IMacParameters *params;
         IRateSelection *rateSelection;
+        struct DirectionalInfo {
+            EulerAngles direction;
+            simtime_t time;
+        };
+        std::map<MACAddress,DirectionalInfo> directionalDataBase;
 
     public:
         MacUtils(IMacParameters *params, IRateSelection *rateSelection);
@@ -82,6 +88,9 @@ class INET_API MacUtils
 
         static int cmpMgmtOverData(Ieee80211DataOrMgmtFrame *a, Ieee80211DataOrMgmtFrame *b);
         static int cmpMgmtOverMulticastOverUnicast(Ieee80211DataOrMgmtFrame *a, Ieee80211DataOrMgmtFrame *b);
+
+        virtual void setDirection(const MACAddress &, const EulerAngles &);
+        const bool getDirection(const MACAddress &, EulerAngles &, simtime_t&) const;
 };
 
 } // namespace ieee80211

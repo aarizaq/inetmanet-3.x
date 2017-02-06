@@ -249,6 +249,24 @@ int MacUtils::cmpMgmtOverMulticastOverUnicast(Ieee80211DataOrMgmtFrame *a, Ieee8
     return bPri - aPri;
 }
 
+void MacUtils::setDirection(const MACAddress &addr, const EulerAngles &d)
+{
+    DirectionalInfo dir;
+    dir.direction = d;
+    dir.time = simTime();
+    directionalDataBase[addr] = dir;
+}
+
+const bool MacUtils::getDirection(const MACAddress &addr, EulerAngles &dir,simtime_t &t) const
+{
+    auto it = directionalDataBase.find(addr);
+    if (it == directionalDataBase.end())
+        return false;
+    dir = it->second.direction;
+    t = it->second.time;
+    return true;
+}
+
 
 } // namespace ieee80211
 } // namespace inet

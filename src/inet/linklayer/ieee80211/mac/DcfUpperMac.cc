@@ -35,6 +35,7 @@
 #include "inet/common/ModuleAccess.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
 #include "inet/physicallayer/ieee80211/mode/Ieee80211ModeSet.h"
+#include "inet/physicallayer/ieee80211/packetlevel/Ieee80211ControlInfo_m.h"
 
 namespace inet {
 namespace ieee80211 {
@@ -161,7 +162,14 @@ void DcfUpperMac::enqueue(Ieee80211DataOrMgmtFrame *frame)
 void DcfUpperMac::lowerFrameReceived(Ieee80211Frame *frame)
 {
     Enter_Method("lowerFrameReceived(\"%s\")", frame->getName());
-    delete frame->removeControlInfo();          //TODO
+
+    Ieee80211ReceptionIndication *indication = check_and_cast<Ieee80211ReceptionIndication*>(frame->removeControlInfo());
+    Ieee80211TwoAddressFrame *frameAux = dynamic_cast<Ieee80211TwoAddressFrame *> (frame);
+    if (frameAux && !frame->hasBitError()) {
+        utils->setDirection(frameAux->getTransmitterAddress(),indication->getDirection());
+    }
+    delete indication;
+    //TODO
     take(frame);
 
     if (!utils->isForUs(frame)) {

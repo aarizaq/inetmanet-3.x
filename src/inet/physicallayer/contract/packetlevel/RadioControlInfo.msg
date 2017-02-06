@@ -16,6 +16,7 @@
 //
 
 cplusplus {{
+#include "inet/common/geometry/common/EulerAngles.h"
 #include "inet/physicallayer/contract/packetlevel/IModulation.h"
 }}
 
@@ -29,6 +30,7 @@ class noncobject IModulationPtr;
 class noncobject bps;
 class noncobject W;
 class noncobject Hz;
+class noncobject EulerAngles;
 
 //
 // Message kinds for sending commands to the radio.
@@ -74,4 +76,5 @@ class ReceptionIndication
     double symbolErrorRate = NaN; // symbol error rate (probability) in the range [0, 1] or NaN if unknown.
     W minRSSI = W(NaN);           // minimum receive signal strength indication in the range (0, +infinity) or NaN if unknown.
     double minSNIR = NaN;         // minimum signal to noise plus interference ratio in the range (0, +infinity) or NaN if unknown.
+    EulerAngles direction;
 }
