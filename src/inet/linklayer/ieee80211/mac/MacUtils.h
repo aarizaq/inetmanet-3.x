@@ -89,7 +89,7 @@ class INET_API MacUtils
         static int cmpMgmtOverData(Ieee80211DataOrMgmtFrame *a, Ieee80211DataOrMgmtFrame *b);
         static int cmpMgmtOverMulticastOverUnicast(Ieee80211DataOrMgmtFrame *a, Ieee80211DataOrMgmtFrame *b);
 
-        virtual void setDirection(const MACAddress &, const EulerAngles &);
+        virtual void setDirection(const Ieee80211Frame *frame);
         const bool getDirection(const MACAddress &, EulerAngles &, simtime_t&) const;
 };
 

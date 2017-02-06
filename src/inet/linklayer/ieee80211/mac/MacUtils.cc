@@ -249,12 +249,18 @@ int MacUtils::cmpMgmtOverMulticastOverUnicast(Ieee80211DataOrMgmtFrame *a, Ieee8
     return bPri - aPri;
 }
 
-void MacUtils::setDirection(const MACAddress &addr, const EulerAngles &d)
+void MacUtils::setDirection(const Ieee80211Frame *frame)
 {
+    if (frame->hasBitError())
+        return;
+    Ieee80211TwoAddressFrame *frameAux = dynamic_cast<Ieee80211TwoAddressFrame *> (const_cast<Ieee80211Frame *>(frame));
+    if (frameAux == nullptr)
+        return;
+    Ieee80211ReceptionIndication *indication = check_and_cast<Ieee80211ReceptionIndication*>(frame->getControlInfo());
     DirectionalInfo dir;
-    dir.direction = d;
+    dir.direction = indication->getDirection();
     dir.time = simTime();
-    directionalDataBase[addr] = dir;
+    directionalDataBase[frameAux->getTransmitterAddress()] = dir;
 }
 
 const bool MacUtils::getDirection(const MACAddress &addr, EulerAngles &dir,simtime_t &t) const
