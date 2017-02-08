@@ -62,7 +62,9 @@ public:
     virtual void pushBack(Ieee80211DataFrame *);
     virtual Ieee80211DataFrame *popFrom();
     virtual Ieee80211DataFrame *popBack();
-    virtual bool haveBlock(){return !encapsulateVector.empty();}
+    virtual Ieee80211DataFrame* getFrom() {return encapsulateVector.front()->pkt;}
+    virtual Ieee80211DataFrame* getBack() {return encapsulateVector.back()->pkt;}
+    virtual bool hasBlock(){return !encapsulateVector.empty();}
     virtual void forEachChild(cVisitor *v);
 
     virtual void encapsulate(cPacket *packet) override

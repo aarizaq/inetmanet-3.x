@@ -266,6 +266,7 @@ packet Ieee80211BlockAckFrame extends Ieee80211TwoAddressFrame
 packet Ieee80211MsduASubframe extends Ieee80211DataFrameWithSNAP
 {
     byteLength = 14;
+    bool withSnap = false;
 }
 
 packet Ieee80211MsduAMeshSubframe extends Ieee80211MeshFrame

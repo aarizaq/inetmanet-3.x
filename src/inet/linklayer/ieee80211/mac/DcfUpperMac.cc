@@ -173,8 +173,7 @@ void DcfUpperMac::createMsduA(Ieee80211DataOrMgmtFrame * fr)
         return;
     }
 
-    if (frame->getReceiverAddress().isBroadcast() || frame->getAddress3().isBroadcast() || frame->getAddress4().isBroadcast() ||
-            frame->getReceiverAddress().isMulticast() || frame->getAddress3().isMulticast() || frame->getAddress4().isMulticast()) {
+    if (utils->isBroadcastOrMulticast(frame) || frame->getAddress3().isMulticast() || frame->getAddress4().isMulticast()) {
         transmissionQueue.insert(frame);
         return;
     }
@@ -246,6 +245,10 @@ void DcfUpperMac::createMsduA(Ieee80211DataOrMgmtFrame * fr)
             Ieee80211MeshFrame *aux = header;
             *aux = (*meshFrame);
             delete frame;
+            // Padding
+            unsigned int padding = (frameMsda->getBack()->getByteLength()%4);
+            frameMsda->getBack()->setByteLength(frameMsda->getBack()->getByteLength()+padding);
+
             aux->setByteLength(20);
             aux->encapsulate(pkt);
             frame = aux;
@@ -259,6 +262,8 @@ void DcfUpperMac::createMsduA(Ieee80211DataOrMgmtFrame * fr)
                 *((Ieee80211DataFrame *) header) = *((Ieee80211DataFrame*)frame);
             Ieee80211DataFrame *aux = header;
             delete frame;
+            unsigned int padding = (frameMsda->getBack()->getByteLength()%4);
+            frameMsda->getBack()->setByteLength(frameMsda->getBack()->getByteLength()+padding);
             aux->setByteLength(14);
             aux->encapsulate(pkt);
             frame = aux;
@@ -372,8 +377,10 @@ void DcfUpperMac::createMsduA(Ieee80211DataOrMgmtFrame * fr)
         else
         {
             Ieee80211MsduASubframe * header = new Ieee80211MsduASubframe();
-            if (dynamic_cast<Ieee80211DataFrameWithSNAP *>(frameAux))
+            if (dynamic_cast<Ieee80211DataFrameWithSNAP *>(frameAux)) {
                 *((Ieee80211DataFrameWithSNAP *) header) = *((Ieee80211DataFrameWithSNAP*)frameAux);
+                header->setWithSnap(true);
+            }
             else
                 *((Ieee80211DataFrame *) header) = *((Ieee80211DataFrame*)frameAux);
             Ieee80211DataFrame *aux = header;
@@ -384,7 +391,10 @@ void DcfUpperMac::createMsduA(Ieee80211DataOrMgmtFrame * fr)
         }
         // change size
         msduaContainer->pushBack(frameAux);
+        unsigned int padding = (msduaContainer->getBack()->getByteLength()%4);
+        msduaContainer->getBack()->setByteLength(msduaContainer->getBack()->getByteLength()+padding);
     }
+
     msduaContainer->pushBack(frame);
     return;
 }
@@ -392,6 +402,13 @@ void DcfUpperMac::createMsduA(Ieee80211DataOrMgmtFrame * fr)
 bool DcfUpperMac::isMsduA(Ieee80211DataOrMgmtFrame * frame)
 {
     return dynamic_cast<Ieee80211MsduAContainer*>(frame) != nullptr;
+}
+
+bool DcfUpperMac::isMsduAMesh(Ieee80211DataOrMgmtFrame * frame)
+{
+    Ieee80211MsduAContainer *fr =  dynamic_cast<Ieee80211MsduAContainer*>(frame);
+    if (fr == nullptr) return false;
+    return dynamic_cast<Ieee80211MsduAMeshSubframe * >(fr->getPacket(0));
 }
 
 void DcfUpperMac::getMsduAFrames(Ieee80211DataOrMgmtFrame * frame, std::vector<Ieee80211DataOrMgmtFrame *>&frames)
@@ -402,11 +419,41 @@ void DcfUpperMac::getMsduAFrames(Ieee80211DataOrMgmtFrame * frame, std::vector<I
         return;
 
     Ieee80211MsduAContainer *frameMsda = dynamic_cast<Ieee80211MsduAContainer*>(frame);
-    while (frameMsda->haveBlock())
+    while (frameMsda->hasBlock())
     {
-        Ieee80211DataFrame * subframe = frameMsda->popFrom();
-        Ieee80211MsduASubframe * header
+        Ieee80211MsduASubframe * header = check_and_cast<Ieee80211MsduASubframe *>(frameMsda->popFrom());
+        cPacket *pkt = header->decapsulate();
+        Ieee80211MsduAMeshSubframe * headerMesh = dynamic_cast<Ieee80211MsduAMeshSubframe *>(header);
+        if (headerMesh) {
 
+            Ieee80211MeshFrame * frameAux = new Ieee80211MeshFrame();
+            uint64_t size = frameAux->getByteLength();
+            *frameAux = *((Ieee80211MeshFrame *) header);
+            frameAux->setByteLength(size);
+            frameAux->encapsulate(pkt);
+            frames.push_back(frameAux);
+        }
+        else
+        {
+            if (header->getWithSnap()) {
+                Ieee80211DataFrameWithSNAP * frameAux = new Ieee80211DataFrameWithSNAP();
+                uint64_t size = frameAux->getByteLength();
+                *frameAux = *((Ieee80211DataFrameWithSNAP*) header);
+                frameAux->setByteLength(size);
+                frameAux->encapsulate(pkt);
+                frames.push_back(frameAux);
+
+            }
+            else {
+                Ieee80211DataFrame * frameAux = new Ieee80211DataFrame();
+                uint64_t size = frameAux->getByteLength();
+                *frameAux = *((Ieee80211DataFrame*) header);
+                frameAux->setByteLength(size);
+                frameAux->encapsulate(pkt);
+                frames.push_back(frameAux);
+            }
+        }
+        delete header;
     }
 }
 
@@ -444,8 +491,17 @@ void DcfUpperMac::lowerFrameReceived(Ieee80211Frame *frame)
                 delete dataOrMgmtFrame;
             }
             else {
-                if (!utils->isFragment(dataOrMgmtFrame))
-                    mac->sendUp(dataOrMgmtFrame);
+                if (!utils->isFragment(dataOrMgmtFrame)) {
+                    std::vector<Ieee80211DataOrMgmtFrame *> frames;
+                    getMsduAFrames(dataOrMgmtFrame, frames);
+                    if (frames.empty())
+                        mac->sendUp(dataOrMgmtFrame);
+                    else {
+                        for (unsigned int i = 0; i < frames.size(); i++)
+                            mac->sendUp(frames[i]);
+                        frames.clear();
+                    }
+                }
                 else {
                     Ieee80211DataOrMgmtFrame *completeFrame = reassembly->addFragment(dataOrMgmtFrame);
                     if (completeFrame)
