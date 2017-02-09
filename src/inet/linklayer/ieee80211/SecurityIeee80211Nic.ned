@@ -24,7 +24,6 @@ import inet.linklayer.contract.IWirelessNic;
 import inet.linklayer.ieee80211.mac.Ieee80211Mac;
 import inet.linklayer.ieee80211.mgmt.Ieee80211AgentSTA;
 import inet.physicallayer.contract.packetlevel.IRadio;
-import inet.linklayer.ieee80211mesh.locator.ILocator;
 import inet.securityModule.SecurityWPA2;
 import inet.linklayer.ieee80211.mgmt.SecurityIeee80211MgmtAdhoc;
 

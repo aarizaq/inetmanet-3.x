@@ -60,7 +60,7 @@ void Ieee80211MsduAContainer::forEachChild(cVisitor *v)
     if (!encapsulateVector.empty())
     {
         for (unsigned int i = 0; i < encapsulateVector.size(); i++)
-            v->visit(encapsulateVector[i]->pkt);
+            v->visit(encapsulateVector[i]);
     }
 }
 
@@ -68,13 +68,13 @@ void Ieee80211MsduAContainer::_deleteEncapVector()
 {
     while (!encapsulateVector.empty())
     {
-        if (encapsulateVector.back()->pkt)
-        {
-            drop(encapsulateVector.back()->pkt);
-            delete encapsulateVector.back()->pkt;
-        }
-        delete encapsulateVector.back();
+        Ieee80211DataFrame *pkt =  encapsulateVector.back();
         encapsulateVector.pop_back();
+        if (pkt)
+        {
+            drop(pkt);
+            delete pkt;
+        }
     }
 }
 
@@ -83,13 +83,12 @@ Ieee80211DataFrame *Ieee80211MsduAContainer::popBack()
     if (encapsulateVector.empty())
         return nullptr;
     if (getBitLength() > 0)
-        setBitLength(getBitLength() - encapsulateVector.back()->pkt->getBitLength());
+        setBitLength(getBitLength() - encapsulateVector.back()->getBitLength());
     if (getBitLength() < 0)
         throw cRuntimeError(this, "popBack(): packet length is smaller than encapsulated packet");
-    if (encapsulateVector.back()->pkt->getOwner() != this)
-        take(encapsulateVector.back()->pkt);
-    Ieee80211DataFrame *msg = encapsulateVector.back()->pkt;
-    delete encapsulateVector.back();
+    if (encapsulateVector.back()->getOwner() != this)
+        take(encapsulateVector.back());
+    Ieee80211DataFrame *msg = encapsulateVector.back();
     encapsulateVector.pop_back();
     if (msg)
         drop(msg);
@@ -101,13 +100,12 @@ Ieee80211DataFrame *Ieee80211MsduAContainer::popFrom()
     if (encapsulateVector.empty())
         return nullptr;
     if (getBitLength() > 0)
-        setBitLength(getBitLength() - encapsulateVector.front()->pkt->getBitLength());
+        setBitLength(getBitLength() - encapsulateVector.front()->getBitLength());
     if (getBitLength() < 0)
         throw cRuntimeError(this, "popFrom(): packet length is smaller than encapsulated packet");
-    if (encapsulateVector.front()->pkt->getOwner() != this)
-        take(encapsulateVector.front()->pkt);
-    Ieee80211DataFrame *msg = encapsulateVector.front()->pkt;
-    delete encapsulateVector.front();
+    if (encapsulateVector.front()->getOwner() != this)
+        take(encapsulateVector.front());
+    Ieee80211DataFrame *msg = encapsulateVector.front();
     encapsulateVector.erase(encapsulateVector.begin());
     if (msg)
         drop(msg);
@@ -122,7 +120,7 @@ void Ieee80211MsduAContainer::pushBack(Ieee80211DataFrame *pkt)
     // Sanity check, check if the packet is already in the vector
     for (unsigned int i = 0; i < encapsulateVector.size(); i++)
     {
-        if (encapsulateVector[i]->pkt == pkt)
+        if (encapsulateVector[i] == pkt)
             throw cRuntimeError(this, "pushBack(): packet already in the vector (%s)%s, owner is (%s)%s",
                     pkt->getClassName(), pkt->getFullName(), pkt->getOwner()->getClassName(),
                     pkt->getOwner()->getFullPath().c_str());
@@ -133,7 +131,7 @@ void Ieee80211MsduAContainer::pushBack(Ieee80211DataFrame *pkt)
     // padding the last
     if (!encapsulateVector.empty())
     {
-        cPacket * pktAux = encapsulateVector.back()->pkt;
+        cPacket * pktAux = encapsulateVector.back();
         uint64_t size = pktAux->getByteLength();
 
         if (size % 4)
@@ -146,14 +144,12 @@ void Ieee80211MsduAContainer::pushBack(Ieee80211DataFrame *pkt)
     }
 
     setBitLength(getBitLength() + pkt->getBitLength());
-    ShareStruct * shareStructPtr = new ShareStruct();
     if (pkt->getOwner() != getSimulation()->getContextSimpleModule())
         throw cRuntimeError(this, "pushBack(): not owner of message (%s)%s, owner is (%s)%s", pkt->getClassName(),
                 pkt->getFullName(), pkt->getOwner()->getClassName(), pkt->getOwner()->getFullPath().c_str());
     take(pkt);
     //drop(pkt);
-    shareStructPtr->pkt = pkt;
-    encapsulateVector.push_back(shareStructPtr);
+    encapsulateVector.push_back(pkt);
 }
 
 void Ieee80211MsduAContainer::pushFrom(Ieee80211DataFrame *pkt)
@@ -163,21 +159,19 @@ void Ieee80211MsduAContainer::pushFrom(Ieee80211DataFrame *pkt)
     // Sanity check, check if the packet is already in the vector
     for (unsigned int i = 0; i < encapsulateVector.size(); i++)
     {
-        if (encapsulateVector[i]->pkt == pkt)
+        if (encapsulateVector[i] == pkt)
             throw cRuntimeError(this, "pushBack(): packet already in the vector (%s)%s, owner is (%s)%s",
                     pkt->getClassName(), pkt->getFullName(), pkt->getOwner()->getClassName(),
                     pkt->getOwner()->getFullPath().c_str());
 
     }
     setBitLength(getBitLength() + pkt->getBitLength());
-    ShareStruct * shareStructPtr = new ShareStruct();
     if (pkt->getOwner() != getSimulation()->getContextSimpleModule())
         throw cRuntimeError(this, "pushFrom(): not owner of message (%s)%s, owner is (%s)%s", pkt->getClassName(),
                 pkt->getFullName(), pkt->getOwner()->getClassName(), pkt->getOwner()->getFullPath().c_str());
     take(pkt);
     //drop(pkt);
-    shareStructPtr->pkt = pkt;
-    encapsulateVector.insert(encapsulateVector.begin(), shareStructPtr);
+    encapsulateVector.insert(encapsulateVector.begin(), pkt);
 }
 
 Ieee80211DataFrame *Ieee80211MsduAContainer::getPacket(unsigned int i) const
@@ -185,7 +179,7 @@ Ieee80211DataFrame *Ieee80211MsduAContainer::getPacket(unsigned int i) const
 
     if (i >= encapsulateVector.size())
         return nullptr;
-    return encapsulateVector[i]->pkt;
+    return encapsulateVector[i];
 }
 
 cPacket *Ieee80211MsduAContainer::decapsulatePacket(unsigned int i)
@@ -193,12 +187,11 @@ cPacket *Ieee80211MsduAContainer::decapsulatePacket(unsigned int i)
 
     if (i >= encapsulateVector.size())
         return nullptr;
-    cPacket * pkt = encapsulateVector[i]->pkt;
+    cPacket * pkt = encapsulateVector[i];
     if (getBitLength() > 0)
         setBitLength(getBitLength() - pkt->getBitLength());
     if (pkt->getOwner() != this)
         take(pkt);
-    delete encapsulateVector[i];
     encapsulateVector.erase(encapsulateVector.begin() + i);
     if (pkt)
         drop(pkt);
@@ -209,14 +202,15 @@ void Ieee80211MsduAContainer::setPacketKind(unsigned int i, int kind)
 {
     if (i >= encapsulateVector.size())
         return;
-    encapsulateVector[i]->pkt->setKind(kind);
+    encapsulateVector[i]->setKind(kind);
 }
 
 Ieee80211MsduAContainer& Ieee80211MsduAContainer::operator=(const Ieee80211MsduAContainer& msg)
 {
     if (this == &msg)
         return *this;
-    cPacket::operator=(msg);
+    Ieee80211MeshFrame::operator=(msg);
+
     if (encapsulateVector.size() > 0)
     {
         _deleteEncapVector();
@@ -225,9 +219,9 @@ Ieee80211MsduAContainer& Ieee80211MsduAContainer::operator=(const Ieee80211MsduA
     {
         for (unsigned int i = 0; i < msg.encapsulateVector.size(); i++)
         {
-            ShareStruct * shareStructPtr = new ShareStruct();
-            shareStructPtr->pkt = msg.encapsulateVector[i]->pkt->dup();
-            encapsulateVector.push_back(shareStructPtr);
+            Ieee80211DataFrame *pkt = msg.encapsulateVector[i]->dup();
+            take(pkt);
+            encapsulateVector.push_back(pkt);
         }
     }
     return *this;

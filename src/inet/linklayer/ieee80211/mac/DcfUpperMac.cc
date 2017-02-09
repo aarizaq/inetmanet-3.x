@@ -85,6 +85,7 @@ void DcfUpperMac::initialize()
     fragmenter = check_and_cast<IFragmenter *>(inet::utils::createOne(par("fragmenterClass")));
     reassembly = check_and_cast<IReassembly *>(inet::utils::createOne(par("reassemblyClass")));
 
+    activeMsduA = par("useMpduA");
     WATCH(maxQueueSize);
     WATCH(fragmentationThreshold);
 }
@@ -357,7 +358,7 @@ void DcfUpperMac::createMsduA(Ieee80211DataOrMgmtFrame * fr)
     }
 
 
-    for (auto it = elements.begin() ;it != elements.end();)
+    for (auto it = elements.begin() ;it != elements.end();++it)
     {
         transmissionQueue.remove(*it);
         Ieee80211DataFrame * frameAux = (Ieee80211DataFrame *)(*it);

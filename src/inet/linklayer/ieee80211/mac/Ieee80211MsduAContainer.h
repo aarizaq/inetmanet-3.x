@@ -25,15 +25,7 @@ namespace ieee80211 {
 class Ieee80211MsduAContainer : public Ieee80211MeshFrame
 {
 private:
-    struct ShareStruct{
-        Ieee80211DataFrame * pkt;
-        unsigned int shareCount;
-        ShareStruct(){
-            pkt = nullptr;
-            shareCount = 0;
-        }
-    };
-    std::vector<ShareStruct*> encapsulateVector;
+    std::vector<Ieee80211DataFrame *> encapsulateVector;
     void _deleteEncapVector();
     bool _checkIfShare();
 protected:
@@ -52,7 +44,7 @@ public:
     uint64_t getPktLength(unsigned int i) const
     {
         if (i<encapsulateVector.size())
-            return encapsulateVector[i]->pkt->getBitLength();
+            return encapsulateVector[i]->getBitLength();
         return 0;
     }
     cPacket *decapsulatePacket(unsigned int i) ;
@@ -62,8 +54,8 @@ public:
     virtual void pushBack(Ieee80211DataFrame *);
     virtual Ieee80211DataFrame *popFrom();
     virtual Ieee80211DataFrame *popBack();
-    virtual Ieee80211DataFrame* getFrom() {return encapsulateVector.front()->pkt;}
-    virtual Ieee80211DataFrame* getBack() {return encapsulateVector.back()->pkt;}
+    virtual Ieee80211DataFrame* getFrom() {return encapsulateVector.front();}
+    virtual Ieee80211DataFrame* getBack() {return encapsulateVector.back();}
     virtual bool hasBlock(){return !encapsulateVector.empty();}
     virtual void forEachChild(cVisitor *v);
 
