@@ -1405,7 +1405,7 @@ void UDPBasicP2P::WirelessNumNeig()
         if (notfound)
             continue;
 
-        cModule *host = getContainingNode(this);
+        cModule *host = getContainingNode(destNode->getModule());
         mod = check_and_cast<IMobility *>(host->getSubmodule("mobility"));
         if (mod == nullptr)
             throw cRuntimeError("node or mobility module not found");
