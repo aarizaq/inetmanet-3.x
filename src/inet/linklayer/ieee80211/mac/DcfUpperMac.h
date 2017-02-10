@@ -83,10 +83,6 @@ class INET_API DcfUpperMac : public cSimpleModule, public IUpperMac, protected I
         void handleMessage(cMessage *msg) override;
 
         virtual void enqueue(Ieee80211DataOrMgmtFrame *frame);
-        virtual void createMsduA(Ieee80211DataOrMgmtFrame * frame);
-        virtual bool isMsduA(Ieee80211DataOrMgmtFrame * frame);
-        virtual bool isMsduAMesh(Ieee80211DataOrMgmtFrame * frame);
-        virtual void getMsduAFrames(Ieee80211DataOrMgmtFrame * frame, std::vector<Ieee80211DataOrMgmtFrame *>&);
         virtual void startSendDataFrameExchange(Ieee80211DataOrMgmtFrame *frame, int txIndex, AccessCategory ac);
         virtual void frameExchangeFinished(IFrameExchange *what, bool successful) override;
 

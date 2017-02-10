@@ -36,6 +36,7 @@ Ieee80211MsduAContainer::~Ieee80211MsduAContainer()
 {
     // TODO Auto-generated destructor stub
     _deleteEncapVector();
+
 }
 
 Register_Class(Ieee80211MsduAContainer);
@@ -68,13 +69,8 @@ void Ieee80211MsduAContainer::_deleteEncapVector()
 {
     while (!encapsulateVector.empty())
     {
-        Ieee80211DataFrame *pkt =  encapsulateVector.back();
-        encapsulateVector.pop_back();
-        if (pkt)
-        {
-            drop(pkt);
-            delete pkt;
-        }
+        Ieee80211DataFrame *pkt =  this->popBack();
+        delete pkt;
     }
 }
 
@@ -106,7 +102,8 @@ Ieee80211DataFrame *Ieee80211MsduAContainer::popFrom()
     if (encapsulateVector.front()->getOwner() != this)
         take(encapsulateVector.front());
     Ieee80211DataFrame *msg = encapsulateVector.front();
-    encapsulateVector.erase(encapsulateVector.begin());
+    encapsulateVector.pop_front();
+    //encapsulateVector.erase(encapsulateVector.begin());
     if (msg)
         drop(msg);
     return msg;
@@ -134,13 +131,9 @@ void Ieee80211MsduAContainer::pushBack(Ieee80211DataFrame *pkt)
         cPacket * pktAux = encapsulateVector.back();
         uint64_t size = pktAux->getByteLength();
 
-        if (size % 4)
-        {
-            size++;
-            while (size % 4) size++;
-            setByteLength(getByteLength() - pktAux->getByteLength() + size);
-            pktAux->setByteLength(size);
-        }
+        uint64_t padding = size%4;
+        pktAux->setByteLength(size+padding);
+        setByteLength(getByteLength() + padding);
     }
 
     setBitLength(getBitLength() + pkt->getBitLength());
@@ -150,6 +143,8 @@ void Ieee80211MsduAContainer::pushBack(Ieee80211DataFrame *pkt)
     take(pkt);
     //drop(pkt);
     encapsulateVector.push_back(pkt);
+    std::string name = "(A-Msdu)Frames:"+std::to_string(encapsulateVector.size())+"-frame:"+std::string(encapsulateVector.front()->getName());
+    setName(name.c_str());
 }
 
 void Ieee80211MsduAContainer::pushFrom(Ieee80211DataFrame *pkt)

@@ -82,6 +82,12 @@ class INET_API MacUtils
 
         static int cmpMgmtOverData(Ieee80211DataOrMgmtFrame *a, Ieee80211DataOrMgmtFrame *b);
         static int cmpMgmtOverMulticastOverUnicast(Ieee80211DataOrMgmtFrame *a, Ieee80211DataOrMgmtFrame *b);
+
+        virtual void createMsduA(Ieee80211DataOrMgmtFrame * frame, cQueue &);
+        virtual bool isMsduA(Ieee80211DataOrMgmtFrame * frame);
+        virtual bool isMsduAMesh(Ieee80211DataOrMgmtFrame * frame);
+        virtual void getMsduAFrames(Ieee80211DataOrMgmtFrame * frame, std::vector<Ieee80211DataOrMgmtFrame *>&);
+
 };
 
 } // namespace ieee80211

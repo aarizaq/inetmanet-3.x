@@ -15,6 +15,8 @@
 
 #ifndef __IEEE80211MSDUA_H__
 #define __IEEE80211MSDUA_H__
+#include <deque>
+
 #include <omnetpp.h>
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
 
@@ -25,12 +27,13 @@ namespace ieee80211 {
 class Ieee80211MsduAContainer : public Ieee80211MeshFrame
 {
 private:
-    std::vector<Ieee80211DataFrame *> encapsulateVector;
+
+    std::deque<Ieee80211DataFrame *> encapsulateVector;
     void _deleteEncapVector();
     bool _checkIfShare();
 protected:
   // protected and unimplemented operator==(), to prevent accidental usage
-  bool operator==(const Ieee80211MeshFrame&);
+  bool operator==(const Ieee80211MsduAContainer&);
 
 public:
     Ieee80211MsduAContainer(const char *name=nullptr, int kind=0);
@@ -96,6 +99,16 @@ public:
         throw cRuntimeError("operation not supported");
         return false;
     }
+
+    void parsimPack(cCommBuffer *buffer) const
+    {
+        throw cRuntimeError(this, "ParSim not supported");
+    }
+    void parsimUnpack(cCommBuffer *buffer)
+    {
+        throw cRuntimeError(this, "ParSim not supported");
+    }
+
 };
 
 
