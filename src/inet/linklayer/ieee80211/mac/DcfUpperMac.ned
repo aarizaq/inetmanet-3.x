@@ -47,6 +47,7 @@ simple DcfUpperMac like IUpperMac
         int cwMulticast = default(-1); // contention window for multicast frames, -1 means default
         string fragmenterClass = default("BasicFragmentation");
         string reassemblyClass = default("BasicReassembly");
+        bool useMpduA = default(false);
         @display("i=block/layer");
         @signal[NF_LINK_BREAK](type=Ieee80211DataOrMgmtFrame);
 }

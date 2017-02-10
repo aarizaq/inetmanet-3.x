@@ -27,6 +27,7 @@
 #include "inet/physicallayer/ieee80211/mode/Ieee80211HRDSSSMode.h"
 #include "inet/physicallayer/ieee80211/mode/Ieee80211HTMode.h"
 #include "inet/physicallayer/ieee80211/mode/Ieee80211OFDMMode.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211MsduAContainer.h"
 
 namespace inet {
 namespace ieee80211 {
@@ -271,6 +272,300 @@ const bool MacUtils::getDirection(const MACAddress &addr, EulerAngles &dir,simti
     dir = it->second.direction;
     t = it->second.time;
     return true;
+}
+
+
+void MacUtils::createMsduA(Ieee80211DataOrMgmtFrame * fr, cQueue &transmissionQueue)
+{
+    Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame *>(fr);
+    if (frame == nullptr) {
+        transmissionQueue.insert(fr);
+        return;
+    }
+
+    if (isBroadcastOrMulticast(frame) || frame->getAddress3().isMulticast() || frame->getAddress4().isMulticast()) {
+        transmissionQueue.insert(frame);
+        return;
+    }
+    Ieee80211MeshFrame *meshFrame = dynamic_cast<Ieee80211MeshFrame *>(frame);
+    if (meshFrame && meshFrame->getSubType() != UPPERMESSAGE){ // mesh frame in transit
+        transmissionQueue.insert(fr);
+        return;
+    }
+
+    MACAddress dest = frame->getReceiverAddress();
+    MACAddress addr3 = frame->getAddress3();
+    MACAddress addr4 = frame->getAddress4();
+    //Search same destination address
+    std::vector<Ieee80211DataFrame *>elements;
+    for (auto it = cQueue::Iterator(transmissionQueue);!it.end(); ++it) {
+
+        Ieee80211DataFrame *frameAux = dynamic_cast<Ieee80211DataFrame *>(*it);
+        MACAddress destAux = frameAux->getReceiverAddress();
+        MACAddress addr3Aux = frameAux->getAddress3();
+        MACAddress addr4Aux = frameAux->getAddress4();
+        // Compare addresses
+        if (destAux.compareTo(dest) == 0 && addr3Aux.compareTo(addr3) == 0 && addr4Aux.compareTo(addr4) == 0 && frameAux->getToDS() == frame->getToDS()) {
+            elements.push_back(frameAux);
+        }
+    }
+
+    if (elements.empty()) { // no available frames to the same destination
+        transmissionQueue.insert(fr);
+        return;
+    }
+
+    // if frames search for frames of the same type,
+    // search frames to the same destination and characteristics
+    int64_t maxSize = 7000;
+
+    // search for msdu-a in the queues
+    for (auto it = elements.begin() ;it != elements.end();)
+    {
+        Ieee80211MsduAContainer *frameMsda = dynamic_cast<Ieee80211MsduAContainer*>(*it); // check if msdu-a is present
+        if (frameMsda == nullptr)
+        {
+            ++it;
+            continue;
+        }
+        if (frameMsda->getByteLength() + frame->getByteLength() >= maxSize)
+        {
+            ++it;
+            continue;
+        }
+        // check type
+        Ieee80211MsduAMeshSubframe* msduMesh = dynamic_cast<Ieee80211MsduAMeshSubframe *>(frameMsda->getPacket(0));
+        if ((meshFrame == nullptr) !=  (msduMesh == nullptr))
+        {
+            ++it;
+            continue;
+        }
+        if (meshFrame && meshFrame->getSubType() != frameMsda->getSubType())
+        {
+            ++it;
+            continue;
+        }
+        // add to the msdu-a
+        // decapsulate and recapsulate
+        // it is necessary to include padding bytes in the latest frame
+        cPacket *pkt = frame->decapsulate();
+        if (meshFrame)
+        {
+            Ieee80211MsduAMeshSubframe * header = new Ieee80211MsduAMeshSubframe();
+            Ieee80211MeshFrame *aux = header;
+            *aux = (*meshFrame);
+            delete frame;
+            aux->setByteLength(20);
+            aux->encapsulate(pkt);
+            aux->setName(pkt->getName());
+            frame = aux;
+        }
+        else
+        {
+            Ieee80211MsduASubframe * header = new Ieee80211MsduASubframe();
+            if (dynamic_cast<Ieee80211DataFrameWithSNAP *>(frame))
+                *((Ieee80211DataFrameWithSNAP *) header) = *((Ieee80211DataFrameWithSNAP*)frame);
+            else
+                *((Ieee80211DataFrame *) header) = *((Ieee80211DataFrame*)frame);
+            Ieee80211DataFrame *aux = header;
+            delete frame;
+            aux->setByteLength(14);
+            aux->encapsulate(pkt);
+            aux->setName(pkt->getName());
+            frame = aux;
+        }
+
+        frameMsda->pushBack(frame);
+        return;
+    }
+
+
+    // search for other frame and create an Msdu-a
+    for (auto it = elements.begin() ;it != elements.end();)
+    {
+        // check if is a Msdu-A container
+        if (dynamic_cast<Ieee80211MsduAContainer*>(*it))
+        {
+            it = elements.erase(it);
+            continue;
+        }
+        // check if it is a MsduAframe
+        if (dynamic_cast<Ieee80211MsduAMeshFrame *>(*it) || dynamic_cast<Ieee80211MsduAFrame *>(*it))
+        {
+            it = elements.erase(it);
+            continue;
+        }
+        Ieee80211MeshFrame * frameAuxMesh = dynamic_cast<Ieee80211MeshFrame *>(*it);
+        if (((meshFrame != nullptr) && (frameAuxMesh == nullptr)) || ((meshFrame == nullptr) && (frameAuxMesh != nullptr)))
+        {
+            it = elements.erase(it);
+            continue;
+        }
+        if (meshFrame && meshFrame->getSubType() != frameAuxMesh->getSubType())
+        {
+            it = elements.erase(it);
+            continue;
+        }
+        ++it;
+    }
+
+    if (elements.empty())    { // no available frames to the same destination
+        transmissionQueue.insert(fr);
+        return;
+    }
+    // create a new msdu
+    Ieee80211MsduAContainer *msduaContainer = new Ieee80211MsduAContainer();
+    // insert before
+    transmissionQueue.insertBefore(elements.front(), msduaContainer);
+    msduaContainer->setReceiverAddress(dest);
+    msduaContainer->setAddress3(addr3);
+    msduaContainer->setAddress4(addr4);
+    msduaContainer->setTransmitterAddress(fr->getTransmitterAddress());
+    cPacket *pkt = frame->decapsulate();
+    if (meshFrame == nullptr)
+    {
+        // set byte length
+        if (dynamic_cast<Ieee80211DataFrameWithSNAP *>(frame))
+            *((Ieee80211DataFrameWithSNAP *) msduaContainer) = *((Ieee80211DataFrameWithSNAP*)frame);
+        else
+            *((Ieee80211DataFrame *) msduaContainer) = *((Ieee80211DataFrame*)frame);
+        msduaContainer->setByteLength(DATAFRAME_HEADER_MINLENGTH / 8 + SNAP_HEADER_BYTES);
+    }
+    else
+    {
+        *((Ieee80211MeshFrame *) msduaContainer) = *meshFrame;
+        msduaContainer->setByteLength(38);
+    }
+
+    if (meshFrame)
+    {
+        Ieee80211MsduAMeshSubframe * header = new Ieee80211MsduAMeshSubframe();
+        Ieee80211MeshFrame *aux = header;
+        *aux = (*meshFrame);
+        delete frame;
+        aux->setByteLength(20);
+        msduaContainer->setSubType(header->getSubType());
+        aux->encapsulate(pkt);
+        aux->setName(pkt->getName());
+        frame = aux;
+    }
+    else
+    {
+        Ieee80211MsduASubframe * header = new Ieee80211MsduASubframe();
+        if (dynamic_cast<Ieee80211DataFrameWithSNAP *>(frame))
+            *((Ieee80211DataFrameWithSNAP *) header) = *((Ieee80211DataFrameWithSNAP*)frame);
+        else
+            *((Ieee80211DataFrame *) header) = *((Ieee80211DataFrame*)frame);
+        Ieee80211DataFrame *aux = header;
+        delete frame;
+        aux->setByteLength(14);
+        aux->encapsulate(pkt);
+        aux->setName(pkt->getName());
+        frame = aux;
+    }
+
+
+    for (auto it = elements.begin() ;it != elements.end();++it)
+    {
+        transmissionQueue.remove(*it);
+        Ieee80211DataFrame * frameAux = (Ieee80211DataFrame *)(*it);
+        // check type
+        Ieee80211MeshFrame * frameAuxMesh = dynamic_cast<Ieee80211MeshFrame *>(frameAux);
+        cPacket *pkt = frameAux->decapsulate();
+        if (frameAuxMesh)
+        {
+            Ieee80211MsduAMeshSubframe * header = new Ieee80211MsduAMeshSubframe();
+            Ieee80211MeshFrame *aux = header;
+            *aux = (*frameAuxMesh);
+            aux->setByteLength(20);
+            delete frameAux;
+            aux->encapsulate(pkt);
+            aux->setName(pkt->getName());
+            frameAux = aux;
+        }
+        else
+        {
+            Ieee80211MsduASubframe * header = new Ieee80211MsduASubframe();
+            if (dynamic_cast<Ieee80211DataFrameWithSNAP *>(frameAux)) {
+                *((Ieee80211DataFrameWithSNAP *) header) = *((Ieee80211DataFrameWithSNAP*)frameAux);
+                header->setWithSnap(true);
+            }
+            else
+                *((Ieee80211DataFrame *) header) = *((Ieee80211DataFrame*)frameAux);
+            Ieee80211DataFrame *aux = header;
+            aux->setByteLength(14);
+            delete frameAux;
+            aux->encapsulate(pkt);
+            aux->setName(pkt->getName());
+            frameAux = aux;
+        }
+        // change size
+        msduaContainer->pushBack(frameAux);
+        unsigned int padding = (msduaContainer->getBack()->getByteLength()%4);
+        msduaContainer->getBack()->setByteLength(msduaContainer->getBack()->getByteLength()+padding);
+    }
+
+    msduaContainer->pushBack(frame);
+    return;
+}
+
+bool MacUtils::isMsduA(Ieee80211DataOrMgmtFrame * frame)
+{
+    return dynamic_cast<Ieee80211MsduAContainer*>(frame) != nullptr;
+}
+
+bool MacUtils::isMsduAMesh(Ieee80211DataOrMgmtFrame * frame)
+{
+    Ieee80211MsduAContainer *fr =  dynamic_cast<Ieee80211MsduAContainer*>(frame);
+    if (fr == nullptr) return false;
+    return dynamic_cast<Ieee80211MsduAMeshSubframe * >(fr->getPacket(0));
+}
+
+void MacUtils::getMsduAFrames(Ieee80211DataOrMgmtFrame * frame, std::vector<Ieee80211DataOrMgmtFrame *>&frames)
+{
+
+    frames.clear();
+    if (!isMsduA(frame))
+        return;
+
+    Ieee80211MsduAContainer *frameMsda = dynamic_cast<Ieee80211MsduAContainer*>(frame);
+    while (frameMsda->hasBlock())
+    {
+        Ieee80211MsduASubframe * header = check_and_cast<Ieee80211MsduASubframe *>(frameMsda->popFrom());
+        cPacket *pkt = header->decapsulate();
+        Ieee80211MsduAMeshSubframe * headerMesh = dynamic_cast<Ieee80211MsduAMeshSubframe *>(header);
+        if (headerMesh) {
+
+            Ieee80211MeshFrame * frameAux = new Ieee80211MeshFrame();
+            uint64_t size = frameAux->getByteLength();
+            *frameAux = *((Ieee80211MeshFrame *) header);
+            frameAux->setByteLength(size);
+            frameAux->encapsulate(pkt);
+            frames.push_back(frameAux);
+        }
+        else
+        {
+            if (header->getWithSnap()) {
+                Ieee80211DataFrameWithSNAP * frameAux = new Ieee80211DataFrameWithSNAP();
+                uint64_t size = frameAux->getByteLength();
+                *frameAux = *((Ieee80211DataFrameWithSNAP*) header);
+                frameAux->setByteLength(size);
+                frameAux->encapsulate(pkt);
+                frames.push_back(frameAux);
+
+            }
+            else {
+                Ieee80211DataFrame * frameAux = new Ieee80211DataFrame();
+                uint64_t size = frameAux->getByteLength();
+                *frameAux = *((Ieee80211DataFrame*) header);
+                frameAux->setByteLength(size);
+                frameAux->encapsulate(pkt);
+                frames.push_back(frameAux);
+            }
+        }
+        delete header;
+    }
+    delete frame;
 }
 
 

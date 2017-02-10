@@ -91,6 +91,12 @@ class INET_API MacUtils
 
         virtual void setDirection(const Ieee80211Frame *frame);
         const bool getDirection(const MACAddress &, EulerAngles &, simtime_t&) const;
+
+        virtual void createMsduA(Ieee80211DataOrMgmtFrame * frame, cQueue &);
+        virtual bool isMsduA(Ieee80211DataOrMgmtFrame * frame);
+        virtual bool isMsduAMesh(Ieee80211DataOrMgmtFrame * frame);
+        virtual void getMsduAFrames(Ieee80211DataOrMgmtFrame * frame, std::vector<Ieee80211DataOrMgmtFrame *>&);
+
 };
 
 } // namespace ieee80211

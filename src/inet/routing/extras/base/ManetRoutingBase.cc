@@ -134,7 +134,9 @@ L3Address ManetRoutingBase::getRouterId() const {
 
 ManetRoutingBase::ManetRoutingBase()
 {
+#ifdef WITH_80211MESH
     locator = nullptr;
+#endif
     isRegistered = false;
     regPosition = false;
     mac_layer_ = false;

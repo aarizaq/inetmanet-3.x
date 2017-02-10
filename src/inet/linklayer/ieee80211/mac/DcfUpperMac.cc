@@ -85,6 +85,7 @@ void DcfUpperMac::initialize()
     fragmenter = check_and_cast<IFragmenter *>(inet::utils::createOne(par("fragmenterClass")));
     reassembly = check_and_cast<IReassembly *>(inet::utils::createOne(par("reassemblyClass")));
 
+    activeMsduA = par("useMpduA");
     WATCH(maxQueueSize);
     WATCH(fragmentationThreshold);
 }
@@ -153,11 +154,18 @@ void DcfUpperMac::upperFrameReceived(Ieee80211DataOrMgmtFrame *frame)
 void DcfUpperMac::enqueue(Ieee80211DataOrMgmtFrame *frame)
 {
     statistics->upperFrameReceived(frame);
-    if (frameExchange)
-        transmissionQueue.insert(frame);
+    if (frameExchange) {
+        if (activeMsduA)
+            utils->createMsduA(frame,transmissionQueue);
+        else
+            transmissionQueue.insert(frame);
+    }
     else
         startSendDataFrameExchange(frame, 0, AC_LEGACY);
 }
+
+
+
 
 void DcfUpperMac::lowerFrameReceived(Ieee80211Frame *frame)
 {
@@ -193,8 +201,17 @@ void DcfUpperMac::lowerFrameReceived(Ieee80211Frame *frame)
                 delete dataOrMgmtFrame;
             }
             else {
-                if (!utils->isFragment(dataOrMgmtFrame))
-                    mac->sendUp(dataOrMgmtFrame);
+                if (!utils->isFragment(dataOrMgmtFrame)) {
+                    std::vector<Ieee80211DataOrMgmtFrame *> frames;
+                    utils->getMsduAFrames(dataOrMgmtFrame, frames);
+                    if (frames.empty())
+                        mac->sendUp(dataOrMgmtFrame);
+                    else {
+                        for (unsigned int i = 0; i < frames.size(); i++)
+                            mac->sendUp(frames[i]);
+                        frames.clear();
+                    }
+                }
                 else {
                     Ieee80211DataOrMgmtFrame *completeFrame = reassembly->addFragment(dataOrMgmtFrame);
                     if (completeFrame)
