@@ -27,6 +27,7 @@
 
 #include <cstdlib>
 #include "inet/linklayer/dmamac/DMAMAC.h"
+#include "inet/linklayer/dmamac/DMAMACSink.h"
 #include "inet/common/INETUtils.h"
 #include "inet/common/INETMath.h"
 #include "inet/common/ModuleAccess.h"
@@ -40,12 +41,55 @@ namespace inet {
 Define_Module(DMAMAC);
 
 /* @brief To set the nodeId for the current node  */
-#define myId ((myMacAddr.getInt() & 0xFFFF)-1)
+#define myId ((myMacAddr.getInt() & 0xFFFF)-1-baseAddress)
+DMAMAC::LocatorTable DMAMAC::globalLocatorTable;
+DMAMAC::LocatorTable DMAMAC::sinkToClientAddress; //
+DMAMAC::LocatorTable DMAMAC::clientToSinkAddress;
+bool DMAMAC::twoLevels = false;
+
 
 /* @brief Got this from BaseLayer file, to catch the signal for hostState change */
 // const simsignal_t DMAMAC::catHostStateSignal = simsignal_t(MIXIM_SIGNAL_HOSTSTATE_NAME);
 
 /* @brief Initialize the MAC protocol using omnetpp.ini variables and initializing other necessary variables  */
+
+void DMAMAC::discoverIfNodeIsRelay() {
+    cModule * mod = gate("upperLayerOut")->getPathEndGate()->getOwnerModule();
+
+    if (mod == nullptr) {
+        sendUppperLayer = false;
+        return;
+    }
+
+    DMAMACSink * dmacSinkThis = dynamic_cast<DMAMACSink *>(this);
+    DMAMAC * dmacNeig = dynamic_cast<DMAMAC *>(mod);
+    DMAMACSink * dmacSinkNeigh = dynamic_cast<DMAMACSink *>(mod);
+
+    if (dmacNeig != nullptr) {
+        // relay node.
+        isRelayNode = true;
+    }
+
+    if (dmacSinkThis != nullptr)
+        isSink = true;
+
+    // seach errors.
+    if (dmacSinkThis != nullptr && dmacSinkNeigh !=nullptr)
+        cRuntimeError("Relay node with two sinks, it must be a sink plus a client");
+    if (dmacSinkThis == nullptr && dmacNeig == nullptr)
+        cRuntimeError("Relay node with two clients, it must be a sink plus a client");
+
+    if (!isRelayNode)
+        return; // nothing more to-do
+
+    // search the address
+
+    if (isSink)
+        sinkToClientAddress[myMacAddr] = dmacNeig->myMacAddr;
+    else
+        clientToSinkAddress[myMacAddr] = dmacNeig->myMacAddr;
+    twoLevels = true;
+}
 
 void DMAMAC::initializeMACAddress()
 {
@@ -53,13 +97,17 @@ void DMAMAC::initializeMACAddress()
 
     if (!strcmp(addrstr, "auto")) {
         // assign automatic address
-        myMacAddr = MACAddress::generateAutoAddress();
-
+        myMacAddr = MACAddress(MACAddress::generateAutoAddress().getInt() & 0xFFFF);
         // change module parameter from "auto" to concrete address
         par("address").setStringValue(myMacAddr.str().c_str());
     }
     else {
-        myMacAddr.setAddress(addrstr);
+        int add = atoi(addrstr);
+        myMacAddr = MACAddress(add);
+
+        if (par("baseAddress").longValue() > 0) {
+            baseAddress = par("baseAddress").longValue();
+        }
     }
 }
 
@@ -115,15 +163,18 @@ void DMAMAC::initialize(int stage)
         alertDelayMax       = par("alertDelayMax");                 // Tune the max delay in sending alert packets
         maxRadioSwitchDelay = par("maxRadioSwitchDelay");
         sinkAddress         = MACAddress( par("sinkAddress").longValue());
+        sinkAddressGlobal   = MACAddress( par("sinkAddressGlobal").longValue());
         isActuator          = par("isActuator");                    
         maxNodes            = par("maxNodes");
         maxChildren         = par("maxChildren");
         hasSensorChild      = par("hasSensorChild");                                     
-        double temp         = (par("macTypeInput").doubleValue());                       
+        double temp         = (par("macTypeInput").doubleValue());
+
         if(temp == 0)
             macType = DMAMAC::HYBRID;
         else
             macType = DMAMAC::TDMA;
+
         /*@}*/
 
         /* @brief @Statistics collection */
@@ -183,20 +234,29 @@ void DMAMAC::initialize(int stage)
 
 
         initializeMACAddress();
-        registerInterface();
 
-        EV << "My Mac address is" << myMacAddr << endl;
+        registerInterface();
 
         /* @brief copies all xml data for slots in steady and transient and neighbor data */
         slotInitialize();
+
+    }
+    else if(stage == INITSTAGE_LINK_LAYER) {
+
+        discoverIfNodeIsRelay(); // configure relay information
+
+        if (sinkAddress.isUnspecified() && !isSink)
+            throw cRuntimeError("Sink address undefined");
+
+        EV << "My Mac address is" << myMacAddr << endl;
+        globalLocatorTable[myMacAddr] = sinkAddress;
 
         frequentHopping = par("frequentHopping");
         if (frequentHopping) {
             hoppingTimer = new cMessage("DMAMAC_HOPPING_TIMEOUT");
             hoppingTimer->setKind(DMAMAC_HOPPING_TIMEOUT);
         }
-    }
-    else if(stage == INITSTAGE_LINK_LAYER) {
+
 
         EV << " QueueLength  = " << queueLength
         << " slotDuration  = "  << slotDuration
@@ -253,16 +313,27 @@ void DMAMAC::initialize(int stage)
 
         sendUppperLayer = par("sendUppperLayer"); // if false the module deletes the packet, other case, it sends the packet to the upper layer.
 
-        // initialize the random generator.
-        if (par("initialSeed").longValue() != -1)
-        {
-            randomGenerator = new CRandomMother(par("initialSeed").longValue());
-            setNextSequenceChannel();
+        if (twoLevels) {
+            reserveChannel = par("reserveChannel");
+            if (reserveChannel != -1) {
+                if (isSink) {
+                    if (myMacAddr == sinkAddressGlobal) {
+                        setChannel(reserveChannel);
+                    }
+                    else
+                        initializeRandomSeq();
+                }
+                else {
+                    if (sinkAddress == sinkAddressGlobal)
+                        setChannel(reserveChannel);
+                    else
+                        initializeRandomSeq();
+                }
+            }
         }
-        else
-        {
-            setChannel(par("initialChannel"));
-            randomGenerator = nullptr;
+        else {
+            reserveChannel = -1;
+            initializeRandomSeq();
         }
     }
 }
@@ -343,40 +414,74 @@ void DMAMAC::finish() {
 void DMAMAC::handleUpperPacket(cPacket* msg){
 
     EV_DEBUG << "Packet from Network layer" << endl;
-    if (sendUppperLayer) {
+    if (!sendUppperLayer) {
+        delete msg;
+        return;
+    }
 
+
+    DMAMACPkt *mac = nullptr;
+    DMAMACPkt *macUpper = dynamic_cast<DMAMACPkt *>(msg);
+    if (macUpper == nullptr) {
         /* Creating Mac packets here itself to have periodic style in our method
-         * Since application packet generated period had certain issues
-         * Folliwing code segement can be used for application layer generated packets
-         * @brief Casting upper layer message to mac packet format
-         * */
-        DMAMACPkt *mac = static_cast<DMAMACPkt *>(encapsMsg(static_cast<cPacket*>(msg)));
-        destAddr = mac->getDestAddr();
+         *              * Since application packet generated period had certain issues
+         *                           * Folliwing code segement can be used for application layer generated packets
+         *                                        * @brief Casting upper layer message to mac packet format
+         *                                                     * */
+        mac = static_cast<DMAMACPkt *>(encapsMsg(static_cast<cPacket*>(msg)));
         // @brief Sensor data goes to sink and is of type DMAMAC_DATA, setting it here 20 May
-        if (mac->getDestAddr() != sinkAddress)
-        {
-            throw cRuntimeError("Destination address is not sink address Dest: %s, Sink Addr %s", mac->getDestAddr().str().c_str(), sinkAddress.str().c_str());
+        if (!isSink) {
+            mac->setDestAddr(sinkAddress);
+            if (twoLevels) {
+                mac->setDestinationAddress(sinkAddressGlobal);
+            }
         }
-
-
-        mac->setKind(DMAMAC_DATA);
-        mac->setMySlot(mySlot);
-
-        // @brief Check if packet queue is full s
-        if (macPktQueue.size() < queueLength) {
-            macPktQueue.push_back(mac);
-            EV_DEBUG << " Data packet put in MAC queue with queueSize: "
-                            << macPktQueue.size() << endl;
-
-        } else {
-            // @brief Queue is full, message has to be deleted DMA-MAC
-            EV_DEBUG << "New packet arrived, but queue is FULL, so new packet is deleted\n";
-            // @brief Network layer unable to handle MAC_ERROR for now so just deleting
-            delete mac;
+        else {
+            if (twoLevels) {
+                destAddr = mac->getDestAddr();
+                mac->setDestinationAddress(destAddr);
+                // search for the appropriate sink
+                auto it = globalLocatorTable.find(destAddr);
+                if (it == globalLocatorTable.end())
+                    throw cRuntimeError("Node not found in the list globalLocatorTable");
+                if (it->second != myMacAddr) { //
+                    // search for the address of the relay
+                    auto itAux = sinkToClientAddress.find(destAddr);
+                    if (itAux == sinkToClientAddress.end())
+                        throw cRuntimeError("Node not found in the list of sinkToClientAddress");
+                    // check that this client address sink is this node
+                    auto itAux2 = globalLocatorTable.find(itAux->second);
+                    if (itAux2 == globalLocatorTable.end())
+                        throw cRuntimeError("Node not found in the list of globalLocatorTable");
+                    mac->setDestAddr(itAux->second);
+                }
+            }
         }
     }
-    else
-        delete msg;
+    else {
+        // the node must be relay to accept this
+        if (!isRelayNode)
+            throw cRuntimeError("Packet type received from upper layer not allowed");
+        // actualize the address and enque
+        mac = macUpper;
+        mac->setDestAddr(mac->getDestinationAddress());
+        mac->setSrcAddr(myMacAddr);
+    }
+
+    mac->setKind(DMAMAC_DATA);
+    mac->setMySlot(mySlot);
+
+    // @brief Check if packet queue is full s
+    if (macPktQueue.size() < queueLength) {
+        macPktQueue.push_back(mac);
+        EV_DEBUG << " Data packet put in MAC queue with queueSize: " << macPktQueue.size() << endl;
+    }
+    else {
+        // @brief Queue is full, message has to be deleted DMA-MAC
+        EV_DEBUG << "New packet arrived, but queue is FULL, so new packet is deleted\n";
+        // @brief Network layer unable to handle MAC_ERROR for now so just deleting
+        delete mac;
+    }
 }
 
 /*  @brief Handles the messages sent to self (mainly slotting messages)  */
@@ -385,7 +490,7 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
     if (hoppingTimer && msg == hoppingTimer && isSincronized) {
         scheduleAt(simTime()+slotDuration, hoppingTimer);
         // change channel
-        setRandSeq(simTime().raw());
+        setRandSeq(simTime().raw() + initialSeed);
         setNextSequenceChannel();
         return;
     }
@@ -450,7 +555,7 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
               destAddr = MACAddress(sinkAddress);
               mac->setDestAddr(destAddr);
               mac->setKind(DMAMAC_DATA);
-              mac->setByteLength(44);        
+              mac->setByteLength(44);
               macPktQueue.push_back(mac);
               //mac->setBitLength(headerLength);
          }
@@ -940,6 +1045,7 @@ MACFrameBase* DMAMAC::encapsMsg(cPacket* msg) {
 
     /* @brief Set the src address to own mac address (nic module getId()) */
     pkt->setSrcAddr(myMacAddr);
+    pkt->setSourceAddress(myMacAddr);
 
     /* @brief Encapsulate the MAC packet */
     pkt->encapsulate(check_and_cast<cPacket *>(msg));
@@ -983,6 +1089,7 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
         DMAMACSyncPkt * syncPk = dynamic_cast<DMAMACSyncPkt*>(msg);
         currentSlot = syncPk->getTimeSlot();
         numSlots = syncPk->getTdmaNumSlots();
+        delete msg;
         return;
     }
 
@@ -1024,10 +1131,13 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
         {
             lastDataPktSrcAddr = mac->getSrcAddr();
             /* @brief not sending forwarding packets up to application layer */
-            if (dest == myMacAddr && sendUppperLayer)
-                sendUp(decapsMsg(mac));
+            if (dest == myMacAddr && sendUppperLayer) {
+                if (isRelayNode)
+                    sendUp(mac);
+                else
+                    sendUp(decapsMsg(mac));
+            }
             else {
-
                 if (macPktQueue.size() < queueLength) {
                     macPktQueue.push_back(mac);
                     EV << " DATA packet from child node put in queue : "
@@ -1094,6 +1204,7 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
         }
         if (frequentHopping) {
             timeRef = notification->getTimeRef();
+            initialSeed = notification->getInitialSeed();
             if (hoppingTimer->isScheduled())
                 cancelEvent(hoppingTimer);
             scheduleAt(timeRef+slotDuration,hoppingTimer);
@@ -1634,6 +1745,22 @@ cObject *DMAMAC::setUpControlInfo(cMessage *const pMsg, const MACAddress& pSrcAd
     return (cCtrlInfo);
 }
 
+
+void DMAMAC::initializeRandomSeq() {
+    // initialize the random generator.
+    if (par("initialSeed").longValue() != -1)
+    {
+        randomGenerator = new CRandomMother(par("initialSeed").longValue());
+        setNextSequenceChannel();
+        initialSeed = par("initialSeed").longValue();
+    }
+    else
+    {
+        setChannel(par("initialChannel"));
+        randomGenerator = nullptr;
+    }
+}
+
 void DMAMAC::setChannel(const int &channel) {
     if (channel < 11 || channel > 26)
         return;
@@ -1668,8 +1795,12 @@ double DMAMAC::getBandwithChannel(const int &channel) {
 void DMAMAC::setNextSequenceChannel()
 {
     if (randomGenerator == nullptr)
-        return;
+       return;
+
     int c = randomGenerator->iRandom(11,26);
+    while (c == reserveChannel)
+        c = randomGenerator->iRandom(11,26);
+
     setChannel(c);
 }
 
@@ -1678,6 +1809,8 @@ void DMAMAC::setChannelWithSeq(const uint32_t *v)
     if (randomGenerator == nullptr)
         return;
     int c = randomGenerator->iRandom(11,26,v);
+    while (c == reserveChannel)
+        c = randomGenerator->iRandom(11,26);
     setChannel(c);
 }
 

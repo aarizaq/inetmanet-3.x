@@ -34,7 +34,7 @@
 
 namespace inet {
 
-#define myId ((myMacAddr.getInt() & 0xFFFF)-1)
+#define myId ((myMacAddr.getInt() & 0xFFFF)-1-baseAddress)
 
 Define_Module(DMAMACSink);
 
@@ -572,7 +572,13 @@ void DMAMACSink::handleLowerPacket(cPacket* msg) {
             lastDataPktSrcAddr = mac->getSrcAddr();
 
             /* @brief Not sending to application layer but sending to Actuators */
-            if (sendUppperLayer)
+            if (!mac->getDestinationAddress().isUnspecified() && mac->getDestinationAddress() != myMacAddr) {
+                if (isRelayNode)
+                    sendUp(mac);
+                else
+                    throw cRuntimeError("Packet to other destination but this node is not relay");
+            }
+            else if (sendUppperLayer)
                 sendUp(decapsMsg(mac));
             else
                 delete mac;

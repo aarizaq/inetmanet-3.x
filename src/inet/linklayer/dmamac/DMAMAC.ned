@@ -37,7 +37,8 @@ simple DMAMAC extends MACProtocolBase like IMACProtocol
         string address = default("auto"); // MAC address as hex string (12 hex digits), or
                                           // "auto". "auto" values will be replaced by
                                           // a generated MAC address in init stage 0.
-                                          
+
+        int baseAddress = default(-1);
         int mtu @unit("B") = default(300B);
     	 // Enable per module debug
         bool debug = default(false);
@@ -85,7 +86,9 @@ simple DMAMAC extends MACProtocolBase like IMACProtocol
         
         // Sink address 
         int sinkAddress=default(0);
-        
+                // Sink address 
+        int sinkAddressGlobal = default(sinkAddress);
+               
         // Radio switch delay from RX->SLEEP or TX->SLEEP, default value is of CC2420
         double maxRadioSwitchDelay @unit(s) = default(0.001792s);
         
@@ -108,6 +111,7 @@ simple DMAMAC extends MACProtocolBase like IMACProtocol
         int initialSeed = default(-1);
         bool sendUppperLayer = default(false); // if false the module deletes the packet, other case, it sends the packet to the upper layer.
         int initialChannel @enum(11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26) = default(11); // if the random seed is different than -1 it uses this value, in other case it uses the random sequence.
+        int reserveChannel = default(-1); // used only if two layer exist. 
         double initTime @unit(s) = default(1s); // this value is used to start the random hop frequency sequency.
         bool frequentHopping = default(false); 
         

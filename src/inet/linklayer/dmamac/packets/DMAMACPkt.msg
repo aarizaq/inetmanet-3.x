@@ -32,6 +32,10 @@ cplusplus {{
 namespace inet;
 
 class MACFrameBase;
+
+class noncobject MACAddress;
+
+
 //
 // Defines all fields of an DMAMAC frame (Extends MacPkt)
 //
@@ -43,6 +47,8 @@ packet DMAMACPkt extends MACFrameBase
     short type;
     short mySlot;      // the node's current slot number
     short ttl;         // Time to live
+    MACAddress sourceAddress;
+    MACAddress destinationAddress;
 }
 
 packet DMAMACSyncPkt extends DMAMACPkt

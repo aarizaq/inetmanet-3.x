@@ -70,6 +70,7 @@ using namespace power;
 class INET_API DMAMAC : public MACProtocolBase, public IMACProtocol
 {
     /* @brief Parts copied from LMAC definition.  */
+
     private:
         /* @brief Copy constructor is not allowed.*/
         DMAMAC(const DMAMAC&);
@@ -80,7 +81,9 @@ class INET_API DMAMAC : public MACProtocolBase, public IMACProtocol
     /* @brief Initializing variables. */
 
 	/* @brief DMAMAC inherits from the BaseMacLayer thus needs to be initialized */
-    public:DMAMAC():MACProtocolBase()
+    public:
+
+       DMAMAC():MACProtocolBase()
         , macPktQueue()
         , slotDuration(0)
         , mySlot(0)
@@ -94,7 +97,7 @@ class INET_API DMAMAC : public MACProtocolBase, public IMACProtocol
         , txPower(0)
         , nextEvent()
         , parent()
-    {}
+    {globalLocatorTable.clear(); sinkToClientAddress.clear();  clientToSinkAddress.clear();}
 
     /* @brief Signal for change in Hoststate mainly used for battery depletion or death of node */
     // const static simsignal_t catHostStateSignal;
@@ -158,8 +161,13 @@ class INET_API DMAMAC : public MACProtocolBase, public IMACProtocol
     virtual cPacket *decapsMsg(MACFrameBase *macPkt);
     cObject *setUpControlInfo(cMessage *const pMsg, const MACAddress& pSrcAddr);
 
+    virtual void discoverIfNodeIsRelay();
+
+    virtual void initializeRandomSeq();
+
 protected:
 
+    int baseAddress = 0;
     /** @brief The radio. */
       IRadio *radio = nullptr;
       IRadio::TransmissionState transmissionState = IRadio::TRANSMISSION_STATE_UNDEFINED;
@@ -331,6 +339,8 @@ protected:
     simtime_t timeRef; // reference time synchronized with the sink
     bool isSincronized = false; // If the node is synchronized
     bool frequentHopping = false;
+    int initialSeed;
+
     cMessage *hoppingTimer = nullptr;
 
     /* @brief Self messages for TDMA slot timer callbacks */
@@ -427,8 +437,22 @@ protected:
     /* @brief Tree topology routing stuff */
     /*@{*/
     long parent;                    // For upstream data   (sensorData, Alert)
+    MACAddress sinkAddressGlobal;
     MACAddress sinkAddress;
+    static bool twoLevels;
+    bool isSink = false;
+    bool isRelayNode = false;
+    int reserveChannel = -1;
     int alertLevel;
+
+    typedef std::map<MACAddress,MACAddress> LocatorTable;
+    LocatorTable locatorTable;
+    // to simplify the code will use global variables
+
+    static LocatorTable globalLocatorTable; // this table allow to know what node is connected with which sink.
+    // relay node functions, used to know the two address of the relay nodes, the client-sink and sink-client correspondence.
+    static LocatorTable sinkToClientAddress; //
+    static LocatorTable clientToSinkAddress;
 
     typedef struct routeTable{
         int nextHop;
