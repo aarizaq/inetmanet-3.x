@@ -73,14 +73,14 @@ void DMAMAC::discoverIfNodeIsRelay() {
     if (dmacSinkThis != nullptr)
         isSink = true;
 
+    if (!isRelayNode)
+        return; // nothing more to-do
+
     // seach errors.
     if (dmacSinkThis != nullptr && dmacSinkNeigh !=nullptr)
         cRuntimeError("Relay node with two sinks, it must be a sink plus a client");
     if (dmacSinkThis == nullptr && dmacNeig == nullptr)
         cRuntimeError("Relay node with two clients, it must be a sink plus a client");
-
-    if (!isRelayNode)
-        return; // nothing more to-do
 
     // search the address
 
@@ -209,7 +209,6 @@ void DMAMAC::initialize(int stage)
 
         /* @brief Other initializations */
         /*@{*/
-        maxNumSlots             = numSlotsSteady;
         nextSlot                = 0;
         txAttempts              = 0;                        // Number of retransmission attempts
         currentMacState         = STARTUP;
@@ -240,23 +239,27 @@ void DMAMAC::initialize(int stage)
         /* @brief copies all xml data for slots in steady and transient and neighbor data */
         slotInitialize();
 
+
+        if (numSlotsTransient != (int)receiveSlotTransient.size())
+            numSlotsTransient = (int)receiveSlotTransient.size();
+        if (numSlotsSteady   != (int)receiveSlotSteady.size())
+            numSlotsSteady   = (int)receiveSlotSteady.size();
+        maxNumSlots  = numSlotsSteady;
+
+        WATCH(actualChannel);
+        WATCH(currentSlot);
+        WATCH(mySlot);
     }
     else if(stage == INITSTAGE_LINK_LAYER) {
-
         discoverIfNodeIsRelay(); // configure relay information
+    }
+    else if(stage == INITSTAGE_LINK_LAYER_2) { // configure the rest of the link information
 
         if (sinkAddress.isUnspecified() && !isSink)
             throw cRuntimeError("Sink address undefined");
 
         EV << "My Mac address is" << myMacAddr << endl;
         globalLocatorTable[myMacAddr] = sinkAddress;
-
-        frequentHopping = par("frequentHopping");
-        if (frequentHopping) {
-            hoppingTimer = new cMessage("DMAMAC_HOPPING_TIMEOUT");
-            hoppingTimer->setKind(DMAMAC_HOPPING_TIMEOUT);
-        }
-
 
         EV << " QueueLength  = " << queueLength
         << " slotDuration  = "  << slotDuration
@@ -334,6 +337,12 @@ void DMAMAC::initialize(int stage)
         else {
             reserveChannel = -1;
             initializeRandomSeq();
+        }
+
+        frequentHopping = par("frequentHopping");
+        if (frequentHopping && randomGenerator) {
+            hoppingTimer = new cMessage("DMAMAC_HOPPING_TIMEOUT");
+            hoppingTimer->setKind(DMAMAC_HOPPING_TIMEOUT);
         }
     }
 }
@@ -515,7 +524,7 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
     /* @brief To change superframe when in slot 0 or at multiples of numSlotsTransient 
 	 * between transient parts, if required for emergency transient switch.
 	 */
-    if (currentSlot == 0 || (currentSlot % numSlotsTransient) == 0)
+    if (currentSlot == 0 || (currentSlot % receiveSlotTransient.size()) == 0)
     {
         /* @brief If we need to change to new superframe operational mode */
         if (changeMacMode)
@@ -568,7 +577,7 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
     EV << "Current <MAC> period = " << macPeriod << endl;
     /* @brief Printing number of slots for check  */
     EV << "nbSlots = " << numSlots << ", currentSlot = " << currentSlot << ", mySlot = " << mySlot << endl;
-    EV << "In this slot transmitting node is : " << transmitSlot[currentSlot] << endl;
+    //EV << "In this slot transmitting node is : " << transmitSlot[currentSlot] << endl;
     EV << "Current RadioState : " << radio->getRadioModeName(radio->getRadioMode())  << endl;
 
     bool recIsIdle = (radio->getReceptionState() == IRadio::RECEPTION_STATE_IDLE);
@@ -1202,7 +1211,7 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
             delete msg;
             return;
         }
-        if (frequentHopping) {
+        if (frequentHopping && randomGenerator) {
             timeRef = notification->getTimeRef();
             initialSeed = notification->getInitialSeed();
             if (hoppingTimer->isScheduled())
@@ -1472,21 +1481,16 @@ void DMAMAC::changeSuperFrame(macMode mode)
 
     if (mode == TRANSIENT)
     {
-        for(int i=0; i < numSlotsTransient; i ++)
-        {
-            transmitSlot[i] = transmitSlotTransient[i];
-            receiveSlot[i] = receiveSlotTransient[i];
-        }
+        transmitSlot = transmitSlotTransient;
+        receiveSlot = receiveSlotTransient;
+
         numSlots = numSlotsTransient;
         EV << "In mode : " << mode << " , and number of slots : " << numSlots << endl;
     }
     else if (mode == STEADY)
     {
-        for(int i=0; i < numSlotsSteady; i ++)
-        {
-            transmitSlot[i] = transmitSlotSteady[i];
-            receiveSlot[i] = receiveSlotSteady[i];
-        }
+        transmitSlot = transmitSlotSteady;
+        receiveSlot = receiveSlotSteady;
         numSlots = numSlotsSteady;
         EV << "In mode : " << mode << " , and number of slots : " << numSlots << endl;
     }
@@ -1529,7 +1533,7 @@ void DMAMAC::slotInitialize()
     {
        xmlBuffer = (*xmlListIterator);
        EV_DEBUG << " XML stuff " << xmlBuffer->getNodeValue() << endl;
-       transmitSlotSteady[i] = atoi(xmlBuffer->getNodeValue());
+       transmitSlotSteady.push_back(atoi(xmlBuffer->getNodeValue()));
     }
 
     xmlBuffer = xmlFileSteady->getFirstChildWithTag("receiveSlots");
@@ -1540,8 +1544,11 @@ void DMAMAC::slotInitialize()
     {
        xmlBuffer = (*xmlListIterator);
        EV_DEBUG << " XML stuff " << xmlBuffer->getNodeValue() << endl;
-       receiveSlotSteady[i] = atoi(xmlBuffer->getNodeValue());
+       receiveSlotSteady.push_back(atoi(xmlBuffer->getNodeValue()));
     }
+
+    if (receiveSlotSteady.size() != transmitSlotSteady.size())
+        throw cRuntimeError("receiveSlotSteady.size() != transmitSlotSteady.size()");
 
     /* @brief Transient superframe copied */
     xmlBuffer = xmlFileTransient->getFirstChildWithTag("transmitSlots");
@@ -1552,7 +1559,7 @@ void DMAMAC::slotInitialize()
     {
        xmlBuffer = (*xmlListIterator);
        EV_DEBUG << " XML stuff " << xmlBuffer->getNodeValue() << endl;
-       transmitSlotTransient[i] = atoi(xmlBuffer->getNodeValue());
+       transmitSlotTransient.push_back(atoi(xmlBuffer->getNodeValue()));
     }
 
     xmlBuffer = xmlFileTransient->getFirstChildWithTag("receiveSlots");
@@ -1563,22 +1570,40 @@ void DMAMAC::slotInitialize()
     {
        xmlBuffer = (*xmlListIterator);
        EV_DEBUG << " XML stuff " << xmlBuffer->getNodeValue() << endl;
-       receiveSlotTransient[i] = atoi(xmlBuffer->getNodeValue());
+       receiveSlotTransient.push_back(atoi(xmlBuffer->getNodeValue()));
+    }
+    if (receiveSlotTransient.size() != transmitSlotTransient.size())
+        throw cRuntimeError("receiveSlotTransient.size() != transmitSlotTransient.size()");
+
+// resize
+    if ((int)transmitSlotTransient.size() < numSlotsTransient) {
+        receiveSlotTransient.resize(numSlotsTransient);
+        transmitSlotTransient.resize(numSlotsTransient);
+    }
+
+    if ((int)receiveSlotSteady.size() < numSlotsSteady) {
+        receiveSlotSteady.resize(numSlotsSteady);
+        receiveSlotSteady.resize(numSlotsSteady);
     }
 
     /* @brief Initializing to prevent random values */
+    transmitSlot = transmitSlotTransient;
+    receiveSlot = receiveSlotTransient;
+    /*
     for(int i=0; i < maxNumSlots; i ++)
     {
         transmitSlot[i] = -1;
         receiveSlot[i] = -1;
     }
-
+*/
     /* @brief Starting with transient superframe */
+    /*
     for(int i=0; i < maxNumSlots; i ++)
     {
        transmitSlot[i] = transmitSlotTransient[i];
        receiveSlot[i] = receiveSlotTransient[i];
     }
+    */
 
     numSlots = numSlotsTransient;
 
@@ -1769,11 +1794,15 @@ void DMAMAC::setChannel(const int &channel) {
 
     EV << "Hop to channel :" << channel << endl;
     bubble("Changing channel");
-
     actualChannel = channel;
+
+    char buf[100];
+    sprintf(buf, "Channel: %d ", actualChannel);
+    getDisplayString().setTagArg("t", 0, buf);
+
     ConfigureRadioCommand *configureCommand = new ConfigureRadioCommand();
-    configureCommand->setBandwidth(Hz(channels[channel-11].bandwith));
-    configureCommand->setCarrierFrequency(Hz(channels[channel-11].mean));
+    configureCommand->setBandwidth(Hz(channels[actualChannel-11].bandwith));
+    configureCommand->setCarrierFrequency(Hz(channels[actualChannel-11].mean));
 
     cMessage *message = new cMessage("configureRadioMode", RADIO_C_CONFIGURE);
     message->setControlInfo(configureCommand);

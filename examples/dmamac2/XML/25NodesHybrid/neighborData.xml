@@ -33,12 +33,12 @@
 				<reachableNode>25</reachableNode>
 			</nextHop>
 			<actuators>
-				<id>5</id>
-				<id>7</id>
-				<id>14</id>
-				<id>20</id>
-				<id>21</id>
-				<id>23</id>
+				<id>34</id>
+				<id>36</id>
+				<id>43</id>
+				<id>49</id>
+				<id>50</id>
+				<id>52</id>
 			</actuators>
 		</node>
 		<node id="1">

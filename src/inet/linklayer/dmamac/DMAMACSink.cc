@@ -139,14 +139,43 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
         /* @brief Preparing packets for actuators set with destination address.*/
         int i=0;
 
-        while(macPktQueue.size() < queueLength)
-        {
-            DMAMACPkt* actuatorData = new DMAMACPkt();
-            destAddr = MACAddress(actuatorNodes[i]);
-            actuatorData->setDestAddr(destAddr);
-            macPktQueue.push_back(actuatorData);
-            actuatorData->setBitLength(headerLength);
-            i++;
+        if (!twoLevels) {
+            while(macPktQueue.size() < queueLength)
+            {
+                DMAMACPkt* actuatorData = new DMAMACPkt();
+                destAddr = MACAddress(actuatorNodes[i]);
+                actuatorData->setDestAddr(destAddr);
+                macPktQueue.push_back(actuatorData);
+                actuatorData->setBitLength(headerLength);
+                i++;
+            }
+        }
+        else {
+            // only the global sink send actuators
+            if (myMacAddr == sinkAddressGlobal) {
+                while(macPktQueue.size() < queueLength)
+                {
+                    DMAMACPkt* actuatorData = new DMAMACPkt();
+                    destAddr = MACAddress(actuatorNodes[i]);
+                    // search the node
+                    auto it = globalLocatorTable.find(destAddr);
+                    if (it == globalLocatorTable.end())
+                        throw cRuntimeError("Actuator error, Address not found in the locator table");
+
+                    actuatorData->setDestinationAddress(destAddr);
+                    actuatorData->setSourceAddress(myMacAddr);
+
+                    auto itAux = sinkToClientAddress.find(it->second);
+                    if (itAux == sinkToClientAddress.end())
+                        throw cRuntimeError("Actuator error, Address not found in the sinkToClientAddress table");
+
+                    actuatorData->setDestAddr(itAux->second);
+                    macPktQueue.push_back(actuatorData);
+                    actuatorData->setBitLength(headerLength);
+
+                    i++;
+                }
+            }
         }
     }
     /* To mark Alert period for MAC */
@@ -155,7 +184,7 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
 
     /* @brief Printing number of slots for debugging */
     EV << "nbSlots = " << numSlots << ", currentSlot = " << currentSlot << ", mySlot = " << mySlot << endl;
-    EV << "In this slot transmitting node is : " << transmitSlot[currentSlot] << endl;
+    //EV << "In this slot transmitting node is : " << transmitSlot[currentSlot] << endl;
     EV << "Current RadioMode : " << radio->getRadioMode() << "Current MacState " << currentMacState << endl;
     EV << "Number of steady superframes until now :" << nbSteady << endl;
 

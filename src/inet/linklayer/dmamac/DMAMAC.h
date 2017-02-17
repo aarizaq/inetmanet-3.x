@@ -324,12 +324,13 @@ protected:
     int numSlotsTransient;          // Number of slots in the transient superframe
     int numSlotsSteady;             // Number of slots in the steady superframe
     int currentSlot;
-    int transmitSlot[600];			// 150 normal slots with configuration 1x, 2x, 3x and 4x we have upto 600 slots
-    int receiveSlot[600];
-    int transmitSlotSteady[600];
-    int receiveSlotSteady[600];
-    int transmitSlotTransient[600];
-    int receiveSlotTransient[600];
+    typedef std::vector<int> Slots;
+    Slots transmitSlot;			// 150 normal slots with configuration 1x, 2x, 3x and 4x we have upto 600 slots
+    Slots receiveSlot;
+    Slots transmitSlotSteady;
+    Slots receiveSlotSteady;
+    Slots transmitSlotTransient;
+    Slots receiveSlotTransient;
     int randomNumber;               // To generate random number
     int maxNodes;                   // To know how much nodes in the network required for initializing slots from XML
     int maxChildren;
