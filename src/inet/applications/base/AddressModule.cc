@@ -23,12 +23,16 @@ namespace inet {
 
 simsignal_t AddressModule::changeAddressSignalInit;
 simsignal_t AddressModule::changeAddressSignalDelete;
+
+Register_Class(AddressModule)
 AddressModule::AddressModule()
 {
     // TODO Auto-generated constructor stub
     emitSignal = false;
     isInitialized = false;
     myAddress.set(IPv4Address::UNSPECIFIED_ADDRESS);
+    changeAddressSignalInit = getSimulation()->getSystemModule()->registerSignal("changeAddressSignalInit");
+    changeAddressSignalDelete = getSimulation()->getSystemModule()->registerSignal("changeAddressSignalDelete");
 }
 
 AddressModule::~AddressModule()
@@ -84,8 +88,6 @@ void AddressModule::initModule(bool mode)
 
     if (emitSignal)
     {
-        changeAddressSignalInit = owner->registerSignal("changeAddressSignalInit");
-        changeAddressSignalDelete = owner->registerSignal("changeAddressSignalDelete");
         getSimulation()->getSystemModule()->subscribe(changeAddressSignalInit, this);
         getSimulation()->getSystemModule()->subscribe(changeAddressSignalDelete, this);
         if (simTime() > 0)

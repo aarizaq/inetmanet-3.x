@@ -66,6 +66,8 @@ class INET_API DcfUpperMac : public cSimpleModule, public IUpperMac, protected I
         int maxQueueSize;
         int fragmentationThreshold = 2346;
 
+        bool activeMsduA = false;
+
         cQueue transmissionQueue;
         IFrameExchange *frameExchange = nullptr;
         IDuplicateDetector *duplicateDetection = nullptr;

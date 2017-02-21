@@ -113,7 +113,7 @@ void printNotificationBanner(simsignal_t signalID, const cObject *obj)
     EV << "** Notification at T=" << simTime()
        << " to " << getSimulation()->getContextModule()->getFullPath() << ": "
        << notificationCategoryName(signalID) << " "
-       << (obj ? obj->STR_COMPAT() : "") << "\n";
+       << (obj ? obj->str() : "") << "\n";
 }
 
 } // namespace inet
