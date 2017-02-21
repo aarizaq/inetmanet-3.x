@@ -68,6 +68,7 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
         // change channel
         setRandSeq(simTime().raw());
         setNextSequenceChannel();
+        refreshDisplay();
         return;
     }
 
@@ -164,6 +165,7 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
 
                     actuatorData->setDestinationAddress(destAddr);
                     actuatorData->setSourceAddress(myMacAddr);
+                    actuatorData->setSrcAddr(myMacAddr);
 
                     auto itAux = sinkToClientAddress.find(it->second);
                     if (itAux == sinkToClientAddress.end())
@@ -418,6 +420,7 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
             EV << "WARNING: unknown timer callback " << msg->getKind() << endl;
         }
     }
+    refreshDisplay();
 }
 
 /* @brief
@@ -660,6 +663,7 @@ void DMAMACSink::handleLowerPacket(cPacket* msg) {
         /* @brief Deleting alert */
         delete alert;
     }
+    refreshDisplay();
 }
 
 /* @brief

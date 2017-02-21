@@ -23,12 +23,10 @@
 		<value>0</value>
 		<value>0</value>
 		<value>0</value>
-		<value>0</value>
 		<value>1</value>
 		<value>1</value>
 		<value>1</value>
 		<value>1</value>
-	    <value>0</value>
 		<value>0</value>
 		<value>0</value>
 		<value>0</value>
@@ -40,34 +38,11 @@
 		<value>0</value>
 		<value>0</value>
 		<value>0</value>
-		<value>0</value>
-		<value>0</value>
-		<value>0</value>
-		<value>0</value>
-		<value>0</value>
-		<value>0</value>
-		<value>0</value>	
-		<value>0</value>
-		<value>0</value>
-		<value>0</value>
-		<value>1</value>
-		<value>1</value>
-		<value>1</value>
-		<value>1</value>
-		<value>102</value>
-		<value>102</value>
-		<value>102</value>
-		<value>102</value>
-		<value>102</value>
-		<value>102</value>
-		<value>102</value>
-		<value>102</value>
 		<value>102</value>
 		<value>102</value>
 		<value>102</value>
 		<value>102</value>
 		<value>102</value>		
-		<value>104</value>
 		<value>102</value>
 		<value>102</value>
 		<value>102</value>
@@ -75,12 +50,7 @@
 		<value>102</value>
 		<value>102</value>
 		<value>102</value>
-		<value>102</value>
-		<value>102</value>
-		<value>102</value>
-		<value>102</value>
-		<value>102</value>
-		<value>102</value>		
+        <value>104</value>			
 	</transmitSlots>
 	<receiveSlots>
 		<value>103</value>	
@@ -119,23 +89,6 @@
 		<value>0</value>
 		<value>0</value>
 		<value>0</value>
-		<value>0</value>
-		<value>0</value>
-		<value>0</value>
-		<value>0</value>
-		<value>0</value>
-		<value>0</value>
-		<value>0</value>
-		<value>0</value>
-		<value>0</value>
-		<value>0</value>
-		<value>0</value>
-		<value>0</value>
-		<value>0</value>
-		<value>1</value>
-		<value>1</value>
-		<value>1</value>
-		<value>1</value>
 		<value>102</value>
 		<value>102</value>
 		<value>102</value>
@@ -148,20 +101,7 @@
 		<value>102</value>
 		<value>102</value>
 		<value>102</value>
-		<value>102</value>
-		<value>102</value>
-		<value>102</value>
-		<value>102</value>
-		<value>102</value>
-		<value>102</value>
-		<value>102</value>
-		<value>102</value>
-		<value>102</value>
-		<value>102</value>
-		<value>102</value>
-		<value>102</value>
-		<value>102</value>
-		<value>102</value>		
+		<value>102</value>	
 	    <value>103</value>
 	</receiveSlots>
 </root>

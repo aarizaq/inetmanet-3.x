@@ -491,6 +491,7 @@ void DMAMAC::handleUpperPacket(cPacket* msg){
         // @brief Network layer unable to handle MAC_ERROR for now so just deleting
         delete mac;
     }
+    refreshDisplay();
 }
 
 /*  @brief Handles the messages sent to self (mainly slotting messages)  */
@@ -501,6 +502,7 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
         // change channel
         setRandSeq(simTime().raw() + initialSeed);
         setNextSequenceChannel();
+        refreshDisplay();
         return;
     }
     else if (hoppingTimer && msg == hoppingTimer && !isSincronized) {
@@ -886,6 +888,7 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
             EV << "WARNING: unknown timer callback at Self-Message" << msg->getKind() << endl;
         }
     }
+    refreshDisplay();
 }
 
 /* @brief
@@ -1309,6 +1312,7 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
         if (radio->getRadioMode() == IRadio::RADIO_MODE_RECEIVER)
             radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
     }
+    refreshDisplay();
 }
 
 /* @brief
@@ -1576,12 +1580,12 @@ void DMAMAC::slotInitialize()
         throw cRuntimeError("receiveSlotTransient.size() != transmitSlotTransient.size()");
 
 // resize
-    if ((int)transmitSlotTransient.size() < numSlotsTransient) {
+    if ((int)transmitSlotTransient.size() > numSlotsTransient) {
         receiveSlotTransient.resize(numSlotsTransient);
         transmitSlotTransient.resize(numSlotsTransient);
     }
 
-    if ((int)receiveSlotSteady.size() < numSlotsSteady) {
+    if ((int)receiveSlotSteady.size() > numSlotsSteady) {
         receiveSlotSteady.resize(numSlotsSteady);
         receiveSlotSteady.resize(numSlotsSteady);
     }
@@ -1786,6 +1790,12 @@ void DMAMAC::initializeRandomSeq() {
     }
 }
 
+void DMAMAC::refreshDisplay() {
+    char buf[150];
+    sprintf(buf, "Current Mac mode Mode :%i Current mac State %d Channel: %d Slot: %d MySlot %d",currentMacMode,currentMacState, actualChannel,currentSlot,mySlot);
+    getDisplayString().setTagArg("t", 0, buf);
+}
+
 void DMAMAC::setChannel(const int &channel) {
     if (channel < 11 || channel > 26)
         return;
@@ -1795,10 +1805,6 @@ void DMAMAC::setChannel(const int &channel) {
     EV << "Hop to channel :" << channel << endl;
     bubble("Changing channel");
     actualChannel = channel;
-
-    char buf[100];
-    sprintf(buf, "Channel: %d ", actualChannel);
-    getDisplayString().setTagArg("t", 0, buf);
 
     ConfigureRadioCommand *configureCommand = new ConfigureRadioCommand();
     configureCommand->setBandwidth(Hz(channels[actualChannel-11].bandwith));

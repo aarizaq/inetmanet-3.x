@@ -516,6 +516,7 @@ protected:
 
     CRandomMother *randomGenerator = nullptr;
 public:
+    virtual void refreshDisplay();
     virtual void setChannel(const int &channel);
     virtual int getChannel(){return (actualChannel);}
     virtual double getCarrierChannel(const int &channel);
