@@ -1132,6 +1132,12 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
     DMAMACSinkPkt *notification  = dynamic_cast<DMAMACSinkPkt *>(msg);
     if (notification != nullptr)
     {
+        if (notification->getSrcAddr() != sinkAddress) {
+            // ignore
+            delete msg;
+            return;
+        }
+        // TODO: Synchronize the node with the data in notification
         int val = (notification->getNumSlot()+1)%numSlots;
         if (val != currentSlot) {
             // resync
