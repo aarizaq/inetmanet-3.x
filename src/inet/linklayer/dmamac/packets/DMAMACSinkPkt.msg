@@ -43,5 +43,7 @@ packet DMAMACSinkPkt extends MACFrameBase
     int numSlots;
     simtime_t timeRef;
     int initialSeed;
+    int numSlot;
+    int macMode;
 }
 

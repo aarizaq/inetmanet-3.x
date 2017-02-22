@@ -83,6 +83,8 @@ class INET_API DMAMAC : public MACProtocolBase, public IMACProtocol
 	/* @brief DMAMAC inherits from the BaseMacLayer thus needs to be initialized */
     public:
 
+       bool shutDown = false;
+
        DMAMAC():MACProtocolBase()
         , macPktQueue()
         , slotDuration(0)
@@ -300,6 +302,15 @@ protected:
     bool sendAlertMessage;          // To set sending of AlertMessage after delay 
     bool checkForSuperframeChange;  // For checking when alert packets collide and result in no superframe change
 	
+    struct nodeStatus {
+        macStates currentMacState;
+        macMode previousMacMode;
+        macMode currentMacMode;
+        int currentSlot;
+    };
+    static std::map<uint64_t,nodeStatus> slotMap; // debug
+
+
     /* @brief To declare if the node is an actuator, inputtaken from ini file */
     bool isActuator;
 

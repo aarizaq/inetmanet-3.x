@@ -63,6 +63,11 @@ void DMAMACSink::initialize(int stage)
 /* @brief Handles the messages sent to self, mainly timers to specify slots */
 void DMAMACSink::handleSelfMessage(cMessage* msg)
 {
+
+    if (shutDown) {
+        delete msg;
+    }
+
     if (hoppingTimer && msg == hoppingTimer) {
         scheduleAt(simTime()+slotDuration, hoppingTimer);
         // change channel
@@ -431,6 +436,10 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
 void DMAMACSink::receiveSignal(cComponent *source, simsignal_t signalID, long value, cObject *details)
 {
     Enter_Method_Silent();
+    if (shutDown) {
+        return;
+    }
+
     if (signalID == IRadio::radioModeChangedSignal) {
             IRadio::RadioMode radioMode = (IRadio::RadioMode)value;
             if (radioMode == IRadio::RADIO_MODE_TRANSMITTER) {
@@ -540,6 +549,8 @@ void DMAMACSink::handleRadioSwitchedToTX() {
             notification->setKind(DMAMAC_NOTIFICATION);
             notification->setTimeRef(timeRef);
             notification->setByteLength(11);
+            notification->setNumSlot(currentSlot);
+            notification->setMacMode(currentMacMode);
 
             attachSignal(notification);
             /* @brief if transient, check for stateProbability otherwise state-switch will be initiated by sensor nodes. */
@@ -583,6 +594,11 @@ void DMAMACSink::handleRadioSwitchedToRX() {
  * was received correct and checks if it was meant for us. 
  */
 void DMAMACSink::handleLowerPacket(cPacket* msg) {
+
+    if (shutDown) {
+        delete msg;
+        return;
+    }
 
     if (msg->hasBitError()) {
         EV << "Received " << msg << " contains bit errors or collision, dropping it\n";
@@ -799,7 +815,7 @@ void DMAMACSink::sinkInitialize()
     for(j=0;j<maxNodes;j++)
         actuatorNodes[j]=-1;
 
-    sprintf(id, "%d", myId);
+    sprintf(id, "%lld", myId);
 
     xmlBuffer = rootElement->getElementById(id);
 

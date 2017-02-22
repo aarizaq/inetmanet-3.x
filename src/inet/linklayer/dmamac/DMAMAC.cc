@@ -45,6 +45,8 @@ Define_Module(DMAMAC);
 DMAMAC::LocatorTable DMAMAC::globalLocatorTable;
 DMAMAC::LocatorTable DMAMAC::sinkToClientAddress; //
 DMAMAC::LocatorTable DMAMAC::clientToSinkAddress;
+std::map<uint64_t,DMAMAC::nodeStatus> DMAMAC::slotMap;
+
 bool DMAMAC::twoLevels = false;
 
 
@@ -344,6 +346,15 @@ void DMAMAC::initialize(int stage)
             hoppingTimer = new cMessage("DMAMAC_HOPPING_TIMEOUT");
             hoppingTimer->setKind(DMAMAC_HOPPING_TIMEOUT);
         }
+        nodeStatus status;
+        status.currentMacMode = currentMacMode;
+        status.currentMacState = currentMacState;
+        status.previousMacMode = previousMacMode;
+        status.currentSlot = currentSlot;
+
+        slotMap[myMacAddr.getInt()] = status;
+
+
     }
 }
 
@@ -422,6 +433,11 @@ void DMAMAC::finish() {
  */
 void DMAMAC::handleUpperPacket(cPacket* msg){
 
+    if (shutDown) {
+        delete msg;
+        return;
+    }
+
     EV_DEBUG << "Packet from Network layer" << endl;
     if (!sendUppperLayer) {
         delete msg;
@@ -497,6 +513,10 @@ void DMAMAC::handleUpperPacket(cPacket* msg){
 /*  @brief Handles the messages sent to self (mainly slotting messages)  */
 void DMAMAC::handleSelfMessage(cMessage* msg)
 {
+    if (shutDown) {
+        return;
+    }
+
     if (hoppingTimer && msg == hoppingTimer && isSincronized) {
         scheduleAt(simTime()+slotDuration, hoppingTimer);
         // change channel
@@ -899,6 +919,10 @@ void DMAMAC::receiveSignal(cComponent *source, simsignal_t signalID, long value,
 {
 
     Enter_Method_Silent();
+    if (shutDown) {
+        return;
+    }
+
     if (signalID == IRadio::radioModeChangedSignal) {
             IRadio::RadioMode radioMode = (IRadio::RadioMode)value;
             if (radioMode == IRadio::RADIO_MODE_TRANSMITTER) {
@@ -1103,6 +1127,17 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
         numSlots = syncPk->getTdmaNumSlots();
         delete msg;
         return;
+    }
+
+    DMAMACSinkPkt *notification  = dynamic_cast<DMAMACSinkPkt *>(msg);
+    if (notification != nullptr)
+    {
+        int val = (notification->getNumSlot()+1)%numSlots;
+        if (val != currentSlot) {
+            // resync
+            throw cRuntimeError(" Slot mismatch");
+        }
+
     }
 
     if(currentMacState == WAIT_DATA)
@@ -1629,7 +1664,7 @@ void DMAMAC::slotInitialize()
     cXMLElement* rootElement = par("neighborData").xmlValue();
 
     char id[maxNodes];
-    sprintf(id, "%d", myId);
+    sprintf(id, "%lld", myId);
     EV << " My ID is : " << myId << endl;
 
 
@@ -1731,6 +1766,13 @@ bool DMAMAC::handleNodeShutdown(IDoneCallback *doneCallback)
     cancelEvent(alertTimeout);
     if (hoppingTimer)
         cancelEvent(hoppingTimer);
+    MacPktQueue::iterator it1;
+    for(it1 = macPktQueue.begin(); it1 != macPktQueue.end(); ++it1) {
+        delete (*it1);
+    }
+    macPktQueue.clear();
+    shutDown = true;
+    radio->setRadioMode(IRadio::RADIO_MODE_OFF);
     return true;
 }
 
@@ -1753,6 +1795,13 @@ void DMAMAC::handleNodeCrash()
     cancelEvent(alertTimeout);
     if (hoppingTimer)
         cancelEvent(hoppingTimer);
+    MacPktQueue::iterator it1;
+    for(it1 = macPktQueue.begin(); it1 != macPktQueue.end(); ++it1) {
+        delete (*it1);
+    }
+    macPktQueue.clear();
+    shutDown = true;
+    radio->setRadioMode(IRadio::RADIO_MODE_OFF);
 }
 
 
@@ -1791,6 +1840,21 @@ void DMAMAC::initializeRandomSeq() {
 }
 
 void DMAMAC::refreshDisplay() {
+    nodeStatus status;
+    status.currentMacMode = currentMacMode;
+    status.currentMacState = currentMacState;
+    status.previousMacMode = previousMacMode;
+    status.currentSlot = currentSlot;
+
+    slotMap[myMacAddr.getInt()] = status;
+
+    // check sink slot
+ /*   auto it = slotMap.find(sinkAddress.getInt());
+    if (it->second.currentSlot != currentSlot) {
+        // check status
+        printf("");
+    }*/
+
     char buf[150];
     sprintf(buf, "Current Mac mode Mode :%i Current mac State %d Channel: %d Slot: %d MySlot %d",currentMacMode,currentMacState, actualChannel,currentSlot,mySlot);
     getDisplayString().setTagArg("t", 0, buf);
