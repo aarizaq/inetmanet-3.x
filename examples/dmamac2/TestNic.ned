@@ -54,11 +54,6 @@ network TestDmaMac2
                 @display("r=,,#707070;p=169,66");
         }
 
-//      relay2: DMAMACNodeRelay {
-//            parameters:
-//                @display("r=,,#707070;p=169,66");
-//        }
-
         relay1: DMAMACNodeRelay {
             parameters:
                 @display("r=,,#707070;p=169,119");
@@ -68,15 +63,12 @@ network TestDmaMac2
             parameters:
                 @display("r=,,#707070;p=250,93");
         }
-//        relay2: DMAMACNodeRelay {
-//            parameters:
-//                @display("r=,,#707070;p=169,66");
-//        }
-//
-//        
-//        node2[numHosts]: DMAMACNodeNic {
-//            parameters:
-//                @display("r=,,#707070;p=250,93");
-//        }
-
+        relay2: DMAMACNodeRelay {
+            parameters:
+                @display("r=,,#707070;p=169,66");
+        }
+        node2[numHosts]: DMAMACNodeNic {
+            parameters:
+                @display("r=,,#707070;p=250,93");
+       }
 }
