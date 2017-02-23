@@ -111,6 +111,18 @@ void DMAMAC::initializeMACAddress()
             baseAddress = par("baseAddress").longValue();
         }
     }
+    int add = atoi(par("StartAddressRange"));
+    startAddressRange = MACAddress(add);
+    add = atoi(par("EndAddressRange"));
+    endAddressRange = MACAddress(add);
+    if (startAddressRange == endAddressRange) {
+        endAddressRange = MACAddress::UNSPECIFIED_ADDRESS;
+        startAddressRange = MACAddress::UNSPECIFIED_ADDRESS;
+    }
+    else if ((startAddressRange.isUnspecified() && !endAddressRange.isUnspecified()) || (!startAddressRange.isUnspecified() && endAddressRange.isUnspecified())) {
+        endAddressRange = MACAddress::UNSPECIFIED_ADDRESS;
+        startAddressRange = MACAddress::UNSPECIFIED_ADDRESS;
+    }
 }
 
 InterfaceEntry *DMAMAC::createInterfaceEntry()
@@ -1109,6 +1121,121 @@ void DMAMAC::handleRadioSwitchedToRX() {
  * Handles received Mac packets from Physical layer. Asserts if the packet
  * was received correct and checks if it was meant for us. 
  */
+void DMAMAC::resyncr(const int &slot,const macMode &mode, const bool &changeMacMode)
+{
+
+    bool resync = false;
+    if (currentMacMode != mode && !changeMacMode)
+    {
+       // if (testing)
+       //     throw cRuntimeError("Synchronization problem, Mac Mode are different");
+
+        currentMacMode = mode;
+        if (currentMacMode == TRANSIENT) {
+            numSlots = numSlotsTransient;
+            transmitSlot = transmitSlotTransient;         // 150 normal slots with configuration 1x, 2x, 3x and 4x we have upto 600 slots
+            receiveSlot = receiveSlotTransient;
+        }
+        else {
+            transmitSlot = transmitSlotSteady;         // 150 normal slots with configuration 1x, 2x, 3x and 4x we have upto 600 slots
+            receiveSlot = receiveSlotSteady;
+            numSlots = numSlotsSteady;
+        }
+        resync = true;
+    }
+
+    int val = (slot+1)%numSlots;
+    if (val != currentSlot || resync) {
+        //if (testing)
+        //    throw cRuntimeError("Synchronization problem, slots number mismatch");
+        // resync
+        resync = true;
+        currentSlot = val;
+        currentMacState = WAIT_NOTIFICATION;
+        if (waitAck->isScheduled())
+            cancelEvent(waitAck);
+        if (waitData->isScheduled())
+            cancelEvent(waitData);
+        if (waitData->isScheduled())
+            cancelEvent(setSleep);
+        if (waitAlert->isScheduled())
+            cancelEvent(waitAlert);
+        if (waitNotification->isScheduled())
+            cancelEvent(waitNotification);
+        if (sendData->isScheduled())
+            cancelEvent(sendData);
+        if (sendAck->isScheduled())
+            cancelEvent(sendAck);
+        if (scheduleAlert->isScheduled())
+            cancelEvent(scheduleAlert);
+        if (sendAlert->isScheduled())
+            cancelEvent(sendAlert);
+        if (sendNotification->isScheduled())
+            cancelEvent(sendNotification);
+        if (ackReceived->isScheduled())
+            cancelEvent(ackReceived);
+        if (ackTimeout->isScheduled())
+            cancelEvent(ackTimeout);
+        if (dataTimeout->isScheduled())
+            cancelEvent(dataTimeout);
+        if (alertTimeout->isScheduled())
+            cancelEvent(alertTimeout);
+        if (setSleep->isScheduled())
+            cancelEvent(setSleep);
+
+    }
+    if (!resync)
+        return;
+
+    if (val == mySlot)
+    {
+        if(slot < numSlotsTransient)
+        {
+            EV << "Immediate next Slot is my Send Slot, getting ready to transmit" << endl;
+            scheduleAt(simTime(), sendData);
+        }
+        else if(slot >= numSlotsTransient)
+        {
+            EV << "Immediate next Slot is my alert Transmit Slot, getting ready to send" << endl;
+            scheduleAt(simTime(), scheduleAlert);
+        }
+    }
+    else if (transmitSlot[val] == alertLevel && !isActuator)
+    {
+        EV << "Immediate next Slot is my alert Transmit Slot, getting ready to send" << endl;
+        scheduleAt(simTime(), scheduleAlert);
+    }
+    else if (receiveSlot[val] == mySlot)
+    {
+        if(slot < numSlotsTransient)
+        {
+            EV << "Immediate next Slot is my Receive Slot, getting ready to receive" << endl;
+            scheduleAt(simTime(), waitData);
+        }
+        else if(slot >= numSlotsTransient)
+        {
+            EV << "Immediate next Slot is my alert Receive Slot, getting ready to receive" << endl;
+            scheduleAt(simTime(), waitAlert);
+        }
+    }
+    else if (receiveSlot[val] == alertLevel)
+    {
+        EV << "Immediate next Slot is my alert Receive Slot, getting ready to receive" << endl;
+        scheduleAt(simTime(), waitAlert);
+    }
+    else if (receiveSlot[val] == BROADCAST_RECEIVE)
+    {
+
+        EV << "Immediate next Slot is Notification Slot, getting ready to receive" << endl;
+        scheduleAt(simTime(), waitNotification);
+    }
+    else
+    {
+        EV << "Immediate next Slot is Sleep slot.\n";
+        scheduleAt(simTime(), setSleep);
+    }
+}
+
 void DMAMAC::handleLowerPacket(cPacket* msg) {
 
     if (msg->hasBitError()) {
@@ -1137,18 +1264,20 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
             delete msg;
             return;
         }
-        // TODO: Synchronize the node with the data in notification
-        int val = (notification->getNumSlot()+1)%numSlots;
-        if (val != currentSlot) {
-            // resync
-            throw cRuntimeError(" Slot mismatch");
-        }
+        resyncr(notification->getNumSlot(),static_cast<macMode>(notification->getMacMode()), notification->getChangeMacMode());
+    }
 
+    DMAMACPkt * dmapkt   = dynamic_cast<DMAMACPkt *>(msg);
+    if (dmapkt !=nullptr && !endAddressRange.isUnspecified()) {
+        if (dmapkt->getSrcAddr() < startAddressRange || dmapkt->getSrcAddr() > endAddressRange) {
+            delete msg;
+            return;
+        }
     }
 
     if(currentMacState == WAIT_DATA)
     {
-        DMAMACPkt *mac  = dynamic_cast<DMAMACPkt *>(msg);
+        DMAMACPkt *mac  = dmapkt;
         if (mac == nullptr)
         {
             delete msg;
@@ -1675,6 +1804,8 @@ void DMAMAC::slotInitialize()
 
 
     xmlBuffer = rootElement->getElementById(id);
+    if (xmlBuffer == nullptr)
+        throw cRuntimeError("Error in configuration file neighborData, id = %s not found",id);
 
     alertLevel = atoi(xmlBuffer->getFirstChildWithTag("level")->getNodeValue());
     EV << " Node is at alertLevel " << alertLevel << endl;

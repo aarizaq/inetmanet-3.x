@@ -169,6 +169,10 @@ class INET_API DMAMAC : public MACProtocolBase, public IMACProtocol
 
 protected:
 
+    bool testing = true;
+
+    MACAddress startAddressRange;
+    MACAddress endAddressRange;
     int baseAddress = 0;
     /** @brief The radio. */
       IRadio *radio = nullptr;
@@ -491,6 +495,7 @@ protected:
     /* @brief Defining the static slot schedule from xml files which will be inherited by DMAMACSink without changes*/
     void slotInitialize();
     // channels
+    virtual void resyncr(const int &, const macMode &, const bool &);
 protected:
 
     //
