@@ -46,6 +46,7 @@ DMAMAC::LocatorTable DMAMAC::globalLocatorTable;
 DMAMAC::LocatorTable DMAMAC::sinkToClientAddress; //
 DMAMAC::LocatorTable DMAMAC::clientToSinkAddress;
 std::map<uint64_t,DMAMAC::nodeStatus> DMAMAC::slotMap;
+std::map<uint64_t,int> DMAMAC::slotInfo;
 
 bool DMAMAC::twoLevels = false;
 
@@ -365,6 +366,7 @@ void DMAMAC::initialize(int stage)
         status.currentSlot = currentSlot;
 
         slotMap[myMacAddr.getInt()] = status;
+        slotInfo[myMacAddr.getInt()] = mySlot;
 
 
     }
@@ -1001,6 +1003,24 @@ void DMAMAC::handleRadioSwitchedToTX() {
 
         if(currentMacState == SEND_DATA)
         {
+            if (par("sendDisorganized")) {
+                // check reception slot
+                int rslot = receiveSlot[currentSlot];
+                for (auto it = macPktQueue.begin(); it != macPktQueue.end(); ++it) {
+                    // it is cheat, but it is possible to know the slot of every node beacuse is ofline configuration
+                    auto itAux = slotInfo.find((*it)->getDestAddr().getInt());
+                    if (itAux->second == rslot) {
+                        if (it != macPktQueue.begin()) {
+                            // move to the front
+                            DMAMACPkt* pkt = (*it);
+                            it = macPktQueue.erase(it);
+                            macPktQueue.push_front(pkt);
+                            break;
+                        }
+                    }
+                }
+            }
+
             EV << "Sending Data packet down " << endl;
             DMAMACPkt* data = macPktQueue.front()->dup();
 

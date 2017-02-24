@@ -116,7 +116,10 @@ simple DMAMAC extends MACProtocolBase like IMACProtocol
         int initialChannel @enum(11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26) = default(11); // if the random seed is different than -1 it uses this value, in other case it uses the random sequence.
         int reserveChannel = default(-1); // used only if two layer exist. 
         double initTime @unit(s) = default(1s); // this value is used to start the random hop frequency sequency.
-        bool frequentHopping = default(false); 
+        bool frequentHopping = default(false);
+        
+        
+        bool sendDisorganized = default(false);
         
     	@class("DMAMAC");
 }

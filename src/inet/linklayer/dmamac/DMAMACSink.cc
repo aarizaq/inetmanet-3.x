@@ -497,82 +497,99 @@ void DMAMACSink::handleRadioSwitchedToTX() {
     /* @brief Radio is set to Transmit state thus next job is to send the packet to physical layer  */
     EV << "Radio transmission (TX) handler module " << endl;
 
-    if(currentMacState == SEND_DATA)
-       {
-            EV << "Sending Data packet down " << endl;
-            DMAMACPkt* data = macPktQueue.front()->dup();
-            data->setSrcAddr(sinkAddress);
-            data->setKind(DMAMAC_ACTUATOR_DATA);
-            data->setMySlot(mySlot);
-            attachSignal(data);
-            EV << "Sending down data packet\n";
-            EV << "MAC queue size " << macPktQueue.size() << endl;
-            EV << "Packet Destination " << data->getDestAddr() << endl;
-            sendDown(data);
+    if (currentMacState == SEND_DATA) {
 
-            /* @statistics */
-            nbTxActuatorData++;
-            nbTxData++;
-       }
-       else if (currentMacState == SEND_ACK)
-       {
-            EV << "Creating and sending ACK packet down " << endl;
-            /* @brief Create ACK packet on reception of DATA packet */
-            DMAMACPkt* ack = new DMAMACPkt();
-            ack->setDestAddr(lastDataPktSrcAddr);
-            ack->setSrcAddr(myMacAddr);
-            ack->setKind(DMAMAC_ACK);
-            ack->setMySlot(mySlot);
-			/* Setting byte length to 11 bytes */
-            ack->setByteLength(11);
-            attachSignal(ack);
-            EV << "Sending ACK packet\n";
-            sendDown(ack);
-
-            /* @Statistics */
-            nbTxAcks++;
-       }
-       else if (currentMacState == SEND_NOTIFICATION)
-       {
-            EV << "Creating and sending Notification packet down " << endl;
-            /* @brief Create SINK notification packet */
-            DMAMACSinkPkt* notification = new DMAMACSinkPkt();
-            timeRef = simTime();
-            if (randomGenerator != nullptr) {
-                randomGenerator->setRandSeq(simTime().raw());
-                int c = randomGenerator->iRandom(11,26);
-                notification->setChannel(c);
-            }
-            lastDataPktSrcAddr = MACAddress::BROADCAST_ADDRESS;
-            notification->setDestAddr(lastDataPktSrcAddr);
-            notification->setSrcAddr(myMacAddr);
-            notification->setKind(DMAMAC_NOTIFICATION);
-            notification->setTimeRef(timeRef);
-            notification->setByteLength(11);
-            notification->setNumSlot(currentSlot);
-            notification->setMacMode(currentMacMode);
-
-            attachSignal(notification);
-            /* @brief if transient, check for stateProbability otherwise state-switch will be initiated by sensor nodes. */
-            if(currentMacMode == TRANSIENT)
-            {
-                randomNumber = uniform(0,100,0);
-                if (randomNumber > stateProbability)
-                {
-                   EV << "!aaks Time to change to steady mode, number generated :" << randomNumber << " with stateProbability " << stateProbability << endl;
-                   changeMacMode = true;
+        if (par("sendDisorganized")) {
+            // check reception slot
+            int rslot = receiveSlot[currentSlot];
+            for (auto it = macPktQueue.begin(); it != macPktQueue.end(); ++it) {
+                // it is cheat, but it is possible to know the slot of every node beacuse is ofline configuration
+                auto itAux = slotInfo.find((*it)->getDestAddr().getInt());
+                if (itAux->second == rslot) {
+                    if (it != macPktQueue.begin()) {
+                        // move to the front
+                        DMAMACPkt* pkt = (*it);
+                        it = macPktQueue.erase(it);
+                        macPktQueue.push_front(pkt);
+                        break;
+                    }
                 }
             }
-            EV << "ChangeMacMode Value is :" << changeMacMode << endl;
-            /* @brief The sensor nodes will be notified either because of stateProbability or because of previous alert */
-            notification->setChangeMacMode(changeMacMode);
-            sendDown(notification);
-            if (notification->getChannel() != -1)
-                setChannel(notification->getChannel());
+        }
 
-            /* @Statistics */
-            nbTxNotifications++;
-       }
+        EV << "Sending Data packet down " << endl;
+        DMAMACPkt* data = macPktQueue.front()->dup();
+
+        data->setSrcAddr(sinkAddress);
+        data->setKind(DMAMAC_ACTUATOR_DATA);
+        data->setMySlot(mySlot);
+        attachSignal(data);
+        EV << "Sending down data packet\n";
+        EV << "MAC queue size " << macPktQueue.size() << endl;
+        EV << "Packet Destination " << data->getDestAddr() << endl;
+        sendDown(data);
+
+        /* @statistics */
+        nbTxActuatorData++;
+        nbTxData++;
+    }
+    else if (currentMacState == SEND_ACK) {
+        EV << "Creating and sending ACK packet down " << endl;
+        /* @brief Create ACK packet on reception of DATA packet */
+        DMAMACPkt* ack = new DMAMACPkt();
+        ack->setDestAddr(lastDataPktSrcAddr);
+        ack->setSrcAddr(myMacAddr);
+        ack->setKind(DMAMAC_ACK);
+        ack->setMySlot(mySlot);
+        /* Setting byte length to 11 bytes */
+        ack->setByteLength(11);
+        attachSignal(ack);
+        EV << "Sending ACK packet\n";
+        sendDown(ack);
+
+        /* @Statistics */
+        nbTxAcks++;
+    }
+    else if (currentMacState == SEND_NOTIFICATION) {
+        EV << "Creating and sending Notification packet down " << endl;
+        /* @brief Create SINK notification packet */
+        DMAMACSinkPkt* notification = new DMAMACSinkPkt();
+        timeRef = simTime();
+        if (randomGenerator != nullptr) {
+            randomGenerator->setRandSeq(simTime().raw());
+            int c = randomGenerator->iRandom(11, 26);
+            notification->setChannel(c);
+        }
+        lastDataPktSrcAddr = MACAddress::BROADCAST_ADDRESS;
+        notification->setDestAddr(lastDataPktSrcAddr);
+        notification->setSrcAddr(myMacAddr);
+        notification->setKind(DMAMAC_NOTIFICATION);
+        notification->setTimeRef(timeRef);
+        notification->setByteLength(11);
+        notification->setNumSlot(currentSlot);
+        notification->setMacMode(currentMacMode);
+
+        attachSignal(notification);
+        /* @brief if transient, check for stateProbability otherwise state-switch will be initiated by sensor nodes. */
+        if (currentMacMode == TRANSIENT) {
+            randomNumber = uniform(0, 100, 0);
+            if (randomNumber > stateProbability) {
+                EV << "!aaks Time to change to steady mode, number generated :"
+                          << randomNumber << " with stateProbability "
+                          << stateProbability << endl;
+                changeMacMode = true;
+            }
+        }
+        EV << "ChangeMacMode Value is :" << changeMacMode << endl;
+        /* @brief The sensor nodes will be notified either because of stateProbability or because of previous alert */
+        notification->setChangeMacMode(changeMacMode);
+        sendDown(notification);
+        if (notification->getChannel() != -1)
+            setChannel(notification->getChannel());
+
+        /* @Statistics */
+        nbTxNotifications++;
+    }
 }
 
 /* @brief

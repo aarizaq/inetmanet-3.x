@@ -313,7 +313,7 @@ protected:
         int currentSlot;
     };
     static std::map<uint64_t,nodeStatus> slotMap; // debug
-
+    static std::map<uint64_t,int> slotInfo; // debug
 
     /* @brief To declare if the node is an actuator, inputtaken from ini file */
     bool isActuator;
