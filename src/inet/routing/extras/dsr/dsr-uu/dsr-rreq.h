@@ -39,7 +39,7 @@ int dsr_rreq_opt_recv(struct dsr_pkt *dp, struct dsr_rreq_opt *rreq_opt);
 int rreq_tbl_route_discovery_cancel(struct in_addr dst);
 int dsr_rreq_route_discovery(struct in_addr target);
 int dsr_rreq_send(struct in_addr target, int ttl);
-void rreq_tbl_timeout(unsigned long data);
+void rreq_tbl_timeout(void *data);
 int dsr_rreq_duplicate(struct in_addr initiator, struct in_addr target,
                                unsigned int id,double cost,unsigned int length, VectorAddress &addrs);
 

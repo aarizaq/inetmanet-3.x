@@ -96,13 +96,13 @@ void PASER_Message_Queue::send_queued_messages(struct in_addr dest_addr) {
     for (auto it = datagrams.begin();
             it != datagrams.end(); it++) {
         struct message_queue_entry temp = (message_queue_entry) *it;
-//        paser_modul->send(temp.p, "to_ip");
+//        paser_modul->send(temp.p, "ipOut");
         if (temp.p->isScheduled()) {
             throw cRuntimeError(
                     "the message that you want to send is scheduled. It is unpossible.");
         } else {
             paser_modul->sendDelayed(temp.p,
-                    paser_modul->data_message_send_total_delay, "to_ip");
+                    paser_modul->data_message_send_total_delay, "ipOut");
             paser_modul->data_message_send_total_delay +=
                     PASER_DATA_PACKET_SEND_DELAY;
         }
@@ -128,9 +128,9 @@ void PASER_Message_Queue::send_queued_messages_for_AddList(
             for (auto it = datagrams.begin();
                     it != datagrams.end(); it++) {
                 struct message_queue_entry temp = (message_queue_entry) *it;
-//                paser_modul->send(temp.p, "to_ip");
+//                paser_modul->send(temp.p, "ipOut");
                 paser_modul->sendDelayed(temp.p,
-                        paser_modul->data_message_send_total_delay, "to_ip");
+                        paser_modul->data_message_send_total_delay, "ipOut");
                 paser_modul->data_message_send_total_delay +=
                         PASER_DATA_PACKET_SEND_DELAY;
             }

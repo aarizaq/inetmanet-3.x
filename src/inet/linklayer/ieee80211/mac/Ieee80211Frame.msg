@@ -262,3 +262,24 @@ packet Ieee80211BlockAckFrame extends Ieee80211TwoAddressFrame
     unsigned short tidInfo;
     unsigned short startingSequence;
 }
+
+packet Ieee80211MsduASubframe extends Ieee80211DataFrameWithSNAP
+{
+    byteLength = 14;
+    bool withSnap = false;
+}
+
+packet Ieee80211MsduAMeshSubframe extends Ieee80211MeshFrame
+{
+    byteLength = 20;
+}
+
+packet Ieee80211MsduAFrame extends Ieee80211DataFrameWithSNAP
+{
+}
+
+packet Ieee80211MsduAMeshFrame extends Ieee80211MeshFrame
+{
+}
+
+

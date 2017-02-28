@@ -41,6 +41,7 @@ import inet.applications.contract.IPingApp;
 import inet.applications.contract.ISCTPApp;
 import inet.applications.contract.ITCPApp;
 import inet.applications.contract.IUDPApp;
+import inet.node.inet.INetworkNode;
 //
 // BaseHost contains the common lower layers (linklayer and networklayer)
 // of Router, StandardHost, WirelessHost etc. 

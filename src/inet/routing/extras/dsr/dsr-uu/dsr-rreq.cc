@@ -67,7 +67,7 @@ static bool compareAddress(const VectorAddress &a, const VectorAddress &b)
 
 
 
-void NSCLASS rreq_tbl_timeout(unsigned long data)
+void NSCLASS rreq_tbl_timeout(void *data)
 {
     struct rreq_tbl_entry *e = (struct rreq_tbl_entry *)data;
     struct timeval expires;
@@ -157,7 +157,7 @@ NSCLASS rreq_tbl_entry *NSCLASS __rreq_tbl_entry_create(struct in_addr node_addr
     init_timer(e->timer);
 
     e->timer->function = &NSCLASS rreq_tbl_timeout;
-    e->timer->data = (unsigned long)e;
+    e->timer->data = e;
     return e;
 }
 

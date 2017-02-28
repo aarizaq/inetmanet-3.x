@@ -39,8 +39,9 @@
 
 #include "inet/common/lifecycle/ILifecycle.h"
 
+#ifdef WITH_80211MESH
 #include "inet/linklayer/ieee80211mesh/locator/ILocator.h"
-
+#endif
 #include <vector>
 #include <set>
 
@@ -143,9 +144,9 @@ class INET_API ManetRoutingBase : public cSimpleModule, public cListener, public
     bool isGateway = false;     /// true if the node will work like gateway for address in the list
 
     std::vector<ManetProxyAddress> proxyAddress;
-
+#ifdef WITH_80211MESH
     ieee80211::ILocator *locator;
-
+#endif
     int addressSizeBytes;
 
     bool isOperational;

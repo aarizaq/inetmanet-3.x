@@ -134,7 +134,9 @@ L3Address ManetRoutingBase::getRouterId() const {
 
 ManetRoutingBase::ManetRoutingBase()
 {
+#ifdef WITH_80211MESH
     locator = nullptr;
+#endif
     isRegistered = false;
     regPosition = false;
     mac_layer_ = false;
@@ -385,7 +387,7 @@ void ManetRoutingBase::registerRoutingModule()
  //   WATCH_MAP(*routesVector);
     if (!mac_layer_)
     {
-        IPSocket socket(gate("to_ip"));
+        IPSocket socket(gate("ipOut"));
         socket.registerProtocol(IP_PROT_MANET);
     }
 }
@@ -557,7 +559,7 @@ void ManetRoutingBase::sendToIpOnIface(cPacket *msg, int srcPort, const L3Addres
                 if (ie)
                     ctrlAux->setInterfaceId(ie->getInterfaceId());
                 msgAux->setControlInfo(ctrlAux);
-                sendDelayed(msgAux, delay, "to_ip");
+                sendDelayed(msgAux, delay, "ipOut");
 
             }
             ie = interfaceVector->back().interfacePtr;
@@ -566,7 +568,7 @@ void ManetRoutingBase::sendToIpOnIface(cPacket *msg, int srcPort, const L3Addres
         if (ie)
             ctrl->setInterfaceId(ie->getInterfaceId());
         msg->setControlInfo(ctrl);
-        sendDelayed(msg, delay, "to_ip");
+        sendDelayed(msg, delay, "ipOut");
         return;
     }
 
@@ -625,14 +627,14 @@ void ManetRoutingBase::sendToIpOnIface(cPacket *msg, int srcPort, const L3Addres
                 UDPPacket *udpPacketAux = udpPacket->dup();
 // Set the control info to the duplicate udp packet
                 udpPacketAux->setControlInfo(ipControlInfoAux);
-                sendDelayed(udpPacketAux, delay, "to_ip");
+                sendDelayed(udpPacketAux, delay, "ipOut");
             }
             ie = interfaceVector->back().interfacePtr;
             srcadd = ie->ipv4Data()->getIPAddress();
             ipControlInfo->setInterfaceId(ie->getInterfaceId());
         }
         ipControlInfo->setSrcAddr(srcadd);
-        sendDelayed(udpPacket, delay, "to_ip");
+        sendDelayed(udpPacket, delay, "ipOut");
     }
     else if (destAddr.getType() == L3Address::IPv6)
     {
@@ -646,7 +648,7 @@ void ManetRoutingBase::sendToIpOnIface(cPacket *msg, int srcPort, const L3Addres
         ipControlInfo->setHopLimit(ttl);
         //ipControlInfo->setInterfaceId(udpCtrl->getInterfaceId()); FIXME extend IPv6 with this!!!
         udpPacket->setControlInfo(check_and_cast<cObject *>(ipControlInfo));
-        sendDelayed(udpPacket, delay, "to_ip");
+        sendDelayed(udpPacket, delay, "ipOut");
     }
     else
     {
@@ -940,7 +942,7 @@ void ManetRoutingBase::omnet_chg_rte(const L3Address &dst, const L3Address &gtwy
     else
         entry->setSourceType(IRoute::MANET2);
 
-        inet_rt->addRoute(entry);
+    inet_rt->addRoute(entry);
 
 #ifdef WITH_80211MESH
     if (locator && locator->isApIp(desAddress))

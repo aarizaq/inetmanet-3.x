@@ -20,6 +20,8 @@
 #define __INET_PACKETDRILLUTILS_H
 
 #include "inet/common/INETDefs.h"
+#include "omnetpp/platdep/sockets.h"
+
 #include "inet/networklayer/common/L3Address.h"
 #include "inet/common/ByteArray.h"
 #if !defined(_WIN32) && !defined(__WIN32__) && !defined(WIN32) && !defined(__CYGWIN__) && !defined(_WIN64)
@@ -41,6 +43,14 @@ struct int_symbol {
 
 #ifndef IPPROTO_SCTP
 #define IPPROTO_SCTP 132
+#endif
+
+/* On Windows we don't have these macros defined (values copyed from fcntl.h) */
+#ifndef F_GETFL
+#define F_GETFL 3
+#endif
+#ifndef F_SETFL
+#define F_SETFL 4
 #endif
 
 /* TCP option numbers and lengths. */

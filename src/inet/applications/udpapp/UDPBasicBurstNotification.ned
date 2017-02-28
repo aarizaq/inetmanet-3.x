@@ -122,16 +122,19 @@ simple UDPBasicBurstNotification like IUDPApp
         string outputInterface = default(""); // select the interface in which the packets will be sent
         string outputInterfaceMulticastBroadcast = default(""); // select the interface in which the broadcast packets will be sent
         bool setBroadcast = default(false); // Configure the socket for receive broadcast packets
-        bool chooseNewIfDeleted = default(false); //receive if a node has been deleted and rebuilt destiation table                 
+        bool chooseNewIfDeleted = default(false); //receive if a node has been deleted and rebuilt destiation table      
+        bool configureInInit = default(true);
+        @signal[changeAddressSignalInit](type=AddressModule);
+        @signal[changeAddressSignalDelete](type=AddressModule);
         @signal[sentPk](type=cPacket);
         @signal[rcvdPk](type=cPacket);
         @signal[dropPk](type=cPacket);
         @signal[outOfOrderPk](type=cPacket);
-        @statistic[sentPkBytes](title="packets sent"; source="packetBytes(sentPk)"; unit=B; record=count,sum,vector; interpolationmode=none);
-        @statistic[rcvdPkBytes](title="packets received"; source="packetBytes(rcvdPk)"; unit=B; record=count,sum,vector; interpolationmode=none);
-        @statistic[dropPkBytes](title="packets dropped"; source="packetBytes(dropPk)"; unit=B; record=count,sum,vector; interpolationmode=none);
-        @statistic[outOfOrderPkBytes](title="packets received out of order"; source="packetBytes(outOfOrderPk)"; unit=B; record=count,sum,vector; interpolationmode=none);
-        @statistic[endToEndDelay](title="delay"; source="messageAge(rcvdPk)"; unit=s; record=histogram,stats,vector; interpolationmode=none);
+        @statistic[sentPk](title="packets sent"; source=sentPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[rcvdPk](title="packets received"; source=rcvdPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[dropPk](title="packets dropped"; source=dropPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[outOfOrderPk](title="packets received out of order"; source=outOfOrderPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[endToEndDelay](title="delay"; source="messageAge(rcvdPk)"; unit=s; record=histogram,vector; interpolationmode=none);
 
     gates:
         input udpIn @labels(UDPControlInfo/up);

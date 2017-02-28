@@ -192,11 +192,11 @@ void DSRUU::omnet_xmit(struct dsr_pkt *dp)
     IPv4Address prev((uint32_t)myaddr_.s_addr);
     p->setPrevAddress(prev);
     if (jitter)
-        sendDelayed(p, jitter, "to_ip");
+        sendDelayed(p, jitter, "ipOut");
     else if (dp->dst.s_addr != DSR_BROADCAST)
-        sendDelayed(p, par("unicastDelay"), "to_ip");
+        sendDelayed(p, par("unicastDelay"), "ipOut");
     else
-        sendDelayed(p, par("broadcastDelay"), "to_ip");
+        sendDelayed(p, par("broadcastDelay"), "ipOut");
     dp->payload = nullptr;
     dsr_pkt_free(dp);
 }
@@ -234,7 +234,7 @@ void DSRUU::omnet_deliver(struct dsr_pkt *dp)
         dgram->encapsulate(dp->payload);
     dp->payload = nullptr;
     dsr_pkt_free(dp);
-    send(dgram, "to_ip");
+    send(dgram, "ipOut");
 }
 
 
@@ -377,7 +377,7 @@ void DSRUU::initialize(int stage)
     }
     else if (stage == INITSTAGE_ROUTING_PROTOCOLS)
     {
-        IPSocket ipSocket(gate("to_ip"));
+        IPSocket ipSocket(gate("ipOut"));
         ipSocket.registerProtocol(IP_PROT_MANET);
         ipSocket.registerProtocol(IP_PROT_DSR);
 
@@ -425,7 +425,7 @@ void DSRUU::initialize(int stage)
             etxNumRetry = par("ETXRetryBeforeFail");
             etxWindowSize = etxTime*(unsigned int)par("ETXWindowNumHello");
             etxJitter = 0.1;
-            etx_timer.init(&DSRUU::EtxMsgSend, 0);
+            etx_timer.init(&DSRUU::EtxMsgSend, nullptr);
             set_timer(&etx_timer, 0.0);
             //set_timer(&etx_timer, etxTime);
             etxWindow = 0;
@@ -961,7 +961,7 @@ int DSRUU::RouteAdd(struct dsr_srt *srt, unsigned long timeout, unsigned short f
     }
 }
 
-void DSRUU::EtxMsgSend(unsigned long data)
+void DSRUU::EtxMsgSend(void *data)
 {
     EtxList neigh[15];
     DSRPktExt* msg = new DSRPktExt();
@@ -1034,7 +1034,7 @@ void DSRUU::EtxMsgSend(unsigned long data)
     if (msg->getByteLength()<etxSize)
         msg->setByteLength(etxSize);
 
-    sendDelayed(msg,uniform(0,etxJitter), "to_ip");
+    sendDelayed(msg,uniform(0,etxJitter), "ipOut");
 
     etxWindow += etxTime;
     set_timer(&etx_timer, etxTime+ SIMTIME_DBL(simTime()));
@@ -1286,7 +1286,7 @@ bool DSRUU::proccesICMP(cMessage *msg)
     icmpMsg->encapsulate(bogusPacket->dup());
     newdgram->encapsulate(icmpMsg);
     newdgram->setTransportProtocol(IP_PROT_ICMP);
-    send(newdgram,"to_ip");
+    send(newdgram,"ipOut");
     delete msg;
     return true;
  }

@@ -53,8 +53,8 @@ module DTRouting
     parameters:
         @display("bgb=161,99;i=block/network2");
     gates:
-        input from_ip;
-        output to_ip;
+        input ipIn;
+        output ipOut;
     submodules:
         // the name of manet routing manager module must be "manetmanager", the routing protocols is ManetRouting.ned
         manetmanager: SaorsManager {
@@ -66,8 +66,8 @@ module DTRouting
                 @display("p=77,52;b=40,24;i=block/arrival");
         }
     connections allowunconnected:
-        manetmanager.from_ip <-- from_ip;
-        manetmanager.to_ip --> to_ip;
+        manetmanager.ipIn <-- ipIn;
+        manetmanager.ipOut --> ipOut;
 }
 
 

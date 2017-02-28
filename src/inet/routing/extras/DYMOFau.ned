@@ -61,7 +61,7 @@ simple DYMOFau extends BaseRouting like IManetRouting
         int BUFFER_SIZE_BYTES @unit("B") = default(75000B); // maximum queue size in bytes, -1 for no limit
         bool PublicRoutingTables = default(false);
     gates:
-        input from_ip;
-        output to_ip;
+        input ipIn;
+        output ipOut;
 }
 

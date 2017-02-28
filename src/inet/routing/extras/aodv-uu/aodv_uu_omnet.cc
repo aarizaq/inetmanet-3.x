@@ -1111,7 +1111,7 @@ void NS_CLASS processMacPacket(cPacket * p, const L3Address &dest, const L3Addre
             p->setControlInfo(ctrl);
         }
 
-        send(p, "to_ip");
+        send(p, "ipOut");
         /* When forwarding data, make sure we are sending HELLO messages */
         //gettimeofday(&this_host.fwd_time, nullptr);
         if (!llfeedback && optimized_hellos)
@@ -1155,7 +1155,7 @@ void NS_CLASS processPacket(IPv4Datagram * p,unsigned int ifindex)
     /* If the packet is not interesting we just let it go through... */
     if (isMcast || dest_addr.s_addr == L3Address(IPv4Address(AODV_BROADCAST)))
     {
-        send(p,"to_ip");
+        send(p,"ipOut");
         return;
     }
     /* Find the entry of the neighboring node and the destination  (if any). */
@@ -1267,7 +1267,7 @@ route_discovery:
     else
     {
         /* DEBUG(LOG_DEBUG, 0, "Sending pkt uid=%d", ch->uid()); */
-        send(p,"to_ip");
+        send(p,"ipOut");
         /* When forwarding data, make sure we are sending HELLO messages */
         gettimeofday(&this_host.fwd_time, nullptr);
 

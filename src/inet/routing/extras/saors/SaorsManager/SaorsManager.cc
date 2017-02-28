@@ -92,7 +92,7 @@ void SaorsManager::initialize(int stage)
 					cModuleType *moduleType = cModuleType::find("saors.DT_DYMO.DTDYMO");
 					routingModule = moduleType->create("dtroutingprotocol", this);
 					// Connet to ip
-					routingModule->gate("to_ip")->connectTo(gate("from_dtdymo"));
+					routingModule->gate("ipOut")->connectTo(gate("from_dtdymo"));
 				}
 			}
 			else if (strcmp("SAMPhO", routingProtocol)==0)
@@ -103,7 +103,7 @@ void SaorsManager::initialize(int stage)
 					cModuleType *moduleType = cModuleType::find("saors.SAMPhO.SAMPhO");
 					routingModule = moduleType->create("dtroutingprotocol", this);
 					//Connet to ip
-					routingModule->gate("to_ip")->connectTo(gate("from_sampho"));
+					routingModule->gate("ipOut")->connectTo(gate("from_sampho"));
 				}
 			}
 			else if (strcmp("EP-DYMO", routingProtocol)==0)
@@ -114,7 +114,7 @@ void SaorsManager::initialize(int stage)
                     cModuleType *moduleType = cModuleType::find("saors.EP_DYMO.EPDYMO");
                     routingModule = moduleType->create("dtroutingprotocol", this);
                     //Connet to ip
-                    routingModule->gate("to_ip")->connectTo(gate("from_epdymo"));
+                    routingModule->gate("ipOut")->connectTo(gate("from_epdymo"));
                 }
             }
 			else if (strcmp("R-DYMO", routingProtocol)==0)
@@ -125,7 +125,7 @@ void SaorsManager::initialize(int stage)
                     cModuleType *moduleType = cModuleType::find("saors.R_DYMO.RDYMO");
                     routingModule = moduleType->create("dtroutingprotocol", this);
                     //Connet to ip
-                    routingModule->gate("to_ip")->connectTo(gate("from_rdymo"));
+                    routingModule->gate("ipOut")->connectTo(gate("from_rdymo"));
                 }
             }
 			else if (strcmp("SimBetTS", routingProtocol)==0)
@@ -136,7 +136,7 @@ void SaorsManager::initialize(int stage)
                     cModuleType *moduleType = cModuleType::find("saors.SimBetTS.SimBetTS");
                     routingModule = moduleType->create("dtroutingprotocol", this);
                     //Connet to ip
-                    routingModule->gate("to_ip")->connectTo(gate("from_simbet"));
+                    routingModule->gate("ipOut")->connectTo(gate("from_simbet"));
                 }
             }
 			
@@ -180,37 +180,37 @@ void SaorsManager::handleMessage(cMessage *msg)
         return;
     }
 
-    if (msg->arrivedOn("from_ip"))
+    if (msg->arrivedOn("ipIn"))
     {
         switch (routing_protocol)
         {
             case DTDYMO:
                 if (dynamicLoad)
-                    sendDirect(msg,routingModule, "from_ip");
+                    sendDirect(msg,routingModule, "ipIn");
                 else
                     send( msg, "to_dtdymo");
                 break;
             case SAMPhO:
                 if (dynamicLoad)
-                    sendDirect(msg,routingModule, "from_ip");
+                    sendDirect(msg,routingModule, "ipIn");
                 else
                     send( msg, "to_sampho");
                 break;
             case EPDYMO:
                 if (dynamicLoad)
-                    sendDirect(msg,routingModule, "from_ip");
+                    sendDirect(msg,routingModule, "ipIn");
                 else
                     send( msg, "to_epdymo");
                 break;
             case RDYMO:
                 if (dynamicLoad)
-                    sendDirect(msg,routingModule, "from_ip");
+                    sendDirect(msg,routingModule, "ipIn");
                 else
                     send( msg, "to_rdymo");
                 break;
             case SIMBETTS:
                 if (dynamicLoad)
-                    sendDirect(msg,routingModule, "from_ip");
+                    sendDirect(msg,routingModule, "ipIn");
                 else
                     send( msg, "to_simbet");
                 break;
@@ -256,7 +256,7 @@ void SaorsManager::handleMessage(cMessage *msg)
                 }
                 break;
         }
-        send(msg,"to_ip");
+        send(msg,"ipOut");
     }
 }
 

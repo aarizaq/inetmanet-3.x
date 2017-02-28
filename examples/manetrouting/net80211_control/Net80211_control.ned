@@ -29,14 +29,6 @@ network Net80211_control
         int numHosts;
         int numFixHosts;
     submodules:
-        host[numHosts]: AdhocHost {
-            parameters:
-                @display("i=device/pocketpc_s;r=,,#707070");
-        }
-        fixhost[numFixHosts]: AdhocHost {
-            parameters:
-                @display("i=device/pocketpc_s;r=,,#707070");
-        }
         radioMedium: Ieee80211ScalarRadioMedium {
             parameters:
                 @display("p=60,50;i=misc/sun");
@@ -45,7 +37,16 @@ network Net80211_control
             parameters:
                 config = xml("<config><interface hosts='*' address='145.236.x.x' netmask='255.255.0.0'/></config>");
                 @display("p=140,50;i=block/cogwheel_s");
+        }        
+        host[numHosts]: AdhocHost {
+            parameters:
+                @display("i=device/pocketpc_s;r=,,#707070");
         }
+        fixhost[numFixHosts]: AdhocHost {
+            parameters:
+                @display("i=device/pocketpc_s;r=,,#707070");
+        }
+
     connections allowunconnected:
 }
 

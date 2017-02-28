@@ -1,0 +1,61 @@
+#!/bin/bash
+qsub -v PATH -cwd ./run -r 0 -c React -u Cmdenv -f omnetpp.ini 
+qsub -v PATH -cwd ./run -r 1 -c React -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 2 -c React -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 3 -c React -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 4 -c React -u Cmdenv -f omnetpp.ini
+
+qsub -v PATH -cwd ./run -r 0 -c ReactNoGate -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 1 -c ReactNoGate -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 2 -c ReactNoGate -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 3 -c ReactNoGate -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 4 -c ReactNoGate -u Cmdenv -f omnetpp.ini
+
+qsub -v PATH -cwd ./run -r 0 -c Proact -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 1 -c Proact -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 2 -c Proact -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 3 -c Proact -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 4 -c Proact -u Cmdenv -f omnetpp.ini
+
+qsub -v PATH -cwd ./run -r 0 -c ProactNoGate -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 1 -c ProactNoGate -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 2 -c ProactNoGate -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 3 -c ProactNoGate -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 4 -c ProactNoGate -u Cmdenv -f omnetpp.ini
+
+qsub -v PATH -cwd ./run -r 0 -c Hybrid -u Cmdenv -f omnetpp.ini 
+qsub -v PATH -cwd ./run -r 1 -c Hybrid -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 2 -c Hybrid -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 3 -c Hybrid -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 4 -c Hybrid -u Cmdenv -f omnetpp.ini
+
+qsub -v PATH -cwd ./run -r 0 -c HybridNoGate -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 1 -c HybridNoGate -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 2 -c HybridNoGate -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 3 -c HybridNoGate -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 4 -c HybridNoGate -u Cmdenv -f omnetpp.ini
+
+qsub -v PATH -cwd ./run -r 0 -c Hwmp -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 1 -c Hwmp -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 2 -c Hwmp -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 3 -c Hwmp -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 4 -c Hwmp -u Cmdenv -f omnetpp.ini
+
+qsub -v PATH -cwd ./run -r 0 -c HwmpNoGate -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 1 -c HwmpNoGate -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 2 -c HwmpNoGate -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 3 -c HwmpNoGate -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 4 -c HwmpNoGate -u Cmdenv -f omnetpp.ini
+
+qsub -v PATH -cwd ./run -r 0 -c ReactST -u Cmdenv -f omnetpp.ini 
+qsub -v PATH -cwd ./run -r 1 -c ReactST -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 2 -c ReactST -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 3 -c ReactST -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 4 -c ReactST -u Cmdenv -f omnetpp.ini
+
+qsub -v PATH -cwd ./run -r 0 -c ReactSTNoGate -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 1 -c ReactSTNoGate -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 2 -c ReactSTNoGate -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 3 -c ReactSTNoGate -u Cmdenv -f omnetpp.ini
+qsub -v PATH -cwd ./run -r 4 -c ReactSTNoGate -u Cmdenv -f omnetpp.ini
+

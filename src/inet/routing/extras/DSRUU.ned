@@ -74,7 +74,7 @@ simple DSRUU like IManetRouting
         bool manetPurgeRoutingTables = default(true);
         bool refreshIntermediate = default(true);// intermediate node routes are actualized also.
     gates:
-        input from_ip;
-        output to_ip;
+        input ipIn;
+        output ipOut;
 }
 

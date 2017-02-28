@@ -190,7 +190,8 @@ void GaugeFigure::setColorStrip(const char *colorStrip)
 void GaugeFigure::parse(cProperty *property)
 {
     cGroupFigure::parse(property);
-    setBounds(parseBounds(property));
+
+    setBounds(parseBounds(property, getBounds()));
 
     // Set default
     redrawTicks();
@@ -398,7 +399,7 @@ void GaugeFigure::redrawTicks()
     }
     for (int i = prevNumTicks; i < numTicks; ++i) {
         addFigure(tickFigures[i]);
-        addFigureBelow(numberFigures[i], needle);
+        numberFigures[i]->insertBelow(needle);
     }
 
     for (int i = 0; i < numTicks; ++i) {
@@ -458,8 +459,9 @@ void GaugeFigure::redrawCurves()
     curvesOnCanvas = index;
 
     // Add or remove figures from canvas according to previous number of curves
-    for (int i = prevCurvesOnCanvas; i < curvesOnCanvas; ++i)
-        addFigureBelow(curveFigures[i], needle);
+    for (int i = prevCurvesOnCanvas; i < curvesOnCanvas; ++i) {
+        curveFigures[i]->insertBelow(needle);
+    }
     for (int i = curvesOnCanvas; i < prevCurvesOnCanvas; ++i)
         removeFigure(curveFigures[index]);
 }

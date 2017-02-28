@@ -724,7 +724,7 @@ void UDPBasicP2P2C::handleMessage(cMessage *msg)
         }
         if (msg == &periodicTimer)
         {
-            emit(queueLengthSignal, timeQueue.size());
+            emit(queueLengthSignal, (unsigned long)timeQueue.size());
             scheduleAt(simTime()+par("periodicTimer"), &periodicTimer);
             return;
         }
@@ -1658,7 +1658,7 @@ void UDPBasicP2P2C::WirelessNumNeig()
         if (notfound)
             continue;
 
-        cModule *host = getContainingNode(this);
+        cModule *host = getContainingNode(destNode->getModule());
         mod = check_and_cast<IMobility *>(host->getSubmodule("mobility"));
         if (mod == nullptr)
             throw cRuntimeError("node or mobility module not found");

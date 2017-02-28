@@ -18,7 +18,7 @@ void NSCLASS send_buf_set_max_len(unsigned int max_len)
     buffMaxlen = max_len;
 }
 
-void NSCLASS send_buf_timeout(unsigned long data)
+void NSCLASS send_buf_timeout(void *data)
 {
 
     if (packetBuffer.empty())

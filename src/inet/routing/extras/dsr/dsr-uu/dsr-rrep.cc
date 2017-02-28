@@ -67,7 +67,7 @@ static inline int crit_time(void *pos, void *time)
     return 0;
 }
 */
-void NSCLASS grat_rrep_tbl_timeout(unsigned long data)
+void NSCLASS grat_rrep_tbl_timeout(void *data)
 {
 
     grat_rrep_entry *e = gratRrep.front();
