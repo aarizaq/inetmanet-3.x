@@ -23,6 +23,7 @@
 #include <map>
 #include "inet/common/geometry/common/Coord.h"
 #include "inet/networklayer/contract/ipv4/IPv4Address.h"
+#include "inet/linklayer/common/MACAddress.h"
 
 namespace inet{
 
@@ -37,11 +38,17 @@ class WirelessGetNeig : public cOwnedObject
             IInterfaceTable* itable;
         };
         typedef std::map<uint32_t,nodeInfo> ListNodes;
+        typedef std::map<MACAddress,nodeInfo> ListNodesMac;
+
         ListNodes listNodes;
+        ListNodesMac listNodesMac;
     public:
         WirelessGetNeig();
         virtual ~WirelessGetNeig();
         virtual void getNeighbours(const IPv4Address &node, std::vector<IPv4Address>&, const double &distance);
+        virtual void getNeighbours(const MACAddress &node, std::vector<MACAddress>&, const double &distance);
+        virtual void getNeighbours(const IPv4Address &node, std::vector<IPv4Address>&, const double &distance, std::vector<Coord> &);
+        virtual void getNeighbours(const MACAddress &node, std::vector<MACAddress>&, const double &distance, std::vector<Coord> &);
 };
 
 
