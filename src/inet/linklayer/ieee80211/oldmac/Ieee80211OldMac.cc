@@ -346,7 +346,7 @@ void Ieee80211OldMac::initialize(int stage)
         timeStampLastMessageReceived = SIMTIME_ZERO;
 
         stateVector.setName("State");
-        stateVector.setEnum("inet::Ieee80211OldMac");
+        stateVector.setEnum("inet::ieee80211::Ieee80211OldMac");
 
         // Code to compute the throughput over a period of time
         throughputTimePeriod = par("throughputTimePeriod");
