@@ -112,10 +112,10 @@ module StandardHost extends NodeBase
         }
         
         for i=0..numTcpApps-1, if  hasThrugmeter{
-            tcpApp[i].tcpOut --> truTcpApp[i].in;
-            truTcpApp[i].out --> tcp.appIn++;
-            tcpApp[i].tcpIn <-- truTcpApp[i+1].out;
-            truTcpApp[i+1].in <-- tcp.appOut++;
+            tcpApp[i].tcpOut --> truTcpApp[2*i].in;
+            truTcpApp[2*i].out --> tcp.appIn++;
+            tcpApp[i].tcpIn <-- truTcpApp[(2*i)+1].out;
+            truTcpApp[(2*i)+1].in <-- tcp.appOut++;
         }
 
         tcp.ipOut --> networkLayer.transportIn++ if hasTcp;
@@ -127,10 +127,10 @@ module StandardHost extends NodeBase
         }
 
         for i=0..numUdpApps-1, if  hasThrugmeter{
-            udpApp[i].udpOut --> truUdpApp[i].in;
-            truUdpApp[i].out --> udp.appIn++;
-            udpApp[i].udpIn <-- truUdpApp[i+1].out;
-            truUdpApp[i+1].in <-- udp.appOut++;
+            udpApp[i].udpOut --> truUdpApp[2*i].in;
+            truUdpApp[2*i].out --> udp.appIn++;
+            udpApp[i].udpIn <-- truUdpApp[(2*i)+1].out;
+            truUdpApp[(2*i)+1].in <-- udp.appOut++;
         }
 
         udp.ipOut --> networkLayer.transportIn++ if hasUdp;
