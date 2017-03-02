@@ -395,7 +395,7 @@ struct random_parameter
 {
     uint16_t type;
     uint16_t length;
-    uint8_t random[];
+    uint8_t random[0];
 } __PACKED__;
 
 struct tlv
