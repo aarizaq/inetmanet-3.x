@@ -24,20 +24,18 @@
 
 namespace inet{
 
-WirelessGetNeig::WirelessGetNeig()
-{
+WirelessGetNeig::WirelessGetNeig() {
     cTopology topo("topo");
     topo.extractByProperty("networkNode");
-    cModule *mod = dynamic_cast<cModule*> (getOwner());
-    for (mod = dynamic_cast<cModule*> (getOwner())->getParentModule(); mod != 0; mod = mod->getParentModule())
-    {
-            cProperties *properties = mod->getProperties();
-            if (properties && properties->getAsBool("networkNode"))
-                break;
+    cModule *mod = dynamic_cast<cModule*>(getOwner());
+    for (mod = dynamic_cast<cModule*>(getOwner())->getParentModule(); mod != 0;
+            mod = mod->getParentModule()) {
+        cProperties *properties = mod->getProperties();
+        if (properties && properties->getAsBool("networkNode"))
+            break;
     }
     listNodes.clear();
-    for (int i = 0; i < topo.getNumNodes(); i++)
-    {
+    for (int i = 0; i < topo.getNumNodes(); i++) {
         cTopology::Node *destNode = topo.getNode(i);
         IMobility *mod;
         cModule *host = destNode->getModule();
@@ -46,21 +44,28 @@ WirelessGetNeig::WirelessGetNeig()
             throw cRuntimeError("node or mobility module not found");
         nodeInfo info;
         info.mob = mod;
-        info.itable = L3AddressResolver().findInterfaceTableOf(destNode->getModule());
-        IPv4Address addr = L3AddressResolver().getAddressFrom(info.itable).toIPv4();
-        listNodes[addr.getInt()]= info;
+        info.itable = L3AddressResolver().findInterfaceTableOf(
+                destNode->getModule());
+        IPv4Address addr =
+                L3AddressResolver().getAddressFrom(info.itable).toIPv4();
+        listNodes[addr.getInt()] = info;
+        for (int i = 0; i < info.itable->getNumInterfaces(); i++) {
+            InterfaceEntry * entry = info.itable->getInterface(i);
+            if (entry->isLoopback())
+                continue;
+            listNodesMac[entry->getMacAddress()] = info;
+
+        }
     }
 }
 
-WirelessGetNeig::~WirelessGetNeig()
-{
+WirelessGetNeig::~WirelessGetNeig() {
     // TODO Auto-generated destructor stub
     listNodes.clear();
 }
 
-
-void WirelessGetNeig::getNeighbours(const IPv4Address &node, std::vector<IPv4Address>&list, const double &distance)
-{
+void WirelessGetNeig::getNeighbours(const IPv4Address &node,
+        std::vector<IPv4Address>&list, const double &distance) {
     list.clear();
 
     auto it = listNodes.find(node.getInt());
@@ -68,13 +73,64 @@ void WirelessGetNeig::getNeighbours(const IPv4Address &node, std::vector<IPv4Add
         throw cRuntimeError("node not found");
 
     Coord pos = it->second.mob->getCurrentPosition();
-    for (it = listNodes.begin(); it != listNodes.end(); ++it)
-    {
+    for (it = listNodes.begin(); it != listNodes.end(); ++it) {
         if (it->first == node.getInt())
             continue;
-        if (pos.distance(it->second.mob->getCurrentPosition()) < distance)
-        {
+        if (pos.distance(it->second.mob->getCurrentPosition()) < distance) {
             list.push_back(IPv4Address(it->first));
+        }
+    }
+}
+
+void WirelessGetNeig::getNeighbours(const MACAddress &node, std::vector<MACAddress>&list, const double &distance) {
+    list.clear();
+
+    auto it = listNodesMac.find(node);
+    if (it == listNodesMac.end())
+        throw cRuntimeError("node not found");
+
+    Coord pos = it->second.mob->getCurrentPosition();
+    for (it = listNodesMac.begin(); it != listNodesMac.end(); ++it) {
+        if (it->first == node)
+            continue;
+        if (pos.distance(it->second.mob->getCurrentPosition()) < distance) {
+            list.push_back(MACAddress(it->first));
+        }
+    }
+}
+
+void WirelessGetNeig::getNeighbours(const IPv4Address &node, std::vector<IPv4Address>&list, const double &distance, std::vector<Coord> & coord) {
+    list.clear();
+
+    auto it = listNodes.find(node.getInt());
+    if (it == listNodes.end())
+        throw cRuntimeError("node not found");
+
+    Coord pos = it->second.mob->getCurrentPosition();
+    for (it = listNodes.begin(); it != listNodes.end(); ++it) {
+        if (it->first == node.getInt())
+            continue;
+        if (pos.distance(it->second.mob->getCurrentPosition()) < distance) {
+            list.push_back(IPv4Address(it->first));
+            coord.push_back(pos);
+        }
+    }
+}
+
+void WirelessGetNeig::getNeighbours(const MACAddress &node, std::vector<MACAddress>&list, const double &distance, std::vector<Coord> &coord) {
+    list.clear();
+
+    auto it = listNodesMac.find(node);
+    if (it == listNodesMac.end())
+        throw cRuntimeError("node not found");
+
+    Coord pos = it->second.mob->getCurrentPosition();
+    for (it = listNodesMac.begin(); it != listNodesMac.end(); ++it) {
+        if (it->first == node)
+            continue;
+        if (pos.distance(it->second.mob->getCurrentPosition()) < distance) {
+            list.push_back(MACAddress(it->first));
+            coord.push_back(pos);
         }
     }
 }
