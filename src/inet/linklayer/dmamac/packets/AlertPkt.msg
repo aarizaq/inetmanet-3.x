@@ -33,11 +33,15 @@ namespace inet;
 
 class MACFrameBase;
 
+class noncobject MACAddress;
+
 //
 // Defines extra fields for AlertPkt, extends MACPkt
 //
 packet AlertPkt extends MACFrameBase
 {
     short type; // Define here as Alert packet and sink would determine.
+    MACAddress sourceAddress;
+    MACAddress destinationAddress;
 }
 

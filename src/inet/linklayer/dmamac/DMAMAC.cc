@@ -398,11 +398,14 @@ DMAMAC::~DMAMAC() {
         cancelAndDelete(hoppingTimer);
     /*@}*/
 
-    MacPktQueue::iterator it1;
-        for(it1 = macPktQueue.begin(); it1 != macPktQueue.end(); ++it1) {
-           delete (*it1);
-        }
-        macPktQueue.clear();
+    while (!macPktQueue.empty()) {
+        delete macPktQueue.back();
+        macPktQueue.pop_back();
+    }
+    while (!alertPktQueue.empty()) {
+        delete alertPktQueue.back();
+        alertPktQueue.pop_back();
+    }
 }
 
 /* @brief Recording statistical data fro analysis */
@@ -455,6 +458,13 @@ void DMAMAC::handleUpperPacket(cPacket* msg){
     EV_DEBUG << "Packet from Network layer" << endl;
     if (!sendUppperLayer) {
         delete msg;
+        return;
+    }
+    if (dynamic_cast<AlertPkt *> (msg)) {
+        if (isRelayNode)
+            alertPktQueue.push_back(dynamic_cast<AlertPkt *> (msg));
+        else
+            delete msg;
         return;
     }
 
@@ -680,7 +690,13 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
                 EV << "Switching radio to RX, waiting for Alert" << endl;
 
                 /* @brief If no sensor children no wait alert.*/
-                if(!hasSensorChild)
+                if (!alertPktQueue.empty()) {
+                    // propagate alert
+                    handleLowerPacket(alertPktQueue.front());
+                    alertPktQueue.pop_front();
+
+                }
+                else if(!hasSensorChild)
                 {
                     EV << " No children are <Sensors> so no waiting" << endl;
                 }
@@ -735,8 +751,10 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
         case DMAMAC_ACK_RECEIVED:
 
                 EV << "ACK Received, setting radio to sleep" << endl;
+
                 if (radio->getRadioMode() == IRadio::RADIO_MODE_RECEIVER)
-                    radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                    if (!alwaysListening)
+                        radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
                 break;
 
         /* @brief Handling ACK timeout possibility (ACK packet lost)  */
@@ -747,18 +765,20 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
                 EV << "Data <failed>" << endl;
 
                 if (radio->getRadioMode() == IRadio::RADIO_MODE_RECEIVER)
-                    radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                    if (!alwaysListening) {
+                        radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                    }
 
                 /* @brief Checking if we have re-transmission slots left */
                 if (transmitSlot[currentSlot + 1] == mySlot)
                     EV << "ACK timeout received re-sending DATA" << endl;
                 else
                 {
-                    EV << "Maximum re-transmissions attempt done, DATA transmission <failed>. Deleting packet from que" << endl;
+                    EV_INFO << "Maximum re-transmissions attempt done, DATA transmission <failed>. Deleting packet from que" << endl;
                     EV_DEBUG << " Deleting packet from DMAMAC queue";
                     delete macPktQueue.front();     // DATA Packet deleted in case re-transmissions are done
                     macPktQueue.pop_front();
-                    EV << "My Packet queue size" << macPktQueue.size() << endl;
+                    EV_INFO << "My Packet queue size" << macPktQueue.size() << endl;
                 }
                 break;
 
@@ -768,8 +788,10 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
                 EV << "No data transmission detected stopping RX" << endl;
                 if (radio->getRadioMode() == IRadio::RADIO_MODE_RECEIVER)
                 {
-                    radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
-                    EV << "Switching Radio to SLEEP" << endl;
+                    if (!alwaysListening) {
+                        radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                        EV << "Switching Radio to SLEEP" << endl;
+                    }
                 }
                 nbTimeouts++;
                 break;
@@ -780,8 +802,10 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
                EV << "No alert transmission detected stopping alert RX, macType : " << macType << endl;
                if (radio->getRadioMode() == IRadio::RADIO_MODE_RECEIVER)
                {
-                   radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
-                  EV << "Switching Radio to SLEEP" << endl;
+                   if (!alwaysListening) {
+                       radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                       EV << "Switching Radio to SLEEP" << endl;
+                   }
                }
                break;
 
@@ -826,7 +850,9 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
                 if(macType == DMAMAC::HYBRID || macType == DMAMAC::TDMA) // 0 = Hybrid
                 {
                     if((radio->getRadioMode() == IRadio::RADIO_MODE_RECEIVER) || (radio->getRadioMode() == IRadio::RADIO_MODE_TRANSMITTER))
-                        radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                        if (!alwaysListening) {
+                            radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                        }
                 }
 
                 randomNumber = uniform(0,1000,0);   
@@ -866,8 +892,14 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
                     {
                         /* @brief If we have no alert to send check if radio is in RX, if yes set to SLEEP */
                         EV << "No alert to send sleeping <NoAlert>" << endl;
-                        if(radio->getRadioMode() != IRadio::RADIO_MODE_SLEEP)
-                            radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                        if (!alwaysListening) {
+                            if(radio->getRadioMode() != IRadio::RADIO_MODE_SLEEP)
+                                radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                        }
+                        else {
+                            if(radio->getRadioMode() != IRadio::RADIO_MODE_RECEIVER)
+                                radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
+                        }
                     }
                 }
                 else if (macType == DMAMAC::TDMA) // 1 = TDMA
@@ -880,8 +912,14 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
                     else
                     {
                         EV << "No alert to send sleeping <NoAlert>" << endl;
-                        if(radio->getRadioMode() != IRadio::RADIO_MODE_SLEEP)
-                            radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                        if (!alwaysListening) {
+                            if(radio->getRadioMode() != IRadio::RADIO_MODE_SLEEP)
+                                radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                        }
+                        else {
+                            if(radio->getRadioMode() != IRadio::RADIO_MODE_RECEIVER)
+                                radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
+                        }
                     }
                 }
 
@@ -958,11 +996,22 @@ void DMAMAC::receiveSignal(cComponent *source, simsignal_t signalID, long value,
             }
             /* @brief Setting radio to sleep to save energy after ACK is sent */
             if(currentMacState == SEND_ACK && radio->getRadioMode() == IRadio::RADIO_MODE_TRANSMITTER)
-                radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+
+                if (!alwaysListening) {
+                    radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                 }
+                 else {
+                     radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
+                 }
 
             /* @brief Setting radio to sleep to save energy after Alert is sent */
             if(currentMacState == SEND_ALERT && radio->getRadioMode() == IRadio::RADIO_MODE_TRANSMITTER)
-                radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                if (!alwaysListening) {
+                    radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                 }
+                 else {
+                     radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
+                 }
         }
         transmissionState = newRadioTransmissionState;
     }
@@ -999,11 +1048,11 @@ void DMAMAC::receiveSignal(cComponent *source, simsignal_t signalID, long value,
  */
 void DMAMAC::handleRadioSwitchedToTX() {
     /* @brief Radio is set to Transmit state thus next job is to send the packet to physical layer  */
-    EV << "¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤ TX handler module ¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤" << endl;
+    EV_INFO << " TX handler module ";
 
         if(currentMacState == SEND_DATA)
         {
-            if (par("sendDisorganized")) {
+            if (par("sendDisorganized") && !alwaysListeningReception) {
                 // check reception slot
                 int rslot = receiveSlot[currentSlot];
                 for (auto it = macPktQueue.begin(); it != macPktQueue.end(); ++it) {
@@ -1027,6 +1076,7 @@ void DMAMAC::handleRadioSwitchedToTX() {
             /* @brief Other fields are set, setting slot field 
 			 * Both for self data and forward data
 			 */
+            data->setSrcAddr(myMacAddr);
             data->setMySlot(mySlot);
             attachSignal(data);
             EV_INFO << "Sending down data packet\n";
@@ -1082,6 +1132,11 @@ void DMAMAC::handleRadioSwitchedToTX() {
                 alert->setDestAddr(destAddr);
                 alert->setSrcAddr(myMacAddr);
                 alert->setKind(DMAMAC_ALERT);
+
+                if (twoLevels){
+                    alert->setSourceAddress(myMacAddr);
+                    alert->setDestinationAddress(sinkAddressGlobal);
+                }
                 alert->setByteLength(11);
                 attachSignal(alert);
                 EV_INFO << "Sending #new Alert packet\n";
@@ -1249,6 +1304,10 @@ void DMAMAC::resyncr(const int &slot,const macMode &mode, const bool &changeMacM
         EV << "Immediate next Slot is Notification Slot, getting ready to receive" << endl;
         scheduleAt(simTime(), waitNotification);
     }
+    else if (alwaysListening) {
+        EV << "Always listening, getting ready to receive" << endl;
+        scheduleAt(simTime(), waitData);
+    }
     else
     {
         EV << "Immediate next Slot is Sleep slot.\n";
@@ -1279,8 +1338,10 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
     DMAMACSinkPkt *notification  = dynamic_cast<DMAMACSinkPkt *>(msg);
     if (notification != nullptr)
     {
+        EV << "Received notification from :" << notification->getSrcAddr() << "\n";
         if (notification->getSrcAddr() != sinkAddress) {
             // ignore
+            EV << "Notification not for me delete \n";
             delete msg;
             return;
         }
@@ -1290,6 +1351,7 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
     DMAMACPkt * dmapkt   = dynamic_cast<DMAMACPkt *>(msg);
     if (dmapkt !=nullptr && !endAddressRange.isUnspecified()) {
         if (dmapkt->getSrcAddr() < startAddressRange || dmapkt->getSrcAddr() > endAddressRange) {
+            EV << "Sender address out of range Received notification from :" << dmapkt->getSrcAddr() << "\n";
             delete msg;
             return;
         }
@@ -1342,13 +1404,11 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
             else {
                 if (macPktQueue.size() < queueLength) {
                     macPktQueue.push_back(mac);
-                    EV << " DATA packet from child node put in queue : "
-                              << macPktQueue.size() << endl;
+                    EV_DEBUG << " DATA packet from child node put in queue : " << macPktQueue.size() << endl;
                 }
                 else
                 {
-                    EV << " No space for forwarding packets queue size :"
-                              << macPktQueue.size() << endl;
+                    EV_DEBUG << " No space for forwarding packets queue size :" << macPktQueue.size() << endl;
                     delete mac;
                 }
             }
@@ -1369,7 +1429,8 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
         }
         else
         {
-            EV << "DATA Packet not for me, deleting";
+            EV << this->getFullName() << " DATA Packet not for me, deleting";
+            EV << " Destination: " << mac->getDestAddr() << " Sender: " << mac->getSrcAddr() << " My address: " << myMacAddr << endl;
             delete mac;
         }
     }
@@ -1382,7 +1443,7 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
             return;
         }
 
-        EV << "ACK Packet received with length : " << mac->getByteLength() << ", DATA Transmission successful"  << endl;
+        EV_INFO << "ACK Packet received with length : " << mac->getByteLength() << ", DATA Transmission successful"  << endl;
 
         EV_DEBUG << " Deleting packet from DMAMAC queue";
         delete macPktQueue.front();     // DATA Packet deleted
@@ -1464,7 +1525,9 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
 
         /* @brief Notification received hence sleeping briefly until next work */
         if (radio->getRadioMode() == IRadio::RADIO_MODE_RECEIVER)
-            radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+            if (!alwaysListening) {
+                radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+             }
     }
     else if (currentMacState == WAIT_ALERT)
     {
@@ -1483,7 +1546,12 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
 
         const MACAddress& dest = alert->getDestAddr();
 
-        if(!alertMessageFromDown && dest == myMacAddr)
+        if (twoLevels && isRelayNode && !alertMessageFromDown){
+            EV << "Alert message received from down will be forwarded" << endl;
+            alertMessageFromDown = true;
+
+        }
+        else if(!alertMessageFromDown && dest == myMacAddr)
         {
             EV << "Alert message received from down will be forwarded" << endl;
             alertMessageFromDown = true;
@@ -1500,7 +1568,8 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
 
         /* If in TDMA or Hybrid mode then stop RX process once alert is received. */
         if (radio->getRadioMode() == IRadio::RADIO_MODE_RECEIVER)
-            radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+            if (!alwaysListening)
+                radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
     }
     refreshDisplay();
 }
@@ -1540,10 +1609,16 @@ void DMAMAC::findDistantNextSlot()
       {
      */
     /* @brief if not sleeping already then set sleep */
-    if (radio->getRadioMode() != IRadio::RADIO_MODE_SLEEP)
-        radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
-    else
-        EV << "Radio already in sleep just making wakeup calculations " << endl;
+    if (!alwaysListening) {
+        if (radio->getRadioMode() != IRadio::RADIO_MODE_SLEEP)
+            radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+        else
+            EV << "Radio already in sleep just making wakeup calculations " << endl;
+    }
+    else {
+        if (radio->getRadioMode() != IRadio::RADIO_MODE_RECEIVER)
+            radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
+    }
 
 	/* @brief Time to next event */
     nextEvent = slotDuration*(i);
@@ -1601,6 +1676,9 @@ void DMAMAC::findDistantNextSlot()
             EV << "My next slot after sleep is alert receive Slot" << endl;
             scheduleAt(simTime() + nextEvent, waitAlert);
         }
+    }
+    else if (alwaysListening) {
+        scheduleAt(simTime() + nextEvent, waitData);
     }
     else
             EV << " Undefined MAC state <ERROR>" << endl;

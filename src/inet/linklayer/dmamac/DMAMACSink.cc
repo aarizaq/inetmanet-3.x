@@ -289,7 +289,8 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
 				  /* @brief Radio put to sleep until next slot or operation */	
                   EV << "ACK Received" << endl;
                   if (radio->getRadioMode() == IRadio::RADIO_MODE_RECEIVER)
-                      radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                      if (!alwaysListening)
+                          radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
                   break;
 
            /* @brief Handling ACK timeout possibility (ACK packet lost)  */
@@ -300,7 +301,8 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
                   EV << "Data <failed>" << endl;
 
                   if (radio->getRadioMode() == IRadio::RADIO_MODE_RECEIVER)
-                      radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);         // 23 Dec
+                      if (!alwaysListening)
+                          radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);         // 23 Dec
 
                   /* @brief Checking if next slot is transmission slot */
                   if (transmitSlot[currentSlot + 1] == mySlot)
@@ -322,8 +324,10 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
                   EV << "No data transmission detected stopping RX" << endl;
                   if (radio->getRadioMode() == IRadio::RADIO_MODE_RECEIVER)
                   {
-                      radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
-                      EV << "Switching Radio to SLEEP" << endl;
+                      if (!alwaysListening) {
+                          radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                          EV << "Switching Radio to SLEEP" << endl;
+                      }
                   }
                   nbTimeouts++;
                   break;
@@ -334,8 +338,10 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
                  EV << "No alert transmission detected stopping alert RX" << endl;
                  if (radio->getRadioMode() == IRadio::RADIO_MODE_RECEIVER)
                  {
-                     radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
-                     EV << "Switching Radio to SLEEP" << endl;
+                     if (!alwaysListening) {
+                         radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                         EV << "Switching Radio to SLEEP" << endl;
+                     }
                  }
                  break;
 
@@ -383,7 +389,13 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
 
                 /* @brief To put in delay of waking up at notification slot equal to other nodes waking up */
                 if(radio->getRadioMode() == IRadio::RADIO_MODE_TRANSMITTER || radio->getRadioMode() == IRadio::RADIO_MODE_RECEIVER)
-                    radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                    if (!alwaysListening) {
+                        radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                    }
+                    else {
+                        radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
+                    }
+
 
                 radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
 
@@ -464,7 +476,12 @@ void DMAMACSink::receiveSignal(cComponent *source, simsignal_t signalID, long va
             }
             /* @brief Setting radio to sleep after notification is sent */
             else if(currentMacState == SEND_NOTIFICATION) {
-                radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                if (!alwaysListening) {
+                       radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                   }
+                   else {
+                       radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
+                   }
             }
         }
         transmissionState = newRadioTransmissionState;
@@ -520,7 +537,7 @@ void DMAMACSink::handleRadioSwitchedToTX() {
         EV << "Sending Data packet down " << endl;
         DMAMACPkt* data = macPktQueue.front()->dup();
 
-        data->setSrcAddr(sinkAddress);
+        data->setSrcAddr(myMacAddr);
         data->setKind(DMAMAC_ACTUATOR_DATA);
         data->setMySlot(mySlot);
         attachSignal(data);
@@ -653,7 +670,8 @@ void DMAMACSink::handleLowerPacket(cPacket* msg) {
         }
         else
         {
-            EV << "DATA Packet not for me, deleting";
+            EV << this->getFullName() << " DATA Packet not for me, deleting";
+            EV << " Destination: " << mac->getDestAddr() << " Sender: " << mac->getSrcAddr() << " My address: " << myMacAddr << endl;
             delete mac;
         }
         /* @statistics */
@@ -717,8 +735,15 @@ void DMAMACSink::findDistantNextSlot()
     /* @brief
      * Setting radio to sleep if not already in sleep
      */
-    if (radio->getRadioMode() != IRadio::RADIO_MODE_SLEEP)
-        radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+    if (!alwaysListening) {
+        if (radio->getRadioMode() != IRadio::RADIO_MODE_SLEEP)
+            radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+     }
+     else {
+         if (radio->getRadioMode() != IRadio::RADIO_MODE_RECEIVER)
+             radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
+         radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
+     }
 
     nextEvent = slotDuration*(i);
     currentSlot +=i;
@@ -765,6 +790,9 @@ void DMAMACSink::findDistantNextSlot()
             EV << "Next slot after sleep is alert slot" << endl;
             scheduleAt(simTime() + nextEvent, waitAlert);
         }
+    }
+    else if (alwaysListening) {
+        scheduleAt(simTime() + nextEvent, waitData);
     }
     else
         EV << " Undefined MAC state <ERROR>" << endl;

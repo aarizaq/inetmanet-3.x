@@ -58,6 +58,8 @@ class INET_API DMAMACSink : public DMAMAC
     public:DMAMACSink():DMAMAC()
     {}
 
+    ~DMAMACSink() {}
+
     /* @brief Module destructor DMAMAC Sink version*/
     //~DMAMACSink();
 

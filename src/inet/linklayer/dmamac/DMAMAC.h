@@ -169,6 +169,9 @@ class INET_API DMAMAC : public MACProtocolBase, public IMACProtocol
 
 protected:
 
+    bool alwaysListening = false;
+    bool alwaysListeningReception = false;
+
     bool testing = true;
 
     MACAddress startAddressRange;
@@ -187,8 +190,11 @@ protected:
      * Mac packet queue to store incoming packets from upper layer  
 	 */
     typedef std::list<DMAMACPkt*> MacPktQueue;
+
+    typedef std::list<AlertPkt*> AlertPktQueue;
 	
 	MacPktQueue macPktQueue;
+	AlertPktQueue alertPktQueue;
 	
     /* @brief length of the queue */
     unsigned queueLength = 0;
