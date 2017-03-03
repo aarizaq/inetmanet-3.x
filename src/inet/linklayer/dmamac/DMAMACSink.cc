@@ -387,16 +387,6 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
                 EV << "Sending Notification as sink" << endl;
                 currentMacState = SEND_NOTIFICATION;
 
-                /* @brief To put in delay of waking up at notification slot equal to other nodes waking up */
-                if(radio->getRadioMode() == IRadio::RADIO_MODE_TRANSMITTER || radio->getRadioMode() == IRadio::RADIO_MODE_RECEIVER)
-                    if (!alwaysListening) {
-                        radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
-                    }
-                    else {
-                        radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
-                    }
-
-
                 radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
 
                 /* @brief if State switch is called for then we ask nodes to make switch here
