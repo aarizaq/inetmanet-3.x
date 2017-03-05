@@ -159,8 +159,7 @@ AnyMacXmacLayer::~AnyMacXmacLayer()
 	cancelAndDelete(ack2_tx_over);
 	cancelAndDelete(cca2_timeout);
 
-	for(auto it = macQueue.begin(); it != macQueue.end(); ++it)
-	{
+	for(auto it = macQueue.begin(); it != macQueue.end(); ++it) {
 		delete (*it);
 	}
 	macQueue.clear();
@@ -169,8 +168,7 @@ AnyMacXmacLayer::~AnyMacXmacLayer()
 void AnyMacXmacLayer::finish()
 {
     // record stats
-    if (stats)
-    {
+    if (stats) {
     	recordScalar("nbTxDataPackets", nbTxDataPackets);
     	recordScalar("nbTxPreambles", nbTxPreambles);
     	recordScalar("nbRxDataPackets", nbRxDataPackets);
@@ -315,113 +313,96 @@ void AnyMacXmacLayer::sendMacAck2(const MACAddress & addr)
  * XMAC_TIMEOUT_DATA: timeout the node after a false busy channel alarm. Go
  * back to sleep.
  */
-void AnyMacXmacLayer::handleSelfMessage(cMessage *msg)
-{
-	if (msg->getKind() == XMAC_PREAMBLE && radio->getRadioMode() == IRadio::RADIO_MODE_RECEIVER)
-	{
-	    XMacPkt *macPkt = dynamic_cast<XMacPkt*>(msg);
-		if (macPkt->getDestAddr() == MACAddress::BROADCAST_ADDRESS || macPkt->getDestAddr() == this->address)
-		{
-		    pendingPreambleIterator = pendingPreambles.find(macPkt->getSrcAddr());
-		    if (pendingPreambleIterator == pendingPreambles.end())
-			    pendingPreambles.insert(macPkt->getSrcAddr());
-		}
-	}
-	switch (macState)
-	{
-	case INIT:
-		if (msg->getKind() == XMAC_START_XMAC)
-		{
-			EV_DETAIL << "State INIT, message XMAC_START, new state SLEEP" << endl;
-			changeDisplayColor(BLACK);
-			radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
-			macState = SLEEP;
-			scheduleAt(simTime()+dblrand()*slotDuration, wakeup);
-			return;
-		}
-		break;
-	case SLEEP:
-		if (msg->getKind() == XMAC_WAKE_UP)
-		{
-			EV_DETAIL << "State SLEEP, message XMAC_WAKEUP, new state CCA" << endl;
-			scheduleAt(simTime() + checkInterval, cca_timeout);
-			radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
-			changeDisplayColor(GREEN);
-			macState = CCA;
-			pendingPreambles.clear();
-			pendingPreambleIterator = pendingPreambles.end();
-			prevMacState = SLEEP;
-			destAddressNext = MACAddress::UNSPECIFIED_ADDRESS;
-			destDestAddrAck2 = MACAddress::UNSPECIFIED_ADDRESS;
-			return;
-		}
-		break;
-	case CCA:
-		if (msg->getKind() == XMAC_CCA_TIMEOUT)
-		{
-			// channel is clear
-			// something waiting in eth queue?
+void AnyMacXmacLayer::handleSelfMessage(cMessage *msg) {
+    if (msg->getKind() == XMAC_PREAMBLE && radio->getRadioMode() == IRadio::RADIO_MODE_RECEIVER) {
+        XMacPkt *macPkt = dynamic_cast<XMacPkt*>(msg);
+        if (macPkt->getDestAddr() == MACAddress::BROADCAST_ADDRESS || macPkt->getDestAddr() == this->address) {
+            pendingPreambleIterator = pendingPreambles.find(macPkt->getSrcAddr());
+            if (pendingPreambleIterator == pendingPreambles.end())
+                pendingPreambles.insert(macPkt->getSrcAddr());
+        }
+    }
+    switch (macState) {
+    case INIT:
+        if (msg->getKind() == XMAC_START_XMAC) {
+            EV_DETAIL << "State INIT, message XMAC_START, new state SLEEP" << endl;
+            changeDisplayColor(BLACK);
+            radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+            macState = SLEEP;
+            scheduleAt(simTime() + dblrand() * slotDuration, wakeup);
+            return;
+        }
+        break;
+    case SLEEP:
+        if (msg->getKind() == XMAC_WAKE_UP) {
+            EV_DETAIL << "State SLEEP, message XMAC_WAKEUP, new state CCA" << endl;
+            scheduleAt(simTime() + checkInterval, cca_timeout);
+            radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
+            changeDisplayColor(GREEN);
+            macState = CCA;
+            pendingPreambles.clear();
+            pendingPreambleIterator = pendingPreambles.end();
+            prevMacState = SLEEP;
+            destAddressNext = MACAddress::UNSPECIFIED_ADDRESS;
+            destDestAddrAck2 = MACAddress::UNSPECIFIED_ADDRESS;
+            return;
+        }
+        break;
+    case CCA:
+        if (msg->getKind() == XMAC_CCA_TIMEOUT) {
+            // channel is clear
+            // something waiting in eth queue?
 
-			// if not, go back to sleep and wake up after a full period
-			if (macQueue.empty())
-			{
-				EV_DETAIL << "State CCA, message CCA_TIMEOUT, new state SLEEP" << endl;
-				if (prevMacState == WAIT_DATA)
-				    scheduleAt(simTime() + slotDuration - checkInterval, wakeup);
-				else
-					scheduleAt(simTime() + slotDuration, wakeup);
-				macState = SLEEP;
-				prevMacState = CCA;
-				radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
-				changeDisplayColor(BLACK);
-				return;
-			}
-			if (prevMacState != WAIT_DATA)
-			{
-				EV_DETAIL << "State CCA, message CCA_TIMEOUT, new state"
-						  " SEND_PREAMBLE" << endl;
-				radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
-				changeDisplayColor(YELLOW);
-				macState = SEND_PREAMBLE;
-				prevMacState = CCA;
-				scheduleAt(simTime() + slotDuration, stop_preambles);
-				return;
-			}
-			else
-			{
-				// continue a very small random period in CCA
-				prevMacState = CCA;
-				scheduleAt(simTime() + checkInterval*dblrand()*0.5f, cca_timeout);
-				return;
-			}
-		}
-		// during CCA, we received a preamble. Go to state WAIT_DATA and
-		// schedule the timeout.
-		if (msg->getKind() == XMAC_PREAMBLE)
-		{
-			nbRxPreambles++;
-			XMacPkt *lmacPkt = dynamic_cast<XMacPkt*>(msg);
-			if (lmacPkt)
-			{
-				// check if address in list
-				bool inList = false;
-				for (unsigned int i=0;i<lmacPkt->getDestinationAddressArraySize();i++)
-					if (lmacPkt->getDestinationAddress(i)==address)
-						inList = true;
-				if (xmac)
-				{
-				    cancelEvent(cca_timeout);
-				    if (inList)
-				    {
-			            macState = SEND_ACK2;
-			            prevMacState = CCA;
-			            radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
-			            changeDisplayColor(YELLOW);
-			            delete msg;
-			            return;
-				    }
-				    else
-				    {
+            // if not, go back to sleep and wake up after a full period
+            if (macQueue.empty()) {
+                EV_DETAIL << "State CCA, message CCA_TIMEOUT, new state SLEEP" << endl;
+                if (prevMacState == WAIT_DATA)
+                    scheduleAt(simTime() + slotDuration - checkInterval, wakeup);
+                else
+                    scheduleAt(simTime() + slotDuration, wakeup);
+                macState = SLEEP;
+                prevMacState = CCA;
+                radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                changeDisplayColor(BLACK);
+                return;
+            }
+            if (prevMacState != WAIT_DATA) {
+                EV_DETAIL << "State CCA, message CCA_TIMEOUT, new state SEND_PREAMBLE" << endl;
+                radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+                changeDisplayColor(YELLOW);
+                macState = SEND_PREAMBLE;
+                prevMacState = CCA;
+                scheduleAt(simTime() + slotDuration, stop_preambles);
+                return;
+            } else {
+                // continue a very small random period in CCA
+                prevMacState = CCA;
+                scheduleAt(simTime() + checkInterval * dblrand() * 0.5f, cca_timeout);
+                return;
+            }
+        }
+        // during CCA, we received a preamble. Go to state WAIT_DATA and
+        // schedule the timeout.
+        if (msg->getKind() == XMAC_PREAMBLE) {
+            nbRxPreambles++;
+            XMacPkt *lmacPkt = dynamic_cast<XMacPkt*>(msg);
+            if (lmacPkt) {
+                // check if address in list
+                bool inList = false;
+                for (unsigned int i = 0; i < lmacPkt->getDestinationAddressArraySize(); i++)
+                    if (lmacPkt->getDestinationAddress(i) == address)
+                        inList = true;
+                if (xmac) {
+                    cancelEvent(cca_timeout);
+                    if (inList) {
+                        macState = SEND_ACK2;
+                        prevMacState = CCA;
+                        radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+                        changeDisplayColor(YELLOW);
+                        delete msg;
+                        return;
+                    }
+                    else {
                         scheduleAt(simTime() + slotDuration, wakeup);
                         macState = SLEEP;
                         prevMacState = CCA;
@@ -429,10 +410,9 @@ void AnyMacXmacLayer::handleSelfMessage(cMessage *msg)
                         changeDisplayColor(BLACK);
                         delete msg;
                         return;
-				    }
-				}
-				else
-				{
+                    }
+                }
+                else {
                     if (inList) {
                         macState = CCA2;
                         prevMacState = CCA;
@@ -440,214 +420,186 @@ void AnyMacXmacLayer::handleSelfMessage(cMessage *msg)
                         scheduleAt(simTime() + delay, cca2_timeout);
                         destDestAddrAck2 = lmacPkt->getSrcAddr();
                         cancelEvent(cca_timeout);
-                    } 
-                    else 
-                    {
+                    }
+                    else {
                         macState = CCA_LOST;
                         prevMacState = CCA;
                     }
                 }
-			}
-			else
-			{
-			    XMacPkt *macPkt = dynamic_cast<XMacPkt*>(msg);
-				if (macPkt->getDestAddr() != MACAddress::BROADCAST_ADDRESS && macPkt->getDestAddr() != this->address)
-				{
-					// not for my  CCA_LOST
-					EV_DETAIL << "State CCA, message XMAC_PREAMBLE received, new state"
-											" CCA_LOST" << endl;
-					macState = CCA_LOST;
-					prevMacState = CCA;
-				}
-				else
-				{
-					EV_DETAIL << "State CCA, message XMAC_PREAMBLE received, new state"
-						" WAIT_DATA" << endl;
-					if (useAck2 && PreambleAddress && macPkt->getDestAddr() != MACAddress::BROADCAST_ADDRESS)
-					{
-						macState = CCA2;
-						prevMacState = CCA;
-						scheduleAt(simTime(), cca2_timeout);
-						destDestAddrAck2 = macPkt->getSrcAddr();
-						cancelEvent(cca_timeout);
-					}
-					else
-						macState = WAIT_DATA;
-					cancelEvent(cca_timeout);
-					//if (prevMacState != WAIT_DATA)
-				    scheduleAt(simTime() + slotDuration + checkInterval, data_timeout);
-					prevMacState = CCA;
-				}
-			}
-			delete msg;
-			return;
-		}
-		// this case is very, very, very improbable, but let's do it.
-		// if in CCA and the node receives directly the data packet, switch to
-		// state WAIT_DATA and re-send the message
-		if (msg->getKind() == XMAC_DATA)
-		{
-			nbRxDataPackets++;
-			EV_DETAIL << "State CCA, message XMAC_DATA, new state WAIT_DATA"
-				   << endl;
-			macState = WAIT_DATA;
-			prevMacState = CCA;
-			cancelEvent(cca_timeout);
-			scheduleAt(simTime() + slotDuration + checkInterval, data_timeout);
-			scheduleAt(simTime(), msg);
-			return;
-		}
-		//in case we get an ACK, we simply dicard it, because it means the end
-		//of another communication
-		if (msg->getKind() == XMAC_ACK)
-		{
-			EV_DETAIL << "State CCA, message XMAC_ACK, new state CCA" << endl;
-			delete msg;
-			return;
-		}
-		if (msg->getKind() == XMAC_ACK2)
-		{
-			EV_DETAIL << "State CCA, message XMAC_ACK2, new state CCA_LOST" << endl;
-			// XMAC_ACK2 works like RTS/CTS
-			macState = CCA_LOST;
-			prevMacState = CCA;
-			delete msg;
-			return;
-		}
-		break;
-	case CCA_LOST:
-		if (msg->getKind() == XMAC_CCA_TIMEOUT)
-		{
-			EV_DETAIL << "State CCA, message CCA_TIMEOUT, new state SLEEP" << endl;
-			scheduleAt(simTime() + slotDuration, wakeup);
-			macState = SLEEP;
-			prevMacState = CCA_LOST;
-			radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
-			changeDisplayColor(BLACK);
-			return;
-		}
-		// during CCA, we received a preamble. Go to state WAIT_DATA and
-		// schedule the timeout.
-		if (msg->getKind() == XMAC_PREAMBLE)
-		{
-			nbRxPreambles++;
-			XMacPkt *macPkt = dynamic_cast<XMacPkt*>(msg);
-			// check if address in list
-			bool inList = false;
-			for (unsigned int i=0;i<macPkt->getDestinationAddressArraySize();i++)
-			    if (macPkt->getDestinationAddress(i)==address)
-			        inList = true;
-			if (inList)
-			{
-			    macState = CCA2;
-			    prevMacState = CCA_LOST;
-			    double delay = slotDuration*0.1*dblrand();
-			    scheduleAt(simTime() + delay, cca2_timeout);
-			    destDestAddrAck2 = macPkt->getSrcAddr();
-			    cancelEvent(cca_timeout);
-			}
-			delete msg;
-			return;
-		}
-		// this case is very, very, very improbable, but let's do it.
-		// if in CCA and the node receives directly the data packet, switch to
-		// state WAIT_DATA and re-send the message
-		if (msg->getKind() == XMAC_DATA)
-		{
-			nbRxDataPackets++;
-			EV_DETAIL << "State CCA_LOST, message XMAC_DATA, new state WAIT_DATA"
-				   << endl;
-			macState = WAIT_DATA;
-			prevMacState = CCA_LOST;
-			cancelEvent(cca_timeout);
-			scheduleAt(simTime() + slotDuration + checkInterval, data_timeout);
-			scheduleAt(simTime(), msg);
-			return;
-		}
-		//in case we get an ACK, we simply dicard it, because it means the end
-		//of another communication
-		if (msg->getKind() == XMAC_ACK)
-		{
-			EV_DETAIL << "State CCA_LOST, message XMAC_ACK, new state CCA" << endl;
-			delete msg;
-			return;
-		}
-		if (msg->getKind() == XMAC_ACK2)
-		{
-			EV_DETAIL << "State CCA_LOST, message XMAC_ACK2, new state CCA_LOST" << endl;
-			// the XMAC_ACK2 works like RTS/CTS
-			delete msg;
-			return;
-		}
-		break;
-	case CCA2:
-		if (msg->getKind() == XMAC_CCA2_TIMEOUT)
-		{
-			macState = SEND_ACK2;
-			prevMacState = CCA2;
-			cancelEvent(data_timeout);
-			radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
-			changeDisplayColor(YELLOW);
-			return;
-		}
-		// during CCA, we received a preamble. Go to state WAIT_DATA and
-		// schedule the timeout.
-		if (msg->getKind() == XMAC_ACK2)
-		{
-			XMacPkt *macPkt = dynamic_cast<XMacPkt*>(msg);
-			if (macPkt->getDestAddr() == destDestAddrAck2) // other node has winned
-			{
-				scheduleAt(simTime() + slotDuration, wakeup);
-				cancelEvent(cca2_timeout);
-	            cancelEvent(data_timeout);
-				radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
-				changeDisplayColor(BLACK);
+            }
+            else {
+                XMacPkt *macPkt = dynamic_cast<XMacPkt*>(msg);
+                if (macPkt->getDestAddr() != MACAddress::BROADCAST_ADDRESS && macPkt->getDestAddr() != this->address) {
+                    // not for my  CCA_LOST
+                    EV_DETAIL << "State CCA, message XMAC_PREAMBLE received, new state CCA_LOST" << endl;
+                    macState = CCA_LOST;
+                    prevMacState = CCA;
+                }
+                else {
+                    EV_DETAIL << "State CCA, message XMAC_PREAMBLE received, new state WAIT_DATA" << endl;
+                    if (useAck2 && PreambleAddress && macPkt->getDestAddr() != MACAddress::BROADCAST_ADDRESS) {
+                        macState = CCA2;
+                        prevMacState = CCA;
+                        scheduleAt(simTime(), cca2_timeout);
+                        destDestAddrAck2 = macPkt->getSrcAddr();
+                        cancelEvent(cca_timeout);
+                    } else
+                        macState = WAIT_DATA;
+                    cancelEvent(cca_timeout);
+                    //if (prevMacState != WAIT_DATA)
+                    scheduleAt(simTime() + slotDuration + checkInterval, data_timeout);
+                    prevMacState = CCA;
+                }
+            }
+            delete msg;
+            return;
+        }
+        // this case is very, very, very improbable, but let's do it.
+        // if in CCA and the node receives directly the data packet, switch to
+        // state WAIT_DATA and re-send the message
+        if (msg->getKind() == XMAC_DATA) {
+            nbRxDataPackets++;
+            EV_DETAIL << "State CCA, message XMAC_DATA, new state WAIT_DATA" << endl;
+            macState = WAIT_DATA;
+            prevMacState = CCA;
+            cancelEvent(cca_timeout);
+            scheduleAt(simTime() + slotDuration + checkInterval, data_timeout);
+            scheduleAt(simTime(), msg);
+            return;
+        }
+        //in case we get an ACK, we simply dicard it, because it means the end
+        //of another communication
+        if (msg->getKind() == XMAC_ACK) {
+            EV_DETAIL << "State CCA, message XMAC_ACK, new state CCA" << endl;
+            delete msg;
+            return;
+        }
+        if (msg->getKind() == XMAC_ACK2) {
+            EV_DETAIL << "State CCA, message XMAC_ACK2, new state CCA_LOST" << endl;
+            // XMAC_ACK2 works like RTS/CTS
+            macState = CCA_LOST;
+            prevMacState = CCA;
+            delete msg;
+            return;
+        }
+        break;
+    case CCA_LOST:
+        if (msg->getKind() == XMAC_CCA_TIMEOUT) {
+            EV_DETAIL << "State CCA, message CCA_TIMEOUT, new state SLEEP" << endl;
+            scheduleAt(simTime() + slotDuration, wakeup);
+            macState = SLEEP;
+            prevMacState = CCA_LOST;
+            radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+            changeDisplayColor(BLACK);
+            return;
+        }
+        // during CCA, we received a preamble. Go to state WAIT_DATA and
+        // schedule the timeout.
+        if (msg->getKind() == XMAC_PREAMBLE) {
+            nbRxPreambles++;
+            XMacPkt *macPkt = dynamic_cast<XMacPkt*>(msg);
+            // check if address in list
+            bool inList = false;
+            for (unsigned int i = 0; i < macPkt->getDestinationAddressArraySize(); i++)
+                if (macPkt->getDestinationAddress(i) == address)
+                    inList = true;
+            if (inList) {
+                macState = CCA2;
+                prevMacState = CCA_LOST;
+                double delay = slotDuration * 0.1 * dblrand();
+                scheduleAt(simTime() + delay, cca2_timeout);
+                destDestAddrAck2 = macPkt->getSrcAddr();
+                cancelEvent(cca_timeout);
+            }
+            delete msg;
+            return;
+        }
+        // this case is very, very, very improbable, but let's do it.
+        // if in CCA and the node receives directly the data packet, switch to
+        // state WAIT_DATA and re-send the message
+        if (msg->getKind() == XMAC_DATA) {
+            nbRxDataPackets++;
+            EV_DETAIL << "State CCA_LOST, message XMAC_DATA, new state WAIT_DATA" << endl;
+            macState = WAIT_DATA;
+            prevMacState = CCA_LOST;
+            cancelEvent(cca_timeout);
+            scheduleAt(simTime() + slotDuration + checkInterval, data_timeout);
+            scheduleAt(simTime(), msg);
+            return;
+        }
+        //in case we get an ACK, we simply dicard it, because it means the end
+        //of another communication
+        if (msg->getKind() == XMAC_ACK) {
+            EV_DETAIL << "State CCA_LOST, message XMAC_ACK, new state CCA" << endl;
+            delete msg;
+            return;
+        }
+        if (msg->getKind() == XMAC_ACK2) {
+            EV_DETAIL << "State CCA_LOST, message XMAC_ACK2, new state CCA_LOST" << endl;
+            // the XMAC_ACK2 works like RTS/CTS
+            delete msg;
+            return;
+        }
+        break;
+    case CCA2:
+        if (msg->getKind() == XMAC_CCA2_TIMEOUT) {
+            macState = SEND_ACK2;
+            prevMacState = CCA2;
+            cancelEvent(data_timeout);
+            radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+            changeDisplayColor(YELLOW);
+            return;
+        }
+        // during CCA, we received a preamble. Go to state WAIT_DATA and
+        // schedule the timeout.
+        if (msg->getKind() == XMAC_ACK2) {
+            XMacPkt *macPkt = dynamic_cast<XMacPkt*>(msg);
+            if (macPkt->getDestAddr() == destDestAddrAck2) {// other node has winned
+                scheduleAt(simTime() + slotDuration, wakeup);
+                cancelEvent(cca2_timeout);
+                cancelEvent(data_timeout);
+                radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                changeDisplayColor(BLACK);
                 macState = SLEEP;
                 prevMacState = CCA2;
-				delete msg;
-				return;
-			}
-			else
-			{
-			    // continue waiting
                 delete msg;
                 return;
-			}
-		}
-		if (msg->getKind() == XMAC_PREAMBLE)
-		{
-			EV_DETAIL << "State CCA2, message XMAC_PREAMBLE, new state CCA2" << endl;
-			delete msg;
-			return;
-		}
-		if (msg->getKind() == XMAC_DATA)
-		{
-			nbRxDataPackets++;
-			EV_DETAIL << "State CCA2, message XMAC_DATA, new state WAIT_DATA" << endl;
-			cancelEvent(cca2_timeout);
-			if (!data_timeout->isScheduled())
- 	            scheduleAt(simTime() + slotDuration + checkInterval, data_timeout);
-			scheduleAt(simTime(), msg);
+            }
+            else {
+                // continue waiting
+                delete msg;
+                return;
+            }
+        }
+        if (msg->getKind() == XMAC_PREAMBLE) {
+            EV_DETAIL << "State CCA2, message XMAC_PREAMBLE, new state CCA2" << endl;
+            delete msg;
+            return;
+        }
+        if (msg->getKind() == XMAC_DATA) {
+            nbRxDataPackets++;
+            EV_DETAIL << "State CCA2, message XMAC_DATA, new state WAIT_DATA" << endl;
+            cancelEvent(cca2_timeout);
+            if (!data_timeout->isScheduled())
+                scheduleAt(simTime() + slotDuration + checkInterval, data_timeout);
+            scheduleAt(simTime(), msg);
             macState = WAIT_DATA;
             prevMacState = CCA2;
-			return;
-		}
-		//in case we get an ACK, we simply dicard it, because it means the end
-		//of another communication
-		if (msg->getKind() == XMAC_ACK)
-		{
-			EV_DETAIL << "State CCA2, message XMAC_ACK, new state CCA2" << endl;
-			delete msg;
-			return;
-		}
+            return;
+        }
+        //in case we get an ACK, we simply dicard it, because it means the end
+        //of another communication
+        if (msg->getKind() == XMAC_ACK) {
+            EV_DETAIL << "State CCA2, message XMAC_ACK, new state CCA2" << endl;
+            delete msg;
+            return;
+        }
 
-        if (msg->getKind() == XMAC_DATA_TIMEOUT)
-        {
-            EV_DETAIL << "State CCA2, message XMAC_DATA_TIMEOUT, new state"
-                      " SLEEP" << endl;
+        if (msg->getKind() == XMAC_DATA_TIMEOUT) {
+            EV_DETAIL << "State CCA2, message XMAC_DATA_TIMEOUT, new state SLEEP" << endl;
             // if something in the queue, wakeup soon.
             if (macQueue.size() > 0)
-                scheduleAt(simTime() + dblrand()*checkInterval, wakeup);
+                scheduleAt(simTime() + dblrand() * checkInterval, wakeup);
             else
                 scheduleAt(simTime() + slotDuration, wakeup);
             cancelEvent(cca2_timeout);
@@ -658,469 +610,412 @@ void AnyMacXmacLayer::handleSelfMessage(cMessage *msg)
             changeDisplayColor(BLACK);
             return;
         }
-		break;
-	case SEND_PREAMBLE:
-		// check if anycast
-	    if (msg->getKind() == XMAC_SEND_PREAMBLE)
-	    {
-	        EV_DETAIL << "State SEND_PREAMBLE, message XMAC_SEND_PREAMBLE, new"
-	                " state SEND_PREAMBLE" << endl;
-	        std::vector<MACAddress> addr;
-	        XMacPkt * pkt = dynamic_cast<XMacPkt*>(macQueue.front());
-	        for (unsigned int i = 0; i < pkt->getDestinationAddressArraySize();i++)
-	            addr.push_back(pkt->getDestinationAddress(i));
-	        sendPreamble(addr);
-	        // scheduleAt(simTime() + 0.5f*checkInterval, send_preamble);
-	        scheduleAt(simTime() + 0.5f*checkInterval, ack_timeout);
-	        macState = SEND_PREAMBLE_TX_END;
-	        prevMacState = SEND_PREAMBLE;
-	        return;
-	    }
-	    // simply change the state to SEND_DATA
-	    if (msg->getKind() == XMAC_STOP_PREAMBLES)
-	    {
-	        EV_DETAIL << "State SEND_PREAMBLE, message XMAC_STOP_PREAMBLES, new"
-	                " state SEND_DATA" << endl;
-	        macState = SEND_DATA;
-	        prevMacState = SEND_PREAMBLE;
-	        txAttempts = 1;
-	        return;
-	    }
-	    break;
-	case SEND_PREAMBLE_TX_END:
-		if (msg->getKind() == XMAC_PREAMBLE_TX_OVER)
-		{
-			macState = WAIT_ACK2;
-			prevMacState = SEND_PREAMBLE_TX_END;
-			radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
-			changeDisplayColor(GREEN);
-			// scheduleAt(simTime()+checkInterval, ack_timeout);
-			return;
-		}
-		break;
-	case SEND_DATA:
-		if ((msg->getKind() == XMAC_SEND_PREAMBLE)
-			|| (msg->getKind() == XMAC_RESEND_DATA))
-		{
-			EV_DETAIL << "State SEND_DATA, message XMAC_SEND_PREAMBLE or"
-					  " XMAC_RESEND_DATA, new state WAIT_TX_DATA_OVER" << endl;
-			// send the data packet
-			sendDataPacket();
-			macState = WAIT_TX_DATA_OVER;
-			prevMacState = SEND_DATA;
-			return;
-		}
-		break;
-	case SEND_DATA2:
-		if ((msg->getKind() == XMAC_SEND_PREAMBLE) || (msg->getKind() == XMAC_RESEND_DATA))
-		{
-			EV_DETAIL << "State SEND_DATA, message XMAC_SEND_PREAMBLE or"
-					  " XMAC_RESEND_DATA, new state WAIT_TX_DATA_OVER" << endl;
-			// send the data packet
-			sendDataPacket(destAddressNext);
-			macState = WAIT_TX_DATA_OVER;
-			prevMacState = SEND_DATA2;
-			return;
-		}
-		break;
+        break;
+    case SEND_PREAMBLE:
+        // check if anycast
+        if (msg->getKind() == XMAC_SEND_PREAMBLE) {
+            EV_DETAIL << "State SEND_PREAMBLE, message XMAC_SEND_PREAMBLE, new state SEND_PREAMBLE" << endl;
+            std::vector<MACAddress> addr;
+            XMacPkt * pkt = dynamic_cast<XMacPkt*>(macQueue.front());
+            for (unsigned int i = 0; i < pkt->getDestinationAddressArraySize(); i++)
+                addr.push_back(pkt->getDestinationAddress(i));
+            sendPreamble(addr);
+            // scheduleAt(simTime() + 0.5f*checkInterval, send_preamble);
+            scheduleAt(simTime() + 0.5f * checkInterval, ack_timeout);
+            macState = SEND_PREAMBLE_TX_END;
+            prevMacState = SEND_PREAMBLE;
+            return;
+        }
+        // simply change the state to SEND_DATA
+        if (msg->getKind() == XMAC_STOP_PREAMBLES) {
+            EV_DETAIL << "State SEND_PREAMBLE, message XMAC_STOP_PREAMBLES, new state SEND_DATA" << endl;
+            macState = SEND_DATA;
+            prevMacState = SEND_PREAMBLE;
+            txAttempts = 1;
+            return;
+        }
+        break;
+    case SEND_PREAMBLE_TX_END:
+        if (msg->getKind() == XMAC_PREAMBLE_TX_OVER) {
+            macState = WAIT_ACK2;
+            prevMacState = SEND_PREAMBLE_TX_END;
+            radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
+            changeDisplayColor(GREEN);
+            // scheduleAt(simTime()+checkInterval, ack_timeout);
+            return;
+        }
+        break;
+    case SEND_DATA:
+        if ((msg->getKind() == XMAC_SEND_PREAMBLE)
+                || (msg->getKind() == XMAC_RESEND_DATA)) {
+            EV_DETAIL << "State SEND_DATA, message XMAC_SEND_PREAMBLE or XMAC_RESEND_DATA, new state WAIT_TX_DATA_OVER" << endl;
+            // send the data packet
+            sendDataPacket();
+            macState = WAIT_TX_DATA_OVER;
+            prevMacState = SEND_DATA;
+            return;
+        }
+        break;
+    case SEND_DATA2:
+        if ((msg->getKind() == XMAC_SEND_PREAMBLE)
+                || (msg->getKind() == XMAC_RESEND_DATA)) {
+            EV_DETAIL << "State SEND_DATA, message XMAC_SEND_PREAMBLE or XMAC_RESEND_DATA, new state WAIT_TX_DATA_OVER" << endl;
+            // send the data packet
+            sendDataPacket(destAddressNext);
+            macState = WAIT_TX_DATA_OVER;
+            prevMacState = SEND_DATA2;
+            return;
+        }
+        break;
 
-	case WAIT_TX_DATA_OVER:
-		if (msg->getKind() == XMAC_DATA_TX_OVER)
-		{
-			if ((useMacAcks) && !lastDataPktDestAddr.isBroadcast())
-			{
-				EV_DETAIL << "State WAIT_TX_DATA_OVER, message XMAC_DATA_TX_OVER,"
-						  " new state WAIT_ACK" << endl;
-				macState = WAIT_ACK;
-				prevMacState = WAIT_TX_DATA_OVER;
-				radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
-				changeDisplayColor(GREEN);
-				scheduleAt(simTime()+checkInterval, ack_timeout);
-			}
-			else
-			{
-				EV_DETAIL << "State WAIT_TX_DATA_OVER, message XMAC_DATA_TX_OVER,"
-						  " new state  SLEEP" << endl;
-				delete macQueue.front();
-				macQueue.pop_front();
-				preambleCont = 0;
-				// if something in the queue, wakeup soon.
-				if (macQueue.size() > 0)
-					scheduleAt(simTime() + dblrand()*checkInterval, wakeup);
-				else
-					scheduleAt(simTime() + slotDuration, wakeup);
-				macState = SLEEP;
-				prevMacState = WAIT_TX_DATA_OVER;
-				radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
-				changeDisplayColor(BLACK);
-			}
-			return;
-		}
-		break;
-	case WAIT_ACK:
-		if (msg->getKind() == XMAC_ACK_TIMEOUT)
-		{
-			// No ACK received. try again or drop.
-			if (txAttempts < maxTxAttempts)
-			{
-				EV_DETAIL << "State WAIT_ACK, message XMAC_ACK_TIMEOUT, new state"
-						  " SEND_DATA" << endl;
-				txAttempts++;
-				macState = SEND_PREAMBLE;
-				prevMacState = WAIT_ACK;
-				scheduleAt(simTime() + slotDuration, stop_preambles);
-				radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
-				changeDisplayColor(YELLOW);
-			}
-			else
-			{
-				EV_DETAIL << "State WAIT_ACK, message XMAC_ACK_TIMEOUT, new state"
-						  " SLEEP" << endl;
+    case WAIT_TX_DATA_OVER:
+        if (msg->getKind() == XMAC_DATA_TX_OVER) {
+            if ((useMacAcks) && !lastDataPktDestAddr.isBroadcast()) {
+                EV_DETAIL << "State WAIT_TX_DATA_OVER, message XMAC_DATA_TX_OVER, new state WAIT_ACK" << endl;
+                macState = WAIT_ACK;
+                prevMacState = WAIT_TX_DATA_OVER;
+                radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
+                changeDisplayColor(GREEN);
+                scheduleAt(simTime() + checkInterval, ack_timeout);
+            } else {
+                EV_DETAIL << "State WAIT_TX_DATA_OVER, message XMAC_DATA_TX_OVER, new state  SLEEP" << endl;
+                delete macQueue.front();
+                macQueue.pop_front();
+                preambleCont = 0;
+                // if something in the queue, wakeup soon.
+                if (macQueue.size() > 0)
+                    scheduleAt(simTime() + dblrand() * checkInterval, wakeup);
+                else
+                    scheduleAt(simTime() + slotDuration, wakeup);
+                macState = SLEEP;
+                prevMacState = WAIT_TX_DATA_OVER;
+                radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                changeDisplayColor(BLACK);
+            }
+            return;
+        }
+        break;
+    case WAIT_ACK:
+        if (msg->getKind() == XMAC_ACK_TIMEOUT) {
+            // No ACK received. try again or drop.
+            if (txAttempts < maxTxAttempts) {
+                EV_DETAIL << "State WAIT_ACK, message XMAC_ACK_TIMEOUT, new state SEND_DATA" << endl;
+                txAttempts++;
+                macState = SEND_PREAMBLE;
+                prevMacState = WAIT_ACK;
+                scheduleAt(simTime() + slotDuration, stop_preambles);
+                radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+                changeDisplayColor(YELLOW);
+            }
+            else {
+                EV_DETAIL << "State WAIT_ACK, message XMAC_ACK_TIMEOUT, new state SLEEP" << endl;
                 //drop the packet
                 cMessage *mac = macQueue.front();
                 macQueue.pop_front();
                 emit(NF_LINK_BREAK, mac);
                 delete mac;
-				preambleCont = 0;
-				// if something in the queue, wakeup soon.
-				if (macQueue.size() > 0)
-					scheduleAt(simTime() + dblrand()*checkInterval, wakeup);
-				else
-					scheduleAt(simTime() + slotDuration, wakeup);
-				macState = SLEEP;
-				prevMacState = WAIT_ACK;
-				radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
-				changeDisplayColor(BLACK);
-				nbMissedAcks++;
-			}
-			return;
-		}
-		//ignore and other packets
-		if ((msg->getKind() == XMAC_DATA) || (msg->getKind() == XMAC_PREAMBLE) || (msg->getKind() == XMAC_ACK2))
-		{
-			EV_DETAIL << "State WAIT_ACK, message XMAC_DATA or XMAC_PREMABLE, new"
-					  " state WAIT_ACK" << endl;
-			delete msg;
-			return;
-		}
-		if (msg->getKind() == XMAC_ACK)
-		{
-			EV_DETAIL << "State WAIT_ACK, message XMAC_ACK" << endl;
-			XMacPkt*  mac = static_cast<XMacPkt *>(msg);
-			const MACAddress& src = mac->getSrcAddr();
-			// the right ACK is received..
-			EV_DETAIL << "We are waiting for ACK from : " << lastDataPktDestAddr
-				   << ", and ACK came from : " << src << endl;
-			if (src == lastDataPktDestAddr)
-			{
-				EV_DETAIL << "New state SLEEP" << endl;
-				nbRecvdAcks++;
-				lastDataPktDestAddr = MACAddress::BROADCAST_ADDRESS;
-				cancelEvent(ack_timeout);
-				delete macQueue.front();
-				macQueue.pop_front();
-				preambleCont = 0;
-				// if something in the queue, wakeup soon.
-				if (macQueue.size() > 0)
-					scheduleAt(simTime() + dblrand()*checkInterval, wakeup);
-				else
-					scheduleAt(simTime() + slotDuration, wakeup);
-				macState = SLEEP;
-				prevMacState = WAIT_ACK;
-				radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
-				changeDisplayColor(BLACK);
-				lastDataPktDestAddr = MACAddress::BROADCAST_ADDRESS;
-			}
-			delete msg;
-			return;
-		}
-		break;
-	case WAIT_DATA:
-		if(msg->getKind() == XMAC_PREAMBLE && dynamic_cast<XMacPkt*>(msg))
-		{
-			//nothing happens
-			EV_DETAIL << "State WAIT_DATA, message XMAC_PREAMBLE, new state"
-					  " WAIT_DATA" << endl;
-			nbRxPreambles++;
-			XMacPkt *lmacPkt = dynamic_cast<XMacPkt*>(msg);
-			if (lmacPkt)
-			{
-				// check if address in list
-				bool inList = false;
-				for (unsigned int i=0;i<lmacPkt->getDestinationAddressArraySize();i++)
-					if (lmacPkt->getDestinationAddress(i)==address)
-						inList = true;
-				if (inList)
-				{
-					double delay = slotDuration*0.1*dblrand();
-					if (data_timeout->isScheduled() && data_timeout->getArrivalTime()-simTime()>delay)
-					{
-						macState = CCA2;
-						prevMacState = WAIT_DATA;
-						//cancelEvent(data_timeout);
-						scheduleAt(simTime() + delay, cca2_timeout);
-						destDestAddrAck2 = lmacPkt->getSrcAddr();
-					}
-				}
-			}
-			delete msg;
-			return;
-		}
-		if(msg->getKind() == XMAC_PREAMBLE)
-		{
-			//nothing happens
-			EV_DETAIL << "State WAIT_DATA, message XMAC_PREAMBLE, new state"
-					  " WAIT_DATA" << endl;
-			nbRxPreambles++;
-			delete msg;
-			return;
-		}
-		if(msg->getKind() == XMAC_ACK)
-		{
-			//nothing happens
-			EV_DETAIL << "State WAIT_DATA, message XMAC_ACK, new state WAIT_DATA"
-				   << endl;
-			delete msg;
-			return;
-		}
-		if(msg->getKind() == XMAC_ACK2)
-		{
-			//nothing happens
-			EV_DETAIL << "State WAIT_DATA, message XMAC_ACK2, new state WAIT_DATA"
-				   << endl;
-			delete msg;
-			return;
-		}
-		if (msg->getKind() == XMAC_DATA)
-		{
-			nbRxDataPackets++;
-			XMacPkt* mac  = static_cast<XMacPkt *>(msg);
-			const MACAddress dest = mac->getDestAddr();
-			const MACAddress src  = mac->getSrcAddr();
-			pendingPreambleIterator = pendingPreambles.find(src);
-			if (pendingPreambleIterator != pendingPreambles.end())
-				pendingPreambles.erase(pendingPreambleIterator);
+                preambleCont = 0;
+                // if something in the queue, wakeup soon.
+                if (macQueue.size() > 0)
+                    scheduleAt(simTime() + dblrand() * checkInterval, wakeup);
+                else
+                    scheduleAt(simTime() + slotDuration, wakeup);
+                macState = SLEEP;
+                prevMacState = WAIT_ACK;
+                radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                changeDisplayColor(BLACK);
+                nbMissedAcks++;
+            }
+            return;
+        }
+        //ignore and other packets
+        if ((msg->getKind() == XMAC_DATA) || (msg->getKind() == XMAC_PREAMBLE)
+                || (msg->getKind() == XMAC_ACK2)) {
+            EV_DETAIL << "State WAIT_ACK, message XMAC_DATA or XMAC_PREMABLE, new state WAIT_ACK" << endl;
+            delete msg;
+            return;
+        }
+        if (msg->getKind() == XMAC_ACK) {
+            EV_DETAIL << "State WAIT_ACK, message XMAC_ACK" << endl;
+            XMacPkt* mac = static_cast<XMacPkt *>(msg);
+            const MACAddress& src = mac->getSrcAddr();
+            // the right ACK is received..
+            EV_DETAIL << "We are waiting for ACK from : " << lastDataPktDestAddr << ", and ACK came from : " << src << endl;
+            if (src == lastDataPktDestAddr) {
+                EV_DETAIL << "New state SLEEP" << endl;
+                nbRecvdAcks++;
+                lastDataPktDestAddr = MACAddress::BROADCAST_ADDRESS;
+                cancelEvent(ack_timeout);
+                delete macQueue.front();
+                macQueue.pop_front();
+                preambleCont = 0;
+                // if something in the queue, wakeup soon.
+                if (macQueue.size() > 0)
+                    scheduleAt(simTime() + dblrand() * checkInterval, wakeup);
+                else
+                    scheduleAt(simTime() + slotDuration, wakeup);
+                macState = SLEEP;
+                prevMacState = WAIT_ACK;
+                radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                changeDisplayColor(BLACK);
+                lastDataPktDestAddr = MACAddress::BROADCAST_ADDRESS;
+            }
+            delete msg;
+            return;
+        }
+        break;
+    case WAIT_DATA:
+        if (msg->getKind() == XMAC_PREAMBLE && dynamic_cast<XMacPkt*>(msg)) {
+            //nothing happens
+            EV_DETAIL << "State WAIT_DATA, message XMAC_PREAMBLE, new state WAIT_DATA" << endl;
+            nbRxPreambles++;
+            XMacPkt *lmacPkt = dynamic_cast<XMacPkt*>(msg);
+            if (lmacPkt) {
+                // check if address in list
+                bool inList = false;
+                for (unsigned int i = 0;
+                        i < lmacPkt->getDestinationAddressArraySize(); i++)
+                    if (lmacPkt->getDestinationAddress(i) == address)
+                        inList = true;
+                if (inList) {
+                    double delay = slotDuration * 0.1 * dblrand();
+                    if (data_timeout->isScheduled() && data_timeout->getArrivalTime() - simTime() > delay) {
+                        macState = CCA2;
+                        prevMacState = WAIT_DATA;
+                        //cancelEvent(data_timeout);
+                        scheduleAt(simTime() + delay, cca2_timeout);
+                        destDestAddrAck2 = lmacPkt->getSrcAddr();
+                    }
+                }
+            }
+            delete msg;
+            return;
+        }
+        if (msg->getKind() == XMAC_PREAMBLE) {
+            //nothing happens
+            EV_DETAIL << "State WAIT_DATA, message XMAC_PREAMBLE, new state WAIT_DATA" << endl;
+            nbRxPreambles++;
+            delete msg;
+            return;
+        }
+        if (msg->getKind() == XMAC_ACK) {
+            //nothing happens
+            EV_DETAIL << "State WAIT_DATA, message XMAC_ACK, new state WAIT_DATA" << endl;
+            delete msg;
+            return;
+        }
+        if (msg->getKind() == XMAC_ACK2) {
+            //nothing happens
+            EV_DETAIL << "State WAIT_DATA, message XMAC_ACK2, new state WAIT_DATA" << endl;
+            delete msg;
+            return;
+        }
+        if (msg->getKind() == XMAC_DATA) {
+            nbRxDataPackets++;
+            XMacPkt* mac = static_cast<XMacPkt *>(msg);
+            const MACAddress dest = mac->getDestAddr();
+            const MACAddress src = mac->getSrcAddr();
+            pendingPreambleIterator = pendingPreambles.find(src);
+            if (pendingPreambleIterator != pendingPreambles.end())
+                pendingPreambles.erase(pendingPreambleIterator);
 
-			if ((dest == address) || dest.isBroadcast())
-			{
-				sendUp(decapsMsg(mac));
-			} else {
-				delete msg;
-				msg = nullptr;
-				mac = nullptr;
-			}
+            if ((dest == address) || dest.isBroadcast()) {
+                sendUp(decapsMsg(mac));
+            }
+            else {
+                delete msg;
+                msg = nullptr;
+                mac = nullptr;
+            }
 
-			cancelEvent(data_timeout);
-			if ((useMacAcks) && (dest == address))
-			{
-				EV_DETAIL << "State WAIT_DATA, message XMAC_DATA, new state"
-						  " SEND_ACK" << endl;
-				macState = SEND_ACK;
-				prevMacState = WAIT_DATA;
-				lastDataPktSrcAddr = src;
-				radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
-				changeDisplayColor(YELLOW);
-			}
-			else
-			{
-				if (!dest.isBroadcast() && pendingPreambles.empty())
-				{
-					EV_DETAIL << "State WAIT_DATA, message XMAC_DATA, new state SLEEP" << endl;
-					// if something in the queue, wakeup soon.
-					if (macQueue.size() > 0)
-						scheduleAt(simTime() + dblrand()*checkInterval, wakeup);
-					else
-						scheduleAt(simTime() + slotDuration, wakeup);
-					macState = SLEEP;
-					prevMacState = WAIT_DATA;
-					radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
-					changeDisplayColor(BLACK);
-				}
-				else
-				{
-				// allow that other messages sent by flooding can arrive.
-					EV_DETAIL << "State WAIT_DATA, message broadcast, new state CCA" << endl;
-					scheduleAt(simTime() + checkInterval, cca_timeout);
-					macState = CCA;
-					prevMacState = WAIT_DATA;
-					destAddressNext = MACAddress::UNSPECIFIED_ADDRESS;
-					destDestAddrAck2 = MACAddress::UNSPECIFIED_ADDRESS;
+            cancelEvent(data_timeout);
+            if ((useMacAcks) && (dest == address)) {
+                EV_DETAIL << "State WAIT_DATA, message XMAC_DATA, new state SEND_ACK" << endl;
+                macState = SEND_ACK;
+                prevMacState = WAIT_DATA;
+                lastDataPktSrcAddr = src;
+                radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+                changeDisplayColor(YELLOW);
+            }
+            else {
+                if (!dest.isBroadcast() && pendingPreambles.empty()) {
+                    EV_DETAIL
+                                     << "State WAIT_DATA, message XMAC_DATA, new state SLEEP"
+                                     << endl;
+                    // if something in the queue, wakeup soon.
+                    if (macQueue.size() > 0)
+                        scheduleAt(simTime() + dblrand() * checkInterval,
+                                wakeup);
+                    else
+                        scheduleAt(simTime() + slotDuration, wakeup);
+                    macState = SLEEP;
+                    prevMacState = WAIT_DATA;
+                    radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+                    changeDisplayColor(BLACK);
+                }
+                else {
+                    // allow that other messages sent by flooding can arrive.
+                    EV_DETAIL << "State WAIT_DATA, message broadcast, new state CCA" << endl;
+                    scheduleAt(simTime() + checkInterval, cca_timeout);
+                    macState = CCA;
+                    prevMacState = WAIT_DATA;
+                    destAddressNext = MACAddress::UNSPECIFIED_ADDRESS;
+                    destDestAddrAck2 = MACAddress::UNSPECIFIED_ADDRESS;
 
-				}
-			}
-			return;
-		}
-		if (msg->getKind() == XMAC_DATA_TIMEOUT)
-		{
-			EV_DETAIL << "State WAIT_DATA, message XMAC_DATA_TIMEOUT, new state"
-					  " SLEEP" << endl;
-			// if something in the queue, wakeup soon.
-			if (macQueue.size() > 0)
-				scheduleAt(simTime() + dblrand()*checkInterval, wakeup);
-			else
-				scheduleAt(simTime() + slotDuration, wakeup);
-			macState = SLEEP;
-			prevMacState = WAIT_DATA;
-			radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
-			changeDisplayColor(BLACK);
-			return;
-		}
-		break;
-	case SEND_ACK:
-		if (msg->getKind() == XMAC_SEND_ACK)
-		{
-			EV_DETAIL << "State SEND_ACK, message XMAC_SEND_ACK, new state"
-					  " WAIT_ACK_TX" << endl;
-			// send now the ack packet
-			sendMacAck();
-			macState = WAIT_ACK_TX;
-			prevMacState = SEND_ACK;
-			return;
-		}
-		break;
-	case WAIT_ACK_TX:
-		if (msg->getKind() == XMAC_ACK_TX_OVER)
-		{
-			EV_DETAIL << "State WAIT_ACK_TX, message XMAC_ACK_TX_OVER, new state"
-					  " SLEEP" << endl;
-			// ack sent, go to sleep now.
-			// if something in the queue, wakeup soon.
-			if (macQueue.size() > 0)
-				scheduleAt(simTime() + dblrand()*checkInterval, wakeup);
-			else
-				scheduleAt(simTime() + slotDuration, wakeup);
-			macState = SLEEP;
-			prevMacState = WAIT_ACK_TX;
-			radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
-			changeDisplayColor(BLACK);
-			lastDataPktSrcAddr = MACAddress::BROADCAST_ADDRESS;
-			return;
-		}
-		break;
-	case SEND_ACK2:
-		if (msg->getKind() == XMAC_SEND_ACK2)
-		{
-			EV_DETAIL << "State SEND_ACK, message XMAC_SEND_ACK, new state"
-					  " WAIT_ACK_TX2" << endl;
-			// send now the ack packet
-			sendMacAck2(destDestAddrAck2);
-			macState = WAIT_ACK2_TX;
-			prevMacState = SEND_ACK2;
-			return;
-		}
-		break;
-	case WAIT_ACK2_TX:
-		if (msg->getKind() == XMAC_ACK2_TX_OVER)
-		{
-			macState = WAIT_DATA;
-			prevMacState = WAIT_ACK2_TX;
-			radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
-			changeDisplayColor(GREEN);
-			if (!data_timeout->isScheduled())
-			    scheduleAt(simTime() + slotDuration + checkInterval, data_timeout);
-			return;
-		}
-		break;
-	case WAIT_ACK2:
-		// simply change the state to SEND_DATA
-		if (msg->getKind() == XMAC_ACK_TIMEOUT)
-		{
-			macState = SEND_PREAMBLE;
-			prevMacState = WAIT_ACK2;
-			radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
-			changeDisplayColor(YELLOW);
-			return;
-		}
+                }
+            }
+            return;
+        }
+        if (msg->getKind() == XMAC_DATA_TIMEOUT) {
+            EV_DETAIL << "State WAIT_DATA, message XMAC_DATA_TIMEOUT, new state SLEEP" << endl;
+            // if something in the queue, wakeup soon.
+            if (macQueue.size() > 0)
+                scheduleAt(simTime() + dblrand() * checkInterval, wakeup);
+            else
+                scheduleAt(simTime() + slotDuration, wakeup);
+            macState = SLEEP;
+            prevMacState = WAIT_DATA;
+            radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+            changeDisplayColor(BLACK);
+            return;
+        }
+        break;
+    case SEND_ACK:
+        if (msg->getKind() == XMAC_SEND_ACK) {
+            EV_DETAIL << "State SEND_ACK, message XMAC_SEND_ACK, new state WAIT_ACK_TX" << endl;
+            // send now the ack packet
+            sendMacAck();
+            macState = WAIT_ACK_TX;
+            prevMacState = SEND_ACK;
+            return;
+        }
+        break;
+    case WAIT_ACK_TX:
+        if (msg->getKind() == XMAC_ACK_TX_OVER) {
+            EV_DETAIL << "State WAIT_ACK_TX, message XMAC_ACK_TX_OVER, new state SLEEP" << endl;
+            // ack sent, go to sleep now.
+            // if something in the queue, wakeup soon.
+            if (macQueue.size() > 0)
+                scheduleAt(simTime() + dblrand() * checkInterval, wakeup);
+            else
+                scheduleAt(simTime() + slotDuration, wakeup);
+            macState = SLEEP;
+            prevMacState = WAIT_ACK_TX;
+            radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+            changeDisplayColor(BLACK);
+            lastDataPktSrcAddr = MACAddress::BROADCAST_ADDRESS;
+            return;
+        }
+        break;
+    case SEND_ACK2:
+        if (msg->getKind() == XMAC_SEND_ACK2) {
+            EV_DETAIL << "State SEND_ACK, message XMAC_SEND_ACK, new state WAIT_ACK_TX2" << endl;
+            // send now the ack packet
+            sendMacAck2(destDestAddrAck2);
+            macState = WAIT_ACK2_TX;
+            prevMacState = SEND_ACK2;
+            return;
+        }
+        break;
+    case WAIT_ACK2_TX:
+        if (msg->getKind() == XMAC_ACK2_TX_OVER) {
+            macState = WAIT_DATA;
+            prevMacState = WAIT_ACK2_TX;
+            radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
+            changeDisplayColor(GREEN);
+            if (!data_timeout->isScheduled())
+                scheduleAt(simTime() + slotDuration + checkInterval, data_timeout);
+            return;
+        }
+        break;
+    case WAIT_ACK2:
+        // simply change the state to SEND_DATA
+        if (msg->getKind() == XMAC_ACK_TIMEOUT) {
+            macState = SEND_PREAMBLE;
+            prevMacState = WAIT_ACK2;
+            radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+            changeDisplayColor(YELLOW);
+            return;
+        }
 
-		if (msg->getKind() == XMAC_STOP_PREAMBLES)
-		{
-			EV_DETAIL << "State SEND_PREAMBLE, message XMAC_STOP_PREAMBLES, new"
-					  " state SEND_DATA" << endl;
-			radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
-			changeDisplayColor(YELLOW);
-			cancelEvent(ack_timeout);
-			macState = SEND_DATA;
-			prevMacState = WAIT_ACK2;
-			txAttempts = 1;
-			return;
-		}
+        if (msg->getKind() == XMAC_STOP_PREAMBLES) {
+            EV_DETAIL << "State SEND_PREAMBLE, message XMAC_STOP_PREAMBLES, new state SEND_DATA" << endl;
+            radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+            changeDisplayColor(YELLOW);
+            cancelEvent(ack_timeout);
+            macState = SEND_DATA;
+            prevMacState = WAIT_ACK2;
+            txAttempts = 1;
+            return;
+        }
 
 		//ignore and other packets
 
-		if (msg->getKind() == XMAC_PREAMBLE)
-		{
-		    XMacPkt *macPkt = dynamic_cast<XMacPkt*>(msg);
-		    if ((int) preambleCont < macPkt->getPreambleCont())
-		    {
-		        // lost
-	            cancelEvent(ack_timeout);
-	            cancelEvent(stop_preambles);
-	            if (macPkt->getDestAddr() != MACAddress::BROADCAST_ADDRESS && macPkt->getDestAddr() != this->address)
-	            {
-	                // not for my  CCA_LOST
-	                EV_DETAIL << "State CCA, message XMAC_PREAMBLE received, new state"
-	                        " CCA_LOST" << endl;
-	                macState = CCA_LOST;
-	                prevMacState = WAIT_ACK2;
-	            }
-	            else
-	            {
-	                if (macPkt->getDestAddr() == this->address)
-	                {
-	                    macState = SEND_ACK2;
-	                    prevMacState = WAIT_ACK2;
-	                    cancelEvent(data_timeout);
-	                    radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
-	                    changeDisplayColor(YELLOW);
-	                }
-	                else
-	                {
-	                    macState = WAIT_DATA;
-	                    cancelEvent(cca_timeout);
-	                    //if (prevMacState != WAIT_DATA)
-	                    scheduleAt(simTime() + slotDuration + checkInterval, data_timeout);
-	                    prevMacState = WAIT_ACK2;
-	                }
-	            }
-		    }
-		    delete msg;
-		    return;
-		}
+        if (msg->getKind() == XMAC_PREAMBLE) {
+            XMacPkt *macPkt = dynamic_cast<XMacPkt*>(msg);
+            if ((int) preambleCont < macPkt->getPreambleCont()) {
+                // lost
+                cancelEvent(ack_timeout);
+                cancelEvent(stop_preambles);
+                if (macPkt->getDestAddr() != MACAddress::BROADCAST_ADDRESS
+                        && macPkt->getDestAddr() != this->address) {
+                    // not for my  CCA_LOST
+                    EV_DETAIL << "State CCA, message XMAC_PREAMBLE received, new state CCA_LOST" << endl;
+                    macState = CCA_LOST;
+                    prevMacState = WAIT_ACK2;
+                }
+                else {
+                    if (macPkt->getDestAddr() == this->address) {
+                        macState = SEND_ACK2;
+                        prevMacState = WAIT_ACK2;
+                        cancelEvent(data_timeout);
+                        radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+                        changeDisplayColor(YELLOW);
+                    }
+                    else {
+                        macState = WAIT_DATA;
+                        cancelEvent(cca_timeout);
+                        //if (prevMacState != WAIT_DATA)
+                        scheduleAt(simTime() + slotDuration + checkInterval, data_timeout);
+                        prevMacState = WAIT_ACK2;
+                    }
+                }
+            }
+            delete msg;
+            return;
+        }
 
-		if ((msg->getKind() == XMAC_DATA)  || (msg->getKind() == XMAC_ACK))
-		{
-			EV_DETAIL << "State WAIT_ACK2, message XMAC_DATA or XMAC_PREMABLE, new"
-					  " state WAIT_ACK2" << endl;
-			delete msg;
-			return;
-		}
-		if (msg->getKind() == XMAC_ACK2)
-		{
-			XMacPkt*  mac = dynamic_cast<XMacPkt *>(msg);
-			const MACAddress dest = mac->getDestAddr();
-			const MACAddress src = mac->getSrcAddr();
-			// ack2 for other destination
-			if (dest != address)
-			{
-				EV_DETAIL << "State WAIT_ACK2, message XMAC_ACK2, new state WAIT_ACK2" << endl;
-				delete msg;
-				return;
-			}
-			cancelEvent(ack_timeout);
-			cancelEvent(stop_preambles);
-			// the right ACK is received..
-			destAddressNext = src;
-			radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
-			changeDisplayColor(YELLOW);
-			EV_DETAIL << "State WAIT_ACK2, message XMAC_ACK2, new state SEND_DATA2" << endl;
-			macState = SEND_DATA2;
-			prevMacState = WAIT_ACK2;
-			delete msg;
-			return;
-		}
-		break;
-	}
-	throw cRuntimeError("Undefined event of type %d in MAC stat %i", msg->getKind(), macState);
+        if ((msg->getKind() == XMAC_DATA) || (msg->getKind() == XMAC_ACK)) {
+            EV_DETAIL << "State WAIT_ACK2, message XMAC_DATA or XMAC_PREMABLE, new state WAIT_ACK2" << endl;
+            delete msg;
+            return;
+        }
+        if (msg->getKind() == XMAC_ACK2) {
+            XMacPkt* mac = dynamic_cast<XMacPkt *>(msg);
+            const MACAddress dest = mac->getDestAddr();
+            const MACAddress src = mac->getSrcAddr();
+            // ack2 for other destination
+            if (dest != address) {
+                EV_DETAIL << "State WAIT_ACK2, message XMAC_ACK2, new state WAIT_ACK2" << endl;
+                delete msg;
+                return;
+            }
+            cancelEvent(ack_timeout);
+            cancelEvent(stop_preambles);
+            // the right ACK is received..
+            destAddressNext = src;
+            radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+            changeDisplayColor(YELLOW);
+            EV_DETAIL << "State WAIT_ACK2, message XMAC_ACK2, new state SEND_DATA2" << endl;
+            macState = SEND_DATA2;
+            prevMacState = WAIT_ACK2;
+            delete msg;
+            return;
+        }
+        break;
+    }
+    throw cRuntimeError("Undefined event of type %d in MAC stat %i",
+            msg->getKind(), macState);
 }
 
 
@@ -1157,25 +1052,19 @@ void AnyMacXmacLayer::receiveSignal(cComponent *source, simsignal_t signalID, lo
 {
     Enter_Method_Silent();
 	// Transmission of one packet is over
-    if (signalID == IRadio::radioModeChangedSignal)
-    {
+    if (signalID == IRadio::radioModeChangedSignal) {
         IRadio::RadioMode radioMode = (IRadio::RadioMode)value;
-        if (radioMode == IRadio::RADIO_MODE_TRANSMITTER)
-        {
-            if (macState == WAIT_TX_DATA_OVER)
-            {
+        if (radioMode == IRadio::RADIO_MODE_TRANSMITTER) {
+            if (macState == WAIT_TX_DATA_OVER) {
                 scheduleAt(simTime(), data_tx_over);
             }
-            if (macState == WAIT_ACK_TX)
-            {
+            else if (macState == WAIT_ACK_TX) {
                 scheduleAt(simTime(), ack_tx_over);
             }
-            if (macState == WAIT_ACK2_TX)
-            {
+            else if (macState == WAIT_ACK2_TX) {
                 scheduleAt(simTime(), ack2_tx_over);
             }
-            if (macState == SEND_PREAMBLE_TX_END)
-            {
+            else if (macState == SEND_PREAMBLE_TX_END) {
                 scheduleAt(simTime(), preamble_tx_over);
             }
         }
@@ -1185,27 +1074,22 @@ void AnyMacXmacLayer::receiveSignal(cComponent *source, simsignal_t signalID, lo
     	// we just switched to TX after CCA, so simply send the first
     	// sendPremable self message
         IRadio::TransmissionState newRadioTransmissionState = (IRadio::TransmissionState)value;
-        if (transmissionState == IRadio::TRANSMISSION_STATE_TRANSMITTING && newRadioTransmissionState == IRadio::TRANSMISSION_STATE_IDLE)
-        {
-            if (macState == SEND_PREAMBLE)
-            {
+        if (transmissionState == IRadio::TRANSMISSION_STATE_TRANSMITTING && newRadioTransmissionState == IRadio::TRANSMISSION_STATE_IDLE) {
+            if (macState == SEND_PREAMBLE) {
                 scheduleAt(simTime(), send_preamble);
             }
-            if (macState == SEND_ACK2)
-            {
+            if (macState == SEND_ACK2) {
                 scheduleAt(simTime(), send_ack2);
             }
-            if (macState == SEND_ACK)
-            {
+            else if (macState == SEND_ACK) {
                 scheduleAt(simTime(), send_ack);
             }
             // we were waiting for acks, but none came. we switched to TX and now
             // need to resend data
-            if (macState == SEND_DATA)
-            {
+            else if (macState == SEND_DATA) {
                 scheduleAt(simTime(), resend_data);
             }
-            if (macState == SEND_DATA2)
+            else if (macState == SEND_DATA2)
             {
                 scheduleAt(simTime(), resend_data);
             }
