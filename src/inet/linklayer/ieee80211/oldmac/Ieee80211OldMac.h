@@ -35,7 +35,7 @@
 #include "inet/linklayer/base/MACProtocolBase.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
 #include "inet/linklayer/ieee80211/oldmac/Ieee80211Consts.h"
-#include "inet/linklayer/ieee80211/mac/AccessCategory.h"
+#include "inet/linklayer/ieee80211/mac/common/AccessCategory.h"
 
 namespace inet {
 

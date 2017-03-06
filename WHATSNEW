@@ -1,13 +1,13 @@
 Recent changes in the INET Framework
 ====================================
 
-INET-3.5.0 (Jan, 2017) - stable
+INET-3.5.0 (Feb, 2017) - stable
 -------------------------------
 
 This release contains mostly bug fixes and compatibility changes. It requires 
-OMNeT++ 5.0 or 5.1 Preview 2. Earlier versions of OMNeT++ are *not* compatible.
+OMNeT++ 5.1. Earlier versions of OMNeT++ are *not* compatible.
 
-Highligts in this release:
+Highlights in this release:
 
 Build:
 
@@ -36,7 +36,7 @@ DHCP:
 
 Radio:
 
-  - Added two-ray interference model.
+  - Added two-ray interference model (TwoRayInterference) as a pathoss model.
 
 SCTP:
 
@@ -49,26 +49,26 @@ GPSR:
 
 Fixes:
 
-  - Small SimpleEnergyStorage, Antenna initialization
+  - Small fixes in SimpleEnergyStorage and during Antenna initialization
 
   - Calling IPv6RoutingTable::getInterfaceByAddress(const L3Address& address) or
     findGpsrOptionFromNetworkDatagram() function caused infinite recursion.
 
-  - Radio: Fixed FreeSpacePathLoss bug in the loss forumula for alpha != 2 case,
+  - Radio: Fixed FreeSpacePathLoss bug in the loss formula for alpha != 2 case,
     reported by Benjamin Sliwa.
 
-  - SimpleVoIPServer should resolve the destAddress at startTime (instead 
+  - SimpleVoIPServer now resolves destAddress at startTime (instead 
     of initialization)
 
   - Ieee8021dRelay: fixed a null pointer crash
 
-  - StaticCOncentricMobility: fixed a rounding issue
+  - StaticConcentricMobility: fixed a rounding issue
 
   - ICMP: fixed "icmp error answer to a fragmented udp packet" problem
 
   - ICMP: fixing bug #64: Buffer Overflow Error
 
-  - AODV: no longer generates assert when RREP-ACK arrived after a timeout
+  - AODV: no longer causes assertion failure when RREP-ACK arrived after a timeout
 
 
 INET-3.4.0 (Jun, 2016) - stable
