@@ -51,13 +51,9 @@ void UDPCdmaMac::initialize(int stage)
 
         localPort = par("localPort");
         destPort = par("destPort");
-        startTime = par("startTime").doubleValue();
-        stopTime = par("stopTime").doubleValue();
-        packetName = par("packetName");
-
-        if (stopTime >= SIMTIME_ZERO && stopTime < startTime)
-            throw cRuntimeError("Invalid startTime/stopTime parameters");
-        selfMsg = new cMessage("sendTimer");
+        selfMsg = new cMessage();
+        selfMsg->setKind(START);
+        scheduleAt(0,selfMsg);
     }
 }
 
@@ -70,11 +66,11 @@ void UDPCdmaMac::finish()
 
 void UDPCdmaMac::setSocketOptions()
 {
-    int timeToLive = par("timeToLive");
+    int timeToLive = -1;
     if (timeToLive != -1)
         socket.setTimeToLive(timeToLive);
 
-    int typeOfService = par("typeOfService");
+    int typeOfService = -1;
     if (typeOfService != -1)
         socket.setTypeOfService(typeOfService);
 
@@ -113,21 +109,6 @@ L3Address UDPCdmaMac::chooseDestAddr()
     return destAddresses[k];
 }
 
-void UDPCdmaMac::sendPacket()
-{
-    std::ostringstream str;
-    str << packetName << "-" << numSent;
-    ApplicationPacket *payload = new ApplicationPacket(str.str().c_str());
-    payload->setByteLength(par("messageLength").longValue());
-    payload->setSequenceNumber(numSent);
-
-    L3Address destAddr = chooseDestAddr();
-
-    emit(sentPkSignal, payload);
-    socket.sendTo(payload, sinkAddress, destPort);
-    numSent++;
-}
-
 void UDPCdmaMac::processStart()
 {
     socket.setOutputGate(gate("udpOut"));
@@ -141,20 +122,6 @@ void UDPCdmaMac::processStart()
         sinkAddress = result;
 
     setSocketOptions();
-}
-
-void UDPCdmaMac::processSend()
-{
-    sendPacket();
-    simtime_t d = simTime() + par("sendInterval").doubleValue();
-    if (stopTime < SIMTIME_ZERO || d < stopTime) {
-        selfMsg->setKind(SEND);
-        scheduleAt(d, selfMsg);
-    }
-    else {
-        selfMsg->setKind(STOP);
-        scheduleAt(stopTime, selfMsg);
-    }
 }
 
 void UDPCdmaMac::processStop()
@@ -178,10 +145,6 @@ void UDPCdmaMac::handleMessageWhenUp(cMessage *msg)
         switch (selfMsg->getKind()) {
             case START:
                 processStart();
-                break;
-
-            case SEND:
-                processSend();
                 break;
 
             case STOP:
@@ -232,11 +195,6 @@ void UDPCdmaMac::processPacket(cPacket *pk)
 
 bool UDPCdmaMac::handleNodeStart(IDoneCallback *doneCallback)
 {
-    simtime_t start = std::max(startTime, simTime());
-    if ((stopTime < SIMTIME_ZERO) || (start < stopTime) || (start == stopTime && startTime == stopTime)) {
-        selfMsg->setKind(START);
-        scheduleAt(start, selfMsg);
-    }
     return true;
 }
 

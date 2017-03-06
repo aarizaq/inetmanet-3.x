@@ -65,13 +65,11 @@ class INET_API UDPCdmaMac : public ApplicationBase
 
     // chooses random destination address
     virtual L3Address chooseDestAddr();
-    virtual void sendPacket();
     virtual void processPacket(cPacket *msg);
     virtual void processDmaMac(cPacket *msg);
     virtual void setSocketOptions();
 
     virtual void processStart();
-    virtual void processSend();
     virtual void processStop();
 
     virtual bool handleNodeStart(IDoneCallback *doneCallback) override;
