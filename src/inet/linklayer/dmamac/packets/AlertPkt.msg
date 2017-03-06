@@ -43,5 +43,6 @@ packet AlertPkt extends MACFrameBase
     short type; // Define here as Alert packet and sink would determine.
     MACAddress sourceAddress;
     MACAddress destinationAddress;
+    int networkId = -1;
 }
 

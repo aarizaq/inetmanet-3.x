@@ -49,6 +49,7 @@ packet DMAMACPkt extends MACFrameBase
     short ttl;         // Time to live
     MACAddress sourceAddress;
     MACAddress destinationAddress;
+    int networkId = -1;
 }
 
 packet DMAMACSyncPkt extends DMAMACPkt

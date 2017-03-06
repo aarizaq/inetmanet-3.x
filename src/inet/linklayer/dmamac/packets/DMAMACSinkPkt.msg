@@ -45,5 +45,6 @@ packet DMAMACSinkPkt extends MACFrameBase
     int initialSeed;
     int numSlot;
     int macMode;
+    int networkId = -1;
 }
 

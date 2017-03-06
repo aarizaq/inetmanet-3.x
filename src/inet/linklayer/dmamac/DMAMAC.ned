@@ -37,9 +37,13 @@ simple DMAMAC extends MACProtocolBase like IMACProtocol
         string address = default("auto"); // MAC address as hex string (12 hex digits), or
                                           // "auto". "auto" values will be replaced by
                                           // a generated MAC address in init stage 0.
+                                          
+        int subnetworkId = default(0);
+        int addressMaskSize = default(-1); 
 
         int baseAddress = default(-1);
         int mtu @unit("B") = default(300B);
+        
     	 // Enable per module debug
         bool debug = default(false);
         // How long is a slot?

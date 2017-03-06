@@ -34,6 +34,7 @@
 #include "inet/common/FindModule.h"
 #include "inet/linklayer/common/SimpleLinkLayerControlInfo.h"
 #include "inet/physicallayer/contract/packetlevel/RadioControlInfo_m.h"
+#include "inet/applications/udpapp/UDPCdmaMac.h"
 
 
 namespace inet {
@@ -63,6 +64,7 @@ void DMAMAC::discoverIfNodeIsRelay() {
         sendUppperLayer = false;
         return;
     }
+    UDPCdmaMac *upper  = dynamic_cast<UDPCdmaMac *>(mod);
 
     DMAMACSink * dmacSinkThis = dynamic_cast<DMAMACSink *>(this);
     DMAMAC * dmacNeig = dynamic_cast<DMAMAC *>(mod);
@@ -76,8 +78,12 @@ void DMAMAC::discoverIfNodeIsRelay() {
     if (dmacSinkThis != nullptr)
         isSink = true;
 
-    if (!isRelayNode)
+    if (!isRelayNode) {
+        if (upper)
+           isRelayNode = true;
         return; // nothing more to-do
+    }
+
 
     // seach errors.
     if (dmacSinkThis != nullptr && dmacSinkNeigh !=nullptr)
@@ -515,6 +521,7 @@ void DMAMAC::handleUpperPacket(cPacket* msg){
         mac = macUpper;
         mac->setDestAddr(mac->getDestinationAddress());
         mac->setSrcAddr(myMacAddr);
+        mac->setNetworkId(networkId);
     }
 
     mac->setKind(DMAMAC_DATA);
@@ -1077,6 +1084,7 @@ void DMAMAC::handleRadioSwitchedToTX() {
 			 * Both for self data and forward data
 			 */
             data->setSrcAddr(myMacAddr);
+            data->setNetworkId(networkId);
             data->setMySlot(mySlot);
             attachSignal(data);
             EV_INFO << "Sending down data packet\n";
@@ -1092,6 +1100,7 @@ void DMAMAC::handleRadioSwitchedToTX() {
             DMAMACPkt* ack = new DMAMACPkt();
             ack->setDestAddr(lastDataPktSrcAddr);
             ack->setSrcAddr(myMacAddr);
+            ack->setNetworkId(networkId);
             ack->setKind(DMAMAC_ACK);
             ack->setMySlot(mySlot);
             ack->setByteLength(11);
@@ -1113,6 +1122,7 @@ void DMAMAC::handleRadioSwitchedToTX() {
                 destAddr = MACAddress(parent);
                 alert->setDestAddr(destAddr);
                 alert->setSrcAddr(myMacAddr);
+                alert->setNetworkId(networkId);
                 alert->setKind(DMAMAC_ALERT);
                 alert->setByteLength(11);
                 attachSignal(alert);
@@ -1131,6 +1141,7 @@ void DMAMAC::handleRadioSwitchedToTX() {
                 destAddr = MACAddress(parent);
                 alert->setDestAddr(destAddr);
                 alert->setSrcAddr(myMacAddr);
+                alert->setNetworkId(networkId);
                 alert->setKind(DMAMAC_ALERT);
 
                 if (twoLevels){
@@ -1168,6 +1179,7 @@ MACFrameBase* DMAMAC::encapsMsg(cPacket* msg) {
 
     /* @brief Set the src address to own mac address (nic module getId()) */
     pkt->setSrcAddr(myMacAddr);
+    pkt->setNetworkId(networkId);
     pkt->setSourceAddress(myMacAddr);
 
     /* @brief Encapsulate the MAC packet */
@@ -1338,6 +1350,13 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
     DMAMACSinkPkt *notification  = dynamic_cast<DMAMACSinkPkt *>(msg);
     if (notification != nullptr)
     {
+        if (networkId != -1 && networkId != notification->getNetworkId()) {
+            // ignore
+             EV << "Notification not for me delete \n";
+             delete msg;
+             return;
+        }
+
         EV << "Received notification from :" << notification->getSrcAddr() << "\n";
         if (notification->getSrcAddr() != sinkAddress) {
             // ignore
@@ -1349,6 +1368,14 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
     }
 
     DMAMACPkt * dmapkt   = dynamic_cast<DMAMACPkt *>(msg);
+
+    if (dmapkt && (networkId != -1 && networkId != dmapkt->getNetworkId())) {
+        // ignore
+         EV << "Notification not for me delete \n";
+         delete msg;
+         return;
+    }
+
     if (dmapkt !=nullptr && !endAddressRange.isUnspecified()) {
         if (dmapkt->getSrcAddr() < startAddressRange || dmapkt->getSrcAddr() > endAddressRange) {
             EV << "Sender address out of range Received notification from :" << dmapkt->getSrcAddr() << "\n";

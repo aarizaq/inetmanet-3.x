@@ -171,6 +171,7 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
                     actuatorData->setDestinationAddress(destAddr);
                     actuatorData->setSourceAddress(myMacAddr);
                     actuatorData->setSrcAddr(myMacAddr);
+                    actuatorData->setNetworkId(networkId);
 
                     auto itAux = sinkToClientAddress.find(it->second);
                     if (itAux == sinkToClientAddress.end())
@@ -529,6 +530,7 @@ void DMAMACSink::handleRadioSwitchedToTX() {
 
         data->setSrcAddr(myMacAddr);
         data->setKind(DMAMAC_ACTUATOR_DATA);
+        data->setNetworkId(networkId);
         data->setMySlot(mySlot);
         attachSignal(data);
         EV << "Sending down data packet\n";
@@ -546,6 +548,7 @@ void DMAMACSink::handleRadioSwitchedToTX() {
         DMAMACPkt* ack = new DMAMACPkt();
         ack->setDestAddr(lastDataPktSrcAddr);
         ack->setSrcAddr(myMacAddr);
+        ack->setNetworkId(networkId);
         ack->setKind(DMAMAC_ACK);
         ack->setMySlot(mySlot);
         /* Setting byte length to 11 bytes */
@@ -570,6 +573,7 @@ void DMAMACSink::handleRadioSwitchedToTX() {
         lastDataPktSrcAddr = MACAddress::BROADCAST_ADDRESS;
         notification->setDestAddr(lastDataPktSrcAddr);
         notification->setSrcAddr(myMacAddr);
+        notification->setNetworkId(networkId);
         notification->setKind(DMAMAC_NOTIFICATION);
         notification->setTimeRef(timeRef);
         notification->setByteLength(11);

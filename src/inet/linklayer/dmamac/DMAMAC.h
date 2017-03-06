@@ -390,6 +390,7 @@ protected:
     MACAddress lastDataPktDestAddr;
     MACAddress destAddr;
     MACAddress myMacAddr;
+    int networkId = -1;
     int txAttempts;
     /*@}*/
 
