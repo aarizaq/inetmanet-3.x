@@ -79,8 +79,10 @@ void DMAMAC::discoverIfNodeIsRelay() {
         isSink = true;
 
     if (!isRelayNode) {
-        if (upper)
+        if (upper) {
            isRelayNode = true;
+           isUpperRelayNode = true;
+        }
         return; // nothing more to-do
     }
 
@@ -467,7 +469,7 @@ void DMAMAC::handleUpperPacket(cPacket* msg){
         return;
     }
     if (dynamic_cast<AlertPkt *> (msg)) {
-        if (isRelayNode)
+        if (isRelayNode && !isUpperRelayNode)
             alertPktQueue.push_back(dynamic_cast<AlertPkt *> (msg));
         else
             delete msg;
@@ -1488,7 +1490,7 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
         DMAMACSinkPkt *notification  = dynamic_cast<DMAMACSinkPkt *>(msg);
         if (notification == nullptr)
         {
-            throw cRuntimeError(" msg is not a notification message");
+            //throw cRuntimeError(" msg is not a notification message");
             delete msg;
             return;
         }

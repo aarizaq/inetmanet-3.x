@@ -56,6 +56,6 @@ module DMAMACNic like IWirelessNic
         upperLayerIn --> mac.upperLayerIn;
         mac.lowerLayerOut --> radio.upperLayerIn;
         mac.upperLayerOut --> { @display("m=n"); } --> upperLayerOut;
-        radioIn --> { @display("m=s"); } --> radio.radioIn;
+        radioIn --> radio.radioIn;
         radio.upperLayerOut --> mac.lowerLayerIn;
 }

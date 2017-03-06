@@ -63,7 +63,7 @@ module DMAMACNodeNic
         *.energySourceModule = default(energyStorageType != "" ? absPath(".energyStorage") : "");
         *.mobilityModule = default(mobilityType != "" ? absPath(".mobility") : "");
      gates:
-        input radioIn @directIn;
+        input radioIn[1] @directIn;
     submodules:
         
         status: NodeStatus if hasStatus {
@@ -114,7 +114,7 @@ module DMAMACNodeNic
         }
 
 
-       radioIn --> { @display("m=s"); } --> wlan.radioIn;
+       radioIn[0] --> wlan.radioIn;
        wlan.upperLayerOut --> networkLayer.ifIn++;
        wlan.upperLayerIn <-- networkLayer.ifOut++; 
 }

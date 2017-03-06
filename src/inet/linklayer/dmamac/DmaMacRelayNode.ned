@@ -170,6 +170,8 @@ module DmaMacRelayNode like INetworkNode
         networkLayer.ifOut++ --> lo0.upperLayerIn;
         lo0.upperLayerOut --> networkLayer.ifIn++;
 
+        radioIn[0] -->  { @display("m=s"); } --> dmaNick.radioIn;
+        
         for i=0..sizeof(radioIn)-2 {
             radioIn[i+1] --> { @display("m=s"); } --> wlan[i].radioIn;
             wlan[i].upperLayerOut --> networkLayer.ifIn++;

@@ -654,6 +654,8 @@ void DMAMACSink::handleLowerPacket(cPacket* msg) {
                 else
                     throw cRuntimeError("Packet to other destination but this node is not relay");
             }
+            else if (isRelayNode && isUpperRelayNode)
+                sendUp(mac);
             else if (sendUppperLayer)
                 sendUp(decapsMsg(mac));
             else

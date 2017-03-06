@@ -65,7 +65,7 @@ module DMAMACSinkNode
         *.energySourceModule = default(energyStorageType != "" ? absPath(".energyStorage") : "");
         *.mobilityModule = default(mobilityType != "" ? absPath(".mobility") : "");
      gates:
-        input radioIn @directIn;
+        input radioIn[1] @directIn;
      submodules:
           status: NodeStatus if hasStatus {
             @display("p=50,50;is=s");
@@ -114,7 +114,7 @@ module DMAMACSinkNode
         }
 
 
-       radioIn --> { @display("m=s"); } --> wlan.radioIn;
+       radioIn[1] -->  wlan.radioIn;
        wlan.upperLayerOut --> networkLayer.ifIn++;
        wlan.upperLayerIn <-- networkLayer.ifOut++; 
 }

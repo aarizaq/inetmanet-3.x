@@ -133,6 +133,8 @@ void UDPCdmaMac::processStop()
 void UDPCdmaMac::processDmaMac(cPacket *msg)
 {
     // send to the sink
+    if (msg->getControlInfo())
+        delete msg->removeControlInfo();
     socket.sendTo(msg, sinkAddress, destPort);
     numSent++;
 

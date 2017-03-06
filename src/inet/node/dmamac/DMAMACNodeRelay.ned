@@ -65,8 +65,7 @@ module DMAMACNodeRelay
         *.energySourceModule = default(energyStorageType != "" ? absPath(".energyStorage") : "");
         *.mobilityModule = default(mobilityType != "" ? absPath(".mobility") : "");
     gates:
-        input radioIn @directIn;
-        input radioIn1 @directIn;
+        input radioIn[2] @directIn;
     submodules:
 
         status: NodeStatus if hasStatus {
@@ -106,8 +105,8 @@ module DMAMACNodeRelay
         // connections to network outside
 
 
-        radioIn --> { @display("m=s"); } --> wlanClient.radioIn;
-        radioIn1 --> { @display("m=s"); } --> wlanSink.radioIn;
+        radioIn[0] --> wlanClient.radioIn;
+        radioIn[1] --> wlanSink.radioIn;
         wlanClient.upperLayerOut --> wlanSink.upperLayerIn;
         wlanClient.upperLayerIn <-- wlanSink.upperLayerOut;
 }

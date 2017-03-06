@@ -465,6 +465,7 @@ protected:
     static bool twoLevels;
     bool isSink = false;
     bool isRelayNode = false;
+    bool isUpperRelayNode = false;
     int reserveChannel = -1;
     int alertLevel;
 
