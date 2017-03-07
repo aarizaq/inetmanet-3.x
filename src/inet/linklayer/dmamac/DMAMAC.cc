@@ -51,6 +51,8 @@ std::map<uint64_t,int> DMAMAC::slotInfo;
 
 bool DMAMAC::twoLevels = false;
 
+simsignal_t DMAMAC::rcvdPkSignalDma = registerSignal("rcvdPkDma");
+
 
 /* @brief Got this from BaseLayer file, to catch the signal for hostState change */
 // const simsignal_t DMAMAC::catHostStateSignal = simsignal_t(MIXIM_SIGNAL_HOSTSTATE_NAME);
@@ -1004,7 +1006,7 @@ void DMAMAC::receiveSignal(cComponent *source, simsignal_t signalID, long value,
                 scheduleAt(simTime(), waitAck);
             }
             /* @brief Setting radio to sleep to save energy after ACK is sent */
-            if(currentMacState == SEND_ACK && radio->getRadioMode() == IRadio::RADIO_MODE_TRANSMITTER)
+            if(currentMacState == SEND_ACK && radio->getRadioMode() == IRadio::RADIO_MODE_TRANSMITTER) {
 
                 if (!alwaysListening) {
                     radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
@@ -1012,15 +1014,17 @@ void DMAMAC::receiveSignal(cComponent *source, simsignal_t signalID, long value,
                  else {
                      radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
                  }
+            }
 
             /* @brief Setting radio to sleep to save energy after Alert is sent */
-            if(currentMacState == SEND_ALERT && radio->getRadioMode() == IRadio::RADIO_MODE_TRANSMITTER)
+            if(currentMacState == SEND_ALERT && radio->getRadioMode() == IRadio::RADIO_MODE_TRANSMITTER) {
                 if (!alwaysListening) {
                     radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
                  }
                  else {
                      radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
                  }
+            }
         }
         transmissionState = newRadioTransmissionState;
     }
@@ -1386,6 +1390,9 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
         }
     }
 
+    if (dmapkt)
+        emit(rcvdPkSignalDma,msg);
+
     if(currentMacState == WAIT_DATA)
     {
         DMAMACPkt *mac  = dmapkt;
@@ -1534,8 +1541,11 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
                 {
 					/* @brief Schedules sleep instead of waitNotification */
                     EV << " Sleep message arrival time " << setSleep->getArrivalTime() << endl;
-                    scheduleAt(setSleep->getArrivalTime(),waitNotification);
-                    cancelEvent(setSleep);
+
+                    if (waitNotification->isScheduled()) {
+                        scheduleAt(waitNotification->getArrivalTime(),setSleep);
+                        cancelEvent(waitNotification);
+                    }
                 }
 
                 /* €brief For the case of emergency switch resetting currentSlot counter to 0 */

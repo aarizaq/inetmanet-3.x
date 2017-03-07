@@ -55,6 +55,7 @@ class INET_API UDPCdmaMac : public ApplicationBase
 
     static simsignal_t sentPkSignal;
     static simsignal_t rcvdPkSignal;
+    static simsignal_t rcvdPkSignalDma;
 
   protected:
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }

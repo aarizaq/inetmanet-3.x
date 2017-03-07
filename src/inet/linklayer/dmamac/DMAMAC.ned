@@ -125,5 +125,8 @@ simple DMAMAC extends MACProtocolBase like IMACProtocol
         
         bool sendDisorganized = default(false);
         
+        @signal[rcvdPkDma](type=cPacket);
+        @statistic[rcvdPkLifetimeDma](title="received DMA packet lifetime"; source="messageAge(rcvdPkDma)"; unit=s; record=stats,vector; interpolationmode=none);
+        
     	@class("DMAMAC");
 }

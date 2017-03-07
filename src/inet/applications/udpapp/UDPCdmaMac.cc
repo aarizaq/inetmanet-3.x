@@ -32,6 +32,7 @@ Define_Module(UDPCdmaMac);
 
 simsignal_t UDPCdmaMac::sentPkSignal = registerSignal("sentPk");
 simsignal_t UDPCdmaMac::rcvdPkSignal = registerSignal("rcvdPk");
+simsignal_t UDPCdmaMac::rcvdPkSignalDma = registerSignal("rcvdPkDma");
 
 
 UDPCdmaMac::~UDPCdmaMac()
@@ -132,6 +133,8 @@ void UDPCdmaMac::processStop()
 
 void UDPCdmaMac::processDmaMac(cPacket *msg)
 {
+
+    emit(rcvdPkSignalDma,msg);
     // send to the sink
     if (msg->getControlInfo())
         delete msg->removeControlInfo();

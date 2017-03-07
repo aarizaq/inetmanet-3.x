@@ -169,6 +169,8 @@ class INET_API DMAMAC : public MACProtocolBase, public IMACProtocol
 
 protected:
 
+    static simsignal_t rcvdPkSignalDma;
+
     bool alwaysListening = false;
     bool alwaysListeningReception = false;
 

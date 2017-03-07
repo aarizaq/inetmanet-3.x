@@ -638,6 +638,8 @@ void DMAMACSink::handleLowerPacket(cPacket* msg) {
 
     if(currentMacState == WAIT_DATA)
     {
+        emit(rcvdPkSignalDma,msg);
+
         DMAMACPkt *const mac  = static_cast<DMAMACPkt *>(msg);
         const MACAddress& dest = mac->getDestAddr();
 

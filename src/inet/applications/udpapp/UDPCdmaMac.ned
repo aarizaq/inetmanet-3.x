@@ -52,10 +52,13 @@ simple UDPCdmaMac like IUDPApp
         @display("i=block/app");
         @signal[sentPk](type=cPacket);
         @signal[rcvdPk](type=cPacket);
+        @signal[rcvdPkDma](type=cPacket);
+        
         @statistic[rcvdPk](title="packets received"; source=rcvdPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
         @statistic[throughput](title="throughput"; unit=bps; source="throughput(rcvdPk)"; record=last);
         @statistic[sentPk](title="packets sent"; source=sentPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
         @statistic[rcvdPkLifetime](title="received packet lifetime"; source="messageAge(rcvdPk)"; unit=s; record=stats,vector; interpolationmode=none);
+        @statistic[rcvdPkLifetimeDma](title="received DMA packet lifetime"; source="messageAge(rcvdPkDma)"; unit=s; record=stats,vector; interpolationmode=none);
         @statistic[rcvdPkSeqNo](title="received packet sequence number"; source="appPkSeqNo(rcvdPk)"; record=vector; interpolationmode=none);
     gates:
         input udpIn @labels(UDPControlInfo/up);
