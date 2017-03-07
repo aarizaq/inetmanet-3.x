@@ -127,6 +127,12 @@ void Dcf::scheduleStartRxTimer(simtime_t timeout)
 void Dcf::processLowerFrame(Ieee80211Frame* frame)
 {
     Enter_Method_Silent();
+    if (auto dataOrMgmtFrame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(frame)) {
+        DirectionalInfo info;
+        info.direction = static_cast<ReceptionIndication *>(frame->getControlInfo())->getDirection();
+        info.time = simTime();
+        directionalDataBase[dataOrMgmtFrame->getTransmitterAddress()] = info;
+    }
     if (frameSequenceHandler->isSequenceRunning()) {
         // TODO: always call processResponses
         if ((!isForUs(frame) && !startRxTimer->isScheduled()) || isForUs(frame)) {
