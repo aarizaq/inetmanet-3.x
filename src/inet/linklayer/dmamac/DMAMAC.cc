@@ -195,6 +195,8 @@ void DMAMAC::initialize(int stage)
         hasSensorChild      = par("hasSensorChild");                                     
         double temp         = (par("macTypeInput").doubleValue());
 
+        networkId = par("subnetworkId");
+
         if(temp == 0)
             macType = DMAMAC::HYBRID;
         else
@@ -1377,7 +1379,7 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
 
     if (dmapkt && (networkId != -1 && networkId != dmapkt->getNetworkId())) {
         // ignore
-         EV << "Notification not for me delete \n";
+         EV << "Data of other subnetwork delete \n";
          delete msg;
          return;
     }
@@ -1385,6 +1387,15 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
     if (dmapkt !=nullptr && !endAddressRange.isUnspecified()) {
         if (dmapkt->getSrcAddr() < startAddressRange || dmapkt->getSrcAddr() > endAddressRange) {
             EV << "Sender address out of range Received notification from :" << dmapkt->getSrcAddr() << "\n";
+            delete msg;
+            return;
+        }
+    }
+
+    if (auto alert = dynamic_cast<AlertPkt *> (msg)) {
+        if (networkId != -1 && networkId != alert->getNetworkId()) {
+            // ignore
+            EV << "Alarm of other subnetwork delete \n";
             delete msg;
             return;
         }
