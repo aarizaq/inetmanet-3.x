@@ -1,0 +1,100 @@
+//
+// Copyright (C) 2006 Andras Varga
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+//
+
+package inet.examples.dmamac4;
+
+import inet.common.lifecycle.LifecycleController;
+import inet.networklayer.configurator.ipv4.IPv4NetworkConfigurator;
+import inet.node.inet.WirelessHost;
+import inet.physicallayer.contract.packetlevel.IRadioMedium;
+import inet.visualizer.integrated.IntegratedCanvasVisualizer;
+import inet.node.dmamac.DMAMACSinkNode;
+import inet.node.dmamac.DMAMACNodeNic;
+import inet.node.dmamac.DMAMACNodeRelay;
+import inet.linklayer.dmamac.DmaMacRelayNode;
+import inet.node.inet.AdhocHost;
+
+network TestDmaMac4
+{
+    parameters:
+        int numHosts;
+        string radioMediumType;
+        int subNet1XDesp = default(0);
+        int subNet1YDesp = default(0);
+        int subNet2XDesp = default(0);
+        int subNet2YDesp = default(0);
+        int subNet3XDesp = default(0);
+        int subNet3YDesp = default(0);                
+    submodules:
+        visualizer: IntegratedCanvasVisualizer {
+            parameters:
+                @display("p=100,50");
+        }
+        configurator: IPv4NetworkConfigurator {
+            parameters:
+                @display("p=100,150");
+        }
+        radioMedium: <radioMediumType> like IRadioMedium {
+            parameters:
+                @display("p=100,250");
+        }
+        lifecycleController: LifecycleController {
+            parameters:
+                @display("p=100,350");
+        }
+        sink: AdhocHost {
+            parameters:
+                @display("r=,,#707070;p=169,66");
+        }
+
+        relay1: DmaMacRelayNode {
+            parameters:
+                @display("r=,,#707070;p=187,215");
+        }
+
+        node1[numHosts]: DMAMACNodeNic {
+            parameters:
+                @display("r=,,#707070;p=256,66");
+        }
+        relay2: DmaMacRelayNode {
+            parameters:
+                @display("r=,,#707070;p=187,142");
+        }
+        node2[numHosts]: DMAMACNodeNic {
+            parameters:
+                @display("r=,,#707070;p=272,181");
+        }
+        
+        relay3: DmaMacRelayNode {
+            parameters:
+                @display("r=,,#707070;p=187,215");
+        }
+
+        node3[numHosts]: DMAMACNodeNic {
+            parameters:
+                @display("r=,,#707070;p=256,66");
+        }
+        relay4: DmaMacRelayNode {
+            parameters:
+                @display("r=,,#707070;p=187,142");
+        }
+        node4[numHosts]: DMAMACNodeNic {
+            parameters:
+                @display("r=,,#707070;p=272,181");
+        }
+}
