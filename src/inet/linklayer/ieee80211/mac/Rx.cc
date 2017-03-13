@@ -46,7 +46,7 @@ void Rx::initialize(int stage)
         WATCH(mediumFree);
     }
     else if (stage == INITSTAGE_LINK_LAYER) {
-        // statistics = check_and_cast<IStatistics *>(getModuleByPath(par("statisticsModule")));
+        statistics = dynamic_cast<IStatistics *>(getModuleByPath(par("statisticsModule")));
         address = check_and_cast<Ieee80211Mac*>(getContainingNicModule(this)->getSubmodule("mac"))->getAddress();
         recomputeMediumFree();
     }
@@ -70,9 +70,12 @@ bool Rx::lowerFrameReceived(Ieee80211Frame *frame)
     bool isFrameOk = isFcsOk(frame);
     if (isFrameOk) {
         EV_INFO << "Received frame from PHY: " << frame << endl;
+        emit(NF_LINK_FULL_PROMISCUOUS,frame);
+        if (frame->getReceiverAddress() == address)
+            emit(NF_LINK_PROMISCUOUS,frame);
         if (frame->getReceiverAddress() != address)
             setOrExtendNav(frame->getDuration());
-//        statistics->frameReceived(frame);
+        if (statistics) statistics->frameReceived(frame);
         return true;
     }
     else {
@@ -80,7 +83,7 @@ bool Rx::lowerFrameReceived(Ieee80211Frame *frame)
         delete frame;
         for (auto contention : contentions)
             contention->corruptedFrameReceived();
-//        statistics->erroneousFrameReceived();
+        if (statistics) statistics->erroneousFrameReceived();
         return false;
     }
 }
