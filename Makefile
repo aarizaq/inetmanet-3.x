@@ -1,6 +1,8 @@
-.PHONY: all clean cleanall makefiles makefiles-so makefiles-lib makefiles-exe checkmakefiles doxy doc
+FEATURES_H = src/inet/features.h
 
-all: checkmakefiles src/inet/features.h 
+.PHONY: all clean cleanall makefiles makefiles-so makefiles-lib makefiles-exe checkmakefiles doxy doc submodule-init
+
+all: checkmakefiles $(FEATURES_H)
 	cd src && $(MAKE)
 
 clean: checkmakefiles
@@ -9,23 +11,23 @@ clean: checkmakefiles
 cleanall: checkmakefiles
 	@cd src && $(MAKE) MODE=release clean
 	@cd src && $(MAKE) MODE=debug clean
-	@rm -f src/Makefile src/inet/features.h
+	@rm -f src/Makefile $(FEATURES_H)
 	@cd tutorials && $(MAKE) clean && rm -rf doc/tutorials
 
-MAKEMAKE_OPTIONS := -f --deep -o INET -O out --no-deep-includes -I.
+MAKEMAKE_OPTIONS := -f --deep -o INET -O out -I.
 
-makefiles: src/inet/features.h makefiles-so
+makefiles: makefiles-so
 
-makefiles-so:
-	@FEATURE_OPTIONS=$$(./inet_featuretool options -f -l -c) && cd src && opp_makemake --make-so $(MAKEMAKE_OPTIONS) $$FEATURE_OPTIONS
+makefiles-so: $(FEATURES_H)
+	@FEATURE_OPTIONS=$$(./inet_featuretool options -f -l) && cd src && opp_makemake --make-so $(MAKEMAKE_OPTIONS) $$FEATURE_OPTIONS
 
-makefiles-lib:
-	@FEATURE_OPTIONS=$$(./inet_featuretool options -f -l -c) && cd src && opp_makemake --make-lib $(MAKEMAKE_OPTIONS) $$FEATURE_OPTIONS
+makefiles-lib: $(FEATURES_H)
+	@FEATURE_OPTIONS=$$(./inet_featuretool options -f -l) && cd src && opp_makemake --make-lib $(MAKEMAKE_OPTIONS) $$FEATURE_OPTIONS
 
-makefiles-exe:
-	@FEATURE_OPTIONS=$$(./inet_featuretool options -f -l -c) && cd src && opp_makemake $(MAKEMAKE_OPTIONS) $$FEATURE_OPTIONS
+makefiles-exe: $(FEATURES_H)
+	@FEATURE_OPTIONS=$$(./inet_featuretool options -f -l) && cd src && opp_makemake $(MAKEMAKE_OPTIONS) $$FEATURE_OPTIONS
 
-checkmakefiles:
+checkmakefiles: submodule-init
 	@if [ ! -f src/Makefile ]; then \
 	echo; \
 	echo '========================================================================'; \
@@ -35,9 +37,18 @@ checkmakefiles:
 	exit 1; \
 	fi
 
+submodule-init:
+	@if [ -d .git ]; then \
+	if [ ! -f tutorials/package.ned ]; then \
+	echo 'Fetching git submodules (tutorials, showcases)...'; \
+	git submodule update --init; \
+	fi \
+	fi
+
 # generate an include file that contains all the WITH_FEATURE macros according to the current enablement of features
-src/inet/features.h: $(wildcard .oppfeaturestate) .oppfeatures
-	@./inet_featuretool defines >src/inet/features.h
+$(FEATURES_H): $(wildcard .oppfeaturestate) .oppfeatures
+	@./inet_featuretool defines >$(FEATURES_H)
+
 
 doc:
 	cd tutorials && $(MAKE) && mkdir -p ../doc/tutorials/wireless && cp -r wireless/html/* ../doc/tutorials/wireless

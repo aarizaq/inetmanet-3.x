@@ -51,6 +51,12 @@ class Ieee80211Mac;
 class INET_API Dcf : public ICoordinationFunction, public IFrameSequenceHandler::ICallback, public IChannelAccess::ICallback, public ITx::ICallback, public IProcedureCallback, public ModeSetListener
 {
     protected:
+        struct DirectionalInfo {
+            EulerAngles direction;
+            simtime_t time;
+        };
+        std::map<MACAddress,DirectionalInfo> directionalDataBase;
+
         Ieee80211Mac *mac = nullptr;
         IRateControl *dataAndMgmtRateControl = nullptr;
 

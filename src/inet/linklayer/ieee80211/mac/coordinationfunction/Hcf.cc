@@ -33,7 +33,7 @@ void Hcf::initialize(int stage)
 {
     ModeSetListener::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
-        mac = check_and_cast<Ieee80211Mac *>(getContainingNicModule(this));
+        mac = check_and_cast<Ieee80211Mac *>(getContainingNicModule(this)->getSubmodule("mac"));
         startRxTimer = new cMessage("startRxTimeout");
         inactivityTimer = new cMessage("blockAckInactivityTimer");
         numEdcafs = par("numEdcafs");
@@ -482,22 +482,22 @@ void Hcf::originatorProcessReceivedControlFrame(Ieee80211Frame* frame, Ieee80211
 {
     if (auto ackFrame = dynamic_cast<Ieee80211ACKFrame *>(frame)) {
         if (auto dataFrame = dynamic_cast<Ieee80211DataFrame *>(lastTransmittedFrame)) {
-            edcaDataRecoveryProcedures[ac]->ackFrameReceived(dataFrame);
             if (dataAndMgmtRateControl) {
                 int retryCount;
                 if (dataFrame->getRetry())
                     retryCount = edcaDataRecoveryProcedures[ac]->getRetryCount(dataFrame);
                 else
                     retryCount = 0;
+                edcaDataRecoveryProcedures[ac]->ackFrameReceived(dataFrame);
                 dataAndMgmtRateControl->frameTransmitted(dataFrame, retryCount, true, false);
             }
         }
         else if (auto mgmtFrame = dynamic_cast<Ieee80211ManagementFrame *>(lastTransmittedFrame)) {
-            edcaMgmtAndNonQoSRecoveryProcedure->ackFrameReceived(mgmtFrame, stationRetryCounters[ac]);
             if (dataAndMgmtRateControl) {
                 int retryCount = edcaMgmtAndNonQoSRecoveryProcedure->getRetryCount(dataFrame);
                 dataAndMgmtRateControl->frameTransmitted(mgmtFrame, retryCount, true, false);
             }
+            edcaMgmtAndNonQoSRecoveryProcedure->ackFrameReceived(mgmtFrame, stationRetryCounters[ac]);
         }
         else
             throw cRuntimeError("Unknown frame"); // TODO: qos, nonqos frame
