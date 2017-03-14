@@ -45,6 +45,7 @@ module Dcf
         *.rateSelectionModule = "^.rateSelection";
         *.rxModule = "^." + rxModule;
 
+        @signal[NF_LINK_BREAK](type=Ieee80211Frame);
         @class(Dcf);
         @display("i=block/queue");
 
