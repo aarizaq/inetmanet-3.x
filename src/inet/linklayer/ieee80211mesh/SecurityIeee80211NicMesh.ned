@@ -49,6 +49,7 @@ module SecurityIeee80211NicMesh like IWirelessNic
         bool securityNeeded = true;
         bool hasSecurity = default(false);        
         @display("i=block/ifcard;bgb=259,357");
+        @nic;        
         *.interfaceTableModule = default(absPath(interfaceTableModule));
         *.energySourceModule = default(absPath(energySourceModule));
     gates:

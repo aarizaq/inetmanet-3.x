@@ -47,7 +47,20 @@ void Rx::initialize(int stage)
     }
     else if (stage == INITSTAGE_LINK_LAYER) {
         statistics = dynamic_cast<IStatistics *>(getModuleByPath(par("statisticsModule")));
-        address = check_and_cast<Ieee80211Mac*>(getContainingNicModule(this)->getSubmodule("mac"))->getAddress();
+        cModule *mod = getContainingNicModule(this)->getSubmodule("mac");
+        if (mod == nullptr) { // array multi mac
+            mod = this;
+            cModule *aux = getContainingNicModule(this);
+            while (mod != aux) {
+                if (strstr(mod->getName(),"mac") !=nullptr)
+                    break;
+                mod = mod->getParentModule();
+            }
+            if (mod == aux)
+                mod = nullptr;
+        }
+        Ieee80211Mac *mac = check_and_cast<Ieee80211Mac *>(mod);
+        address = mac->getAddress();
         recomputeMediumFree();
     }
 }
