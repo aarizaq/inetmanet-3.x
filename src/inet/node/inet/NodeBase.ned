@@ -126,7 +126,7 @@ module NodeBase like INetworkNode
         }
         tun[numTunInterfaces]: <default("TunInterface")> like ITunNic {
             parameters:
-                @display("p=213,406,row,10;q=txQueue;i=block/ifcard");
+                @display("p=177,308,row,10;q=txQueue;i=block/ifcard");
         }
 
     connections allowunconnected:
