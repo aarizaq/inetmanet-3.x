@@ -88,17 +88,16 @@ class INET_API UDPBasicFlooding : public ApplicationBase
     virtual void generateBurst();
 
   protected:
-    virtual int numInitStages() const {return 4;}
-    virtual void initialize(int stage);
-    virtual void handleMessageWhenUp(cMessage *msg);
-    virtual void finish();
+    virtual void initialize(int stage)  override;
+    virtual void handleMessageWhenUp(cMessage *msg) override;
+    virtual void finish() override;
     virtual bool sendBroadcast(const L3Address &dest, cPacket *pkt);
     virtual void processStart();
 
     //AppBase:
-    virtual bool handleNodeStart(IDoneCallback *doneCallback);
-    virtual bool handleNodeShutdown(IDoneCallback *doneCallback);
-    virtual void handleNodeCrash();
+    virtual bool handleNodeStart(IDoneCallback *doneCallback) override;
+    virtual bool handleNodeShutdown(IDoneCallback *doneCallback) override;
+    virtual void handleNodeCrash() override;
 
   public:
     UDPBasicFlooding();
