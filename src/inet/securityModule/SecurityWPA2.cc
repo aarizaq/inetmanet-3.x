@@ -37,6 +37,7 @@
 #include "inet/common/NotifierConsts.h"
 #include "inet/transportlayer/tcp/queues/TCPByteStreamRcvQueue.h"
 #include "inet/common/ModuleAccess.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211Mac.h"
 
 
 using namespace std;
@@ -171,23 +172,33 @@ void SecurityWPA2::initialize(int stage)
     {
         // obtain our address from MAC
         unsigned int numMac=0;
-        cModule *mac = getParentModule()->getSubmodule("mac");
-        if (!mac)
-        {
+        cModule *nic = getContainingNicModule(this);
+        cModule *mac = nic->getSubmodule("mac");
+        if (mac == nullptr) {
             // search for vector of mac:
-            do
-            {
-                mac = getParentModule()->getSubmodule("mac",numMac);
+            unsigned int numRadios = 0;
+            do {
+                mac = nic->getSubmodule("mac",numMac);
                 if (mac)
                     numMac++;
-            }
-            while (mac);
+            } while (mac);
+
             if (numMac == 0)
-                error("MAC module not found; it is expected to be next to this submodule and called 'mac'");
-            else
-                mac = getParentModule()->getSubmodule("mac",0);
+                throw cRuntimeError("MAC module not found; it is expected to be next to this submodule and called 'mac'");
+            cModule *radio = nullptr;
+            do {
+                radio = nic->getSubmodule("radio",numRadios);
+                if (radio)
+                    numRadios++;
+            } while (radio);
+            if (numRadios != numMac)
+                throw cRuntimeError("numRadios != numMac");
+            mac = nic->getSubmodule("mac",0);
         }
-        myAddress.setAddress(mac->par("address").stringValue());
+
+        if (!mac)
+            throw cRuntimeError("MAC module not found; it is expected to be next to this submodule and called 'mac'");
+        myAddress = check_and_cast<Ieee80211Mac *>(mac)->getAddress();
         EV << "My MAcAddress is: " << myAddress <<endl;
     }
 

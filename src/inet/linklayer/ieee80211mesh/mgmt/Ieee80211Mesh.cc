@@ -171,45 +171,29 @@ void Ieee80211Mesh::initializeBase(int stage)
 
         cModule *nic = getContainingNicModule(this);
         cModule *mac = nic->getSubmodule("mac");
-        if (mac == nullptr)
-        {
+        if (mac == nullptr) {
             // search for vector of mac:
-
             unsigned int numRadios = 0;
-            do
-            {
+            do {
                 mac = nic->getSubmodule("mac",numMac);
                 if (mac)
                     numMac++;
-            }
-            while (mac);
+            } while (mac);
 
             if (numMac == 0)
-                error("MAC module not found; it is expected to be next to this submodule and called 'mac'");
+                throw cRuntimeError("MAC module not found; it is expected to be next to this submodule and called 'mac'");
 
-            cModule *radio;
-            do
-            {
+            cModule *radio = nullptr;
+            do {
                 radio = nic->getSubmodule("radio",numRadios);
                 if (radio)
                     numRadios++;
-            }
-            while (radio);
+            } while (radio);
             if (numRadios != numMac)
-                error("numRadios != numMac");
+                throw cRuntimeError("numRadios != numMac");
 
-            if (numMac > 1)
-            {
-                for (unsigned int i = 0 ; i < numMac; i++)
-                {
-                    mac = nic->getSubmodule("mac",i);
-                    radio = nic->getSubmodule("radio",i);
-                    macInterfaces.push_back(dynamic_cast<Ieee80211Mac*>(mac));
-                    // radioInterfaces.push_back(dynamic_cast<Radio*>(radio));
-                }
-            }
+            mac = nic->getSubmodule("mac",0);
         }
-        mac = nic->getSubmodule("mac",0);
         if (!mac)
             throw cRuntimeError("MAC module not found; it is expected to be next to this submodule and called 'mac'");
         myAddress = check_and_cast<Ieee80211Mac *>(mac)->getAddress();
