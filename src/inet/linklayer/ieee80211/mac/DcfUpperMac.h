@@ -24,6 +24,9 @@
 #include "IFrameExchange.h"
 #include "AccessCategory.h"
 #include "inet/physicallayer/ieee80211/mode/IIeee80211Mode.h"
+#include "inet/mobility/contract/IMobility.h"
+#include "inet/physicallayer/antenna/PhasedArray.h"
+#include "inet/linklayer/common/MACAddress.h"
 
 using namespace inet::physicallayer;
 
@@ -76,6 +79,12 @@ class INET_API DcfUpperMac : public cSimpleModule, public IUpperMac, protected I
         IRateSelection *rateSelection = nullptr;
         IRateControl *rateControl = nullptr;
         IStatistics *statistics = nullptr;
+        struct NodeData {
+            IMobility *mob = nullptr;
+            PhasedArray *phaseAr = nullptr;
+        };
+        std::map<MACAddress,NodeData> mobilityList;
+        MACAddress myAddress;
 
     protected:
         void initialize() override;
@@ -89,6 +98,8 @@ class INET_API DcfUpperMac : public cSimpleModule, public IUpperMac, protected I
         void sendAck(Ieee80211DataOrMgmtFrame *frame);
         void sendCts(Ieee80211RTSFrame *frame);
         virtual void configureAntenna(const double &);
+        virtual std::vector<MACAddress> getListaMac();
+        virtual bool decideQueue(Ieee80211DataOrMgmtFrame *frame);
 
     public:
         DcfUpperMac();

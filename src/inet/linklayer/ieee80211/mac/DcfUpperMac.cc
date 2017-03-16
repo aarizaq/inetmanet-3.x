@@ -36,6 +36,7 @@
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
 #include "inet/physicallayer/ieee80211/mode/Ieee80211ModeSet.h"
 #include "inet/physicallayer/antenna/PhasedArray.h"
+#include "inet/networklayer/common/L3AddressResolver.h"
 
 namespace inet {
 namespace ieee80211 {
@@ -153,6 +154,14 @@ void DcfUpperMac::upperFrameReceived(Ieee80211DataOrMgmtFrame *frame)
 
 void DcfUpperMac::enqueue(Ieee80211DataOrMgmtFrame *frame)
 {
+    bool decision= decideQueue(frame);
+
+    if (frameExchange && decision)
+        transmissionQueue.insert(frame);
+    else
+        startSendDataFrameExchange(frame, 0, AC_LEGACY);
+    return;
+
     statistics->upperFrameReceived(frame);
     if (frameExchange) {
         if (activeMsduA)
@@ -304,6 +313,89 @@ void DcfUpperMac::sendCts(Ieee80211RTSFrame *frame)
     Ieee80211CTSFrame *ctsFrame = utils->buildCtsFrame(frame);
     tx->transmitFrame(ctsFrame, params->getSifsTime(), nullptr);
 }
+
+bool DcfUpperMac::decideQueue(Ieee80211DataOrMgmtFrame *frame){
+    bool var =false;
+    std::vector<MACAddress>list;
+    list=getListaMac();
+    MACAddress rxaddr=frame->getReceiverAddress();
+    MACAddress txaddr;
+    if (auto dataOrMgmtFrame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(frame)) {
+        txaddr = dataOrMgmtFrame->getTransmitterAddress();
+    }
+    if (!rxaddr.isMulticast() && !txaddr.isUnspecified()){
+        auto itRc = mobilityList.find(rxaddr);
+        auto itTx = mobilityList.find(txaddr);
+        Coord txhost= itTx->second.mob->getCurrentPosition();
+        Coord rxhost= itRc->second.mob->getCurrentPosition();
+        Coord transmissionStartDirection = rxhost - txhost;
+        double z = transmissionStartDirection.z;
+        transmissionStartDirection.z = 0;
+        double heading = atan2(transmissionStartDirection.y, transmissionStartDirection.x);
+        double elevation = atan2(z, transmissionStartDirection.length());
+        EulerAngles direction = EulerAngles(heading, elevation, 0);
+        PhasedArray *phas = itRc->second.phaseAr;
+        if (phas->isWithinSector(direction)){ // test the position of the receiver
+            var=true; //ok (misses instruction)
+            }
+        else {
+            delete frame;
+            var=false;//remove frame from queue (misses instruction)
+            }
+    }
+    return var;
+          // std::cout<<"prova"<<endl;
+}
+
+
+std::vector<MACAddress> DcfUpperMac:: getListaMac(){
+    if (!mobilityList.empty()) {
+        std::vector<MACAddress>lista;
+        for (const auto &elem : mobilityList) {
+            lista.push_back(elem.first);
+        }
+        return lista;
+    }
+
+    cModule * myHost = getContainingNode(this);
+    std::vector<MACAddress>lista;
+    cTopology topology ("topology");
+    topology.extractByProperty("networkNode");
+    int n = topology.getNumNodes();
+    if (topology.getNumNodes() == 0)
+        throw cRuntimeError("Empty network!");
+    for (int i = 0; i < n; i++) {
+        NodeData data;
+        cTopology::Node *destNode = topology.getNode(i);
+        cModule *host = destNode->getModule();
+        data.mob = check_and_cast<IMobility *>(host->getSubmodule("mobility"));
+
+        IInterfaceTable * ifTable = L3AddressResolver().findInterfaceTableOf(host);
+
+        for (int i = 0; i < ifTable->getNumInterfaces(); i++) {
+            InterfaceEntry *entry = ifTable->getInterface(i);
+            if (strstr(entry->getName(),"wlan") != nullptr) {
+
+                cModule *ifaceMod = entry->getInterfaceModule();
+                IRadio *radioMod = check_and_cast<IRadio *>(ifaceMod->getSubmodule("radio"));
+                IAntenna *pa = const_cast<IAntenna*>(radioMod->getAntenna());
+                data.phaseAr = dynamic_cast<PhasedArray *>(pa);
+                IPv4Address addr = L3AddressResolver().getAddressFrom(L3AddressResolver().findInterfaceTableOf(host)).toIPv4();
+                MACAddress ma = entry->getMacAddress();
+                lista.push_back(ma);
+                mobilityList[ma] = data;
+                if (myHost == host)
+                    myAddress = ma;
+                break;
+            }
+        }
+    }
+    if (lista.empty())
+        throw cRuntimeError("Lista is empty");
+    return lista;
+}
+
+
 
 void DcfUpperMac::configureAntenna(const double &angle)
 {

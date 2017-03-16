@@ -2,6 +2,7 @@
 #include "inet/physicallayer/base/packetlevel/AntennaBase.h"
 
 #include "inet/common/ModuleAccess.h"
+
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -18,6 +19,7 @@ namespace physicallayer {
 using std::cout;
 
 int counter = 0;
+//double PhasedArray::phiz=0;
 simsignal_t PhasedArray::phaseArrayConfigureChange = registerSignal(
         "phaseArrayConfigureChange");
 
@@ -27,7 +29,9 @@ PhasedArray::PhasedArray() :
         AntennaBase(), length(NaN),
         freq(1000000),
         distance (0.5),
-        phiz(120)
+        phiz(120),
+        sectorWidth(45)
+
 {
     cout<<" nodo  "<< counter << " creato " << endl;
     if (counter == 29) {
@@ -57,6 +61,7 @@ void PhasedArray::initialize(int stage) {
         freq = (par("freq"));
         distance = (par("distance"));
         phiz = (par("phiz"));
+        sectorWidth = (par("sectorWidth"));
 #ifdef REGISTER_IN_NODE
 		// this code register in the node module
 		cModule *mod = getContainingNode(this);
@@ -76,6 +81,7 @@ void PhasedArray::initialize(int stage) {
         radio = check_and_cast<IRadio *>(radioModule);
 
         const char *energySourceModule = par("energySourceModule");
+
         energySource = dynamic_cast<IEnergySource *>(getModuleByPath(energySourceModule));
         if (energySource)
             energyConsumerId = energySource->addEnergyConsumer(this);
@@ -83,19 +89,32 @@ void PhasedArray::initialize(int stage) {
 }
 
 double PhasedArray::computeGain(EulerAngles direction) const {
+    getCurrentActiveSector();
+       IRadio *radio= check_and_cast<IRadio *>(getParentModule());
+       IRadioMedium *ra =  const_cast< IRadioMedium *> (radio->getMedium());
+       RadioMedium *rm = dynamic_cast< RadioMedium *>(ra);
+
+       phiz = -1;
+      // phiz = rm->getMainAngle();
+
+
 
     if (phiz == -1) {
         // omni
         return 1;
     }
 
-    int numel = getNumAntennas();
+    //int numel = const_cast<PhasedArray*>(this)->switchElements();  //with energy control
+    int numel = getNumAntennas(); //without energy control
+    cout<<"ACTIVE ARRAY ELEMENTS:"<<numel<<endl;
+
     double c = 300000 * 10 * 10 * 10;
     double lambda = c / freq;
     double d = distance * lambda;
 
     double k = (2 * M_PI) / lambda;
     double phizero = phiz * (M_PI / 180);
+    cout<<"PHI:"<<phiz<<endl;
     double psi = k * d * (cos(direction.beta) - cos(phizero));
     double num = sin((numel * psi) / 2);
     double den = sin(psi / 2);
@@ -104,8 +123,28 @@ double PhasedArray::computeGain(EulerAngles direction) const {
     double ef = cos(direction.beta);
     double efa = fabs(ef);
     double gain = 10 * log10(mod * efa);
-
+    //if (phiz==0)gain=1;
+    if (gain<0)gain=1; // if high losses , switch to omni
+    cout<<"GAIN:"<<gain<<endl;
     return gain;
+
+}
+
+
+
+int PhasedArray::switchElements () {
+    int numel;
+    cModule *host = getContainingNode(this);
+    IEnergyStorage *mod = check_and_cast<IEnergyStorage *>(host->getSubmodule("energyStorage"));
+    if((mod->getResidualCapacity())< (mod->getNominalCapacity()*0.2) ) // if currentResidual< 20% nominalCapacity
+    {numel=this->numAntennas -1;} //switch off one element
+    else if((mod->getResidualCapacity())< (mod->getNominalCapacity()*0.3) ) // if currentResidual< 30% nominalCapacity
+        {numel=this->numAntennas -2;} //switch off two elements
+    else if((mod->getResidualCapacity())< (mod->getNominalCapacity()*0.4) ) // if currentResidual< 40% nominalCapacity
+            {numel=this->numAntennas -3;} //switch off three elements
+    else numel=getNumAntennas();
+    cout<<"ACTIVE ARRAY ELEMENTS:"<<numel<<endl;
+    return numel;
 
 }
 
@@ -147,6 +186,115 @@ double PhasedArray::getAngolo(Coord p1, Coord p2) const {
     angolo = atan(cangl) * (180 / 3.14);
     return angolo;
 
+}
+
+int PhasedArray::getNumSectors()const { // returns the plane sectorization size based on the width sector value
+    switch (getSectorWidth()){
+    case 45 : return 8;break;
+    case 60 : return 6;break;
+    case 90 : return 4;break;
+    case 120 : return 3;break;
+    case 180 : return 2;break;
+    default : return -1;
+    }
+
+}
+std::vector<int> PhasedArray::getSectorVector()const { // return the sectorizated vector based on the width secto value
+    std::vector<int>sector;
+    switch (getNumSectors()){
+    case 8 :
+            sector.resize(8);
+            for (int pos=0; pos<sector.size();pos++){sector[pos]=pos;}
+            return sector;
+            break;
+    case 6 :
+            sector.resize(6);
+            for (int pos=0; pos<sector.size();pos++){sector[pos]=pos;}
+            return sector;
+            break;
+    case 4 :
+            sector.resize(4);
+            for (int pos=0; pos<sector.size();pos++){sector[pos]=pos;}
+            return sector;
+            break;
+    case 3 :
+            sector.resize(3);
+            for (int pos=0; pos<sector.size();pos++){sector[pos]=pos;}
+            return sector;
+            break;
+    case 2 :
+            sector.resize(2);
+            for (int pos=0; pos<sector.size();pos++){sector[pos]=pos;}
+            return sector;
+            break;
+    default : return sector;
+
+    }
+}
+std::vector<int> PhasedArray::getSectorVectorProva()const{
+    std::vector<int>sect=getSectorVector();
+    return sect;
+}
+
+int PhasedArray::getCurrentActiveSector()const{
+    std::vector<int>sect=getSectorVector();
+    int N = sect.size();
+    double tslot=5; // duration of the sector (can be as output ned parameter to set in the ini)
+    double T;
+    double tsim=simTime().dbl();
+    T=N*tslot;
+    float rem= fmod(tsim,T);
+    int sector = ceil(rem/tslot); // current active sector
+    return sector;
+
+}
+bool PhasedArray::isWithinSector (EulerAngles direction)const {
+    switch (getNumSectors()){
+    case 8 :
+        switch (getCurrentActiveSector()){
+        case 1: if ((direction.alpha*(180/3.14) >= 0)&& (direction.alpha*(180/3.14) <= 45)){return true; break;} // first sector width 45°
+        case 2: if ((direction.alpha*(180/3.14) > 45)&& (direction.alpha*(180/3.14) <= 90)){return true; break;} //second sector width 45°
+        case 3: if ((direction.alpha*(180/3.14) > 90)&& (direction.alpha*(180/3.14) <= 135)){return true; break;} // third sector width 45°..
+        case 4: if ((direction.alpha*(180/3.14) > 135)&& (direction.alpha*(180/3.14) <= 180)){return true; break;}
+        case 5: if ((direction.alpha*(180/3.14) > -180)&& (direction.alpha*(180/3.14) <= -135)){return true; break;}
+        case 6: if ((direction.alpha*(180/3.14) > -135)&& (direction.alpha*(180/3.14) <= -90)){return true; break;}
+        case 7: if ((direction.alpha*(180/3.14) > -90)&& (direction.alpha*(180/3.14) <= -45)){return true; break;}
+        case 8: if ((direction.alpha*(180/3.14) > -45)&& (direction.alpha*(180/3.14) < 0)){return true; break;}
+        default: return false;
+        }break;
+    case  6:
+        switch (getCurrentActiveSector()){
+        case 1: if ((direction.alpha*(180/3.14) >= 0)&& (direction.alpha*(180/3.14) <= 60)){return true; break;}
+        case 2: if ((direction.alpha*(180/3.14) > 60)&& (direction.alpha*(180/3.14) <= 120)){return true; break;}
+        case 3: if ((direction.alpha*(180/3.14) > 120)&& (direction.alpha*(180/3.14) <= 180)){return true; break;}
+        case 4: if ((direction.alpha*(180/3.14) > -180)&& (direction.alpha*(180/3.14) <= 120)){return true; break;}
+        case 5: if ((direction.alpha*(180/3.14) > -120)&& (direction.alpha*(180/3.14) <= -60)){return true; break;}
+        case 6: if ((direction.alpha*(180/3.14) > -60)&& (direction.alpha*(180/3.14) <= 0)){return true; break;}
+        default: return false;
+        }break;
+    case  4:
+        switch (getCurrentActiveSector()){
+        case 1: if ((direction.alpha*(180/3.14) >= 0)&& (direction.alpha*(180/3.14) <= 90)){return true; break;}
+        case 2: if ((direction.alpha*(180/3.14) > 90)&& (direction.alpha*(180/3.14) <= 180)){return true; break;}
+        case 3: if ((direction.alpha*(180/3.14) > -180)&& (direction.alpha*(180/3.14) <= -90)){return true; break;}
+        case 4: if ((direction.alpha*(180/3.14) > -90)&& (direction.alpha*(180/3.14) <= 0)){return true; break;}
+        default: return false;
+        }break;
+    case  3:
+        switch (getCurrentActiveSector()){
+        case 1: if ((direction.alpha*(180/3.14) >= 0)&& (direction.alpha*(180/3.14) <= 120)){return true; break;}
+        case 2: if ((direction.alpha*(180/3.14) > 120)&& (direction.alpha*(180/3.14) <= -120)){return true; break;}
+        case 3: if ((direction.alpha*(180/3.14) > -120)&& (direction.alpha*(180/3.14) <= 0)){return true; break;}
+        default: return false;
+        }break;
+    case  2:
+        switch (getCurrentActiveSector()){
+        case 1: if ((direction.alpha*(180/3.14) >= 0)&& (direction.alpha*(180/3.14) <= 180)){return true; break;}
+        case 2: if ((direction.alpha*(180/3.14) > -180)&& (direction.alpha*(180/3.14) <= 0)){return true; break;}
+        default: return false;
+        }break;
+        default: return false;
+    }
 }
 
 std::ostream& PhasedArray::printToStream(std::ostream& stream, int level) const {
@@ -204,4 +352,6 @@ void PhasedArray::receiveSignal(cComponent *source, simsignal_t signalID, long v
 } // namespace physicallayer
 
 } // namespace inet
+
+
 

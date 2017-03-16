@@ -7,7 +7,9 @@
 #include "inet/physicallayer/antenna/Mempos.h"
 #include "inet/physicallayer/contract/packetlevel/IRadio.h"
 #include "inet/power/contract/IEnergySource.h"
-
+#include "inet/power/contract/IEnergyStorage.h"
+#include "inet/power/storage/SimpleEnergyStorage.h"
+#include "inet/physicallayer/common/packetlevel/RadioMedium.h"
 
 #include <vector>
 namespace inet {
@@ -20,13 +22,17 @@ using namespace inet::power;
 
 class INET_API PhasedArray : public AntennaBase, IEnergyConsumer, protected cListener
 {
-  public:
-    static simsignal_t phaseArrayConfigureChange;
-  protected:
+
+
+
+    public:
+         static simsignal_t phaseArrayConfigureChange;
+    protected:
     m length;
     double freq;
     double distance;
-    double  phiz;
+   mutable double  phiz;
+    int sectorWidth;
     Mempos *mp;
     IRadio *radio;
     IEnergySource *energySource;
@@ -62,7 +68,13 @@ virtual std::ostream& printToStream(std::ostream& stream, int level) const overr
    virtual double computePar(EulerAngles direction);
    virtual double getPhizero() {return phiz; }
    virtual Mempos *getMempos()const{return mp;}
-
+   virtual int getSectorWidth()const {return sectorWidth;}
+   virtual int getCurrentActiveSector()const;
+   virtual bool isWithinSector (EulerAngles direction)const;
+   virtual std::vector<int> getSectorVector()const;
+   std::vector<int> getSectorVectorProva()const;
+   virtual int getNumSectors()const;
+   virtual int switchElements ();
    // Consumption methods
    virtual W getPowerConsumption() const override {return actualConsumption;}
    virtual void setConsumption()
@@ -70,6 +82,7 @@ virtual std::ostream& printToStream(std::ostream& stream, int level) const overr
        if (energySource)
            energySource->setPowerConsumption(energyConsumerId,getPowerConsumption());
    }
+
 
 };
 

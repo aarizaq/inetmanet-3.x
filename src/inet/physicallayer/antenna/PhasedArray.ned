@@ -1,22 +1,14 @@
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-// 
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-// 
-// You should have received a copy of the GNU Lesser General Public License
-// along with this program.  If not, see http://www.gnu.org/licenses/.
-// 
-
 package inet.physicallayer.antenna;
 
 import inet.physicallayer.base.packetlevel.AntennaBase;
+import inet.power.base.EnergySourceBase;
 
+
+//
+// This antenna model describes the well-known dipole antenna or doublet. It
+// consists of two identical conductive elements, which are bilaterally
+// symmetrical. 
+// 
 module PhasedArray extends AntennaBase
 {
     parameters:
@@ -24,6 +16,7 @@ module PhasedArray extends AntennaBase
         double distance;
         double freq;
         double phiz;
+        int sectorWidth;
         string energySourceModule;
 
 
