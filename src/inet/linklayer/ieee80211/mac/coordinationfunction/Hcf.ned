@@ -52,7 +52,7 @@ module Hcf
 
         *.rateSelectionModule = "^.rateSelection";
         *.rxModule = "^." + rxModule;
-
+        @signal[NF_LINK_BREAK](type=Ieee80211Frame);
         @class(Hcf);
         @display("i=block/queue");
 

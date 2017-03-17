@@ -459,6 +459,7 @@ void Hcf::originatorProcessFailedFrame(Ieee80211DataOrMgmtFrame* failedFrame)
             else if (auto mgmtFrame = dynamic_cast<Ieee80211ManagementFrame*>(failedFrame))
                 edcaMgmtAndNonQoSRecoveryProcedure->retryLimitReached(mgmtFrame);
             edcaInProgressFrames[ac]->dropFrame(failedFrame);
+            emit(NF_LINK_BREAK,failedFrame);
             delete failedFrame;
         }
         else
