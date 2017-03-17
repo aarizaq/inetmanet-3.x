@@ -56,6 +56,7 @@ module Ieee80211NicMeshMulti
         **.opMode = opMode;
         **.bitrate = bitrate;       
         @display("i=block/ifcard;bgb=259,357");
+        @nic;
         *.interfaceTableModule = default(absPath(interfaceTableModule));
         *.energySourceModule = default(absPath(energySourceModule));        
     gates:

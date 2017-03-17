@@ -29,6 +29,7 @@
 #include "inet/linklayer/ethernet//EtherFrame_m.h"
 #include "inet/routing/extras/olsr/OLSR.h"
 #include "inet/common/lifecycle/NodeStatus.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211Mac.h"
 
 //#define LIMITBROADCAST
 
@@ -167,49 +168,35 @@ void Ieee80211Mesh::initializeBase(int stage)
     else if (stage==INITSTAGE_PHYSICAL_ENVIRONMENT)
     {
         // obtain our address from MAC
-        cModule *mac = getParentModule()->getSubmodule("mac");
-        if (!mac)
-        {
+
+        cModule *nic = getContainingNicModule(this);
+        cModule *mac = nic->getSubmodule("mac");
+        if (mac == nullptr) {
             // search for vector of mac:
             unsigned int numRadios = 0;
-            do
-            {
-                mac = getParentModule()->getSubmodule("mac",numMac);
+            do {
+                mac = nic->getSubmodule("mac",numMac);
                 if (mac)
                     numMac++;
-            }
-            while (mac);
+            } while (mac);
 
             if (numMac == 0)
-                error("MAC module not found; it is expected to be next to this submodule and called 'mac'");
+                throw cRuntimeError("MAC module not found; it is expected to be next to this submodule and called 'mac'");
 
-            cModule *radio;
-            do
-            {
-                radio = getParentModule()->getSubmodule("radio",numRadios);
+            cModule *radio = nullptr;
+            do {
+                radio = nic->getSubmodule("radio",numRadios);
                 if (radio)
                     numRadios++;
-            }
-            while (radio);
+            } while (radio);
             if (numRadios != numMac)
-                error("numRadios != numMac");
+                throw cRuntimeError("numRadios != numMac");
 
-            if (numMac > 1)
-            {
-                for (unsigned int i = 0 ; i < numMac; i++)
-                {
-                    mac = getParentModule()->getSubmodule("mac",i);
-                    radio = getParentModule()->getSubmodule("radio",i);
-                    macInterfaces.push_back(dynamic_cast<Ieee80211Mac*>(mac));
-                    // radioInterfaces.push_back(dynamic_cast<Radio*>(radio));
-                }
-            }
+            mac = nic->getSubmodule("mac",0);
         }
-
-        mac = getParentModule()->getSubmodule("mac",0);
         if (!mac)
             throw cRuntimeError("MAC module not found; it is expected to be next to this submodule and called 'mac'");
-        myAddress.setAddress(mac->par("address").stringValue());
+        myAddress = check_and_cast<Ieee80211Mac *>(mac)->getAddress();
     }
 }
 

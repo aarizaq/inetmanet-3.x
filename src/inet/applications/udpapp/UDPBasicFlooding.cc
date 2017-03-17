@@ -61,7 +61,7 @@ void UDPBasicFlooding::initialize(int stage)
     // because of AddressResolver, we need to wait until interfaces are registered,
     // address auto-assignment takes place etc.
     ApplicationBase::initialize(stage);
-    if (stage == 0)
+    if (stage == INITSTAGE_LOCAL)
     {
         counter = 0;
         numSent = 0;
@@ -89,7 +89,7 @@ void UDPBasicFlooding::initialize(int stage)
         WATCH(numDuplicated);
         WATCH(numFlood);
     }
-    else if (stage ==3)
+    else if (stage == INITSTAGE_APPLICATION_LAYER)
         processStart();
 }
 

@@ -51,6 +51,7 @@ module Ieee80211NicMesh like IWirelessNic
         bool hasLocator = default(false);
         **.opMode = opMode;
         **.bitrate = bitrate;
+        @nic;
         @display("i=block/ifcard;bgb=259,357");
         *.interfaceTableModule = default(absPath(interfaceTableModule));
         *.energySourceModule = default(absPath(energySourceModule));
