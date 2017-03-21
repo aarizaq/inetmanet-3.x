@@ -58,6 +58,7 @@ class INET_API Rx : public cSimpleModule, public IRx
         Rx();
         ~Rx();
 
+        IStatistics *getStatistics() override {return statistics;}
         virtual bool isReceptionInProgress() const override;
         virtual bool isMediumFree() const override { return mediumFree; }
         virtual void receptionStateChanged(IRadio::ReceptionState newReceptionState) override;

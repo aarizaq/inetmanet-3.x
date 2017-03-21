@@ -43,6 +43,7 @@ class INET_API ITx
     public:
         virtual ~ITx() {}
 
+        virtual IStatistics *getStatistics() = 0;
         virtual void transmitFrame(Ieee80211Frame *frame, ITx::ICallback *txCallback) = 0;
         virtual void transmitFrame(Ieee80211Frame *frame, simtime_t ifs, ITx::ICallback *txCallback) = 0;
         virtual void radioTransmissionFinished() = 0;

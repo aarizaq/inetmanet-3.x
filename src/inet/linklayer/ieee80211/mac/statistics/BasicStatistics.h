@@ -59,6 +59,7 @@ class INET_API BasicStatistics : /*public IStatistics, */public cSimpleModule
 //        virtual void frameTransmissionGivenUp(Ieee80211DataOrMgmtFrame *frame) override;
 //        virtual void frameReceived(Ieee80211Frame *frame) override;
 //        virtual void erroneousFrameReceived() override;
+//        virtual void upperFrameDiscaded(Ieee80211Frame *frame) = 0;
 };
 
 }  // namespace ieee80211

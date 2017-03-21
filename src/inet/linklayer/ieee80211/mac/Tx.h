@@ -53,6 +53,7 @@ class INET_API Tx : public cSimpleModule, public ITx
         Tx() {}
         ~Tx();
 
+        IStatistics *getStatistics() override {return statistics;}
         virtual void transmitFrame(Ieee80211Frame *frame, ITx::ICallback *txCallback) override;
         virtual void transmitFrame(Ieee80211Frame *frame, simtime_t ifs, ITx::ICallback *txCallback) override;
         virtual void radioTransmissionFinished() override;

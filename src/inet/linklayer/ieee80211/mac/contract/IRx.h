@@ -29,6 +29,7 @@ namespace ieee80211 {
 
 class Ieee80211Frame;
 class IContention;
+class IStatistics;
 
 using namespace inet::physicallayer;  //TODO Khmm
 
@@ -46,6 +47,8 @@ class INET_API IRx
 {
     public:
         virtual ~IRx() {}
+
+        virtual IStatistics *getStatistics() = 0;
 
         virtual bool isReceptionInProgress() const = 0;
 

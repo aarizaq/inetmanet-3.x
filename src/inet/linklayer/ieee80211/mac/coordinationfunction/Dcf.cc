@@ -21,6 +21,7 @@
 #include "inet/linklayer/ieee80211/mac/Ieee80211Mac.h"
 #include "inet/linklayer/ieee80211/mac/rateselection/RateSelection.h"
 #include "inet/linklayer/ieee80211/mac/recipient/RecipientAckProcedure.h"
+#include "inet/linklayer/ieee80211/mac/contract/IStatistics.h"
 
 namespace inet {
 namespace ieee80211 {
@@ -97,6 +98,7 @@ void Dcf::processUpperFrame(Ieee80211DataOrMgmtFrame* frame)
     }
     else {
         EV_INFO << "Frame " << frame->getName() << " has been dropped because the PendingQueue is full." << endl;
+        if (rx->getStatistics()) rx->getStatistics()->upperFrameDiscarded(frame);
         delete frame;
     }
 }
