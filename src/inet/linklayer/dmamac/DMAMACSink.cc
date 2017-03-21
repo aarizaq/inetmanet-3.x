@@ -146,14 +146,16 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
         int i=0;
 
         if (!twoLevels) {
-            while(macPktQueue.size() < queueLength)
-            {
-                DMAMACPkt* actuatorData = new DMAMACPkt();
-                destAddr = MACAddress(actuatorNodes[i]);
-                actuatorData->setDestAddr(destAddr);
-                macPktQueue.push_back(actuatorData);
-                actuatorData->setBitLength(headerLength);
-                i++;
+            if (par("localActuators")) {
+                while(macPktQueue.size() < queueLength)
+                {
+                    DMAMACPkt* actuatorData = new DMAMACPkt();
+                    destAddr = MACAddress(actuatorNodes[i]);
+                    actuatorData->setDestAddr(destAddr);
+                    macPktQueue.push_back(actuatorData);
+                    actuatorData->setBitLength(headerLength);
+                    i++;
+                }
             }
         }
         else {

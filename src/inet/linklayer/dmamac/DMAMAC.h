@@ -296,11 +296,11 @@ protected:
 
     /* @brief Packet types  */
     enum packetTypes {
-            DMAMAC_DATA,            // marking data packet
-            DMAMAC_ACTUATOR_DATA,   // marking actuator data
-            DMAMAC_ACK,             // marking ACK packet
-            DMAMAC_ALERT,           // marking Alert packet
-            DMAMAC_NOTIFICATION,    // marking Notification packet from sink
+            DMAMAC_DATA = 0,            // marking data packet
+            DMAMAC_ACTUATOR_DATA = 1,   // marking actuator data
+            DMAMAC_ACK = 2,             // marking ACK packet
+            DMAMAC_ALERT = 3,           // marking Alert packet
+            DMAMAC_NOTIFICATION = 4,    // marking Notification packet from sink
     };
 
     /* @brief Mac mode (Steady,transient) and Mac states defined above */
@@ -510,6 +510,7 @@ protected:
 
     //
     bool sendUppperLayer = false; // if false the module deletes the packet, other case, it sends the packet to the upper layer.
+    bool procUppperLayer = true;
 
     int actualChannel = -1;
 

@@ -27,6 +27,8 @@
 
 #include <cstdlib>
 #include "inet/linklayer/dmamac/DMAMAC.h"
+
+#include "../../applications/udpapp/UDPCdmaMacRelay.h"
 #include "inet/linklayer/dmamac/DMAMACSink.h"
 #include "inet/common/INETUtils.h"
 #include "inet/common/INETMath.h"
@@ -34,7 +36,6 @@
 #include "inet/common/FindModule.h"
 #include "inet/linklayer/common/SimpleLinkLayerControlInfo.h"
 #include "inet/physicallayer/contract/packetlevel/RadioControlInfo_m.h"
-#include "inet/applications/udpapp/UDPCdmaMac.h"
 
 
 namespace inet {
@@ -66,7 +67,7 @@ void DMAMAC::discoverIfNodeIsRelay() {
         sendUppperLayer = false;
         return;
     }
-    UDPCdmaMac *upper  = dynamic_cast<UDPCdmaMac *>(mod);
+    UDPCdmaMacRelay *upper  = dynamic_cast<UDPCdmaMacRelay *>(mod);
 
     DMAMACSink * dmacSinkThis = dynamic_cast<DMAMACSink *>(this);
     DMAMAC * dmacNeig = dynamic_cast<DMAMAC *>(mod);
@@ -342,6 +343,7 @@ void DMAMAC::initialize(int stage)
 
 
         sendUppperLayer = par("sendUppperLayer"); // if false the module deletes the packet, other case, it sends the packet to the upper layer.
+        procUppperLayer = par("procUppperLayer");
 
         if (twoLevels) {
             reserveChannel = par("reserveChannel");
@@ -468,7 +470,7 @@ void DMAMAC::handleUpperPacket(cPacket* msg){
     }
 
     EV_DEBUG << "Packet from Network layer" << endl;
-    if (!sendUppperLayer) {
+    if (!procUppperLayer) {
         delete msg;
         return;
     }
@@ -528,9 +530,12 @@ void DMAMAC::handleUpperPacket(cPacket* msg){
         mac->setDestAddr(mac->getDestinationAddress());
         mac->setSrcAddr(myMacAddr);
         mac->setNetworkId(networkId);
+        mac->setBitLength(headerLength);
     }
 
-    mac->setKind(DMAMAC_DATA);
+    if (mac->getKind() != DMAMAC_ACTUATOR_DATA)
+        mac->setKind(DMAMAC_DATA);
+
     mac->setMySlot(mySlot);
 
     // @brief Check if packet queue is full s

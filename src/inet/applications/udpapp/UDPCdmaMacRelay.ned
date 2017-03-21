@@ -39,7 +39,7 @@ import inet.applications.contract.IUDPApp;
 // like ~UDPSink), or a ~UDPEchoApp. When used with ~UDPEchoApp, the rcvdPkLifetime
 // statistic will contain the round-trip times.
 //
-simple UDPCdmaMac like IUDPApp
+simple UDPCdmaMacRelay like IUDPApp
 {
     parameters:
         string interfaceTableModule;   // The path to the InterfaceTable module

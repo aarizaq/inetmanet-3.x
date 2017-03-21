@@ -16,7 +16,7 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "inet/applications/udpapp/UDPCdmaMac.h"
+#include "UDPCdmaMacRelay.h"
 
 #include "inet/applications/base/ApplicationPacket_m.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
@@ -28,19 +28,19 @@
 
 namespace inet {
 
-Define_Module(UDPCdmaMac);
+Define_Module(UDPCdmaMacRelay);
 
-simsignal_t UDPCdmaMac::sentPkSignal = registerSignal("sentPk");
-simsignal_t UDPCdmaMac::rcvdPkSignal = registerSignal("rcvdPk");
-simsignal_t UDPCdmaMac::rcvdPkSignalDma = registerSignal("rcvdPkDma");
+simsignal_t UDPCdmaMacRelay::sentPkSignal = registerSignal("sentPk");
+simsignal_t UDPCdmaMacRelay::rcvdPkSignal = registerSignal("rcvdPk");
+simsignal_t UDPCdmaMacRelay::rcvdPkSignalDma = registerSignal("rcvdPkDma");
 
 
-UDPCdmaMac::~UDPCdmaMac()
+UDPCdmaMacRelay::~UDPCdmaMacRelay()
 {
     cancelAndDelete(selfMsg);
 }
 
-void UDPCdmaMac::initialize(int stage)
+void UDPCdmaMacRelay::initialize(int stage)
 {
     ApplicationBase::initialize(stage);
 
@@ -58,14 +58,14 @@ void UDPCdmaMac::initialize(int stage)
     }
 }
 
-void UDPCdmaMac::finish()
+void UDPCdmaMacRelay::finish()
 {
     recordScalar("packets sent", numSent);
     recordScalar("packets received", numReceived);
     ApplicationBase::finish();
 }
 
-void UDPCdmaMac::setSocketOptions()
+void UDPCdmaMacRelay::setSocketOptions()
 {
     int timeToLive = -1;
     if (timeToLive != -1)
@@ -95,7 +95,7 @@ void UDPCdmaMac::setSocketOptions()
     }
 }
 
-L3Address UDPCdmaMac::chooseDestAddr()
+L3Address UDPCdmaMacRelay::chooseDestAddr()
 {
     int k = intrand(destAddresses.size());
     if (destAddresses[k].isLinkLocal()) {    // KLUDGE for IPv6
@@ -110,11 +110,11 @@ L3Address UDPCdmaMac::chooseDestAddr()
     return destAddresses[k];
 }
 
-void UDPCdmaMac::processStart()
+void UDPCdmaMacRelay::processStart()
 {
     socket.setOutputGate(gate("udpOut"));
 
-
+    socket.bind(localPort);
     L3Address result;
     L3AddressResolver().tryResolve( par("sinkAddress"), result);
     if (result.isUnspecified())
@@ -125,13 +125,13 @@ void UDPCdmaMac::processStart()
     setSocketOptions();
 }
 
-void UDPCdmaMac::processStop()
+void UDPCdmaMacRelay::processStop()
 {
     socket.close();
 }
 
 
-void UDPCdmaMac::processDmaMac(cPacket *msg)
+void UDPCdmaMacRelay::processDmaMac(cPacket *msg)
 {
 
     emit(rcvdPkSignalDma,msg);
@@ -143,7 +143,7 @@ void UDPCdmaMac::processDmaMac(cPacket *msg)
 
 }
 
-void UDPCdmaMac::handleMessageWhenUp(cMessage *msg)
+void UDPCdmaMacRelay::handleMessageWhenUp(cMessage *msg)
 {
     if (msg->isSelfMessage()) {
         ASSERT(msg == selfMsg);
@@ -160,7 +160,9 @@ void UDPCdmaMac::handleMessageWhenUp(cMessage *msg)
                 throw cRuntimeError("Invalid kind %d in self message", (int)selfMsg->getKind());
         }
     }
-    else if (dynamic_cast<DMAMACPkt *>(msg)) {
+    else if (opp_strcmp("dmaGateIn",msg->getArrivalGate()->getBaseName()) == 0) {
+        if (!dynamic_cast<DMAMACPkt *>(msg))
+            throw cRuntimeError("Packet is not of the time DMAMACPkt");
         processDmaMac(PK(msg));
 
     }
@@ -177,14 +179,14 @@ void UDPCdmaMac::handleMessageWhenUp(cMessage *msg)
     }
 }
 
-void UDPCdmaMac::refreshDisplay() const
+void UDPCdmaMacRelay::refreshDisplay() const
 {
     char buf[100];
     sprintf(buf, "rcvd: %d pks\nsent: %d pks", numReceived, numSent);
     getDisplayString().setTagArg("t", 0, buf);
 }
 
-void UDPCdmaMac::processPacket(cPacket *pk)
+void UDPCdmaMacRelay::processPacket(cPacket *pk)
 {
     emit(rcvdPkSignal, pk);
     EV_INFO << "Received packet: " << UDPSocket::getReceivedPacketInfo(pk) << endl;
@@ -198,12 +200,12 @@ void UDPCdmaMac::processPacket(cPacket *pk)
     numReceived++;
 }
 
-bool UDPCdmaMac::handleNodeStart(IDoneCallback *doneCallback)
+bool UDPCdmaMacRelay::handleNodeStart(IDoneCallback *doneCallback)
 {
     return true;
 }
 
-bool UDPCdmaMac::handleNodeShutdown(IDoneCallback *doneCallback)
+bool UDPCdmaMacRelay::handleNodeShutdown(IDoneCallback *doneCallback)
 {
     if (selfMsg)
         cancelEvent(selfMsg);
@@ -211,7 +213,7 @@ bool UDPCdmaMac::handleNodeShutdown(IDoneCallback *doneCallback)
     return true;
 }
 
-void UDPCdmaMac::handleNodeCrash()
+void UDPCdmaMacRelay::handleNodeCrash()
 {
     if (selfMsg)
         cancelEvent(selfMsg);

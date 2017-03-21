@@ -16,8 +16,8 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef __INET_UDPBASICAPP_H
-#define __INET_UDPBASICAPP_H
+#ifndef __INET_UDPCDMAMACRELAY_H
+#define __INET_UDPCDMAMACRELAY_H
 
 #include <vector>
 
@@ -31,7 +31,7 @@ namespace inet {
 /**
  * UDP application. See NED for more info.
  */
-class INET_API UDPCdmaMac : public ApplicationBase
+class INET_API UDPCdmaMacRelay : public ApplicationBase
 {
   protected:
     enum SelfMsgKinds { START = 1, SEND, STOP };
@@ -78,8 +78,8 @@ class INET_API UDPCdmaMac : public ApplicationBase
     virtual void handleNodeCrash() override;
 
   public:
-    UDPCdmaMac() {}
-    ~UDPCdmaMac();
+    UDPCdmaMacRelay() {}
+    ~UDPCdmaMacRelay();
 };
 
 } // namespace inet
