@@ -49,7 +49,7 @@ simple DMAMAC extends MACProtocolBase like IMACProtocol
         // How long is a slot?
         double slotDuration @unit(s) = default(10ms);
         // Length of MAC header
-        int headerLength @unit(B) = default(10B);
+        int headerLength @unit(bit) = default(80b);
         double queueLength = default(10);
         // Default channel 
         double defaultChannel = default(0);
@@ -117,6 +117,7 @@ simple DMAMAC extends MACProtocolBase like IMACProtocol
         
         int initialSeed = default(-1);
         bool sendUppperLayer = default(false); // if false the module deletes the packet, other case, it sends the packet to the upper layer.
+        bool procUppperLayer = default(true); // if false the module deletes the packet received from upper layers, 
         int initialChannel @enum(11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26) = default(11); // if the random seed is different than -1 it uses this value, in other case it uses the random sequence.
         int reserveChannel = default(-1); // used only if two layer exist. 
         double initTime @unit(s) = default(1s); // this value is used to start the random hop frequency sequency.
@@ -124,6 +125,7 @@ simple DMAMAC extends MACProtocolBase like IMACProtocol
         
         
         bool sendDisorganized = default(false);
+        bool localActuators = default(true);
         
         @signal[rcvdPkDma](type=cPacket);
         @statistic[rcvdPkLifetimeDma](title="received DMA packet lifetime"; source="messageAge(rcvdPkDma)"; unit=s; record=stats,vector; interpolationmode=none);
