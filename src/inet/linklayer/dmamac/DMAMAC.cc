@@ -28,7 +28,7 @@
 #include <cstdlib>
 #include "inet/linklayer/dmamac/DMAMAC.h"
 
-#include "../../applications/udpapp/UDPCdmaMacRelay.h"
+#include "../../applications/udpapp/UDPDmaMacRelay.h"
 #include "inet/linklayer/dmamac/DMAMACSink.h"
 #include "inet/common/INETUtils.h"
 #include "inet/common/INETMath.h"
@@ -67,7 +67,7 @@ void DMAMAC::discoverIfNodeIsRelay() {
         sendUppperLayer = false;
         return;
     }
-    UDPCdmaMacRelay *upper  = dynamic_cast<UDPCdmaMacRelay *>(mod);
+    UDPDmaMacRelay *upper  = dynamic_cast<UDPDmaMacRelay *>(mod);
 
     DMAMACSink * dmacSinkThis = dynamic_cast<DMAMACSink *>(this);
     DMAMAC * dmacNeig = dynamic_cast<DMAMAC *>(mod);

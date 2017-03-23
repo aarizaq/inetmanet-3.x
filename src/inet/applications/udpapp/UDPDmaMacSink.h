@@ -16,8 +16,8 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef __INET_UDPCDMAMACRELAY_H
-#define __INET_UDPCDMAMACRELAY_H
+#ifndef __INET_UDPC_H
+#define __INET_UDPBASICAPP_H
 
 #include <vector>
 
@@ -31,7 +31,7 @@ namespace inet {
 /**
  * UDP application. See NED for more info.
  */
-class INET_API UDPCdmaMacRelay : public ApplicationBase
+class INET_API UDPDmaMacSink : public ApplicationBase
 {
   protected:
     enum SelfMsgKinds { START = 1, SEND, STOP };
@@ -52,10 +52,34 @@ class INET_API UDPCdmaMacRelay : public ApplicationBase
     // statistics
     int numSent = 0;
     int numReceived = 0;
+    int numReceivedDmaMac = 0;
 
     static simsignal_t sentPkSignal;
     static simsignal_t rcvdPkSignal;
     static simsignal_t rcvdPkSignalDma;
+
+    typedef std::map<int,L3Address> RelayId;
+    RelayId relayId;
+
+    enum DISTRUBUTIONTYPE {
+        uniformDist,
+        constantDist,
+        exponentialDist,
+        pareto_shiftedDist,
+        normalDist
+    };
+
+    struct ActuatorInfo {
+        int networkId;
+        int address;
+        DISTRUBUTIONTYPE disType;
+        double a;
+        double b;
+        double c;
+        simtime_t startTime;
+        cMessage *timer;
+    };
+    std::vector<ActuatorInfo> actuators;
 
   protected:
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
@@ -67,7 +91,7 @@ class INET_API UDPCdmaMacRelay : public ApplicationBase
     // chooses random destination address
     virtual L3Address chooseDestAddr();
     virtual void processPacket(cPacket *msg);
-    virtual void processDmaMac(cPacket *msg);
+    virtual void parseXMLConfigFile();
     virtual void setSocketOptions();
 
     virtual void processStart();
@@ -78,8 +102,8 @@ class INET_API UDPCdmaMacRelay : public ApplicationBase
     virtual void handleNodeCrash() override;
 
   public:
-    UDPCdmaMacRelay() {}
-    ~UDPCdmaMacRelay();
+    UDPDmaMacSink() {}
+    ~UDPDmaMacSink();
 };
 
 } // namespace inet

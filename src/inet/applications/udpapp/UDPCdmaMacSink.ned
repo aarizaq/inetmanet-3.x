@@ -39,9 +39,10 @@ import inet.applications.contract.IUDPApp;
 // like ~UDPSink), or a ~UDPEchoApp. When used with ~UDPEchoApp, the rcvdPkLifetime
 // statistic will contain the round-trip times.
 //
-simple UDPDmaMacRelay like IUDPApp
+simple UDPDmaMacSink like IUDPApp
 {
     parameters:
+        xml configuration = default(xml("<configuration/>"));
         string interfaceTableModule;   // The path to the InterfaceTable module
         int localPort = default(-1);  // local port (-1: use ephemeral port)
         string sinkAddress = default(""); // list of IP addresses, separated by spaces ("": don't send)
@@ -63,6 +64,4 @@ simple UDPDmaMacRelay like IUDPApp
     gates:
         input udpIn @labels(UDPControlInfo/up);
         output udpOut @labels(UDPControlInfo/down);
-        input dmaGateIn @labels(UDPControlInfo/up);
-        output dmaGateOut @labels(UDPControlInfo/down);
 }

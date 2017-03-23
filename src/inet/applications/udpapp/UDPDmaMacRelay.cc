@@ -16,31 +16,30 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "UDPCdmaMacRelay.h"
-
 #include "inet/applications/base/ApplicationPacket_m.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
 #include "inet/common/ModuleAccess.h"
 #include "inet/common/lifecycle/NodeOperations.h"
 #include "inet/transportlayer/contract/udp/UDPControlInfo_m.h"
 #include "inet/linklayer/dmamac/packets/DMAMACPkt_m.h"        // MAC Data/ACK packet
+#include "UDPDmaMacRelay.h"
 
 
 namespace inet {
 
-Define_Module(UDPCdmaMacRelay);
+Define_Module(UDPDmaMacRelay);
 
-simsignal_t UDPCdmaMacRelay::sentPkSignal = registerSignal("sentPk");
-simsignal_t UDPCdmaMacRelay::rcvdPkSignal = registerSignal("rcvdPk");
-simsignal_t UDPCdmaMacRelay::rcvdPkSignalDma = registerSignal("rcvdPkDma");
+simsignal_t UDPDmaMacRelay::sentPkSignal = registerSignal("sentPk");
+simsignal_t UDPDmaMacRelay::rcvdPkSignal = registerSignal("rcvdPk");
+simsignal_t UDPDmaMacRelay::rcvdPkSignalDma = registerSignal("rcvdPkDma");
 
 
-UDPCdmaMacRelay::~UDPCdmaMacRelay()
+UDPDmaMacRelay::~UDPDmaMacRelay()
 {
     cancelAndDelete(selfMsg);
 }
 
-void UDPCdmaMacRelay::initialize(int stage)
+void UDPDmaMacRelay::initialize(int stage)
 {
     ApplicationBase::initialize(stage);
 
@@ -58,14 +57,14 @@ void UDPCdmaMacRelay::initialize(int stage)
     }
 }
 
-void UDPCdmaMacRelay::finish()
+void UDPDmaMacRelay::finish()
 {
     recordScalar("packets sent", numSent);
     recordScalar("packets received", numReceived);
     ApplicationBase::finish();
 }
 
-void UDPCdmaMacRelay::setSocketOptions()
+void UDPDmaMacRelay::setSocketOptions()
 {
     int timeToLive = -1;
     if (timeToLive != -1)
@@ -95,7 +94,7 @@ void UDPCdmaMacRelay::setSocketOptions()
     }
 }
 
-L3Address UDPCdmaMacRelay::chooseDestAddr()
+L3Address UDPDmaMacRelay::chooseDestAddr()
 {
     int k = intrand(destAddresses.size());
     if (destAddresses[k].isLinkLocal()) {    // KLUDGE for IPv6
@@ -110,7 +109,7 @@ L3Address UDPCdmaMacRelay::chooseDestAddr()
     return destAddresses[k];
 }
 
-void UDPCdmaMacRelay::processStart()
+void UDPDmaMacRelay::processStart()
 {
     socket.setOutputGate(gate("udpOut"));
 
@@ -125,13 +124,13 @@ void UDPCdmaMacRelay::processStart()
     setSocketOptions();
 }
 
-void UDPCdmaMacRelay::processStop()
+void UDPDmaMacRelay::processStop()
 {
     socket.close();
 }
 
 
-void UDPCdmaMacRelay::processDmaMac(cPacket *msg)
+void UDPDmaMacRelay::processDmaMac(cPacket *msg)
 {
 
     emit(rcvdPkSignalDma,msg);
@@ -143,7 +142,7 @@ void UDPCdmaMacRelay::processDmaMac(cPacket *msg)
 
 }
 
-void UDPCdmaMacRelay::handleMessageWhenUp(cMessage *msg)
+void UDPDmaMacRelay::handleMessageWhenUp(cMessage *msg)
 {
     if (msg->isSelfMessage()) {
         ASSERT(msg == selfMsg);
@@ -179,14 +178,14 @@ void UDPCdmaMacRelay::handleMessageWhenUp(cMessage *msg)
     }
 }
 
-void UDPCdmaMacRelay::refreshDisplay() const
+void UDPDmaMacRelay::refreshDisplay() const
 {
     char buf[100];
     sprintf(buf, "rcvd: %d pks\nsent: %d pks", numReceived, numSent);
     getDisplayString().setTagArg("t", 0, buf);
 }
 
-void UDPCdmaMacRelay::processPacket(cPacket *pk)
+void UDPDmaMacRelay::processPacket(cPacket *pk)
 {
     emit(rcvdPkSignal, pk);
     EV_INFO << "Received packet: " << UDPSocket::getReceivedPacketInfo(pk) << endl;
@@ -200,12 +199,12 @@ void UDPCdmaMacRelay::processPacket(cPacket *pk)
     numReceived++;
 }
 
-bool UDPCdmaMacRelay::handleNodeStart(IDoneCallback *doneCallback)
+bool UDPDmaMacRelay::handleNodeStart(IDoneCallback *doneCallback)
 {
     return true;
 }
 
-bool UDPCdmaMacRelay::handleNodeShutdown(IDoneCallback *doneCallback)
+bool UDPDmaMacRelay::handleNodeShutdown(IDoneCallback *doneCallback)
 {
     if (selfMsg)
         cancelEvent(selfMsg);
@@ -213,7 +212,7 @@ bool UDPCdmaMacRelay::handleNodeShutdown(IDoneCallback *doneCallback)
     return true;
 }
 
-void UDPCdmaMacRelay::handleNodeCrash()
+void UDPDmaMacRelay::handleNodeCrash()
 {
     if (selfMsg)
         cancelEvent(selfMsg);

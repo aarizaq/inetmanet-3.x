@@ -15,7 +15,7 @@
 
 package inet.linklayer.dmamac;
 
-import inet.applications.udpapp.UDPCdmaMacRelay;
+import inet.applications.udpapp.UDPDmaMacRelay;
 
 import inet.node.inet.INetworkNode;
 import inet.networklayer.contract.IManetRouting;
@@ -160,7 +160,7 @@ module DmaMacRelayNode like INetworkNode
                 @display("p=329,141");
         }
 
-        udpApp: UDPCdmaMacRelay {
+        udpApp: UDPDmaMacRelay {
             parameters:
                 @display("p=427,141,row,60");
         }

@@ -1,0 +1,36 @@
+<configuration>
+      <relay node="relay1" networkId="1" />
+      <relay node="relay2" networkId="2" />
+      <relay node="relay3" networkId="3" />
+      <relay node="relay4" networkId="4" />
+      <actuator address="34" networkId="1" distribution="constant" a="1" start="1"/>
+      <actuator address="36" networkId="1" distribution="constant" a="1" start="1"/>
+      <actuator address="43" networkId="1" distribution="constant" a="1" start="1"/>
+      <actuator address="49" networkId="1" distribution="constant" a="1" start="1"/>
+      <actuator address="50" networkId="1" distribution="constant" a="1" start="1"/>
+      <actuator address="52" networkId="1" distribution="constant" a="1" start="1"/> 
+      
+      <actuator address="34" networkId="2" distribution="constant" a="1" start="2"/>
+      <actuator address="36" networkId="2" distribution="constant" a="1" start="2"/>
+      <actuator address="43" networkId="2" distribution="constant" a="1" start="2"/>
+      <actuator address="49" networkId="2" distribution="constant" a="1" start="2"/>
+      <actuator address="50" networkId="2" distribution="constant" a="1" start="2"/>
+      <actuator address="52" networkId="2" distribution="constant" a="1" start="2"/>
+      
+      
+      <actuator address="34" networkId="3" distribution="constant" a="1" start="3"/>
+      <actuator address="36" networkId="3" distribution="constant" a="1" start="3"/>
+      <actuator address="43" networkId="3" distribution="constant" a="1" start="3"/>
+      <actuator address="49" networkId="3" distribution="constant" a="1" start="3"/>
+      <actuator address="50" networkId="3" distribution="constant" a="1" start="3"/>
+      <actuator address="52" networkId="3" distribution="constant" a="1" start="3"/>
+      
+      
+      <actuator address="34" networkId="4" distribution="constant" a="1" start="4"/>
+      <actuator address="36" networkId="4" distribution="constant" a="1" start="4"/>
+      <actuator address="43" networkId="4" distribution="constant" a="1" start="4"/>
+      <actuator address="49" networkId="4" distribution="constant" a="1" start="4"/>
+      <actuator address="50" networkId="4" distribution="constant" a="1" start="4"/>
+      <actuator address="52" networkId="4" distribution="constant" a="1" start="4"/>
+      
+</configuration>
