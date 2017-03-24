@@ -125,7 +125,12 @@ void Ieee80211Mac::handleUpperPacket(cPacket *msg)
 
 void Ieee80211Mac::handleLowerPacket(cPacket *msg)
 {
-    auto frame = check_and_cast<Ieee80211Frame *>(msg);
+    auto frame = dynamic_cast<Ieee80211Frame *>(msg);
+    if (frame == nullptr) {
+        delete msg;
+        return;
+    }
+
     if (rx->lowerFrameReceived(frame)) {
         processLowerFrame(frame);
     }
