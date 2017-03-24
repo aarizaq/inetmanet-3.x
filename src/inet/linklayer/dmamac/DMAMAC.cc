@@ -1907,15 +1907,33 @@ void DMAMAC::slotInitialize()
         receiveSlotTransient.resize(numSlotsTransient);
         transmitSlotTransient.resize(numSlotsTransient);
     }
+    else if ((int)transmitSlotTransient.size() < numSlotsTransient)
+        numSlotsTransient = transmitSlotTransient.size();
 
     if ((int)receiveSlotSteady.size() > numSlotsSteady) {
         receiveSlotSteady.resize(numSlotsSteady);
         receiveSlotSteady.resize(numSlotsSteady);
     }
+    else if ((int)receiveSlotSteady.size() < numSlotsSteady)
+        numSlotsSteady = receiveSlotSteady.size();
 
     /* @brief Initializing to prevent random values */
     transmitSlot = transmitSlotTransient;
     receiveSlot = receiveSlotTransient;
+
+    for (unsigned int i = 0; i < receiveSlotSteady.size();i++) {
+            if ((receiveSlotSteady[i] == transmitSlotSteady[i]) &&  transmitSlotSteady[i] != 102) {
+                throw cRuntimeError("receiveSlotSteady[i] == transmitSlotSteady[i] i = %i",i);
+            }
+        }
+
+    for (unsigned int i = 0; i < receiveSlotTransient.size();i++) {
+        if ((receiveSlotTransient[i] == transmitSlotTransient[i]) &&  transmitSlotTransient[i] != 102) {
+            throw cRuntimeError("receiveSlotTransient[i] == transmitSlotTransient[i] i = %i",i);
+        }
+    }
+
+
     /*
     for(int i=0; i < maxNumSlots; i ++)
     {
