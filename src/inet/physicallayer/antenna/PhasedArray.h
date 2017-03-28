@@ -27,6 +27,7 @@ class INET_API PhasedArray : public AntennaBase, IEnergyConsumer, protected cLis
 
     public:
          static simsignal_t phaseArrayConfigureChange;
+         static simsignal_t triggerChange;
     protected:
     m length;
     double freq;

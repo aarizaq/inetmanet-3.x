@@ -23,6 +23,8 @@ int counter = 0;
 simsignal_t PhasedArray::phaseArrayConfigureChange = registerSignal(
         "phaseArrayConfigureChange");
 
+simsignal_t PhasedArray::triggerChange = registerSignal("triggerChange");;
+
 Define_Module(PhasedArray);
 
 PhasedArray::PhasedArray() :
@@ -78,6 +80,9 @@ void PhasedArray::initialize(int stage) {
         radioModule->subscribe(IRadio::receptionStateChangedSignal, this);
         radioModule->subscribe(IRadio::transmissionStateChangedSignal, this);
         radioModule->subscribe(IRadio::receivedSignalPartChangedSignal, this);
+
+        getSimulation()->getSystemModule()->subscribe(triggerChange, this);
+
         radio = check_and_cast<IRadio *>(radioModule);
 
         const char *energySourceModule = par("energySourceModule");
@@ -333,7 +338,10 @@ void PhasedArray::receiveSignal(cComponent *source, simsignal_t signalID, double
 
 void PhasedArray::receiveSignal(cComponent *source, simsignal_t signalID, long val, cObject *details)
 {
-    if (signalID != phaseArrayConfigureChange)
+    if (signalID == triggerChange) {
+
+    }
+    else if (signalID != phaseArrayConfigureChange)
         // Radio signals
         if (pendingConfiguration)
         {
