@@ -19,11 +19,10 @@ namespace physicallayer {
 using std::cout;
 
 int counter = 0;
+
 //double PhasedArray::phiz=0;
 simsignal_t PhasedArray::phaseArrayConfigureChange = registerSignal(
         "phaseArrayConfigureChange");
-
-simsignal_t PhasedArray::triggerChange = registerSignal("triggerChange");;
 
 Define_Module(PhasedArray);
 
@@ -80,9 +79,6 @@ void PhasedArray::initialize(int stage) {
         radioModule->subscribe(IRadio::receptionStateChangedSignal, this);
         radioModule->subscribe(IRadio::transmissionStateChangedSignal, this);
         radioModule->subscribe(IRadio::receivedSignalPartChangedSignal, this);
-
-        getSimulation()->getSystemModule()->subscribe(triggerChange, this);
-
         radio = check_and_cast<IRadio *>(radioModule);
 
         const char *energySourceModule = par("energySourceModule");
@@ -90,17 +86,41 @@ void PhasedArray::initialize(int stage) {
         energySource = dynamic_cast<IEnergySource *>(getModuleByPath(energySourceModule));
         if (energySource)
             energyConsumerId = energySource->addEnergyConsumer(this);
+
+        trigger = new cMessage("phase array trigger");
+        interval = par("interval");
+        simtime_t next = interval * ceil(simTime().dbl()/Interval.dbl());
+        scheduleAt(next,trigger);
+
+
     }
 }
 
+void PhasedArray::handleMessage(cMessage *msg) {
+
+    if (msg != trigger)
+        throw cRuntimeError("Received invalid timer");
+
+    int sector = getCurrentActiveSector();
+    sector++;
+    if (sector >  getNumSectors())
+        sector = 1;
+
+    // change to the new sector
+
+    simtime_t next = interval * ceil(simTime().dbl()/Interval.dbl());
+    if (next == simTime())
+        next = next + interval;
+    scheduleAt(next,trigger);
+}
+
 double PhasedArray::computeGain(EulerAngles direction) const {
-    getCurrentActiveSector();
+
        IRadio *radio= check_and_cast<IRadio *>(getParentModule());
        IRadioMedium *ra =  const_cast< IRadioMedium *> (radio->getMedium());
-       RadioMedium *rm = dynamic_cast< RadioMedium *>(ra);
+       RadioMedium *rm=dynamic_cast< RadioMedium *>(ra);
 
-       phiz = -1;
-      // phiz = rm->getMainAngle();
+       phiz=rm->getMainAngle();
 
 
 
@@ -244,12 +264,13 @@ std::vector<int> PhasedArray::getSectorVectorProva()const{
 int PhasedArray::getCurrentActiveSector()const{
     std::vector<int>sect=getSectorVector();
     int N = sect.size();
-    double tslot=5; // duration of the sector (can be as output ned parameter to set in the ini)
+    double tslot=2; // duration of the sector (can be as output ned parameter to set in the ini)
     double T;
     double tsim=simTime().dbl();
     T=N*tslot;
     float rem= fmod(tsim,T);
     int sector = ceil(rem/tslot); // current active sector
+
     return sector;
 
 }
@@ -301,6 +322,64 @@ bool PhasedArray::isWithinSector (EulerAngles direction)const {
         default: return false;
     }
 }
+/*
+int PhasedArray::getCurrentNodeSector (EulerAngles direction)const {
+    switch (getNumSectors()){
+    case 8 :
+
+         if ((direction.alpha*(180/3.14) >= 0)&& (direction.alpha*(180/3.14) <= 45)){currentNodeSector =1;return currentNodeSector; break;} // first sector width 45°
+         if ((direction.alpha*(180/3.14) > 45)&& (direction.alpha*(180/3.14) <= 90)){currentNodeSector =2;return currentNodeSector;break;} //second sector width 45°
+         if ((direction.alpha*(180/3.14) > 90)&& (direction.alpha*(180/3.14) <= 135)){currentNodeSector =3;return currentNodeSector; break;} // third sector width 45°..
+         if ((direction.alpha*(180/3.14) > 135)&& (direction.alpha*(180/3.14) <= 180)){currentNodeSector =4;return currentNodeSector; break;}
+         if ((direction.alpha*(180/3.14) > -180)&& (direction.alpha*(180/3.14) <= -135)){currentNodeSector =5;return currentNodeSector; break;}
+         if ((direction.alpha*(180/3.14) > -135)&& (direction.alpha*(180/3.14) <= -90)){currentNodeSector =6;return currentNodeSector; break;}
+         if ((direction.alpha*(180/3.14) > -90)&& (direction.alpha*(180/3.14) <= -45)){currentNodeSector =7;return currentNodeSector; break;}
+         if ((direction.alpha*(180/3.14) > -45)&& (direction.alpha*(180/3.14) < 0)){currentNodeSector =8;return currentNodeSector; break;}
+
+
+    case  6:
+
+         if ((direction.alpha*(180/3.14) >= 0)&& (direction.alpha*(180/3.14) <= 60)){currentNodeSector =1;return currentNodeSector; break;}
+         if ((direction.alpha*(180/3.14) > 60)&& (direction.alpha*(180/3.14) <= 120)){currentNodeSector =2;return currentNodeSector; break;}
+         if ((direction.alpha*(180/3.14) > 120)&& (direction.alpha*(180/3.14) <= 180)){currentNodeSector =3;return currentNodeSector; break;}
+         if ((direction.alpha*(180/3.14) > -180)&& (direction.alpha*(180/3.14) <= 120)){currentNodeSector =4;return currentNodeSector; break;}
+         if ((direction.alpha*(180/3.14) > -120)&& (direction.alpha*(180/3.14) <= -60)){currentNodeSector =5;return currentNodeSector; break;}
+         if ((direction.alpha*(180/3.14) > -60)&& (direction.alpha*(180/3.14) <= 0)){currentNodeSector =6;return currentNodeSector; break;}
+
+
+    case  4:
+
+         if ((direction.alpha*(180/3.14) >= 0)&& (direction.alpha*(180/3.14) <= 90)){currentNodeSector =1;return currentNodeSector; break;}
+         if ((direction.alpha*(180/3.14) > 90)&& (direction.alpha*(180/3.14) <= 180)){currentNodeSector =2;return currentNodeSector; break;}
+         if ((direction.alpha*(180/3.14) > -180)&& (direction.alpha*(180/3.14) <= -90)){currentNodeSector =3;return currentNodeSector; break;}
+         if ((direction.alpha*(180/3.14) > -90)&& (direction.alpha*(180/3.14) <= 0)){currentNodeSector =4;return currentNodeSector; break;}
+
+
+    case  3:
+
+         if ((direction.alpha*(180/3.14) >= 0)&& (direction.alpha*(180/3.14) <= 120)){currentNodeSector =1;return currentNodeSector; break;}
+         if ((direction.alpha*(180/3.14) > 120)&& (direction.alpha*(180/3.14) <= -120)){currentNodeSector =2;return currentNodeSector; break;}
+         if ((direction.alpha*(180/3.14) > -120)&& (direction.alpha*(180/3.14) <= 0)){currentNodeSector =3;return currentNodeSector; break;}
+
+
+    case  2:
+
+         if ((direction.alpha*(180/3.14) >= 0)&& (direction.alpha*(180/3.14) <= 180)){currentNodeSector =1;return currentNodeSector; break;}
+         if ((direction.alpha*(180/3.14) > -180)&& (direction.alpha*(180/3.14) <= 0)){currentNodeSector =2;return currentNodeSector; break;}
+
+
+    default: return -1;
+    }
+}
+
+int PhasedArray::getD(int currentNodeSector,int currentActiveSector){
+
+    d = currentNodeSector - currentActiveSector;
+    return d ;
+}
+/*simtime_t PhasedArray::getDelay(int d, int sectorWidth){
+
+}*/
 
 std::ostream& PhasedArray::printToStream(std::ostream& stream, int level) const {
     stream << "PhasedArray";
@@ -338,10 +417,7 @@ void PhasedArray::receiveSignal(cComponent *source, simsignal_t signalID, double
 
 void PhasedArray::receiveSignal(cComponent *source, simsignal_t signalID, long val, cObject *details)
 {
-    if (signalID == triggerChange) {
-
-    }
-    else if (signalID != phaseArrayConfigureChange)
+    if (signalID != phaseArrayConfigureChange)
         // Radio signals
         if (pendingConfiguration)
         {

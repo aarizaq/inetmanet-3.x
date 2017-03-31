@@ -18,6 +18,7 @@ module PhasedArray extends AntennaBase
         double phiz;
         int sectorWidth;
         string energySourceModule;
+        double interval @unit(s)=default(2s);
 
 
         @class(PhasedArray);
@@ -25,6 +26,6 @@ module PhasedArray extends AntennaBase
         @signal[receptionStateChangedSignal](type="long");
         @signal[transmissionStateChangedSignal](type="long");
         @signal[receivedSignalPartChangedSignal](type="long");
-        @statistic[guadagno](title="guadagno"; source="gain"; record=vector; interpolationmode=none);
+        //@statistic[guadagno](title="guadagno"; source="gain"; record=vector; interpolationmode=none);
     submodules:
 }

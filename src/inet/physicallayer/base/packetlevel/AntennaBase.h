@@ -24,7 +24,7 @@ namespace inet {
 
 namespace physicallayer {
 
-class INET_API AntennaBase : public IAntenna, public cModule
+class INET_API AntennaBase : public IAntenna, public cSimpleModule
 {
   protected:
     IMobility *mobility;

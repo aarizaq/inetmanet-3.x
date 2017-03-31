@@ -24,9 +24,10 @@
 #include "IFrameExchange.h"
 #include "AccessCategory.h"
 #include "inet/physicallayer/ieee80211/mode/IIeee80211Mode.h"
+#include "inet/linklayer/base/MACProtocolBase.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
 #include "inet/mobility/contract/IMobility.h"
 #include "inet/physicallayer/antenna/PhasedArray.h"
-#include "inet/linklayer/common/MACAddress.h"
 
 using namespace inet::physicallayer;
 
@@ -69,9 +70,10 @@ class INET_API DcfUpperMac : public cSimpleModule, public IUpperMac, protected I
         int maxQueueSize;
         int fragmentationThreshold = 2346;
 
-        bool activeMsduA = false;
-
         cQueue transmissionQueue;
+        // TODO: This can work if the network is static, if the nodes move, the nodes can change of sector
+        std::vector<cQueue>  sectorsQueue;
+
         IFrameExchange *frameExchange = nullptr;
         IDuplicateDetector *duplicateDetection = nullptr;
         IFragmenter *fragmenter = nullptr;
@@ -79,10 +81,15 @@ class INET_API DcfUpperMac : public cSimpleModule, public IUpperMac, protected I
         IRateSelection *rateSelection = nullptr;
         IRateControl *rateControl = nullptr;
         IStatistics *statistics = nullptr;
+        simtime_t interval;
+        simtime_t mintime;
+        cMessage *trigger;
         struct NodeData {
-            IMobility *mob = nullptr;
-            PhasedArray *phaseAr = nullptr;
+            IMobility *mob;
+            IRadio *radio;
+            PhasedArray *phaseAr;
         };
+
         std::map<MACAddress,NodeData> mobilityList;
         MACAddress myAddress;
 
@@ -94,12 +101,12 @@ class INET_API DcfUpperMac : public cSimpleModule, public IUpperMac, protected I
         virtual void enqueue(Ieee80211DataOrMgmtFrame *frame);
         virtual void startSendDataFrameExchange(Ieee80211DataOrMgmtFrame *frame, int txIndex, AccessCategory ac);
         virtual void frameExchangeFinished(IFrameExchange *what, bool successful) override;
-
+        virtual bool decideQueue(Ieee80211DataOrMgmtFrame *frame);
+        virtual int getFrameSector (Ieee80211DataOrMgmtFrame *frame);
         void sendAck(Ieee80211DataOrMgmtFrame *frame);
         void sendCts(Ieee80211RTSFrame *frame);
-        virtual void configureAntenna(const double &);
+       // virtual void configureAntenna(const double &);
         virtual std::vector<MACAddress> getListaMac();
-        virtual bool decideQueue(Ieee80211DataOrMgmtFrame *frame);
 
     public:
         DcfUpperMac();

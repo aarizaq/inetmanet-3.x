@@ -27,27 +27,30 @@ class INET_API PhasedArray : public AntennaBase, IEnergyConsumer, protected cLis
 
     public:
          static simsignal_t phaseArrayConfigureChange;
-         static simsignal_t triggerChange;
+
     protected:
     m length;
     double freq;
     double distance;
    mutable double  phiz;
     int sectorWidth;
+  //  int currentActiveSector;
+  //  int currentNodeSector;
     Mempos *mp;
     IRadio *radio;
     IEnergySource *energySource;
     // internal state
     int energyConsumerId;
-
     bool pendingConfiguration = false;
     double newConfigurtion = 0;
-
+    simtime_t interval;
+    cMessage *trigger;
     W actualConsumption = W(0);
 
 
   protected:
     virtual void initialize(int stage) override;
+    virtual void handleMessage(cMessage *msg) override;
 
   public:
     PhasedArray();
@@ -70,6 +73,8 @@ virtual std::ostream& printToStream(std::ostream& stream, int level) const overr
    virtual double getPhizero() {return phiz; }
    virtual Mempos *getMempos()const{return mp;}
    virtual int getSectorWidth()const {return sectorWidth;}
+  // virtual int getCurrentNodeSector(EulerAngles direction)const;
+  // virtual int getD (int currentNodeSector, int currentActiveSector);
    virtual int getCurrentActiveSector()const;
    virtual bool isWithinSector (EulerAngles direction)const;
    virtual std::vector<int> getSectorVector()const;

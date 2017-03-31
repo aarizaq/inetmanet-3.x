@@ -35,8 +35,9 @@
 #include "inet/common/ModuleAccess.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
 #include "inet/physicallayer/ieee80211/mode/Ieee80211ModeSet.h"
-#include "inet/physicallayer/antenna/PhasedArray.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
+#include "inet/physicallayer/contract/packetlevel/IRadio.h"
+#include "inet/physicallayer/antenna/PhasedArray.h"
 
 namespace inet {
 namespace ieee80211 {
@@ -56,6 +57,14 @@ DcfUpperMac::~DcfUpperMac()
     delete params;
     delete utils;
     delete [] contention;
+    for (unsigned int i = 0; i < sectorsQueue.size();i++) {
+        while (!sectorsQueue[i].isEmpty()) {
+            delete sectorsQueue[i].pop();
+        }
+    }
+    sectorsQueue.clear();
+    mobilityList.clear();
+    cancelAndDelete(trigger);
 }
 
 void DcfUpperMac::initialize()
@@ -85,10 +94,19 @@ void DcfUpperMac::initialize()
     duplicateDetection = new NonQoSDuplicateDetector(); //TODO or LegacyDuplicateDetector();
     fragmenter = check_and_cast<IFragmenter *>(inet::utils::createOne(par("fragmenterClass")));
     reassembly = check_and_cast<IReassembly *>(inet::utils::createOne(par("reassemblyClass")));
+    mobilityList.clear();
+    trigger = new cMessage("phase array trigger");
+    interval = 2;
+    mintime.setRaw(1); // minimum time
+    //
+    scheduleAt(interval+mintime,trigger);
 
-    activeMsduA = par("useMpduA");
+
     WATCH(maxQueueSize);
     WATCH(fragmentationThreshold);
+
+
+
 }
 
 inline double fallback(double a, double b) {return a!=-1 ? a : b;}
@@ -120,7 +138,35 @@ IMacParameters *DcfUpperMac::extractParameters(const IIeee80211Mode *slowestMand
 
 void DcfUpperMac::handleMessage(cMessage *msg)
 {
-    if (msg->getContextPointer() != nullptr)
+    if (trigger == msg) {
+        // TODO: change in the configuration, extract information from the queue and send,
+        // search section active
+        cModule *par = this->getParentModule()->getParentModule();
+        IRadio *radio= dynamic_cast< IRadio*>(par->getSubmodule("radio"));
+        IAntenna *pa = const_cast<IAntenna*>(reinterpret_cast<const IAntenna *>(radio->getAntenna()));
+        PhasedArray *phas = dynamic_cast<PhasedArray*>(pa);
+        unsigned int activeSector = phas->getCurrentActiveSector();
+        unsigned int numSectors = phas->getNumSectors();
+        if (sectorsQueue.empty()) sectorsQueue.resize(numSectors);
+        if (mobilityList.empty()) getListaMac();
+        // TODO: Limit the number of frames that it is possible to transmit in funtion of the sector time
+        while (!sectorsQueue[activeSector-1].isEmpty()) {
+            enqueue(check_and_cast<Ieee80211DataOrMgmtFrame *>(sectorsQueue[activeSector-1].pop()));
+        }
+        simtime_t next = interval * ceil(simTime().dbl()/interval.dbl());
+        scheduleAt(next+mintime,trigger); // this guarantee that this trigger arrive always after the phase array trigger.
+        return;
+    }
+    /*
+     auto frame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(msg);
+     if ((msg->isSelfMessage()) &&  frame !=nullptr) { // delayed frame, reenque or delay other time
+           enqueue(frame);
+           return;
+     }
+     simtime_t next = interval * ceil(simTime().dbl()/Interval.dbl());
+     scheduleAt(next+mintime,trigger); // this guarantee that this trigger arrive always after the phase array trigger.
+     */
+     if (msg->getContextPointer() != nullptr)
         ((MacPlugin *)msg->getContextPointer())->handleSelfMessage(msg);
     else
         ASSERT(false);
@@ -131,8 +177,31 @@ void DcfUpperMac::upperFrameReceived(Ieee80211DataOrMgmtFrame *frame)
     Enter_Method("upperFrameReceived(\"%s\")", frame->getName());
     take(frame);
 
+    MACAddress rxaddr=frame->getReceiverAddress();
+    MACAddress txaddr;
+                if (auto dataOrMgmtFrame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(frame)) {
+                     txaddr = dataOrMgmtFrame->getTransmitterAddress();
+                }
+
+    if (!rxaddr.isBroadcast() ){
+
+    auto itRc = mobilityList.find(rxaddr);
+    if (itRc == mobilityList.end())
+    throw cRuntimeError("Address not found %s",rxaddr.str().c_str());
+    PhasedArray *phas = itRc->second.phaseAr;
+    unsigned int activeSector = phas->getCurrentActiveSector();
+    unsigned int frameSector = getFrameSector(frame);
+    if (activeSector != frameSector) {
+        sectorsQueue[frameSector-1].insert(frame);
+        return;
+    }
+    }
     EV_INFO << "Frame " << frame << " received from higher layer, receiver = " << frame->getReceiverAddress() << endl;
 
+    /*bool decision= decideQueue(frame);
+                if (!decision){
+                    delete frame;
+                                    }*/
     if (maxQueueSize > 0 && transmissionQueue.getLength() >= maxQueueSize && dynamic_cast<Ieee80211DataFrame *>(frame)) {
         EV << "Dataframe " << frame << " received from higher layer but MAC queue is full, dropping\n";
         delete frame;
@@ -150,36 +219,29 @@ void DcfUpperMac::upperFrameReceived(Ieee80211DataOrMgmtFrame *frame)
         for (Ieee80211DataOrMgmtFrame *fragment : fragments)
             enqueue(fragment);
     }
+
+
+
 }
 
 void DcfUpperMac::enqueue(Ieee80211DataOrMgmtFrame *frame)
 {
-    bool decision= decideQueue(frame);
-
-    if (frameExchange && decision)
+    if (frameExchange)
         transmissionQueue.insert(frame);
-    else
+    else{
         startSendDataFrameExchange(frame, 0, AC_LEGACY);
-    return;
-
-    statistics->upperFrameReceived(frame);
-    if (frameExchange) {
-        if (activeMsduA)
-            utils->createMsduA(frame,transmissionQueue);
-        else
-            transmissionQueue.insert(frame);
     }
-    else
-        startSendDataFrameExchange(frame, 0, AC_LEGACY);
 }
-
-
-
 
 void DcfUpperMac::lowerFrameReceived(Ieee80211Frame *frame)
 {
     Enter_Method("lowerFrameReceived(\"%s\")", frame->getName());
     utils->setDirection(frame);
+    /*Ieee80211DataOrMgmtFrame *dataOrMgmtFrame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(frame);
+    bool decision= decideQueue(dataOrMgmtFrame);
+            if (!decision){
+                delete frame;
+                                }*/
     delete frame->removeControlInfo();          //TODO
     take(frame);
 
@@ -210,17 +272,8 @@ void DcfUpperMac::lowerFrameReceived(Ieee80211Frame *frame)
                 delete dataOrMgmtFrame;
             }
             else {
-                if (!utils->isFragment(dataOrMgmtFrame)) {
-                    std::vector<Ieee80211DataOrMgmtFrame *> frames;
-                    utils->getMsduAFrames(dataOrMgmtFrame, frames);
-                    if (frames.empty())
-                        mac->sendUp(dataOrMgmtFrame);
-                    else {
-                        for (unsigned int i = 0; i < frames.size(); i++)
-                            mac->sendUp(frames[i]);
-                        frames.clear();
-                    }
-                }
+                if (!utils->isFragment(dataOrMgmtFrame))
+                    mac->sendUp(dataOrMgmtFrame);
                 else {
                     Ieee80211DataOrMgmtFrame *completeFrame = reassembly->addFragment(dataOrMgmtFrame);
                     if (completeFrame)
@@ -288,8 +341,144 @@ void DcfUpperMac::startSendDataFrameExchange(Ieee80211DataOrMgmtFrame *frame, in
         frameExchange = new SendDataWithAckFrameExchange(&context, this, frame, txIndex, ac);
 
     frameExchange->start();
+
+
 }
 
+bool DcfUpperMac::decideQueue(Ieee80211DataOrMgmtFrame *frame){
+           bool var =false;
+           std::vector<MACAddress>list;
+           list=getListaMac();
+           MACAddress rxaddr=frame->getReceiverAddress();
+           MACAddress txaddr;
+            if (auto dataOrMgmtFrame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(frame)) {
+                 txaddr = dataOrMgmtFrame->getTransmitterAddress();
+            }
+
+            if (myAddress.isUnspecified())  throw cRuntimeError("myAdress is undefined");
+             if (!rxaddr.isMulticast()){
+
+                  txaddr = myAddress;
+               int rxpos;
+               for (int ind=0;ind < list.size();ind++){
+                            if(rxaddr.equals(list[ind]))rxpos=ind;
+                         }
+               cTopology topology ("topology");
+               topology.extractByProperty("networkNode");
+               cTopology::Node *NodoRx = topology.getNode(rxpos);
+               cModule *hostRx = NodoRx->getModule();
+             //  std::cout << hostRx-><<endl;
+             //  IRadio *rm= dynamic_cast< IRadio*> (hostRx->getSubmodule("radio"));
+
+               auto itRc = mobilityList.find(rxaddr);
+                       if (itRc == mobilityList.end())
+                          throw cRuntimeError("Address not found %s",rxaddr.str().c_str());
+               auto itTx = mobilityList.find(txaddr);
+                       if (itTx == mobilityList.end())
+                          throw cRuntimeError("Address not found %s",txaddr.str().c_str());
+               Coord txhost= itTx->second.mob->getCurrentPosition();
+               Coord rxhost= itRc->second.mob->getCurrentPosition();
+               Coord transmissionStartDirection = rxhost - txhost;
+               double z = transmissionStartDirection.z;
+               transmissionStartDirection.z = 0;
+               double heading = atan2(transmissionStartDirection.y, transmissionStartDirection.x);
+               double elevation = atan2(z, transmissionStartDirection.length());
+               EulerAngles direction = EulerAngles(heading, elevation, 0);
+               PhasedArray *phas = itRc->second.phaseAr;
+               // double test = phas->getPhizero();
+
+
+               if(phas){
+                   bool temp=phas->isWithinSector(direction);
+               if (temp){ // test the position of the receiver
+              var=true; //ok (misses instruction)
+               }
+               else {
+
+                   var=false;//remove frame from queue (misses instruction)
+               }
+           }
+
+           }
+           return var;
+          // std::cout<<"prova"<<endl;
+}
+
+int DcfUpperMac::getFrameSector (Ieee80211DataOrMgmtFrame *frame) {
+
+    //EulerAngles direction = utils->getFrameDirection(frame);
+
+
+    if (mobilityList.empty()) getListaMac();
+    if (mobilityList.empty()) throw cRuntimeError("List is empty");
+    auto itRc = mobilityList.find(frame->getReceiverAddress());
+    if (itRc == mobilityList.end())
+        throw cRuntimeError("Address not found %s",frame->getReceiverAddress().str().c_str());
+    auto itTx = mobilityList.find(myAddress);
+    if (itTx == mobilityList.end())
+        throw cRuntimeError("Address not found %s",myAddress.str().c_str());
+
+    Coord txhost= itTx->second.mob->getCurrentPosition();
+    Coord rxhost= itRc->second.mob->getCurrentPosition();
+
+    Coord transmissionStartDirection = rxhost - txhost;
+
+    double z = transmissionStartDirection.z;
+    transmissionStartDirection.z = 0;
+    double heading = atan2(transmissionStartDirection.y, transmissionStartDirection.x);
+    double elevation = atan2(z, transmissionStartDirection.length());
+    EulerAngles direction = EulerAngles(heading, elevation, 0);
+
+    int currentFrameSector =0;
+
+    PhasedArray *phas = itRc->second.phaseAr;
+    switch (phas->getNumSectors()){
+    case 8 :
+
+         if ((direction.alpha*(180/3.14) >= 0)&& (direction.alpha*(180/3.14) <= 45)){currentFrameSector =1;return currentFrameSector; break;} // first sector width 45°
+         if ((direction.alpha*(180/3.14) > 45)&& (direction.alpha*(180/3.14) <= 90)){currentFrameSector =2;return currentFrameSector;break;} //second sector width 45°
+         if ((direction.alpha*(180/3.14) > 90)&& (direction.alpha*(180/3.14) <= 135)){currentFrameSector =3;return currentFrameSector; break;} // third sector width 45°..
+         if ((direction.alpha*(180/3.14) > 135)&& (direction.alpha*(180/3.14) <= 180)){currentFrameSector =4;return currentFrameSector; break;}
+         if ((direction.alpha*(180/3.14) > -180)&& (direction.alpha*(180/3.14) <= -135)){currentFrameSector =5;return currentFrameSector; break;}
+         if ((direction.alpha*(180/3.14) > -135)&& (direction.alpha*(180/3.14) <= -90)){currentFrameSector =6;return currentFrameSector; break;}
+         if ((direction.alpha*(180/3.14) > -90)&& (direction.alpha*(180/3.14) <= -45)){currentFrameSector =7;return currentFrameSector; break;}
+         if ((direction.alpha*(180/3.14) > -45)&& (direction.alpha*(180/3.14) < 0)){currentFrameSector =8;return currentFrameSector; break;}
+
+
+    case  6:
+
+         if ((direction.alpha*(180/3.14) >= 0)&& (direction.alpha*(180/3.14) <= 60)){currentFrameSector =1;return currentFrameSector; break;}
+         if ((direction.alpha*(180/3.14) > 60)&& (direction.alpha*(180/3.14) <= 120)){currentFrameSector =2;return currentFrameSector; break;}
+         if ((direction.alpha*(180/3.14) > 120)&& (direction.alpha*(180/3.14) <= 180)){currentFrameSector =3;return currentFrameSector; break;}
+         if ((direction.alpha*(180/3.14) > -180)&& (direction.alpha*(180/3.14) <= 120)){currentFrameSector =4;return currentFrameSector; break;}
+         if ((direction.alpha*(180/3.14) > -120)&& (direction.alpha*(180/3.14) <= -60)){currentFrameSector =5;return currentFrameSector; break;}
+         if ((direction.alpha*(180/3.14) > -60)&& (direction.alpha*(180/3.14) <= 0)){currentFrameSector =6;return currentFrameSector; break;}
+
+
+    case  4:
+
+         if ((direction.alpha*(180/3.14) >= 0)&& (direction.alpha*(180/3.14) <= 90)){currentFrameSector =1;return currentFrameSector; break;}
+         if ((direction.alpha*(180/3.14) > 90)&& (direction.alpha*(180/3.14) <= 180)){currentFrameSector =2;return currentFrameSector; break;}
+         if ((direction.alpha*(180/3.14) > -180)&& (direction.alpha*(180/3.14) <= -90)){currentFrameSector =3;return currentFrameSector; break;}
+         if ((direction.alpha*(180/3.14) > -90)&& (direction.alpha*(180/3.14) <= 0)){currentFrameSector =4;return currentFrameSector; break;}
+
+
+    case  3:
+
+         if ((direction.alpha*(180/3.14) >= 0)&& (direction.alpha*(180/3.14) <= 120)){currentFrameSector =1;return currentFrameSector; break;}
+         if ((direction.alpha*(180/3.14) > 120)&& (direction.alpha*(180/3.14) <= -120)){currentFrameSector =2;return currentFrameSector; break;}
+         if ((direction.alpha*(180/3.14) > -120)&& (direction.alpha*(180/3.14) <= 0)){currentFrameSector =3;return currentFrameSector; break;}
+
+
+    case  2:
+
+         if ((direction.alpha*(180/3.14) >= 0)&& (direction.alpha*(180/3.14) <= 180)){currentFrameSector =1;return currentFrameSector; break;}
+         if ((direction.alpha*(180/3.14) > -180)&& (direction.alpha*(180/3.14) <= 0)){currentFrameSector =2;return currentFrameSector; break;}
+
+
+    default: return -1;
+    }
+}
 void DcfUpperMac::frameExchangeFinished(IFrameExchange *what, bool successful)
 {
     EV_INFO << "Frame exchange finished" << std::endl;
@@ -314,93 +503,56 @@ void DcfUpperMac::sendCts(Ieee80211RTSFrame *frame)
     tx->transmitFrame(ctsFrame, params->getSifsTime(), nullptr);
 }
 
-bool DcfUpperMac::decideQueue(Ieee80211DataOrMgmtFrame *frame){
-    bool var =false;
-    std::vector<MACAddress>list;
-    list=getListaMac();
-    MACAddress rxaddr=frame->getReceiverAddress();
-    MACAddress txaddr;
-    if (auto dataOrMgmtFrame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(frame)) {
-        txaddr = dataOrMgmtFrame->getTransmitterAddress();
-    }
-    if (!rxaddr.isMulticast() && !txaddr.isUnspecified()){
-        auto itRc = mobilityList.find(rxaddr);
-        auto itTx = mobilityList.find(txaddr);
-        Coord txhost= itTx->second.mob->getCurrentPosition();
-        Coord rxhost= itRc->second.mob->getCurrentPosition();
-        Coord transmissionStartDirection = rxhost - txhost;
-        double z = transmissionStartDirection.z;
-        transmissionStartDirection.z = 0;
-        double heading = atan2(transmissionStartDirection.y, transmissionStartDirection.x);
-        double elevation = atan2(z, transmissionStartDirection.length());
-        EulerAngles direction = EulerAngles(heading, elevation, 0);
-        PhasedArray *phas = itRc->second.phaseAr;
-        if (phas->isWithinSector(direction)){ // test the position of the receiver
-            var=true; //ok (misses instruction)
-            }
-        else {
-            delete frame;
-            var=false;//remove frame from queue (misses instruction)
-            }
-    }
-    return var;
-          // std::cout<<"prova"<<endl;
-}
-
-
 std::vector<MACAddress> DcfUpperMac:: getListaMac(){
-    if (!mobilityList.empty()) {
-        std::vector<MACAddress>lista;
-        for (const auto &elem : mobilityList) {
-            lista.push_back(elem.first);
+
+        if (!mobilityList.empty()) {
+            std::vector<MACAddress>lista;
+            for (const auto &elem : mobilityList) {
+                lista.push_back(elem.first);
+            }
+            return lista;
         }
+
+        cModule * myHost = getContainingNode(this);
+        std::vector<MACAddress>lista;
+        cTopology topology ("topology");
+        topology.extractByProperty("networkNode");
+        int n = topology.getNumNodes();
+        if (topology.getNumNodes() == 0)
+            throw cRuntimeError("Empty network!");
+        for (int i = 0; i < n; i++) {
+            NodeData data;
+            cTopology::Node *destNode = topology.getNode(i);
+            cModule *host = destNode->getModule();
+            data.mob = check_and_cast<IMobility *>(host->getSubmodule("mobility"));
+
+            IInterfaceTable * ifTable = L3AddressResolver().findInterfaceTableOf(host);
+
+            for (int i = 0; i < ifTable->getNumInterfaces(); i++) {
+                InterfaceEntry *entry = ifTable->getInterface(i);
+                if (strstr(entry->getName(),"wlan") != nullptr) {
+
+                    cModule *ifaceMod = entry->getInterfaceModule();
+                    IRadio *radioMod = check_and_cast<IRadio *>(ifaceMod->getSubmodule("radio"));
+                    IAntenna *pa = const_cast<IAntenna*>(radioMod->getAntenna());
+                    data.phaseAr = dynamic_cast<PhasedArray *>(pa);
+                    IPv4Address addr = L3AddressResolver().getAddressFrom(L3AddressResolver().findInterfaceTableOf(host)).toIPv4();
+                    MACAddress ma = entry->getMacAddress();
+                    lista.push_back(ma);
+                    mobilityList[ma] = data;
+                    if (myHost == host)
+                        myAddress = ma;
+                    break;
+                }
+            }
+        }
+        if (lista.empty())
+            throw cRuntimeError("Lista is empty");
         return lista;
     }
 
-    cModule * myHost = getContainingNode(this);
-    std::vector<MACAddress>lista;
-    cTopology topology ("topology");
-    topology.extractByProperty("networkNode");
-    int n = topology.getNumNodes();
-    if (topology.getNumNodes() == 0)
-        throw cRuntimeError("Empty network!");
-    for (int i = 0; i < n; i++) {
-        NodeData data;
-        cTopology::Node *destNode = topology.getNode(i);
-        cModule *host = destNode->getModule();
-        data.mob = check_and_cast<IMobility *>(host->getSubmodule("mobility"));
-
-        IInterfaceTable * ifTable = L3AddressResolver().findInterfaceTableOf(host);
-
-        for (int i = 0; i < ifTable->getNumInterfaces(); i++) {
-            InterfaceEntry *entry = ifTable->getInterface(i);
-            if (strstr(entry->getName(),"wlan") != nullptr) {
-
-                cModule *ifaceMod = entry->getInterfaceModule();
-                IRadio *radioMod = check_and_cast<IRadio *>(ifaceMod->getSubmodule("radio"));
-                IAntenna *pa = const_cast<IAntenna*>(radioMod->getAntenna());
-                data.phaseAr = dynamic_cast<PhasedArray *>(pa);
-                IPv4Address addr = L3AddressResolver().getAddressFrom(L3AddressResolver().findInterfaceTableOf(host)).toIPv4();
-                MACAddress ma = entry->getMacAddress();
-                lista.push_back(ma);
-                mobilityList[ma] = data;
-                if (myHost == host)
-                    myAddress = ma;
-                break;
-            }
-        }
-    }
-    if (lista.empty())
-        throw cRuntimeError("Lista is empty");
-    return lista;
-}
 
 
-
-void DcfUpperMac::configureAntenna(const double &angle)
-{
-    emit(PhasedArray::phaseArrayConfigureChange,angle);
-}
 
 } // namespace ieee80211
 } // namespace inet
