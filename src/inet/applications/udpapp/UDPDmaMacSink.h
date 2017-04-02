@@ -16,8 +16,8 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef __INET_UDPC_H
-#define __INET_UDPBASICAPP_H
+#ifndef __INET_UDPDMASINK_H
+#define __INET_UDPDMASINK_H
 
 #include <vector>
 
