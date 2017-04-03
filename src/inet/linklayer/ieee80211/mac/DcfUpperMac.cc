@@ -99,7 +99,7 @@ void DcfUpperMac::initialize()
     interval = 2;
     mintime.setRaw(1); // minimum time
     //
-    scheduleAt(interval+mintime,trigger);
+    scheduleAt(mintime,trigger);
 
 
     WATCH(maxQueueSize);
@@ -149,7 +149,7 @@ void DcfUpperMac::handleMessage(cMessage *msg)
         unsigned int numSectors = phas->getNumSectors();
         if (sectorsQueue.empty()) sectorsQueue.resize(numSectors);
         if (mobilityList.empty()) getListaMac();
-        if (!transmissionQueue.isEmpty(s)) {
+        if (!transmissionQueue.isEmpty()) {
 #ifdef DELAYEDFRAME
             while (!transmissionQueue.isEmpty()){
                 Ieee80211DataOrMgmtFrame *frame = check_and_cast<Ieee80211DataOrMgmtFrame *> transmissionQueue.pop();
@@ -192,22 +192,21 @@ void DcfUpperMac::upperFrameReceived(Ieee80211DataOrMgmtFrame *frame)
 
     MACAddress rxaddr=frame->getReceiverAddress();
     MACAddress txaddr;
-                if (auto dataOrMgmtFrame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(frame)) {
-                     txaddr = dataOrMgmtFrame->getTransmitterAddress();
-                }
+    if (auto dataOrMgmtFrame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(frame)) {
+        txaddr = dataOrMgmtFrame->getTransmitterAddress();
+    }
 
     if (!rxaddr.isBroadcast() ){
-
-    auto itRc = mobilityList.find(rxaddr);
-    if (itRc == mobilityList.end())
-    throw cRuntimeError("Address not found %s",rxaddr.str().c_str());
-    PhasedArray *phas = itRc->second.phaseAr;
-    unsigned int activeSector = phas->getCurrentActiveSector();
-    unsigned int frameSector = getFrameSector(frame);
-    if (activeSector != frameSector) {
-        sectorsQueue[frameSector-1].insert(frame);
-        return;
-    }
+        auto itRc = mobilityList.find(rxaddr);
+        if (itRc == mobilityList.end())
+            throw cRuntimeError("Address not found %s",rxaddr.str().c_str());
+        PhasedArray *phas = itRc->second.phaseAr;
+        unsigned int activeSector = phas->getCurrentActiveSector();
+        unsigned int frameSector = getFrameSector(frame);
+        if (activeSector != frameSector) {
+            sectorsQueue[frameSector-1].insert(frame);
+            return;
+        }
     }
     EV_INFO << "Frame " << frame << " received from higher layer, receiver = " << frame->getReceiverAddress() << endl;
 
