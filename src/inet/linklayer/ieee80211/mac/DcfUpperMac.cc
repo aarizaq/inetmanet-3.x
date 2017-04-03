@@ -149,6 +149,19 @@ void DcfUpperMac::handleMessage(cMessage *msg)
         unsigned int numSectors = phas->getNumSectors();
         if (sectorsQueue.empty()) sectorsQueue.resize(numSectors);
         if (mobilityList.empty()) getListaMac();
+        if (!transmissionQueue.isEmpty(s)) {
+#ifdef DELAYEDFRAME
+            while (!transmissionQueue.isEmpty()){
+                Ieee80211DataOrMgmtFrame *frame = check_and_cast<Ieee80211DataOrMgmtFrame *> transmissionQueue.pop();
+                unsigned int frameSector = getFrameSector(frame);
+                sectorsQueue[frameSector-1].insertBefore(sectorsQueue[frameSector-1].front(),frame);
+            }
+#elif defined(DELETEFRAME)
+            while (!transmissionQueue.isEmpty()){
+                delete transmissionQueue.pop();
+            }
+#endif
+        }
         // TODO: Limit the number of frames that it is possible to transmit in funtion of the sector time
         while (!sectorsQueue[activeSector-1].isEmpty()) {
             enqueue(check_and_cast<Ieee80211DataOrMgmtFrame *>(sectorsQueue[activeSector-1].pop()));

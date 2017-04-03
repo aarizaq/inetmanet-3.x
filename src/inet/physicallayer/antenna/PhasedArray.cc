@@ -89,7 +89,7 @@ void PhasedArray::initialize(int stage) {
 
         trigger = new cMessage("phase array trigger");
         interval = par("interval");
-        simtime_t next = interval * ceil(simTime().dbl()/Interval.dbl());
+        simtime_t next = interval * ceil(simTime().dbl()/interval.dbl());
         scheduleAt(next,trigger);
 
 
@@ -108,7 +108,7 @@ void PhasedArray::handleMessage(cMessage *msg) {
 
     // change to the new sector
 
-    simtime_t next = interval * ceil(simTime().dbl()/Interval.dbl());
+    simtime_t next = interval * ceil(simTime().dbl()/interval.dbl());
     if (next == simTime())
         next = next + interval;
     scheduleAt(next,trigger);
@@ -120,7 +120,7 @@ double PhasedArray::computeGain(EulerAngles direction) const {
        IRadioMedium *ra =  const_cast< IRadioMedium *> (radio->getMedium());
        RadioMedium *rm=dynamic_cast< RadioMedium *>(ra);
 
-       phiz=rm->getMainAngle();
+      // phiz=rm->getMainAngle();
 
 
 
@@ -270,10 +270,9 @@ int PhasedArray::getCurrentActiveSector()const{
     T=N*tslot;
     float rem= fmod(tsim,T);
     int sector = ceil(rem/tslot); // current active sector
-
     return sector;
-
 }
+
 bool PhasedArray::isWithinSector (EulerAngles direction)const {
     switch (getNumSectors()){
     case 8 :
