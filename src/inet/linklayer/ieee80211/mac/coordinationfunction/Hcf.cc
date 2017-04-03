@@ -135,6 +135,7 @@ void Hcf::processUpperFrame(Ieee80211DataOrMgmtFrame* frame)
     else {
         if (rx->getStatistics()) rx->getStatistics()->upperFrameDiscarded(frame);
         EV_INFO << "Frame " << frame->getName() << " has been dropped because the PendingQueue is full." << endl;
+        emit(NF_PACKET_DROP, frame);
         delete frame;
     }
 }
@@ -226,6 +227,8 @@ void Hcf::handleInternalCollision(std::vector<Edcaf*> internallyCollidedEdcafs)
             throw cRuntimeError("Unknown frame");
         if (retryLimitReached) {
             EV_DETAIL << "The frame has reached its retry limit. Dropping it" << std::endl;
+            emit(NF_LINK_BREAK, internallyCollidedFrame);
+            emit(NF_PACKET_DROP, internallyCollidedFrame);
             if (auto dataFrame = dynamic_cast<Ieee80211DataFrame *>(internallyCollidedFrame))
                 edcaDataRecoveryProcedures[ac]->retryLimitReached(dataFrame);
             else if (auto mgmtFrame = dynamic_cast<Ieee80211ManagementFrame*>(internallyCollidedFrame))
@@ -239,6 +242,12 @@ void Hcf::handleInternalCollision(std::vector<Edcaf*> internallyCollidedEdcafs)
             edcaf->requestChannel(this);
     }
 }
+
+/*
+ * TODO:  If a PHY-RXSTART.indication primitive does not occur during the ACKTimeout interval,
+ * the STA concludes that the transmission of the MPDU has failed, and this STA shall invoke its
+ * backoff procedure **upon expiration of the ACKTimeout interval**.
+ */
 
 void Hcf::frameSequenceFinished()
 {
@@ -288,6 +297,8 @@ void Hcf::recipientProcessReceivedControlFrame(Ieee80211Frame* frame)
         if (recipientBlockAckProcedure)
             recipientBlockAckProcedure->processReceivedBlockAckReq(blockAckRequest, recipientAckPolicy, recipientBlockAckAgreementHandler, this);
     }
+    else if (auto ackFrame = dynamic_cast<Ieee80211ACKFrame*>(frame))
+        ; // drop it, it is an ACK frame that is received after the ACKTimeout
     else
         throw cRuntimeError("Unknown control frame");
 }
@@ -348,6 +359,8 @@ void Hcf::originatorProcessRtsProtectionFailed(Ieee80211DataOrMgmtFrame* protect
                 edcaMgmtAndNonQoSRecoveryProcedure->retryLimitReached(mgmtFrame);
             else ; // TODO: nonqos data
             edcaInProgressFrames[ac]->dropFrame(protectedFrame);
+            emit(NF_LINK_BREAK, protectedFrame);
+            emit(NF_PACKET_DROP, protectedFrame);
             delete protectedFrame;
         }
     }
@@ -461,7 +474,8 @@ void Hcf::originatorProcessFailedFrame(Ieee80211DataOrMgmtFrame* failedFrame)
             else if (auto mgmtFrame = dynamic_cast<Ieee80211ManagementFrame*>(failedFrame))
                 edcaMgmtAndNonQoSRecoveryProcedure->retryLimitReached(mgmtFrame);
             edcaInProgressFrames[ac]->dropFrame(failedFrame);
-            emit(NF_LINK_BREAK,failedFrame);
+            emit(NF_LINK_BREAK, failedFrame);
+            emit(NF_PACKET_DROP, failedFrame);
             delete failedFrame;
         }
         else

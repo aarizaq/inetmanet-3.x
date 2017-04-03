@@ -52,9 +52,11 @@ module Hcf
 
         *.rateSelectionModule = "^.rateSelection";
         *.rxModule = "^." + rxModule;
-        @signal[NF_LINK_BREAK](type=Ieee80211Frame);
+
         @class(Hcf);
         @display("i=block/queue");
+        @signal[NF_LINK_BREAK](type=Ieee80211DataOrMgmtFrame);
+        @signal[NF_PACKET_DROP](type=Ieee80211Frame);
 
     submodules:
         edca: Edca {

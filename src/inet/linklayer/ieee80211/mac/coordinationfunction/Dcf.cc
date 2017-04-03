@@ -98,6 +98,7 @@ void Dcf::processUpperFrame(Ieee80211DataOrMgmtFrame* frame)
     }
     else {
         EV_INFO << "Frame " << frame->getName() << " has been dropped because the PendingQueue is full." << endl;
+        emit(NF_PACKET_DROP, frame);
         if (rx->getStatistics()) rx->getStatistics()->upperFrameDiscarded(frame);
         delete frame;
     }
@@ -172,6 +173,11 @@ void Dcf::transmitFrame(Ieee80211Frame* frame, simtime_t ifs)
     frame->setDuration(originatorProtectionMechanism->computeDurationField(frame, inProgressFrames->getPendingFrameFor(frame)));
     tx->transmitFrame(frame, ifs, this);
 }
+/*
+ * TODO:  If a PHY-RXSTART.indication primitive does not occur during the ACKTimeout interval,
+ * the STA concludes that the transmission of the MPDU has failed, and this STA shall invoke its
+ * backoff procedure **upon expiration of the ACKTimeout interval**.
+ */
 
 void Dcf::frameSequenceFinished()
 {
@@ -239,23 +245,24 @@ void Dcf::originatorProcessRtsProtectionFailed(Ieee80211DataOrMgmtFrame* protect
     EV_INFO << "RTS frame transmission failed\n";
     recoveryProcedure->rtsFrameTransmissionFailed(protectedFrame, stationRetryCounters);
     if (recoveryProcedure->isRtsFrameRetryLimitReached(protectedFrame)) {
+        emit(NF_LINK_BREAK, protectedFrame);
         recoveryProcedure->retryLimitReached(protectedFrame);
         inProgressFrames->dropFrame(protectedFrame);
+        emit(NF_PACKET_DROP, protectedFrame);
         delete protectedFrame;
     }
 }
 
 void Dcf::originatorProcessTransmittedFrame(Ieee80211Frame* transmittedFrame)
 {
-    if (originatorAckPolicy->isAckNeeded(transmittedFrame)) {
-        auto transmittedDataOrMgmtFrame = check_and_cast<Ieee80211DataOrMgmtFrame *>(transmittedFrame);
-        ackHandler->processTransmittedDataOrMgmtFrame(transmittedDataOrMgmtFrame);
-    }
-    else if (transmittedFrame->getReceiverAddress().isMulticast()) {
-        recoveryProcedure->multicastFrameTransmitted(stationRetryCounters);
-        auto transmittedDataOrMgmtFrame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(transmittedFrame);
-        if (transmittedDataOrMgmtFrame)
-            inProgressFrames->dropFrame(transmittedDataOrMgmtFrame);
+    if (auto dataOrMgmtFrame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(transmittedFrame)) {
+        if (originatorAckPolicy->isAckNeeded(dataOrMgmtFrame)) {
+            ackHandler->processTransmittedDataOrMgmtFrame(dataOrMgmtFrame);
+        }
+        else if (dataOrMgmtFrame->getReceiverAddress().isMulticast()) {
+            recoveryProcedure->multicastFrameTransmitted(stationRetryCounters);
+            inProgressFrames->dropFrame(dataOrMgmtFrame);
+        }
     }
     else if (auto rtsFrame = dynamic_cast<Ieee80211RTSFrame *>(transmittedFrame))
         rtsProcedure->processTransmittedRts(rtsFrame);
@@ -299,9 +306,10 @@ void Dcf::originatorProcessFailedFrame(Ieee80211DataOrMgmtFrame* failedFrame)
     }
     ackHandler->processFailedFrame(failedFrame);
     if (retryLimitReached) {
+        emit(NF_LINK_BREAK, failedFrame);
         recoveryProcedure->retryLimitReached(failedFrame);
         inProgressFrames->dropFrame(failedFrame);
-        emit(NF_LINK_BREAK,failedFrame);
+        emit(NF_PACKET_DROP, failedFrame);
         delete failedFrame;
     }
     else
