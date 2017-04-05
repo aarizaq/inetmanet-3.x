@@ -1,6 +1,6 @@
-[submodule "tutorials"]
+[submodule "inet-tutorials"]
 	path = tutorials
 	url = https://github.com/inet-framework/inet-tutorials.git
-[submodule "showcases"]
+[submodule "inet-showcases"]
 	path = showcases
 	url = https://github.com/inet-framework/inet-showcases.git
