@@ -1970,7 +1970,7 @@ void DMAMAC::slotInitialize()
     cXMLElement* rootElement = par("neighborData").xmlValue();
 
     char id[maxNodes];
-    sprintf(id, "%lld", myId);
+    sprintf(id, "%lu", myId);
     EV << " My ID is : " << myId << endl;
 
 
