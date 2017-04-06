@@ -114,7 +114,7 @@ module DMAMACSinkNode
         }
 
 
-       radioIn[1] -->  wlan.radioIn;
+       radioIn[0] -->  wlan.radioIn;
        wlan.upperLayerOut --> networkLayer.ifIn++;
        wlan.upperLayerIn <-- networkLayer.ifOut++; 
 }
