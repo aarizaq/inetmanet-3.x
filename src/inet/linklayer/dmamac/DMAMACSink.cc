@@ -43,6 +43,7 @@ Define_Module(DMAMACSink);
 /* @brief To set the nodeId for the current node  */
 /* @brief Initialize the mac using omnetpp.ini variables and initializing other necessary variables  */
 
+
 void DMAMACSink::initialize(int stage)
 {
     DMAMAC::initialize(stage);
@@ -638,8 +639,7 @@ void DMAMACSink::handleLowerPacket(cPacket* msg) {
         return;
     }
 
-    if(currentMacState == WAIT_DATA)
-    {
+    if(currentMacState == WAIT_DATA) {
         emit(rcvdPkSignalDma,msg);
 
         DMAMACPkt *const mac  = static_cast<DMAMACPkt *>(msg);
@@ -677,8 +677,7 @@ void DMAMACSink::handleLowerPacket(cPacket* msg) {
         /* @statistics */
         nbRxData++;
     }
-    else if (currentMacState == WAIT_ACK)
-    {
+    else if (currentMacState == WAIT_ACK) {
         DMAMACPkt *const mac  = static_cast<DMAMACPkt *>(msg);
 
         EV << "ACK Packet received with length : " << mac->getByteLength() << ", DATA Transmission successful"  << endl;
@@ -698,8 +697,7 @@ void DMAMACSink::handleLowerPacket(cPacket* msg) {
         /* @Statistics */
         nbRxAcks++;
     }
-    else if(currentMacState == WAIT_ALERT)
-    {
+    else if(currentMacState == WAIT_ALERT) {
         AlertPkt *const alert  = static_cast<AlertPkt *>(msg);
 
         EV << " Alert Packet received with length :" << alert->getByteLength() << endl;
@@ -714,6 +712,8 @@ void DMAMACSink::handleLowerPacket(cPacket* msg) {
         /* @brief Deleting alert */
         delete alert;
     }
+    else
+        delete msg;
     refreshDisplay();
 }
 
