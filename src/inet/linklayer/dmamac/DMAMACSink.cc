@@ -860,7 +860,7 @@ void DMAMACSink::sinkInitialize()
     for(j=0;j<maxNodes;j++)
         actuatorNodes[j]=-1;
 
-    sprintf(id, "%lud", myId);
+    sprintf(id, "%lu", myId);
 
     xmlBuffer = rootElement->getElementById(id);
 
