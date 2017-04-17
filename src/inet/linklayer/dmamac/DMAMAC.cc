@@ -195,6 +195,7 @@ void DMAMAC::initialize(int stage)
         maxChildren         = par("maxChildren");
         hasSensorChild      = par("hasSensorChild");                                     
         double temp         = (par("macTypeInput").doubleValue());
+        disableChecks = par("disableChecks");
 
         networkId = par("subnetworkId");
 
@@ -1224,6 +1225,8 @@ void DMAMAC::handleRadioSwitchedToRX() {
 void DMAMAC::resyncr(const int &slot,const macMode &mode, const bool &changeMacMode)
 {
 
+    if (!disableChecks) return;
+
     bool resync = false;
     if (currentMacMode != mode && !changeMacMode)
     {
@@ -1360,49 +1363,53 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
         return;
     }
 
-    DMAMACSinkPkt *notification  = dynamic_cast<DMAMACSinkPkt *>(msg);
-    if (notification != nullptr)
-    {
-        if (networkId != -1 && networkId != notification->getNetworkId()) {
-            // ignore
-             EV << "Notification not for me delete \n";
-             delete msg;
-             return;
+    DMAMACPkt * dmapkt = dynamic_cast<DMAMACPkt *>(msg);
+
+    if (!disableChecks) {
+        DMAMACSinkPkt *notification = dynamic_cast<DMAMACSinkPkt *>(msg);
+        if (notification != nullptr) {
+            if (networkId != -1 && networkId != notification->getNetworkId()) {
+                // ignore
+                EV << "Notification not for me delete \n";
+                delete msg;
+                return;
+            }
+
+            EV << "Received notification from :" << notification->getSrcAddr()
+                      << "\n";
+            if (notification->getSrcAddr() != sinkAddress) {
+                // ignore
+                EV << "Notification not for me delete \n";
+                delete msg;
+                return;
+            }
+            resyncr(notification->getNumSlot(), static_cast<macMode>(notification->getMacMode()), notification->getChangeMacMode());
         }
 
-        EV << "Received notification from :" << notification->getSrcAddr() << "\n";
-        if (notification->getSrcAddr() != sinkAddress) {
+        if (dmapkt && (networkId != -1 && networkId != dmapkt->getNetworkId())) {
             // ignore
-            EV << "Notification not for me delete \n";
+            EV << "Data of other subnetwork delete \n";
             delete msg;
             return;
         }
-        resyncr(notification->getNumSlot(),static_cast<macMode>(notification->getMacMode()), notification->getChangeMacMode());
-    }
 
-    DMAMACPkt * dmapkt   = dynamic_cast<DMAMACPkt *>(msg);
-
-    if (dmapkt && (networkId != -1 && networkId != dmapkt->getNetworkId())) {
-        // ignore
-         EV << "Data of other subnetwork delete \n";
-         delete msg;
-         return;
-    }
-
-    if (dmapkt !=nullptr && !endAddressRange.isUnspecified()) {
-        if (dmapkt->getSrcAddr() < startAddressRange || dmapkt->getSrcAddr() > endAddressRange) {
-            EV << "Sender address out of range Received notification from :" << dmapkt->getSrcAddr() << "\n";
-            delete msg;
-            return;
+        if (dmapkt != nullptr && !endAddressRange.isUnspecified()) {
+            if (dmapkt->getSrcAddr() < startAddressRange
+                    || dmapkt->getSrcAddr() > endAddressRange) {
+                EV << "Sender address out of range Received notification from :"
+                          << dmapkt->getSrcAddr() << "\n";
+                delete msg;
+                return;
+            }
         }
-    }
 
-    if (auto alert = dynamic_cast<AlertPkt *> (msg)) {
-        if (networkId != -1 && networkId != alert->getNetworkId()) {
-            // ignore
-            EV << "Alarm of other subnetwork delete \n";
-            delete msg;
-            return;
+        if (auto alert = dynamic_cast<AlertPkt *>(msg)) {
+            if (networkId != -1 && networkId != alert->getNetworkId()) {
+                // ignore
+                EV << "Alarm of other subnetwork delete \n";
+                delete msg;
+                return;
+            }
         }
     }
 
