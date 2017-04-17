@@ -1290,7 +1290,7 @@ void DMAMAC::resyncr(const int &slot,const macMode &mode, const bool &changeMacM
     if (!resync)
         return;
 
-    if (val == mySlot)
+    if (transmitSlot[val] == mySlot)
     {
         if(slot < numSlotsTransient)
         {
@@ -1977,7 +1977,7 @@ void DMAMAC::slotInitialize()
     cXMLElement* rootElement = par("neighborData").xmlValue();
 
     char id[maxNodes];
-    sprintf(id, "%lu", myId);
+    sprintf(id, "%llu", myId);
     EV << " My ID is : " << myId << endl;
 
 
