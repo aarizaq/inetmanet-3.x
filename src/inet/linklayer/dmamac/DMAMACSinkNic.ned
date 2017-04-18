@@ -33,7 +33,7 @@ module DMAMACSinkNic like IWirelessNic
 {
     parameters:
         string interfaceTableModule;
-        string energySourceModule = default("");        
+        string energySourceModule;        
         string radioType = default("Ieee802154NarrowbandScalarRadio");
         *.interfaceTableModule = default(absPath(interfaceTableModule));
         *.energySourceModule = default(absPath(energySourceModule));
