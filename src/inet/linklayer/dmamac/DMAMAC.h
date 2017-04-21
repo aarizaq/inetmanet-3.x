@@ -414,36 +414,39 @@ protected:
     int alertDelayMax;          // Input to be taken #aaks 29 Apr
     /*@}*/
 
+    unsigned long sequence = 0; // used to detect dupplicate packets.
+
     /* @brief Statistics part and bool to set tracking on or off from config file */
     /*@{*/
     bool stats;
-    long nbTxData;
-    long nbTxActuatorData;
-    long nbTxDataFailures;      // No lossy links currently so not useful as such 
-    long nbTxAcks;
-    long nbTxAlert;
-    long nbTxSlots;
-    long nbTxNotifications;
-    long nbRxData;
-    long nbRxActuatorData;
-    long nbRxAcks;
-    long nbRxAlert;
-    long nbRxNotifications;
-    //long nbMissedAcks;        // No lossy links
-    long nbSleepSlots;
-    long nbCollisions;
-    long nbDroppedDataPackets;  // No dropping scenario designed yet.
-    long nbTransient;
-    long nbSteady;
-    long nbSteadyToTransient;
-    long nbTransientToSteady;
-    long nbFailedSwitch;        // Counts switches failed due to collision (or dropping of packets based on error)
-    long nbMidSwitch;           // Counts switches that happen between steady state
-    long nbSkippedAlert;        // Counts alert skipped because of carrier sense
-    long nbForwardedAlert;
-    long nbDiscardedAlerts;
-    long nbTimeouts;            // number of timeouts recorded
-    long nbAlertRxSlots;
+    long nbTxData = 0;
+    long nbCreatePkt = 0;
+    long nbTxActuatorData = 0;
+    long nbTxDataFailures = 0;      // No lossy links currently so not useful as such
+    long nbTxAcks = 0;
+    long nbTxAlert = 0;
+    long nbTxSlots = 0;
+    long nbTxNotifications = 0;
+    long nbRxData = 0;
+    long nbRxActuatorData = 0;
+    long nbRxAcks = 0;
+    long nbRxAlert = 0;
+    long nbRxNotifications = 0;
+    //long nbMissedAcks = 0;        // No lossy links
+    long nbSleepSlots = 0;
+    long nbCollisions = 0;
+    long nbDroppedDataPackets = 0;  // No dropping scenario designed yet.
+    long nbTransient = 0;
+    long nbSteady = 0;
+    long nbSteadyToTransient = 0;
+    long nbTransientToSteady = 0;
+    long nbFailedSwitch = 0;        // Counts switches failed due to collision (or dropping of packets based on error)
+    long nbMidSwitch = 0;           // Counts switches that happen between steady state
+    long nbSkippedAlert = 0;        // Counts alert skipped because of carrier sense
+    long nbForwardedAlert = 0;
+    long nbDiscardedAlerts = 0;
+    long nbTimeouts = 0;            // number of timeouts recorded
+    long nbAlertRxSlots = 0;
     /*@}*/
 
     /* @brief Parameters and lists to read the input xml file */

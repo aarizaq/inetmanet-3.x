@@ -45,6 +45,27 @@ class INET_API UDPDmaMacSink : public ApplicationBase
     simtime_t stopTime;
     const char *packetName = nullptr;
 
+    struct NodeId {
+        int networkId;
+        MACAddress addr;
+        bool operator==(const NodeId& other) const { return (networkId == other.networkId && addr == other.addr);}
+          /**
+           * @brief Returns true if the id of the other dimension is
+           * greater then the id of this dimension.
+           *
+           * This is needed to be able to use Dimension as a key in std::map.
+           */
+        bool operator<(const NodeId& other) const { if (networkId == other.networkId) return addr < other.addr; else return (networkId < other.networkId);  }
+
+          /** @brief Sorting operator by dimension ID.*/
+        bool operator>(const NodeId& other) const { if (networkId == other.networkId) return addr > other.addr; else return (networkId > other.networkId);}
+          /** @brief Sorting operator by dimension ID.*/
+    };
+
+    std::map<NodeId,unsigned long> sequences;
+
+
+
     // state
     UDPSocket socket;
     cMessage *selfMsg = nullptr;
@@ -53,6 +74,7 @@ class INET_API UDPDmaMacSink : public ApplicationBase
     int numSent = 0;
     int numReceived = 0;
     int numReceivedDmaMac = 0;
+    int totalRec = 0;
 
     static simsignal_t sentPkSignal;
     static simsignal_t rcvdPkSignal;

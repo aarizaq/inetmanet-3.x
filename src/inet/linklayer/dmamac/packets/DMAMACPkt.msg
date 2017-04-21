@@ -50,6 +50,7 @@ packet DMAMACPkt extends MACFrameBase
     MACAddress sourceAddress;
     MACAddress destinationAddress;
     int networkId = -1;
+    unsigned long sequence; 
 }
 
 packet DMAMACSyncPkt extends DMAMACPkt

@@ -64,6 +64,10 @@ void UDPDmaMacSink::finish()
 {
     recordScalar("packets sent", numSent);
     recordScalar("packets received", numReceived);
+
+    recordScalar("packets received DmaMac", numReceivedDmaMac);
+    recordScalar("packets received DmaMac Not dup", totalRec);
+
     ApplicationBase::finish();
 }
 
@@ -354,8 +358,17 @@ void UDPDmaMacSink::processPacket(cPacket *pk)
     emit(rcvdPkSignal, pk);
     EV_INFO << "Received packet: " << UDPSocket::getReceivedPacketInfo(pk) << endl;
     DMAMACPkt *pkt = dynamic_cast<DMAMACPkt *>(pk);
-    if (pkt)
+    if (pkt) {
         numReceivedDmaMac++;
+        NodeId nId;
+        nId.addr = pkt->getSourceAddress();
+        nId.networkId = pkt->getNetworkId();
+        auto it = sequences.find(nId);
+        if (it == sequences.end() || (it != sequences.end() && it->second < pkt->getSequence())) {
+            sequences[nId] = pkt->getSequence();
+            totalRec++;
+        }
+    }
     delete pk;
     numReceived++;
 }

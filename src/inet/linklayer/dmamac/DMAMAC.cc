@@ -429,6 +429,7 @@ void DMAMAC::finish() {
     /* @brief Record statistics for plotting before finish */
     if (stats)
     {
+        recordScalar("nbCreatePkt", nbCreatePkt);
         recordScalar("nbTxData", nbTxData);
         recordScalar("nbTxActuatorData", nbTxActuatorData);
         recordScalar("nbTxDataFailures", nbTxDataFailures);
@@ -538,6 +539,7 @@ void DMAMAC::handleUpperPacket(cPacket* msg){
         mac->setKind(DMAMAC_DATA);
 
     mac->setMySlot(mySlot);
+    mac->setSourceAddress(myMacAddr);
 
     // @brief Check if packet queue is full s
     if (macPktQueue.size() < queueLength) {
@@ -630,6 +632,10 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
               mac->setDestAddr(destAddr);
               mac->setKind(DMAMAC_DATA);
               mac->setByteLength(44);
+              mac->setSourceAddress(myMacAddr);
+              nbCreatePkt++;
+              sequence++;
+              mac->setSequence(sequence);
               macPktQueue.push_back(mac);
               //mac->setBitLength(headerLength);
          }
@@ -1195,6 +1201,8 @@ MACFrameBase* DMAMAC::encapsMsg(cPacket* msg) {
     pkt->setSrcAddr(myMacAddr);
     pkt->setNetworkId(networkId);
     pkt->setSourceAddress(myMacAddr);
+    sequence++;
+    pkt->setSequence(sequence);
 
     /* @brief Encapsulate the MAC packet */
     pkt->encapsulate(check_and_cast<cPacket *>(msg));
