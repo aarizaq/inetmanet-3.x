@@ -179,6 +179,8 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
                     actuatorData->setSourceAddress(myMacAddr);
                     actuatorData->setSrcAddr(myMacAddr);
                     actuatorData->setNetworkId(networkId);
+                    sequence++;
+                    actuatorData->setSequence(sequence);
 
                     auto itAux = sinkToClientAddress.find(it->second);
                     if (itAux == sinkToClientAddress.end())
@@ -545,6 +547,8 @@ void DMAMACSink::handleRadioSwitchedToTX() {
 
 
         data->setSrcAddr(myMacAddr);
+        if (data->getKind() != DMAMAC_ACTUATOR_DATA)
+            throw cRuntimeError("");
         data->setKind(DMAMAC_ACTUATOR_DATA);
         data->setNetworkId(networkId);
         data->setMySlot(mySlot);

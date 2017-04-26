@@ -541,10 +541,12 @@ void DMAMAC::handleUpperPacket(cPacket* msg){
     }
 
     if (mac->getKind() != DMAMAC_ACTUATOR_DATA)
-        mac->setKind(DMAMAC_DATA);
+        mac->setKind(DMAMAC_ACTUATOR_DATA);
 
     mac->setMySlot(mySlot);
     mac->setSourceAddress(myMacAddr);
+    sequence++;
+    mac->setSequence(sequence);
 
     // @brief Check if packet queue is full s
     if (macPktQueue.size() < queueLength) {
@@ -1444,6 +1446,20 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
     bool isDup = false;
     if (dmapkt && dmapkt->getKind() != DMAMAC_ACK) {
         emit(rcvdPkSignalDma,msg);
+        MACAddress addr = dmapkt->getSourceAddress();
+        if (dmapkt->getKind() == DMAMAC_DATA) {
+            bool isDupli = false;
+            auto it = longSeqMap.find(addr);
+            if (it == longSeqMap.end() || (it != longSeqMap.end() && it->second < dmapkt->getSequence())) {
+                longSeqMap[addr] = dmapkt->getSequence();
+            }
+            else {
+                double t = simTime().dbl();
+                double cre = dmapkt->getCreationTime().dbl();
+                isDupli = true;
+            }
+        }
+
         if (checkDup) {
             auto it = seqMap.find(dmapkt->getSrcAddr());
             if (it != seqMap.end()) {

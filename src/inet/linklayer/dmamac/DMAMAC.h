@@ -173,6 +173,7 @@ protected:
     bool checkDup = false;
     unsigned char seqMod256 = 0;
     std::map<MACAddress,unsigned char> seqMap;
+    std::map<MACAddress,unsigned long> longSeqMap;
 
     static simsignal_t rcvdPkSignalDma;
 
