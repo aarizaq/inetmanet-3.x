@@ -657,10 +657,82 @@ void DMAMACSink::handleLowerPacket(cPacket* msg) {
         return;
     }
 
+
+    DMAMACPkt * dmapkt = dynamic_cast<DMAMACPkt *>(msg);
+
+    if (!disableChecks) {
+        DMAMACSinkPkt *notification = dynamic_cast<DMAMACSinkPkt *>(msg);
+        if (notification != nullptr) {
+            EV << "Notification not for me delete \n";
+            delete msg;
+            return;
+        }
+
+        if (dmapkt  && (networkId != -1 && networkId != dmapkt->getNetworkId())) {
+            // ignore
+            EV << "Data of other subnetwork delete \n";
+            delete msg;
+            return;
+        }
+
+        if (auto alert = dynamic_cast<AlertPkt *>(msg)) {
+            if (networkId != -1 && networkId != alert->getNetworkId()) {
+                // ignore
+                EV << "Alarm of other subnetwork delete \n";
+                delete msg;
+                return;
+            }
+        }
+    }
+
+    bool isDup = false;
+
+    if (dmapkt && dmapkt->getKind() != DMAMAC_ACK) {
+        emit(rcvdPkSignalDma,msg);
+        MACAddress addr = dmapkt->getSourceAddress();
+        if (dmapkt->getKind() == DMAMAC_DATA) {
+            auto it = vecSeqMap.find(addr);
+
+            if (it == vecSeqMap.end()) {
+                std::deque<unsigned long> aux;
+                aux.push_back(dmapkt->getSequence());
+                vecSeqMap[addr] = aux;
+            }
+            else
+            {
+                auto itAux = std::find(it->second.begin(), it->second.end(), dmapkt->getSequence());
+                if (itAux == it->second.end()) {
+                    it->second.push_back(dmapkt->getSequence());
+                    if (it->second.size() > 10)
+                        it->second.pop_front();
+                }
+                else {
+                    isDup = true;
+                }
+            }
+        }
+
+/*        if (checkDup) {
+            auto it = seqMap.find(dmapkt->getSrcAddr());
+            if (it != seqMap.end()) {
+//                uint8_t distance = ((uint16_t)(dmapkt->getSeq() - (uint16_t)it->second) + 256) % 256;
+//                if (distance >= 128) {
+//                    isDup = true;
+//                }
+                if (dmapkt->getSeq() == (uint16_t)it->second) isDup = true;
+            }
+            seqMap[dmapkt->getSrcAddr()] = dmapkt->getSeq();
+        }*/
+    }
+
+
+
     if(currentMacState == WAIT_DATA) {
         emit(rcvdPkSignalDma,msg);
 
-        DMAMACPkt *const mac  = static_cast<DMAMACPkt *>(msg);
+        DMAMACPkt *mac  = dmapkt;
+        if (!mac)
+            throw cRuntimeError("No of type DMAMACPkt");
         const MACAddress& dest = mac->getDestAddr();
 
         /* @brief Check if the packet is for me (TDMA So it has to be me in general so just for testing) */
@@ -669,17 +741,23 @@ void DMAMACSink::handleLowerPacket(cPacket* msg) {
             EV << " DATA Packet received with length :" << mac->getByteLength() << ", Sending to Upper Layer" << endl;
             lastDataPktSrcAddr = mac->getSrcAddr();
 
-            /* @brief Not sending to application layer but sending to Actuators */
-            if (!mac->getDestinationAddress().isUnspecified() && mac->getDestinationAddress() != myMacAddr) {
-                if (isRelayNode)
+            if (!isDup) {
+                /* @brief Not sending to application layer but sending to Actuators */
+                if (!mac->getDestinationAddress().isUnspecified()
+                        && mac->getDestinationAddress() != myMacAddr) {
+                    if (isRelayNode)
+                        sendUp(mac);
+                    else
+                        throw cRuntimeError(
+                                "Packet to other destination but this node is not relay");
+                }
+                else if (isRelayNode && isUpperRelayNode)
                     sendUp(mac);
+                else if (sendUppperLayer)
+                    sendUp(decapsMsg(mac));
                 else
-                    throw cRuntimeError("Packet to other destination but this node is not relay");
+                    delete mac;
             }
-            else if (isRelayNode && isUpperRelayNode)
-                sendUp(mac);
-            else if (sendUppperLayer)
-                sendUp(decapsMsg(mac));
             else
                 delete mac;
 

@@ -62,7 +62,14 @@ class INET_API UDPDmaMacSink : public ApplicationBase
           /** @brief Sorting operator by dimension ID.*/
     };
 
-    std::map<NodeId,unsigned long> sequences;
+    struct DataNode {
+        int totalRec = 0;
+        int sequence;
+        int totalNoDup = 0;
+    };
+
+    std::map<NodeId,DataNode > sequences;
+    std::map<NodeId,long > dupli;
 
 
 

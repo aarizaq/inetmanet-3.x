@@ -29,6 +29,7 @@
 #define __DMAMACSINK_H__
 
 #include "inet/linklayer/dmamac/DMAMAC.h"
+#include <deque>
 
 /* @brief XML files are used to store slot structure for easy input differentiation 
  * from execution files */
@@ -96,6 +97,8 @@ class INET_API DMAMACSink : public DMAMAC
     //void slotInitialize(); Will be inherited from DMAMAC.cc
 
 protected:
+
+    std::map<MACAddress,std::deque<unsigned long> > vecSeqMap;
 
     bool changeMacModeInNextSuperFrame = false;
 

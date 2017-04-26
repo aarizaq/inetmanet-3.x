@@ -1458,9 +1458,10 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
                 double cre = dmapkt->getCreationTime().dbl();
                 isDupli = true;
             }
+            isDup = isDupli;
         }
 
-        if (checkDup) {
+      /*  if (checkDup) {
             auto it = seqMap.find(dmapkt->getSrcAddr());
             if (it != seqMap.end()) {
 //                uint8_t distance = ((uint16_t)(dmapkt->getSeq() - (uint16_t)it->second) + 256) % 256;
@@ -1470,7 +1471,7 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
                 if (dmapkt->getSeq() == (uint16_t)it->second) isDup = true;
             }
             seqMap[dmapkt->getSrcAddr()] = dmapkt->getSeq();
-        }
+        }*/
     }
 
     if(currentMacState == WAIT_DATA)
@@ -1534,21 +1535,19 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
                         delete mac;
                     }
                 }
+                /* @brief Resetting forChildNode value to false */
+                if (forChildNode) {
+                    forChildNode = false;
+                    /* @statistics */
+                    nbRxActuatorData++;
+                }
+                //if(dest == myMacAddr)
+                nbRxData++;
             }
-
 
             /* @brief Packet received for myself thus sending an ACK */
             scheduleAt(simTime(), sendAck);
 
-            /* @brief Resetting forChildNode value to false */
-            if (forChildNode)
-            {
-                forChildNode = false;
-                /* @statistics */
-                nbRxActuatorData++;
-            }
-            //if(dest == myMacAddr)
-                nbRxData++;
         }
         else
         {

@@ -356,7 +356,8 @@ void UDPDmaMacSink::refreshDisplay() const
 void UDPDmaMacSink::processPacket(cPacket *pk)
 {
     emit(rcvdPkSignal, pk);
-    EV_INFO << "Received packet: " << UDPSocket::getReceivedPacketInfo(pk) << endl;
+    EV_INFO << "Received packet: " << UDPSocket::getReceivedPacketInfo(pk)
+                   << endl;
     DMAMACPkt *pkt = dynamic_cast<DMAMACPkt *>(pk);
     if (pkt) {
         numReceivedDmaMac++;
@@ -364,10 +365,28 @@ void UDPDmaMacSink::processPacket(cPacket *pk)
         nId.addr = pkt->getSourceAddress();
         nId.networkId = pkt->getNetworkId();
         auto it = sequences.find(nId);
-        if (it == sequences.end() || (it != sequences.end() && it->second < pkt->getSequence())) {
-            sequences[nId] = pkt->getSequence();
+        if (it == sequences.end() || (it != sequences.end() && it->second.sequence < pkt->getSequence())) {
+            if (it == sequences.end()) {
+                DataNode dataNode;
+
+                sequences.insert(std::make_pair(nId, dataNode));
+                it = sequences.find(nId);
+            }
+            it->second.sequence = pkt->getSequence();
+            it->second.totalNoDup++;
             totalRec++;
         }
+        else {
+            auto it = dupli.find(nId);
+            if (it == dupli.end()) {
+
+                dupli.insert(std::make_pair(nId, 0));
+                it = dupli.find(nId);
+            }
+            it->second++;
+
+        }
+        it->second.totalRec++;
     }
     delete pk;
     numReceived++;
