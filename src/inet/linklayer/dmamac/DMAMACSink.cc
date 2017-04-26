@@ -153,8 +153,12 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
                     DMAMACPkt* actuatorData = new DMAMACPkt();
                     destAddr = MACAddress(actuatorNodes[i]);
                     actuatorData->setDestAddr(destAddr);
-                    macPktQueue.push_back(actuatorData);
+                    packetSend aux;
+                    aux.pkt = actuatorData;
+                    macPktQueue.push_back(aux);
                     actuatorData->setBitLength(headerLength);
+                    if (checkDup)
+                        actuatorData->setByteLength(actuatorData->getByteLength()+1);
                     i++;
                 }
             }
@@ -181,8 +185,12 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
                         throw cRuntimeError("Actuator error, Address not found in the sinkToClientAddress table");
 
                     actuatorData->setDestAddr(itAux->second);
-                    macPktQueue.push_back(actuatorData);
                     actuatorData->setBitLength(headerLength);
+                    if (checkDup)
+                        actuatorData->setByteLength(actuatorData->getByteLength()+1);
+                    packetSend aux;
+                    aux.pkt = actuatorData;
+                    macPktQueue.push_back(aux);
 
                     i++;
                 }
@@ -316,7 +324,7 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
                       EV << "Maximum re-transmissions attempt done, DATA transmission <failed>. Deleting packet from que" << endl;
                       EV_DEBUG << " Deleting packet from DMAMAC queue";
 					  /* @brief DATA Packet deleted */
-                      delete macPktQueue.front();     
+                      delete macPktQueue.front().pkt;
                       macPktQueue.pop_front();
                       EV << "My Packet queue size" << macPktQueue.size() << endl;
                   }
@@ -515,13 +523,13 @@ void DMAMACSink::handleRadioSwitchedToTX() {
             int rslot = receiveSlot[currentSlot];
             for (auto it = macPktQueue.begin(); it != macPktQueue.end(); ++it) {
                 // it is cheat, but it is possible to know the slot of every node beacuse is ofline configuration
-                auto itAux = slotInfo.find((*it)->getDestAddr().getInt());
+                auto itAux = slotInfo.find((*it).pkt->getDestAddr().getInt());
                 if (itAux->second == rslot) {
                     if (it != macPktQueue.begin()) {
                         // move to the front
-                        DMAMACPkt* pkt = (*it);
+                        packetSend aux = (*it);
                         it = macPktQueue.erase(it);
-                        macPktQueue.push_front(pkt);
+                        macPktQueue.push_front(aux);
                         break;
                     }
                 }
@@ -529,7 +537,12 @@ void DMAMACSink::handleRadioSwitchedToTX() {
         }
 
         EV << "Sending Data packet down " << endl;
-        DMAMACPkt* data = macPktQueue.front()->dup();
+        if (macPktQueue.front().ret == 0) {
+            seqMod256++;
+            macPktQueue.front().pkt->setSeq(seqMod256);
+        }
+        DMAMACPkt* data = macPktQueue.front().pkt->dup();
+
 
         data->setSrcAddr(myMacAddr);
         data->setKind(DMAMAC_ACTUATOR_DATA);
@@ -539,6 +552,7 @@ void DMAMACSink::handleRadioSwitchedToTX() {
         EV << "Sending down data packet\n";
         EV << "MAC queue size " << macPktQueue.size() << endl;
         EV << "Packet Destination " << data->getDestAddr() << endl;
+        macPktQueue.front().ret++;
         sendDown(data);
 
         /* @statistics */
@@ -683,7 +697,7 @@ void DMAMACSink::handleLowerPacket(cPacket* msg) {
         EV << "ACK Packet received with length : " << mac->getByteLength() << ", DATA Transmission successful"  << endl;
 
         EV_DEBUG << " Deleting packet from DMAMAC queue";
-        delete macPktQueue.front();     // DATA Packet deleted
+        delete macPktQueue.front().pkt;     // DATA Packet deleted
         macPktQueue.pop_front();
         delete mac;                     // received ACK Packet is deleted
 

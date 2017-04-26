@@ -128,6 +128,8 @@ simple DMAMAC extends MACProtocolBase like IMACProtocol
         bool localActuators = default(true);
         bool disableChecks = default(false);
         
+        bool checkDup = default(false); // add 1 byte at the size
+        
         @signal[rcvdPkDma](type=cPacket);
         @statistic[rcvdPkLifetimeDma](title="received DMA packet lifetime"; source="messageAge(rcvdPkDma)"; unit=s; record=stats,vector; interpolationmode=none);
         

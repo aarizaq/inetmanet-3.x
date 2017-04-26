@@ -170,6 +170,9 @@ class INET_API DMAMAC : public MACProtocolBase, public IMACProtocol
 protected:
 
     bool disableChecks = false;
+    bool checkDup = false;
+    unsigned char seqMod256 = 0;
+    std::map<MACAddress,unsigned char> seqMap;
 
     static simsignal_t rcvdPkSignalDma;
 
@@ -193,7 +196,11 @@ protected:
     /* @brief Defining at type for MAC packet buffer 
      * Mac packet queue to store incoming packets from upper layer  
 	 */
-    typedef std::list<DMAMACPkt*> MacPktQueue;
+    struct packetSend {
+        DMAMACPkt* pkt;
+        unsigned int ret = 0;
+    };
+    typedef std::list<packetSend> MacPktQueue;
 
     typedef std::list<AlertPkt*> AlertPktQueue;
 	

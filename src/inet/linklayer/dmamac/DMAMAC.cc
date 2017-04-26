@@ -196,6 +196,7 @@ void DMAMAC::initialize(int stage)
         hasSensorChild      = par("hasSensorChild");                                     
         double temp         = (par("macTypeInput").doubleValue());
         disableChecks = par("disableChecks");
+        checkDup = par("checkDup");
 
         networkId = par("subnetworkId");
 
@@ -414,7 +415,7 @@ DMAMAC::~DMAMAC() {
     /*@}*/
 
     while (!macPktQueue.empty()) {
-        delete macPktQueue.back();
+        delete macPktQueue.back().pkt;
         macPktQueue.pop_back();
     }
     while (!alertPktQueue.empty()) {
@@ -532,7 +533,11 @@ void DMAMAC::handleUpperPacket(cPacket* msg){
         mac->setDestAddr(mac->getDestinationAddress());
         mac->setSrcAddr(myMacAddr);
         mac->setNetworkId(networkId);
-        mac->setBitLength(headerLength);
+        if (checkDup) {
+            mac->setBitLength(headerLength+8);
+        }
+        else
+            mac->setBitLength(headerLength);
     }
 
     if (mac->getKind() != DMAMAC_ACTUATOR_DATA)
@@ -543,7 +548,9 @@ void DMAMAC::handleUpperPacket(cPacket* msg){
 
     // @brief Check if packet queue is full s
     if (macPktQueue.size() < queueLength) {
-        macPktQueue.push_back(mac);
+        packetSend aux;
+        aux.pkt = mac;
+        macPktQueue.push_back(aux);
         EV_DEBUG << " Data packet put in MAC queue with queueSize: " << macPktQueue.size() << endl;
     }
     else {
@@ -632,11 +639,16 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
               mac->setDestAddr(destAddr);
               mac->setKind(DMAMAC_DATA);
               mac->setByteLength(44);
+              if (checkDup)
+                  mac->setByteLength(mac->getByteLength()+1);
               mac->setSourceAddress(myMacAddr);
               nbCreatePkt++;
               sequence++;
               mac->setSequence(sequence);
-              macPktQueue.push_back(mac);
+              packetSend aux;
+              aux.pkt = mac;
+              macPktQueue.push_back(aux);
+
               //mac->setBitLength(headerLength);
          }
     }
@@ -801,7 +813,7 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
                 {
                     EV_INFO << "Maximum re-transmissions attempt done, DATA transmission <failed>. Deleting packet from que" << endl;
                     EV_DEBUG << " Deleting packet from DMAMAC queue";
-                    delete macPktQueue.front();     // DATA Packet deleted in case re-transmissions are done
+                    delete macPktQueue.front().pkt;     // DATA Packet deleted in case re-transmissions are done
                     macPktQueue.pop_front();
                     EV_INFO << "My Packet queue size" << macPktQueue.size() << endl;
                 }
@@ -1084,13 +1096,13 @@ void DMAMAC::handleRadioSwitchedToTX() {
                 int rslot = receiveSlot[currentSlot];
                 for (auto it = macPktQueue.begin(); it != macPktQueue.end(); ++it) {
                     // it is cheat, but it is possible to know the slot of every node beacuse is ofline configuration
-                    auto itAux = slotInfo.find((*it)->getDestAddr().getInt());
+                    auto itAux = slotInfo.find((*it).pkt->getDestAddr().getInt());
                     if (itAux->second == rslot) {
                         if (it != macPktQueue.begin()) {
                             // move to the front
-                            DMAMACPkt* pkt = (*it);
+                            packetSend aux = (*it);
                             it = macPktQueue.erase(it);
-                            macPktQueue.push_front(pkt);
+                            macPktQueue.push_front(aux);
                             break;
                         }
                     }
@@ -1098,7 +1110,11 @@ void DMAMAC::handleRadioSwitchedToTX() {
             }
 
             EV << "Sending Data packet down " << endl;
-            DMAMACPkt* data = macPktQueue.front()->dup();
+            if (macPktQueue.front().ret == 0) {
+                seqMod256++;
+                macPktQueue.front().pkt->setSeq(seqMod256);
+            }
+            DMAMACPkt* data = macPktQueue.front().pkt->dup();
 
             /* @brief Other fields are set, setting slot field 
 			 * Both for self data and forward data
@@ -1108,6 +1124,7 @@ void DMAMAC::handleRadioSwitchedToTX() {
             data->setMySlot(mySlot);
             attachSignal(data);
             EV_INFO << "Sending down data packet\n";
+            macPktQueue.front().ret++;
             sendDown(data);
 
             /* @statistics */
@@ -1145,6 +1162,7 @@ void DMAMAC::handleRadioSwitchedToTX() {
                 alert->setNetworkId(networkId);
                 alert->setKind(DMAMAC_ALERT);
                 alert->setByteLength(11);
+
                 attachSignal(alert);
                 EV_INFO << "Forwarding Alert packet\n";
                 sendDown(alert);
@@ -1203,6 +1221,8 @@ MACFrameBase* DMAMAC::encapsMsg(cPacket* msg) {
     pkt->setSourceAddress(myMacAddr);
     sequence++;
     pkt->setSequence(sequence);
+    if (checkDup)
+        pkt->setByteLength(pkt->getByteLength()+1);
 
     /* @brief Encapsulate the MAC packet */
     pkt->encapsulate(check_and_cast<cPacket *>(msg));
@@ -1421,8 +1441,21 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
         }
     }
 
-    if (dmapkt)
+    bool isDup = false;
+    if (dmapkt && dmapkt->getKind() != DMAMAC_ACK) {
         emit(rcvdPkSignalDma,msg);
+        if (checkDup) {
+            auto it = seqMap.find(dmapkt->getSrcAddr());
+            if (it != seqMap.end()) {
+//                uint8_t distance = ((uint16_t)(dmapkt->getSeq() - (uint16_t)it->second) + 256) % 256;
+//                if (distance >= 128) {
+//                    isDup = true;
+//                }
+                if (dmapkt->getSeq() == (uint16_t)it->second) isDup = true;
+            }
+            seqMap[dmapkt->getSrcAddr()] = dmapkt->getSeq();
+        }
+    }
 
     if(currentMacState == WAIT_DATA)
     {
@@ -1449,10 +1482,10 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
                 }
             }
             /* @brief Error prevention clause to make space for actuator packets even if there is no space */
-            if(macPktQueue.size() == queueLength)
+            if(macPktQueue.size() == queueLength && !isDup)
             {
                 EV_DEBUG << " Deleting packet from DMAMAC queue";
-                delete macPktQueue.front();     // DATA Packet deleted
+                delete macPktQueue.front().pkt;     // DATA Packet deleted
                 macPktQueue.pop_front();
             }
         }
@@ -1462,21 +1495,28 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
         {
             lastDataPktSrcAddr = mac->getSrcAddr();
             /* @brief not sending forwarding packets up to application layer */
-            if (dest == myMacAddr && sendUppperLayer) {
-                if (isRelayNode)
-                    sendUp(mac);
-                else
-                    sendUp(decapsMsg(mac));
-            }
+            if (isDup)
+                delete mac;
             else {
-                if (macPktQueue.size() < queueLength) {
-                    macPktQueue.push_back(mac);
-                    EV_DEBUG << " DATA packet from child node put in queue : " << macPktQueue.size() << endl;
-                }
-                else
-                {
-                    EV_DEBUG << " No space for forwarding packets queue size :" << macPktQueue.size() << endl;
-                    delete mac;
+                if (dest == myMacAddr && sendUppperLayer) {
+                    if (isRelayNode)
+                        sendUp(mac);
+                    else
+                        sendUp(decapsMsg(mac));
+                } else {
+                    if (macPktQueue.size() < queueLength) {
+                        packetSend aux;
+                        aux.pkt = mac;
+                        macPktQueue.push_back(aux);
+                        EV_DEBUG
+                                        << " DATA packet from child node put in queue : "
+                                        << macPktQueue.size() << endl;
+                    } else {
+                        EV_DEBUG
+                                        << " No space for forwarding packets queue size :"
+                                        << macPktQueue.size() << endl;
+                        delete mac;
+                    }
                 }
             }
 
@@ -1513,7 +1553,7 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
         EV_INFO << "ACK Packet received with length : " << mac->getByteLength() << ", DATA Transmission successful"  << endl;
 
         EV_DEBUG << " Deleting packet from DMAMAC queue";
-        delete macPktQueue.front();     // DATA Packet deleted
+        delete macPktQueue.front().pkt;     // DATA Packet deleted
         macPktQueue.pop_front();
         delete mac;                     // ACK Packet deleted
 
@@ -2091,7 +2131,7 @@ bool DMAMAC::handleNodeShutdown(IDoneCallback *doneCallback)
         cancelEvent(hoppingTimer);
     MacPktQueue::iterator it1;
     for(it1 = macPktQueue.begin(); it1 != macPktQueue.end(); ++it1) {
-        delete (*it1);
+        delete (*it1).pkt;
     }
     macPktQueue.clear();
     shutDown = true;
@@ -2120,7 +2160,7 @@ void DMAMAC::handleNodeCrash()
         cancelEvent(hoppingTimer);
     MacPktQueue::iterator it1;
     for(it1 = macPktQueue.begin(); it1 != macPktQueue.end(); ++it1) {
-        delete (*it1);
+        delete (*it1).pkt;
     }
     macPktQueue.clear();
     shutDown = true;
