@@ -36,7 +36,7 @@
 #include "inet/common/FindModule.h"
 #include "inet/linklayer/common/SimpleLinkLayerControlInfo.h"
 #include "inet/physicallayer/contract/packetlevel/RadioControlInfo_m.h"
-
+#include <cinttypes>
 
 namespace inet {
 
@@ -53,6 +53,7 @@ std::map<uint64_t,int> DMAMAC::slotInfo;
 bool DMAMAC::twoLevels = false;
 
 simsignal_t DMAMAC::rcvdPkSignalDma = registerSignal("rcvdPkDma");
+simsignal_t DMAMAC::DmaMacChangeChannel = registerSignal("DmaMacChangeChannel");
 
 
 /* @brief Got this from BaseLayer file, to catch the signal for hostState change */
@@ -261,6 +262,10 @@ void DMAMAC::initialize(int stage)
         radioModule->subscribe(IRadio::receptionStateChangedSignal, this);
         radio = check_and_cast<IRadio *>(radioModule);
 
+        if (par ("useSignalsToChangeChannel").boolValue())
+            getSimulation()->getSystemModule()->subscribe(DmaMacChangeChannel, this);
+
+
 
         initializeMACAddress();
 
@@ -335,6 +340,22 @@ void DMAMAC::initialize(int stage)
         ackTimeout->setKind(DMAMAC_ACK_TIMEOUT);
         dataTimeout->setKind(DMAMAC_DATA_TIMEOUT);
         alertTimeout->setKind(DMAMAC_ALERT_TIMEOUT);
+
+        startup->setSchedulingPriority(-1);
+        setSleep->setSchedulingPriority(-1);
+        waitData->setSchedulingPriority(-1);
+        waitAck->setSchedulingPriority(-1);
+        waitAlert->setSchedulingPriority(-1);
+        waitNotification->setSchedulingPriority(-1);
+        sendData->setSchedulingPriority(-1);
+        sendAck->setSchedulingPriority(-1);
+        scheduleAlert->setSchedulingPriority(-1);
+        sendAlert->setSchedulingPriority(-1);
+        sendNotification->setSchedulingPriority(-1);
+        ackReceived->setSchedulingPriority(-1);
+        ackTimeout->setSchedulingPriority(-1);
+        dataTimeout->setSchedulingPriority(-1);
+        alertTimeout->setSchedulingPriority(-1);
         /*@}*/
 
         /* @brief My slot is same as myID assigned used for slot scheduling  */
@@ -371,9 +392,13 @@ void DMAMAC::initialize(int stage)
         }
 
         frequentHopping = par("frequentHopping");
-        if (frequentHopping && randomGenerator) {
-            hoppingTimer = new cMessage("DMAMAC_HOPPING_TIMEOUT");
-            hoppingTimer->setKind(DMAMAC_HOPPING_TIMEOUT);
+
+        if (frequentHopping && randomGenerator ) {
+            if (isSink || !par ("useSignalsToChangeChannel").boolValue()) {
+                hoppingTimer = new cMessage("DMAMAC_HOPPING_TIMEOUT");
+                hoppingTimer->setSchedulingPriority(-2);
+                hoppingTimer->setKind(DMAMAC_HOPPING_TIMEOUT);
+            }
         }
         nodeStatus status;
         status.currentMacMode = currentMacMode;
@@ -383,8 +408,6 @@ void DMAMAC::initialize(int stage)
 
         slotMap[myMacAddr.getInt()] = status;
         slotInfo[myMacAddr.getInt()] = mySlot;
-
-
     }
 }
 
@@ -1080,6 +1103,16 @@ void DMAMAC::receiveSignal(cComponent *source, simsignal_t signalID, long value,
             }
         }
     }
+    else if (signalID == DmaMacChangeChannel){
+        if (details == nullptr)
+            return;
+        DetailsChangeChannel *de = dynamic_cast<DetailsChangeChannel *> (details);
+        if (de == nullptr)
+            return;
+        if (networkId != de->networkId || sinkAddress != de->sinkId)
+            return;
+        setChannel(value);
+    }
 }
 
 /* @brief
@@ -1587,7 +1620,7 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
             delete msg;
             return;
         }
-        if (frequentHopping && randomGenerator) {
+        if (frequentHopping && randomGenerator && !par("useSignalsToChangeChannel").boolValue()) {
             timeRef = notification->getTimeRef();
             initialSeed = notification->getInitialSeed();
             if (hoppingTimer->isScheduled())
@@ -2040,7 +2073,7 @@ void DMAMAC::slotInitialize()
     cXMLElement* rootElement = par("neighborData").xmlValue();
 
     char id[maxNodes];
-    sprintf(id, "%lu", myId);
+    sprintf(id,"%"  PRIu64, myId);
     EV << " My ID is : " << myId << endl;
 
 

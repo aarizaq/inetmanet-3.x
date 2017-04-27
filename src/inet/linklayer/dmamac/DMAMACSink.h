@@ -98,7 +98,6 @@ class INET_API DMAMACSink : public DMAMAC
 
 protected:
 
-    std::map<MACAddress,std::deque<unsigned long> > vecSeqMap;
 
     bool changeMacModeInNextSuperFrame = false;
 

@@ -41,6 +41,7 @@
 #include "inet/linklayer/dmamac/packets/DMAMACSinkPkt_m.h"    // Notification packet from sink
 #include "inet/power/contract/IEnergyStorage.h"
 #include <map>                  // For neighbor recognition from xmls
+#include <deque>
 
 /* @brief XML files are used to store slot structure for easy input differentiation from execution files */
 
@@ -168,14 +169,21 @@ class INET_API DMAMAC : public MACProtocolBase, public IMACProtocol
     virtual void initializeRandomSeq();
 
 protected:
+    class  DetailsChangeChannel : public cObject {
+    public:
+        int networkId = -1;
+        MACAddress sinkId;
+    };
 
     bool disableChecks = false;
     bool checkDup = false;
     unsigned char seqMod256 = 0;
     std::map<MACAddress,unsigned char> seqMap;
     std::map<MACAddress,unsigned long> longSeqMap;
+    std::map<MACAddress,std::deque<unsigned long> > vecSeqMap;
 
     static simsignal_t rcvdPkSignalDma;
+    static simsignal_t DmaMacChangeChannel;
 
     bool alwaysListening = false;
     bool alwaysListeningReception = false;

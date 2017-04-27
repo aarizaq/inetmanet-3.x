@@ -31,6 +31,7 @@
 #include "inet/common/ModuleAccess.h"
 #include "inet/common/FindModule.h"
 #include <cstdlib>
+#include <cinttypes>
 
 namespace inet {
 
@@ -74,6 +75,13 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
         // change channel
         setRandSeq(simTime().raw());
         setNextSequenceChannel();
+        if (par("useSignalsToChangeChannel").boolValue()) {
+            DetailsChangeChannel details;
+            details.networkId = networkId;
+            details.sinkId = myMacAddr;
+            emit(DmaMacChangeChannel,(long) actualChannel,&details);
+        }
+
         refreshDisplay();
         return;
     }
@@ -219,7 +227,7 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
 
                 /* @brief We start with sending notification message from the sink */
                 scheduleAt(simTime(), sendNotification);
-                if (hoppingTimer)
+                if (hoppingTimer && !par ("useSignalsToChangeChannel").boolValue())
                     scheduleAt(simTime()+slotDuration, hoppingTimer);
                 break;
 
@@ -686,44 +694,32 @@ void DMAMACSink::handleLowerPacket(cPacket* msg) {
     }
 
     bool isDup = false;
-
-    if (dmapkt && dmapkt->getKind() != DMAMAC_ACK) {
-        emit(rcvdPkSignalDma,msg);
-        MACAddress addr = dmapkt->getSourceAddress();
-        if (dmapkt->getKind() == DMAMAC_DATA) {
-            auto it = vecSeqMap.find(addr);
-
-            if (it == vecSeqMap.end()) {
-                std::deque<unsigned long> aux;
-                aux.push_back(dmapkt->getSequence());
-                vecSeqMap[addr] = aux;
-            }
-            else
-            {
-                auto itAux = std::find(it->second.begin(), it->second.end(), dmapkt->getSequence());
-                if (itAux == it->second.end()) {
-                    it->second.push_back(dmapkt->getSequence());
-                    if (it->second.size() > 10)
-                        it->second.pop_front();
-                }
-                else {
-                    isDup = true;
-                }
-            }
-        }
-
-/*        if (checkDup) {
-            auto it = seqMap.find(dmapkt->getSrcAddr());
-            if (it != seqMap.end()) {
-//                uint8_t distance = ((uint16_t)(dmapkt->getSeq() - (uint16_t)it->second) + 256) % 256;
-//                if (distance >= 128) {
+//
+//    if (dmapkt && dmapkt->getKind() != DMAMAC_ACK) {
+//        emit(rcvdPkSignalDma,msg);
+//        MACAddress addr = dmapkt->getSourceAddress();
+//        if (dmapkt->getKind() == DMAMAC_DATA) {
+//            auto it = vecSeqMap.find(addr);
+//
+//            if (it == vecSeqMap.end()) {
+//                std::deque<unsigned long> aux;
+//                aux.push_back(dmapkt->getSequence());
+//                vecSeqMap[addr] = aux;
+//            }
+//            else
+//            {
+//                auto itAux = std::find(it->second.begin(), it->second.end(), dmapkt->getSequence());
+//                if (itAux == it->second.end()) {
+//                    it->second.push_back(dmapkt->getSequence());
+//                    if (it->second.size() > 20)
+//                        it->second.pop_front();
+//                }
+//                else {
 //                    isDup = true;
 //                }
-                if (dmapkt->getSeq() == (uint16_t)it->second) isDup = true;
-            }
-            seqMap[dmapkt->getSrcAddr()] = dmapkt->getSeq();
-        }*/
-    }
+//            }
+//        }
+//    }
 
 
 
@@ -956,7 +952,7 @@ void DMAMACSink::sinkInitialize()
     for(j=0;j<maxNodes;j++)
         actuatorNodes[j]=-1;
 
-    sprintf(id, "%lu", myId);
+    sprintf(id,"%" PRIu64, myId);
 
     xmlBuffer = rootElement->getElementById(id);
 
