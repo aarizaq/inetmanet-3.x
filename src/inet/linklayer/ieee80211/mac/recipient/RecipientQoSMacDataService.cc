@@ -54,8 +54,10 @@ Ieee80211ManagementFrame* RecipientQoSMacDataService::defragment(Ieee80211Manage
 std::vector<Ieee80211Frame*> RecipientQoSMacDataService::dataFrameReceived(Ieee80211DataFrame* dataFrame, IRecipientBlockAckAgreementHandler *blockAckAgreementHandler)
 {
     // TODO: A-MPDU Deaggregation, MPDU Header+CRC Validation, Address1 Filtering, Duplicate Removal, MPDU Decryption
-    if (duplicateRemoval && duplicateRemoval->isDuplicate(dataFrame))
+    if (duplicateRemoval && duplicateRemoval->isDuplicate(dataFrame)) {
+        delete dataFrame;
         return std::vector<Ieee80211Frame*>();
+    }
     BlockAckReordering::ReorderBuffer frames;
     frames[dataFrame->getSequenceNumber()].push_back(dataFrame);
     if (blockAckReordering && blockAckAgreementHandler) {
@@ -88,9 +90,10 @@ std::vector<Ieee80211Frame*> RecipientQoSMacDataService::dataFrameReceived(Ieee8
         for (auto frame : defragmentedFrames) {
             auto dataFrame = check_and_cast<Ieee80211DataFrame *>(frame);
             if (dataFrame->getAMsduPresent()) {
-                auto subframes = aMsduDeaggregation->deaggregateFrame(dataFrame); // FIXME
+                auto subframes = aMsduDeaggregation->deaggregateFrame(dataFrame);
                 for (auto subframe : *subframes)
                     deaggregatedFrames.push_back(subframe);
+                delete subframes;
             }
             else
                 deaggregatedFrames.push_back(dataFrame);

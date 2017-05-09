@@ -770,7 +770,7 @@ void SAORSBase::handleSelfMsg(cMessage* apMsg) {
 		    hasActive = beaconTimeout->isActive();
 
 		//Maybe it's a SAORSBase_RoutingEntry
-		for(int i = 0; i < dymo_routingTable->getNumRoutes(); ) {
+		for(unsigned int i = 0; i < dymo_routingTable->getNumRoutes(); ) {
 
 			SAORSBase_RoutingEntry *entry = dymo_routingTable->getRoute(i);
             bool deleted = false;
@@ -805,7 +805,7 @@ void SAORSBase::handleSelfMsg(cMessage* apMsg) {
 		}
 
 		//Maybe it's a SAORSBase_Routing delay tolerant Entry
-		for(int i = 0; i < dymo_routingTable->getDTNumRoutes(); ) {
+		for(unsigned int i = 0; i < dymo_routingTable->getDTNumRoutes(); ) {
 
 			SAORSBase_RoutingEntry *entry = dymo_routingTable->getDTRoute(i);
 			bool deleted = false;
@@ -1377,7 +1377,7 @@ void SAORSBase::packetFailed(IPv4Datagram *dgram)
 	if (entry)
 	{
 		IPv4Address nextHop = entry->routeNextHopAddress;
-		for(int i = 0; i < dymo_routingTable->getNumRoutes(); i++) {
+		for(unsigned int i = 0; i < dymo_routingTable->getNumRoutes(); i++) {
 			SAORSBase_RoutingEntry *entry = dymo_routingTable->getRoute(i);
 			if (entry->routeNextHopAddress==nextHop)
 			{
