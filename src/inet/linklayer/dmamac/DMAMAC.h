@@ -444,6 +444,8 @@ protected:
     long nbTxSlots = 0;
     long nbTxNotifications = 0;
     long nbRxData = 0;
+    long nbRxDataErroneous = 0;
+    long nbRxNotificationErroneous = 0;
     long nbRxActuatorData = 0;
     long nbRxAcks = 0;
     long nbRxAlert = 0;

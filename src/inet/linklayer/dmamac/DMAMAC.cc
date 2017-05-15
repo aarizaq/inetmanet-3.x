@@ -481,6 +481,9 @@ void DMAMAC::finish() {
         recordScalar("nbDiscardedAlerts", nbDiscardedAlerts);
         recordScalar("nbTimeouts", nbTimeouts); 
         recordScalar("nbAlertRxSlots", nbAlertRxSlots); 
+        recordScalar("nbRxDataErroneous", nbRxDataErroneous);
+        recordScalar("nbRxNotificationErroneous", nbRxNotificationErroneous);
+
     }
 }
 
@@ -1475,6 +1478,8 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
             }
         }
     }
+    if (dmapkt && networkId != dmapkt->getNetworkId())
+        nbRxDataErroneous ++;
 
     bool isDup = false;
     if (dmapkt && dmapkt->getKind() != DMAMAC_ACK) {
@@ -1614,6 +1619,8 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
     else if (currentMacState == WAIT_NOTIFICATION)
     {
         DMAMACSinkPkt *notification  = dynamic_cast<DMAMACSinkPkt *>(msg);
+        if (notification && networkId != notification->getNetworkId())
+            nbRxNotificationErroneous++;
         if (notification == nullptr)
         {
             //throw cRuntimeError(" msg is not a notification message");

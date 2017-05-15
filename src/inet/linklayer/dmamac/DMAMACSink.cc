@@ -161,6 +161,10 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
                     DMAMACPkt* actuatorData = new DMAMACPkt();
                     destAddr = MACAddress(actuatorNodes[i]);
                     actuatorData->setDestAddr(destAddr);
+                    actuatorData->setKind(DMAMAC_ACTUATOR_DATA);
+                    actuatorData->setSourceAddress(myMacAddr);
+                    actuatorData->setDestinationAddress(destAddr);
+
                     packetSend aux;
                     aux.pkt = actuatorData;
                     macPktQueue.push_back(aux);
@@ -187,6 +191,7 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
                     actuatorData->setSourceAddress(myMacAddr);
                     actuatorData->setSrcAddr(myMacAddr);
                     actuatorData->setNetworkId(networkId);
+                    actuatorData->setKind(DMAMAC_ACTUATOR_DATA);
                     sequence++;
                     actuatorData->setSequence(sequence);
 
@@ -693,6 +698,9 @@ void DMAMACSink::handleLowerPacket(cPacket* msg) {
         }
     }
 
+    if (dmapkt && networkId != dmapkt->getNetworkId())
+        nbRxDataErroneous ++;
+
     bool isDup = false;
 //
 //    if (dmapkt && dmapkt->getKind() != DMAMAC_ACK) {
@@ -724,11 +732,15 @@ void DMAMACSink::handleLowerPacket(cPacket* msg) {
 
 
     if(currentMacState == WAIT_DATA) {
+        DMAMACPkt *mac  = dmapkt;
+        if (!mac) {
+
+            delete mac;
+            return;
+        }
+
         emit(rcvdPkSignalDma,msg);
 
-        DMAMACPkt *mac  = dmapkt;
-        if (!mac)
-            throw cRuntimeError("No of type DMAMACPkt");
         const MACAddress& dest = mac->getDestAddr();
 
         /* @brief Check if the packet is for me (TDMA So it has to be me in general so just for testing) */
