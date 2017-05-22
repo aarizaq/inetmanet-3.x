@@ -15,6 +15,7 @@
 // along with this program; if not, see http://www.gnu.org/licenses/.
 //
 
+#include <algorithm>
 #include "InProgressFrames.h"
 
 namespace inet {
@@ -85,15 +86,40 @@ Ieee80211DataOrMgmtFrame* InProgressFrames::getPendingFrameFor(Ieee80211Frame *f
     }
 }
 
-void InProgressFrames::dropFrame(Ieee80211DataOrMgmtFrame* frame)
+void InProgressFrames::dropFrame(Ieee80211DataOrMgmtFrame *frame)
 {
-    inProgressFrames.remove(frame);
+    dropFrame(SequenceControlField(frame->getSequenceNumber(), frame->getFragmentNumber()));
+}
+
+void InProgressFrames::dropFrame(SequenceControlField sequenceControlField)
+{
+    for (auto it = inProgressFrames.begin(); it != inProgressFrames.end();) {
+        auto frame = *it;
+        if (frame->getSequenceNumber() == sequenceControlField.getSequenceNumber() && frame->getFragmentNumber() == sequenceControlField.getFragmentNumber()) {
+            it = inProgressFrames.erase(it);
+            delete frame;
+        }
+        else
+            it++;
+    }
 }
 
 void InProgressFrames::dropFrames(std::set<std::pair<MACAddress, std::pair<Tid, SequenceControlField>>> seqAndFragNums)
 {
-    SequenceControlPredicate predicate(seqAndFragNums);
-    inProgressFrames.remove_if(predicate);
+    for (auto it = inProgressFrames.begin(); it != inProgressFrames.end();) {
+        auto frame = *it;
+        if (frame->getType() == ST_DATA_WITH_QOS) {
+            auto dataFrame = dynamic_cast<const Ieee80211DataFrame*>(frame);
+            if (seqAndFragNums.count(std::make_pair(dataFrame->getReceiverAddress(), std::make_pair(dataFrame->getTid(), SequenceControlField(dataFrame->getSequenceNumber(), dataFrame->getFragmentNumber())))) != 0) {
+                it = inProgressFrames.erase(it);
+                delete frame;
+            }
+            else
+                it++;
+        }
+        else
+            it++;
+    }
 }
 
 std::vector<Ieee80211DataFrame*> InProgressFrames::getOutstandingFrames()

@@ -29,26 +29,6 @@ namespace ieee80211 {
 
 class INET_API InProgressFrames
 {
-    public:
-        class SequenceControlPredicate
-        {
-            private:
-                const std::set<std::pair<MACAddress, std::pair<Tid, SequenceControlField>>>& seqAndFragNums;
-
-            public:
-                SequenceControlPredicate(const std::set<std::pair<MACAddress, std::pair<Tid, SequenceControlField>>>& seqAndFragNums) :
-                    seqAndFragNums(seqAndFragNums) {}
-
-                bool operator() (const Ieee80211DataOrMgmtFrame *frame) {
-                    if (frame->getType() == ST_DATA_WITH_QOS) {
-                        auto dataFrame = check_and_cast<const Ieee80211DataFrame*>(frame);
-                        return seqAndFragNums.count(std::make_pair(dataFrame->getReceiverAddress(), std::make_pair(dataFrame->getTid(), SequenceControlField(dataFrame->getSequenceNumber(), dataFrame->getFragmentNumber())))) != 0;
-                    }
-                    else
-                        throw cRuntimeError("This method is not applicable for NonQoS frames");
-                }
-        };
-
     protected:
         PendingQueue *pendingQueue = nullptr;
         IOriginatorMacDataService *dataService = nullptr;
@@ -70,6 +50,7 @@ class INET_API InProgressFrames
         virtual Ieee80211DataOrMgmtFrame *getFrameToTransmit();
         virtual Ieee80211DataOrMgmtFrame *getPendingFrameFor(Ieee80211Frame *frame);
         virtual void dropFrame(Ieee80211DataOrMgmtFrame *dataOrMgmtFrame);
+        virtual void dropFrame(SequenceControlField sequenceControlField);
         virtual void dropFrames(std::set<std::pair<MACAddress, std::pair<Tid, SequenceControlField>>> seqAndFragNums);
 
         virtual bool hasInProgressFrames() { ensureHasFrameToTransmit(); return hasEligibleFrameToTransmit(); }
