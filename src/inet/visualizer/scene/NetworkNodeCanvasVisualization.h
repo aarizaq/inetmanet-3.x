@@ -19,12 +19,15 @@
 #define __INET_NETWORKNODECANVASVISUALIZATION_H
 
 #include "inet/common/INETDefs.h"
+#if OMNETPP_VERSION <= 0x0501
+#include "inet/common/figures/cPanelFigure.h"
+#endif
 
 namespace inet {
 
 namespace visualizer {
 
-class INET_API NetworkNodeCanvasVisualization : public cGroupFigure
+class INET_API NetworkNodeCanvasVisualization : public cPanelFigure
 {
   protected:
     class INET_API Annotation {

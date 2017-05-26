@@ -68,6 +68,7 @@ Ieee80211DataFrame *MsduAggregation::aggregateFrames(std::vector<Ieee80211DataFr
     {
         Ieee80211MsduSubframe msduSubframe;
         auto dataFrame = frames->at(i);
+        ASSERT(dataFrame->getType() == ST_DATA_WITH_QOS);
         auto msdu = dataFrame->decapsulate();
         if (auto dataFrameWithSnap = dynamic_cast<Ieee80211DataFrameWithSNAP*>(dataFrame)) {
             aMsduLength += msdu->getByteLength() + LENGTH_A_MSDU_SUBFRAME_HEADER / 8 + SNAP_HEADER_BYTES; // sum of MSDU lengths + subframe header + snap header
@@ -81,6 +82,7 @@ Ieee80211DataFrame *MsduAggregation::aggregateFrames(std::vector<Ieee80211DataFr
         setSubframeAddress(&msduSubframe, dataFrame);
         msduSubframe.encapsulate(msdu);
         aMsdu->setSubframes(i, msduSubframe);
+        aMsdu->getSubframes(i).setName(dataFrame->getName());
         delete dataFrame;
     }
     aMsdu->setByteLength(aMsduLength);
