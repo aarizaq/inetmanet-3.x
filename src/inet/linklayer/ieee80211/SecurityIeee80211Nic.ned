@@ -37,7 +37,7 @@ module SecurityIeee80211Nic like IWirelessNic
         string energySourceModule = default("");
         string mgmtType = default("SecurityIeee80211MgmtAdhoc"); // name of the management module type (implements IIeee80211Mgmt)
         string radioType = default("Ieee80211Radio");
-        string opMode @enum("b","g","a","p") = default("g");
+        string opMode @enum("a", "b", "g(erp)", "g(mixed)", "n", "p") = default("g(mixed)");
         int numOutputHooks = default(0);
         int numInputHooks = default(0);
         string macType = default("Ieee80211OldMac");   // choose from Ieee80211OldMac, Ieee80211Mac, Ieee80211CompatibleMac

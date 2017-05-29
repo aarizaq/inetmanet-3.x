@@ -40,7 +40,7 @@ module SecurityIeee80211NicMesh like IWirelessNic
         string classifierType = default(""); // needed for EDCA, as the classifier assigns User Priority (UP) to packets; UP determines Access Category via TID
         string mgmtType = default("SecurityIeee80211Mesh"); // name of the management module type (implements IIeee80211Mgmt)
         string radioType = default("Ieee80211Radio");
-        string opMode @enum("b","g","a","p") = default("g");
+        string opMode @enum("a", "b", "g(erp)", "g(mixed)", "n", "p") = default("g(mixed)");
         int numOutputHooks = default(0);
         int numInputHooks = default(0);
         double bitrate @unit("bps") = default(opMode == "b" ? 11Mbps : opMode == "p" ? 27Mbps : 54Mbps);
