@@ -28,6 +28,7 @@ LabeledPolylineFigure::LabeledPolylineFigure(const char *name) :
     addFigure(panelFigure);
     labelFigure = new cTextFigure("label");
     labelFigure->setAnchor(cFigure::ANCHOR_S);
+    labelFigure->setTags("label");
     labelFigure->setHalo(true);
     labelFigure->setPosition(cFigure::Point(0, 0));
     panelFigure->addFigure(labelFigure);
@@ -42,7 +43,7 @@ void LabeledPolylineFigure::setPoints(const std::vector<cFigure::Point>& points)
 void LabeledPolylineFigure::updateLabelPosition()
 {
     auto points = polylineFigure->getPoints();
-    int index = points.size() / 2;
+    int index = (points.size() - 1) / 2;
     auto position = (points[index] + points[index + 1]) / 2;
     auto direction = points[index + 1] - points[index];
     double alpha = atan2(-direction.y, direction.x);
