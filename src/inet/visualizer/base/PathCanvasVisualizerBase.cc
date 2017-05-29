@@ -47,7 +47,7 @@ static Coord intersectLines(const Coord& begin1, const Coord& end1, const Coord&
     return Coord(x, y, 0);
 }
 
-PathCanvasVisualizerBase::PathCanvasVisualization::PathCanvasVisualization(const std::vector<int>& path, cPolylineFigure *figure) :
+PathCanvasVisualizerBase::PathCanvasVisualization::PathCanvasVisualization(const std::vector<int>& path, LabeledPolylineFigure *figure) :
     PathVisualization(path),
     figure(figure)
 {
@@ -107,13 +107,20 @@ void PathCanvasVisualizerBase::refreshDisplay() const
     visualizerTargetModule->getCanvas()->setAnimationSpeed(pathVisualizations.empty() ? 0 : fadeOutAnimationSpeed, this);
 }
 
-const PathVisualizerBase::PathVisualization *PathCanvasVisualizerBase::createPathVisualization(const std::vector<int>& path) const
+const PathVisualizerBase::PathVisualization *PathCanvasVisualizerBase::createPathVisualization(const std::vector<int>& path, cPacket *packet) const
 {
-    auto figure = new cPolylineFigure("path");
-    figure->setLineWidth(lineWidth);
-    figure->setLineStyle(lineStyle);
-    figure->setEndArrowhead(cFigure::ARROW_BARBED);
-    figure->setLineColor(lineColorSet.getColor(pathVisualizations.size()));
+    auto figure = new LabeledPolylineFigure("path");
+    auto polylineFigure = figure->getPolylineFigure();
+    polylineFigure->setLineWidth(lineWidth);
+    polylineFigure->setLineStyle(lineStyle);
+    polylineFigure->setEndArrowhead(cFigure::ARROW_BARBED);
+    auto lineColor = lineColorSet.getColor(pathVisualizations.size());
+    polylineFigure->setLineColor(lineColor);
+    auto labelFigure = figure->getLabelFigure();
+    labelFigure->setFont(labelFont);
+    labelFigure->setColor(isEmpty(labelColorAsString) ? lineColor : labelColor);
+    auto text = getPathVisualizationText(packet);
+    labelFigure->setText(text.c_str());
     return new PathCanvasVisualization(path, figure);
 }
 
@@ -136,7 +143,15 @@ void PathCanvasVisualizerBase::removePathVisualization(const PathVisualization *
 void PathCanvasVisualizerBase::setAlpha(const PathVisualization *path, double alpha) const
 {
     auto pathCanvasVisualization = static_cast<const PathCanvasVisualization *>(path);
-    pathCanvasVisualization->figure->setLineOpacity(alpha);
+    pathCanvasVisualization->figure->getPolylineFigure()->setLineOpacity(alpha);
+}
+
+void PathCanvasVisualizerBase::refreshPathVisualization(const PathVisualization *pathVisualization, cPacket *packet)
+{
+    PathVisualizerBase::refreshPathVisualization(pathVisualization, packet);
+    auto pathCanvasVisualization = static_cast<const PathCanvasVisualization *>(pathVisualization);
+    auto text = getPathVisualizationText(packet);
+    pathCanvasVisualization->figure->getLabelFigure()->setText(text.c_str());
 }
 
 } // namespace visualizer

@@ -282,10 +282,13 @@ void Hcf::recipientProcessReceivedFrame(Ieee80211Frame* frame)
     else if (auto mgmtFrame = dynamic_cast<Ieee80211ManagementFrame*>(frame)) {
         sendUp(recipientDataService->managementFrameReceived(mgmtFrame));
         recipientProcessReceivedManagementFrame(mgmtFrame);
+        if (dynamic_cast<Ieee80211ActionFrame *>(mgmtFrame))
+            delete mgmtFrame;
     }
     else { // TODO: else if (auto ctrlFrame = dynamic_cast<Ieee80211ControlFrame*>(frame))
         sendUp(recipientDataService->controlFrameReceived(frame, recipientBlockAckAgreementHandler));
         recipientProcessReceivedControlFrame(frame);
+        delete frame;
     }
 }
 
@@ -361,7 +364,6 @@ void Hcf::originatorProcessRtsProtectionFailed(Ieee80211DataOrMgmtFrame* protect
             edcaInProgressFrames[ac]->dropFrame(protectedFrame);
             emit(NF_LINK_BREAK, protectedFrame);
             emit(NF_PACKET_DROP, protectedFrame);
-            delete protectedFrame;
         }
     }
     else
@@ -450,7 +452,6 @@ void Hcf::originatorProcessFailedFrame(Ieee80211DataOrMgmtFrame* failedFrame)
                 // bool lifetimeExpired = lifetimeHandler->isLifetimeExpired(failedFrame);
                 // if (lifetimeExpired) {
                 //    inProgressFrames->dropFrame(failedFrame);
-                //    delete dataFrame;
                 // }
             }
             else
@@ -476,7 +477,6 @@ void Hcf::originatorProcessFailedFrame(Ieee80211DataOrMgmtFrame* failedFrame)
             edcaInProgressFrames[ac]->dropFrame(failedFrame);
             emit(NF_LINK_BREAK, failedFrame);
             emit(NF_PACKET_DROP, failedFrame);
-            delete failedFrame;
         }
         else
             failedFrame->setRetry(true);
@@ -499,7 +499,6 @@ void Hcf::originatorProcessReceivedFrame(Ieee80211Frame* frame, Ieee80211Frame* 
     }
     else
         throw cRuntimeError("Hcca is unimplemented!");
-    delete frame;
 }
 
 void Hcf::originatorProcessReceivedManagementFrame(Ieee80211ManagementFrame* frame, Ieee80211Frame* lastTransmittedFrame, AccessCategory ac)
@@ -588,7 +587,7 @@ void Hcf::sendUp(const std::vector<Ieee80211Frame*>& completeFrames)
 {
     for (auto frame : completeFrames) {
         // FIXME: mgmt module does not handle addba req ..
-        if (!dynamic_cast<Ieee80211AddbaRequest*>(frame) && !dynamic_cast<Ieee80211AddbaResponse*>(frame) && !dynamic_cast<Ieee80211Delba*>(frame))
+        if (!dynamic_cast<Ieee80211ActionFrame *>(frame))
             mac->sendUp(frame);
     }
 }

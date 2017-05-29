@@ -60,11 +60,11 @@ void MobilityCanvasVisualizer::refreshDisplay() const
         auto position = canvasProjection->computeCanvasPoint(mobility->getCurrentPosition());
         auto orientation = mobility->getCurrentAngularPosition();
         auto velocity = canvasProjection->computeCanvasPoint(mobility->getCurrentSpeed());
-        mobilityVisualization->networkNodeVisualization->setTransform(cFigure::Transform().translate(position.x, position.y));
+        mobilityVisualization->networkNodeVisualization->setPosition(cFigure::Point(position.x, position.y));
         if (mobilityVisualization->visualRepresentation != nullptr)
             setPosition(mobilityVisualization->visualRepresentation, position);
         if (displayOrientations) {
-            // TODO: this doesn't correctly take canvas projetion into account
+            // TODO: this doesn't correctly take canvas projection into account
             double angle = orientation.alpha;
             mobilityVisualization->orientationFigure->setStartAngle(angle - M_PI * orientationArcSize);
             mobilityVisualization->orientationFigure->setEndAngle(angle + M_PI * orientationArcSize);
@@ -182,8 +182,10 @@ void MobilityCanvasVisualizer::extendMovementTrail(const IMobility *mobility, Tr
 void MobilityCanvasVisualizer::receiveSignal(cComponent *source, simsignal_t signal, cObject *object, cObject *details)
 {
     Enter_Method_Silent();
-    if (signal == IMobility::mobilityStateChangedSignal)
-        ensureMobilityVisualization(dynamic_cast<IMobility *>(object));
+    if (signal == IMobility::mobilityStateChangedSignal) {
+        if (moduleFilter.matches(check_and_cast<cModule *>(source)))
+            ensureMobilityVisualization(dynamic_cast<IMobility *>(source));
+    }
     else
         throw cRuntimeError("Unknown signal");
 }
