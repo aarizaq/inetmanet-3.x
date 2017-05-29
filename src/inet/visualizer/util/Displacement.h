@@ -15,30 +15,34 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef __INET_NETWORKNODEVISUALIZERBASE_H
-#define __INET_NETWORKNODEVISUALIZERBASE_H
+#ifndef __INET_DISPLACEMENT_H
+#define __INET_DISPLACEMENT_H
 
-#include "inet/visualizer/base/VisualizerBase.h"
-#include "inet/visualizer/util/NetworkNodeFilter.h"
+#include "inet/common/INETDefs.h"
 
 namespace inet {
 
 namespace visualizer {
 
-class INET_API NetworkNodeVisualizerBase : public VisualizerBase, public cListener
+enum INET_API Displacement
 {
-  protected:
-    NetworkNodeFilter nodeFilter;
-    double annotationSpacing;
-
-  protected:
-    virtual void initialize(int stage) override;
-    virtual void handleParameterChange(const char *name) override;
+    DISPLACEMENT_NONE          = 0x00,
+    DISPLACEMENT_TOP_LEFT      = 0x01,
+    DISPLACEMENT_TOP_CENTER    = 0x02,
+    DISPLACEMENT_TOP_RIGHT     = 0x04,
+    DISPLACEMENT_CENTER_LEFT   = 0x08,
+    DISPLACEMENT_CENTER_RIGHT  = 0x10,
+    DISPLACEMENT_BOTTOM_LEFT   = 0x20,
+    DISPLACEMENT_BOTTOM_CENTER = 0x40,
+    DISPLACEMENT_BOTTOM_RIGHT  = 0x80,
+    DISPLACEMENT_ANY           = 0xFF
 };
+
+Displacement parseDisplacement(const char *s);
 
 } // namespace visualizer
 
 } // namespace inet
 
-#endif // ifndef __INET_NETWORKNODEVISUALIZERBASE_H
+#endif // ifndef __INET_DISPLACEMENT_H
 
