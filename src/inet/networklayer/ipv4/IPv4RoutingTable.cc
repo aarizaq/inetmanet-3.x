@@ -351,8 +351,9 @@ bool IPv4RoutingTable::isLocalAddress(const IPv4Address& dest) const
     if (localAddresses.empty()) {
         // collect interface addresses if not yet done
         for (int i = 0; i < ift->getNumInterfaces(); i++) {
-            IPv4Address interfaceAddr = ift->getInterface(i)->ipv4Data()->getIPAddress();
-            localAddresses.insert(interfaceAddr);
+            auto ipv4Data = ift->getInterface(i)->ipv4Data();
+            if (ipv4Data != nullptr)
+                localAddresses.insert(ipv4Data->getIPAddress());
         }
     }
 
@@ -590,6 +591,7 @@ void IPv4RoutingTable::internalAddRoute(IPv4Route *entry)
 void IPv4RoutingTable::addRoute(IPv4Route *entry)
 {
     Enter_Method("addRoute(...)");
+    EV_INFO << "add route " << entry->info() << "\n";
 
     internalAddRoute(entry);
 
@@ -615,6 +617,7 @@ IPv4Route *IPv4RoutingTable::removeRoute(IPv4Route *entry)
     entry = internalRemoveRoute(entry);
 
     if (entry != nullptr) {
+        EV_INFO << "remove route " << entry->info() << "\n";
         invalidateCache();
         ASSERT(entry->getRoutingTable() == this);    // still filled in, for the listeners' benefit
         emit(NF_ROUTE_DELETED, entry);
@@ -630,6 +633,7 @@ bool IPv4RoutingTable::deleteRoute(IPv4Route *entry)    //TODO this is almost du
     entry = internalRemoveRoute(entry);
 
     if (entry != nullptr) {
+        EV_INFO << "delete route " << entry->info() << "\n";
         invalidateCache();
         ASSERT(entry->getRoutingTable() == this);    // still filled in, for the listeners' benefit
         emit(NF_ROUTE_DELETED, entry);
