@@ -24,11 +24,11 @@ namespace inet {
 
 namespace visualizer {
 
-NetworkNodeCanvasVisualization::Annotation::Annotation(cFigure *figure, const cFigure::Point& size, Displacement displacement, double priority) :
+NetworkNodeCanvasVisualization::Annotation::Annotation(cFigure *figure, const cFigure::Point& size, Displacement displacementHint, double displacementPriority) :
     figure(figure),
     bounds(cFigure::Rectangle(NaN, NaN, size.x, size.y)),
-    displacement(displacement),
-    priority(priority)
+    displacementHint(displacementHint),
+    displacementPriority(displacementPriority)
 {
 }
 
@@ -38,10 +38,11 @@ static BoxedLabelFigure *createRectangle(const char *label) {
     return figure;
 }
 
-NetworkNodeCanvasVisualization::NetworkNodeCanvasVisualization(cModule *networkNode, double annotationSpacing) :
+NetworkNodeCanvasVisualization::NetworkNodeCanvasVisualization(cModule *networkNode, double annotationSpacing, double displacementPenalty) :
     cGroupFigure(networkNode->getFullName()),
     networkNode(networkNode),
-    annotationSpacing(annotationSpacing)
+    annotationSpacing(annotationSpacing),
+    displacementPenalty(displacementPenalty)
 {
     annotationFigure = new cPanelFigure("annotation");
     addFigure(annotationFigure);
@@ -52,13 +53,15 @@ NetworkNodeCanvasVisualization::NetworkNodeCanvasVisualization(cModule *networkN
 
 void NetworkNodeCanvasVisualization::refreshDisplay()
 {
-    if (isLayoutInvalid)
+    if (isLayoutInvalid) {
         layout();
+        isLayoutInvalid = false;
+    }
 }
 
-void NetworkNodeCanvasVisualization::addAnnotation(cFigure *figure, cFigure::Point size, Displacement displacement, double priority)
+void NetworkNodeCanvasVisualization::addAnnotation(cFigure *figure, cFigure::Point size, Displacement displacementHint, double displacementPriority)
 {
-    annotations.push_back(Annotation(figure, size, displacement, priority));
+    annotations.push_back(Annotation(figure, size, displacementHint, displacementPriority));
     annotationFigure->addFigure(figure);
     isLayoutInvalid = true;
 }
@@ -155,29 +158,51 @@ static void pushUnlessContains(std::vector<cFigure::Point>& pts, const std::vect
     pts.push_back(pt);
 }
 
-static Displacement getDisplacement(const cFigure::Rectangle& rc, const cFigure::Point& pt) {
+static double getDistance(const cFigure::Rectangle& rc, const cFigure::Point& pt) {
     if (pt.x <= rc.x && pt.y <= rc.y)
-        return DISPLACEMENT_TOP_LEFT;
+        return pt.distanceTo(getTopLeft(rc));
     else if (rc.x <= pt.x && pt.x <= rc.x + rc.width && pt.y <= rc.y)
-        return DISPLACEMENT_TOP_CENTER;
+        return fabs(pt.y - rc.y);
     else if (pt.x >= rc.x + rc.width && pt.y <= rc.y)
-        return DISPLACEMENT_TOP_RIGHT;
+        return pt.distanceTo(getTopRight(rc));
     else if (pt.x <= rc.x && rc.y <= pt.y && pt.y <= rc.y + rc.height)
-        return DISPLACEMENT_CENTER_LEFT;
+        return fabs(pt.x - rc.x);
     else if (pt.x >= rc.x + rc.width && rc.y <= pt.y && pt.y <= rc.y + rc.height)
-        return DISPLACEMENT_CENTER_RIGHT;
+        return fabs(pt.x - (rc.x + rc.width));
     else if (pt.x <= rc.x && pt.y >= rc.y + rc.height)
-        return DISPLACEMENT_BOTTOM_LEFT;
+        return pt.distanceTo(getBottomLeft(rc));
     else if (rc.x <= pt.x && pt.x <= rc.x + rc.width && pt.y >= rc.y + rc.height)
-        return DISPLACEMENT_BOTTOM_CENTER;
+        return fabs(pt.y - (rc.y + rc.height));
     else if (pt.x >= rc.x + rc.width && pt.y >= rc.y + rc.height)
-        return DISPLACEMENT_BOTTOM_RIGHT;
+        return pt.distanceTo(getBottomRight(rc));
     else
-        return DISPLACEMENT_NONE;
+        return 0;
 }
 
-bool NetworkNodeCanvasVisualization::Annotation::comparePriority(const Annotation& a1, const Annotation& a2) {
-    return a1.priority < a2.priority;
+static double getClosestDisplacementDistance(const cFigure::Rectangle& rc, Displacement displacement, const cFigure::Point& pt) {
+    double size = 1000;
+    double distance = std::numeric_limits<double>::infinity();
+    if (displacement & DISPLACEMENT_TOP_LEFT)
+        distance = std::min(distance, getDistance(cFigure::Rectangle(rc.x - size, rc.y - size, size, size), pt));
+    if (displacement & DISPLACEMENT_TOP_CENTER)
+        distance = std::min(distance, getDistance(cFigure::Rectangle(rc.x, rc.y - size, rc.width, size), pt));
+    if (displacement & DISPLACEMENT_TOP_RIGHT)
+        distance = std::min(distance, getDistance(cFigure::Rectangle(rc.x + rc.width, rc.y - size, size, size), pt));
+    if (displacement & DISPLACEMENT_CENTER_LEFT)
+        distance = std::min(distance, getDistance(cFigure::Rectangle(rc.x - size, rc.y, size, rc.height), pt));
+    if (displacement & DISPLACEMENT_CENTER_RIGHT)
+        distance = std::min(distance, getDistance(cFigure::Rectangle(rc.x + rc.width, rc.y, size, rc.height), pt));
+    if (displacement & DISPLACEMENT_BOTTOM_LEFT)
+        distance = std::min(distance, getDistance(cFigure::Rectangle(rc.x - size, rc.y + rc.height, size, size), pt));
+    if (displacement & DISPLACEMENT_BOTTOM_CENTER)
+        distance = std::min(distance, getDistance(cFigure::Rectangle(rc.x, rc.y + rc.height, rc.width, size), pt));
+    if (displacement & DISPLACEMENT_BOTTOM_RIGHT)
+        distance = std::min(distance, getDistance(cFigure::Rectangle(rc.x + rc.width, rc.y + rc.height, size, size), pt));
+    return distance;
+}
+
+bool NetworkNodeCanvasVisualization::Annotation::compareDisplacementPriority(const Annotation& a1, const Annotation& a2) {
+    return a1.displacementPriority < a2.displacementPriority;
 }
 
 void NetworkNodeCanvasVisualization::layout()
@@ -185,10 +210,10 @@ void NetworkNodeCanvasVisualization::layout()
     std::vector<cFigure::Rectangle> rcs;  // rectangles of annotations already positioned
     std::vector<cFigure::Point> pts;  // candidate points where annotations may be positioned
     cFigure::Rectangle extendendSubmoduleBounds = submoduleBounds;
-    extendendSubmoduleBounds.x -= annotationSpacing;
-    extendendSubmoduleBounds.y -= annotationSpacing;
-    extendendSubmoduleBounds.width += 2 * annotationSpacing;
-    extendendSubmoduleBounds.height += 2 * annotationSpacing;
+    extendendSubmoduleBounds.x -= annotationSpacing / 2;
+    extendendSubmoduleBounds.y -= annotationSpacing / 2;
+    extendendSubmoduleBounds.width += annotationSpacing;
+    extendendSubmoduleBounds.height += annotationSpacing;
     rcs.push_back(extendendSubmoduleBounds);
     pts.push_back(getTopLeft(extendendSubmoduleBounds));
     pts.push_back(getTopCenter(extendendSubmoduleBounds));
@@ -199,7 +224,7 @@ void NetworkNodeCanvasVisualization::layout()
     pts.push_back(getBottomCenter(extendendSubmoduleBounds));
     pts.push_back(getBottomRight(extendendSubmoduleBounds));
 
-    std::sort(annotations.begin(), annotations.end(), Annotation::comparePriority);
+    std::sort(annotations.begin(), annotations.end(), Annotation::compareDisplacementPriority);
 
     // delete all annotation positions
     for (auto it = annotations.begin(); it != annotations.end(); it++) {
@@ -212,7 +237,7 @@ void NetworkNodeCanvasVisualization::layout()
         auto& annotation = *it;
         if (!annotation.figure->isVisible())
             continue;
-        cFigure::Point rs = cFigure::Point(annotation.bounds.width, annotation.bounds.height);
+        cFigure::Point rs = cFigure::Point(annotation.bounds.width + annotationSpacing, annotation.bounds.height + annotationSpacing);
 
         // find the best minimizing the distance cost function
         double bestDistance = std::numeric_limits<double>::infinity();
@@ -260,9 +285,11 @@ void NetworkNodeCanvasVisualization::layout()
                         break;
                 }
 
-                Displacement candidateDisplacement = getDisplacement(submoduleBounds, getCenterCenter(candidateRc));
-                if (!(annotation.displacement & candidateDisplacement))
-                    continue;
+                double distance = 0;
+                distance += getClosestDisplacementDistance(submoduleBounds, annotation.displacementHint, getTopLeft(candidateRc)) * displacementPenalty;
+                distance += getClosestDisplacementDistance(submoduleBounds, annotation.displacementHint, getTopRight(candidateRc)) * displacementPenalty;
+                distance += getClosestDisplacementDistance(submoduleBounds, annotation.displacementHint, getBottomLeft(candidateRc)) * displacementPenalty;
+                distance += getClosestDisplacementDistance(submoduleBounds, annotation.displacementHint, getBottomRight(candidateRc)) * displacementPenalty;
 
                 // find an already positioned annotation which would intersect the candidate rectangle
                 bool intersects = false;
@@ -277,7 +304,7 @@ void NetworkNodeCanvasVisualization::layout()
                     continue;
 
                 // if better than the current best
-                double distance = getCenterCenter(submoduleBounds).distanceTo(getCenterCenter(candidateRc));
+                distance += getCenterCenter(submoduleBounds).distanceTo(getCenterCenter(candidateRc));
                 if (distance < bestDistance) {
                     bestRc = candidateRc;
                     bestDistance = distance;
@@ -289,14 +316,9 @@ void NetworkNodeCanvasVisualization::layout()
 
     found:
         // store position and rectangle
-        annotation.bounds = cFigure::Rectangle(bestRc.x, bestRc.y, annotation.bounds.width, annotation.bounds.height);
+        annotation.bounds.x = bestRc.x + annotationSpacing / 2;
+        annotation.bounds.y = bestRc.y + annotationSpacing / 2;
         annotation.figure->setTransform(cFigure::Transform().translate(annotation.bounds.x, annotation.bounds.y));
-
-        // grow rectangle
-        bestRc.x -= annotationSpacing;
-        bestRc.y -= annotationSpacing;
-        bestRc.width += 2 * annotationSpacing;
-        bestRc.height += 2 * annotationSpacing;
 
         // delete candidate points covered by best rc
         for (int j = 0; j < (int)pts.size(); j++) {

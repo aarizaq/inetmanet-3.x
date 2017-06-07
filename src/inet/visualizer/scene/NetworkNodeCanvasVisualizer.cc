@@ -59,10 +59,10 @@ void NetworkNodeCanvasVisualizer::refreshDisplay() const
 
 NetworkNodeCanvasVisualization *NetworkNodeCanvasVisualizer::createNetworkNodeVisualization(cModule *networkNode) const
 {
-    return new NetworkNodeCanvasVisualization(networkNode, annotationSpacing);
+    return new NetworkNodeCanvasVisualization(networkNode, annotationSpacing, displacementPenalty);
 }
 
-NetworkNodeCanvasVisualization *NetworkNodeCanvasVisualizer::getNeworkNodeVisualization(const cModule *networkNode) const
+NetworkNodeCanvasVisualization *NetworkNodeCanvasVisualizer::getNetworkNodeVisualization(const cModule *networkNode) const
 {
     auto it = networkNodeVisualizations.find(networkNode);
     return it == networkNodeVisualizations.end() ? nullptr : it->second;

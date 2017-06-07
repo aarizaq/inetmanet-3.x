@@ -1,5 +1,5 @@
 //
-// Copyright (C) OpenSim Ltd.
+// Copyright (C) 2013 OpenSim Ltd.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -15,26 +15,32 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef __INET_SCENEVISUALIZERBASE_H
-#define __INET_SCENEVISUALIZERBASE_H
+#ifndef __INET_IEEE80211IDEALRECEIVER_H
+#define __INET_IEEE80211IDEALRECEIVER_H
 
-#include "inet/common/geometry/object/Box.h"
-#include "inet/visualizer/base/VisualizerBase.h"
+#include "inet/physicallayer/idealradio/IdealReceiver.h"
 
 namespace inet {
 
-namespace visualizer {
+namespace physicallayer {
 
-class INET_API SceneVisualizerBase : public VisualizerBase
+// TODO: Ieee80211ReceiverBase
+class INET_API Ieee80211IdealReceiver : public IdealReceiver
 {
   protected:
     virtual void initialize(int stage) override;
-    virtual Box getPlaygroundBounds();
+
+    virtual const ReceptionIndication *computeReceptionIndication(const ISNIR *snir) const override;
+
+  public:
+    Ieee80211IdealReceiver();
+
+    virtual std::ostream& printToStream(std::ostream& stream, int level) const override;
 };
 
-} // namespace visualizer
+} // namespace physicallayer
 
 } // namespace inet
 
-#endif // ifndef __INET_SCENEVISUALIZERBASE_H
+#endif // ifndef __INET_IEEE80211IDEALRECEIVER_H
 

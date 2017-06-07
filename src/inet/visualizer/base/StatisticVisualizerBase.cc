@@ -80,7 +80,8 @@ void StatisticVisualizerBase::initialize(int stage)
         textColor = cFigure::Color(par("textColor"));
         backgroundColor = cFigure::Color(par("backgroundColor"));
         opacity = par("opacity");
-        displacement = parseDisplacement(par("displacement"));
+        displacementHint = parseDisplacement(par("displacementHint"));
+        displacementPriority = par("displacementPriority");
         if (displayStatistics)
             subscribe();
     }
@@ -217,20 +218,16 @@ void StatisticVisualizerBase::processSignal(cComponent *source, simsignal_t sign
 void StatisticVisualizerBase::refreshStatisticVisualization(const StatisticVisualization *statisticVisualization)
 {
     double value = statisticVisualization->recorder->getLastValue();
-    if (std::isnan(value))
+    if (std::isnan(value) || units.empty()) {
         statisticVisualization->printValue = value;
+        statisticVisualization->printUnit = statisticVisualization->unit == nullptr ? "" : statisticVisualization->unit;
+    }
     else {
-        if (!units.empty()) {
-            for (auto& unit : units) {
-                statisticVisualization->printUnit = unit.c_str();
-                statisticVisualization->printValue = cNEDValue::convertUnit(value, statisticVisualization->unit, statisticVisualization->printUnit);
-                if (statisticVisualization->printValue > 1)
-                    break;
-            }
-        }
-        else {
-            statisticVisualization->printValue = value;
-            statisticVisualization->printUnit = statisticVisualization->unit == nullptr ? "" : statisticVisualization->unit;
+        for (auto& unit : units) {
+            statisticVisualization->printUnit = unit.c_str();
+            statisticVisualization->printValue = cNEDValue::convertUnit(value, statisticVisualization->unit, statisticVisualization->printUnit);
+            if (statisticVisualization->printValue > 1)
+                break;
         }
     }
 }

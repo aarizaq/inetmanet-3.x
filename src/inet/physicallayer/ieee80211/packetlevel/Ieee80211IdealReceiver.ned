@@ -1,5 +1,5 @@
 //
-// Copyright (C) OpenSim Ltd.
+// Copyright (C) 2013 OpenSim Ltd
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -15,26 +15,13 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef __INET_SCENEVISUALIZERBASE_H
-#define __INET_SCENEVISUALIZERBASE_H
+package inet.physicallayer.ieee80211.packetlevel;
 
-#include "inet/common/geometry/object/Box.h"
-#include "inet/visualizer/base/VisualizerBase.h"
-
-namespace inet {
-
-namespace visualizer {
-
-class INET_API SceneVisualizerBase : public VisualizerBase
+//
+// See also ~Ieee80211IdealTransmitter, ~Ieee80211IdealRadio, and ~IdealRadioMedium.
+//
+module Ieee80211IdealReceiver extends Ieee80211ReceiverBase
 {
-  protected:
-    virtual void initialize(int stage) override;
-    virtual Box getPlaygroundBounds();
-};
-
-} // namespace visualizer
-
-} // namespace inet
-
-#endif // ifndef __INET_SCENEVISUALIZERBASE_H
-
+    parameters:
+        @class(Ieee80211IdealReceiver);
+}
