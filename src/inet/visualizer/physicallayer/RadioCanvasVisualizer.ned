@@ -15,25 +15,19 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef __INET_PHYSICALLINKOSGVISUALIZER_H
-#define __INET_PHYSICALLINKOSGVISUALIZER_H
+package inet.visualizer.physicallayer;
 
-#include "inet/visualizer/base/LinkOsgVisualizerBase.h"
+import inet.visualizer.base.RadioVisualizerBase;
+import inet.visualizer.contract.IRadioVisualizer;
 
-namespace inet {
-
-namespace visualizer {
-
-class INET_API PhysicalLinkOsgVisualizer : public LinkOsgVisualizerBase
+//
+// This module visualizes radios on a 2D canvas.
+//
+// @see ~RadioOsgVisualizer, ~RadioVisualizer, ~RadioVisualizerBase, ~IRadioVisualizer
+//
+simple RadioCanvasVisualizer extends RadioVisualizerBase like IRadioVisualizer
 {
-  protected:
-    virtual bool isLinkStart(cModule *module) const override;
-    virtual bool isLinkEnd(cModule *module) const override;
-};
-
-} // namespace visualizer
-
-} // namespace inet
-
-#endif // ifndef __INET_PHYSICALLINKOSGVISUALIZER_H
-
+    parameters:
+        double zIndex = default(10); // determines the drawing order of figures relative to other visualizers
+        @class(RadioCanvasVisualizer);
+}

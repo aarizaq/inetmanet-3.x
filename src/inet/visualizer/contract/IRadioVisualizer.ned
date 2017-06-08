@@ -15,25 +15,16 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef __INET_PHYSICALLINKOSGVISUALIZER_H
-#define __INET_PHYSICALLINKOSGVISUALIZER_H
+package inet.visualizer.contract;
 
-#include "inet/visualizer/base/LinkOsgVisualizerBase.h"
-
-namespace inet {
-
-namespace visualizer {
-
-class INET_API PhysicalLinkOsgVisualizer : public LinkOsgVisualizerBase
+//
+// This module interface allows configuring different ~IRadioVisualizer
+// submodules from INI files. Such a visualizer displays radios.
+//
+// @see ~RadioCanvasVisualizer, ~RadioOsgVisualizer, ~RadioVisualizer, ~RadioVisualizerBase
+//
+moduleinterface IRadioVisualizer
 {
-  protected:
-    virtual bool isLinkStart(cModule *module) const override;
-    virtual bool isLinkEnd(cModule *module) const override;
-};
-
-} // namespace visualizer
-
-} // namespace inet
-
-#endif // ifndef __INET_PHYSICALLINKOSGVISUALIZER_H
-
+    parameters:
+        @display("i=block/app_s");
+}
