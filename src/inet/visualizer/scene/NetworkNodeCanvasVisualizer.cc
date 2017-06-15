@@ -35,10 +35,8 @@ void NetworkNodeCanvasVisualizer::initialize(int stage)
         for (cModule::SubmoduleIterator it(getSystemModule()); !it.end(); it++) {
             auto networkNode = *it;
             if (isNetworkNode(networkNode) && nodeFilter.matches(networkNode)) {
-                auto position = canvasProjection->computeCanvasPoint(getPosition(networkNode));
                 auto visualization = createNetworkNodeVisualization(networkNode);
                 visualization->setZIndex(zIndex);
-                visualization->setTransform(cFigure::Transform().translate(position.x, position.y));
                 setNetworkNodeVisualization(networkNode, visualization);
                 visualizerTargetModule->getCanvas()->addFigure(visualization);
             }
@@ -59,10 +57,10 @@ void NetworkNodeCanvasVisualizer::refreshDisplay() const
 
 NetworkNodeCanvasVisualization *NetworkNodeCanvasVisualizer::createNetworkNodeVisualization(cModule *networkNode) const
 {
-    return new NetworkNodeCanvasVisualization(networkNode, annotationSpacing);
+    return new NetworkNodeCanvasVisualization(networkNode, annotationSpacing, displacementPenalty);
 }
 
-NetworkNodeCanvasVisualization *NetworkNodeCanvasVisualizer::getNeworkNodeVisualization(const cModule *networkNode) const
+NetworkNodeCanvasVisualization *NetworkNodeCanvasVisualizer::getNetworkNodeVisualization(const cModule *networkNode) const
 {
     auto it = networkNodeVisualizations.find(networkNode);
     return it == networkNodeVisualizations.end() ? nullptr : it->second;

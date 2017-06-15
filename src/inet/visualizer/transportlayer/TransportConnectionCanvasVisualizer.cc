@@ -45,9 +45,10 @@ void TransportConnectionCanvasVisualizer::initialize(int stage)
 
 LabeledIconFigure *TransportConnectionCanvasVisualizer::createConnectionEndFigure(tcp::TCPConnection *tcpConnection) const
 {
+#ifdef WITH_TCP_INET
     std::string icon(this->icon);
     auto labeledIconFigure = new LabeledIconFigure("transportConnection");
-    labeledIconFigure->setTags("transport_connection");
+    labeledIconFigure->setTags((std::string("transport_connection ") + tags).c_str());
     labeledIconFigure->setTooltip("This icon represents a transport connection between two network nodes");
     labeledIconFigure->setAssociatedObject(tcpConnection);
     labeledIconFigure->setZIndex(zIndex);
@@ -66,6 +67,9 @@ LabeledIconFigure *TransportConnectionCanvasVisualizer::createConnectionEndFigur
     label[1] = '\0';
     labelFigure->setText(label);
     return labeledIconFigure;
+#else
+    return nullptr;
+#endif // WITH_TCP_INET
 }
 
 const TransportConnectionVisualizerBase::TransportConnectionVisualization *TransportConnectionCanvasVisualizer::createConnectionVisualization(cModule *source, cModule *destination, tcp::TCPConnection *tcpConnection) const
@@ -80,11 +84,11 @@ void TransportConnectionCanvasVisualizer::addConnectionVisualization(const Trans
     TransportConnectionVisualizerBase::addConnectionVisualization(connectionVisualization);
     auto connectionCanvasVisualization = static_cast<const TransportConnectionCanvasVisualization *>(connectionVisualization);
     auto sourceModule = getSimulation()->getModule(connectionVisualization->sourceModuleId);
-    auto sourceVisualization = networkNodeVisualizer->getNeworkNodeVisualization(getContainingNode(sourceModule));
-    sourceVisualization->addAnnotation(connectionCanvasVisualization->sourceFigure, connectionCanvasVisualization->sourceFigure->getBounds().getSize(), displacement);
+    auto sourceVisualization = networkNodeVisualizer->getNetworkNodeVisualization(getContainingNode(sourceModule));
+    sourceVisualization->addAnnotation(connectionCanvasVisualization->sourceFigure, connectionCanvasVisualization->sourceFigure->getBounds().getSize(), displacementHint, displacementPriority);
     auto destinationModule = getSimulation()->getModule(connectionVisualization->destinationModuleId);
-    auto destinationVisualization = networkNodeVisualizer->getNeworkNodeVisualization(getContainingNode(destinationModule));
-    destinationVisualization->addAnnotation(connectionCanvasVisualization->destinationFigure, connectionCanvasVisualization->destinationFigure->getBounds().getSize(), displacement);
+    auto destinationVisualization = networkNodeVisualizer->getNetworkNodeVisualization(getContainingNode(destinationModule));
+    destinationVisualization->addAnnotation(connectionCanvasVisualization->destinationFigure, connectionCanvasVisualization->destinationFigure->getBounds().getSize(), displacementHint, displacementPriority);
     setConnectionLabelsVisible(connectionVisualizations.size() > iconColorSet.getSize());
 }
 
@@ -93,10 +97,10 @@ void TransportConnectionCanvasVisualizer::removeConnectionVisualization(const Tr
     TransportConnectionVisualizerBase::removeConnectionVisualization(connectionVisualization);
     auto connectionCanvasVisualization = static_cast<const TransportConnectionCanvasVisualization *>(connectionVisualization);
     auto sourceModule = getSimulation()->getModule(connectionVisualization->sourceModuleId);
-    auto sourceVisualization = networkNodeVisualizer->getNeworkNodeVisualization(getContainingNode(sourceModule));
+    auto sourceVisualization = networkNodeVisualizer->getNetworkNodeVisualization(getContainingNode(sourceModule));
     sourceVisualization->removeAnnotation(connectionCanvasVisualization->sourceFigure);
     auto destinationModule = getSimulation()->getModule(connectionVisualization->destinationModuleId);
-    auto destinationVisualization = networkNodeVisualizer->getNeworkNodeVisualization(getContainingNode(destinationModule));
+    auto destinationVisualization = networkNodeVisualizer->getNetworkNodeVisualization(getContainingNode(destinationModule));
     destinationVisualization->removeAnnotation(connectionCanvasVisualization->destinationFigure);
     setConnectionLabelsVisible(connectionVisualizations.size() > iconColorSet.getSize());
 }

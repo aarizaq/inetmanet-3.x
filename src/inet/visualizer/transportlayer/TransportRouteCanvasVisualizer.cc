@@ -43,6 +43,21 @@ namespace visualizer {
 
 Define_Module(TransportRouteCanvasVisualizer);
 
+bool TransportRouteCanvasVisualizer::isPathStart(cModule *module) const
+{
+#ifdef WITH_UDP
+    if (dynamic_cast<UDP *>(module) != nullptr)
+        return true;
+#endif
+
+#ifdef WITH_TCP_INET
+    if (dynamic_cast<tcp::TCP *>(module) != nullptr)
+        return true;
+#endif
+
+    return false;
+}
+
 bool TransportRouteCanvasVisualizer::isPathEnd(cModule *module) const
 {
 #ifdef WITH_UDP
@@ -81,7 +96,7 @@ bool TransportRouteCanvasVisualizer::isPathElement(cModule *module) const
 const PathCanvasVisualizerBase::PathVisualization *TransportRouteCanvasVisualizer::createPathVisualization(const std::vector<int>& path, cPacket *packet) const
 {
     auto pathVisualization = static_cast<const PathCanvasVisualization *>(PathCanvasVisualizerBase::createPathVisualization(path, packet));
-    pathVisualization->figure->setTags("transport_route");
+    pathVisualization->figure->setTags((std::string("transport_route ") + tags).c_str());
     pathVisualization->figure->setTooltip("This polyline arrow represents a recently active transport route between two network nodes");
     pathVisualization->shiftPriority = 4;
     return pathVisualization;

@@ -17,8 +17,10 @@
 
 #include "inet/common/ModuleAccess.h"
 #include "inet/common/NotifierConsts.h"
+#ifdef WITH_IEEE80211
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtAP.h"
 #include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtSTA.h"
+#endif // WITH_IEEE80211
 #include "inet/networklayer/common/L3AddressResolver.h"
 #include "inet/visualizer/base/Ieee80211VisualizerBase.h"
 
@@ -50,7 +52,8 @@ void Ieee80211VisualizerBase::initialize(int stage)
         iconColorSet.parseColors(par("iconColor"));
         labelFont = cFigure::parseFont(par("labelFont"));
         labelColor = cFigure::Color(par("labelColor"));
-        displacement = parseDisplacement(par("displacement"));
+        displacementHint = parseDisplacement(par("displacementHint"));
+        displacementPriority = par("displacementPriority");
         if (displayAssociations)
             subscribe();
     }
@@ -120,6 +123,7 @@ void Ieee80211VisualizerBase::removeAllIeee80211Visualizations()
 
 void Ieee80211VisualizerBase::receiveSignal(cComponent *source, simsignal_t signal, cObject *object, cObject *details)
 {
+#ifdef WITH_IEEE80211
     Enter_Method_Silent();
     if (signal == NF_L2_ASSOCIATED) {
         auto networkNode = getContainingNode(check_and_cast<cModule *>(source));
@@ -165,6 +169,7 @@ void Ieee80211VisualizerBase::receiveSignal(cComponent *source, simsignal_t sign
     }
     else
         throw cRuntimeError("Unknown signal");
+#endif // WITH_IEEE80211
 }
 
 } // namespace visualizer

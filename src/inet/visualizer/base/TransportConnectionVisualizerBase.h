@@ -18,12 +18,17 @@
 #ifndef __INET_TRANSPORTCONNECTIONVISUALIZERBASE_H
 #define __INET_TRANSPORTCONNECTIONVISUALIZERBASE_H
 
-#include "inet/transportlayer/tcp/TCPConnection.h"
 #include "inet/visualizer/base/VisualizerBase.h"
 #include "inet/visualizer/util/ColorSet.h"
 #include "inet/visualizer/util/Displacement.h"
 #include "inet/visualizer/util/NetworkNodeFilter.h"
 #include "inet/visualizer/util/PortFilter.h"
+
+#ifdef WITH_TCP_INET
+#include "inet/transportlayer/tcp/TCPConnection.h"
+#else
+namespace inet { namespace tcp { class TCPConnection; } }
+#endif // WITH_TCP_INET
 
 namespace inet {
 
@@ -55,7 +60,8 @@ class INET_API TransportConnectionVisualizerBase : public VisualizerBase, public
     ColorSet iconColorSet;
     cFigure::Font labelFont;
     cFigure::Color labelColor;
-    Displacement displacement;
+    Displacement displacementHint;
+    double displacementPriority;
     //@}
 
     std::vector<const TransportConnectionVisualization *> connectionVisualizations;

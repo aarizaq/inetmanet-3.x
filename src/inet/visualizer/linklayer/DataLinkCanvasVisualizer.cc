@@ -25,6 +25,11 @@ namespace visualizer {
 
 Define_Module(DataLinkCanvasVisualizer);
 
+bool DataLinkCanvasVisualizer::isLinkStart(cModule *module) const
+{
+    return dynamic_cast<MACProtocolBase *>(module) != nullptr || dynamic_cast<MACBase *>(module) != nullptr;
+}
+
 bool DataLinkCanvasVisualizer::isLinkEnd(cModule *module) const
 {
     return dynamic_cast<MACProtocolBase *>(module) != nullptr || dynamic_cast<MACBase *>(module) != nullptr;
@@ -33,7 +38,7 @@ bool DataLinkCanvasVisualizer::isLinkEnd(cModule *module) const
 const LinkVisualizerBase::LinkVisualization *DataLinkCanvasVisualizer::createLinkVisualization(cModule *source, cModule *destination, cPacket *packet) const
 {
     auto linkVisualization = static_cast<const LinkCanvasVisualization *>(LinkCanvasVisualizerBase::createLinkVisualization(source, destination, packet));
-    linkVisualization->figure->setTags("data_link");
+    linkVisualization->figure->setTags((std::string("data_link ") + tags).c_str());
     linkVisualization->figure->setTooltip("This arrow represents a data link between two network nodes");
     linkVisualization->shiftPriority = 2;
     return linkVisualization;
