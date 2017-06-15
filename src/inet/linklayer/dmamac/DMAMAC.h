@@ -381,7 +381,7 @@ protected:
     simtime_t timeRef; // reference time synchronized with the sink
     bool isSincronized = false; // If the node is synchronized
     bool frequentHopping = false;
-    int initialSeed;
+    int initialSeed = 1;
 
     cMessage *hoppingTimer = nullptr;
 

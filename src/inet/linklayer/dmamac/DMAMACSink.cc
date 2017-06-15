@@ -73,7 +73,7 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
     if (hoppingTimer && msg == hoppingTimer) {
         scheduleAt(simTime()+slotDuration, hoppingTimer);
         // change channel
-        setRandSeq(simTime().raw());
+        setRandSeq(simTime().raw() + initialSeed);
         setNextSequenceChannel();
         if (par("useSignalsToChangeChannel").boolValue()) {
             DetailsChangeChannel details;
@@ -232,8 +232,11 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
 
                 /* @brief We start with sending notification message from the sink */
                 scheduleAt(simTime(), sendNotification);
-                if (hoppingTimer && !par ("useSignalsToChangeChannel").boolValue())
+/*                if (hoppingTimer && !par ("useSignalsToChangeChannel").boolValue()) {
+                    if (hoppingTimer->isScheduled())
+                        cancelEvent(hoppingTimer);
                     scheduleAt(simTime()+slotDuration, hoppingTimer);
+                }*/
                 break;
 
         /* @brief Sleep state definition */

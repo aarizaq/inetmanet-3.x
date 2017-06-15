@@ -398,6 +398,7 @@ void DMAMAC::initialize(int stage)
                 hoppingTimer = new cMessage("DMAMAC_HOPPING_TIMEOUT");
                 hoppingTimer->setSchedulingPriority(-2);
                 hoppingTimer->setKind(DMAMAC_HOPPING_TIMEOUT);
+                scheduleAt(par("initTime").doubleValue(), hoppingTimer);
             }
         }
         nodeStatus status;
@@ -594,10 +595,11 @@ void DMAMAC::handleUpperPacket(cPacket* msg){
 void DMAMAC::handleSelfMessage(cMessage* msg)
 {
     if (shutDown) {
+        delete msg;
         return;
     }
 
-    if (hoppingTimer && msg == hoppingTimer && isSincronized) {
+    if (hoppingTimer && msg == hoppingTimer) {
         scheduleAt(simTime()+slotDuration, hoppingTimer);
         // change channel
         setRandSeq(simTime().raw() + initialSeed);
@@ -1629,10 +1631,10 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
         }
         if (frequentHopping && randomGenerator && !par("useSignalsToChangeChannel").boolValue()) {
             timeRef = notification->getTimeRef();
-            initialSeed = notification->getInitialSeed();
+/*            initialSeed = notification->getInitialSeed();
             if (hoppingTimer->isScheduled())
                 cancelEvent(hoppingTimer);
-            scheduleAt(timeRef+slotDuration,hoppingTimer);
+            scheduleAt(timeRef+slotDuration,hoppingTimer);*/
             isSincronized = true;
         }
 
