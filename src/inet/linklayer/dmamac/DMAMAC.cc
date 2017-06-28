@@ -361,10 +361,6 @@ void DMAMAC::initialize(int stage)
         /* @brief My slot is same as myID assigned used for slot scheduling  */
         mySlot = myId;
 
-        /* @brief Schedule a self-message to start superFrame  */
-        scheduleAt(par("initTime").doubleValue(), startup);
-
-
         sendUppperLayer = par("sendUppperLayer"); // if false the module deletes the packet, other case, it sends the packet to the upper layer.
         procUppperLayer = par("procUppperLayer");
 
@@ -400,7 +396,14 @@ void DMAMAC::initialize(int stage)
                 hoppingTimer->setKind(DMAMAC_HOPPING_TIMEOUT);
                 scheduleAt(par("initTime").doubleValue(), hoppingTimer);
             }
+            if (channelSinc)
+                scheduleAt(par("initTime").doubleValue(), startup);
         }
+        else {
+            /* @brief Schedule a self-message to start superFrame  */
+            scheduleAt(par("initTime").doubleValue(), startup);
+        }
+
         nodeStatus status;
         status.currentMacMode = currentMacMode;
         status.currentMacState = currentMacState;
@@ -409,6 +412,13 @@ void DMAMAC::initialize(int stage)
 
         slotMap[myMacAddr.getInt()] = status;
         slotInfo[myMacAddr.getInt()] = mySlot;
+
+
+        if (radio->getRadioMode() != IRadio::RADIO_MODE_RECEIVER && !channelSinc)
+        {
+            radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
+            EV << "Switching Radio to RX mode" << endl;
+        }
     }
 }
 
@@ -599,11 +609,29 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
         return;
     }
 
-    if (hoppingTimer && msg == hoppingTimer) {
-        scheduleAt(simTime()+slotDuration, hoppingTimer);
+    if (!channelSinc && frequentHopping) {
+        if (hoppingTimer && msg == hoppingTimer) {
+            currentSlot++;
+            currentSlot %= numSlots;
+            if (currentSlot == 0) {
+                // change to the next channel
+                int channel = actualChannel+1;
+                if (channel > 26)
+                    channel = 11;
+                setChannel(channel);
+            }
+            if (timeRef+slotDuration < simTime())
+                timeRef = simTime();
+            scheduleAt(timeRef+slotDuration, hoppingTimer);
+            timeRef += slotDuration;
+        }
+    }
+    else if (hoppingTimer && msg == hoppingTimer) {
+        scheduleAt(timeRef+slotDuration, hoppingTimer);
         // change channel
-        setRandSeq(simTime().raw() + initialSeed);
+        setRandSeq(timeRef.raw() + initialSeed);
         setNextSequenceChannel();
+        timeRef += slotDuration;
         refreshDisplay();
         return;
     }
@@ -1165,6 +1193,10 @@ void DMAMAC::handleRadioSwitchedToTX() {
             attachSignal(data);
             EV_INFO << "Sending down data packet\n";
             macPktQueue.front().ret++;
+            if (channelSinc && frequentHopping) {
+                data->setTimeRef(simTime());
+                data->setInitialSeed(initialSeed);
+            }
             sendDown(data);
 
             /* @statistics */
@@ -1183,6 +1215,11 @@ void DMAMAC::handleRadioSwitchedToTX() {
             ack->setByteLength(11);
             attachSignal(ack);
             EV_INFO << "Sending ACK packet\n";
+            if (channelSinc && frequentHopping) {
+                ack->setTimeRef(simTime());
+                ack->setInitialSeed(initialSeed);
+            }
+
             sendDown(ack);
 
             /* @Statistics */
@@ -1205,6 +1242,10 @@ void DMAMAC::handleRadioSwitchedToTX() {
 
                 attachSignal(alert);
                 EV_INFO << "Forwarding Alert packet\n";
+                if (channelSinc && frequentHopping) {
+                    alert->setTimeRef(simTime());
+                    alert->setInitialSeed(initialSeed);
+                }
                 sendDown(alert);
 
                 /* @Statistics */
@@ -1229,6 +1270,10 @@ void DMAMAC::handleRadioSwitchedToTX() {
                 alert->setByteLength(11);
                 attachSignal(alert);
                 EV_INFO << "Sending #new Alert packet\n";
+                if (channelSinc && frequentHopping) {
+                    alert->setTimeRef(simTime());
+                    alert->setInitialSeed(initialSeed);
+                }
                 sendDown(alert);
 
                 /* @Statistics */
@@ -1494,8 +1539,8 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
                 longSeqMap[addr] = dmapkt->getSequence();
             }
             else {
-                double t = simTime().dbl();
-                double cre = dmapkt->getCreationTime().dbl();
+//                double t = simTime().dbl();
+//                double cre = dmapkt->getCreationTime().dbl();
                 isDupli = true;
             }
             isDup = isDupli;
@@ -1512,6 +1557,43 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
             }
             seqMap[dmapkt->getSrcAddr()] = dmapkt->getSeq();
         }*/
+    }
+
+    if (frequentHopping && !channelSinc) {
+        // Synchronize channel hopping
+        if (dmapkt && dmapkt->getTimeRef() != SimTime::ZERO) {
+            timeRef = dmapkt->getTimeRef();
+            initialSeed = dmapkt->getInitialSeed();
+            timeRef += slotDuration;
+            if (hoppingTimer->isScheduled())
+                cancelEvent(hoppingTimer);
+            scheduleAt(timeRef, hoppingTimer);
+            channelSinc = true;
+            // check if this message is a notification
+            DMAMACSinkPkt *notification  = dynamic_cast<DMAMACSinkPkt *>(msg);
+            if (notification == nullptr)
+                scheduleAt(simTime(), startup);
+        }
+        else {
+            auto alert = dynamic_cast<AlertPkt *>(msg);
+            if (alert && alert->getTimeRef() != SimTime::ZERO) {
+                timeRef = alert->getTimeRef();
+                initialSeed = alert->getInitialSeed();
+                timeRef += slotDuration;
+                if (hoppingTimer->isScheduled())
+                    cancelEvent(hoppingTimer);
+                scheduleAt(timeRef, hoppingTimer);
+                channelSinc = true;
+                // check if this message is a notification
+                DMAMACSinkPkt *notification  = dynamic_cast<DMAMACSinkPkt *>(msg);
+                if (notification == nullptr)
+                    scheduleAt(simTime(), startup);
+            }
+        }
+        if (!channelSinc) {
+            delete msg;
+            return;
+        }
     }
 
     if(currentMacState == WAIT_DATA)

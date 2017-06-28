@@ -380,6 +380,7 @@ protected:
     // variables used to frequent hopping
     simtime_t timeRef; // reference time synchronized with the sink
     bool isSincronized = false; // If the node is synchronized
+    bool channelSinc = false; // If the node is synchronized
     bool frequentHopping = false;
     int initialSeed = 1;
 

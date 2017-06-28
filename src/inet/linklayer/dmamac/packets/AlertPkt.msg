@@ -45,5 +45,7 @@ packet AlertPkt extends MACFrameBase
     MACAddress destinationAddress;
     int networkId = -1;
     unsigned char seq;
+    simtime_t timeRef;
+    int initialSeed = -1;
 }
 

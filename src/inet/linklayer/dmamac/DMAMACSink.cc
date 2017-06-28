@@ -57,6 +57,7 @@ void DMAMACSink::initialize(int stage)
         /* @brief Initializing the actuator sending part. */
         sinkInitialize();
         isSincronized = true;
+        channelSinc = true;
     }
     else if (stage == INITSTAGE_LINK_LAYER)
     {    }
@@ -573,6 +574,9 @@ void DMAMACSink::handleRadioSwitchedToTX() {
         EV << "MAC queue size " << macPktQueue.size() << endl;
         EV << "Packet Destination " << data->getDestAddr() << endl;
         macPktQueue.front().ret++;
+        data->setTimeRef(simTime());
+        data->setInitialSeed(initialSeed);
+
         sendDown(data);
 
         /* @statistics */
@@ -592,6 +596,8 @@ void DMAMACSink::handleRadioSwitchedToTX() {
         ack->setByteLength(11);
         attachSignal(ack);
         EV << "Sending ACK packet\n";
+        ack->setTimeRef(simTime());
+        ack->setInitialSeed(initialSeed);
         sendDown(ack);
 
         /* @Statistics */
@@ -616,6 +622,9 @@ void DMAMACSink::handleRadioSwitchedToTX() {
         notification->setByteLength(11);
         notification->setNumSlot(currentSlot);
         notification->setMacMode(currentMacMode);
+        notification->setTimeRef(simTime());
+        notification->setInitialSeed(initialSeed);
+
 
         attachSignal(notification);
         /* @brief if transient, check for stateProbability otherwise state-switch will be initiated by sensor nodes. */

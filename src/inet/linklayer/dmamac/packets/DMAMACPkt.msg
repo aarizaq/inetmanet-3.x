@@ -52,6 +52,8 @@ packet DMAMACPkt extends MACFrameBase
     int networkId = -1;
     unsigned long sequence;
     unsigned char seq;
+    simtime_t timeRef;
+    int initialSeed = -1;
 }
 
 packet DMAMACSyncPkt extends DMAMACPkt
