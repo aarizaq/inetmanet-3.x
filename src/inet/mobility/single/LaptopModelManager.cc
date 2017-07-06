@@ -165,8 +165,6 @@ void LaptopModelManager::deleteNode(const int &index, const simtime_t &startTime
 
     if (!mod) error("no node with Id \"%i\" not found", index);
 
-    if (!mod->getSubmodule("notificationBoard")) error("host has no submodule notificationBoard");
-
     mod->callFinish();
     mod->deleteModule();
     nodeList[index].module = nullptr;
