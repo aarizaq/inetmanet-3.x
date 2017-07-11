@@ -32,6 +32,7 @@ class PASER_Route_Maintenance;
 #include "inet/networklayer/common/L3Address.h"
 
 namespace inet {
+namespace inetmanet {
 
 class PASER_Route_Maintenance {
 public:
@@ -74,6 +75,7 @@ private:
     void timeout_ROOT_TIMEOUT(PASER_Timer_Message *t);
 };
 
+}
 }
 
 #endif /* PASER_ROUTE_MAINTENANCE_H_ */

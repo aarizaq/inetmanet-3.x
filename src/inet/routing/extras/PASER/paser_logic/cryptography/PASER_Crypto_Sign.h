@@ -21,7 +21,6 @@
  ********************************************************************************/
 #include "inet/routing/extras/PASER/generic/Configuration.h"
 #ifdef OPENSSL_IS_LINKED
-class PASER_Crypto_Sign;
 
 #ifndef PASER_CRYPTO_SIGN_H_
 #define PASER_CRYPTO_SIGN_H_
@@ -52,6 +51,7 @@ class PASER_Crypto_Sign;
 namespace inet {
 
 namespace inetmanet {
+class PASER_Routing_Table;
 
 class PASER_Crypto_Sign {
 private:

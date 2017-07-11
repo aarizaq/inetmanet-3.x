@@ -22,7 +22,7 @@
 #include "inet/routing/extras/PASER/generic/Configuration.h"
 #ifdef OPENSSL_IS_LINKED
 #include <openssl/pem.h>
-#include "inet/routing/extras/PASER/paser_logic/crytography/PASER_Crypto_Sign.h"
+#include "inet/routing/extras/PASER/paser_logic/cryptography/PASER_Crypto_Sign.h"
 #include "inet/routing/extras/PASER/paser_configuration/PASER_Definitions.h"
 
 #include <stdio.h>

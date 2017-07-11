@@ -49,7 +49,7 @@
 
 #endif
 
-#include <omnetpp.h>
+#include "inet/common/INETDefs.h"
 
 
 using namespace std;

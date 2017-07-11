@@ -21,7 +21,6 @@
  ********************************************************************************/
 #include "inet/routing/extras/PASER/generic/Configuration.h"
 #ifdef OPENSSL_IS_LINKED
-class PASER_Neighbor_Table;
 
 #ifndef PASER_NEIGHBOR_TABLE_H_
 #define PASER_NEIGHBOR_TABLE_H_
@@ -40,7 +39,9 @@ class PASER_Neighbor_Table;
 
 
 namespace inet {
+namespace inetmanet {
 
+class PASER_Socket;
 class PASER_Neighbor_Table {
 public:
     /**
@@ -120,6 +121,7 @@ private:
 };
 
 
+}
 }
 #endif /* PASER_NEIGHBOR_TABLE_H_ */
 #endif

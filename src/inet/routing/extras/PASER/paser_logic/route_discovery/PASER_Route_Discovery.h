@@ -21,7 +21,6 @@
  ********************************************************************************/
 #include "inet/routing/extras/PASER/generic/Configuration.h"
 #ifdef OPENSSL_IS_LINKED
-class PASER_Route_Discovery;
 
 #ifndef PASER_ROUTE_FINDUNG_H_
 #define PASER_ROUTE_FINDUNG_H_
@@ -31,12 +30,13 @@ class PASER_Route_Discovery;
 #include "inet/routing/extras/PASER/paser_socket/PASER_Socket.h"
 
 namespace inet {
+namespace inetmanet {
+class PASER_Global;
 
 class PASER_Route_Discovery {
 
 public:
-    PASER_Route_Discovery(PASER_Global *pGlobal, PASER_Configurations *pConfig,
-            PASER_Socket *pModul, bool setGWsearch);
+    PASER_Route_Discovery(PASER_Global *pGlobal, PASER_Configurations *pConfig, PASER_Socket *pModul, bool setGWsearch);
 
     /**
      * @brief Start registration of the node at a gateway (only if the node is not registered).
@@ -67,6 +67,8 @@ private:
 
     bool isGWsearch;
 };
+
+}
 
 }
 

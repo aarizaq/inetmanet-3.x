@@ -26,6 +26,8 @@
 
 namespace inet {
 
+namespace inetmanet {
+
 PASER_Route_Discovery::PASER_Route_Discovery(PASER_Global *pGlobal,
         PASER_Configurations *pConfig, PASER_Socket *pModul, bool setGWsearch) {
     paser_global = pGlobal;
@@ -42,7 +44,7 @@ void PASER_Route_Discovery::tryToRegister() {
     if (paser_global->getWasRegistered() && !isGWsearch) {
         return;
     }
-    struct in_addr bcast_addr;
+    in_addr bcast_addr;
     bcast_addr.s_addr.set(IPv4Address::ALLONES_ADDRESS);
     route_discovery(bcast_addr, 1);
 }
@@ -51,7 +53,7 @@ void PASER_Route_Discovery::route_discovery(struct in_addr dest_addr,
         int isDestGW) {
     // If a route discovery has been already started for dest_addr,
     // then simply return
-    struct in_addr bcast_addr;
+    in_addr bcast_addr;
     bcast_addr.S_addr.set(IPv4Address::ALLONES_ADDRESS);
     if (paser_global->getRreq_list()->pending_find(dest_addr)) {
         EV << "a route discovery are already started\n";
@@ -135,7 +137,7 @@ void PASER_Route_Discovery::processMessage(IPv4Datagram* datagram) {
     // No route is found in the table found -> route discovery (only if there is no one already underway)
     if (!isRoute) {
         EV << "start Route discovery for "
-                << dest_addr.S_addr.getIPv4().str() << "\n";
+                << dest_addr.S_addr.toIPv4().str() << "\n";
         if (isLocal
                 || (rEntry && paser_configuration->isSetLocalRepair()
                         && paser_configuration->getMaxLocalRepairHopCount()
@@ -163,6 +165,7 @@ void PASER_Route_Discovery::processMessage(IPv4Datagram* datagram) {
     }
 }
 
+}
 }
 
 #endif

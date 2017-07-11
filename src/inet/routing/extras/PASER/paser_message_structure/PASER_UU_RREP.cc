@@ -156,9 +156,9 @@ PASER_UU_RREP& PASER_UU_RREP::operator =(const PASER_UU_RREP &m) {
 std::string PASER_UU_RREP::detailedInfo() const {
     std::stringstream out;
     out << "Type : UURREP \n";
-    out << "Querying node : " << srcAddress_var.S_addr.getIPv4().str()
+    out << "Querying node : " << srcAddress_var.S_addr.toIPv4().str()
             << "\n";
-    out << "Destination node : " << destAddress_var.S_addr.getIPv4().str()
+    out << "Destination node : " << destAddress_var.S_addr.toIPv4().str()
             << "\n";
     out << "Sequence : " << seq << "\n";
     out << "KeyNr : " << keyNr << "\n";
@@ -169,7 +169,7 @@ std::string PASER_UU_RREP::detailedInfo() const {
 //    temp.assign(routeFromQueryingToForwarding.begin(), routeFromQueryingToForwarding.end());
 //    for(std::list<struct in_addr>::iterator it=temp.begin(); it!=temp.end(); it++){
 //        struct in_addr temp = (struct in_addr)*it;
-//        out << "route: " << temp.S_addr.getIPv4().str() << "\n";
+//        out << "route: " << temp.S_addr.toIPv4().str() << "\n";
 //    }
 
     std::list<address_list> temp;
@@ -177,14 +177,14 @@ std::string PASER_UU_RREP::detailedInfo() const {
     for (std::list<address_list>::iterator it = temp.begin(); it != temp.end();
             it++) {
         address_list tempList = (address_list) *it;
-        out << "route: " << tempList.ipaddr.S_addr.getIPv4().str() << "\n";
+        out << "route: " << tempList.ipaddr.S_addr.toIPv4().str() << "\n";
 
         std::list<address_range> temp2;
         temp2.assign(tempList.range.begin(), tempList.range.end());
         for (std::list<address_range>::iterator it = temp2.begin();
                 it != temp2.end(); it++) {
             address_range tempRange = (address_range) *it;
-            out << "range: " << tempRange.ipaddr.S_addr.getIPv4().str()
+            out << "range: " << tempRange.ipaddr.S_addr.toIPv4().str()
                     << "\n";
         }
     }

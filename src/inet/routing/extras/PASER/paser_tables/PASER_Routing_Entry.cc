@@ -26,6 +26,7 @@
 
 
 namespace inet {
+namespace inetmanet {
 
 PASER_Routing_Entry::~PASER_Routing_Entry() {
     if (Cert) {
@@ -55,4 +56,6 @@ void PASER_Routing_Entry::setValidTimer(PASER_Timer_Message *_validTimer) {
 }
 
 }
+}
+
 #endif

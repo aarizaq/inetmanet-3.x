@@ -27,10 +27,11 @@
 //OMNET
 
 #include "inet/routing/extras/PASER/paser_configuration/PASER_Definitions.h"
-#include "PASER_Timer_Message.h"
+#include "inet/routing/extras/PASER/paser_timer_management/PASER_Timer_Message.h"
 #include "inet/routing/extras/base/compatibility.h"
 
 namespace inet {
+namespace inetmanet {
 
 class PASER_Neighbor_Entry {
 public:
@@ -53,6 +54,7 @@ public:
     void setValidTimer(PASER_Timer_Message *_validTimer);
 };
 
+}
 }
 
 #endif /* PASER_NEIGHBOR_ENTRY_H_ */

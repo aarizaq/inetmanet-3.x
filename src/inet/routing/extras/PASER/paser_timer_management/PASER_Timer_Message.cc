@@ -27,6 +27,7 @@
 #include "inet/routing/extras/PASER/paser_message_structure/PASER_UU_RREP.h"
 
 namespace inet {
+namespace inetmanet {
 
 PASER_Timer_Message::~PASER_Timer_Message() {
     if (data) {
@@ -79,4 +80,6 @@ bool PASER_Timer_Message::operator==(PASER_Timer_Message *op2) {
 //}
 
 }
+}
+
 #endif

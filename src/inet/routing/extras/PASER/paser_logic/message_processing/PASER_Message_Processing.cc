@@ -180,7 +180,7 @@ int PASER_Message_Processing::check_seq_nr(PASER_MSG *paser_msg,
         PASER_Routing_Entry *forwardingNode = routing_table->findDest(
                 forwarding);
         if (srcNode && isGW
-                && (destAddr.S_addr.getIPv4().getInt() == 0xFFFFFFFF
+                && (destAddr.S_addr.toIPv4().getInt() == 0xFFFFFFFF
                         || paser_modul->isMyLocalAddress(destAddr))
                 && forwardingNode) {
 //            if(paser_msg->seq >= srcNode->seqnum && seqForw > forwardingNode->seqnum){
@@ -236,7 +236,7 @@ int PASER_Message_Processing::check_seq_nr(PASER_MSG *paser_msg,
         destAddr.S_addr = paser_msg->srcAddress_var.S_addr;
 
         if (srcNode
-                && (destAddr.S_addr.getIPv4().getInt() == 0xFFFFFFFF
+                && (destAddr.S_addr.toIPv4().getInt() == 0xFFFFFFFF
                         || paser_modul->isMyLocalAddress(destAddr))) {
 //            if(paser_msg->seq >= srcNode->seqnum){
             if (paser_msg->seq == srcNode->seqnum
@@ -262,7 +262,7 @@ int PASER_Message_Processing::check_seq_nr(PASER_MSG *paser_msg,
         destAddr.S_addr = paser_msg->srcAddress_var.S_addr;
 
         if (srcNode && isGW
-                && (destAddr.S_addr.getIPv4().getInt() == 0xFFFFFFFF
+                && (destAddr.S_addr.toIPv4().getInt() == 0xFFFFFFFF
                         || paser_modul->isMyLocalAddress(destAddr))) {
 //            if(paser_msg->seq > srcNode->seqnum){
             if (paser_global->isSeqNew(srcNode->seqnum, paser_msg->seq)) {
@@ -409,7 +409,7 @@ void PASER_Message_Processing::handleUBRREQ(cPacket * msg, u_int32_t ifIndex) {
         return;
     }
     EV << "destAddr: "
-            << ubrreq_msg->destAddress_var.S_addr.getIPv4().str() << "\n";
+            << ubrreq_msg->destAddress_var.S_addr.toIPv4().str() << "\n";
     // Update neighbor table
     //aktualisiere NeighborTable
     X509 *certNeigh = crypto_sign->extractCert(ubrreq_msg->certForw);
@@ -470,7 +470,7 @@ void PASER_Message_Processing::handleUBRREQ(cPacket * msg, u_int32_t ifIndex) {
 
     int ifId = paser_modul->getIfIdFromIfIndex(ifIndex);
     // sende RREP
-    if ((isGW && ubrreq_msg->destAddress_var.S_addr.getIPv4().getInt() == 0xFFFFFFFF)
+    if ((isGW && ubrreq_msg->destAddress_var.S_addr.toIPv4().getInt() == 0xFFFFFFFF)
             || (paser_modul->isMyLocalAddress(ubrreq_msg->destAddress_var)
                     && ifId >= 0
                     && (netDevice[ifId].ipaddr.S_addr
@@ -492,7 +492,7 @@ void PASER_Message_Processing::handleUBRREQ(cPacket * msg, u_int32_t ifIndex) {
         WlanAddrStruct.S_addr = netDevice[ifId].ipaddr.S_addr;
         EV << "nxtHopIf: " << netDevice[ifId].ifindex << "\n";
         EV << "nxtHopIfName: " << netDevice[ifId].ifname << "\n";
-        EV << "my Addr: " << WlanAddrStruct.S_addr.getIPv4().str() << "\n";
+        EV << "my Addr: " << WlanAddrStruct.S_addr.toIPv4().str() << "\n";
         cert = (X509*) rEntry->Cert;
         kdc_block kdcData;
         PASER_UU_RREP *message = send_uu_rrep(ubrreq_msg->srcAddress_var,
@@ -522,7 +522,7 @@ void PASER_Message_Processing::handleUBRREQ(cPacket * msg, u_int32_t ifIndex) {
     // leite die Nachricht weiter
     else if (!paser_modul->isMyLocalAddress(ubrreq_msg->destAddress_var)) {
         PASER_Routing_Entry *routeToDest = nullptr;
-        if (ubrreq_msg->destAddress_var.S_addr.getIPv4().getInt() == 0xFFFFFFFF) {
+        if (ubrreq_msg->destAddress_var.S_addr.toIPv4().getInt() == 0xFFFFFFFF) {
             EV << "destAddr = GW\n";
             routeToDest = routing_table->getRouteToGw();
             if (!routeToDest) {
@@ -765,7 +765,7 @@ void PASER_Message_Processing::handleUURREP(cPacket * msg, u_int32_t ifIndex) {
                     rrep->tPack = tPack;
                 }
             } else {
-                ev
+                EV_INFO
                         << "handleUURREP Error: Could not find the destination node(Route not exist)!\n";
                 std::list<unreachableBlock> allAddrList;
                 unreachableBlock temp;
@@ -777,7 +777,7 @@ void PASER_Message_Processing::handleUURREP(cPacket * msg, u_int32_t ifIndex) {
                 return;
             }
         } else {
-            ev
+            EV_INFO
                     << "handleUURREP Error: Could not find the destination node(NextHop not exist)!\n";
             std::list<unreachableBlock> allAddrList;
             unreachableBlock temp;
@@ -920,7 +920,7 @@ void PASER_Message_Processing::handleTURREQ(cPacket * msg, u_int32_t ifIndex) {
         PASER_Routing_Entry *rEntry = routing_table->findDest(
                 turreq_msg->destAddress_var);
         if (rEntry == nullptr || !rEntry->isValid) {
-            ev
+            EV_INFO
                     << "handleUURREP Error: Could not find the destination node(Route not exist)!\n";
             std::list<unreachableBlock> allAddrList;
             unreachableBlock temp;
@@ -934,7 +934,7 @@ void PASER_Message_Processing::handleTURREQ(cPacket * msg, u_int32_t ifIndex) {
         PASER_Neighbor_Entry *nEntry = neighbor_table->findNeigh(
                 rEntry->nxthop_addr);
         if (nEntry == nullptr || !nEntry->neighFlag || !nEntry->isValid) {
-            ev
+            EV_INFO
                     << "handleUURREP Error: Could not find the destination node(NextHop not exist)!\n";
             std::list<unreachableBlock> allAddrList;
             unreachableBlock temp;
@@ -972,7 +972,7 @@ void PASER_Message_Processing::handleTURREP(cPacket * msg, u_int32_t ifIndex) {
         return;
     }
     struct in_addr forwarding = turrep_msg->AddressRangeList.back().ipaddr;
-    EV << "forwarding: " << forwarding.S_addr.getIPv4().str() << "\n";
+    EV << "forwarding: " << forwarding.S_addr.toIPv4().str() << "\n";
     if (!check_seq_nr((check_and_cast<PASER_MSG *>(msg)), forwarding)) {
         EV << "REPLAY SEQ\n";
         delete turrep_msg;
@@ -1265,9 +1265,9 @@ void PASER_Message_Processing::handleTURREPACK(cPacket * msg, u_int32_t ifIndex)
 
     message_rreq_entry * rrep = rrep_list->pending_find(
             turrepack_msg->srcAddress_var);
-    EV << "src: " << turrepack_msg->srcAddress_var.S_addr.getIPv4().str()
+    EV << "src: " << turrepack_msg->srcAddress_var.S_addr.toIPv4().str()
             << " dest: "
-            << turrepack_msg->destAddress_var.S_addr.getIPv4().str()
+            << turrepack_msg->destAddress_var.S_addr.toIPv4().str()
             << "\n";
     if (rrep) {
         PASER_Timer_Message *tPack = rrep->tPack;
@@ -1344,11 +1344,11 @@ void PASER_Message_Processing::handleRERR(cPacket * msg, u_int32_t ifIndex) {
         }
         //loesche Route
         EV << "delete addr: "
-                << tempEntry->dest_addr.S_addr.getIPv4().str() << "\n";
+                << tempEntry->dest_addr.S_addr.toIPv4().str() << "\n";
         for (std::list<address_range>::iterator it2 = tempEntry->AddL.begin();
                 it2 != tempEntry->AddL.end(); it2++) {
             address_range addList = (address_range) *it2;
-            EV << "    subnetz: " << addList.ipaddr.S_addr.getIPv4().str()
+            EV << "    subnetz: " << addList.ipaddr.S_addr.toIPv4().str()
                     << "\n";
             routing_table->updateKernelRoutingTable(addList.ipaddr,
                     tempEntry->nxthop_addr, addList.mask, tempEntry->hopcnt + 1,
@@ -1422,7 +1422,7 @@ void PASER_Message_Processing::handleHELLO(cPacket * msg, u_int32_t ifIndex) {
     EV << "root_check_root OK\n";
 
     if (!neigh->neighFlag) {
-        EV << neigh->neighbor_addr.S_addr.getIPv4().str()
+        EV << neigh->neighbor_addr.S_addr.toIPv4().str()
                 << " is untrusted neighbor!\n";
         route_findung->route_discovery(neigh->neighbor_addr,0);
         delete hello_msg;
@@ -1453,7 +1453,7 @@ void PASER_Message_Processing::handleHELLO(cPacket * msg, u_int32_t ifIndex) {
             hello_msg->AddressRangeList.begin();
             it != hello_msg->AddressRangeList.end(); it++) {
         address_list tempList = (address_list) *it;
-        EV << "update address: " << tempList.ipaddr.S_addr.getIPv4().str()
+        EV << "update address: " << tempList.ipaddr.S_addr.toIPv4().str()
                 << "\n";
         if (paser_modul->isMyLocalAddress(tempList.ipaddr)) {
             EV << "it's me\n";
@@ -1476,7 +1476,7 @@ void PASER_Message_Processing::handleB_ROOT(cPacket * msg, u_int32_t ifIndex) {
         return;
     }
     struct in_addr querying = b_root_msg->srcAddress_var;
-    EV << "ROOT from IP: " << querying.S_addr.getIPv4().str() << "\n";
+    EV << "ROOT from IP: " << querying.S_addr.toIPv4().str() << "\n";
     //Pruefe Sequenznummer des Pakets
     if (!check_seq_nr((check_and_cast<PASER_MSG *>(msg)), querying)) {
         EV << "REPLAY SEQ\n";
@@ -1553,7 +1553,7 @@ void PASER_Message_Processing::handleB_RESET(cPacket * msg, u_int32_t ifIndex) {
         return;
     }
     struct in_addr querying = b_reset_msg->srcAddress_var;
-    EV << "RESET from IP: " << querying.S_addr.getIPv4().str() << "\n";
+    EV << "RESET from IP: " << querying.S_addr.toIPv4().str() << "\n";
     // Check if message key number is equal to the number of the key currently in use
     //pruefe Schluesselnummer
     u_int32_t myKeyNr = paser_configuration->getKeyNr();
@@ -1698,11 +1698,11 @@ PASER_UB_RREQ * PASER_Message_Processing::send_ub_rreq(struct in_addr src_addr,
 PASER_UU_RREP * PASER_Message_Processing::send_uu_rrep(struct in_addr src_addr,
         struct in_addr forw_addr, struct in_addr dest_addr, int isDestGW,
         X509 *cert, kdc_block kdcData) {
-    EV << "src: " << src_addr.S_addr.getIPv4().str() << " dest: "
-            << dest_addr.S_addr.getIPv4().str() << "\n";
+    EV << "src: " << src_addr.S_addr.toIPv4().str() << " dest: "
+            << dest_addr.S_addr.toIPv4().str() << "\n";
     PASER_Routing_Entry * routeEntry = routing_table->findDest(src_addr);
     if (routeEntry == nullptr || !routeEntry->isValid) {
-        EV << "Route to " << src_addr.S_addr.getIPv4().str()
+        EV << "Route to " << src_addr.S_addr.toIPv4().str()
                 << " not Found. ERROR!\n";
         return nullptr;
     }
@@ -1800,7 +1800,7 @@ PASER_UU_RREP * PASER_Message_Processing::send_uu_rrep(struct in_addr src_addr,
 
     crypto_sign->signUURREP(message);
     PASER_UU_RREP *messageToSend = new PASER_UU_RREP(*message);
-    EV << "send to: " << forw_addr.S_addr.getIPv4().str() << "\n";
+    EV << "send to: " << forw_addr.S_addr.toIPv4().str() << "\n";
     paser_modul->paketProcessingDelay = paser_modul->paketProcessingDelay
             + (double) paser_modul->par("sing_rsa_delay");
     paser_modul->send_message(messageToSend, forw_addr, nEntry->ifIndex);
@@ -1813,7 +1813,7 @@ PASER_TU_RREP * PASER_Message_Processing::send_tu_rrep(struct in_addr src_addr,
         X509 *cert, kdc_block kdcData) {
     PASER_Routing_Entry * routeEntry = routing_table->findDest(src_addr);
     if (routeEntry == nullptr || !routeEntry->isValid) {
-        EV << "Route to " << src_addr.S_addr.getIPv4().str()
+        EV << "Route to " << src_addr.S_addr.toIPv4().str()
                 << " not Found. ERROR!\n";
         return nullptr;
     }
@@ -1961,7 +1961,7 @@ void PASER_Message_Processing::send_rerr(
             temp.addr.S_addr = ((unreachableBlock) *it).addr.S_addr;
             temp.seq = ((unreachableBlock) *it).seq;
             messageToSend->UnreachableAdressesList.push_back(temp);
-            EV << "IP: " << temp.addr.S_addr.getIPv4().str() << "\t: "
+            EV << "IP: " << temp.addr.S_addr.toIPv4().str() << "\t: "
                     << temp.seq << "\n";
         }
 

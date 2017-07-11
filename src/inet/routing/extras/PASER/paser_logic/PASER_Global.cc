@@ -22,8 +22,10 @@
 #include "inet/routing/extras/PASER/generic/Configuration.h"
 #ifdef OPENSSL_IS_LINKED
 #include "inet/routing/extras/PASER/paser_logic/PASER_Global.h"
+#include "inet/routing/extras/PASER/paser_tables/PASER_Neighbor_Table.h"
 
 namespace inet {
+namespace inetmanet {
 
 PASER_Global::PASER_Global(PASER_Configurations *pConfig, PASER_Socket *pModul) {
 
@@ -79,8 +81,8 @@ PASER_Global::PASER_Global(PASER_Configurations *pConfig, PASER_Socket *pModul) 
         tempRange.ipaddr = netAddDevice[i].ipaddr;
         tempRange.mask = netAddDevice[i].mask;
         AddL.push_back(tempRange);
-        EV << "addr: " << tempRange.ipaddr.S_addr.getIPv4().str()
-                << " mask: " << tempRange.mask.S_addr.getIPv4().str()
+        EV << "addr: " << tempRange.ipaddr.S_addr.toIPv4().str()
+                << " mask: " << tempRange.mask.S_addr.toIPv4().str()
                 << "\n";
 
         struct in_addr emptyAddr;
@@ -397,6 +399,7 @@ bool PASER_Global::isSeqNew(u_int32_t oldSeq, u_int32_t newSeq) {
     return false;
 }
 
+}
 }
 
 #endif

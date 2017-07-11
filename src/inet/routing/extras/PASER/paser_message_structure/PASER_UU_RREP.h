@@ -24,8 +24,8 @@
 #ifndef PASER_UU_RREP_H_
 #define PASER_UU_RREP_H_
 
+#include "inet/common/INETDefs.h"
 #include "inet/routing/extras/PASER/paser_configuration/PASER_Definitions.h"
-#include <omnetpp.h>
 
 #include "inet/routing/extras/PASER/paser_message_structure/PASER_MSG.h"
 

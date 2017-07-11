@@ -24,8 +24,8 @@
 #ifndef PASER_TB_RERR_H_
 #define PASER_TB_RERR_H_
 
+#include "inet/common/INETDefs.h"
 #include "inet/routing/extras/PASER/paser_configuration/PASER_Definitions.h"
-#include <omnetpp.h>
 
 #include <list>
 #include <string.h>

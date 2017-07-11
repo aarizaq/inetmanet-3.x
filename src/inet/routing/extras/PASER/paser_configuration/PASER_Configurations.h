@@ -32,6 +32,7 @@ class PASER_Configurations;
 namespace inet {
 
 namespace inetmanet {
+class PASER_Socket;
 
 class PASER_Configurations {
 public:

@@ -24,6 +24,7 @@
 #include "inet/routing/extras/PASER/paser_tables/PASER_Neighbor_Table.h"
 
 namespace inet {
+namespace inetmanet {
 
 PASER_Neighbor_Table::PASER_Neighbor_Table(PASER_Timer_Queue *tQueue,
         PASER_Socket *pModul) {
@@ -234,6 +235,7 @@ void PASER_Neighbor_Table::updateNeighborTableIV(struct in_addr neigh,
     }
 }
 
+}
 }
 
 #endif

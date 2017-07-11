@@ -106,7 +106,7 @@ PASER_TB_Hello& PASER_TB_Hello::operator =(const PASER_TB_Hello &m) {
 std::string PASER_TB_Hello::detailedInfo() const {
     std::stringstream out;
     out << "Type: PASER_TB_Hello \n";
-    out << "Querying node: " << srcAddress_var.S_addr.getIPv4().str()
+    out << "Querying node: " << srcAddress_var.S_addr.toIPv4().str()
             << "\n";
     out << "Sequence: " << seq << "\n";
     out << "AddL.size: " << AddressRangeList.size() << "\n";
@@ -115,14 +115,14 @@ std::string PASER_TB_Hello::detailedInfo() const {
     for (std::list<address_list>::iterator it = temp.begin(); it != temp.end();
             it++) {
         address_list tempList = (address_list) *it;
-        out << "Route: " << tempList.ipaddr.S_addr.getIPv4().str() << "\n";
+        out << "Route: " << tempList.ipaddr.S_addr.toIPv4().str() << "\n";
 
         std::list<address_range> temp2;
         temp2.assign(tempList.range.begin(), tempList.range.end());
         for (std::list<address_range>::iterator it = temp2.begin();
                 it != temp2.end(); it++) {
             address_range tempRange = (address_range) *it;
-            out << "Range: " << tempRange.ipaddr.S_addr.getIPv4().str()
+            out << "Range: " << tempRange.ipaddr.S_addr.toIPv4().str()
                     << "\n";
         }
     }

@@ -21,21 +21,20 @@
  ********************************************************************************/
 #include "inet/routing/extras/PASER/generic/Configuration.h"
 #ifdef OPENSSL_IS_LINKED
-class PASER_Message_Processing;
 
 #ifndef PASER_PAKET_PROCESSING_H_
 #define PASER_PAKET_PROCESSING_H_
 
-#include "inet/routing/extras/PASER/paser_socket/PASER_Socket.h"
+//#include "inet/routing/extras/PASER/paser_socket/PASER_Socket.h"
 #include "inet/routing/extras/PASER/paser_configuration/PASER_Configurations.h"
 #include "inet/routing/extras/PASER/paser_logic/PASER_Global.h"
 #include "inet/routing/extras/PASER/paser_buffer/PASER_Message_Queue.h"
 #include "inet/routing/extras/PASER/paser_logic/route_discovery/PASER_Route_Discovery.h"
 #include "inet/routing/extras/PASER/paser_logic/route_maintenance/PASER_Route_Maintenance.h"
 #include "inet/routing/extras/PASER/paser_tables/PASER_RREQ_List.h"
-#include "inet/routing/extras/PASER/paser_logic/crytography/PASER_Crypto_Root.h"
-#include "inet/routing/extras/PASER/paser_logic/crytography/PASER_Crypto_Hash.h"
-#include "inet/routing/extras/PASER/paser_logic/crytography/PASER_Crypto_Sign.h"
+#include "inet/routing/extras/PASER/paser_logic/cryptography/PASER_Crypto_Root.h"
+#include "inet/routing/extras/PASER/paser_logic/cryptography/PASER_Crypto_Hash.h"
+#include "inet/routing/extras/PASER/paser_logic/cryptography/PASER_Crypto_Sign.h"
 #include "inet/networklayer/common/L3Address.h"
 #include "inet/routing/extras/PASER/simple_kdc/kdc_message/crl_message_m.h"
 #include "inet/routing/extras/PASER/paser_message_structure/PASER_UU_RREP.h"
@@ -45,6 +44,12 @@ namespace inet {
 
 namespace inetmanet {
 
+class PASER_Global;
+class PASER_Message_Queue;
+class PASER_Crypto_Root;
+class PASER_Route_Discovery;
+class PASER_Socket;
+class PASER_Routing_Table;
 
 class PASER_Message_Processing {
 private:

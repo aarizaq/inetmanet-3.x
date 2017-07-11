@@ -25,11 +25,12 @@
 #define PASER_TIMER_QUEUE_H_
 
 //#include <sys/time.h>
+#include "inet/common/INETDefs.h"
 #include "PASER_Timer_Message.h"
-#include <omnetpp.h>
 #include <list>
 
 namespace inet {
+namespace inetmanet {
 
 class PASER_Timer_Queue {
 
@@ -89,6 +90,7 @@ public:
 
 };
 
+}
 }
 
 #endif /* PASER_TIMER_QUEUE_H_ */

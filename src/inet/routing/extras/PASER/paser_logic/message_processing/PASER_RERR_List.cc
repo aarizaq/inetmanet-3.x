@@ -30,12 +30,12 @@ namespace inetmanet {
 
 bool PASER_RERR_List::setRerrTime(struct in_addr addr, struct timeval time) {
     EV << "Suche ein Eintrag in blacklist fuer IP: "
-            << addr.S_addr.getIPv4().str() << "\n";
+            << addr.S_addr.toIPv4().str() << "\n";
     std::map<L3Address, struct timeval>::iterator it = rerr_list.find(
             addr.S_addr);
     if (it != rerr_list.end()) {
         struct timeval last = it->second;
-        EV << "Eintrag fuer IP: " << addr.S_addr.getIPv4().str()
+        EV << "Eintrag fuer IP: " << addr.S_addr.toIPv4().str()
                 << " exestiert in blacklist\n";
         EV << "Zeit in blackList sec: " << last.tv_sec << " usec: "
                 << last.tv_usec << "\n";

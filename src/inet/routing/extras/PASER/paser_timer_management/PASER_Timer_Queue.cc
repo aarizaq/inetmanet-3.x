@@ -26,6 +26,7 @@
 #include "inet/routing/extras/PASER/paser_message_structure/PASER_UB_RREQ.h"
 
 namespace inet {
+namespace inetmanet {
 
 PASER_Timer_Queue::~PASER_Timer_Queue() {
     for (std::list<PASER_Timer_Message *>::iterator it = timer_queue.begin();
@@ -114,6 +115,7 @@ long PASER_Timer_Queue::timeval_diff(struct timeval *t1, struct timeval *t2) {
     return -1;
 }
 
+}
 }
 
 #endif

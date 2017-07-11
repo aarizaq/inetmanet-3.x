@@ -21,23 +21,23 @@
  ********************************************************************************/
 #include "inet/routing/extras/PASER/generic/Configuration.h"
 #ifdef OPENSSL_IS_LINKED
-class PASER_Message_Queue;
+
 
 #ifndef PASER_PACKET_QUEUE_H_
 #define PASER_PACKET_QUEUE_H_
 
 //#include <IPv4Datagram.h>
-
+#include "inet/common/INETDefs.h"
 #include <list>
 #include "inet/networklayer/common/L3Address.h"
 #include "inet/routing/extras/PASER/paser_socket/PASER_Socket.h"
 
-#include <omnetpp.h>
 #include "inet/routing/extras/base/compatibility.h"
 
 namespace inet {
 
 namespace inetmanet {
+class PASER_Socket;
 
 struct message_queue_entry {
     cPacket *p;

@@ -24,6 +24,7 @@
 #include "inet/routing/extras/PASER/paser_tables/PASER_RREQ_List.h"
 
 namespace inet {
+namespace inetmanet {
 
 
 PASER_RREQ_List::~PASER_RREQ_List() {
@@ -68,7 +69,7 @@ int PASER_RREQ_List::pending_remove(message_rreq_entry *entry) {
     if (!entry)
         return 0;
 
-    std::map<Address, message_rreq_entry *>::iterator it = rreq_list.find(
+    std::map<L3Address, message_rreq_entry *>::iterator it = rreq_list.find(
             entry->dest_addr.s_addr);
     if (it != rreq_list.end()) {
         if ((*it).second == entry) {
@@ -104,9 +105,9 @@ message_rreq_entry* PASER_RREQ_List::pending_find_addr_with_mask(
         struct in_addr dest_addr, struct in_addr dest_mask) {
     for (std::map<L3Address, message_rreq_entry *>::iterator it =
             rreq_list.begin(); it != rreq_list.end(); it++) {
-        Address tempAddr = it->first;
+        L3Address tempAddr = it->first;
         message_rreq_entry *entry = it->second;
-        if (IPv4Address::maskedAddrAreEqual(tempAddr.getIPv4(),dest_addr.S_addr.getIPv4(), dest_mask.S_addr.getIPv4())) {
+        if (IPv4Address::maskedAddrAreEqual(tempAddr.toIPv4(),dest_addr.S_addr.toIPv4(), dest_mask.S_addr.toIPv4())) {
             return entry;
         }
     }
@@ -123,6 +124,7 @@ message_rreq_entry* PASER_RREQ_List::pending_find_addr_with_mask(
 //    return nullptr;
 }
 
+}
 }
 
 #endif

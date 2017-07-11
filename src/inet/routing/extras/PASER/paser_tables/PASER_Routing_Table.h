@@ -21,7 +21,6 @@
  ********************************************************************************/
 #include "inet/routing/extras/PASER/generic/Configuration.h"
 #ifdef OPENSSL_IS_LINKED
-class PASER_Routing_Table;
 
 #ifndef PASER_ROUTING_TABLE_H_
 #define PASER_ROUTING_TABLE_H_
@@ -34,7 +33,7 @@ class PASER_Routing_Table;
 #include "PASER_Routing_Entry.h"
 #include "inet/routing/extras/PASER/paser_tables/PASER_Neighbor_Table.h"
 #include "inet/routing/extras/PASER/paser_tables/PASER_Neighbor_Entry.h"
-#include "PASER_Timer_Message.h"
+#include "inet/routing/extras/PASER/paser_timer_management/PASER_Timer_Message.h"
 #include "inet/routing/extras/PASER/paser_timer_management/PASER_Timer_Queue.h"
 #include "inet/routing/extras/PASER/paser_socket/PASER_Socket.h"
 #include "inet/routing/extras/PASER/paser_logic/PASER_Global.h"
@@ -43,6 +42,9 @@ class PASER_Routing_Table;
 
 
 namespace inet {
+namespace inetmanet {
+class PASER_Global;
+class PASER_Socket;
 
 class PASER_Routing_Table {
 public:
@@ -208,6 +210,7 @@ private:
 
 };
 
+}
 }
 
 #endif /* PASER_ROUTING_TABLE_H_ */
