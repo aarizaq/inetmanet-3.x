@@ -21,6 +21,7 @@
  * This work is part of the secure wireless mesh networks framework, which is currently under development by CNI
  ********************************************************************************/
 #include "inet/routing/extras/PASER/generic/Configuration.h"
+#include "inet/common/INETDefs.h"
 #ifdef OPENSSL_IS_LINKED
 #include <openssl/err.h>
 #include "inet/routing/extras/PASER/paser_socket/PASER_Socket.h"
@@ -784,7 +785,7 @@ void PASER_Socket::processLinkBreak(const cObject *details) {
     IPv4Datagram *dgram = nullptr;
     if (paser_configuration->isSetLinkLayerFeeback()) {
         if (dynamic_cast<IPv4Datagram *>(const_cast<cObject*>(details))) {
-            dgram = check_and_cast<IPv4Datagram *>(details);
+            dgram = dynamic_cast<IPv4Datagram *>(const_cast<cObject*>(details));
             struct in_addr dest_addr, src_addr;
             src_addr.s_addr.set(dgram->getSrcAddress());
             dest_addr.s_addr.set(dgram->getDestAddress());

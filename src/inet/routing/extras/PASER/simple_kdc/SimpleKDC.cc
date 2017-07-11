@@ -36,6 +36,7 @@
 #include "inet/networklayer/common/L3AddressResolver.h"
 #include "inet/routing/extras/base/compatibility.h"
 #include "inet/networklayer/common/L3Address.h"
+#include "inet/common/ModuleAccess.h"
 #include <string.h>
 #include "SimpleKDC.h"
 #define MSGKIND_CONNECT  0
@@ -454,8 +455,10 @@ void SimpleKDC::setSocketOptions() {
         socket.setBroadcast(true);
 
     bool joinLocalMulticastGroups = par("joinLocalMulticastGroups");
-    if (joinLocalMulticastGroups)
-        socket.joinLocalMulticastGroups();
+    if (joinLocalMulticastGroups) {
+        MulticastGroupList mgl = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this)->collectMulticastGroups();
+        socket.joinLocalMulticastGroups(mgl);
+    }
 }
 
 int SimpleKDC::checkOneCert(X509 *cert) {

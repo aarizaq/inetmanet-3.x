@@ -38,6 +38,7 @@
 #include "inet/networklayer/common/L3Address.h"
 #include "inet/routing/extras/PASER/simple_kdc/kdc_message/crl_message_m.h"
 #include "inet/routing/extras/PASER/paser_message_structure/PASER_UU_RREP.h"
+#include "inet/routing/extras/PASER/paser_tables/PASER_Neighbor_Table.h"
 //#include "kdcReset_m.h"
 
 namespace inet {
@@ -50,6 +51,8 @@ class PASER_Crypto_Root;
 class PASER_Route_Discovery;
 class PASER_Socket;
 class PASER_Routing_Table;
+class PASER_Neighbor_Table;
+class PASER_Crypto_Sign;
 
 class PASER_Message_Processing {
 private:

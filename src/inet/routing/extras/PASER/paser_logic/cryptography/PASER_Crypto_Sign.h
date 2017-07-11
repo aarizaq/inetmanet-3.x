@@ -52,6 +52,7 @@ namespace inet {
 
 namespace inetmanet {
 class PASER_Routing_Table;
+class PASER_Neighbor_Table;
 
 class PASER_Crypto_Sign {
 private:

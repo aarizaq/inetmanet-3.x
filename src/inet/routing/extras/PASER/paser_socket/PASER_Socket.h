@@ -220,6 +220,10 @@ protected:
      */
     int addPaketLaengeZuStat(cPacket * msg);
 
+    virtual bool handleNodeStart(IDoneCallback *doneCallback) override {};
+    virtual bool handleNodeShutdown(IDoneCallback *doneCallback) override {};
+    virtual void handleNodeCrash() override {};
+
 public:
     PASER_Socket();
     ~PASER_Socket();
