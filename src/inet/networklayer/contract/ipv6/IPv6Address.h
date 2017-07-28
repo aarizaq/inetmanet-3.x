@@ -91,7 +91,12 @@ class INET_API IPv6Address
 
     /** Link-local MANET routers multicast address */
     static const IPv6Address LL_MANET_ROUTERS;
+
+    /** Link-local RPL routers multicast address */
+    static const IPv6Address LL_RPL_ROUTERS;
     //@}
+
+
 
     /**
      * Constructor. Initializes the IPv6 address to ::0 (all-zeroes).

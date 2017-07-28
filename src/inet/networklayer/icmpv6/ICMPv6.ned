@@ -40,6 +40,8 @@ simple ICMPv6
         input pingIn[]; // ping requests from app
         output pingOut[];
         output errorOut;  // for errors
+        input protocolIn[] @labels(IPv6ControlInfo/down,ICMPv6Message);
+        output protocolOut[] @labels(IPv6ControlInfo/up,ICMPv6Message);
 }
 
 

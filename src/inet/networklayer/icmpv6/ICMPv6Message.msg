@@ -48,6 +48,7 @@ enum ICMPv6Type
     ICMPv6_REDIRECT = 137;
     ICMPv6_MLDv2_REPORT = 143;
     ICMPv6_EXPERIMENTAL_MOBILITY = 150;  //Zarrar Yousaf 02.08.07 (FMIPv6 Implementation)
+    ICMPv6_RPL_CONTROL = 155;  //Zarrar Yousaf 02.08.07 (FMIPv6 Implementation)
 }
 
 

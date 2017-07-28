@@ -23,6 +23,7 @@
 
 #include "inet/networklayer/icmpv6/ICMPv6Message_m.h"
 #include "inet/common/lifecycle/ILifecycle.h"
+#include "inet/common/ProtocolMap.h"
 
 namespace inet {
 
@@ -114,6 +115,7 @@ class INET_API ICMPv6 : public cSimpleModule, public ILifecycle
   protected:
     typedef std::map<long, int> PingMap;
     PingMap pingMap;
+    ProtocolMapping mapping;    // where to send packets after decapsulation
 };
 
 } // namespace inet

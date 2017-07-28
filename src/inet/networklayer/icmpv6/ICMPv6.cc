@@ -58,10 +58,27 @@ void ICMPv6::handleMessage(cMessage *msg)
 {
     ASSERT(!msg->isSelfMessage());    // no timers in ICMPv6
 
+    if (dynamic_cast<RegisterTransportProtocolCommand *>(msg)) {
+        RegisterTransportProtocolCommand *command = static_cast<RegisterTransportProtocolCommand *>(msg);
+        if (msg->getArrivalGate()->isName("protocolIn")) {
+            mapping.addProtocolMapping(command->getProtocol(), msg->getArrivalGate()->getIndex());
+        }
+        else
+            throw cRuntimeError("RegisterProtocolCommand %d arrived invalid gate '%s'", command->getProtocol(), msg->getArrivalGate()->getFullName());
+        delete msg;
+        return;
+    }
     // process arriving ICMP message
     if (msg->getArrivalGate()->isName("ipv6In")) {
         EV_INFO << "Processing ICMPv6 message.\n";
         processICMPv6Message(check_and_cast<ICMPv6Message *>(msg));
+        return;
+    }
+
+    // process arriving ICMP message
+    if (msg->getArrivalGate()->isName("protocolIn")) {
+        EV_INFO << "Processing External ICMPv6 message.\n";
+        sendToIP(check_and_cast<ICMPv6Message *>(msg));
         return;
     }
 
@@ -99,8 +116,23 @@ void ICMPv6::processICMPv6Message(ICMPv6Message *icmpv6msg)
         EV_INFO << "ICMPv6 Echo Reply Message Received." << endl;
         processEchoReply((ICMPv6EchoReplyMsg *)icmpv6msg);
     }
-    else
-        throw cRuntimeError("Unknown message type received: (%s)%s.\n", icmpv6msg->getClassName(),icmpv6msg->getName());
+    else {
+        // check type
+        int gateindex = mapping.findOutputGateForProtocol(icmpv6msg->getType());
+        // check if the transportOut port are connected, otherwise discard the packet
+        if (gateindex >= 0) {
+            cGate *outGate = gate("protocolOut", gateindex);
+            if (outGate->isPathOK()) {
+                EV_INFO << "Icmp type  " << icmpv6msg->getType() << ", passing up on gate " << gateindex << "\n";
+                //TODO: Indication of forward progress
+                send(packet, outGate);
+                packet = nullptr;
+                return;
+            }
+        }
+        else
+            throw cRuntimeError("Unknown message type received: (%s)%s.\n", icmpv6msg->getClassName(),icmpv6msg->getName());
+    }
 }
 
 /*
