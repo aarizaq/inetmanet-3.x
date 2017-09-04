@@ -25,7 +25,7 @@
 #include <openssl/sha.h>
 #include <omnetpp.h>
 
-#include "inet/routing/extras/PASER/paser_logic/crytography/PASER_Crypto_Root.h"
+#include "inet/routing/extras/PASER/paser_logic/cryptography/PASER_Crypto_Root.h"
 #include "inet/routing/extras/PASER/paser_configuration/PASER_Definitions.h"
 #include "inet/routing/extras/base/compatibility.h"
 

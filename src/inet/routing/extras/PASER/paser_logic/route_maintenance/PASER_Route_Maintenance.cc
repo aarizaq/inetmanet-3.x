@@ -25,6 +25,7 @@
 #include "inet/routing/extras/PASER/paser_message_structure/PASER_TB_RERR.h"
 
 namespace inet {
+namespace inetmanet {
 
 PASER_Route_Maintenance::PASER_Route_Maintenance(PASER_Global *pGlobal,
         PASER_Configurations *pConfig, PASER_Socket *pModul) {
@@ -347,7 +348,7 @@ void PASER_Route_Maintenance::timeout_HELLO_SEND_TIMEOUT(
         EV << "i = " << i << "\n";
         network_device *tempDevice = paser_global->getNetDevice();
         EV << "tempDevice[i].ipaddr = "
-                << tempDevice[i].ipaddr.S_addr.getIPv4().str() << "\n";
+                << tempDevice[i].ipaddr.S_addr.toIPv4().str() << "\n";
         PASER_TB_Hello *messageToSend = new PASER_TB_Hello(tempDevice[i].ipaddr,
                 paser_global->getSeqNr());
         messageToSend->seq = paser_global->getSeqNr();
@@ -366,12 +367,12 @@ void PASER_Route_Maintenance::timeout_HELLO_SEND_TIMEOUT(
                 tempRange.push_back(tempR);
             }
             EV << "add ip to AddressRangeList: "
-                    << tempEntry.ipaddr.S_addr.getIPv4().str() << "\n";
+                    << tempEntry.ipaddr.S_addr.toIPv4().str() << "\n";
             messageToSend->AddressRangeList.push_back(tempEntry);
         }
 
         if (messageToSend->AddressRangeList.size() <= 1) {
-            ev
+            EV_INFO
                     << "es gibt keine Nachbarn. HELLO Nachricht wird nicht gesendet.\n";
             delete messageToSend;
             continue;
@@ -418,8 +419,8 @@ void PASER_Route_Maintenance::timeout_ROOT_TIMEOUT(PASER_Timer_Message *t) {
 
 void PASER_Route_Maintenance::messageFailed(struct in_addr src,
         struct in_addr dest, bool sendRERR) {
-    EV << "Link break for src: " << src.S_addr.getIPv4().str()
-            << ", dest: " << dest.S_addr.getIPv4().str() << "\n";
+    EV << "Link break for src: " << src.S_addr.toIPv4().str()
+            << ", dest: " << dest.S_addr.toIPv4().str() << "\n";
     PASER_Routing_Entry *rEntry = paser_global->getRouting_table()->findDest(
             dest);
     if (rEntry == nullptr) {
@@ -434,7 +435,7 @@ void PASER_Route_Maintenance::messageFailed(struct in_addr src,
     if (paser_global->getRouting_table()->findDest(nextHop) == nullptr) {
         return;
     }
-    EV << "Link broken to neighbor " << nextHop.S_addr.getIPv4().str()
+    EV << "Link broken to neighbor " << nextHop.S_addr.toIPv4().str()
             << "\n";
 
     std::list<PASER_Routing_Entry*> EntryList =
@@ -460,7 +461,7 @@ void PASER_Route_Maintenance::messageFailed(struct in_addr src,
         paser_global->getPaket_processing()->send_rerr(allAddrList);
     }
 }
-
+}
 }
 
 #endif

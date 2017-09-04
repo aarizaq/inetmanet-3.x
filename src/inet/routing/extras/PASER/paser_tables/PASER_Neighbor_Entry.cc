@@ -26,6 +26,7 @@
 
 
 namespace inet {
+namespace inetmanet {
 
 PASER_Neighbor_Entry::~PASER_Neighbor_Entry() {
     if (root) {
@@ -43,6 +44,7 @@ void PASER_Neighbor_Entry::setValidTimer(PASER_Timer_Message *_validTimer) {
     validTimer = _validTimer;
 }
 
+}
 }
 
 #endif

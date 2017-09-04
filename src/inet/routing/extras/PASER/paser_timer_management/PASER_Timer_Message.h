@@ -30,6 +30,7 @@
 #include "inet/routing/extras/base/compatibility.h"
 
 namespace inet {
+namespace inetmanet {
 
 enum timeout_var {
     KDC_REQUEST,
@@ -62,6 +63,7 @@ public:
     ;
 };
 
+}
 }
 
 #endif /* PASER_TIMER_PACKET_H_ */

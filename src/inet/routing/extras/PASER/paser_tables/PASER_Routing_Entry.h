@@ -28,10 +28,11 @@
 
 //OMNET
 
-#include "PASER_Timer_Message.h"
+#include "inet/routing/extras/PASER/paser_timer_management/PASER_Timer_Message.h"
 #include "inet/routing/extras/base/compatibility.h"
 
 namespace inet {
+namespace inetmanet {
 
 class PASER_Routing_Entry {
 public:
@@ -59,5 +60,7 @@ public:
 
 
 }
+}
+
 #endif /* PASER_ROUTING_ENTRY_H_ */
 #endif

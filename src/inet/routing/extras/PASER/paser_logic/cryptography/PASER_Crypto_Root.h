@@ -19,9 +19,9 @@
  ********************************************************************************
  * This work is part of the secure wireless mesh networks framework, which is currently under development by CNI
  ********************************************************************************/
+
 #include "inet/routing/extras/PASER/generic/Configuration.h"
 #ifdef OPENSSL_IS_LINKED
-class PASER_Crypto_Root;
 
 #ifndef PASER_ROOT_H_
 #define PASER_ROOT_H_
@@ -36,6 +36,7 @@ class PASER_Crypto_Root;
 namespace inet {
 
 namespace inetmanet {
+class PASER_Global;
 
 class PASER_Crypto_Root {
 private:

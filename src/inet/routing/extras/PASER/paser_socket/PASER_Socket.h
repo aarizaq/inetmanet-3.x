@@ -23,8 +23,6 @@
 #ifdef OPENSSL_IS_LINKED
 #define OMNETPP
 
-class PASER_Socket;
-
 //#ifdef PASER_SOCKET_H_
 //
 //
@@ -32,6 +30,7 @@ class PASER_Socket;
 
 #ifndef PASER_SOCKET_H_
 #define PASER_SOCKET_H_
+#include "inet/common/INETDefs.h"
 #include "inet/routing/extras/PASER/paser_message_structure/PASER_MSG.h"
 #include "inet/routing/extras/PASER/paser_message_structure/PASER_TU_RREP.h"
 #include "inet/routing/extras/PASER/paser_message_structure/PASER_TU_RREP_ACK.h"
@@ -39,16 +38,16 @@ class PASER_Socket;
 #include "inet/routing/extras/PASER/paser_message_structure/PASER_UB_RREQ.h"
 #include "inet/routing/extras/PASER/paser_message_structure/PASER_UU_RREP.h"
 #include "inet/routing/extras/PASER/paser_tables/PASER_Routing_Table.h"
-#include "PASER_Routing_Entry.h"
+#include "inet/routing/extras/PASER/paser_tables/PASER_Routing_Entry.h"
 #include "inet/routing/extras/PASER/paser_tables/PASER_Neighbor_Table.h"
 #include "inet/routing/extras/PASER/paser_tables/PASER_Neighbor_Entry.h"
 #include "inet/routing/extras/PASER/paser_tables/PASER_RREQ_List.h"
 #include "inet/routing/extras/PASER/paser_timer_management/PASER_Timer_Queue.h"
-#include "PASER_Timer_Message.h"
+#include "inet/routing/extras/PASER/paser_timer_management/PASER_Timer_Message.h"
 #include "inet/routing/extras/PASER/paser_buffer/PASER_Message_Queue.h"
-#include "inet/routing/extras/PASER/paser_logic/crytography/PASER_Crypto_Root.h"
-#include "inet/routing/extras/PASER/paser_logic/crytography/PASER_Crypto_Sign.h"
-#include "inet/routing/extras/PASER/paser_logic/crytography/PASER_Crypto_Hash.h"
+#include "inet/routing/extras/PASER/paser_logic/cryptography/PASER_Crypto_Root.h"
+#include "inet/routing/extras/PASER/paser_logic/cryptography/PASER_Crypto_Sign.h"
+#include "inet/routing/extras/PASER/paser_logic/cryptography/PASER_Crypto_Hash.h"
 #include "inet/routing/extras/PASER/paser_logic/message_processing/PASER_Message_Processing.h"
 #include "inet/routing/extras/PASER/paser_logic/route_maintenance/PASER_Route_Maintenance.h"
 #include "inet/routing/extras/PASER/paser_logic/route_discovery/PASER_Route_Discovery.h"
@@ -56,11 +55,10 @@ class PASER_Socket;
 #include "inet/routing/extras/PASER/paser_configuration/PASER_Configurations.h"
 #include "inet/routing/extras/PASER/paser_configuration/PASER_Definitions.h"
 #include "inet/networklayer/common/L3Address.h"
-#include <omnetpp.h>
-#include <Coord.h>
-#include <ChannelControl.h>
+#include "inet/common/geometry/common/Coord.h"
+//#include <ChannelControl.h>
 
-#include "ManetRoutingBase.h"
+#include "inet/routing/extras/base/ManetRoutingBase.h"
 #include "inet/networklayer/ipv4/IPv4Datagram.h"
 
 #include <list>
@@ -70,6 +68,13 @@ class PASER_Socket;
 namespace inet {
 
 namespace inetmanet {
+
+class PASER_Message_Queue;
+class PASER_Message_Processing;
+class PASER_Global;
+class PASER_Global;
+class PASER_Crypto_Sign;
+class PASER_Crypto_Root;
 
 class PASER_Socket: public ManetRoutingBase {
 private:
@@ -153,13 +158,13 @@ protected:
      */
     bool supportGetRoute () {return false;};
     virtual uint32_t getRoute(const L3Address &, std::vector<L3Address> &) {
-        ev << "computer says no\n";
+        EV_INFO << "computer says no\n";
         return 0;
     }
     ;
     virtual bool getNextHop(const L3Address &, L3Address &add, int &iface,
             double &val) {
-        ev << "computer says no\n";
+        EV_INFO << "computer says no\n";
         return false;
     }
     ;
@@ -214,6 +219,10 @@ protected:
      * @brief Include the length of the message sent into the statistics
      */
     int addPaketLaengeZuStat(cPacket * msg);
+
+    virtual bool handleNodeStart(IDoneCallback *doneCallback) override {};
+    virtual bool handleNodeShutdown(IDoneCallback *doneCallback) override {};
+    virtual void handleNodeCrash() override {};
 
 public:
     PASER_Socket();

@@ -21,7 +21,6 @@
  ********************************************************************************/
 #include "inet/routing/extras/PASER/generic/Configuration.h"
 #ifdef OPENSSL_IS_LINKED
-class PASER_Global;
 
 #ifndef PASER_GLOBAL_H_
 #define PASER_GLOBAL_H_
@@ -31,15 +30,17 @@ class PASER_Global;
 #include "inet/routing/extras/PASER/paser_logic/route_discovery/PASER_Route_Discovery.h"
 #include "inet/routing/extras/PASER/paser_logic/route_maintenance/PASER_Route_Maintenance.h"
 #include "inet/routing/extras/PASER/paser_configuration/PASER_Configurations.h"
-#include "inet/routing/extras/PASER/paser_logic/crytography/PASER_Crypto_Hash.h"
-#include "inet/routing/extras/PASER/paser_logic/crytography/PASER_Crypto_Sign.h"
-#include "inet/routing/extras/PASER/paser_logic/crytography/PASER_Crypto_Root.h"
+#include "inet/routing/extras/PASER/paser_logic/cryptography/PASER_Crypto_Hash.h"
+#include "inet/routing/extras/PASER/paser_logic/cryptography/PASER_Crypto_Sign.h"
+#include "inet/routing/extras/PASER/paser_logic/cryptography/PASER_Crypto_Root.h"
 #include "inet/routing/extras/PASER/paser_tables/PASER_RREQ_List.h"
-#include "PASER_RERR_List.h"
+#include "inet/routing/extras/PASER/paser_logic/message_processing/PASER_RERR_List.h"
 #include "inet/routing/extras/PASER/paser_configuration/PASER_Definitions.h"
 
 namespace inet {
+namespace inetmanet {
 
+class PASER_Message_Processing;
 class PASER_Global {
 public:
     PASER_Global(PASER_Configurations *pConfig, PASER_Socket *pModul);
@@ -136,6 +137,8 @@ private:
 };
 
 }
+}
+
 
 #endif /* PASER_GLOBAL_H_ */
 #endif

@@ -21,6 +21,7 @@
  * This work is part of the secure wireless mesh networks framework, which is currently under development by CNI
  ********************************************************************************/
 #include "inet/routing/extras/PASER/generic/Configuration.h"
+#include "inet/common/INETDefs.h"
 #ifdef OPENSSL_IS_LINKED
 #include <openssl/err.h>
 #include "inet/routing/extras/PASER/paser_socket/PASER_Socket.h"
@@ -243,8 +244,8 @@ InterfaceEntry * PASER_Socket::PUBLIC_getInterfaceEntry(int index) {
 //TIMEOUT
 std::ostream& operator<<(std::ostream& os, const PASER_Timer_Message& ob2) {
     os
-            << /*"src: " << ob2.srcAddr.S_addr.getIPv4().str() << "forw: " << ob2.forwAddr.S_addr.getIPv4().str() <<*/" dest: "
-            << ob2.destAddr.S_addr.getIPv4().str() << " type: ";
+            << /*"src: " << ob2.srcAddr.S_addr.toIPv4().str() << "forw: " << ob2.forwAddr.S_addr.toIPv4().str() <<*/" dest: "
+            << ob2.destAddr.S_addr.toIPv4().str() << " type: ";
     switch ((int) ob2.handler) {
     case KDC_REQUEST:
         os << "KDC_REQUEST";
@@ -279,7 +280,7 @@ std::ostream& operator<<(std::ostream& os, const PASER_Timer_Message& ob2) {
 
 //NEIGHBOR TABLE
 std::ostream& operator<<(std::ostream& os, const PASER_Neighbor_Entry& ob2) {
-    os << "addr: " << ob2.neighbor_addr.S_addr.getIPv4().str() << " IV: "
+    os << "addr: " << ob2.neighbor_addr.S_addr.toIPv4().str() << " IV: "
             << ob2.IV << " Flag: " << ob2.neighFlag << " positionX: "
             << ob2.position.lat << " positionY: " << ob2.position.lon
             << " isValid: " << (int) ob2.isValid << " if: " << ob2.ifIndex;
@@ -293,9 +294,9 @@ std::ostream& operator<<(std::ostream& os, const PASER_Neighbor_Entry& ob2) {
 
 //ROUTING TABLE
 std::ostream& operator<<(std::ostream& os, const PASER_Routing_Entry& ob2) {
-    os << "destAddr.S_addr: " << ob2.dest_addr.S_addr.getIPv4().str()
+    os << "destAddr.S_addr: " << ob2.dest_addr.S_addr.toIPv4().str()
             << " Metric: " << (int) ob2.hopcnt << " nextHop: "
-            << ob2.nxthop_addr.S_addr.getIPv4().str() << " isGW: "
+            << ob2.nxthop_addr.S_addr.toIPv4().str() << " isGW: "
             << (int) ob2.is_gw << " SeqNr: " << ob2.seqnum << " isValid: "
             << (int) ob2.isValid;
     return os;
@@ -304,7 +305,7 @@ std::ostream& operator<<(std::ostream& os, const PASER_Routing_Entry& ob2) {
 
 //ROUTING TABLE
 std::ostream& operator<<(std::ostream& os, const message_rreq_entry& ob2) {
-    os << "dest : " << ob2.dest_addr.S_addr.getIPv4().str() << " ";
+    os << "dest : " << ob2.dest_addr.S_addr.toIPv4().str() << " ";
     switch (ob2.tPack->handler) {
     case ROUTE_DISCOVERY_UB:
         os << "ROUTE_DISCOVERY_UB";
@@ -469,13 +470,13 @@ void PASER_Socket::handleMessage(cMessage *msg) {
         // Update Timer of a route
         else if (control->getOptionCode() == MANET_ROUTE_UPDATE) {
             EV << "Update Message. src: "
-                    << control->getSrcAddress().getIPv4().str()
+                    << control->getSrcAddress().toIPv4().str()
                     << ", dest: "
-                    << control->getDestAddress().getIPv4().str() << "\n";
+                    << control->getDestAddress().toIPv4().str() << "\n";
             struct in_addr tempAddr;
             if (paser_global->isHelloActive()) {
                 tempAddr.S_addr = control->getSrcAddress();
-                EV << "controlSrc: " << tempAddr.S_addr.getIPv4().str()
+                EV << "controlSrc: " << tempAddr.S_addr.toIPv4().str()
                         << "\n";
                 if (paser_configuration->isAddInMySubnetz(tempAddr)
                         || isLocalAddress(tempAddr.S_addr)) {
@@ -485,7 +486,7 @@ void PASER_Socket::handleMessage(cMessage *msg) {
                 }
             }
             tempAddr.S_addr = control->getDestAddress();
-            EV << "controlDest: " << tempAddr.S_addr.getIPv4().str()
+            EV << "controlDest: " << tempAddr.S_addr.toIPv4().str()
                     << "\n";
             if (tempAddr.S_addr != PASER_BROADCAST) {
                 if (paser_configuration->isAddInMySubnetz(tempAddr)
@@ -784,7 +785,7 @@ void PASER_Socket::processLinkBreak(const cObject *details) {
     IPv4Datagram *dgram = nullptr;
     if (paser_configuration->isSetLinkLayerFeeback()) {
         if (dynamic_cast<IPv4Datagram *>(const_cast<cObject*>(details))) {
-            dgram = check_and_cast<IPv4Datagram *>(details);
+            dgram = dynamic_cast<IPv4Datagram *>(const_cast<cObject*>(details));
             struct in_addr dest_addr, src_addr;
             src_addr.s_addr.set(dgram->getSrcAddress());
             dest_addr.s_addr.set(dgram->getDestAddress());
@@ -821,7 +822,7 @@ void PASER_Socket::processLinkBreak(const cObject *details) {
 
 bool PASER_Socket::isMyLocalAddress(struct in_addr addr) {
     EV << " Entering isMyLocalAddress \n";
-    EV << addr.S_addr.getIPv4().getInt()<<" \n";
+    EV << addr.S_addr.toIPv4().getInt()<<" \n";
     bool result = isLocalAddress(addr.S_addr);
     EV <<"result"<< result<<" \n";
     return result;
@@ -850,7 +851,7 @@ int PASER_Socket::MYgettimeofday(struct timeval *tv, struct timezone *tz) {
     return 0;
 }
 
-int PASER_Socket::MYgetWlanInterfaceIndexByAddress(Address add) {
+int PASER_Socket::MYgetWlanInterfaceIndexByAddress(L3Address add) {
     EV<<"MYgetWlanInterfaceIndexByAddress"<<endl;
     return getWlanInterfaceIndexByAddress(add);
 }
@@ -865,9 +866,9 @@ void PASER_Socket::MY_omnet_chg_rte(const L3Address &destination, const L3Addres
     if (getIsMacLayer())
         throw cRuntimeError("PASER can not work in the MAC layer");
      /* Add route to kernel routing table ... */
-     IPv4Address desAddress(destination.getIPv4());
-     EV<<"destination is"<<destination.getIPv4()<<endl;
-     EV<<"MASK"<<mask.getIPv4()<<endl;
+     IPv4Address desAddress(destination.toIPv4());
+     EV<<"destination is"<<destination.toIPv4()<<endl;
+     EV<<"MASK"<<mask.toIPv4()<<endl;
      EV<<"getNumInterfaces()"<<getNumInterfaces()<<endl;
      EV<<"ifaceIndex"<<ifaceIndex<<endl;
 
@@ -881,7 +882,7 @@ void PASER_Socket::MY_omnet_chg_rte(const L3Address &destination, const L3Addres
      // let optimise next search!
      for (int i=getInetRoutingTable()->getNumRoutes(); i>0; --i)
      {
-         IPv4Route *e = getInetRoutingTable()->getRoute(i-1);
+         IPv4Route *e = dynamic_cast<IPv4Route *>(getInetRoutingTable()->getRoute(i-1));
          if (desAddress == e->getDestination())     // FIXME netmask checking?
          {
              if (del_entry && !found)    // FIXME The 'found' never set to true when 'del_entry' is true
@@ -901,8 +902,8 @@ void PASER_Socket::MY_omnet_chg_rte(const L3Address &destination, const L3Addres
      if (del_entry)
           return;
 
-      IPv4Address netmask(mask.getIPv4());
-      IPv4Address gateway(nextHop.getIPv4());
+      IPv4Address netmask(mask.toIPv4());
+      IPv4Address gateway(nextHop.toIPv4());
       //if (mask.isUnspecified())
         //  netmask = IPv4Address::ALLONES_ADDRESS;
       InterfaceEntry *ie = getInterfaceEntry(ifaceIndex);
@@ -915,7 +916,7 @@ void PASER_Socket::MY_omnet_chg_rte(const L3Address &destination, const L3Addres
                   && oldentry->getGateway() == gateway
                   && oldentry->getMetric() == hops
                   && oldentry->getInterface() == ie
-                  && oldentry->getSource() == IPv4Route::MANUAL)
+                  && oldentry->getSourceType() == IRoute::MANUAL)
               return;
           getInetRoutingTable()->deleteRoute(oldentry);
       }
@@ -945,8 +946,8 @@ void PASER_Socket::MY_omnet_chg_rte(const L3Address &destination, const L3Addres
 
       /// Source of route, MANUAL by reading a file,
       /// routing protocol name otherwise
-      IPv4Route::RouteSource routeSource = getUseManetLabelRouting() ? IPv4Route::MANET : IPv4Route::MANET2;
-      entry->setSource(routeSource);
+      IRoute::SourceType routeSource = getUseManetLabelRouting() ? IRoute::MANET : IRoute::MANET2;
+      entry->setSourceType(routeSource);
       EV<<"routeSource is"<<routeSource<<endl;
       EV<<"routeSource is"<<entry->getSource()<<endl;
 
@@ -954,9 +955,9 @@ void PASER_Socket::MY_omnet_chg_rte(const L3Address &destination, const L3Addres
 
       //omnet_chg_rte(dst, gtwy, netm, hops, del_entry, index);
       if (!del_entry) {
-          EV << "update  Routing Table: " << destination.getIPv4().str() << "\n";
+          EV << "update  Routing Table: " << destination.toIPv4().str() << "\n";
       } else {
-          EV << "loesche Routing Table: " << destination.getIPv4().str() << "\n";
+          EV << "loesche Routing Table: " << destination.toIPv4().str() << "\n";
       }
       return;
 }
@@ -999,7 +1000,7 @@ bool PASER_Socket::parseIntTo(const char *s, double& destValue) {
     return true;
 }
 
-void PASER_Socket::sendUDPToIp(cPacket *msg, int srcPort, const Address& destAddr,
+void PASER_Socket::sendUDPToIp(cPacket *msg, int srcPort, const L3Address& destAddr,
         int destPort, int ttl, double delay, int index) {
     InterfaceEntry *ie = nullptr;
 
@@ -1007,7 +1008,7 @@ void PASER_Socket::sendUDPToIp(cPacket *msg, int srcPort, const Address& destAdd
     //TODO set UDPSIZE
     udpPacket->setByteLength(600);
     udpPacket->encapsulate(msg);
-    //Address srcAddr = interfaceWlanptr->ipv4Data()->getIPv4();
+    //Address srcAddr = interfaceWlanptr->ipv4Data()->toIPv4();
 
     if (ttl == 0) {
         // delete and return
@@ -1026,16 +1027,16 @@ void PASER_Socket::sendUDPToIp(cPacket *msg, int srcPort, const Address& destAdd
     //if (!destAddr.isIPv6())
     if (true) {
         // Send to IPv4
-        IPv4Address add = destAddr.getIPv4();
+        IPv4Address add = destAddr.toIPv4();
         IPv4Address srcadd;
 
 // If the interface on which the message arrived, use the address of that interface
         if (ie)
             srcadd = ie->ipv4Data()->getIPAddress();
         else {
-//            srcadd = hostAddress.getIPv4();
+//            srcadd = hostAddress.toIPv4();
             srcadd =
-                    netDevice[getIfIdFromIfIndex(index)].ipaddr.S_addr.getIPv4();
+                    netDevice[getIfIdFromIfIndex(index)].ipaddr.S_addr.toIPv4();
         }
 
         EV << "Sending app message " << msg->getName() << " over IPv4."

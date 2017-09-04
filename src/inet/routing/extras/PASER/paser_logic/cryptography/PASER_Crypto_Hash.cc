@@ -24,7 +24,7 @@
 #include <openssl/engine.h>
 #include <openssl/hmac.h>
 #include <openssl/evp.h>
-#include "inet/routing/extras/PASER/paser_logic/crytography/PASER_Crypto_Hash.h"
+#include "inet/routing/extras/PASER/paser_logic/cryptography/PASER_Crypto_Hash.h"
 #include "inet/routing/extras/base/compatibility.h"
 
 namespace inet {

@@ -24,9 +24,9 @@
 #ifndef PASER_UB_Root_Refresh_H_
 #define PASER_UB_Root_Refresh_H_
 
-#include "inet/routing/extras/PASER/paser_configuration/PASER_Definitions.h"
-#include <omnetpp.h>
+#include "inet/common/INETDefs.h"
 
+#include "inet/routing/extras/PASER/paser_configuration/PASER_Definitions.h"
 #include <list>
 #include <string.h>
 

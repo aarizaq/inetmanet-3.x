@@ -78,7 +78,7 @@ void PASER_Message_Queue::getAllPaketsToAddWithMask(struct in_addr dest_addr,
                 message_queue_list.begin(); it != message_queue_list.end();
                 it++) {
             struct message_queue_entry temp = (struct message_queue_entry) *it;
-            if (IPv4Address::maskedAddrAreEqual( temp.dest_addr.S_addr.getIPv4(), dest_addr.S_addr.getIPv4(),   mask_addr.S_addr.getIPv4())) {
+            if (IPv4Address::maskedAddrAreEqual( temp.dest_addr.S_addr.toIPv4(), dest_addr.S_addr.toIPv4(),   mask_addr.S_addr.toIPv4())) {
                 message_queue_list.erase(it);
                 datagrams->push_back(temp);
                 tryAgain = true;
@@ -89,7 +89,7 @@ void PASER_Message_Queue::getAllPaketsToAddWithMask(struct in_addr dest_addr,
 }
 
 void PASER_Message_Queue::send_queued_messages(struct in_addr dest_addr) {
-    EV << "send all messages to: " << dest_addr.S_addr.getIPv4().str()
+    EV << "send all messages to: " << dest_addr.S_addr.toIPv4().str()
             << "\n";
     std::list<message_queue_entry> datagrams;
     getAllPaketsTo(dest_addr, &datagrams);
@@ -121,8 +121,8 @@ void PASER_Message_Queue::send_queued_messages_for_AddList(
             struct in_addr dest_addr = destRange.ipaddr;
             struct in_addr mask_addr = destRange.mask;
             EV << "send all messages to ip: "
-                    << dest_addr.S_addr.getIPv4().str() << " mask: "
-                    << mask_addr.S_addr.getIPv4().str() << "\n";
+                    << dest_addr.S_addr.toIPv4().str() << " mask: "
+                    << mask_addr.S_addr.toIPv4().str() << "\n";
             std::list<message_queue_entry> datagrams;
             getAllPaketsToAddWithMask(dest_addr, mask_addr, &datagrams);
             for (auto it = datagrams.begin();
@@ -140,7 +140,7 @@ void PASER_Message_Queue::send_queued_messages_for_AddList(
 }
 
 void PASER_Message_Queue::deleteMessages(struct in_addr dest_addr) {
-    EV << "delete all messages to: " << dest_addr.S_addr.getIPv4().str()
+    EV << "delete all messages to: " << dest_addr.S_addr.toIPv4().str()
             << "\n";
     std::list<message_queue_entry> datagrams;
     getAllPaketsTo(dest_addr, &datagrams);

@@ -28,10 +28,10 @@
 
 #include <map>
 #include "inet/routing/extras/base/compatibility.h"
-#include "PASER_Timer_Message.h"
+#include "inet/routing/extras/PASER/paser_timer_management/PASER_Timer_Message.h"
 
 namespace inet {
-
+namespace inetmanet {
 
 class message_rreq_entry {
 public:
@@ -85,6 +85,8 @@ public:
 };
 
 }
+}
+
 
 #endif /* PASER_RREQ_LIST_H_ */
 #endif

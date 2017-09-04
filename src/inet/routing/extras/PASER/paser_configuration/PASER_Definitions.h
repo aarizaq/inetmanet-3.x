@@ -67,6 +67,9 @@
 #include "inet/routing/extras/base/compatibility.h"
 #include <list>
 
+namespace inet {
+
+namespace inetmanet {
 
 /** Port number of the PASER UDP socket*/
 #define PASER_PORT 653
@@ -132,7 +135,7 @@
 //#define PASER_Crypto_Root_repeat 2
 
 /** Broadcast address (255.255.255.255) */
-#define PASER_BROADCAST Address(IPv4Address::ALLONES_ADDRESS)
+#define PASER_BROADCAST IPv4Address::ALLONES_ADDRESS
 
 #define PASER_SUBNETZ ((in_addr_t) 0x0A000100)
 #define PASER_MASK ((in_addr_t) 0xFFFF0000)
@@ -147,7 +150,8 @@
 #define PASER_linkLayerFeeback paser_modul->par("isLinkLayer").boolValue()
 
 /// Maximum sequence number
-#define PASER_MAXSEQ ((u_int32_t)0xFFFFFFFF)
+#define PASER_MAXSEQ ((uint32_t)0xFFFFFFFF)
+
 
 typedef struct {
     double lat;
@@ -156,21 +160,21 @@ typedef struct {
 
 typedef struct {
     unsigned char *buf;
-    u_int32_t len;
+    uint32_t len;
 } lv_block;
 
 typedef struct {
-    struct in_addr addr;
-    u_int32_t seq;
+    in_addr addr;
+    uint32_t seq;
 } unreachableBlock;
 
 typedef struct {
     lv_block GTK;
-    u_int32_t nonce;
+    uint32_t nonce;
     lv_block CRL;
     lv_block cert_kdc;
     lv_block sign;
-    u_int32_t key_nr;
+    uint32_t key_nr;
     lv_block sign_key;
 } kdc_block;
 
@@ -186,16 +190,16 @@ typedef struct {
     int enabled; ///< 1 if struct is used, else 0
     int sock; ///< PASER socket associated with this device
     int icmp_sock; ///< Raw socket used to send/receive ICMP messages
-    u_int32_t ifindex; ///< Index of this interface
+    uint32_t ifindex; ///< Index of this interface
     char ifname[IFNAMSIZ]; ///< Interface name
-    struct in_addr ipaddr; ///< Local IP address
-    struct in_addr bcast; ///< Broadcast address
-    struct in_addr mask; ///< Mask
+    in_addr ipaddr; ///< Local IP address
+    in_addr bcast; ///< Broadcast address
+    in_addr mask; ///< Mask
 } network_device;
 
 struct address_range {
-    struct in_addr ipaddr; /* The IP address */
-    struct in_addr mask; /* mask */
+    in_addr ipaddr; /* The IP address */
+    in_addr mask; /* mask */
 
     address_range() {
         ipaddr.S_addr = L3Address();
@@ -211,7 +215,7 @@ struct address_range {
 };
 
 struct address_list {
-    struct in_addr ipaddr; /* The IP address */
+    in_addr ipaddr; /* The IP address */
     std::list<address_range> range; /* List of the node's subnetworks */
 
     address_list() {
@@ -233,6 +237,10 @@ struct address_list {
 //  long tv_usec;
 //};
 //#endif
+
+}
+
+}
 
 #endif /* PASER_DEFS_H_ */
 #endif

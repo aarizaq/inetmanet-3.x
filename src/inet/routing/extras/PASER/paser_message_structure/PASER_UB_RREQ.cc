@@ -134,9 +134,9 @@ PASER_UB_RREQ& PASER_UB_RREQ::operator =(const PASER_UB_RREQ &m) {
 std::string PASER_UB_RREQ::detailedInfo() const {
     std::stringstream out;
     out << "Type: UBRREQ \n";
-    out << "Querying node: " << srcAddress_var.S_addr.getIPv4().str()
+    out << "Querying node: " << srcAddress_var.S_addr.toIPv4().str()
             << "\n";
-    out << "Destination node: " << destAddress_var.S_addr.getIPv4().str()
+    out << "Destination node: " << destAddress_var.S_addr.toIPv4().str()
             << "\n";
     out << "Sequence: " << seq << "\n";
     out << "KeyNr: " << keyNr << "\n";
@@ -147,14 +147,14 @@ std::string PASER_UB_RREQ::detailedInfo() const {
     for (std::list<address_list>::iterator it = temp.begin(); it != temp.end();
             it++) {
         address_list tempList = (address_list) *it;
-        out << "Route: " << tempList.ipaddr.S_addr.getIPv4().str() << "\n";
+        out << "Route: " << tempList.ipaddr.S_addr.toIPv4().str() << "\n";
 
         std::list<address_range> temp2;
         temp2.assign(tempList.range.begin(), tempList.range.end());
         for (std::list<address_range>::iterator it = temp2.begin();
                 it != temp2.end(); it++) {
             address_range tempRange = (address_range) *it;
-            out << "Range: " << tempRange.ipaddr.S_addr.getIPv4().str()
+            out << "Range: " << tempRange.ipaddr.S_addr.toIPv4().str()
                     << "\n";
         }
     }
@@ -163,7 +163,7 @@ std::string PASER_UB_RREQ::detailedInfo() const {
 //    temp.assign(routeFromQueryingToForwarding.begin(), routeFromQueryingToForwarding.end());
 //    for(std::list<struct in_addr>::iterator it=temp.begin(); it!=temp.end(); it++){
 //        struct in_addr temp = (struct in_addr)*it;
-//        out << "route: " << temp.S_addr.getIPv4().str() << "\n";
+//        out << "route: " << temp.S_addr.toIPv4().str() << "\n";
 //    }
     out << "metric.size: " << (int32_t) metricBetweenQueryingAndForw << " .\n";
     out << "initVector: " << (int32_t) initVector << " .\n";

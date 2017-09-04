@@ -36,12 +36,14 @@
 #include "inet/networklayer/common/L3AddressResolver.h"
 #include "inet/routing/extras/base/compatibility.h"
 #include "inet/networklayer/common/L3Address.h"
+#include "inet/common/ModuleAccess.h"
 #include <string.h>
 #include "SimpleKDC.h"
 #define MSGKIND_CONNECT  0
 #define MSGKIND_SEND     1
 
 namespace inet {
+namespace inetmanet {
 
 Define_Module(SimpleKDC);
 
@@ -180,7 +182,7 @@ void SimpleKDC::handleMessage(cMessage *msg) {
         for (std::list<struct in_addr>::iterator it = nextHopList.begin();
                 it != nextHopList.end(); it++) {
             struct in_addr tempAddr = (struct in_addr) *it;
-            EV << "nextHopAddr: " << tempAddr.S_addr.getIPv4().str()
+            EV << "nextHopAddr: " << tempAddr.S_addr.toIPv4().str()
                     << "\n";
 //            kdcReset *message = new kdcReset();
 //            message->setKdc_key_nr(key_nr);
@@ -217,7 +219,7 @@ void SimpleKDC::handleMessage(cMessage *msg) {
 //    printf("%02x", sign[n]);
 //putchar('\n');
             free(data);
-            socket.sendTo(message, tempAddr.S_addr.getIPv4(),
+            socket.sendTo(message, tempAddr.S_addr.toIPv4(),
                     (int) par("port").longValue());
         }
         return;
@@ -236,9 +238,9 @@ void SimpleKDC::handleMessage(cMessage *msg) {
             if (!found) {
                 nextHopList.push_back(message->getGwAddr());
             }
-            socket.sendTo(message, message->getGwAddr().S_addr.getIPv4(),
+            socket.sendTo(message, message->getGwAddr().S_addr.toIPv4(),
                     (int) par("port").longValue());
-//            sendToUDP(message, (int)par("port").longValue(), message->getGwAddr().S_addr.getIPv4(), (int)par("port").longValue());
+//            sendToUDP(message, (int)par("port").longValue(), message->getGwAddr().S_addr.toIPv4(), (int)par("port").longValue());
         } else {
             delete msg;
         }
@@ -248,9 +250,9 @@ void SimpleKDC::handleMessage(cMessage *msg) {
         struct in_addr dest_Addr;
         crl_message *message = check_and_cast<crl_message *>(msg);
         EV << "message->getGwAddr(): "
-                << message->getGwAddr().S_addr.getIPv4().str() << "\n";
+                << message->getGwAddr().S_addr.toIPv4().str() << "\n";
         struct in_addr src = message->getSrc();
-        EV << "src: " << src.S_addr.getIPv4().str() << "\n";
+        EV << "src: " << src.S_addr.toIPv4().str() << "\n";
         //Verify certificate of incoming message
         lv_block tempCert;
         tempCert.len = message->getCert_len();
@@ -416,7 +418,7 @@ void SimpleKDC::handleMessage(cMessage *msg) {
         message_to_send->setGwAddr(message->getGwAddr());
         message_to_send->setNextHopAddr(message->getNextHopAddr());
 
-//        sendToUDP(message_to_send, PORT_for_CRL_out, message->getGwAddr().S_addr.getIPv4(), PORT_for_CRL_out);
+//        sendToUDP(message_to_send, PORT_for_CRL_out, message->getGwAddr().S_addr.toIPv4(), PORT_for_CRL_out);
         scheduleAt(message_dellay + simTime().dbl(), message_to_send);
 
         free(kdcData.GTK.buf);
@@ -453,8 +455,10 @@ void SimpleKDC::setSocketOptions() {
         socket.setBroadcast(true);
 
     bool joinLocalMulticastGroups = par("joinLocalMulticastGroups");
-    if (joinLocalMulticastGroups)
-        socket.joinLocalMulticastGroups();
+    if (joinLocalMulticastGroups) {
+        MulticastGroupList mgl = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this)->collectMulticastGroups();
+        socket.joinLocalMulticastGroups(mgl);
+    }
 }
 
 int SimpleKDC::checkOneCert(X509 *cert) {
@@ -601,6 +605,7 @@ int SimpleKDC::rsa_encrypt(lv_block in, lv_block *out, X509 *cert) {
     return 1;
 }
 
+}
 }
 
 #endif

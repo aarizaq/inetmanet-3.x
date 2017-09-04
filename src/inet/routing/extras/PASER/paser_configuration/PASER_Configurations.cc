@@ -359,7 +359,7 @@ void PASER_Configurations::intAddlList() {
 //        netAddDevice[i].bcast.S_addr = (in_addr_t) 0xFFFFFF00;
         netAddDevice[i].mask.S_addr.set(paser_modul->PUBLIC_getInterfaceEntry(i + netDeviceNumber )->ipv4Data()->getNetmask());
         netAddDevice[i].ipaddr.S_addr.set(IPv4Address(paser_modul->PUBLIC_getInterfaceEntry(i + netDeviceNumber)->ipv4Data()->getIPAddress().getInt()
-                        & netAddDevice[i].mask.S_addr.getIPv4().getInt()));/*(in_addr_t) 0xFFFFFF00*/;
+                        & netAddDevice[i].mask.S_addr.toIPv4().getInt()));/*(in_addr_t) 0xFFFFFF00*/;
         EV << "net Mask: "
                 << paser_modul->PUBLIC_getInterfaceEntry(
                         i + netDeviceNumber)->ipv4Data()->getNetmask().str()
@@ -374,9 +374,9 @@ void PASER_Configurations::intAddlList() {
 bool PASER_Configurations::isAddInMySubnetz(struct in_addr Addr) {
     for (u_int32_t i = 0; i < netAddDeviceNumber; i++) {
         EV << "(netAddDevice[i].mask.S_addr & Addr.S_addr) = "
-                << (netAddDevice[i].mask.S_addr.getIPv4().getInt() & Addr.S_addr.getIPv4().getInt()) << "\n";
-        if ((netAddDevice[i].mask.S_addr.getIPv4().getInt() & Addr.S_addr.getIPv4().getInt())
-                == (netAddDevice[i].mask.S_addr.getIPv4().getInt() & netAddDevice[i].ipaddr.S_addr.getIPv4().getInt())) {
+                << (netAddDevice[i].mask.S_addr.toIPv4().getInt() & Addr.S_addr.toIPv4().getInt()) << "\n";
+        if ((netAddDevice[i].mask.S_addr.toIPv4().getInt() & Addr.S_addr.toIPv4().getInt())
+                == (netAddDevice[i].mask.S_addr.toIPv4().getInt() & netAddDevice[i].ipaddr.S_addr.toIPv4().getInt())) {
             return true;
         }
     }

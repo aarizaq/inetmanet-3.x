@@ -114,9 +114,9 @@ PASER_TB_RERR& PASER_TB_RERR::operator =(const PASER_TB_RERR &m) {
 std::string PASER_TB_RERR::detailedInfo() const {
     std::stringstream out;
     out << "Type: RERR \n";
-    out << "Querying node: " << srcAddress_var.S_addr.getIPv4().str()
+    out << "Querying node: " << srcAddress_var.S_addr.toIPv4().str()
             << "\n";
-//    out << "First unreachable node: "<< UnreachableAdressesList.front().S_addr.getIPv4().str() << "\n";
+//    out << "First unreachable node: "<< UnreachableAdressesList.front().S_addr.toIPv4().str() << "\n";
     out << "Sequence: " << seq << "\n";
     out << "KeyNR: " << keyNr << "\n";
 //    out << "Route.size: "<< routeFromQueryingToForwarding.size() << "\n";
@@ -124,7 +124,7 @@ std::string PASER_TB_RERR::detailedInfo() const {
 //    temp.assign(routeFromQueryingToForwarding.begin(), routeFromQueryingToForwarding.end());
 //    for(std::list<struct in_addr>::iterator it=temp.begin(); it!=temp.end(); it++){
 //        struct in_addr temp = (struct in_addr)*it;
-//        out << "route: " << temp.S_addr.getIPv4().str() << "\n";
+//        out << "route: " << temp.S_addr.toIPv4().str() << "\n";
 //    }
 
     return out.str();

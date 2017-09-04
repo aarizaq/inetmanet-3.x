@@ -30,14 +30,14 @@
 #include "openssl/x509.h"
 #include "openssl/pem.h"
 #include "openssl/err.h"
+#include "inet/common/INETDefs.h"
+
 #include "inet/routing/extras/PASER/paser_configuration/PASER_Definitions.h"
 #include "inet/routing/extras/PASER/paser_message_structure/PASER_UB_Key_Refresh.h"
 
 #include "inet/routing/extras/PASER/simple_kdc/kdc_message/crl_message_m.h"
 
-#include <omnetpp.h>
 #include <list>
-#include "csimplemodule.h"
 #include "inet/transportlayer/contract/udp/UDPSocket.h"
 //#include "UDPBasicApp.h"
 
@@ -58,6 +58,7 @@
 
 
 namespace inet {
+namespace inetmanet {
 
 class SimpleKDC : public cSimpleModule
 {
@@ -101,6 +102,7 @@ protected:
     int rsa_encrypt(lv_block in, lv_block *out, X509 *cert);
 };
 
+}
 }
 
 #endif
