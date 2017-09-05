@@ -39,6 +39,11 @@ class noncobject MACAddress;
 //
 // Defines all fields of an DMAMAC frame (Extends MacPkt)
 //
+class Alarms {
+   MACAddress address;
+   uint8_t alarms = 0;
+}
+
 packet DMAMACPkt extends MACFrameBase
 {
     short nextHopUp;   // Multi-hop facilty, next hop towards sink
@@ -54,6 +59,8 @@ packet DMAMACPkt extends MACFrameBase
     unsigned char seq;
     simtime_t timeRef;
     int initialSeed = -1;
+    uint8_t alarms = 0;
+    Alarms alarmsArray[];
 }
 
 packet DMAMACSyncPkt extends DMAMACPkt

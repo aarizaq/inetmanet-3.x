@@ -751,6 +751,32 @@ void DMAMACSink::handleLowerPacket(cPacket* msg) {
             return;
         }
 
+        // TODO: check alerts
+        if (pktAux->getSourceAddress() == myMacAddr) {
+            if (pktAux->getAlarms() != 0xFF)
+                pktAux->setAlarms(pktAux->getAlarms()<<1 & 0x1);
+        }
+        else {
+            bool find = false;
+            for (int i = 0; i < pktAux->getAlarmsArrayArraySize(); i++) {
+                Alarms alr = pktAux->getAlarmsArray(i);
+                if (alr.getAddress() == myMacAddr)  {
+                    find = true;
+                    alr.setAlarms(alr.getAlarms()<<1 & 0x1);
+                    pktAux->setAlarmsArray(i,alr);
+                }
+            }
+            if (!find) {
+                Alarms alr;
+                alr.setAddress(myMacAddr);
+                pktAux->setAlarmsArrayArraySize(pktAux->getAlarmsArrayArraySize()+1);
+                alr.setAlarms(alr.getAlarms()<<1 & 0x1);
+                pktAux->setAlarmsArray(pktAux->getAlarmsArrayArraySize()-1,alr);
+                pktAux->setByteLength(pktAux->getByteLength()+2);
+            }
+            nbRxAlert++
+        }
+
         emit(rcvdPkSignalDma,msg);
 
         const MACAddress& dest = mac->getDestAddr();
@@ -896,6 +922,9 @@ void DMAMACSink::findDistantNextSlot()
     }
     else if (receiveSlot[(currentSlot) % numSlots] == mySlot)
     {
+        EV << "My next slot after sleep is receive slot" << endl;
+        scheduleAt(simTime() + nextEvent, waitData);
+        /*
         if(currentSlot < numSlotsTransient)
         {
             EV << "My next slot after sleep is receive slot" << endl;
@@ -905,7 +934,8 @@ void DMAMACSink::findDistantNextSlot()
         {
             EV << "Next slot after sleep is alert slot" << endl;
             scheduleAt(simTime() + nextEvent, waitAlert);
-        }
+        }*/
+
     }
     else if (alwaysListening) {
         scheduleAt(simTime() + nextEvent, waitData);
@@ -934,6 +964,9 @@ void DMAMACSink::findImmediateNextSlot(int currentSlotLocal,simtime_t nextSlot)
     }
     else if (receiveSlot[(currentSlotLocal + 1) % numSlots] == mySlot)
     {
+        EV << "Immediate next Slot is my Receive Slot, getting ready to receive.\n";
+        scheduleAt(simTime() + nextSlot, waitData);
+        /*
         if(currentSlotLocal < numSlotsTransient)
         {
             EV << "Immediate next Slot is my Receive Slot, getting ready to receive.\n";
@@ -944,6 +977,7 @@ void DMAMACSink::findImmediateNextSlot(int currentSlotLocal,simtime_t nextSlot)
             EV << "Immediate next Slot is Alert Slot, getting ready to receive.\n";
             scheduleAt(simTime() + nextSlot, waitAlert);
         }
+        */
 
     }
     else if (receiveSlot[(currentSlotLocal + 1) % numSlots] == ALERT_SINK)

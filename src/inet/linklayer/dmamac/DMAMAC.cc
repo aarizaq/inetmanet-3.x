@@ -696,7 +696,7 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
               destAddr = MACAddress(sinkAddress);
               mac->setDestAddr(destAddr);
               mac->setKind(DMAMAC_DATA);
-              mac->setByteLength(44);
+              mac->setByteLength(45);
               if (checkDup)
                   mac->setByteLength(mac->getByteLength()+1);
               mac->setSourceAddress(myMacAddr);
@@ -712,8 +712,8 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
     }
 
     /* @brief To mark Alert period for mark */
-    if (currentSlot >= numSlotsTransient)
-        macPeriod = ALERT;
+/*    if (currentSlot >= numSlotsTransient)
+        macPeriod = ALERT;*/
 
     EV << "Current <MAC> period = " << macPeriod << endl;
     /* @brief Printing number of slots for check  */
@@ -722,7 +722,7 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
     EV << "Current RadioState : " << radio->getRadioModeName(radio->getRadioMode())  << endl;
 
     bool recIsIdle = (radio->getReceptionState() == IRadio::RECEPTION_STATE_IDLE);
-
+    bool generateAlert = false;
     switch (msg->getKind())
     {
         /* @brief SETUP phase enters to start the MAC protocol operation */
@@ -914,10 +914,73 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
                 assert(mySlot == transmitSlot[currentSlot]);
 
                 /* @brief Checking if packets are available to send in the mac queue  */
-                if(macPktQueue.empty())
+                randomNumber = uniform(0,1000,0);
+                EV << "Generated randomNumber is : " << randomNumber << endl;
+
+                /* @brief Checking if we need to send Alert message at all */
+                /*@{*/
+
+                if (randomNumber < alertProbability)
+                {
+                   EV << "Threshold crossed need to send Alert message, number generated :" << randomNumber << endl;
+                   generateAlert = true;
+                }
+
+                if (generateAlert && macPktQueue.empty()) {
+                    // generate message of data for transmit the alert.
+                    /* @brief Creating the data packet for this round */
+                    if(!isActuator && macPktQueue.empty()) {
+                        DMAMACPkt* mac = new DMAMACPkt();
+                        destAddr = MACAddress(sinkAddress);
+                        mac->setDestAddr(destAddr);
+                        mac->setKind(DMAMAC_DATA);
+                        mac->setByteLength(45);
+                        if (checkDup)
+                            mac->setByteLength(mac->getByteLength()+1);
+                        mac->setSourceAddress(myMacAddr);
+                        nbCreatePkt++;
+                        sequence++;
+                        mac->setSequence(sequence);
+                        packetSend aux;
+                        aux.pkt = mac;
+                        macPktQueue.push_back(aux);
+                        //mac->setBitLength(headerLength);
+                    }
+                }
+
+                if(macPktQueue.empty()) {
                     EV << "No Packet to Send exiting" << endl;
+                }
                 else
                 {
+                    if (generateAlert) {
+                        nbTxAlert++;
+                        // search a message in the queue and activate the alert.
+                        DMAMACPkt *pktAux = macPktQueue.front().pkt;
+                        if (pktAux->getSourceAddress() == myMacAddr) {
+                            if (pktAux->getAlarms() != 0xFF)
+                                pktAux->setAlarms(pktAux->getAlarms()<<1 & 0x1);
+                        }
+                        else {
+                            bool find = false;
+                            for (int i = 0; i < pktAux->getAlarmsArrayArraySize(); i++) {
+                                Alarms alr = pktAux->getAlarmsArray(i);
+                                if (alr.getAddress() == myMacAddr)  {
+                                    find = true;
+                                    alr.setAlarms(alr.getAlarms()<<1 & 0x1);
+                                    pktAux->setAlarmsArray(i,alr);
+                                }
+                            }
+                            if (!find) {
+                                Alarms alr;
+                                alr.setAddress(myMacAddr);
+                                pktAux->setAlarmsArrayArraySize(pktAux->getAlarmsArrayArraySize()+1);
+                                alr.setAlarms(alr.getAlarms()<<1 & 0x1);
+                                pktAux->setAlarmsArray(pktAux->getAlarmsArrayArraySize()-1,alr);
+                                pktAux->setByteLength(pktAux->getByteLength()+2);
+                            }
+                        }
+                    }
                     /* @brief Setting the radio state to transmit mode */
                     if(radio->getRadioMode() != IRadio::RADIO_MODE_TRANSMITTER)
                         radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
@@ -1405,6 +1468,8 @@ void DMAMAC::resyncr(const int &slot,const macMode &mode, const bool &changeMacM
 
     if (transmitSlot[val] == mySlot)
     {
+        scheduleAt(simTime(), sendData);
+        /*
         if(slot < numSlotsTransient)
         {
             EV << "Immediate next Slot is my Send Slot, getting ready to transmit" << endl;
@@ -1415,6 +1480,7 @@ void DMAMAC::resyncr(const int &slot,const macMode &mode, const bool &changeMacM
             EV << "Immediate next Slot is my alert Transmit Slot, getting ready to send" << endl;
             scheduleAt(simTime(), scheduleAlert);
         }
+        */
     }
     else if (transmitSlot[val] == alertLevel && !isActuator)
     {
@@ -1423,6 +1489,9 @@ void DMAMAC::resyncr(const int &slot,const macMode &mode, const bool &changeMacM
     }
     else if (receiveSlot[val] == mySlot)
     {
+        EV << "Immediate next Slot is my Receive Slot, getting ready to receive" << endl;
+        scheduleAt(simTime(), waitData);
+        /*
         if(slot < numSlotsTransient)
         {
             EV << "Immediate next Slot is my Receive Slot, getting ready to receive" << endl;
@@ -1433,6 +1502,7 @@ void DMAMAC::resyncr(const int &slot,const macMode &mode, const bool &changeMacM
             EV << "Immediate next Slot is my alert Receive Slot, getting ready to receive" << endl;
             scheduleAt(simTime(), waitAlert);
         }
+        */
     }
     else if (receiveSlot[val] == alertLevel)
     {
@@ -1887,6 +1957,8 @@ void DMAMAC::findDistantNextSlot()
     */
     if(transmitSlot[(currentSlot) % numSlots] == mySlot)
     {
+        scheduleAt(simTime() + nextEvent, sendData);
+        /*
         if(currentSlot < numSlotsTransient)
         {
             EV << "My next slot after sleep is transmit slot" << endl;
@@ -1897,6 +1969,7 @@ void DMAMAC::findDistantNextSlot()
             EV << "My next slot after sleep is alert Transmit Slot" << endl;
             scheduleAt(simTime() + nextEvent, scheduleAlert);
         }
+        */
     }
     else if (transmitSlot[(currentSlot) % numSlots] == alertLevel && !isActuator)
     {
@@ -1915,6 +1988,8 @@ void DMAMAC::findDistantNextSlot()
     }
     else if (receiveSlot[(currentSlot) % numSlots] == mySlot)
     {
+        scheduleAt(simTime() + nextEvent, waitData);
+        /*
         if(currentSlot < numSlotsTransient)
         {
             EV << "My next slot after sleep is receive slot" << endl;
@@ -1925,6 +2000,7 @@ void DMAMAC::findDistantNextSlot()
             EV << "My next slot after sleep is alert receive Slot" << endl;
             scheduleAt(simTime() + nextEvent, waitAlert);
         }
+        */
     }
     else if (alwaysListening) {
         scheduleAt(simTime() + nextEvent, waitData);
@@ -1958,6 +2034,8 @@ void DMAMAC::findImmediateNextSlot(int currentSlotLocal,simtime_t nextSlot)
     }
     else if (receiveSlot[(currentSlotLocal + 1) % numSlots] == mySlot)
     {
+        scheduleAt(simTime() + nextSlot, waitData);
+        /*
         if(currentSlotLocal < numSlotsTransient)
         {
             EV << "Immediate next Slot is my Receive Slot, getting ready to receive" << endl;
@@ -1968,6 +2046,7 @@ void DMAMAC::findImmediateNextSlot(int currentSlotLocal,simtime_t nextSlot)
             EV << "Immediate next Slot is my alert Receive Slot, getting ready to receive" << endl;
             scheduleAt(simTime() + nextSlot, waitAlert);
         }
+        */
     }
     else if (receiveSlot[(currentSlotLocal + 1) % numSlots] == alertLevel)
     {
