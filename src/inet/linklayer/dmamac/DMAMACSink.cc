@@ -751,32 +751,6 @@ void DMAMACSink::handleLowerPacket(cPacket* msg) {
             return;
         }
 
-        // TODO: check alerts
-        if (pktAux->getSourceAddress() == myMacAddr) {
-            if (pktAux->getAlarms() != 0xFF)
-                pktAux->setAlarms(pktAux->getAlarms()<<1 & 0x1);
-        }
-        else {
-            bool find = false;
-            for (int i = 0; i < pktAux->getAlarmsArrayArraySize(); i++) {
-                Alarms alr = pktAux->getAlarmsArray(i);
-                if (alr.getAddress() == myMacAddr)  {
-                    find = true;
-                    alr.setAlarms(alr.getAlarms()<<1 & 0x1);
-                    pktAux->setAlarmsArray(i,alr);
-                }
-            }
-            if (!find) {
-                Alarms alr;
-                alr.setAddress(myMacAddr);
-                pktAux->setAlarmsArrayArraySize(pktAux->getAlarmsArrayArraySize()+1);
-                alr.setAlarms(alr.getAlarms()<<1 & 0x1);
-                pktAux->setAlarmsArray(pktAux->getAlarmsArrayArraySize()-1,alr);
-                pktAux->setByteLength(pktAux->getByteLength()+2);
-            }
-            nbRxAlert++
-        }
-
         emit(rcvdPkSignalDma,msg);
 
         const MACAddress& dest = mac->getDestAddr();
@@ -788,6 +762,11 @@ void DMAMACSink::handleLowerPacket(cPacket* msg) {
             lastDataPktSrcAddr = mac->getSrcAddr();
 
             if (!isDup) {
+                nbRxAlert += mac->getAlarms();
+                for (int i = 0; i < mac->getAlarmsArrayArraySize(); i++) {
+                    Alarms alr = mac->getAlarmsArray(i);
+                    nbRxAlert += alr.getAlarms();
+                }
                 /* @brief Not sending to application layer but sending to Actuators */
                 if (!mac->getDestinationAddress().isUnspecified()
                         && mac->getDestinationAddress() != myMacAddr) {

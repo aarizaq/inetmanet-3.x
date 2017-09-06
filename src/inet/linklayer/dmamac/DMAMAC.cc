@@ -958,8 +958,7 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
                         // search a message in the queue and activate the alert.
                         DMAMACPkt *pktAux = macPktQueue.front().pkt;
                         if (pktAux->getSourceAddress() == myMacAddr) {
-                            if (pktAux->getAlarms() != 0xFF)
-                                pktAux->setAlarms(pktAux->getAlarms()<<1 & 0x1);
+                            pktAux->setAlarms(pktAux->getAlarms()+1);
                         }
                         else {
                             bool find = false;
@@ -967,7 +966,7 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
                                 Alarms alr = pktAux->getAlarmsArray(i);
                                 if (alr.getAddress() == myMacAddr)  {
                                     find = true;
-                                    alr.setAlarms(alr.getAlarms()<<1 & 0x1);
+                                    alr.setAlarms(alr.getAlarms()+1);
                                     pktAux->setAlarmsArray(i,alr);
                                 }
                             }
@@ -975,7 +974,7 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
                                 Alarms alr;
                                 alr.setAddress(myMacAddr);
                                 pktAux->setAlarmsArrayArraySize(pktAux->getAlarmsArrayArraySize()+1);
-                                alr.setAlarms(alr.getAlarms()<<1 & 0x1);
+                                alr.setAlarms(1);
                                 pktAux->setAlarmsArray(pktAux->getAlarmsArrayArraySize()-1,alr);
                                 pktAux->setByteLength(pktAux->getByteLength()+2);
                             }
