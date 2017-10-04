@@ -15,21 +15,34 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-package inet.visualizer.base;
+#ifndef __INET_PLACEMENT_H
+#define __INET_PLACEMENT_H
 
-//
-// This is a base module for node visualizer simple modules. The actual
-// visualization of network nodes is done in derived modules.
-//
-// @see ~NetworkNodeCanvasVisualizer, ~NetworkNodeOsgVisualizer, ~INetworkNodeVisualizer, ~VisualizerBase
-//
-simple NetworkNodeVisualizerBase extends VisualizerBase
+#include "inet/common/INETDefs.h"
+
+namespace inet {
+
+namespace visualizer {
+
+enum Placement
 {
-    parameters:
-        string nodeFilter = default("*"); // determines which network nodes are displayed, all nodes by default
+    PLACEMENT_NONE          = 0x00,
+    PLACEMENT_TOP_LEFT      = 0x01,
+    PLACEMENT_TOP_CENTER    = 0x02,
+    PLACEMENT_TOP_RIGHT     = 0x04,
+    PLACEMENT_CENTER_LEFT   = 0x08,
+    PLACEMENT_CENTER_RIGHT  = 0x10,
+    PLACEMENT_BOTTOM_LEFT   = 0x20,
+    PLACEMENT_BOTTOM_CENTER = 0x40,
+    PLACEMENT_BOTTOM_RIGHT  = 0x80,
+    PLACEMENT_ANY           = 0xFF
+};
 
-        double annotationSpacing = default(4);
-        double placementPenalty = default(10);
+Placement parsePlacement(const char *s);
 
-        @class(NetworkNodeVisualizerBase);
-}
+} // namespace visualizer
+
+} // namespace inet
+
+#endif // ifndef __INET_PLACEMENT_H
+

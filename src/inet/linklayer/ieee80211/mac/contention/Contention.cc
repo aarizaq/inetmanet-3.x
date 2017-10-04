@@ -38,19 +38,7 @@ void Contention::initialize(int stage)
     if (stage == INITSTAGE_LOCAL) {
         backoffOptimization = par("backoffOptimization");
         lastIdleStartTime = simTime() - SimTime::getMaxTime() / 2;
-        cModule *mod = getContainingNicModule(this)->getSubmodule("mac");
-        if (mod == nullptr) { // array multi mac
-            mod = this;
-            cModule *aux = getContainingNicModule(this);
-            while (mod != aux) {
-                if (strstr(mod->getName(),"mac") !=nullptr)
-                    break;
-                mod = mod->getParentModule();
-            }
-            if (mod == aux)
-                mod = nullptr;
-        }
-        mac = check_and_cast<Ieee80211Mac *>(mod);
+        mac = check_and_cast<Ieee80211Mac *>(getContainingNicModule(this)->getSubmodule("mac"));
         startTxEvent = new cMessage("startTx");
         startTxEvent->setSchedulingPriority(1000); // low priority, i.e. processed later than most events for the same time
         // FIXME: kludge
@@ -276,13 +264,7 @@ const char *Contention::getEventName(EventType event)
 
 void Contention::updateDisplayString(simtime_t expectedChannelAccess)
 {
-    std::string displayString(fsm.getStateName());
-    if (expectedChannelAccess != -1) {
-        std::ostringstream strs;
-        strs << expectedChannelAccess;
-        displayString += ("\nExp. access: " + strs.str());
-    }
-    getDisplayString().setTagArg("t", 0, displayString.c_str());
+    getDisplayString().setTagArg("t", 0, fsm.getStateName());
 }
 
 } // namespace ieee80211
