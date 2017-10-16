@@ -1188,7 +1188,7 @@ Ieee80211DataFrame *Ieee80211Mesh::encapsulate(cPacket *msg,MACAddress dest)
 }
 
 
-void Ieee80211Mesh::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj)
+void Ieee80211Mesh::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details)
 {
     Enter_Method_Silent();
     printNotificationBanner(signalID, obj);

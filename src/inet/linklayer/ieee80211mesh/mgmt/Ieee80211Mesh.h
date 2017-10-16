@@ -271,7 +271,7 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase, public cListener
         virtual Ieee80211DataFrame *encapsulate(cPacket *msg);
 
         /** Called by the NotificationBoard whenever a change occurs we're interested in */
-        virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj);
+        virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details) override;
 
         /** @name Processing of different frame types */
         //@{
