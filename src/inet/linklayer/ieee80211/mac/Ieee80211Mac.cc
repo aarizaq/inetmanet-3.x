@@ -67,12 +67,11 @@ void Ieee80211Mac::initialize(int stage)
         modeSet = Ieee80211ModeSet::getModeSet(par("modeSet").stringValue());
     }
     else if (stage == INITSTAGE_LINK_LAYER) {
-        registerInterface();
+        if (isInterfaceRegistered().isUnspecified())// TODO: do we need multi-MAC feature? if so, should they share interfaceEntry??  --Andras
+            registerInterface();
         emit(NF_MODESET_CHANGED, modeSet);
         if (isOperational)
             radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
-        if (isInterfaceRegistered().isUnspecified())// TODO: do we need multi-MAC feature? if so, should they share interfaceEntry??  --Andras
-            registerInterface();
     }
     else if (stage == INITSTAGE_LINK_LAYER_2) {
         rx = check_and_cast<IRx *>(getSubmodule("rx"));
