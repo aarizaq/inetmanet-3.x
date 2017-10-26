@@ -131,7 +131,7 @@ PASER_UB_RREQ& PASER_UB_RREQ::operator =(const PASER_UB_RREQ &m) {
 }
 
 
-std::string PASER_UB_RREQ::detailedInfo() const {
+std::string PASER_UB_RREQ::str() const {
     std::stringstream out;
     out << "Type: UBRREQ \n";
     out << "Querying node: " << srcAddress_var.S_addr.toIPv4().str()

@@ -103,7 +103,7 @@ PASER_TB_Hello& PASER_TB_Hello::operator =(const PASER_TB_Hello &m) {
     return *this;
 }
 
-std::string PASER_TB_Hello::detailedInfo() const {
+std::string PASER_TB_Hello::str() const {
     std::stringstream out;
     out << "Type: PASER_TB_Hello \n";
     out << "Querying node: " << srcAddress_var.S_addr.toIPv4().str()

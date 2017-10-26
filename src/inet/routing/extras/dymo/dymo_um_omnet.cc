@@ -1434,7 +1434,7 @@ void DYMOUM::finish()
 }
 
 
-std::string DYMOUM::detailedInfo() const
+std::string DYMOUM::str() const
 {
     std::stringstream out;
 

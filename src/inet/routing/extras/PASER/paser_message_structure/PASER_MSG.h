@@ -64,7 +64,7 @@ public:
      *
      *@return Description of the message content
      */
-    virtual std::string detailedInfo() const=0;
+    virtual std::string str() const=0 override;
 
     /**
      *@brief  Duplicates a PASER message

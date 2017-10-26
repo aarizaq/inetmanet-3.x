@@ -108,7 +108,7 @@ std::string SAORSBase_RoutingTable::info() const {
 /*****************************************************************************************
  * Prints out the detailed information concerning the routing table of SAORS.
  *****************************************************************************************/
-std::string SAORSBase_RoutingTable::detailedInfo() const {
+std::string SAORSBase_RoutingTable::str() const {
 	return info();
 }
 

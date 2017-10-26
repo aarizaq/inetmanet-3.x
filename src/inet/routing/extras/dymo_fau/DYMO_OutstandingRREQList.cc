@@ -70,7 +70,7 @@ std::string DYMO_OutstandingRREQList::info() const
     return ss.str();
 }
 
-std::string DYMO_OutstandingRREQList::detailedInfo() const
+std::string DYMO_OutstandingRREQList::str() const
 {
     return info();
 }

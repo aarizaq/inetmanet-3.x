@@ -51,7 +51,7 @@ std::string DYMO_Timer::info() const
     return ss.str();
 }
 
-std::string DYMO_Timer::detailedInfo() const
+std::string DYMO_Timer::str() const
 {
     return info();
 }

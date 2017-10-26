@@ -70,7 +70,7 @@ public:
      *
      *@return Description of the message content
      */
-    std::string detailedInfo() const;
+    std::string str() const override;
     /**
      *@brief  Creates and return an array of all fields that must be secured via hash or signature
      *

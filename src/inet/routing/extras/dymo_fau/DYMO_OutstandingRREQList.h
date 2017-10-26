@@ -56,7 +56,7 @@ class DYMO_OutstandingRREQList : public cObject
     virtual std::string info() const override;
 
     /** @brief inherited from cObject */
-    virtual std::string detailedInfo() const override;
+    virtual std::string str() const override;
 
     /**
      * @returns DYMO_OutstandingRREQ with matching destAddr or 0 if none is found

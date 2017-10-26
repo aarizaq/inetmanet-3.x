@@ -17,9 +17,9 @@ std::string LWmpls_Forwarding_Structure::info() const
     return out.str();
 }
 
-std::string LWmpls_Forwarding_Structure::detailedInfo() const
+std::string LWmpls_Forwarding_Structure::str() const
 {
-    return std::string();
+    return info();
 }
 
 

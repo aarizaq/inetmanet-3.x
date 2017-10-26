@@ -93,7 +93,7 @@ PASER_TU_RREP_ACK& PASER_TU_RREP_ACK::operator =(const PASER_TU_RREP_ACK &m) {
 }
 
 
-std::string PASER_TU_RREP_ACK::detailedInfo() const {
+std::string PASER_TU_RREP_ACK::str() const {
     std::stringstream out;
     out << "Type : TU_RREP_ACK \n";
     out << "Querying node : " << srcAddress_var.S_addr.toIPv4().str()

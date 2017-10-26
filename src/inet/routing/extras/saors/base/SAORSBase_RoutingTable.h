@@ -47,13 +47,13 @@ class SAORSBase_RoutingTable : public cObject
 		virtual ~SAORSBase_RoutingTable();
 
 		/** @brief inherited from cObject */
-		virtual const char* getFullName() const;
+		virtual const char* getFullName() const override;
 
 		/** @brief inherited from cObject */
-		virtual std::string info() const;
+		virtual std::string info() const override;
 
 		/** @brief inherited from cObject */
-		virtual std::string detailedInfo() const;
+		virtual std::string str() const override;
 
 		//-----------------------------------------------------------------------
 		//Route table manipulation operations

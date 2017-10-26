@@ -301,7 +301,7 @@ void Dymo_RERR::delBocks(int n)
 }
 
 
-std::string DYMO_element::detailedInfo() const
+std::string DYMO_element::str() const
 {
     std::stringstream out;
 

@@ -64,13 +64,13 @@ class SAORSBase_OutstandingRREQList : public cObject
 		~SAORSBase_OutstandingRREQList();
 
 		/** @brief inherited from cObject */
-		virtual const char* getFullName() const;
+		virtual const char* getFullName() const override;
 
 		/** @brief inherited from cObject */
-		virtual std::string info() const;
+		virtual std::string info() const override;
 
 		/** @brief inherited from cObject */
-		virtual std::string detailedInfo() const;
+		virtual std::string str() const override;
 
 		/** @brief returns SAORSBase_OutstandingRREQ with matching destAddr or 0 if none is found */
 		SAORSBase_OutstandingRREQ* getByDestAddr(unsigned int destAddr, int prefix);

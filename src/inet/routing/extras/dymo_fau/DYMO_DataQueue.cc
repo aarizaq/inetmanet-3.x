@@ -75,7 +75,7 @@ std::string DYMO_DataQueue::info() const
     return ss.str();
 }
 
-std::string DYMO_DataQueue::detailedInfo() const
+std::string DYMO_DataQueue::str() const
 {
     return info();
 }
