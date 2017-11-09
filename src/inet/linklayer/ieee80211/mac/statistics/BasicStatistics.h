@@ -26,6 +26,47 @@ namespace ieee80211 {
 /**
  * A basic implementation of statistics collection (IStatistics).
  */
+#define ACTIVE80211STATISTICS
+#ifdef ACTIVE80211STATISTICS
+
+class INET_API BasicStatistics : public IStatistics, public cSimpleModule
+{
+    private:
+        MacUtils *utils = nullptr;
+        IRateControl *rateControl = nullptr; //TODO maybe there should be a listener list instead of a direct pointer here
+
+        long numRetry = 0;
+        long numSentWithoutRetry = 0;
+        long numGivenUp = 0;
+        long numCollision = 0;
+        long numSent = 0;
+        long numSentBroadcast = 0;
+
+        long numReceivedUnicast = 0;
+        long numReceivedMulticast = 0;
+        long numReceivedBroadcast = 0;
+        long numReceivedNotForUs = 0;
+        long numReceivedErroneous = 0;
+        long numUpperDiscarded = 0;
+
+    protected:
+        virtual void initialize() override;
+        virtual void finish() override;
+        virtual void resetStatistics();
+
+    public:
+        virtual void setMacUtils(MacUtils *utils) override;
+        virtual void setRateControl(IRateControl *rateControl) override;
+        virtual void frameTransmissionSuccessful(Ieee80211DataOrMgmtFrame *frame, int retryCount) override;
+        virtual void frameTransmissionUnsuccessful(Ieee80211DataOrMgmtFrame *frame, int retryCount) override;
+        virtual void frameTransmissionUnsuccessfulGivingUp(Ieee80211DataOrMgmtFrame *frame, int retryCount) override;
+        virtual void frameTransmissionGivenUp(Ieee80211DataOrMgmtFrame *frame) override;
+        virtual void frameReceived(Ieee80211Frame *frame) override;
+        virtual void erroneousFrameReceived() override;
+        virtual void upperFrameDiscarded(Ieee80211Frame *frame) override;
+};
+
+#else
 class INET_API BasicStatistics : /*public IStatistics, */public cSimpleModule
 {
 //    private:
@@ -61,7 +102,7 @@ class INET_API BasicStatistics : /*public IStatistics, */public cSimpleModule
 //        virtual void erroneousFrameReceived() override;
 //        virtual void upperFrameDiscaded(Ieee80211Frame *frame) = 0;
 };
-
+#endif
 }  // namespace ieee80211
 }  // namespace inet
 
