@@ -68,7 +68,7 @@ public:
      *@return Reference to myself
      */
     PASER_TB_RERR& operator=(const PASER_TB_RERR &m);
-    virtual PASER_TB_RERR *dup() const {
+    virtual PASER_TB_RERR *dup() const override {
         return new PASER_TB_RERR(*this);
     }
     /**
@@ -83,14 +83,14 @@ public:
      *@param l Length of the created array
      *@return Array
      */
-    u_int8_t * toByteArray(int *l);
+    u_int8_t * toByteArray(int *l) override;
     /**
      *@brief  Creates and return an array of all message fields
      *
      *@param l Length of the created array
      *@return Array
      */
-    u_int8_t * getCompleteByteArray(int *l);
+    u_int8_t * getCompleteByteArray(int *l) override;
 };
 
 }

@@ -77,7 +77,7 @@ public:
      *@return Reference to myself
      */
     PASER_UU_RREP& operator=(const PASER_UU_RREP &m);
-    virtual PASER_UU_RREP *dup() const {
+    virtual PASER_UU_RREP *dup() const override {
         return new PASER_UU_RREP(*this);
     }
 
@@ -94,14 +94,14 @@ public:
      *@param l Length of the created array
      *@return Array
      */
-    u_int8_t * toByteArray(int *l);
+    u_int8_t * toByteArray(int *l) override;
     /**
      * @brief  Creates and return an array of all message fields
      *
      *@param l Length of the created array
      *@return Array
      */
-    u_int8_t * getCompleteByteArray(int *l);
+    u_int8_t * getCompleteByteArray(int *l) override;
 
 };
 

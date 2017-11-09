@@ -14,5 +14,5 @@
 #endif
 #endif /* CONFIGURATION_H_ */
 
-//#define OPENSSL_IS_LINKED //is only defined if the openssl library is installed and linked; necessary to evaluate PASER.
+#define OPENSSL_IS_LINKED //is only defined if the openssl library is installed and linked; necessary to evaluate PASER.
 //end add
