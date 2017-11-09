@@ -212,7 +212,7 @@ OLSR_rtable::size()
 ///
 ///
 
-std::string OLSR_rtable::detailedInfo() const
+std::string OLSR_rtable::str() const
 {
     std::stringstream out;
 

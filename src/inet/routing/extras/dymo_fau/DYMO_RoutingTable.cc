@@ -82,7 +82,7 @@ std::string DYMO_RoutingTable::info() const
     return ss.str();
 }
 
-std::string DYMO_RoutingTable::detailedInfo() const
+std::string DYMO_RoutingTable::str() const
 {
     return info();
 }

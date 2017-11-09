@@ -157,7 +157,7 @@ struct RREP : public AODV_msg
     RREP (const RREP &m);
     RREP &  operator= (const RREP &m);
     virtual RREP *dup() const override {return new RREP(*this);}
-    virtual std::string detailedInfo() const override;
+    virtual std::string str() const override;
     uint16_t getRes1() const {return res1;}
     uint16_t getA() const {return a;}
     uint16_t getR() const {return r;}
@@ -233,7 +233,7 @@ struct RREQ : public AODV_msg
     RREQ (const RREQ &m);
     RREQ &  operator= (const RREQ &m);
     virtual RREQ *dup() const override {return new RREQ(*this);}
-    virtual std::string detailedInfo() const override;
+    virtual std::string str() const override;
     uint8_t getJ() const {return j;}
     uint8_t getR() const {return r;}
     uint8_t getG() const {return g;}

@@ -188,7 +188,7 @@ void DSRPkt::modDsrOptions(struct dsr_pkt *dp, int interface_id)
 
 
 
-std::string DSRPkt::detailedInfo() const
+std::string DSRPkt::str() const
 {
     std::stringstream out;
     struct dsr_opt *dopt;

@@ -95,7 +95,7 @@ PASER_UB_Root_Refresh& PASER_UB_Root_Refresh::operator =(const PASER_UB_Root_Ref
 }
 
 
-std::string PASER_UB_Root_Refresh::detailedInfo() const {
+std::string PASER_UB_Root_Refresh::str() const {
     std::stringstream out;
     out << "Type: PASER_UB_Root_Refresh \n";
     out << "Querying node: " << srcAddress_var.S_addr.toIPv4().str()

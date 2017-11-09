@@ -126,7 +126,7 @@ PASER_TU_RREQ& PASER_TU_RREQ::operator =(const PASER_TU_RREQ &m) {
 }
 
 
-std::string PASER_TU_RREQ::detailedInfo() const {
+std::string PASER_TU_RREQ::str() const {
     std::stringstream out;
     out << "Type: TURREQ \n";
     out << "Querying node: " << srcAddress_var.S_addr.toIPv4().str()

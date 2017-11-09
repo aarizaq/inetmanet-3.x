@@ -147,36 +147,36 @@ protected:
      * @brief Processing a received message. Check the type of the message
      * and call the corresponding function to handle it
      */
-    void handleMessage(cMessage *msg);
-    int numInitStages() const {
+    void handleMessage(cMessage *msg) override;
+    int numInitStages() const override {
         return 5;
     }
-    void initialize(int stage);
+    void initialize(int stage) override;
 
     /**
      * @brief ManetRoutingBase abstract Functions
      */
-    bool supportGetRoute () {return false;};
-    virtual uint32_t getRoute(const L3Address &, std::vector<L3Address> &) {
+    bool supportGetRoute () override {return false;};
+    virtual uint32_t getRoute(const L3Address &, std::vector<L3Address> &) override {
         EV_INFO << "computer says no\n";
         return 0;
     }
     ;
     virtual bool getNextHop(const L3Address &, L3Address &add, int &iface,
-            double &val) {
+            double &val) override {
         EV_INFO << "computer says no\n";
         return false;
     }
     ;
     virtual void setRefreshRoute(const L3Address &destination,
-            const L3Address & nextHop, bool isReverse) {
+            const L3Address & nextHop, bool isReverse) override {
     }
     ;
-    virtual bool isProactive() {
+    virtual bool isProactive() override {
         return false;
     }
     ;
-    virtual bool isOurType(cPacket * msg) {
+    virtual bool isOurType(cPacket * msg) override {
         if (dynamic_cast<PASER_MSG*>(msg))
             return true;
         else if (dynamic_cast<PASER_MSG*>(msg))
@@ -185,11 +185,11 @@ protected:
             return false;
     }
     ;
-    virtual bool getDestAddress(cPacket *, L3Address &) {
+    virtual bool getDestAddress(cPacket *, L3Address &) override {
         return false;
     }
     ;
-    virtual void processLinkBreak(const cObject *details);
+    virtual void processLinkBreak(const cObject *details) override;
     //  ManetRoutingBase abstract Function END
 
     /**
@@ -220,8 +220,8 @@ protected:
      */
     int addPaketLaengeZuStat(cPacket * msg);
 
-    virtual bool handleNodeStart(IDoneCallback *doneCallback) override {};
-    virtual bool handleNodeShutdown(IDoneCallback *doneCallback) override {};
+    virtual bool handleNodeStart(IDoneCallback *doneCallback) override {return false;};
+    virtual bool handleNodeShutdown(IDoneCallback *doneCallback) override {return false;};
     virtual void handleNodeCrash() override {};
 
 public:

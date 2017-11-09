@@ -69,7 +69,7 @@ struct DYMO_element : public cPacket
     void clearExtension();
     char * getFirstExtension() {return extension;}
     int getSizeExtension() {return extensionsize;}
-    virtual std::string detailedInfo() const;
+    virtual std::string str() const;
 
   private:
     void copy(const DYMO_element& other);

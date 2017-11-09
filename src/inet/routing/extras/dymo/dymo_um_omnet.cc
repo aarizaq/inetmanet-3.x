@@ -73,6 +73,16 @@ int DYMOUM::totalRerrRec = 0;
 #endif
 std::map<L3Address,u_int32_t *> DYMOUM::mapSeqNum;
 
+
+std::ostream& operator<<(std::ostream& os, const rtable_entry_t e)
+{
+    os << "dest:"  << e.rt_dest_addr.S_addr << "  ";
+    os << "next:" << e.rt_nxthop_addr.S_addr << "  ";
+    os << "sq:" << e.rt_seqnum<< "  ";
+    os << "hops:" << e.rt_hopcnt<< "  ";
+    return os;
+};
+
 void DYMOUM::initialize(int stage)
 {
     ManetRoutingBase::initialize(stage);
@@ -222,7 +232,7 @@ void DYMOUM::initialize(int stage)
         costMobile = par("costMobile").longValue();
         useHover = par("useHover");
         EV_INFO << "Dymo active" << "\n";
-
+        WATCH_PTRMAP(*dymoRoutingTable);
     }
 }
 
@@ -1424,7 +1434,7 @@ void DYMOUM::finish()
 }
 
 
-std::string DYMOUM::detailedInfo() const
+std::string DYMOUM::str() const
 {
     std::stringstream out;
 

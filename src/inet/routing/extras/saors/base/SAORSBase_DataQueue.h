@@ -72,13 +72,13 @@ class SAORSBase_DataQueue : public cObject {
 		~SAORSBase_DataQueue();
 
 		/** @brief inherited from cObject */
-		virtual const char* getFullName() const;
+		virtual const char* getFullName() const override;
 
 		/** @brief inherited from cObject */
-		virtual std::string info() const;
+		virtual std::string info() const override;
 
 		/** @brief inherited from cObject */
-		virtual std::string detailedInfo() const;
+		virtual std::string str() const override;
 
 		/** @brief checks if list is empty */
 		bool isempty();

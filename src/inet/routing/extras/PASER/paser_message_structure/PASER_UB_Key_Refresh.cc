@@ -79,7 +79,7 @@ PASER_UB_Key_Refresh& PASER_UB_Key_Refresh::operator =(const PASER_UB_Key_Refres
     return *this;
 }
 
-std::string PASER_UB_Key_Refresh::detailedInfo() const {
+std::string PASER_UB_Key_Refresh::str() const {
     std::stringstream out;
     out << "Type: PASER_UB_Key_Refresh \n";
     out << "Querying node: " << srcAddress_var.S_addr.toIPv4().str()

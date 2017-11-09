@@ -87,7 +87,7 @@ std::string SAORSBase_OutstandingRREQList::info() const {
  * Returns a character string with the detailed current information of the class.
  * Currently the same as the SAORSBase_OutstandingRREQList::info() function.
  ********************************************************************************************/
-std::string SAORSBase_OutstandingRREQList::detailedInfo() const {
+std::string SAORSBase_OutstandingRREQList::str() const {
 	return info();
 }
 

@@ -551,17 +551,21 @@ void Ieee80211Mesh::handleMessage(cMessage *msg)
                 actualizeReactive(frame,false);
                 Ieee80211MeshFrame *frame2 = (check_and_cast<Ieee80211MeshFrame *>(msg));
                 if(frame2->getFinalAddress().compareTo(myAddress)==0)
-                send(msg, "securityOut");
+                    send(msg, "securityOut");
                 else
-                processFrame(frame);
+                    processFrame(frame);
             }
             else
-            send(msg, "securityOut");
+                send(msg, "securityOut");
         }
         else if (dynamic_cast<Ieee80211ActionMeshFrame *>(msg))
         {
-            if ((routingModuleHwmp != nullptr) && (routingModuleHwmp->isOurType(PK(msg))))
+            if ((routingModuleHwmp != nullptr) && (routingModuleHwmp->isOurType(PK(msg)))) {
+                if (PK(msg)->getControlInfo())
+                    delete PK(msg)->removeControlInfo();
+
                 send(msg,"routingOutHwmp");
+            }
             else
                 delete msg;
         }
@@ -649,8 +653,12 @@ void Ieee80211Mesh::handleMessage(cMessage *msg)
 
             if (dynamic_cast<Ieee80211ActionMeshFrame *>(msg))
             {
-                if ((routingModuleHwmp != nullptr) && (routingModuleHwmp->isOurType(PK(msg))))
+                if ((routingModuleHwmp != nullptr) && (routingModuleHwmp->isOurType(PK(msg)))) {
+                    if (PK(msg)->getControlInfo())
+                        delete PK(msg)->removeControlInfo();
+
                     send(msg,"routingOutHwmp");
+                }
                 else
                     delete msg;
             }
@@ -820,6 +828,13 @@ Ieee80211DataFrame *Ieee80211Mesh::encapsulate(cPacket *msg)
         Ieee802Ctrl *ctrl = check_and_cast<Ieee802Ctrl *>(msg->removeControlInfo());
         dest = ctrl->getDest();
         next = ctrl->getDest();
+        int up = ctrl->getUserPriority();
+        if (up >= 0) {
+            // make it a QoS frame, and set TID
+            frame->setType(ST_DATA_WITH_QOS);
+            frame->addBitLength(QOSCONTROL_BITS);
+            frame->setTid(up);
+        }
         delete ctrl;
         frame->setAddress3(myAddress);
         frame->setFinalAddress(dest);
@@ -1033,6 +1048,8 @@ Ieee80211DataFrame *Ieee80211Mesh::encapsulate(cPacket *msg)
                       if (!routingModuleHwmp->getNextHopGroup(L3Address(dest),add[0],iface,gateWayAddress,isToGt)) //send the packet to the routingModuleReactive
                       {
                           frame->encapsulate(msg);
+                          if (frame->getControlInfo())
+                              delete frame->removeControlInfo();
                           send(frame,"routingOutHwmp");
                           return nullptr;
                       }
@@ -1052,6 +1069,9 @@ Ieee80211DataFrame *Ieee80211Mesh::encapsulate(cPacket *msg)
                       if (!routingModuleHwmp->getNextHop(L3Address(dest),add[0],iface,cost)) //send the packet to the routingModuleReactive
                       {
                            frame->encapsulate(msg);
+                           if (frame->getControlInfo())
+                               delete frame->removeControlInfo();
+
                            send(frame,"routingOutHwmp");
                            return nullptr;
                       }
@@ -1168,7 +1188,7 @@ Ieee80211DataFrame *Ieee80211Mesh::encapsulate(cPacket *msg,MACAddress dest)
 }
 
 
-void Ieee80211Mesh::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj)
+void Ieee80211Mesh::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details)
 {
     Enter_Method_Silent();
     printNotificationBanner(signalID, obj);
@@ -1197,6 +1217,9 @@ void Ieee80211Mesh::receiveSignal(cComponent *source, simsignal_t signalID, cObj
 
 void Ieee80211Mesh::handleDataFrame(Ieee80211DataFrame *frame)
 {
+    if (frame->getControlInfo())
+        delete frame->removeControlInfo();
+
     // The message is forward
     if (forwardMessage(frame))
         return;
@@ -1221,6 +1244,8 @@ void Ieee80211Mesh::handleDataFrame(Ieee80211DataFrame *frame)
         EV<<"totalFixHops"<< totalFixHops<<endl;
 
     }
+
+
 
     cPacket *msg = decapsulate(frame);
     ///
@@ -1641,6 +1666,8 @@ bool Ieee80211Mesh::macLabelBasedSend(Ieee80211DataFrame *frame)
             }
             if (routingModuleHwmp)
             {
+                if (frame->getControlInfo())
+                    delete frame->removeControlInfo();
                 send(frame,"routingOutHwmp");
                 frame = nullptr;
             }
@@ -2259,8 +2286,11 @@ void Ieee80211Mesh::handleWateGayDataReceive(cPacket *pkt)
 
     if (dynamic_cast<Ieee80211ActionMeshFrame *>(pkt))
     {
-        if ((routingModuleHwmp != nullptr) && routingModuleHwmp->isOurType(pkt))
+        if ((routingModuleHwmp != nullptr) && routingModuleHwmp->isOurType(pkt)) {
+            if (pkt->getControlInfo())
+                delete pkt->removeControlInfo();
             send(pkt,"routingOutHwmp");
+        }
         else
             delete pkt;
         return;

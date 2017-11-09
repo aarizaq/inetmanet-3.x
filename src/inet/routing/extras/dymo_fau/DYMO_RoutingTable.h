@@ -47,7 +47,7 @@ class DYMO_RoutingTable : public cObject
     virtual std::string info() const override;
 
     /** @brief inherited from cObject */
-    virtual std::string detailedInfo() const override;
+    virtual std::string str() const override;
 
     //-----------------------------------------------------------------------
     //Route table manupilation operations

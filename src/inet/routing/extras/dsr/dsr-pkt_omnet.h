@@ -100,7 +100,7 @@ class DSRPkt : public IPv4Datagram
     std::vector<struct dsr_opt_hdr> &getDsrOptions() {return dsrOptions;}
     void  setDsrOptions(const std::vector<struct dsr_opt_hdr> &op) {dsrOptions.clear(); dsrOptions=op;}
     void clearDsrOptions(){dsrOptions.clear();}
-    virtual std::string detailedInfo() const override;
+    virtual std::string str() const override;
 
     void resetCostVector();
     virtual void getCostVector(std::vector<EtxCost> &cost); // Copy
