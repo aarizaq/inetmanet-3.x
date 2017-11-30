@@ -53,6 +53,11 @@ void IdealEpEnergyStorage::updateEnergyBalance()
     }
 }
 
+void IdealEpEnergyStorage::finish()
+{
+    recordScalar("energy Balance",energyBalance.get());
+}
+
 } // namespace power
 
 } // namespace inet

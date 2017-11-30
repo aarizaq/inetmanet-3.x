@@ -96,6 +96,12 @@ void SimpleCcBattery::executeNodeOperation(C newResidualCapacity)
     }
 }
 
+
+void SimpleCcBattery::finish()
+{
+    recordScalar("Residual energy",residualCapacity.get());
+}
+
 } // namespace power
 
 } // namespace inet

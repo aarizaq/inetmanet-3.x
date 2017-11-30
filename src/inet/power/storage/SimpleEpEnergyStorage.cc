@@ -151,6 +151,12 @@ void SimpleEpEnergyStorage::scheduleTimer()
         scheduleAt(simTime() + remainingTime, timer);
 }
 
+void SimpleEpEnergyStorage::finish()
+{
+    recordScalar("Residual energy",residualCapacity.get());
+}
+
+
 } // namespace power
 
 } // namespace inet
