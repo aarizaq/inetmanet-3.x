@@ -28,7 +28,7 @@
 
 namespace inet {
 
-Define_Module( AnyMacXmacLayer )
+Define_Module( AnyMacXmacLayer );
 
 /**
  * Initialize method of BMacLayer. Init all parameters, schedule timers.
@@ -75,7 +75,7 @@ void AnyMacXmacLayer::initialize(int stage)
         initializeMACAddress();
         registerInterface();
 
-        cModule *radioModule = getParentModule()->getSubmodule("radio");
+        cModule *radioModule = getModuleFromPar<cModule>(par("radioModule"), this);
         radioModule->subscribe(IRadio::radioModeChangedSignal, this);
         radioModule->subscribe(IRadio::transmissionStateChangedSignal, this);
         radio = check_and_cast<IRadio *>(radioModule);
