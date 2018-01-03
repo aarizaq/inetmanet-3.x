@@ -394,7 +394,7 @@ void DMAMAC::initialize(int stage)
                 hoppingTimer = new cMessage("DMAMAC_HOPPING_TIMEOUT");
                 hoppingTimer->setSchedulingPriority(-2);
                 hoppingTimer->setKind(DMAMAC_HOPPING_TIMEOUT);
-                scheduleAt(par("initTime").doubleValue(), hoppingTimer);
+                scheduleAt(par("initTime").doubleValue()+par("initTime").doubleValue(), hoppingTimer);
             }
             if (channelSinc)
                 scheduleAt(par("initTime").doubleValue(), startup);
@@ -2436,7 +2436,7 @@ void DMAMAC::refreshDisplay() {
     }*/
 
     char buf[150];
-    sprintf(buf, "Current Mac mode Mode :%i Current mac State %d Channel: %d Slot: %d MySlot %d",currentMacMode,currentMacState, actualChannel,currentSlot,mySlot);
+    sprintf(buf, "channelSinc %d Current Mac mode Mode :%i Current mac State %d Channel: %d Slot: %d MySlot %d",channelSinc, currentMacMode,currentMacState, actualChannel,currentSlot,mySlot);
     getDisplayString().setTagArg("t", 0, buf);
 }
 

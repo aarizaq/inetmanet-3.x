@@ -58,6 +58,7 @@ void DMAMACSink::initialize(int stage)
         sinkInitialize();
         isSincronized = true;
         channelSinc = true;
+        alwaysListening = par("alwaysListening");
     }
     else if (stage == INITSTAGE_LINK_LAYER)
     {    }
@@ -917,7 +918,7 @@ void DMAMACSink::findDistantNextSlot()
 
     }
     else if (alwaysListening) {
-        scheduleAt(simTime() + nextEvent, waitData);
+        scheduleAt(simTime(), waitData);
     }
     else
         EV << " Undefined MAC state <ERROR>" << endl;
