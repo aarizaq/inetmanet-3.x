@@ -609,6 +609,11 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
         return;
     }
 
+    if (currentMacState == MAC_SLEEP && radio->getRadioMode() != IRadio::RADIO_MODE_SLEEP) {
+        // force sleep
+        radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+    }
+
     if (!channelSinc && frequentHopping) {
         if (hoppingTimer && msg == hoppingTimer) {
             currentSlot++;
@@ -1116,6 +1121,10 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
         default:{
             EV << "WARNING: unknown timer callback at Self-Message" << msg->getKind() << endl;
         }
+    }
+    if (currentMacState == MAC_SLEEP && radio->getRadioMode() != IRadio::RADIO_MODE_SLEEP) {
+        // force sleep
+        radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
     }
     refreshDisplay();
 }
