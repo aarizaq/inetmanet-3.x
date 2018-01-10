@@ -71,7 +71,7 @@ class OLSR_rtable : public cObject
     OLSR_rt_entry*  find_send_entry(OLSR_rt_entry*);
     uint32_t    size();
 
-    virtual std::string detailedInfo() const;
+    virtual std::string str() const;
 
     virtual OLSR_rtable *dup() const { return new OLSR_rtable(*this); }
 

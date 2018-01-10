@@ -136,6 +136,7 @@ void Hcf::processUpperFrame(Ieee80211DataOrMgmtFrame* frame)
         if (rx->getStatistics()) rx->getStatistics()->upperFrameDiscarded(frame);
         EV_INFO << "Frame " << frame->getName() << " has been dropped because the PendingQueue is full." << endl;
         emit(NF_PACKET_DROP, frame);
+        if (rx->getStatistics()) rx->getStatistics()->frameTransmissionGivenUp(frame);
         delete frame;
     }
 }
@@ -229,6 +230,7 @@ void Hcf::handleInternalCollision(std::vector<Edcaf*> internallyCollidedEdcafs)
             EV_DETAIL << "The frame has reached its retry limit. Dropping it" << std::endl;
             emit(NF_LINK_BREAK, internallyCollidedFrame);
             emit(NF_PACKET_DROP, internallyCollidedFrame);
+            if (rx->getStatistics()) rx->getStatistics()->frameTransmissionGivenUp(internallyCollidedFrame);
             if (auto dataFrame = dynamic_cast<Ieee80211DataFrame *>(internallyCollidedFrame))
                 edcaDataRecoveryProcedures[ac]->retryLimitReached(dataFrame);
             else if (auto mgmtFrame = dynamic_cast<Ieee80211ManagementFrame*>(internallyCollidedFrame))
@@ -364,6 +366,7 @@ void Hcf::originatorProcessRtsProtectionFailed(Ieee80211DataOrMgmtFrame* protect
             edcaInProgressFrames[ac]->dropFrame(protectedFrame);
             emit(NF_LINK_BREAK, protectedFrame);
             emit(NF_PACKET_DROP, protectedFrame);
+            if (rx->getStatistics()) rx->getStatistics()->frameTransmissionGivenUp(protectedFrame);
         }
     }
     else
@@ -477,6 +480,7 @@ void Hcf::originatorProcessFailedFrame(Ieee80211DataOrMgmtFrame* failedFrame)
             edcaInProgressFrames[ac]->dropFrame(failedFrame);
             emit(NF_LINK_BREAK, failedFrame);
             emit(NF_PACKET_DROP, failedFrame);
+            if (rx->getStatistics()) rx->getStatistics()->frameTransmissionGivenUp(failedFrame);
         }
         else
             failedFrame->setRetry(true);

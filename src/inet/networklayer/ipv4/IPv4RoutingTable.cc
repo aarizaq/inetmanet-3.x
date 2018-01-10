@@ -33,6 +33,7 @@
 #include "inet/common/lifecycle/NodeStatus.h"
 #include "inet/common/INETUtils.h"
 #include "inet/common/ModuleAccess.h"
+#include "inet/networklayer/common/L3AddressResolver.h"
 
 namespace inet {
 
@@ -43,6 +44,22 @@ Define_Module(IPv4RoutingTable);
 std::ostream& operator<<(std::ostream& os, const IPv4Route& e)
 {
     os << e.info();
+    os << " path ";
+    auto destination = e.getDestination();
+    auto gateway = e.getGateway();
+    os << gateway << " ";
+    auto nextHop = L3AddressResolver().findHostWithAddress(gateway.isUnspecified() ? destination : gateway);
+    while (nextHop !=nullptr &&  destination != L3AddressResolver().addressOf(nextHop).toIPv4()) {
+        auto rt = L3AddressResolver().findIPv4RoutingTableOf(nextHop);
+        auto route = rt->findBestMatchingRoute(destination);
+        if (route != nullptr) {
+            gateway = route->getGateway();
+            os << gateway << " ";
+        }
+        else
+            break;
+        nextHop = L3AddressResolver().findHostWithAddress(gateway.isUnspecified() ? destination : gateway);
+    }
     return os;
 };
 

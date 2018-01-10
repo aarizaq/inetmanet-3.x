@@ -30,6 +30,8 @@ rm -rf $INET_ROOT/out/$DIRNAME
 mkdir -p $INET_ROOT/out/$DIRNAME
 
 git checkout-index -a -f --prefix=$INET_ROOT/out/$DIRNAME/ || { echo --- error copying repo ---; exit 1;}
+(cd showcases; git checkout-index -a -f --prefix=$INET_ROOT/out/$DIRNAME/showcases/ || { echo --- error copying showcases ---; exit 1;})
+(cd tutorials; git checkout-index -a -f --prefix=$INET_ROOT/out/$DIRNAME/tutorials/ || { echo --- error copying tutorials ---; exit 1;})
 
 echo "inet-$BUILDID" > $INET_ROOT/out/$DIRNAME/Version
 
@@ -53,6 +55,10 @@ if [ "$todofiles" != "" ]; then
     echo "Removing underscore files: $todofiles"
     rm -rf $todofiles
 fi
+
+# clean up the showcase and tutorial dir and remove the website text and videos to reduce package size
+(cd showcases && rm -rf docs start_local_server)
+(cd tutorials && rm -rf *.md start_local_server _config.yml _data _includes _layouts etc */doc)
 
 # pack and create tar.gz archives
 echo Creating $FILENAME.

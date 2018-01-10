@@ -44,7 +44,7 @@ import inet.linklayer.contract.IMACProtocol;
 simple AnyMacXmacLayer extends MACProtocolBase like IMACProtocol
 {
     parameters:
-		@class(BMac2Layer);
+		@class(AnyMacXmacLayer);
         // debug switch
         bool debug = default(false);
         //collect statistics?
@@ -77,6 +77,8 @@ simple AnyMacXmacLayer extends MACProtocolBase like IMACProtocol
         double macMaxFrameRetries = default(3);
         bool   useAck2 = default(false); // if the preamble has destination address can send ACK2
         bool   PreambleAddress = default(false); // Include the destination address in the preamble    
-        bool   XMAC = default(false);    
+        bool   XMAC = default(false); 
+        string radioModule = default("^.radio");   // The path to the Radio module  //FIXME remove default value
+        @signal[NF_LINK_BREAK](type=XMacPkt);
 }
 

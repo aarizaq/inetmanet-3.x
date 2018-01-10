@@ -79,7 +79,7 @@ public:
      *@return Reference to myself
      */
     PASER_UB_RREQ& operator=(const PASER_UB_RREQ &m);
-    virtual PASER_UB_RREQ *dup() const {
+    virtual PASER_UB_RREQ *dup() const override {
         return new PASER_UB_RREQ(*this);
     }
     /**
@@ -87,21 +87,21 @@ public:
      *
      *@return Description of the message content
      */
-    std::string detailedInfo() const;
+    std::string str() const override;
     /**
      * @brief Creates and return an array of all fields that must be secured via hash or signature
      *
      *@param l Length of the created array
      *@return Array
      */
-    u_int8_t * toByteArray(int *l);
+    u_int8_t * toByteArray(int *l) override;
     /**
      * @brief Creates and return an array of all message fields
      *
      *@param l Length of the created array
      *@return Array
      */
-    u_int8_t * getCompleteByteArray(int *l);
+    u_int8_t * getCompleteByteArray(int *l) override;
 };
 
 }

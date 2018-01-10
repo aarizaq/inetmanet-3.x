@@ -222,7 +222,7 @@ void RREP::copy(const RREP& m)
     totalHops = m.totalHops;
 }
 
-std::string RREP::detailedInfo() const
+std::string RREP::str() const
 {
     std::stringstream out;
     int timeToLive = ttl;
@@ -287,7 +287,7 @@ void RREQ::copy(const RREQ& m)
     hopfix = m.hopfix;
 }
 
-std::string RREQ::detailedInfo() const
+std::string RREQ::str() const
 {
     std::stringstream out;
     int timeToLive = ttl;

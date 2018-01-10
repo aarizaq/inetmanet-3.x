@@ -154,7 +154,7 @@ PASER_TU_RREP& PASER_TU_RREP::operator =(const PASER_TU_RREP &m) {
 }
 
 
-std::string PASER_TU_RREP::detailedInfo() const {
+std::string PASER_TU_RREP::str() const {
     std::stringstream out;
     out << "Type : TURREP \n";
     out << "Querying node : " << srcAddress_var.S_addr.toIPv4().str()

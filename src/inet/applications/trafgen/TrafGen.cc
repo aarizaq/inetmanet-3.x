@@ -75,11 +75,21 @@ void TrafGen::initialize(int aStage)
             mPacketSize.parse(rootelement->getElementById(id)->getAttribute("packetSize"));
             mInterDepartureTime.parse(rootelement->getElementById(id)->getAttribute("interDepartureTime"));
             mFirstPacketTime.parse(rootelement->getElementById(id)->getAttribute("firstPacketTime"));
+#if OMNETPP_VERSION < 0x0503
             if (mFirstPacketTime.longValue(this) == -1)
             {
                 // no traffic is to be sent by this node
                 return;
             }
+
+#else
+            if (mFirstPacketTime.intValue(this) == -1)
+            {
+                // no traffic is to be sent by this node
+                return;
+            }
+
+#endif
 
             // the onOff-traffic timer is scheduled
             // only if the parameters for onOff-traffic are present
@@ -201,7 +211,11 @@ double TrafGen::InterDepartureTime()
  */
 long TrafGen::PacketSize()
 {
+#if OMNETPP_VERSION < 0x0503
     return mPacketSize.longValue(this);
+#else
+    return mPacketSize.intValue(this);
+#endif
 }
 
 /////////////////////////////// PROTECTED  ///////////////////////////////////

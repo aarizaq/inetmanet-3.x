@@ -237,14 +237,14 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase, public cListener
         void processDistributionPacket(Ieee80211MeshFrame *frame);
 
     protected:
-        virtual void finish();
-        virtual int numInitStages() const
+        virtual void finish() override;
+        virtual int numInitStages() const override
         {
             return NUM_INIT_STAGES;
         }
-        virtual void initialize(int);
+        virtual void initialize(int) override;
 
-        virtual void handleMessage(cMessage*);
+        virtual void handleMessage(cMessage*) override;
 
         /** Implements abstract to use ETX packets */
         virtual void handleEtxMessage(cPacket*);
@@ -259,33 +259,33 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase, public cListener
         virtual void handleReroutingGateway(Ieee80211DataFrame *);
 
         /** Implements abstract Ieee80211MgmtBase method */
-        virtual void handleTimer(cMessage *msg);
+        virtual void handleTimer(cMessage *msg) override;
 
         /** Implements abstract Ieee80211MgmtBase method */
-        virtual void handleUpperMessage(cPacket *msg);
+        virtual void handleUpperMessage(cPacket *msg) override;
 
         /** Implements abstract Ieee80211MgmtBase method -- throws an error (no commands supported) */
-        virtual void handleCommand(int msgkind, cObject *ctrl);
+        virtual void handleCommand(int msgkind, cObject *ctrl) override;
 
         /** Utility function for handleUpperMessage() */
         virtual Ieee80211DataFrame *encapsulate(cPacket *msg);
 
         /** Called by the NotificationBoard whenever a change occurs we're interested in */
-        virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj);
+        virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details) override;
 
         /** @name Processing of different frame types */
         //@{
-        virtual void handleDataFrame(Ieee80211DataFrame *frame);
-        virtual void handleAuthenticationFrame(Ieee80211AuthenticationFrame *frame);
-        virtual void handleDeauthenticationFrame(Ieee80211DeauthenticationFrame *frame);
-        virtual void handleAssociationRequestFrame(Ieee80211AssociationRequestFrame *frame);
-        virtual void handleAssociationResponseFrame(Ieee80211AssociationResponseFrame *frame);
-        virtual void handleReassociationRequestFrame(Ieee80211ReassociationRequestFrame *frame);
-        virtual void handleReassociationResponseFrame(Ieee80211ReassociationResponseFrame *frame);
-        virtual void handleDisassociationFrame(Ieee80211DisassociationFrame *frame);
-        virtual void handleBeaconFrame(Ieee80211BeaconFrame *frame);
-        virtual void handleProbeRequestFrame(Ieee80211ProbeRequestFrame *frame);
-        virtual void handleProbeResponseFrame(Ieee80211ProbeResponseFrame *frame);
+        virtual void handleDataFrame(Ieee80211DataFrame *frame) override;
+        virtual void handleAuthenticationFrame(Ieee80211AuthenticationFrame *frame) override;
+        virtual void handleDeauthenticationFrame(Ieee80211DeauthenticationFrame *frame) override;
+        virtual void handleAssociationRequestFrame(Ieee80211AssociationRequestFrame *frame) override;
+        virtual void handleAssociationResponseFrame(Ieee80211AssociationResponseFrame *frame) override;
+        virtual void handleReassociationRequestFrame(Ieee80211ReassociationRequestFrame *frame) override;
+        virtual void handleReassociationResponseFrame(Ieee80211ReassociationResponseFrame *frame) override;
+        virtual void handleDisassociationFrame(Ieee80211DisassociationFrame *frame) override;
+        virtual void handleBeaconFrame(Ieee80211BeaconFrame *frame) override;
+        virtual void handleProbeRequestFrame(Ieee80211ProbeRequestFrame *frame) override;
+        virtual void handleProbeResponseFrame(Ieee80211ProbeResponseFrame *frame) override;
         virtual void handleCCMPFrame(CCMPFrame *frame);
         //@}
         /** Redefined from Ieee80211MgmtBase: send message to MAC */

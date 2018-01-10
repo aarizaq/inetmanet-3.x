@@ -111,7 +111,7 @@ PASER_TB_RERR& PASER_TB_RERR::operator =(const PASER_TB_RERR &m) {
     return *this;
 }
 
-std::string PASER_TB_RERR::detailedInfo() const {
+std::string PASER_TB_RERR::str() const {
     std::stringstream out;
     out << "Type: RERR \n";
     out << "Querying node: " << srcAddress_var.S_addr.toIPv4().str()

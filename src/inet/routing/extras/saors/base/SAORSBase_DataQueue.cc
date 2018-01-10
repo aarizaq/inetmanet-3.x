@@ -97,7 +97,7 @@ std::string SAORSBase_DataQueue::info() const {
 /*****************************************************************************
  * Inherited from cObject -  The same and the info function.
  *****************************************************************************/
-std::string SAORSBase_DataQueue::detailedInfo() const {
+std::string SAORSBase_DataQueue::str() const {
 	return info();
 }
 

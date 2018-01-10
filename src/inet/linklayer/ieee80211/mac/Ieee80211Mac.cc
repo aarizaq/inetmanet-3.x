@@ -58,21 +58,41 @@ void Ieee80211Mac::initialize(int stage)
         rx = check_and_cast<IRx *>(getSubmodule("rx"));
         tx = check_and_cast<ITx *>(getSubmodule("tx"));
         const char *addressString = par("address");
-        if (!strcmp(addressString, "auto")) {
-            // change module parameter from "auto" to concrete address
-            par("address").setStringValue(MACAddress::generateAutoAddress().str().c_str());
-            addressString = par("address");
+        cModule *mod = getContainingNicModule(this)->getSubmodule("mac");
+        if (mod == nullptr) { // array multi mac
+            bool addressInit = false;
+            // check first if some node has the address initialized
+            for (int i = 0; i < this->getVectorSize(); i++ ) {
+                Ieee80211Mac * modAux = check_and_cast<Ieee80211Mac *>(getContainingNicModule(this)->getSubmodule("mac",i));
+                if (!modAux->getAddress().isUnspecified()) {
+                    addressInit = true;
+                    par("address").setStringValue(modAux->getAddress().str().c_str());
+                    break;
+                }
+            }
+            if (!addressInit) {
+                if (!strcmp(addressString, "auto")) {
+                    // change module parameter from "auto" to concrete address
+                    par("address").setStringValue(MACAddress::generateAutoAddress().str().c_str());
+                }
+            }
         }
+        else {
+            if (!strcmp(addressString, "auto")) {
+                // change module parameter from "auto" to concrete address
+                par("address").setStringValue(MACAddress::generateAutoAddress().str().c_str());
+            }
+        }
+        addressString = par("address");
         address.setAddress(addressString);
         modeSet = Ieee80211ModeSet::getModeSet(par("modeSet").stringValue());
     }
     else if (stage == INITSTAGE_LINK_LAYER) {
-        registerInterface();
+        if (isInterfaceRegistered().isUnspecified())// TODO: do we need multi-MAC feature? if so, should they share interfaceEntry??  --Andras
+            registerInterface();
         emit(NF_MODESET_CHANGED, modeSet);
         if (isOperational)
             radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
-        if (isInterfaceRegistered().isUnspecified())// TODO: do we need multi-MAC feature? if so, should they share interfaceEntry??  --Andras
-            registerInterface();
     }
     else if (stage == INITSTAGE_LINK_LAYER_2) {
         rx = check_and_cast<IRx *>(getSubmodule("rx"));

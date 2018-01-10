@@ -153,7 +153,7 @@ PASER_UU_RREP& PASER_UU_RREP::operator =(const PASER_UU_RREP &m) {
     return *this;
 }
 
-std::string PASER_UU_RREP::detailedInfo() const {
+std::string PASER_UU_RREP::str() const {
     std::stringstream out;
     out << "Type : UURREP \n";
     out << "Querying node : " << srcAddress_var.S_addr.toIPv4().str()
