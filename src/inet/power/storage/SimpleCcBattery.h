@@ -52,6 +52,8 @@ class INET_API SimpleCcBattery : public CcEnergyStorageBase
 
     virtual void executeNodeOperation(C newResidualCapacity);
 
+    virtual void finish() override;
+
   public:
     virtual V getNominalVoltage() const override { return nominalVoltage; }
     virtual V getOutputVoltage() const override { return nominalVoltage + (totalCurrentGeneration - totalCurrentConsumption) * internalResistance; }

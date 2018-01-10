@@ -99,6 +99,7 @@ class INET_API SimpleEpEnergyStorage : public EpEnergyStorageBase
     virtual void setResidualCapacity(J newResidualCapacity);
     virtual void updateResidualCapacity();
     virtual void scheduleTimer();
+    virtual void finish() override;
 
   public:
     virtual ~SimpleEpEnergyStorage();

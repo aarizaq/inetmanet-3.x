@@ -43,6 +43,7 @@ class INET_API IdealEpEnergyStorage : public EpEnergyStorageBase
     virtual void updateTotalPowerConsumption() override;
     virtual void updateTotalPowerGeneration() override;
     virtual void updateEnergyBalance();
+    virtual void finish() override;
 
   public:
     virtual J getNominalEnergyCapacity() const override { return J(INFINITY); }

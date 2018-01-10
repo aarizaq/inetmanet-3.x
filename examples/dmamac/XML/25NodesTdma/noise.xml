@@ -1,0 +1,3 @@
+<config>
+<frequency carrier= '2.405e9' bandwidth='2e6' power='-70'/> 
+</config>

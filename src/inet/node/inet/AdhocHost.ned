@@ -16,6 +16,8 @@
 package inet.node.inet;
 
 import inet.networklayer.contract.IManetRouting;
+
+
 //
 // A wireless host containing routing, mobility and battery components.
 // Supports only IPv4 protocol, TCP and UDP as transport protocol.
