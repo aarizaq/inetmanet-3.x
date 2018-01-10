@@ -58,7 +58,7 @@ void DMAMACSink::initialize(int stage)
         sinkInitialize();
         isSincronized = true;
         channelSinc = true;
-        alwaysListening = par("alwaysListening");
+        alwaysListening = false;//par("alwaysListening");
     }
     else if (stage == INITSTAGE_LINK_LAYER)
     {    }
