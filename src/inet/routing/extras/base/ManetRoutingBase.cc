@@ -189,7 +189,9 @@ void ManetRoutingBase::registerRoutingModule()
     sendToICMP = false;
 
     cProperties *props = getParentModule()->getProperties();
-    mac_layer_ = props && props->getAsBool("macRouting");
+    bool hasMacRouting = props && props->getAsBool("macRouting");
+    bool hasNic = props && props->getAsBool("nic");
+    mac_layer_ = hasMacRouting || hasNic;
     useManetLabelRouting = par("useManetLabelRouting");
 
     const char *interfaces = par("interfaces");
@@ -244,7 +246,13 @@ void ManetRoutingBase::registerRoutingModule()
     }
     else
     {
-        cModule *mod = getParentModule()->getParentModule();
+        cModule *mod = nullptr;
+        if (hasNic)
+            mod = getParentModule();
+        else if (hasMacRouting)
+            mod = getParentModule()->getParentModule();
+        else
+            throw cRuntimeError("Manet routing protocol in mac layer but no nic");
         char *interfaceName = new char[strlen(mod->getFullName()) + 1];
         char *d = interfaceName;
         for (const char *s = mod->getFullName(); *s; s++)
