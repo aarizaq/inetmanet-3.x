@@ -130,6 +130,7 @@ class TraCIMobility : public LineSegmentsMobilityBase
         void move() override;
 
 	protected:
+
 		bool debug; /**< whether to emit debug messages */
 		int accidentCount; /**< number of accidents */
 

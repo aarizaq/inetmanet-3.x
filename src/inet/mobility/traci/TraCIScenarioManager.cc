@@ -492,11 +492,16 @@ void TraCIScenarioManager::addModule(std::string nodeId, std::string type, std::
 	//TODO: this trashes the vectsize member of the cModule, although nobody seems to use it
 	cModule* mod = nodeType->create(name.c_str(), parentmod, nodeVectorIndex, nodeVectorIndex);
 	mod->finalizeParameters();
-	if (displayString.length() > 0) {
-		mod->getDisplayString().parse(displayString.c_str());
-	}
+//	if (displayString.length() > 0) {
+//		mod->getDisplayString().parse(displayString.c_str());
+//	}
 	mod->buildInside();
 	mod->scheduleStart(simTime() + updateInterval);
+
+//	cImageFigure *img = new cImageFigure("img");
+//	img->setImageName("misc/node2");
+//	img->setPosition(cFigure::Point(position.x,position.y));
+//	mod->getCanvas()->addFigure(img);
 
 	preInitializeModule(mod, nodeId, position, road_id, speed, angle, signals);
 
