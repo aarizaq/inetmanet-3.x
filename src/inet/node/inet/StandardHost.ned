@@ -26,6 +26,7 @@ import inet.transportlayer.contract.ISCTP;
 import inet.transportlayer.contract.ITCP;
 import inet.transportlayer.contract.IUDP;
 import inet.applications.contract.ITunApp;
+import inet.common.misc.ThruputMeter;
 
 //
 // IPv4 host with SCTP, TCP, UDP layers and applications.
@@ -56,6 +57,7 @@ module StandardHost extends NodeBase
         bool hasUdp = default(numUdpApps > 0);
         bool hasSctp = default(numSctpApps > 0);
         bool hasTun = default(numTunInterfaces > 0);
+        bool hasThrugmeter = default(false);
         string tcpType = default(firstAvailableOrEmpty("TCP", "TCP_lwIP", "TCP_NSC"));  // tcp implementation (e.g. ~TCP, ~TCP_lwIP, ~TCP_NSC) or ~TCPSpoof
         string udpType = default(firstAvailableOrEmpty("UDP"));
         string sctpType = default(firstAvailableOrEmpty("SCTP"));
@@ -70,6 +72,10 @@ module StandardHost extends NodeBase
             parameters:
                 @display("p=147,54,row,60");
         }
+        truTcpApp[numTcpApps*2]: ThruputMeter if hasTcp && hasThrugmeter {
+            parameters:
+                @display("p=189,100");
+        }
         tcp: <tcpType> like ITCP if hasTcp {
             parameters:
                 @display("p=147,141");
@@ -78,6 +84,10 @@ module StandardHost extends NodeBase
             parameters:
                 @display("p=329,54,row,60");
         }
+        truUdpApp[numUdpApps*2]: ThruputMeter if hasUdp && hasThrugmeter {
+            parameters:
+                @display("p=380,100");
+        }        
         udp: <udpType> like IUDP if hasUdp {
             parameters:
                 @display("p=329,141");
@@ -94,17 +104,31 @@ module StandardHost extends NodeBase
                 @display("p=635,141,row,60");
         }
     connections allowunconnected:
-        for i=0..numTcpApps-1 {
+        for i=0..numTcpApps-1 , if !hasThrugmeter{
             tcpApp[i].tcpOut --> tcp.appIn++;
             tcpApp[i].tcpIn <-- tcp.appOut++;
         }
-
+        
+        for i=0..numTcpApps-1, if  hasThrugmeter{
+            tcpApp[i].tcpOut --> truTcpApp[2*i].in;
+            truTcpApp[2*i].out --> tcp.appIn++;
+            tcpApp[i].tcpIn <-- truTcpApp[(2*i)+1].out;
+            truTcpApp[(2*i)+1].in <-- tcp.appOut++;
+        }
+        
         tcp.ipOut --> networkLayer.transportIn++ if hasTcp;
         tcp.ipIn <-- networkLayer.transportOut++ if hasTcp;
 
-        for i=0..numUdpApps-1 {
+        for i=0..numUdpApps-1, if !hasThrugmeter {
             udpApp[i].udpOut --> udp.appIn++;
             udpApp[i].udpIn <-- udp.appOut++;
+        }
+
+        for i=0..numUdpApps-1, if  hasThrugmeter{
+            udpApp[i].udpOut --> truUdpApp[2*i].in;
+            truUdpApp[2*i].out --> udp.appIn++;
+            udpApp[i].udpIn <-- truUdpApp[(2*i)+1].out;
+            truUdpApp[(2*i)+1].in <-- udp.appOut++;
         }
 
         udp.ipOut --> networkLayer.transportIn++ if hasUdp;
