@@ -444,7 +444,7 @@ void Ieee80211Mesh::startGateWay()
     cGate *g = gate("toEthernet")->getPathEndGate();
     MACAddress ethAddr;
     strcpy(mameclass,g->getOwnerModule()->getClassName());
-    if (strcmp(mameclass, "EtherEncapMesh")!=0)
+    if (strstr(mameclass, "EtherEncapMesh")!=0)
         return;
     // find the interface
     char interfaceName[100];
