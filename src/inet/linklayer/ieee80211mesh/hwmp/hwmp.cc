@@ -498,8 +498,10 @@ void HwmpProtocol::sendPrep(MACAddress src,
     else
     {
         EV << "Sending prep frame to " << ieee80211ActionPrepFrame->getReceiverAddress() << endl;
-        if (proactive)
+        if (ieee80211ActionPrepFrame->getReceiverAddress() == MACAddress::BROADCAST_ADDRESS)
             sendDelayed(ieee80211ActionPrepFrame, par("broadcastDelay"), "ipOut");
+        else if (proactive)
+            sendDelayed(ieee80211ActionPrepFrame, par("proactivePrep"), "ipOut");
         else
             sendDelayed(ieee80211ActionPrepFrame, par("unicastDelay"), "ipOut");
     }
