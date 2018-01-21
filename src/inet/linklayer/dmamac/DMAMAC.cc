@@ -37,8 +37,14 @@
 #include "inet/linklayer/common/SimpleLinkLayerControlInfo.h"
 #include "inet/physicallayer/contract/packetlevel/RadioControlInfo_m.h"
 #include <cinttypes>
+#include <stdio.h>
 
 namespace inet {
+
+simsignal_t DMAMAC::dmamacSendPkt = registerSignal("dmamacSendPkt");
+
+
+std::map<int,std::vector<int64_t> >  DMAMAC::actuatorNodesList;
 
 Define_Module(DMAMAC);
 
@@ -191,7 +197,8 @@ void DMAMAC::initialize(int stage)
         maxRadioSwitchDelay = par("maxRadioSwitchDelay");
         sinkAddress         = MACAddress( par("sinkAddress").longValue());
         sinkAddressGlobal   = MACAddress( par("sinkAddressGlobal").longValue());
-        isActuator          = par("isActuator");                    
+        isActuator          = par("isActuator");
+
         maxNodes            = par("maxNodes");
         maxChildren         = par("maxChildren");
         hasSensorChild      = par("hasSensorChild");                                     
@@ -284,9 +291,16 @@ void DMAMAC::initialize(int stage)
         WATCH(actualChannel);
         WATCH(currentSlot);
         WATCH(mySlot);
+        cModule *host = getContainingNode(this)->getParentModule();
+
+        host->subscribe(dmamacSendPkt,this);
     }
     else if(stage == INITSTAGE_LINK_LAYER) {
         discoverIfNodeIsRelay(); // configure relay information
+
+        if (isActuator) {
+            actuatorNodesList[networkId].push_back(myMacAddr.getInt());
+        }
     }
     else if(stage == INITSTAGE_LINK_LAYER_2) { // configure the rest of the link information
 
@@ -305,6 +319,8 @@ void DMAMAC::initialize(int stage)
         << " alertProbability = " << alertProbability
         << " macType = "  << macType
         << " Is Actuator = " << isActuator << endl;
+
+
 
         /* @brief initialize the timers with enumerated values  */
         /*@{*/
@@ -394,9 +410,9 @@ void DMAMAC::initialize(int stage)
                 hoppingTimer = new cMessage("DMAMAC_HOPPING_TIMEOUT");
                 hoppingTimer->setSchedulingPriority(-2);
                 hoppingTimer->setKind(DMAMAC_HOPPING_TIMEOUT);
-                scheduleAt(par("initTime").doubleValue()+par("initTime").doubleValue(), hoppingTimer);
+                scheduleAt(par("initTime").doubleValue()+slotDuration, hoppingTimer);
             }
-            if (channelSinc)
+            // if (channelSinc)
                 scheduleAt(par("initTime").doubleValue(), startup);
         }
         else {
@@ -732,7 +748,7 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
     {
         /* @brief SETUP phase enters to start the MAC protocol operation */
         case DMAMAC_STARTUP:
-
+                refreshDisplay();
                 currentMacState = STARTUP;
                 currentSlot = 0;
                 /* @brief Starting with notification (TRANSIENT state) */
@@ -1127,6 +1143,12 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
         radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
     }
     refreshDisplay();
+    if (isActuator && writeTrace) {
+        writeTrace = false;
+        FILE * p = fopen("traza","a");
+        fprintf(p,"Tz2 t %g Node Id = %i; slot = %i;  mySlot = %i  actualChannel = %i ts = %i rs = %i \n",simTime().dbl(),  myMacAddr.getInt(), currentSlot, mySlot, actualChannel,transmitSlot[currentSlot],receiveSlot[currentSlot]);
+        fclose(p);
+    }
 }
 
 /* @brief
@@ -1216,6 +1238,14 @@ void DMAMAC::receiveSignal(cComponent *source, simsignal_t signalID, long value,
         if (networkId != de->networkId || sinkAddress != de->sinkId)
             return;
         setChannel(value);
+    }
+    else if (signalID == dmamacSendPkt){
+        if (isActuator) {
+            FILE * p = fopen("traza","a");
+            writeTrace = true;
+            fprintf(p,"t %g Node Id = %i; slot = %i;  mySlot = %i  actualChannel = %i ts = %i rs = %i \n",simTime().dbl(),  myMacAddr.getInt(), currentSlot, mySlot, actualChannel,transmitSlot[currentSlot],receiveSlot[currentSlot]);
+            fclose(p);
+        }
     }
 }
 
@@ -1409,7 +1439,7 @@ void DMAMAC::handleRadioSwitchedToRX() {
 void DMAMAC::resyncr(const int &slot,const macMode &mode, const bool &changeMacMode)
 {
 
-    if (!disableChecks) return;
+    if (disableChecks) return;
 
     bool resync = false;
     if (currentMacMode != mode && !changeMacMode)
@@ -1544,16 +1574,6 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
         return;
     }
 
-    if (dynamic_cast<DMAMACSyncPkt*>(msg))
-    {
-        // TODO: sync packet, syncronize channels and time slots
-        DMAMACSyncPkt * syncPk = dynamic_cast<DMAMACSyncPkt*>(msg);
-        currentSlot = syncPk->getTimeSlot();
-        numSlots = syncPk->getTdmaNumSlots();
-        delete msg;
-        return;
-    }
-
     DMAMACPkt * dmapkt = dynamic_cast<DMAMACPkt *>(msg);
 
     if (!disableChecks) {
@@ -1642,29 +1662,61 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
         if (dmapkt && dmapkt->getTimeRef() != SimTime::ZERO) {
             timeRef = dmapkt->getTimeRef();
             initialSeed = dmapkt->getInitialSeed();
-            timeRef += slotDuration;
-            if (hoppingTimer->isScheduled())
+            // timeRef += slotDuration;
+            if (hoppingTimer && hoppingTimer->isScheduled() && hoppingTimer->getArrivalTime() != dmapkt->getTimeRef()) {
                 cancelEvent(hoppingTimer);
-            scheduleAt(timeRef, hoppingTimer);
+                if (dmapkt->getTimeRef() > simTime())
+                    scheduleAt(dmapkt->getTimeRef(), hoppingTimer);
+            }
+
+            if (hoppingTimer && !hoppingTimer->isScheduled())
+                scheduleAt(timeRef, hoppingTimer);
             channelSinc = true;
             // check if this message is a notification
             DMAMACSinkPkt *notification  = dynamic_cast<DMAMACSinkPkt *>(msg);
             if (notification == nullptr)
                 scheduleAt(simTime(), startup);
         }
-        else {
-            auto alert = dynamic_cast<AlertPkt *>(msg);
-            if (alert && alert->getTimeRef() != SimTime::ZERO) {
-                timeRef = alert->getTimeRef();
-                initialSeed = alert->getInitialSeed();
+        else if (dynamic_cast<DMAMACSinkPkt *>(msg)) {
+            DMAMACSinkPkt *notification = dynamic_cast<DMAMACSinkPkt *>(msg);
+            if (notification && notification->getTimeRef() != SimTime::ZERO) {
+                timeRef = notification->getTimeRef();
+                initialSeed = dmapkt->getInitialSeed();
                 timeRef += slotDuration;
-                if (hoppingTimer->isScheduled())
+                if (hoppingTimer && hoppingTimer->isScheduled() && hoppingTimer->getArrivalTime() != notification->getTimeRef()) {
                     cancelEvent(hoppingTimer);
-                scheduleAt(timeRef, hoppingTimer);
+                    if (notification->getTimeRef() > simTime())
+                        scheduleAt(notification->getTimeRef(), hoppingTimer);
+                }
+
+                if (hoppingTimer && !hoppingTimer->isScheduled())
+                    scheduleAt(timeRef, hoppingTimer);
                 channelSinc = true;
                 // check if this message is a notification
                 DMAMACSinkPkt *notification  = dynamic_cast<DMAMACSinkPkt *>(msg);
                 if (notification == nullptr)
+                    scheduleAt(simTime(), startup);
+            }
+        }
+        else {
+            auto alert = dynamic_cast<AlertPkt *>(msg);
+
+            if (alert && alert->getTimeRef() != SimTime::ZERO) {
+                timeRef = alert->getTimeRef();
+                initialSeed = alert->getInitialSeed();
+                timeRef += slotDuration;
+                if (hoppingTimer && hoppingTimer->isScheduled() && hoppingTimer->getArrivalTime() != alert->getTimeRef()) {
+                    cancelEvent(hoppingTimer);
+                    if (alert->getTimeRef() > simTime())
+                        scheduleAt(alert->getTimeRef(), hoppingTimer);
+                }
+
+                if (hoppingTimer && !hoppingTimer->isScheduled())
+                    scheduleAt(timeRef, hoppingTimer);
+                channelSinc = true;
+                // check if this message is a notification
+                DMAMACSinkPkt *notification  = dynamic_cast<DMAMACSinkPkt *>(msg);
+                if (notification == nullptr && !startup->isScheduled())
                     scheduleAt(simTime(), startup);
             }
         }

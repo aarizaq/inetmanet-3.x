@@ -68,6 +68,8 @@ using namespace power;
 
 #define macpkt_ptr_t DMAMACPkt*
 
+
+
 class INET_API DMAMAC : public MACProtocolBase, public IMACProtocol
 {
     /* @brief Parts copied from LMAC definition.  */
@@ -169,6 +171,7 @@ class INET_API DMAMAC : public MACProtocolBase, public IMACProtocol
     virtual void initializeRandomSeq();
 
 protected:
+    static simsignal_t dmamacSendPkt;
     class  DetailsChangeChannel : public cObject {
     public:
         int networkId = -1;
@@ -343,6 +346,11 @@ protected:
 
     /* @brief To declare if the node is an actuator, inputtaken from ini file */
     bool isActuator;
+    bool writeTrace = false;
+
+    /* @brief Stores addresses for actuator nodes. */
+    static std::map<int,std::vector<int64_t> > actuatorNodesList;
+
 
     /* @brief To decide if the node should wait for alert in its alert slot or not */
     bool hasSensorChild;

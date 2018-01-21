@@ -35,7 +35,7 @@ class MACFrameBase;
 //
 // DMAMACSink Packet, extends MacPkt
 //
-packet DMAMACSinkPkt extends MACFrameBase
+packet DMAMACSynkPkt extends MACFrameBase
 {
 	bool changeMacMode;   // Multi-hop facilty, next hop towards sink
 	int channel = -1;	
