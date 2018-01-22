@@ -1735,6 +1735,7 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
             return;
         }
         const MACAddress& dest = mac->getDestAddr();
+        const int destId = addrToId(mac->getDestAddr());
 
         EV << " DATA Packet received with length :" << mac->getByteLength() << " destined for: " << mac->getDestAddr() << endl;
 
@@ -1745,8 +1746,8 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
             {
                 for(int j=0;j<10;j++)
                 {
-                    MACAddress childNode =  MACAddress(downStream[i].reachableAddress[j]);
-                    if (dest == childNode)
+                    //MACAddress childNode =  MACAddress(downStream[i].reachableAddress[j]);
+                    if (destId == downStream[i].reachableAddress[j])
                        forChildNode = true;
                 }
             }

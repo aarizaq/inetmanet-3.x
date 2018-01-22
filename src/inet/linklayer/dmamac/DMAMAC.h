@@ -170,6 +170,8 @@ class INET_API DMAMAC : public MACProtocolBase, public IMACProtocol
 
     virtual void initializeRandomSeq();
 
+    int addrToId(const MACAddress &add) { return ((add.getInt() & 0xFFFF)-1-baseAddress); }
+
 protected:
     static simsignal_t dmamacSendPkt;
     class  DetailsChangeChannel : public cObject {
