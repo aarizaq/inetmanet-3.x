@@ -345,8 +345,6 @@ void Ieee80211Mesh::initialize(int stage)
             routingModuleReactive->setCollaborativeProtocol(routingModuleProactive);
             routingModuleProactive->setCollaborativeProtocol(routingModuleReactive);
         }
-        if (par("IsGateWay"))
-            startGateWay();
 
         if (par("coverageArea").doubleValue() > 0)
         {
@@ -356,6 +354,11 @@ void Ieee80211Mesh::initialize(int stage)
         //end Gateway and group address code
         if (numMac > 1 && selectionCriteria != ETX)
              timeReceptionInterface.resize(numMac);
+    }
+    else if (stage == INITSTAGE_LAST) // this gurantee that the routing protocols are completely configured
+    {
+        if (par("IsGateWay"))
+            startGateWay();
     }
 }
 
@@ -444,7 +447,8 @@ void Ieee80211Mesh::startGateWay()
     cGate *g = gate("toEthernet")->getPathEndGate();
     MACAddress ethAddr;
     strcpy(mameclass,g->getOwnerModule()->getClassName());
-    if (strstr(mameclass, "EtherEncapMesh")!=0)
+    char * ptr = strstr(mameclass, "EtherEncapMesh");
+    if (ptr == nullptr)
         return;
     // find the interface
     char interfaceName[100];
