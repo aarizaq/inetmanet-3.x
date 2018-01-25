@@ -2415,7 +2415,8 @@ void Ieee80211Mesh::handleWateGayDataReceive(cPacket *pkt)
                 }
 
 
-                emit(numFixHopsSignal,totalFixHops/totalHops);
+                if (totalHops > 0)
+                    emit(numFixHopsSignal,totalFixHops/totalHops);
             }
         }
         else if (!frame2->getFinalAddress().isUnspecified())
