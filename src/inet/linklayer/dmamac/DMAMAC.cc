@@ -1742,12 +1742,12 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
         /* @brief Checking done for actuator data packets if it is for one of the children */
         if( mac->getKind() == DMAMAC_ACTUATOR_DATA)
         {
-            for(int i=0;i<4;i++)
+            for(const auto &elem : downStream)
             {
-                for(int j=0;j<10;j++)
+                for(const auto &elem2 : elem.reachableAddress)
                 {
                     //MACAddress childNode =  MACAddress(downStream[i].reachableAddress[j]);
-                    if (destId == downStream[i].reachableAddress[j])
+                    if (destId == elem2)
                        forChildNode = true;
                 }
             }
@@ -2317,21 +2317,10 @@ void DMAMAC::slotInitialize()
 
     parent = long(atoi(xmlBuffer->getFirstChildWithTag("parent")->getNodeValue()));
     EV << "My Parent is " << parent << endl;
-    int reachableNodes[maxNodes],nextHopEntry;
+
     int i=0,j=0;
 
-    for(j=0;j<maxNodes;j++)
-       reachableNodes[j]=-1;
-
     /* @brief Initialization */
-    for(int i=0;i<maxChildren;i++)
-    {
-        for(int j=0;j<maxNodes;j++)
-        {
-            downStream[i].nextHop = -1;
-            downStream[i].reachableAddress[j] = -1;
-        }
-    }
 
     cXMLElementList::iterator xmlListIterator1;
     cXMLElementList::iterator xmlListIterator2;
@@ -2344,8 +2333,10 @@ void DMAMAC::slotInitialize()
     {
       xmlBuffer1 = (*xmlListIterator1);
       EV<< " nList buffer " << xmlBuffer1->getAttribute("address") << endl;
-      nextHopEntry = atoi(xmlBuffer1->getAttribute("address"));
+      int nextHopEntry = atoi(xmlBuffer1->getAttribute("address"));
       EV << "next hop entry is " << nextHopEntry << endl;
+      std::vector<int> reachableNodes;
+      routeTable rtTable;
       if(xmlBuffer1->hasChildren())
       {
           nListBuffer2 = xmlBuffer1->getChildren();
@@ -2353,36 +2344,35 @@ void DMAMAC::slotInitialize()
           {
               xmlBuffer2 = (*xmlListIterator2);
               EV << " XML stuff " << xmlBuffer2->getNodeValue() << endl;
-              reachableNodes[i] = atoi(xmlBuffer2->getNodeValue());
+              reachableNodes.push_back(atoi(xmlBuffer2->getNodeValue()));
+              if (reachableNodes.size() > maxNodes)
+                  throw cRuntimeError("Bad configuration, number of nodes is bigger than maxNodes");
               i++;
           }
-          downStream[j].nextHop = nextHopEntry;
-          for(int x=0;x<i;x++)
-              downStream[j].reachableAddress[x] = reachableNodes[x];
-          /* @brief Resetting reachableNodes to input next values */
-          for(int x=0;x<maxNodes;x++)
-              reachableNodes[x] = -1;
+          rtTable.nextHop = nextHopEntry;
+          rtTable.reachableAddress = reachableNodes;
+          downStream.push_back(rtTable);
           i=0;
           j++;
       }
       else
       {
+          rtTable.nextHop = nextHopEntry;
+          rtTable.reachableAddress.push_back(nextHopEntry);
           EV << "Children are leaf nodes" << endl;
-          reachableNodes[0] = nextHopEntry;
-          downStream[j].nextHop = nextHopEntry;
-          for(int x=0;x<maxNodes;x++)
-              downStream[j].reachableAddress[x] = reachableNodes[x];
+          downStream.push_back(rtTable);
           j++;
       }
     }
+    if (downStream.size() > maxChildren)
+        throw cRuntimeError("Bad configuration, number of children is bigger than maxChildren");
     /* @brief All nodes can have max 3 children so we list only 3 for their next hops. */
-    for(int j=0;j<maxChildren;j++)
+    for(const auto & elem : downStream)
     {
-        EV << " The downstream possibilities at :" << downStream[j].nextHop << " are :";
-        for(int x=0;x<maxNodes;x++)
+        EV << " The downstream possibilities at :" << elem.nextHop << " are :";
+        for(const auto elem2 : elem.reachableAddress)
         {
-          if(downStream[j].reachableAddress[x] != -1)
-              EV << "Node: " << downStream[j].reachableAddress[x];
+            EV << "Node: " << elem2;
         }
         EV <<  endl;
     }

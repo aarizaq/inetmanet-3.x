@@ -516,10 +516,10 @@ protected:
 
     typedef struct routeTable{
         int nextHop;
-        int reachableAddress[10];   // Maximum nodes reachable equal to number of nodes in the network
+        std::vector<int> reachableAddress;   // Maximum nodes reachable equal to number of nodes in the network
     }routeTable;
 
-    routeTable downStream[3];       // For upstream data we always send it to the parent, 3 is maxChildren possible for all nodes
+    std::vector<routeTable> downStream;       // For upstream data we always send it to the parent, 3 is maxChildren possible for all nodes
     /*@}*/
 
     /* Protected methods */
