@@ -1,7 +1,3 @@
-//APMeshNode in place of APMeshRelay
-
-//802.11n
-//With minimum power for UE and distance between AP to be 200m
 
 
 // Copyright (C) 2005 Andras Varga
@@ -47,7 +43,7 @@ channel cable extends DatarateChannel
         datarate = 1000Mbps;
 }
 
-network meshAP1
+network meshAP
 {
     parameters:
         int numMeshHost = default(0);

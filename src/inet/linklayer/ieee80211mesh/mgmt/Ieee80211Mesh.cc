@@ -345,8 +345,6 @@ void Ieee80211Mesh::initialize(int stage)
             routingModuleReactive->setCollaborativeProtocol(routingModuleProactive);
             routingModuleProactive->setCollaborativeProtocol(routingModuleReactive);
         }
-        if (par("IsGateWay"))
-            startGateWay();
 
         if (par("coverageArea").doubleValue() > 0)
         {
@@ -356,6 +354,11 @@ void Ieee80211Mesh::initialize(int stage)
         //end Gateway and group address code
         if (numMac > 1 && selectionCriteria != ETX)
              timeReceptionInterface.resize(numMac);
+    }
+    else if (stage == INITSTAGE_LAST) // this gurantee that the routing protocols are completely configured
+    {
+        if (par("IsGateWay"))
+            startGateWay();
     }
 }
 
@@ -369,10 +372,10 @@ void Ieee80211Mesh::startProactive()
     moduleType = cModuleType::find("inet.routing.extras.OLSR");
     if (!moduleType)
         throw cRuntimeError("Module inet.routing.extras.OLSR not found");
-    module = moduleType->create("ManetRoutingProtocolProactive", this);
+    module = moduleType->create("ManetRoutingProtocolProactive", getParentModule());
     routingModuleProactive = dynamic_cast <ManetRoutingBase*> (module);
-    routingModuleProactive->gate("ipOut")->connectTo(gate("routingInProactive"));
-    gate("routingOutProactive")->connectTo(routingModuleProactive->gate("ipIn"));
+    routingModuleProactive->gate("ipOut")->connectTo(this->gate("routingInProactive"));
+    this->gate("routingOutProactive")->connectTo(routingModuleProactive->gate("ipIn"));
     routingModuleProactive->par("interfaceTableModule").setStringValue(par("interfaceTableModule").stringValue());
     routingModuleProactive->par("routingTableModule").setStringValue("");
     routingModuleProactive->par("icmpModule").setStringValue("");
@@ -388,10 +391,10 @@ void Ieee80211Mesh::startReactive()
     moduleType = cModuleType::find(par("meshReactiveRoutingProtocol").stringValue());
     if (!moduleType)
         throw cRuntimeError("Module %s not found",par("meshReactiveRoutingProtocol").stringValue());
-    module = moduleType->create("ManetRoutingProtocolReactive", this);
+    module = moduleType->create("ManetRoutingProtocolReactive", getParentModule());
     routingModuleReactive = dynamic_cast <ManetRoutingBase*> (module);
-    routingModuleReactive->gate("ipOut")->connectTo(gate("routingInReactive"));
-    gate("routingOutReactive")->connectTo(routingModuleReactive->gate("ipIn"));
+    routingModuleReactive->gate("ipOut")->connectTo(this->gate("routingInReactive"));
+    this->gate("routingOutReactive")->connectTo(routingModuleReactive->gate("ipIn"));
     routingModuleReactive->par("interfaceTableModule").setStringValue(par("interfaceTableModule").stringValue());
     routingModuleReactive->par("routingTableModule").setStringValue("");
     routingModuleReactive->par("icmpModule").setStringValue("");
@@ -406,10 +409,10 @@ void Ieee80211Mesh::startHwmp()
     moduleType = cModuleType::find("inet.linklayer.ieee80211mesh.hwmp.HwmpProtocol");
     if (!moduleType)
         throw cRuntimeError("Module inet.linklayer.ieee80211mesh.hwmp.HwmpProtocol not found");
-    module = moduleType->create("HwmpProtocol", this);
+    module = moduleType->create("HwmpProtocol", getParentModule());
     routingModuleHwmp = dynamic_cast <ManetRoutingBase*> (module);
-    routingModuleHwmp->gate("ipOut")->connectTo(gate("routingInHwmp"));
-    gate("routingOutHwmp")->connectTo(routingModuleHwmp->gate("ipIn"));
+    routingModuleHwmp->gate("ipOut")->connectTo(this->gate("routingInHwmp"));
+    this->gate("routingOutHwmp")->connectTo(routingModuleHwmp->gate("ipIn"));
     routingModuleHwmp->par("interfaceTableModule").setStringValue(par("interfaceTableModule").stringValue());
     routingModuleHwmp->buildInside();
     routingModuleHwmp->scheduleStart(simTime());
@@ -422,10 +425,10 @@ void Ieee80211Mesh::startEtx()
     moduleType = cModuleType::find("inet.linklayer.ieee80211.mgmt.Ieee80211Etx");
     if (!moduleType)
         throw cRuntimeError("Module %s not found",par("meshReactiveRoutingProtocol").stringValue());
-    module = moduleType->create("ETXproc", this);
+    module = moduleType->create("ETXproc", getParentModule());
     ETXProcess = dynamic_cast <Ieee80211Etx*> (module);
-    ETXProcess->gate("toMac")->connectTo(gate("ETXProcIn"));
-    gate("ETXProcOut")->connectTo(ETXProcess->gate("fromMac"));
+    ETXProcess->gate("toMac")->connectTo(this->gate("ETXProcIn"));
+    this->gate("ETXProcOut")->connectTo(ETXProcess->gate("fromMac"));
     ETXProcess->par("interfaceTableModule").setStringValue(par("interfaceTableModule").stringValue());
     ETXProcess->buildInside();
     ETXProcess->scheduleStart(simTime());
@@ -444,7 +447,8 @@ void Ieee80211Mesh::startGateWay()
     cGate *g = gate("toEthernet")->getPathEndGate();
     MACAddress ethAddr;
     strcpy(mameclass,g->getOwnerModule()->getClassName());
-    if (strcmp(mameclass, "EtherEncapMesh")!=0)
+    char * ptr = strstr(mameclass, "EtherEncapMesh");
+    if (ptr == nullptr)
         return;
     // find the interface
     char interfaceName[100];
@@ -1822,7 +1826,6 @@ bool Ieee80211Mesh::isSendToGateway(Ieee80211DataOrMgmtFrame *frame)
     {
         if (frame->getControlInfo() == nullptr || !dynamic_cast<MeshControlInfo*>(frame->getControlInfo()))
         {
-            GateWayDataMap::iterator it;
             frame->setTransmitterAddress(myAddress);
             if (frame->getReceiverAddress().isBroadcast())
             {
@@ -1835,14 +1838,14 @@ bool Ieee80211Mesh::isSendToGateway(Ieee80211DataOrMgmtFrame *frame)
                             || code == WMPLS_REQUEST_GATEWAY)
                         origin = dynamic_cast<LWMPLSPacket*>(frame->getEncapsulatedPacket())->getSource();
                 }
-                for (it = getGateWayDataMap()->begin(); it != getGateWayDataMap()->end(); it++)
+                for (auto elem : *(getGateWayDataMap()) )
                 {
-                    if (it->second.idAddress == myAddress || it->second.idAddress == origin)
+                    if (elem.second.idAddress == myAddress || elem.second.idAddress == origin)
                         continue;
                     MeshControlInfo *ctrl = new MeshControlInfo();
                     ctrl->setSrc(MACAddress::UNSPECIFIED_ADDRESS); // the Ethernet will fill the field
                     //ctrl->setDest(frameAux->getReceiverAddress());
-                    ctrl->setDest(it->second.ethAddress);
+                    ctrl->setDest(elem.second.ethAddress);
                     cPacket *pktAux = frame->dup();
                     pktAux->setControlInfo(ctrl);
                     //sendDirect(pktAux,it->second.gate);
@@ -1851,10 +1854,9 @@ bool Ieee80211Mesh::isSendToGateway(Ieee80211DataOrMgmtFrame *frame)
             }
             else
             {
+                auto it = getGateWayDataMap()->end();
                 if (dynamic_cast<Ieee80211DataFrame*>(frame))
                     it = getGateWayDataMap()->find(L3Address(dynamic_cast<Ieee80211DataFrame*>(frame)->getAddress4()));
-                else
-                    it = getGateWayDataMap()->end();
                 if (it != getGateWayDataMap()->end())
                 {
                     MeshControlInfo *ctrl = new MeshControlInfo();
@@ -2413,7 +2415,8 @@ void Ieee80211Mesh::handleWateGayDataReceive(cPacket *pkt)
                 }
 
 
-                emit(numFixHopsSignal,totalFixHops/totalHops);
+                if (totalHops > 0)
+                    emit(numFixHopsSignal,totalFixHops/totalHops);
             }
         }
         else if (!frame2->getFinalAddress().isUnspecified())
