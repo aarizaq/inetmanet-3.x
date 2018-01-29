@@ -64,7 +64,7 @@ network meshTest
                 mobility.separation = nodeSeparation*2;
                 @display("i=block/wrxtx;r=,,#707070");
         }
-        fixhostB[4]: ApMeshRelay {
+        fixhostB[4]: BasicMobileManetMesh { //ApMeshRelay {
             parameters:
                 mobilityType = "LinearNodeDistributionMobility";
                 mobility.initialY = 315m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
@@ -74,7 +74,7 @@ network meshTest
                 @display("i=device/accesspoint;r=,,#707070");
 
         }
-        fixhost2[5]: ApMeshRelay {
+        fixhost2[5]: BasicMobileManetMesh { //ApMeshRelay {
             parameters:
                 mobilityType = "LinearNodeDistributionMobility";
                 mobility.initialY = 195m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
@@ -83,7 +83,7 @@ network meshTest
                 wlanMesh.hasLocator = true;
                 @display("i=device/accesspoint;r=,,#707070");
         }
-        fixhost3[5]: ApMeshRelay {
+        fixhost3[5]: BasicMobileManetMesh { //ApMeshRelay {
             parameters:
                 mobilityType = "LinearNodeDistributionMobility";
                 mobility.initialY = 435m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
@@ -101,7 +101,7 @@ network meshTest
                 mobility.initialX = nodeSeparation/2.0+nodeSeparation;
                 @display("i=block/wrxtx;r=,,#707070");
         }
-        fixhost6[5]: ApMeshRelay {
+        fixhost6[5]: BasicMobileManetMesh { //ApMeshRelay {
             parameters:
                 mobilityType = "LinearNodeDistributionMobility";
                 mobility.initialY = 75m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
@@ -110,7 +110,7 @@ network meshTest
                 wlanMesh.hasLocator = true;
                 @display("i=device/accesspoint");
         }
-        fixhost7[5]: ApMeshRelay {
+        fixhost7[5]: BasicMobileManetMesh { //ApMeshRelay {
             parameters:
                 mobilityType = "LinearNodeDistributionMobility";
                 mobility.initialY = 555m;// (floor(index/sqrt(numFixHosts))*nodeSeparation)+(nodeSeparation);
