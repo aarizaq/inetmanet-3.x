@@ -63,10 +63,15 @@ packet DMAMACPkt extends MACFrameBase
     Alarms alarmsArray[];
 }
 
-packet DMAMACSyncPkt extends DMAMACPkt
+packet DMAMACSinkPkt extends DMAMACPkt
 {
-    uint32_t randSeq[5];
+    bool changeMacMode;   // Multi-hop facilty, next hop towards sink
+	int channel = -1;	
     double timeSlot;
+    int numSlots;
+    int numSlot;
+    int macMode;
+    
     int channelNumSlots;
     int tdmaNumSlots;
     int currentTimeSlot;

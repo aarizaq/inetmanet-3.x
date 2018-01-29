@@ -102,7 +102,7 @@ protected:
     bool changeMacModeInNextSuperFrame = false;
 
 	/* @brief Stores addresses for actuator nodes. */
-    int actuatorNodes[10];  
+    std::vector<int64_t> actuatorNodes;
 
     /* @brief Finds the distant next slot after the current slot (say after going to sleep) #GinMAC */
     virtual void findDistantNextSlot() override;

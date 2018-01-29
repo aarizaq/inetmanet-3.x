@@ -62,6 +62,13 @@ void DMAMACSink::initialize(int stage)
     }
     else if (stage == INITSTAGE_LINK_LAYER)
     {    }
+    else if(stage == INITSTAGE_LINK_LAYER_2) {
+        auto it = actuatorNodesList.find(networkId);
+        if (it != actuatorNodesList.end())
+            actuatorNodes = it->second;
+        else
+            throw cRuntimeError("Error in actuator map list");
+    }
 }
 
 /* @brief Handles the messages sent to self, mainly timers to specify slots */
@@ -158,7 +165,7 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
 
         if (!twoLevels) {
             if (par("localActuators")) {
-                while(macPktQueue.size() < queueLength)
+                while(macPktQueue.size() < queueLength && i < actuatorNodes.size())
                 {
                     DMAMACPkt* actuatorData = new DMAMACPkt();
                     destAddr = MACAddress(actuatorNodes[i]);
@@ -231,6 +238,7 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
 
                 currentMacState = STARTUP;
                 currentSlot = 0;
+                refreshDisplay();
 
                 /* @brief We start with sending notification message from the sink */
                 scheduleAt(simTime(), sendNotification);
@@ -578,6 +586,14 @@ void DMAMACSink::handleRadioSwitchedToTX() {
         data->setTimeRef(simTime());
         data->setInitialSeed(initialSeed);
 
+        if (par("emitTrace")) {
+
+            FILE * p = fopen("traza","a");
+            fprintf(p," sink t %g Node Id = %i; slot = %i;  mySlot = %i  actualChannel = %i ts = %i rs = %i \n",simTime().dbl(),data->getDestAddr().getInt(), currentSlot, mySlot, actualChannel,transmitSlot[currentSlot],receiveSlot[currentSlot]);
+            fclose(p);
+            emit(dmamacSendPkt,(int)data->getDestAddr().getInt());
+        }
+
         sendDown(data);
 
         /* @statistics */
@@ -610,7 +626,10 @@ void DMAMACSink::handleRadioSwitchedToTX() {
         DMAMACSinkPkt* notification = new DMAMACSinkPkt();
         timeRef = simTime();
         if (randomGenerator != nullptr) {
-            randomGenerator->setRandSeq(simTime().raw());
+            if (hoppingTimer->isScheduled())
+                randomGenerator->setRandSeq(hoppingTimer->getArrivalTime().raw());
+            else
+                randomGenerator->setRandSeq(timeRef.raw());
             int c = randomGenerator->iRandom(11, 26);
             notification->setChannel(c);
         }
@@ -623,7 +642,11 @@ void DMAMACSink::handleRadioSwitchedToTX() {
         notification->setByteLength(11);
         notification->setNumSlot(currentSlot);
         notification->setMacMode(currentMacMode);
-        notification->setTimeRef(simTime());
+        if (hoppingTimer && hoppingTimer->isScheduled())
+            notification->setTimeRef(hoppingTimer->getArrivalTime());
+        else
+            notification->setTimeRef(simTime());
+
         notification->setInitialSeed(initialSeed);
 
 
@@ -987,8 +1010,8 @@ void DMAMACSink::sinkInitialize()
     cXMLElementList::iterator xmlListIterator1;
     cXMLElementList nListBuffer1;
 
-    for(j=0;j<maxNodes;j++)
-        actuatorNodes[j]=-1;
+    //for(j=0;j<maxNodes;j++)
+    //    actuatorNodes[j]=-1;
 
     sprintf(id,"%" PRIu64, myId);
 
@@ -1003,7 +1026,7 @@ void DMAMACSink::sinkInitialize()
     {
       xmlBuffer2 = (*xmlListIterator1);
       EV << " Actuator ID <aaks> " << xmlBuffer2->getNodeValue() << endl;
-      actuatorNodes[j]= atoi(xmlBuffer2->getNodeValue());
+      //actuatorNodes[j]= atoi(xmlBuffer2->getNodeValue());
       j++;
     }
 }
