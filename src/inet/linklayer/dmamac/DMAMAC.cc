@@ -55,7 +55,7 @@ DMAMAC::LocatorTable DMAMAC::globalLocatorTable;
 DMAMAC::LocatorTable DMAMAC::sinkToClientAddress; //
 DMAMAC::LocatorTable DMAMAC::clientToSinkAddress;
 std::map<uint64_t,DMAMAC::nodeStatus> DMAMAC::slotMap;
-std::map<uint64_t,int> DMAMAC::slotInfo;
+DMAMAC::SlotInfo DMAMAC::slotInfo;
 
 bool DMAMAC::twoLevels = false;
 
@@ -1005,6 +1005,8 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
                     /* @brief Setting the radio state to transmit mode */
                     if(radio->getRadioMode() != IRadio::RADIO_MODE_TRANSMITTER)
                         radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+                    else
+                        handleRadioSwitchedToTX();
                     EV_DEBUG << "Radio switch to TX command Sent.\n";
                 }
 
@@ -1017,7 +1019,10 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
         case DMAMAC_SEND_ACK:
 
                 currentMacState = SEND_ACK;
-                radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+                if(radio->getRadioMode() != IRadio::RADIO_MODE_TRANSMITTER)
+                    radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+                else
+                    handleRadioSwitchedToTX();
                 break;
 
         /* @brief Scheduling the alert with a random Delay for Hybrid and without delay fro TDMA */
@@ -1266,8 +1271,28 @@ void DMAMAC::handleRadioSwitchedToTX() {
                 int rslot = receiveSlot[currentSlot];
                 for (auto it = macPktQueue.begin(); it != macPktQueue.end(); ++it) {
                     // it is cheat, but it is possible to know the slot of every node beacuse is ofline configuration
-                    auto itAux = slotInfo.find((*it).pkt->getDestAddr().getInt());
+                    auto destAddr = (*it).pkt->getDestAddr();
+                    auto itAux = slotInfo.find(destAddr.getInt());
                     if (itAux->second == rslot) {
+                        if (it != macPktQueue.begin()) {
+                            // move to the front
+                            packetSend aux = (*it);
+                            it = macPktQueue.erase(it);
+                            macPktQueue.push_front(aux);
+                            break;
+                        }
+                    }
+                    // also check retransmissions nodes
+                    const int destId = addrToId(destAddr);
+                    bool isChild = false;
+                    for(const auto &elem : downStream) {
+                        if (elem.nextHop == rslot) {
+                            auto itReachable = std::find(elem.reachableAddress.begin(),elem.reachableAddress.end(),destId);
+                            if (itReachable != elem.reachableAddress.end())
+                                isChild = true;
+                        }
+                    }
+                    if (isChild) {
                         if (it != macPktQueue.begin()) {
                             // move to the front
                             packetSend aux = (*it);

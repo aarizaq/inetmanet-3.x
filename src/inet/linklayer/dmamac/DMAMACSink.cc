@@ -402,7 +402,10 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
                     else
                     {
                         /* @brief Setting the radio state to transmit mode */
-                        radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+                        if(radio->getRadioMode() != IRadio::RADIO_MODE_TRANSMITTER)
+                            radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+                        else
+                            handleRadioSwitchedToTX();
                         EV_DEBUG << "Waking up in my slot. Radio switch to TX command Sent.\n";
                         findImmediateNextSlot(currentSlot, slotDuration);
                     }
@@ -418,7 +421,10 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
             case DMAMAC_SEND_ACK:
 
                 currentMacState = SEND_ACK;
-                radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+                if(radio->getRadioMode() != IRadio::RADIO_MODE_TRANSMITTER)
+                    radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+                else
+                    handleRadioSwitchedToTX();
                 break;
 
             /* @brief Send NOTIFICATION definition */
@@ -427,7 +433,11 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
                 EV << "Sending Notification as sink" << endl;
                 currentMacState = SEND_NOTIFICATION;
 
-                radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+
+                if(radio->getRadioMode() != IRadio::RADIO_MODE_TRANSMITTER)
+                    radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+                else
+                    handleRadioSwitchedToTX();
 
                 /* @brief if State switch is called for then we ask nodes to make switch here
 				 * and makes its own switch here. Should not happen in the first slot of sink 
@@ -887,7 +897,6 @@ void DMAMACSink::findDistantNextSlot()
      else {
          if (radio->getRadioMode() != IRadio::RADIO_MODE_RECEIVER)
              radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
-         radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
      }
 
     nextEvent = slotDuration*(i);

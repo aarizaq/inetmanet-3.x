@@ -343,8 +343,9 @@ protected:
         macMode currentMacMode;
         int currentSlot;
     };
+    typedef std::map<uint64_t,int> SlotInfo;
     static std::map<uint64_t,nodeStatus> slotMap; // debug
-    static std::map<uint64_t,int> slotInfo; // debug
+    static SlotInfo slotInfo; // debug
 
     /* @brief To declare if the node is an actuator, inputtaken from ini file */
     bool isActuator;
