@@ -38,6 +38,7 @@
 #include "inet/physicallayer/contract/packetlevel/RadioControlInfo_m.h"
 #include <cinttypes>
 #include <stdio.h>
+#include <algorithm>    // std::find
 
 namespace inet {
 
@@ -1744,12 +1745,9 @@ void DMAMAC::handleLowerPacket(cPacket* msg) {
         {
             for(const auto &elem : downStream)
             {
-                for(const auto &elem2 : elem.reachableAddress)
-                {
-                    //MACAddress childNode =  MACAddress(downStream[i].reachableAddress[j]);
-                    if (destId == elem2)
-                       forChildNode = true;
-                }
+                auto it = std::find(elem.reachableAddress.begin(),elem.reachableAddress.end(),destId);
+                if (it != elem.reachableAddress.end())
+                    forChildNode = true;
             }
             /* @brief Error prevention clause to make space for actuator packets even if there is no space */
             if(macPktQueue.size() == queueLength && !isDup)
