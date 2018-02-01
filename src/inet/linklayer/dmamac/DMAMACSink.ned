@@ -33,6 +33,7 @@ simple DMAMACSink extends DMAMAC
         //All parameters required are already defined in the bas ned file.
         bool alwaysListening = default(false);
         bool emitTrace = default(false);
+        bool cleanOldMsg = default(false);
 
     	@class("DMAMACSink");
 }

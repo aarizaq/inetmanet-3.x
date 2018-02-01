@@ -165,6 +165,13 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
 
         if (!twoLevels) {
             if (par("localActuators")) {
+                if (par("sendDisorganized") && par("cleanOldMsg")) {
+                    while(!macPktQueue.empty()) {
+                        delete macPktQueue.back().pkt;
+                        macPktQueue.pop_back(aux);
+                        nbDroppedDataPackets++;
+                    }
+                }
                 while(macPktQueue.size() < queueLength && i < actuatorNodes.size())
                 {
                     DMAMACPkt* actuatorData = new DMAMACPkt();
