@@ -138,7 +138,7 @@ protected:
 public:
     DijkstraKshortest(int);
     virtual ~DijkstraKshortest();
-    virtual void setFromTopo(const cTopology *);
+    virtual void setFromTopo(const cTopology *,L3Address::AddressType = L3Address::IPv4);
     virtual void setLimits(const std::vector<double> &);
     virtual void resetLimits(){limitsData.clear();}
     virtual void setKLimit(int val){if (val>0) K_LIMITE=val;}
@@ -158,49 +158,155 @@ public:
     virtual void getRouteMapK(const NodeId &nodeId, Kroutes &routes);
 };
 
-
-
-inline bool operator < ( const DijkstraKshortest::SetElem& x, const DijkstraKshortest::SetElem& y )
+typedef std::vector<std::pair<NodeId, NodeId> > NodePairs;
+class Dijkstra
 {
-    for (unsigned int i =0;i<x.cost.size();i++)
+protected:
+    enum StateLabel
     {
-        switch(x.cost[i].metric)
-        {
-        case aditiveMin:
-        case concaveMin:
-            if (x.cost[i].value<y.cost[i].value)
-                return true;
-            break;
-        case aditiveMax:
-        case concaveMax:
-            if (x.cost[i].value>y.cost[i].value)
-                return true;
-            break;
-        }
-    }
-    return false;
-}
+        perm, tent
+    };
 
-inline bool operator < ( const DijkstraKshortest::CostVector& x, const DijkstraKshortest::CostVector& y )
-{
-    for (unsigned int i =0;i<x.size();i++)
+public:
+    enum Method
     {
-        switch(x[i].metric)
+        basic, widestshortest, shortestwidest,otherCost
+    };
+
+protected :
+    Method method;
+
+public:
+
+    typedef std::vector<NodeId> Route;
+    typedef std::map<NodeId, Route> MapRoutes;
+
+    class SetElem
+    {
+    public:
+        NodeId iD;
+        Method m;
+        double cost;
+        double cost2 = -1;
+        SetElem()
         {
-        case aditiveMin:
-        case concaveMin:
-            if (x[i].value<y[i].value)
-                return true;
-            break;
-        case aditiveMax:
-        case concaveMax:
-            if (x[i].value>y[i].value)
-                return true;
-            break;
+            iD = UndefinedAddr;
+            cost = 1e30;
+            cost2 = 0;
+            m = basic;
         }
+        SetElem& operator=(const SetElem& val)
+        {
+            this->iD = val.iD;
+            this->cost2 = val.cost2;
+            this->cost = val.cost;
+            return *this;
+        }
+    };
+
+    friend bool operator <(const Dijkstra::SetElem& x, const Dijkstra::SetElem& y);
+    friend bool operator >(const Dijkstra::SetElem& x, const Dijkstra::SetElem& y);
+    class State
+    {
+    public:
+        double cost = 1e30;
+        double cost2 = 0;
+        NodeId idPrev;
+        StateLabel label;
+        State();
+        State(const double &cost, const double &);
+        virtual ~State();
+    };
+
+    struct Edge
+    {
+        NodeId last_node_; // last node to reach node X
+        double cost;
+        double cost2;
+        Edge()
+        {
+            cost = 1e30;
+            cost2 = 0;
+            last_node_ = UndefinedAddr;
+        }
+
+        Edge(const Edge &other)
+        {
+            last_node_ = other.last_node_;
+            cost = other.cost;
+            cost2 = other.cost2;
+        }
+
+        virtual Edge *dup() const {return new Edge(*this);}
+
+        virtual ~Edge()
+        {
+
+        }
+
+        inline NodeId& last_node()
+        {
+            return last_node_;
+        }
+
+        virtual double& Cost()
+        {
+            return cost;
+        }
+
+        virtual double& Cost2()
+        {
+            return cost2;
+        }
+
+    };
+
+    typedef std::map<NodeId, Dijkstra::State> RouteMap;
+    typedef std::map<NodeId, std::vector<Dijkstra::Edge*> > LinkArray;
+protected:
+    LinkArray linkArray;
+    RouteMap routeMap;
+    NodeId rootNode;
+public:
+
+    Dijkstra();
+    virtual ~Dijkstra();
+    virtual void discoverPartitionedLinks(std::vector<NodeId> &pathNode, const LinkArray &, NodePairs &);
+    virtual void discoverAllPartitionedLinks(const LinkArray & topo, NodePairs &links);
+
+    virtual void discoverPartitionedLinks(std::vector<NodeId> &pathNode, NodePairs &array) {
+        discoverPartitionedLinks(pathNode, linkArray, array);
     }
-    return false;
-}
+
+    virtual void discoverAllPartitionedLinks(NodePairs &links) {
+        discoverAllPartitionedLinks(linkArray, links);
+    }
+
+    virtual void setFromTopo(const cTopology *, L3Address::AddressType type = L3Address::IPv4);
+/*    virtual void setFromDijkstraFuzzy(const DijkstraFuzzy::LinkArray &);
+    virtual void setFromDijkstraFuzzy(const DijkstraFuzzy::LinkArray &, LinkArray &);*/
+
+    virtual void cleanLinkArray(LinkArray &);
+    virtual void addEdge(const NodeId & dest_node, const NodeId & last_node, const double &cost, const double &cost2, LinkArray &);
+    virtual void addEdge(const NodeId & dest_node, Edge*, LinkArray &);
+    virtual void deleteEdge(const NodeId &, const NodeId &, LinkArray &);
+    virtual Edge* removeEdge(const NodeId & originNode, const NodeId & last_node, LinkArray & linkArray);
+
+    virtual void cleanLinkArray();
+    virtual void clearAll();
+    virtual void cleanRoutes() {routeMap.clear();}
+    virtual void addEdge(const NodeId & dest_node, const NodeId & last_node, const double &cost, const double &cost2);
+    virtual void addEdge(const NodeId & dest_node, Edge *);
+    virtual void deleteEdge(const NodeId &, const NodeId &);
+    virtual void setRoot(const NodeId & dest_node);
+    virtual void run(const NodeId &, const LinkArray &, RouteMap &);
+    virtual void runUntil(const NodeId &, const NodeId &, const LinkArray &, RouteMap &);
+    virtual void run();
+    virtual void runUntil(const NodeId &);
+    virtual bool getRoute(const NodeId &nodeId, std::vector<NodeId> &pathNode);
+    virtual bool getRoute(const NodeId &, std::vector<NodeId> &, const RouteMap &);
+    virtual void setMethod(Method p) {method = p;}
+};
 
 }
 
