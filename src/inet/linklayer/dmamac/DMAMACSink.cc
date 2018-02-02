@@ -168,7 +168,7 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
                 if (par("sendDisorganized") && par("cleanOldMsg")) {
                     while(!macPktQueue.empty()) {
                         delete macPktQueue.back().pkt;
-                        macPktQueue.pop_back(aux);
+                        macPktQueue.pop_back();
                         nbDroppedDataPackets++;
                     }
                 }
