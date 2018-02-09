@@ -347,21 +347,32 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
                   nbTxDataFailures++;
                   EV << "Data <failed>" << endl;
 
+
                   if (radio->getRadioMode() == IRadio::RADIO_MODE_RECEIVER)
                       if (!alwaysListening)
                           radio->setRadioMode(IRadio::RADIO_MODE_SLEEP);         // 23 Dec
 
-                  /* @brief Checking if next slot is transmission slot */
-                  if (transmitSlot[currentSlot + 1] == mySlot)
-                      EV << "ACK timeout received re-sending DATA" << endl;
+                  if (hasPar("NoRetransmission") && par("NoRetransmission").boolValue() == true) {
+                      EV_INFO << "Maximum re-transmissions attempt done, DATA transmission <failed>. Deleting packet from que" << endl;
+                      EV_DEBUG << " Deleting packet from DMAMAC queue";
+                      delete macPktQueue.front().pkt;     // DATA Packet deleted in case re-transmissions are done
+                      macPktQueue.pop_front();
+                      EV_INFO << "My Packet queue size" << macPktQueue.size() << endl;
+                  }
                   else
                   {
-                      EV << "Maximum re-transmissions attempt done, DATA transmission <failed>. Deleting packet from que" << endl;
-                      EV_DEBUG << " Deleting packet from DMAMAC queue";
-					  /* @brief DATA Packet deleted */
-                      delete macPktQueue.front().pkt;
-                      macPktQueue.pop_front();
-                      EV << "My Packet queue size" << macPktQueue.size() << endl;
+                      /* @brief Checking if next slot is transmission slot */
+                      if (transmitSlot[currentSlot + 1] == mySlot)
+                          EV << "ACK timeout received re-sending DATA" << endl;
+                      else
+                      {
+                          EV << "Maximum re-transmissions attempt done, DATA transmission <failed>. Deleting packet from que" << endl;
+                          EV_DEBUG << " Deleting packet from DMAMAC queue";
+                          /* @brief DATA Packet deleted */
+                          delete macPktQueue.front().pkt;
+                          macPktQueue.pop_front();
+                          EV << "My Packet queue size" << macPktQueue.size() << endl;
+                      }
                   }
                   break;
 
@@ -942,8 +953,8 @@ void DMAMACSink::findDistantNextSlot()
     else if (receiveSlot[(currentSlot) % numSlots] == mySlot)
     {
         EV << "My next slot after sleep is receive slot" << endl;
-        scheduleAt(simTime() + nextEvent, waitData);
-        /*
+        //scheduleAt(simTime() + nextEvent, waitData);
+
         if(currentSlot < numSlotsTransient)
         {
             EV << "My next slot after sleep is receive slot" << endl;
@@ -953,7 +964,7 @@ void DMAMACSink::findDistantNextSlot()
         {
             EV << "Next slot after sleep is alert slot" << endl;
             scheduleAt(simTime() + nextEvent, waitAlert);
-        }*/
+        }
 
     }
     else if (alwaysListening) {
@@ -984,8 +995,8 @@ void DMAMACSink::findImmediateNextSlot(int currentSlotLocal,simtime_t nextSlot)
     else if (receiveSlot[(currentSlotLocal + 1) % numSlots] == mySlot)
     {
         EV << "Immediate next Slot is my Receive Slot, getting ready to receive.\n";
-        scheduleAt(simTime() + nextSlot, waitData);
-        /*
+        //scheduleAt(simTime() + nextSlot, waitData);
+
         if(currentSlotLocal < numSlotsTransient)
         {
             EV << "Immediate next Slot is my Receive Slot, getting ready to receive.\n";
@@ -996,8 +1007,6 @@ void DMAMACSink::findImmediateNextSlot(int currentSlotLocal,simtime_t nextSlot)
             EV << "Immediate next Slot is Alert Slot, getting ready to receive.\n";
             scheduleAt(simTime() + nextSlot, waitAlert);
         }
-        */
-
     }
     else if (receiveSlot[(currentSlotLocal + 1) % numSlots] == ALERT_SINK)
     {

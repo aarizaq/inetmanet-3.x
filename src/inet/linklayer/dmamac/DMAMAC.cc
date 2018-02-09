@@ -292,6 +292,7 @@ void DMAMAC::initialize(int stage)
         WATCH(actualChannel);
         WATCH(currentSlot);
         WATCH(mySlot);
+
         cModule *host = getContainingNode(this)->getParentModule();
 
         host->subscribe(dmamacSendPkt,this);
@@ -378,6 +379,8 @@ void DMAMAC::initialize(int stage)
         /* @brief My slot is same as myID assigned used for slot scheduling  */
         mySlot = myId;
 
+        myIdNum = myId;
+        WATCH(myIdNum);
         sendUppperLayer = par("sendUppperLayer"); // if false the module deletes the packet, other case, it sends the packet to the upper layer.
         procUppperLayer = par("procUppperLayer");
 
@@ -734,8 +737,8 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
     }
 
     /* @brief To mark Alert period for mark */
-/*    if (currentSlot >= numSlotsTransient)
-        macPeriod = ALERT;*/
+    if (currentSlot >= numSlotsTransient)
+        macPeriod = ALERT;
 
     EV << "Current <MAC> period = " << macPeriod << endl;
     /* @brief Printing number of slots for check  */
@@ -887,15 +890,26 @@ void DMAMAC::handleSelfMessage(cMessage* msg)
                     }
 
                 /* @brief Checking if we have re-transmission slots left */
-                if (transmitSlot[currentSlot + 1] == mySlot)
-                    EV << "ACK timeout received re-sending DATA" << endl;
-                else
+                if (hasPar("NoRetransmission") && par("NoRetransmission").boolValue() == true)
                 {
                     EV_INFO << "Maximum re-transmissions attempt done, DATA transmission <failed>. Deleting packet from que" << endl;
                     EV_DEBUG << " Deleting packet from DMAMAC queue";
                     delete macPktQueue.front().pkt;     // DATA Packet deleted in case re-transmissions are done
                     macPktQueue.pop_front();
                     EV_INFO << "My Packet queue size" << macPktQueue.size() << endl;
+                }
+                else
+                {
+                    if (transmitSlot[currentSlot + 1] == mySlot)
+                        EV << "ACK timeout received re-sending DATA" << endl;
+                    else
+                    {
+                        EV_INFO << "Maximum re-transmissions attempt done, DATA transmission <failed>. Deleting packet from que" << endl;
+                        EV_DEBUG << " Deleting packet from DMAMAC queue";
+                        delete macPktQueue.front().pkt;     // DATA Packet deleted in case re-transmissions are done
+                        macPktQueue.pop_front();
+                        EV_INFO << "My Packet queue size" << macPktQueue.size() << endl;
+                    }
                 }
                 break;
 
@@ -1532,8 +1546,6 @@ void DMAMAC::resyncr(const int &slot,const macMode &mode, const bool &changeMacM
 
     if (transmitSlot[val] == mySlot)
     {
-        scheduleAt(simTime(), sendData);
-        /*
         if(slot < numSlotsTransient)
         {
             EV << "Immediate next Slot is my Send Slot, getting ready to transmit" << endl;
@@ -1544,7 +1556,7 @@ void DMAMAC::resyncr(const int &slot,const macMode &mode, const bool &changeMacM
             EV << "Immediate next Slot is my alert Transmit Slot, getting ready to send" << endl;
             scheduleAt(simTime(), scheduleAlert);
         }
-        */
+
     }
     else if (transmitSlot[val] == alertLevel && !isActuator)
     {
@@ -1554,8 +1566,7 @@ void DMAMAC::resyncr(const int &slot,const macMode &mode, const bool &changeMacM
     else if (receiveSlot[val] == mySlot)
     {
         EV << "Immediate next Slot is my Receive Slot, getting ready to receive" << endl;
-        scheduleAt(simTime(), waitData);
-        /*
+        //scheduleAt(simTime(), waitData);
         if(slot < numSlotsTransient)
         {
             EV << "Immediate next Slot is my Receive Slot, getting ready to receive" << endl;
@@ -1566,7 +1577,6 @@ void DMAMAC::resyncr(const int &slot,const macMode &mode, const bool &changeMacM
             EV << "Immediate next Slot is my alert Receive Slot, getting ready to receive" << endl;
             scheduleAt(simTime(), waitAlert);
         }
-        */
     }
     else if (receiveSlot[val] == alertLevel)
     {
@@ -2041,8 +2051,6 @@ void DMAMAC::findDistantNextSlot()
     */
     if(transmitSlot[(currentSlot) % numSlots] == mySlot)
     {
-        scheduleAt(simTime() + nextEvent, sendData);
-        /*
         if(currentSlot < numSlotsTransient)
         {
             EV << "My next slot after sleep is transmit slot" << endl;
@@ -2053,7 +2061,6 @@ void DMAMAC::findDistantNextSlot()
             EV << "My next slot after sleep is alert Transmit Slot" << endl;
             scheduleAt(simTime() + nextEvent, scheduleAlert);
         }
-        */
     }
     else if (transmitSlot[(currentSlot) % numSlots] == alertLevel && !isActuator)
     {
@@ -2072,8 +2079,8 @@ void DMAMAC::findDistantNextSlot()
     }
     else if (receiveSlot[(currentSlot) % numSlots] == mySlot)
     {
-        scheduleAt(simTime() + nextEvent, waitData);
-        /*
+        //scheduleAt(simTime() + nextEvent, waitData);
+
         if(currentSlot < numSlotsTransient)
         {
             EV << "My next slot after sleep is receive slot" << endl;
@@ -2084,7 +2091,6 @@ void DMAMAC::findDistantNextSlot()
             EV << "My next slot after sleep is alert receive Slot" << endl;
             scheduleAt(simTime() + nextEvent, waitAlert);
         }
-        */
     }
     else if (alwaysListening) {
         scheduleAt(simTime() + nextEvent, waitData);
@@ -2100,6 +2106,7 @@ void DMAMAC::findImmediateNextSlot(int currentSlotLocal,simtime_t nextSlot)
     EV << "Finding immediate next slot" << endl;
     if (transmitSlot[(currentSlotLocal + 1) % numSlots] == mySlot)
     {
+        // scheduleAt(simTime() + nextSlot, sendData);
         if(currentSlotLocal < numSlotsTransient)
         {
             EV << "Immediate next Slot is my Send Slot, getting ready to transmit" << endl;
@@ -2118,8 +2125,8 @@ void DMAMAC::findImmediateNextSlot(int currentSlotLocal,simtime_t nextSlot)
     }
     else if (receiveSlot[(currentSlotLocal + 1) % numSlots] == mySlot)
     {
-        scheduleAt(simTime() + nextSlot, waitData);
-        /*
+        //scheduleAt(simTime() + nextSlot, waitData);
+
         if(currentSlotLocal < numSlotsTransient)
         {
             EV << "Immediate next Slot is my Receive Slot, getting ready to receive" << endl;
@@ -2130,7 +2137,7 @@ void DMAMAC::findImmediateNextSlot(int currentSlotLocal,simtime_t nextSlot)
             EV << "Immediate next Slot is my alert Receive Slot, getting ready to receive" << endl;
             scheduleAt(simTime() + nextSlot, waitAlert);
         }
-        */
+
     }
     else if (receiveSlot[(currentSlotLocal + 1) % numSlots] == alertLevel)
     {

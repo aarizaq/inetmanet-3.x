@@ -370,6 +370,7 @@ protected:
     simtime_t controlDuration;         // Unused currently, used for calculating time required for control operations
     simtime_t maxRadioSwitchDelay;     // Radio switching delay between radio states (Not to interfere in between)
 
+    int myIdNum;
     int mySlot;                     // The slot in which the node can transmit
     int maxNumSlots;                // Maximum number of slots (specifically in steady superframe
     int numSlots;                   // Number of slots in the current superframe

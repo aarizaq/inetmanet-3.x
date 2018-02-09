@@ -102,6 +102,8 @@ simple DMAMAC extends MACProtocolBase like IMACProtocol
         // Has Sensor child or not.
         bool hasSensorChild = default(true);
         
+        bool NoRetransmission = default(false);
+        
         // Initialization parameters
         int maxNodes;
         int maxChildren;

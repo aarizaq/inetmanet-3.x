@@ -1,0 +1,389 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <nodes>
+        <node id="0">
+            <level>105</level>
+            <parent>0</parent>
+            <nextHop address="1">
+                <reachableNode>7</reachableNode>
+                <reachableNode>8</reachableNode>
+                <reachableNode>9</reachableNode>
+                <reachableNode>25</reachableNode>
+                <reachableNode>26</reachableNode>
+                <reachableNode>27</reachableNode>
+                <reachableNode>28</reachableNode>
+            </nextHop>
+            <nextHop address="2">
+                <reachableNode>10</reachableNode>
+                <reachableNode>11</reachableNode>
+                <reachableNode>12</reachableNode>
+                <reachableNode>29</reachableNode>
+                <reachableNode>30</reachableNode>
+                <reachableNode>31</reachableNode>
+                <reachableNode>32</reachableNode>
+            </nextHop>
+            <nextHop address="3">
+                <reachableNode>13</reachableNode>
+                <reachableNode>14</reachableNode>
+                <reachableNode>15</reachableNode>
+                <reachableNode>33</reachableNode>
+                <reachableNode>34</reachableNode>
+                <reachableNode>35</reachableNode>
+                <reachableNode>36</reachableNode>
+                <reachableNode>37</reachableNode>
+            </nextHop>
+            <nextHop address="4">
+                <reachableNode>16</reachableNode>
+                <reachableNode>17</reachableNode>
+                <reachableNode>18</reachableNode>
+                <reachableNode>38</reachableNode>
+                <reachableNode>39</reachableNode>
+                <reachableNode>40</reachableNode>
+                <reachableNode>41</reachableNode>
+            </nextHop>
+            <nextHop address="5">
+                <reachableNode>19</reachableNode>
+                <reachableNode>20</reachableNode>
+                <reachableNode>21</reachableNode>
+                <reachableNode>42</reachableNode>
+                <reachableNode>43</reachableNode>
+                <reachableNode>44</reachableNode>
+                <reachableNode>45</reachableNode>
+            </nextHop>
+            <nextHop address="6">
+                <reachableNode>22</reachableNode>
+                <reachableNode>23</reachableNode>
+                <reachableNode>24</reachableNode>
+                <reachableNode>46</reachableNode>
+                <reachableNode>47</reachableNode>
+                <reachableNode>48</reachableNode>
+                <reachableNode>49</reachableNode>
+                <reachableNode>50</reachableNode>
+            </nextHop>
+            <actuators>
+                <id>5</id>
+                <id>7</id>
+                <id>14</id>
+                <id>20</id>
+                <id>21</id>
+                <id>23</id>
+                <id>34</id>
+                <id>36</id>
+            </actuators>
+        </node>
+        <node id="1">
+            <level>106</level>
+            <parent>0</parent>
+            <nextHop address="7">
+                <reachableNode>25</reachableNode>
+                <reachableNode>26</reachableNode>
+            </nextHop>
+            <nextHop address="8">
+            </nextHop>
+            <nextHop address="9">
+                <reachableNode>27</reachableNode>
+                <reachableNode>28</reachableNode>
+            </nextHop>
+        </node>
+        <node id="2">
+            <level>106</level>
+            <parent>0</parent>
+            <nextHop address="10">
+            </nextHop>
+            <nextHop address="11">
+                <reachableNode>29</reachableNode>
+                <reachableNode>30</reachableNode>
+            </nextHop>
+            <nextHop address="12">
+                <reachableNode>31</reachableNode>
+                <reachableNode>32</reachableNode>
+            </nextHop>
+        </node>
+        <node id="3">
+            <level>106</level>
+            <parent>0</parent>
+            <nextHop address="13">
+                <reachableNode>33</reachableNode>
+                <reachableNode>34</reachableNode>
+            </nextHop>
+            <nextHop address="14">
+                <reachableNode>35</reachableNode>
+            </nextHop>
+            <nextHop address="15">
+                <reachableNode>36</reachableNode>
+                <reachableNode>37</reachableNode>
+            </nextHop>
+        </node>
+        <node id="4">
+            <level>106</level>
+            <parent>0</parent>
+            <nextHop address="16">
+                <reachableNode>38</reachableNode>
+                <reachableNode>39</reachableNode>
+            </nextHop>
+            <nextHop address="17">
+            </nextHop>
+            <nextHop address="18">
+                <reachableNode>40</reachableNode>
+                <reachableNode>41</reachableNode>
+            </nextHop>
+        </node>
+        <node id="5">
+            <level>106</level>
+            <parent>0</parent>
+            <nextHop address="19">
+            </nextHop>
+            <nextHop address="21">
+                <reachableNode>42</reachableNode>
+                <reachableNode>43</reachableNode>
+            </nextHop>
+            <nextHop address="22">
+                <reachableNode>44</reachableNode>
+                <reachableNode>45</reachableNode>
+            </nextHop>
+        </node>
+        <node id="6">
+            <level>106</level>
+            <parent>0</parent>
+            <nextHop address="23">
+                <reachableNode>46</reachableNode>
+                <reachableNode>47</reachableNode>
+            </nextHop>
+            <nextHop address="24">
+                <reachableNode>48</reachableNode>
+            </nextHop>
+            <nextHop address="25">
+                <reachableNode>49</reachableNode>
+                <reachableNode>50</reachableNode>
+            </nextHop>
+        </node>
+        <node id="7">
+            <level>107</level>
+            <parent>1</parent>
+            <nextHop address="25">                
+            </nextHop>
+            <nextHop address="26">
+            </nextHop>
+        </node>
+        <node id="8">
+            <level>107</level>
+            <parent>1</parent>
+        </node>
+        <node id="9">
+            <level>107</level>
+            <parent>1</parent>
+            <nextHop address="27">
+            </nextHop>
+            <nextHop address="28">
+            </nextHop>
+        </node>
+        <node id="10">
+            <level>107</level>
+            <parent>2</parent>
+        </node>
+        <node id="11">
+            <level>107</level>
+            <parent>2</parent>
+            <nextHop address="29">
+            </nextHop>
+            <nextHop address="30">
+            </nextHop>
+        </node>
+        <node id="12">
+            <level>107</level>
+            <parent>2</parent>
+            <nextHop address="31">
+            </nextHop>
+            <nextHop address="32">
+            </nextHop>
+        </node>
+        <node id="13">
+            <level>107</level>
+            <parent>3</parent>
+            <nextHop address="33">
+            </nextHop>
+            <nextHop address="34">
+            </nextHop>
+        </node>
+        <node id="14">
+            <level>107</level>
+            <parent>3</parent>
+            <nextHop address="35">
+            </nextHop>
+        </node>
+        <node id="15">
+            <level>107</level>
+            <parent>3</parent>
+            <nextHop address="36">
+            </nextHop>
+            <nextHop address="37">
+            </nextHop>
+        </node>
+        <node id="16">
+            <level>107</level>
+            <parent>04</parent>
+			<nextHop address="38">
+            </nextHop>
+            <nextHop address="39">
+			</nextHop>
+        </node>
+        <node id="17">
+            <level>107</level>
+            <parent>04</parent>
+        </node>
+        <node id="18">
+            <level>107</level>
+            <parent>04</parent>
+			<nextHop address="40">
+            </nextHop>
+            <nextHop address="41">
+			</nextHop>
+        </node>
+        <node id="19">
+            <level>107</level>
+            <parent>05</parent>
+        </node>
+        <node id="20">
+            <level>107</level>
+            <parent>05</parent>
+			<nextHop address="42">
+            </nextHop>
+            <nextHop address="43">
+			</nextHop>
+        </node>
+        <node id="21">
+            <level>107</level>
+            <parent>05</parent>
+			<nextHop address="44">
+            </nextHop>
+            <nextHop address="45">
+			</nextHop>
+        </node>
+        <node id="22">
+            <level>107</level>
+            <parent>06</parent>
+			<nextHop address="46">
+            </nextHop>
+            <nextHop address="47">
+			</nextHop>
+        </node>
+        <node id="23">
+            <level>107</level>
+            <parent>06</parent>
+			<nextHop address="48">
+            </nextHop>
+        </node>
+        <node id="24">
+            <level>107</level>
+            <parent>06</parent>
+			<nextHop address="49">
+            </nextHop>
+            <nextHop address="50">
+			</nextHop>
+        </node>
+		<node id="25">
+            <level>108</level>
+            <parent>07</parent>
+        </node>
+        <node id="26">
+            <level>108</level>
+            <parent>07</parent>
+        </node>
+        <node id="27">
+            <level>108</level>
+            <parent>09</parent>
+        </node>
+		<node id="28">
+            <level>108</level>
+            <parent>09</parent>
+        </node>
+        <node id="29">
+            <level>108</level>
+            <parent>11</parent>
+        </node>
+        <node id="30">
+            <level>108</level>
+            <parent>11</parent>
+        </node>
+		<node id="31">
+            <level>108</level>
+            <parent>12</parent>
+        </node>
+        <node id="32">
+            <level>108</level>
+            <parent>12</parent>
+        </node>
+        <node id="33">
+            <level>108</level>
+            <parent>13</parent>
+        </node>
+        <node id="34">
+            <level>108</level>
+            <parent>13</parent>
+        </node>
+        <node id="35">
+            <level>108</level>
+            <parent>14</parent>
+        </node>
+        <node id="36">
+            <level>108</level>
+            <parent>15</parent>
+        </node>
+        <node id="37">
+            <level>108</level>
+            <parent>15</parent>
+        </node>
+        <node id="38">
+            <level>106</level>
+            <parent>16</parent>
+        </node>
+        <node id="39">
+            <level>107</level>
+            <parent>16</parent>
+        </node>
+        <node id="40">
+            <level>107</level>
+            <parent>18</parent>
+        </node>
+        <node id="41">
+            <level>107</level>
+            <parent>18</parent>
+        </node>
+        <node id="42">
+            <level>108</level>
+            <parent>20</parent>
+        </node>
+        <node id="43">
+            <level>108</level>
+            <parent>20</parent>
+        </node>
+        <node id="44">
+            <level>108</level>
+            <parent>21</parent>
+        </node>
+        <node id="45">
+            <level>108</level>
+            <parent>21</parent>
+        </node>
+        <node id="46">
+            <level>108</level>
+            <parent>22</parent>
+        </node>
+        <node id="47">
+            <level>108</level>
+            <parent>22</parent>
+        </node>
+        <node id="48">
+            <level>108</level>
+            <parent>23</parent>
+        </node>
+        <node id="49">
+            <level>108</level>
+            <parent>24</parent>
+        </node>
+        <node id="50">
+            <level>108</level>
+            <parent>24</parent>
+        </node>
+    </nodes>
+</root>
