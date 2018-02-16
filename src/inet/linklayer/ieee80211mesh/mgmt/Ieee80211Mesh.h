@@ -63,7 +63,7 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase, public cListener
         };
     private:
 
-        WirelessNumHops *getOtpimunRoute;
+        WirelessNumHops *getOtpimunRoute = nullptr;
 
         static simsignal_t numHopsSignal;
         static simsignal_t numFixHopsSignal;
@@ -71,8 +71,8 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase, public cListener
         static const int MaxSeqNum;
         class SeqNumberData
         {
-            uint64_t seqNum;
-            int numTimes;
+            uint64_t seqNum = 0;
+            int numTimes = 0;
             public:
                 SeqNumberData() {seqNum = 0; numTimes = 0;}
                 SeqNumberData(uint64_t s, int t ) {seqNum = s; numTimes = t;}
@@ -104,8 +104,8 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase, public cListener
         typedef std::map<L3Address, SeqNumberVector> SeqNumberInfo;
         SeqNumberInfo seqNumberInfo;
 
-        uint64_t numRoutingBytes;
-        uint64_t numDataBytes;
+        uint64_t numRoutingBytes = 0;
+        uint64_t numDataBytes = 0;
         //
         // Multi mac interfaces
         //
@@ -113,41 +113,41 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase, public cListener
         SelectionCriteria selectionCriteria;
         bool inteligentBroadcastRouting;
 
-        cMessage *WMPLSCHECKMAC;
-        cMessage *gateWayTimeOut;
+        cMessage *WMPLSCHECKMAC = nullptr;
+        cMessage *gateWayTimeOut = nullptr;
 
-        double limitDelay;
-        bool proactiveFeedback;
-        int maxHopProactiveFeedback; // Maximun number of hops for to use the proactive feedback
-        int maxHopProactive; // Maximun number of hops in the fix part of the network with the proactive feedback
-        int maxHopReactive; // Maximun number of hops by the reactive part for to use the proactive feedback
+        double limitDelay = 10000;
+        bool proactiveFeedback = false;
+        int maxHopProactiveFeedback = -1; // Maximun number of hops for to use the proactive feedback
+        int maxHopProactive = -1; // Maximun number of hops in the fix part of the network with the proactive feedback
+        int maxHopReactive = -1; // Maximun number of hops by the reactive part for to use the proactive feedback
 
-        bool floodingConfirmation;
+        bool floodingConfirmation = false;
 
-        bool hasSecurity;
+        bool hasSecurity = false;
 
         struct ConfirmationInfo
         {
-                Ieee80211MeshFrame* frame;
-                int reintent;
+                Ieee80211MeshFrame* frame = nullptr;
+                int reintent = 0;
         };
         std::vector<ConfirmationInfo> confirmationFrames;
 
-        inetmanet::ManetRoutingBase *routingModuleProactive;
-        inetmanet::ManetRoutingBase *routingModuleReactive;
-        inetmanet::ManetRoutingBase *routingModuleHwmp;
-        Ieee80211Etx * ETXProcess;
+        inetmanet::ManetRoutingBase *routingModuleProactive = nullptr;
+        inetmanet::ManetRoutingBase *routingModuleReactive = nullptr;
+        inetmanet::ManetRoutingBase *routingModuleHwmp = nullptr;
+        Ieee80211Etx * ETXProcess = nullptr;
 
-        IInterfaceTable *ift;
-        bool useLwmpls;
-        int maxTTL;
+        IInterfaceTable *ift = nullptr;
+        bool useLwmpls = false;
+        int maxTTL = 32;
 
-        LWMPLSDataStructure * mplsData;
+        LWMPLSDataStructure * mplsData = nullptr;
 
-        double multipler_active_break;
-        simtime_t timer_active_refresh;
-        bool activeMacBreak;
-        int macBaseGateId; // id of the nicOut[0] gate  // FIXME macBaseGateId is unused, what is it?
+        double multipler_active_break = 1;
+        simtime_t timer_active_refresh; // 0
+        bool activeMacBreak = false;
+        int macBaseGateId = -1; // id of the nicOut[0] gate  // FIXME macBaseGateId is unused, what is it?
 
         // start routing proccess
         virtual void startReactive();
@@ -183,25 +183,27 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase, public cListener
         //////////////////////////////////////////
         // Gateway structures
         /////////////////////////////////////////////////
-        bool isGateWay;
+        bool isGateWay = false;
         typedef std::map<uint64_t, simtime_t> AssociatedAddress;
         AssociatedAddress associatedAddress;
         struct GateWayData
         {
                 MACAddress idAddress;
                 MACAddress ethAddress;
-                ManetRoutingBase *proactive;
-                ManetRoutingBase *reactive;
-                AssociatedAddress *associatedAddress;
+                ManetRoutingBase *proactive = nullptr;
+                ManetRoutingBase *reactive = nullptr;
+                ManetRoutingBase *hwmp = nullptr;
+                AssociatedAddress *associatedAddress = nullptr;
         };
         typedef std::map<L3Address, GateWayData> GateWayDataMap;
+        GateWayDataMap *localGateWayDataMap = nullptr;
 #ifdef CHEAT_IEEE80211MESH
         // cheat, we suppose that the information between gateway is interchanged with the wired
         static GateWayDataMap *gateWayDataMap;
 #else
-        GateWayDataMap *gateWayDataMap;
+        GateWayDataMap *gateWayDataMap = nullptr;
 #endif
-        int gateWayIndex;
+        int gateWayIndex = -1;
 
         ///////////////////////
         // gateWay methods
@@ -214,11 +216,22 @@ class INET_API Ieee80211Mesh : public Ieee80211MgmtBase, public cListener
                 return gateWayDataMap;
             return nullptr;
         }
+
+        virtual GateWayDataMap * getLocalGateWayDataMap()
+        {
+            if (isGateWay)
+                return localGateWayDataMap;
+            return nullptr;
+        }
+
+
         virtual bool selectGateWay(const L3Address &, MACAddress &);
 
-        bool hasLocator;
-        bool isMultiMac;
-        bool hasRelayUnit;
+        virtual void discoverGateWay();
+
+        bool hasLocator = false;
+        bool isMultiMac = false;
+        bool hasRelayUnit = false;
     protected:
         virtual void initializeBase(int stage);
 
