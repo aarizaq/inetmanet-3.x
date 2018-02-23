@@ -126,10 +126,15 @@ void DMAMAC::initializeMACAddress()
     else {
         int add = atoi(addrstr);
         myMacAddr = MACAddress(add);
-
+#if OMNETPP_VERSION > 0x0501
+        if (par("baseAddress").intValue() > 0) {
+            baseAddress = par("baseAddress").intValue();
+        }
+#else
         if (par("baseAddress").longValue() > 0) {
             baseAddress = par("baseAddress").longValue();
         }
+#endif
     }
     int add = atoi(par("StartAddressRange"));
     startAddressRange = MACAddress(add);
@@ -157,7 +162,11 @@ InterfaceEntry *DMAMAC::createInterfaceEntry()
     e->setInterfaceToken(myMacAddr.formInterfaceIdentifier());
 
     // capabilities
+#if OMNETPP_VERSION > 0x0501
+    e->setMtu(par("mtu").intValue());
+#else
     e->setMtu(par("mtu").longValue());
+#endif
     e->setMulticast(false);
     e->setBroadcast(true);
 
@@ -196,14 +205,19 @@ void DMAMAC::initialize(int stage)
         stats               = par("stats");                         // @Statistics recording switch ON/OFF
         alertDelayMax       = par("alertDelayMax");                 // Tune the max delay in sending alert packets
         maxRadioSwitchDelay = par("maxRadioSwitchDelay");
-        sinkAddress         = MACAddress( par("sinkAddress").longValue());
+#if OMNETPP_VERSION > 0x0501
+        sinkAddress         = MACAddress( par("sinkAddress").intValue());
+        sinkAddressGlobal   = MACAddress( par("sinkAddressGlobal").intValue());
+#else
+        sinkAddress         = MACAddress( par("sinkAddress").Value());
         sinkAddressGlobal   = MACAddress( par("sinkAddressGlobal").longValue());
+#endif
         isActuator          = par("isActuator");
 
         maxNodes            = par("maxNodes");
         maxChildren         = par("maxChildren");
         hasSensorChild      = par("hasSensorChild");                                     
-        double temp         = (par("macTypeInput").doubleValue());
+        int temp         = par("macTypeInput");
         disableChecks = par("disableChecks");
         checkDup = par("checkDup");
 
@@ -2488,6 +2502,19 @@ cObject *DMAMAC::setUpControlInfo(cMessage *const pMsg, const MACAddress& pSrcAd
 
 void DMAMAC::initializeRandomSeq() {
     // initialize the random generator.
+#if OMNETPP_VERSION > 0x0501
+    if (par("initialSeed").intValue() != -1)
+    {
+        randomGenerator = new CRandomMother(par("initialSeed").intValue());
+        setNextSequenceChannel();
+        initialSeed = par("initialSeed").intValue();
+    }
+    else
+    {
+        setChannel(par("initialChannel"));
+        randomGenerator = nullptr;
+    }
+#else
     if (par("initialSeed").longValue() != -1)
     {
         randomGenerator = new CRandomMother(par("initialSeed").longValue());
@@ -2499,6 +2526,7 @@ void DMAMAC::initializeRandomSeq() {
         setChannel(par("initialChannel"));
         randomGenerator = nullptr;
     }
+#endif
 }
 
 void DMAMAC::refreshDisplay() {

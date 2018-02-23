@@ -50,7 +50,7 @@ simple DMAMAC extends MACProtocolBase like IMACProtocol
         double slotDuration @unit(s) = default(10ms);
         // Length of MAC header
         int headerLength @unit(bit) = default(80b);
-        double queueLength = default(10);
+        int queueLength = default(10);
         // Default channel 
         double defaultChannel = default(0);
         // Bit rate 250 kbps (CC2420 value)
