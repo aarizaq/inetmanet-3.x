@@ -1496,7 +1496,8 @@ void DMAMAC::resyncr(const int &slot,const macMode &mode, const bool &changeMacM
     if (disableChecks) return;
 
     bool resync = false;
-    if (currentMacMode != mode && !changeMacMode)
+    //if (currentMacMode != mode && !changeMacMode) //
+    if (currentMacMode != mode) //
     {
        // if (testing)
        //     throw cRuntimeError("Synchronization problem, Mac Mode are different");
@@ -2330,15 +2331,16 @@ void DMAMAC::slotInitialize()
 
     numSlots = numSlotsTransient;
 
-    EV_DEBUG << "Transmit Slots and Receive Slots" << endl;
-    for(int i=0; i < maxNumSlots; i ++)
+    /*EV_DEBUG << "Transmit Slots and Receive Slots" << endl;
+    for(int i=0; i < transmitSlot.size(); i ++)
     {
         EV_DEBUG << " Send Slot "<< i << " = " << transmitSlot[i] << endl;
     }
-    for(int i=0; i < maxNumSlots; i ++)
+    for(int i=0; i < receiveSlot.size(); i ++)
     {
         EV_DEBUG << " Receive Slot "<< i << " = " << receiveSlot[i] << endl;
     }
+    */
 
     /* @brief Extracting neighbor data from the input xml file */
     //if (myId != sinkAddress)
