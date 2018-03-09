@@ -78,9 +78,9 @@ simple DMAMAC extends MACProtocolBase like IMACProtocol
         xml neighborData;
 		
 		// State change probability (transient to steady);
-        int stateProbability = default(5);
+        double stateProbability = default(5);
         // Alert probability
-        int alertProbability = default(1);
+        double alertProbability = default(1);
         
         // Using new alert message
         bool newAlertMessage = default(false);

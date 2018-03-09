@@ -122,15 +122,23 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
             EV << " MAC to change operational mode : " << currentMacMode << " to : " << previousMacMode << endl;
             if (currentMacMode == TRANSIENT)
             {
-               previousMacMode = TRANSIENT;
-               currentMacMode = STEADY;
-               nbTransientToSteady++;
+                if (consecutivesFamesSteady < minConsecutivesFamesSteady || (maxTimeInTransient > (simTime()-timeInTransient))) {
+                    previousMacMode = TRANSIENT;
+                    currentMacMode = STEADY;
+                    nbTransientToSteady++;
+                    consecutivesFamesSteady = 1;
+                }
+                else {
+                    // continue in transient
+                    changeMacMode = false;
+                }
             }
             else
             {
                previousMacMode = STEADY;
                currentMacMode = TRANSIENT;
                nbSteadyToTransient++;
+               timeInTransient = simTime();
             }
             
 			EV << " Current slot at change of operational modes " << (currentSlot % numSlots) << endl;
@@ -143,6 +151,9 @@ void DMAMACSink::handleSelfMessage(cMessage* msg)
                nbMidSwitch++;
             }
             changeSuperFrame(currentMacMode);
+        }
+        else if (currentMacMode == STEADY) {
+            consecutivesFamesSteady++;
         }
     }
 

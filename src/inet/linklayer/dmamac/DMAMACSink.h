@@ -29,6 +29,7 @@
 #define __DMAMACSINK_H__
 
 #include "inet/linklayer/dmamac/DMAMAC.h"
+#include <stdint.h>
 #include <deque>
 
 /* @brief XML files are used to store slot structure for easy input differentiation 
@@ -45,6 +46,16 @@ using namespace power;
   
 class INET_API DMAMACSink : public DMAMAC
 {
+private:
+    uint64_t consecutivesFamesSteady = 0;
+    uint64_t numFamesSteadyPeriod = 0;
+    uint64_t minConsecutivesFamesSteady = UINT64_MAX;
+    simtime_t maxTimeInTransient;
+    simtime_t timeInTransient;
+    simtime_t controlPeriodSteady;
+
+    // For control the change to transient/steady
+
     /* @brief Partly used from LMAC definition.  */
 
     private:

@@ -384,7 +384,7 @@ protected:
     Slots receiveSlotSteady;
     Slots transmitSlotTransient;
     Slots receiveSlotTransient;
-    int randomNumber;               // To generate random number
+    double randomNumber;               // To generate random number
     int maxNodes;                   // To know how much nodes in the network required for initializing slots from XML
     int maxChildren;
     /*@}*/
@@ -491,9 +491,9 @@ protected:
     /*@}*/
 
     /* @brief Probability of transient frame appearing next, taken from configuration ini file */
-    int stateProbability;
+    double stateProbability;
     /* @brief Probability of nodes to generate alert*/
-    int alertProbability;
+    double alertProbability;
 
     /* @brief Tree topology routing stuff */
     /*@{*/
