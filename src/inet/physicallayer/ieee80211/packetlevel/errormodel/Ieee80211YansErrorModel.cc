@@ -162,8 +162,22 @@ double Ieee80211YansErrorModel::getOFDMAndERPOFDMChunkSuccessRate(const APSKModu
     else if (subcarrierModulation == &QAM64Modulation::singleton) {
         if (convolutionalCode->getCodeRatePuncturingK() == 2 && convolutionalCode->getCodeRatePuncturingN() == 3)
             return getFecQamBer(snr, bitLength, bandwidth, grossBitrate, 64, 6, 1, 16);
+        else if (convolutionalCode->getCodeRatePuncturingK() == 5 && convolutionalCode->getCodeRatePuncturingN() == 6)
+            return getFecQamBer(snr, bitLength, bandwidth, grossBitrate, 64, 4, 14, 69);
         else
             return getFecQamBer(snr, bitLength, bandwidth, grossBitrate, 64, 5, 8, 31);
+    }
+    else if (subcarrierModulation == &QAM254Modulation::singleton) {
+        if (convolutionalCode->getCodeRatePuncturingK() == 5 && convolutionalCode->getCodeRatePuncturingN() == 6)
+            return getFecQamBer(snr, bitLength, bandwidth, grossBitrate, 256, 4, 14, 69);
+        else
+            return getFecQamBer(snr, bitLength, bandwidth, grossBitrate, 256, 5, 8, 31);
+    }
+    else if (subcarrierModulation == &QAM64Modulation::singleton) {
+        if (convolutionalCode->getCodeRatePuncturingK() == 5 && convolutionalCode->getCodeRatePuncturingN() == 6)
+            return getFecQamBer(snr, bitLength, bandwidth, grossBitrate, 1024, 4, 14, 69);
+        else
+            return getFecQamBer(snr, bitLength, bandwidth, grossBitrate, 1024, 5, 8, 31);
     }
     else
         throw cRuntimeError("Unknown modulation");
