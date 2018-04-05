@@ -67,7 +67,7 @@ double Ieee80211NistErrorModel::get64QamBer(double snr) const
     return ber;
 }
 
-double Ieee80211NistErrorModel::Get256QamBer (double snr) const
+double Ieee80211NistErrorModel::get256QamBer (double snr) const
 {
   double z = std::sqrt (snr / (85.0 * 2.0));
   double ber = 15.0 / 32.0 * 0.5 * erfc (z);
@@ -75,7 +75,7 @@ double Ieee80211NistErrorModel::Get256QamBer (double snr) const
   return ber;
 }
 
-double Ieee80211NistErrorModel::Get1024QamBer (double snr) const
+double Ieee80211NistErrorModel::get1024QamBer (double snr) const
 {
   double z = std::sqrt (snr / (341.0 * 2.0));
   double ber = 31.0 / 160.0 * 0.5 * erfc (z);
@@ -222,12 +222,12 @@ double Ieee80211NistErrorModel::getOFDMAndERPOFDMChunkSuccessRate(const APSKModu
     else if (subcarrierModulation == &QAM256Modulation::singleton) {
         if (convolutionalCode->getCodeRatePuncturingK() == 5 && convolutionalCode->getCodeRatePuncturingN() == 6)
             return getFec64QamBer(snr, bitLength, 5);
-        return getFec254QamBer(snr, bitLength, 3);
+        return getFec256QamBer(snr, bitLength, 3);
     }
     else if (subcarrierModulation == &QAM1024Modulation::singleton) {
         if (convolutionalCode->getCodeRatePuncturingK() == 5 && convolutionalCode->getCodeRatePuncturingN() == 6)
             return getFec64QamBer(snr, bitLength, 5);
-        return getFec254QamBer(snr, bitLength, 3);
+        return getFec256QamBer(snr, bitLength, 3);
     }
     else
         throw cRuntimeError("Unknown modulation");

@@ -68,7 +68,7 @@ class INET_API Ieee80211VHTModeBase
 };
 
 
-class INET_API Ieee80211VHTSignalMode : public IIeee80211HeaderMode, public Ieee80211HTModeBase, public Ieee80211HTTimingRelatedParametersBase
+class INET_API Ieee80211VHTSignalMode : public IIeee80211HeaderMode, public Ieee80211VHTModeBase, public Ieee80211HTTimingRelatedParametersBase
 {
     protected:
         const Ieee80211OFDMModulation *modulation;
@@ -79,7 +79,7 @@ class INET_API Ieee80211VHTSignalMode : public IIeee80211HeaderMode, public Ieee
         virtual bps computeNetBitrate() const override;
 
     public:
-        Ieee80211VHTSignalMode(unsigned int modulationAndCodingScheme, const Ieee80211OFDMModulation *modulation, const Ieee80211HTCode *code, const Hz bandwidth, GuardIntervalType guardIntervalType);
+        Ieee80211VHTSignalMode(unsigned int modulationAndCodingScheme, const Ieee80211OFDMModulation *modulation, const Ieee80211VHTCode *code, const Hz bandwidth, GuardIntervalType guardIntervalType);
         Ieee80211VHTSignalMode(unsigned int modulationAndCodingScheme, const Ieee80211OFDMModulation *modulation, const Ieee80211ConvolutionalCode *convolutionalCode, const Hz bandwidth, GuardIntervalType guardIntervalType);
         virtual ~Ieee80211VHTSignalMode();
 
@@ -141,9 +141,9 @@ class INET_API Ieee80211VHTPreambleMode : public IIeee80211PreambleMode, public 
         virtual ~Ieee80211VHTPreambleMode() { delete highThroughputSignalMode; }
 
         HighTroughputPreambleFormat getPreambleFormat() const { return preambleFormat; }
-        virtual const Ieee80211HTSignalMode *getSignalMode() const { return highThroughputSignalMode; }
+        virtual const Ieee80211VHTSignalMode *getSignalMode() const { return highThroughputSignalMode; }
         virtual const Ieee80211OFDMSignalMode *getLegacySignalMode() const { return legacySignalMode; }
-        virtual const Ieee80211HTSignalMode* getHighThroughputSignalMode() const { return highThroughputSignalMode; }
+        virtual const Ieee80211VHTSignalMode* getHighThroughputSignalMode() const { return highThroughputSignalMode; }
         virtual inline unsigned int getNumberOfHTLongTrainings() const { return numberOfHTLongTrainings; }
 
         virtual const inline simtime_t getDoubleGIDuration() const { return 2 * getGIDuration(); } // GI2
@@ -165,15 +165,29 @@ class INET_API Ieee80211VHTMCS
 {
     protected:
         const unsigned int mcsIndex;
-        const Ieee80211OFDMModulation *stream1Modulation;
+        const Ieee80211OFDMModulation *stream1Modulation = nullptr;
         const Ieee80211OFDMModulation *stream2Modulation = nullptr;
         const Ieee80211OFDMModulation *stream3Modulation = nullptr;
         const Ieee80211OFDMModulation *stream4Modulation = nullptr;
-        const Ieee80211HTCode *code;
+        const Ieee80211OFDMModulation *stream5Modulation = nullptr;
+        const Ieee80211OFDMModulation *stream6Modulation = nullptr;
+        const Ieee80211OFDMModulation *stream7Modulation = nullptr;
+        const Ieee80211OFDMModulation *stream8Modulation = nullptr;
+        const Ieee80211VHTCode *code;
         const Hz bandwidth;
 
     public:
+        Ieee80211VHTMCS(unsigned int mcsIndex, const Ieee80211VHTCode *code, const Ieee80211OFDMModulation *stream1Modulation, const Ieee80211OFDMModulation *stream2Modulation, const Ieee80211OFDMModulation *stream3Modulation, const Ieee80211OFDMModulation *stream4Modulation, const Ieee80211OFDMModulation *stream5Modulation, const Ieee80211OFDMModulation *stream6Modulation, const Ieee80211OFDMModulation *stream7Modulation, const Ieee80211OFDMModulation *stream8Modulation);
+        Ieee80211VHTMCS(unsigned int mcsIndex, const Ieee80211OFDMModulation* stream1Modulation, const Ieee80211OFDMModulation* stream2Modulation, const Ieee80211OFDMModulation* stream3Modulation, const Ieee80211OFDMModulation* stream4Modulation, const Ieee80211OFDMModulation* stream5Modulation, const Ieee80211OFDMModulation* stream6Modulation, const Ieee80211OFDMModulation* stream7Modulation, const Ieee80211OFDMModulation* stream8Modulation, const Ieee80211ConvolutionalCode* convolutionalCode, Hz bandwidth);
+        Ieee80211VHTMCS(unsigned int mcsIndex, const Ieee80211OFDMModulation* stream1Modulation, const Ieee80211OFDMModulation* stream2Modulation, const Ieee80211OFDMModulation* stream3Modulation, const Ieee80211OFDMModulation* stream4Modulation, const Ieee80211OFDMModulation* stream5Modulation, const Ieee80211OFDMModulation* stream6Modulation, const Ieee80211OFDMModulation* stream7Modulation, const Ieee80211ConvolutionalCode* convolutionalCode, Hz bandwidth);
+        Ieee80211VHTMCS(unsigned int mcsIndex, const Ieee80211OFDMModulation* stream1Modulation, const Ieee80211OFDMModulation* stream2Modulation, const Ieee80211OFDMModulation* stream3Modulation, const Ieee80211OFDMModulation* stream4Modulation, const Ieee80211OFDMModulation* stream5Modulation, const Ieee80211OFDMModulation* stream6Modulation, const Ieee80211ConvolutionalCode* convolutionalCode, Hz bandwidth);
+        Ieee80211VHTMCS(unsigned int mcsIndex, const Ieee80211OFDMModulation* stream1Modulation, const Ieee80211OFDMModulation* stream2Modulation, const Ieee80211OFDMModulation* stream3Modulation, const Ieee80211OFDMModulation* stream4Modulation, const Ieee80211OFDMModulation* stream5Modulation, const Ieee80211ConvolutionalCode* convolutionalCode, Hz bandwidth);
+        Ieee80211VHTMCS(unsigned int mcsIndex, const Ieee80211OFDMModulation* stream1Modulation, const Ieee80211OFDMModulation* stream2Modulation, const Ieee80211OFDMModulation* stream3Modulation, const Ieee80211OFDMModulation* stream4Modulation, const Ieee80211ConvolutionalCode* convolutionalCode, Hz bandwidth);
+        Ieee80211VHTMCS(unsigned int mcsIndex, const Ieee80211OFDMModulation *stream1Modulation, const Ieee80211OFDMModulation *stream2Modulation, const Ieee80211OFDMModulation *stream3Modulation, const Ieee80211ConvolutionalCode *convolutionalCode, Hz bandwidth);
+        Ieee80211VHTMCS(unsigned int mcsIndex, const Ieee80211OFDMModulation *stream1Modulation, const Ieee80211OFDMModulation *stream2Modulation, const Ieee80211ConvolutionalCode *convolutionalCode, Hz bandwidth);
         Ieee80211VHTMCS(unsigned int mcsIndex, const Ieee80211OFDMModulation *stream1Modulation, const Ieee80211ConvolutionalCode *convolutionalCode, Hz bandwidth);
+        Ieee80211VHTMCS(unsigned int mcsIndex, const Ieee80211OFDMModulation *stream1Modulation, const Ieee80211ConvolutionalCode *convolutionalCode, Hz bandwidth, int nss);
+
         virtual ~Ieee80211VHTMCS();
 
         const Ieee80211VHTCode* getCode() const { return code; }
@@ -182,6 +196,10 @@ class INET_API Ieee80211VHTMCS
         virtual const Ieee80211OFDMModulation* getStreamExtension1Modulation() const { return stream2Modulation; }
         virtual const Ieee80211OFDMModulation* getStreamExtension2Modulation() const { return stream3Modulation; }
         virtual const Ieee80211OFDMModulation* getStreamExtension3Modulation() const { return stream4Modulation; }
+        virtual const Ieee80211OFDMModulation* getStreamExtension4Modulation() const { return stream5Modulation; }
+        virtual const Ieee80211OFDMModulation* getStreamExtension5Modulation() const { return stream6Modulation; }
+        virtual const Ieee80211OFDMModulation* getStreamExtension6Modulation() const { return stream7Modulation; }
+        virtual const Ieee80211OFDMModulation* getStreamExtension7Modulation() const { return stream8Modulation; }
         virtual Hz getBandwidth() const { return bandwidth; }
 };
 
@@ -194,7 +212,7 @@ class INET_API Ieee80211VHTDataMode : public IIeee80211DataMode, public Ieee8021
     protected:
         bps computeGrossBitrate() const override;
         bps computeNetBitrate() const override;
-        unsigned int computeNumberOfSpatialStreams(const Ieee80211OFDMModulation* stream1Modulation, const Ieee80211OFDMModulation* stream2Modulation, const Ieee80211OFDMModulation* stream3Modulation, const Ieee80211OFDMModulation* stream4Modulation) const;
+        unsigned int computeNumberOfSpatialStreams(const Ieee80211VHTMCS*) const;
         unsigned int computeNumberOfCodedBitsPerSubcarrierSum() const;
         unsigned int computeNumberOfBccEncoders() const;
 
@@ -265,388 +283,389 @@ class INET_API Ieee80211VHTMCSTable
 {
     public:
         // Table 20-30—MCS parameters for mandatory 20 MHz, N_SS = 1, N_ES = 1
-        static const DI<Ieee80211VHTMCS> vhtMcs0BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs1BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs2BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs3BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs4BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs5BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs6BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs7BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs8BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs9BW20MHz; // No valid
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW20MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW20MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW20MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW20MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW20MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW20MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW20MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW20MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW20MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW20MHzNss1; // No valid
 
         // Table 20-31—MCS parameters for optional 20 MHz, N_SS = 2
-        static const DI<Ieee80211VHTMCS> vhtMcs10BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs11BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs12BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs13BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs14BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs15BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs16BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs17BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs18BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs19BW20MHz; // No valid
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW20MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW20MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW20MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW20MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW20MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW20MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW20MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW20MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW20MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW20MHzNss2; // No valid
 
         // Table 20-32—MCS parameters for optional 20 MHz, N_SS = 3
-        static const DI<Ieee80211VHTMCS> vhtMcs20BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs21BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs22BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs23BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs24BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs25BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs26BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs27BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs28BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs29BW20MHz;
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW20MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW20MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW20MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW20MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW20MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW20MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW20MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW20MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW20MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW20MHzNss3;
 
         // Table 20-33—MCS parameters for optional 20 MHz, N_SS = 4
-        static const DI<Ieee80211VHTMCS> vhtMcs30BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs31BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs32BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs33BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs34BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs35BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs36BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs37BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs38BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs39BW20MHz; // No valid
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW20MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW20MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW20MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW20MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW20MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW20MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW20MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW20MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW20MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW20MHzNss4; // No valid
 
         // Table 20-33—MCS parameters for optional 20 MHz, N_SS = 5
-        static const DI<Ieee80211VHTMCS> vhtMcs40BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs41BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs42BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs43BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs44BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs45BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs46BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs47BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs48BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs49BW20MHz; // No valid
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW20MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW20MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW20MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW20MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW20MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW20MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW20MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW20MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW20MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW20MHzNss5; // No valid
 
         // Table 20-33—MCS parameters for optional 20 MHz, N_SS = 6
-        static const DI<Ieee80211VHTMCS> vhtMcs50BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs51BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs52BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs53BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs54BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs55BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs56BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs57BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs58BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs59BW20MHz;
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW20MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW20MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW20MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW20MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW20MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW20MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW20MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW20MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW20MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW20MHzNss6;
 
         // Table 20-33—MCS parameters for optional 20 MHz, N_SS = 7
-        static const DI<Ieee80211VHTMCS> vhtMcs60BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs61BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs62BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs63BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs64BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs65BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs66BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs67BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs68BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs69BW20MHz; // No valid
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW20MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW20MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW20MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW20MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW20MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW20MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW20MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW20MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW20MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW20MHzNss7; // No valid
 
         // Table 20-33—MCS parameters for optional 20 MHz, N_SS = 8
-        static const DI<Ieee80211VHTMCS> vhtMcs70BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs71BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs72BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs73BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs74BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs75BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs76BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs77BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs78BW20MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs79BW20MHz; // No valid
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW20MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW20MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW20MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW20MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW20MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW20MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW20MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW20MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW20MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW20MHzNss8; // No valid
 
         // Table 20-30—MCS parameters for mandatory 40 MHz, N_SS = 1, N_ES = 1
-        static const DI<Ieee80211VHTMCS> vhtMcs0BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs1BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs2BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs3BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs4BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs5BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs6BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs7BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs8BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs9BW40MHz; // no valid
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW40MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW40MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW40MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW40MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW40MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW40MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW40MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW40MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW40MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW40MHzNss1;
 
         // Table 20-31—MCS parameters for optional 40 MHz, N_SS = 2
-        static const DI<Ieee80211VHTMCS> vhtMcs10BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs11BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs12BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs13BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs14BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs15BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs16BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs17BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs18BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs19BW40MHz;
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW40MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW40MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW40MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW40MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW40MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW40MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW40MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW40MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW40MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW40MHzNss2;
 
         // Table 20-32—MCS parameters for optional 40 MHz, N_SS = 3
-        static const DI<Ieee80211VHTMCS> vhtMcs20BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs21BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs22BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs23BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs24BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs25BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs26BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs27BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs28BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs29BW40MHz;
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW40MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW40MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW40MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW40MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW40MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW40MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW40MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW40MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW40MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW40MHzNss3;
 
         // Table 20-33—MCS parameters for optional 40 MHz, N_SS = 4
-        static const DI<Ieee80211VHTMCS> vhtMcs30BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs31BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs32BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs33BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs34BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs35BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs36BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs37BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs38BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs39BW40MHz;
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW40MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW40MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW40MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW40MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW40MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW40MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW40MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW40MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW40MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW40MHzNss4;
 
         // Table 20-33—MCS parameters for optional 40 MHz, N_SS = 5
-        static const DI<Ieee80211VHTMCS> vhtMcs40BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs41BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs42BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs43BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs44BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs45BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs46BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs47BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs48BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs49BW40MHz;
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW40MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW40MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW40MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW40MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW40MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW40MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW40MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW40MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW40MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW40MHzNss5;
 
         // Table 20-33—MCS parameters for optional 40 MHz, N_SS = 6
-        static const DI<Ieee80211VHTMCS> vhtMcs50BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs51BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs52BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs53BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs54BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs55BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs56BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs57BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs58BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs59BW40MHz;
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW40MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW40MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW40MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW40MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW40MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW40MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW40MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW40MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW40MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW40MHzNss6;
 
         // Table 20-33—MCS parameters for optional 40 MHz, N_SS = 7
-        static const DI<Ieee80211VHTMCS> vhtMcs60BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs61BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs62BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs63BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs64BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs65BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs66BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs67BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs68BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs69BW40MHz;
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW40MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW40MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW40MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW40MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW40MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW40MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW40MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW40MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW40MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW40MHzNss7;
 
         // Table 20-33—MCS parameters for optional 40 MHz, N_SS = 8
-        static const DI<Ieee80211VHTMCS> vhtMcs70BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs71BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs72BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs73BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs74BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs75BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs76BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs77BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs78BW40MHz;
-        static const DI<Ieee80211VHTMCS> vhtMcs79BW40MHz;
-
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW40MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW40MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW40MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW40MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW40MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW40MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW40MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW40MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW40MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW40MHzNss8;
         // Table 20-30—MCS parameters for mandatory 80 MHz, N_SS = 1, N_ES = 1
-          static const DI<Ieee80211VHTMCS> vhtMcs0BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs1BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs2BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs3BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs4BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs5BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs6BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs7BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs8BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs9BW80MHz;
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW80MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW80MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW80MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW80MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW80MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW80MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW80MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW80MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW80MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW80MHzNss1;
 
-          // Table 20-31—MCS parameters for optional 80 MHz, N_SS = 2
-          static const DI<Ieee80211VHTMCS> vhtMcs10BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs11BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs12BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs13BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs14BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs15BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs16BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs17BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs18BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs19BW80MHz;
+        // Table 20-31—MCS parameters for optional 80 MHz, N_SS = 2
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW80MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW80MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW80MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW80MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW80MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW80MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW80MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW80MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW80MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW80MHzNss2;
 
-          // Table 20-32—MCS parameters for optional 80 MHz, N_SS = 3
-          static const DI<Ieee80211VHTMCS> vhtMcs20BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs21BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs22BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs23BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs24BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs25BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs26BW80MHz; // no valid
-          static const DI<Ieee80211VHTMCS> vhtMcs27BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs28BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs29BW80MHz;
+        // Table 20-32—MCS parameters for optional 80 MHz, N_SS = 3
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW80MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW80MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW80MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW80MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW80MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW80MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW80MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW80MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW80MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW80MHzNss3;
 
-          // Table 20-33—MCS parameters for optional 80 MHz, N_SS = 4
-          static const DI<Ieee80211VHTMCS> vhtMcs30BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs31BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs32BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs33BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs34BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs35BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs36BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs37BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs38BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs39BW80MHz;
+        // Table 20-33—MCS parameters for optional 80 MHz, N_SS = 4
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW80MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW80MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW80MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW80MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW80MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW80MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW80MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW80MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW80MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW80MHzNss4;
 
-          // Table 20-33—MCS parameters for optional 80 MHz, N_SS = 5
-          static const DI<Ieee80211VHTMCS> vhtMcs40BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs41BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs42BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs43BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs44BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs45BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs46BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs47BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs48BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs49BW80MHz;
+        // Table 20-33—MCS parameters for optional 80 MHz, N_SS = 5
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW80MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW80MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW80MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW80MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW80MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW80MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW80MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW80MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW80MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW80MHzNss5;
 
-          // Table 20-33—MCS parameters for optional 80 MHz, N_SS = 6
-          static const DI<Ieee80211VHTMCS> vhtMcs50BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs51BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs52BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs53BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs54BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs55BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs56BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs57BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs58BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs59BW80MHz;
+        // Table 20-33—MCS parameters for optional 80 MHz, N_SS = 6
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW80MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW80MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW80MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW80MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW80MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW80MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW80MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW80MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW80MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW80MHzNss6;
 
-          // Table 20-33—MCS parameters for optional 80 MHz, N_SS = 7
-          static const DI<Ieee80211VHTMCS> vhtMcs60BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs61BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs62BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs63BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs64BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs65BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs66BW80MHz; // no valid
-          static const DI<Ieee80211VHTMCS> vhtMcs67BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs68BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs69BW80MHz;
+        // Table 20-33—MCS parameters for optional 80 MHz, N_SS = 7
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW80MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW80MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW80MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW80MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW80MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW80MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW80MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW80MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW80MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW80MHzNss7;
 
-          // Table 20-33—MCS parameters for optional 80 MHz, N_SS = 8
-          static const DI<Ieee80211VHTMCS> vhtMcs70BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs71BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs72BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs73BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs74BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs75BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs76BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs77BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs78BW80MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs79BW80MHz;
+        // Table 20-33—MCS parameters for optional 80 MHz, N_SS = 8
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW80MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW80MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW80MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW80MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW80MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW80MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW80MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW80MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW80MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW80MHzNss8;
 
-          // Table 20-30—MCS parameters for mandatory 160 MHz, N_SS = 1, N_ES = 1
-          static const DI<Ieee80211VHTMCS> vhtMcs0BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs1BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs2BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs3BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs4BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs5BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs6BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs7BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs8BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs9BW160MHz;
+        // Table 20-30—MCS parameters for mandatory 160 MHz, N_SS = 1, N_ES = 1
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW160MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW160MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW160MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW160MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW160MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW160MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW160MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW160MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW160MHzNss1;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW160MHzNss1;
 
-          // Table 20-31—MCS parameters for optional 160 MHz, N_SS = 2
-          static const DI<Ieee80211VHTMCS> vhtMcs10BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs11BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs12BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs13BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs14BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs15BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs16BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs17BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs18BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs19BW160MHz;
+        // Table 20-31—MCS parameters for optional 160 MHz, N_SS = 2
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW160MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW160MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW160MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW160MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW160MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW160MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW160MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW160MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW160MHzNss2;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW160MHzNss2;
 
-          // Table 20-32—MCS parameters for optional 160 MHz, N_SS = 3
-          static const DI<Ieee80211VHTMCS> vhtMcs20BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs21BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs22BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs23BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs24BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs25BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs26BW160MHz; // no valid
-          static const DI<Ieee80211VHTMCS> vhtMcs27BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs28BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs29BW160MHz;
+        // Table 20-32—MCS parameters for optional 160 MHz, N_SS = 3
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW160MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW160MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW160MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW160MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW160MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW160MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW160MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW160MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW160MHzNss3;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW160MHzNss3;
 
-          // Table 20-33—MCS parameters for optional 160 MHz, N_SS = 4
-          static const DI<Ieee80211VHTMCS> vhtMcs30BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs31BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs32BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs33BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs34BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs35BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs36BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs37BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs38BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs39BW160MHz;
+        // Table 20-33—MCS parameters for optional 160 MHz, N_SS = 4
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW160MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW160MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW160MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW160MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW160MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW160MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW160MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW160MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW160MHzNss4;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW160MHzNss4;
 
-          // Table 20-33—MCS parameters for optional 160 MHz, N_SS = 5
-          static const DI<Ieee80211VHTMCS> vhtMcs40BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs41BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs42BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs43BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs44BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs45BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs46BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs47BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs48BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs49BW160MHz;
+        // Table 20-33—MCS parameters for optional 160 MHz, N_SS = 5
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW160MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW160MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW160MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW160MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW160MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW160MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW160MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW160MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW160MHzNss5;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW160MHzNss5;
 
-          // Table 20-33—MCS parameters for optional 160 MHz, N_SS = 6
-          static const DI<Ieee80211VHTMCS> vhtMcs50BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs51BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs52BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs53BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs54BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs55BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs56BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs57BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs58BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs59BW160MHz;
+        // Table 20-33—MCS parameters for optional 160 MHz, N_SS = 6
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW160MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW160MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW160MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW160MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW160MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW160MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW160MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW160MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW160MHzNss6;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW160MHzNss6;
 
-          // Table 20-33—MCS parameters for optional 160 MHz, N_SS = 7
-          static const DI<Ieee80211VHTMCS> vhtMcs60BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs61BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs62BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs63BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs64BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs65BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs66BW160MHz; // no valid
-          static const DI<Ieee80211VHTMCS> vhtMcs67BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs68BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs69BW160MHz;
+        // Table 20-33—MCS parameters for optional 160 MHz, N_SS = 7
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW160MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW160MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW160MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW160MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW160MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW160MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW160MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW160MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW160MHzNss7;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW160MHzNss7;
 
-          // Table 20-33—MCS parameters for optional 160 MHz, N_SS = 8
-          static const DI<Ieee80211VHTMCS> vhtMcs70BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs71BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs72BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs73BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs74BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs75BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs76BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs77BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs78BW160MHz;
-          static const DI<Ieee80211VHTMCS> vhtMcs79BW160MHz;
+        // Table 20-33—MCS parameters for optional 160 MHz, N_SS = 8
+        static const DI<Ieee80211VHTMCS> vhtMcs0BW160MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs1BW160MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs2BW160MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs3BW160MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs4BW160MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs5BW160MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs6BW160MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs7BW160MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs8BW160MHzNss8;
+        static const DI<Ieee80211VHTMCS> vhtMcs9BW160MHzNss8;
+
+
 };
 
 class INET_API Ieee80211VHTCompliantModes
@@ -654,13 +673,13 @@ class INET_API Ieee80211VHTCompliantModes
     protected:
         static Ieee80211VHTCompliantModes singleton;
 
-        std::map<std::tuple<Hz, unsigned int, Ieee80211VHTModeBase::GuardIntervalType>, const Ieee80211HTMode *> modeCache;
+        std::map<std::tuple<Hz, unsigned int, Ieee80211VHTModeBase::GuardIntervalType>, const Ieee80211VHTMode *> modeCache;
 
     public:
         Ieee80211VHTCompliantModes();
         virtual ~Ieee80211VHTCompliantModes();
 
-        static const Ieee80211VHTMode *getCompliantMode(const Ieee80211VHTMCS *mcsMode, Ieee80211HTMode::BandMode carrierFrequencyMode, Ieee80211HTPreambleMode::HighTroughputPreambleFormat preambleFormat, Ieee80211HTModeBase::GuardIntervalType guardIntervalType);
+        static const Ieee80211VHTMode *getCompliantMode(const Ieee80211VHTMCS *mcsMode, Ieee80211VHTMode::BandMode carrierFrequencyMode, Ieee80211VHTPreambleMode::HighTroughputPreambleFormat preambleFormat, Ieee80211VHTModeBase::GuardIntervalType guardIntervalType);
 
 };
 

@@ -39,7 +39,7 @@ class INET_API Ieee80211VHTCode : public ICode
 
         const IForwardErrorCorrection *getForwardErrorCorrection() const { return forwardErrorCorrection; }
         const AdditiveScrambling *getScrambling() const { return scrambling; }
-        const Ieee80211HTInterleaving *getInterleaving() const { return interleaving; }
+        const Ieee80211VHTInterleaving *getInterleaving() const { return interleaving; }
 
         virtual ~Ieee80211VHTCode();
 
@@ -49,7 +49,7 @@ class INET_API Ieee80211VHTCompliantCodes
 {
     public:
         // Convolutional codes (TODO: LDPC codes).
-        static const Ieee80211VHTCode *getCompliantCode(const Ieee80211ConvolutionalCode *convolutionalCode, const Ieee80211OFDMModulation *stream1Modulation, const Ieee80211OFDMModulation *stream2Modulation, const Ieee80211OFDMModulation *stream3Modulation, const Ieee80211OFDMModulation *stream4Modulation, Hz bandwidth, bool withScrambling = true);
+        static const Ieee80211VHTCode *getCompliantCode(const Ieee80211ConvolutionalCode *convolutionalCode, const Ieee80211OFDMModulation *stream1Modulation, const Ieee80211OFDMModulation *stream2Modulation, const Ieee80211OFDMModulation *stream3Modulation, const Ieee80211OFDMModulation *stream4Modulation, const Ieee80211OFDMModulation *stream5Modulation, const Ieee80211OFDMModulation *stream6Modulation, const Ieee80211OFDMModulation *stream7Modulation, const Ieee80211OFDMModulation *stream8Modulation, Hz bandwidth, bool withScrambling = true);
 
 };
 

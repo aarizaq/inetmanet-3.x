@@ -22,6 +22,8 @@
 #include "inet/physicallayer/modulation/QPSKModulation.h"
 #include "inet/physicallayer/modulation/QAM16Modulation.h"
 #include "inet/physicallayer/modulation/QAM64Modulation.h"
+#include "inet/physicallayer/modulation/QAM256Modulation.h"
+#include "inet/physicallayer/modulation/QAM1024Modulation.h"
 #include "inet/physicallayer/ieee80211/mode/Ieee80211DSSSMode.h"
 #include "inet/physicallayer/ieee80211/mode/Ieee80211HRDSSSMode.h"
 #include "inet/physicallayer/ieee80211/mode/Ieee80211OFDMMode.h"
@@ -167,7 +169,7 @@ double Ieee80211YansErrorModel::getOFDMAndERPOFDMChunkSuccessRate(const APSKModu
         else
             return getFecQamBer(snr, bitLength, bandwidth, grossBitrate, 64, 5, 8, 31);
     }
-    else if (subcarrierModulation == &QAM254Modulation::singleton) {
+    else if (subcarrierModulation == &QAM256Modulation::singleton) {
         if (convolutionalCode->getCodeRatePuncturingK() == 5 && convolutionalCode->getCodeRatePuncturingN() == 6)
             return getFecQamBer(snr, bitLength, bandwidth, grossBitrate, 256, 4, 14, 69);
         else

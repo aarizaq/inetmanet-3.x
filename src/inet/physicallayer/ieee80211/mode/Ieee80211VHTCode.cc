@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015 OpenSim Ltd.
+// Copyright (C) 2018 OpenSim Ltd.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -23,7 +23,7 @@ namespace physicallayer {
 
 Ieee80211VHTCode::Ieee80211VHTCode(
         const IForwardErrorCorrection* forwardErrorCorrection,
-        const Ieee80211HTInterleaving* interleaving,
+        const Ieee80211VHTInterleaving* interleaving,
         const AdditiveScrambling* scrambling) :
                 forwardErrorCorrection(forwardErrorCorrection),
                 interleaving(interleaving),
@@ -32,7 +32,7 @@ Ieee80211VHTCode::Ieee80211VHTCode(
 
 }
 
-const Ieee80211VHTCode* Ieee80211VHTCompliantCodes::getCompliantCode(const Ieee80211ConvolutionalCode *convolutionalCode, const Ieee80211OFDMModulation *stream1Modulation, const Ieee80211OFDMModulation *stream2Modulation, const Ieee80211OFDMModulation *stream3Modulation, const Ieee80211OFDMModulation *stream4Modulation, Hz bandwidth, bool withScrambling)
+const Ieee80211VHTCode* Ieee80211VHTCompliantCodes::getCompliantCode(const Ieee80211ConvolutionalCode *convolutionalCode, const Ieee80211OFDMModulation *stream1Modulation, const Ieee80211OFDMModulation *stream2Modulation, const Ieee80211OFDMModulation *stream3Modulation, const Ieee80211OFDMModulation *stream4Modulation, const Ieee80211OFDMModulation *stream5Modulation, const Ieee80211OFDMModulation *stream6Modulation, const Ieee80211OFDMModulation *stream7Modulation, const Ieee80211OFDMModulation *stream8Modulation, Hz bandwidth, bool withScrambling)
 {
     std::vector<unsigned int> numberOfCodedBitsPerSpatialStreams;
     if (stream1Modulation)
@@ -43,8 +43,16 @@ const Ieee80211VHTCode* Ieee80211VHTCompliantCodes::getCompliantCode(const Ieee8
         numberOfCodedBitsPerSpatialStreams.push_back(stream3Modulation->getSubcarrierModulation()->getCodeWordSize());
     if (stream4Modulation)
         numberOfCodedBitsPerSpatialStreams.push_back(stream4Modulation->getSubcarrierModulation()->getCodeWordSize());
-    return withScrambling ? new Ieee80211HTCode(convolutionalCode, new Ieee80211HTInterleaving(numberOfCodedBitsPerSpatialStreams, bandwidth), &Ieee80211OFDMCompliantCodes::ofdmScrambling) :
-                            new Ieee80211HTCode(convolutionalCode, new Ieee80211HTInterleaving(numberOfCodedBitsPerSpatialStreams, bandwidth), nullptr);
+    if (stream5Modulation)
+        numberOfCodedBitsPerSpatialStreams.push_back(stream5Modulation->getSubcarrierModulation()->getCodeWordSize());
+    if (stream6Modulation)
+        numberOfCodedBitsPerSpatialStreams.push_back(stream6Modulation->getSubcarrierModulation()->getCodeWordSize());
+    if (stream7Modulation)
+        numberOfCodedBitsPerSpatialStreams.push_back(stream7Modulation->getSubcarrierModulation()->getCodeWordSize());
+    if (stream8Modulation)
+        numberOfCodedBitsPerSpatialStreams.push_back(stream8Modulation->getSubcarrierModulation()->getCodeWordSize());
+    return withScrambling ? new Ieee80211VHTCode(convolutionalCode, new Ieee80211VHTInterleaving(numberOfCodedBitsPerSpatialStreams, bandwidth), &Ieee80211OFDMCompliantCodes::ofdmScrambling) :
+                            new Ieee80211VHTCode(convolutionalCode, new Ieee80211VHTInterleaving(numberOfCodedBitsPerSpatialStreams, bandwidth), nullptr);
 }
 
 Ieee80211VHTCode::~Ieee80211VHTCode()
