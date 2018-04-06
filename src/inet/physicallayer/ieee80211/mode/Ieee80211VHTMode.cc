@@ -222,7 +222,6 @@ Ieee80211VHTMCS::Ieee80211VHTMCS(unsigned int mcsIndex, const Ieee80211OFDMModul
     stream6Modulation(nullptr),
     stream7Modulation(nullptr),
     stream8Modulation(nullptr),
-    code(Ieee80211VHTCompliantCodes::getCompliantCode(convolutionalCode, stream1Modulation, stream2Modulation, stream3Modulation, stream4Modulation, stream5Modulation, stream6Modulation, stream7Modulation, stream8Modulation, bandwidth)),
     bandwidth(bandwidth)
 {
     if (nss > 1)
@@ -239,6 +238,7 @@ Ieee80211VHTMCS::Ieee80211VHTMCS(unsigned int mcsIndex, const Ieee80211OFDMModul
         stream7Modulation = stream1Modulation;
     if (nss > 7)
         stream8Modulation = stream1Modulation;
+    code = Ieee80211VHTCompliantCodes::getCompliantCode(convolutionalCode, stream1Modulation, stream2Modulation, stream3Modulation, stream4Modulation, stream5Modulation, stream6Modulation, stream7Modulation, stream8Modulation, bandwidth);
 }
 
 
@@ -287,12 +287,16 @@ const simtime_t Ieee80211VHTPreambleMode::getDuration() const
 bps Ieee80211VHTSignalMode::computeGrossBitrate() const
 {
     unsigned int numberOfCodedBitsPerSymbol = modulation->getSubcarrierModulation()->getCodeWordSize() * getNumberOfDataSubcarriers();
+    double bitrate;
     if (guardIntervalType == HT_GUARD_INTERVAL_LONG)
-        return bps(numberOfCodedBitsPerSymbol / getSymbolInterval());
+        bitrate = numberOfCodedBitsPerSymbol / getSymbolInterval();
     else if (guardIntervalType == HT_GUARD_INTERVAL_SHORT)
-        return bps(numberOfCodedBitsPerSymbol / getShortGISymbolInterval());
+        bitrate = numberOfCodedBitsPerSymbol / getShortGISymbolInterval();
     else
         throw cRuntimeError("Unknown guard interval type");
+    bitrate /= 1e5;
+    bitrate = std::round(bitrate);
+    return bps(bitrate*1e5);
 }
 
 bps Ieee80211VHTSignalMode::computeNetBitrate() const
@@ -355,11 +359,11 @@ int Ieee80211VHTModeBase::getNumberOfDataSubcarriers() const
     if (bandwidth == MHz(20))
         return 52;
     else if (bandwidth == MHz(40))
-        return mcsIndex ==  108;
+        return 108;
     else if (bandwidth == MHz(80))
-        return mcsIndex ==  234;
+        return 234;
     else if (bandwidth == MHz(160))
-        return mcsIndex ==  468;
+        return 468;
     else
         throw cRuntimeError("Unsupported bandwidth");
 }

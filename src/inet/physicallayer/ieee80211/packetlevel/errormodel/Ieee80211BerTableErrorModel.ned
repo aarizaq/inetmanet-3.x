@@ -22,7 +22,7 @@ import inet.physicallayer.base.packetlevel.ErrorModelBase;
 module Ieee80211BerTableErrorModel extends ErrorModelBase
 {
     parameters:
-        string opMode @enum("a", "b", "g(erp)", "g(mixed)", "n", "p");
+        string opMode @enum("a", "b", "g(erp)", "g(mixed)", "n(mixed-2.4Ghz)", "p", "ac");
         string berTableFile;
         @class(Ieee80211BerTableErrorModel);
         @display("i=block/broadcast");

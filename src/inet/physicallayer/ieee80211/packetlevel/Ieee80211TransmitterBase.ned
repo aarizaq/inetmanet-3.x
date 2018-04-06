@@ -30,7 +30,7 @@ import inet.physicallayer.base.packetlevel.NarrowbandTransmitterBase;
 module Ieee80211TransmitterBase extends NarrowbandTransmitterBase
 {
     parameters:
-        string opMode @enum("a", "b", "g(erp)", "g(mixed)", "n", "p");
+        string opMode @enum("a", "b", "g(erp)", "g(mixed)", "n(mixed-2.4Ghz)", "p", "ac");
         string bandName @enum("2.4 GHz", "5 GHz");
         int channelNumber;
         modulation = default("BPSK"); // TODO: this is simply wrong

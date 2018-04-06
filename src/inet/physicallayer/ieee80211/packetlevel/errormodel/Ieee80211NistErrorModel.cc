@@ -27,6 +27,8 @@
 #include "inet/physicallayer/ieee80211/mode/Ieee80211DSSSMode.h"
 #include "inet/physicallayer/ieee80211/mode/Ieee80211HRDSSSMode.h"
 #include "inet/physicallayer/ieee80211/mode/Ieee80211OFDMMode.h"
+#include "inet/physicallayer/ieee80211/mode/Ieee80211HTMode.h"
+#include "inet/physicallayer/ieee80211/mode/Ieee80211VHTMode.h"
 #include "inet/physicallayer/ieee80211/packetlevel/errormodel/Ieee80211NistErrorModel.h"
 
 namespace inet {
@@ -254,6 +256,16 @@ double Ieee80211NistErrorModel::getHeaderSuccessRate(const IIeee80211Mode* mode,
     if (auto ofdmMode = dynamic_cast<const Ieee80211OFDMMode *>(mode))
         successRate = getOFDMAndERPOFDMChunkSuccessRate(ofdmMode->getHeaderMode()->getModulation()->getSubcarrierModulation(),
                                                         ofdmMode->getHeaderMode()->getCode()->getConvolutionalCode(),
+                                                        bitLength,
+                                                        snr);
+    else if (auto htMode = dynamic_cast<const Ieee80211HTMode *>(mode))
+        successRate = getOFDMAndERPOFDMChunkSuccessRate(htMode->getHeaderMode()->getModulation()->getSubcarrierModulation(),
+                                                        htMode->getHeaderMode()->getCode()->getConvolutionalCode(),
+                                                        bitLength,
+                                                        snr);
+    else if (auto vhtMode = dynamic_cast<const Ieee80211VHTMode *>(mode))
+        successRate = getOFDMAndERPOFDMChunkSuccessRate(vhtMode->getHeaderMode()->getModulation()->getSubcarrierModulation(),
+                                                        vhtMode->getHeaderMode()->getCode()->getConvolutionalCode(),
                                                         bitLength,
                                                         snr);
     else if (auto dsssMode = dynamic_cast<const Ieee80211DsssMode *>(mode))

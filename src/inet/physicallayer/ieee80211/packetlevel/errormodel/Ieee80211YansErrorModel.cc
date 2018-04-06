@@ -27,6 +27,8 @@
 #include "inet/physicallayer/ieee80211/mode/Ieee80211DSSSMode.h"
 #include "inet/physicallayer/ieee80211/mode/Ieee80211HRDSSSMode.h"
 #include "inet/physicallayer/ieee80211/mode/Ieee80211OFDMMode.h"
+#include "inet/physicallayer/ieee80211/mode/Ieee80211HTMode.h"
+#include "inet/physicallayer/ieee80211/mode/Ieee80211VHTMode.h"
 #include "inet/physicallayer/ieee80211/packetlevel/errormodel/Ieee80211YansErrorModel.h"
 
 namespace inet {
@@ -203,6 +205,20 @@ double Ieee80211YansErrorModel::getHeaderSuccessRate(const IIeee80211Mode* mode,
                                                         bitLength,
                                                         ofdmMode->getHeaderMode()->getGrossBitrate(),
                                                         ofdmMode->getHeaderMode()->getBandwidth(),
+                                                        snr);
+    else if (auto htMode = dynamic_cast<const Ieee80211HTMode *>(mode))
+        successRate = getOFDMAndERPOFDMChunkSuccessRate(htMode->getHeaderMode()->getModulation()->getSubcarrierModulation(),
+                                                        htMode->getHeaderMode()->getCode()->getConvolutionalCode(),
+                                                        bitLength,
+                                                        htMode->getHeaderMode()->getGrossBitrate(),
+                                                        htMode->getHeaderMode()->getBandwidth(),
+                                                        snr);
+    else if (auto vhtMode = dynamic_cast<const Ieee80211VHTMode *>(mode))
+        successRate = getOFDMAndERPOFDMChunkSuccessRate(vhtMode->getHeaderMode()->getModulation()->getSubcarrierModulation(),
+                                                        vhtMode->getHeaderMode()->getCode()->getConvolutionalCode(),
+                                                        bitLength,
+                                                        vhtMode->getHeaderMode()->getGrossBitrate(),
+                                                        vhtMode->getHeaderMode()->getBandwidth(),
                                                         snr);
     else if (auto dsssMode = dynamic_cast<const Ieee80211DsssMode *>(mode))
         successRate = getDSSSAndHrDSSSChunkSuccessRate(dsssMode->getHeaderMode()->getNetBitrate(), bitLength, snr);
