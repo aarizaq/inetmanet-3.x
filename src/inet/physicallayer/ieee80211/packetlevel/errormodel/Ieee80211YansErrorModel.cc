@@ -175,12 +175,6 @@ double Ieee80211YansErrorModel::getOFDMAndERPOFDMChunkSuccessRate(const APSKModu
         else
             return getFecQamBer(snr, bitLength, bandwidth, grossBitrate, 256, 5, 8, 31);
     }
-    else if (subcarrierModulation == &QAM64Modulation::singleton) {
-        if (convolutionalCode->getCodeRatePuncturingK() == 5 && convolutionalCode->getCodeRatePuncturingN() == 6)
-            return getFecQamBer(snr, bitLength, bandwidth, grossBitrate, 1024, 4, 14, 69);
-        else
-            return getFecQamBer(snr, bitLength, bandwidth, grossBitrate, 1024, 5, 8, 31);
-    }
     else
         throw cRuntimeError("Unknown modulation");
 }
