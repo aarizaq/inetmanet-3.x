@@ -215,6 +215,10 @@ class INET_API Ieee80211VHTDataMode : public IIeee80211DataMode, public Ieee8021
         unsigned int computeNumberOfSpatialStreams(const Ieee80211VHTMCS*) const;
         unsigned int computeNumberOfCodedBitsPerSubcarrierSum() const;
         unsigned int computeNumberOfBccEncoders() const;
+        unsigned int getNumberOfBccEncoders20MHz() const;
+        unsigned int getNumberOfBccEncoders40MHz() const;
+        unsigned int getNumberOfBccEncoders80MHz() const;
+        unsigned int getNumberOfBccEncoders160MHz() const;
 
     public:
         Ieee80211VHTDataMode(const Ieee80211VHTMCS *modulationAndCodingScheme, const Hz bandwidth, GuardIntervalType guardIntervalType);

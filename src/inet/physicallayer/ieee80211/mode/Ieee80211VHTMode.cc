@@ -409,16 +409,267 @@ unsigned int Ieee80211VHTDataMode::computeNumberOfCodedBitsPerSubcarrierSum() co
         (modulationAndCodingScheme->getStreamExtension7Modulation() ? modulationAndCodingScheme->getStreamExtension7Modulation()->getSubcarrierModulation()->getCodeWordSize() : 0);
 }
 
+unsigned int Ieee80211VHTDataMode::getNumberOfBccEncoders20MHz() const
+{
+    if (getNumberOfSpatialStreams() < 7)
+        return 1;
+    else {
+        if (getMcsIndex() > 7)
+            return 2;
+        else
+            return 1;
+    }
+}
+
+unsigned int Ieee80211VHTDataMode::getNumberOfBccEncoders40MHz() const
+{
+    switch(getNumberOfSpatialStreams()) {
+      case 1:
+      case 2:
+      case 3:
+          return 1;
+          break;
+      case 4:
+          if (getMcsIndex() > 7)
+              return 2;
+          else
+              return 1;
+          break;
+      case 5:
+          if (getMcsIndex() > 5)
+              return 2;
+          else
+              return 1;
+
+          break;
+      case 6:
+          if (getMcsIndex() > 4)
+              return 2;
+          else
+              return 1;
+          break;
+      case 7:
+      case 8:
+          if (getMcsIndex() < 4)
+              return 1;
+          else if (getMcsIndex() < 8)
+              return 2;
+          else
+              return 3;
+          break;
+      default:
+          throw cRuntimeError("Invalid MCS mode");
+      }
+}
+
+unsigned int Ieee80211VHTDataMode::getNumberOfBccEncoders80MHz() const
+{
+    switch(getNumberOfSpatialStreams()) {
+        case 1:
+            return 1;
+            break;
+        case 2:
+            if (getMcsIndex() > 6)
+                 return 2;
+             else
+                 return 1;
+             break;
+        case 3:
+            if (getMcsIndex() < 5)
+                return 1;
+            else if (getMcsIndex() < 9)
+                return 2;
+            else
+                return 3;
+            break;
+        case 4:
+            if (getMcsIndex() < 4)
+                return 1;
+            else if (getMcsIndex() < 7)
+                return 2;
+            else
+                return 3;
+            break;
+        case 5:
+            if (getMcsIndex() < 3)
+                return 1;
+            else if (getMcsIndex() < 5)
+                return 2;
+            else if (getMcsIndex() < 8)
+                return 3;
+            else
+                return 4;
+            break;
+        case 6:
+            if (getMcsIndex() < 3)
+                return 1;
+            else if (getMcsIndex() < 4)
+                return 2;
+            else if (getMcsIndex() < 7)
+                return 3;
+            else
+                return 4;
+            break;
+        case 7:
+            if (getMcsIndex() < 2)
+                return 1;
+            else if (getMcsIndex() == 3)
+                return 2;
+            else if (getMcsIndex() < 5)
+                return 3;
+            else if (getMcsIndex() == 5)
+                return 4;
+            else
+                return 6;
+            break;
+        case 8:
+            if (getMcsIndex() < 3)
+                return 1;
+            else if (getMcsIndex() < 4)
+                return 2;
+            else if (getMcsIndex() < 5)
+                return 3;
+            else if (getMcsIndex() < 7)
+                return 4;
+            else
+                return 6;
+              break;
+        default:
+            throw cRuntimeError("Invalid MCS mode");
+        }
+}
+
+unsigned int Ieee80211VHTDataMode::getNumberOfBccEncoders160MHz() const
+{
+    switch(getNumberOfSpatialStreams()) {
+        case 1:
+            if (getMcsIndex() > 6)
+                 return 2;
+             else
+                 return 1;
+             break;
+            break;
+        case 2:
+            if (getMcsIndex() < 4)
+                  return 1;
+              else if (getMcsIndex() < 7)
+                  return 2;
+              else
+                  return 3;
+              break;
+        case 3:
+            if (getMcsIndex() < 3)
+                return 1;
+            else if (getMcsIndex() < 5)
+                return 2;
+            else if (getMcsIndex() < 7)
+                return 3;
+            else
+                return 4;
+            break;
+        case 4:
+            if (getMcsIndex() < 2)
+                return 1;
+            else if (getMcsIndex() < 4)
+                return 2;
+            else if (getMcsIndex() < 5)
+                return 3;
+            else if (getMcsIndex() < 7)
+                return 4;
+            else
+                return 6;
+            break;
+        case 5:
+            if (getMcsIndex() < 1)
+                return 1;
+            else if (getMcsIndex() < 3)
+                return 2;
+            else if (getMcsIndex() < 4)
+                return 3;
+            else if (getMcsIndex() < 5)
+                return 4;
+            else if (getMcsIndex() < 7)
+                return 5;
+            else if (getMcsIndex() < 8)
+                return 6;
+            else
+                return 8;
+            break;
+        case 6:
+            if (getMcsIndex() < 1)
+                return 1;
+            else if (getMcsIndex() < 3)
+                return 2;
+            else if (getMcsIndex() < 4)
+                return 3;
+            else if (getMcsIndex() < 5)
+                return 4;
+            else if (getMcsIndex() < 7)
+                return 6;
+            else if (getMcsIndex() < 9)
+                return 8;
+            else
+                return 9;
+            break;
+        case 7:
+            if (getMcsIndex() < 1)
+                return 1;
+            else if (getMcsIndex() < 2)
+                return 2;
+            else if (getMcsIndex() < 3)
+                return 3;
+            else if (getMcsIndex() < 4)
+                return 4;
+            else if (getMcsIndex() < 5)
+                return 6;
+            else if (getMcsIndex() < 7)
+                return 7;
+            else if (getMcsIndex() < 8)
+                return 9;
+            else
+                return 12;
+            break;
+        case 8:
+            if (getMcsIndex() < 1)
+                return 1;
+            else if (getMcsIndex() < 2)
+                return 2;
+            else if (getMcsIndex() < 3)
+                return 3;
+            else if (getMcsIndex() < 4)
+                return 4;
+            else if (getMcsIndex() < 5)
+                return 6;
+            else if (getMcsIndex() < 7)
+                return 8;
+            else if (getMcsIndex() < 8)
+                return 9;
+            else
+                return 12;
+        default:
+            throw cRuntimeError("Invalid MCS mode");
+        }
+}
+
+
 unsigned int Ieee80211VHTDataMode::computeNumberOfBccEncoders() const
 {
     // When the BCC FEC encoder is used, a single encoder is used, except that two encoders
     // are used when the selected MCS has a PHY rate greater than 300 Mb/s (see 20.6).
-    if (getGrossBitrate() < Mbps(540))
-        return 1;
-    else if (getGrossBitrate() < Mbps(1170))
-        return 2;
+    if (getBandwidth() == MHz(20)) {
+        return getNumberOfBccEncoders20MHz();
+    }
+    else if (getBandwidth() == MHz(40)) {
+        return getNumberOfBccEncoders40MHz();
+    }
+    else if (getBandwidth() == MHz(80)) {
+        return getNumberOfBccEncoders80MHz();
+    }
+    else if (getBandwidth() == MHz(160)) {
+        return getNumberOfBccEncoders160MHz();
+    }
     else
-        return 3;
+        throw cRuntimeError("Invalid bandwidth evaluating  NumberOfBccEncoders");
 }
 
 const simtime_t Ieee80211VHTDataMode::getDuration(int dataBitLength) const
