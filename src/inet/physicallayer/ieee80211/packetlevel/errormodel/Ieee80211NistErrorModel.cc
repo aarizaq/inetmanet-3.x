@@ -19,6 +19,7 @@
 //
 
 #include "inet/physicallayer/modulation/BPSKModulation.h"
+#include "inet/physicallayer/modulation/QBPSKModulation.h"
 #include "inet/physicallayer/modulation/QPSKModulation.h"
 #include "inet/physicallayer/modulation/QAM16Modulation.h"
 #include "inet/physicallayer/modulation/QAM64Modulation.h"
@@ -199,7 +200,7 @@ double Ieee80211NistErrorModel::getFec1024QamBer (double snr, uint64_t nbits, ui
 
 double Ieee80211NistErrorModel::getOFDMAndERPOFDMChunkSuccessRate(const APSKModulationBase *subcarrierModulation, const ConvolutionalCode *convolutionalCode, unsigned int bitLength, double snr) const
 {
-    if (subcarrierModulation == &BPSKModulation::singleton) {
+    if (subcarrierModulation == &BPSKModulation::singleton || subcarrierModulation == &QBPSKModulation::singleton) {
         if (convolutionalCode->getCodeRatePuncturingK() == 1 && convolutionalCode->getCodeRatePuncturingN() == 2)
             return getFecBpskBer(snr, bitLength, 1);
         return getFecBpskBer(snr, bitLength, 3);
@@ -260,12 +261,12 @@ double Ieee80211NistErrorModel::getHeaderSuccessRate(const IIeee80211Mode* mode,
                                                         snr);
     else if (auto htMode = dynamic_cast<const Ieee80211HTMode *>(mode))
         successRate = getOFDMAndERPOFDMChunkSuccessRate(htMode->getHeaderMode()->getModulation()->getSubcarrierModulation(),
-                                                        htMode->getHeaderMode()->getCode()->getConvolutionalCode(),
+                                                        htMode->getHeaderMode()->getCode()->getForwardErrorCorrection(),
                                                         bitLength,
                                                         snr);
     else if (auto vhtMode = dynamic_cast<const Ieee80211VHTMode *>(mode))
         successRate = getOFDMAndERPOFDMChunkSuccessRate(vhtMode->getHeaderMode()->getModulation()->getSubcarrierModulation(),
-                                                        vhtMode->getHeaderMode()->getCode()->getConvolutionalCode(),
+                                                        vhtMode->getHeaderMode()->getCode()->getForwardErrorCorrection(),
                                                         bitLength,
                                                         snr);
     else if (auto dsssMode = dynamic_cast<const Ieee80211DsssMode *>(mode))
@@ -286,6 +287,16 @@ double Ieee80211NistErrorModel::getDataSuccessRate(const IIeee80211Mode* mode, u
     if (auto ofdmMode = dynamic_cast<const Ieee80211OFDMMode *>(mode))
         successRate = getOFDMAndERPOFDMChunkSuccessRate(ofdmMode->getDataMode()->getModulation()->getSubcarrierModulation(),
                                                         ofdmMode->getDataMode()->getCode()->getConvolutionalCode(),
+                                                        bitLength,
+                                                        snr);
+    else if (auto htMode = dynamic_cast<const Ieee80211HTMode *>(mode))
+        successRate = getOFDMAndERPOFDMChunkSuccessRate(htMode->getDataMode()->getModulation()->getSubcarrierModulation(),
+                                                        htMode->getDataMode()->getCode()->getForwardErrorCorrection(),
+                                                        bitLength,
+                                                        snr);
+    else if (auto vhtMode = dynamic_cast<const Ieee80211VHTMode *>(mode))
+        successRate = getOFDMAndERPOFDMChunkSuccessRate(vhtMode->getDataMode()->getModulation()->getSubcarrierModulation(),
+                                                        vhtMode->getDataMode()->getCode()->getForwardErrorCorrection(),
                                                         bitLength,
                                                         snr);
     else if (auto dsssMode = dynamic_cast<const Ieee80211DsssMode *>(mode))

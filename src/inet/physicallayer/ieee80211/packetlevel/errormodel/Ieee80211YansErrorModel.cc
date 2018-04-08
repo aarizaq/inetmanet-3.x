@@ -19,6 +19,7 @@
 //
 
 #include "inet/physicallayer/modulation/BPSKModulation.h"
+#include "inet/physicallayer/modulation/QBPSKModulation.h"
 #include "inet/physicallayer/modulation/QPSKModulation.h"
 #include "inet/physicallayer/modulation/QAM16Modulation.h"
 #include "inet/physicallayer/modulation/QAM64Modulation.h"
@@ -145,7 +146,7 @@ double Ieee80211YansErrorModel::getFecQamBer(double snr, uint32_t nbits, Hz sign
 
 double Ieee80211YansErrorModel::getOFDMAndERPOFDMChunkSuccessRate(const APSKModulationBase* subcarrierModulation, const ConvolutionalCode* convolutionalCode, unsigned int bitLength, bps grossBitrate, Hz bandwidth, double snr) const
 {
-    if (subcarrierModulation == &BPSKModulation::singleton) {
+    if (subcarrierModulation == &BPSKModulation::singleton || subcarrierModulation == &QBPSKModulation::singleton) {
         if (convolutionalCode->getCodeRatePuncturingK() == 1 && convolutionalCode->getCodeRatePuncturingN() == 2)
             return getFecBpskBer(snr, bitLength, bandwidth, grossBitrate, 10, 11);
         else
@@ -208,14 +209,14 @@ double Ieee80211YansErrorModel::getHeaderSuccessRate(const IIeee80211Mode* mode,
                                                         snr);
     else if (auto htMode = dynamic_cast<const Ieee80211HTMode *>(mode))
         successRate = getOFDMAndERPOFDMChunkSuccessRate(htMode->getHeaderMode()->getModulation()->getSubcarrierModulation(),
-                                                        htMode->getHeaderMode()->getCode()->getConvolutionalCode(),
+                                                        htMode->getHeaderMode()->getCode()->getForwardErrorCorrection(),
                                                         bitLength,
                                                         htMode->getHeaderMode()->getGrossBitrate(),
                                                         htMode->getHeaderMode()->getBandwidth(),
                                                         snr);
     else if (auto vhtMode = dynamic_cast<const Ieee80211VHTMode *>(mode))
         successRate = getOFDMAndERPOFDMChunkSuccessRate(vhtMode->getHeaderMode()->getModulation()->getSubcarrierModulation(),
-                                                        vhtMode->getHeaderMode()->getCode()->getConvolutionalCode(),
+                                                        vhtMode->getHeaderMode()->getCode()->getForwardErrorCorrection(),
                                                         bitLength,
                                                         vhtMode->getHeaderMode()->getGrossBitrate(),
                                                         vhtMode->getHeaderMode()->getBandwidth(),
@@ -241,6 +242,20 @@ double Ieee80211YansErrorModel::getDataSuccessRate(const IIeee80211Mode* mode, u
                                                         bitLength,
                                                         ofdmMode->getDataMode()->getGrossBitrate(),
                                                         ofdmMode->getHeaderMode()->getBandwidth(),
+                                                        snr);
+    else if (auto htMode = dynamic_cast<const Ieee80211HTMode *>(mode))
+        successRate = getOFDMAndERPOFDMChunkSuccessRate(htMode->getDataMode()->getModulation()->getSubcarrierModulation(),
+                                                        htMode->getDataMode()->getCode()->getForwardErrorCorrection(),
+                                                        bitLength,
+                                                        htMode->getDataMode()->getGrossBitrate(),
+                                                        htMode->getDataMode()->getBandwidth(),
+                                                        snr);
+    else if (auto vhtMode = dynamic_cast<const Ieee80211VHTMode *>(mode))
+        successRate = getOFDMAndERPOFDMChunkSuccessRate(vhtMode->getDataMode()->getModulation()->getSubcarrierModulation(),
+                                                        vhtMode->getDataMode()->getCode()->getForwardErrorCorrection(),
+                                                        bitLength,
+                                                        vhtMode->getDataMode()->getGrossBitrate(),
+                                                        vhtMode->getDataMode()->getBandwidth(),
                                                         snr);
     else if (auto dsssMode = dynamic_cast<const Ieee80211DsssMode *>(mode))
         successRate = getDSSSAndHrDSSSChunkSuccessRate(dsssMode->getDataMode()->getNetBitrate(), bitLength, snr);
