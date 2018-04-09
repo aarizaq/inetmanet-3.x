@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2013 OpenSim Ltd
+// Copyright (C) 2015 OpenSim Ltd.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -15,15 +15,17 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-package inet.physicallayer.ieee80211.packetlevel.errormodel;
+#include "inet/physicallayer/ieee80211/bitlevel/Ieee80211VHTInterleaving.h"
 
-import inet.physicallayer.base.packetlevel.ErrorModelBase;
+namespace inet {
+namespace physicallayer {
 
-module Ieee80211BerTableErrorModel extends ErrorModelBase
+Ieee80211VHTInterleaving::Ieee80211VHTInterleaving(const std::vector<unsigned int>& numberOfCodedBitsPerSpatialStreams, Hz bandwidth) :
+        numberOfCodedBitsPerSpatialStreams(numberOfCodedBitsPerSpatialStreams),
+        bandwidth(bandwidth)
 {
-    parameters:
-        string opMode @enum("a", "b", "g(erp)", "g(mixed)", "n(mixed-2.4Ghz)", "p", "ac");
-        string berTableFile;
-        @class(Ieee80211BerTableErrorModel);
-        @display("i=block/broadcast");
 }
+
+} /* namespace physicallayer */
+} /* namespace inet */
+

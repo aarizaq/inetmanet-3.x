@@ -116,7 +116,8 @@ class INET_API Ieee80211HTSignalMode : public IIeee80211HeaderMode, public Ieee8
         virtual int getBitLength() const override;
         virtual bps getNetBitrate() const override { return Ieee80211HTModeBase::getNetBitrate(); }
         virtual bps getGrossBitrate() const override { return Ieee80211HTModeBase::getGrossBitrate(); }
-        virtual const IModulation *getModulation() const override { return modulation; }
+        virtual const Ieee80211OFDMModulation *getModulation() const override { return modulation; }
+        const Ieee80211HTCode* getCode() const { return code; }
 };
 
 /*

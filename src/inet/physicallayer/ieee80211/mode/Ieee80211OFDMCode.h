@@ -50,12 +50,15 @@ class INET_API Ieee80211OFDMCompliantCodes
     static const Ieee80211ConvolutionalCode ofdmConvolutionalCode1_2;
     static const Ieee80211ConvolutionalCode ofdmConvolutionalCode2_3;
     static const Ieee80211ConvolutionalCode ofdmConvolutionalCode3_4;
+    static const Ieee80211ConvolutionalCode ofdmConvolutionalCode5_6;
 
     // Interleavings supported by the OFDM PHY: 18.3.5.7 Data interleaving
     static const Ieee80211OFDMInterleaving ofdmBPSKInterleaving;
     static const Ieee80211OFDMInterleaving ofdmQPSKInterleaving;
     static const Ieee80211OFDMInterleaving ofdmQAM16Interleaving;
     static const Ieee80211OFDMInterleaving ofdmQAM64Interleaving;
+    static const Ieee80211OFDMInterleaving ofdmQAM256Interleaving;
+    static const Ieee80211OFDMInterleaving ofdmQAM1024Interleaving;
 
     // Scrambling supported by the OFDM PHY: 18.3.5.5 PLCP DATA scrambler and descrambler
     static const AdditiveScrambling ofdmScrambling;
@@ -70,6 +73,11 @@ class INET_API Ieee80211OFDMCompliantCodes
     static const Ieee80211OFDMCode ofdmCC3_4QAM16Interleaving;
     static const Ieee80211OFDMCode ofdmCC2_3QAM64Interleaving;
     static const Ieee80211OFDMCode ofdmCC3_4QAM64Interleaving;
+    static const Ieee80211OFDMCode ofdmCC5_6QAM64Interleaving;
+    static const Ieee80211OFDMCode ofdmCC3_4QAM256Interleaving;
+    static const Ieee80211OFDMCode ofdmCC5_6QAM256Interleaving;
+    static const Ieee80211OFDMCode ofdmCC3_4QAM1024Interleaving;
+    static const Ieee80211OFDMCode ofdmCC5_6QAM1024Interleaving;
 };
 
 } /* namespace physicallayer */

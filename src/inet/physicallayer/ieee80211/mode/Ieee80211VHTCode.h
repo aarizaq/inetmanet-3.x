@@ -15,11 +15,11 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef __INET_IEEE80211HTSIGNALCODE_H
-#define __INET_IEEE80211HTSIGNALCODE_H
+#ifndef __INET_IEEE80211VHTSIGNALCODE_H
+#define __INET_IEEE80211VHTSIGNALCODE_H
 
 #include "inet/physicallayer/contract/bitlevel/ICode.h"
-#include "inet/physicallayer/ieee80211/bitlevel/Ieee80211HTInterleaving.h"
+#include "inet/physicallayer/ieee80211/bitlevel/Ieee80211VHTInterleaving.h"
 #include "inet/physicallayer/ieee80211/bitlevel/Ieee80211ConvolutionalCode.h"
 #include "inet/physicallayer/common/bitlevel/AdditiveScrambling.h"
 #include "inet/physicallayer/ieee80211/mode/Ieee80211OFDMModulation.h"
@@ -27,32 +27,29 @@
 namespace inet {
 namespace physicallayer {
 
-class INET_API Ieee80211HTCode : public ICode
+class INET_API Ieee80211VHTCode : public ICode
 {
     protected:
         const Ieee80211ConvolutionalCode *forwardErrorCorrection;
-        const Ieee80211HTInterleaving *interleaving;
+        const Ieee80211VHTInterleaving *interleaving;
         const AdditiveScrambling *scrambling;
 
     public:
-        Ieee80211HTCode(const Ieee80211ConvolutionalCode *forwardErrorCorrection, const Ieee80211HTInterleaving *interleaving, const AdditiveScrambling *scrambling);
+        Ieee80211VHTCode(const Ieee80211ConvolutionalCode *forwardErrorCorrection, const Ieee80211VHTInterleaving *interleaving, const AdditiveScrambling *scrambling);
 
         const Ieee80211ConvolutionalCode *getForwardErrorCorrection() const { return forwardErrorCorrection; }
         const AdditiveScrambling *getScrambling() const { return scrambling; }
-        const Ieee80211HTInterleaving *getInterleaving() const { return interleaving; }
+        const Ieee80211VHTInterleaving *getInterleaving() const { return interleaving; }
 
-        virtual ~Ieee80211HTCode();
+        virtual ~Ieee80211VHTCode();
 
 };
 
-class INET_API Ieee80211HTCompliantCodes
+class INET_API Ieee80211VHTCompliantCodes
 {
     public:
         // Convolutional codes (TODO: LDPC codes).
-        // Note: 1/2, 2/3, 3/4 rates are defined in Ieee80211OFDMCompliantCodes.
-        static const Ieee80211ConvolutionalCode htConvolutionalCode5_6;
-
-        static const Ieee80211HTCode *getCompliantCode(const Ieee80211ConvolutionalCode *convolutionalCode, const Ieee80211OFDMModulation *stream1Modulation, const Ieee80211OFDMModulation *stream2Modulation, const Ieee80211OFDMModulation *stream3Modulation, const Ieee80211OFDMModulation *stream4Modulation, Hz bandwidth, bool withScrambling = true);
+        static const Ieee80211VHTCode *getCompliantCode(const Ieee80211ConvolutionalCode *convolutionalCode, const Ieee80211OFDMModulation *stream1Modulation, const Ieee80211OFDMModulation *stream2Modulation, const Ieee80211OFDMModulation *stream3Modulation, const Ieee80211OFDMModulation *stream4Modulation, const Ieee80211OFDMModulation *stream5Modulation, const Ieee80211OFDMModulation *stream6Modulation, const Ieee80211OFDMModulation *stream7Modulation, const Ieee80211OFDMModulation *stream8Modulation, Hz bandwidth, bool withScrambling = true);
 
 };
 
