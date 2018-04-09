@@ -323,15 +323,12 @@ bps Ieee80211VHTDataMode::computeGrossBitrate() const
 {
     unsigned int numberOfCodedBitsPerSubcarrierSum = computeNumberOfCodedBitsPerSubcarrierSum();
     unsigned int numberOfCodedBitsPerSymbol = numberOfCodedBitsPerSubcarrierSum * getNumberOfDataSubcarriers();
-    double bitrate;
     if (guardIntervalType == HT_GUARD_INTERVAL_LONG)
-        bitrate = numberOfCodedBitsPerSymbol / getSymbolInterval();
+        return  bps(numberOfCodedBitsPerSymbol / getSymbolInterval());
     else if (guardIntervalType == HT_GUARD_INTERVAL_SHORT)
-        bitrate = numberOfCodedBitsPerSymbol / getShortGISymbolInterval();
+        return bps(numberOfCodedBitsPerSymbol / getShortGISymbolInterval());
     else
         throw cRuntimeError("Unknown guard interval type");
-
-    return bps((bitrate/1e5) * 1e5);
 }
 
 bps Ieee80211VHTDataMode::computeNetBitrate() const

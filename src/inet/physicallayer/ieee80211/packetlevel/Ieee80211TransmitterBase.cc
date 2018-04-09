@@ -111,7 +111,7 @@ void Ieee80211TransmitterBase::setModeSet(const Ieee80211ModeSet *modeSet)
 void Ieee80211TransmitterBase::setMode(const IIeee80211Mode *mode)
 {
     if (this->mode != mode) {
-        if (modeSet->findMode(mode->getDataMode()->getNetBitrate()) == nullptr)
+        if (modeSet->findMode(bps(std::round(mode->getDataMode()->getNetBitrate().get() / 1e5) * 1e5)) == nullptr)
             throw cRuntimeError("Invalid mode");
         this->mode = mode;
     }
