@@ -287,16 +287,12 @@ const simtime_t Ieee80211VHTPreambleMode::getDuration() const
 bps Ieee80211VHTSignalMode::computeGrossBitrate() const
 {
     unsigned int numberOfCodedBitsPerSymbol = modulation->getSubcarrierModulation()->getCodeWordSize() * getNumberOfDataSubcarriers();
-    double bitrate;
     if (guardIntervalType == HT_GUARD_INTERVAL_LONG)
-        bitrate = numberOfCodedBitsPerSymbol / getSymbolInterval();
+        return bps(numberOfCodedBitsPerSymbol / getSymbolInterval());
     else if (guardIntervalType == HT_GUARD_INTERVAL_SHORT)
-        bitrate = numberOfCodedBitsPerSymbol / getShortGISymbolInterval();
+        return bps(numberOfCodedBitsPerSymbol / getShortGISymbolInterval());
     else
         throw cRuntimeError("Unknown guard interval type");
-    bitrate /= 1e5;
-    bitrate = std::round(bitrate);
-    return bps(bitrate*1e5);
 }
 
 bps Ieee80211VHTSignalMode::computeNetBitrate() const
@@ -327,12 +323,15 @@ bps Ieee80211VHTDataMode::computeGrossBitrate() const
 {
     unsigned int numberOfCodedBitsPerSubcarrierSum = computeNumberOfCodedBitsPerSubcarrierSum();
     unsigned int numberOfCodedBitsPerSymbol = numberOfCodedBitsPerSubcarrierSum * getNumberOfDataSubcarriers();
+    double bitrate;
     if (guardIntervalType == HT_GUARD_INTERVAL_LONG)
-        return bps(numberOfCodedBitsPerSymbol / getSymbolInterval());
+        bitrate = numberOfCodedBitsPerSymbol / getSymbolInterval();
     else if (guardIntervalType == HT_GUARD_INTERVAL_SHORT)
-        return bps(numberOfCodedBitsPerSymbol / getShortGISymbolInterval());
+        bitrate = numberOfCodedBitsPerSymbol / getShortGISymbolInterval();
     else
         throw cRuntimeError("Unknown guard interval type");
+
+    return bps((bitrate/1e5) * 1e5);
 }
 
 bps Ieee80211VHTDataMode::computeNetBitrate() const
@@ -394,10 +393,7 @@ unsigned int Ieee80211VHTDataMode::computeNumberOfSpatialStreams(const Ieee80211
 {
     if (vhtmcs == nullptr)
         throw cRuntimeError("Invalid MCS mode");
-    return (vhtmcs->getModulation() ? 1 : 0) + (vhtmcs->getStreamExtension1Modulation() ? 1 : 0) +
-               (vhtmcs->getStreamExtension2Modulation() ? 1 : 0) + (vhtmcs->getStreamExtension3Modulation() ? 1 : 0) +
-               (vhtmcs->getStreamExtension4Modulation() ? 1 : 0) + (vhtmcs->getStreamExtension5Modulation() ? 1 : 0) +
-               (vhtmcs->getStreamExtension6Modulation() ? 1 : 0) + (vhtmcs->getStreamExtension7Modulation() ? 1 : 0);
+    return vhtmcs->getNumNss();
 }
 
 unsigned int Ieee80211VHTDataMode::computeNumberOfCodedBitsPerSubcarrierSum() const
@@ -720,7 +716,8 @@ Ieee80211VHTCompliantModes::~Ieee80211VHTCompliantModes()
 const Ieee80211VHTMode* Ieee80211VHTCompliantModes::getCompliantMode(const Ieee80211VHTMCS *mcsMode, Ieee80211VHTMode::BandMode carrierFrequencyMode, Ieee80211VHTPreambleMode::HighTroughputPreambleFormat preambleFormat, Ieee80211VHTModeBase::GuardIntervalType guardIntervalType)
 {
     const char *name =""; //TODO
-    auto htModeId = std::make_tuple(mcsMode->getBandwidth(), mcsMode->getMcsIndex(), guardIntervalType);
+    unsigned int nss = mcsMode->getNumNss();
+    auto htModeId = std::make_tuple(mcsMode->getBandwidth(), mcsMode->getMcsIndex(), guardIntervalType,nss);
     auto mode = singleton.modeCache.find(htModeId);
     if (mode == std::end(singleton.modeCache))
     {
@@ -738,7 +735,7 @@ const Ieee80211VHTMode* Ieee80211VHTCompliantModes::getCompliantMode(const Ieee8
         const Ieee80211VHTDataMode *dataMode = new Ieee80211VHTDataMode(mcsMode, mcsMode->getBandwidth(), guardIntervalType);
         const Ieee80211VHTPreambleMode *preambleMode = new Ieee80211VHTPreambleMode(htSignal, legacySignal, preambleFormat, dataMode->getNumberOfSpatialStreams());
         const Ieee80211VHTMode *htMode = new Ieee80211VHTMode(name, preambleMode, dataMode, carrierFrequencyMode);
-        singleton.modeCache.insert(std::pair<std::tuple<Hz, unsigned int, Ieee80211VHTModeBase::GuardIntervalType>, const Ieee80211VHTMode *>(htModeId, htMode));
+        singleton.modeCache.insert(std::pair<std::tuple<Hz, unsigned int, Ieee80211VHTModeBase::GuardIntervalType, unsigned int>, const Ieee80211VHTMode *>(htModeId, htMode));
         return htMode;
     }
     return mode->second;

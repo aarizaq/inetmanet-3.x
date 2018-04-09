@@ -202,6 +202,10 @@ class INET_API Ieee80211VHTMCS
         virtual const Ieee80211OFDMModulation* getStreamExtension6Modulation() const { return stream7Modulation; }
         virtual const Ieee80211OFDMModulation* getStreamExtension7Modulation() const { return stream8Modulation; }
         virtual Hz getBandwidth() const { return bandwidth; }
+        virtual unsigned int getNumNss() const {return (stream1Modulation ? 1 : 0) + (stream2Modulation ? 1 : 0) +
+                                              (stream3Modulation ? 1 : 0) + (stream4Modulation ? 1 : 0) +
+                                              (stream5Modulation ? 1 : 0) + (stream6Modulation ? 1 : 0) +
+                                              (stream7Modulation ? 1 : 0) + (stream8Modulation ? 1 : 0);}
 };
 
 class INET_API Ieee80211VHTDataMode : public IIeee80211DataMode, public Ieee80211VHTModeBase, public Ieee80211HTTimingRelatedParametersBase
@@ -678,7 +682,7 @@ class INET_API Ieee80211VHTCompliantModes
     protected:
         static Ieee80211VHTCompliantModes singleton;
 
-        std::map<std::tuple<Hz, unsigned int, Ieee80211VHTModeBase::GuardIntervalType>, const Ieee80211VHTMode *> modeCache;
+        std::map<std::tuple<Hz, unsigned int, Ieee80211VHTModeBase::GuardIntervalType, unsigned int>, const Ieee80211VHTMode *> modeCache;
 
     public:
         Ieee80211VHTCompliantModes();
