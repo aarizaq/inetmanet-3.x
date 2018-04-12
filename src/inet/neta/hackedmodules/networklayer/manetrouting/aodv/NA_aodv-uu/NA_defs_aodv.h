@@ -123,10 +123,10 @@ struct dev_info
 
 struct host_info
 {
-    u_int32_t seqno;        /* Sequence number */
+    inetmanet::u_int32_t seqno;        /* Sequence number */
     struct timeval bcast_time;  /* The time of the last broadcast msg sent */
     struct timeval fwd_time;    /* The time a data packet was last forwarded */
-    u_int32_t rreq_id;      /* RREQ id */
+    inetmanet::u_int32_t rreq_id;      /* RREQ id */
     int nif;            /* Number of interfaces to broadcast on */
     struct dev_info devs[MAX_NR_INTERFACES];
 };
