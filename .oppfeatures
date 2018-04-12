@@ -1235,7 +1235,7 @@
         description = "NETwork Attacks Framework for OMNeT++"
         initiallyEnabled = "false"
         requires = "IPv4 IPv6 UDP Ieee80211 MANET"
-        labels = "routing manet"
+        labels = "routing manet neta"
         nedPackages = "
                        inet.neta
                       "
@@ -1243,4 +1243,18 @@
         compileFlags = "-DWITH_NETA"
         linkerFlags = ""
         />
+    <feature
+        id="NETA examples"
+        name="Net Attack examples"
+        description = "NETwork Attacks Framework for OMNeT++ examples"
+        initiallyEnabled = "false"
+        requires = "NETA"
+        labels = "routing manet neta"
+        nedPackages = "
+                       inet.examples.neta
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />		
 </features>
