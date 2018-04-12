@@ -56,13 +56,13 @@ namespace inet {
 
 namespace neta {
 
-const int UDP_HEADER_BYTES = 8;
 typedef std::vector<IPv4Address> IPAddressVector;
 
 Define_Module(NA_AODVUU);
 
 /* Constructor for the AODVUU routing agent */
 
+std::map<L3Address,u_int32_t *> NA_AODVUU::mapSeqNum;
 bool NA_AODVUU::log_file_fd_init=false;
 int NA_AODVUU::log_file_fd = -1;
 
