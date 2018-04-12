@@ -45,7 +45,7 @@ simple NA_UDPBasicBurst extends UDPBasicBurst
         
         //# Normal parameters
         @display("i=block/app,white;i2=status/green");
-	    @class(NA_UDPBasicBurst);	    
+	    @class(neta::NA_UDPBasicBurst);	    
 	    
 	    //# Hop count statistics
 	    @signal[hopCount](type=long); // Signal for hop count

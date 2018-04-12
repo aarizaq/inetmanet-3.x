@@ -29,13 +29,15 @@
 
 package inet.neta.hackedmodules.networklayer;
 
-import inet.networklayer.contract.IARP;
-import inet.networklayer.configurator.ipv4.IPv4NodeConfigurator;
 import inet.networklayer.ipv4.ErrorHandling;
 import inet.networklayer.ipv4.ICMP;
 import inet.networklayer.ipv4.IIGMP;
 
 import inet.neta.hackedmodules.networklayer.ipv4.NA_IPv4;
+
+import inet.networklayer.contract.IARP;
+import inet.networklayer.configurator.ipv4.IPv4NodeConfigurator;
+import inet.networklayer.contract.INetworkLayer;
 
 //
 // Compound module allowing hacked modules. Modificated from NetworkLayer module.
@@ -47,7 +49,7 @@ import inet.neta.hackedmodules.networklayer.ipv4.NA_IPv4;
 //
 // @author Gabriel Maciá Fernández, gmacia@ugr.es
 // @date 01/22/2013
-module NA_NetworkLayer
+module NA_NetworkLayer like INetworkLayer
 {
     parameters:
         @display("i=block/fork,red;i2=status/excl3");
@@ -61,38 +63,28 @@ module NA_NetworkLayer
         *.arpModule = default(absPath(".arp"));
         *.icmpModule = default(absPath(".icmp"));
         arp.respondToProxyARP = proxyARP;
-        @display("i=block/fork");
         
-    gates:
-        input ifIn[] @labels(IPv4Datagram);
-        input tcpIn @labels(TCPSegment,IPv4ControlInfo/down);
-        input udpIn @labels(UDPPacket,IPv4ControlInfo/down);
-        input sctpIn @labels(IPv4ControlInfo/down,SCTPPacket);
-        input rsvpIn @labels(IPv4ControlInfo/down);
-        input ospfIn @labels(IPv4ControlInfo/down);
-        input pingIn[];
-        input manetIn;
+   gates:
+        input ifIn[] @labels(INetworkDatagram);
+        output ifOut[] @labels(INetworkDatagram);
+        input transportIn[] @labels(IPv4ControlInfo/down);
+        output transportOut[] @labels(IPv4ControlInfo/up);
+        input pingIn[] @labels(PingPayload/down);
+        output pingOut[] @labels(PingPayload/up);
         input igmpIn;
-        output ifOut[] @labels(IPv4Datagram);
-        output tcpOut @labels(TCPSegment,IPv4ControlInfo/up);
-        output udpOut @labels(UDPPacket,IPv4ControlInfo/up);
-        output sctpOut @labels(IPv4ControlInfo/up,SCTPPacket);
-        output rsvpOut @labels(IPv4ControlInfo/up);
-        output ospfOut @labels(IPv4ControlInfo/up);
-        output pingOut[];
-        output manetOut;
         output igmpOut;
 
     submodules:
-        //# Hacked module replacing the normal IPv4 INET module for attack purposes.
+        configurator: IPv4NodeConfigurator {
+            @display("p=39,158");
+        }
         ip: NA_IPv4 {
             parameters:
-              //  protocolMapping = "6:0,17:1,1:2,2:3,46:4,89:5,132:6,48:7,138:7"; // see: http://www.iana.org/assignments/protocol-numbers
+                useProxyARP = true; // as routes with unspecified next-hop addr are quite common
                 @display("p=85,95;q=queue");
             gates:
-                transportIn[8];
-                transportOut[8];
                 queueIn[sizeof(ifIn)];
+                queueOut[sizeof(ifOut)];
         }
         arp: <arpType> like IARP {
             parameters:
@@ -100,7 +92,7 @@ module NA_NetworkLayer
         }
         icmp: ICMP {
             parameters:
-                @display("p=160,63");
+                @display("p=165,70");
         }
         igmp: <igmpType> like IIGMP {
             parameters:
@@ -108,34 +100,23 @@ module NA_NetworkLayer
         }
         errorHandling: ErrorHandling {
             parameters:
-                @display("p=239,63");
+                @display("p=239,70");
         }
 
     connections allowunconnected:
-        // transport Layer
-        ip.transportOut[0] --> { @display("m=n"); } --> tcpOut;
-        ip.transportIn[0] <-- { @display("m=n"); } <-- tcpIn;
+        for i=0..sizeof(transportIn)-1 {
+            transportIn[i] --> { @display("m=n"); } --> ip.transportIn++;
+        }
+        for i=0..sizeof(transportOut)-1 {
+            ip.transportOut++ --> { @display("m=n"); } --> transportOut[i];
+        }
 
-        ip.transportOut[1] --> { @display("m=n"); } --> udpOut;
-        ip.transportIn[1] <-- { @display("m=n"); } <-- udpIn;
+        ip.transportOut++ --> icmp.localIn;
+        ip.transportIn++ <-- icmp.sendOut;
 
-        ip.transportOut[2] --> icmp.localIn;
-        ip.transportIn[2] <-- icmp.sendOut;
+        ip.transportOut++ --> igmp.ipIn;
+        ip.transportIn++ <-- igmp.ipOut;
 
-        ip.transportOut[3] --> igmp.ipIn;
-        ip.transportIn[3] <-- igmp.ipOut;
-
-        ip.transportOut[4] --> { @display("m=n"); } --> rsvpOut;
-        ip.transportIn[4] <-- { @display("m=n"); } <-- rsvpIn;
-
-        ip.transportOut[5] --> { @display("m=n"); } --> ospfOut;
-        ip.transportIn[5] <-- { @display("m=n"); } <-- ospfIn;
-
-        ip.transportOut[6] --> { @display("m=n"); } --> sctpOut;
-        ip.transportIn[6] <-- { @display("m=n"); } <-- sctpIn;
-
-        ip.transportOut[7] --> { @display("m=n"); } --> manetOut;
-        ip.transportIn[7] <-- { @display("m=n"); } <-- manetIn;
         for i=0..sizeof(pingOut)-1 {
             icmp.pingOut++ --> { @display("m=n"); } --> pingOut[i];
         }
@@ -148,25 +129,14 @@ module NA_NetworkLayer
         ip.arpOut --> arp.netwIn;
         ip.arpIn <-- arp.netwOut;
 
-        for i=0..sizeof(ifIn)-1 {
-            ifIn[i] --> { @display("m=s"); } --> ip.queueIn[i];
-        }
-             
-        
-        for i=0..sizeof(pingOut)-1 {
-            icmp.pingOut++ --> { @display("m=n"); } --> pingOut[i];
-        }
-        for i=0..sizeof(pingIn)-1 {
-            icmp.pingIn++ <-- { @display("m=n"); } <-- pingIn[i];
-        }
-
-
         igmp.routerOut --> igmpOut;
         igmp.routerIn <-- igmpIn;
 
         for i=0..sizeof(ifIn)-1 {
-            ifIn[i] --> { @display("m=s"); } --> ip.queueIn[i];
+            ip.queueIn[i] <-- { @display("m=s"); } <-- ifIn[i];
         }
-        
-        
+        for i=0..sizeof(ifOut)-1 {
+            ip.queueOut[i] --> { @display("m=s"); } --> ifOut[i];
+        }
 }
+

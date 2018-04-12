@@ -38,7 +38,7 @@ import inet.neta.attacks.controllers.NA_Attack;
 simple NA_DelayAttack extends NA_Attack
 {
     parameters:
-        @class(NA_DelayAttack);
+        @class(neta::NA_DelayAttack);
         @display("i=misc/cloud3,red,100;is=l");
 
         attackType = "delay";  //Should correspond with the tag located in the hackedModules.ned. e.g. @delay for this attack.

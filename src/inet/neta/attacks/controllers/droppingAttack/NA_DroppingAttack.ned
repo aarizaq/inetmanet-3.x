@@ -38,7 +38,7 @@ import inet.neta.attacks.controllers.NA_Attack;
 simple NA_DroppingAttack extends NA_Attack
 {
     parameters:
-        @class(NA_DroppingAttack);
+        @class(neta::NA_DroppingAttack);
         @display("i=misc/cloud3,red,100;is=l");
 
         attackType = "dropping"; //Should correspond with the tag located in the hackedModules.ned. e.g. @dropping for this attack.

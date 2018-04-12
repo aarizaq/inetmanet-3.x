@@ -39,7 +39,7 @@ import inet.neta.attacks.controllers.NA_Attack;
 simple NA_SinkholeAttack extends NA_Attack
 {
     parameters:
-        @class(NA_SinkholeAttack);
+        @class(neta::NA_SinkholeAttack);
         @display("i=misc/cloud3,red,100;is=l");
 
         attackType = "sinkhole";  //Should correspond with the tag located in the hackedModules.ned. e.g. @sinkhole for this attack.       

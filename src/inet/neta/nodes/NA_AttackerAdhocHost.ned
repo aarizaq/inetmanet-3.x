@@ -57,8 +57,6 @@ module NA_AttackerAdhocHost extends NA_WirelessHost
         @display("i=device/cellphone,red;bgb=803,448;i2=status/lightning");
         wlan[*].mgmtType = default("Ieee80211MgmtAdhoc");  // use adhoc management
         string routingProtocol @enum("AODVUU","DYMOUM","DYMO","DSRUU","OLSR","OLSR_ETX","DSDV_2","Batman") = default("AODVUU");
-        IPForward = default(true);
-
     submodules:
         manetrouting: <routingProtocol> like IManetRouting if routingProtocol != "" {
             @display("p=522,307");
@@ -76,7 +74,6 @@ module NA_AttackerAdhocHost extends NA_WirelessHost
             @display("p=708,205");
         }
     connections:
-        networkLayer.manetOut --> manetrouting.ipIn if routingProtocol != "";
-        networkLayer.manetIn <-- manetrouting.ipOut if routingProtocol != "";
-        
+        networkLayer.transportOut++ --> manetrouting.ipIn if routingProtocol != "";
+        networkLayer.transportIn++ <-- manetrouting.ipOut if routingProtocol != ""; 
 }

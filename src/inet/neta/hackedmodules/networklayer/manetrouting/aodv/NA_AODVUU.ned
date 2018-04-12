@@ -51,7 +51,7 @@ simple NA_AODVUU extends BaseRouting like IManetRouting
 
         //# Normal parameters.
         @display("i=,red;i2=status/excl3");
-        @class(NA_AODVUU);
+        @class(neta::NA_AODVUU);
         
         
         @reactive;                             // IP module will send control messages when no route is present to the destination 

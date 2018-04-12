@@ -47,7 +47,7 @@ simple NA_IPv4 extends IPv4
         
         //# Normal parameters
         @display("i=block/routing,red;i2=status/excl3");
-	    @class(NA_IPv4);
+	    @class(neta::NA_IPv4);
 	    
 	    //# Dropping attack statistics
 	    @signal[droppings](type=long); // Signal for number of packet discarded
