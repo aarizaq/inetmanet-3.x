@@ -174,7 +174,7 @@ module PhysicalEnvironment like IPhysicalEnvironment
         double spaceMaxY @unit(m) = default(0m/0); // upper bound of y coordinates in space, NaN means determined by physical objects, NaN by default
         double spaceMaxZ @unit(m) = default(0m/0); // upper bound of z coordinates in space, NaN means determined by physical objects, NaN by default
         xml config = default(xml("<config/>"));
-        @display("i=misc/town_s");
+        @display("i=misc/town");
         @class(PhysicalEnvironment);
 
     submodules:

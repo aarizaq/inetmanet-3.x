@@ -43,7 +43,7 @@ class INET_API GenericNetworkProtocolInterfaceData : public InterfaceProtocolDat
     enum { F_ADDRESS, F_METRIC };
 
   protected:
-    void changed1(int fieldId) { changed(NF_INTERFACE_GENERICNETWORKPROTOCOLCONFIG_CHANGED, fieldId); }
+    void changed1(int fieldId) { changed(interfaceGnpConfigChangedSignal, fieldId); }
 
   private:
     // copying not supported: following are private and also left undefined
@@ -52,7 +52,7 @@ class INET_API GenericNetworkProtocolInterfaceData : public InterfaceProtocolDat
 
   public:
     GenericNetworkProtocolInterfaceData() { metric = 0; }
-    virtual std::string info() const override;
+    virtual std::string str() const override;
     virtual std::string detailedInfo() const override;
 
     /** @name Getters */

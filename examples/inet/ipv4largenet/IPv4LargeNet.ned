@@ -20,7 +20,7 @@ package inet.examples.inet.ipv4largenet;
 
 import inet.linklayer.ethernet.EtherBus;
 import inet.linklayer.ethernet.EtherHub;
-import inet.networklayer.configurator.ipv4.IPv4NetworkConfigurator;
+import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.ethernet.EtherSwitch;
 import inet.node.inet.Router;
 import inet.node.inet.StandardHost;
@@ -124,7 +124,7 @@ module IPv4LargeLAN
         channel cabletobus extends DatarateChannel
         {
             parameters:
-                delay = 0;
+                delay = 0s;
                 datarate = 10Mbps;
         }
     submodules:
@@ -200,7 +200,7 @@ network IPv4LargeNet
         channel cabletoserver extends DatarateChannel
         {
             parameters:
-                delay = 0;
+                delay = 0s;
                 datarate = 1Gbps;
         }
     submodules:
@@ -228,7 +228,7 @@ network IPv4LargeNet
         slanD[ds]: IPv4SmallLAN;
         mlanD[dm]: IPv4MediumLAN;
         llanD[dl]: IPv4LargeLAN;
-        configurator: IPv4NetworkConfigurator {
+        configurator: Ipv4NetworkConfigurator {
             @display("p=121,37");
         }
     connections:

@@ -19,8 +19,7 @@
 #include "GaugeFigure.h"
 #include "inet/common/INETUtils.h"
 
-//TODO namespace inet { -- for the moment commented out, as OMNeT++ 5.0 cannot instantiate a figure from a namespace
-using namespace inet;
+namespace inet {
 
 Register_Figure("gauge", GaugeFigure);
 
@@ -63,10 +62,10 @@ GaugeFigure::GaugeFigure(const char *name) : cGroupFigure(name)
 GaugeFigure::~GaugeFigure()
 {
     // delete figures which is not in canvas
-    for (int i = curvesOnCanvas; i < curveFigures.size(); ++i)
+    for (size_t i = curvesOnCanvas; i < curveFigures.size(); ++i)
         delete curveFigures[i];
 
-    for (int i = numTicks; i < tickFigures.size(); ++i) {
+    for (size_t i = numTicks; i < tickFigures.size(); ++i) {
         delete tickFigures[i];
         delete numberFigures[i];
     }
@@ -517,5 +516,5 @@ void GaugeFigure::refresh()
     }
 }
 
-// } // namespace inet
+} // namespace inet
 

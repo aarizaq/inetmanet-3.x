@@ -42,7 +42,7 @@ echo -e "Additional arguments passed to fingerprint test script: " $@ "\n"
 
 cd tests/fingerprint
 if [ "$MODE" = "debug" ]; then
-    ./fingerprints -e opp_run_dbg "$@"
+    ./fingerprinttest -d "$@"
 else
-    ./fingerprints -e opp_run_release "$@"
+    ./fingerprinttest "$@"
 fi

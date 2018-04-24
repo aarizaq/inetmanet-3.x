@@ -1,3 +1,71 @@
+====== inet-4.x ======
+
+2018-01-18  Levente Mészáros
+
+	Replaced packet tags API calls to use the new API.
+
+2018-01-12  Zoltan Bojthe
+
+	Removed 'Routing' from name of all routing protocol classes/files.
+
+2018-01-05  Zoltan Bojthe
+
+	Renamed NF_* signals to use camel case.
+	Renamed signal variables to *Signal.
+
+2017-12-22  ------ inet-3.99.2 released ------
+
+2017-12-20  Zoltan Bojthe
+
+	Renaming:
+	    IPv4NetworkConfigurator -> Ipv4NetworkConfigurator
+	    RIPCommand -> RipCommand
+	    RIPEntry -> RipEntry
+	    RIPInterfaceEntry -> RipInterfaceEntry
+	    RIPMode -> RipMode
+	    RIPPacket -> RipPacket
+	    RIPRoute -> RipRoute
+	    RIPRouting -> RipRouting
+	    RIP_AF -> RipAf
+	    UDP -> Udp
+	    UDPControlInfo -> UdpControlInfo
+	    UDPSocket -> UdpSocket
+
+2017-12-15  Zoltan Bojthe
+
+	Renamed deprecated info() to str().
+	Removed unnecessary cPar::xmlValue(), cPar::doubleValue() calls.
+
+2017-12-14  Levente Mészáros
+
+	Removed unnecessary markImmutable() calls.
+
+2017-12-11  Zoltan Bojthe
+
+	Updated for new msgc function names: getFooForUpdate, insertFoo, eraseFoo, etc.
+
+2017-11-14  Zoltan Bojthe
+
+	Replaced "int foo @enum(FooEnum)" to FooEnum foo.
+
+2017-11-17  Zoltan Bojthe
+
+	Added required import statements to MSG files according to new syntax.
+
+2017-11-16  ------ inet-3.99.1 released ------
+
+2017-10-19  Zoltan Bojthe
+
+	Fixed class declaration namespace.
+
+2017-02-06  Zoltan Bojthe
+
+	Adapted to the new Chunk based Packet API.
+
+2016-06-02  Levente Mészáros
+
+	Changed RIPRouting to implement IApp interface.
+
 ====== inet-3.x ======
 
 2018-03-21  ------ inet-3.6.4 released ------

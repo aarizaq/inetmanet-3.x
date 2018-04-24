@@ -40,6 +40,15 @@ precompiled.h.*
 *.vec
 *.vci
 *.anf
+*.aux
+*.bbl
+*.blg
+*.idx
+*.toc
+*.pdf
+*.ilg
+*.ind
+*.synctex.gz
 .buildlog*
 
 # ignore binary files

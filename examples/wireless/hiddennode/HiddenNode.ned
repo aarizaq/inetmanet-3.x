@@ -18,10 +18,11 @@
 
 package inet.examples.wireless.hiddennode;
 
-import inet.applications.ethernet.EtherAppCli;
+import inet.applications.ethernet.EtherAppClient;
 import inet.common.queue.Sink;
-import inet.linklayer.ieee80211.Ieee80211Nic;
+import inet.linklayer.ieee80211.Ieee80211Interface;
 import inet.mobility.static.StationaryMobility;
+import inet.networklayer.common.InterfaceTable;
 import inet.physicallayer.ieee80211.packetlevel.Ieee80211ScalarRadioMedium;
 
 
@@ -30,17 +31,18 @@ module Node
     parameters:
         @display("i=device/wifilaptop");
         @networkNode();
-        *.interfaceTableModule = "";
+        *.interfaceTableModule = default(absPath(".interfaceTable"));
     gates:
         input radioIn @directIn;
 
     submodules:
-        cli: EtherAppCli {
+        interfaceTable: InterfaceTable;
+        cli: EtherAppClient {
             parameters:
                 registerSAP = false;
                 @display("b=40,24;p=180,60,col");
         }
-        wlan: Ieee80211Nic {
+        wlan: Ieee80211Interface {
             parameters:
                 @display("p=112,134;q=queue");
                 mgmtType = "Ieee80211MgmtAdhoc";
@@ -60,16 +62,17 @@ module SinkNode
     parameters:
         @display("i=device/wifilaptop");
         @networkNode();
-        *.interfaceTableModule = "";
+        *.interfaceTableModule = default(absPath(".interfaceTable"));
     gates:
         input radioIn @directIn;
 
     submodules:
+        interfaceTable: InterfaceTable;
         sink: Sink {
             parameters:
                 @display("p=210,68,col");
         }
-        wlan: Ieee80211Nic {
+        wlan: Ieee80211Interface {
             parameters:
                 @display("p=120,158;q=queue");
                 mgmtType = "Ieee80211MgmtAdhoc";

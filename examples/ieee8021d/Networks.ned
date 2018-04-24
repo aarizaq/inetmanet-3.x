@@ -15,10 +15,9 @@
 
 package inet.examples.ieee8021d;
 
-import inet.common.lifecycle.LifecycleController;
 import inet.common.scenario.ScenarioManager;
 import inet.linklayer.configurator.L2NetworkConfigurator;
-import inet.linklayer.ieee8021d.tester.STPTester;
+import inet.linklayer.ieee8021d.tester.StpTester;
 import inet.node.ethernet.Eth1G;
 import inet.node.ethernet.EtherHost;
 import inet.node.ethernet.EtherSwitch;
@@ -28,7 +27,7 @@ network SwitchNetwork
 {
     @display("bgb=689,368");
     submodules:
-        stpTester: STPTester {
+        stpTester: StpTester {
             @display("p=75,277");
         }
         scenarioManager: ScenarioManager {
@@ -36,9 +35,6 @@ network SwitchNetwork
         }
         l2NetworkConfigurator: L2NetworkConfigurator {
             @display("p=75,217");
-        }
-        lifecycleController: LifecycleController {
-            @display("p=75,155");
         }
 
         switch1: EtherSwitch {

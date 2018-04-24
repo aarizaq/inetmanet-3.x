@@ -16,8 +16,8 @@
 //
 package inet.examples.manetrouting.multiradio;
 
-import inet.networklayer.configurator.ipv4.IPv4NetworkConfigurator;
-import inet.node.dymo.DYMORouter;
+import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
+import inet.node.dymo.DymoRouter;
 import inet.physicallayer.ieee80211.packetlevel.Ieee80211ScalarRadioMedium;
 
 
@@ -33,14 +33,14 @@ network MultiRadio
         radioMedium: Ieee80211ScalarRadioMedium {
             @display("p=83,15");
         }
-        configurator: IPv4NetworkConfigurator {
+        configurator: Ipv4NetworkConfigurator {
             config=xml("<config><interface hosts='*' address='10.0.0.x' netmask='255.255.255.0'/></config>");
             addStaticRoutes = false;
             addDefaultRoutes = false;
             addSubnetRoutes = false;
             @display("p=253,15");
         }
-        mobileHost[numHosts]: DYMORouter {
+        mobileHost[numHosts]: DymoRouter {
             @display("p=100,100;r=,,#000040");
         }
     connections allowunconnected:

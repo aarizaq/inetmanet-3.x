@@ -21,10 +21,12 @@
 // This file is based on the cSocketRTScheduler.cc of OMNeT++ written by
 // Andras Varga.
 
-#include "inet/linklayer/ext/cSocketRTScheduler.h"
-
-#include "inet/linklayer/common/Ieee802Ctrl_m.h"
+#include "inet/common/packet/chunk/BytesChunk.h"
+#include "inet/common/packet/Packet.h"
 #include "inet/common/serializer/headers/ethernethdr.h"
+#include "inet/linklayer/common/Ieee802Ctrl_m.h"
+#include "inet/linklayer/common/EtherType_m.h"
+#include "inet/linklayer/ext/cSocketRTScheduler.h"
 
 #if defined(_WIN32) || defined(__WIN32__) || defined(WIN32) || defined(__CYGWIN__) || defined(_WIN64)
 #include <ws2tcpip.h>
@@ -40,26 +42,16 @@
 
 namespace inet {
 
-#if OMNETPP_BUILDNUM <= 1003
-#define FES(sim) (&sim->msgQueue)
-#else
 #define FES(sim) (sim->getFES())
-#endif
 
 std::vector<cModule *> cSocketRTScheduler::modules;
 std::vector<pcap_t *> cSocketRTScheduler::pds;
 std::vector<int32> cSocketRTScheduler::datalinks;
 std::vector<int32> cSocketRTScheduler::headerLengths;
 
-timeval cSocketRTScheduler::baseTime;
+int64_t cSocketRTScheduler::baseTime;
 
 Register_Class(cSocketRTScheduler);
-
-inline std::ostream& operator<<(std::ostream& out, const timeval& tv)
-{
-    return out << (uint32)tv.tv_sec << "s" << tv.tv_usec << "us";
-}
-
 
 cSocketRTScheduler::cSocketRTScheduler() : cScheduler()
 {
@@ -72,7 +64,7 @@ cSocketRTScheduler::~cSocketRTScheduler()
 
 void cSocketRTScheduler::startRun()
 {
-    gettimeofday(&baseTime, nullptr);
+    baseTime = opp_get_monotonic_clock_usecs();
 
     // Enabling sending makes no sense when we can't receive...
     fd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
@@ -106,8 +98,8 @@ void cSocketRTScheduler::endRun()
 
 void cSocketRTScheduler::executionResumed()
 {
-    gettimeofday(&baseTime, nullptr);
-    baseTime = timeval_substract(baseTime, sim->getSimTime().dbl());
+    baseTime = opp_get_monotonic_clock_usecs();
+    baseTime = baseTime - sim->getSimTime().inUnit(SIMTIME_US);
 }
 
 void cSocketRTScheduler::setInterfaceModule(cModule *mod, const char *dev, const char *filter)
@@ -185,7 +177,6 @@ static void packet_handler(u_char *user, const struct pcap_pkthdr *hdr, const u_
     int32 headerLength;
     int32 datalink;
     cModule *module;
-    struct serializer::ether_header *ethernet_hdr;
 
     i = *(uint16 *)user;
     datalink = cSocketRTScheduler::datalinks.at(i);
@@ -193,37 +184,33 @@ static void packet_handler(u_char *user, const struct pcap_pkthdr *hdr, const u_
     module = cSocketRTScheduler::modules.at(i);
 
     // skip ethernet frames not encapsulating an IP packet.
-    if (datalink == DLT_EN10MB) {
-        ethernet_hdr = (struct serializer::ether_header *)bytes;
-        if (ntohs(ethernet_hdr->ether_type) != ETHERTYPE_IPv4)
+    // TODO: how about ipv6 and other protocols?
+    if (datalink == DLT_EN10MB && hdr->caplen > ETHER_HDR_LEN) {
+        uint16_t etherType = (uint16_t)(bytes[ETHER_ADDR_LEN * 2]) << 8 | bytes[ETHER_ADDR_LEN * 2 + 1];
+        //TODO get ethertype from snap header when packet has snap header
+        if (etherType != ETHERTYPE_IPv4) // ipv4
             return;
     }
 
-    // put the IP packet from wire into data[] array of ExtFrame
-    ExtFrame *notificationMsg = new ExtFrame("rtEvent");
-    notificationMsg->setDataArraySize(hdr->caplen - headerLength);
-    for (uint16 j = 0; j < hdr->caplen - headerLength; j++)
-        notificationMsg->setData(j, bytes[j + headerLength]);
+    // put the IP packet from wire into Packet
+    uint32_t pklen = hdr->caplen - headerLength;
+    Packet *notificationMsg = new Packet("rtEvent");
+    const auto& bytesChunk = makeShared<BytesChunk>(bytes + headerLength, pklen);
+    notificationMsg->insertAtBack(bytesChunk);
 
     // signalize new incoming packet to the interface via cMessage
-    EV << "Captured " << hdr->caplen - headerLength << " bytes for an IP packet.\n";
-    timeval curTime;
-    gettimeofday(&curTime, nullptr);
-    curTime = timeval_substract(curTime, cSocketRTScheduler::baseTime);
-    simtime_t t = curTime.tv_sec + curTime.tv_usec * 1e-6;
+    EV << "Captured " << pklen << " bytes for an IP packet.\n";
+    int64_t curTime = opp_get_monotonic_clock_usecs();
+    simtime_t t(curTime - cSocketRTScheduler::baseTime, SIMTIME_US);
     // TBD assert that it's somehow not smaller than previous event's time
-#if OMNETPP_BUILDNUM <= 1003
-    notificationMsg->setArrival(module, -1, t);
-#else
     notificationMsg->setArrival(module->getId(), -1, t);
-#endif
     FES(getSimulation())->insert(notificationMsg);
 }
 
 bool cSocketRTScheduler::receiveWithTimeout(long usec)
 {
     bool found;
-    struct timeval timeout;
+    timeval timeout;
     int32 n;
 #ifdef __linux__
     int32 fd[FD_SETSIZE], maxfd;
@@ -263,26 +250,25 @@ bool cSocketRTScheduler::receiveWithTimeout(long usec)
     return found;
 }
 
-int cSocketRTScheduler::receiveUntil(const timeval& targetTime)
+int cSocketRTScheduler::receiveUntil(int64_t targetTime)
 {
     // if there's more than 2*UI_REFRESH_TIME to wait, wait in UI_REFRESH_TIME chunks
     // in order to keep UI responsiveness by invoking getEnvir()->idle()
-    timeval curTime;
-    gettimeofday(&curTime, nullptr);
-    while (targetTime.tv_sec-curTime.tv_sec >=2 ||
-           timeval_diff_usec(targetTime, curTime) >= 2*UI_REFRESH_TIME)
+    int64_t curTime = opp_get_monotonic_clock_usecs();
+
+    while ((targetTime - curTime) >= 2000000 || (targetTime - curTime) >= 2*UI_REFRESH_TIME)
     {
         if (receiveWithTimeout(UI_REFRESH_TIME))
             return 1;
         if (getEnvir()->idle())
             return -1;
-        gettimeofday(&curTime, nullptr);
+        curTime = opp_get_monotonic_clock_usecs();
     }
 
     // difference is now at most UI_REFRESH_TIME, do it at once
-    long usec = timeval_diff_usec(targetTime, curTime);
-    if (usec>0)
-        if (receiveWithTimeout(usec))
+    int64_t remaining = targetTime - curTime;
+    if (remaining > 0)
+        if (receiveWithTimeout(remaining))
             return 1;
     return 0;
 }
@@ -294,24 +280,25 @@ cEvent *cSocketRTScheduler::guessNextEvent()
 
 cEvent *cSocketRTScheduler::takeNextEvent()
 {
-    timeval targetTime;
+    int64_t targetTime;
 
     // calculate target time
     cEvent *event = FES(sim)->peekFirst();
     if (!event) {
-        targetTime.tv_sec = LONG_MAX;
-        targetTime.tv_usec = 0;
+        // This way targetTime will always be "as far in the future as possible", considering
+        // how integer overflows work in conjunction with comparisons in C++ (in practice...)
+        targetTime = baseTime + INT64_MAX;
     }
     else {
         // use time of next event
         simtime_t eventSimtime = event->getArrivalTime();
-        targetTime = timeval_add(baseTime, eventSimtime.dbl());
+        targetTime = baseTime + eventSimtime.inUnit(SIMTIME_US);
     }
 
     // if needed, wait until that time arrives
-    timeval curTime;
-    gettimeofday(&curTime, nullptr);
-    if (timeval_greater(targetTime, curTime))
+    int64_t curTime = opp_get_monotonic_clock_usecs();
+
+    if (targetTime > curTime)
     {
         int status = receiveUntil(targetTime);
         if (status == -1)
@@ -322,14 +309,13 @@ cEvent *cSocketRTScheduler::takeNextEvent()
     else {
         // we're behind -- customized versions of this class may
         // alert if we're too much behind, whatever that means
-        timeval diffTime = timeval_substract(curTime, targetTime);
-        EV << "We are behind: " << diffTime.tv_sec + diffTime.tv_usec * 1e-6 << " seconds\n";
+        int64_t diffTime = curTime - targetTime;
+        EV << "We are behind: " << diffTime * 1e-6 << " seconds\n";
     }
     cEvent *tmp = FES(sim)->removeFirst();
     ASSERT(tmp == event);
     return event;
 }
-#undef cEvent
 
 void cSocketRTScheduler::putBackEvent(cEvent *event)
 {

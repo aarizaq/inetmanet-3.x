@@ -17,41 +17,13 @@
 
 package inet.linklayer.ieee80211.mac;
 
+import inet.linklayer.base.MacProtocolBase;
 import inet.linklayer.ieee80211.IIeee80211Mac;
-import inet.linklayer.ieee80211.mac.contract.IRateControl;
-import inet.linklayer.ieee80211.mac.contract.IRateSelection;
 import inet.linklayer.ieee80211.mac.contract.IRx;
 import inet.linklayer.ieee80211.mac.contract.IStatistics;
 import inet.linklayer.ieee80211.mac.contract.ITx;
 import inet.linklayer.ieee80211.mac.coordinationfunction.Dcf;
 import inet.linklayer.ieee80211.mac.coordinationfunction.Hcf;
-
-
-// near copy-paste of inet.linklayer.base.MACProtocolBase to work around "compound-module cannot extend a simple-module" error in OMNeT++ 4.x
-module LayeredProtocolBase
-{
-    parameters:
-        @signal[packetSentToUpper](type=cPacket);
-        @signal[packetReceivedFromUpper](type=cPacket);
-        @signal[packetFromUpperDropped](type=cPacket);
-        @signal[packetSentToLower](type=cPacket);
-        @signal[packetReceivedFromLower](type=cPacket);
-        @signal[packetFromLowerDropped](type=cPacket);
-}
-
-// near copy-paste of inet.linklayer.base.MACProtocolBase to work around "compound-module cannot extend a simple-module" error in OMNeT++ 4.x
-module MACProtocolBase extends LayeredProtocolBase
-{
-    parameters:
-        string interfaceTableModule;
-        int mtu @unit("B") = default(2304B);
-        @display("i=block/rxtx");
-    gates:
-        input upperLayerIn @labels(INetworkDatagram/down);
-        output upperLayerOut @labels(INetworkDatagram/up);
-        input lowerLayerIn @labels(ILinkLayerFrame/up);
-        output lowerLayerOut @labels(ILinkLayerFrame/down);
-}
 
 //
 // Implementation of the 802.11b MAC protocol. This module is intended
@@ -60,9 +32,9 @@ module MACProtocolBase extends LayeredProtocolBase
 // per-packet bitrate setting gets implemented.)
 //
 // Encapsulation/decapsulation must be done in the upper layers. (It is
-// typically in the 802.11 management module, see in ~Ieee80211Nic).
-// The base class for 802.11 frame messages is ~Ieee80211Frame, but this
-// module expects ~Ieee80211DataOrMgmtFrame (a subclass) from upper layers
+// typically in the 802.11 management module, see in ~Ieee80211Interface).
+// The base class for 802.11 frame messages is ~Ieee80211MacHeader, but this
+// module expects ~Ieee80211DataOrMgmtHeader (a subclass) from upper layers
 // (the management module). This module will assign the transmitter address
 // (address 2) and the frame sequence number/fragment number fields in the
 // frames; all other fields must already be filled when this module gets
@@ -86,27 +58,42 @@ module MACProtocolBase extends LayeredProtocolBase
 // listen interval which is related to power management, capability information
 // which is related to PCF and other non-modelled features).
 //
-module Ieee80211Mac extends MACProtocolBase like IIeee80211Mac
+module Ieee80211Mac extends MacProtocolBase like IIeee80211Mac
 {
     parameters:
+        string mibModule;
         string address = default("auto"); // MAC address as hex string (12 hex digits), or
                                           // "auto". "auto" values will be replaced by
                                           // a generated MAC address in init stage 0.
         string modeSet @enum("a", "b", "g(erp)", "g(mixed)", "n", "p") = default("g(mixed)");
+        string fcsMode @enum("declared","computed") = default("declared");
 
+        int mtu @unit(B) = default(2304B);
         bool qosStation = default(false);
 
+        *.mibModule = default(absPath(mibModule));
         *.rxModule = "^.rx";
         *.txModule = "^.tx";
 
         @display("i=block/layer");
         @class(Ieee80211Mac);
+        @signal[packetSentToPeer](type=Packet);
+        @signal[packetReceivedFromPeer](type=Packet);
         @statistic[passedUpPk](title="packets passed to higher layer"; source=packetSentToUpper; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
         @statistic[sentDownPk](title="packets sent to lower layer"; source=packetSentToLower; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
-        @statistic[rcvdPkFromHL](title="packets received from higher layer"; source=packetReceivedFromUpper; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
-        @statistic[rcvdPkFromLL](title="packets received from lower layer"; source=packetReceivedFromLower; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[rcvdPkFromHl](title="packets received from higher layer"; source=packetReceivedFromUpper; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[rcvdPkFromLl](title="packets received from lower layer"; source=packetReceivedFromLower; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
 
-        @signal[NF_MODESET_CHANGED](type=inet::physicallayer::Ieee80211ModeSet);
+        @signal[linkBroken];
+        @statistic[linkBroken](title="link break"; source=linkBroken; record=count; interpolationmode=none);
+        @statistic[packetDropIncorrectlyReceived](title="packet drop: incorrectly received"; source=packetDropReasonIsIncorrectlyReceived(packetDropped); record=count,sum(packetBytes),vector(packetBytes); interpolationmode=none);
+        @statistic[packetDropNotAddressedToUs](title="packet drop: not addressed to us"; source=packetDropReasonIsNotAddressedToUs(packetDropped); record=count,sum(packetBytes),vector(packetBytes); interpolationmode=none);
+        @statistic[packetDropQueueOverflow](title="packet drop: queue overflow"; source=packetDropReasonIsQueueOverflow(packetDropped); record=count,sum(packetBytes),vector(packetBytes); interpolationmode=none);
+        @statistic[packetDropRetryLimitReached](title="packet drop: retry limit reached"; source=packetDropReasonIsRetryLimitReached(packetDropped); record=count,sum(packetBytes),vector(packetBytes); interpolationmode=none);
+        @signal[modesetChanged](type=inet::physicallayer::Ieee80211ModeSet);
+    gates:
+        input mgmtIn;
+        output mgmtOut;
     submodules:
         dcf: Dcf {
             parameters:
@@ -114,19 +101,23 @@ module Ieee80211Mac extends MACProtocolBase like IIeee80211Mac
         }
         hcf: Hcf {
             parameters:
-                @display("p=200,100");
+                @display("p=250,100");
+        }
+        ds: Ds {
+            parameters:
+                @display("p=400,100");
         }
         rx: <default("Rx")> like IRx {
             parameters:
-                @display("p=100,200");
+                @display("p=100,250");
         }
         tx: <default("Tx")> like ITx {
             parameters:
-                @display("p=200,200");
+                @display("p=250,250");
         }
         statistics: <default("BasicStatistics")> like IStatistics {
             parameters:
-                @display("p=300,100");
+                @display("p=400,250");
         }
 }
 
@@ -138,15 +129,15 @@ module Ieee80211CompatibleMac extends Ieee80211Mac
 {
     parameters:
         string rateControlType = default("");
-        string opMode @enum("a", "b", "g(erp)", "g(mixed)", "n", "p") = default("g(mixed)");
-        double bitrate @unit("bps") = default(-1bps); // for backward compatibility
-        double basicBitrate @unit("bps") = default(-1bps); // for backward compatibility
-        double dataBitrate @unit("bps") = default(bitrate);
-        double mgmtBitrate @unit("bps") = default(basicBitrate);
-        double multicastBitrate @unit("bps") = default(basicBitrate);
-        double controlBitrate @unit("bps") = default(-1bps);
-        double initialRateControlRate @unit("bps") = default(-1bps);
-        int rtsThresholdBytes @unit("B") = default(2346B);
+        string opMode @enum("a","b","g(erp)","g(mixed)","n","p") = default("g(mixed)");
+        double bitrate @unit(bps) = default(-1bps); // for backward compatibility
+        double basicBitrate @unit(bps) = default(-1bps); // for backward compatibility
+        double dataBitrate @unit(bps) = default(bitrate);
+        double mgmtBitrate @unit(bps) = default(basicBitrate);
+        double multicastBitrate @unit(bps) = default(basicBitrate);
+        double controlBitrate @unit(bps) = default(-1bps);
+        double initialRateControlRate @unit(bps) = default(-1bps);
+        int rtsThresholdBytes @unit(B) = default(2346B);
         int retryLimit = default(-1);
         bool EDCA = default(false);
         int maxQueueSize = default(14);
@@ -161,7 +152,7 @@ module Ieee80211CompatibleMac extends Ieee80211Mac
         double TXOP3 @unit(s) = default(1.504ms);
         int AIFSN = default(2); // if there is only one AC (EDCA = false)
         bool prioritizeMulticast = default(false); // if true, prioritize multicast frames (9.3.2.1 Fundamental access)
-        double slotTime @unit("s") = default(-1s); // slot time, -1 means default (mode dependent)
+        double slotTime @unit(s) = default(-1s); // slot time, -1 means default (mode dependent)
         int cwMinData = default(-1); // contention window for normal data frames, -1 means default
         int cwMaxData = default(-1); // contention window for normal data frames, -1 means default
 

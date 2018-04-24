@@ -18,13 +18,6 @@
 
 #include "inet/common/INETDefs.h"
 
-// compatibility for pre-4.2b3 omnetpp
-#ifndef Define_NED_Math_Function
-#define cNEDValue           cDynamicExpression::Value
-#define stringValue()       s.c_str()
-#define stdstringValue()    s
-#endif // ifndef Define_NED_Math_Function
-
 namespace inet {
 
 namespace utils {
@@ -256,7 +249,7 @@ static cNedValue nedf_intWithUnit(cComponent *contextComponent, cNedValue argv[]
 {
     switch (argv[0].getType()) {
         case cNedValue::BOOL:
-            return (intpar_t)( (bool)argv[0] ? 1 : 0 );
+            return (intpar_t)( argv[0].boolValue() ? 1 : 0 );
         case cNedValue::INT:
             return argv[0];
         case cNedValue::DOUBLE:

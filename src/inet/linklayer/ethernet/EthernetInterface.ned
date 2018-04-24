@@ -21,29 +21,32 @@
 package inet.linklayer.ethernet;
 
 import inet.common.IHook;
-import inet.linklayer.contract.IEtherMAC;
+import inet.linklayer.contract.IEtherMac;
+import inet.linklayer.contract.IEthernetInterface;
 import inet.linklayer.contract.ITrafficConditioner;
-import inet.linklayer.contract.IWiredNic;
 
 
 //
-// Ethernet network interface. Complements ~EtherMAC and ~EtherEncap
+// Ethernet network interface. Complements ~EtherMac and ~EtherEncap
 // with an output queue for QoS and RED support.
 //
-module EthernetInterface like IWiredNic
+module EthernetInterface like IEthernetInterface
 {
     parameters:
+        @class(InterfaceEntry);
         string interfaceTableModule;
         bool csmacdSupport = default(false);  // by default CSMA/CD is turned off, so only point-to-point duplex links are supported.
-        string macType = default(csmacdSupport ? "EtherMAC" : "EtherMACFullDuplex"); // ~EtherMAC or ~EtherMACFullDuplex
+        string macType = default(csmacdSupport ? "EtherMac" : "EtherMacFullDuplex"); // ~EtherMac or ~EtherMacFullDuplex
         string queueType = default(""); // ~DropTailQueue, or a Diffserv queue; set to "" for use of an internal queue
         string ingressTCType = default(""); // a module type implementing ~ITrafficConditioner for optional traffic conditioning of incoming traffic
         string egressTCType = default(""); // a module type implementing ~ITrafficConditioner for optional traffic conditioning of outgoing traffic
         string encapType = default("EtherEncap");   // module for encapsulation/decapsulation; use ~EtherEncapDummy for no encapsulation/decapsulation
+        string fcsMode @enum("declaredCorrect","declaredIncorrect","computed") = default("declaredCorrect");
         int numOutputHooks = default(0);
         int numInputHooks = default(0);
         @display("i=block/ifcard;bgl=2");
         *.interfaceTableModule = default(absPath(interfaceTableModule));
+        *.fcsMode = fcsMode;
     gates:
         input upperLayerIn;
         output upperLayerOut;
@@ -61,12 +64,12 @@ module EthernetInterface like IWiredNic
         egressTC: <egressTCType> like ITrafficConditioner if egressTCType != "" {
             @display("p=53,158");
         }
-        queue: EtherQoSQueue if queueType != "" {
+        queue: EtherQosQueue if queueType != "" {
             parameters:
                 dataQueueType = queueType;
                 @display("p=107,263;q=l2queue");
         }
-        mac: <macType> like IEtherMAC {
+        mac: <macType> like IEtherMac {
             parameters:
                 queueModule = (queueType == "" ? "" : "^.queue");
                 txQueueLimit = (queueType == "" ? 10000 : 1); // queue sends one packet at a time

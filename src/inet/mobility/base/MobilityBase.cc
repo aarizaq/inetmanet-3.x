@@ -20,7 +20,7 @@
  * part of:     framework implementation developed by tkn
  **************************************************************************/
 
-#include "inet/common/geometry/common/CoordinateSystem.h"
+#include "inet/common/geometry/common/GeographicCoordinateSystem.h"
 #include "inet/common/INETMath.h"
 #include "inet/mobility/base/MobilityBase.h"
 #ifdef WITH_VISUALIZERS
@@ -72,17 +72,19 @@ void MobilityBase::initialize(int stage)
         constraintAreaMax.y = par("constraintAreaMaxY");
         constraintAreaMax.z = par("constraintAreaMaxZ");
         bool visualizeMobility = par("visualizeMobility");
-        if (visualizeMobility)
+        if (visualizeMobility) {
             visualRepresentation = findVisualRepresentation();
+            if (visualRepresentation != nullptr) {
+                auto visualizationTarget = visualRepresentation->getParentModule();
+                canvasProjection = CanvasProjection::getCanvasProjection(visualizationTarget->getCanvas());
+            }
+        }
         WATCH(constraintAreaMin);
         WATCH(constraintAreaMax);
         WATCH(lastPosition);
+        WATCH(lastOrientation);
     }
     else if (stage == INITSTAGE_PHYSICAL_ENVIRONMENT_2) {
-        if (visualRepresentation != nullptr) {
-            auto visualizationTarget = visualRepresentation->getParentModule();
-            canvasProjection = CanvasProjection::getCanvasProjection(visualizationTarget->getCanvas());
-        }
         initializeOrientation();
         initializePosition();
     }
@@ -101,7 +103,7 @@ void MobilityBase::setInitialPosition()
     // reading the coordinates from omnetpp.ini makes predefined scenarios a lot easier
     bool filled = false;
     auto coordinateSystem = getModuleFromPar<IGeographicCoordinateSystem>(par("coordinateSystemModule"), this, false);
-    if (hasPar("initFromDisplayString") && par("initFromDisplayString").boolValue() && visualRepresentation) {
+    if (hasPar("initFromDisplayString") && par("initFromDisplayString") && visualRepresentation) {
         const char *s = visualRepresentation->getDisplayString().getTagArg("p", 2);
         if (s && *s)
             throw cRuntimeError("The coordinates of '%s' are invalid. Please remove automatic arrangement"
@@ -109,7 +111,7 @@ void MobilityBase::setInitialPosition()
         filled = parseIntTo(visualRepresentation->getDisplayString().getTagArg("p", 0), lastPosition.x) &&
                  parseIntTo(visualRepresentation->getDisplayString().getTagArg("p", 1), lastPosition.y);
         if (filled)
-            lastPosition.z = hasPar("initialZ") ? par("initialZ").doubleValue() : 0.0;
+            lastPosition.z = hasPar("initialZ") ? par("initialZ") : 0.0;
     }
     // not all mobility models have "initialX", "initialY" and "initialZ" parameters
     else if (coordinateSystem == nullptr && hasPar("initialX") && hasPar("initialY") && hasPar("initialZ")) {
@@ -119,7 +121,10 @@ void MobilityBase::setInitialPosition()
         filled = true;
     }
     else if (coordinateSystem != nullptr && hasPar("initialLatitude") && hasPar("initialLongitude") && hasPar("initialAltitude")) {
-        lastPosition = coordinateSystem->computePlaygroundCoordinate(GeoCoord(par("initialLatitude"), par("initialLongitude"), par("initialAltitude")));
+        auto initialLatitude = deg(par("initialLatitude"));
+        auto initialLongitude = deg(par("initialLongitude"));
+        auto initialAltitude = m(par("initialAltitude"));
+        lastPosition = coordinateSystem->computePlaygroundCoordinate(GeoCoord(initialLatitude, initialLongitude, initialAltitude));
         filled = true;
     }
     if (!filled)
@@ -139,10 +144,12 @@ void MobilityBase::checkPosition()
 
 void MobilityBase::initializeOrientation()
 {
-    if (hasPar("initialAlpha") && hasPar("initialBeta") && hasPar("initialGamma")) {
-        lastOrientation.alpha = par("initialAlpha");
-        lastOrientation.beta = par("initialBeta");
-        lastOrientation.gamma = par("initialGamma");
+    if (hasPar("initialHeading") && hasPar("initialElevation") && hasPar("initialBank")) {
+        lastOrientation.alpha = deg(par("initialHeading"));
+        auto initialElevation = deg(par("initialElevation"));
+        // NOTE: negation is needed, see IMobility comments on orientation
+        lastOrientation.beta = -initialElevation;
+        lastOrientation.gamma = deg(par("initialBank"));
     }
 }
 
@@ -205,22 +212,22 @@ static int reflect(double min, double max, double& coordinate, double& speed)
     return sign;
 }
 
-void MobilityBase::reflectIfOutside(Coord& targetPosition, Coord& speed, double& angle)
+void MobilityBase::reflectIfOutside(Coord& targetPosition, Coord& velocity, rad& angle)
 {
     int sign;
     double dummy = NaN;
     if (lastPosition.x < constraintAreaMin.x || constraintAreaMax.x < lastPosition.x) {
-        sign = reflect(constraintAreaMin.x, constraintAreaMax.x, lastPosition.x, speed.x);
+        sign = reflect(constraintAreaMin.x, constraintAreaMax.x, lastPosition.x, velocity.x);
         reflect(constraintAreaMin.x, constraintAreaMax.x, targetPosition.x, dummy);
-        angle = 90 + sign * (angle - 90);
+        angle = deg(90) + (angle - deg(90)) * sign;
     }
     if (lastPosition.y < constraintAreaMin.y || constraintAreaMax.y < lastPosition.y) {
-        sign = reflect(constraintAreaMin.y, constraintAreaMax.y, lastPosition.y, speed.y);
+        sign = reflect(constraintAreaMin.y, constraintAreaMax.y, lastPosition.y, velocity.y);
         reflect(constraintAreaMin.y, constraintAreaMax.y, targetPosition.y, dummy);
-        angle = sign * angle;
+        angle = angle * sign;
     }
     if (lastPosition.z < constraintAreaMin.z || constraintAreaMax.z < lastPosition.z) {
-        sign = reflect(constraintAreaMin.z, constraintAreaMax.z, lastPosition.z, speed.z);
+        sign = reflect(constraintAreaMin.z, constraintAreaMax.z, lastPosition.z, velocity.z);
         reflect(constraintAreaMin.z, constraintAreaMax.z, targetPosition.z, dummy);
         // NOTE: angle is not affected
     }
@@ -266,11 +273,11 @@ void MobilityBase::raiseErrorIfOutside()
     }
 }
 
-void MobilityBase::handleIfOutside(BorderPolicy policy, Coord& targetPosition, Coord& speed, double& angle)
+void MobilityBase::handleIfOutside(BorderPolicy policy, Coord& targetPosition, Coord& velocity, rad& angle)
 {
     switch (policy) {
         case REFLECT:
-            reflectIfOutside(targetPosition, speed, angle);
+            reflectIfOutside(targetPosition, velocity, angle);
             break;
 
         case WRAP:

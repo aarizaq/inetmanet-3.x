@@ -18,8 +18,9 @@
 #ifndef __INET_HTTPSERVER_H
 #define __INET_HTTPSERVER_H
 
-#include "inet/transportlayer/contract/tcp/TCPSocket.h"
-#include "inet/transportlayer/contract/tcp/TCPSocketMap.h"
+#include "inet/common/packet/ChunkQueue.h"
+#include "inet/transportlayer/contract/tcp/TcpSocket.h"
+#include "inet/transportlayer/contract/tcp/TcpSocketMap.h"
 #include "inet/applications/httptools/server/HttpServerBase.h"
 
 namespace inet {
@@ -36,11 +37,17 @@ namespace httptools {
  *
  * @author  Kristjan V. Jonsson
  */
-class INET_API HttpServer : public HttpServerBase, public TCPSocket::CallbackInterface
+class INET_API HttpServer : public HttpServerBase, public TcpSocket::CallbackInterface
 {
   protected:
-    TCPSocket listensocket;
-    TCPSocketMap sockCollection;
+    struct SockData
+    {
+        TcpSocket *socket = nullptr;    // A reference to the socket object.
+        ChunkQueue queue;       // incoming queue for slices
+    };
+
+    TcpSocket listensocket;
+    TcpSocketMap sockCollection;
     unsigned long numBroken = 0;
     unsigned long socketsOpened = 0;
 
@@ -51,10 +58,11 @@ class INET_API HttpServer : public HttpServerBase, public TCPSocket::CallbackInt
     virtual void handleMessage(cMessage *msg) override;
 
     virtual void socketEstablished(int connId, void *yourPtr) override;
-    virtual void socketDataArrived(int connId, void *yourPtr, cPacket *msg, bool urgent) override;
+    virtual void socketDataArrived(int connId, void *yourPtr, Packet *msg, bool urgent) override;
     virtual void socketPeerClosed(int connId, void *yourPtr) override;
     virtual void socketClosed(int connId, void *yourPtr) override;
     virtual void socketFailure(int connId, void *yourPtr, int code) override;
+    virtual void socketDeleted(int connId, void *yourPtr) override;
 };
 
 } // namespace httptools

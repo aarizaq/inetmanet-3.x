@@ -35,13 +35,13 @@ void GenericNetworkConfigurator::initialize(int stage)
         // extract topology into the Topology object, then fill in a LinkInfo[] vector
         TIME(extractTopology(topology));
         // dump the result if requested
-        if (par("dumpTopology").boolValue())
+        if (par("dumpTopology"))
             TIME(dumpTopology(topology));
         // calculate shortest paths, and add corresponding static routes
-        if (par("addStaticRoutes").boolValue())
+        if (par("addStaticRoutes"))
             TIME(addStaticRoutes(topology));
         // dump routes to module output
-        if (par("dumpRoutes").boolValue())
+        if (par("dumpRoutes"))
             TIME(dumpRoutes(topology));
         printElapsedTime("initialize", initializeStartTime);
     }
@@ -112,7 +112,7 @@ void GenericNetworkConfigurator::addStaticRoutes(Topology& topology)
                         L3Address nextHopAddress = nextHopInterfaceEntry->getGenericNetworkProtocolData()->getAddress();
                         if (nextHopAddress != destinationAddress)
                             route->setNextHop(nextHopAddress);
-                        EV_DEBUG << "Adding route " << sourceInterfaceEntry->getFullPath() << " -> " << destinationInterfaceEntry->getFullPath() << " as " << route->info() << endl;
+                        EV_DEBUG << "Adding route " << sourceInterfaceEntry->getInterfaceFullPath() << " -> " << destinationInterfaceEntry->getInterfaceFullPath() << " as " << route->str() << endl;
                         sourceRoutingTable->addRoute(route);
                     }
                 }

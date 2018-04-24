@@ -23,14 +23,14 @@ package inet.networklayer.configurator.generic;
 import inet.networklayer.configurator.base.NetworkConfiguratorBase;
 
 //
-// Adds routes to a GenericRoutingTable similarly how IPv4NetworkConfigurator adds
-// static routes to IPv4RoutingTable.
+// Adds routes to a GenericRoutingTable similarly how Ipv4NetworkConfigurator adds
+// static routes to Ipv4RoutingTable.
 //
 simple GenericNetworkConfigurator extends NetworkConfiguratorBase
 {
     parameters:
         @class(GenericNetworkConfigurator);
-        @display("i=block/cogwheel_s");
+        @display("i=block/cogwheel");
         xml config = default(xml("<config/>")); // XML configuration parameters
         bool addStaticRoutes = default(true);  // add static routes to the routing tables of all nodes to route to all destination interfaces (only where applicable; turn off when config file contains manual routes)
         bool dumpTopology = default(false);  // print extracted network topology to the module output

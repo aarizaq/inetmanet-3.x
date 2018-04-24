@@ -16,8 +16,8 @@
 //
 
 #include "inet/common/ModuleAccess.h"
-#include "inet/common/OSGScene.h"
-#include "inet/common/OSGUtils.h"
+#include "inet/common/OsgScene.h"
+#include "inet/common/OsgUtils.h"
 #include "inet/visualizer/mobility/MobilityOsgVisualizer.h"
 
 #ifdef WITH_OSG
@@ -127,9 +127,9 @@ void MobilityOsgVisualizer::receiveSignal(cComponent *source, simsignal_t signal
         auto mobilityVisualization = ensureMobilityVisualization(mobility);
         auto networkNode = mobilityVisualization->networkNode;
         networkNode->setPosition(osg::Vec3d(position.x, position.y, position.z));
-        networkNode->setAttitude(osg::Quat(orientation.alpha, osg::Vec3d(0.0, 0.0, 1.0)) *
-                                 osg::Quat(orientation.beta, osg::Vec3d(0.0, 1.0, 0.0)) *
-                                 osg::Quat(orientation.gamma, osg::Vec3d(1.0, 0.0, 0.0)));
+        networkNode->setAttitude(osg::Quat(rad(orientation.gamma).get(), osg::Vec3d(1.0, 0.0, 0.0)) *
+                                 osg::Quat(rad(orientation.beta).get(), osg::Vec3d(0.0, 1.0, 0.0)) *
+                                 osg::Quat(rad(orientation.alpha).get(), osg::Vec3d(0.0, 0.0, 1.0)));
         if (displayMovementTrails)
             extendMovementTrail(mobilityVisualization->trail, position);
     }

@@ -23,7 +23,7 @@ namespace inet {
 
 Register_Class(GenericRoute);
 
-std::string GenericRoute::info() const
+std::string GenericRoute::str() const
 {
     std::stringstream out;
 
@@ -42,12 +42,14 @@ std::string GenericRoute::info() const
     if (!interface)
         out << "*";
     else
-        out << interface->getName();
+        out << interface->getInterfaceName();
     if (interface && interface->getGenericNetworkProtocolData())
         out << "(" << interface->getGenericNetworkProtocolData()->getAddress() << ")";
     out << "  ";
     out << (nextHop.isUnspecified() ? "DIRECT" : "REMOTE");
     out << " " << IRoute::sourceTypeName(sourceType);
+    if (protocolData)
+        out << " " << protocolData->str();
 
     return out.str();
 }
@@ -77,7 +79,7 @@ IRoutingTable *GenericRoute::getRoutingTableAsGeneric() const
 
 #if 0    /*FIXME TODO!!!! */
 
-std::string GenericMulticastRoute::info() const
+std::string GenericMulticastRoute::str() const
 {
     return "";    //TODO
 }

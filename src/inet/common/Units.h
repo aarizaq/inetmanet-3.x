@@ -22,8 +22,11 @@
 #ifndef __INET_UNITS_H
 #define __INET_UNITS_H
 
+#include <assert.h>
 #include <cmath>
 #include <iostream>
+
+#include "inet/common/INETMath.h" // M_PI
 
 namespace inet {
 
@@ -50,6 +53,14 @@ struct compose;
 // Constructs a unit equivalent to Unit*Num/Den
 template<typename Unit, int Num, int Den = 1>
 struct scale;
+
+// Constructs a unit equivalent to F(Unit)
+template<typename Unit, double F()>
+struct fscale;
+
+// Constructs a unit equivalent to Unit*Num/Den
+template<typename Unit, int Num, int Den = 1>
+struct intscale;
 
 // Constructs a unit equivalent to Unit+Num/Den
 template<typename Unit, int Num, int Den = 1>
@@ -361,6 +372,56 @@ struct convert3<T, scale<U, Num, Den> >
     }
 };
 
+// Convert from a scaled unit
+template<typename T, typename U, double F()>
+struct convert2<fscale<T, F>, U>
+{
+    template<typename V>
+    static V fn(const V& v)
+    {
+        auto t = v / F();
+        return convert<T, U>::fn(t);
+    }
+};
+
+// Convert to a scaled unit
+template<typename T, typename U, double F()>
+struct convert3<T, fscale<U, F> >
+{
+    template<typename V>
+    static V fn(const V& v)
+    {
+        auto t = convert<T, U>::fn(v);
+        return t * F();
+    }
+};
+
+// Convert from a scaled unit
+template<typename T, typename U, int Num, int Den>
+struct convert2<intscale<T, Num, Den>, U>
+{
+    template<typename V>
+    static V fn(const V& v)
+    {
+        auto t = v * Den;
+        assert(t % Num == 0);
+        return convert<T, U>::fn(t / Num);
+    }
+};
+
+// Convert to a scaled unit
+template<typename T, typename U, int Num, int Den>
+struct convert3<T, intscale<U, Num, Den> >
+{
+    template<typename V>
+    static V fn(const V& v)
+    {
+        auto t = convert<T, U>::fn(v) * Num;
+        assert(t % Den == 0);
+        return t / Den;
+    }
+};
+
 // Convert from a translated unit
 template<typename T, typename U, int Num, int Den>
 struct convert2<translate<T, Num, Den>, U>
@@ -403,6 +464,23 @@ struct count_terms<Term, Term>
 // count_terms ignores scaling factors - that is taken care of by scaling_factor.
 template<typename Term, typename Unit, int N, int D>
 struct count_terms<Term, scale<Unit, N, D> >
+{
+    typedef count_terms<Term, Unit> result;
+    static const int num = result::num;
+    static const int den = result::den;
+};
+
+template<typename Term, typename Unit, double F()>
+struct count_terms<Term, fscale<Unit, F> >
+{
+    typedef count_terms<Term, Unit> result;
+    static const int num = result::num;
+    static const int den = result::den;
+};
+
+// count_terms ignores scaling factors - that is taken care of by scaling_factor.
+template<typename Term, typename Unit, int N, int D>
+struct count_terms<Term, intscale<Unit, N, D> >
 {
     typedef count_terms<Term, Unit> result;
     static const int num = result::num;
@@ -462,6 +540,18 @@ struct check_terms_equal<pow<Unit, N, D>, T1, T2>
 
 template<typename Unit, int N, int D, typename T1, typename T2>
 struct check_terms_equal<scale<Unit, N, D>, T1, T2>
+{
+    static const bool value = check_terms_equal<Unit, T1, T2>::value;
+};
+
+template<typename Unit, double F(), typename T1, typename T2>
+struct check_terms_equal<fscale<Unit, F>, T1, T2>
+{
+    static const bool value = check_terms_equal<Unit, T1, T2>::value;
+};
+
+template<typename Unit, int N, int D, typename T1, typename T2>
+struct check_terms_equal<intscale<Unit, N, D>, T1, T2>
 {
     static const bool value = check_terms_equal<Unit, T1, T2>::value;
 };
@@ -597,6 +687,28 @@ struct scaling_factor<scale<U, N, D> >
     }
 };
 
+template<typename U, double F()>
+struct scaling_factor<fscale<U, F> >
+{
+    template<typename T>
+    static T fn()
+    {
+        return scaling_factor<U>::template fn<T>() * F();
+    }
+};
+
+template<typename U, int N, int D>
+struct scaling_factor<intscale<U, N, D> >
+{
+    template<typename T>
+    static T fn()
+    {
+        auto t = scaling_factor<U>::template fn<T>() * static_cast<T>(N);
+        assert(t % static_cast<T>(D) == 0);
+        return t / static_cast<T>(D);
+    }
+};
+
 template<typename U, int N, int D>
 struct scaling_factor<pow<U, N, D> >
 {
@@ -716,6 +828,31 @@ struct output_unit2<scale<Unit, Num, Den> >
     }
 };
 
+template<typename Unit, double F()>
+struct output_unit2<fscale<Unit, F> >
+{
+    template<typename Stream>
+    static void fn(Stream& os)
+    {
+        os << F() << '.';
+        output_unit<Unit>::fn(os);
+    }
+};
+
+template<typename Unit, int Num, int Den>
+struct output_unit2<intscale<Unit, Num, Den> >
+{
+    template<typename Stream>
+    static void fn(Stream& os)
+    {
+        os << Den;
+        if (Num != 1)
+            os << '/' << Num;
+        os << '.';
+        output_unit<Unit>::fn(os);
+    }
+};
+
 } // namespace internal
 
 template<typename Value, typename Unit>
@@ -747,6 +884,7 @@ struct A;    // Ampere
 struct mol;    // mole
 struct cd;    // candela
 struct b;    // bit
+struct rad; // rad;
 
 } // namespace units
 
@@ -757,11 +895,11 @@ UNIT_DISPLAY_NAME(units::K, "K");
 UNIT_DISPLAY_NAME(units::A, "A");
 UNIT_DISPLAY_NAME(units::mol, "mol");
 UNIT_DISPLAY_NAME(units::cd, "cd");
+UNIT_DISPLAY_NAME(units::b, "b");
 
 namespace units {
 
 // SI derived units:
-typedef compose<m, pow<m, -1> > rad;
 typedef compose<pow<m, 2>, pow<m, -2> > sr;
 typedef pow<s, -1> Hz;
 typedef compose<m, compose<kg, pow<s, -2> > > N;
@@ -971,10 +1109,10 @@ typedef compose<nautical_mile, pow<hour, -1> > knot;
 typedef scale<mps, 100, 34029> mach;
 
 // Angles
-typedef scale<rad, 180000000, 3141593> degree;
-typedef scale<rad, 200000000, 3141593> grad;
-typedef scale<degree, 60> degree_minute;
-typedef scale<degree_minute, 60> degree_second;
+constexpr static double rad2degScale() { return 180 / M_PI; }
+typedef fscale<rad, rad2degScale> deg;
+typedef scale<deg, 60> deg_min;
+typedef scale<deg_min, 60> deg_sec;
 
 // Pressure
 typedef scale<Pa, 1, 1000> kPa;
@@ -982,6 +1120,7 @@ typedef scale<kPa, 1450377, 10000000> psi;
 typedef scale<kPa, 10> millibar;
 
 // Informatics
+typedef intscale<b, 1, 8> B;
 typedef compose<b, pow<s, -1> > bps;
 typedef scale<bps, 1, 1000> kbps;
 typedef scale<bps, 1, 1000000> Mbps;
@@ -1024,13 +1163,13 @@ UNIT_DISPLAY_NAME(units::mps, "mps");
 UNIT_DISPLAY_NAME(units::kph, "km/h");
 UNIT_DISPLAY_NAME(units::knot, "knots");
 UNIT_DISPLAY_NAME(units::mach, "mach");
-UNIT_DISPLAY_NAME(units::degree, "deg");
-UNIT_DISPLAY_NAME(units::grad, "grad");
-UNIT_DISPLAY_NAME(units::degree_minute, "'");
-UNIT_DISPLAY_NAME(units::degree_second, "\"");
+UNIT_DISPLAY_NAME(units::deg, "deg");
+UNIT_DISPLAY_NAME(units::deg_min, "'");
+UNIT_DISPLAY_NAME(units::deg_sec, "\"");
 UNIT_DISPLAY_NAME(units::kPa, "kPa");
 UNIT_DISPLAY_NAME(units::psi, "PSI");
 UNIT_DISPLAY_NAME(units::millibar, "millibars");
+UNIT_DISPLAY_NAME(units::B, "B");
 UNIT_DISPLAY_NAME(units::bps, "bps");
 UNIT_DISPLAY_NAME(units::kbps, "kbps");
 UNIT_DISPLAY_NAME(units::Mbps, "Mbps");
@@ -1051,7 +1190,8 @@ typedef value<double, units::K> K;
 typedef value<double, units::A> A;
 typedef value<double, units::mol> mol;
 typedef value<double, units::cd> cd;
-typedef value<double, units::m> b;
+typedef value<int64_t, units::b> b;
+typedef value<int64_t, units::B> B;
 
 // SI derived
 typedef value<double, units::rad> rad;
@@ -1136,10 +1276,9 @@ typedef value<double, units::spm> spm;
 typedef value<double, units::knot> knot;
 typedef value<double, units::mach> mach;
 
-typedef value<double, units::degree> degree;
-typedef value<double, units::grad> grad;
-typedef value<double, units::degree_minute> degree_minute;
-typedef value<double, units::degree_second> degree_second;
+typedef value<double, units::deg> deg;
+typedef value<double, units::deg_min> deg_min;
+typedef value<double, units::deg_sec> deg_sec;
 
 typedef value<double, units::kPa> kPa;
 typedef value<double, units::psi> psi;
@@ -1155,6 +1294,18 @@ typedef value<double, units::dozen> dozen;
 typedef value<double, units::bakers_dozen> bakers_dozen;
 
 } // namespace values
+
+template<typename Value>
+std::ostream& operator<<(std::ostream& os, const value<Value, units::b>& value)
+{
+    if (value.get() % 8 == 0)
+        os << values::B(value);
+    else {
+        os << value.get() << ' ';
+        output_unit<units::b>::fn(os);
+    }
+    return os;
+}
 
 namespace constants {
 

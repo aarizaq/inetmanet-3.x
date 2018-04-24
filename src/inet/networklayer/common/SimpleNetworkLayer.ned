@@ -17,8 +17,10 @@
 
 package inet.networklayer.common;
 
+import inet.common.MessageDispatcher;
 import inet.networklayer.contract.INetworkLayer;
 import inet.networklayer.contract.INetworkProtocol;
+
 
 //
 // This module provides a simple network layer.
@@ -32,48 +34,35 @@ module SimpleNetworkLayer like INetworkLayer
         @display("i=block/fork");
 
     gates:
-        input ifIn[] @labels(INetworkDatagram);
-        output ifOut[] @labels(INetworkDatagram);
-        input transportIn[] @labels(ITransportPacket/down);
-        output transportOut[] @labels(ITransportPacket/up);
-        input pingIn[] @labels(PingPayload/down);
-        output pingOut[] @labels(PingPayload/up);
+        input ifIn @labels(INetworkHeader);
+        output ifOut @labels(INetworkHeader);
+        input transportIn @labels(ITransportPacket/down);
+        output transportOut @labels(ITransportPacket/up);
 
     submodules:
         np: <networkProtocolType> like INetworkProtocol {
             parameters:
-                @display("p=85,95;q=queue");
-            gates:
-                lowerLayerIn[sizeof(ifIn)];
-                lowerLayerOut[sizeof(ifOut)];
+                @display("p=200,300;q=queue");
         }
         echo: EchoProtocol {
             parameters:
-                @display("p=160,63");
+                @display("p=300,100");
+        }
+        dp: MessageDispatcher {
+            parameters:
+                @display("p=200,200;b=280,5");
         }
 
     connections allowunconnected:
-        for i=0..sizeof(transportIn)-1 {
-            transportIn[i] --> { @display("m=n"); } --> np.upperLayerIn++;
-        }
-        for i=0..sizeof(transportOut)-1 {
-            np.upperLayerOut++ --> { @display("m=n"); } --> transportOut[i];
-        }
+        dp.out++ --> { @display("m=n"); } --> transportOut;
+        dp.in++ <-- { @display("m=n"); } <-- transportIn;
 
-        np.upperLayerOut++ --> echo.localIn;
-        np.upperLayerIn++ <-- echo.sendOut;
+        np.transportOut --> dp.in++;
+        np.transportIn <-- dp.out++;
 
-        for i=0..sizeof(pingOut)-1 {
-            echo.pingOut++ --> { @display("m=n"); } --> pingOut[i];
-        }
-        for i=0..sizeof(pingIn)-1 {
-            echo.pingIn++ <-- { @display("m=n"); } <-- pingIn[i];
-        }
+        dp.out++ --> echo.ipIn;
+        dp.in++ <-- echo.ipOut;
 
-        for i=0..sizeof(ifIn)-1 {
-            ifIn[i] --> { @display("m=s"); } --> np.lowerLayerIn[i];
-        }
-        for i=0..sizeof(ifOut)-1 {
-            np.lowerLayerOut[i] --> { @display("m=s"); } --> ifOut[i];
-        }
+        ifIn --> { @display("m=s"); } --> np.queueIn;
+        np.queueOut --> { @display("m=s"); } --> ifOut;
 }

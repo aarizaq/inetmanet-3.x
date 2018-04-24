@@ -17,10 +17,10 @@
 
 package inet.networklayer.generic;
 
-import inet.networklayer.arp.generic.GenericARP;
+import inet.common.MessageDispatcher;
+import inet.networklayer.arp.ipv4.GlobalArp;
 import inet.networklayer.common.EchoProtocol;
 import inet.networklayer.contract.INetworkLayer;
-
 
 //
 // This module provides the generic network layer.
@@ -28,61 +28,56 @@ import inet.networklayer.contract.INetworkLayer;
 module GenericNetworkLayer like INetworkLayer
 {
     parameters:
+        bool forwarding = default(false);
+        bool multicastForwarding = default(false);
         string interfaceTableModule;
-        string routingTableModule;
+        *.forwarding = forwarding;
+        *.multicastForwarding = multicastForwarding;
         *.interfaceTableModule = default(absPath(interfaceTableModule));
-        *.routingTableModule = default(absPath(routingTableModule));
+        *.routingTableModule = default(absPath(".routingTable"));
         *.arpModule = default(absPath(".arp"));
         @display("i=block/fork");
     gates:
-        input ifIn[] @labels(INetworkDatagram);
-        output ifOut[] @labels(INetworkDatagram);
-        input transportIn[] @labels(IPv4ControlInfo/down);
-        output transportOut[] @labels(IPv4ControlInfo/up);
-        input pingIn[] @labels(PingPayload/down);
-        output pingOut[] @labels(PingPayload/up);
+        input ifIn @labels(INetworkHeader);
+        output ifOut @labels(INetworkHeader);
+        input transportIn @labels(Ipv4ControlInfo/down);
+        output transportOut @labels(Ipv4ControlInfo/up);
 
     submodules:
+        routingTable: GenericRoutingTable {
+            parameters:
+                @display("p=100,100;is=s");
+        }
         gnp: GenericNetworkProtocol {
             parameters:
-                @display("p=85,95;q=queue");
-            gates:
-                queueIn[sizeof(ifIn)];
-                queueOut[sizeof(ifOut)];
+                @display("p=350,300;q=queue");
         }
         echo: EchoProtocol {
             parameters:
-                @display("p=160,63");
+                @display("p=500,100");
         }
-        arp: GenericARP {
+        arp: GlobalArp {
             parameters:
-                @display("p=202,142;q=pendingQueue");
+                @display("p=200,300;q=pendingQueue");
         }
+        dp: MessageDispatcher {
+            parameters:
+                @display("p=350,200;b=380,5");
+        }
+
     connections allowunconnected:
-        for i=0..sizeof(transportIn)-1 {
-            transportIn[i] --> { @display("m=n"); } --> gnp.transportIn++;
-        }
-        for i=0..sizeof(transportOut)-1 {
-            gnp.transportOut++ --> { @display("m=n"); } --> transportOut[i];
-        }
+        dp.out++ --> { @display("m=n"); } --> transportOut;
+        dp.in++ <-- { @display("m=n"); } <-- transportIn;
 
-        gnp.transportOut++ --> echo.localIn;
-        gnp.transportIn++ <-- echo.sendOut;
+        gnp.transportOut --> dp.in++;
+        gnp.transportIn <-- dp.out++;
 
-        for i=0..sizeof(pingOut)-1 {
-            echo.pingOut++ --> { @display("m=n"); } --> pingOut[i];
-        }
-        for i=0..sizeof(pingIn)-1 {
-            echo.pingIn++ <-- { @display("m=n"); } <-- pingIn[i];
-        }
+        dp.out++ --> echo.ipIn;
+        dp.in++ <-- echo.ipOut;
 
         gnp.arpOut --> arp.netwIn;
         gnp.arpIn <-- arp.netwOut;
 
-        for i=0..sizeof(ifIn)-1 {
-            ifIn[i] --> { @display("m=s"); } --> gnp.queueIn[i];
-        }
-        for i=0..sizeof(ifOut)-1 {
-            gnp.queueOut[i] --> { @display("m=s"); } --> ifOut[i];
-        }
+        ifIn --> { @display("m=s"); } --> gnp.queueIn;
+        gnp.queueOut --> { @display("m=s"); } --> ifOut;
 }

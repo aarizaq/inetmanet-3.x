@@ -77,7 +77,7 @@ class INET_API MobilityBase : public cSimpleModule, public IMobility
     /** @brief The last position that was reported. */
     Coord lastPosition;
 
-    /** @brief The last position that was reported. */
+    /** @brief The last orientation that was reported. */
     EulerAngles lastOrientation;
 
   protected:
@@ -117,7 +117,7 @@ class INET_API MobilityBase : public cSimpleModule, public IMobility
     virtual Coord getRandomPosition();
 
     /** @brief Returns the module that represents the object moved by this mobility module. */
-    virtual cModule *findVisualRepresentation() { return getModuleFromPar<cModule>(par("visualRepresentation"), this); }
+    virtual cModule *findVisualRepresentation() { return findModuleFromPar<cModule>(par("visualRepresentation"), this); }
 
     /** @brief Returns true if the mobility is outside of the constraint area. */
     virtual bool isOutside();
@@ -128,7 +128,7 @@ class INET_API MobilityBase : public cSimpleModule, public IMobility
      * Decision is made on pos, but the variables passed as args will
      * also be updated. (Pass dummies you don't have some of them).
      */
-    virtual void reflectIfOutside(Coord& targetPosition, Coord& speed, double& angle);
+    virtual void reflectIfOutside(Coord& targetPosition, Coord& velocity, rad& angle);
 
     /** @brief Utility function to wrap the node to the opposite edge
      * (torus) if it goes outside the constraint area.
@@ -154,15 +154,10 @@ class INET_API MobilityBase : public cSimpleModule, public IMobility
     /** @brief Invokes one of reflectIfOutside(), wrapIfOutside() and
      * placeRandomlyIfOutside(), depending on the given border policy.
      */
-    virtual void handleIfOutside(BorderPolicy policy, Coord& targetPosition, Coord& speed, double& angle);
+    virtual void handleIfOutside(BorderPolicy policy, Coord& targetPosition, Coord& velocity, rad& angle);
 
   public:
     virtual double getMaxSpeed() const override { return NaN; }
-
-    virtual EulerAngles getCurrentAngularPosition() override { return EulerAngles::ZERO; }
-
-    /** @brief Returns the current angular speed at the current simulation time. */
-    virtual EulerAngles getCurrentAngularSpeed() override { return EulerAngles::ZERO; }
 
     virtual Coord getConstraintAreaMax() const override { return constraintAreaMax; }
     virtual Coord getConstraintAreaMin() const override { return constraintAreaMin; }

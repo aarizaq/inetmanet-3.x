@@ -28,6 +28,5 @@ simple Rx like IRx
     parameters:
         string statisticsModule = default(""); // TODO
         @display("i=block/rx");
-        @signal[NF_LINK_FULL_PROMISCUOUS](type=Ieee80211Frame);
-        @signal[NF_LINK_PROMISCUOUS](type=Ieee80211Frame);
+        @signal[packetDropped];
 }

@@ -14,66 +14,65 @@
 
 package inet.examples.mpls.testte_routing;
 
-import inet.common.lifecycle.LifecycleController;
 import inet.common.scenario.ScenarioManager;
 import inet.node.inet.StandardHost;
-import inet.node.mpls.RSVP_LSR;
+import inet.node.mpls.RsvpMplsRouter;
 
 
 //
-// Example network to demonstrate RSVP-TE.
+// Example network to demonstrate Rsvp-TE.
 //
 // See the README file in the model directory for scenario description.
 //
 network RSVPTE4
 {
     parameters:
-        **.networkLayer.configurator.networkConfiguratorModule = "";
+        **.ipv4.configurator.networkConfiguratorModule = "";
 
     submodules:
-        LSR1: RSVP_LSR {
+        LSR1: RsvpMplsRouter {
             parameters:
                 peers = "ppp0 ppp1";
                 @display("p=160,167");
             gates:
                 pppg[5];
         }
-        LSR2: RSVP_LSR {
+        LSR2: RsvpMplsRouter {
             parameters:
                 peers = "ppp0 ppp1 ppp2";
                 @display("p=254,255");
             gates:
                 pppg[3];
         }
-        LSR3: RSVP_LSR {
+        LSR3: RsvpMplsRouter {
             parameters:
                 peers = "ppp0 ppp1 ppp2";
                 @display("p=253,78");
             gates:
                 pppg[3];
         }
-        LSR4: RSVP_LSR {
+        LSR4: RsvpMplsRouter {
             parameters:
                 peers = "ppp0 ppp1 ppp2";
                 @display("p=358,167");
             gates:
                 pppg[3];
         }
-        LSR5: RSVP_LSR {
+        LSR5: RsvpMplsRouter {
             parameters:
                 peers = "ppp0 ppp3 ppp4";
                 @display("p=460,167");
             gates:
                 pppg[5];
         }
-        LSR6: RSVP_LSR {
+        LSR6: RsvpMplsRouter {
             parameters:
                 peers = "ppp0 ppp1";
                 @display("p=400,300");
             gates:
                 pppg[2];
         }
-        LSR7: RSVP_LSR {
+        LSR7: RsvpMplsRouter {
             parameters:
                 peers = "ppp0 ppp1";
                 @display("p=400,50");
@@ -103,10 +102,6 @@ network RSVPTE4
         scenarioManager: ScenarioManager {
             parameters:
                 @display("p=150,50");
-        }
-        lifecycleController: LifecycleController {
-            parameters:
-                @display("p=500,50");
         }
     connections:
         LSR1.pppg[0] <--> {  delay = 15ms; datarate = 600kbps; } <--> LSR2.pppg[0];

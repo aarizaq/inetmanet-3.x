@@ -3,11 +3,11 @@ package inet.examples.rip.simpletest;
 
 import inet.common.misc.ThruputMeteringChannel;
 import inet.linklayer.ethernet.EtherHub;
-import inet.networklayer.configurator.ipv4.IPv4NetworkConfigurator;
-import inet.networklayer.configurator.ipv6.FlatNetworkConfigurator6;
+import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
+import inet.networklayer.configurator.ipv6.Ipv6FlatNetworkConfigurator;
 import inet.networklayer.ipv4.RoutingTableRecorder;
 import inet.node.inet.StandardHost;
-import inet.node.rip.RIPRouter;
+import inet.node.rip.RipRouter;
 
 
 network SimpleTest
@@ -37,13 +37,13 @@ network SimpleTest
             gates:
                 ethg[2];
         }
-        R1: RIPRouter {
+        R1: RipRouter {
             parameters:
                 @display("p=296,92");
             gates:
                 ethg[2];
         }
-        R2: RIPRouter {
+        R2: RipRouter {
             parameters:
                 @display("p=416,92");
             gates:
@@ -61,7 +61,7 @@ network SimpleTest
             gates:
                 ethg[1];
         }
-        configurator: IPv4NetworkConfigurator {
+        configurator: Ipv4NetworkConfigurator {
             parameters:
                 config = xml("<config>"+
                             "<interface among='H1 R1' address='192.168.1.x' netmask='255.255.255.0' />"+
@@ -73,7 +73,7 @@ network SimpleTest
                 addDefaultRoutes = false;
                 @display("p=75,31");
         }
-        configurator6: FlatNetworkConfigurator6 {
+        configurator6: Ipv6FlatNetworkConfigurator {
             @display("p=184,31;is=s");
         }
     connections:

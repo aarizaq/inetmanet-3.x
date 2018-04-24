@@ -1,0 +1,149 @@
+\ifdraft
+
+\chapter{The MPLS Models}
+\label{cha:mpls}
+
+
+\section{Overview}
+
+TODO
+
+
+\section{MPLS/RSVP/LDP Model - Implemented Standards}
+
+The implementation follows those RFCs below:
+
+\begin{itemize}
+  \item RFC 2702: Requirements for Traffic Engineering Over MPLS
+  \item RFC 2205: Resource ReSerVation Protocol
+  \item RFC 3031: Multiprotocol Label Switching Architecture
+  \item RFC 3036: LDP Specification
+  \item RFC 3209: RSVP-TE Extension to RSVP for LSP tunnels
+  \item RFC 2205: RSVP Version 1 - Functional Specification
+  \item RFC 2209: RSVP Message processing Version 1
+\end{itemize}
+
+\section{The MPLS Module}
+
+TODO
+
+\section{The LDP Module}
+
+TODO
+
+\section{LIB Table File Format}
+
+The format of a LIB table file is:
+
+The beginning of the file should begin with comments. Lines that begin with \# are treated
+as comments. An empty line is required after the comments. The "LIB TABLE"
+syntax must come next with an empty line. The column headers follow. This header
+must be strictly "In-lbl In-intf Out-lbl Out-intf". Column
+values are after that with space or tab for field separation.
+The following is a sample of lib table file.
+
+\begin{verbatim}
+#lib table for MPLS network simulation test
+#lib1.table for LSR1 - this is an edge router
+#no incoming label for traffic from in-intf 0 &1 - LSR1 is ingress router for those traffic
+#no outgoing label for traffic from in_intf 2 &3 - LSR 1 is egress router for those traffic
+
+LIB TABLE:
+
+In-lbl  In-intf         Out-lbl     Out-intf
+1       193.233.7.90    1           193.231.7.21
+2       193.243.2.1     0           193.243.2.3
+\end{verbatim}
+
+
+\section{The traffic.xml file}
+
+The traffic.xml file is read by the RSVP-TE module (RSVP).
+The file must be in the same folder as the executable
+network simulation file.
+
+The XML elements used in the "traffic.xml" file:
+
+\begin{itemize}
+  \item \ttt{<Traffic></Traffic>} is the root element. It may contain one or more \ttt{<Conn>} elements.
+  \item \ttt{<Conn></Conn>} specifies an RSVP session. It may contain the following elements:
+  \begin{itemize}
+    \item \ttt{<src></src>} specifies sender IP address
+    \item \ttt{<dest></dest>} specifies receiver IP address
+    \item \ttt{<setupPri></setupPri>} specifies LSP setup priority
+    \item \ttt{<holdingPri></holdingPri>} specifies LSP holding priority
+    \item \ttt{<bandwidth></bandwidth>} specifies the requested BW.
+    \item \ttt{<delay></delay>} specifies the requested delay.
+    \item \ttt{<route></route>} specifies the explicit route. This is a comma-separated
+      list of IP-address, hop-type pairs (also separated by comma).
+      A hop type has a value of 1 if the hop is a loose hop and 0 otherwise.
+  \end{itemize}
+\end{itemize}
+
+The following presents an example file:
+
+\begin{verbatim}
+<?xml version="1.0"?>
+<!-- Example of traffic control file -->
+<traffic>
+   <conn>
+       <src>10.0.0.1</src>
+       <dest>10.0.1.2</dest>
+       <setupPri>7</setupPri>
+       <holdingPri>7</holdingPri>
+       <bandwidth>400</bandwidth>
+       <delay>5</delay>
+   </conn>
+   <conn>
+       <src>11.0.0.1</src>
+       <dest>11.0.1.2</dest>
+       <setupPri>7</setupPri>
+       <holdingPri>7</holdingPri>
+       <bandwidth>100</bandwidth>
+       <delay>5</delay>
+   </conn>
+</traffic>
+\end{verbatim}
+
+An example of using RSVP-TE as signaling protocol can be found in
+ExplicitRouting folder distributed with the simulation. In this
+example, a network similar to the network in LDP-MPLS example is
+setup. Instead of using LDP, "signaling" parameter is set to 2 (value
+of RSVP-TE handler). The following xml file is used for traffic
+control. Note the explicit routes specified in the second connection.
+It indicates that the route is a strict one since the values of every
+hop types are 0. The route defined is 10.0.0.1 -> 1.0.0.1 ->
+10.0.0.3 -> 1.0.0.4 -> 10.0.0.5 -> 10.0.1.2.
+
+\begin{verbatim}
+<?xml version="1.0"?>
+<!-- Example of traffic control file -->
+<traffic>
+    <conn>
+        <src>10.0.0.1</src>
+        <dest>10.0.1.2</dest>
+        <setupPri>7</setupPri>
+        <holdingPri>7</holdingPri>
+        <bandwidth>0</bandwidth>
+        <delay>0</delay>
+        <ER>false</ER>
+    </conn>
+    <conn>
+        <src>11.0.0.1</src>
+        <dest>11.0.1.2</dest>
+        <setupPri>7</setupPri>
+        <holdingPri>7</holdingPri>
+        <bandwidth>0</bandwidth>
+        <delay>0</delay>
+        <ER>true</ER>
+        <route>1.0.0.1,0,1.0.0.3,0,1.0.0.4,0,1.0.0.5,0,10.0.1.2,0</route>
+    </conn>
+</traffic>
+\end{verbatim}
+
+\fi
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "usman"
+%%% End:

@@ -3,9 +3,9 @@ package inet.examples.ospfv2.backbone;
 
 import inet.common.misc.ThruputMeteringChannel;
 import inet.linklayer.ethernet.EtherHub;
-import inet.networklayer.configurator.ipv4.IPv4NetworkConfigurator;
+import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.inet.StandardHost;
-import inet.node.ospfv2.OSPFRouter;
+import inet.node.ospfv2.OspfRouter;
 
 
 network Backbone
@@ -20,7 +20,7 @@ network Backbone
             thruputDisplayFormat = "#N";
         }
     submodules:
-        R1: OSPFRouter {
+        R1: OspfRouter {
             parameters:
                 @display("p=372,340");
             gates:
@@ -38,19 +38,19 @@ network Backbone
             gates:
                 ethg[3];
         }
-        R2: OSPFRouter {
+        R2: OspfRouter {
             parameters:
                 @display("p=368,188");
             gates:
                 ethg[2];
         }
-        R4: OSPFRouter {
+        R4: OspfRouter {
             parameters:
                 @display("p=216,432");
             gates:
                 ethg[2];
         }
-        R3: OSPFRouter {
+        R3: OspfRouter {
             parameters:
                 @display("p=532,428");
             gates:
@@ -68,19 +68,19 @@ network Backbone
             gates:
                 ethg[3];
         }
-        R5: OSPFRouter {
+        R5: OspfRouter {
             parameters:
                 @display("p=488,284");
             gates:
                 ethg[2];
         }
-        R7: OSPFRouter {
+        R7: OspfRouter {
             parameters:
                 @display("p=256,284");
             gates:
                 ethg[2];
         }
-        R6: OSPFRouter {
+        R6: OspfRouter {
             parameters:
                 @display("p=372,476");
             gates:
@@ -110,7 +110,7 @@ network Backbone
             gates:
                 ethg[1];
         }
-        configurator: IPv4NetworkConfigurator {
+        configurator: Ipv4NetworkConfigurator {
             parameters:
                 config = xml("<config>"+
                             "<interface hosts='R2' towards='N1 R1' address='192.168.1.1' netmask='255.255.255.0' metric='1' />"+

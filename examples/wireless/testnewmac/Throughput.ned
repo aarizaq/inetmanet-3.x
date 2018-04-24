@@ -18,11 +18,12 @@
 
 package inet.examples.wireless.testnewmac;
 
-import inet.applications.ethernet.EtherAppCli;
+import inet.applications.ethernet.EtherAppClient;
 import inet.common.queue.Sink;
-import inet.linklayer.ieee80211.Ieee80211Nic;
+import inet.linklayer.ieee80211.Ieee80211Interface;
 import inet.mobility.single.CircleMobility;
 import inet.mobility.static.StationaryMobility;
+import inet.networklayer.common.InterfaceTable;
 import inet.physicallayer.ieee80211.packetlevel.Ieee80211ScalarRadioMedium;
 
 
@@ -31,17 +32,21 @@ module ThroughputClient
     parameters:
         @display("i=device/wifilaptop");
         @networkNode();
-        *.interfaceTableModule = "";
+        *.interfaceTableModule = default(absPath(".interfaceTable"));
     gates:
         input radioIn @directIn;
 
     submodules:
-        cli: EtherAppCli {
+        interfaceTable: InterfaceTable {
+            parameters:
+                @display("p=50,50;is=s");
+        }
+        cli: EtherAppClient {
             parameters:
                 registerSAP = false;
                 @display("b=40,24;p=180,60,col");
         }
-        wlan: Ieee80211Nic {
+        wlan: Ieee80211Interface {
             parameters:
                 @display("p=112,134;q=queue");
                 mgmtType = "Ieee80211MgmtAdhoc";
@@ -49,7 +54,7 @@ module ThroughputClient
         }
         mobility: CircleMobility {
             parameters:
-                @display("p=50,141");
+                @display("p=50,141;is=s");
         }
     connections allowunconnected:
         wlan.radioIn <-- radioIn;
@@ -61,23 +66,27 @@ module ThroughputServer
     parameters:
         @display("i=device/wifilaptop");
         @networkNode();
-        *.interfaceTableModule = "";
+        *.interfaceTableModule = default(absPath(".interfaceTable"));
     gates:
         input radioIn @directIn;
 
     submodules:
+        interfaceTable: InterfaceTable {
+            parameters:
+                @display("p=50,50;is=s");
+        }
         sink: Sink {
             parameters:
                 @display("p=210,68,col");
         }
-        wlan: Ieee80211Nic {
+        wlan: Ieee80211Interface {
             parameters:
                 @display("p=120,158;q=queue");
                 mgmtType = "Ieee80211MgmtAdhoc";
         }
         mobility: StationaryMobility {
             parameters:
-                @display("p=50,141");
+                @display("p=50,141;is=s");
         }
     connections allowunconnected:
         wlan.radioIn <-- radioIn;

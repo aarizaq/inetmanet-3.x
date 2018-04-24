@@ -4,9 +4,8 @@
 
 package inet.examples.rip.mixednetwork;
 
-import inet.common.lifecycle.LifecycleController;
 import inet.common.scenario.ScenarioManager;
-import inet.networklayer.configurator.ipv4.IPv4NetworkConfigurator;
+import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.inet.Router;
 import inet.node.inet.StandardHost;
 import ned.DatarateChannel;
@@ -43,7 +42,7 @@ network MixedNetwork
         rHost: StandardHost {
             @display("p=580,641");
         }
-        configurator: IPv4NetworkConfigurator {
+        configurator: Ipv4NetworkConfigurator {
             @display("p=59,31");
             config = xml(
                  "<config>"
@@ -58,9 +57,6 @@ network MixedNetwork
         }
         scenarioManager: ScenarioManager {
             @display("p=59,100");
-        }
-        lifecycleController: LifecycleController {
-            @display("p=59,150");
         }
     connections:
         cRouter.ethg++ <--> C <--> bRouter.ethg++;

@@ -17,12 +17,11 @@
 
 package inet.examples.neighborcache;
 
-import inet.common.lifecycle.LifecycleController;
 import inet.common.scenario.ScenarioManager;
-import inet.networklayer.configurator.ipv4.IPv4NetworkConfigurator;
+import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.networklayer.ipv4.RoutingTableRecorder;
-import inet.node.aodv.AODVRouter;
-import inet.physicallayer.idealradio.IdealRadioMedium;
+import inet.node.aodv.AodvRouter;
+import inet.physicallayer.unitdisk.UnitDiskRadioMedium;
 
 
 network NeighborCacheTest
@@ -30,11 +29,11 @@ network NeighborCacheTest
     parameters:
         int numHosts;
     submodules:
-        radioMedium: IdealRadioMedium {
+        radioMedium: UnitDiskRadioMedium {
             parameters:
                 @display("p=50,50");
         }
-        configurator: IPv4NetworkConfigurator {
+        configurator: Ipv4NetworkConfigurator {
             parameters:
                 config = xml("<config><interface hosts='*' address='145.236.x.x' netmask='255.255.0.0'/></config>");
                 @display("p=50,100");
@@ -43,16 +42,12 @@ network NeighborCacheTest
             parameters:
                 @display("p=50,150");
         }
-        lifecycleController: LifecycleController {
-            parameters:
-                @display("p=50,200");
-        }
         scenarioManager: ScenarioManager {
             parameters:
                 script = default(xml("<scenario/>"));
                 @display("p=50,250");
         }
-        host[numHosts]: AODVRouter {
+        host[numHosts]: AodvRouter {
             parameters:
                 @display("i=device/pocketpc_s;r=,,#707070");
         }

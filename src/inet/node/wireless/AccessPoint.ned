@@ -15,11 +15,12 @@
 
 package inet.node.wireless;
 
+import inet.common.MessageDispatcher;
 import inet.common.lifecycle.NodeStatus;
-import inet.linklayer.contract.IMACAddressTable;
-import inet.linklayer.contract.IMACRelayUnit;
-import inet.linklayer.contract.IWiredNic;
-import inet.linklayer.contract.IWirelessNic;
+import inet.linklayer.contract.IEthernetInterface;
+import inet.linklayer.contract.IMacAddressTable;
+import inet.linklayer.contract.IMacRelayUnit;
+import inet.linklayer.contract.IWirelessInterface;
 import inet.mobility.contract.IMobility;
 import inet.networklayer.common.InterfaceTable;
 
@@ -33,8 +34,8 @@ import inet.networklayer.common.InterfaceTable;
 // but that can also be configured by a parameter.
 //
 // The wlan[*].mgmtType can be configured for different management types
-// currently it can be: ~Ieee80211MgmtAPSimplified and ~Ieee80211MgmtAP.
-// By default it is ~Ieee80211MgmtAP. The Simplified version does not
+// currently it can be: ~Ieee80211MgmtApSimplified and ~Ieee80211MgmtAp.
+// By default it is ~Ieee80211MgmtAp. The Simplified version does not
 // support channel scanning, authentication and association .
 // In this case, nodes must explicitly specify the hardware address
 // of the wlan card they want to be associated with.
@@ -46,57 +47,67 @@ module AccessPoint
         @labels(node,ethernet-node,wireless-node);
         @display("i=device/accesspoint");
         string mobilityType = default("StationaryMobility"); // how the node moves around. see: inet.mobility
-        string relayUnitType = default(firstAvailable("Ieee8021dRelay","MACRelayUnit")); // type of the IMACRelayUnit (MACRelayUnit, Ieee8021dRelay, etc)
-        string macTableType = default("MACAddressTable"); // type of the ~IMACAddressTable
-        int numRadios = default(1);               // the number of radios in the access point
+        string relayUnitType = default(firstAvailable("Ieee8021dRelay","MacRelayUnit")); // type of the IMacRelayUnit (MacRelayUnit, Ieee8021dRelay, etc)
+        string macTableType = default("MacAddressTable"); // type of the ~IMacAddressTable
+        int numWlanInterfaces = default(1);               // the number of radios in the access point
         bool hasStatus = default(false);
-        wlan[*].mgmtType = default("Ieee80211MgmtAP");
+        wlan[*].llcType = default("Ieee80211Portal");
+        wlan[*].mgmtType = default("Ieee80211MgmtAp");
         eth[*].encapType = "EtherEncapDummy";
         *.interfaceTableModule = default(absPath(".interfaceTable"));
     gates:
-        input radioIn[numRadios] @directIn;
+        input radioIn[numWlanInterfaces] @directIn;
         inout ethg[] @labels(EtherFrame-conn);
     submodules:
         status: NodeStatus if hasStatus {
-            @display("p=51,43");
+            parameters:
+                @display("p=100,100;is=s");
         }
 
         interfaceTable: InterfaceTable {
-            @display("p=51,121;is=s");
+            parameters:
+                @display("p=100,200;is=s");
         }
         mobility: <mobilityType> like IMobility {
             parameters:
-                @display("p=208,43");
+                @display("p=100,300;is=s");
         }
-        macTable: <macTableType> like IMACAddressTable {
-            @display("p=73,19;is=s");
-        }
-        relayUnit: <relayUnitType> like IMACRelayUnit if sizeof(ethg)+numRadios>1 && relayUnitType != "" {
+        macTable: <macTableType> like IMacAddressTable {
             parameters:
-                @display("p=151,121");
+                @display("p=100,400;is=s");
         }
-        wlan[numRadios]: <default("Ieee80211Nic")> like IWirelessNic {
+        relayUnit: <relayUnitType> like IMacRelayUnit if sizeof(ethg)+numWlanInterfaces > 1 && relayUnitType != "" {
             parameters:
-                @display("p=89,225,row;q=queue");
+                @display("p=400,200");
         }
-        eth[sizeof(ethg)]: <default("EthernetInterface")> like IWiredNic {
+        nl: MessageDispatcher if sizeof(ethg)+numWlanInterfaces > 1 && relayUnitType != "" {
+            parameters:
+                @display("p=356,299;b=300,5,,,,1");
+        }
+        wlan[numWlanInterfaces]: <default("Ieee80211Interface")> like IWirelessInterface {
+            parameters:
+                @display("p=216,400,row;q=queue");
+        }
+        eth[sizeof(ethg)]: <default("EthernetInterface")> like IEthernetInterface {
             parameters:
                 mac.promiscuous = true;
-                @display("p=208,225,row;q=txQueue");
+                @display("p=400,400,row;q=txQueue");
         }
     connections allowunconnected:
+        nl.out++--> relayUnit.ifIn if sizeof(ethg)+numWlanInterfaces > 1 && relayUnitType != "";
+        nl.in++ <-- relayUnit.ifOut if sizeof(ethg)+numWlanInterfaces > 1 && relayUnitType != "";
         // connections to network outside
-        // wireless interfaces MUST be connected first (i.e. ports 0..numRadios-1)
+        // wireless interfaces MUST be connected first (i.e. ports 0..numWlanInterfaces-1)
         // because broadcasts must be handled differently for wireless IFs by the relayUnit
-        for i=0..numRadios-1 {
-            radioIn[i] --> wlan[i].radioIn;
-            wlan[i].upperLayerOut --> relayUnit.ifIn++ if sizeof(ethg)+numRadios>1;
-            wlan[i].upperLayerIn <-- relayUnit.ifOut++ if sizeof(ethg)+numRadios>1;
+        for i=0..numWlanInterfaces-1 {
+            radioIn[i] --> { @display("m=s"); } --> wlan[i].radioIn;
+            wlan[i].upperLayerOut --> nl.in++ if sizeof(ethg)+numWlanInterfaces > 1 && relayUnitType != "";
+            wlan[i].upperLayerIn <-- nl.out++ if sizeof(ethg)+numWlanInterfaces > 1 && relayUnitType != "";
         }
         // ethernet must be connected only AFTER wireless ports
         for i=0..sizeof(ethg)-1 {
-            eth[i].phys <--> ethg[i];
-            eth[i].upperLayerIn <-- relayUnit.ifOut++ if sizeof(ethg)+numRadios>1;
-            eth[i].upperLayerOut --> relayUnit.ifIn++ if sizeof(ethg)+numRadios>1;
+            eth[i].phys <--> { @display("m=s"); } <--> ethg[i];
+            eth[i].upperLayerIn <-- nl.out++ if sizeof(ethg)+numWlanInterfaces>1;
+            eth[i].upperLayerOut --> nl.in++ if sizeof(ethg)+numWlanInterfaces>1;
         }
 }

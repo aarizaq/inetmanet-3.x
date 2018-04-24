@@ -15,17 +15,14 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-
 package inet.applications.tcpapp;
 
-
-import inet.applications.contract.ITCPApp;
-
+import inet.applications.contract.IApp;
 
 //
 // Models Telnet sessions with a specific user behaviour.
-// The server app should be ~TCPGenericSrvApp.
-// Compatible with both ~IPv4 and ~IPv6.
+// The server app should be ~TcpGenericServerApp.
+// Compatible with both ~Ipv4 and ~Ipv6.
 //
 // NOTE: This module emulates a very specific user behaviour, and as such,
 // it should be viewed as an example rather than a generic Telnet model.
@@ -35,8 +32,7 @@ import inet.applications.contract.ITCPApp;
 //
 // <b>Configuring App</b>
 //
-// The module parameter dataTransferMode should be set the transfer mode in TCP layer.
-// Currently you have three choices:
+// Currently you have three dataTransferMode choices:
 //
 //   -# set them to "bytecount".
 //      This mode manages "virtual bytes", that is, only byte counts are
@@ -55,11 +51,11 @@ import inet.applications.contract.ITCPApp;
 //      after the TCP entities have completed simulating the transmission
 //      of 1 megabyte over the connection. This is a different behaviour
 //      from TCPVirtualDataSendQueue/RcvQueue.
-//      This mode is not implemented in ~TCP_NSC yet.
+//      This mode is not implemented in ~TcpNsc yet.
 //
 //   -# use "bytestream", which transmits real bytes of messages.
 //
-simple TelnetApp like ITCPApp
+simple TelnetApp like IApp
 {
     parameters:
         string localAddress = default(""); // local address or empty ("")
@@ -77,17 +73,17 @@ simple TelnetApp like ITCPApp
         volatile double idleInterval @unit(s) = default(exponential(300s)); // time gap between sessions
         volatile double reconnectInterval @unit(s) = default(30s);  // if connection breaks, user waits this much before trying to reconnect
         @display("i=block/telnet");
-        @signal[sentPk](type=cPacket);
-        @signal[rcvdPk](type=cPacket);
+        @signal[packetSent](type=Packet);
+        @signal[packetReceived](type=Packet);
         @signal[connect](type=long);  // 1 for open, -1 for close
-        @statistic[rcvdPk](title="packets received"; source=rcvdPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
-        @statistic[sentPk](title="packets sent"; source=sentPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
-        @statistic[endToEndDelay](title="end-to-end delay"; source="messageAge(rcvdPk)"; unit=s; record=histogram,vector; interpolationmode=none);
+        @statistic[packetReceived](title="packets received"; source=packetReceived; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[packetSent](title="packets sent"; source=packetSent; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
+        @statistic[endToEndDelay](title="end-to-end delay"; source="dataAge(packetReceived)"; unit=s; record=histogram,vector; interpolationmode=none);
         @statistic[numActiveSessions](title="number of active sessions"; source="sum(connect)"; record=max,timeavg,vector; interpolationmode=sample-hold;);
         @statistic[numSessions](title="total number of sessions"; source="sum(connect+1)/2"; record=last);
 
     gates:
-        input tcpIn @labels(TCPCommand/up);
-        output tcpOut @labels(TCPCommand/down);
+        input socketIn @labels(TcpCommand/up);
+        output socketOut @labels(TcpCommand/down);
 }
 

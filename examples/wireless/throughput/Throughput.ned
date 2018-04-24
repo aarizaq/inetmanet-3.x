@@ -18,9 +18,10 @@
 
 package inet.examples.wireless.throughput;
 
-import inet.applications.ethernet.EtherAppCli;
-import inet.linklayer.ieee80211.Ieee80211Nic;
+import inet.applications.ethernet.EtherAppClient;
+import inet.linklayer.ieee80211.Ieee80211Interface;
 import inet.mobility.static.StationaryMobility;
+import inet.networklayer.common.InterfaceTable;
 import inet.physicallayer.ieee80211.packetlevel.Ieee80211ScalarRadioMedium;
 import inet.visualizer.contract.IIntegratedVisualizer;
 
@@ -30,24 +31,28 @@ module ThroughputClient
     parameters:
         @display("i=device/wifilaptop");
         @networkNode();
-        *.interfaceTableModule = "";
+        *.interfaceTableModule = "^.interfaceTable";
     gates:
         input radioIn @directIn;
 
     submodules:
-        cli: EtherAppCli {
+        cli: EtherAppClient {
             parameters:
                 registerSAP = false;
                 @display("b=40,24;p=180,60,col");
         }
-        wlan: Ieee80211Nic {
+        wlan: Ieee80211Interface {
             parameters:
                 @display("p=112,134;q=queue");
-                mgmtType = default("Ieee80211MgmtSTASimplified");
+                mgmtType = default("Ieee80211MgmtStaSimplified");
+        }
+        interfaceTable: InterfaceTable {
+            parameters:
+                @display("p=50,50;is=s");
         }
         mobility: StationaryMobility {
             parameters:
-                @display("p=50,141");
+                @display("p=50,141;is=s");
         }
     connections allowunconnected:
         wlan.radioIn <-- radioIn;

@@ -15,7 +15,10 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
+#include "inet/physicallayer/common/packetlevel/SignalTag_m.h"
+#include "inet/physicallayer/ieee80211/packetlevel/Ieee80211Tag_m.h"
 #include "inet/physicallayer/ieee80211/packetlevel/Ieee80211TransmitterBase.h"
+#include "inet/physicallayer/ieee80211/mode/Ieee80211VhtMode.h"
 
 namespace inet {
 
@@ -39,10 +42,31 @@ void Ieee80211TransmitterBase::initialize(int stage)
     FlatTransmitterBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         const char *opMode = par("opMode");
-        setModeSet(*opMode ? Ieee80211ModeSet::getModeSet(opMode) : nullptr);
-        setMode(modeSet != nullptr ? (bitrate != bps(-1) ? modeSet->getMode(bitrate) : nullptr) : nullptr);
         const char *bandName = par("bandName");
         setBand(*bandName != '\0' ? Ieee80211CompliantBands::getBand(bandName) : nullptr);
+        setModeSet(*opMode ? Ieee80211ModeSet::getModeSet(opMode) : nullptr);
+
+        if (strcmp(opMode, "ac") == 0) {
+            if (band == nullptr)
+                throw cRuntimeError("AC mode required a valid bandwidth");
+            if (strcmp(band->getName(), "5 GHz&20 MHz") == 0) {
+                setMode(modeSet != nullptr ? (bitrate != bps(-1) ? modeSet->getMode(bitrate, Hz(20e6)) : nullptr) : nullptr);
+            }
+            else if (strcmp(band->getName(), "5 GHz&40 MHz") == 0) {
+                setMode(modeSet != nullptr ? (bitrate != bps(-1) ? modeSet->getMode(bitrate, Hz(40e6)) : nullptr) : nullptr);
+            }
+            else if (strcmp(band->getName(), "5 GHz&80 MHz") == 0) {
+                setMode(modeSet != nullptr ? (bitrate != bps(-1) ? modeSet->getMode(bitrate, Hz(80e6)) : nullptr) : nullptr);
+            }
+            else if (strcmp(band->getName(), "5 GHz&160 MHz") == 0) {
+                setMode(modeSet != nullptr ? (bitrate != bps(-1) ? modeSet->getMode(bitrate, Hz(160e6)) : nullptr) : nullptr);
+            }
+            else
+                throw cRuntimeError("Invalid bandwidth for AC mode");
+        }
+        else
+            setMode(modeSet != nullptr ? (bitrate != bps(-1) ? modeSet->getMode(bitrate) : nullptr) : nullptr);
+
         int channelNumber = par("channelNumber");
         if (channelNumber != -1)
             setChannelNumber(channelNumber);
@@ -60,17 +84,18 @@ std::ostream& Ieee80211TransmitterBase::printToStream(std::ostream& stream, int 
     return FlatTransmitterBase::printToStream(stream, level);
 }
 
-const IIeee80211Mode *Ieee80211TransmitterBase::computeTransmissionMode(const TransmissionRequest *transmissionRequest) const
+const IIeee80211Mode *Ieee80211TransmitterBase::computeTransmissionMode(const Packet *packet) const
 {
     const IIeee80211Mode *transmissionMode;
-    const Ieee80211TransmissionRequest *ieee80211TransmissionRequest = dynamic_cast<const Ieee80211TransmissionRequest *>(transmissionRequest);
-    if (ieee80211TransmissionRequest != nullptr && ieee80211TransmissionRequest->getMode() != nullptr) {
-        if (modeSet != nullptr && !modeSet->containsMode(ieee80211TransmissionRequest->getMode()))
+    auto modeReq = const_cast<Packet *>(packet)->findTag<Ieee80211ModeReq>();
+    auto bitrateReq = const_cast<Packet *>(packet)->findTag<SignalBitrateReq>();
+    if (modeReq != nullptr) {
+        if (modeSet != nullptr && !modeSet->containsMode(modeReq->getMode()))
             throw cRuntimeError("Unsupported mode requested");
-        transmissionMode = ieee80211TransmissionRequest->getMode();
+        transmissionMode = modeReq->getMode();
     }
-    else if (modeSet != nullptr && transmissionRequest != nullptr && !std::isnan(transmissionRequest->getBitrate().get()))
-        transmissionMode = modeSet->getMode(transmissionRequest->getBitrate());
+    else if (modeSet != nullptr && bitrateReq != nullptr)
+        transmissionMode = modeSet->getMode(bitrateReq->getDataBitrate());
     else
         transmissionMode = mode;
     if (transmissionMode == nullptr)
@@ -78,25 +103,15 @@ const IIeee80211Mode *Ieee80211TransmitterBase::computeTransmissionMode(const Tr
     return transmissionMode;
 }
 
-const Ieee80211Channel *Ieee80211TransmitterBase::computeTransmissionChannel(const TransmissionRequest *transmissionRequest) const
+const Ieee80211Channel *Ieee80211TransmitterBase::computeTransmissionChannel(const Packet *packet) const
 {
     const Ieee80211Channel *transmissionChannel;
-    const Ieee80211TransmissionRequest *ieee80211TransmissionRequest = dynamic_cast<const Ieee80211TransmissionRequest *>(transmissionRequest);
-    if (ieee80211TransmissionRequest != nullptr && ieee80211TransmissionRequest->getChannel() != nullptr)
-        transmissionChannel = ieee80211TransmissionRequest->getChannel();
-    else
-        transmissionChannel = channel;
+    auto channelReq = const_cast<Packet *>(packet)->findTag<Ieee80211ChannelReq>();
+    transmissionChannel = channelReq != nullptr ? channelReq->getChannel() : channel;
     if (transmissionChannel == nullptr)
         throw cRuntimeError("Transmission channel is undefined");
     return transmissionChannel;
-}
 
-W Ieee80211TransmitterBase::computeTransmissionPower(const TransmissionRequest *transmissionRequest) const
-{
-    if (transmissionRequest != nullptr && !std::isnan(transmissionRequest->getPower().get()))
-        return transmissionRequest->getPower();
-    else
-        return power;
 }
 
 void Ieee80211TransmitterBase::setModeSet(const Ieee80211ModeSet *modeSet)
@@ -111,8 +126,17 @@ void Ieee80211TransmitterBase::setModeSet(const Ieee80211ModeSet *modeSet)
 void Ieee80211TransmitterBase::setMode(const IIeee80211Mode *mode)
 {
     if (this->mode != mode) {
-        if (modeSet->findMode(bps(std::round(mode->getDataMode()->getNetBitrate().get() / 1e5) * 1e5)) == nullptr)
-            throw cRuntimeError("Invalid mode");
+        const Ieee80211VhtMode *modVht = dynamic_cast<const Ieee80211VhtMode *>(mode);
+        if (modVht) {
+            double bitRate = modVht->getDataMode()->getNetBitrate().get();
+            double normBitRate = (std::round(bitRate / 1e5) * 1e5);
+            if (modeSet->findMode(bps(normBitRate), modVht->getDataMode()->getBandwidth()) == nullptr)
+                throw cRuntimeError("Invalid mode");
+        }
+        else {
+            if (modeSet->findMode(mode->getDataMode()->getNetBitrate()) == nullptr)
+                throw cRuntimeError("Invalid mode");
+        }
         this->mode = mode;
     }
 }

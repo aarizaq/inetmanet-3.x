@@ -15,40 +15,50 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
+import inet.common.INETDefs;
+import inet.common.TlvOptions;
+import inet.networklayer.common.L3Address;
+import inet.networklayer.contract.NetworkHeaderBase;
+
 cplusplus {{
-#include "inet/common/TLVOption.h"
-#include "inet/networklayer/common/L3Address.h"
-#include "inet/networklayer/common/IPProtocolId_m.h"
+#include "inet/common/ProtocolGroup.h"
+#include "inet/common/packet/Packet.h"
 }}
 
+import inet.networklayer.common.IpProtocolId;
+
 namespace inet;
-
-class noncobject L3Address;
-class noncobject TLVOptions;
-
-enum IPProtocolId;
 
 //
 // Generic protocol TLV option types
 //
-enum GenericTLVOptionTypes
+enum GenericTlvOptionTypes
 {
     GENERIC_TLVOPTION_NOP1 = 0;
     GENERIC_TLVOPTION_NOPN = 1;
     GENERIC_TLVOPTION_TLV_GPSR = 47;
 };
 
-
-
 //
 // Represents a generic network datagram with generic network addresses. 
 //
-packet GenericDatagram
+class GenericDatagramHeader extends NetworkHeaderBase
 {
-    @customize(true);
-    L3Address sourceAddress @getter(_getSrcAddr);
-    L3Address destinationAddress @getter(_getDestAddr);
-    int transportProtocol @enum(IPProtocolId) = IP_PROT_NONE;
+    L3Address srcAddr;
+    L3Address destAddr;
+    IpProtocolId protocolId = IP_PROT_NONE;
     short hopLimit;
-    TLVOptions tlvOptions;
+    B payloadLengthField;
+    TlvOptions tlvOptions;
 }
+
+cplusplus(GenericDatagramHeader) {{
+  public:
+    virtual L3Address getSourceAddress() const override { return getSrcAddr(); }
+    virtual void setSourceAddress(const L3Address& addr) override { setSrcAddr(addr); }
+    virtual L3Address getDestinationAddress() const override { return getDestAddr(); }
+    virtual void setDestinationAddress(const L3Address& addr) override { setDestAddr(addr); }
+    virtual const Protocol *getProtocol() const override { return ProtocolGroup::ipprotocol.findProtocol(getProtocolId()); }
+    virtual void setProtocol(const Protocol *protocol) override { setProtocolId(static_cast<IpProtocolId>(ProtocolGroup::ipprotocol.getProtocolNumber(protocol))); }
+}}
+

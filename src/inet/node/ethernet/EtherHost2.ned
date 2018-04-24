@@ -18,8 +18,8 @@
 package inet.node.ethernet;
 
 import inet.applications.ethernet.EtherTrafGen;
-import inet.linklayer.contract.IEtherMAC;
-import inet.linklayer.ethernet.EtherQoSQueue;
+import inet.linklayer.contract.IEtherMac;
+import inet.linklayer.ethernet.EtherQosQueue;
 import inet.linklayer.ethernet.IEtherEncap;
 
 
@@ -33,9 +33,11 @@ module EtherHost2
 {
     parameters:
         bool csmacdSupport = default(true);  // by default use CSMA/CD
-        string macType = default(csmacdSupport ? "EtherMAC" : "EtherMACFullDuplex"); // ~EtherMAC or ~EtherMACFullDuplex
+        string macType = default(csmacdSupport ? "EtherMac" : "EtherMacFullDuplex"); // ~EtherMac or ~EtherMacFullDuplex
         string queueType = default(""); // DropTailQueue, DiffServQueue, or "" to use the internal queue
+        string fcsMode @enum("declaredCorrect", "declaredIncorrect", "computed") = default("declaredCorrect");
         *.interfaceTableModule = default("");
+        *.fcsMode = fcsMode;
         @networkNode();
         @labels(node,ethernet-node);
         @display("i=device/pc2");
@@ -48,12 +50,12 @@ module EtherHost2
         encap: <default("EtherEncap")> like IEtherEncap {
             @display("p=155,146");
         }
-        queue: EtherQoSQueue if queueType != "" {
+        queue: EtherQosQueue if queueType != "" {
             parameters:
                 dataQueueType = queueType;
                 @display("p=87,207;q=l2queue");
         }
-        mac: <macType> like IEtherMAC {
+        mac: <macType> like IEtherMac {
             queueModule = (queueType == "" ? "" : "^.queue");
             @display("p=155,272;q=txQueue");
         }

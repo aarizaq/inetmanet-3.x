@@ -30,7 +30,7 @@
 
 #include "inet/common/INETDefs.h"
 
-#include "inet/networklayer/ipv4/IPv4RoutingTable.h"
+#include "inet/networklayer/ipv4/Ipv4RoutingTable.h"
 
 namespace inet {
 
@@ -41,13 +41,13 @@ class INET_API RoutingTableParser
 {
   protected:
     IInterfaceTable *ift;
-    IIPv4RoutingTable *rt;
+    IIpv4RoutingTable *rt;
 
   public:
     /**
      * Constructor
      */
-    RoutingTableParser(IInterfaceTable *ift, IIPv4RoutingTable *rt) : ift(ift), rt(rt) {}
+    RoutingTableParser(IInterfaceTable *ift, IIpv4RoutingTable *rt) : ift(ift), rt(rt) {}
 
     /**
      * Destructor
@@ -76,8 +76,6 @@ class INET_API RoutingTableParser
     // Go through the routeFile char array, parse all entries line by line and
     // write them into the routing table.
     virtual void parseRouting(char *routeFile);
-
-    void parseRules(char *rulesFile);
 
     virtual char *parseEntry(char *ifconfigFile,
             const char *tokenStr,

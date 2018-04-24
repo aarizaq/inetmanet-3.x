@@ -18,12 +18,12 @@
 
 package inet.node.ethernet;
 
-import inet.applications.ethernet.EtherAppCli;
-import inet.applications.ethernet.EtherAppSrv;
+import inet.applications.ethernet.EtherAppClient;
+import inet.applications.ethernet.EtherAppServer;
 import inet.common.lifecycle.NodeStatus;
-import inet.linklayer.contract.IEtherMAC;
-import inet.linklayer.ethernet.EtherLLC;
-import inet.linklayer.ethernet.EtherQoSQueue;
+import inet.linklayer.contract.IEtherMac;
+import inet.linklayer.ethernet.EtherLlc;
+import inet.linklayer.ethernet.EtherQosQueue;
 
 
 //
@@ -37,41 +37,43 @@ module EtherHost
     parameters:
         bool hasStatus = default(false);
         bool csmacdSupport = default(true);  // by default use CSMA/CD
-        string macType = default(csmacdSupport ? "EtherMAC" : "EtherMACFullDuplex"); // ~EtherMAC or ~EtherMACFullDuplex
+        string macType = default(csmacdSupport ? "EtherMac" : "EtherMacFullDuplex"); // ~EtherMac or ~EtherMacFullDuplex
         string queueType = default(""); // DropTailQueue, DiffServQueue, or empty to use the internal queue
+        string fcsMode @enum("declaredCorrect", "declaredIncorrect", "computed") = default("declaredCorrect");
         @networkNode();
         @labels(node,ethernet-node);
         @display("i=device/pc2");
         *.interfaceTableModule = default("");
+        *.fcsMode = fcsMode;
     gates:
         inout ethg @labels(EtherFrame-conn);
     submodules:
         status: NodeStatus if hasStatus {
             @display("p=50,50;is=s");
         }
-        cli: EtherAppCli {
+        cli: EtherAppClient {
             parameters:
                 registerSAP = true;
                 @display("p=120,58,col");
         }
-        srv: EtherAppSrv {
+        srv: EtherAppServer {
             parameters:
                 registerSAP = true;
                 @display("p=310,58,col");
         }
-        llc: EtherLLC {
+        llc: EtherLlc {
             parameters:
                 @display("p=215,118");
             gates:
                 upperLayerIn[2];
                 upperLayerOut[2];
         }
-        queue: EtherQoSQueue if queueType != "" {
+        queue: EtherQosQueue if queueType != "" {
             parameters:
                 dataQueueType = queueType;
                 @display("p=159,199;q=l2queue");
         }
-        mac: <macType> like IEtherMAC {
+        mac: <macType> like IEtherMac {
             parameters:
                 queueModule = (queueType == "" ? "" : "^.queue");
                 @display("p=215,270;q=txQueue");

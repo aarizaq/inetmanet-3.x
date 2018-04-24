@@ -10,6 +10,7 @@
                        inet.transportlayer.tcp_common
                        inet.applications.tcpapp
                        inet.common.serializer.tcp
+                       inet.common.serializer.application.tcpapp
                       "
         extraSourceFolders = ""
         compileFlags = "-DWITH_TCP_COMMON"
@@ -73,7 +74,7 @@
                        inet.networklayer.configurator.ipv4
                        inet.networklayer.arp.ipv4
                        inet.common.serializer.ipv4
-                       inet.common.serializer.headerserializers.arp
+                       inet.common.serializer.arp
                       "
         extraSourceFolders = ""
         compileFlags = "-DWITH_IPv4"
@@ -165,24 +166,9 @@
         nedPackages = "
                        inet.networklayer.generic
                        inet.networklayer.configurator.generic
-                       inet.networklayer.arp.generic
                       "
         extraSourceFolders = ""
         compileFlags = "-DWITH_GENERIC"
-        linkerFlags = ""
-        />
-    <feature
-        id="MultiNet"
-        name="Multi network layer"
-        description = "Multi network layer support, e.g. IPv4/IPv6 dual stack"
-        initiallyEnabled = "true"
-        requires = ""
-        labels = ""
-        nedPackages = "
-                       inet.networklayer.multi
-                      "
-        extraSourceFolders = ""
-        compileFlags = ""
         linkerFlags = ""
         />
     <feature
@@ -200,18 +186,18 @@
         linkerFlags = ""
         />
     <feature
-        id="Flood"
-        name="Flood"
+        id="Flooding"
+        name="Flooding"
         description = "Provides network layer support for deterministic and probabilistic flooding"
         initiallyEnabled = "true"
         requires = ""
         labels = ""
         nedPackages = "
-                       inet.networklayer.flood
+                       inet.networklayer.flooding
                        inet.networklayer.probabilistic
                       "
         extraSourceFolders = ""
-        compileFlags = "-DWITH_FLOOD"
+        compileFlags = "-DWITH_FLOODING"
         linkerFlags = ""
         />
     <feature
@@ -265,7 +251,7 @@
         name="SCTP"
         description = "SCTP Protocol support"
         initiallyEnabled = "true"
-        requires = "IPv4 IPv6"
+        requires = "IPv4 UDP"
         labels = ""
         nedPackages = "
                        inet.applications.sctpapp
@@ -333,7 +319,7 @@
                        inet.applications.ethernet
                        inet.linklayer.ethernet
                        inet.node.ethernet
-                       inet.common.serializer.headerserializers.ethernet
+                       inet.common.serializer.ethernet
                       "
         extraSourceFolders = ""
         compileFlags = "-DWITH_ETHERNET"
@@ -361,6 +347,7 @@
         labels = "protocols"
         nedPackages = "
                        inet.linklayer.ppp
+                       inet.common.serializer.ppp
                       "
         extraSourceFolders = ""
         compileFlags = "-DWITH_PPP"
@@ -406,7 +393,7 @@
         nedPackages = "
                        inet.networklayer.mpls inet.node.mpls
                        inet.networklayer.ldp
-                       inet.networklayer.rsvp_te
+                       inet.networklayer.rsvpte
                        inet.networklayer.ted
                       "
         extraSourceFolders = ""
@@ -518,14 +505,14 @@
         name="DYMO"
         description = "Dynamic MANET On-demand Routing"
         initiallyEnabled = "true"
-        requires = "UDP IPv4 Ieee80211 MultiNet"
+        requires = "UDP IPv4 Ieee80211"
         labels = "routing"
         nedPackages = "
                        inet.routing.dymo
                        inet.node.dymo
                       "
         extraSourceFolders = ""
-        compileFlags = ""
+        compileFlags = "-DWITH_DYMO"
         linkerFlags = ""
         />
     <feature
@@ -558,11 +545,26 @@
         linkerFlags = ""
         />
     <feature
+        id="DSDV"
+        name="DSDV"
+        description = "Destination-Sequenced Distance Vector routing"
+        initiallyEnabled = "true"
+        requires = "IPv4 Ieee80211"
+        labels = "routing"
+        nedPackages = "
+                       inet.routing.dsdv
+                       inet.node.dsdv
+                      "
+        extraSourceFolders = ""
+        compileFlags = "-DWITH_DSDV"
+        linkerFlags = ""
+        />
+    <feature
         id="GPSR"
         name="GPSR"
         description = "Greedy Perimeter Stateless Routing for Wireless Networks"
         initiallyEnabled = "true"
-        requires = "UDP IPv4 MultiNet"
+        requires = "UDP IPv4"
         labels = "routing"
         nedPackages = "
                        inet.routing.gpsr
@@ -602,26 +604,12 @@
         linkerFlags = ""
         />
     <feature
-        id="MANET"
-        name="MANET routing"
-        description = "AdHoc MANET routing support (AODV, BATMAN, DSR, DSDV, DYMO, DYMO_FAU, OLSR)"
-        initiallyEnabled = "true"
-        requires = "IPv4 IPv6 UDP Ieee80211"
-        labels = "routing manet"
-        nedPackages = "
-                       inet.routing.extras
-                      "
-        extraSourceFolders = ""
-        compileFlags = "-DWITH_MANET"
-        linkerFlags = ""
-        />
-    <feature
         id="MANET_examples"
         name="MANET routing examples"
         description = "Examples for the MANET routing protocols"
         initiallyEnabled = "true"
         requires = "TCP_INET UDP IPv4 DYMO GPSR"
-        labels = "routing manet examples MultiNet"
+        labels = "routing manet examples"
         nedPackages = "
                        inet.examples.manetrouting
                       "
@@ -735,12 +723,12 @@
         name="IEEE 802.11"
         description = "Provides IEEE 802.11 (a/b/g/e/p/n) Ad-hoc and Infrastucture mode NICs"
         initiallyEnabled = "true"
-        requires = "mobility radio idealwireless"
+        requires = "mobility radio ackingwireless"
         labels = "nic wireless"
         nedPackages = "
                        inet.linklayer.ieee80211
                        inet.physicallayer.ieee80211
-                       inet.common.serializer.headerserializers.ieee80211
+                       inet.common.serializer.ieee80211
                        inet.node.wireless
                       "
         extraSourceFolders = ""
@@ -752,7 +740,7 @@
         name="IEEE 802.15.4"
         description = "Provides IEEE 802.15.4 Narrowband and Ultra-Wideband NICs"
         initiallyEnabled = "true"
-        requires = "mobility radio apskradio CSMA idealwireless"
+        requires = "mobility radio apskradio ackingwireless"
         labels = "nic wireless"
         nedPackages = "
                        inet.linklayer.ieee802154
@@ -776,22 +764,37 @@
         linkerFlags = ""
         />
     <feature
-        id="idealwireless"
-        name="Ideal Wireless"
+        id="ackingwireless"
+        name="Acking Wireless"
         description = "Provides a simple wireless interface that consists
-        	of a unit disk radio and no real MAC protocol. It offers simplicity
-        	for scenarios where Layer 1 and 2 effects can be completely ignored.
-        	Parts: IdealWirelessNic (IdealWirelessMac plus IdealRadio), and
-            IdealRadioMedium."
+                of a unit disk radio and no real MAC protocol. It offers simplicity
+                for scenarios where Layer 1 and 2 effects can be completely ignored.
+                Parts: AckingWirelessNic (AckingWirelessMac plus UnitDiskRadio), and
+                UnitDiskRadioMedium."
         initiallyEnabled = "true"
         requires = "mobility radio"
         labels = "nic wireless"
         nedPackages = "
-                       inet.linklayer.ideal
-                       inet.physicallayer.idealradio
+                       inet.linklayer.acking
+                       inet.physicallayer.unitdisk
                       "
         extraSourceFolders = ""
-        compileFlags = "-DWITH_IDEALWIRELESS"
+        compileFlags = "-DWITH_ACKINGWIRELESS"
+        linkerFlags = ""
+        />
+    <feature
+        id="shortcut"
+        name="Shortcut"
+        description = "Implements simple shortcut to peer protocols that completely bypass the lower layers."
+        initiallyEnabled = "true"
+        requires = "radio"
+        labels = ""
+        nedPackages = "
+                       inet.linklayer.shortcut
+                       inet.physicallayer.shortcut
+                      "
+        extraSourceFolders = ""
+        compileFlags = "-DWITH_SHORTCUT"
         linkerFlags = ""
         />
     <feature
@@ -799,7 +802,7 @@
         name="Wireless examples"
         description = "Provides various wireless examples"
         initiallyEnabled = "true"
-        requires = "TCP_INET UDP IPv4 Ethernet Ieee80211 Ieee802154 apskradio idealwireless physicalenvironment AODV CSMA"
+        requires = "TCP_INET UDP IPv4 Ethernet Ieee80211 Ieee802154 apskradio ackingwireless physicalenvironment AODV"
         labels = "nic wireless"
         nedPackages = "
                        inet.examples.adhoc
@@ -835,20 +838,6 @@
                       "
         extraSourceFolders = ""
         compileFlags = "-DWITH_VISUALIZERS"
-        linkerFlags = ""
-        />
-    <feature
-        id="visualization_examples"
-        name="Visualization examples"
-        description = "Provides examples for the various visualization modules."
-        initiallyEnabled = "true"
-        requires = "visualization physicalenvironment DYMO Ieee80211 IPv4 MultiNet Ethernet"
-        labels = ""
-        nedPackages = "
-                       inet.examples.visualization
-                      "
-        extraSourceFolders = ""
-        compileFlags = ""
         linkerFlags = ""
         />
     <feature
@@ -1070,7 +1059,7 @@
         />
     <feature
         id="BMAC"
-        name="BMAC"
+        name="B-MAC"
         description = "B-MAC, also called the Berkeley MAC, a Low Power Listening (LPL) protocol"
         initiallyEnabled = "true"
         requires = ""
@@ -1084,7 +1073,7 @@
         />
     <feature
         id="LMAC"
-        name="LMAC"
+        name="L-MAC"
         description = "L-MAC, a lightweight MAC protocol for wireless sensor networks"
         initiallyEnabled = "true"
         requires = ""
@@ -1097,38 +1086,9 @@
         linkerFlags = ""
         />
     <feature
-        id="CSMA"
-        name="CSMA"
-        description = "A CSMA (Carrier Sense Multiple Access) MAC protocol, similar to 802.15.4"
-        initiallyEnabled = "true"
-        requires = ""
-        labels = ""
-        nedPackages = "
-                       inet.linklayer.csma
-                      "
-        extraSourceFolders = ""
-        compileFlags = "-DWITH_CSMA"
-        linkerFlags = ""
-        />
-    <feature
-        id="CsmaCaMac"
-        name="CSMA/CA"
-        description = "A CSMA/CA (Carrier Sense Multiple Access / Collision Avoidance) MAC protocol, similar to 802.11b"
-        initiallyEnabled = "true"
-        requires = ""
-        labels = ""
-        nedPackages = "
-                       inet.linklayer.csmaca
-                      "
-        extraSourceFolders = ""
-        compileFlags = "-DWITH_CSMACA"
-        linkerFlags = ""
-        />
-
-     <feature
         id="XMAC"
-        name="XMAC"
-        description = "Provides the X-MAC, also called the Berkeley MAC, a Low Power Listening (LPL) protocol"
+        name="X-MAC"
+        description = "X-MAC, a MAC protocol for wireless sensor networks"
         initiallyEnabled = "true"
         requires = ""
         labels = ""
@@ -1140,31 +1100,18 @@
         linkerFlags = ""
         />
     <feature
-        id="HIP"
-        name="Host Identity Protocol"
-        description = "Host Identity Protocol"
-        initiallyEnabled = "false"
-        requires = "UDP IPv6 Ethernet Ieee80211"
+        id="CsmaCaMac"
+        name="CSMA/CA"
+        description = "A CSMA/CA (Carrier Sense Multiple Access / Collision Avoidance) MAC protocol, similar to 802.11b"
+        initiallyEnabled = "true"
+        requires = ""
         labels = ""
         nedPackages = "
-                       inet.underTest.hip
+                       inet.common.serializer.csmaca
+                       inet.linklayer.csmaca
                       "
         extraSourceFolders = ""
-        compileFlags = "-DWITH_HIP"
-        linkerFlags = ""
-        />
-    <feature
-        id="Ieee80211_mesh"
-        name="802.11a/b/g/e (mesh networking mode)"
-        description = "IEEE 802.11a/b/g/e NIC supporting mesh networking"
-        initiallyEnabled = "true"
-        requires = "mobility radio TCP_INET MANET OSPFv2 MPLS UDP IPv4 IPv6"
-        labels = "nic wireless mesh"
-        nedPackages = "
-                       inet.linklayer.ieee80211mesh
-                      "
-        extraSourceFolders = ""
-        compileFlags = "-DWITH_80211MESH"
+        compileFlags = "-DWITH_CSMACA"
         linkerFlags = ""
         />
     <feature
@@ -1172,7 +1119,7 @@
         name="Wireless tutorial"
         description = "A step-by-step tutorial starting from the basics, and introducing new features and concepts related to wireless communication networks."
         initiallyEnabled = "true"
-        requires = "physicalenvironment apskradio idealwireless Ieee80211 IPv4 UDP AODV"
+        requires = "physicalenvironment apskradio ackingwireless Ieee80211 IPv4 UDP AODV"
         labels = "tutorial wireless"
         nedPackages = "inet.tutorials.wireless"
         extraSourceFolders = ""
@@ -1191,7 +1138,6 @@
         compileFlags = ""
         linkerFlags = ""
         />
-
     <feature
         id="configuratortutorial"
         name="Configurator tutorial"
@@ -1205,9 +1151,21 @@
         linkerFlags = ""
         />
     <feature
+        id="generalshowcases"
+        name="General showcases"
+        description = "Simple showcases demonstrating general features."
+        initiallyEnabled = "true"
+        requires = ""
+        labels = "showcase general"
+        nedPackages = "inet.showcases.general"
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
+    <feature
         id="visualizershowcases"
-        name="Visualization showcaes"
-        description = "Simple showcases demonstrationg features and concepts related to visualizing state and behavior of communication networks."
+        name="Visualization showcases"
+        description = "Simple showcases demonstrating features and concepts related to visualizing state and behavior of communication networks."
         initiallyEnabled = "true"
         requires = "visualization physicalenvironment Ethernet Ieee80211 IPv4 AODV"
         labels = "showcase visualization"
@@ -1218,8 +1176,8 @@
         />
     <feature
         id="wirelessshowcases"
-        name="Wireless showcaes"
-        description = "Simple showcases demonstrationg wireless features."
+        name="Wireless showcases"
+        description = "Simple showcases demonstrating wireless features."
         initiallyEnabled = "true"
         requires = "visualization physicalenvironment apskradio Ieee80211 IPv4 AODV"
         labels = "showcase visualization"
@@ -1228,28 +1186,4 @@
         compileFlags = ""
         linkerFlags = ""
         />
-    <feature
-        id="NETA"
-        name="Net Attack"
-        description = "NETwork Attacks Framework for OMNeT++"
-        initiallyEnabled = "false"
-        requires = "IPv4 IPv6 UDP Ieee80211 MANET"
-        labels = "routing manet neta"
-        nedPackages = "inet.neta"
-        extraSourceFolders = ""
-        compileFlags = "-DWITH_NETA"
-        linkerFlags = ""
-        />
-    <feature
-        id="NETAExamples"
-        name="Net Attack examples"
-        description = "NETwork Attacks Framework for OMNeT++ examples"
-        initiallyEnabled = "false"
-        requires = "NETA"
-        labels = "routing manet NETA"
-        nedPackages = "inet.examples.neta"
-        extraSourceFolders = ""
-        compileFlags = ""
-        linkerFlags = ""
-        />		
 </features>

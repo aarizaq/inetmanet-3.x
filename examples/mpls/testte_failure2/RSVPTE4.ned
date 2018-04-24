@@ -14,50 +14,49 @@
 
 package inet.examples.mpls.testte_failure2;
 
-import inet.common.lifecycle.LifecycleController;
 import inet.common.scenario.ScenarioManager;
-import inet.networklayer.configurator.ipv4.IPv4NetworkConfigurator;
+import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.inet.StandardHost;
-import inet.node.mpls.RSVP_LSR;
+import inet.node.mpls.RsvpMplsRouter;
 
 
 //
-// Example network to demonstrate RSVP-TE.
+// Example network to demonstrate Rsvp-TE.
 //
 // See the README file in the model directory for scenario description.
 //
 network RSVPTE4
 {
     submodules:
-        configurator: IPv4NetworkConfigurator {
+        configurator: Ipv4NetworkConfigurator {
             parameters:
                 @display("p=115,50");
         }
-        LSR1: RSVP_LSR {
+        LSR1: RsvpMplsRouter {
             parameters:
                 @display("p=160,167");
         }
-        LSR2: RSVP_LSR {
+        LSR2: RsvpMplsRouter {
             parameters:
                 @display("p=254,255");
         }
-        LSR3: RSVP_LSR {
+        LSR3: RsvpMplsRouter {
             parameters:
                 @display("p=253,78");
         }
-        LSR4: RSVP_LSR {
+        LSR4: RsvpMplsRouter {
             parameters:
                 @display("p=358,167");
         }
-        LSR5: RSVP_LSR {
+        LSR5: RsvpMplsRouter {
             parameters:
                 @display("p=460,167");
         }
-        LSR6: RSVP_LSR {
+        LSR6: RsvpMplsRouter {
             parameters:
                 @display("p=400,300");
         }
-        LSR7: RSVP_LSR {
+        LSR7: RsvpMplsRouter {
             parameters:
                 @display("p=400,50");
         }
@@ -84,10 +83,6 @@ network RSVPTE4
         scenarioManager: ScenarioManager {
             parameters:
                 @display("p=195,50");
-        }
-        lifecycleController: LifecycleController {
-            parameters:
-                @display("p=500,50");
         }
     connections:
         LSR1.pppg++ <--> {  delay = 15ms; datarate = 600kbps; } <--> LSR2.pppg++;

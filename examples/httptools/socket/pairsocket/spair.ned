@@ -7,7 +7,7 @@
 package inet.examples.httptools.socket.pairsocket;
 
 import inet.applications.httptools.configurator.HttpController;
-import inet.networklayer.configurator.ipv4.IPv4NetworkConfigurator;
+import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.inet.StandardHost;
 
 
@@ -23,14 +23,14 @@ network HttpSockPair
                 datarate = 1000Mbps;
         }
     submodules:
-        configurator: IPv4NetworkConfigurator {
+        configurator: Ipv4NetworkConfigurator {
             parameters:
                 //                moduleTypes = "StandardHost";
                 //                nonIPModuleTypes = "";
                 config = xml("<config><interface hosts='*' address='145.236.x.x' netmask='255.255.0.0'/></config>");
                 @display("i=block/cogwheel");
         }
-        controller: HttpController {
+        httpController: HttpController {
             parameters:
                 @display("p=62,60;i=block/cogwheel");
         }

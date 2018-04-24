@@ -17,11 +17,13 @@
 
 package inet.physicallayer.common.packetlevel;
 
-import inet.physicallayer.contract.packetlevel.IRadio;
+import inet.physicallayer.base.packetlevel.PhysicalLayerBase;
 import inet.physicallayer.contract.packetlevel.IAntenna;
+import inet.physicallayer.contract.packetlevel.IRadio;
 import inet.physicallayer.contract.packetlevel.IReceiver;
 import inet.physicallayer.contract.packetlevel.ITransmitter;
 import inet.power.contract.IEnergyConsumer;
+
 
 //
 // The radio model describes the physical device that is capable of transmitting
@@ -48,7 +50,7 @@ import inet.power.contract.IEnergyConsumer;
 // The first entry of the switchingTimes string indicates the
 // time-related metric prefix and it MUST be s, ms or ns.
 //
-module Radio like IRadio
+module Radio extends PhysicalLayerBase like IRadio
 {
     parameters:
         string antennaType;                      // NED type of the antenna model
@@ -61,6 +63,8 @@ module Radio like IRadio
 
         string switchingTimes = default("ms 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"); // time parameters to switch between radio modes
 
+        bool sendRawBytes = default(false); // when true packets are serialized into a sequence of bytes before sending out
+
         bool separateTransmissionParts = default(false); // when enabled the transmission of preamble, header and data part are simulated separately
         bool separateReceptionParts = default(false);    // when enabled the reception of preamble, header and data part are simulated separately 
 
@@ -70,7 +74,6 @@ module Radio like IRadio
         *.energySourceModule = default(absPath(energySourceModule));
 
         @class(Radio);
-        @display("i=block/wrxtx");
 
         @signal[packetSentToUpper](type=cPacket);
         @signal[packetReceivedFromUpper](type=cPacket);
@@ -80,24 +83,19 @@ module Radio like IRadio
         @signal[transmissionStateChanged](type=long);
         @signal[receivedSignalPartChanged](type=long);
         @signal[transmittedSignalPartChanged](type=long);
-        @signal[minSNIR];
-        @signal[packetErrorRate];
-        @signal[bitErrorRate];
-        @signal[symbolErrorRate];
+        @signal[transmissionStarted];
+        @signal[transmissionEnded];
+        @signal[receptionStarted];
+        @signal[receptionEnded];
 
         @statistic[radioMode](title="Radio mode"; source=radioModeChanged; record=count,vector; interpolationmode=sample-hold);
         @statistic[receptionState](title="Radio reception state"; source=receptionStateChanged; record=count,vector; interpolationmode=sample-hold);
         @statistic[transmissionState](title="Radio transmission state"; source=transmissionStateChanged; record=count,vector; interpolationmode=sample-hold);
 
-        @statistic[minSNIR](title="Min SNIR"; source=minSNIR; record=histogram);
-        @statistic[packetErrorRate](title="Packet error rate"; source=packetErrorRate; record=histogram);
-        @statistic[bitErrorRate](title="Bit error rate"; source=bitErrorRate; record=histogram);
-        @statistic[symbolErrorRate](title="Symbol error rate"; source=symbolErrorRate; record=histogram);
-
-    gates:
-        input upperLayerIn @labels(ILinkLayerFrame/down);
-        output upperLayerOut @labels(ILinkLayerFrame/up);
-        input radioIn @labels(IRadioFrame);
+        @statistic[minSnir](title="Min SNIR"; source=minimumSnir(packetSentToUpper); record=histogram);
+        @statistic[packetErrorRate](title="Packet error rate"; source=packetErrorRate(packetSentToUpper); record=histogram);
+        @statistic[bitErrorRate](title="Bit error rate"; source=bitErrorRate(packetSentToUpper); record=histogram);
+        @statistic[symbolErrorRate](title="Symbol error rate"; source=symbolErrorRate(packetSentToUpper); record=histogram);
 
     submodules:
         antenna: <antennaType> like IAntenna {

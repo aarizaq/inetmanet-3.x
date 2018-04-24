@@ -23,7 +23,7 @@
 #include "inet/networklayer/contract/IInterfaceTable.h"
 #include "inet/networklayer/generic/GenericRoute.h"
 #include "inet/networklayer/generic/GenericNetworkProtocolInterfaceData.h"
-#include "inet/common/NotifierConsts.h"
+#include "inet/common/Simsignals.h"
 #include "inet/common/ModuleAccess.h"
 
 namespace inet {
@@ -32,7 +32,7 @@ Define_Module(GenericRoutingTable);
 
 std::ostream& operator<<(std::ostream& os, const GenericRoute& e)
 {
-    os << e.info();
+    os << e.str();
     return os;
 };
 
@@ -71,7 +71,7 @@ void GenericRoutingTable::initialize(int stage)
             addressType = L3Address::MODULEID;
         else
             throw cRuntimeError("Unknown address type");
-        forwarding = par("forwarding").boolValue();
+        forwarding = par("forwarding");
         multicastForwarding = par("multicastForwarding");
 
         WATCH_PTRVECTOR(routes);
@@ -81,15 +81,15 @@ void GenericRoutingTable::initialize(int stage)
         WATCH(routerId);
 
         cModule *host = getContainingNode(this);
-        host->subscribe(NF_INTERFACE_CREATED, this);
-        host->subscribe(NF_INTERFACE_DELETED, this);
-        host->subscribe(NF_INTERFACE_STATE_CHANGED, this);
-        host->subscribe(NF_INTERFACE_CONFIG_CHANGED, this);
-        host->subscribe(NF_INTERFACE_IPv4CONFIG_CHANGED, this);
+        host->subscribe(interfaceCreatedSignal, this);
+        host->subscribe(interfaceDeletedSignal, this);
+        host->subscribe(interfaceStateChangedSignal, this);
+        host->subscribe(interfaceConfigChangedSignal, this);
+        host->subscribe(interfaceIpv4ConfigChangedSignal, this);
     }
     else if (stage == INITSTAGE_NETWORK_LAYER) {
         // At this point, all L2 modules have registered themselves (added their
-        // interface entries). Create the per-interface IPv4 data structures.
+        // interface entries). Create the per-interface Ipv4 data structures.
         IInterfaceTable *interfaceTable = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
         for (int i = 0; i < interfaceTable->getNumInterfaces(); ++i)
             configureInterface(interfaceTable->getInterface(i));
@@ -103,9 +103,9 @@ void GenericRoutingTable::initialize(int stage)
 //TODO
 //        // set routerId if param is not "" (==no routerId) or "auto" (in which case we'll
 //        // do it later in a later stage, after network configurators configured the interfaces)
-//        const char *routerIdStr = par("routerId").stringValue();
+//        const char *routerIdStr = par("routerId");
 //        if (strcmp(routerIdStr, "") && strcmp(routerIdStr, "auto"))
-//            routerId = IPv4Address(routerIdStr);
+//            routerId = Ipv4Address(routerIdStr);
     }
     else if (stage == INITSTAGE_NETWORK_LAYER_3) {
         // routerID selection must be after network autoconfiguration assigned interface addresses
@@ -137,13 +137,13 @@ void GenericRoutingTable::routeChanged(GenericRoute *entry, int fieldCode)
 
         //invalidateCache();
     }
-    emit(NF_ROUTE_CHANGED, entry);    // TODO include fieldCode in the notification
+    emit(routeChangedSignal, entry);    // TODO include fieldCode in the notification
 }
 
 void GenericRoutingTable::configureRouterId()
 {
     if (routerId.isUnspecified()) {    // not yet configured
-        const char *routerIdStr = par("routerId").stringValue();
+        const char *routerIdStr = par("routerId");
         if (!strcmp(routerIdStr, "auto")) {    // non-"auto" cases already handled in earlier stage
             // choose highest interface address as routerId
             for (int i = 0; i < ift->getNumInterfaces(); ++i) {
@@ -171,15 +171,15 @@ void GenericRoutingTable::configureRouterId()
 void GenericRoutingTable::configureInterface(InterfaceEntry *ie)
 {
     int metric = (int)(ceil(2e9 / ie->getDatarate()));    // use OSPF cost as default
-    int interfaceModuleId = ie->getInterfaceModule() ? ie->getInterfaceModule()->getId() : -1;
+    int interfaceModuleId = ie ? ie->getId() : -1;
     // mac
     GenericNetworkProtocolInterfaceData *d = new GenericNetworkProtocolInterfaceData();
     d->setMetric(metric);
     if (addressType == L3Address::MAC)
         d->setAddress(ie->getMacAddress());
-    else if (ie->getInterfaceModule() && addressType == L3Address::MODULEPATH)
+    else if (ie && addressType == L3Address::MODULEPATH)
         d->setAddress(ModulePathAddress(interfaceModuleId));
-    else if (ie->getInterfaceModule() && addressType == L3Address::MODULEID)
+    else if (ie && addressType == L3Address::MODULEID)
         d->setAddress(ModuleIdAddress(interfaceModuleId));
     ie->setGenericNetworkProtocolData(d);
 }
@@ -188,11 +188,11 @@ void GenericRoutingTable::configureLoopback()
 {
 //TODO needed???
 //    InterfaceEntry *ie = ift->getFirstLoopbackInterface()
-//    // add IPv4 info. Set 127.0.0.1/8 as address by default --
+//    // add Ipv4 info. Set 127.0.0.1/8 as address by default --
 //    // we may reconfigure later it to be the routerId
-//    IPv4InterfaceData *d = new IPv4InterfaceData();
-//    d->setIPAddress(IPv4Address::LOOPBACK_ADDRESS);
-//    d->setNetmask(IPv4Address::LOOPBACK_NETMASK);
+//    Ipv4InterfaceData *d = new Ipv4InterfaceData();
+//    d->setIPAddress(Ipv4Address::LOOPBACK_ADDRESS);
+//    d->setNetmask(Ipv4Address::LOOPBACK_NETMASK);
 //    d->setMetric(1);
 //    ie->setIPv4Data(d);
 }
@@ -337,7 +337,7 @@ void GenericRoutingTable::addRoute(IRoute *route)
 
     internalAddRoute(entry);
 
-    emit(NF_ROUTE_ADDED, entry);
+    emit(routeAddedSignal, entry);
 }
 
 IRoute *GenericRoutingTable::removeRoute(IRoute *route)
@@ -346,7 +346,7 @@ IRoute *GenericRoutingTable::removeRoute(IRoute *route)
 
     GenericRoute *entry = internalRemoveRoute(check_and_cast<GenericRoute *>(route));
     if (entry) {
-        emit(NF_ROUTE_DELETED, entry);
+        emit(routeDeletedSignal, entry);
     }
 
     return entry;
@@ -416,7 +416,7 @@ IRoute *GenericRoutingTable::createRoute()
 void GenericRoutingTable::printRoutingTable() const
 {
     for (const auto & elem : routes)
-        EV_INFO << (elem)->getInterface()->getFullPath() << " -> " << (elem)->getDestinationAsGeneric().str() << " as " << (elem)->info() << endl;
+        EV_INFO << (elem)->getInterface()->getInterfaceFullPath() << " -> " << (elem)->getDestinationAsGeneric().str() << " as " << (elem)->str() << endl;
 }
 
 } // namespace inet

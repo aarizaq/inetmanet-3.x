@@ -18,13 +18,10 @@
 #include "PlotFigure.h"
 #include "InstrumentUtil.h"
 
-// for the moment commented out as omnet cannot instatiate it from a namespace
-using namespace inet;
-// namespace inet {
+namespace inet {
 
 Register_Figure("plot", PlotFigure);
 
-#define M_PI    3.14159265358979323846
 static const char *INIT_PLOT_COLOR = "blue";
 static const char *INIT_BACKGROUND_COLOR = "white";
 static const double TICK_LENGTH = 5;
@@ -326,7 +323,7 @@ void PlotFigure::redrawValueTicks()
             valueTicks.pop_back();
         }
 
-    for (int i = 0; i < valueTicks.size(); ++i) {
+    for (uint32 i = 0; i < valueTicks.size(); ++i) {
         double x = bounds.x + bounds.width;
         double y = bounds.y + bounds.height - bounds.height * (i * valueTickSize) / std::abs(max - min);
         if (y > bounds.y && y < bounds.y + bounds.height) {
@@ -393,7 +390,7 @@ void PlotFigure::redrawTimeTicks()
             timeTicks.pop_back();
         }
 
-    for (int i = 0; i < timeTicks.size(); ++i) {
+    for (uint32 i = 0; i < timeTicks.size(); ++i) {
         double x = bounds.x + bounds.width * (i * timeTickSize + shifting) / timeWindow;
         double y = bounds.y + bounds.height;
         if (x > bounds.x && x < bounds.x + bounds.width) {
@@ -472,4 +469,5 @@ void PlotFigure::refresh()
         values.erase(++it, values.end());
 }
 
-// } // namespace inet
+} // namespace inet
+

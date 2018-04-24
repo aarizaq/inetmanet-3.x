@@ -2,9 +2,9 @@
 
 package inet.examples.rtp.unicast1;
 
-import inet.networklayer.configurator.ipv4.IPv4NetworkConfigurator;
+import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.inet.Router;
-import inet.node.rtp.RTPHost;
+import inet.node.rtp.RtpHost;
 import ned.DatarateChannel;
 
 
@@ -17,37 +17,37 @@ network RTPUnicast1
             datarate = 10Mbps;
         }
     submodules:
-        host1: RTPHost {
+        host1: RtpHost {
             parameters:
                 forwarding = false;
-                profileName = "inet.transportlayer.rtp.RTPAVProfile";
+                profileName = "inet.transportlayer.rtp.RtpAvProfile";
                 destinationAddress = "host4";
                 portNumber = 5004;
                 bandwidth = 8000;
                 @display("p=150,50");
         }
-        host2: RTPHost {
+        host2: RtpHost {
             parameters:
                 forwarding = false;
-                profileName = "inet.transportlayer.rtp.RTPAVProfile";
+                profileName = "inet.transportlayer.rtp.RtpAvProfile";
                 destinationAddress = "host4";
                 portNumber = 5004;
                 bandwidth = 8000;
                 @display("p=250,150");
         }
-        host3: RTPHost {
+        host3: RtpHost {
             parameters:
                 forwarding = false;
-                profileName = "inet.transportlayer.rtp.RTPAVProfile";
+                profileName = "inet.transportlayer.rtp.RtpAvProfile";
                 destinationAddress = "host4";
                 portNumber = 5004;
                 bandwidth = 8000;
                 @display("p=150,250");
         }
-        host4: RTPHost {
+        host4: RtpHost {
             parameters:
                 forwarding = false;
-                profileName = "inet.transportlayer.rtp.RTPAVProfile";
+                profileName = "inet.transportlayer.rtp.RtpAvProfile";
                 destinationAddress = "host1";
                 portNumber = 5004;
                 bandwidth = 8000;
@@ -60,7 +60,7 @@ network RTPUnicast1
                 pppg[];
 
         }
-        configurator: IPv4NetworkConfigurator {
+        configurator: Ipv4NetworkConfigurator {
             @display("p=58,32");
         }
     connections:

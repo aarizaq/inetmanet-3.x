@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2000 Institut fuer Telematik, Universitaet Karlsruhe
+// Copyright (C) OpenSim Ltd.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
@@ -17,12 +17,11 @@
 
 package inet.node.inet;
 
-import inet.applications.contract.IUDPApp;
-import inet.routing.contract.IBGPRouting;
-import inet.routing.contract.IIPRouting;
-import inet.routing.contract.IPIMRouting;
-import inet.transportlayer.contract.ITCP;
-import inet.transportlayer.contract.IUDP;
+import inet.applications.contract.IApp;
+import inet.node.base.ApplicationLayerNodeBase;
+import inet.routing.contract.IBgp;
+import inet.routing.contract.IOspf;
+import inet.routing.contract.IPim;
 
 //
 // IPv4 router that supports wireless, Ethernet, PPP and external interfaces.
@@ -34,92 +33,70 @@ import inet.transportlayer.contract.IUDP;
 //   only (twisted pair). Set **.eth.typename="EthernetInterface" for
 //   a full/half-duplex CSMA/CD implementation (coaxial cable)
 // - By default contains no wireless cards, however it can be configured
-//   by the numRadios parameter. Wirless card type is configured by the
+//   by the numWlanInterfaces parameter. Wirless card type is configured by the
 //   **.wlan.typename parameter. see:  inet.linklayer.ieee80211 or other
-//   modules implementing ~IWirelessNic
+//   modules implementing ~IWirelessInterface
 // - Also external interfaces can be configured for HW in the loop simulation
 //   using the numExtInterfaces parameter and setting the type using
-//   **.ext.typename in the INI file. see: ~ExtInterface and ~IExternalNic
-// - PPP queueing type can be set using **.ppp.queueType see: ~PPPInterface
+//   **.ext.typename in the INI file. see: ~ExtInterface and ~IExternalInterface
+// - PPP queueing type can be set using **.ppp.queueType see: ~PppInterface
 // - If wireless card is present, node mobility can be set using **.mobility.typename
 //   see: inet.mobility and ~IMobility
 //
 // By default, dynamic routing is not supported. Specific routing protocols can
 // be added by setting the hasOSPF/hasRIP/hasBGP parameters.
 //
-module Router extends NodeBase
+module Router extends ApplicationLayerNodeBase
 {
     parameters:
         @display("i=abstract/router");
+        @figure[submodules];
         forwarding = true;
         bool hasOSPF = default(false);
         bool hasRIP = default(false);
         bool hasBGP = default(false);
         bool hasPIM = default(false);
         bool hasDHCP = default(false);
-        string tcpType = default(firstAvailableOrEmpty("TCP", "TCP_lwIP", "TCP_NSC"));  // tcp implementation (e.g. ~TCP, ~TCP_lwIP, ~TCP_NSC) or ~TCPSpoof
-        string udpType = default("UDP");
+        hasUdp = default(hasRIP || hasDHCP);
+        hasTcp = default(hasBGP);
+        *.routingTableModule = default("^.ipv4.routingTable");
 
     submodules:
-        ospf: <"OSPFRouting"> like IIPRouting if hasOSPF {
+        ospf: <"Ospf"> like IOspf if hasOSPF {
             parameters:
-                @display("p=465,287,row");
+                @display("p=800,300,row");
         }
-        bgp: <"BGPRouting"> like IBGPRouting if hasBGP {
+        bgp: <"Bgp"> like IBgp if hasBGP {
             parameters:
                 ospfRoutingModule = default(hasOSPF ? "^.ospf" : "");
-                @display("p=214,80;i=block/network");
+                @display("p=600,100");
         }
-        tcp: <tcpType> like ITCP if hasBGP && tcpType != "" {
+        rip: <"Rip"> like IApp if hasRIP {
             parameters:
-                @display("p=214,180;i=block/transport");
+                @display("p=700,100");
         }
-        rip: <"RIPRouting"> like IUDPApp if hasRIP {
+        pim: <"Pim"> like IPim if hasPIM {
             parameters:
-                @display("p=404,80");
+                @display("p=700,300");
         }
-        dhcp: <"DHCPServer"> like IUDPApp if hasDHCP {
+        dhcp: <"DhcpServer"> like IApp if hasDHCP {
             parameters:
-                @display("p=566,80");
-        }
-        udp: <udpType> like IUDP if hasRIP || hasDHCP {
-            @display("p=404,180");
-        }
-        pim: <"PIMRouting"> like IPIMRouting if hasPIM {
-            @display("p=175,287");
+                @display("p=800,100");
         }
 
     connections allowunconnected:
-        if hasOSPF {
-            ospf.ipOut --> networkLayer.transportIn++;
-            ospf.ipIn <-- networkLayer.transportOut++;
-        }
+        ospf.ipOut --> tn.in++ if hasOSPF;
+        ospf.ipIn <-- tn.out++ if hasOSPF;
 
-        if hasBGP {
-            bgp.tcpOut --> tcp.appIn++;
-            bgp.tcpIn <-- tcp.appOut++;
+        bgp.socketOut --> at.in++ if hasBGP;
+        bgp.socketIn <-- at.out++ if hasBGP;
 
-            tcp.ipOut --> networkLayer.transportIn++;
-            tcp.ipIn <-- networkLayer.transportOut++;
-        }
+        rip.socketOut --> at.in++ if hasRIP;
+        rip.socketIn <-- at.out++ if hasRIP;
 
-        if hasRIP {
-            rip.udpOut --> udp.appIn++;
-            rip.udpIn <-- udp.appOut++;
-        }
+        pim.networkLayerOut --> tn.in++ if hasPIM;
+        pim.networkLayerIn <-- tn.out++ if hasPIM;
 
-        if hasDHCP {
-            dhcp.udpOut --> udp.appIn++;
-            dhcp.udpIn <-- udp.appOut++;
-        }
-
-        if hasRIP || hasDHCP {
-            udp.ipOut --> networkLayer.transportIn++;
-            udp.ipIn <-- networkLayer.transportOut++;
-        }
-
-        if hasPIM {
-            pim.networkLayerOut --> networkLayer.transportIn++;
-            pim.networkLayerIn <-- networkLayer.transportOut++;
-        }
+        dhcp.socketOut --> at.in++ if hasDHCP;
+        dhcp.socketIn <-- at.out++ if hasDHCP;
 }

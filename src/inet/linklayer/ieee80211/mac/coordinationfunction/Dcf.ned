@@ -19,7 +19,7 @@ package inet.linklayer.ieee80211.mac.coordinationfunction;
 
 import inet.linklayer.ieee80211.mac.channelaccess.Dcaf;
 import inet.linklayer.ieee80211.mac.contract.IRateControl;
-import inet.linklayer.ieee80211.mac.originator.NonQoSRecoveryProcedure;
+import inet.linklayer.ieee80211.mac.originator.NonQosRecoveryProcedure;
 import inet.linklayer.ieee80211.mac.originator.OriginatorAckPolicy;
 import inet.linklayer.ieee80211.mac.originator.OriginatorMacDataService;
 import inet.linklayer.ieee80211.mac.originator.RtsPolicy;
@@ -47,8 +47,8 @@ module Dcf
 
         @class(Dcf);
         @display("i=block/queue");
-        @signal[NF_LINK_BREAK](type=Ieee80211DataOrMgmtFrame);
-        @signal[NF_PACKET_DROP](type=Ieee80211Frame);
+        @signal[linkBroken](type=Packet);
+        @signal[packetDropped](type=Packet);
 
     submodules:
         channelAccess: Dcaf {
@@ -72,7 +72,7 @@ module Dcf
             parameters:
                 @display("p=400,200");
         }
-        recoveryProcedure: NonQoSRecoveryProcedure {
+        recoveryProcedure: NonQosRecoveryProcedure {
             parameters:
                 cwCalculatorModule = "^.channelAccess";
                 rtsPolicyModule = "^.rtsPolicy";
