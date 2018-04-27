@@ -1,0 +1,339 @@
+//
+// Copyright (C) 2000 Institut fuer Telematik, Universitaet Karlsruhe
+// Copyright (C) 2007 Universidad de Málaga
+// Copyright (C) 2011 Zoltan Bojthe
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+//
+
+#include "inet/applications/udpapp/UdpBasicBurstNotification.h"
+
+#include "inet/applications/base/ApplicationPacket_m.h"
+#include "inet/transportlayer/contract/udp/UdpControlInfo_m.h"
+#include "inet/networklayer/common/L3AddressResolver.h"
+#include "inet/common/ModuleAccess.h"
+#include "inet/common/packet/Packet.h"
+
+namespace inet {
+
+EXECUTE_ON_STARTUP(
+        cEnum * e = cEnum::find("inet::ChooseDestAddrMode");
+        if (!e)
+            enums.getInstance()->add(e = new cEnum("inet::ChooseDestAddrMode"));
+        e->insert(UdpBasicBurstNotification::ONCE, "once");
+        e->insert(UdpBasicBurstNotification::PER_BURST, "perBurst");
+        e->insert(UdpBasicBurstNotification::PER_SEND, "perSend");
+        );
+
+Define_Module(UdpBasicBurstNotification);
+
+int UdpBasicBurstNotification::counter;
+
+simsignal_t UdpBasicBurstNotification::outOfOrderPkSignal = registerSignal("outOfOrderPk");
+
+UdpBasicBurstNotification::~UdpBasicBurstNotification()
+{
+    cancelAndDelete(timerNext);
+    if (addressModule)
+        delete addressModule;
+}
+
+void UdpBasicBurstNotification::initialize(int stage)
+{
+    ApplicationBase::initialize(stage);
+
+    if (stage == INITSTAGE_LOCAL) {
+        counter = 0;
+        numSent = 0;
+        numReceived = 0;
+        numDeleted = 0;
+        numDuplicated = 0;
+
+        delayLimit = par("delayLimit");
+        startTime = par("startTime");
+        stopTime = par("stopTime");
+        if (stopTime >= SIMTIME_ZERO && stopTime <= startTime)
+            throw cRuntimeError("Invalid startTime/stopTime parameters");
+
+        messageLengthPar = &par("messageLength");
+        burstDurationPar = &par("burstDuration");
+        sleepDurationPar = &par("sleepDuration");
+        sendIntervalPar = &par("sendInterval");
+        nextSleep = startTime;
+        nextBurst = startTime;
+        nextPkt = startTime;
+
+        destAddrRNG = par("destAddrRNG");
+        const char *addrModeStr = par("chooseDestAddrMode");
+        int addrMode = cEnum::get("inet::ChooseDestAddrMode")->lookup(addrModeStr);
+        if (addrMode == -1)
+            throw cRuntimeError("Invalid chooseDestAddrMode: '%s'", addrModeStr);
+        chooseDestAddrMode = static_cast<ChooseDestAddrMode>(addrMode);
+
+        WATCH(numSent);
+        WATCH(numReceived);
+        WATCH(numDeleted);
+        WATCH(numDuplicated);
+
+        localPort = par("localPort");
+        destPort = par("destPort");
+
+        timerNext = new cMessage("UdpBasicBurstNotificationTimer");
+    }
+}
+
+L3Address UdpBasicBurstNotification::chooseDestAddr()
+{
+    if (destAddresses.size() == 1)
+        return destAddresses[0];
+
+    int k = getRNG(destAddrRNG)->intRand(destAddresses.size());
+    return destAddresses[k];
+}
+
+Packet *UdpBasicBurstNotification::createPacket()
+{
+    char msgName[32];
+    sprintf(msgName, "UDPBasicAppData-%d", counter++);
+    long msgByteLength = *messageLengthPar;
+    Packet *pk = new Packet(msgName);
+    const auto& payload = makeShared<ApplicationPacket>();
+    payload->setChunkLength(B(msgByteLength));
+    payload->setSequenceNumber(numSent);
+    pk->insertAtBack(payload);
+    pk->addPar("sourceId") = getId();
+    pk->addPar("msgId") = numSent;
+
+    return pk;
+}
+
+void UdpBasicBurstNotification::processStart()
+{
+    socket.setOutputGate(gate("socketOut"));
+    socket.bind(localPort);
+
+    nextSleep = simTime();
+    nextBurst = simTime();
+    nextPkt = simTime();
+    activeBurst = false;
+
+    addressModule = new AddressModule();
+    addressModule->initModule(true);
+
+    if (addressModule->getNumAddress() > 0)
+        isSource = true;
+
+    if (isSource) {
+        if (chooseDestAddrMode == ONCE)
+            destAddr = addressModule->choseNewAddress();
+        activeBurst = true;
+    }
+    timerNext->setKind(SEND);
+    processSend();
+}
+
+void UdpBasicBurstNotification::processSend()
+{
+    if (stopTime < SIMTIME_ZERO || simTime() < stopTime) {
+        // send and reschedule next sending
+        if (isSource) // if the node is a sink, don't generate messages
+            generateBurst();
+    }
+}
+
+void UdpBasicBurstNotification::processStop()
+{
+    socket.close();
+}
+
+void UdpBasicBurstNotification::handleMessageWhenUp(cMessage *msg)
+{
+    if (msg->isSelfMessage()) {
+        switch (msg->getKind()) {
+            case START:
+                processStart();
+                break;
+
+            case SEND:
+                processSend();
+                break;
+
+            case STOP:
+                processStop();
+                break;
+
+            default:
+                throw cRuntimeError("Invalid kind %d in self message", (int)msg->getKind());
+        }
+    }
+    else if (msg->getKind() == UDP_I_DATA) {
+        // process incoming packet
+        processPacket(check_and_cast<Packet *>(msg));
+    }
+    else if (msg->getKind() == UDP_I_ERROR) {
+        EV_WARN << "Ignoring UDP error report\n";
+        delete msg;
+    }
+    else {
+        throw cRuntimeError("Unrecognized message (%s)%s", msg->getClassName(), msg->getName());
+    }
+}
+
+void UdpBasicBurstNotification::refreshDisplay() const
+{
+    char buf[100];
+    sprintf(buf, "rcvd: %d pks\nsent: %d pks", numReceived, numSent);
+    getDisplayString().setTagArg("t", 0, buf);
+}
+
+void UdpBasicBurstNotification::processPacket(Packet *pk)
+{
+    if (pk->getKind() == UDP_I_ERROR) {
+        EV_WARN << "UDP error received\n";
+        delete pk;
+        return;
+    }
+
+    if (pk->hasPar("sourceId") && pk->hasPar("msgId")) {
+        // duplicate control
+        int moduleId = pk->par("sourceId");
+        int msgId = pk->par("msgId");
+        auto it = sourceSequence.find(moduleId);
+        if (it != sourceSequence.end()) {
+            if (it->second >= msgId) {
+                EV_DEBUG << "Out of order packet: " << UdpSocket::getReceivedPacketInfo(pk) << endl;
+                emit(outOfOrderPkSignal, pk);
+                delete pk;
+                numDuplicated++;
+                return;
+            }
+            else
+                it->second = msgId;
+        }
+        else
+            sourceSequence[moduleId] = msgId;
+    }
+
+    if (delayLimit > 0) {
+        if (simTime() - pk->getTimestamp() > delayLimit) {
+            EV_DEBUG << "Old packet: " << UdpSocket::getReceivedPacketInfo(pk) << endl;
+            PacketDropDetails details;
+            details.setReason(CONGESTION);
+            emit(packetDroppedSignal, pk, &details);
+            delete pk;
+            numDeleted++;
+            return;
+        }
+    }
+
+    EV_INFO << "Received packet: " << UdpSocket::getReceivedPacketInfo(pk) << endl;
+    emit(packetReceivedSignal, pk);
+    numReceived++;
+    delete pk;
+}
+
+void UdpBasicBurstNotification::generateBurst()
+{
+    simtime_t now = simTime();
+
+    if (nextPkt < now)
+        nextPkt = now;
+
+    double sendInterval = *sendIntervalPar;
+    if (sendInterval <= 0.0)
+        throw cRuntimeError("The sendInterval parameter must be bigger than 0");
+    nextPkt += sendInterval;
+
+    if (activeBurst && nextBurst <= now) {    // new burst
+        double burstDuration = *burstDurationPar;
+        if (burstDuration < 0.0)
+            throw cRuntimeError("The burstDuration parameter mustn't be smaller than 0");
+        double sleepDuration = *sleepDurationPar;
+
+        if (burstDuration == 0.0)
+            activeBurst = false;
+        else {
+            if (sleepDuration < 0.0)
+                throw cRuntimeError("The sleepDuration parameter mustn't be smaller than 0");
+            nextSleep = now + burstDuration;
+            nextBurst = nextSleep + sleepDuration;
+        }
+
+        if (chooseDestAddrMode == PER_BURST)
+            destAddr = addressModule->choseNewAddress();
+    }
+
+    if (chooseDestAddrMode == PER_SEND)
+        destAddr = addressModule->choseNewAddress();
+
+    Packet *payload = createPacket();
+    payload->setTimestamp();
+    emit(packetSentSignal, payload);
+    socket.sendTo(payload, destAddr, destPort);
+    numSent++;
+
+    // Next timer
+    if (activeBurst && nextPkt >= nextSleep)
+        nextPkt = nextBurst;
+
+    if (stopTime >= SIMTIME_ZERO && nextPkt >= stopTime) {
+        timerNext->setKind(STOP);
+        nextPkt = stopTime;
+    }
+    scheduleAt(nextPkt, timerNext);
+}
+
+void UdpBasicBurstNotification::finish()
+{
+    recordScalar("Total sent", numSent);
+    recordScalar("Total received", numReceived);
+    recordScalar("Total deleted", numDeleted);
+    ApplicationBase::finish();
+}
+
+bool UdpBasicBurstNotification::handleNodeStart(IDoneCallback *doneCallback)
+{
+    simtime_t start = std::max(startTime, simTime());
+
+    if ((stopTime < SIMTIME_ZERO) || (start < stopTime) || (start == stopTime && startTime == stopTime)) {
+        timerNext->setKind(START);
+        scheduleAt(start, timerNext);
+    }
+
+    return true;
+}
+
+bool UdpBasicBurstNotification::handleNodeShutdown(IDoneCallback *doneCallback)
+{
+    if (timerNext)
+        cancelEvent(timerNext);
+    activeBurst = false;
+    delete addressModule;
+    addressModule = nullptr;
+    //TODO if(socket.isOpened()) socket.close();
+    return true;
+}
+
+void UdpBasicBurstNotification::handleNodeCrash()
+{
+    if (timerNext)
+        cancelEvent(timerNext);
+    activeBurst = false;
+    delete addressModule;
+    addressModule = nullptr;
+}
+
+} // namespace inet
+
