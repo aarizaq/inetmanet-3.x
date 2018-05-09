@@ -268,7 +268,7 @@ unsigned int Ieee80211VhtPreambleMode::computeNumberOfHTLongTrainings(unsigned i
 const simtime_t Ieee80211VhtPreambleMode::getDuration() const
 {
     // 21.3.4 Mathematical description of signals
-    simtime_t sumOfHTLTFs = getSecondAndSubsequentHTLongTrainingFielDuration() * (numberOfHTLongTrainings);
+    simtime_t sumOfHTLTFs = getSecondAndSubsequentHTLongTrainingFielDuration() * numberOfHTLongTrainings;
     return getNonHTShortTrainingSequenceDuration() + getNonHTLongTrainingFieldDuration() + getLSIGDuration() + getVHTSignalFieldA() + getVHTShortTrainingFieldDuration() + sumOfHTLTFs + getVHTSignalFieldB();
 }
 
