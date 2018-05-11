@@ -234,7 +234,6 @@ InterfaceEntry *Ext::createInterfaceEntry()
 
 void Ext::handleMessage(cMessage *msg)
 {
-    using namespace serializer;
     if (!isOperational) {
         handleMessageWhenDown(msg);
         return;
@@ -275,7 +274,7 @@ void Ext::handleMessage(cMessage *msg)
             addr.sin_addr.s_addr = htonl(ipv4Header->getDestAddress().getInt());
             auto bytesChunk = packet->peekAllAsBytes();
             size_t packetLength = bytesChunk->copyToBuffer(buffer, sizeof(buffer));
-            ASSERT(packetLength == packet->getByteLength());
+            ASSERT(packetLength == (size_t)packet->getByteLength());
 
             EV << "Delivering an IPv4 packet from "
                << ipv4Header->getSrcAddress()

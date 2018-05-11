@@ -21,7 +21,7 @@
 #include "inet/common/ProtocolTag_m.h"
 //#include "inet/common/ProtocolGroup.h"
 #include "inet/common/packet/chunk/BytesChunk.h"
-#include "inet/common/serializer/EthernetCRC.h"
+#include "inet/common/checksum/EthernetCRC.h"
 #include "inet/linklayer/ethernet/EtherPhyFrame_m.h"
 #include "inet/linklayer/ethernet/EtherFrame_m.h"
 #include "inet/linklayer/ethernet/Ethernet.h"
@@ -419,7 +419,7 @@ bool EtherMacBase::verifyCrcAndLength(Packet *packet)
             // 1. fill in the data
             ethBytes->copyToBuffer(buffer, bufferLength);
             // 2. compute the FCS
-            auto computedFcs = inet::serializer::ethernetCRC(buffer, bufferLength);
+            auto computedFcs = ethernetCRC(buffer, bufferLength);
             delete [] buffer;
             isFcsBad = (computedFcs != ethTrailer->getFcs());      //FIXME how to check fcs?
             if (isFcsBad)
