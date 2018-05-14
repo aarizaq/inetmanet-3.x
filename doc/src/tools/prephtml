@@ -6,10 +6,10 @@
 
 
 # *** check settings below -- also ltoh.specs for \opp definition! ***
-$product = "INET Framework"; # or "OMNEST";
+$product = "[PRODUCT]";
 $productversion = "4.x";
 $templatefile = "";
-$doctitle = "INET Framework Users Guide";
+$doctitle = "[UNTITLED]";
 
 $fname = "";
 $outfnamebase = "";
@@ -89,19 +89,22 @@ $html = join("", <HTMLFILE>);
 #
 print "removing unnecessary formatting and parts\n" unless $quiet;
 
-if ($isdraft) {
-   $html =~ s/\@ifdraft\@//sg;
-   $html =~ s/\@fi\@//sg;
-} else {
-   $html =~ s/\@ifdraft\@.*?\@fi\@//sg;
-}
-
 if ($product ne "OMNEST") {
-   $html =~ s/\@ifcommercial\@.*?\@fi\@//sg;
+   while ($html =~ s/(.*)\@ifcommercial\@(.*?)\@fi\@/$1/sg) {}
 } else {
    $html =~ s/\@ifcommercial\@//sg;
    $html =~ s/\@fi\@//sg;
 }
+
+if ($isdraft) {
+   $html =~ s/\@ifdraft\@//sg;
+   $html =~ s/\@fi\@//sg;
+} else {
+   while ($html =~ s/(.*)\@ifdraft\@(.*?)\@fi\@/$1/sg) {}
+   die "unmatched \\fi" if ($html =~ /\@fi\@/);
+   die "unmatched \\ifdraft" if ($html =~ /\@ifdraft\@/);
+}
+
 
 # replace product name in verbatim and listing sections (not affected by ltoh)
 $html =~ s|`\\opp`|$product|seg;
@@ -368,11 +371,17 @@ sub savepage($$$)
       my $needtitlepage = shift @_;
 
       my $new_html = $template;
-      $new_html =~ s/__PRODUCT__/$product/sg;
-      $new_html =~ s/__VERSION__/$productversion/sg;
       $new_html =~ s/__TITLEPAGE_START__(.*)__TITLEPAGE_END__//s unless ($needtitlepage);
       $new_html =~ s/__TITLEPAGE_(START|END)__//sg;
       $new_html =~ s/__BODY__/$body/;
+      
+      my $prev_html = "";
+      while ($prev_html ne $new_html) {
+          $prev_html = $new_html;
+          $new_html =~ s/__TITLE__/$doctitle/sg;
+          $new_html =~ s/__PRODUCT__/$product/sg;
+          $new_html =~ s/__VERSION__/$productversion/sg;
+      }
 
       open(FILE,">$filename");
       print FILE $new_html;

@@ -31,12 +31,19 @@
 #include "inet/common/packet/ReorderBuffer.h"
 #include "inet/common/packet/serializer/FieldsChunkSerializer.h"
 #include "inet/common/ProtocolTag_m.h"
+#include "inet/common/socket/SocketMap.h"
 #include "inet/common/TimeTag_m.h"
 #include "inet/linklayer/common/InterfaceTag_m.h"
 #include "inet/linklayer/common/MacAddressTag_m.h"
 #include "inet/linklayer/ieee80211/mac/contract/IChannelAccess.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
+#include "inet/linklayer/tun/TunSocket.h"
+#include "inet/networklayer/common/L3AddressTag_m.h"
+#include "inet/networklayer/contract/ipv4/Ipv4Socket.h"
+#include "inet/networklayer/contract/ipv6/Ipv6Socket.h"
+#include "inet/networklayer/contract/L3Socket.h"
 #include "inet/physicallayer/common/packetlevel/Signal.h"
+#include "inet/transportlayer/contract/sctp/SctpSocket.h"
 #include "inet/transportlayer/contract/tcp/TcpSocket.h"
 #include "inet/transportlayer/contract/udp/UdpSocket.h"
 
@@ -646,32 +653,438 @@ dump.writePacket(simTime(), packet); // record with current time
 //!End
 }
 
-class App : public cSimpleModule
+class App : public cSimpleModule, public UdpSocket::ICallback, public TcpSocket::ICallback
 {
 public:
-  void udpSocketUsageExample();
-  void tcpSocketUsageExample();
+  void socketConfigureExample();
+  void socketSendExample();
+  void socketProcessExample();
+  void socketReceiveExample();
+  void socketFindExample();
+  void socketCloseExample();
+  void udpSocketExample();
+  void tcpSocketExample();
+  void sctpSocketExample();
+  void ipv4SocketExample();
+  void ipv6SocketExample();
+  void l3SocketExample();
+  void tunSocketExample();
 };
 
-void App::udpSocketUsageExample()
+void App::socketConfigureExample()
 {
-  auto packet = new Packet();
-//!UDPSocketUsageExample
-UdpSocket socket;
-socket.setOutputGate(gate("out")); // configure application output gate
-socket.sendTo(packet, Ipv4Address("10.0.0.42"), 42); // send to address/port
+    UdpSocket socket;
+//!SocketConfigureExample
+socket.setOutputGate(gate("socketOut")); // configure socket output gate
+socket.setCallback(this); // set callback interface for message processing
 //!End
 }
 
-void App::tcpSocketUsageExample()
+void App::socketSendExample()
 {
-//!TCPSocketUsageExample
-TcpSocket socket;
-socket.setOutputGate(gate("out")); // configure application output gate
-socket.bind(Ipv4Address("10.0.0.42"), 42); // bind to address/port
-socket.listen(); // start listening for incoming connections
+    UdpSocket socket;
+    auto packet = new Packet();
+//!SocketSendExample
+socket.send(packet); // by means of the underlying communication protocol
 //!End
 }
+
+//!SocketCallbackInterfaceExample
+class ICallback // usually the inner class of the socket
+{
+    void socketDataArrived(ISocket *socket, Packet *packet);
+};
+//!End
+
+void App::socketProcessExample()
+{
+    ISocket& socket = *new Ipv4Socket();
+    cMessage *message = nullptr;
+//!SocketProcessExample
+if (socket.belongsToSocket(message)) // match message and socket
+    socket.processMessage(message); // invoke callback interface
+//!End
+}
+
+namespace socket {
+//!SocketReceiveExample
+class App : public cSimpleModule, public ICallback
+{
+    void socketDataArrived(ISocket *socket, Packet *packet);
+};
+
+void App::socketDataArrived(ISocket *socket, Packet *packet)
+{
+    EV << packet->peekData() << endl;
+}
+//!End
+} // namespace socket
+
+void App::socketFindExample()
+{
+    cMessage *message = nullptr;
+    SocketMap socketMap;
+//!SocketFindExample
+auto socket = socketMap.findSocketFor(message); // lookup socket to process
+socket->processMessage(message); // dispatch message to callback interface
+//!End
+}
+
+void App::socketCloseExample()
+{
+    TcpSocket socket;
+//!SocketCloseExample
+socket.close(); // release allocated local and remote network resources
+//!End
+}
+
+void App::udpSocketExample()
+{
+    UdpSocket socket;
+//!UdpSocketBindExample
+socket.bind(Ipv4Address("10.0.0.42"), 42); // local address/port
+//!End
+//!UdpSocketConnectExample
+socket.connect(Ipv4Address("10.0.0.42"), 42); // remote address/port
+//!End
+//!UdpSocketConfigureExample
+socket.setTimeToLive(16); // change default TTL
+socket.setBroadcast(true); // receive all broadcasts
+socket.joinMulticastGroup(Ipv4Address("224.0.0.9")); // receive multicasts
+//!End
+    auto packet1 = new Packet();
+    auto packet42 = new Packet();
+//!UdpSocketSendToExample
+socket.sendTo(packet42, Ipv4Address("10.0.0.42"), 42); // remote address/port
+//!End
+//!UdpSocketSendExample
+socket.connect(Ipv4Address("10.0.0.42"), 42); // remote address/port
+socket.send(packet1); // send packets via connected socket
+// ...
+socket.send(packet42);
+//!End
+}
+
+namespace udp {
+//!UdpSocketCallbackInterface
+class ICallback // inner class of UdpSocket
+{
+    void socketDataArrived(UdpSocket *socket, Packet *packet);
+    void socketErrorArrived(UdpSocket *socket, Indication *indication);
+};
+//!End
+} // namespace
+
+//!UdpSocketReceiveExample
+class UdpApp : public cSimpleModule, public UdpSocket::ICallback
+{
+    void socketDataArrived(UdpSocket *socket, Packet *packet);
+};
+
+void UdpApp::socketDataArrived(UdpSocket *socket, Packet *packet)
+{
+    EV << packet->peekData() << endl;
+}
+//!End
+
+void App::tcpSocketExample()
+{
+TcpSocket socket;
+//!TcpSocketListenExample
+socket.bind(Ipv4Address("10.0.0.42"), 42); // local address/port
+socket.listen(); // start listening for incoming connections
+//!End
+//!TcpSocketConnectExample
+socket.connect(Ipv4Address("10.0.0.42"), 42); // remote address/port
+//!End
+//!TcpSocketConfigureExample
+socket.setTCPAlgorithmClass("TcpReno");
+//!End
+    auto packet1 = new Packet();
+    auto packet42 = new Packet();
+//!TcpSocketSendExample
+socket.send(packet1);
+// ...
+socket.send(packet42);
+//!End
+}
+
+//!TcpSocketAcceptExample
+class TcpServerApp : public cSimpleModule, public TcpSocket::ICallback
+{
+    TcpSocket serverSocket; // server socket listening for connections
+    SocketMap socketMap; // container for all accepted connections
+
+    void socketAvailable(TcpSocket *socket, TcpAvailableInfo *info);
+};
+
+void TcpServerApp::socketAvailable(TcpSocket *socket, TcpAvailableInfo *info)
+{
+    auto newSocket = new TcpSocket(info); // create socket using received info
+    // ...
+    socketMap.addSocket(newSocket); // store accepted connection
+    serverSocket.accept(info->getNewSocketId()); // notify Tcp module
+}
+//!End
+
+namespace tcp {
+//!TcpSocketCallbackInterface
+class ICallback // inner class of TcpSocket
+{
+    void socketDataArrived(TcpSocket* socket, Packet *packet, bool urgent);
+    void socketAvailable(TcpSocket *socket, TcpAvailableInfo *info);
+    void socketEstablished(TcpSocket *socket);
+    // ...
+    void socketClosed(TcpSocket *socket);
+    void socketFailure(TcpSocket *socket, int code);
+};
+//!End
+} // namespace
+
+//!TcpSocketReceiveExample
+class TcpApp : public cSimpleModule, public TcpSocket::ICallback
+{
+    void socketDataArrived(TcpSocket *socket, Packet *packet, bool urgent);
+};
+
+void TcpApp::socketDataArrived(TcpSocket *socket, Packet *packet, bool urgent)
+{
+    EV << packet->peekData() << endl;
+}
+//!End
+
+void App::sctpSocketExample()
+{
+SctpSocket socket;
+//!SctpSocketConfigureExample
+// TODO:
+//!End
+//!SctpSocketListenExample
+socket.bind(Ipv4Address("10.0.0.42"), 42); // local address/port
+socket.listen(true); // start listening for incoming connections
+//!End
+//!SctpSocketConnectExample
+socket.connect(Ipv4Address("10.0.0.42"), 42);
+//!End
+auto packet1 = new Packet();
+auto packet42 = new Packet();
+//!SctpSocketSendExample
+socket.send(packet1);
+// ...
+socket.send(packet42);
+//!End
+}
+
+//!SctpSocketAcceptExample
+class SctpServerApp : public cSimpleModule, public SctpSocket::ICallback
+{
+    SocketMap socketMap;
+    SctpSocket serverSocket;
+
+    void socketAvailable(SctpSocket *socket, SctpAvailableInfo *info);
+};
+
+void SctpServerApp::socketAvailable(SctpSocket *socket, SctpAvailableInfo *info)
+{
+    auto newSocket = new SctpSocket(info);
+    // ...
+    socketMap.addSocket(newSocket);
+    serverSocket.accept(info->getNewSocketId());
+}
+//!End
+
+namespace sctp {
+//!SctpSocketCallbackInterface
+class ICallback // inner class of SctpSocket
+{
+    void socketDataArrived(SctpSocket* socket, Packet *packet, bool urgent);
+    void socketEstablished(SctpSocket *socket);
+    // ...
+    void socketClosed(SctpSocket *socket);
+    void socketFailure(SctpSocket *socket, int code);
+};
+//!End
+} // namespace
+
+//!SctpSocketReceiveExample
+class SctpApp : public cSimpleModule, public SctpSocket::ICallback
+{
+    void socketDataArrived(SctpSocket *socket, Packet *packet, bool urgent);
+};
+
+void SctpApp::socketDataArrived(SctpSocket *socket, Packet *packet, bool urgent)
+{
+    EV << packet->peekData() << endl;
+}
+//!End
+
+void App::ipv4SocketExample()
+{
+    Ipv4Socket socket;
+//!Ipv4SocketBindExample
+socket.bind(&Protocol::icmpv4, Ipv4Address()); // filter for ICMPv4 messages
+//!End
+//!Ipv4SocketConnectExample
+socket.connect(Ipv4Address("10.0.0.42")); // filter for remote address
+//!End
+    auto packet = new Packet();
+    auto packet1 = new Packet();
+    auto packet42 = new Packet();
+//!Ipv4SocketSendToExample
+socket.sendTo(packet, Ipv4Address("10.0.0.42")); // remote address
+//!End
+//!Ipv4SocketSendExample
+socket.connect(Ipv4Address("10.0.0.42")); // remote address
+socket.send(packet1);
+// ...
+socket.send(packet42);
+//!End
+}
+
+namespace ipv4 {
+//!Ipv4SocketCallbackInterface
+class ICallback // inner class of Ipv4Socket
+{
+    void socketDataArrived(Ipv4Socket *socket, Packet *packet);
+};
+//!End
+} // namespace ipv4
+
+//!Ipv4SocketReceiveExample
+class Ipv4App : public cSimpleModule, public Ipv4Socket::ICallback
+{
+    void socketDataArrived(Ipv4Socket *socket, Packet *packet);
+};
+
+void Ipv4App::socketDataArrived(Ipv4Socket *socket, Packet *packet)
+{
+    EV << packet->peekData() << endl;
+}
+//!End
+
+void App::ipv6SocketExample()
+{
+    Ipv6Socket socket;
+//!Ipv6SocketBindExample
+socket.bind(&Protocol::icmpv6, Ipv6Address()); // filter for ICMPv6 messages
+//!End
+//!Ipv6SocketConnectExample
+socket.connect(Ipv6Address("10:0:0:0:0:0:0:42")); // filter for remote address
+//!End
+    auto packet = new Packet();
+    auto packet1 = new Packet();
+    auto packet42 = new Packet();
+//!Ipv6SocketSendAtExample
+socket.sendTo(packet, Ipv6Address("10:0:0:0:0:0:0:42")); // remote address
+//!End
+//!Ipv6SocketSendExample
+socket.connect(Ipv6Address("10:0:0:0:0:0:0:42")); // remote address
+socket.send(packet1);
+// ...
+socket.send(packet42);
+//!End
+}
+
+namespace ipv6 {
+//!Ipv6SocketCallbackInterface
+class ICallback // inner class of Ipv6Socket
+{
+    void socketDataArrived(Ipv6Socket *socket, Packet *packet);
+};
+//!End
+} // namespace ipv6
+
+//!Ipv6SocketReceiveExample
+class Ipv6App : public cSimpleModule, public Ipv6Socket::ICallback
+{
+    void socketDataArrived(Ipv6Socket *socket, Packet *packet);
+};
+
+void Ipv6App::socketDataArrived(Ipv6Socket *socket, Packet *packet)
+{
+    EV << packet->peekData() << endl;
+}
+//!End
+
+void App::l3SocketExample()
+{
+//!L3SocketProtocolExample
+L3Socket socket(&Protocol::flooding);
+//!End
+//!L3SocketBindExample
+socket.bind(&Protocol::echo, ModuleIdAddress(42));
+//!End
+//!L3SocketConnectExample
+socket.connect(ModuleIdAddress(42)); // filter for remote interface
+//!End
+    auto packet = new Packet();
+    auto packet1 = new Packet();
+    auto packet42 = new Packet();
+//!L3SocketSendToExample
+socket.sendTo(packet, ModuleIdAddress(42)); // remote interface
+//!End
+//!L3SocketSendExample
+socket.connect(ModuleIdAddress(42)); // remote interface
+socket.send(packet1);
+//..
+socket.send(packet42);
+//!End
+}
+
+namespace l3 {
+//!L3SocketCallbackInterface
+class ICallback // inner class of L3Socket
+{
+    void socketDataArrived(L3Socket *socket, Packet *packet);
+};
+//!End
+} // namespace l3
+
+//!L3SocketReceiveExample
+class L3App : public cSimpleModule, public L3Socket::ICallback
+{
+    void socketDataArrived(L3Socket *socket, Packet *packet);
+};
+
+void L3App::socketDataArrived(L3Socket *socket, Packet *packet)
+{
+    EV << packet->peekData() << endl;
+}
+//!End
+
+void App::tunSocketExample()
+{
+    TunSocket socket;
+    InterfaceEntry *interface = nullptr;
+//!TunSocketOpenExample
+socket.open(interface->getId());
+//!End
+    auto packet = new Packet();
+//!TunSocketSendExample
+socket.send(packet);
+//!End
+}
+
+namespace tun {
+//!TunSocketCallbackInterface
+class ICallback // inner class of TunSocket
+{
+    void socketDataArrived(TunSocket *socket, Packet *packet);
+};
+//!End
+} // namespace tun
+
+//!TunSocketReceiveExample
+class TunApp : public cSimpleModule, public TunSocket::ICallback
+{
+    void socketDataArrived(TunSocket *socket, Packet *packet);
+};
+
+void TunApp::socketDataArrived(TunSocket *socket, Packet *packet)
+{
+    EV << packet->peekData() << endl;
+}
+//!End
 
 static MacAddress MacAddress(const char *address)
 {
