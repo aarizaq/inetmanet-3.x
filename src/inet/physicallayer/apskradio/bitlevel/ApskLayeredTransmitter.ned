@@ -52,10 +52,6 @@ module ApskLayeredTransmitter like ITransmitter
 {
     parameters:
         string levelOfDetail @enum("packet", "bit", "symbol", "sample") = default("symbol");
-        string encoderType = default("ApskEncoder");
-        string modulatorType = default("ApskModulator");
-        string pulseShaperType = default("");
-        string digitalAnalogConverterType = default("");
         double bitrate @unit(bps); // net bitrate of the transmitter
         double power @unit(W); // scalar transmission power for the whole signal duration
         double carrierFrequency @unit(Hz); // center frequency of the narrowband carrier signal
@@ -64,16 +60,16 @@ module ApskLayeredTransmitter like ITransmitter
         @class(ApskLayeredTransmitter);
 
     submodules:
-        encoder: <encoderType> like IEncoder if encoderType != "" {
-            @display("p=100,50");
+        encoder: <default("ApskEncoder")> like IEncoder if typename != "" {
+            @display("p=100,100");
         }
-        modulator: <modulatorType> like IModulator {
-            @display("p=100,150");
+        modulator: <default("ApskModulator")> like IModulator {
+            @display("p=100,200");
         }
-        pulseShaper: <pulseShaperType> like IPulseShaper if pulseShaperType != "" {
-            @display("p=100,250");
+        pulseShaper: <default("")> like IPulseShaper if typename != "" {
+            @display("p=100,300");
         }
-        digitalAnalogConverter: <digitalAnalogConverterType> like IDigitalAnalogConverter if digitalAnalogConverterType != "" {
-            @display("p=100,350");
+        digitalAnalogConverter: <default("")> like IDigitalAnalogConverter if typename != "" {
+            @display("p=100,400");
         }
 }

@@ -38,13 +38,6 @@ module Ieee80211LayeredOfdmReceiver like IReceiver
     parameters:
         bool isCompliant = default(true);
         string levelOfDetail @enum("packet", "bit","symbol","sample") = default("symbol");
-        string errorModelType = default("");
-        string signalDecoderType = default("");
-        string dataDecoderType = default("");
-        string signalDemodulatorType = default("");
-        string dataDemodulatorType = default("");
-        string pulseFilterType = default("");
-        string analogDigitalConverterType = default("");
         double energyDetection @unit(dBm); // TODO: @unit(W) + dBm/dBW <--> W
         double sensitivity @unit(dBm); // TODO: @unit(W) + dBm/dBW <--> W
         double carrierFrequency @unit(Hz);
@@ -55,25 +48,25 @@ module Ieee80211LayeredOfdmReceiver like IReceiver
 
         @display("i=block/rx");
     submodules:
-        errorModel: <errorModelType> like ILayeredErrorModel if errorModelType != "" {
-            @display("p=240,350");
+        errorModel: <default("")> like ILayeredErrorModel if typename != "" {
+            @display("p=300,400");
         }
-        dataDecoder: <dataDecoderType> like IDecoder if dataDecoderType != "" {
-            @display("p=100,50");
+        dataDecoder: <default("")> like IDecoder if typename != "" {
+            @display("p=100,100");
         }
-        signalDecoder: <signalDecoderType> like IDecoder if signalDecoderType != "" {
-            @display("p=240,50");
+        signalDecoder: <default("")> like IDecoder if typename != "" {
+            @display("p=300,100");
         }
-        signalDemodulator: <signalDemodulatorType> like IDemodulator if signalDemodulatorType != "" {
-            @display("p=240,150");
+        signalDemodulator: <default("")> like IDemodulator if typename != "" {
+            @display("p=300,200");
         }
-        dataDemodulator: <dataDemodulatorType> like IDemodulator if dataDemodulatorType != "" {
-            @display("p=100,150");
+        dataDemodulator: <default("")> like IDemodulator if typename != "" {
+            @display("p=100,200");
         }
-        pulseFilter: <pulseFilterType> like IPulseFilter if pulseFilterType != "" {
-            @display("p=100,250");
+        pulseFilter: <default("")> like IPulseFilter if typename != "" {
+            @display("p=100,300");
         }
-        analogDigitalConverter: <analogDigitalConverterType> like IAnalogDigitalConverter if analogDigitalConverterType != "" {
-            @display("p=100,350");
+        analogDigitalConverter: <default("")> like IAnalogDigitalConverter if typename != "" {
+            @display("p=100,400");
         }
 }

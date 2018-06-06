@@ -26,43 +26,40 @@ module NetworkLayerNodeBase extends LinkLayerNodeBase
         bool hasIpv4 = default(true);
         bool hasIpv6 = default(false);
         bool hasGn = default(false); 
-        string networkLayerType = default("");
-        string ipv4NetworkLayerType = default("Ipv4NetworkLayer");
-        string ipv6NetworkLayerType = default("Ipv6NetworkLayer");
         bool forwarding = default(false);
         bool multicastForwarding = default(false);
         *.forwarding = forwarding;
         *.multicastForwarding = multicastForwarding;
-        @figure[networkLayer](type=rectangle; pos=250,410; size=670,180; fillColor=#00ff00; lineColor=#808080; cornerRadius=5; fillOpacity=0.1);
-        @figure[networkLayer.title](type=text; pos=910,420; anchor=ne; text="network layer");
+        @figure[networkLayer](type=rectangle; pos=250,306; size=1000,130; fillColor=#00ff00; lineColor=#808080; cornerRadius=5; fillOpacity=0.1);
+        @figure[networkLayer.title](type=text; pos=1245,311; anchor=ne; text="network layer");
 
     submodules:
-        ipv4: <ipv4NetworkLayerType> like INetworkLayer if hasIpv4 {
+        ipv4: <default("Ipv4NetworkLayer")> like INetworkLayer if hasIpv4 {
             parameters:
-                @display("p=400,500;q=queue");
+                @display("p=375,376;q=queue");
         }
-        ipv6: <ipv6NetworkLayerType> like INetworkLayer if hasIpv6 {
+        ipv6: <default("Ipv6NetworkLayer")> like INetworkLayer if hasIpv6 {
             parameters:
-                @display("p=500,500;q=queue");
+                @display("p=525,376;q=queue");
         }
-        generic: <networkLayerType> like INetworkLayer if hasGn {
+        generic: <default("")> like INetworkLayer if hasGn {
             parameters:
-                @display("p=600,500;q=queue");
+                @display("p=675,376;q=queue");
         }
         nl: MessageDispatcher {
             parameters:
-                @display("p=585,600;b=670,5,,,,1");
+                @display("p=750,446;b=1000,5,,,,1");
         }
 
     connections allowunconnected:
-        ipv4.ifIn <-- nl.out++if hasIpv4;
+        ipv4.ifIn <-- nl.out++ if hasIpv4;
         ipv4.ifOut --> nl.in++ if hasIpv4;
 
-        ipv6.ifIn <-- nl.out++if hasIpv6;
+        ipv6.ifIn <-- nl.out++ if hasIpv6;
         ipv6.ifOut --> nl.in++ if hasIpv6;
 
-        generic.ifIn <-- nl.out++if networkLayerType != "";
-        generic.ifOut --> nl.in++ if networkLayerType != "";
+        generic.ifIn <-- nl.out++ if exists(generic);
+        generic.ifOut --> nl.in++ if exists(generic);
 
         for i=0..numLoInterfaces-1 {
             nl.out++ --> lo[i].upperLayerIn;

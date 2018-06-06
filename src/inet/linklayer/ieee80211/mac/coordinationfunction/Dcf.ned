@@ -39,7 +39,6 @@ module Dcf
 
         string rxModule;
         string txModule;
-        string rateControlType = default("");
         bool prioritizeMulticast = default(false); // if true, prioritize multicast frames (9.3.2.1 Fundamental access)
 
         *.rateSelectionModule = "^.rateSelection";
@@ -66,36 +65,36 @@ module Dcf
         rateSelection: RateSelection {
             parameters:
                 rateControlModule = "^.rateControl";
-                @display("p=400,100");
+                @display("p=350,100");
         }
-        rateControl: <rateControlType> like IRateControl if rateControlType != "" {
+        rateControl: <default("")> like IRateControl if typename != "" {
             parameters:
-                @display("p=400,200");
+                @display("p=350,200");
         }
         recoveryProcedure: NonQosRecoveryProcedure {
             parameters:
                 cwCalculatorModule = "^.channelAccess";
                 rtsPolicyModule = "^.rtsPolicy";
-                @display("p=400,300");
+                @display("p=350,300");
         }
         originatorProtectionMechanism: OriginatorProtectionMechanism {
             parameters:
-                @display("p=400,400");
+                @display("p=350,400");
         }
         originatorAckPolicy: OriginatorAckPolicy {
             parameters:
-                @display("p=650,100");
+                @display("p=550,100");
         }
         recipientAckPolicy: RecipientAckPolicy {
             parameters:
-                @display("p=650,200");
+                @display("p=550,200");
         }
         rtsPolicy: RtsPolicy {
             parameters:
-                @display("p=650,300");
+                @display("p=550,300");
         }
         ctsPolicy: CtsPolicy {
             parameters:
-                @display("p=650,400");
+                @display("p=550,400");
         }
 }

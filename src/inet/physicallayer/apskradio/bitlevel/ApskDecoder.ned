@@ -32,20 +32,17 @@ import inet.physicallayer.contract.bitlevel.IScrambler;
 module ApskDecoder like IDecoder
 {
     parameters:
-        string deinterleaverType = default("");
-        string fecType = default("");
-        string descramblerType = default("");
         @display("i=block/blackboard");
         @class(ApskDecoder);
 
     submodules:
-        deinterleaver: <deinterleaverType> like IInterleaver if deinterleaverType != "" {
-            @display("p=100,50");
+        deinterleaver: <default("")> like IInterleaver if typename != "" {
+            @display("p=100,100");
         }
-        fecDecoder: <fecType> like IFecCoder if fecType != "" {
-            @display("p=100,150");
+        fecDecoder: <default("")> like IFecCoder if typename != "" {
+            @display("p=100,200");
         }
-        descrambler: <descramblerType> like IScrambler if descramblerType != "" {
-            @display("p=100,250");
+        descrambler: <default("")> like IScrambler if typename != "" {
+            @display("p=100,300");
         }
 }
