@@ -640,25 +640,23 @@ bool DijkstraKshortest::getRoute(const NodeId &nodeId,std::vector<NodeId> &pathN
     auto it = routeMap.find(nodeId);
     if (it == routeMap.end())
         return false;
-    if (k>=(int)it->second.size())
+    if (k >= (int) it->second.size())
         return false;
     std::vector<NodeId> path;
     NodeId currentNode = nodeId;
-    int idx=it->second[k].idPrevIdx;
-    while (currentNode!=rootNode)
-    {
+    int idx = k;
+    while (currentNode != rootNode) {
         path.push_back(currentNode);
         currentNode = it->second[idx].idPrev;
-        idx=it->second[idx].idPrevIdx;
+        idx = it->second[idx].idPrevIdx;
         it = routeMap.find(currentNode);
-        if (it==routeMap.end())
+        if (it == routeMap.end())
             throw cRuntimeError("error in data");
-        if (idx>=(int)it->second.size())
+        if (idx >= (int) it->second.size())
             throw cRuntimeError("error in data");
     }
     pathNode.clear();
-    while (!path.empty())
-    {
+    while (!path.empty()) {
         pathNode.push_back(path.back());
         path.pop_back();
     }
