@@ -135,6 +135,21 @@ void WirelessGetNeig::getNeighbours(const MACAddress &node, std::vector<MACAddre
     }
 }
 
+EulerAngles WirelessGetNeig::getDirection(const IPv4Address &node, const IPv4Address &dest, double &distance) {
+    auto it = listNodes.find(node.getInt());
+    if (it == listNodes.end())
+        throw cRuntimeError("node not found");
+
+    auto it2 = listNodes.find(dest.getInt());
+    if (it2 == listNodes.end())
+        throw cRuntimeError("node not found");
+
+    Coord pos = it->second.mob->getCurrentPosition();
+    Coord pos2 = it2->second.mob->getCurrentPosition();
+    distance = pos.distance(pos2);
+    return pos.angle(pos2);
+}
+
 EulerAngles WirelessGetNeig::getDirection(const MACAddress &node, const MACAddress &dest, double &distance) {
     auto it = listNodesMac.find(node);
     if (it == listNodesMac.end())

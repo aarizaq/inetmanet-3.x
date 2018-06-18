@@ -50,6 +50,7 @@ class WirelessGetNeig : public cOwnedObject
         virtual void getNeighbours(const MACAddress &node, std::vector<MACAddress>&, const double &distance);
         virtual void getNeighbours(const IPv4Address &node, std::vector<IPv4Address>&, const double &distance, std::vector<Coord> &);
         virtual void getNeighbours(const MACAddress &node, std::vector<MACAddress>&, const double &distance, std::vector<Coord> &);
+        virtual EulerAngles getDirection(const IPv4Address &, const IPv4Address&, double &distance);
         virtual EulerAngles getDirection(const MACAddress &, const MACAddress&, double &distance);
 };
 
