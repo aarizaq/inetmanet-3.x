@@ -120,33 +120,33 @@ void DijkstraKshortest::addCost (CostVector &val, const CostVector & a, const Co
 
 void DijkstraKshortest::initMinAndMax()
 {
-   CostVector defaulCost;
-   Cost costData;
-   costData.metric=aditiveMin;
-   costData.value=0;
-   minimumCost.push_back(costData);
-   costData.metric=aditiveMin;
-   costData.value=0;
-   minimumCost.push_back(costData);
-   costData.metric=concaveMax;
-   costData.value=100e100;
-   minimumCost.push_back(costData);
-   costData.metric=aditiveMin;
-   costData.value=0;
-   minimumCost.push_back(costData);
+    CostVector defaulCost;
+    Cost costData;
+    costData.metric = aditiveMin;
+    costData.value = 0;
+    minimumCost.push_back(costData);
+    costData.metric = aditiveMin;
+    costData.value = 0;
+    minimumCost.push_back(costData);
+    costData.metric = concaveMax;
+    costData.value = 100e100;
+    minimumCost.push_back(costData);
+    costData.metric = aditiveMin;
+    costData.value = 0;
+    minimumCost.push_back(costData);
 
-   costData.metric=aditiveMin;
-   costData.value=10e100;
-   maximumCost.push_back(costData);
-   costData.metric=aditiveMin;
-   costData.value=1e100;
-   maximumCost.push_back(costData);
-   costData.metric=concaveMax;
-   costData.value=0;
-   maximumCost.push_back(costData);
-   costData.metric=aditiveMin;
-   costData.value=10e100;
-   maximumCost.push_back(costData);
+    costData.metric = aditiveMin;
+    costData.value = std::numeric_limits<double>::max();
+    maximumCost.push_back(costData);
+    costData.metric = aditiveMin;
+    costData.value = std::numeric_limits<double>::max();
+    maximumCost.push_back(costData);
+    costData.metric = concaveMax;
+    costData.value = 0;
+    maximumCost.push_back(costData);
+    costData.metric = aditiveMin;
+    costData.value = std::numeric_limits<double>::max();
+    maximumCost.push_back(costData);
 }
 
 void DijkstraKshortest::initMinAndMaxWs()
