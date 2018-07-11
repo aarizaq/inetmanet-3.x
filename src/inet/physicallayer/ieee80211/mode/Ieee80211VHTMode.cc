@@ -48,9 +48,17 @@ Ieee80211VHTPreambleMode::Ieee80211VHTPreambleMode(const Ieee80211VHTSignalMode*
         highThroughputSignalMode(highThroughputSignalMode),
         legacySignalMode(legacySignalMode),
         preambleFormat(preambleFormat),
-        numberOfHTLongTrainings(computeNumberOfHTLongTrainings(computeNumberOfSpaceTimeStreams(numberOfSpatialStream)))
+        numberOfHTLongTrainings(computeNumberOfHTLongTrainings(computeNumberOfSpaceTimeStreams(numberOfSpatialStream))),
+        header(new Ieee80211VHTSignalModeHeader(highThroughputSignalMode))
 {
 }
+
+Ieee80211VHTSignalMode::Ieee80211VHTSignalMode(const Ieee80211VHTSignalMode * c) : Ieee80211VHTModeBase(c->getMcsIndex(), 1, c->getBandwidth(), c->getGuardIntervalType()),
+        modulation(c->getModulation()),
+        code(c->getCode())
+{
+}
+
 
 Ieee80211VHTSignalMode::Ieee80211VHTSignalMode(unsigned int modulationAndCodingScheme, const Ieee80211OFDMModulation *modulation, const Ieee80211VHTCode *code, const Hz bandwidth, GuardIntervalType guardIntervalType) :
         Ieee80211VHTModeBase(modulationAndCodingScheme, 1, bandwidth, guardIntervalType),
@@ -63,6 +71,10 @@ Ieee80211VHTSignalMode::Ieee80211VHTSignalMode(unsigned int modulationAndCodingS
         Ieee80211VHTModeBase(modulationAndCodingScheme, 1, bandwidth, guardIntervalType),
         modulation(modulation),
         code(Ieee80211VHTCompliantCodes::getCompliantCode(convolutionalCode, modulation, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, bandwidth, false))
+{
+}
+
+Ieee80211VHTSignalModeHeader::Ieee80211VHTSignalModeHeader(const Ieee80211VHTSignalMode *base): Ieee80211VHTSignalMode(base)
 {
 }
 
@@ -272,16 +284,9 @@ unsigned int Ieee80211VHTPreambleMode::computeNumberOfHTLongTrainings(unsigned i
 
 const simtime_t Ieee80211VHTPreambleMode::getDuration() const
 {
-    // 20.3.7 Mathematical description of signals
-    simtime_t sumOfHTLTFs = getFirstHTLongTrainingFieldDuration() + getSecondAndSubsequentHTLongTrainingFielDuration() * (numberOfHTLongTrainings - 1);
-    if (preambleFormat == HT_PREAMBLE_MIXED)
-        // L-STF -> L-LTF -> L-SIG -> HT-SIG -> HT-STF -> HT-LTF1 -> HT-LTF2 -> ... -> HT_LTFn
-        return getNonHTShortTrainingSequenceDuration() + getNonHTLongTrainingFieldDuration() + legacySignalMode->getDuration() + highThroughputSignalMode->getDuration() + getHTShortTrainingFieldDuration() + sumOfHTLTFs;
-    else if (preambleFormat == HT_PREAMBLE_GREENFIELD)
-        // HT-GF-STF -> HT-LTF1 -> HT-SIG -> HT-LTF2 -> ... -> HT-LTFn
-        return getHTGreenfieldShortTrainingFieldDuration() + highThroughputSignalMode->getDuration() + sumOfHTLTFs;
-    else
-        throw cRuntimeError("Unknown preamble format");
+    // 21.3.4 Mathematical description of signals
+    simtime_t sumOfHTLTFs = getSecondAndSubsequentHTLongTrainingFielDuration() * numberOfHTLongTrainings;
+    return getNonHTShortTrainingSequenceDuration() + getNonHTLongTrainingFieldDuration() + getLSIGDuration() + getVHTSignalFieldA() + getVHTShortTrainingFieldDuration() + sumOfHTLTFs + getVHTSignalFieldB();
 }
 
 bps Ieee80211VHTSignalMode::computeGrossBitrate() const

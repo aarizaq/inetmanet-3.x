@@ -79,6 +79,7 @@ class INET_API Ieee80211VHTSignalMode : public IIeee80211HeaderMode, public Ieee
         virtual bps computeNetBitrate() const override;
 
     public:
+        Ieee80211VHTSignalMode(const Ieee80211VHTSignalMode * c);
         Ieee80211VHTSignalMode(unsigned int modulationAndCodingScheme, const Ieee80211OFDMModulation *modulation, const Ieee80211VHTCode *code, const Hz bandwidth, GuardIntervalType guardIntervalType);
         Ieee80211VHTSignalMode(unsigned int modulationAndCodingScheme, const Ieee80211OFDMModulation *modulation, const Ieee80211ConvolutionalCode *convolutionalCode, const Hz bandwidth, GuardIntervalType guardIntervalType);
         virtual ~Ieee80211VHTSignalMode();
@@ -114,6 +115,14 @@ class INET_API Ieee80211VHTSignalMode : public IIeee80211HeaderMode, public Ieee
         virtual const Ieee80211VHTCode * getCode() const {return code;}
 };
 
+class INET_API Ieee80211VHTSignalModeHeader : public Ieee80211VHTSignalMode
+{
+    public:
+        Ieee80211VHTSignalModeHeader(const Ieee80211VHTSignalMode *b);
+        virtual const simtime_t getDuration() const override {return 0;}
+        virtual int getBitLength() const override {return 0;}
+};
+
 /*
  * The HT preambles are defined in HT-mixed format and in HT-greenfield format to carry the required
  * information to operate in a system with multiple transmit and multiple receive antennas. (20.3.9 HT preamble)
@@ -133,6 +142,8 @@ class INET_API Ieee80211VHTPreambleMode : public IIeee80211PreambleMode, public 
         const HighTroughputPreambleFormat preambleFormat;
         const unsigned int numberOfHTLongTrainings; // N_LTF, 20.3.9.4.6 HT-LTF definition
 
+        const Ieee80211VHTSignalModeHeader *header;
+
     protected:
         virtual unsigned int computeNumberOfSpaceTimeStreams(unsigned int numberOfSpatialStreams) const;
         virtual unsigned int computeNumberOfHTLongTrainings(unsigned int numberOfSpaceTimeStreams) const;
@@ -143,6 +154,7 @@ class INET_API Ieee80211VHTPreambleMode : public IIeee80211PreambleMode, public 
 
         HighTroughputPreambleFormat getPreambleFormat() const { return preambleFormat; }
         virtual const Ieee80211VHTSignalMode *getSignalMode() const { return highThroughputSignalMode; }
+        virtual const Ieee80211VHTSignalModeHeader *getSignalModeHeader() const { return header; }
         virtual const Ieee80211OFDMSignalMode *getLegacySignalMode() const { return legacySignalMode; }
         virtual const Ieee80211VHTSignalMode* getHighThroughputSignalMode() const { return highThroughputSignalMode; }
         virtual inline unsigned int getNumberOfHTLongTrainings() const { return numberOfHTLongTrainings; }
@@ -152,10 +164,14 @@ class INET_API Ieee80211VHTPreambleMode : public IIeee80211PreambleMode, public 
         virtual const inline simtime_t getNonHTShortTrainingSequenceDuration() const { return 10 * getDFTPeriod() / 4;  } // L-STF
         virtual const inline simtime_t getHTGreenfieldShortTrainingFieldDuration() const { return 10 * getDFTPeriod() / 4; } // HT-GF-STF
         virtual const inline simtime_t getNonHTLongTrainingFieldDuration() const { return 2 * getDFTPeriod() + getDoubleGIDuration(); } // L-LTF
-        virtual const inline simtime_t getHTShortTrainingFieldDuration() const { return 4E-6; } // HT-STF
+        virtual const inline simtime_t getNonHTSignalField() const { return 4E-6; } // L-SIG
+        virtual const inline simtime_t getVHTSignalFieldA() const { return 8E-6; } // VHT-SIG-A
+        virtual const inline simtime_t getVHTShortTrainingFieldDuration() const { return 4E-6; } // VHT-STF
+        virtual const inline simtime_t getVHTSignalFieldB() const { return 4E-6; } // VHT-SIG-A
+
         virtual const simtime_t getFirstHTLongTrainingFieldDuration() const;
         virtual const inline simtime_t getSecondAndSubsequentHTLongTrainingFielDuration() const { return 4E-6; } // HT-LTFs, s = 2,3,..,n
-        virtual const inline unsigned int getNumberOfHtLongTrainings() const { return numberOfHTLongTrainings; }
+
 
         virtual const simtime_t getDuration() const override;
 
@@ -265,7 +281,7 @@ class INET_API Ieee80211VHTMode : public Ieee80211ModeBase
 
         virtual const Ieee80211VHTDataMode* getDataMode() const override { return dataMode; }
         virtual const Ieee80211VHTPreambleMode* getPreambleMode() const override { return preambleMode; }
-        virtual const Ieee80211VHTSignalMode *getHeaderMode() const override { return preambleMode->getSignalMode(); }
+        virtual const Ieee80211VHTSignalMode *getHeaderMode() const override { return preambleMode->getSignalModeHeader(); }
         virtual const Ieee80211OFDMSignalMode *getLegacySignalMode() const { return preambleMode->getLegacySignalMode(); }
 
         // Table 20-25—MIMO PHY characteristics
@@ -281,7 +297,7 @@ class INET_API Ieee80211VHTMode : public Ieee80211ModeBase
         virtual inline int getMpduMaxLength() const override { return 65535; } // in octets
         virtual BandMode getCarrierFrequencyMode() const { return carrierFrequencyMode; }
 
-        virtual const simtime_t getDuration(int dataBitLength) const override { return preambleMode->getDuration() + dataMode->getDuration(dataBitLength); }
+        virtual const simtime_t getDuration(int dataBitLength) const override { return preambleMode->getDuration() + getHeaderMode()->getDuration() + dataMode->getDuration(dataBitLength); }
 };
 
 // A specification of the high-throughput (HT) physical layer (PHY)
