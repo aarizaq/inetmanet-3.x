@@ -39,8 +39,26 @@
 #include "inet/common/ModuleAccess.h"
 #include "inet/common/GlobalWirelessLinkInspector.h"
 #include "inet/common/lifecycle/NodeOperations.h"
+
+#ifdef WITH_CSMA
 #include "inet/linklayer/csma/CSMAFrame_m.h"
+#endif // ifdef WITH_CSMA
+
+#ifdef WITH_CSMACA
+#include "inet/linklayer/csmaca/CsmaCaMacFrame_m.h"
+#endif // ifdef WITH_CSMA
+
+#ifdef WITH_LMAC
+#include "inet/linklayer/lmac/LMacFrame_m.h"
+#endif // ifdef WITH_LMAC
+
+#ifdef WITH_BMAC
+#include "inet/linklayer/bmac/BMacFrame_m.h"
+#endif // ifdef WITH_BMAC
+
+#ifdef WITH_XMAC
 #include "inet/linklayer/xmac/XMacPkt_m.h"
+#endif // ifdef WITH_XMAC
 
 namespace inet {
 
@@ -1055,6 +1073,7 @@ void ManetRoutingBase::receiveSignal(cComponent *source, simsignal_t signalID, c
     {
         if (obj == nullptr)
             return;
+
         if (dynamic_cast<Ieee80211DataOrMgmtFrame *>(const_cast<cObject*>(obj)))
         {
             Ieee80211DataFrame *frame = dynamic_cast<Ieee80211DataFrame *>(const_cast<cObject*>(obj));
@@ -1081,6 +1100,7 @@ void ManetRoutingBase::receiveSignal(cComponent *source, simsignal_t signalID, c
                     processLinkBreakManagement(obj);
             }
         }
+#ifdef WITH_CSMA
         else if (dynamic_cast<CSMAFrame *>(const_cast<cObject*>(obj)))
         {
             CSMAFrame *frame = dynamic_cast<CSMAFrame *>(const_cast<cObject*>(obj));
@@ -1095,6 +1115,8 @@ void ManetRoutingBase::receiveSignal(cComponent *source, simsignal_t signalID, c
                 delete pkt;
             }
         }
+#endif
+#ifdef WITH_XMAC
         else if (dynamic_cast<XMacPkt *>(const_cast<cObject*>(obj)))
         {
             XMacPkt *frame = dynamic_cast<XMacPkt *>(const_cast<cObject*>(obj));
@@ -1109,6 +1131,44 @@ void ManetRoutingBase::receiveSignal(cComponent *source, simsignal_t signalID, c
                 delete pkt;
             }
         }
+
+#endif
+#ifdef WITH_LMAC
+        else if (dynamic_cast<LMacFrame *>(const_cast<cObject*>(obj)))
+         {
+             LMacFrame *frame = dynamic_cast<LMacFrame *>(const_cast<cObject*>(obj));
+             cPacket * pktAux = frame->getEncapsulatedPacket();
+             if (!mac_layer_ && pktAux != nullptr)
+             {
+                 cPacket *pkt = pktAux->dup();
+                 ControlInfoBreakLink *add = new ControlInfoBreakLink;
+                 add->setDest(frame->getDestAddr());
+                 pkt->setControlInfo(add);
+                 processLinkBreak(pkt);
+                 delete pkt;
+             }
+         }
+#endif // ifdef WITH_LMAC
+
+#ifdef WITH_BMAC
+        else if (dynamic_cast<BMacFrame *>(const_cast<cObject*>(obj)))
+        {
+            BMacFrame *frame = dynamic_cast<BMacFrame *>(const_cast<cObject*>(obj));
+            cPacket * pktAux = frame->getEncapsulatedPacket();
+            if (!mac_layer_ && pktAux != nullptr)
+            {
+                cPacket *pkt = pktAux->dup();
+                ControlInfoBreakLink *add = new ControlInfoBreakLink;
+                add->setDest(frame->getDestAddr());
+                pkt->setControlInfo(add);
+                processLinkBreak(pkt);
+                delete pkt;
+            }
+        }
+#endif // ifdef WITH_BMAC
+#ifdef WITH_CSMACA
+
+#endif // ifdef WITH_CSMA
     }
     else if (signalID == NF_LINK_PROMISCUOUS)
     {

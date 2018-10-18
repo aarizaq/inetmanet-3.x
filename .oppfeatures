@@ -1158,7 +1158,7 @@
         name="802.11a/b/g/e (mesh networking mode)"
         description = "IEEE 802.11a/b/g/e NIC supporting mesh networking"
         initiallyEnabled = "true"
-        requires = "mobility radio TCP_INET MANET OSPFv2 MPLS UDP IPv4 IPv6"
+        requires = "mobility radio TCP_INET MANET UDP IPv4"
         labels = "nic wireless mesh"
         nedPackages = "
                        inet.linklayer.ieee80211mesh

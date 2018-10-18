@@ -27,12 +27,6 @@
 #include "inet/routing/extras/olsr/OLSRpkt_m.h"
 #include "inet/routing/extras/dymo/dymo_msg_struct.h"
 #include "inet/routing/extras/aodv-uu/aodv_msg_struct.h"
-#include "inet/networklayer/ipv4/IPv4Datagram.h"
-#include "inet/networklayer/ipv6/IPv6Datagram.h"
-#include "inet/networklayer/ted/LinkStatePacket_m.h"
-#include "inet/networklayer/mpls/MPLSPacket.h"
-#include "inet/networklayer/arp/ipv4/ARPPacket_m.h"
-#include "inet/routing/ospfv2/OSPFPacket_m.h"
 #include "inet/routing/extras/olsr/OLSR.h"
 #include "inet/linklayer/ethernet/EtherFrame_m.h"
 
