@@ -1,0 +1,54 @@
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// 
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/.
+// 
+cplusplus {{
+#include "INETDefs.h"
+#include "ManetAddress.h"
+}}
+
+class noncobject ManetAddress;
+
+enum PacketType
+{
+    REQUEST = 1;
+    SEGMEN = 2;
+    GENERAL = 3;
+    CONFIRMATION = 4;
+}
+
+packet UDPBasicPacketP2P 
+{
+    ManetAddress nodeId;
+    ManetAddress destination;
+    int type @enum(PacketType);
+    int64_t segmentRequest = -1;
+    uint64_t totalSize;
+    uint64_t segmentId;
+    uint16_t subSegmentId;
+    int objectId = -1;
+    uint16_t subSegmentRequest[];    
+    ManetAddress sourceRoute[];
+    char mapSegments[];
+    int objectsDesired[];
+}
+
+packet UDPBasicPacketP2PNotification 
+{
+    ManetAddress nodeId;
+    uint64_t seqnum;    
+    int mapSegmentsSize;
+    int objectId = -1;
+    char mapSegments[];
+}
+

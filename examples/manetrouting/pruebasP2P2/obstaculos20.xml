@@ -1,0 +1,4 @@
+<obstacles>
+  <poly id="building#0" type="building" attenuationPerWall="20" color="#F00" shape="0,200 0,201 600,201 600,200"/>
+  <poly id="building#0" type="building" attenuationPerWall="20" color="#F00" shape="200,600 200,601 800,601 800,600"/>
+</obstacles>

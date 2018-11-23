@@ -1,0 +1,98 @@
+[System]
+Name='P2P1'
+Type='mamdani'
+Version=2.0
+NumInputs=3
+NumOutputs=1
+NumRules=48
+AndMethod='min'
+OrMethod='max'
+ImpMethod='min'
+AggMethod='max'
+DefuzzMethod='centroid'
+
+[Input1]
+Name='NHops'
+Range=[0 14]
+NumMFs=4
+MF1='Low':'trapmf',[-0.4 0 1 5]
+MF2='Middle1':'trimf',[1 5 9]
+MF3='High':'trapmf',[9 13 15 16]
+MF4='Middle2':'trimf',[5 9 13]
+
+[Input2]
+Name='ETX'
+Range=[0 82]
+NumMFs=4
+MF1='Low':'trapmf',[-0.3 0 1 2]
+MF2='Middle1':'trimf',[1 2 3]
+MF3='High':'trapmf',[3 4 81 82]
+MF4='Middle2':'trimf',[2 3 4]
+
+[Input3]
+Name='Queue'
+Range=[0 3000]
+NumMFs=3
+MF1='Low':'trapmf',[-1 0 80 120]
+MF2='Middle':'trapmf',[80 120 300 500]
+MF3='High':'trapmf',[300 500 2000 3000]
+
+[Output1]
+Name='BondadCliente'
+Range=[0 1]
+NumMFs=5
+MF1='Low':'trapmf',[-0.3 0 0.2 0.3]
+MF2='MiddleLow':'trimf',[0.2 0.3 0.4]
+MF3='High':'trapmf',[0.7 0.8 1 1.3]
+MF4='Middle':'trapmf',[0.3 0.4 0.6 0.7]
+MF5='MiddleHigh':'trimf',[0.6 0.7 0.8]
+
+[Rules]
+1 1 1, 3 (1) : 1
+1 1 2, 5 (1) : 1
+1 1 3, 2 (1) : 1
+1 2 1, 5 (1) : 1
+1 2 2, 4 (1) : 1
+1 2 3, 1 (1) : 1
+1 4 1, 4 (1) : 1
+1 4 2, 2 (1) : 1
+1 4 3, 1 (1) : 1
+1 3 1, 1 (1) : 1
+2 1 1, 5 (1) : 1
+2 1 2, 4 (1) : 1
+2 1 3, 2 (1) : 1
+2 2 1, 4 (1) : 1
+2 2 2, 2 (1) : 1
+2 2 3, 1 (1) : 1
+2 4 1, 2 (1) : 1
+2 4 2, 1 (1) : 1
+2 4 3, 1 (1) : 1
+4 2 1, 2 (1) : 1
+4 2 2, 1 (1) : 1
+4 2 3, 1 (1) : 1
+4 4 1, 1 (1) : 1
+4 3 1, 1 (1) : 1
+1 3 2, 1 (1) : 1
+1 3 3, 1 (1) : 1
+2 3 1, 1 (1) : 1
+2 3 2, 1 (1) : 1
+2 3 3, 1 (1) : 1
+4 1 1, 2 (1) : 1
+4 1 2, 2 (1) : 1
+4 1 3, 1 (1) : 1
+4 4 2, 1 (1) : 1
+4 4 3, 1 (1) : 1
+4 3 2, 1 (1) : 1
+4 3 3, 1 (1) : 1
+3 1 1, 1 (1) : 1
+3 1 2, 1 (1) : 1
+3 1 3, 1 (1) : 1
+3 2 1, 1 (1) : 1
+3 2 2, 1 (1) : 1
+3 2 3, 1 (1) : 1
+3 4 1, 1 (1) : 1
+3 4 2, 1 (1) : 1
+3 4 3, 1 (1) : 1
+3 3 1, 1 (1) : 1
+3 3 2, 1 (1) : 1
+3 3 3, 1 (1) : 1

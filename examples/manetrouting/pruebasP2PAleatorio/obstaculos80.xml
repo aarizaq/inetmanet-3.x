@@ -1,0 +1,8 @@
+<obstacles>
+  <poly id="building#0" type="probability" color="#F00" shape=" 350,170 350,172 500,172 500,170" lossProbability="0.80"/>
+  <poly id="building#0" type="probability" color="#F00" shape=" 300,270 300,400 302,400 302,270" lossProbability="0.80"/>
+  
+  <poly id="building#0" type="probability" color="#F00" shape=" 350,470 350,472 500,472 500,470" lossProbability="0.80"/>
+  <poly id="building#0" type="probability" color="#F00" shape=" 500,270 500,400 502,400 502,270" lossProbability="0.80"/>
+  
+</obstacles>

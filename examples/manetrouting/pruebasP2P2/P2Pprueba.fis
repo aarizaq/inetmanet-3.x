@@ -1,0 +1,62 @@
+[System]
+Name='P2Pprueba'
+Type='mamdani'
+Version=2.0
+NumInputs=3
+NumOutputs=1
+NumRules=14
+AndMethod='min'
+OrMethod='max'
+ImpMethod='min'
+AggMethod='max'
+DefuzzMethod='centroid'
+
+[Input1]
+Name='No.Saltos'
+Range=[0 10]
+NumMFs=3
+MF1='Bajo':'trapmf',[-0.4 0 1 3]
+MF2='Medio':'trimf',[1 3 5]
+MF3='Alto':'trapmf',[3 5 10 11]
+
+[Input2]
+Name='ETT'
+Range=[0 81]
+NumMFs=3
+MF1='Bajo':'trapmf',[-0.3 0 3 10]
+MF2='Medio':'trimf',[3 10 17]
+MF3='Alto':'trapmf',[10 17 81 82]
+
+[Input3]
+Name='No.Vecinos'
+Range=[0 10]
+NumMFs=3
+MF1='Bajo':'trapmf',[-0.3 0 3 5]
+MF2='Medio':'trimf',[3 5 7]
+MF3='Alto':'trapmf',[5 7 10 111]
+
+[Output1]
+Name='BondadCliente'
+Range=[0 1]
+NumMFs=5
+MF1='Bajo':'trapmf',[-0.3 0 0.2 0.3]
+MF2='MedioBajo':'trimf',[0.2 0.3 0.4]
+MF3='Alto':'trapmf',[0.7 0.8 1 1.3]
+MF4='Medio':'trapmf',[0.3 0.4 0.6 0.7]
+MF5='MedioAlto':'trimf',[0.6 0.7 0.8]
+
+[Rules]
+1 1 1, 3 (1) : 1
+1 1 2, 5 (1) : 1
+1 1 3, 2 (1) : 1
+1 2 1, 4 (1) : 1
+1 2 2, 1 (1) : 1
+1 2 3, 1 (1) : 1
+1 3 0, 1 (1) : 1
+2 1 1, 5 (1) : 1
+2 1 2, 4 (1) : 1
+2 1 3, 2 (1) : 1
+2 2 0, 1 (1) : 1
+2 3 0, 1 (1) : 1
+3 1 1, 4 (1) : 1
+3 -1 -1, 1 (1) : 1
