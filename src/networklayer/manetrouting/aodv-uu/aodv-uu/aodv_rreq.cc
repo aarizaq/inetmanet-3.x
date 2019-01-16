@@ -291,6 +291,7 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
     /* Ignore already processed RREQs. */
     if (rreq_record_find(rreq_orig, rreq_id))
     {
+        life = PATH_DISCOVERY_TIME - 2 * rreq_new_hcnt * NODE_TRAVERSAL_TIME;
 #ifdef OMNETPP
         if (isBroadcast(rreq_dest.s_addr))
         {
