@@ -25,10 +25,8 @@
 #include "debug_dsr.h"
 #include "dsr-srt.h"
 #include "dsr-ack.h"
-#include "link-cache.h"
-#include "maint-buf.h"
 
-static struct dsr_rerr_opt *dsr_rerr_opt_add(char *buf, int len,
+static struct dsr_rerr_opt *dsr_rerr_opt_add(struct dsr_opt_hdr *buf, int len,
         int err_type,
         struct in_addr err_src,
         struct in_addr err_dst,
@@ -40,7 +38,7 @@ static struct dsr_rerr_opt *dsr_rerr_opt_add(char *buf, int len,
     if (!buf || len < (int)DSR_RERR_HDR_LEN)
         return NULL;
 
-    rerr_opt = (struct dsr_rerr_opt *)buf;
+    rerr_opt = new dsr_rerr_opt;
 
     rerr_opt->type = DSR_OPT_RERR;
     rerr_opt->length = DSR_RERR_OPT_LEN;
@@ -53,17 +51,19 @@ static struct dsr_rerr_opt *dsr_rerr_opt_add(char *buf, int len,
     switch (err_type)
     {
     case NODE_UNREACHABLE:
-        if (len < (int)(DSR_RERR_HDR_LEN + sizeof(struct in_addr)))
+        if (len < (int)(DSR_RERR_HDR_LEN + 4))
             return NULL;
-        rerr_opt->length += sizeof(struct in_addr);
-        memcpy(rerr_opt->info, &unreach_addr, sizeof(struct in_addr));
+        rerr_opt->length += 4;
+        //rerr_opt->info.resize(sizeof(unreach_addr));
+        //memcpy(&rerr_opt->info[0], &unreach_addr, sizeof(unreach_addr));
+        rerr_opt->info =  unreach_addr.s_addr;
         break;
     case FLOW_STATE_NOT_SUPPORTED:
         break;
     case OPTION_NOT_SUPPORTED:
         break;
     }
-
+    buf->option.push_back(rerr_opt);
     return rerr_opt;
 }
 
@@ -71,8 +71,8 @@ int NSCLASS dsr_rerr_send(struct dsr_pkt *dp_trigg, struct in_addr unr_addr)
 {
     struct dsr_pkt *dp;
     struct dsr_rerr_opt *rerr_opt;
-    struct in_addr dst, err_src, err_dst, myaddr;
-    char *buf;
+    struct in_addr dst, err_src, err_dst, myaddr, unr_dst;
+    struct dsr_opt_hdr *buf;
     int n, len, i;
 
     myaddr = my_addr();
@@ -104,15 +104,16 @@ int NSCLASS dsr_rerr_send(struct dsr_pkt *dp_trigg, struct in_addr unr_addr)
     if (!dp->srt)
     {
         DEBUG("No source route to %s\n", print_ip(dst));
+        dsr_pkt_free(dp);
         return -1;
     }
 
     len = DSR_OPT_HDR_LEN + DSR_SRT_OPT_LEN(dp->srt) +
           (DSR_RERR_HDR_LEN + 4) +
-          DSR_ACK_HDR_LEN * dp_trigg->num_ack_opts;
+          DSR_ACK_HDR_LEN * dp_trigg->ack_opt.size();
 
     /* Also count in RERR opts in trigger packet */
-    for (i = 0; i < dp_trigg->num_rerr_opts; i++)
+    for (i = 0; i < (int)dp_trigg->rerr_opt.size(); i++)
     {
         if (dp_trigg->rerr_opt[i]->salv > ConfVal(MAX_SALVAGE_COUNT))
             break;
@@ -135,21 +136,21 @@ int NSCLASS dsr_rerr_send(struct dsr_pkt *dp_trigg, struct in_addr unr_addr)
         goto out_err;
     }
 
-    buf = dsr_pkt_alloc_opts(dp, len);
+    buf = dsr_pkt_alloc_opts(dp);
 
     if (!buf)
         goto out_err;
 
-    dp->dh.opth = dsr_opt_hdr_add(buf, len, DSR_NO_NEXT_HDR_TYPE);
+    dsr_opt_hdr_add(buf, len, DSR_NO_NEXT_HDR_TYPE);
 
-    if (!dp->dh.opth)
+    if (dp->dh.opth.empty())
     {
         DEBUG("Could not create DSR options header\n");
         goto out_err;
     }
 
-    buf += DSR_OPT_HDR_LEN;
     len -= DSR_OPT_HDR_LEN;
+    dp->dh.opth.begin()->p_len = len;
 
     dp->srt_opt = dsr_srt_opt_add(buf, len, 0, 0, dp->srt);
 
@@ -159,9 +160,7 @@ int NSCLASS dsr_rerr_send(struct dsr_pkt *dp_trigg, struct in_addr unr_addr)
         goto out_err;
     }
 
-    buf += DSR_SRT_OPT_LEN(dp->srt);
     len -= DSR_SRT_OPT_LEN(dp->srt);
-
     rerr_opt = dsr_rerr_opt_add(buf, len, NODE_UNREACHABLE, dp->src,
                                 dp->dst, unr_addr,
                                 dp_trigg->srt_opt->salv);
@@ -169,43 +168,42 @@ int NSCLASS dsr_rerr_send(struct dsr_pkt *dp_trigg, struct in_addr unr_addr)
     if (!rerr_opt)
         goto out_err;
 
-    buf += (rerr_opt->length + 2);
     len -= (rerr_opt->length + 2);
 
     /* Add old RERR options */
-    for (i = 0; i < dp_trigg->num_rerr_opts; i++)
+    for (i = 0; i < (int)dp_trigg->rerr_opt.size(); i++)
     {
 
         if (dp_trigg->rerr_opt[i]->salv > ConfVal(MAX_SALVAGE_COUNT))
             break;
-
-        memcpy(buf, dp_trigg->rerr_opt[i],
-               dp_trigg->rerr_opt[i]->length + 2);
-
+        buf->option.push_back(dp_trigg->rerr_opt[i]->dup());
         len -= (dp_trigg->rerr_opt[i]->length + 2);
-        buf += (dp_trigg->rerr_opt[i]->length + 2);
     }
 
     /* TODO: Must preserve order of RERR and ACK options from triggering
      * packet */
 
     /* Add old ACK options */
-    for (i = 0; i < dp_trigg->num_ack_opts; i++)
+    for (i = 0; i < (int)dp_trigg->ack_opt.size(); i++)
     {
-        memcpy(buf, dp_trigg->ack_opt[i],
-               dp_trigg->ack_opt[i]->length + 2);
-
+        buf->option.push_back(dp_trigg->ack_opt[i]->dup());
         len -= (dp_trigg->ack_opt[i]->length + 2);
-        buf += (dp_trigg->ack_opt[i]->length + 2);
     }
 
     err_src.s_addr = rerr_opt->err_src;
     err_dst.s_addr = rerr_opt->err_dst;
+    unr_dst.s_addr = rerr_opt->info;
+
+    /*DEBUG("Send RERR err_src %s err_dst %s unr_dst %s\n",
+            print_ip(err_src),
+            print_ip(err_dst),
+            print_ip(*((struct in_addr *)&rerr_opt->info[0])));*/
+
 
     DEBUG("Send RERR err_src %s err_dst %s unr_dst %s\n",
-          print_ip(err_src),
-          print_ip(err_dst),
-          print_ip(*((struct in_addr *)rerr_opt->info)));
+              print_ip(err_src),
+              print_ip(err_dst),
+              print_ip(unr_dst));
 
     XMIT(dp);
 
@@ -226,7 +224,7 @@ int NSCLASS dsr_rerr_opt_recv(struct dsr_pkt *dp, struct dsr_rerr_opt *rerr_opt)
     if (!rerr_opt)
         return -1;
 
-    dp->rerr_opt[dp->num_rerr_opts++] = rerr_opt;
+    dp->rerr_opt.push_back(rerr_opt);
 
     switch (rerr_opt->err_type)
     {
@@ -234,7 +232,8 @@ int NSCLASS dsr_rerr_opt_recv(struct dsr_pkt *dp, struct dsr_rerr_opt *rerr_opt)
         err_src.s_addr = rerr_opt->err_src;
         err_dst.s_addr = rerr_opt->err_dst;
 
-        memcpy(&unr_addr, rerr_opt->info, sizeof(struct in_addr));
+        //memcpy(&unr_addr, &(rerr_opt->info[0]), sizeof(unr_addr));
+        unr_addr.s_addr = rerr_opt->info;
 
         DEBUG("NODE_UNREACHABLE err_src=%s err_dst=%s unr=%s\n",
               print_ip(err_src), print_ip(err_dst), print_ip(unr_addr));
@@ -246,10 +245,7 @@ int NSCLASS dsr_rerr_opt_recv(struct dsr_pkt *dp, struct dsr_rerr_opt *rerr_opt)
         /* Remove broken link from cache */
 
 #ifdef OMNETPP
-        if (ConfVal(PathCache))
-            ph_srt_delete_link(err_src, unr_addr);
-        else
-            lc_link_del(err_src, unr_addr);
+        ph_srt_delete_link_map(err_src,unr_addr);
 #else
         lc_link_del(err_src, unr_addr);
 #endif

@@ -28,16 +28,11 @@
 #include "dsr-srt.h"
 #include "dsr-ack.h"
 
-struct dsr_opt_hdr *dsr_opt_hdr_add(char *buf, unsigned int len,
+struct dsr_opt_hdr *dsr_opt_hdr_add(struct dsr_opt_hdr *opt_hdr, unsigned int len,
                                     unsigned int protocol)
 {
-    struct dsr_opt_hdr *opt_hdr;
-
     if (len < DSR_OPT_HDR_LEN)
         return NULL;
-
-    opt_hdr = (struct dsr_opt_hdr *)buf;
-
     opt_hdr->nh = protocol;
     opt_hdr->f = 0;
     opt_hdr->res = 0;
@@ -82,21 +77,15 @@ struct iphdr *dsr_build_ip(struct dsr_pkt *dp, struct in_addr src,
 
 struct dsr_opt *dsr_opt_find_opt(struct dsr_pkt *dp, int type)
 {
-    int dsr_len, l;
     struct dsr_opt *dopt;
-
-    dsr_len = dsr_pkt_opts_len(dp);
-
-    l = DSR_OPT_HDR_LEN;
-    dopt = DSR_GET_OPT(dp->dh.opth);
-
-    while (l < dsr_len && (dsr_len - l) > 2)
+    for (unsigned int i = 0; i < dp->dh.opth.size(); i++)
     {
-        if (type == dopt->type)
-            return dopt;
-
-        l += dopt->length + 2;
-        dopt = DSR_GET_NEXT_OPT(dopt);
+        for (unsigned int j = 0; j < dp->dh.opth[i].option.size(); j++)
+        {
+            dopt = dp->dh.opth[i].option[j];
+            if (dopt->type==DSR_OPT_ACK_REQ)
+                return dopt;
+        }
     }
     return NULL;
 }
@@ -105,124 +94,118 @@ int NSCLASS dsr_opt_remove(struct dsr_pkt *dp)
 {
     int len, ip_len, prot, ttl;
 
-    if (!dp || !dp->dh.raw)
+    if (!dp || dp->dh.opth.empty())
         return -1;
 
-    prot = dp->dh.opth->nh;
-#ifdef NS2
-    ip_len = 20;
-    ttl = dp->nh.iph->ttl();
-#else
+    prot = dp->dh.opth.begin()->nh;
+
     ip_len = (dp->nh.iph->ihl << 2);
     ttl = dp->nh.iph->ttl;
-#endif
+
+
     dsr_build_ip(dp, dp->src, dp->dst, ip_len,
                  ip_len + dp->payload_len, prot, ttl);
 
-    len = dsr_pkt_free_opts(dp);
-
+    len = dp->dh.opth.begin()->p_len;
+    dsr_pkt_free_opts(dp);
     /* Return bytes removed */
     return len;
 }
 
 int dsr_opt_parse(struct dsr_pkt *dp)
 {
-    int dsr_len, l, n = 0;
+    int n = 0;
     struct dsr_opt *dopt;
 
     if (!dp)
         return -1;
 
-    dsr_len = dsr_pkt_opts_len(dp);
-
-    l = DSR_OPT_HDR_LEN;
-    dopt = DSR_GET_OPT(dp->dh.opth);
-
-    dp->num_rrep_opts = dp->num_rerr_opts = dp->num_rreq_opts = dp->num_ack_opts = 0;
+    dp->rreq_opt.clear();  /* Can only be one */
+    dp->rrep_opt.clear();
+    dp->rerr_opt.clear();
+    dp->ack_opt.clear();
 
     dp->srt_opt = NULL;
     dp->ack_req_opt = NULL;
 
-    while (l < dsr_len && (dsr_len - l) > 2)
+    for (unsigned int i = 0; i < dp->dh.opth.size(); i++)
     {
-        switch (dopt->type)
+        for (unsigned int j = 0; j < dp->dh.opth[i].option.size(); j++)
         {
-        case DSR_OPT_PADN:
-            break;
-        case DSR_OPT_RREQ:
-            if (dp->num_rreq_opts == 0)
-                dp->rreq_opt = (struct dsr_rreq_opt *)dopt;
-#ifndef NS2
-            else
-                DEBUG("ERROR: More than one RREQ option!!\n");
-#endif
-            break;
-        case DSR_OPT_RREP:
-            if (dp->num_rrep_opts < MAX_RREP_OPTS)
-                dp->rrep_opt[dp->num_rrep_opts++] = (struct dsr_rrep_opt *)dopt;
-#ifndef NS2
-            else
-                DEBUG("Maximum RREP opts in one packet reached\n");
-#endif
-            break;
-        case DSR_OPT_RERR:
-            if (dp->num_rerr_opts < MAX_RERR_OPTS)
-                dp->rerr_opt[dp->num_rerr_opts++] = (struct dsr_rerr_opt *)dopt;
-#ifndef NS2
-            else
-                DEBUG("Maximum RERR opts in one packet reached\n");
-#endif
-            break;
-        case DSR_OPT_PREV_HOP:
-            break;
-        case DSR_OPT_ACK:
-            if (dp->num_ack_opts < MAX_ACK_OPTS)
-                dp->ack_opt[dp->num_ack_opts++] = (struct dsr_ack_opt *)dopt;
-#ifndef NS2
-            else
-                DEBUG("Maximum ACK opts in one packet reached\n");
-#endif
-            break;
-        case DSR_OPT_SRT:
-            if (!dp->srt_opt)
-                dp->srt_opt = (struct dsr_srt_opt *)dopt;
-#ifndef NS2
-            else
-                DEBUG("More than one source route in packet\n");
-#endif
-            break;
-        case DSR_OPT_TIMEOUT:
-            break;
-        case DSR_OPT_FLOWID:
-            break;
-        case DSR_OPT_ACK_REQ:
-            if (!dp->ack_req_opt)
-                dp->ack_req_opt = (struct dsr_ack_req_opt *)dopt;
-#ifndef NS2
-            else
-                DEBUG("More than one ACK REQ in packet\n");
-#endif
-            break;
-        case DSR_OPT_PAD1:
-            l++;
-            dopt++;
-            continue;
-#ifndef NS2
-        default:
-            DEBUG("Unknown DSR option type=%d\n", dopt->type);
-#endif
+            dopt = dp->dh.opth[i].option[j];
+            switch (dopt->type)
+            {
+                 case DSR_OPT_PADN:
+                 break;
+                 case DSR_OPT_RREQ:
+                     if (dp->rreq_opt.empty())
+                         dp->rreq_opt.push_back((struct dsr_rreq_opt *)dopt);
+                     #ifndef NS2
+                     else
+                         DEBUG("ERROR: More than one RREQ option!!\n");
+                     #endif
+                 break;
+                 case DSR_OPT_RREP:
+                     if (dp->rrep_opt.size() < MAX_RREP_OPTS)
+                         dp->rrep_opt.push_back((struct dsr_rrep_opt *)dopt);
+                       #ifndef NS2
+                          else
+                             DEBUG("Maximum RREP opts in one packet reached\n");
+                       #endif
+                 break;
+                 case DSR_OPT_RERR:
+                     if (dp->rerr_opt.size() < MAX_RERR_OPTS)
+                          dp->rerr_opt.push_back((struct dsr_rerr_opt *)dopt);
+                     #ifndef NS2
+                     else
+                          DEBUG("Maximum RERR opts in one packet reached\n");
+                     #endif
+                 break;
+                 case DSR_OPT_PREV_HOP:
+                 break;
+                 case DSR_OPT_ACK:
+                     if (dp->ack_opt.size() < MAX_ACK_OPTS)
+                         dp->ack_opt.push_back((struct dsr_ack_opt *)dopt);
+                     #ifndef NS2
+                     else
+                           DEBUG("Maximum ACK opts in one packet reached\n");
+                     #endif
+                  break;
+                  case DSR_OPT_SRT:
+                     if (!dp->srt_opt)
+                           dp->srt_opt = (struct dsr_srt_opt *)dopt;
+                   #ifndef NS2
+                      else
+                        DEBUG("More than one source route in packet\n");
+                    #endif
+                 break;
+                 case DSR_OPT_TIMEOUT:
+                 break;
+                 case DSR_OPT_FLOWID:
+                 break;
+                 case DSR_OPT_ACK_REQ:
+                     if (!dp->ack_req_opt)
+                          dp->ack_req_opt = (struct dsr_ack_req_opt *)dopt;
+                     #ifndef NS2
+                     else
+                         DEBUG("More than one ACK REQ in packet\n");
+                     #endif
+                 break;
+                 case DSR_OPT_PAD1:
+                     continue;
+                 #ifndef NS2
+                     default:
+                       DEBUG("Unknown DSR option type=%d\n", dopt->type);
+                 #endif
+            }
+            n++;
         }
-        l += dopt->length + 2;
-        dopt = DSR_GET_NEXT_OPT(dopt);
-        n++;
     }
-
     return n;
 }
 
 int NSCLASS dsr_opt_recv(struct dsr_pkt *dp)
 {
-    int dsr_len, l;
     int action = 0;
     struct dsr_opt *dopt;
     struct in_addr myaddr;
@@ -243,78 +226,64 @@ int NSCLASS dsr_opt_recv(struct dsr_pkt *dp)
     if (dp->dst.s_addr == myaddr.s_addr && dp->payload_len != 0)
         action |= DSR_PKT_DELIVER;
 #endif
-    dsr_len = dsr_pkt_opts_len(dp);
-
-    l = DSR_OPT_HDR_LEN;
-    dopt = DSR_GET_OPT(dp->dh.opth);
 
     //DEBUG("Parsing DSR packet l=%d dsr_len=%d\n", l, dsr_len);
-
-    while (l < dsr_len && (dsr_len - l) > 2)
+    for (unsigned int i = 0; i < dp->dh.opth.size(); i++)
     {
-        //DEBUG("dsr_len=%d l=%d\n", dsr_len, l);
-        switch (dopt->type)
+        for (unsigned int j = 0; j < dp->dh.opth[i].option.size(); j++)
         {
-        case DSR_OPT_PADN:
-            break;
-        case DSR_OPT_RREQ:
-            if (dp->flags & PKT_PROMISC_RECV)
-                break;
-
-            action |= dsr_rreq_opt_recv(dp, (struct dsr_rreq_opt *)dopt);
-            break;
-        case DSR_OPT_RREP:
-            if (dp->flags & PKT_PROMISC_RECV)
-                break;
-
-            action |= dsr_rrep_opt_recv(dp, (struct dsr_rrep_opt *)dopt);
-            break;
-        case DSR_OPT_RERR:
-            if (dp->flags & PKT_PROMISC_RECV)
-                break;
-            if (dp->num_rerr_opts < MAX_RERR_OPTS)
+            dopt = dp->dh.opth[i].option[j];
+        //DEBUG("dsr_len=%d l=%d\n", dsr_len, l);
+            switch (dopt->type)
             {
-                action |=
-                    dsr_rerr_opt_recv(dp, (struct dsr_rerr_opt *)dopt);
-            }
-
-            break;
-        case DSR_OPT_PREV_HOP:
-            break;
-        case DSR_OPT_ACK:
-            if (dp->flags & PKT_PROMISC_RECV)
+                case DSR_OPT_PADN:
                 break;
-
-            if (dp->num_ack_opts < MAX_ACK_OPTS)
-            {
-                dp->ack_opt[dp->num_ack_opts++] =
-                    (struct dsr_ack_opt *)dopt;
-                action |=
-                    dsr_ack_opt_recv((struct dsr_ack_opt *)
-                                     dopt);
+                case DSR_OPT_RREQ:
+                    if (dp->flags & PKT_PROMISC_RECV)
+                        break;
+                    action |= dsr_rreq_opt_recv(dp, (struct dsr_rreq_opt *)dopt);
+                break;
+                case DSR_OPT_RREP:
+                    if (dp->flags & PKT_PROMISC_RECV)
+                        break;
+                    action |= dsr_rrep_opt_recv(dp, (struct dsr_rrep_opt *)dopt);
+                break;
+                case DSR_OPT_RERR:
+                    if (dp->flags & PKT_PROMISC_RECV)
+                        break;
+                    if (dp->rerr_opt.size() < MAX_RERR_OPTS)
+                    {
+                        action |= dsr_rerr_opt_recv(dp, (struct dsr_rerr_opt *)dopt);
+                    }
+                break;
+                case DSR_OPT_PREV_HOP:
+                break;
+                case DSR_OPT_ACK:
+                    if (dp->flags & PKT_PROMISC_RECV)
+                        break;
+                    if (dp->ack_opt.size()  < MAX_ACK_OPTS)
+                    {
+                        dp->ack_opt.push_back((struct dsr_ack_opt *)dopt);
+                        action |=
+                                dsr_ack_opt_recv((struct dsr_ack_opt *) dopt);
+                    }
+                    break;
+                case DSR_OPT_SRT:
+                    action |= dsr_srt_opt_recv(dp, (struct dsr_srt_opt *)dopt);
+                break;
+                case DSR_OPT_TIMEOUT:
+                break;
+                case DSR_OPT_FLOWID:
+                break;
+                case DSR_OPT_ACK_REQ:
+                    action |= dsr_ack_req_opt_recv(dp, (struct dsr_ack_req_opt *) dopt);
+                break;
+                case DSR_OPT_PAD1:
+                continue;
+                default:
+                    DEBUG("Unknown DSR option type=%d\n", dopt->type);
             }
-            break;
-        case DSR_OPT_SRT:
-            action |= dsr_srt_opt_recv(dp, (struct dsr_srt_opt *)dopt);
-            break;
-        case DSR_OPT_TIMEOUT:
-            break;
-        case DSR_OPT_FLOWID:
-            break;
-        case DSR_OPT_ACK_REQ:
-            action |=
-                dsr_ack_req_opt_recv(dp, (struct dsr_ack_req_opt *)
-                                     dopt);
-            break;
-        case DSR_OPT_PAD1:
-            l++;
-            dopt++;
-            continue;
-        default:
-            DEBUG("Unknown DSR option type=%d\n", dopt->type);
         }
-        l += dopt->length + 2;
-        dopt = DSR_GET_NEXT_OPT(dopt);
     }
     return action;
 }

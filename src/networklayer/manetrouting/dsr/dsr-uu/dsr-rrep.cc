@@ -28,13 +28,10 @@
 
 #include "dsr.h"
 #include "debug_dsr.h"
-#include "tbl.h"
 #include "dsr-rrep.h"
 #include "dsr-rreq.h"
 #include "dsr-opt.h"
 #include "dsr-srt.h"
-#include "link-cache.h"
-#include "send-buf.h"
 #include "timer.h"
 
 #define GRAT_RREP_TBL_MAX_LEN 64
@@ -46,18 +43,7 @@ static TBL(grat_rrep_tbl, GRAT_RREP_TBL_MAX_LEN);
 DSRUUTimer grat_rrep_tbl_timer;
 #endif
 
-struct grat_rrep_entry
-{
-    dsr_list_t l;
-    struct in_addr src, prev_hop;
-    struct timeval expires;
-};
-
-struct grat_rrep_query
-{
-    struct in_addr *src, *prev_hop;
-};
-
+/*
 static inline int crit_query(void *pos, void *query)
 {
     struct grat_rrep_entry *p = (struct grat_rrep_entry *)pos;
@@ -78,38 +64,33 @@ static inline int crit_time(void *pos, void *time)
 
     return 0;
 }
-
+*/
 void NSCLASS grat_rrep_tbl_timeout(unsigned long data)
 {
-    struct grat_rrep_entry *e =
-        (struct grat_rrep_entry *)tbl_detach_first(&grat_rrep_tbl);
 
-    FREE(e);
+    grat_rrep_entry *e = gratRrep.front();
+    gratRrep.erase(gratRrep.begin());
 
-    if (tbl_empty(&grat_rrep_tbl))
+    delete e;
+
+    if (gratRrep.empty())
         return;
-
-    DSR_READ_LOCK(&grat_rrep_tbl.lock);
-
-    e = (struct grat_rrep_entry *)TBL_FIRST(&grat_rrep_tbl);
-
+    e = gratRrep.front();
     grat_rrep_tbl_timer.function = &NSCLASS grat_rrep_tbl_timeout;
-
     set_timer(&grat_rrep_tbl_timer, &e->expires);
-
-    DSR_READ_UNLOCK(&grat_rrep_tbl.lock);
 }
 
 int NSCLASS grat_rrep_tbl_add(struct in_addr src, struct in_addr prev_hop)
 {
-    struct grat_rrep_query q = { &src, &prev_hop };
     struct grat_rrep_entry *e;
 
-    if (in_tbl(&grat_rrep_tbl, &q, crit_query))
-        return 0;
+    for (unsigned int i = 0; i < gratRrep.size(); i++)
+    {
+        if (gratRrep[i]->src.s_addr ==  src.s_addr && gratRrep[i]->prev_hop.s_addr ==  prev_hop.s_addr)
+            return 0;
+    }
 
-    e = (struct grat_rrep_entry *)MALLOC(sizeof(struct grat_rrep_entry),
-                                         GFP_ATOMIC);
+    e = new grat_rrep_entry;
 
     if (!e)
         return -1;
@@ -124,108 +105,79 @@ int NSCLASS grat_rrep_tbl_add(struct in_addr src, struct in_addr prev_hop)
     if (timer_pending(&grat_rrep_tbl_timer))
         del_timer_sync(&grat_rrep_tbl_timer);
 
-    if (tbl_add(&grat_rrep_tbl, &e->l, crit_time))
+    if (gratRrep.empty() || timeval_diff(&gratRrep.back()->expires,&e->expires) < 0 )
+        gratRrep.push_back(e);
+    else if (timeval_diff(&gratRrep.front()->expires,&e->expires) > 0 )
     {
-
-        DSR_READ_LOCK(&grat_rrep_tbl.lock);
-        e = (struct grat_rrep_entry *)TBL_FIRST(&grat_rrep_tbl);
-
-        grat_rrep_tbl_timer.function = &NSCLASS grat_rrep_tbl_timeout;
-        set_timer(&grat_rrep_tbl_timer, &e->expires);
-        DSR_READ_UNLOCK(&grat_rrep_tbl.lock);
+        gratRrep.push_front(e);
     }
+    else
+    {
+        std::deque<grat_rrep_entry*>::iterator it;
+        for (it = gratRrep.begin() ; it != gratRrep.end() ; ++it)
+        {
+            if (timeval_diff(&((*it)->expires), &(e->expires)) > 0)
+            {
+                gratRrep.insert(it,e);
+                break;
+            }
+        }
+    }
+
+    e = gratRrep.front();
+    grat_rrep_tbl_timer.function = &NSCLASS grat_rrep_tbl_timeout;
+    set_timer(&grat_rrep_tbl_timer, &e->expires);
+
     return 1;
 }
 
 int NSCLASS grat_rrep_tbl_find(struct in_addr src, struct in_addr prev_hop)
 {
-    struct grat_rrep_query q = { &src, &prev_hop };
-
-    if (in_tbl(&grat_rrep_tbl, &q, crit_query))
-        return 1;
+    for (unsigned int i = 0; i < gratRrep.size(); i++)
+    {
+        if (gratRrep[i]->src.s_addr ==  src.s_addr && gratRrep[i]->prev_hop.s_addr ==  prev_hop.s_addr)
+            return 1;
+    }
     return 0;
 }
 
-#ifdef __KERNEL__
-
-static int grat_rrep_tbl_print(struct tbl *t, char *buf)
-{
-    dsr_list_t *pos;
-    int len = 0;
-    struct timeval now;
-
-    gettime(&now);
-
-    DSR_READ_LOCK(&t->lock);
-
-    len += sprintf(buf, "# %-15s %-15s Time\n", "Source", "Prev hop");
-
-    list_for_each(pos, &t->head)
-    {
-        struct grat_rrep_entry *e = (struct grat_rrep_entry *)pos;
-
-        len += sprintf(buf + len, "  %-15s %-15s %lu\n",
-                       print_ip(e->src),
-                       print_ip(e->prev_hop),
-                       timeval_diff(&e->expires, &now) / 1000000);
-    }
-
-    DSR_READ_UNLOCK(&t->lock);
-
-    return len;
-}
-
-static int
-grat_rrep_tbl_proc_info(char *buffer, char **start, off_t offset, int length)
-{
-    int len;
-
-    len = grat_rrep_tbl_print(&grat_rrep_tbl, buffer);
-
-    *start = buffer + offset;
-    len -= offset;
-    if (len > length)
-        len = length;
-    else if (len < 0)
-        len = 0;
-    return len;
-}
-
-#endif              /* __KERNEL__ */
 
 static inline int
 dsr_rrep_add_srt(struct dsr_rrep_opt *rrep_opt, struct dsr_srt *srt)
 {
-    int n;
-
     if (!rrep_opt | !srt)
         return -1;
 
-    n = srt->laddrs / sizeof(struct in_addr);
-
-    memcpy(rrep_opt->addrs, srt->addrs, srt->laddrs);
-    rrep_opt->addrs[n] = srt->dst.s_addr;
+    //n = srt->laddrs / sizeof(struct in_addr);
+    rrep_opt->addrs.clear();
+    for (unsigned int i = 0; i< srt->addrs.size(); i++)
+        rrep_opt->addrs.push_back(srt->addrs[i].s_addr);
+    // memcpy(&rrep_opt->addrs[0], &srt->addrs[], srt->laddrs);
+    rrep_opt->addrs.push_back(srt->dst.s_addr);
+    rrep_opt->cost = srt->cost;
 
     return 0;
 }
 
-static struct dsr_rrep_opt *dsr_rrep_opt_add(char *buf, int len,
+static struct dsr_rrep_opt *dsr_rrep_opt_add(struct dsr_opt_hdr *opt_hdr, int len,
         struct dsr_srt *srt)
 {
-    struct dsr_rrep_opt *rrep_opt;
 
-    if (!buf || !srt || (unsigned int)len < DSR_RREP_OPT_LEN(srt))
+
+    if (!opt_hdr || !srt || (unsigned int)len < DSR_RREP_OPT_LEN(srt))
         return NULL;
 
-    rrep_opt = (struct dsr_rrep_opt *)buf;
+    struct dsr_rrep_opt *rrep_opt = new dsr_rrep_opt;
 
     rrep_opt->type = DSR_OPT_RREP;
-    rrep_opt->length = srt->laddrs + sizeof(struct in_addr) + 1;
+    rrep_opt->length = srt->laddrs + DSR_ADDRESS_SIZE + 1;
     rrep_opt->l = 0;
     rrep_opt->res = 0;
 
     /* Add source route to RREP */
     dsr_rrep_add_srt(rrep_opt, srt);
+    opt_hdr->option.push_back(rrep_opt);
+
 
     return rrep_opt;
 }
@@ -233,7 +185,7 @@ static struct dsr_rrep_opt *dsr_rrep_opt_add(char *buf, int len,
 int NSCLASS dsr_rrep_send(struct dsr_srt *srt, struct dsr_srt *srt_to_me)
 {
     struct dsr_pkt *dp = NULL;
-    char *buf;
+    struct dsr_opt_hdr *buf;
     int len, ttl, n;
 
     if (!srt || !srt_to_me)
@@ -258,7 +210,7 @@ int NSCLASS dsr_rrep_send(struct dsr_srt *srt, struct dsr_srt *srt_to_me)
     len = DSR_OPT_HDR_LEN + DSR_SRT_OPT_LEN(srt) +
           DSR_RREP_OPT_LEN(srt_to_me)/*  + DSR_OPT_PAD1_LEN */;
 
-    n = srt->laddrs / sizeof(struct in_addr);
+    n = srt->laddrs / DSR_ADDRESS_SIZE;
 
     DEBUG("srt: %s\n", print_srt(srt));
     DEBUG("srt_to_me: %s\n", print_srt(srt_to_me));
@@ -272,7 +224,7 @@ int NSCLASS dsr_rrep_send(struct dsr_srt *srt, struct dsr_srt *srt_to_me)
 
     DEBUG("TTL=%d, n=%d\n", ttl, n);
 
-    buf = dsr_pkt_alloc_opts(dp, len);
+    buf = dsr_pkt_alloc_opts(dp);
 
     if (!buf)
         goto out_err;
@@ -286,16 +238,16 @@ int NSCLASS dsr_rrep_send(struct dsr_srt *srt, struct dsr_srt *srt_to_me)
         goto out_err;
     }
 
-    dp->dh.opth = dsr_opt_hdr_add(buf, len, DSR_NO_NEXT_HDR_TYPE);
+    dsr_opt_hdr_add(buf, len, DSR_NO_NEXT_HDR_TYPE);
 
-    if (!dp->dh.opth)
+    if (dp->dh.opth.empty())
     {
         DEBUG("Could not create DSR options header\n");
         goto out_err;
     }
 
-    buf += DSR_OPT_HDR_LEN;
     len -= DSR_OPT_HDR_LEN;
+    dp->dh.opth.begin()->p_len = len;
 
     /* Add the source route option to the packet */
     dp->srt_opt = dsr_srt_opt_add(buf, len, 0, dp->salvage, srt);
@@ -306,17 +258,16 @@ int NSCLASS dsr_rrep_send(struct dsr_srt *srt, struct dsr_srt *srt_to_me)
         goto out_err;
     }
 
-    buf += DSR_SRT_OPT_LEN(srt);
     len -= DSR_SRT_OPT_LEN(srt);
 
-    dp->rrep_opt[dp->num_rrep_opts++] =
-        dsr_rrep_opt_add(buf, len, srt_to_me);
+    dp->rrep_opt.push_back(dsr_rrep_opt_add(buf, len, srt_to_me));
 
-    if (!dp->rrep_opt[dp->num_rrep_opts - 1])
+    if (!dp->rrep_opt.back())
     {
         DEBUG("Could not create RREP option header\n");
         goto out_err;
     }
+
 
     /* TODO: Should we PAD? The rrep struct is padded and aligned
      * automatically by the compiler... How to fix this? */
@@ -333,7 +284,8 @@ int NSCLASS dsr_rrep_send(struct dsr_srt *srt, struct dsr_srt *srt_to_me)
     dp->flags |= PKT_XMIT_JITTER;
 
 #ifdef OMNETPP
-    AddCost(dp,srt_to_me);
+    AddCostRrep(dp, srt_to_me);
+    //AddCost(dp,srt_to_me);
 #endif
 
     XMIT(dp);
@@ -354,14 +306,17 @@ int NSCLASS dsr_rrep_opt_recv(struct dsr_pkt *dp, struct dsr_rrep_opt *rrep_opt)
     if (!dp || !rrep_opt || dp->flags & PKT_PROMISC_RECV)
         return DSR_PKT_ERROR;
 
-    if (dp->num_rrep_opts < MAX_RREP_OPTS)
-        dp->rrep_opt[dp->num_rrep_opts++] = rrep_opt;
+    if (dp->rrep_opt.size() < MAX_RREP_OPTS)
+        dp->rrep_opt.push_back(rrep_opt);
     else
         return DSR_PKT_ERROR;
 
     myaddr = my_addr();
 
-    srt_dst.s_addr = rrep_opt->addrs[DSR_RREP_ADDRS_LEN(rrep_opt) / sizeof(struct in_addr)];
+    srt_dst.s_addr = rrep_opt->addrs.back();
+    if (srt_dst.s_addr != myaddr.s_addr)
+        ActualizeMyCostRrep(rrep_opt);
+
 #ifndef OMNETPP
     rrep_opt_srt = dsr_srt_new(dp->dst, srt_dst,
                                DSR_RREP_ADDRS_LEN(rrep_opt),
@@ -369,7 +324,11 @@ int NSCLASS dsr_rrep_opt_recv(struct dsr_pkt *dp, struct dsr_rrep_opt *rrep_opt)
 #else
     rrep_opt_srt = dsr_srt_new(dp->dst, srt_dst,
                                DSR_RREP_ADDRS_LEN(rrep_opt),
-                               (char *)rrep_opt->addrs,dp->costVector,dp->costVectorSize);
+                               VectorAddress(rrep_opt->addrs.begin(),rrep_opt->addrs.end()-1));
+    if (etxActive && rrep_opt->cost.size() == rrep_opt->addrs.size())
+    {
+        rrep_opt_srt->cost = rrep_opt->cost;
+    }
 #endif
     if (!rrep_opt_srt)
         return DSR_PKT_ERROR;
@@ -379,7 +338,7 @@ int NSCLASS dsr_rrep_opt_recv(struct dsr_pkt *dp, struct dsr_rrep_opt *rrep_opt)
     /* Remove pending RREQs */
     rreq_tbl_route_discovery_cancel(rrep_opt_srt->dst);
 
-    FREE(rrep_opt_srt);
+    delete rrep_opt_srt;
 
     if (dp->dst.s_addr == myaddr.s_addr)
     {
@@ -398,23 +357,17 @@ int NSCLASS dsr_rrep_opt_recv(struct dsr_pkt *dp, struct dsr_rrep_opt *rrep_opt)
 
 int __init NSCLASS grat_rrep_tbl_init(void)
 {
-    INIT_TBL(&grat_rrep_tbl, GRAT_RREP_TBL_MAX_LEN);
-
+    grat_rrep_tbl_cleanup();
     init_timer(&grat_rrep_tbl_timer);
-
-#ifdef __KERNEL__
-    proc_net_create(GRAT_RREP_TBL_PROC_NAME, 0, grat_rrep_tbl_proc_info);
-#endif
     return 0;
 }
 
 void __exit NSCLASS grat_rrep_tbl_cleanup(void)
 {
-    tbl_flush(&grat_rrep_tbl, NULL);
-
+    while (!gratRrep.empty())
+    {
+        delete gratRrep.back();
+        gratRrep.pop_back();
+    }
     del_timer_sync(&grat_rrep_tbl_timer);
-
-#ifdef __KERNEL__
-    proc_net_remove(GRAT_RREP_TBL_PROC_NAME);
-#endif
 }

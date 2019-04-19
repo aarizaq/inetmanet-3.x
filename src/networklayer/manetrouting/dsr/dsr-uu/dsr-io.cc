@@ -26,12 +26,9 @@
 #include "dsr-ack.h"
 #include "dsr-rtc.h"
 #include "dsr-ack.h"
-#include "maint-buf.h"
 #include "neigh.h"
 #include "dsr-opt.h"
-#include "link-cache.h"
 #include "debug_dsr.h"
-#include "send-buf.h"
 
 int NSCLASS dsr_recv(struct dsr_pkt *dp)
 {
@@ -103,16 +100,18 @@ int NSCLASS dsr_recv(struct dsr_pkt *dp)
             DEBUG("Send ICMP\n");
             break;
         case DSR_PKT_SEND_BUFFERED:
-            if (dp->rrep_opt)
+            if (!dp->rrep_opt.empty())
             {
                 struct in_addr rrep_srt_dst;
                 int i;
 
-                for (i = 0; i < dp->num_rrep_opts; i++)
+                for (i = 0; i < (int)dp->rrep_opt.size(); i++)
                 {
-                    rrep_srt_dst.s_addr = dp->rrep_opt[i]->addrs[DSR_RREP_ADDRS_LEN(dp->rrep_opt[i]) / sizeof(struct in_addr)];
-
-                    send_buf_set_verdict(SEND_BUF_SEND, rrep_srt_dst);
+                    for (unsigned int j = 0; j < dp->rrep_opt[i]->addrs.size(); j++)
+                    {
+                        rrep_srt_dst.s_addr = dp->rrep_opt[i]->addrs[j];
+                        send_buf_set_verdict(SEND_BUF_SEND, rrep_srt_dst);
+                    }
                 }
             }
             break;
@@ -172,7 +171,7 @@ void NSCLASS dsr_start_xmit(struct dsr_pkt *dp)
 #endif
 #else
         /* OMNET code*/
-        res = send_buf_enqueue_packet(dp, &DSRUU::omnet_xmit);
+        res = send_buf_enqueue_packet(dp);
 #endif /* OMNET endif*/
         if (res < 0)
         {

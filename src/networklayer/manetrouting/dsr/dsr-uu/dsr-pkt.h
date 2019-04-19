@@ -19,6 +19,7 @@
 #else
 
 #include <omnetpp.h>
+#include <vector>
 #include "compatibility_dsr.h"
 
 class DSRPkt;
@@ -73,24 +74,16 @@ struct dsr_pkt
 #endif
     struct
     {
-        union
-        {
-            struct dsr_opt_hdr *opth;
-            char *raw;
-        };
-        char *tail, *end;
+         std::vector<struct dsr_opt_hdr>opth;
     } dh;
 
-    int num_rrep_opts, num_rerr_opts, num_rreq_opts, num_ack_opts;
     struct dsr_srt_opt *srt_opt;
-    struct dsr_rreq_opt *rreq_opt;  /* Can only be one */
-    struct dsr_rrep_opt *rrep_opt[MAX_RREP_OPTS];
-    struct dsr_rerr_opt *rerr_opt[MAX_RERR_OPTS];
-    struct dsr_ack_opt *ack_opt[MAX_ACK_OPTS];
+    std::vector<struct dsr_rreq_opt *> rreq_opt;  /* Can only be one */
+    std::vector<struct dsr_rrep_opt *> rrep_opt;
+    std::vector<struct dsr_rerr_opt *> rerr_opt;
+    std::vector<struct dsr_ack_opt *> ack_opt;
     struct dsr_ack_req_opt *ack_req_opt;
     struct dsr_srt *srt;    /* Source route */
-
-
     int payload_len;
 #ifndef OMNETPP
 #ifdef NS2
@@ -109,11 +102,40 @@ struct dsr_pkt
     DSRPkt   *ip_pkt;
     int encapsulate_protocol;
     // Etx cost
-    EtxCost  * costVector;
-    int costVectorSize;
 
+    std::vector<EtxCost> costVector;
     struct dsr_pkt * next;
 #endif
+    void clear()
+    {
+        costVector.clear();
+        dh.opth.clear();
+        src.s_addr = 0; /* IP level data */
+        dst = nxt_hop = prv_hop = src;
+        flags = salvage = numRetries = 0;
+        mac.raw = NULL;
+        memset(mac_data,0,sizeof(mac_data));
+        nh.raw = NULL;
+        memset(ip_data,0,sizeof(ip_data));
+        srt_opt = NULL;
+        ack_req_opt = NULL;
+        srt = NULL;
+        srt_opt = NULL;
+        payload_len = 0;
+        moreFragments = false;
+        fragmentOffset = totalPayloadLength = 0;
+        payload = NULL;
+        ip_pkt = NULL;
+        encapsulate_protocol = 0;
+        next = NULL;
+
+        rreq_opt.clear();  /* Can only be one */
+        rrep_opt.clear();
+        rerr_opt.clear();
+        ack_opt.clear();
+
+    }
+    struct dsr_pkt *dup();
 };
 
 
@@ -137,29 +159,13 @@ struct dsr_pkt
 #define DSR_PKT_DELIVER        (DSR_PKT_NONE << 11)
 #define DSR_PKT_ACTION_LAST    (12)
 
-static inline int dsr_pkt_opts_len(struct dsr_pkt *dp)
-{
-    return dp->dh.tail - dp->dh.raw;
-}
-
-static inline int dsr_pkt_tailroom(struct dsr_pkt *dp)
-{
-    return dp->dh.end - dp->dh.tail;
-}
-#ifndef OMNETPP
-#ifdef NS2
-struct dsr_pkt *dsr_pkt_alloc(Packet * p);
-#else
-struct dsr_pkt *dsr_pkt_alloc(struct sk_buff *skb);
-#endif
-#else
 struct dsr_pkt *dsr_pkt_alloc(cPacket *p);
 struct dsr_pkt * dsr_pkt_alloc2(cPacket  * p, cObject *ctrl);
-#endif
 
-char *dsr_pkt_alloc_opts(struct dsr_pkt *dp, int len);
-char *dsr_pkt_alloc_opts_expand(struct dsr_pkt *dp, int len);
+
+struct dsr_opt_hdr * dsr_pkt_alloc_opts(struct dsr_pkt *dp);
+//struct dsr_opt_hdr * dsr_pkt_alloc_opts_expand(struct dsr_pkt *dp, int len);
 void dsr_pkt_free(struct dsr_pkt *dp);
-int dsr_pkt_free_opts(struct dsr_pkt *dp);
+void dsr_pkt_free_opts(struct dsr_pkt *dp);
 
 #endif              /* _DSR_PKT_H */
