@@ -120,33 +120,33 @@ void DijkstraKshortest::addCost (CostVector &val, const CostVector & a, const Co
 
 void DijkstraKshortest::initMinAndMax()
 {
-   CostVector defaulCost;
-   Cost costData;
-   costData.metric=aditiveMin;
-   costData.value=0;
-   minimumCost.push_back(costData);
-   costData.metric=aditiveMin;
-   costData.value=0;
-   minimumCost.push_back(costData);
-   costData.metric=concaveMax;
-   costData.value=100e100;
-   minimumCost.push_back(costData);
-   costData.metric=aditiveMin;
-   costData.value=0;
-   minimumCost.push_back(costData);
+    CostVector defaulCost;
+    Cost costData;
+    costData.metric = aditiveMin;
+    costData.value = 0;
+    minimumCost.push_back(costData);
+    costData.metric = aditiveMin;
+    costData.value = 0;
+    minimumCost.push_back(costData);
+    costData.metric = concaveMax;
+    costData.value = 100e100;
+    minimumCost.push_back(costData);
+    costData.metric = aditiveMin;
+    costData.value = 0;
+    minimumCost.push_back(costData);
 
-   costData.metric=aditiveMin;
-   costData.value=10e100;
-   maximumCost.push_back(costData);
-   costData.metric=aditiveMin;
-   costData.value=1e100;
-   maximumCost.push_back(costData);
-   costData.metric=concaveMax;
-   costData.value=0;
-   maximumCost.push_back(costData);
-   costData.metric=aditiveMin;
-   costData.value=10e100;
-   maximumCost.push_back(costData);
+    costData.metric = aditiveMin;
+    costData.value = std::numeric_limits<double>::max();
+    maximumCost.push_back(costData);
+    costData.metric = aditiveMin;
+    costData.value = std::numeric_limits<double>::max();
+    maximumCost.push_back(costData);
+    costData.metric = concaveMax;
+    costData.value = 0;
+    maximumCost.push_back(costData);
+    costData.metric = aditiveMin;
+    costData.value = std::numeric_limits<double>::max();
+    maximumCost.push_back(costData);
 }
 
 void DijkstraKshortest::initMinAndMaxWs()
@@ -640,25 +640,23 @@ bool DijkstraKshortest::getRoute(const NodeId &nodeId,std::vector<NodeId> &pathN
     auto it = routeMap.find(nodeId);
     if (it == routeMap.end())
         return false;
-    if (k>=(int)it->second.size())
+    if (k >= (int) it->second.size())
         return false;
     std::vector<NodeId> path;
     NodeId currentNode = nodeId;
-    int idx=it->second[k].idPrevIdx;
-    while (currentNode!=rootNode)
-    {
+    int idx = k;
+    while (currentNode != rootNode) {
         path.push_back(currentNode);
         currentNode = it->second[idx].idPrev;
-        idx=it->second[idx].idPrevIdx;
+        idx = it->second[idx].idPrevIdx;
         it = routeMap.find(currentNode);
-        if (it==routeMap.end())
+        if (it == routeMap.end())
             throw cRuntimeError("error in data");
-        if (idx>=(int)it->second.size())
+        if (idx >= (int) it->second.size())
             throw cRuntimeError("error in data");
     }
     pathNode.clear();
-    while (!path.empty())
-    {
+    while (!path.empty()) {
         pathNode.push_back(path.back());
         path.pop_back();
     }

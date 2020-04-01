@@ -21,6 +21,8 @@
 #include "inet/physicallayer/modulation/QPSKModulation.h"
 #include "inet/physicallayer/modulation/QAM16Modulation.h"
 #include "inet/physicallayer/modulation/QAM64Modulation.h"
+#include "inet/physicallayer/modulation/QAM256Modulation.h"
+#include "inet/physicallayer/modulation/QAM1024Modulation.h"
 
 namespace inet {
 namespace physicallayer {
@@ -44,6 +46,8 @@ const Ieee80211OFDMModulation Ieee80211OFDMCompliantModulations::bpskModulation(
 const Ieee80211OFDMModulation Ieee80211OFDMCompliantModulations::qpskModulation(&QPSKModulation::singleton);
 const Ieee80211OFDMModulation Ieee80211OFDMCompliantModulations::qam16Modulation(&QAM16Modulation::singleton);
 const Ieee80211OFDMModulation Ieee80211OFDMCompliantModulations::qam64Modulation(&QAM64Modulation::singleton);
+const Ieee80211OFDMModulation Ieee80211OFDMCompliantModulations::qam256Modulation(&QAM256Modulation::singleton);
+const Ieee80211OFDMModulation Ieee80211OFDMCompliantModulations::qam1024Modulation(&QAM1024Modulation::singleton);
 
 } /* namespace physicallayer */
 } /* namespace inet */

@@ -47,6 +47,8 @@ class INET_API Ieee80211OFDMCompliantModulations
     static const Ieee80211OFDMModulation qpskModulation;
     static const Ieee80211OFDMModulation qam16Modulation;
     static const Ieee80211OFDMModulation qam64Modulation;
+    static const Ieee80211OFDMModulation qam256Modulation;
+    static const Ieee80211OFDMModulation qam1024Modulation;
 };
 
 } /* namespace physicallayer */

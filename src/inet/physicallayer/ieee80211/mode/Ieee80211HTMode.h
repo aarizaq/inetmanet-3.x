@@ -116,7 +116,8 @@ class INET_API Ieee80211HTSignalMode : public IIeee80211HeaderMode, public Ieee8
         virtual int getBitLength() const override;
         virtual bps getNetBitrate() const override { return Ieee80211HTModeBase::getNetBitrate(); }
         virtual bps getGrossBitrate() const override { return Ieee80211HTModeBase::getGrossBitrate(); }
-        virtual const IModulation *getModulation() const override { return modulation; }
+        virtual const Ieee80211OFDMModulation *getModulation() const override { return modulation; }
+        const Ieee80211HTCode* getCode() const { return code; }
 };
 
 /*
@@ -263,7 +264,7 @@ class INET_API Ieee80211HTMode : public Ieee80211ModeBase
         virtual inline int getMpduMaxLength() const override { return 65535; } // in octets
         virtual BandMode getCarrierFrequencyMode() const { return carrierFrequencyMode; }
 
-        virtual const simtime_t getDuration(int dataBitLength) const override { return preambleMode->getDuration() + dataMode->getDuration(dataBitLength); }
+        virtual const simtime_t getDuration(int dataBitLength) const override { return preambleMode->getDuration() + getHeaderMode()->getDuration() + dataMode->getDuration(dataBitLength); }
 };
 
 // A specification of the high-throughput (HT) physical layer (PHY)

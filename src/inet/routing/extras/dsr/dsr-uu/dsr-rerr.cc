@@ -91,8 +91,13 @@ int NSCLASS dsr_rerr_send(struct dsr_pkt *dp_trigg, struct in_addr unr_addr)
 
     if (dp_trigg->srt_opt->salv == 0)
         dst = dp_trigg->src;
-    else
-        dst.s_addr = dp_trigg->srt_opt->addrs[1];
+    else {
+        if (dp_trigg->srt_opt->addrs.size() > 1)
+            dst.s_addr = dp_trigg->srt_opt->addrs[1];
+        else
+            dst.s_addr = 0;
+    }
+
 
     dp = dsr_pkt_alloc(nullptr);
 
