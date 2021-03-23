@@ -62,10 +62,10 @@ void MpduGen::sendPackets() {
         str << packetName << "-" << i;
         cPacket *payload = new cPacket(str.str().c_str());
         if (packets[i] == 'L') {
-            payload->setByteLength(par("longPacketSize").longValue());
+            payload->setByteLength(par("longPacketSize").intValue());
         }
         else if (packets[i] == 'S') {
-            payload->setByteLength(par("shortPacketSize").longValue());
+            payload->setByteLength(par("shortPacketSize").intValue());
         }
         else
             throw cRuntimeError("Unknown packet type = %c", packets[i]);

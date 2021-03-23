@@ -32,9 +32,9 @@ class ProgramedFailureDataRateChannel : public cDatarateChannel
 
     virtual ~ProgramedFailureDataRateChannel();
 
-    virtual void processMessage(cMessage *msg, simtime_t t, result_t& result);
+    virtual Result processMessage(cMessage *msg, const SendOptions& options, simtime_t t) override;
 
-    virtual bool initializeChannel(int stage);
+    virtual bool initializeChannel(int stage) override;
 
     void setState(LinkState state);
 
@@ -51,9 +51,9 @@ class ProgramedFailureChannel : public cDelayChannel
 
     virtual ~ProgramedFailureChannel();
 
-    virtual void processMessage(cMessage *msg, simtime_t t, result_t& result);
+    virtual cDelayChannel::Result processMessage(cMessage *msg, const SendOptions& options, simtime_t t) override;
 
-    virtual bool initializeChannel(int stage);
+    virtual bool initializeChannel(int stage) override;
 
     void setState(LinkState state);
 

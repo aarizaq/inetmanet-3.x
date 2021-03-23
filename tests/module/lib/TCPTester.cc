@@ -309,7 +309,7 @@ void TCPRandomTester::processIncomingSegment(TCPSegment *seg, bool fromA)
     {
         bubble("copy: removing original");
         dump(seg, fromA, "copy: removing original");
-        int n = numCopies->longValue();
+        int n = numCopies->intValue();
         for (int i=0; i<n; i++)
         {
             double d = delay->doubleValue();

@@ -273,12 +273,12 @@ void NA_AODVUU::initialize(int stage)
         costStatic = par("costStatic");
         costMobile = par("costMobile");
         useHover = par("useHover");
-        proactive_rreq_timeout= par("proactiveRreqTimeout").longValue();
+        proactive_rreq_timeout= par("proactiveRreqTimeout").intValue();
 
         if (isRoot)
         {
             timer_init(&proactive_rreq_timer,&NS_CLASS rreq_proactive, nullptr);
-            timer_set_timeout(&proactive_rreq_timer, par("startRreqProactive").longValue());
+            timer_set_timeout(&proactive_rreq_timer, par("startRreqProactive").intValue());
         }
 
         propagateProactive = par("propagateProactive");
@@ -1541,7 +1541,7 @@ bool NS_CLASS handleNodeStart(IDoneCallback *doneCallback)
     if (isRoot)
     {
         timer_init(&proactive_rreq_timer,&NS_CLASS rreq_proactive, nullptr);
-        timer_set_timeout(&proactive_rreq_timer, par("startRreqProactive").longValue());
+        timer_set_timeout(&proactive_rreq_timer, par("startRreqProactive").intValue());
     }
 
     propagateProactive = par("propagateProactive");

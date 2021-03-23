@@ -51,7 +51,7 @@ simple UDPVideoStreamSvr2 like IUDPApp
         volatile double sendInterval @unit(s); // interval between sending video stream packets
         volatile int packetLen @unit(B);  // length of a video packet in bytes
         volatile int videoSize @unit(B);  // length of full a video stream in bytes
-        volatile double stopTime @unit(s) = default(0);
+        volatile double stopTime @unit(s) = default(0s);
         string traceFileName = default(""); // University arizona video trace format
         bool macroPackets = default(false); // it allows that several video frames can be grouped in a packet
         int maxSizeMacro @unit(B) = default(512B); // maximum size of a grouped packet

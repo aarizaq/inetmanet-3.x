@@ -123,7 +123,7 @@ void IGMPTester::initialize(int stage)
         MACAddress address("AA:00:00:00:00:01");
         interfaceEntry->setMACAddress(address);
         interfaceEntry->setInterfaceToken(address.formInterfaceIdentifier());
-        interfaceEntry->setMtu(par("mtu").longValue());
+        interfaceEntry->setMtu(par("mtu").intValue());
         interfaceEntry->setMulticast(true);
         interfaceEntry->setBroadcast(true);
 

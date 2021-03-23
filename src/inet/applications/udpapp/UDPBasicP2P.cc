@@ -164,11 +164,11 @@ void UDPBasicP2P::initialize(int stage)
     if (par("fuzzy"))
     {
         fuzzy = new FuzzYControl(par("fuzzyFisFile").stringValue());
-        fuzzy->setSizeParam(par("numVarFuzzy").longValue());
+        fuzzy->setSizeParam(par("numVarFuzzy").intValue());
     }
 
-    totalSegments = par("totalSegments").longValue();
-    segmentSize = par("segmentSize").longValue();
+    totalSegments = par("totalSegments").intValue();
+    segmentSize = par("segmentSize").intValue();
 
     uint64_t initseg = 0;
     L3Address myAddr = L3AddressResolver().resolve(this->getParentModule()->getFullPath().c_str());
@@ -196,7 +196,7 @@ void UDPBasicP2P::initialize(int stage)
 
 
     if (!par("initNodesRand").boolValue())
-        initseg = par("numInitialSegments").longValue();
+        initseg = par("numInitialSegments").intValue();
     else
     {
         // cModule * myNode = L3AddressResolver().findHostWithAddress(myAddr);
@@ -206,7 +206,7 @@ void UDPBasicP2P::initialize(int stage)
         if (initNodes.empty())
         {
             int numNodes = myNode->getVectorSize();
-            while ((int)initNodes.size() < par("numInitNodesRand").longValue())
+            while ((int)initNodes.size() < par("numInitNodesRand").intValue())
             {
                 int val = intuniform(0,numNodes);
                 bool isInside = false;
@@ -1491,7 +1491,7 @@ cPacket *UDPBasicP2P::createPacket()
 {
     char msgName[32];
     sprintf(msgName, "UDPBasicAppData-%d", counter++);
-    long msgByteLength = messageLengthPar->longValue();
+    long msgByteLength = messageLengthPar->intValue();
     cPacket *payload = new cPacket(msgName);
     payload->setByteLength(msgByteLength);
     payload->addPar("sourceId") = getId();

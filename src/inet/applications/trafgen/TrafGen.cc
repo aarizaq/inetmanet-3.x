@@ -76,7 +76,7 @@ void TrafGen::initialize(int aStage)
             mInterDepartureTime.parse(rootelement->getElementById(id)->getAttribute("interDepartureTime"));
             mFirstPacketTime.parse(rootelement->getElementById(id)->getAttribute("firstPacketTime"));
 #if OMNETPP_VERSION < 0x0503
-            if (mFirstPacketTime.longValue(this) == -1)
+            if (mFirstPacketTime.intValue(this) == -1)
             {
                 // no traffic is to be sent by this node
                 return;
@@ -212,7 +212,7 @@ double TrafGen::InterDepartureTime()
 long TrafGen::PacketSize()
 {
 #if OMNETPP_VERSION < 0x0503
-    return mPacketSize.longValue(this);
+    return mPacketSize.intValue(this);
 #else
     return mPacketSize.intValue(this);
 #endif

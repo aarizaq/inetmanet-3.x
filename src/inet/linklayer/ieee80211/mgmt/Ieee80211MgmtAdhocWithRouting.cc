@@ -49,7 +49,7 @@ void Ieee80211MgmtAdhocWithRouting::initialize(int stage)
     if (stage == INITSTAGE_LINK_LAYER)
     {
         routingModule = nullptr;
-        maxTTL = par("maxTtl").longValue();
+        maxTTL = par("maxTtl").intValue();
         if (strcmp(par("routingProtocol").stringValue(),"") != 0)
             startRouting();
     }

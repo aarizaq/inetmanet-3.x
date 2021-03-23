@@ -141,7 +141,9 @@ void Dcf::scheduleStartRxTimer(simtime_t timeout)
 
 void Dcf::processLowerFrame(Ieee80211Frame* frame)
 {
-    Enter_Method_Silent();
+    Enter_Method("processLowerFrame(%s)", frame->getName());
+    take(frame);
+    EV_INFO << "Processing lower frame: " << frame->getName() << endl;
     if (auto dataOrMgmtFrame = dynamic_cast<Ieee80211DataOrMgmtFrame *>(frame)) {
         DirectionalInfo info;
         info.direction = static_cast<ReceptionIndication *>(frame->getControlInfo())->getDirection();
@@ -173,6 +175,7 @@ void Dcf::transmitFrame(Ieee80211Frame* frame, simtime_t ifs)
     frame->setDuration(originatorProtectionMechanism->computeDurationField(frame, inProgressFrames->getPendingFrameFor(frame)));
     tx->transmitFrame(frame, ifs, this);
 }
+
 /*
  * TODO:  If a PHY-RXSTART.indication primitive does not occur during the ACKTimeout interval,
  * the STA concludes that the transmission of the MPDU has failed, and this STA shall invoke its

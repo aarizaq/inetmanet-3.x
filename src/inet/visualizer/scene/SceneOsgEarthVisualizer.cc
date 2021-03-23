@@ -94,7 +94,6 @@ void SceneOsgEarthVisualizer::initializeLocator()
         osg::Quat(playgroundOrientation.gamma, osg::Vec3d(1.0, 0.0, 0.0)) *
         osg::Quat(playgroundOrientation.beta, osg::Vec3d(0.0, 1.0, 0.0)) *
         osg::Quat(playgroundOrientation.alpha, osg::Vec3d(0.0, 0.0, 1.0)));
-
 }
 
 void SceneOsgEarthVisualizer::initializeViewpoint()

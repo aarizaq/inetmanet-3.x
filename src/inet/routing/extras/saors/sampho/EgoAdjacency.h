@@ -74,7 +74,7 @@ class EgoAdjacency
 	virtual void removeBeaconInfo(uint32_t address);
 
 	/** @brief prints out the information stored in the Ego-Adjacency Matrix */
-	virtual std::string info() const;
+	virtual std::string str() const;
 
 	/** @brief calculates the betweenness of the host, according to the Ego-Adjacency information */
 	virtual double calculateBetweenness();

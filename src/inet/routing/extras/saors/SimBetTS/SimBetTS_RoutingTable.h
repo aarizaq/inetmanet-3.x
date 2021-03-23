@@ -74,7 +74,7 @@ class SimBetTS_RoutingTable : public SAORSBase_RoutingTable
 		virtual uint findEntryRank(uint32_t Address);
 
 		/** @brief prints out the info of the class to include the Ego-Adjacency Matrix */
-		virtual std::string info() const;
+		virtual std::string str() const;
 
 		/** @brief returns the betweenness centrality value of the node */
 		virtual double getBetweenness();

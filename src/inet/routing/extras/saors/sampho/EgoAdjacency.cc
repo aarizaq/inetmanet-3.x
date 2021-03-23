@@ -168,7 +168,7 @@ void EgoAdjacency::removeBeaconInfo(uint32_t address) {
 /*****************************************************************************************
  * Prints out the information stored in the Ego-Adjacency Matrix.
  *****************************************************************************************/
-std::string EgoAdjacency::info() const {
+std::string EgoAdjacency::str() const {
 	std::ostringstream ss;
 
 	for(std::map<uint32_t, VectorOfSAORSBeaconBlocks>::const_iterator iter=pastBeacons.begin();iter!=pastBeacons.end();iter++) {
@@ -316,7 +316,7 @@ bool EgoAdjacency::isCommuninityMenber(uint32_t address) {
  *****************************************************************************************/
 std::ostream& operator<<(std::ostream& os, const EgoAdjacency& o)
 {
-	os << o.info();
+	os << o.str();
 	return os;
 }
 

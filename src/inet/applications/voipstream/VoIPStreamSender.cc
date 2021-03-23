@@ -243,7 +243,7 @@ void VoIPStreamSender::openSoundFile(const char *name)
     if (!pCodecEncoder)
         throw cRuntimeError("Codec '%s' not found!", codec);
 
-    pEncoderCtx->sample_fmt = pCodecCtx->sample_fmt;    // FIXME hack!
+    pEncoderCtx->sample_fmt = pCodecEncoder->sample_fmts[0];
 
     if (avcodec_open2(pEncoderCtx, pCodecEncoder, nullptr) < 0)
         throw cRuntimeError("could not open %s encoding codec!", codec);
@@ -431,8 +431,8 @@ void VoIPStreamSender::Buffer::align()
 
 void VoIPStreamSender::readFrame()
 {
-    short int inBytesPerSample = av_get_bytes_per_sample(pEncoderCtx->sample_fmt);
-    short int outBytesPerSample = av_get_bytes_per_sample(pCodecCtx->sample_fmt);
+    short int inBytesPerSample = av_get_bytes_per_sample(pCodecCtx->sample_fmt);
+    short int outBytesPerSample = av_get_bytes_per_sample(pEncoderCtx->sample_fmt);
     if (sampleBuffer.length() >= samplesPerPacket * inBytesPerSample)
         return;
 

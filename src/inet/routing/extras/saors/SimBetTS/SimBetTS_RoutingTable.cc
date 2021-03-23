@@ -74,7 +74,7 @@ SimBetTS_RoutingTable::~SimBetTS_RoutingTable() {
 /*****************************************************************************************
  * Prints out the information concerning the routing table of DS-DYMO.
  *****************************************************************************************/
-std::string SimBetTS_RoutingTable::info() const {
+std::string SimBetTS_RoutingTable::str() const {
 	std::ostringstream ss;
 
 	ss << getNumRoutes() << " entries";
@@ -442,7 +442,7 @@ double SimBetTS_RoutingTable::getSimilarityScore(VectorOfSAORSBeaconBlocks beaco
 
 std::ostream& operator<<(std::ostream& os, const SimBetTS_RoutingTable& o)
 {
-	os << o.info();
+	os << o.str();
 	return os;
 }
 

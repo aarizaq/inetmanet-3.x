@@ -152,9 +152,9 @@ void SimpleKDC::initialize(int stage) {
     }
     delete[] cafile;
 
-//    bindToPort((int)par("port").longValue());
+//    bindToPort((int)par("port").intValue());
     socket.setOutputGate(gate("udpOut"));
-    socket.bind(((int) par("port").longValue()));
+    socket.bind(((int) par("port").intValue()));
     setSocketOptions();
 
     message_dellay = 0;
@@ -220,7 +220,7 @@ void SimpleKDC::handleMessage(cMessage *msg) {
 //putchar('\n');
             free(data);
             socket.sendTo(message, tempAddr.S_addr.toIPv4(),
-                    (int) par("port").longValue());
+                    (int) par("port").intValue());
         }
         return;
     }
@@ -239,8 +239,8 @@ void SimpleKDC::handleMessage(cMessage *msg) {
                 nextHopList.push_back(message->getGwAddr());
             }
             socket.sendTo(message, message->getGwAddr().S_addr.toIPv4(),
-                    (int) par("port").longValue());
-//            sendToUDP(message, (int)par("port").longValue(), message->getGwAddr().S_addr.toIPv4(), (int)par("port").longValue());
+                    (int) par("port").intValue());
+//            sendToUDP(message, (int)par("port").intValue(), message->getGwAddr().S_addr.toIPv4(), (int)par("port").intValue());
         } else {
             delete msg;
         }

@@ -257,7 +257,7 @@ void TraCIScenarioManager::initialize(int stage) {
 
 	vehicleNameCounter = 0;
 	vehicleRngIndex = par("vehicleRngIndex");
-	numVehicles = par("numVehicles").longValue();
+	numVehicles = par("numVehicles").intValue();
 	mobRng = getRNG(vehicleRngIndex);
 
 	myAddVehicleTimer = new cMessage("myAddVehicleTimer");

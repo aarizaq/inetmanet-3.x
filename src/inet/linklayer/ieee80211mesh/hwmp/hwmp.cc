@@ -1548,7 +1548,7 @@ void HwmpProtocol::processLinkBreak(const cObject *details)
         {
             EV<<"second.lost"<<it->second.lost<<endl;
             it->second.lost++;
-            if (it->second.lost < (unsigned int) par("lostThreshold").longValue())
+            if (it->second.lost < (unsigned int) par("lostThreshold").intValue())
                 return;
             neighborMap.erase(it);
         }
@@ -1567,7 +1567,7 @@ void HwmpProtocol::processLinkBreakManagement(const cObject *details)
         {
             EV<<"second.lost++"<<it->second.lost<<endl;
             it->second.lost++;
-            if (it->second.lost < (unsigned int) par("lostThreshold").longValue())
+            if (it->second.lost < (unsigned int) par("lostThreshold").intValue())
                 return;
             neighborMap.erase(it);
         }

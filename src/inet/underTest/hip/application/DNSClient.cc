@@ -38,7 +38,7 @@ Define_Module(DNSClient);
 void DNSClient::initialize()
 {
      socket.setOutputGate(gate("udpOut"));
-     socket.bind(par("localPort").longValue());
+     socket.bind(par("localPort").intValue());
 }
 
 void DNSClient::finish()

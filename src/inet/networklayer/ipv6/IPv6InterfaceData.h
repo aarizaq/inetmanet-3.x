@@ -117,7 +117,7 @@ class INET_API IPv6InterfaceData : public InterfaceProtocolData
         IPv6AddressVector joinedMulticastGroups;
         std::vector<int> refCounts;
 
-        std::string info();
+        std::string str();
         std::string detailedInfo();
     };
 
@@ -125,7 +125,7 @@ class INET_API IPv6InterfaceData : public InterfaceProtocolData
     {
         IPv6AddressVector reportedMulticastGroups;    ///< multicast groups that have listeners on the link connected to this interface
 
-        std::string info();
+        std::string str();
         std::string detailedInfo();
     };
 
@@ -157,6 +157,17 @@ class INET_API IPv6InterfaceData : public InterfaceProtocolData
 #ifdef WITH_xMIPv6
         IPv6Address rtrAddress;    //global scope, present when advRtrAddr is true (Zarrar Yousaf 09.07.07)
 #endif /* WITH_xMIPv6 */
+
+        AdvPrefix() {}
+        AdvPrefix(const IPv6Address& addr, short preflength)
+            : prefixLength(preflength),
+              advOnLinkFlag(false), advAutonomousFlag(false),
+#ifdef WITH_xMIPv6
+              advRtrAddr(false),
+#endif /* WITH_xMIPv6 */
+              prefix(addr)
+        {
+        }
     };
 
     /*************RFC 2461: Section 10 Protocol Constants**********************/
@@ -443,8 +454,8 @@ class INET_API IPv6InterfaceData : public InterfaceProtocolData
   public:
     IPv6InterfaceData();
     virtual ~IPv6InterfaceData();
-    std::string info() const override;
-    std::string detailedInfo() const override;
+    std::string str() const override;
+    std::string detailedInfo() const OMNETPP5_CODE(override);
 
     /** @name Addresses */
     //@{

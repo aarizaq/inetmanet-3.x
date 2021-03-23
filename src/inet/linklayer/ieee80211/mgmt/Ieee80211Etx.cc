@@ -61,7 +61,7 @@ void Ieee80211Etx::initialize(int stage)
         {
             InterfaceEntry * ie = inet_ift->getInterface(i);
             if (ie->getMacAddress()==myAddress)
-                ie->setEstimateCostProcess(par("Index").longValue(), this);
+                ie->setEstimateCostProcess(par("Index").intValue(), this);
         }
         if (etxSize>0 && etxInterval>0 && !pasiveMeasure)
             scheduleAt(simTime()+par("startEtx"), etxTimer);

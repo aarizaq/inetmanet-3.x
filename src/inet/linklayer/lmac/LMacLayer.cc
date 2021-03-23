@@ -141,7 +141,7 @@ InterfaceEntry *LMacLayer::createInterfaceEntry()
     e->setInterfaceToken(address.formInterfaceIdentifier());
 
     // capabilities
-    e->setMtu(par("mtu").longValue());
+    e->setMtu(par("mtu").intValue());
     e->setMulticast(false);
     e->setBroadcast(true);
 
@@ -578,7 +578,7 @@ void LMacLayer::handleLowerPacket(cPacket *msg)
 /**
  * Handle transmission over messages: send the data packet or don;t do anyhting.
  */
-void LMacLayer::receiveSignal(cComponent *source, simsignal_t signalID, long value, cObject *details)
+void LMacLayer::receiveSignal(cComponent *source, simsignal_t signalID, intval_t value, cObject *details)
 {
     if (signalID == IRadio::transmissionStateChangedSignal) {
         IRadio::TransmissionState newRadioTransmissionState = (IRadio::TransmissionState)value;

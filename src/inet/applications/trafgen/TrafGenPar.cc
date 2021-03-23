@@ -167,7 +167,7 @@ double TrafGenPar::InterDepartureTime()
  */
 long TrafGenPar::PacketSize()
 {
-    return par("packetSize").longValue();
+    return par("packetSize").intValue();
 }
 
 double TrafGenPar::OnIntv()

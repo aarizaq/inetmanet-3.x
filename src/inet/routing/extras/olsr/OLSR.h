@@ -449,7 +449,7 @@ class OLSR : public ManetRoutingBase
     inline double     hello_ival()    { return hello_ival_->doubleValue();}
     inline double     tc_ival()   { return tc_ival_->doubleValue();}
     inline double     mid_ival()  { return mid_ival_->doubleValue();}
-    inline int     willingness()   { return willingness_->longValue();}
+    inline int     willingness()   { return willingness_->intValue();}
     inline int     use_mac()   { return use_mac_;}
 
     inline linkset_t&   linkset()   { return state_ptr->linkset(); }

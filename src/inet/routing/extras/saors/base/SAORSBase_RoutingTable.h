@@ -50,7 +50,7 @@ class SAORSBase_RoutingTable : public cObject
 		virtual const char* getFullName() const override;
 
 		/** @brief inherited from cObject */
-		virtual std::string info() const override;
+		virtual std::string info() const;
 
 		/** @brief inherited from cObject */
 		virtual std::string str() const override;

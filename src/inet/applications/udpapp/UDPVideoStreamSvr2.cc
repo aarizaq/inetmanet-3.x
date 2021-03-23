@@ -137,7 +137,7 @@ void UDPVideoStreamSvr2::initialize(int stage)
         localPort = par("localPort");
 
         macroPackets = par("macroPackets");
-        maxSizeMacro = par("maxSizeMacro").longValue();
+        maxSizeMacro = par("maxSizeMacro").intValue();
 
         if (par("videoBroadcast").boolValue())
         {
@@ -275,7 +275,7 @@ void UDPVideoStreamSvr2::sendStreamData(cMessage *timer)
     cPacket *pkt = new cPacket("VideoStrmPk");
     if (!d->fileTrace)
     {
-        long pktLen = packetLen->longValue();
+        long pktLen = packetLen->intValue();
 
         if (pktLen > d->bytesLeft)
             pktLen = d->bytesLeft;

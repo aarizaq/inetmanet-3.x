@@ -169,7 +169,7 @@ InterfaceEntry *BMacLayer::createInterfaceEntry()
     e->setInterfaceToken(address.formInterfaceIdentifier());
 
     // capabilities
-    e->setMtu(par("mtu").longValue());
+    e->setMtu(par("mtu").intValue());
     e->setMulticast(false);
     e->setBroadcast(true);
 
@@ -567,7 +567,7 @@ void BMacLayer::sendDataPacket()
     sendDown(pkt);
 }
 
-void BMacLayer::receiveSignal(cComponent *source, simsignal_t signalID, long value, cObject *details)
+void BMacLayer::receiveSignal(cComponent *source, simsignal_t signalID, intval_t value, cObject *details)
 {
     Enter_Method_Silent();
     if (signalID == IRadio::radioModeChangedSignal) {

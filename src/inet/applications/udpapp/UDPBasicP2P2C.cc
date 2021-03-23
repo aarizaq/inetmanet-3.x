@@ -140,14 +140,14 @@ void UDPBasicP2P2C::initialize(int stage)
         if (par("fuzzy"))
         {
             fuzzy = new FuzzYControl(par("fuzzyFisFile").stringValue());
-            fuzzy->setSizeParam(par("numVarFuzzy").longValue());
+            fuzzy->setSizeParam(par("numVarFuzzy").intValue());
         }
 
         if (par("useGlobal"))
             useGlobal = true;
 
-        totalSegments = par("totalSegments").longValue();
-        segmentSize = par("segmentSize").longValue();
+        totalSegments = par("totalSegments").intValue();
+        segmentSize = par("segmentSize").intValue();
 
         uint64_t initseg = 0;
         L3Address myAddr = L3AddressResolver().resolve(this->getParentModule()->getFullPath().c_str());
@@ -178,7 +178,7 @@ void UDPBasicP2P2C::initialize(int stage)
         directAddress[myAddr.toIPv4()] = myAddress.toMAC().getInt();
 
         if (!par("initNodesRand").boolValue())
-            initseg = par("numInitialSegments").longValue();
+            initseg = par("numInitialSegments").intValue();
         else
         {
             // cModule * myNode = L3AddressResolver().findHostWithAddress(myAddr);
@@ -188,7 +188,7 @@ void UDPBasicP2P2C::initialize(int stage)
             if (initNodes.empty())
             {
                 int numNodes = myNode->getVectorSize();
-                while ((int) initNodes.size() < par("numInitNodesRand").longValue())
+                while ((int) initNodes.size() < par("numInitNodesRand").intValue())
                 {
                     int val = intuniform(0, numNodes);
                     bool isInside = false;
@@ -1534,7 +1534,7 @@ void UDPBasicP2P2C::answerRequest(UDPBasicPacketP2P *pkt)
         delayM->setRemain(delayM->subSegmentRequest.size()*maxPacketSize);
     }
 
-    // El primero se envía inmediatamente para evitar que la otra parte se impaciente
+    // El primero se envï¿½a inmediatamente para evitar que la otra parte se impaciente
     //
     UDPBasicPacketP2P *pktSend = delayM->getPkt(maxPacketSize);
     lastPacket = simTime();

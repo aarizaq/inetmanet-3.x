@@ -47,6 +47,7 @@ const unsigned char IPOPTION_NUMBER_MASK = 0x1F;
 // option entry number
 const unsigned int MAX_IPADDR_OPTION_ENTRIES = 9;
 const unsigned int MAX_TIMESTAMP_OPTION_ENTRIES = 4;
+
 }}
 
 
@@ -194,5 +195,4 @@ packet IPv4Datagram
     // Virtual value, used by the new fragment mechanism
     unsigned int totalPayloadLength;
 }
-
 

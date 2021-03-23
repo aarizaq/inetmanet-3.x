@@ -141,7 +141,7 @@ cPacket *UDPBasicFlooding::createPacket()
 {
     char msgName[32];
     sprintf(msgName, "UDPBasicAppData-%d", counter++);
-    long msgByteLength = messageLengthPar->longValue();
+    long msgByteLength = messageLengthPar->intValue();
     cPacket *payload = new cPacket(msgName);
     payload->setByteLength(msgByteLength);
     payload->addPar("sourceId") = getId();

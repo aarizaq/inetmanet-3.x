@@ -127,7 +127,7 @@ void UDPBasicAppMulti::sendPacket()
         str << packetName << "-" << numSent;
 
         ApplicationPacket *payload = new ApplicationPacket(str.str().c_str());
-        payload->setByteLength(par("messageLength").longValue());
+        payload->setByteLength(par("messageLength").intValue());
         payload->setSequenceNumber(numSent);
 
         L3Address destAddr = chooseDestAddr();

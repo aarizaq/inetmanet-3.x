@@ -37,7 +37,7 @@ simple SCTPClient like ISCTPApp
         int requestLength = default(1452); // length of a request (bytes)
         double thinkTime @unit(s) = default(0s); // time gap between requests
         double waitToClose @unit(s) = default(0s); //time to wait between last message sent and abort
-        double reconnectInterval @unit(s) = default(0);  // if connection breaks, waits this much before trying to reconnect
+        double reconnectInterval @unit(s) = default(0s);  // if connection breaks, waits this much before trying to reconnect
         int inboundStreams = default(17);
         int outboundStreams = default(1);
         bool echo = default(false);  // echoes received packages when true
@@ -56,9 +56,9 @@ simple SCTPClient like ISCTPApp
         string streamRequestRatio = default("");
         string streamPriorities = default("");
         bool finishEndsSimulation = default(false);
-        @signal[sentPk](type=SCTPSimpleMessage);
+        @signal[sentPk](type=inet::SCTPSimpleMessage);
         @signal[rcvdPk](type=cPacket);
-        @signal[echoedPk](type=SCTPSimpleMessage);
+        @signal[echoedPk](type=inet::SCTPSimpleMessage);
         @statistic[rcvdPk](title="packets received"; source=rcvdPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
         @statistic[sentPk](title="packets sent"; source=sentPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
         @statistic[echoedPk](title="packets echoed"; source=echoedPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);

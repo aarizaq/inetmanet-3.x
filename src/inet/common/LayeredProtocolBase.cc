@@ -21,7 +21,6 @@ namespace inet {
 simsignal_t LayeredProtocolBase::packetSentToUpperSignal = registerSignal("packetSentToUpper");
 simsignal_t LayeredProtocolBase::packetReceivedFromUpperSignal = registerSignal("packetReceivedFromUpper");
 simsignal_t LayeredProtocolBase::packetFromUpperDroppedSignal = registerSignal("packetFromUpperDropped");
-simsignal_t LayeredProtocolBase::packetTransmissionDroppedSignal = registerSignal("packetTransmissionDroppedSignal");
 
 simsignal_t LayeredProtocolBase::packetSentToLowerSignal = registerSignal("packetSentToLower");
 simsignal_t LayeredProtocolBase::packetReceivedFromLowerSignal = registerSignal("packetReceivedFromLower");

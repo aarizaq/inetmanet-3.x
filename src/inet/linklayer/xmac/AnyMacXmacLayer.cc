@@ -39,16 +39,16 @@ void AnyMacXmacLayer::initialize(int stage)
 
     if (stage == INITSTAGE_LOCAL) {
 
-		queueLength = hasPar("queueLength") ? par("queueLength").longValue() : 10;
+		queueLength = hasPar("queueLength") ? par("queueLength").intValue() : 10;
 		animation = hasPar("animation") ? par("animation").boolValue() : true;
 		slotDuration = hasPar("slotDuration") ? par("slotDuration").doubleValue() : 1.0;
-		bitrate = hasPar("bitrate") ? par("bitrate").longValue() : 15360;
-		headerLength = hasPar("headerLength") ? par("headerLength").longValue() : 10;
+		bitrate = hasPar("bitrate") ? par("bitrate").intValue() : 15360;
+		headerLength = hasPar("headerLength") ? par("headerLength").intValue() : 10;
 		checkInterval = hasPar("checkInterval") ? par("checkInterval").doubleValue() : 0.1;
 		txPower = hasPar("txPower") ? par("txPower").doubleValue() : 50.0;
 		useMacAcks = hasPar("useMACAcks") ? par("useMACAcks").boolValue() : false;
-		maxTxAttempts = hasPar("maxTxAttempts") ? par("maxTxAttempts").longValue() : 2;
-		ADDR_SIZE = hasPar("addrSize")  ? par("addrSize").longValue() : 8;
+		maxTxAttempts = hasPar("maxTxAttempts") ? par("maxTxAttempts").intValue() : 2;
+		ADDR_SIZE = hasPar("addrSize")  ? par("addrSize").intValue() : 8;
 		EV_DETAIL << "headerLength: " << headerLength << ", bitrate: " << bitrate << endl;
 		xmac = par("XMAC");
 
@@ -214,7 +214,7 @@ InterfaceEntry *AnyMacXmacLayer::createInterfaceEntry()
     e->setInterfaceToken(address.formInterfaceIdentifier());
 
     // capabilities
-    e->setMtu(par("mtu").longValue());
+    e->setMtu(par("mtu").intValue());
     e->setMulticast(false);
     e->setBroadcast(true);
 

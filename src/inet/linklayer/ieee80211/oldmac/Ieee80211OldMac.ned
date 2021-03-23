@@ -114,7 +114,7 @@ simple Ieee80211OldMac extends MACProtocolBase like IIeee80211Mac
         bool purgeOldTuples = default(true); // delete old tuples in the duplicate list
         double duplicateTimeOut @unit("s") = default(20s); // timeout for the duplicate detection
         // statistics
-        double throughputTimePeriod @unit("s") = default(0); // period of time used by throughput measurement statistic
+        double throughputTimePeriod @unit("s") = default(0s); // period of time used by throughput measurement statistic
         bool multiMac = default(false); // allows multiples mac interfaces in the same link layer
 
         @class(Ieee80211OldMac);

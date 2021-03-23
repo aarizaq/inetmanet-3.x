@@ -147,7 +147,7 @@ PASER_Configurations::PASER_Configurations(char *configFile, PASER_Socket *pModu
 
     isLocalRepair = pModul->par("PASER_local_repair").boolValue();
     maxHopCountForLocalRepair =
-            (int) pModul->par("PASER_local_repair_hopCount").longValue();
+            (int) pModul->par("PASER_local_repair_hopCount").intValue();
 
     addressOfKDC.S_addr.set(IPv4Address((in_addr_t) 0x0A0A0001));
 

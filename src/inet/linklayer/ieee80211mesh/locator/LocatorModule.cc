@@ -319,7 +319,7 @@ void LocatorModule::initialize(int stage)
         // bind the client to the udp port
         socket = new UDPSocket();
         socket->setOutputGate(gate("outGate"));
-        port = par("locatorPort").longValue();
+        port = par("locatorPort").intValue();
         socket->bind(port);
         socket->setBroadcast(true);
         isInMacLayer = false;

@@ -157,7 +157,9 @@ void Hcf::scheduleInactivityTimer(simtime_t timeout)
 
 void Hcf::processLowerFrame(Ieee80211Frame* frame)
 {
-    Enter_Method_Silent();
+    Enter_Method("processLowerFrame(%s)", frame->getName());
+    take(frame);
+    EV_INFO << "Processing lower frame: " << frame->getName() << endl;
     auto edcaf = edca->getChannelOwner();
     if (edcaf && frameSequenceHandler->isSequenceRunning()) {
         // TODO: always call processResponse?

@@ -301,8 +301,8 @@ void NS_CLASS rreq_process(RREQ * rreq, int rreqlen, struct in_addr ip_src,
         if (isBroadcast(rreq_dest.s_addr))
         {
 
-           if (par("proactiveLifeTime").longValue() > 0 )
-               life = par("proactiveLifeTime").longValue() ;
+           if (par("proactiveLifeTime").intValue() > 0 )
+               life = par("proactiveLifeTime").intValue() ;
            rev_rt = rt_table_find(rreq_orig);
            if (rev_rt == nullptr)
            {

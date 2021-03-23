@@ -136,9 +136,9 @@ void UDPVideoStreamCli2::requestStream()
     lastSeqNum = -1;
     cPacket *pk = new cPacket("VideoStrmReq");
     socket.sendTo(pk, svrAddr, svrPort);
-    double reint = par("reintent").longValue();
+    double reint = par("reintent").intValue();
     if (reint > 0)
-        scheduleAt(simTime()+par("reintent").longValue(),reintentTimer);
+        scheduleAt(simTime()+par("reintent").intValue(),reintentTimer);
 }
 
 void UDPVideoStreamCli2::receiveStream(cPacket *pk)
@@ -202,9 +202,9 @@ void UDPVideoStreamCli2::receiveStream(cPacket *pk)
 
 void UDPVideoStreamCli2::timeOutData()
 {
-    double reint = par("reintent").longValue();
+    double reint = par("reintent").intValue();
     if (reint > 0)
-        scheduleAt(simTime()+par("reintent").longValue(),reintentTimer);
+        scheduleAt(simTime()+par("reintent").intValue(),reintentTimer);
 }
 
 bool UDPVideoStreamCli2::handleNodeStart(IDoneCallback *doneCallback)

@@ -211,7 +211,7 @@ void DYMOUM::initialize(int stage)
         norouteBehaviour = par("noRouteBehaviour");
         useIndex = par("UseIndex");
         isRoot = par("isRoot");
-        proactive_rreq_timeout= par("proactiveRreqTimeout").longValue();
+        proactive_rreq_timeout= par("proactiveRreqTimeout").intValue();
         if (isRoot)
         {
             timer_init(&proactive_rreq_timer, &DYMOUM::rreq_proactive,nullptr);
@@ -228,8 +228,8 @@ void DYMOUM::initialize(int stage)
         is_init = true;
         // Initialize the timer
         scheduleNextEvent();
-        costStatic = par("costStatic").longValue();
-        costMobile = par("costMobile").longValue();
+        costStatic = par("costStatic").intValue();
+        costMobile = par("costMobile").intValue();
         useHover = par("useHover");
         EV_INFO << "Dymo active" << "\n";
         WATCH_PTRMAP(*dymoRoutingTable);
@@ -1861,7 +1861,7 @@ bool DYMOUM::handleNodeStart(IDoneCallback *doneCallback)
     if (isRoot)
     {
         timer_init(&proactive_rreq_timer,&NS_CLASS rreq_proactive, nullptr);
-        timer_set_timeout(&proactive_rreq_timer, par("startRreqProactive").longValue());
+        timer_set_timeout(&proactive_rreq_timer, par("startRreqProactive").intValue());
     }
     startDYMOUMAgent();
     scheduleNextEvent();

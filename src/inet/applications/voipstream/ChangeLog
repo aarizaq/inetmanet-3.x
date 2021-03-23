@@ -1,5 +1,30 @@
 ====== inet-3.x ======
 
+2021-01-04  Zoltan Bojthe
+
+	VoipStreamServer: bugfix: swapped inBytesPerSample, outBytesPerSample.
+	Change backported from inet4.
+
+2021-01-04  Zoltan Bojthe
+
+	VoipStreamSender: updated for avcodec-7:4.2.4
+
+	Fixed sample format, old hack didn't work under Ubuntu 20.04. BUT: This
+	change alters the fingerprints of VoIP simulations. Change backported
+	from inet4.
+
+2020-10-20  ------ inet-3.6.8 released ------
+
+2019-11-04  ------ inet-3.6.7 released ------
+
+2019-08-16  ------ inet-3.6.6 released ------
+
+2019-04-12  ------ inet-3.6.5 released ------
+
+2018-01-12  Levente Meszaros
+
+	Voip: Removed include statement for obsolete header file.
+
 2018-03-21  ------ inet-3.6.4 released ------
 
 2017-12-22  ------ inet-3.6.3 released ------

@@ -1,5 +1,46 @@
 ====== inet-3.x ======
 
+2021-01-05  Zoltan Bojthe
+
+	802.11: Dcf: added some missing Enter_Method() calls
+
+2021-01-04  Levente Mészáros
+
+	802.11: Tx ownership fix.
+
+2021-01-04  Levente Mészáros
+
+	802.11: Change MAC data services to take care of packet ownership.
+
+2020-12-18  Levente Mészáros
+
+	802.11: Changed coordination function to take ownership of received upper
+	and lower packets.
+
+2020-10-20  ------ inet-3.6.8 released ------
+
+2020-10-20  Zoltan Bojthe
+
+	KLUDGEs - for omnetpp6 delete module sequence to produce memory leak
+	instead of a crash with OMNeT 6.
+
+2020-03-27  Christoph Sommer
+
+	bugfix: rely on OMNeT++ to delete submodules
+
+2019-11-04  ------ inet-3.6.7 released ------
+
+2019-08-16  ------ inet-3.6.6 released ------
+
+2019-04-12  ------ inet-3.6.5 released ------
+
+2018-05-03  Levente Meszaros
+
+	802.11: Fixed ACK frame duration bug reported by Raphael Elsner.
+
+	The duration was incorrectly rounded up in seconds instead of
+	microseconds for data fragment ACKs.
+
 2018-03-21  ------ inet-3.6.4 released ------
 
 2018-01-12  Zoltan Bojthe

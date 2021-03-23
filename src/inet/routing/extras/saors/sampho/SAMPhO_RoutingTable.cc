@@ -74,7 +74,7 @@ SAMPhO_RoutingTable::~SAMPhO_RoutingTable() {
 /*****************************************************************************************
  * Prints out the information concerning the routing table of DS-DYMO.
  *****************************************************************************************/
-std::string SAMPhO_RoutingTable::info() const {
+std::string SAMPhO_RoutingTable::str() const {
 	std::ostringstream ss;
 
 	ss << getNumRoutes() << " entries";
