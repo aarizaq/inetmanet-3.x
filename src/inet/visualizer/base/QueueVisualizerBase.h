@@ -36,7 +36,13 @@ class INET_API QueueVisualizerBase : public VisualizerBase
             std::vector<PacketQueue *> queues;
 
         public:
+#if OMNETPP_VERSION < 0x0600 || OMNETPP_BUILDNUM < 1506
             virtual void visit(cObject *object) override;
+#else
+            virtual bool visit(cObject *object) override;
+#endif // if OMNETPP_VERSION < 0x0600 || OMNETPP_BUILDNUM < 1506
+
+
 
     };
 

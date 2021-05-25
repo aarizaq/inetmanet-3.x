@@ -69,11 +69,6 @@ bool ProgramedFailureDataRateChannel::initializeChannel(int stage)
     return false;
 }
 
-cDatarateChannel::Result ProgramedFailureDataRateChannel::processMessage(cMessage *msg, const SendOptions& options, simtime_t t)
-{
-    return cDatarateChannel::processMessage(msg,options, t);
-}
-
 void ProgramedFailureDataRateChannel::setState(LinkState state)
 {
     if (state == UP)
@@ -142,12 +137,6 @@ bool ProgramedFailureChannel::initializeChannel(int stage)
 
     return false;
 }
-
-cDelayChannel::Result ProgramedFailureChannel::processMessage(cMessage *msg, const SendOptions& options, simtime_t t)
-{
-    return cDelayChannel::processMessage(msg,options, t);
-}
-
 
 void ProgramedFailureChannel::setState(LinkState state)
 {
