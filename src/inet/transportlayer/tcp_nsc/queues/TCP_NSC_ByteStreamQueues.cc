@@ -81,7 +81,7 @@ TCPSegment *TCP_NSC_ByteStreamSendQueue::createSegmentWithBytes(const void *tcpD
     uint32 numBytes = tcpseg->getPayloadLength();
 
     char msgname[80];
-    sprintf(msgname, "%.10s%s%s%s(l=%lu,%u bytes)",
+    sprintf(msgname, "%.10s%s%s%s(l=%lu,%lu bytes)",
             "tcpseg",
             tcpseg->getSynBit() ? " SYN" : "",
             tcpseg->getFinBit() ? " FIN" : "",
@@ -141,7 +141,7 @@ cPacket *TCP_NSC_ByteStreamReceiveQueue::extractBytesUpTo()
         char *data = new char[extractBytes];
         unsigned int extractedBytes = byteArrayBufferM.popBytesToBuffer(data, extractBytes);
         dataMsg->setByteLength(extractedBytes);
-        dataMsg->getByteArray().assignBuffer(data, extractedBytes);
+        dataMsg->getByteArrayForUpdate().assignBuffer(data, extractedBytes);
     }
 
     return dataMsg;

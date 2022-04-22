@@ -18,16 +18,11 @@
 //
 // Required for MACAddress declarations
 //
-cplusplus
-{{
-#include "inet/linklayer/common/MACAddress.h"
-}};
-
-class noncobject inet::MACAddress;
+import inet.linklayer.common.MACAddress;
 
 namespace inet::inetmanet;
 
-class ControlInfoBreakLink
+class ControlInfoBreakLink extends cObject
 {
       MACAddress dest;   //
 }

@@ -541,7 +541,7 @@ void SAORSBase::handleLowerRMForRelay(DYMO_RM *routingMsg) {
 		delete routingMsg;
 		return;
 	}
-	routingMsg->getOrigNode().incrementDistIfAvailable();
+	routingMsg->getOrigNodeForUpdate().incrementDistIfAvailable();
 	for (unsigned int i = 0; i < additional_nodes.size(); i++) {
 		if (additional_nodes[i].hasDist() && (additional_nodes[i].getDist() >= 0xFF - 1)) {
 			EV << "passing on additionalNode would overflow OrigNode.Dist -> dropping additionalNode" << endl;
@@ -882,15 +882,15 @@ void SAORSBase::sendRREQ(unsigned int destAddr, int msgHdrHopLimit, unsigned int
 
 	SAORS_RREQ *my_rreq = new SAORS_RREQ("RREQ");
 	my_rreq->setMsgHdrHopLimit(msgHdrHopLimit);
-	my_rreq->getTargetNode().setAddress(destAddr);
-	if (targetSeqNum != 0) my_rreq->getTargetNode().setSeqNum(targetSeqNum);
-	if (targetDist != 0) my_rreq->getTargetNode().setDist(targetDist);
+	my_rreq->getTargetNodeForUpdate().setAddress(destAddr);
+	if (targetSeqNum != 0) my_rreq->getTargetNodeForUpdate().setSeqNum(targetSeqNum);
+	if (targetDist != 0) my_rreq->getTargetNodeForUpdate().setDist(targetDist);
 
-	my_rreq->getOrigNode().setDist(0);
-	my_rreq->getOrigNode().setAddress(myAddr);
-	if (RESPONSIBLE_ADDRESSES_PREFIX != -1) my_rreq->getOrigNode().setPrefix(RESPONSIBLE_ADDRESSES_PREFIX);
+	my_rreq->getOrigNodeForUpdate().setDist(0);
+	my_rreq->getOrigNodeForUpdate().setAddress(myAddr);
+	if (RESPONSIBLE_ADDRESSES_PREFIX != -1) my_rreq->getOrigNodeForUpdate().setPrefix(RESPONSIBLE_ADDRESSES_PREFIX);
 	incSeqNum();
-	my_rreq->getOrigNode().setSeqNum(ownSeqNum);
+	my_rreq->getOrigNodeForUpdate().setSeqNum(ownSeqNum);
 	my_rreq->setMinDeliveryProb(min_prob);
 
 	//Do not transmit DYMO messages when we lost our sequence number
@@ -925,17 +925,17 @@ void SAORSBase::sendReply(unsigned int destAddr, unsigned int tSeqNum) {
 	if (!entry) error("Tried sending RREP via a route that just vanished");
 
 	rrep->setMsgHdrHopLimit(MAX_HOPLIMIT);
-	rrep->getTargetNode().setAddress(destAddr);
-	rrep->getTargetNode().setSeqNum(entry->routeSeqNum);
-	rrep->getTargetNode().setDist(entry->routeDist);
+	rrep->getTargetNodeForUpdate().setAddress(destAddr);
+	rrep->getTargetNodeForUpdate().setSeqNum(entry->routeSeqNum);
+	rrep->getTargetNodeForUpdate().setDist(entry->routeDist);
 
 	//Check if ownSeqNum should be incremented
 	if ((tSeqNum == 0) || (seqNumIsFresher(ownSeqNum, tSeqNum))) incSeqNum();
 
-	rrep->getOrigNode().setAddress(myAddr);
-	if (RESPONSIBLE_ADDRESSES_PREFIX != -1) rrep->getOrigNode().setPrefix(RESPONSIBLE_ADDRESSES_PREFIX);
-	rrep->getOrigNode().setSeqNum(ownSeqNum);
-	rrep->getOrigNode().setDist(0);
+	rrep->getOrigNodeForUpdate().setAddress(myAddr);
+	if (RESPONSIBLE_ADDRESSES_PREFIX != -1) rrep->getOrigNodeForUpdate().setPrefix(RESPONSIBLE_ADDRESSES_PREFIX);
+	rrep->getOrigNodeForUpdate().setSeqNum(ownSeqNum);
+	rrep->getOrigNodeForUpdate().setDist(0);
 
 	//!!! Do not set Searched node parameters !!!
 
@@ -996,17 +996,17 @@ void SAORSBase::sendReplyAsIntermediateRouter(const DYMO_AddressBlock& origNode,
 	//Create rrepToOrigNode
 	SAORS_RREP* rrepToOrigNode = new SAORS_RREP("RREP");
 	rrepToOrigNode->setMsgHdrHopLimit(MAX_HOPLIMIT);
-	rrepToOrigNode->getTargetNode().setAddress(origNode.getAddress());
-	rrepToOrigNode->getTargetNode().setSeqNum(origNode.getSeqNum());
-	if (origNode.hasDist()) rrepToOrigNode->getTargetNode().setDist(origNode.getDist() + 1);
+	rrepToOrigNode->getTargetNodeForUpdate().setAddress(origNode.getAddress());
+	rrepToOrigNode->getTargetNodeForUpdate().setSeqNum(origNode.getSeqNum());
+	if (origNode.hasDist()) rrepToOrigNode->getTargetNodeForUpdate().setDist(origNode.getDist() + 1);
 
 	//If the DT-Routing will NOT be used, then the node sent request is in the proximity of this host
 	if(!dt_routing) {
 		//Set the RREQ destination as the original node //additionalNode
-		rrepToOrigNode->getOrigNode().setAddress(routeToTargetNode->routeAddress.getInt());
-		if (RESPONSIBLE_ADDRESSES_PREFIX != -1) rrepToOrigNode->getOrigNode().setPrefix(RESPONSIBLE_ADDRESSES_PREFIX);
-		if (test->routeSeqNum != 0)rrepToOrigNode->getOrigNode().setSeqNum(test->routeSeqNum);
-		if (test->routeDist != 0) rrepToOrigNode->getOrigNode().setDist(test->routeDist);
+		rrepToOrigNode->getOrigNodeForUpdate().setAddress(routeToTargetNode->routeAddress.getInt());
+		if (RESPONSIBLE_ADDRESSES_PREFIX != -1) rrepToOrigNode->getOrigNodeForUpdate().setPrefix(RESPONSIBLE_ADDRESSES_PREFIX);
+		if (test->routeSeqNum != 0)rrepToOrigNode->getOrigNodeForUpdate().setSeqNum(test->routeSeqNum);
+		if (test->routeDist != 0) rrepToOrigNode->getOrigNodeForUpdate().setDist(test->routeDist);
 		EV << "Target Sequence number: " << test->routeSeqNum << " and distance: " << test->routeDist;
 
 		//Set me as the additional node to create the correct path //rrepToOrigNode->getOrigNode()
@@ -1015,23 +1015,23 @@ void SAORSBase::sendReplyAsIntermediateRouter(const DYMO_AddressBlock& origNode,
 		additionalNode.setSeqNum(ownSeqNum);
 		EV << " Own Sequence number: " << ownSeqNum << endl;
 		additionalNode.setDist(0);
-		rrepToOrigNode->getAdditionalNodes().push_back(additionalNode);
+		rrepToOrigNode->getAdditionalNodesForUpdate().push_back(additionalNode);
 	}
 	//Addition for SAORS: If entry only exists in DT routing table set Searched Node, therefore it is not in the proximity of this host
 	else {
 		//Set me as original address
-		rrepToOrigNode->getOrigNode().setAddress(myAddr);
-		if (RESPONSIBLE_ADDRESSES_PREFIX != -1) rrepToOrigNode->getOrigNode().setPrefix(RESPONSIBLE_ADDRESSES_PREFIX);
-		rrepToOrigNode->getOrigNode().setSeqNum(ownSeqNum);
-		rrepToOrigNode->getOrigNode().setDist(0);
+		rrepToOrigNode->getOrigNodeForUpdate().setAddress(myAddr);
+		if (RESPONSIBLE_ADDRESSES_PREFIX != -1) rrepToOrigNode->getOrigNodeForUpdate().setPrefix(RESPONSIBLE_ADDRESSES_PREFIX);
+		rrepToOrigNode->getOrigNodeForUpdate().setSeqNum(ownSeqNum);
+		rrepToOrigNode->getOrigNodeForUpdate().setDist(0);
 
 		//Set searched node
-		rrepToOrigNode->getSearchedNode().setAddress(targetNode.getAddress());
-		if (targetNode.hasPrefix()) rrepToOrigNode->getSearchedNode().setPrefix(targetNode.getPrefix());
+		rrepToOrigNode->getSearchedNodeForUpdate().setAddress(targetNode.getAddress());
+		if (targetNode.hasPrefix()) rrepToOrigNode->getSearchedNodeForUpdate().setPrefix(targetNode.getPrefix());
 		//The target node has to have a sequence number, so if non available set the minimum
-		if (targetNode.hasSeqNum()) rrepToOrigNode->getSearchedNode().setSeqNum(targetNode.getSeqNum());
-		else rrepToOrigNode->getSearchedNode().setSeqNum(1);
-		rrepToOrigNode->getSearchedNode().setDist(0);
+		if (targetNode.hasSeqNum()) rrepToOrigNode->getSearchedNodeForUpdate().setSeqNum(targetNode.getSeqNum());
+		else rrepToOrigNode->getSearchedNodeForUpdate().setSeqNum(1);
+		rrepToOrigNode->getSearchedNodeForUpdate().setDist(0);
 	}
 
 	//Setting encounter probability in RREP towards original node
@@ -1040,20 +1040,20 @@ void SAORSBase::sendReplyAsIntermediateRouter(const DYMO_AddressBlock& origNode,
 	//Create rrepToTargetNode
 	SAORS_RREP* rrepToTargetNode = new SAORS_RREP("RREP");
 	rrepToTargetNode->setMsgHdrHopLimit(MAX_HOPLIMIT);
-	rrepToTargetNode->getTargetNode().setAddress(targetNode.getAddress());
-	if (targetNode.hasSeqNum()) rrepToTargetNode->getTargetNode().setSeqNum(targetNode.getSeqNum());
-	if (targetNode.hasDist()) rrepToTargetNode->getTargetNode().setDist(targetNode.getDist());
+	rrepToTargetNode->getTargetNodeForUpdate().setAddress(targetNode.getAddress());
+	if (targetNode.hasSeqNum()) rrepToTargetNode->getTargetNodeForUpdate().setSeqNum(targetNode.getSeqNum());
+	if (targetNode.hasDist()) rrepToTargetNode->getTargetNodeForUpdate().setDist(targetNode.getDist());
 
-	rrepToTargetNode->getOrigNode().setAddress(myAddr);
-	if (RESPONSIBLE_ADDRESSES_PREFIX != -1) rrepToTargetNode->getOrigNode().setPrefix(RESPONSIBLE_ADDRESSES_PREFIX);
-	rrepToTargetNode->getOrigNode().setSeqNum(ownSeqNum);
-	rrepToTargetNode->getOrigNode().setDist(0);
+	rrepToTargetNode->getOrigNodeForUpdate().setAddress(myAddr);
+	if (RESPONSIBLE_ADDRESSES_PREFIX != -1) rrepToTargetNode->getOrigNodeForUpdate().setPrefix(RESPONSIBLE_ADDRESSES_PREFIX);
+	rrepToTargetNode->getOrigNodeForUpdate().setSeqNum(ownSeqNum);
+	rrepToTargetNode->getOrigNodeForUpdate().setDist(0);
 
 	DYMO_AddressBlock additionalNode2;
 	additionalNode2.setAddress(origNode.getAddress());
 	additionalNode2.setSeqNum(origNode.getSeqNum());
 	if (origNode.hasDist()) additionalNode2.setDist(origNode.getDist() + 1);
-	rrepToTargetNode->getAdditionalNodes().push_back(additionalNode2);
+	rrepToTargetNode->getAdditionalNodesForUpdate().push_back(additionalNode2);
 
 	//Setting encounter probability in RREP towards target node
 	rrepToTargetNode->setDeliveryProb(encounter_prob);

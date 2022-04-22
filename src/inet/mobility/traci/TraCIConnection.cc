@@ -86,7 +86,7 @@ TraCIConnection* TraCIConnection::connect(const char* host, int port) {
 		int sleepDuration = tries*.25 + 1;
 
 		if (tries >= 10) {
-			throw cRuntimeError(msg.c_str());
+			throw cRuntimeError("%s", msg.c_str());
 		}
 		else if (tries == 3) {
 			EV_WARN << msg << " -- Will retry in " << sleepDuration << " second(s)." << std::endl;

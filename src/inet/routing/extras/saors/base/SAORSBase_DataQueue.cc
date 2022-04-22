@@ -178,7 +178,7 @@ int SAORSBase_DataQueue::queuePacket(DT_MSG* dtmsg, int prefix) {
 	}
 
 	//Update the past carriers list if the packet arrived from another node
-    if(dtmsg->getIsCopy()==true)
+    if(dtmsg->isCopy()==true)
         updatePastCarriers(controlInfo->getSrcAddr(), std::string(dtmsg->getFullName()));
 
 	//Check if this IP Address already exists
@@ -300,7 +300,7 @@ int SAORSBase_DataQueue::reinjectDatagramsTo(IPv4Address destAddr, int prefix, I
                     bool pastCarrier = wasPastCarrier(tempAddr, std::string(dtmsg->getFullName()));
 
 					//If the message is a copy and the candidate node was a past carrier
-					if(pastCarrier && dtmsg->getIsCopy()==true) {
+					if(pastCarrier && dtmsg->isCopy()==true) {
 					    //Push the initial message into the collected datagrams list
 					    datagrams->push_back( dtmsg );
 					}

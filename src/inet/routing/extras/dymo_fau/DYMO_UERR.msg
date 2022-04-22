@@ -17,17 +17,12 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-cplusplus {{
-#include "inet/routing/extras/dymo_fau/DYMO_PacketBBMessage_m.h"
-}}
+import inet.routing.extras.dymo_fau.DYMO_PacketBBMessage;
 
 namespace inet::inetmanet;
 
-class DYMO_PacketBBMessage;
 
-
-
-message DYMO_UERR extends DYMO_PacketBBMessage
+packet DYMO_UERR extends DYMO_PacketBBMessage
 {
     int uelemTargetAddress;
     int uerrTargetAddress;

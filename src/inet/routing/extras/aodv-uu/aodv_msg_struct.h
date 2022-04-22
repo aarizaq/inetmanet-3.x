@@ -4,12 +4,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-//#include <unistd.h>
-//#include <sys/time.h>
-//#include <sys/types.h>
 #include "inet/routing/extras/base/compatibility.h"
 #include "inet/routing/extras/base/ManetRoutingBase.h"
-#include "aodv_msg_struct_m.h"
+//#include "aodv_msg_struct_m.h"
 
 #define AddressSizeUsed 4
 namespace inet {
@@ -18,13 +15,13 @@ namespace inetmanet {
 
 // this structures are a redifinition of def.h struct for omnet
 
-typedef struct
+struct AODV_ext
 {
     u_int8_t type;
     u_int8_t length;
     char * pointer;
     /* Type specific data follows here */
-} AODV_ext;
+};
 
 /* A generic AODV packet header struct... */ /* Omnet++ definition */
 struct AODV_msg : public cPacket
@@ -36,7 +33,6 @@ struct AODV_msg : public cPacket
     AODV_ext *extension;
     int extensionsize;
     /* NS_PORT: Additions for the AODVUU packet type in ns-2 */
-
   public:
     //explicit AODV_msg(const char *name="AodvMgs") : cPacket(name) {extensionsize=0;extension=nullptr;}
     explicit AODV_msg(const char *name=nullptr) : cPacket(name) {extensionsize=0; extension=nullptr;}

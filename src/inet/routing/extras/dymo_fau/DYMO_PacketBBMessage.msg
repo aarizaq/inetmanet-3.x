@@ -22,7 +22,7 @@ namespace inet::inetmanet;
 //
 // PacketBB Message
 //
-message DYMO_PacketBBMessage extends cPacket
+packet DYMO_PacketBBMessage
 {
     int msgHdrHopLimit;
 

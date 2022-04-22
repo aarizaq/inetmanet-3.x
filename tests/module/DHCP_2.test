@@ -4,6 +4,7 @@ Testing DHCP protocol
 %#--------------------------------------------------------------------------------------------------------------
 %file: test.ned
 
+import inet.test.moduletest.lib.*;
 import inet.networklayer.configurator.ipv4.IPv4NetworkConfigurator;
 import inet.node.inet.StandardHost;
 import ned.DatarateChannel;
@@ -42,7 +43,7 @@ network Dhcptest
 
 [General]
 
-tkenv-plugin-path = ../../../etc/plugins
+
 ned-path = .;../../../../src;../../lib
 
 #omnetpp 5.0 - 5.1 compatibility:

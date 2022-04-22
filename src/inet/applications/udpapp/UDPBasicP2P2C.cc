@@ -50,8 +50,9 @@ UDPBasicP2P2C::DirectAddres UDPBasicP2P2C::directAddress;
 std::vector<int> UDPBasicP2P2C::initNodes;
 
 EXECUTE_ON_STARTUP(
-    cEnum *e = cEnum::find("modoP2P");
-    if (!e) enums.getInstance()->add(e = new cEnum("modoP2P"));
+    cEnum *e = cEnum::find("inet::modoP2P");
+    if (!e)
+       OMNETPP6_CODE(omnetpp::internal::)enums.getInstance()->add(e = new cEnum("inet::modoP2P"));
     e->insert(UDPBasicP2P2C::CONCAVO, "concavo");
     e->insert(UDPBasicP2P2C::ADITIVO, "aditivo");
     e->insert(UDPBasicP2P2C::ADITIVO_PONDERADO, "aditivo_ponderado");

@@ -185,12 +185,12 @@ class INET_API Ieee80211Etx : public cSimpleModule, public MacEstimateCostProces
     }
 
   protected:
-    virtual int numInitStages() const {return 3;}
-    virtual void initialize(int);
+    virtual int numInitStages() const override {return 3;}
+    virtual void initialize(int) override;
 
     virtual ~Ieee80211Etx();
 
-    virtual void handleMessage(cMessage*);
+    virtual void handleMessage(cMessage*) override;
     /** Implements abstract to use routing protocols in the mac layer */
     virtual void handleEtxMessage(MACETXPacket *);
     /** Implements abstract Ieee80211MgmtBase method */
@@ -233,7 +233,7 @@ class INET_API Ieee80211Etx : public cSimpleModule, public MacEstimateCostProces
     std::string detailedInfo() const;
     Ieee80211Etx() {setNumInterfaces(1);}
     void setAddress(const MACAddress &add) {myAddress = add;}
-    virtual double getCost(int i, MACAddress &add)
+    virtual double getCost(int i, MACAddress &add) override
     {
         switch (i)
         {
@@ -255,9 +255,9 @@ class INET_API Ieee80211Etx : public cSimpleModule, public MacEstimateCostProces
         }
     }
 
-    virtual double getNumCost() {return 4;}
-    virtual int getNumNeighbors() {return neighbors.size();}
-    virtual int getNeighbors(std::vector<MACAddress> &add)
+    virtual double getNumCost() override {return 4;}
+    virtual int getNumNeighbors() override  {return neighbors.size();}
+    virtual int getNeighbors(std::vector<MACAddress> &add) override
     {
         getNeighbors(add,0);
         return (int)add.size();

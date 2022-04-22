@@ -7,10 +7,10 @@ Testing PR-SCTP: prMethod=PR_TTL prValue=0.5 se lifetime
 %inifile: omnetpp.ini
 
 [General]
-network=SCTPFeatureTest
+network = inet.test.moduletest.lib.SCTPFeatureTest
 cmdenv-event-banners=false
 cmdenv-express-mode = false
-tkenv-plugin-path = ../../../etc/plugins
+
 ned-path = .;../../../../src;../../lib
 
 #omnetpp 5.0 - 5.1 compatibility:
@@ -20,7 +20,7 @@ output-vector-file = "${resultdir}/${configname}-${runnumber}.vec"
 snapshot-file = "${resultdir}/${configname}-${runnumber}.sna"
 
 **.testing = false
-**.testTimeout = 0
+**.testTimeout = 0s
 
 # udp app (off)
 **.numUdpApps = 0

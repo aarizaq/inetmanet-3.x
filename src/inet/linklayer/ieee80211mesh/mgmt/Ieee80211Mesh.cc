@@ -21,6 +21,7 @@
 #define CHEAT_IEEE80211MESH
 #include <string.h>
 #include <algorithm>
+#include "inet/linklayer/common/Ieee802Ctrl.h"
 #include "inet/linklayer/ieee80211mesh/mgmt/Ieee80211Mesh.h"
 #include "inet/routing/extras/base/MeshControlInfo_m.h"
 #include "inet/routing/extras/base/ControlInfoBreakLink_m.h"
@@ -47,8 +48,8 @@ using namespace inetmanet;
 
 EXECUTE_ON_STARTUP(
     cEnum *e = cEnum::find("inet::ieee80211::SelectionCriteria");
-    if (!e) enums.getInstance()->add(e = new cEnum("inet::ieee80211::SelectionCriteria"));
-    e->insert(Ieee80211Mesh::ETX, "Etx");
+    if (!e)
+      OMNETPP6_CODE(omnetpp::internal::)enums.getInstance()->add(e = new cEnum("inet::ieee80211::SelectionCriteria"));    e->insert(Ieee80211Mesh::ETX, "Etx");
     e->insert(Ieee80211Mesh::MINQUEUE, "MinQueue");
     e->insert(Ieee80211Mesh::LASTUSED, "LastUsed");
     e->insert(Ieee80211Mesh::MINQUEUELASTUSED, "MinQueueLastUsed");
@@ -671,8 +672,8 @@ void Ieee80211Mesh::handleMessage(cMessage *msg)
         // packet from upper layers, to be sent out
         EV << "Packet arrived from upper layers: " << pk << "\n";
         if (pk->getByteLength() > 2312)
-            error("message from higher layer (%s)%s is too long for 802.11b, %d bytes (fragmentation is not supported yet)",
-                  pk->getClassName(), pk->getName(), pk->getByteLength());
+            throw cRuntimeError("message from higher layer (%s)%s is too long for 802.11b, %ui bytes (fragmentation is not supported yet)",
+                  pk->getClassName(), pk->getName(), (uint32_t)pk->getByteLength());
         handleUpperMessage(pk);
     }
 }

@@ -538,16 +538,16 @@ void HipFsmBase::handleMsgRemoteIn(cMessage *msg)
 void HipFsmBase::specInitialize()
 {
 }
-void HipFsmBase::findIPaddress(IPv6Address &HIT)
+void HipFsmBase::findIPaddress(const IPv6Address &HIT)
 {
 }
-void HipFsmBase::setIPaddress(IPv6Address &HIT, IPv6Address& IP)
+void HipFsmBase::setIPaddress(const IPv6Address &HIT, const IPv6Address& IP)
 {
 }
-void HipFsmBase::addIPaddress(IPv6Address &HIT, IPv6Address& IP)
+void HipFsmBase::addIPaddress(const IPv6Address &HIT, const IPv6Address& IP)
 {
 }
-void HipFsmBase::deleteAllIPaddress(IPv6Address &HIT)
+void HipFsmBase::deleteAllIPaddress(const IPv6Address &HIT)
 {
 }
 
@@ -601,7 +601,7 @@ void HipFsmBase::createUpdHIPpacket(int updKind, HIPHeaderMessage * old)
 }
 
 // Creates a BE HIP packet
-void HipFsmBase::createHIPpacket(int kind, const char name[], IPv6Address& via_rvs)
+void HipFsmBase::createHIPpacket(int kind, const char name[], const IPv6Address& via_rvs)
 {
     //create hip header
     HIPHeaderMessage *hipHead = new HIPHeaderMessage(name, kind);

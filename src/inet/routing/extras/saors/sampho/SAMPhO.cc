@@ -102,15 +102,15 @@ void SAMPhO::sendBeacon() {
 
 	//Set target node parameters
 	bcn->setMsgHdrHopLimit(1);
-	bcn->getTargetNode().setAddress(IPv4Address::LL_MANET_ROUTERS.getInt());
-	bcn->getTargetNode().setSeqNum(0);
-	bcn->getTargetNode().setDist(1);
+	bcn->getTargetNodeForUpdate().setAddress(IPv4Address::LL_MANET_ROUTERS.getInt());
+	bcn->getTargetNodeForUpdate().setSeqNum(0);
+	bcn->getTargetNodeForUpdate().setDist(1);
 
 	//Set source node parameters
-	bcn->getOrigNode().setAddress(myAddr);
-	if (RESPONSIBLE_ADDRESSES_PREFIX != -1) bcn->getOrigNode().setPrefix(RESPONSIBLE_ADDRESSES_PREFIX);
-	bcn->getOrigNode().setSeqNum(ownSeqNum);
-	bcn->getOrigNode().setDist(0);
+	bcn->getOrigNodeForUpdate().setAddress(myAddr);
+	if (RESPONSIBLE_ADDRESSES_PREFIX != -1) bcn->getOrigNodeForUpdate().setPrefix(RESPONSIBLE_ADDRESSES_PREFIX);
+	bcn->getOrigNodeForUpdate().setSeqNum(ownSeqNum);
+	bcn->getOrigNodeForUpdate().setDist(0);
 
 	// Age the delivery probability for all entries{
     for(uint i=0; i<dymo_routingTable->getDTNumRoutes(); i++) {
@@ -122,7 +122,7 @@ void SAMPhO::sendBeacon() {
 		//Add neighbours only in the beacon entry field
 		if(SAMPhO_ref->isFriend(entry)) {
 		    SAORSBase_BeaconBlock bcn_entry(entry->routeAddress.getInt(), entry->routePrefix, entry->deliveryProb, entry->beaconsRcvd, entry->similarity);
-		    bcn->getBeaconEntries().push_back(bcn_entry);
+		    bcn->getBeaconEntriesForUpdate().push_back(bcn_entry);
 		}
 
 		//Add the non stranger routing table entries in the routing entries field -  no need to used almost random meetings
@@ -169,14 +169,14 @@ void SAMPhO::handleBeacon(SAORS_BEACON* my_beacon) {
 		EV << "Updating routes from Beacon failed" << endl;
 
 	// Update contact probabilities - no need to update PROPHET
-	//SAMPhO_ref->adjust_Probabilities(my_beacon->getOrigNode().getAddress(), my_beacon->getBeaconEntries());
-	SAMPhO_ref->updateBeaconCounter(my_beacon->getOrigNode().getAddress(), my_beacon->getBeaconEntries());
-	SAMPhO_ref->updateSimilarity(my_beacon->getOrigNode().getAddress(), my_beacon->getBeaconEntries());
+	//SAMPhO_ref->adjust_Probabilities(my_beacon->getOrigNodeForUpdate().getAddress(), my_beacon->getBeaconEntries());
+	SAMPhO_ref->updateBeaconCounter(my_beacon->getOrigNodeForUpdate().getAddress(), my_beacon->getBeaconEntries());
+	SAMPhO_ref->updateSimilarity(my_beacon->getOrigNodeForUpdate().getAddress(), my_beacon->getBeaconEntries());
 
 	//--------------------------------------------------------------------//
 	// Check if final destination of any packets in DT queue, sent beacon //
 	//--------------------------------------------------------------------//
-	dst_entry = SAMPhO_ref->getByAddress(IPv4Address(my_beacon->getOrigNode().getAddress()));
+	dst_entry = SAMPhO_ref->getByAddress(IPv4Address(my_beacon->getOrigNodeForUpdate().getAddress()));
 	//Sanity check -- That there is a routing table entry
 	if(!dst_entry) {
 	    EV << "ERROR: The node that just sent a beacon cannot be found in the routing table!!!" << endl;
@@ -204,9 +204,9 @@ void SAMPhO::handleBeacon(SAORS_BEACON* my_beacon) {
 	if(!my_beacon->getBeaconEntries().empty()) {
 
 		// Check all entries of beacon
-		for(std::vector<SAORSBase_BeaconBlock>::iterator iter=my_beacon->getBeaconEntries().begin(); iter < my_beacon->getBeaconEntries().end(); iter++) {
+		for(const auto &elem : my_beacon->getBeaconEntries()) {
 
-			SAORSBase_BeaconBlock iterentry=*iter;
+			SAORSBase_BeaconBlock iterentry = elem;
 
 			//Check for an entry in the DYMO routing table
 			entry = dymo_routingTable->getByAddress(iterentry.getAddress());

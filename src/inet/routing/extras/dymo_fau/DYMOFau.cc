@@ -499,7 +499,7 @@ void DYMOFau::handleLowerRMForRelay(DYMO_RM *routingMsg)
         delete routingMsg;
         return;
     }
-    routingMsg->getOrigNode().incrementDistIfAvailable();
+    routingMsg->getOrigNodeForUpdate().incrementDistIfAvailable();
     for (auto & additional_node : additional_nodes)
     {
         if (additional_node.hasDist() && (additional_node.getDist() >= 0xFF - 1))
@@ -781,15 +781,15 @@ void DYMOFau::sendRREQ(unsigned int destAddr, int msgHdrHopLimit, unsigned int t
 
     DYMO_RM *my_rreq = new DYMO_RREQ("RREQ");
     my_rreq->setMsgHdrHopLimit(msgHdrHopLimit);
-    my_rreq->getTargetNode().setAddress(destAddr);
-    if (targetSeqNum != 0) my_rreq->getTargetNode().setSeqNum(targetSeqNum);
-    if (targetDist != 0) my_rreq->getTargetNode().setDist(targetDist);
+    my_rreq->getTargetNodeForUpdate().setAddress(destAddr);
+    if (targetSeqNum != 0) my_rreq->getTargetNodeForUpdate().setSeqNum(targetSeqNum);
+    if (targetDist != 0) my_rreq->getTargetNodeForUpdate().setDist(targetDist);
 
-    my_rreq->getOrigNode().setDist(0);
-    my_rreq->getOrigNode().setAddress(myAddr);
-    if (RESPONSIBLE_ADDRESSES_PREFIX != -1) my_rreq->getOrigNode().setPrefix(RESPONSIBLE_ADDRESSES_PREFIX);
+    my_rreq->getOrigNodeForUpdate().setDist(0);
+    my_rreq->getOrigNodeForUpdate().setAddress(myAddr);
+    if (RESPONSIBLE_ADDRESSES_PREFIX != -1) my_rreq->getOrigNodeForUpdate().setPrefix(RESPONSIBLE_ADDRESSES_PREFIX);
     incSeqNum();
-    my_rreq->getOrigNode().setSeqNum(ownSeqNum);
+    my_rreq->getOrigNodeForUpdate().setSeqNum(ownSeqNum);
 
     // do not transmit DYMO messages when we lost our sequence number
     if (ownSeqNumLossTimeout->isRunning())
@@ -821,17 +821,17 @@ void DYMOFau::sendReply(unsigned int destAddr, unsigned int tSeqNum)
     if (!entry) throw cRuntimeError("Tried sending RREP via a route that just vanished");
 
     rrep->setMsgHdrHopLimit(MAX_HOPLIMIT);
-    rrep->getTargetNode().setAddress(destAddr);
-    rrep->getTargetNode().setSeqNum(entry->routeSeqNum);
-    rrep->getTargetNode().setDist(entry->routeDist);
+    rrep->getTargetNodeForUpdate().setAddress(destAddr);
+    rrep->getTargetNodeForUpdate().setSeqNum(entry->routeSeqNum);
+    rrep->getTargetNodeForUpdate().setDist(entry->routeDist);
 
     // check if ownSeqNum should be incremented
     if ((tSeqNum == 0) || (seqNumIsFresher(ownSeqNum, tSeqNum))) incSeqNum();
 
-    rrep->getOrigNode().setAddress(myAddr);
-    if (RESPONSIBLE_ADDRESSES_PREFIX != -1) rrep->getOrigNode().setPrefix(RESPONSIBLE_ADDRESSES_PREFIX);
-    rrep->getOrigNode().setSeqNum(ownSeqNum);
-    rrep->getOrigNode().setDist(0);
+    rrep->getOrigNodeForUpdate().setAddress(myAddr);
+    if (RESPONSIBLE_ADDRESSES_PREFIX != -1) rrep->getOrigNodeForUpdate().setPrefix(RESPONSIBLE_ADDRESSES_PREFIX);
+    rrep->getOrigNodeForUpdate().setSeqNum(ownSeqNum);
+    rrep->getOrigNodeForUpdate().setDist(0);
 
     // do not transmit DYMO messages when we lost our sequence number
     if (ownSeqNumLossTimeout->isRunning())
@@ -860,38 +860,38 @@ void DYMOFau::sendReplyAsIntermediateRouter(const DYMO_AddressBlock& origNode, c
     // create rrepToOrigNode
     DYMO_RREP* rrepToOrigNode = new DYMO_RREP("RREP");
     rrepToOrigNode->setMsgHdrHopLimit(MAX_HOPLIMIT);
-    rrepToOrigNode->getTargetNode().setAddress(origNode.getAddress());
-    rrepToOrigNode->getTargetNode().setSeqNum(origNode.getSeqNum());
-    if (origNode.hasDist()) rrepToOrigNode->getTargetNode().setDist(origNode.getDist() + 1);
+    rrepToOrigNode->getTargetNodeForUpdate().setAddress(origNode.getAddress());
+    rrepToOrigNode->getTargetNodeForUpdate().setSeqNum(origNode.getSeqNum());
+    if (origNode.hasDist()) rrepToOrigNode->getTargetNodeForUpdate().setDist(origNode.getDist() + 1);
 
-    rrepToOrigNode->getOrigNode().setAddress(myAddr);
-    if (RESPONSIBLE_ADDRESSES_PREFIX != -1) rrepToOrigNode->getOrigNode().setPrefix(RESPONSIBLE_ADDRESSES_PREFIX);
-    rrepToOrigNode->getOrigNode().setSeqNum(ownSeqNum);
-    rrepToOrigNode->getOrigNode().setDist(0);
+    rrepToOrigNode->getOrigNodeForUpdate().setAddress(myAddr);
+    if (RESPONSIBLE_ADDRESSES_PREFIX != -1) rrepToOrigNode->getOrigNodeForUpdate().setPrefix(RESPONSIBLE_ADDRESSES_PREFIX);
+    rrepToOrigNode->getOrigNodeForUpdate().setSeqNum(ownSeqNum);
+    rrepToOrigNode->getOrigNodeForUpdate().setDist(0);
 
     DYMO_AddressBlock additionalNode;
     additionalNode.setAddress(routeToTargetNode->routeAddress.getInt());
     if (routeToTargetNode->routeSeqNum != 0) additionalNode.setSeqNum(routeToTargetNode->routeSeqNum);
     if (routeToTargetNode->routeDist != 0) additionalNode.setDist(routeToTargetNode->routeDist);
-    rrepToOrigNode->getAdditionalNodes().push_back(additionalNode);
+    rrepToOrigNode->getAdditionalNodesForUpdate().push_back(additionalNode);
 
     // create rrepToTargetNode
     DYMO_RREP* rrepToTargetNode = new DYMO_RREP("RREP");
     rrepToTargetNode->setMsgHdrHopLimit(MAX_HOPLIMIT);
-    rrepToTargetNode->getTargetNode().setAddress(targetNode.getAddress());
-    if (targetNode.hasSeqNum()) rrepToTargetNode->getTargetNode().setSeqNum(targetNode.getSeqNum());
-    if (targetNode.hasDist()) rrepToTargetNode->getTargetNode().setDist(targetNode.getDist());
+    rrepToTargetNode->getTargetNodeForUpdate().setAddress(targetNode.getAddress());
+    if (targetNode.hasSeqNum()) rrepToTargetNode->getTargetNodeForUpdate().setSeqNum(targetNode.getSeqNum());
+    if (targetNode.hasDist()) rrepToTargetNode->getTargetNodeForUpdate().setDist(targetNode.getDist());
 
-    rrepToTargetNode->getOrigNode().setAddress(myAddr);
-    if (RESPONSIBLE_ADDRESSES_PREFIX != -1) rrepToTargetNode->getOrigNode().setPrefix(RESPONSIBLE_ADDRESSES_PREFIX);
-    rrepToTargetNode->getOrigNode().setSeqNum(ownSeqNum);
-    rrepToTargetNode->getOrigNode().setDist(0);
+    rrepToTargetNode->getOrigNodeForUpdate().setAddress(myAddr);
+    if (RESPONSIBLE_ADDRESSES_PREFIX != -1) rrepToTargetNode->getOrigNodeForUpdate().setPrefix(RESPONSIBLE_ADDRESSES_PREFIX);
+    rrepToTargetNode->getOrigNodeForUpdate().setSeqNum(ownSeqNum);
+    rrepToTargetNode->getOrigNodeForUpdate().setDist(0);
 
     DYMO_AddressBlock additionalNode2;
     additionalNode2.setAddress(origNode.getAddress());
     additionalNode2.setSeqNum(origNode.getSeqNum());
     if (origNode.hasDist()) additionalNode2.setDist(origNode.getDist() + 1);
-    rrepToTargetNode->getAdditionalNodes().push_back(additionalNode2);
+    rrepToTargetNode->getAdditionalNodesForUpdate().push_back(additionalNode2);
 
     // do not transmit DYMO messages when we lost our sequence number
     if (ownSeqNumLossTimeout->isRunning())

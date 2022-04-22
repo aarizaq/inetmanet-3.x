@@ -7,7 +7,7 @@ Test startup operation on AccessPoint that is initially down.
 
 [General]
 network = Test
-tkenv-plugin-path = ../../../etc/plugins
+
 ned-path = .;../../../../src;../../lib
 cmdenv-express-mode = false
 record-eventlog = true
@@ -50,6 +50,7 @@ snapshot-file = "${resultdir}/${configname}-${runnumber}.sna"
 
 %file: test.ned
 
+import inet.test.moduletest.lib.*;
 import inet.common.lifecycle.LifecycleController;
 import inet.node.wireless.AccessPoint;
 import inet.physicallayer.idealradio.IdealRadioMedium;

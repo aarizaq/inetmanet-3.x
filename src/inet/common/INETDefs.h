@@ -37,14 +37,30 @@
 
 #include "inet/common/Compat.h"
 
+namespace inet {
 using namespace omnetpp;
+}
 
-#if OMNETPP_VERSION < 0x0503 || OMNETPP_BUILDNUM < 1010
-#  error At least OMNeT++/OMNEST version 5.3 required
-#endif // if OMNETPP_VERSION < 0x0503
+#if OMNETPP_VERSION < 0x0507 || OMNETPP_BUILDNUM < 1020
+#  error At least OMNeT++/OMNEST version 5.7 required
+#endif // if OMNETPP_VERSION < 0x0504
 
-#define INET_VERSION  0x0307
-#define INET_PATCH_LEVEL 0x00
+#if OMNETPP_VERSION >= 0x0600 && OMNETPP_BUILDNUM < 1525
+#  error At least OMNeT++/OMNEST version 6.0pre12 required when use OMNeT++/OMNEST 6.0 versions
+#endif
+
+#define INET_VERSION  0x0308
+#define INET_PATCH_LEVEL 0x02
+
+#if OMNETPP_VERSION < 0x0600 || OMNETPP_BUILDNUM < 1525
+namespace omnetpp {
+typedef void * any_ptr;
+inline any_ptr toAnyPtr(void *p) { return p; }
+inline any_ptr toAnyPtr(const void *p) { return const_cast<void *>(p); }
+template<typename T> inline T *fromAnyPtr(any_ptr ptr) { return check_and_cast<T*>(ptr); }
+template<> inline omnetpp::cObject *fromAnyPtr(any_ptr ptr) { return static_cast<omnetpp::cObject*>(ptr); }
+}
+#endif
 
 #if OMNETPP_VERSION < 0x0600
 #define OMNETPP5_CODE(x) x

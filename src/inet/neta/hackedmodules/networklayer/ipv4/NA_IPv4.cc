@@ -103,7 +103,7 @@ void NA_IPv4::handleMessageFromAttackController(cMessage *msg) {
                 << dmsg->getDelayAttackValue() << "\n";
         delayAttackIsActive = true;
         delayAttackProbability = dmsg->getDelayAttackProbability();
-        delayAttackValue = dmsg->getDelayAttackValue();
+        delayAttackValue = dmsg->getDelayAttackValueForUpdate();
         delete (msg);
 
     } else if (not strcmp(msg->getFullName(), "delayDeactivate")) {

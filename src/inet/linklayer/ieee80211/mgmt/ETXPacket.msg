@@ -18,16 +18,10 @@
 //
 // Required for MACAddress declarations
 //
-cplusplus
-{{
-#include "inet/linklayer/common/MACAddress.h"
-}};
+import inet.linklayer.common.MACAddress;
 
 namespace inet::ieee80211;
     
-class noncobject MACAddress;
-
-
 packet ETXBasePacket
 {
      MACAddress source;

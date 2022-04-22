@@ -492,7 +492,7 @@ void Security::sendBeacon()
 {
     EV << "Sending beacon"<<endl;
     Ieee80211BeaconFrame *frame = new Ieee80211BeaconFrame("Beacon");
-    Ieee80211BeaconFrameBody& body = frame->getBody();
+    Ieee80211BeaconFrameBody& body = frame->getBodyForUpdate();
     body.setSSID(ssid.c_str());
     body.setBeaconInterval(beaconInterval);
     body.setChannelNumber(channelNumber);
@@ -775,7 +775,7 @@ void Security::startSAE(MeshInfo *mesh, simtime_t timeout)
 
     // create and send first authentication frame
     Ieee80211AuthenticationFrame *frame = new Ieee80211AuthenticationFrame("SAE msg 1/4");
-    frame->getBody().setSequenceNumber(1);
+    frame->getBodyForUpdate().setSequenceNumber(1);
     frame->encapsulate(msg);
 
     frame->setByteLength((int)sae_1);
@@ -1042,7 +1042,7 @@ void Security::handleSAE(Ieee80211AuthenticationFrame *frame)
             EV << "frameAuthSeq: " << frameAuthSeq<<endl;
             EV << "Wrong sequence number, " << mesh->authSeqExpected << " expected\n";
             Ieee80211AuthenticationFrame *resp = new Ieee80211AuthenticationFrame("SAE-ERROR");
-            resp->getBody().setStatusCode(SC_AUTH_OUT_OF_SEQ);
+            resp->getBodyForUpdate().setStatusCode(SC_AUTH_OUT_OF_SEQ);
            // resp->setByteLength(msgSize);
             sendManagementFrame(resp, frame->getTransmitterAddress());
             delete frame;
@@ -1060,15 +1060,14 @@ void Security::handleSAE(Ieee80211AuthenticationFrame *frame)
         std::stringstream buffer;
         buffer << "SAE msg " <<frameAuthSeq +1<< "/4" << std::endl;
 
-        const char* p  = buffer.str().c_str();
-        Ieee80211AuthenticationFrame *resp = new Ieee80211AuthenticationFrame(isLast ? "SAE-OK msg 4/4" : p);
-        resp->getBody().setSequenceNumber(frameAuthSeq+1);
+        Ieee80211AuthenticationFrame *resp = new Ieee80211AuthenticationFrame(isLast ? "SAE-OK msg 4/4" : buffer.str().c_str());
+        resp->getBodyForUpdate().setSequenceNumber(frameAuthSeq+1);
         resp->setByteLength(msgSize);
         // if(frameAuthSeq +1== 3)// pass status to other party
         // if(mesh->status==NOT_AUTHENTICATED)
         //    resp->getBody().setStatusCode(SC_TBTT_REQUEST);
 
-        resp->getBody().setIsLast(isLast);
+        resp->getBodyForUpdate().setIsLast(isLast);
         resp->encapsulate(msg);
 
         EV << "Delay: " <<delay <<endl;
@@ -1135,8 +1134,7 @@ void Security::startAMPE(const MACAddress& address, int side)
                 delay = (double) enc + mic_add + 2*rand_gen;
             }
             // create and send first action frame
-            const char* p  = buffer.str().c_str();
-            Ieee80211ActionFrame *frame = new  Ieee80211ActionFrame(p);
+            Ieee80211ActionFrame *frame = new  Ieee80211ActionFrame(buffer.str().c_str());
 
             /*----------------- Security msg ------------*/
             AMPEMsg *msg = new AMPEMsg();
@@ -2185,9 +2183,9 @@ Security::nonce Security::generateNonce() {
 Security::key128 Security::encrypt128(Security::key128 a, Security::key128 b){
     key128 c;
     if(a.buf.size()<2)
-        error("encrypt128:a is empty: '%d'", a.buf.size());
+        error("encrypt128:a is empty: '%zi'", a.buf.size());
     if( b.buf.size()<2)
-        error("encrypt128:b is empty: '%d'", b.buf.size());
+        error("encrypt128:b is empty: '%zi'", b.buf.size());
     for(int i=0;i<2;i++){
         c.buf.push_back(a.buf.at(i)^b.buf.at(i));
         EV<<a.buf.at(i); EV<< " XOR "; EV<< b.buf.at(i);EV<< " = "; EV<< c.buf.at(i)<<endl;
@@ -2241,9 +2239,9 @@ Security::key128 Security::computeMic128(key128 KCK, cMessage *msg){
 Security::key128 Security::encryptAMPEFrames(Security::key256 key, Security::key128 element){
     key128 c;
     if(key.buf.size()<2)
-        error("encrypt128:a is empty: '%d'", key.buf.size());
+        error("encrypt128:a is empty: '%zi'", key.buf.size());
     if( element.buf.size()<2)
-        error("encrypt128:b is empty: '%d'", element.buf.size());
+        error("encrypt128:b is empty: '%zi'", element.buf.size());
     for(int i=0;i<2;i++){
         c.buf.push_back(key.buf.at(i)^element.buf.at(i));
         EV<<key.buf.at(i); EV<< " XOR "; EV<< element.buf.at(i);EV<< " = "; EV<< c.buf.at(i)<<endl;

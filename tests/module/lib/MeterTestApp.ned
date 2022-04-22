@@ -16,6 +16,8 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
+package inet.test.moduletest.lib;
+
 //
 // This module can be used to test Diffserv meter components.
 // It is a traffic generator for the meter, and it also
@@ -27,6 +29,9 @@
 //
 // A report is written for each packet into resultFile.
 //
+
+package inet.test.moduletest.lib;
+
 simple MeterTestApp
 {
   parameters:

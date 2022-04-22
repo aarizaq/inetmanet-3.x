@@ -4,7 +4,7 @@ with the IEEE802.11 standard puncture matrix defined in the INI file.
 %#--------------------------------------------------------------------------------------------------------------
 %file: test.ned
 
-import ieee80211.Ieee80211BitDomainTest;
+import inet.test.moduletest.lib.ieee80211.Ieee80211BitDomainTest;
 import inet.physicallayer.common.bitlevel.ConvolutionalCoder;
 
 network ConvCoder
@@ -18,7 +18,7 @@ network ConvCoder
 %inifile: omnetpp.ini
 
 [General]
-tkenv-plugin-path = ../../../etc/plugins
+
 ned-path = .;../../../../src;../../lib
 cmdenv-express-mode = false
 record-eventlog = true

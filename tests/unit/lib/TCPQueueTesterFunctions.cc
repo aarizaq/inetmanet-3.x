@@ -11,7 +11,7 @@ void enqueue(TCPMsgBasedSendQueue *sq, const char *msgname, ulong numBytes)
     msg->setByteLength(numBytes);
     sq->enqueueAppData(msg);
 
-    EV << " --> " << sq->info() <<"\n";
+    EV << " --> " << sq->str() <<"\n";
 }
 
 void tryenqueue(TCPMsgBasedSendQueue *sq, const char *msgname, ulong numBytes)
@@ -27,7 +27,7 @@ void tryenqueue(TCPMsgBasedSendQueue *sq, const char *msgname, ulong numBytes)
         EV << " --> Error: " << e.what();
     }
 
-    EV << " --> " << sq->info() <<"\n";
+    EV << " --> " << sq->str() <<"\n";
 }
 
 TCPSegment *createSegmentWithBytes(TCPMsgBasedSendQueue *sq, uint32 fromSeq, uint32 toSeq)
@@ -37,11 +37,12 @@ TCPSegment *createSegmentWithBytes(TCPMsgBasedSendQueue *sq, uint32 fromSeq, uin
     ulong numBytes = toSeq-fromSeq;
     TCPSegment *tcpseg = sq->createSegmentWithBytes(fromSeq, numBytes);
 
-    for (int i=0; i<tcpseg->getPayloadArraySize(); i++)
+    for (int i=0; i<tcpseg->getPayloadMsgArraySize(); i++)
     {
-        TCPPayloadMessage& payload = tcpseg->getPayload(i);
-        uint32_t startSeq = payload.endSequenceNo - payload.msg->getByteLength();
-        EV << (i?", ":" ") << payload.msg->getName() << '[' << startSeq << ".." << payload.endSequenceNo <<')';
+        const cPacket *payloadMsg = tcpseg->getPayloadMsg(i);
+        uint32_t payloadSeq = tcpseg->getPayloadEndSequenceNo(i);
+        uint32_t startSeq = payloadSeq - payloadMsg->getByteLength();
+        EV << (i?", ":" ") << payloadMsg->getName() << '[' << startSeq << ".." << payloadSeq <<')';
     }
     EV << "\n";
 
@@ -53,7 +54,7 @@ void discardUpTo(TCPMsgBasedSendQueue *sq, uint32 seqNum)
     EV << "SQ:" << "discardUpTo(" << seqNum << "): ";
     sq->discardUpTo(seqNum);
 
-    EV << sq->info() <<"\n";
+    EV << sq->str() <<"\n";
 }
 
 //////////////////////////////////////////////////////////////
@@ -65,7 +66,7 @@ void insertSegment(TCPMsgBasedRcvQueue *rq, TCPSegment *tcpseg)
     EV << "RQ:" << "insertSeg [" << beg << ".." << end << ")";
     uint32 rcv_nxt = rq->insertBytesFromSegment(tcpseg);
     delete tcpseg;
-    EV << " --> " << rq->info() <<"\n";
+    EV << " --> " << rq->str() <<"\n";
 }
 
 void tryinsertSegment(TCPMsgBasedRcvQueue *rq, TCPSegment *tcpseg)
@@ -80,7 +81,7 @@ void tryinsertSegment(TCPMsgBasedRcvQueue *rq, TCPSegment *tcpseg)
     }
     delete tcpseg;
 
-    EV << " --> " << rq->info() <<"\n";
+    EV << " --> " << rq->str() <<"\n";
 }
 
 void extractBytesUpTo(TCPMsgBasedRcvQueue *rq, uint32 seq)
@@ -92,7 +93,7 @@ void extractBytesUpTo(TCPMsgBasedRcvQueue *rq, uint32 seq)
         EV << " < " << msg->getName() << ": " << msg->getByteLength() << " bytes >";
         delete msg;
     }
-    EV << " > --> " << rq->info() <<"\n";
+    EV << " > --> " << rq->str() <<"\n";
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -107,7 +108,7 @@ void insertSegment(TCPVirtualDataRcvQueue *q, uint32 beg, uint32 end)
     uint32 rcv_nxt = q->insertBytesFromSegment(tcpseg);
     delete tcpseg;
 
-    EV << " --> " << q->info() <<"\n";
+    EV << " --> " << q->str() <<"\n";
 }
 
 void tryinsertSegment(TCPVirtualDataRcvQueue *q, uint32 beg, uint32 end)
@@ -122,7 +123,7 @@ void tryinsertSegment(TCPVirtualDataRcvQueue *q, uint32 beg, uint32 end)
         EV << " --> Error: " << e.what();
     }
     delete tcpseg;
-    EV << " --> " << q->info() <<"\n";
+    EV << " --> " << q->str() <<"\n";
 }
 
 void extractBytesUpTo(TCPVirtualDataRcvQueue *q, uint32 seq)
@@ -134,6 +135,6 @@ void extractBytesUpTo(TCPVirtualDataRcvQueue *q, uint32 seq)
         EV << " msglen=" << msg->getByteLength();
         delete msg;
     }
-    EV << " --> " << q->info() <<"\n";
+    EV << " --> " << q->str() <<"\n";
 }
 

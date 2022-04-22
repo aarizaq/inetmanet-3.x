@@ -162,7 +162,7 @@ namespace inet {
 
 namespace neta {
 
-class NA_AODVUU : public ManetRoutingBase, public NA_HackedModule
+class NA_AODVUU : public inet::inetmanet::ManetRoutingBase, public NA_HackedModule
 {
 
   private:
@@ -200,7 +200,7 @@ class NA_AODVUU : public ManetRoutingBase, public NA_HackedModule
     /**
      * Sequence number for the simulation. Implemented as a pointer to allow random distributions values
      */
-    ParPtr seqnoAdded;
+    cPar *seqnoAdded;
 
     /**
     * Sequence number for the simulation. Implemented as a pointer to allow random distributions values

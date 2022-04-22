@@ -17,9 +17,10 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
+import inet.routing.extras.dymo_fau.DYMO_PacketBBMessage;
+import inet.routing.extras.dymo_fau.DYMO_AddressBlock;
+
 cplusplus {{
-#include "inet/routing/extras/dymo_fau/DYMO_PacketBBMessage_m.h"
-#include "inet/routing/extras/dymo_fau/DYMO_AddressBlock.h"
 #include "inet/routing/extras/dymo_fau/InspectorHelpers.h"
 #include <vector>
 #include <sys/types.h>
@@ -27,19 +28,7 @@ cplusplus {{
 
 namespace inet::inetmanet;
 
-cplusplus {{
-typedef std::vector<DYMO_AddressBlock> VectorOfDYMOAddressBlocks;
-}}
-
-
-class noncobject VectorOfDYMOAddressBlocks;
-
-class DYMO_PacketBBMessage;
-
-struct DYMO_AddressBlock;
-
-
-message DYMO_RM extends DYMO_PacketBBMessage
+packet DYMO_RM extends DYMO_PacketBBMessage
 {
     DYMO_AddressBlock targetNode;
     DYMO_AddressBlock origNode;

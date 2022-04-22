@@ -7,7 +7,7 @@ Test shutdown and startup operations on WirelessHost when transmit.
 
 [General]
 network = Test
-tkenv-plugin-path = ../../../etc/plugins
+
 ned-path = .;../../../../src;../../lib
 cmdenv-express-mode = false
 record-eventlog = true
@@ -42,6 +42,7 @@ snapshot-file = "${resultdir}/${configname}-${runnumber}.sna"
 %#--------------------------------------------------------------------------------------------------------------
 %file: test.ned
 
+import inet.test.moduletest.lib.*;
 import inet.common.lifecycle.LifecycleController;
 import inet.common.scenario.ScenarioManager;
 import inet.node.inet.AdhocHost;

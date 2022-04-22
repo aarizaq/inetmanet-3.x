@@ -16,16 +16,9 @@
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-
-cplusplus {{
-#include "inet/routing/extras/dymo_fau/DYMO_RM_m.h"
-}}
+import inet.routing.extras.dymo_fau.DYMO_RM;
 
 namespace inet::inetmanet;
-
-class DYMO_RM;
-
-
 //
 // <b> The SAORS Routing-Request Message </b>
 //

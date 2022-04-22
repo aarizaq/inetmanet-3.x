@@ -12,14 +12,14 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
+
+import inet.networklayer.common.L3Address;
+
 cplusplus {{
 #include "inet/common/INETDefs.h"
-#include "inet/networklayer/common/L3Address.h"
 }}
 
 namespace inet;
-
-class noncobject L3Address;
 
 enum PacketType
 {

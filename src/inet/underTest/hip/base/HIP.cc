@@ -26,7 +26,7 @@
 
 #include "inet/underTest/hip/base/HIP.h"
 #include "inet/networklayer/contract/ipv6/IPv6ControlInfo.h"
-#include "inet/networklayer/ipv6/IPv6ExtensionHeaders_m.h"
+#include "inet/networklayer/contract/ipv6/IPv6ExtensionHeaders_m.h"
 #include "inet/networklayer/ipv6/IPv6Datagram.h"
 #include "inet/underTest/hip/application/DNSBaseMsg_m.h"
 #include "inet/underTest/hip/application/DNSRegRvsMsg_m.h"
@@ -589,7 +589,7 @@ int HIP::getTempId()
 }
 
 // Creates a new FSM and returns its pointer
-cModule* HIP::createStateMachine(IPv6Address ipAddress, IPv6Address &HIT)
+cModule* HIP::createStateMachine(const IPv6Address &ipAddress, const IPv6Address &HIT)
 {
     cModule *newFsm = fsmType->createScheduleInit("HipFsm", this);
     hitToIpMapEntryWork = new HitToIpMapEntry();

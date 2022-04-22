@@ -88,7 +88,7 @@ static ostream &operator<<(ostream &out, IGMPMessage* msg)
             IGMPv3Report *report = check_and_cast<IGMPv3Report*>(msg);
             for (unsigned int i = 0; i < report->getGroupRecordArraySize(); i++)
             {
-                GroupRecord &record = report->getGroupRecord(i);
+                const GroupRecord &record = report->getGroupRecord(i);
                 out << (i>0?", ":"") << record.groupAddress << "=";
                 switch (record.recordType)
                 {
@@ -123,7 +123,7 @@ void IGMPTester::initialize(int stage)
         MACAddress address("AA:00:00:00:00:01");
         interfaceEntry->setMACAddress(address);
         interfaceEntry->setInterfaceToken(address.formInterfaceIdentifier());
-        interfaceEntry->setMtu(par("mtu").intValue());
+        interfaceEntry->setMtu(par("mtu"));
         interfaceEntry->setMulticast(true);
         interfaceEntry->setBroadcast(true);
 
@@ -264,7 +264,7 @@ void IGMPTester::processSendCommand(const cXMLElement &node)
             const char *sourcesStr = recordNode->getAttribute("sources");
             ASSERT(groupStr);
 
-            GroupRecord &record = msg->getGroupRecord(i);
+            GroupRecord &record = msg->getGroupRecordForUpdate(i);
             record.groupAddress = IPv4Address(groupStr);
             parseIPv4AddressVector(sourcesStr, record.sourceList);
             record.recordType = recordTypeStr == "IS_IN" ? MODE_IS_INCLUDE :
@@ -370,7 +370,7 @@ void IGMPTester::processDumpCommand(string what, InterfaceEntry *ie)
         {
             IPv4Address group = ie->ipv4Data()->getJoinedMulticastGroup(i);
             const IPv4MulticastSourceList &sourceList = ie->ipv4Data()->getJoinedMulticastSources(i);
-            EV << (i==0?"":", ") << group << " " << sourceList.info();
+            EV << (i==0?"":", ") << group << " " << sourceList.str();
         }
     }
     else if (what == "listeners")
@@ -379,7 +379,7 @@ void IGMPTester::processDumpCommand(string what, InterfaceEntry *ie)
         {
             IPv4Address group = ie->ipv4Data()->getReportedMulticastGroup(i);
             const IPv4MulticastSourceList &sourceList = ie->ipv4Data()->getReportedMulticastSources(i);
-            EV << (i==0?"":", ") << group << " " << sourceList.info();
+            EV << (i==0?"":", ") << group << " " << sourceList.str();
         }
     }
 

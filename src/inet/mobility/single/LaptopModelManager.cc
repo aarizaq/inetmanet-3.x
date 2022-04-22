@@ -124,13 +124,19 @@ void LaptopModelManager::newNode(const char * name, const char * type,bool setCo
 {
     cModule* parentmod = getParentModule();
     int nodeVectorIndex = index;
-    if (!parentmod) error("Parent Module not found");
+    if (!parentmod)
+        throw cRuntimeError("Parent Module not found");
 
     cModuleType* nodeType = cModuleType::get(type);
-    if (!nodeType) error("Module Type \"%s\" not found", type);
+    if (!nodeType)
+        throw cRuntimeError("Module Type \"%s\" not found", type);
 
     //TODO: this trashes the vectsize member of the cModule, although nobody seems to use it
+#if OMNETPP_VERSION >= 0x0600 && OMNETPP_BUILDNUM >= 1516
+    cModule* mod = nodeType->create(name, parentmod, nodeVectorIndex);
+#else
     cModule* mod = nodeType->create(name, parentmod, nodeVectorIndex, nodeVectorIndex);
+#endif
     mod->finalizeParameters();
     mod->buildInside();
     mod->scheduleStart(simTime());

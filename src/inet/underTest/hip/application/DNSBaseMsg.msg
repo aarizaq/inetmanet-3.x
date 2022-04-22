@@ -28,15 +28,10 @@
 // Message class used by DNSBase.
 //
 
-cplusplus {{
-#include "inet/networklayer/common/L3Address.h"
-}}
+import inet.networklayer.common.L3Address;
+
 
 namespace inet;
-
-class noncobject L3Address;
-
-
 
 packet DNSBaseMsg
 {

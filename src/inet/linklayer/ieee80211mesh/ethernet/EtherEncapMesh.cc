@@ -86,7 +86,7 @@ void EtherEncapMesh::processFrameFromMAC(EtherFrame *frame)
        {
            // Fragment, is the last?
            EV << "reassemble wifi frame over ethernet " << endl;
-           if (frameMesh->getIsFragment())
+           if (frameMesh->isFragment())
            {
                delete higherlayermsg;
                delete frame;
@@ -102,7 +102,7 @@ void EtherEncapMesh::processFrameFromMAC(EtherFrame *frame)
        {
            // Fragment, is the last?
            EV << "reassemble wifi frame over ethernet " << endl;
-           if (frameAction->getIsFragment())
+           if (frameAction->isFragment())
            {
                delete higherlayermsg;
                delete frame;

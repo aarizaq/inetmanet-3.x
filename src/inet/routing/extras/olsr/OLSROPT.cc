@@ -96,7 +96,7 @@ OLSROPT::recv_olsr(cMessage* msg)
     assert(op->msgArraySize() >= 0 && op->msgArraySize() <= OLSR_MAX_MSGS);
     for (int i = 0; i < (int) op->msgArraySize(); i++)
     {
-        OLSR_msg& msg = op->msg(i);
+        OLSR_msg& msg = op->getMsgForUpdate(i);
 
         // If ttl is less than or equal to zero, or
         // the receiver is the same as the originator,

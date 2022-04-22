@@ -13,22 +13,21 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 //
 
+import inet.networklayer.contract.ipv4.IPv4Address;
+
 cplusplus {{
 #include "inet/networklayer/ipv4/IPv4Route.h"
-#include "inet/networklayer/contract/ipv4/IPv4Address.h"
 }}
 
 namespace inet;
-
-class noncobject IPv4Address;
 
 class IPv4Route extends cNamedObject
 {
     @existingClass(true);
     @descriptor(readonly);
-    IPv4Address destination @opaque;
-    IPv4Address netmask @opaque;
-    IPv4Address gateway @opaque;
+    IPv4Address destination;
+    IPv4Address netmask;
+    IPv4Address gateway;
     int metric;
     int prefixLength;
     string interfaceName;

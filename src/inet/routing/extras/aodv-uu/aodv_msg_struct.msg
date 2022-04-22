@@ -15,12 +15,10 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-
+import inet.networklayer.common.L3Address;
 cplusplus {{
 #include "aodv_msg_struct.h"
 }}
-
-class noncobject inet::L3Address;
 
 namespace inet::inetmanet;
 
@@ -30,7 +28,17 @@ struct AODV_ext
     @descriptor(readonly);
     uint8_t type;
     uint8_t length;
+    
     //TODO char *pointer;
+}
+
+struct RERR_udest
+{
+    @existingClass(true);
+    @descriptor(readonly);
+    //uint32_t dest_addr;
+    L3Address dest_addr;
+    uint32_t dest_seqno;
 }
 
 //
@@ -49,14 +57,6 @@ packet AODV_msg
 //
 // Extra unreachable destinations
 //
-struct RERR_udest
-{
-    @existingClass(true);
-    @descriptor(readonly);
-    //uint32_t dest_addr;
-    L3Address dest_addr;
-    uint32_t dest_seqno;
-}
 
 packet RERR extends AODV_msg
 {

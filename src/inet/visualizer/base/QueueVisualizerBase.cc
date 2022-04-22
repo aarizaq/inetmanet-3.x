@@ -22,22 +22,13 @@ namespace inet {
 
 namespace visualizer {
 
-#if OMNETPP_VERSION < 0x0600 || OMNETPP_BUILDNUM < 1506
-void QueueVisualizerBase::QueueVisitor::visit(cObject *object)
+VISIT_RETURNTYPE QueueVisualizerBase::QueueVisitor::visit(cObject *object)
 {
     if (auto queue = dynamic_cast<PacketQueue *>(object))
         queues.push_back(queue);
     object->forEachChild(this);
+    VISIT_RETURN(true);
 }
-#else
-bool QueueVisualizerBase::QueueVisitor::visit(cObject *object)
-{
-    if (auto queue = dynamic_cast<PacketQueue *>(object))
-        queues.push_back(queue);
-    object->forEachChild(this);
-    return true;
-}
-#endif
 
 QueueVisualizerBase::QueueVisualization::QueueVisualization(PacketQueue *queue) :
     queue(queue)

@@ -43,7 +43,6 @@ namespace ieee80211 {
 
 class SecurityWPA2 : public cSimpleModule, public cListener, public SecurityKeys
 {
-        const char *msg;
 
 public:
          long totalAuthTimeout;

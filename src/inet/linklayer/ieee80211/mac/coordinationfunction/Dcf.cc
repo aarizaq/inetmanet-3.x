@@ -82,6 +82,7 @@ void Dcf::handleMessage(cMessage* msg)
 
 void Dcf::channelGranted(IChannelAccess *channelAccess)
 {
+    Enter_Method("channelGranted");
     ASSERT(dcfChannelAccess == channelAccess);
     if (!frameSequenceHandler->isSequenceRunning())
         frameSequenceHandler->startFrameSequence(new DcfFs(), buildContext(), this);
@@ -90,6 +91,7 @@ void Dcf::channelGranted(IChannelAccess *channelAccess)
 void Dcf::processUpperFrame(Ieee80211DataOrMgmtFrame* frame)
 {
     Enter_Method("processUpperFrame(%s)", frame->getName());
+    take(frame);
     EV_INFO << "Processing upper frame: " << frame->getName() << endl;
     if (pendingQueue->insert(frame)) {
         EV_INFO << "Frame " << frame->getName() << " has been inserted into the PendingQueue." << endl;
@@ -106,6 +108,7 @@ void Dcf::processUpperFrame(Ieee80211DataOrMgmtFrame* frame)
 
 void Dcf::transmitControlResponseFrame(Ieee80211Frame* responseFrame, Ieee80211Frame* receivedFrame)
 {
+    Enter_Method("transmitControlResponseFrame");
     const IIeee80211Mode *responseMode = nullptr;
     if (auto rtsFrame = dynamic_cast<Ieee80211RTSFrame*>(receivedFrame))
         responseMode = rateSelection->computeResponseCtsFrameMode(rtsFrame);
@@ -347,6 +350,16 @@ void Dcf::corruptedFrameReceived()
             frameSequenceHandler->handleStartRxTimeout();
     }
 }
+
+#if OMNETPP_BUILDNUM >= 1505   //OMNETPP_VERSION < 0x0600    // 6.0 pre9
+void Dcf::preDelete(cComponent *)
+{
+    delete inProgressFrames;
+    inProgressFrames = nullptr;
+    delete pendingQueue;
+    pendingQueue = nullptr;
+}
+#endif
 
 Dcf::~Dcf()
 {

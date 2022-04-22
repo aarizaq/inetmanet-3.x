@@ -459,7 +459,7 @@ void SecurityWPA2::sendBeacon()
 {
     EV << "Sending beacon"<<endl;
     Ieee80211BeaconFrame *frame = new Ieee80211BeaconFrame("Beacon");
-    Ieee80211BeaconFrameBody& body = frame->getBody();
+    Ieee80211BeaconFrameBody& body = frame->getBodyForUpdate();
     body.setSSID(ssid.c_str());
     body.setBeaconInterval(beaconInterval);
     body.setChannelNumber(channelNumber);
@@ -690,7 +690,7 @@ void SecurityWPA2::sendOpenAuthenticateRequest(MeshInfo *mesh)//, simtime_t time
     EV << "Sending Open Auth-Req" <<endl;
     // create and send first authentication frame
     Ieee80211AuthenticationFrame *frame = new Ieee80211AuthenticationFrame("Open Auth-Req");
-    frame->getBody().setSequenceNumber(100);
+    frame->getBodyForUpdate().setSequenceNumber(100);
     frame->setByteLength(34);
 
     mesh->isCandidate=0;
@@ -706,7 +706,7 @@ void SecurityWPA2::sendOpenAuthenticateRequest(MeshInfo *mesh)//, simtime_t time
 void SecurityWPA2::handleOpenAuthenticationFrame(Ieee80211AuthenticationFrame *frame)
 {
     EV <<frame->getTransmitterAddress() <<endl;
-    int frameAuthSeq = frame->getBody().getSequenceNumber();
+    int frameAuthSeq = frame->getBodyForUpdate().getSequenceNumber();
 
     // create Mesh entry if needed
     MeshInfo *mesh = lookupMesh(frame->getTransmitterAddress());
@@ -741,8 +741,8 @@ void SecurityWPA2::handleOpenAuthenticationFrame(Ieee80211AuthenticationFrame *f
             EV << "Open Auth-Req arrived, send Response"<<endl;
 
             Ieee80211AuthenticationFrame *resp = new Ieee80211AuthenticationFrame("Open Auth-Resp");
-            resp->getBody().setSequenceNumber(frameAuthSeq+100);
-            resp->getBody().setStatusCode(SC_SUCCESSFUL);
+            resp->getBodyForUpdate().setSequenceNumber(frameAuthSeq+100);
+            resp->getBodyForUpdate().setStatusCode(SC_SUCCESSFUL);
             resp->setByteLength(34);
 
             ASSERT(mesh->authTimeoutMsg_b==nullptr);
@@ -840,7 +840,7 @@ void SecurityWPA2::startAuthentication(MeshInfo *mesh, simtime_t timeout)
     EV << "Sending NonceA" <<endl;
     // create and send first authentication frame
     Ieee80211AuthenticationFrame *frame = new Ieee80211AuthenticationFrame("Auth msg 1/4");
-    frame->getBody().setSequenceNumber(1);
+    frame->getBodyForUpdate().setSequenceNumber(1);
 
     //Set Nonce A in Frame
     msg->setByteLength(103);
@@ -1171,7 +1171,7 @@ void SecurityWPA2::handleAuthenticationFrame(Ieee80211AuthenticationFrame *frame
         EV << "frameAuthSeq: " << frameAuthSeq<<endl;
         EV << "Wrong sequence number, " << mesh->authSeqExpected << " expected\n";
         Ieee80211AuthenticationFrame *resp = new Ieee80211AuthenticationFrame("Auth-ERROR");
-        resp->getBody().setStatusCode(SC_AUTH_OUT_OF_SEQ);
+        resp->getBodyForUpdate().setStatusCode(SC_AUTH_OUT_OF_SEQ);
         sendManagementFrame(resp, frame->getTransmitterAddress());
         delete frame;
         delete msg;
@@ -1190,18 +1190,17 @@ void SecurityWPA2::handleAuthenticationFrame(Ieee80211AuthenticationFrame *frame
     std::stringstream buffer;
     buffer << "Auth msg " <<frameAuthSeq +1<< "/4" << std::endl;
 
-    const char* p  = buffer.str().c_str();
-    Ieee80211AuthenticationFrame *resp = new Ieee80211AuthenticationFrame(isLast ? "Auth-OK msg 4/4" : p);
-    resp->getBody().setSequenceNumber(frameAuthSeq+1);
+    Ieee80211AuthenticationFrame *resp = new Ieee80211AuthenticationFrame(isLast ? "Auth-OK msg 4/4" : buffer.str().c_str());
+    resp->getBodyForUpdate().setSequenceNumber(frameAuthSeq+1);
 
     if(frameAuthSeq +1== 3)
     {  // pass status to other party
         EV <<"MHN"<<endl;
         if(mesh->status==NOT_AUTHENTICATED)
-            resp->getBody().setStatusCode(SC_TBTT_REQUEST);
+            resp->getBodyForUpdate().setStatusCode(SC_TBTT_REQUEST);
 
     }
-    resp->getBody().setIsLast(isLast);
+    resp->getBodyForUpdate().setIsLast(isLast);
     resp->encapsulate(msg);
 
     EV << "Delay: " <<delay <<endl;
@@ -1264,14 +1263,14 @@ void SecurityWPA2::sendGroupHandshakeMsg(MeshInfo *mesh,  simtime_t timeout)
 
     EV << "Initialize Group key Handshake\n";
     if(mesh->groupAuthTimeoutMsg!=nullptr)
-        error("startAuthentication: already authenticated with Mesh address=", mesh->address.str().c_str());
+        throw cRuntimeError("startAuthentication: already authenticated with Mesh address= %s", mesh->address.str().c_str());
     double delay=0;
 
     EV << " Final: " << mesh->PTK_final.buf.at(0) << ""<< mesh->PTK_final.buf.at(1) <<endl;
 
     // create and send first authentication frame
     Ieee80211AuthenticationFrame *frame = new Ieee80211AuthenticationFrame("Group msg 1/2");
-    frame->getBody().setSequenceNumber(1);
+    frame->getBodyForUpdate().setSequenceNumber(1);
 
     SecurityPkt *msg = new SecurityPkt();
     //Pick Random GTK(128)
@@ -1331,8 +1330,8 @@ void SecurityWPA2::handleGroupHandshakeFrame(Ieee80211AuthenticationFrame *frame
 
                 EV << "Group msg 1/2 arrived"<<endl;
                 Ieee80211AuthenticationFrame *resp = new Ieee80211AuthenticationFrame("Group msg 2/2");
-                resp->getBody().setSequenceNumber(frameAuthSeq+1);
-                resp->getBody().setStatusCode(SC_SUCCESSFUL);
+                resp->getBodyForUpdate().setSequenceNumber(frameAuthSeq+1);
+                resp->getBodyForUpdate().setStatusCode(SC_SUCCESSFUL);
 
                 //verify Mic (ok1)
                 for(int i=0;i<12;i++)
@@ -1340,9 +1339,9 @@ void SecurityWPA2::handleGroupHandshakeFrame(Ieee80211AuthenticationFrame *frame
                 msg->setDescriptor_Type(1,'1');
 
                 if(mesh->KCK.buf.size()<2)
-                    error("mesh->KCK is empty: '%d'", mesh->KCK.buf.size());
+                    throw cRuntimeError("mesh->KCK is empty: '%zu'", mesh->KCK.buf.size());
                 if(mesh->KEK.buf.size()<2)
-                    error("mesh->KEK is empty: '%d'", mesh->KEK.buf.size());
+                    throw cRuntimeError("mesh->KEK is empty: '%zu'", mesh->KEK.buf.size());
                 clearKey128(mesh->TempMIC);
                 mesh->TempMIC = computeMic128(mesh->KCK, msg);
 
@@ -1401,7 +1400,7 @@ void SecurityWPA2::handleGroupHandshakeFrame(Ieee80211AuthenticationFrame *frame
                 msg->setDescriptor_Type(1,'1');
 
                 if(mesh->KCK.buf.size()<2)
-                    error("mesh->KCK is empty: '%d'", mesh->KCK.buf.size());
+                    error("mesh->KCK is empty: '%zu'", mesh->KCK.buf.size());
                 clearKey128(mesh->TempMIC);
                 mesh->TempMIC = computeMic128(mesh->KCK, msg);
                 if(msg->getKey_Info()==0)
@@ -2125,9 +2124,9 @@ SecurityWPA2::nonce SecurityWPA2::generateNonce() {
 SecurityWPA2::key128 SecurityWPA2::encrypt128(SecurityWPA2::key128 a, SecurityWPA2::key128 b){
     key128 c;
     if(a.buf.size()<2)
-        error("encrypt128:a is empty: '%d'", a.buf.size());
+        error("encrypt128:a is empty: '%zu'", a.buf.size());
     if( b.buf.size()<2)
-        error("encrypt128:b is empty: '%d'", b.buf.size());
+        error("encrypt128:b is empty: '%zu'", b.buf.size());
     for(int i=0;i<2;i++){
         c.buf.push_back(a.buf.at(i)^b.buf.at(i));
         EV<<a.buf.at(i); EV<< " XOR "; EV<< b.buf.at(i);EV<< " = "; EV<< c.buf.at(i)<<endl;

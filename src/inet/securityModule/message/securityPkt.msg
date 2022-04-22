@@ -1,22 +1,18 @@
-class noncobject MACAddress;
+
+import inet.linklayer.common.MACAddress;
+import inet.linklayer.ieee80211.mgmt.Ieee80211MgmtFrames;
 
 cplusplus {{
 #include "inet/common/INETDefs.h"
-}}
-
-cplusplus {{
-#include "inet/linklayer/common/MACAddress.h"
-#include "inet/linklayer/ieee80211/mgmt/Ieee80211MgmtFrames_m.h"
 #include "inet/securityModule/Security.h"
 #include "inet/securityModule/SecurityKeys.h"
 #include <iostream>
 #include <vector>
-
 }}
 
 namespace inet::ieee80211;
     
-class noncobject Security;
+//class  Security  { @existingClass(true); @descriptor(readonly);}
 
 cplusplus {{
 typedef SecurityKeys::nonce nonce;
@@ -26,31 +22,26 @@ typedef SecurityKeys::key384 key384;
 typedef SecurityKeys::mic mic;
 typedef SecurityKeys::unit64_t_ unit64_t_;
 }}
-class noncobject nonce;
-class noncobject key128;
-class noncobject key256;
-class noncobject key384;
-class noncobject mic;
-class noncobject std;
-class noncobject unit64_t_;
-packet Ieee80211ManagementFrame;
-packet Ieee80211MeshFrame;
 
+class nonce { @existingClass; @opaque;}
+class key128 { @existingClass; @opaque;}
+class key256 { @existingClass; @opaque;}
+class key384 { @existingClass; @opaque;}
+class mic { @existingClass; @opaque;}
 
 packet SecurityPkt //extends Ieee80211ManagementFrame
 {
     char Descriptor_Type[12];
    // char Descriptor_Type=0;
-    short Key_Info=0;
-    short Key_Length=0;
-    unit64_t_ Key_RC;
+    short Key_Info = 0;
+    short Key_Length = 0;
+    uint64_t Key_RC;
     nonce Key_Nonce;
     key128 EAPOL_KeyIV;
-    unit64_t_ Key_RSC=0; //Key Replay Conter
-    unit64_t_ Reserved=0;
+    uint64_t Key_RSC = 0; //Key Replay Conter
+    uint64_t Reserved = 0;
     key128 Mic;
-  	short Key_Data_Length=0;
-  	
+  	short Key_Data_Length = 0;  	
     key128 Key_Data128;
   	key256 Key_Data256;
 }
@@ -59,8 +50,8 @@ packet SecurityPkt //extends Ieee80211ManagementFrame
 // Ieee80211DataFrame
 packet CCMPFrame //extends Ieee80211MeshFrame
 {
-    unit64_t_ CCMP_Header; //8 octets
-    unit64_t_ CCMP_Mic; 	
+    uint64_t CCMP_Header; //8 octets
+    uint64_t CCMP_Mic; 	
   //  key128 encryptedData128;  
 }
 

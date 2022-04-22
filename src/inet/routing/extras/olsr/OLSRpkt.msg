@@ -17,10 +17,10 @@
 // *   Free Software Foundation, Inc.,                                       *
 // *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
 // ***************************************************************************
+import inet.networklayer.common.L3Address;
 
 cplusplus {{
 #include "inet/routing/extras/olsr/OLSR_ETX_parameter.h"
-#include "inet/networklayer/common/L3Address.h"
 #include <string.h>
 }}
 
@@ -387,7 +387,7 @@ typedef struct OLSR_msg {
 }}
 
 
-struct OLSR_msg;
+struct OLSR_msg { @existingClass; @opaque;}
 
 //
 // Represents an OLSR packet

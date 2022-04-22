@@ -6,6 +6,7 @@ Topology:
 
 %file: test.ned
 
+import inet.test.moduletest.lib.*;
 import inet.networklayer.configurator.ipv4.IPv4NetworkConfigurator;
 import inet.node.ethernet.Eth10M;
 import inet.node.ethernet.EtherSwitch;
@@ -40,7 +41,7 @@ network Test
 [General]
 network = Test
 cmdenv-express-mode = false
-tkenv-plugin-path = ../../../etc/plugins
+
 ned-path = .;../../../../src;../../lib
 sim-time-limit = 1s
 

@@ -6,7 +6,7 @@ Test node shutdown followed by ping start.
 
 [General]
 network = Test
-tkenv-plugin-path = ../../../etc/plugins
+
 ned-path = .;../../../../src;../../lib
 cmdenv-express-mode = false
 
@@ -27,6 +27,7 @@ snapshot-file = "${resultdir}/${configname}-${runnumber}.sna"
 
 %file: test.ned
 
+import inet.test.moduletest.lib.*;
 import inet.node.inet.StandardHost;
 import inet.common.lifecycle.LifecycleController;
 import inet.common.scenario.ScenarioManager;

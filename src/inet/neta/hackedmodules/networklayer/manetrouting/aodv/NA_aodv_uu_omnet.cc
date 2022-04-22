@@ -384,7 +384,7 @@ void NS_CLASS handleMessageFromAttackController(cMessage *msg){
         sinkholeAttackIsActive = true;
         sinkholeAttackProbability = dmsg->getSinkholeAttackProbability();
         sinkOnlyWhenRouteInTable = dmsg->getSinkOnlyWhenRouteInTable();
-        seqnoAdded = dmsg->getSeqnoAdded();
+        seqnoAdded = dmsg->getSeqnoAddedForUpdate();
         numHops = dmsg->getNumHops();
         delete(msg);
 

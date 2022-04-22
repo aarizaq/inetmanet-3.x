@@ -182,10 +182,10 @@ void DYMO::processSelfMessage(cMessage *message)
 
 void DYMO::processMessage(cMessage *message)
 {
-    if (dynamic_cast<UDPPacket *>(message))
-        processUDPPacket((UDPPacket *)message);
+    if (auto udpPacket = dynamic_cast<UDPPacket *>(message))
+        processUDPPacket(udpPacket);
     else
-        throw cRuntimeError("Unknown message");
+        throw cRuntimeError("Unknown message (not an UDPPacket)");
 }
 
 //
@@ -401,8 +401,7 @@ void DYMO::sendUDPPacket(UDPPacket *packet, double delay)
 void DYMO::processUDPPacket(UDPPacket *packet)
 {
     cPacket *encapsulatedPacket = packet->decapsulate();
-    if (dynamic_cast<DYMOPacket *>(encapsulatedPacket)) {
-        DYMOPacket *dymoPacket = (DYMOPacket *)encapsulatedPacket;
+    if (DYMOPacket *dymoPacket = dynamic_cast<DYMOPacket *>(encapsulatedPacket)) {
         dymoPacket->setControlInfo(packet->removeControlInfo());
         processDYMOPacket(dymoPacket);
     }
@@ -455,8 +454,8 @@ void DYMO::processDYMOPacket(DYMOPacket *packet)
 bool DYMO::permissibleRteMsg(RteMsg *rteMsg)
 {
     // 7.5. Handling a Received RteMsg
-    AddressBlock& originatorNode = rteMsg->getOriginatorNode();
-    AddressBlock& targetNode = rteMsg->getTargetNode();
+    const AddressBlock& originatorNode = rteMsg->getOriginatorNode();
+    const AddressBlock& targetNode = rteMsg->getTargetNode();
     INetworkProtocolControlInfo *networkProtocolControlInfo = check_and_cast<INetworkProtocolControlInfo *>(rteMsg->getControlInfo());
     // 1. HandlingRtr MUST handle AODVv2 messages only from adjacent
     //    routers as specified in Section 5.4. AODVv2 messages from other
@@ -513,15 +512,15 @@ void DYMO::processRteMsg(RteMsg *rteMsg)
     //    RteMsg as speciied in Section 6.1.
     updateCost(rteMsg);
     if (dynamic_cast<RREQ *>(rteMsg))
-        updateRoutes(rteMsg, rteMsg->getOriginatorNode());
+        updateRoutes(rteMsg, rteMsg->getOriginatorNodeForUpdate());
     else if (dynamic_cast<RREP *>(rteMsg))
-        updateRoutes(rteMsg, rteMsg->getTargetNode());
+        updateRoutes(rteMsg, rteMsg->getTargetNodeForUpdate());
     // 2. HandlingRtr MAY process AddedNode routing information (if
     //    present) as specified in Section 13.7.1 Otherwise, if AddedNode
     //    information is not processed, it MUST be deleted.
     int count = rteMsg->getAddedNodeArraySize();
     for (int i = 0; i < count; i++)
-        updateRoutes(rteMsg, rteMsg->getAddedNode(i));
+        updateRoutes(rteMsg, rteMsg->getAddedNodeForUpdate(i));
     // 3. By sending the updated RteMsg, HandlingRtr advertises that it
     //    will route for addresses contained in the outgoing RteMsg based
     //    on the information enclosed.  HandlingRtr MAY choose not to send
@@ -599,8 +598,8 @@ int DYMO::computeRteMsgBitLength(RteMsg *rteMsg)
 RREQ *DYMO::createRREQ(const L3Address& target, int retryCount)
 {
     RREQ *rreq = new RREQ("RREQ");
-    AddressBlock& originatorNode = rreq->getOriginatorNode();
-    AddressBlock& targetNode = rreq->getTargetNode();
+    AddressBlock& originatorNode = rreq->getOriginatorNodeForUpdate();
+    AddressBlock& targetNode = rreq->getTargetNodeForUpdate();
     // 7.3. RREQ Generation
     // 1. RREQ_Gen MUST increment its OwnSeqNum by one (1) according to the
     //    rules specified in Section 5.5.
@@ -726,8 +725,8 @@ RREP *DYMO::createRREP(RteMsg *rteMsg, IRoute *route)
 {
     DYMORouteData *routeData = check_and_cast<DYMORouteData *>(route->getProtocolData());
     RREP *rrep = new RREP("RREP");
-    AddressBlock& originatorNode = rrep->getOriginatorNode();
-    AddressBlock& targetNode = rrep->getTargetNode();
+    AddressBlock& originatorNode = rrep->getOriginatorNodeForUpdate();
+    AddressBlock& targetNode = rrep->getTargetNodeForUpdate();
     // 1. RREP_Gen first uses the routing information to update its route
     //    table entry for OrigNode if necessary as specified in Section 6.2.
     // NOTE: this is already done
@@ -823,7 +822,7 @@ void DYMO::processRREP(RREP *rrepIncoming)
         }
     }
     else
-        EV_WARN << "Dropping non-permissible RREQ" << endl;
+        EV_WARN << "Dropping non-permissible RREP" << endl;
     delete rrepIncoming;
 }
 
@@ -961,7 +960,7 @@ void DYMO::processRERR(RERR *rerrIncoming)
         // Route is found, processing is complete for that UnreachableNode.Address.
         std::vector<L3Address> unreachableAddresses;
         for (int i = 0; i < (int)rerrIncoming->getUnreachableNodeArraySize(); i++) {
-            AddressBlock& addressBlock = rerrIncoming->getUnreachableNode(i);
+            AddressBlock addressBlock = rerrIncoming->getUnreachableNode(i);
             for (int j = 0; j < routingTable->getNumRoutes(); j++) {
                 IRoute *route = routingTable->getRoute(j);
                 if (route->getSource() == this) {
@@ -1179,7 +1178,7 @@ void DYMO::updateRoute(RteMsg *rteMsg, AddressBlock& addressBlock, IRoute *route
 void DYMO::updateCost(RteMsg *rteMsg) {
     RREQ * rreq = dynamic_cast<RREQ *>(rteMsg);
     if (rreq != nullptr) {
-        AddressBlock& originatorNode = rreq->getOriginatorNode();
+        auto originatorNode = rreq->getOriginatorNodeForUpdate();
         if (originatorNode.getHasMetric()
                 && (originatorNode.getMetricType() == DYMOMetricType::HOP_COUNT)) {
             originatorNode.setMetric(originatorNode.getMetric() + 1);
@@ -1187,7 +1186,7 @@ void DYMO::updateCost(RteMsg *rteMsg) {
 
         int count = rreq->getAddedNodeArraySize();
         for (int i = 0; i < count; i++) {
-            AddressBlock& addrBl = rreq->getAddedNode(i);
+            AddressBlock& addrBl = rreq->getAddedNodeForUpdate(i);
             if (addrBl.getHasMetric()
                     && (addrBl.getMetricType() == DYMOMetricType::HOP_COUNT)) {
                 addrBl.setMetric(addrBl.getMetric() + 1);

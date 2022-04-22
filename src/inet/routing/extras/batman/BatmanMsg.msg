@@ -18,8 +18,10 @@
 // *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
 // ***************************************************************************
 
+import inet.networklayer.common.L3Address;
+import inet.networklayer.contract.ipv4.IPv4Address;
+
 cplusplus {{
-#include "inet/networklayer/common/L3Address.h"
 #define DIRECTLINK 0x40
 #define UNIDIRECTIONAL 0x80
 
@@ -33,8 +35,6 @@ cplusplus {{
 
 }}
 
-class noncobject inet::IPv4Address;
-class noncobject inet::L3Address;
 
 namespace inet::inetmanet;
 

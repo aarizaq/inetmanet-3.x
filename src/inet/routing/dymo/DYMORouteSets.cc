@@ -50,8 +50,8 @@ bool DYMORouteSet::checkRREQ(RREQ *rreq) {
         return false;
 
     // Only check RREQ
-    AddressBlock& originatorNode = rreq->getOriginatorNode();
-    AddressBlock& targetNode = rreq->getTargetNode();
+    const AddressBlock &originatorNode = rreq->getOriginatorNode();
+    const AddressBlock &targetNode = rreq->getTargetNode();
 
     // ignore self messages
     if (selfAddress == originatorNode.getAddress())
@@ -144,7 +144,7 @@ bool DYMORouteSet::checkRERR(RERR *rerr) {
     std::vector<AddressBlock> remove;
     for (unsigned int i = 0; i < rerr->getUnreachableNodeArraySize(); i++)
     {
-        AddressBlock& addressBlock = rerr->getUnreachableNode(i);
+        const AddressBlock &addressBlock = rerr->getUnreachableNode(i);
         info.unreachableAddress = addressBlock.getAddress();
         auto it = errorRouteSet.find(info);
         if (it == errorRouteSet.end() || it->timeout < simTime())

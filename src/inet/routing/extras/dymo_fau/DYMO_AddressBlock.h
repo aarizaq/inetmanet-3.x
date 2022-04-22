@@ -142,7 +142,16 @@ class DYMO_AddressBlock
         this->setDist(this->getDist() + 1);
     }
 
+    std::string str() const
+    {
+        std::ostringstream  o;
+        o << "addr " << address << " seq " <<seqNum;
+        return o.str();
+    }
+
 };
+
+typedef std::vector<DYMO_AddressBlock> VectorOfDYMOAddressBlocks;
 
 } // namespace inetmanet
 

@@ -1,3 +1,5 @@
+package inet.test.moduletest.lib;
+
 import inet.node.inet.StandardHost;
 import inet.transportlayer.sctp.SCTPNatRouter;
 import inet.node.inet.Router;
@@ -5,7 +7,7 @@ import ned.DatarateChannel;
 
 network multiRendezvous {
     parameters:
-        volatile double testTimeout;
+        volatile double testTimeout @unit(s);
         bool testing;
         **.networkLayer.configurator.networkConfiguratorModule = "";
     submodules:

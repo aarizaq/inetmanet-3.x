@@ -17,9 +17,10 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
+import inet.routing.extras.dymo_fau.DYMO_RM;
+import inet.routing.extras.dymo_fau.DYMO_PacketBBMessage;
+
 cplusplus {{
-#include "inet/routing/extras/dymo_fau/DYMO_RM_m.h"
-#include "inet/routing/extras/dymo_fau/DYMO_PacketBBMessage_m.h"
 #include "inet/routing/extras/dymo_fau/DYMO_AddressBlock.h"
 #include "inet/routing/extras/dymo_fau/InspectorHelpers.h"
 #include <vector>
@@ -27,12 +28,6 @@ cplusplus {{
 }}
 
 namespace inet::inetmanet;
-
-class DYMO_RM;
-
-
-struct DYMO_AddressBlock;
-
 
 //
 // <b> The SAORS Routing-Reply Message </b>

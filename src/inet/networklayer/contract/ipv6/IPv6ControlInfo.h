@@ -76,24 +76,35 @@ class INET_API IPv6ControlInfo : public IPv6ControlInfo_Base, public INetworkPro
     /**
      * Returns the number of extension headers in this datagram
      */
-    virtual unsigned int getExtensionHeaderArraySize() const override;
+    virtual size_t getExtensionHeaderArraySize() const override;
 
     /** Generated but unused method, should not be called. */
-    virtual void setExtensionHeaderArraySize(unsigned int size) override;
+    virtual void setExtensionHeaderArraySize(size_t size) override;
 
     /**
      * Returns the kth extension header in this datagram
      */
-    virtual IPv6ExtensionHeaderPtr& getExtensionHeader(unsigned int k) override;
+    virtual const IPv6ExtensionHeader *getExtensionHeader(size_t k) const override;
 
     /** Generated but unused method, should not be called. */
-    virtual void setExtensionHeader(unsigned int k, const IPv6ExtensionHeaderPtr& extensionHeader_var) override;
+    virtual void setExtensionHeader(size_t k, IPv6ExtensionHeader *extensionHeader_var) override;
 
     /**
      * Adds an extension header to the datagram, at the given position.
      * The default (atPos==-1) is to add the header at the end.
      */
     virtual void addExtensionHeader(IPv6ExtensionHeader *eh, int atPos = -1);
+
+#if (OMNETPP_BUILDNUM < 1530)
+    virtual void insertExtensionHeader(IPv6ExtensionHeader *extensionHeader) override { addExtensionHeader(extensionHeader); }
+#else
+    [[deprecated]] void insertExtensionHeader(IPv6ExtensionHeader *extensionHeader) { addExtensionHeader(extensionHeader); }
+    virtual void appendExtensionHeader(IPv6ExtensionHeader *extensionHeader) override { addExtensionHeader(extensionHeader); }
+#endif
+
+    virtual void insertExtensionHeader(size_t k, IPv6ExtensionHeader *extensionHeader) override { addExtensionHeader(extensionHeader, k); }
+
+    virtual void eraseExtensionHeader(size_t k) override { throw cRuntimeError(this, "eraseExtensionHeader() not supported, use removeFirstExtensionHeader()"); }
 
     /**
      * Remove the first extension header and return it.

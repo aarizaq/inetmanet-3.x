@@ -109,6 +109,7 @@ void Hcf::processUpperFrame(Ieee80211DataOrMgmtFrame* frame)
 {
     Enter_Method("processUpperFrame(%s)", frame->getName());
     EV_INFO << "Processing upper frame: " << frame->getName() << endl;
+    take(frame);
     // TODO:
     // A QoS STA should send individually addressed Management frames that are addressed to a non-QoS STA
     // using the access category AC_BE and shall send all other management frames using the access category
@@ -158,8 +159,8 @@ void Hcf::scheduleInactivityTimer(simtime_t timeout)
 void Hcf::processLowerFrame(Ieee80211Frame* frame)
 {
     Enter_Method("processLowerFrame(%s)", frame->getName());
-    take(frame);
     EV_INFO << "Processing lower frame: " << frame->getName() << endl;
+    take(frame);
     auto edcaf = edca->getChannelOwner();
     if (edcaf && frameSequenceHandler->isSequenceRunning()) {
         // TODO: always call processResponse?
@@ -665,7 +666,7 @@ void Hcf::setFrameMode(Ieee80211Frame *frame, const IIeee80211Mode *mode) const
     ASSERT(mode != nullptr);
     delete frame->removeControlInfo();
     Ieee80211TransmissionRequest *ctrl = new Ieee80211TransmissionRequest();
-    ctrl->setMode(mode);
+    ctrl->setMode(const_cast<IIeee80211Mode *>(mode));
     frame->setControlInfo(ctrl);
 }
 

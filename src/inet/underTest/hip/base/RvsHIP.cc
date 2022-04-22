@@ -96,8 +96,8 @@ void RvsHIP::handleMsgFromNetwork(cMessage *msg)
 }
 
 // Forwards I1 messages to the registered host's IP address
-void RvsHIP::alterHipPacketAndSend(HIPHeaderMessage* hipHead, IPv6Address &rvsIP, IPv6Address &destIP,
-        IPv6Address &fromIP)
+void RvsHIP::alterHipPacketAndSend(HIPHeaderMessage* hipHead, const IPv6Address &rvsIP, const IPv6Address &destIP,
+       const IPv6Address &fromIP)
 {
     //create new dest locator
     HipLocator *destLoc = new HipLocator();

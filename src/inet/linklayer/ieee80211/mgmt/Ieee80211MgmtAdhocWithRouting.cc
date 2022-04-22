@@ -226,7 +226,7 @@ void Ieee80211MgmtAdhocWithRouting::handleMessage(cMessage *msg)
         // packet from upper layers, to be sent out
         EV << "Packet arrived from upper layers: " << pk << "\n";
         if (pk->getByteLength() > 2312)
-            error("message from higher layer (%s)%s is too long for 802.11b, %d bytes (fragmentation is not supported yet)",
+            error("message from higher layer (%s)%s is too long for 802.11b, %ui bytes (fragmentation is not supported yet)",
                   pk->getClassName(), pk->getName(), pk->getByteLength());
         handleUpperMessage(pk);
     }

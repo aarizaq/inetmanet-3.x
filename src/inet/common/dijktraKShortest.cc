@@ -1102,7 +1102,7 @@ void Dijkstra::discoverPartitionedLinks(std::vector<NodeId> &pathNode, const Lin
     for (unsigned int i = 0; i < pathNode.size() - 1; i++) {
         auto it1 = topoAux.find(pathNode[i]);
         if (it1 == topoAux.end())
-            throw cRuntimeError("Node not found %i", pathNode[i]);
+            throw cRuntimeError("Node not found %s", pathNode[i].str().c_str());
         auto it = topoAux.find(pathNode[i]);
         Edge *tempEdge = nullptr;
         NodeId origin = it1->first;
@@ -1115,7 +1115,7 @@ void Dijkstra::discoverPartitionedLinks(std::vector<NodeId> &pathNode, const Lin
             }
         }
         if (tempEdge == nullptr)
-            throw cRuntimeError("Link not found %i - %i", pathNode[i], pathNode[i + 1]);
+            throw cRuntimeError("Link not found %s - %s", pathNode[i].str().c_str(), pathNode[i + 1].str().c_str());
         RouteMap routeMap;
 
         runUntil(nodeId, origin, topoAux, routeMap);

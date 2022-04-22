@@ -131,7 +131,7 @@ class INET_API HIP : public cSimpleModule, public cListener
     virtual void handleAddressChange();
 
 	//creates a new FSM daemon, returns its pointer
-    virtual cModule* createStateMachine(IPv6Address ipAddress, IPv6Address &HIT);
+    virtual cModule* createStateMachine(const IPv6Address &ipAddress, const IPv6Address &HIT);
 
 	//searches for an FSM daemon by its module id
     virtual cModule* findStateMachine(int fsmID);

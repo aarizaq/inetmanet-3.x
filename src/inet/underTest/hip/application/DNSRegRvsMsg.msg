@@ -27,14 +27,9 @@
 //
 // HIP host registers its RVS with this msg
 //
-cplusplus {{
-#include "inet/networklayer/common/L3Address.h"
-}}
+import inet.networklayer.common.L3Address;
 
 namespace inet;
-
-class noncobject L3Address;
-
 
 packet DNSRegRvsMsg
 {

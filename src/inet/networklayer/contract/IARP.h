@@ -45,6 +45,7 @@ class INET_API IARP
         L3Address l3Address;
         MACAddress macAddress;
         const InterfaceEntry *ie;
+
       public:
         Notification(L3Address l3Address, MACAddress macAddress, const InterfaceEntry *ie)
             : l3Address(l3Address), macAddress(macAddress), ie(ie) {}

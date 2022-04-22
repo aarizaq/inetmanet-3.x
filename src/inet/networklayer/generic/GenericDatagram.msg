@@ -15,18 +15,11 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-cplusplus {{
-#include "inet/common/TLVOption.h"
-#include "inet/networklayer/common/L3Address.h"
-#include "inet/networklayer/common/IPProtocolId_m.h"
-}}
+import inet.common.TLVOption;
+import inet.networklayer.common.L3Address;
+import inet.networklayer.common.IPProtocolId;
 
 namespace inet;
-
-class noncobject L3Address;
-class noncobject TLVOptions;
-
-enum IPProtocolId;
 
 //
 // Generic protocol TLV option types

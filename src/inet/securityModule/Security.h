@@ -49,8 +49,6 @@ class SAEMsg;
 class AMPEMsg;
 class Security : public cSimpleModule, public cListener, public SecurityKeys
 {
-        const char *msg;
-
 public:
          long totalAuthTimeout;
          long totalBeaconTimeout;

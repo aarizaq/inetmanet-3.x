@@ -123,7 +123,7 @@ private:
     /**
      * elayValue for the simulation. Implemented as a pointer to allow functions as values
      */
-    ParPtr delayAttackValue;
+    omnetpp::cPar *delayAttackValue;
 
     /*---------------------OTHERs-------------------------------*/
     /**

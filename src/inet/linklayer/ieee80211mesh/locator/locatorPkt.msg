@@ -17,21 +17,12 @@
 // TODO generated message class
 //
 
-
-cplusplus {{
-#include "inet/networklayer/contract/ipv4/IPv4Address.h"
-#include "inet/linklayer/common/MACAddress.h"
-#include "inet/networklayer/common/L3Address.h"
-}}
-
-namespace inet::ieee80211;
-
-class noncobject inet::IPv4Address;
-
-class noncobject inet::MACAddress;
-
-class noncobject inet::L3Address;
+import inet.networklayer.contract.ipv4.IPv4Address;
+import inet.linklayer.common.MACAddress;
+import inet.networklayer.common.L3Address;
     
+namespace inet;
+
 enum LocatorOpcode
 {
     LocatorAssoc = 1;

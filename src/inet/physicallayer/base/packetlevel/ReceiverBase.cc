@@ -91,17 +91,6 @@ const IReceptionResult *ReceiverBase::computeReceptionResult(const IListening *l
     auto radioMedium = radio->getMedium();
     auto transmission = reception->getTransmission();
     auto indication = computeReceptionIndication(snir);
-
-    const Coord transmissionStartPosition = transmission->getStartPosition();
-    const Coord arrivalStartPosition = reception->getStartPosition();
-    Coord transmissionStartDirection = arrivalStartPosition - transmissionStartPosition;
-    double z = transmissionStartDirection.z;
-    transmissionStartDirection.z = 0;
-    double heading = atan2(transmissionStartDirection.y, transmissionStartDirection.x);
-    double elevation = atan2(z, transmissionStartDirection.length());
-    EulerAngles direction(heading, elevation, 0);
-    const_cast<ReceptionIndication *>(indication)->setDirection(direction);
-
     // TODO: add all cached decisions?
     auto decisions = new std::vector<const IReceptionDecision *>();
     decisions->push_back(radioMedium->getReceptionDecision(radio, listening, transmission, IRadioSignal::SIGNAL_PART_WHOLE));

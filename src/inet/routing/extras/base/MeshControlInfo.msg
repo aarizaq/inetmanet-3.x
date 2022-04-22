@@ -16,15 +16,13 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
+import inet.linklayer.common.Ieee802Ctrl;
 
 cplusplus {{
 #include "inet/linklayer/common/Ieee802Ctrl.h"
 }}
 
-class noncobject inet::Ieee802Ctrl;
-
 namespace inet::inetmanet;
-
 //
 // Control structure for communication between LLC and higher layers
 //

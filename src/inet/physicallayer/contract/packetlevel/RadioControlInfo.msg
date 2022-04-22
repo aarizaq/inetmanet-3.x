@@ -15,22 +15,12 @@
 // License along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-cplusplus {{
-#include "inet/physicallayer/contract/packetlevel/IModulation.h"
-#include "inet/common/geometry/common/EulerAngles.h"
-}}
+import inet.common.Units;
+import inet.common.geometry.Geometry;
+import inet.physicallayer.contract.packetlevel.IModulation;
+
 
 namespace inet::physicallayer;
-
-cplusplus {{
-typedef IModulation * IModulationPtr;
-}}
-
-class noncobject IModulationPtr;
-class noncobject bps;
-class noncobject W;
-class noncobject Hz;
-class noncobject EulerAngles;
 
 //
 // Message kinds for sending commands to the radio.
@@ -43,12 +33,12 @@ enum RadioCommandCode
 //
 // Control info attached to a configure command that is sent to the ~Radio.
 //
-class ConfigureRadioCommand
+class ConfigureRadioCommand extends cObject
 {
     int radioMode = -1;                  // new radio mode or -1 if not set.
     W power = W(NaN);                    // new default transmission power in the range (0, +infinity) or NaN if not set.
     bps bitrate = bps(NaN);              // new default bitrate in the range (0, +infinity) or NaN if not set.
-    IModulationPtr modulation = nullptr; // new default modulation or nullptr if not set.
+    IModulation *modulation = nullptr;   // new default modulation or nullptr if not set.
     Hz carrierFrequency = Hz(NaN);       // new default carrier frequency in the range (0, +infinity) or NaN if not set.
     Hz bandwidth = Hz(NaN);              // new default bandwidth in the rage (0, +infinity) or NaN if not set.
 }
@@ -56,7 +46,7 @@ class ConfigureRadioCommand
 //
 // Control info attached to a mac frame that is sent down to the ~Radio.
 //
-class TransmissionRequest
+class TransmissionRequest extends cObject
 {
     W power = W(NaN);              // override default transmission power in the range (0, +infinity) or NaN if not set.
     bps bitrate = bps(NaN);        // override default bitrate in the range (0, +infinity) or NaN if not set.
@@ -67,7 +57,7 @@ class TransmissionRequest
 //
 // Control info attached to a mac frame that is sent up from the ~Radio.
 //
-class ReceptionIndication
+class ReceptionIndication extends cObject
 {
     int bitErrorCount = -1;       // number of erroneous bits in the range [0, +infinity) or -1 if unknown.
     int symbolErrorCount = -1;    // number of erroneous symbols in the range [0, +infinity) or -1 if unknown.

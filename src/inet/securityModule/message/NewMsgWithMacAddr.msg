@@ -1,15 +1,15 @@
-class noncobject MACAddress;
+
 cplusplus {{
 #include "inet/common/INETDefs.h"
-#include "inet/linklayer/common/MACAddress.h"
-
 }}
+
+import inet.linklayer.common.MACAddress;
 
 namespace inet::ieee80211;
     
 // For Timeouts
-packet newcMessage extends cMessage
+packet newcMessage
 {
-MACAddress MeshMACAddress_AuthTimeout;
-MACAddress senderMACAddr;
+    MACAddress MeshMACAddress_AuthTimeout;
+    MACAddress senderMACAddr;
 }

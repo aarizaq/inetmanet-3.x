@@ -112,13 +112,13 @@ protected:
 	virtual void handleCreditAging();
 
 	virtual void specInitialize();
-	virtual void findIPaddress(IPv6Address &HIT);
-	virtual void setIPaddress(IPv6Address &HIT, IPv6Address& IP);
-	virtual void addIPaddress(IPv6Address &HIT, IPv6Address& IP);
-	virtual void deleteAllIPaddress(IPv6Address &HIT);
+	virtual void findIPaddress(const IPv6Address &HIT);
+	virtual void setIPaddress(const IPv6Address &HIT, const IPv6Address& IP);
+	virtual void addIPaddress(const IPv6Address &HIT, const IPv6Address& IP);
+	virtual void deleteAllIPaddress(const IPv6Address &HIT);
 	virtual void createUpdHIPpacket(int updKind, HIPHeaderMessage * old);
 	virtual void createHIPpacket(int kind, const char name[]);
-	virtual void createHIPpacket(int kind, const char name[], IPv6Address& via_rvs);
+	virtual void createHIPpacket(int kind, const char name[], const IPv6Address& via_rvs);
 	virtual void addControlInfoAndSend(HIPHeaderMessage *hipPacket);
 };
 }

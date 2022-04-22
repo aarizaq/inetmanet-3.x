@@ -1,3 +1,5 @@
+package inet.test.moduletest.lib;
+
 import inet.node.inet.StandardHost;
 import inet.node.inet.Router;
 import ned.DatarateChannel;
@@ -5,7 +7,7 @@ import ned.DatarateChannel;
 network SCTPFeatureTest
 {
     parameters:
-        volatile double testTimeout;
+        volatile double testTimeout @unit(s);
         bool testing;
     types:
       channel BottlePath extends DatarateChannel

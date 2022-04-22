@@ -5,6 +5,7 @@ UDP communication via lo0 interface
 %#--------------------------------------------------------------------------------------------------------------
 %file: test.ned
 
+import inet.test.moduletest.lib.*;
 import inet.node.ipv6.StandardHost6;
 
 network LocalUDP
@@ -20,7 +21,7 @@ network LocalUDP
 %inifile: omnetpp.ini
 
 [General]
-tkenv-plugin-path = ../../../etc/plugins
+
 ned-path = .;../../../../src;../../lib
 
 #omnetpp 5.0 - 5.1 compatibility:

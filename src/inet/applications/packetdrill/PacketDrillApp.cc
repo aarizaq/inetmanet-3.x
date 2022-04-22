@@ -386,7 +386,7 @@ void PacketDrillApp::runEvent(PacketDrillEvent* event)
                 sctp->setTag(peerVTag);
                 int32 noChunks = sctp->getChunksArraySize();
                 for (int32 cc = 0; cc < noChunks; cc++) {
-                    SCTPChunk *chunk = const_cast<SCTPChunk *>(check_and_cast<const SCTPChunk *>(((SCTPMessage *)sctp)->getChunks(cc)));
+                    SCTPChunk *chunk = sctp->getChunksForUpdate(cc);
                     unsigned char chunkType = chunk->getChunkType();
                     switch (chunkType) {
                         case INIT: {
@@ -410,7 +410,7 @@ void PacketDrillApp::runEvent(PacketDrillEvent* event)
                             int tempLength = cookieEcho->getByteLength();
                             printf("copy peerCookie %p\n", peerCookie);
                             cookieEcho->setStateCookie(peerCookie->dup());
-                            cookieEcho->getStateCookie()->setName("CookieEchoStateCookie");
+                            cookieEcho->getStateCookieForUpdate()->setName("CookieEchoStateCookie");
                             cookieEcho->setByteLength(SCTP_COOKIE_ACK_LENGTH + peerCookieLength);
                             sctp->setByteLength(sctp->getByteLength() - tempLength + cookieEcho->getByteLength());
                             delete peerCookie;
@@ -431,13 +431,12 @@ void PacketDrillApp::runEvent(PacketDrillEvent* event)
                                     sack->setDupTsns(i, sack->getDupTsns(i) + localDiffTsn);
                                 }
                             }
-                            sctp->replaceChunk(sack, cc);
                             break;
                         }
                         case RE_CONFIG:{
                             SCTPStreamResetChunk* reconfig = check_and_cast<SCTPStreamResetChunk*>(chunk);
                             for (unsigned int i = 0; i < reconfig->getParametersArraySize(); i++) {
-                                SCTPParameter *parameter = check_and_cast<SCTPParameter *>(reconfig->getParameters(i));
+                                SCTPParameter *parameter = reconfig->getParametersForUpdate(i);
                                 switch (parameter->getParameterType()) {
                                     case STREAM_RESET_RESPONSE_PARAMETER: {
                                         SCTPStreamResetResponseParameter *param = check_and_cast<SCTPStreamResetResponseParameter *>(parameter);
@@ -459,7 +458,6 @@ void PacketDrillApp::runEvent(PacketDrillEvent* event)
                                     }
                                 }
                             }
-                            sctp->replaceChunk(reconfig, cc);
                             break;
                         }
                     }
@@ -496,16 +494,16 @@ void PacketDrillApp::runEvent(PacketDrillEvent* event)
             } else {
                 if (protocol == IP_PROT_SCTP) {
                     SCTPMessage* sctp = check_and_cast<SCTPMessage*>(ip->getEncapsulatedPacket());
-                    if (((SCTPChunk*) sctp->peekFirstChunk())->getChunkType() == INIT) {
-                        SCTPInitChunk* init = check_and_cast<SCTPInitChunk*>(sctp->getChunks(0));
+                    if (sctp->peekFirstChunk()->getChunkType() == INIT) {
+                        const SCTPInitChunk* init = check_and_cast<const SCTPInitChunk*>(sctp->getChunks(0));
                         initLocalTsn = init->getInitTSN();
                         peerVTag = init->getInitTag();
                         localCumTsn = initLocalTsn - 1;
                         sctpSocket.setInboundStreams(init->getNoInStreams());
                         sctpSocket.setOutboundStreams(init->getNoOutStreams());
                     }
-                    if (((SCTPChunk*) sctp->peekFirstChunk())->getChunkType() == INIT_ACK) {
-                        SCTPInitAckChunk* initack = check_and_cast<SCTPInitAckChunk*>(sctp->getChunks(0));
+                    if (sctp->peekFirstChunk()->getChunkType() == INIT_ACK) {
+                        const SCTPInitAckChunk* initack = check_and_cast<const SCTPInitAckChunk*>(sctp->getChunks(0));
                         initLocalTsn = initack->getInitTSN();
                         peerVTag = initack->getInitTag();
                         localCumTsn = initLocalTsn - 1;
@@ -1488,15 +1486,13 @@ void PacketDrillApp::finish()
 
 PacketDrillApp::~PacketDrillApp()
 {
-    if (eventTimer->isScheduled()) {
-        cancelEvent(eventTimer);
-    }
-    delete eventTimer;
+    delete script;
+    delete config;
     delete pd;
     delete receivedPackets;
     delete outboundPackets;
-    delete config;
-    delete script;
+    delete peerCookie;
+    cancelAndDelete(eventTimer);
 }
 
 // Verify that something happened at the expected time.
@@ -1645,16 +1641,12 @@ bool PacketDrillApp::compareTcpPacket(TCPSegment *storedTcp, TCPSegment *liveTcp
             return true;
         }
         if (storedTcp->getHeaderOptionArraySize() != liveTcp->getHeaderOptionArraySize()) {
-            TCPOption *liveOption;
-            for (unsigned int i = 0; i < liveTcp->getHeaderOptionArraySize(); i++) {
-                liveOption = liveTcp->getHeaderOption(i);
-            }
             return false;
         } else {
             TCPOption *storedOption, *liveOption;
             for (unsigned int i = 0; i < storedTcp->getHeaderOptionArraySize(); i++) {
-                storedOption = storedTcp->getHeaderOption(i);
-                liveOption = liveTcp->getHeaderOption(i);
+                storedOption = storedTcp->getHeaderOptionForUpdate(i);
+                liveOption = liveTcp->getHeaderOptionForUpdate(i);
                 if (storedOption->getKind() == liveOption->getKind()) {
                     switch (storedOption->getKind()) {
                         case TCPOPT_EOL:
@@ -1720,8 +1712,8 @@ bool PacketDrillApp::compareSctpPacket(SCTPMessage *storedSctp, SCTPMessage *liv
 
     const uint32 numberOfChunks = storedSctp->getChunksArraySize();
     for (uint32 i = 0; i < numberOfChunks; i++) {
-        SCTPChunk* storedHeader = (SCTPChunk*) (storedSctp->removeChunk());
-        SCTPChunk* liveHeader = (SCTPChunk*) (liveSctp->removeChunk());
+        SCTPChunk* storedHeader = storedSctp->removeChunk();
+        SCTPChunk* liveHeader = liveSctp->removeChunk();
         if (!(storedHeader->getChunkType() == liveHeader->getChunkType())) {
             return false;
         }
@@ -1852,8 +1844,8 @@ bool PacketDrillApp::compareSctpPacket(SCTPMessage *storedSctp, SCTPMessage *liv
                 }
                 if (storedErrorChunk->getParametersArraySize() > 0) {
                 // Only Cause implemented so far.
-                    SCTPSimpleErrorCauseParameter *storedcause = check_and_cast<SCTPSimpleErrorCauseParameter *>(storedErrorChunk->getParameters(0));
-                    SCTPSimpleErrorCauseParameter *livecause = check_and_cast<SCTPSimpleErrorCauseParameter *>(liveErrorChunk->getParameters(0));
+                    SCTPSimpleErrorCauseParameter *storedcause = check_and_cast<SCTPSimpleErrorCauseParameter *>(storedErrorChunk->getParametersForUpdate(0));
+                    SCTPSimpleErrorCauseParameter *livecause = check_and_cast<SCTPSimpleErrorCauseParameter *>(liveErrorChunk->getParametersForUpdate(0));
                     if (!(storedcause->getValue() == livecause->getValue())) {
                         delete storedcause;
                         delete livecause;
@@ -1975,7 +1967,7 @@ bool PacketDrillApp::compareInitAckPacket(SCTPInitAckChunk* storedInitAckChunk, 
     if (!(flags & FLAG_INIT_ACK_CHUNK_TSN_NOCHECK))
         if (!(storedInitAckChunk->getInitTSN() + localDiffTsn == liveInitAckChunk->getInitTSN()))
             return false;
-    peerCookie = check_and_cast<SCTPCookie*>(liveInitAckChunk->getStateCookie());
+    peerCookie = liveInitAckChunk->getStateCookie()->dup();
     peerCookieLength = peerCookie->getByteLength();
     return true;
 }
@@ -1989,14 +1981,14 @@ bool PacketDrillApp::compareReconfigPacket(SCTPStreamResetChunk* storedReconfigC
         return false;
     }
     for (unsigned int i = 0; i < storedReconfigChunk->getParametersArraySize(); i++) {
-        SCTPParameter *storedParameter = check_and_cast<SCTPParameter *>(storedReconfigChunk->getParameters(i));
+        const SCTPParameter *storedParameter = storedReconfigChunk->getParameters(i);
         SCTPParameter *liveParameter = nullptr;
         found = false;
         switch (storedParameter->getParameterType()) {
             case OUTGOING_RESET_REQUEST_PARAMETER: {
-                SCTPOutgoingSSNResetRequestParameter *storedoutparam = check_and_cast<SCTPOutgoingSSNResetRequestParameter *>(storedParameter);
+                const SCTPOutgoingSSNResetRequestParameter *storedoutparam = check_and_cast<const SCTPOutgoingSSNResetRequestParameter *>(storedParameter);
                 for (unsigned int j = 0; j < liveReconfigChunk->getParametersArraySize(); j++) {
-                    liveParameter = check_and_cast<SCTPParameter *>(liveReconfigChunk->getParameters(j));
+                    liveParameter = liveReconfigChunk->getParametersForUpdate(j);
                     if (liveParameter->getParameterType() != OUTGOING_RESET_REQUEST_PARAMETER)
                         continue;
                     else {
@@ -2031,9 +2023,9 @@ bool PacketDrillApp::compareReconfigPacket(SCTPStreamResetChunk* storedReconfigC
             }
             case INCOMING_RESET_REQUEST_PARAMETER: {
                 found = false;
-                SCTPIncomingSSNResetRequestParameter *storedinparam = check_and_cast<SCTPIncomingSSNResetRequestParameter *>(storedParameter);
+                const SCTPIncomingSSNResetRequestParameter *storedinparam = check_and_cast<const SCTPIncomingSSNResetRequestParameter *>(storedParameter);
                 for (unsigned int j = 0; j < liveReconfigChunk->getParametersArraySize(); j++) {
-                    liveParameter = check_and_cast<SCTPParameter *>(liveReconfigChunk->getParameters(j));
+                    liveParameter = liveReconfigChunk->getParametersForUpdate(j);
                     if (liveParameter->getParameterType() != INCOMING_RESET_REQUEST_PARAMETER)
                         continue;
                     else {
@@ -2060,8 +2052,8 @@ bool PacketDrillApp::compareReconfigPacket(SCTPStreamResetChunk* storedReconfigC
                 break;
             }
             case STREAM_RESET_RESPONSE_PARAMETER: {
-                SCTPStreamResetResponseParameter *storedresparam = check_and_cast<SCTPStreamResetResponseParameter *>(storedParameter);
-                liveParameter = check_and_cast<SCTPParameter *>(liveReconfigChunk->getParameters(i));
+                const SCTPStreamResetResponseParameter *storedresparam = check_and_cast<const SCTPStreamResetResponseParameter *>(storedParameter);
+                liveParameter = liveReconfigChunk->getParametersForUpdate(i);
                 if (liveParameter->getParameterType() != STREAM_RESET_RESPONSE_PARAMETER) {
                     break;
                 }
@@ -2084,9 +2076,9 @@ bool PacketDrillApp::compareReconfigPacket(SCTPStreamResetChunk* storedReconfigC
             }
             case SSN_TSN_RESET_REQUEST_PARAMETER: {
                 found = false;
-                SCTPSSNTSNResetRequestParameter *storedinparam = check_and_cast<SCTPSSNTSNResetRequestParameter *>(storedParameter);
+                const SCTPSSNTSNResetRequestParameter *storedinparam = check_and_cast<const SCTPSSNTSNResetRequestParameter *>(storedParameter);
                 for (unsigned int j = 0; j < liveReconfigChunk->getParametersArraySize(); j++) {
-                    liveParameter = check_and_cast<SCTPParameter *>(liveReconfigChunk->getParameters(j));
+                    liveParameter = liveReconfigChunk->getParametersForUpdate(j);
                     if (liveParameter->getParameterType() != SSN_TSN_RESET_REQUEST_PARAMETER)
                         continue;
                     else {
@@ -2106,9 +2098,9 @@ bool PacketDrillApp::compareReconfigPacket(SCTPStreamResetChunk* storedReconfigC
             }
             case ADD_INCOMING_STREAMS_REQUEST_PARAMETER: {
                 found = false;
-                SCTPAddStreamsRequestParameter *storedaddparam = check_and_cast<SCTPAddStreamsRequestParameter *>(storedParameter);
+                const SCTPAddStreamsRequestParameter *storedaddparam = check_and_cast<const SCTPAddStreamsRequestParameter *>(storedParameter);
                 for (unsigned int j = 0; j < liveReconfigChunk->getParametersArraySize(); j++) {
-                    liveParameter = check_and_cast<SCTPParameter *>(liveReconfigChunk->getParameters(j));
+                    liveParameter = liveReconfigChunk->getParametersForUpdate(j);
                     if (liveParameter->getParameterType() != ADD_INCOMING_STREAMS_REQUEST_PARAMETER)
                         continue;
                     else {
@@ -2130,9 +2122,9 @@ bool PacketDrillApp::compareReconfigPacket(SCTPStreamResetChunk* storedReconfigC
             }
             case ADD_OUTGOING_STREAMS_REQUEST_PARAMETER: {
                 found = false;
-                SCTPAddStreamsRequestParameter *storedaddparam = check_and_cast<SCTPAddStreamsRequestParameter *>(storedParameter);
+                const SCTPAddStreamsRequestParameter *storedaddparam = check_and_cast<const SCTPAddStreamsRequestParameter *>(storedParameter);
                 for (unsigned int j = 0; j < liveReconfigChunk->getParametersArraySize(); j++) {
-                    liveParameter = check_and_cast<SCTPParameter *>(liveReconfigChunk->getParameters(j));
+                    liveParameter = liveReconfigChunk->getParametersForUpdate(j);
                     if (liveParameter->getParameterType() != ADD_OUTGOING_STREAMS_REQUEST_PARAMETER)
                         continue;
                     else {

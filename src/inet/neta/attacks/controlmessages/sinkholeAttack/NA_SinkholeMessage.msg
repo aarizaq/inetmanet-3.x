@@ -17,16 +17,7 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 //
 
-cplusplus {{
-#include "omnetpp.h"
-typedef omnetpp::cPar *ParPtr;
-}}
-
 namespace inet::neta;
-
-class noncobject ParPtr;
-
-
 
 //
 // Message interchanged between sinkhole attack controller and the corresponding hacked
@@ -40,6 +31,6 @@ message NA_SinkholeMessage {
     bool sinkOnlyWhenRouteInTable; 	// TRUE indicates that only RREQ for routes that are in routing table are answered as the best route across the sink node.
     								// A false value indicates that all the sinkhole node will answer to all the RREQ with fake routes. 
     double sinkholeAttackProbability;  	//Probability for announcing a fake route when a RREQ is received. Value in [0,1]
-    ParPtr seqnoAdded; 					// Sequence number.
+    omnetpp::cPar * seqnoAdded; 					// Sequence number.
     int numHops;						// Number of hops.
 }

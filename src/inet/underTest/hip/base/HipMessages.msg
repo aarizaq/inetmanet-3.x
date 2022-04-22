@@ -24,11 +24,12 @@
 // Part of: HIPSim++ Host Identity Protocol Simulation Framework developed by BME-HT
 //**********************************************************************************
 
+import inet.networklayer.contract.ipv6.IPv6Address;
+import inet.networklayer.ipv6.IPv6Datagram;
+import inet.networklayer.contract.ipv6.IPv6ExtensionHeaders;
 
 cplusplus {{
-#include "inet/networklayer/contract/ipv6/IPv6Address.h"
-#include "inet/networklayer/ipv6/IPv6Datagram.h"
-#include "inet/networklayer/ipv6/IPv6ExtensionHeaders_m.h"
+#include "inet/networklayer/ipv6/IPv6ExtensionHeaders.h"
 }}
 
 namespace inet;
@@ -47,23 +48,7 @@ const int IPPROTO_NONE = 59;
 #endif
 //maximum length of the HIP Parameters field is (255*8)-32 = 2008 bytes
 const int HIP_MAX_HEADER_BYTES = 2008;
-
-typedef cMessage *cMessagePtr;
-typedef IPv6EncapsulatingSecurityPayloadHeader *IPv6EncapsulatingSecurityPayloadHeaderPtr;
-
 }}
-
-
-class noncobject IPv6Address;
-
-
-
-struct IPv6EncapsulatingSecurityPayloadHeaderPtr;
-
-
-struct cMessagePtr;
-
-
 
 //HIP message types
 enum HipPacketType
@@ -150,5 +135,5 @@ packet HIPHeaderMessage
 
 packet ESPMessage
 {
-    IPv6EncapsulatingSecurityPayloadHeaderPtr esp;
+    IPv6EncapsulatingSecurityPayloadHeader* esp;
 }

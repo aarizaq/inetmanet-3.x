@@ -590,7 +590,7 @@ void RSVP::refreshResv(ResvStateBlock_t *rsbEle)
 {
     EV_INFO << "refresh reservation (RSB " << rsbEle->id << ")" << endl;
 
-    IPAddressVector phops;
+    IPv4AddressVector phops;
 
     for (auto & elem : PSBList) {
         if (elem.OutInterface != rsbEle->OI)
@@ -1562,7 +1562,7 @@ void RSVP::processResvMsg(RSVPResvMsg *msg)
             EV_DETAIL << "matching PSB not found for lspid=" << msg->getFlowDescriptor()[m].Filter_Spec_Object.Lsp_Id << endl;
 
             // remove descriptor from message
-            msg->getFlowDescriptor().erase(msg->getFlowDescriptor().begin() + m);
+            msg->getFlowDescriptorForUpdate().erase(msg->getFlowDescriptor().begin() + m);
             --m;
         }
     }

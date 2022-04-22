@@ -46,7 +46,7 @@ Define_NED_Function2(nedf_hasVisualizer,
 
 cNEDValue nedf_hasModule(cComponent *context, cNEDValue argv[], int argc)
 {
-    cRegistrationList *types = componentTypes.getInstance();
+    cRegistrationList *types = OMNETPP6_CODE(omnetpp::internal::)componentTypes.getInstance();
     if (argv[0].getType() != cNEDValue::STR)
         throw cRuntimeError("hasModule(): string arguments expected");
     const char *name = argv[0].stringValue();
@@ -68,7 +68,7 @@ Define_NED_Function2(nedf_hasModule,
 
 cNEDValue nedf_haveClass(cComponent *context, cNEDValue argv[], int argc)
 {
-    return classes.getInstance()->lookup(argv[0].stringValue()) != nullptr;
+    return OMNETPP6_CODE(omnetpp::internal::)classes.getInstance()->lookup(argv[0].stringValue()) != nullptr;
 }
 
 Define_NED_Function2(nedf_haveClass,
@@ -134,10 +134,8 @@ Define_NED_Function2(nedf_moduleListByNedType,
 cNEDValue nedf_select(cComponent *context, cNEDValue argv[], int argc)
 {
     long index = argv[0];
-    if (index < 0)
-        throw cRuntimeError("select(): negative index %ld", index);
-    if (index >= argc - 1)
-        throw cRuntimeError("select(): index=%ld is too large", index, argc - 1);
+    if (index < 0 || index >= argc - 1)
+        throw cRuntimeError("select(): index=%ld is out of range [0..%d]", index, argc - 1);
     return argv[index + 1];
 }
 
@@ -172,7 +170,7 @@ Define_NED_Function2(nedf_absPath,
 
 cNEDValue nedf_firstAvailableOrEmpty(cComponent *context, cNEDValue argv[], int argc)
 {
-    cRegistrationList *types = componentTypes.getInstance();
+    cRegistrationList *types = OMNETPP6_CODE(omnetpp::internal::)componentTypes.getInstance();
     for (int i=0; i<argc; i++)
     {
         if (argv[i].getType() != cNEDValue::STR)
@@ -199,7 +197,11 @@ Define_NED_Function2(nedf_firstAvailableOrEmpty,
 
 cNEDValue nedf_nanToZero(cComponent *context, cNEDValue argv[], int argc)
 {
+#if OMNETPP_BUILDNUM < 1512
     double x = argv[0].doubleValue();
+#else
+    double x = argv[0].doubleValueRaw();
+#endif
     const char *unit = argv[0].getUnit();
     return std::isnan(x) ? cNEDValue(0.0, unit) : argv[0];
 }
@@ -210,48 +212,6 @@ Define_NED_Function2(nedf_nanToZero,
         "Returns the argument if it is not NaN, otherwise returns 0."
         );
 
-#if OMNETPP_VERSION <= 0x0503 && OMNETPP_BUILDNUM < 1014
-#if OMNETPP_BUILDNUM <= 1012
-static cNEDValue nedf_intWithUnit(cComponent *contextComponent, cNEDValue argv[], int argc)
-{
-    switch (argv[0].getType()) {
-        case cNEDValue::BOOL:
-            return (long)( (bool)argv[0] ? 1 : 0 );
-        case cNEDValue::DBL:
-            argv[0].setPreservingUnit(floor(argv[0].doubleValue()));
-            return argv[0];
-        case cNEDValue::STR:
-            throw cRuntimeError("intWithUnit(): Cannot convert string to int");
-        case cNEDValue::XML:
-            throw cRuntimeError("intWithUnit(): Cannot convert xml to int");
-        default:
-            throw cRuntimeError("Internal error: Invalid cNedValue type");
-    }
-}
-#else
-static cNedValue nedf_intWithUnit(cComponent *contextComponent, cNedValue argv[], int argc)
-{
-    switch (argv[0].getType()) {
-        case cNedValue::BOOL:
-            return (intpar_t)( argv[0].boolValue() ? 1 : 0 );
-        case cNedValue::DOUBLE:
-            argv[0].setPreservingUnit(floor(argv[0].doubleValue()));
-            return argv[0];
-        case cNedValue::STRING:
-            throw cRuntimeError("intWithUnit(): Cannot convert string to int");
-        case cNedValue::XML:
-            throw cRuntimeError("intWithUnit(): Cannot convert xml to int");
-        default:
-            throw cRuntimeError("Internal error: Invalid cNedValue type");
-    }
-}
-#endif
-Define_NED_Function2(nedf_intWithUnit,
-    "quantity intWithUnit(any x)",
-    "conversion",
-    "Converts x to an integer (C++ long), and returns the result. A boolean argument becomes 0 or 1; a double is converted using floor(); a string or an XML argument causes an error.");
-
-#else
 static cNedValue nedf_intWithUnit(cComponent *contextComponent, cNedValue argv[], int argc)
 {
     switch (argv[0].getType()) {
@@ -260,7 +220,11 @@ static cNedValue nedf_intWithUnit(cComponent *contextComponent, cNedValue argv[]
         case cNedValue::INT:
             return argv[0];
         case cNedValue::DOUBLE:
+#if OMNETPP_BUILDNUM < 1512
             return cNedValue(checked_int_cast<intpar_t>(floor(argv[0].doubleValue())), argv[0].getUnit());
+#else
+            return cNedValue(checked_int_cast<intpar_t>(floor(argv[0].doubleValueRaw())), argv[0].getUnit());
+#endif
         case cNedValue::STRING:
             throw cRuntimeError("intWithUnit(): Cannot convert string to int");
         case cNedValue::XML:
@@ -274,8 +238,6 @@ Define_NED_Function2(nedf_intWithUnit,
     "intquantity intWithUnit(any x)",
     "conversion",
     "Converts x to an integer (C++ long), and returns the result. A boolean argument becomes 0 or 1; a double is converted using floor(); a string or an XML argument causes an error.");
-
-#endif
 
 } // namespace utils
 

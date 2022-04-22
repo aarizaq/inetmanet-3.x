@@ -17,15 +17,10 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-cplusplus {{
-#include "inet/routing/extras/dymo_fau/DYMO_RM_m.h"
-}}
+import inet.routing.extras.dymo_fau.DYMO_RM;
 
 namespace inet::inetmanet;
 
-class DYMO_RM;
-
-
-message DYMO_RREQ extends DYMO_RM
+packet DYMO_RREQ extends DYMO_RM
 {
 }

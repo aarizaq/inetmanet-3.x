@@ -241,10 +241,11 @@ void SCTP::handleMessage(cMessage *msg)
             SCTPCommand* indication = new SCTPCommand("SCTP_I_SENDSOCKETOPTIONS");
             cmsg->setControlInfo(indication);
             socketOptions = collectSocketOptions();
-            cmsg->setContextPointer((void*) socketOptions);
+            cmsg->setContextPointer(socketOptions);
             send(cmsg, "to_appl", 0);
             delete msg;
-        } else {
+        }
+        else {
             SCTPCommand *controlInfo = check_and_cast<SCTPCommand *>(msg->getControlInfo());
 
             int32 appGateIndex;
@@ -335,8 +336,8 @@ void SCTP::sendAbortFromMain(SCTPMessage *sctpmsg, L3Address fromAddr, L3Address
 
     SCTPAbortChunk *abortChunk = new SCTPAbortChunk("ABORT");
     abortChunk->setChunkType(ABORT);
-    if (sctpmsg->getChunksArraySize() > 0 && ((SCTPChunk *)(sctpmsg->getChunks(0)))->getChunkType() == INIT) {
-        SCTPInitChunk *initChunk = check_and_cast<SCTPInitChunk *>(sctpmsg->getChunks(0));
+    if (sctpmsg->getChunksArraySize() > 0 && sctpmsg->getChunks(0)->getChunkType() == INIT) {
+        auto *initChunk = check_and_cast<const SCTPInitChunk *>(sctpmsg->getChunks(0));
         abortChunk->setT_Bit(0);
         msg->setTag(initChunk->getInitTag());
     }

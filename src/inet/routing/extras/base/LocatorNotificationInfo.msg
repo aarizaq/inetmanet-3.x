@@ -18,16 +18,13 @@
 //
 // Required for MACAddress declarations
 //
-cplusplus
-{{
-#include "inet/linklayer/common/MACAddress.h"
-#include "inet/networklayer/contract/ipv4/IPv4Address.h"
-}};
+
+import inet.linklayer.common.MACAddress;
+import inet.networklayer.contract.ipv4.IPv4Address;
+
 
 namespace inet::inetmanet;
 
-class noncobject inet::MACAddress;
-class noncobject inet::IPv4Address;
 class LocatorNotificationInfo
 {
       MACAddress macAddr;   //

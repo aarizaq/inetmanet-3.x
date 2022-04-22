@@ -100,11 +100,7 @@ class INET_API InetPacketPrinter2 : public cMessagePrinter
     InetPacketPrinter2() { showEncapsulatedPackets = true; }
     virtual ~InetPacketPrinter2() {}
     virtual int getScoreFor(cMessage *msg) const override;
-#if OMNETPP_BUILDNUM < 1018
-    virtual void printMessage(std::ostream& os, cMessage *msg) const override;
-#else
     virtual void printMessage(std::ostream& os, cMessage *msg, const Options *options = nullptr) const override;
-#endif
 };
 
 Register_MessagePrinter(InetPacketPrinter2);
@@ -117,11 +113,7 @@ int InetPacketPrinter2::getScoreFor(cMessage *msg) const
     return msg->isPacket() ? 21 : 0;
 }
 
-#if OMNETPP_BUILDNUM < 1018
-void InetPacketPrinter2::printMessage(std::ostream& os, cMessage *msg) const
-#else
 void InetPacketPrinter2::printMessage(std::ostream& os, cMessage *msg, const Options *options) const
-#endif
 {
     std::string outs;
 
@@ -486,7 +478,7 @@ std::string InetPacketPrinter2::formatRIPPacket(RIPPacket *packet) const
     }
     unsigned int size = packet->getEntryArraySize();
     for (unsigned int i = 0; i < size; ++i) {
-        RIPEntry& entry = packet->getEntry(i);
+        const RIPEntry& entry = packet->getEntry(i);
         if (i > 0)
             os << "; ";
         if (i > 2) {

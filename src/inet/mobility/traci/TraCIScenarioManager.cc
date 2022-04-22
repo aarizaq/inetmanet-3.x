@@ -490,7 +490,11 @@ void TraCIScenarioManager::addModule(std::string nodeId, std::string type, std::
 	if (!nodeType) error("Module Type \"%s\" not found", type.c_str());
 
 	//TODO: this trashes the vectsize member of the cModule, although nobody seems to use it
+#if OMNETPP_VERSION >= 0x0600 && OMNETPP_BUILDNUM >= 1516
+	cModule* mod = nodeType->create(name.c_str(), parentmod, nodeVectorIndex);
+#else
 	cModule* mod = nodeType->create(name.c_str(), parentmod, nodeVectorIndex, nodeVectorIndex);
+#endif
 	mod->finalizeParameters();
 //	if (displayString.length() > 0) {
 //		mod->getDisplayString().parse(displayString.c_str());

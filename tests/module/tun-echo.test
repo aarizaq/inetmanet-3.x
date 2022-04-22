@@ -6,9 +6,9 @@ Testing the functionality of the TUN interface:
 %#--------------------------------------------------------------------------------------------------------------
 %inifile: omnetpp.ini
 
-network = TunTest
+network = inet.test.moduletest.lib.TunTest
 debug-on-errors = true
-tkenv-plugin-path = ../../../etc/plugins
+
 ned-path = .;../../../../src;../../lib
 
 #omnetpp 5.0 - 5.1 compatibility:

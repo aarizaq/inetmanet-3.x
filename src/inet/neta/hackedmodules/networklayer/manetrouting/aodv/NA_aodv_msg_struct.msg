@@ -15,12 +15,11 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-
+import inet.networklayer.common.L3Address;
 cplusplus {{
 #include "NA_aodv_msg_struct.h"
 }}
 
-class noncobject inet::L3Address;
 
 namespace inet::neta; 
 

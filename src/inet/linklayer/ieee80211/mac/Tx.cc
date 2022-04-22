@@ -31,8 +31,10 @@ Define_Module(Tx);
 Tx::~Tx()
 {
     cancelAndDelete(endIfsTimer);
-    if (frame && !transmitting)
+    if (frame && !transmitting) {
+        take(frame);
         delete frame;
+    }
 }
 
 void Tx::initialize(int stage)
@@ -70,10 +72,9 @@ void Tx::transmitFrame(Ieee80211Frame *frame, ITx::ICallback *txCallback)
 
 void Tx::transmitFrame(Ieee80211Frame *frame, simtime_t ifs, ITx::ICallback *txCallback)
 {
+    Enter_Method("transmitFrame(\"%s\")", frame->getName());
     ASSERT(this->txCallback == nullptr);
     this->txCallback = txCallback;
-    Enter_Method("transmitFrame(\"%s\")", frame->getName());
-    take(frame);
     auto frameToTransmit = inet::utils::dupPacketAndControlInfo(frame);
     this->frame = frameToTransmit;
     if (auto twoAddrFrame = dynamic_cast<Ieee80211TwoAddressFrame*>(frameToTransmit))

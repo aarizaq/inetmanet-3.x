@@ -795,7 +795,7 @@ void Batman::parseIncomingPacket(L3Address neigh, BatmanIf *if_incoming, BatmanP
 
             hna_buff_len = bat_packet->getHnaMsgArraySize() * BATMAN_HNA_MSG_SIZE;
             unsigned int  hnaLen = bat_packet->getHnaMsgArraySize();
-            hna_recv_buff = hnaLen > 0 ? &bat_packet->getHnaMsg(0) : nullptr;
+            hna_recv_buff = hnaLen > 0 ? & bat_packet->getHnaMsgForUpdate(0) : nullptr;
 
             {
 

@@ -17,22 +17,26 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
+import inet.common.TLVOption;
+import inet.common.geometry.Geometry;
+import inet.networklayer.common.L3Address;
+
 cplusplus {{
-#include "inet/common/geometry/common/Coord.h"
 #include "inet/common/TLVOption.h"
-#include "inet/networklayer/common/L3Address.h"
 #include "inet/routing/gpsr/GPSRDefs.h"
 }}
 
 namespace inet;
 
-class noncobject L3Address;
+enum GPSRForwardingMode {
+    GPSR_GREEDY_ROUTING = 0;
+    GPSR_PERIMETER_ROUTING = 1;
+};
 
-class noncobject Coord;
-
-class noncobject GPSRForwardingMode;
-
-class noncobject TLVOptionBase;
+enum GPSRPlanarizationMode {
+    GPSR_GG_PLANARIZATION = 0;
+    GPSR_RNG_PLANARIZATION = 1;
+};
 
 //
 // The GPSR beacon packet is sent periodically by all GPSR routers to notify

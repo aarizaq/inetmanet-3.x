@@ -1,13 +1,13 @@
 cplusplus {{
 #include "inet/routing/extras/PASER/paser_configuration/PASER_Definitions.h"
 #include "inet/routing/extras/base/compatibility.h"
-
 }}
 
 
 namespace inet::inetmanet;
 
-struct In_addr;
+struct In_addr {@existingClass;    @opaque;}
+
 //struct lv_block;
 //struct kdc_block;
 

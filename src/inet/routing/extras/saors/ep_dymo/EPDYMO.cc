@@ -50,15 +50,15 @@ void EPDYMO::sendBeacon() {
 
 	//Set target node parameters
 	bcn->setMsgHdrHopLimit(1);
-	bcn->getTargetNode().setAddress(IPv4Address::LL_MANET_ROUTERS.getInt());
-	bcn->getTargetNode().setSeqNum(0);
-	bcn->getTargetNode().setDist(1);
+	bcn->getTargetNodeForUpdate().setAddress(IPv4Address::LL_MANET_ROUTERS.getInt());
+	bcn->getTargetNodeForUpdate().setSeqNum(0);
+	bcn->getTargetNodeForUpdate().setDist(1);
 
 	//Set source node parameters
-	bcn->getOrigNode().setAddress(myAddr);
-	if (RESPONSIBLE_ADDRESSES_PREFIX != -1) bcn->getOrigNode().setPrefix(RESPONSIBLE_ADDRESSES_PREFIX);
-	bcn->getOrigNode().setSeqNum(ownSeqNum);
-	bcn->getOrigNode().setDist(0);
+	bcn->getOrigNodeForUpdate().setAddress(myAddr);
+	if (RESPONSIBLE_ADDRESSES_PREFIX != -1) bcn->getOrigNodeForUpdate().setPrefix(RESPONSIBLE_ADDRESSES_PREFIX);
+	bcn->getOrigNodeForUpdate().setSeqNum(ownSeqNum);
+	bcn->getOrigNodeForUpdate().setDist(0);
 
 	sendDown(bcn, IPv4Address::LL_MANET_ROUTERS.getInt());
 }
@@ -87,7 +87,7 @@ void EPDYMO::handleBeacon(SAORS_BEACON* my_beacon) {
 	//--------------------------------------------------------------------//
     // Check if final destination of any packets in DT queue, sent beacon //
     //--------------------------------------------------------------------//
-    dst_entry = dymo_routingTable->getByAddress(IPv4Address(my_beacon->getOrigNode().getAddress()));
+    dst_entry = dymo_routingTable->getByAddress(IPv4Address(my_beacon->getOrigNodeForUpdate().getAddress()));
     //Sanity check -- That there is a routing table entry
     if(!dst_entry) {
         EV << "ERROR: The node that just sent a beacon cannot be found in the routing table!!!" << endl;

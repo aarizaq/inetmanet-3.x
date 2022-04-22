@@ -242,7 +242,7 @@ OLSR_ETX::recv_olsr(cMessage* msg)
     nsaddr_t receiverIfaceAddr = getIfaceAddressFromIndex(index);
     for (int i = 0; i < (int) op->msgArraySize(); i++)
     {
-        OLSR_ETX_msg& msg = op->msg(i);
+        OLSR_ETX_msg& msg = op->getMsgForUpdate(i);
 
         // If ttl is less than or equal to zero, or
         // the receiver is the same as the originator,

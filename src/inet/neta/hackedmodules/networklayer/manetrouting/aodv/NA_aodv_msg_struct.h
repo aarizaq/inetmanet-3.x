@@ -14,7 +14,7 @@ using namespace inet;
 using namespace inet::inetmanet;
 #define AddressSizeUsed 4
 
-#include "NA_aodv_msg_struct_m.h"
+//#include "NA_aodv_msg_struct_m.h"
 
 namespace inet {
 

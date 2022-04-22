@@ -350,8 +350,8 @@ void HwmpProtocol::processData(cMessage *msg)
         return;
     }
 
-    pkt->getBody().setTTL(pkt->getBody().getTTL() - 1);
-    pkt->getBody().setHopsCount(pkt->getBody().getHopsCount() + 1);
+    pkt->getBodyForUpdate().setTTL(pkt->getBody().getTTL() - 1);
+    pkt->getBodyForUpdate().setHopsCount(pkt->getBody().getHopsCount() + 1);
 
     switch (pkt->getBody().getId())
     {
@@ -463,15 +463,15 @@ void HwmpProtocol::sendPrep(MACAddress src,
     EV << "sendprep" << endl;
     Ieee80211ActionPREPFrame* ieee80211ActionPrepFrame = new Ieee80211ActionPREPFrame();
     ieee80211ActionPrepFrame->setName("Hwmp::PREP");
-    ieee80211ActionPrepFrame->getBody().setHopsCount(hops);
-    ieee80211ActionPrepFrame->getBody().setTTL(GetMaxTtl());
+    ieee80211ActionPrepFrame->getBodyForUpdate().setHopsCount(hops);
+    ieee80211ActionPrepFrame->getBodyForUpdate().setTTL(GetMaxTtl());
 
-    ieee80211ActionPrepFrame->getBody().setOriginator(src);
-    ieee80211ActionPrepFrame->getBody().setOriginatorSeqNumber(originatorSn); // must be actualized previously
-    ieee80211ActionPrepFrame->getBody().setLifeTime(GetActivePathLifetime());
-    ieee80211ActionPrepFrame->getBody().setMetric(0);
-    ieee80211ActionPrepFrame->getBody().setTarget(targetAddr);
-    ieee80211ActionPrepFrame->getBody().setTargetSeqNumber(targetSn); // must be actualized previously
+    ieee80211ActionPrepFrame->getBodyForUpdate().setOriginator(src);
+    ieee80211ActionPrepFrame->getBodyForUpdate().setOriginatorSeqNumber(originatorSn); // must be actualized previously
+    ieee80211ActionPrepFrame->getBodyForUpdate().setLifeTime(GetActivePathLifetime());
+    ieee80211ActionPrepFrame->getBodyForUpdate().setMetric(0);
+    ieee80211ActionPrepFrame->getBodyForUpdate().setTarget(targetAddr);
+    ieee80211ActionPrepFrame->getBodyForUpdate().setTargetSeqNumber(targetSn); // must be actualized previously
 
     ieee80211ActionPrepFrame->setReceiverAddress(retransmitter);
     ieee80211ActionPrepFrame->setTransmitterAddress(GetAddress());
@@ -528,15 +528,15 @@ void HwmpProtocol::sendGann()
         return;
     Ieee80211ActionGANNFrame * gannFrame = new Ieee80211ActionGANNFrame();
     gannFrame->setName("Hwmp::GANN");
-    gannFrame->getBody().setMeshGateAddress(GetAddress());
-    gannFrame->getBody().setMeshGateSeqNumber(GetNextGannSeqno());
+    gannFrame->getBodyForUpdate().setMeshGateAddress(GetAddress());
+    gannFrame->getBodyForUpdate().setMeshGateSeqNumber(GetNextGannSeqno());
     m_gannTimer->resched(m_dot11MeshHWMPGannInterval);
 
-    gannFrame->getBody().setHopsCount(0);
-    gannFrame->getBody().setTTL(GetMaxTtl());
+    gannFrame->getBodyForUpdate().setHopsCount(0);
+    gannFrame->getBodyForUpdate().setTTL(GetMaxTtl());
     gannFrame->setReceiverAddress(MACAddress::BROADCAST_ADDRESS);
 
-    gannFrame->getBody().setMeshGateAddress(GetAddress());
+    gannFrame->getBodyForUpdate().setMeshGateAddress(GetAddress());
     gannFrame->setTransmitterAddress(GetAddress());
     gannFrame->setAddress3(gannFrame->getTransmitterAddress());
 
@@ -584,48 +584,48 @@ HwmpProtocol::createPReq(std::vector<PREQElem> preq, bool individual, MACAddress
     Ieee80211ActionPREQFrame* ieee80211ActionPreqFrame = new Ieee80211ActionPREQFrame();
     ieee80211ActionPreqFrame->setName("Hwmp::PREQ");
     if (isRoot())
-        ieee80211ActionPreqFrame->getBody().setFlags(ieee80211ActionPreqFrame->getBody().getFlags() | 0x80);
+        ieee80211ActionPreqFrame->getBodyForUpdate().setFlags(ieee80211ActionPreqFrame->getBody().getFlags() | 0x80);
     else
-        ieee80211ActionPreqFrame->getBody().setFlags(ieee80211ActionPreqFrame->getBody().getFlags() & 0x7F);
+        ieee80211ActionPreqFrame->getBodyForUpdate().setFlags(ieee80211ActionPreqFrame->getBody().getFlags() & 0x7F);
 
     if (individual)
     {
-        ieee80211ActionPreqFrame->getBody().setFlags(ieee80211ActionPreqFrame->getBody().getFlags() | 0x40);
+        ieee80211ActionPreqFrame->getBodyForUpdate().setFlags(ieee80211ActionPreqFrame->getBody().getFlags() | 0x40);
         ieee80211ActionPreqFrame->setReceiverAddress(addr);
     }
     else
     {
         ieee80211ActionPreqFrame->setReceiverAddress(MACAddress::BROADCAST_ADDRESS);
-        ieee80211ActionPreqFrame->getBody().setFlags(ieee80211ActionPreqFrame->getBody().getFlags() & 0xBF);
+        ieee80211ActionPreqFrame->getBodyForUpdate().setFlags(ieee80211ActionPreqFrame->getBody().getFlags() & 0xBF);
     }
 
     if (isProactive)
     {
-        ieee80211ActionPreqFrame->getBody().setFlags(ieee80211ActionPreqFrame->getBody().getFlags() | 0x20);
-        ieee80211ActionPreqFrame->getBody().setLifeTime(GetRootPathLifetime());
+        ieee80211ActionPreqFrame->getBodyForUpdate().setFlags(ieee80211ActionPreqFrame->getBody().getFlags() | 0x20);
+        ieee80211ActionPreqFrame->getBodyForUpdate().setLifeTime(GetRootPathLifetime());
     }
     else
     {
-        ieee80211ActionPreqFrame->getBody().setFlags(ieee80211ActionPreqFrame->getBody().getFlags() & 0xDF);
-        ieee80211ActionPreqFrame->getBody().setLifeTime(GetActivePathLifetime());
+        ieee80211ActionPreqFrame->getBodyForUpdate().setFlags(ieee80211ActionPreqFrame->getBody().getFlags() & 0xDF);
+        ieee80211ActionPreqFrame->getBodyForUpdate().setLifeTime(GetActivePathLifetime());
     }
 
-    ieee80211ActionPreqFrame->getBody().setHopsCount(0);
-    ieee80211ActionPreqFrame->getBody().setTTL(GetMaxTtl());
+    ieee80211ActionPreqFrame->getBodyForUpdate().setHopsCount(0);
+    ieee80211ActionPreqFrame->getBodyForUpdate().setTTL(GetMaxTtl());
 
-    ieee80211ActionPreqFrame->getBody().setPreqElemArraySize(preq.size());
-    ieee80211ActionPreqFrame->getBody().setPathDiscoveryId(GetNextPreqId());
-    ieee80211ActionPreqFrame->getBody().setOriginator(GetAddress());
-    ieee80211ActionPreqFrame->getBody().setOriginatorSeqNumber(m_hwmpSeqno); // must be actualized previously
-    ieee80211ActionPreqFrame->getBody().setMetric(0);
+    ieee80211ActionPreqFrame->getBodyForUpdate().setPreqElemArraySize(preq.size());
+    ieee80211ActionPreqFrame->getBodyForUpdate().setPathDiscoveryId(GetNextPreqId());
+    ieee80211ActionPreqFrame->getBodyForUpdate().setOriginator(GetAddress());
+    ieee80211ActionPreqFrame->getBodyForUpdate().setOriginatorSeqNumber(m_hwmpSeqno); // must be actualized previously
+    ieee80211ActionPreqFrame->getBodyForUpdate().setMetric(0);
 
     for (unsigned int i = 0; i < preq.size(); i++)
     {
-        ieee80211ActionPreqFrame->getBody().setPreqElem(i, preq[i]);
+        ieee80211ActionPreqFrame->getBodyForUpdate().setPreqElem(i, preq[i]);
     }
-    ieee80211ActionPreqFrame->getBody().setTargetCount(ieee80211ActionPreqFrame->getBody().getPreqElemArraySize());
+    ieee80211ActionPreqFrame->getBodyForUpdate().setTargetCount(ieee80211ActionPreqFrame->getBody().getPreqElemArraySize());
 
-    ieee80211ActionPreqFrame->getBody().setBodyLength(ieee80211ActionPreqFrame->getBody().getBodyLength() + (preq.size() * PREQElemLen));
+    ieee80211ActionPreqFrame->getBodyForUpdate().setBodyLength(ieee80211ActionPreqFrame->getBody().getBodyLength() + (preq.size() * PREQElemLen));
     ieee80211ActionPreqFrame->setByteLength(ieee80211ActionPreqFrame->getByteLength() + (preq.size() * PREQElemLen));
 
     ieee80211ActionPreqFrame->setTransmitterAddress(GetAddress());
@@ -772,10 +772,10 @@ void HwmpProtocol::sendPerr(std::vector<HwmpFailedDestination> failedDestination
     EV << "sendPerr " << endl;
     Ieee80211ActionPERRFrame * ieee80211ActionPerrFrame = new Ieee80211ActionPERRFrame();
     ieee80211ActionPerrFrame->setName("Hwmp::PERR");
-    ieee80211ActionPerrFrame->getBody().setPerrElemArraySize(failedDestinations.size());
-    ieee80211ActionPerrFrame->getBody().setBodyLength(ieee80211ActionPerrFrame->getBody().getBodyLength() + (failedDestinations.size() * PERRElemLen));
+    ieee80211ActionPerrFrame->getBodyForUpdate().setPerrElemArraySize(failedDestinations.size());
+    ieee80211ActionPerrFrame->getBodyForUpdate().setBodyLength(ieee80211ActionPerrFrame->getBody().getBodyLength() + (failedDestinations.size() * PERRElemLen));
     ieee80211ActionPerrFrame->setByteLength(ieee80211ActionPerrFrame->getByteLength() + (failedDestinations.size() * PERRElemLen));
-    ieee80211ActionPerrFrame->getBody().setTTL(GetMaxTtl());
+    ieee80211ActionPerrFrame->getBodyForUpdate().setTTL(GetMaxTtl());
 
     ieee80211ActionPerrFrame->setTransmitterAddress(GetAddress());
     ieee80211ActionPerrFrame->setAddress3(ieee80211ActionPerrFrame->getTransmitterAddress());
@@ -786,7 +786,7 @@ void HwmpProtocol::sendPerr(std::vector<HwmpFailedDestination> failedDestination
         perr.destAddress = failedDestinations[i].destination;
         perr.destSeqNumber = failedDestinations[i].seqnum;
         perr.reasonCode = RC_MESH_PATH_ERROR_DESTINATION_UNREACHABLE;
-        ieee80211ActionPerrFrame->getBody().setPerrElem(i, perr);
+        ieee80211ActionPerrFrame->getBodyForUpdate().setPerrElem(i, perr);
     }
 
     if (receivers.size() >= GetUnicastPerrThreshold() || receivers.empty())
@@ -1146,7 +1146,7 @@ void HwmpProtocol::discoverRouteToGan(const MACAddress &add)
 void HwmpProtocol::receivePreq(Ieee80211ActionPREQFrame *preqFrame, MACAddress from, uint32_t interface,
         MACAddress fromMp, uint32_t metric)
 {
-    preqFrame->getBody().setMetric(preqFrame->getBody().getMetric() + metric);
+    preqFrame->getBodyForUpdate().setMetric(preqFrame->getBody().getMetric() + metric);
     uint32_t totalMetric = preqFrame->getBody().getMetric();
     MACAddress originatorAddress = preqFrame->getBody().getOriginator();
     uint32_t originatorSeqNumber = preqFrame->getBody().getOriginatorSeqNumber();
@@ -1325,11 +1325,11 @@ void HwmpProtocol::receivePreq(Ieee80211ActionPREQFrame *preqFrame, MACAddress f
         }
         // prepare the frame for retransmission
         int numEleDel = preqFrame->getBody().getPreqElemArraySize() - preqElements.size();
-        preqFrame->getBody().setPreqElemArraySize(preqElements.size());
+        preqFrame->getBodyForUpdate().setPreqElemArraySize(preqElements.size());
         for (unsigned int i = 0; i < preqFrame->getBody().getPreqElemArraySize(); i++)
-            preqFrame->getBody().setPreqElem(i, preqElements[i]);
+            preqFrame->getBodyForUpdate().setPreqElem(i, preqElements[i]);
         // actualize sizes
-        preqFrame->getBody().setBodyLength(preqFrame->getBody().getBodyLength() - (numEleDel * PREQElemLen));
+        preqFrame->getBodyForUpdate().setBodyLength(preqFrame->getBody().getBodyLength() - (numEleDel * PREQElemLen));
         preqFrame->setByteLength(preqFrame->getByteLength() - (numEleDel * PREQElemLen));
     }
 
@@ -1343,7 +1343,7 @@ void HwmpProtocol::receivePreq(Ieee80211ActionPREQFrame *preqFrame, MACAddress f
         std::vector < MACAddress > receivers = getPreqReceivers(iId);
         if (receivers.size() == 1 && receivers[0] == MACAddress::BROADCAST_ADDRESS)
         {
-            preqFrame->getBody().setFlags(preqFrame->getBody().getFlags() & 0xBF);
+            preqFrame->getBodyForUpdate().setFlags(preqFrame->getBody().getFlags() & 0xBF);
             preqFrame->setReceiverAddress(MACAddress::BROADCAST_ADDRESS);
         }
         else
@@ -1400,7 +1400,7 @@ void HwmpProtocol::receivePrep(Ieee80211ActionPREPFrame * prepFrame, MACAddress 
         MACAddress fromMp, uint32_t metric)
 {
     uint32_t totalMetric = prepFrame->getBody().getMetric() + metric;
-    prepFrame->getBody().setMetric(totalMetric);
+    prepFrame->getBodyForUpdate().setMetric(totalMetric);
     MACAddress originatorAddress = prepFrame->getBody().getOriginator();
     uint32_t originatorSeqNumber = prepFrame->getBody().getOriginatorSeqNumber();
     MACAddress destinationAddress = prepFrame->getBody().getTarget();

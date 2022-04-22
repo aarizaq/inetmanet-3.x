@@ -45,7 +45,7 @@ public:
 protected:
 	virtual void handleMsgFromNetwork(cMessage *msg);
 	virtual void specInitialize();
-	virtual void alterHipPacketAndSend(HIPHeaderMessage* hipHead, IPv6Address &rvsIP, IPv6Address &destIP,  IPv6Address &fromIP);
+	virtual void alterHipPacketAndSend(HIPHeaderMessage* hipHead, const IPv6Address &rvsIP, const IPv6Address &destIP,  const IPv6Address &fromIP);
 	virtual void handleMsgFromTransport(cMessage *msg);
 	virtual void handleAddressChange();
 

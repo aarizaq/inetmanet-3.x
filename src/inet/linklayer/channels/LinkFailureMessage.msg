@@ -19,7 +19,7 @@ cplusplus {{
 
 namespace inet;
 
-class noncobject LinkState;
+class LinkState {@existingClass;    @opaque;}
 
 message LinkFailureMessage {
     int module_id;

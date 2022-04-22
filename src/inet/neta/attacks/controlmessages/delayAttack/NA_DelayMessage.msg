@@ -17,14 +17,6 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 //
 
-cplusplus {{
-#include "omnetpp.h"
-typedef omnetpp::cPar *ParPtr;
-}}
-
-class noncobject ParPtr;
-
-
 namespace inet::neta;
 
 //
@@ -37,6 +29,6 @@ namespace inet::neta;
 // @date 01/22/2013
 message NA_DelayMessage {
     double delayAttackProbability; // Attack probability
-    ParPtr delayAttackValue;  // Implemented as a pointer to cPar to allow the use of random distributions for the delay value
+    omnetpp::cPar * delayAttackValue;  // Implemented as a pointer to cPar to allow the use of random distributions for the delay value
 
 }
